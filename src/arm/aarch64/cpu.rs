@@ -11855,10 +11855,16 @@ impl AArch64Cpu {
             for p in 0..((16 / esize) / 2) {
                 let (re, im) = (2 * p, 2 * p + 1);
                 let e2 = if flip == 1 { elem(n, im) } else { elem(n, re) };
-                let dr = fp_muladd_bits(elem(acc, re), e2, e1, bits) as u128 & mask;
-                let di = fp_muladd_bits(elem(acc, im), e2, e3, bits) as u128 & mask;
-                result = (result & !(mask << (re * bits as usize))) | (dr << (re * bits as usize));
-                result = (result & !(mask << (im * bits as usize))) | (di << (im * bits as usize));
+                let ar = elem(acc, re);
+                let ai = elem(acc, im);
+                let dr = fp_muladd_bits(ar, e2, e1, bits);
+                let di = fp_muladd_bits(ai, e2, e3, bits);
+                self.fpsr |= fp_status_fma(esize, ar, e2, e1, dr);
+                self.fpsr |= fp_status_fma(esize, ai, e2, e3, di);
+                result = (result & !(mask << (re * bits as usize)))
+                    | ((dr as u128 & mask) << (re * bits as usize));
+                result = (result & !(mask << (im * bits as usize)))
+                    | ((di as u128 & mask) << (im * bits as usize));
             }
             self.v[zd] = result;
             return Ok(CpuExit::Continue);

@@ -34210,3 +34210,98 @@ fn diff_sve_fcmla_fpsr() {
     }
     run_fpsr_batch("sve_fcmla_fpsr", batch);
 }
+
+// commit 5424a4f3739a temp: set sve fcmla indexed fpsr
+#[test]
+fn diff_sve_fcmla_indexed_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // Indexed FCMLA supports .h (size=2, esize=2) and .s (size=3, esize=4) only.
+    for &(size, esz) in &[(2u32, 2usize), (3u32, 4usize)] {
+        // sNaN, +inf, +0.0, 1.0, and a sub-half-ULP "tiny" value, per element size.
+        let (snan, pinf, pzero, one, tiny): (u64, u64, u64, u64, u64) = if esz == 2 {
+            // half: sNaN=0x7c01, +inf=0x7c00, +0=0, 1.0=0x3c00,
+            // tiny=0x0400 (2^-14, smallest normal; far below the 2^-10 ULP at 1.0).
+            (0x7c01, 0x7c00, 0x0000, 0x3c00, 0x0400)
+        } else {
+            // single: sNaN=0x7fa00000, +inf=0x7f800000, +0=0, 1.0,
+            // tiny=2^-24 (half-ULP at 1.0 -> inexact when added to 1.0).
+            (
+                0x7fa0_0000,
+                0x7f80_0000,
+                0x0000_0000,
+                (1.0f32).to_bits() as u64,
+                (2.0f32.powi(-24)).to_bits() as u64,
+            )
+        };
+        let pack = |lanes: &[u64]| -> u128 {
+            let mut out = 0u128;
+            for (l, &v) in lanes.iter().enumerate() {
+                out |= (v as u128) << (l * esz * 8);
+            }
+            out
+        };
+        let nlanes = 16 / esz;
+        // index=0 selects the Zm complex pair at lanes [0]=real,[1]=imag. rot=0:
+        // flip=0, no negate, so dr = acc_re + Zn_re * Zm_re, di = acc_im + Zn_im * Zm_im.
+        let index = 0u32;
+        let rot = 0u32;
+        let insn = enc_sve_fcmla_idx(size, index, RM, rot);
+
+        // Case 1: sNaN in the accumulator -> fp_status_fma returns IOC for both FMAs.
+        {
+            let mut st = ArmState::zeroed();
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            let acc: Vec<u64> = (0..nlanes).map(|_| snan).collect();
+            let zn: Vec<u64> = (0..nlanes).map(|_| one).collect();
+            let zm: Vec<u64> = (0..nlanes).map(|_| one).collect();
+            let za = pack(&acc);
+            let zn = pack(&zn);
+            let zm = pack(&zm);
+            st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((format!("fcmla_idx_s{size}_snan_acc"), insn, st));
+        }
+
+        // Case 2: inf * 0 invalid product -> IOC. Zn lanes = +inf, Zm pair = +0.
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = 0;
+            st.fpsr = initial_fpsr;
+            st.set_preg(0, 0xFFFF);
+            let acc: Vec<u64> = (0..nlanes).map(|_| one).collect();
+            let zn: Vec<u64> = (0..nlanes).map(|_| pinf).collect();
+            let zm: Vec<u64> = (0..nlanes).map(|_| pzero).collect();
+            let za = pack(&acc);
+            let zn = pack(&zn);
+            let zm = pack(&zm);
+            st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("fcmla_idx_s{size}_inf0_ioc_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
+        }
+
+        // Case 3: inexact finite accumulate -> IXC. dr = 1.0 + 1.0 * tiny, not representable.
+        {
+            let mut st = ArmState::zeroed();
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            let acc: Vec<u64> = (0..nlanes).map(|_| one).collect();
+            let zn: Vec<u64> = (0..nlanes).map(|_| one).collect();
+            let zm: Vec<u64> = (0..nlanes).map(|_| tiny).collect();
+            let za = pack(&acc);
+            let zn = pack(&zn);
+            let zm = pack(&zm);
+            st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((format!("fcmla_idx_s{size}_inexact_ixc"), insn, st));
+        }
+    }
+    run_fpsr_batch("sve_fcmla_indexed_fpsr", batch);
+}
