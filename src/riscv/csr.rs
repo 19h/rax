@@ -29,6 +29,8 @@ pub enum Csr {
     InstretH = 0xC82,
     /// Machine status.
     Mstatus = 0x300,
+    /// Supervisor status.
+    Sstatus = 0x100,
     /// Machine ISA register.
     Misa = 0x301,
     /// Machine exception delegation.
@@ -37,6 +39,8 @@ pub enum Csr {
     Mideleg = 0x303,
     /// Machine interrupt-enable.
     Mie = 0x304,
+    /// Supervisor interrupt-enable.
+    Sie = 0x104,
     /// Machine trap-vector base address.
     Mtvec = 0x305,
     /// Machine counter-enable.
@@ -51,6 +55,8 @@ pub enum Csr {
     Mtval = 0x343,
     /// Machine interrupt-pending.
     Mip = 0x344,
+    /// Supervisor interrupt-pending.
+    Sip = 0x144,
     /// Vendor ID.
     Mvendorid = 0xF11,
     /// Architecture ID.
@@ -89,10 +95,12 @@ impl Csr {
             0xC81 => Csr::TimeH,
             0xC82 => Csr::InstretH,
             0x300 => Csr::Mstatus,
+            0x100 => Csr::Sstatus,
             0x301 => Csr::Misa,
             0x302 => Csr::Medeleg,
             0x303 => Csr::Mideleg,
             0x304 => Csr::Mie,
+            0x104 => Csr::Sie,
             0x305 => Csr::Mtvec,
             0x306 => Csr::Mcounteren,
             0x340 => Csr::Mscratch,
@@ -100,6 +108,7 @@ impl Csr {
             0x342 => Csr::Mcause,
             0x343 => Csr::Mtval,
             0x344 => Csr::Mip,
+            0x144 => Csr::Sip,
             0xF11 => Csr::Mvendorid,
             0xF12 => Csr::Marchid,
             0xF13 => Csr::Mimpid,
