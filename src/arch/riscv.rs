@@ -158,7 +158,7 @@ impl Arch for Riscv64Arch {
         Ok(BootInfo::RiscV(info))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Ok(())
     }

@@ -4,7 +4,7 @@ use thiserror::Error;
 pub enum Error {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     #[error("KVM error: {0}")]
     Kvm(#[from] kvm_ioctls::Error),
     #[error("Linux loader error: {0}")]

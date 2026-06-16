@@ -100,7 +100,7 @@ use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::arch::{Arch, BootInfo, X86_64BootInfo, X86_64RealModeBootInfo};
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::VmConfig;
 use crate::cpu::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters, X86_64CpuState};
@@ -116,7 +116,7 @@ use crate::devices::map::{X86_DEBUG_PORT_BASE, X86_DEBUG_PORT_LEN};
 use crate::devices::rtc::{RTC_ADDRESS, RtcStub};
 use crate::devices::sysctl::SystemControl;
 use crate::error::{Error, Result};
-use crate::memory::{align_down, KVM_TSS_IDENTITY_GAP_START, PAGE_SIZE};
+use crate::memory::{KVM_TSS_IDENTITY_GAP_START, PAGE_SIZE, align_down};
 use std::sync::{Arc, Mutex};
 
 /// The primary IDE controller, stashed during device setup so the ISO boot path
@@ -1014,7 +1014,7 @@ impl Arch for X86_64Arch {
         }))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, vm: &KvmVm, boot: &BootInfo) -> Result<()> {
         let boot = boot
             .as_x86_64()

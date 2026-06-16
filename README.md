@@ -57,7 +57,7 @@ reference from an identical state, then diffs the result:
 
 ```bash
 cargo test --release --test differential       # x86-64  vs. KVM (the silicon)
-cargo test --release --test arm_diff           # AArch64 vs. qemu-aarch64
+cargo test --release --test arm_diff           # AArch64 vs. native EL0 hardware on aarch64, qemu-aarch64 elsewhere
 cargo test --release --test hexagon_hvx_diff   # Hexagon vs. qemu-hexagon
 cargo test --release --test riscv_diff         # RV64GC  vs. qemu-riscv64
 ```
@@ -82,9 +82,10 @@ authoritative reference:
 - **x86-64** is checked against **KVM**, the silicon in your machine. The same machine code runs on the
   interpreter and on hardware from an identical architectural state, and the final state is diffed; the
   chip itself defines the expected result.
-- **AArch64, Hexagon, and RISC-V** are each checked against **QEMU** in user mode the same way: a small
-  reference harness loads a state, runs one instruction, and reports back; rax runs it from the identical
-  state; any divergence is a bug, reported precisely.
+- **AArch64** is checked against a native **EL0 hardware oracle** on aarch64 hosts: a small signal-frame
+  harness loads a state, runs one instruction directly on the CPU, and reports back. On non-aarch64
+  hosts the same harness falls back to **qemu-aarch64** user mode. Hexagon and RISC-V use the same
+  user-mode oracle pattern through QEMU.
 - **Intel APX** is the exception with no chip to ask: no shipping CPU implements it, and QEMU does not
   emulate it, so KVM cannot be the oracle. Its encodings come from **LLVM**, the only assembler that
   speaks APX; each test pins an instruction to LLVM's exact bytes and checks rax's architectural effect
@@ -236,7 +237,7 @@ pseudo-random states, so each test function exercises many cases.
 | Harness | rax core | Oracle | Compares |
 |---------|----------|--------|----------|
 | `tests/differential.rs` | x86-64 | KVM (hardware) | GPRs, RIP, RFLAGS, XMM, memory |
-| `tests/arm_diff.rs` | AArch64: NEON + SVE/SVE2/SVE2.1 | `qemu-aarch64` | X0-X30, SP, NZCV, V0-V31, P0-P15 |
+| `tests/arm_diff.rs` | AArch64: NEON + SVE/SVE2/SVE2.1 | native EL0 hardware on aarch64; `qemu-aarch64` fallback | X0-X30, SP, NZCV, V0-V31, P0-P15 |
 | `tests/arm_diff32.rs` | AArch32: A32 + Thumb T16/T32 | `qemu-arm` | R0-R14, CPSR, FPSCR, D0-D31, scratch |
 | `tests/hexagon_*_diff.rs` | Hexagon (scalar / cf / float / mem / HVX / HVX-mem) | `qemu-hexagon` | GPRs, P3:0, USR, loop regs, V0-V31, Q0-Q3 |
 | `tests/riscv_diff.rs` | RV64GC | `qemu-riscv64` | x1-x31, f0-f31, fcsr, scratch |

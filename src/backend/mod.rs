@@ -4,7 +4,7 @@
 
 pub mod emulator;
 
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 pub mod kvm;
 
 // HVF backend for macOS
@@ -18,7 +18,9 @@ use std::sync::Arc;
 
 use vm_memory::GuestMemoryMmap;
 
-use crate::config::{ArchKind, BackendKind, VmConfig};
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
+use crate::config::ArchKind;
+use crate::config::{BackendKind, VmConfig};
 use crate::cpu::VCpu;
 use crate::error::{Error, Result};
 
@@ -50,7 +52,7 @@ pub trait Backend: Send + Sync {
 /// Create a backend based on configuration.
 pub fn create(config: &VmConfig) -> Result<Box<dyn Backend>> {
     match config.backend {
-        #[cfg(all(feature = "kvm", target_os = "linux"))]
+        #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
         BackendKind::Kvm => {
             if config.arch != ArchKind::X86_64 {
                 return Err(Error::InvalidConfig(
@@ -59,9 +61,9 @@ pub fn create(config: &VmConfig) -> Result<Box<dyn Backend>> {
             }
             Ok(Box::new(kvm::KvmBackend::new()?))
         }
-        #[cfg(not(all(feature = "kvm", target_os = "linux")))]
+        #[cfg(not(all(feature = "kvm", target_os = "linux", target_arch = "x86_64")))]
         BackendKind::Kvm => Err(Error::InvalidConfig(
-            "KVM backend not available (requires Linux with --features kvm)".to_string(),
+            "KVM backend not available (requires x86_64 Linux with --features kvm)".to_string(),
         )),
         BackendKind::Emulator => Ok(Box::new(emulator::EmulatorBackend::new(
             config.arch,

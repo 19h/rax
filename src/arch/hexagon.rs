@@ -121,7 +121,7 @@ impl Arch for HexagonArch {
         Ok(BootInfo::Hexagon(info))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Ok(())
     }

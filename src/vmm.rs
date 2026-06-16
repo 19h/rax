@@ -13,7 +13,7 @@ use crate::arch::{
 use crate::backend::emulator::x86_64::get_total_instruction_count;
 #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
 use crate::backend::hvf::HvfVm;
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use crate::backend::kvm::KvmVm;
 use crate::backend::{self, Vm};
 use crate::config::{ArchKind, BackendKind, CheckpointConfig, VmConfig};
@@ -467,7 +467,7 @@ impl Vmm {
         let guest_mem = GuestMemoryWrapper::new(config.memory.bytes())?;
 
         // Register memory with VM (backend-specific)
-        #[cfg(all(feature = "kvm", target_os = "linux"))]
+        #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
         if matches!(config.backend, BackendKind::Kvm) {
             let kvm_vm = vm
                 .as_any()
@@ -618,7 +618,7 @@ impl Vmm {
         // Initialize VM (backend-specific). Skipped on resume: the emulator
         // backend needs none, and a resumed machine takes its full CPU/segment
         // state from the checkpoint rather than the boot-time init.
-        #[cfg(all(feature = "kvm", target_os = "linux"))]
+        #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
         if !resume && matches!(config.backend, BackendKind::Kvm) {
             let kvm_vm = vm
                 .as_any()

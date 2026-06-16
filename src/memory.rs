@@ -1,12 +1,12 @@
 use crate::error::Result;
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use kvm_bindings::kvm_userspace_memory_region;
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use kvm_ioctls::VmFd;
 use tracing::info;
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemoryRegion};
-#[cfg(not(all(feature = "kvm", target_os = "linux")))]
+#[cfg(not(all(feature = "kvm", target_os = "linux", target_arch = "x86_64")))]
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
 pub const PAGE_SIZE: u64 = 4096;
@@ -115,7 +115,7 @@ impl GuestMemoryWrapper {
         })
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     pub fn register(&self, vm_fd: &VmFd) -> Result<()> {
         use tracing::debug;
 

@@ -394,7 +394,7 @@ impl Arch for Aarch64Arch {
         Ok(BootInfo::Arm(info))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         // TODO: Initialize KVM for ARM
         Err(Error::InvalidConfig(
@@ -747,7 +747,7 @@ impl Arch for Armv7aArch {
         Ok(BootInfo::Arm(info))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Err(Error::InvalidConfig(
             "KVM for ARMv7-A not supported".to_string(),
@@ -814,7 +814,7 @@ impl Arch for Armv8a32Arch {
         Armv7aArch::new().load_kernel(mem, config)
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Err(Error::InvalidConfig(
             "KVM for ARMv8-A AArch32 not supported".to_string(),
@@ -886,7 +886,7 @@ impl Arch for CortexMArch {
         Ok(BootInfo::Arm(info))
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Err(Error::InvalidConfig(
             "KVM for Cortex-M not supported".to_string(),
@@ -944,7 +944,7 @@ impl Arch for CortexRArch {
         Armv7aArch::new().load_kernel(mem, config)
     }
 
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         Err(Error::InvalidConfig(
             "KVM for Cortex-R not supported".to_string(),

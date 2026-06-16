@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::{ArchKind, VmConfig};
 use crate::cpu::{CpuState, Registers, SystemRegisters};
@@ -128,7 +128,7 @@ pub trait Arch: Send + Sync {
 
     /// Initialize VM-level state (IRQ chip, PIT, TSS, identity map).
     /// This is KVM-specific.
-    #[cfg(all(feature = "kvm", target_os = "linux"))]
+    #[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
     fn init_vm(&self, vm: &KvmVm, boot: &BootInfo) -> Result<()>;
 
     /// Get initial CPU state for booting.
