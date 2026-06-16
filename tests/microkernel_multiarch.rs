@@ -18,12 +18,17 @@
 //!   cargo test --no-default-features --test microkernel_multiarch -- --nocapture
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 struct Case {
     label: &'static str,
     arch: &'static str,
     extra: Vec<String>,
+}
+
+struct BootResult {
+    output: String,
+    status: ExitStatus,
 }
 
 fn manifest_dir() -> PathBuf {
@@ -55,8 +60,8 @@ fn kernel_path(label: &str) -> PathBuf {
     manifest_dir().join(format!("microkernel/microkernel-{label}.bin"))
 }
 
-/// Run one kernel under rax. Returns the combined stdout+stderr.
-fn boot(case: &Case, bin: &Path) -> String {
+/// Run one kernel under rax. Returns the combined stdout+stderr and exit status.
+fn boot(case: &Case, bin: &Path) -> BootResult {
     let rax = env!("CARGO_BIN_EXE_rax");
     let mut cmd = Command::new(rax);
     cmd.args([
@@ -77,13 +82,50 @@ fn boot(case: &Case, bin: &Path) -> String {
         .unwrap_or_else(|e| panic!("failed to spawn rax for {}: {e}", case.label));
     let mut combined = String::from_utf8_lossy(&out.stdout).into_owned();
     combined.push_str(&String::from_utf8_lossy(&out.stderr));
-    combined
+    BootResult {
+        output: combined,
+        status: out.status,
+    }
 }
 
 fn extract_cksum(output: &str) -> Option<String> {
     output
         .lines()
         .find_map(|l| l.trim().strip_prefix("NBODY_CKSUM=").map(|s| s.to_string()))
+}
+
+fn output_tail(output: &str) -> String {
+    output
+        .lines()
+        .rev()
+        .take(25)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn boot_failure(
+    label: &str,
+    output: &str,
+    status_success: bool,
+    status: impl std::fmt::Display,
+) -> Option<String> {
+    let tail = output_tail(output);
+    if !status_success {
+        return Some(format!(
+            "[{label}] emulator exited with {status}. Tail of output:\n{tail}"
+        ));
+    }
+
+    let passed = output.contains("RAX-MK: RESULT PASS");
+    let failed = output.contains("RAX-MK: RESULT FAIL");
+    if !(passed && !failed) {
+        return Some(format!("[{label}] did not pass. Tail of output:\n{tail}"));
+    }
+
+    None
 }
 
 #[test]
@@ -114,26 +156,17 @@ fn microkernel_passes_on_all_architectures() {
     let mut checksums: Vec<(&str, String)> = Vec::new();
     for case in &cases {
         let bin = kernel_path(case.label);
-        let output = boot(case, &bin);
-
-        let passed = output.contains("RAX-MK: RESULT PASS");
-        let failed = output.contains("RAX-MK: RESULT FAIL");
-        assert!(
-            passed && !failed,
-            "[{}] did not pass. Tail of output:\n{}",
+        let result = boot(case, &bin);
+        if let Some(message) = boot_failure(
             case.label,
-            output
-                .lines()
-                .rev()
-                .take(25)
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
+            &result.output,
+            result.status.success(),
+            &result.status,
+        ) {
+            panic!("{message}");
+        }
 
-        let cksum = extract_cksum(&output)
+        let cksum = extract_cksum(&result.output)
             .unwrap_or_else(|| panic!("[{}] no NBODY_CKSUM in output", case.label));
         eprintln!("[{}] RESULT PASS, NBODY_CKSUM={cksum}", case.label);
         checksums.push((case.label, cksum));
@@ -149,4 +182,14 @@ fn microkernel_passes_on_all_architectures() {
             label
         );
     }
+}
+
+#[test]
+fn rejects_pass_sentinel_with_nonzero_emulator_exit() {
+    let output = "RAX-MK: RESULT PASS\nNBODY_CKSUM=0x1\n";
+    let err = boot_failure("fake", output, false, "exit status: 1")
+        .expect("non-zero status must reject a PASS sentinel");
+
+    assert!(err.contains("[fake] emulator exited with exit status: 1"));
+    assert!(err.contains("RAX-MK: RESULT PASS"));
 }
