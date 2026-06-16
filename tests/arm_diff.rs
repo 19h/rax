@@ -34598,3 +34598,52 @@ fn diff_simd_cvtf_fpsr_inexact() {
     }
     run_fpsr_batch("simd_cvtf_fpsr_inexact", batch);
 }
+
+// commit 0adee55efb47 temp: set simd two-reg unary fpsr
+#[test]
+fn diff_simd_two_reg_unary_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // size field is {sz_hi, sz}: 0b10=FSQRT.f32, 0b11=FSQRT.f64,
+    // 0b00=FRINTX.f32, 0b01=FRINTX.f64.
+    for initial_fpsr in [0u64, 0x10] {
+        // FSQRT f32 (U=1, size=0b10, opcode=0b11111): negative finite -> IOC.
+        {
+            let insn = enc_two_reg(1, 1, 0b10, 0b11111);
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            let n = (-4.0f32).to_bits() as u64;
+            let lane = n | (n << 32);
+            st.set_vreg(RN as usize, lane, lane);
+            batch.push((format!("fsqrt_s_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+        // FSQRT f64 (U=1, size=0b11, opcode=0b11111): negative finite -> IOC.
+        {
+            let insn = enc_two_reg(1, 1, 0b11, 0b11111);
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            let n = (-4.0f64).to_bits();
+            st.set_vreg(RN as usize, n, n);
+            batch.push((format!("fsqrt_d_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+        // FRINTX f32 (U=1, size=0b00, opcode=0b11001): non-integral -> IXC.
+        {
+            let insn = enc_two_reg(1, 1, 0b00, 0b11001);
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            let n = (1.5f32).to_bits() as u64;
+            let lane = n | (n << 32);
+            st.set_vreg(RN as usize, lane, lane);
+            batch.push((format!("frintx_s_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+        // FRINTX f64 (U=1, size=0b01, opcode=0b11001): non-integral -> IXC.
+        {
+            let insn = enc_two_reg(1, 1, 0b01, 0b11001);
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            let n = (1.5f64).to_bits();
+            st.set_vreg(RN as usize, n, n);
+            batch.push((format!("frintx_d_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+    run_fpsr_batch("simd_two_reg_unary_fpsr", batch);
+}

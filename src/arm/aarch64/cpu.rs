@@ -6023,6 +6023,8 @@ impl AArch64Cpu {
                     (a as i64 as i128).unsigned_abs()
                 };
                 self.fpsr |= fp_status_int_to_fp_scaled(raw_int, esize, r);
+            } else if let Some(kind) = kind {
+                self.fpsr |= fp_status_unop(esize, Some(kind), a, r);
             }
             write_elem(&mut dst, off, esize, r);
         }
