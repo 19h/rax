@@ -29,12 +29,16 @@ const MAX_ITERS: u64 = 2_000_000;
 
 /// A pending MMIO write surfaced to the run loop.
 type MmioSink = Arc<Mutex<Option<(u64, Vec<u8>)>>>;
+/// A pending guest-requested exit surfaced to the run loop.
+type ExitSink = Arc<Mutex<Option<VcpuExit>>>;
 
 /// Guest memory bridge: RAM via [`GuestMemoryMmap`], with the UART window
 /// intercepted.
 struct GuestBridge {
     mem: Arc<GuestMemoryMmap>,
     pending: MmioSink,
+    pending_exit: ExitSink,
+    tohost_addr: Arc<Mutex<Option<u64>>>,
 }
 
 impl std::fmt::Debug for GuestBridge {
@@ -70,6 +74,24 @@ impl Memory for GuestBridge {
             *self.pending.lock().unwrap() = Some((addr, data.to_vec()));
             return Ok(());
         }
+        if *self.tohost_addr.lock().unwrap() == Some(addr) {
+            let mut raw = [0u8; 8];
+            let len = data.len().min(raw.len());
+            raw[..len].copy_from_slice(&data[..len]);
+            let value = u64::from_le_bytes(raw);
+            if value == 1 {
+                *self.pending_exit.lock().unwrap() = Some(VcpuExit::Shutdown);
+            } else if value & 1 == 1 {
+                *self.pending_exit.lock().unwrap() = Some(VcpuExit::Unknown(format!(
+                    "riscv tohost failure: value={value:#x} test={}",
+                    value >> 1
+                )));
+            } else if value != 0 {
+                *self.pending_exit.lock().unwrap() = Some(VcpuExit::Unknown(format!(
+                    "unsupported riscv tohost value: {value:#x}"
+                )));
+            }
+        }
         self.mem
             .write_slice(data, GuestAddress(addr))
             .map_err(|_| MemError::OutOfBounds {
@@ -84,21 +106,29 @@ pub struct RiscVVcpu {
     id: u32,
     cpu: RiscVCpu,
     pending: MmioSink,
+    pending_exit: ExitSink,
+    tohost_addr: Arc<Mutex<Option<u64>>>,
     halted: bool,
 }
 
 impl RiscVVcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
         let pending: MmioSink = Arc::new(Mutex::new(None));
+        let pending_exit: ExitSink = Arc::new(Mutex::new(None));
+        let tohost_addr = Arc::new(Mutex::new(None));
         let bridge = GuestBridge {
             mem,
             pending: pending.clone(),
+            pending_exit: pending_exit.clone(),
+            tohost_addr: tohost_addr.clone(),
         };
         let cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(bridge));
         RiscVVcpu {
             id,
             cpu,
             pending,
+            pending_exit,
+            tohost_addr,
             halted: false,
         }
     }
@@ -111,6 +141,10 @@ impl VCpu for RiscVVcpu {
         }
         for _ in 0..MAX_ITERS {
             let exit = self.cpu.step();
+            if let Some(exit) = self.pending_exit.lock().unwrap().take() {
+                self.halted = matches!(exit, VcpuExit::Shutdown);
+                return Ok(exit);
+            }
             // Surface any UART output produced by this instruction first.
             if let Some((addr, data)) = self.pending.lock().unwrap().take() {
                 return Ok(VcpuExit::MmioWrite { addr, data });
@@ -118,15 +152,21 @@ impl VCpu for RiscVVcpu {
             match exit {
                 RiscVExit::Continue => {}
                 RiscVExit::Ecall => {
-                    // Environment call: treat as a request to power down.
+                    let syscall = self.cpu.x(17);
+                    let code = self.cpu.x(10);
                     self.halted = true;
+                    if syscall == 93 && code != 0 {
+                        return Ok(VcpuExit::Unknown(format!(
+                            "riscv ecall failure: code={code:#x}"
+                        )));
+                    }
                     return Ok(VcpuExit::Shutdown);
                 }
                 RiscVExit::Ebreak => {
                     self.halted = true;
                     return Ok(VcpuExit::Debug);
                 }
-                RiscVExit::Wfi => return Ok(VcpuExit::Hlt),
+                RiscVExit::Wfi => {}
                 RiscVExit::Trap(t) => {
                     self.halted = true;
                     return Ok(VcpuExit::Unknown(format!(
@@ -149,6 +189,7 @@ impl VCpu for RiscVVcpu {
         }
         regs.pc = self.cpu.pc();
         regs.fcsr = self.cpu.fcsr();
+        regs.tohost_addr = *self.tohost_addr.lock().unwrap();
         Ok(CpuState::riscv(regs))
     }
 
@@ -167,6 +208,7 @@ impl VCpu for RiscVVcpu {
         }
         self.cpu.set_pc(state.regs.pc);
         self.cpu.set_fcsr(state.regs.fcsr);
+        *self.tohost_addr.lock().unwrap() = state.regs.tohost_addr;
         self.halted = false;
         Ok(())
     }

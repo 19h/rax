@@ -245,6 +245,9 @@ pub struct RiscVRegisters {
     pub f: [u64; 32],
     /// Floating-point control/status (`frm` || `fflags`).
     pub fcsr: u32,
+    /// Optional HTIF `tohost` physical address for bare-metal test harnesses.
+    #[serde(default)]
+    pub tohost_addr: Option<u64>,
 }
 
 impl Default for RiscVRegisters {
@@ -254,6 +257,7 @@ impl Default for RiscVRegisters {
             pc: 0,
             f: [0u64; 32],
             fcsr: 0,
+            tohost_addr: None,
         }
     }
 }

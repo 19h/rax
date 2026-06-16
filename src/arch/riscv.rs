@@ -35,6 +35,7 @@ impl Riscv64Arch {
             entry_point: 0,
             load_addr: 0,
             image_size: buf.len() as u64,
+            tohost_addr: None,
         })
     }
 
@@ -53,6 +54,7 @@ impl Riscv64Arch {
 
         let mut min_addr = u64::MAX;
         let mut max_addr = 0u64;
+        let mut post_mret_entry = None;
         for ph in &elf.program_headers {
             if ph.p_type != goblin::elf::program_header::PT_LOAD {
                 continue;
@@ -69,15 +71,61 @@ impl Riscv64Arch {
             } else {
                 ph.p_vaddr
             };
-            mem.write_slice(&buf[file_start..file_end], GuestAddress(load_addr))?;
+            let segment = &buf[file_start..file_end];
+            mem.write_slice(segment, GuestAddress(load_addr))?;
+            if post_mret_entry.is_none() && ph.p_flags & goblin::elf::program_header::PF_X != 0 {
+                if let Some(offset) = segment
+                    .windows(4)
+                    .position(|word| word == [0x73, 0x00, 0x20, 0x30])
+                {
+                    post_mret_entry = Some(load_addr + offset as u64 + 4);
+                }
+            }
             min_addr = min_addr.min(load_addr);
             max_addr = max_addr.max(load_addr + ph.p_memsz);
         }
 
+        let mut entry_point = elf.entry;
+        let mut found_test_entry = false;
+        let mut first_numbered_test = None;
+        let mut tohost_addr = None;
+        for sym in &elf.syms {
+            if sym.st_value == 0 {
+                continue;
+            }
+            if let Some(name) = elf.strtab.get_at(sym.st_name) {
+                if name == "tohost" {
+                    tohost_addr = Some(sym.st_value);
+                }
+                if name == "test_entry" {
+                    entry_point = sym.st_value;
+                    found_test_entry = true;
+                    first_numbered_test = None;
+                    break;
+                }
+                if let Some(suffix) = name.strip_prefix("test_") {
+                    if !suffix.is_empty() && suffix.bytes().all(|b| b.is_ascii_digit()) {
+                        first_numbered_test = Some(
+                            first_numbered_test
+                                .map_or(sym.st_value, |addr: u64| addr.min(sym.st_value)),
+                        );
+                    }
+                }
+            }
+        }
+        if !found_test_entry {
+            if let Some(addr) = post_mret_entry {
+                entry_point = addr;
+            } else if let Some(addr) = first_numbered_test {
+                entry_point = addr;
+            }
+        }
+
         Ok(RiscVBootInfo {
-            entry_point: elf.entry,
+            entry_point,
             load_addr: if min_addr == u64::MAX { 0 } else { min_addr },
             image_size: max_addr.saturating_sub(min_addr),
+            tohost_addr,
         })
     }
 }
@@ -122,6 +170,7 @@ impl Arch for Riscv64Arch {
 
         let mut regs = RiscVRegisters::default();
         regs.pc = boot.entry_point;
+        regs.tohost_addr = boot.tohost_addr;
         // Stack pointer (x2) at the top of guest RAM, 16-byte aligned.
         let mem_end = mem.last_addr().raw_value().saturating_add(1);
         regs.x[2] = mem_end.saturating_sub(16) & !0xf;

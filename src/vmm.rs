@@ -71,6 +71,7 @@ fn null_boot_info(arch: ArchKind) -> BootInfo {
             entry_point: 0,
             load_addr: 0,
             image_size: 0,
+            tohost_addr: None,
         }),
         ArchKind::Aarch64
         | ArchKind::Armv7a

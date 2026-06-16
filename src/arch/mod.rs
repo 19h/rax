@@ -49,6 +49,7 @@ pub struct RiscVBootInfo {
     pub entry_point: u64,
     pub load_addr: u64,
     pub image_size: u64,
+    pub tohost_addr: Option<u64>,
 }
 
 /// Boot information returned after image loading.
