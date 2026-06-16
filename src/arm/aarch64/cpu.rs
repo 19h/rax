@@ -631,7 +631,20 @@ impl AArch64Cpu {
         is_write: bool,
         is_execute: bool,
     ) -> Result<u64, ArmError> {
-        self.translate_address_at(va, is_write, is_execute, self.current_el > 0 && self.uao)
+        self.translate_address_at(
+            va,
+            is_write,
+            is_execute,
+            self.current_el > 0 && self.uao && self.has_uao_ext(),
+        )
+    }
+
+    fn has_uao_ext(&self) -> bool {
+        ((self.sysregs.id_aa64mmfr2_el1 >> 4) & 0xF) != 0
+    }
+
+    fn has_pan_ext(&self) -> bool {
+        ((self.sysregs.id_aa64mmfr1_el1 >> 20) & 0xF) != 0
     }
 
     fn translate_address_at(
@@ -912,6 +925,7 @@ impl AArch64Cpu {
         self.current_el = target_el;
         self.sp_sel = true; // Use SP_ELx
         self.daif = 0xF; // Mask all interrupts
+        self.uao = false;
 
         // Clear single-step
         self.ss = false;
@@ -13952,9 +13966,19 @@ impl AArch64Cpu {
                     self.set_nzcv(false, z || v, c && !v, false);
                 }
                 // UAO
-                (0, 0b011) => self.uao = imm & 1 != 0,
+                (0, 0b011) => {
+                    if self.current_el == 0 || !self.has_uao_ext() {
+                        return Err(ArmError::UndefinedInstruction(insn));
+                    }
+                    self.uao = imm & 1 != 0;
+                }
                 // PAN
-                (0, 0b100) => self.pan = imm & 1 != 0,
+                (0, 0b100) => {
+                    if self.current_el == 0 || !self.has_pan_ext() {
+                        return Err(ArmError::UndefinedInstruction(insn));
+                    }
+                    self.pan = imm & 1 != 0;
+                }
                 // SPSel
                 (0, 0b101) => self.sp_sel = imm & 1 != 0,
                 // SSBS
@@ -23610,6 +23634,7 @@ mod tests {
 
     fn create_issue_39_cpu() -> (AArch64Cpu, u64) {
         let mut cpu = create_test_cpu(); // EL1, flat memory, MMU initially disabled.
+        cpu.sysregs.id_aa64mmfr2_el1 |= 1 << 4; // Advertise FEAT_UAO for override checks.
 
         // Single-level L1-block identity map for the low 1GB, AP=00 (EL1 RW, EL0
         // no-access). Tables/data are written while the MMU is disabled (identity).
@@ -23634,6 +23659,10 @@ mod tests {
 
     fn sttr_x0_x1_0() -> u32 {
         (0b11 << 30) | (0b111 << 27) | (0b00 << 22) | (0b10 << 10) | (1 << 5)
+    }
+
+    fn msr_imm_pstate(op1: u8, op2: u8, imm: u8) -> u32 {
+        0xD500_401F | ((op1 as u32) << 16) | ((imm as u32) << 8) | ((op2 as u32) << 5)
     }
 
     fn is_permission_error<T>(result: Result<T, ArmError>) -> bool {
@@ -23689,6 +23718,91 @@ mod tests {
         cpu.uao = true;
         assert_eq!(cpu.exec_ldst_reg(sttr_x0_x1_0()).unwrap(), CpuExit::Continue);
         assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
+    }
+
+    #[test]
+    fn issue_187_unadvertised_uao_does_not_override_permissions() {
+        let (mut cpu, data_va) = create_issue_39_cpu();
+        cpu.sysregs.id_aa64mmfr2_el1 = 0;
+        cpu.uao = true;
+
+        assert!(
+            is_permission_error(cpu.mem_read_u64_unprivileged(data_va)),
+            "unadvertised UAO state must not make EL1 unprivileged accesses privileged"
+        );
+    }
+
+    #[test]
+    fn issue_187_el0_cannot_forge_uao_or_pan() {
+        let mut cpu = create_test_cpu();
+        cpu.current_el = 0;
+
+        let msr_uao_1 = msr_imm_pstate(0, 0b011, 1);
+        assert!(matches!(
+            cpu.exec_system(msr_uao_1),
+            Err(ArmError::UndefinedInstruction(insn)) if insn == msr_uao_1
+        ));
+        assert!(!cpu.uao);
+
+        let msr_pan_1 = msr_imm_pstate(0, 0b100, 1);
+        assert!(matches!(
+            cpu.exec_system(msr_pan_1),
+            Err(ArmError::UndefinedInstruction(insn)) if insn == msr_pan_1
+        ));
+        assert!(!cpu.pan);
+    }
+
+    #[test]
+    fn issue_187_pstate_uao_and_pan_require_advertised_features() {
+        let mut cpu = create_test_cpu();
+
+        let msr_uao_1 = msr_imm_pstate(0, 0b011, 1);
+        assert!(matches!(
+            cpu.exec_system(msr_uao_1),
+            Err(ArmError::UndefinedInstruction(insn)) if insn == msr_uao_1
+        ));
+        assert!(!cpu.uao);
+
+        cpu.sysregs.id_aa64mmfr2_el1 |= 1 << 4;
+        assert_eq!(cpu.exec_system(msr_uao_1).unwrap(), CpuExit::Continue);
+        assert!(cpu.uao);
+
+        let msr_pan_1 = msr_imm_pstate(0, 0b100, 1);
+        assert!(matches!(
+            cpu.exec_system(msr_pan_1),
+            Err(ArmError::UndefinedInstruction(insn)) if insn == msr_pan_1
+        ));
+        assert!(!cpu.pan);
+
+        cpu.sysregs.id_aa64mmfr1_el1 |= 1 << 20;
+        assert_eq!(cpu.exec_system(msr_pan_1).unwrap(), CpuExit::Continue);
+        assert!(cpu.pan);
+    }
+
+    #[test]
+    fn issue_187_exception_entry_clears_uao_until_eret() {
+        let mut cpu = create_test_cpu();
+        cpu.current_el = 0;
+        cpu.uao = true;
+        cpu.pc = 0x4000;
+        cpu.sysregs.el1.vbar = 0x1000;
+
+        cpu.take_exception(1, ExceptionType::Synchronous, SyndromeRegister::new())
+            .unwrap();
+
+        assert_eq!(cpu.current_el, 1);
+        assert!(!cpu.uao, "exception entry must clear PSTATE.UAO");
+        assert_eq!(cpu.pc, 0x1400);
+
+        let (_, _, saved_el, _, _, _, saved_uao, _, _, _, _, _) =
+            parse_spsr(cpu.sysregs.el1.spsr);
+        assert_eq!(saved_el, 0);
+        assert!(saved_uao, "SPSR must still preserve the old UAO bit");
+
+        assert_eq!(cpu.exception_return().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.current_el, 0);
+        assert!(cpu.uao, "ERET restores UAO from SPSR");
+        assert_eq!(cpu.pc, 0x4000);
     }
 
     // Regression for issue #49: checkpoint-imported TCR values are guest
