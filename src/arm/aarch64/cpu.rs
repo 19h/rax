@@ -11692,14 +11692,18 @@ impl AArch64Cpu {
                     (elem(zmv, im), fp_neg_bits(elem(zmv, re), bits))
                 };
                 if (pred >> (re * esz)) & 1 == 1 {
-                    let r = fp_add_bits(elem(dn, re), add_re, bits) as u128 & mask;
-                    result =
-                        (result & !(mask << (re * bits as usize))) | (r << (re * bits as usize));
+                    let lhs = elem(dn, re);
+                    let r = fp_add_bits(lhs, add_re, bits);
+                    self.fpsr |= fp_status_binop(esz, FpKind::Add, lhs, add_re, r);
+                    result = (result & !(mask << (re * bits as usize)))
+                        | ((r as u128 & mask) << (re * bits as usize));
                 }
                 if (pred >> (im * esz)) & 1 == 1 {
-                    let r = fp_add_bits(elem(dn, im), add_im, bits) as u128 & mask;
-                    result =
-                        (result & !(mask << (im * bits as usize))) | (r << (im * bits as usize));
+                    let lhs = elem(dn, im);
+                    let r = fp_add_bits(lhs, add_im, bits);
+                    self.fpsr |= fp_status_binop(esz, FpKind::Add, lhs, add_im, r);
+                    result = (result & !(mask << (im * bits as usize)))
+                        | ((r as u128 & mask) << (im * bits as usize));
                 }
             }
             self.v[zd] = result;

@@ -34084,3 +34084,66 @@ fn diff_sve2_fpairwise_faddp_fpsr() {
 
     run_fpsr_batch("sve2_fpairwise_faddp_fpsr", batch);
 }
+
+// commit 0d477d7c0f17 temp: set sve fcadd fpsr
+#[test]
+fn diff_sve_fcadd_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (size field, +inf bit pattern, big, small) for H/S/D.
+    // big/small drive the inexact (IXC) case; ignored for H (skipped).
+    let cfgs: [(u32, u64, u64, u64); 3] = [
+        // H: +inf=0x7C00 (IXC row skipped, big/small unused).
+        (1, 0x7C00, 0, 0),
+        // S: +inf; 1.0 + 2^-25 not representable in f32 => IXC.
+        (2, 0x7F80_0000, (1.0f32).to_bits() as u64, (2.0f32.powi(-25)).to_bits() as u64),
+        // D: +inf; 1.0 + 2^-54 not representable in f64 => IXC.
+        (3, 0x7FF0_0000_0000_0000, (1.0f64).to_bits(), (2.0f64.powi(-54)).to_bits()),
+    ];
+    for &(size, inf, big, small) in &cfgs {
+        for rot in 0..2u32 {
+            let insn = enc_sve_fcadd(size, rot);
+            let bits = 8u32 << size;
+            let nlane = 128 / bits as usize;
+            // Invalid (IOC): every lane of both Zdn and Zm = +inf. For each
+            // complex pair one of the two internal adds is inf + (-inf) for
+            // either rotation (rot0: re=Zdn_re+(-Zm_im); rot1: im=Zdn_im+(-Zm_re)).
+            {
+                let mut a = 0u128;
+                for l in 0..nlane {
+                    a |= (inf as u128) << (l * bits as usize);
+                }
+                for &initial_fpsr in &[0u64, 0x10] {
+                    let mut st = ArmState::zeroed();
+                    st.fpsr = initial_fpsr;
+                    st.fpcr = 0;
+                    st.set_vreg(RD as usize, a as u64, (a >> 64) as u64); // Zdn
+                    st.set_vreg(RN as usize, a as u64, (a >> 64) as u64); // Zm
+                    st.set_preg(0, 0xFFFF);
+                    batch.push((
+                        format!("fcadd_ioc_s{size}_r{rot}_f{initial_fpsr:#x}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+            // Inexact (IXC): big in Zdn, small in Zm; one internal sum is
+            // not representable. Skip H (no meaningful half-precision pair set).
+            if size != 1 {
+                let mut dn = 0u128;
+                let mut zm = 0u128;
+                for l in 0..nlane {
+                    dn |= (big as u128) << (l * bits as usize);
+                    zm |= (small as u128) << (l * bits as usize);
+                }
+                let mut st = ArmState::zeroed();
+                st.fpsr = 0;
+                st.fpcr = 0;
+                st.set_vreg(RD as usize, dn as u64, (dn >> 64) as u64); // Zdn
+                st.set_vreg(RN as usize, zm as u64, (zm >> 64) as u64); // Zm
+                st.set_preg(0, 0xFFFF);
+                batch.push((format!("fcadd_ixc_s{size}_r{rot}"), insn, st));
+            }
+        }
+    }
+    run_fpsr_batch("sve_fcadd_fpsr", batch);
+}
