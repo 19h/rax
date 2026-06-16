@@ -34358,3 +34358,47 @@ fn diff_sve_fmlal_fpsr_exceptions() {
 
     run_fpsr_batch("sve_fmlal_fpsr_exceptions", batch);
 }
+
+// commit 15630f3b5c9f temp: set simd bfmlal fpsr
+#[test]
+fn diff_simd_bfmlal_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // q: 0 = BFMLALB (reads bf16 even lanes 0,2,..), 1 = BFMLALT (odd lanes 1,3,..).
+    // For output f32 lane e, the impl reads bf16 lane (2*e + q) of Vn/Vm and the
+    // f32 addend from Vd lane e. The commit added
+    //   self.fpsr |= fp_status_fma(4, a, b1<<16, b2<<16, r)
+    // per f32 lane, so BFMLALB/BFMLALT must raise IOC (inf*0 invalid-fma) and
+    // IXC (lossy single-rounded accumulate) like the HW oracle. fpcr=0 keeps
+    // the standard (AH-off) path so bfmlal_ah_result()==None and fp_status_fma
+    // is the flag source.
+    for &q in &[0u32, 1u32] {
+        let bf_lane = q as usize; // bf16 lane feeding output f32 lane 0
+        let insn = enc_bfmlal(q);
+
+        // bf16 bit patterns (high 16 bits of the widened f32, since b<<16).
+        let bf_inf: u16 = 0x7F80; // +inf
+        let bf_one: u16 = 0x3F80; // 1.0
+
+        for initial_fpsr in [0u64, 0x10] {
+            // --- IOC: inf * 0 invalid-fma, addend +0.0 (f32 lane 0). ---
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, (bf_inf as u64) << (16 * bf_lane), 0);
+            st.set_vreg(RM as usize, 0, 0); // bf16 +0.0 in lane bf_lane
+            st.set_vreg(RD as usize, 0, 0); // f32 addend lane 0 = +0.0
+            batch.push((format!("bfmlal_q{q}_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+
+            // --- IXC: 1.0*1.0 added to a 2^24 accumulator -> 2^24+1 not
+            //     representable in f32, rounds -> inexact. ---
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, (bf_one as u64) << (16 * bf_lane), 0);
+            st.set_vreg(RM as usize, (bf_one as u64) << (16 * bf_lane), 0);
+            st.set_vreg(RD as usize, (2.0f32).powi(24).to_bits() as u64, 0);
+            batch.push((format!("bfmlal_q{q}_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+    run_fpsr_batch("simd_bfmlal_fpsr", batch);
+}

@@ -3723,6 +3723,13 @@ impl AArch64Cpu {
                 (b2 as u32 as u64) << 16,
                 32,
             ) as u32;
+            self.fpsr |= fp_status_fma(
+                4,
+                a as u64,
+                (b1 as u32 as u64) << 16,
+                (b2 as u32 as u64) << 16,
+                r as u64,
+            );
             result |= (r as u128) << (e * 32);
         }
         self.v[rd] = result;
