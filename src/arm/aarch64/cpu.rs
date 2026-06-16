@@ -6025,6 +6025,7 @@ impl AArch64Cpu {
                 self.fpsr |= fp_status_int_to_fp_scaled(raw_int, esize, r);
             } else if let Some(kind) = kind {
                 self.fpsr |= fp_status_unop(esize, Some(kind), a, r);
+                self.fpsr |= fp_status_fp_to_int_unop(esize, kind, a);
             }
             write_elem(&mut dst, off, esize, r);
         }
@@ -19829,6 +19830,24 @@ fn fp_status_unop(esize: usize, kind: Option<TwoRegFp>, a: u64, result: u64) -> 
         4 => fp_status_unop_f32(kind, a as u32, result as u32),
         _ => fp_status_unop_f64(kind, a, result),
     }
+}
+
+fn fp_status_fp_to_int_unop(esize: usize, kind: TwoRegFp, a: u64) -> u32 {
+    use TwoRegFp::*;
+    let signed = matches!(kind, CvtNS | CvtMS | CvtPS | CvtZS | CvtAS);
+    if !signed && !matches!(kind, CvtNU | CvtMU | CvtPU | CvtZU | CvtAU) {
+        return 0;
+    }
+    let input = sve_fp_to_f64(esize, a);
+    let rounded = match kind {
+        CvtNS | CvtNU => input.round_ties_even(),
+        CvtMS | CvtMU => input.floor(),
+        CvtPS | CvtPU => input.ceil(),
+        CvtZS | CvtZU => input.trunc(),
+        CvtAS | CvtAU => input.round(),
+        _ => unreachable!(),
+    };
+    fp_to_int_rounded_status(input, rounded, signed, (esize * 8) as u32)
 }
 
 fn fp_status_fscale(esize: usize, x: u64, n: i64, result: u64) -> u32 {

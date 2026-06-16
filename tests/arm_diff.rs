@@ -34647,3 +34647,90 @@ fn diff_simd_two_reg_unary_fpsr() {
     }
     run_fpsr_batch("simd_two_reg_unary_fpsr", batch);
 }
+
+// commit a581e39bda99 temp: set simd fp-to-int fpsr
+#[test]
+fn diff_simd_fp_to_int_fpsr_exceptions() {
+    // (name, u, sz_hi, opcode) for each vector fp->int convert kind. These match
+    // the (u, sz_hi, opcode) -> TwoRegFp::Cvt* table in exec_simd_two_reg_fp.
+    let kinds: &[(&str, u32, u32, u32)] = &[
+        ("fcvtns", 0, 0, 0b11010),
+        ("fcvtnu", 1, 0, 0b11010),
+        ("fcvtms", 0, 0, 0b11011),
+        ("fcvtmu", 1, 0, 0b11011),
+        ("fcvtps", 0, 1, 0b11010),
+        ("fcvtpu", 1, 1, 0b11010),
+        ("fcvtzs", 0, 1, 0b11011),
+        ("fcvtzu", 1, 1, 0b11011),
+        ("fcvtas", 0, 0, 0b11100),
+        ("fcvtau", 1, 0, 0b11100),
+    ];
+
+    // f32 / f64 inputs that drive the new fp_status_fp_to_int_unop path to a
+    // nonzero flag:
+    //   1.5  -> non-integral, in range  => IXC (inexact; input != rounded)
+    //   NaN  -> => IOC (invalid; input.is_nan())
+    //   1e30 -> out of signed/unsigned 32/64-bit range after rounding => IOC
+    let f32_inputs: &[(&str, u32)] = &[
+        ("ixc", (1.5f32).to_bits()),
+        ("ioc_nan", f32::NAN.to_bits()),
+        ("ioc_oor", (1e30f32).to_bits()),
+    ];
+    let f64_inputs: &[(&str, u64)] = &[
+        ("ixc", (1.5f64).to_bits()),
+        ("ioc_nan", f64::NAN.to_bits()),
+        ("ioc_oor", (1e30f64).to_bits()),
+    ];
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(kname, u, sz_hi, opcode) in kinds {
+        // S (sz=0) and D (sz=1). The encoding size field is {sz_hi, sz}: bit23
+        // (sz_hi) selects the Cvt* variant, bit22 (sz) selects f32/f64 esize.
+        for &sz in &[0u32, 1] {
+            let size = (sz_hi << 1) | sz;
+            let insn = enc_two_reg(1, u, size, opcode); // Q=1 (full 128-bit vector)
+            for &initial_fpsr in &[0u64, 0x10] {
+                if sz == 0 {
+                    for &(iname, bits) in f32_inputs {
+                        let (lo, hi) = pack_s(bits);
+                        let mut st = ArmState::zeroed();
+                        st.fpsr = initial_fpsr;
+                        st.fpcr = 0;
+                        st.set_vreg(RN as usize, lo, hi);
+                        batch.push((
+                            format!("{kname}_s_{iname}_fpsr{initial_fpsr:#x}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                } else {
+                    for &(iname, bits) in f64_inputs {
+                        let (lo, hi) = pack_d(bits);
+                        let mut st = ArmState::zeroed();
+                        st.fpsr = initial_fpsr;
+                        st.fpcr = 0;
+                        st.set_vreg(RN as usize, lo, hi);
+                        batch.push((
+                            format!("{kname}_d_{iname}_fpsr{initial_fpsr:#x}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_fpsr_batch("simd_fp_to_int_fpsr_exceptions", batch);
+}
