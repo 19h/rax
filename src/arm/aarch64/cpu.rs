@@ -3086,19 +3086,31 @@ impl AArch64Cpu {
         match op {
             Fp16Op::Bin(f) => {
                 for e in 0..elements {
-                    let r = f(lane(src1, e), lane(src2, e));
+                    let n = lane(src1, e);
+                    let m = lane(src2, e);
+                    let r = f(n, m);
+                    self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << (e * 16);
                 }
             }
             Fp16Op::Mla => {
                 for e in 0..elements {
-                    let r = fp16_mla(lane(acc, e), lane(src1, e), lane(src2, e));
+                    let aa = lane(acc, e);
+                    let n = lane(src1, e);
+                    let m = lane(src2, e);
+                    let r = fp16_mla(aa, n, m);
+                    self.fpsr |= fp_status_fma(2, aa as u64, n as u64, m as u64, r as u64);
                     dst |= (r as u128) << (e * 16);
                 }
             }
             Fp16Op::Mls => {
                 for e in 0..elements {
-                    let r = fp16_mls(lane(acc, e), lane(src1, e), lane(src2, e));
+                    let aa = lane(acc, e);
+                    let n = lane(src1, e);
+                    let m = lane(src2, e);
+                    let r = fp16_mls(aa, n, m);
+                    self.fpsr |=
+                        fp_status_fma(2, aa as u64, fp_neg_bits(n as u64, 16), m as u64, r as u64);
                     dst |= (r as u128) << (e * 16);
                 }
             }
@@ -3107,11 +3119,17 @@ impl AArch64Cpu {
                 // pairs of Vn, the upper half from adjacent pairs of Vm.
                 let pairs = elements / 2;
                 for i in 0..pairs {
-                    let r = f(lane(src1, 2 * i), lane(src1, 2 * i + 1));
+                    let n = lane(src1, 2 * i);
+                    let m = lane(src1, 2 * i + 1);
+                    let r = f(n, m);
+                    self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << (i * 16);
                 }
                 for i in 0..pairs {
-                    let r = f(lane(src2, 2 * i), lane(src2, 2 * i + 1));
+                    let n = lane(src2, 2 * i);
+                    let m = lane(src2, 2 * i + 1);
+                    let r = f(n, m);
+                    self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << ((pairs + i) * 16);
                 }
             }
@@ -19562,6 +19580,67 @@ fn fp_status_mulx(esize: usize, a: u64, b: u64, result: u64) -> u32 {
         let exact = sve_fp_to_f64(esize, a) * sve_fp_to_f64(esize, b);
         fp_status_from_exact_f64(esize, exact, result)
     }
+}
+
+fn fp_status_recps_rsqrts(esize: usize, rsqrt: bool, a: u64, b: u64, result: u64) -> u32 {
+    if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
+        return FPSR_IOC;
+    }
+    if fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b) {
+        return 0;
+    }
+    let inf_zero = (fp_is_zero_bits(esize, a) && fp_is_inf_bits(esize, b))
+        || (fp_is_inf_bits(esize, a) && fp_is_zero_bits(esize, b));
+    if inf_zero {
+        return 0;
+    }
+    if !fp_is_finite_bits(esize, a) || !fp_is_finite_bits(esize, b) {
+        return 0;
+    }
+    let x = sve_fp_to_f64(esize, a);
+    let y = sve_fp_to_f64(esize, b);
+    let exact = if rsqrt {
+        (3.0 - x * y) * 0.5
+    } else {
+        2.0 - x * y
+    };
+    fp_status_from_exact_f64(esize, exact, result)
+}
+
+fn fp16_three_same_status(u: u32, a_bit: u32, opcode: u32, n: u16, m: u16, r: u16) -> u32 {
+    use FpKind::*;
+    let kind = match (u, a_bit, opcode) {
+        (0, 0, 0b000) => Some(MaxNm),
+        (0, 1, 0b000) => Some(MinNm),
+        (0, 0, 0b010) => Some(Add),
+        (0, 1, 0b010) => Some(Sub),
+        (0, 0, 0b011) => return fp_status_mulx(2, n as u64, m as u64, r as u64),
+        (0, 0, 0b100) | (1, 0, 0b100) | (1, 1, 0b100) | (1, 0, 0b101) | (1, 1, 0b101) => {
+            return if fp16_is_snan(n) || fp16_is_snan(m) {
+                FPSR_IOC
+            } else {
+                0
+            };
+        }
+        (0, 0, 0b110) => Some(Max),
+        (0, 1, 0b110) => Some(Min),
+        (0, 0, 0b111) => {
+            return fp_status_recps_rsqrts(2, false, n as u64, m as u64, r as u64);
+        }
+        (0, 1, 0b111) => {
+            return fp_status_recps_rsqrts(2, true, n as u64, m as u64, r as u64);
+        }
+        (1, 0, 0b000) => Some(MaxNmp),
+        (1, 1, 0b000) => Some(MinNmp),
+        (1, 0, 0b010) => Some(Addp),
+        (1, 1, 0b010) => Some(Abd),
+        (1, 0, 0b011) => Some(Mul),
+        (1, 0, 0b110) => Some(Maxp),
+        (1, 1, 0b110) => Some(Minp),
+        (1, 0, 0b111) => Some(Div),
+        _ => None,
+    };
+    kind.map_or(0, |k| fp_status_binop(2, k, n as u64, m as u64, r as u64))
 }
 
 fn fp_status_cvt_precision(src: u64, src_prec: usize, dst_prec: usize, result: u64) -> u32 {

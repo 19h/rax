@@ -35012,3 +35012,86 @@ fn diff_simd_indexed_fp_fpsr_exceptions() {
 
     run_fpsr_batch("simd_indexed_fp_fpsr_exceptions", batch);
 }
+
+// commit 733deaa5b2fa temp: set simd fp16 three-same fpsr
+#[test]
+fn diff_simd_fp16_three_same_fpsr() {
+    // Splat one fp16 bit pattern across all 8 H lanes of a 128-bit reg
+    // (4 per 64-bit word; for Q=0 only the low word's lanes are active).
+    fn splat(h: u16) -> (u64, u64) {
+        let mut w = 0u64;
+        for e in 0..4 {
+            w |= (h as u64) << (e * 16);
+        }
+        (w, w)
+    }
+
+    const INF: u16 = 0x7C00; // +inf
+    const NINF: u16 = 0xFC00; // -inf
+    const ONE: u16 = 0x3C00; // 1.0
+    const TWO: u16 = 0x4000; // 2.0
+    const ZERO: u16 = 0x0000; // +0.0
+    const MAXN: u16 = 0x7BFF; // largest finite normal (~65504)
+    const TINY: u16 = 0x0001; // smallest positive subnormal
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // (label, u, a, opcode, n_lane, m_lane, acc_lane)
+    // Bin paths read n=V[RN], m=V[RM] (acc unused).
+    // Mla/Mls (opcode 0b001) accumulate into V[RD].
+    let cases: &[(&str, u32, u32, u32, u16, u16, u16)] = &[
+        // FADD (u=0,a=0,opc=010): inf + (-inf) -> IOC (invalid, opposite-sign inf sum)
+        ("fadd_ioc", 0, 0, 0b010, INF, NINF, 0),
+        // FADD: 1.0 + tiny subnormal -> IXC (inexact, rounds back to 1.0)
+        ("fadd_ixc", 0, 0, 0b010, ONE, TINY, 0),
+        // FSUB (u=0,a=1,opc=010): inf - inf -> IOC (same-sign inf difference)
+        ("fsub_ioc", 0, 1, 0b010, INF, INF, 0),
+        // FMULX (u=0,a=0,opc=011): max * max -> OFC|IXC via fp_status_mulx
+        ("fmulx_ofc", 0, 0, 0b011, MAXN, MAXN, 0),
+        // FRECPS (u=0,a=0,opc=111): exact = 2 - n*m = 2 - max*max -> OFC|IXC
+        // via fp_status_recps_rsqrts (finite, non-zero, non-NaN operands).
+        ("frecps_ofc", 0, 0, 0b111, MAXN, MAXN, 0),
+        // FRSQRTS (u=0,a=1,opc=111): exact = (3 - n*m)/2 -> OFC|IXC
+        ("frsqrts_ofc", 0, 1, 0b111, MAXN, MAXN, 0),
+        // FMUL (u=1,a=0,opc=011): max * 2.0 -> OFC|IXC (overflow)
+        ("fmul_ofc", 1, 0, 0b011, MAXN, TWO, 0),
+        // FDIV (u=1,a=0,opc=111): 1.0 / 0.0 -> DZC (divide by zero)
+        ("fdiv_dzc", 1, 0, 0b111, ONE, ZERO, 0),
+        // FDIV: max / tiny -> OFC|IXC (overflow)
+        ("fdiv_ofc", 1, 0, 0b111, MAXN, TINY, 0),
+        // FABD (u=1,a=1,opc=010): |inf - inf| -> IOC
+        ("fabd_ioc", 1, 1, 0b010, INF, INF, 0),
+        // FMLA (u=0,a=0,opc=001): acc + n*m, 1.0 + max*max -> OFC|IXC via fp_status_fma
+        ("fmla_ofc", 0, 0, 0b001, MAXN, MAXN, ONE),
+        // FMLA: 0 * inf + finite -> IOC (invalid product) via fp_status_fma
+        ("fmla_ioc", 0, 0, 0b001, INF, ZERO, ONE),
+        // FMLS (u=0,a=1,opc=001): acc + (-n)*m, max*max magnitude -> OFC|IXC
+        ("fmls_ofc", 0, 1, 0b001, MAXN, MAXN, ONE),
+        // FMLS: 0 * inf -> IOC (invalid product)
+        ("fmls_ioc", 0, 1, 0b001, INF, ZERO, ONE),
+    ];
+
+    for q in [0u32, 1] {
+        for &(label, u, a, opcode, n, m, acc) in cases {
+            let insn = enc_fp16_3s(q, u, a, opcode);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                let (nlo, nhi) = splat(n);
+                let (mlo, mhi) = splat(m);
+                let (alo, ahi) = splat(acc);
+                st.set_vreg(RN as usize, nlo, nhi);
+                st.set_vreg(RM as usize, mlo, mhi);
+                st.set_vreg(RD as usize, alo, ahi);
+                batch.push((
+                    format!("{label}_q{q}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("simd_fp16_three_same_fpsr", batch);
+}
