@@ -675,13 +675,13 @@ impl Aarch64Lowerer {
 
     fn gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
-            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok(n),
-            // The identity map sends x86 Rn to host Xn. Reject R30 (host X30 = the
-            // link register the region's `RET` branches through) and R31 (X31 =
-            // SP/XZR): both are reserved and not guest-state-backed, so mapping a
-            // guest operand onto them would corrupt the return address / SP (R30 is
-            // a guest-to-host CFI break and code-pointer leak). Such ops fall back
-            // to the interpreter. (#61)
+            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 30 => Ok(n),
+            // The mixed native/x86 paths identity-map guest registers to host Xn.
+            // Reject X/R30 (host X30 = the link register the region's `RET`
+            // branches through) and X/R31 (SP/XZR): both are reserved and not
+            // guest-state-backed, so mapping a guest operand onto them would
+            // corrupt the return address / SP. Such ops fall back to the
+            // interpreter. (#61)
             VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 30).ok_or_else(|| {
                 LowerError::InvalidRegister(format!(
                     "AArch64 native lowerer expected GPR, got X86({reg:?})"
@@ -705,8 +705,8 @@ impl Aarch64Lowerer {
 
     fn dst_gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
-            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok(n),
-            // Reject R30 (host X30 = link register) and R31 (X31 = SP/XZR): reserved
+            VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 30 => Ok(n),
+            // Reject X/R30 (host X30 = link register) and X/R31 (SP/XZR): reserved
             // host registers, not guest-state-backed. Writing a guest value onto X30
             // would overwrite the native return target used by the region's `RET`. (#61)
             VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index().filter(|&n| n < 30).ok_or_else(|| {
@@ -18403,6 +18403,45 @@ mod tests {
             })
             .is_ok(),
             "R29 (host X29, guest-backed) must still lower"
+        );
+    }
+
+    // Regression for the native ARM facet of issue #61: the same mixed-register
+    // helper path must reserve host X30 even when the operand is ArmReg::X(30).
+    #[test]
+    fn rejects_arm_x30_identity_mapping_x30_is_link_register() {
+        for kind in [
+            OpKind::Mov {
+                dst: x(30),
+                src: SrcOperand::Imm(0x4141_4141),
+                width: OpWidth::W64,
+            },
+            OpKind::Mov {
+                dst: x(16),
+                src: SrcOperand::Reg(x(30)),
+                width: OpWidth::W64,
+            },
+            OpKind::Cmp {
+                src1: x(30),
+                src2: SrcOperand::Reg(x(16)),
+                width: OpWidth::W64,
+            },
+        ] {
+            let err = try_lower_single_op(kind).unwrap_err();
+            assert!(
+                matches!(err, LowerError::InvalidRegister(_)),
+                "X30 must be rejected (host X30 = LR): {err:?}"
+            );
+        }
+
+        assert!(
+            try_lower_single_op(OpKind::Mov {
+                dst: x(29),
+                src: SrcOperand::Reg(x(16)),
+                width: OpWidth::W64,
+            })
+            .is_ok(),
+            "X29 (host X29, guest-backed) must still lower"
         );
     }
 
