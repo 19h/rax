@@ -1759,6 +1759,7 @@ impl AArch64Cpu {
                 0b11 => {
                     let (n, m) = (self.v[rn as usize] as u16, self.v[rm as usize] as u16);
                     let mut r = sve_fp16_binop(kind, n, m);
+                    self.fpsr |= fp_status_binop_f16(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000;
                     }
@@ -1904,6 +1905,7 @@ impl AArch64Cpu {
                         Some(TwoRegFp::RintA) => fp16_frint(a, 4),
                         _ => return Err(ArmError::UndefinedInstruction(insn)),
                     };
+                    self.fpsr |= fp_status_unop_f16(kind, a, r);
                     self.v[rd as usize] = r as u128;
                 }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
@@ -19404,6 +19406,58 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
     0
 }
 
+fn fp_invalid_binop_f16(kind: FpKind, a: u16, b: u16) -> bool {
+    use FpKind::*;
+    if fp16_is_snan(a) || fp16_is_snan(b) {
+        return true;
+    }
+    match kind {
+        Add | Addp => fp16_is_inf(a) && fp16_is_inf(b) && ((a ^ b) >> 15) != 0,
+        Sub | Abd => fp16_is_inf(a) && fp16_is_inf(b) && ((a ^ b) >> 15) == 0,
+        Mul | Mla | Mls => (fp16_is_zero(a) && fp16_is_inf(b)) || (fp16_is_inf(a) && fp16_is_zero(b)),
+        Div => (fp16_is_zero(a) && fp16_is_zero(b)) || (fp16_is_inf(a) && fp16_is_inf(b)),
+        Max | Maxp | Min | Minp | MaxNm | MaxNmp | MinNm | MinNmp => false,
+        _ => false,
+    }
+}
+
+fn fp_status_binop_f16(kind: FpKind, a: u16, b: u16, result: u16) -> u32 {
+    use FpKind::*;
+    if !matches!(
+        kind,
+        Add | Sub | Mul | Div | Addp | Abd | Max | Min | MaxNm | MinNm
+    ) {
+        return 0;
+    }
+
+    if fp_invalid_binop_f16(kind, a, b) {
+        return FPSR_IOC;
+    }
+
+    if matches!(kind, Div) && fp16_is_zero(b) && !fp16_is_zero(a) && fp16_abs_bits(a) < 0x7c00 {
+        return FPSR_DZC;
+    }
+
+    if !matches!(kind, Add | Sub | Mul | Div | Addp | Abd)
+        || fp16_abs_bits(a) >= 0x7c00
+        || fp16_abs_bits(b) >= 0x7c00
+    {
+        return 0;
+    }
+
+    let x = fp16_to_f64(a);
+    let y = fp16_to_f64(b);
+    let exact = match kind {
+        Add | Addp => x + y,
+        Sub => x - y,
+        Mul => x * y,
+        Div => x / y,
+        Abd => (x - y).abs(),
+        _ => return 0,
+    };
+    fp_status_from_exact_f64(2, exact, result as u64)
+}
+
 fn fp_status_unop_f32(kind: Option<TwoRegFp>, a: u32, result: u32) -> u32 {
     match kind {
         Some(TwoRegFp::Fsqrt) => {
@@ -19476,6 +19530,44 @@ fn fp_status_unop_f64(kind: Option<TwoRegFp>, a: u64, result: u64) -> u32 {
                 return 0;
             }
             let x = f64::from_bits(a);
+            if x.is_finite() && x.fract() != 0.0 {
+                FPSR_IXC
+            } else {
+                0
+            }
+        }
+        _ => 0,
+    }
+}
+
+fn fp_status_unop_f16(kind: Option<TwoRegFp>, a: u16, result: u16) -> u32 {
+    match kind {
+        Some(TwoRegFp::Fsqrt) => {
+            if fp16_is_snan(a) || (a & 0x8000) != 0 && fp16_abs_bits(a) != 0 && !fp16_is_nan(a) {
+                return FPSR_IOC;
+            }
+            if fp16_abs_bits(a) < 0x7c00 && a & 0x8000 == 0 {
+                let exact = fp16_to_f64(a).sqrt();
+                return fp_status_from_exact_f64(2, exact, result as u64);
+            }
+            0
+        }
+        Some(
+            TwoRegFp::RintN
+            | TwoRegFp::RintP
+            | TwoRegFp::RintM
+            | TwoRegFp::RintZ
+            | TwoRegFp::RintA
+            | TwoRegFp::RintX
+            | TwoRegFp::RintI,
+        ) => {
+            if fp16_is_snan(a) {
+                return FPSR_IOC;
+            }
+            if !matches!(kind, Some(TwoRegFp::RintX)) {
+                return 0;
+            }
+            let x = fp16_to_f64(a);
             if x.is_finite() && x.fract() != 0.0 {
                 FPSR_IXC
             } else {

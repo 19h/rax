@@ -32783,3 +32783,47 @@ fn diff_fp_scalar_conversion_fpsr() {
 
     run_fpsr_batch("fp_scalar_conversion_fpsr", batch);
 }
+
+// commit 1a4e7cc10b04 temp: set scalar fp16 arithmetic fpsr
+#[test]
+fn diff_fp_scalar_fp16_arith_fpsr() {
+    // fp16 bit patterns.
+    const H_ZERO: u64 = 0x0000; // +0.0
+    const H_ONE: u64 = 0x3C00; // 1.0
+    const H_TWO: u64 = 0x4000; // 2.0
+    const H_PINF: u64 = 0x7C00; // +inf
+    const H_NINF: u64 = 0xFC00; // -inf
+    const H_MAX: u64 = 0x7BFF; // 65504.0 (largest finite normal)
+
+    // (opcode, a-operand, b-operand, label) — fp_type is fixed to half (0b11).
+    let cases: &[(u32, u64, u64, &str)] = &[
+        // FADD: inf + (-inf) -> invalid (IOC).
+        (0b0010, H_PINF, H_NINF, "fadd_ioc"),
+        // FADD: max + max overflows fp16 -> OFC + IXC.
+        (0b0010, H_MAX, H_MAX, "fadd_ofc"),
+        // FSUB: inf - inf -> invalid (IOC).
+        (0b0011, H_PINF, H_PINF, "fsub_ioc"),
+        // FMUL: 0 * inf -> invalid (IOC).
+        (0b0000, H_ZERO, H_PINF, "fmul_ioc"),
+        // FMUL: max * 2 overflows -> OFC + IXC.
+        (0b0000, H_MAX, H_TWO, "fmul_ofc"),
+        // FDIV: finite / 0 -> divide-by-zero (DZC).
+        (0b0001, H_ONE, H_ZERO, "fdiv_dzc"),
+        // FDIV: inf / inf -> invalid (IOC).
+        (0b0001, H_PINF, H_PINF, "fdiv_ioc"),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(opcode, a, b, label) in cases {
+        let insn = enc_fp2(3, opcode); // fp_type = 0b11 (half)
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0; // RN, no FTZ, no alternate handling.
+            st.set_vreg(RN as usize, a, 0);
+            st.set_vreg(RM as usize, b, 0);
+            batch.push((format!("{label}_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+    run_fpsr_batch("fp_scalar_fp16_arith_fpsr", batch);
+}
