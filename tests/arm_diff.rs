@@ -34147,3 +34147,66 @@ fn diff_sve_fcadd_fpsr() {
     }
     run_fpsr_batch("sve_fcadd_fpsr", batch);
 }
+
+// commit 7934f4d598f2 temp: set sve fcmla fpsr
+#[test]
+fn diff_sve_fcmla_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // size: 01=H(esz2), 10=S(esz4), 11=D(esz8). size==00 is reserved (#UD).
+    for &size in &[1u32, 2, 3] {
+        // rot=0 selects (x=a_re, y=b_re) for the real lane, so an inf real in Zn
+        // times a zero real in Zm yields the invalid-product IOC.
+        for &rot in &[0u32, 1, 2, 3] {
+            let insn = enc_sve_fcmla(size, rot);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                // Zn = all +inf, Zm = all +0.0, acc (Zda) = finite (1.0).
+                let (zn_lo, zn_hi, zm_lo, zm_hi, acc_lo, acc_hi): (u64, u64, u64, u64, u64, u64) =
+                    match size {
+                        1 => {
+                            // half: 8 lanes of 0x7C00 (inf) / 0x0000 (zero) / 0x3C00 (1.0)
+                            let inf = 0x7C00u16;
+                            let one = 0x3C00u16;
+                            let mut zn: u128 = 0;
+                            let mut acc: u128 = 0;
+                            for l in 0..8 {
+                                zn |= (inf as u128) << (l * 16);
+                                acc |= (one as u128) << (l * 16);
+                            }
+                            (zn as u64, (zn >> 64) as u64, 0, 0, acc as u64, (acc >> 64) as u64)
+                        }
+                        2 => {
+                            // single: 4 lanes
+                            let inf = (f32::INFINITY).to_bits();
+                            let one = (1.0f32).to_bits();
+                            let mut zn: u128 = 0;
+                            let mut acc: u128 = 0;
+                            for l in 0..4 {
+                                zn |= (inf as u128) << (l * 32);
+                                acc |= (one as u128) << (l * 32);
+                            }
+                            (zn as u64, (zn >> 64) as u64, 0, 0, acc as u64, (acc >> 64) as u64)
+                        }
+                        _ => {
+                            // double: 2 lanes
+                            let inf = (f64::INFINITY).to_bits();
+                            let one = (1.0f64).to_bits();
+                            (inf, inf, 0, 0, one, one)
+                        }
+                    };
+                st.set_vreg(RN as usize, zn_lo, zn_hi); // Zn
+                st.set_vreg(RM as usize, zm_lo, zm_hi); // Zm
+                st.set_vreg(RD as usize, acc_lo, acc_hi); // Zda (accumulator)
+                st.set_preg(0, 0xFFFF); // P0 all-active (pg=0 for this encoding)
+                batch.push((
+                    format!("sve_fcmla_sz{size}_rot{rot}_ioc_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("sve_fcmla_fpsr", batch);
+}

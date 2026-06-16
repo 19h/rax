@@ -11737,14 +11737,18 @@ impl AArch64Cpu {
                     _ => (a_im, b_im, a_im, fp_neg_bits(b_re, bits)),
                 };
                 if (pred >> (re * esz)) & 1 == 1 {
-                    let r = fp_muladd_bits(elem(acc, re), xr, yr, bits) as u128 & mask;
-                    result =
-                        (result & !(mask << (re * bits as usize))) | (r << (re * bits as usize));
+                    let aa = elem(acc, re);
+                    let r = fp_muladd_bits(aa, xr, yr, bits);
+                    self.fpsr |= fp_status_fma(esz, aa, xr, yr, r);
+                    result = (result & !(mask << (re * bits as usize)))
+                        | ((r as u128 & mask) << (re * bits as usize));
                 }
                 if (pred >> (im * esz)) & 1 == 1 {
-                    let r = fp_muladd_bits(elem(acc, im), xi, yi, bits) as u128 & mask;
-                    result =
-                        (result & !(mask << (im * bits as usize))) | (r << (im * bits as usize));
+                    let aa = elem(acc, im);
+                    let r = fp_muladd_bits(aa, xi, yi, bits);
+                    self.fpsr |= fp_status_fma(esz, aa, xi, yi, r);
+                    result = (result & !(mask << (im * bits as usize)))
+                        | ((r as u128 & mask) << (im * bits as usize));
                 }
             }
             self.v[zd] = result;
