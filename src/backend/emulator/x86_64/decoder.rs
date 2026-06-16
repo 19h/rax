@@ -133,7 +133,7 @@ impl Decoder {
                     // REX2 must be the last prefix before the opcode
                     ctx.cursor += 1;
                     if ctx.cursor >= ctx.bytes_len {
-                        return Err(Error::Emulator("REX2: missing payload byte".to_string()));
+                        return Err(ctx.out_of_bytes());
                     }
                     let payload = ctx.bytes[ctx.cursor];
                     // Decode REX2 payload: [M:R4:X4:B4:W:R:X:B].
@@ -286,6 +286,40 @@ mod tests {
         );
         let (addr, _extra) = vcpu.decode_modrm_addr(&ctx, modrm_offset).unwrap();
         addr
+    }
+
+    // A fetch truncated at the canonical-address boundary must surface as #GP,
+    // not a fatal emulator error or a silent decode of zero padding.
+    #[test]
+    fn rex2_truncated_payload_is_gp_at_boundary() {
+        use super::super::cpu::MAX_INSN_LEN;
+        let mut bytes = [0u8; MAX_INSN_LEN];
+        bytes[0] = 0xD5;
+
+        let err = Decoder::decode_prefixes(bytes, 1, true, true).err();
+        assert!(
+            matches!(err, Some(Error::GeneralProtection { .. })),
+            "REX2 payload truncation at the canonical boundary must be #GP, got {err:?}"
+        );
+
+        let err = Decoder::decode_prefixes(bytes, 1, false, true).err();
+        assert!(matches!(err, Some(Error::Emulator(_))));
+    }
+
+    #[test]
+    fn modrm_disp_truncation_is_gp_at_boundary() {
+        let vcpu = make_vcpu_64();
+        use super::super::cpu::MAX_INSN_LEN;
+        let mut bytes = [0u8; MAX_INSN_LEN];
+        // mod=10, rm=000 -> [rax + disp32], with the disp32 missing.
+        bytes[0] = 0x80;
+
+        let ctx = Decoder::decode_prefixes(bytes, 1, true, true).unwrap();
+        let result = vcpu.decode_modrm_addr(&ctx, 0);
+        assert!(
+            matches!(result, Err(Error::GeneralProtection { .. })),
+            "missing disp32 at the canonical boundary must be #GP, got {result:?}"
+        );
     }
 
     #[test]
@@ -585,9 +619,10 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize, u64)> {
-        let bytes = &ctx.bytes[modrm_offset..];
+        let end = ctx.bytes_len.min(ctx.bytes.len());
+        let bytes = ctx.bytes.get(modrm_offset..end).unwrap_or(&[]);
         if bytes.is_empty() {
-            return Err(Error::Emulator("ModR/M: no bytes".to_string()));
+            return Err(ctx.out_of_bytes());
         }
 
         let modrm = bytes[0];
@@ -633,7 +668,7 @@ impl X86_64Vcpu {
                 0 => Ok((base, 0, 0)),
                 1 => {
                     if bytes.len() < 2 {
-                        return Err(Error::Emulator("ModR/M: missing disp8".to_string()));
+                        return Err(ctx.out_of_bytes());
                     }
                     Ok((
                         (base as i64).wrapping_add(bytes[1] as i8 as i64) as u64,
@@ -644,7 +679,7 @@ impl X86_64Vcpu {
                 _ => {
                     // mod_bits == 2 (mod == 3 rejected above): disp32
                     if bytes.len() < 5 {
-                        return Err(Error::Emulator("ModR/M: missing disp32".to_string()));
+                        return Err(ctx.out_of_bytes());
                     }
                     let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
                     Ok(((base as i64).wrapping_add(disp) as u64, 4, 0))
@@ -674,7 +709,7 @@ impl X86_64Vcpu {
         if rm_field == 4 {
             // SIB byte follows
             if bytes.len() < 2 {
-                return Err(Error::Emulator("ModR/M: missing SIB byte".to_string()));
+                return Err(ctx.out_of_bytes());
             }
             let sib = bytes[1];
             extra += 1;
@@ -707,9 +742,7 @@ impl X86_64Vcpu {
             // Handle displacement for base=5, mod=0 case
             if !has_base {
                 if bytes.len() < 2 + 4 {
-                    return Err(Error::Emulator(
-                        "ModR/M: missing disp32 for SIB".to_string(),
-                    ));
+                    return Err(ctx.out_of_bytes());
                 }
                 let disp = i32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]) as i64;
                 extra += 4;
@@ -719,9 +752,7 @@ impl X86_64Vcpu {
             // In 64-bit mode (CS.L = 1): RIP-relative addressing [RIP+disp32]
             // In compatibility/legacy mode (CS.L = 0): absolute disp32 [disp32]
             if bytes.len() < 5 {
-                return Err(Error::Emulator(
-                    "ModR/M: missing disp32 for RIP-relative/disp32".to_string(),
-                ));
+                return Err(ctx.out_of_bytes());
             }
             let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
             extra += 4;
@@ -755,7 +786,7 @@ impl X86_64Vcpu {
             1 => {
                 // disp8
                 if bytes.len() < extra + 2 {
-                    return Err(Error::Emulator("ModR/M: missing disp8".to_string()));
+                    return Err(ctx.out_of_bytes());
                 }
                 let disp = bytes[extra + 1] as i8 as i64;
                 extra += 1;
@@ -764,7 +795,7 @@ impl X86_64Vcpu {
             2 => {
                 // disp32
                 if bytes.len() < extra + 5 {
-                    return Err(Error::Emulator("ModR/M: missing disp32".to_string()));
+                    return Err(ctx.out_of_bytes());
                 }
                 let disp = i32::from_le_bytes([
                     bytes[extra + 1],
