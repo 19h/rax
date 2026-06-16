@@ -12287,8 +12287,10 @@ impl AArch64Cpu {
                 if (pred >> off) & 1 == 0 {
                     continue;
                 }
+                let x = read_elem(&a, off, esize);
                 let n = sext_elem(read_elem(&b, off, esize), ibits) as i64;
-                let r = sve_fscale(esize, read_elem(&a, off, esize), n);
+                let r = sve_fscale(esize, x, n);
+                self.fpsr |= fp_status_fscale(esize, x, n, r);
                 write_elem(&mut dst, off, esize, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -19696,6 +19698,27 @@ fn fp_status_unop(esize: usize, kind: Option<TwoRegFp>, a: u64, result: u64) -> 
         2 => fp_status_unop_f16(kind, a as u16, result as u16),
         4 => fp_status_unop_f32(kind, a as u32, result as u32),
         _ => fp_status_unop_f64(kind, a, result),
+    }
+}
+
+fn fp_status_fscale(esize: usize, x: u64, n: i64, result: u64) -> u32 {
+    if fp_is_snan_bits(esize, x) {
+        return FPSR_IOC;
+    }
+    if fp_is_nan_bits(esize, x) || fp_is_inf_bits(esize, x) || fp_is_zero_bits(esize, x) {
+        return 0;
+    }
+    if esize == 8 {
+        if fp64_is_inf(result) {
+            FPSR_OFC | FPSR_IXC
+        } else if fp64_is_tiny(result) || fp64_is_zero(result) {
+            FPSR_UFC | FPSR_IXC
+        } else {
+            0
+        }
+    } else {
+        let exact = sve_fp_to_f64(esize, x) * exp2_f64(n.clamp(-1023, 1023) as i32);
+        fp_status_from_exact_f64(esize, exact, result)
     }
 }
 

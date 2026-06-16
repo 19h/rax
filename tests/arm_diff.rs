@@ -33136,3 +33136,42 @@ fn diff_sve_fp_pred_binop_fpsr() {
 
     run_fpsr_batch("sve_fp_pred_binop_fpsr", batch);
 }
+
+// commit 7a8ce502adc3 temp: set sve fscale fpsr
+#[test]
+fn diff_sve_fscale_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (size, esz_bytes, big_normal_bits, smallest_normal_bits, over_exp, under_exp)
+    let cases: &[(u32, usize, u64, u64, i64, i64)] = &[
+        (1, 2, 0x7bff, 0x0400, 40, -40),                                  // half
+        (2, 4, f32::MAX.to_bits() as u64, 0x0080_0000, 200, -200),        // single
+        (3, 8, f64::MAX.to_bits(), 0x0010_0000_0000_0000, 1023, -1023),   // double
+    ];
+    for &(size, esz, big, small, over_exp, under_exp) in cases {
+        let insn = enc_sve_fscale(size);
+        let emask: u64 = if esz == 8 { u64::MAX } else { (1u64 << (esz * 8)) - 1 };
+        let lanes = 16 / esz;
+        for &(tag, val, exp) in &[("ofc", big, over_exp), ("ufc", small, under_exp)] {
+            for initial_fpsr in [0u64, 0x10] {
+                let mut z = 0u128;
+                let mut n = 0u128;
+                for l in 0..lanes {
+                    z |= ((val & emask) as u128) << (l * esz * 8);
+                    n |= (((exp as u64) & emask) as u128) << (l * esz * 8);
+                }
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xffff);
+                st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+                st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+                batch.push((
+                    format!("fscale_s{size}_{tag}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("sve_fscale_fpsr", batch);
+}
