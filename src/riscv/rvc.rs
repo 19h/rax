@@ -197,15 +197,15 @@ fn decode_q1(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
         0b011 => {
             if rd == 2 {
                 // C.ADDI16SP -> addi x2, x2, nzimm
-                let v = (bit(h, 12) << 9)
-                    | (bits(h, 4, 3) << 7)
-                    | (bit(h, 5) << 6)
-                    | (bit(h, 2) << 5)
-                    | (bit(h, 6) << 4);
+                let v = (bit(h, 12) << 5)
+                    | (bits(h, 4, 3) << 3)
+                    | (bit(h, 5) << 2)
+                    | (bit(h, 2) << 1)
+                    | bit(h, 6);
                 if v == 0 {
                     return ill(h);
                 }
-                mk(Op::Addi, 2, 2, 0, sext(v, 10), h)
+                mk(Op::Addi, 2, 2, 0, sext(v, 6) << 4, h)
             } else {
                 // C.LUI -> lui rd, nzimm (value already sign-extended << 12)
                 let v = (bit(h, 12) << 17) | (bits(h, 6, 2) << 12);
@@ -459,14 +459,23 @@ mod tests {
     #[test]
     fn zcb_aliases_require_dependent_extensions() {
         // Q1 ALU, funct3=100, funct2=11, bit12=1. rd'=x8, rs2'=x9.
-        let c_mul = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b10 << 5) | (1 << 2) | 0b01) as u16;
-        let c_sextb = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b001 << 2) | 0b01) as u16;
-        let c_zextw = ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b100 << 2) | 0b01) as u16;
+        let c_mul =
+            ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b10 << 5) | (1 << 2) | 0b01) as u16;
+        let c_sextb =
+            ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b001 << 2) | 0b01) as u16;
+        let c_zextw =
+            ((0b100 << 13) | (1 << 12) | (0b11 << 10) | (0b11 << 5) | (0b100 << 2) | 0b01) as u16;
 
         // Fully-featured RV64GC decodes all of them.
         assert_eq!(decode_rvc(c_mul, Xlen::Rv64, &Isa::rv64gc()).op, Op::Mul);
-        assert_eq!(decode_rvc(c_sextb, Xlen::Rv64, &Isa::rv64gc()).op, Op::SextB);
-        assert_eq!(decode_rvc(c_zextw, Xlen::Rv64, &Isa::rv64gc()).op, Op::AddUw);
+        assert_eq!(
+            decode_rvc(c_sextb, Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SextB
+        );
+        assert_eq!(
+            decode_rvc(c_zextw, Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::AddUw
+        );
 
         // c.mul needs M.
         let mut no_m = Isa::rv64gc();
@@ -482,7 +491,10 @@ mod tests {
         let mut no_zba = Isa::rv64gc();
         no_zba.zba = false;
         assert_eq!(decode_rvc(c_zextw, Xlen::Rv64, &no_zba).op, Op::Illegal);
-        assert_eq!(decode_rvc(c_zextw, Xlen::Rv32, &Isa::rv64gc()).op, Op::Illegal);
+        assert_eq!(
+            decode_rvc(c_zextw, Xlen::Rv32, &Isa::rv64gc()).op,
+            Op::Illegal
+        );
     }
 
     #[test]
