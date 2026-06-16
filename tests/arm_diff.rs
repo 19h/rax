@@ -32927,3 +32927,75 @@ fn diff_fp_scalar_fmul_fpsr_inexact() {
 
     run_fpsr_batch("fp_scalar_fmul_fpsr_inexact", batch);
 }
+
+// commit d3ded73ca7f6 temp: set sve fp unary fpsr
+#[test]
+fn diff_sve_fp_unary_fpsr_exceptions() {
+    // SVE FP unary (FSQRT/FRINT*): 0x65 << 24 | size<<22 | opc6<<16 | 0b101<<13
+    // | Zn<<5 | Zd.  size: 1=H(esize2), 2=S(esize4), 3=D(esize8).
+    // FSQRT opc6=0b001101, FRINTX opc6=0b000110. (FABS/FNEG use 0x04 and are a
+    // different handler; this commit only touched the 0x65 FSQRT/FRINT path.)
+    let enc_sve_fp_unary = |size: u32, opc6: u32| -> u32 {
+        (0x65 << 24) | (size << 22) | (opc6 << 16) | (0b101 << 13) | (RN << 5) | RD
+    };
+    // Broadcast `value` (esize bytes) across all 128 bits.
+    let pack = |value: u64, esize: usize| -> (u64, u64) {
+        let bits = esize * 8;
+        let mask: u128 = if bits == 128 { u128::MAX } else { (1u128 << bits) - 1 };
+        let mut packed = 0u128;
+        let lanes = 16 / esize;
+        for lane in 0..lanes {
+            packed |= (value as u128 & mask) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // (size, esize, neg-finite -> FSQRT IOC, pos non-square -> FSQRT IXC,
+    //  non-integral -> FRINTX IXC). H: -4.0=0xC400, 2.0=0x4000, 1.5=0x3E00.
+    let cases: &[(u32, usize, u64, u64, u64)] = &[
+        (1, 2, 0xC400, 0x4000, 0x3E00),
+        (
+            2,
+            4,
+            (-4.0f32).to_bits() as u64,
+            (2.0f32).to_bits() as u64,
+            (1.5f32).to_bits() as u64,
+        ),
+        (
+            3,
+            8,
+            (-4.0f64).to_bits(),
+            (2.0f64).to_bits(),
+            (1.5f64).to_bits(),
+        ),
+    ];
+
+    for &(size, esize, neg, nonsq, nonint) in cases {
+        for &(op, opc6, bits) in &[
+            ("fsqrt_ioc", 0b001101u32, neg),     // FSQRT(-x) -> invalid (IOC)
+            ("fsqrt_ixc", 0b001101u32, nonsq),   // FSQRT(2.0) -> inexact (IXC)
+            ("frintx_ixc", 0b000110u32, nonint), // FRINTX(1.5) -> inexact (IXC)
+        ] {
+            let insn = enc_sve_fp_unary(size, opc6);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xffff); // P0 all-active at VL=128
+                let (lo, hi) = pack(bits, esize);
+                st.set_vreg(RN as usize, lo, hi);
+                // Distinct prior Zd so a missed merge would also show.
+                st.set_vreg(RD as usize, 0, 0);
+                batch.push((
+                    format!("sve_{op}_size{size}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("sve_fp_unary_fpsr_exceptions", batch);
+}

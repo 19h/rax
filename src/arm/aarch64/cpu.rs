@@ -12513,25 +12513,31 @@ impl AArch64Cpu {
             }
             let off = e * esize;
             let lane = read_elem(&src, off, esize);
-            let r = match b20_16 {
-                0b01101 => match esize {
-                    2 => fp16_sqrt(lane as u16) as u64,
-                    4 => fp_two_reg_f32(TwoRegFp::Fsqrt, lane as u32) as u64,
-                    _ => fp_two_reg_f64(TwoRegFp::Fsqrt, lane),
-                },
-                0b01100 => sve_fp_recpx(esize, lane),
+            let (r, status) = match b20_16 {
+                0b01101 => {
+                    let kind = TwoRegFp::Fsqrt;
+                    let r = match esize {
+                        2 => fp16_sqrt(lane as u16) as u64,
+                        4 => fp_two_reg_f32(kind, lane as u32) as u64,
+                        _ => fp_two_reg_f64(kind, lane),
+                    };
+                    (r, fp_status_unop(esize, Some(kind), lane, r))
+                }
+                0b01100 => (sve_fp_recpx(esize, lane), 0),
                 m if m < 0b01000 => {
                     let Some((trk, fp16m)) = rint(m) else {
                         return Ok(CpuExit::Undefined(insn));
                     };
-                    match esize {
+                    let r = match esize {
                         2 => fp16_frint(lane as u16, fp16m) as u64,
                         4 => fp_two_reg_f32(trk, lane as u32) as u64,
                         _ => fp_two_reg_f64(trk, lane),
-                    }
+                    };
+                    (r, fp_status_unop(esize, Some(trk), lane, r))
                 }
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
+            self.fpsr |= status;
             write_elem(&mut dst, off, esize, r);
         }
         self.v[zd] = u128::from_le_bytes(dst);
@@ -19606,6 +19612,14 @@ fn fp_status_unop_f16(kind: Option<TwoRegFp>, a: u16, result: u16) -> u32 {
             }
         }
         _ => 0,
+    }
+}
+
+fn fp_status_unop(esize: usize, kind: Option<TwoRegFp>, a: u64, result: u64) -> u32 {
+    match esize {
+        2 => fp_status_unop_f16(kind, a as u16, result as u16),
+        4 => fp_status_unop_f32(kind, a as u32, result as u32),
+        _ => fp_status_unop_f64(kind, a, result),
     }
 }
 
