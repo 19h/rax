@@ -32674,3 +32674,112 @@ fn diff_fp_scalar_native_oracle_fpsr() {
 
     run_fpsr_batch("fp_scalar_native_oracle_fpsr", batch);
 }
+
+// commit e03f27efbbaa temp: set scalar fp conversion fpsr
+#[test]
+fn diff_fp_scalar_conversion_fpsr() {
+    // enc_fp_gpr_to_fp / enc_fp_to_gpr are added later in this branch; define
+    // them locally so the test compiles at this commit.
+    fn enc_fp_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32) -> u32 {
+        (sf << 31)
+            | (0b0011110 << 24)
+            | (fp_type << 22)
+            | (1 << 21)
+            | (opcode << 16)
+            | ((RN & 0x1F) << 5)
+            | (RD & 0x1F)
+    }
+    fn enc_fp_to_gpr(sf: u32, fp_type: u32, rmode: u32, opcode: u32) -> u32 {
+        (sf << 31)
+            | (0b0011110 << 24)
+            | (fp_type << 22)
+            | (1 << 21)
+            | (rmode << 19)
+            | (opcode << 16)
+            | ((RN & 0x1F) << 5)
+            | (RD & 0x1F)
+    }
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // --- int -> FP (SCVTF/UCVTF), opcode 010 (signed) / 011 (unsigned). ---
+    // Integers that exceed the destination mantissa precision become inexact
+    // (IXC): 2^11+1 for f16 (11 bits), 2^24+1 for f32 (24 bits), 2^53+1 for
+    // f64 (53 bits). fp_status_int_to_fp_scaled detects this via
+    // fp_int_scaled_exact and OR-s in FPSR_IXC.
+    for &initial_fpsr in &[0u64, 0x10] {
+        let mut push_cvtf = |label: &str, sf: u32, fp_type: u32, opcode: u32, raw: u64| {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.x[RN as usize] = raw;
+            batch.push((
+                format!("{label}_fpsr{initial_fpsr:#x}"),
+                enc_fp_gpr_to_fp(sf, fp_type, opcode),
+                st,
+            ));
+        };
+        // half (ptype 0b11), 32-bit GPR source.
+        push_cvtf("scvtf_h_w_2p11p1", 0, 0b11, 0b010, 2_049);
+        push_cvtf("ucvtf_h_w_2p11p1", 0, 0b11, 0b011, 2_049);
+        // single (ptype 0b00), 32-bit GPR source.
+        push_cvtf("scvtf_s_w_2p24p1", 0, 0b00, 0b010, 16_777_217);
+        push_cvtf("ucvtf_s_w_2p24p1", 0, 0b00, 0b011, 16_777_217);
+        // double (ptype 0b01), 64-bit GPR source.
+        push_cvtf("scvtf_d_x_2p53p1", 1, 0b01, 0b010, 9_007_199_254_740_993);
+        push_cvtf("ucvtf_d_x_2p53p1", 1, 0b01, 0b011, 9_007_199_254_740_993);
+    }
+
+    // --- FP -> int (rounding/truncating), bit21==1 unscaled forms. ---
+    // FCVTZS/FCVTZU use rmode 0b11 (toward zero); FCVTNS/FCVTNU use rmode 0b00.
+    // opcode 000=FCVT_S signed, 001=FCVT_U unsigned.
+    //   inexact (IXC): a non-integral finite value (e.g. 1.5) truncates/rounds
+    //     to an integer != input -> fp_to_int_rounded_status returns FPSR_IXC.
+    //   invalid (IOC): a NaN -> fp_to_int_rounded_status returns FPSR_IOC.
+    let inexact: &[(u32, &str, u64)] = &[
+        (0b00, "s", (1.5f32).to_bits() as u64),
+        (0b01, "d", (1.5f64).to_bits()),
+        (0b11, "h", 0x3E00u64), // f16 1.5
+    ];
+    let nan: &[(u32, &str, u64)] = &[
+        (0b00, "s", f32::NAN.to_bits() as u64),
+        (0b01, "d", f64::NAN.to_bits()),
+        (0b11, "h", 0x7E00u64), // f16 qNaN
+    ];
+    for &initial_fpsr in &[0u64, 0x10] {
+        for &(rmode, rname) in &[(0b11u32, "z"), (0b00, "n")] {
+            for &(opcode, sname) in &[(0b000u32, "s"), (0b001, "u")] {
+                for sf in 0..=1u32 {
+                    let wname = if sf == 0 { "w" } else { "x" };
+                    for &(fp_type, fname, bits) in inexact {
+                        let mut st = ArmState::zeroed();
+                        st.fpsr = initial_fpsr;
+                        st.fpcr = 0;
+                        st.set_vreg(RN as usize, bits, 0);
+                        batch.push((
+                            format!(
+                                "fcvt{rname}{sname}_{fname}_{wname}_ixc_fpsr{initial_fpsr:#x}"
+                            ),
+                            enc_fp_to_gpr(sf, fp_type, rmode, opcode),
+                            st,
+                        ));
+                    }
+                    for &(fp_type, fname, bits) in nan {
+                        let mut st = ArmState::zeroed();
+                        st.fpsr = initial_fpsr;
+                        st.fpcr = 0;
+                        st.set_vreg(RN as usize, bits, 0);
+                        batch.push((
+                            format!(
+                                "fcvt{rname}{sname}_{fname}_{wname}_ioc_fpsr{initial_fpsr:#x}"
+                            ),
+                            enc_fp_to_gpr(sf, fp_type, rmode, opcode),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_conversion_fpsr", batch);
+}

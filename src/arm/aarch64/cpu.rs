@@ -2300,6 +2300,17 @@ impl AArch64Cpu {
                 // GPR int -> FP, value = int / 2^fbits (the 2^-fbits scale is an
                 // exact power of two, so a single FPRound of the integer suffices).
                 let signed = opcode == 0b010;
+                let raw_int: u128 = if signed {
+                    if sf == 1 {
+                        (self.get_x(rn) as i64 as i128).unsigned_abs()
+                    } else {
+                        (self.get_w(rn) as i32 as i128).unsigned_abs()
+                    }
+                } else if sf == 1 {
+                    self.get_x(rn) as u128
+                } else {
+                    self.get_w(rn) as u128
+                };
                 let scale_f = 2f64.powi(-fbits);
                 let r: u64 = match ptype {
                     0b00 => {
@@ -2352,6 +2363,13 @@ impl AArch64Cpu {
                     }
                     _ => return Err(ArmError::UndefinedInstruction(insn)),
                 };
+                let dst_prec = match ptype {
+                    0b00 => 4usize,
+                    0b01 => 8,
+                    0b11 => 2,
+                    _ => unreachable!(),
+                };
+                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, dst_prec, r);
                 self.v[rd as usize] = r as u128;
                 return Ok(CpuExit::Continue);
             }
@@ -2364,6 +2382,7 @@ impl AArch64Cpu {
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
             };
             let scaled = fval * 2f64.powi(fbits);
+            self.fpsr |= fp_to_int_status(scaled, signed, if sf == 1 { 64 } else { 32 });
             let res: u64 = match (sf == 1, signed) {
                 (true, true) => scaled as i64 as u64,
                 (true, false) => scaled as u64,
@@ -2434,6 +2453,24 @@ impl AArch64Cpu {
                     0b11 => fp16_round(val) as u64,
                     _ => return Err(ArmError::UndefinedInstruction(insn)),
                 };
+                let raw_int = if signed {
+                    if sf == 1 {
+                        (iv as i64 as i128).unsigned_abs()
+                    } else {
+                        (iv as u32 as i32 as i128).unsigned_abs()
+                    }
+                } else if sf == 1 {
+                    iv as u128
+                } else {
+                    (iv as u32) as u128
+                };
+                let dst_prec = match ptype {
+                    0b00 => 4usize,
+                    0b01 => 8,
+                    0b11 => 2,
+                    _ => unreachable!(),
+                };
+                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, dst_prec, r);
                 self.v[rd as usize] = r as u128;
                 return Ok(CpuExit::Continue);
             }
@@ -2456,6 +2493,8 @@ impl AArch64Cpu {
                     _ => fval.trunc(),
                 }
             };
+            self.fpsr |=
+                fp_to_int_rounded_status(fval, rounded, signed, if sf == 1 { 64 } else { 32 });
             // Saturate into the sf-width signed/unsigned range; NaN -> 0 (Rust's
             // float-to-int `as` already truncates/saturates/maps NaN to 0, and the
             // input is already integral).
@@ -18314,18 +18353,37 @@ fn fp_to_int_status(scaled: f64, signed: bool, bits: u32) -> u32 {
         return FPSR_IOC;
     }
     let rounded = scaled.trunc();
+    fp_to_int_rounded_status(scaled, rounded, signed, bits)
+}
+
+fn fp_to_int_rounded_status(input: f64, rounded: f64, signed: bool, bits: u32) -> u32 {
+    if input.is_nan() || input.is_infinite() {
+        return FPSR_IOC;
+    }
     let invalid = if signed {
-        rounded < -(1i128 << (bits - 1)) as f64 || rounded > ((1i128 << (bits - 1)) - 1) as f64
+        rounded < -(1i128 << (bits - 1)) as f64 || rounded >= (1u128 << (bits - 1)) as f64
     } else {
-        rounded < 0.0 || rounded > (elem_mask_u128(bits) as f64)
+        rounded < 0.0 || rounded >= (1u128 << bits) as f64
     };
     if invalid {
         FPSR_IOC
-    } else if scaled != rounded {
+    } else if input != rounded {
         FPSR_IXC
     } else {
         0
     }
+}
+
+fn fp_status_int_to_fp_scaled(abs_int: u128, dst_prec: usize, result: u64) -> u32 {
+    let precision_bits = match dst_prec {
+        2 => 11,
+        4 => 24,
+        _ => 53,
+    };
+    if fp_int_scaled_exact(abs_int, precision_bits) {
+        return 0;
+    }
+    fp_status_assume_inexact(dst_prec, result)
 }
 
 /// One element of a NEON fixed-point <-> floating-point conversion (`bits` is
