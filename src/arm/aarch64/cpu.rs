@@ -12609,6 +12609,9 @@ impl AArch64Cpu {
                 _ if round_odd => round_odd_f64_to_f32(f64::from_bits(x)) as u64, // FCVTX
                 _ => (f64::from_bits(x) as f32).to_bits() as u64, // double -> single
             };
+            if !bf {
+                self.fpsr |= fp_status_cvt_precision(x, src_sz, dst_sz, res);
+            }
             write_elem(&mut dst, off, cont, res);
         }
         self.v[zd] = u128::from_le_bytes(dst);

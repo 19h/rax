@@ -33497,3 +33497,72 @@ fn diff_sve_pred_fp_fma_fpsr() {
 
     run_fpsr_batch("sve_pred_fp_fma_fpsr", batch);
 }
+
+// commit bd9b610f2ca8 temp: set sve fcvt fpsr
+#[test]
+fn diff_sve_fcvt_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // Narrowing FCVT forms only (dst smaller than src -> can be inexact/overflow).
+    // (opc, opc2, src_sz, dst_sz, name)
+    let convs = [
+        (0b10u32, 0b00u32, 4usize, 2usize, "s2h"), // single -> half
+        (0b11, 0b00, 8, 2, "d2h"),                 // double -> half
+        (0b11, 0b10, 8, 4, "d2s"),                 // double -> single
+    ];
+    for (opc, opc2, src_sz, dst_sz, name) in convs {
+        let insn = enc_sve_fcvt(opc, opc2);
+        let cont = src_sz.max(dst_sz);
+        let elements = 16 / cont;
+        // (case-name, per-lane source bits in the source width) chosen so every
+        // active lane raises a flag in the destination precision.
+        let cases: Vec<(&str, u64)> = match src_sz {
+            4 => vec![
+                // 0.1f32 is not representable in half -> IXC
+                ("inexact", 0.1f32.to_bits() as u64),
+                // 70000 > 65504 (max normal half) -> OFC|IXC
+                ("overflow", 70000.0f32.to_bits() as u64),
+                // single sNaN -> IOC
+                ("snan", 0x7F80_0001u64),
+            ],
+            _ => match dst_sz {
+                2 => vec![
+                    // 0.1f64 not representable in half -> IXC
+                    ("inexact", 0.1f64.to_bits()),
+                    // 1e6 > max half -> OFC|IXC
+                    ("overflow", 1.0e6f64.to_bits()),
+                    // double sNaN -> IOC
+                    ("snan", 0x7FF0_0000_0000_0001u64),
+                ],
+                _ => vec![
+                    // 0.1f64 not representable in single -> IXC
+                    ("inexact", 0.1f64.to_bits()),
+                    // 1e300 overflows single -> OFC|IXC
+                    ("overflow", 1.0e300f64.to_bits()),
+                    // double sNaN -> IOC
+                    ("snan", 0x7FF0_0000_0000_0001u64),
+                ],
+            },
+        };
+        for (case, bits) in cases {
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0; // RNE, no flush-to-zero, no alternate handling
+                // Pack the triggering value into every lane of the source Zn (=V1).
+                let mut zn: u128 = 0;
+                for e in 0..elements {
+                    zn |= (bits as u128) << (e * cont * 8);
+                }
+                st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(RD as usize, 0xdead_beef_dead_beef, 0xfeed_face_feed_face); // merge target
+                st.set_preg(0, 0xFFFF); // P0 all-active
+                batch.push((
+                    format!("fcvt_{name}_{case}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("sve_fcvt_fpsr", batch);
+}
