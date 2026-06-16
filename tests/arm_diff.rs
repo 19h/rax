@@ -33802,3 +33802,53 @@ fn diff_sve_bfcvt_fpsr_exceptions() {
     }
     run_fpsr_batch("sve_bfcvt_fpsr_exceptions", batch);
 }
+
+// commit b8f4f24bd766 temp: set simd bfcvt fpsr
+#[test]
+fn diff_simd_bfcvt_fpsr() {
+    let bfcvt = 0x1E63_4000 | (RN << 5) | RD; // BFCVT Hd, Sn
+    let bfcvtn = 0x0EA1_6800 | (RN << 5) | RD; // BFCVTN Vd.4H, Vn.4S
+    let bfcvtn2 = 0x4EA1_6800 | (RN << 5) | RD; // BFCVTN2 Vd.8H, Vn.4S
+
+    // f32 source patterns, each chosen to drive a distinct fp_status_bfcvt branch:
+    //   sNaN          -> IOC (exponent all-1, mantissa MSB clear, nonzero)
+    //   1.0 + 1ulp    -> IXC (low 16 mantissa bits dropped, inexact)
+    //   FLT_MAX       -> OFC|IXC (rounds up to bf16 +Inf, result_abs==0x7F80)
+    //   tiny normal   -> UFC|IXC (rounds to bf16 zero, result exponent bits==0)
+    let triggers: [(&str, u32); 4] = [
+        ("ioc_snan", 0x7F80_0001),
+        ("ixc_inexact", 0x3F80_0001),
+        ("ofc_max", 0x7F7F_FFFF),
+        ("ufc_tiny", 0x0000_8000),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(name, src) in &triggers {
+        for initial_fpsr in [0u64, 0x10] {
+            // Scalar BFCVT: single f32 in Vn low 32 bits.
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, src as u64, 0);
+            batch.push((format!("bfcvt_{name}_fpsr{initial_fpsr:#x}"), bfcvt, st));
+
+            // Vector BFCVTN / BFCVTN2: same trigger in all four f32 lanes of Vn.
+            let lo = (src as u64) | ((src as u64) << 32);
+            let hi = (src as u64) | ((src as u64) << 32);
+            for &(vname, insn) in &[("bfcvtn", bfcvtn), ("bfcvtn2", bfcvtn2)] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_vreg(RN as usize, lo, hi);
+                // Preset Vd so BFCVTN2's preserved low half is observable.
+                st.set_vreg(RD as usize, 0xDEAD_BEEF_CAFE_F00D, 0x0123_4567_89AB_CDEF);
+                batch.push((
+                    format!("{vname}_{name}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("simd_bfcvt_fpsr", batch);
+}

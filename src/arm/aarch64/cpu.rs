@@ -1788,7 +1788,9 @@ impl AArch64Cpu {
             // BFCVT Hd, Sn (FEAT_BF16): single-precision -> bfloat16, RNE.
             // Encoded as ptype=01, opcode bits[20:15]=000110 (bits[19:15]=00110).
             if fp_type == 0b01 && opcode == 0b00110 {
-                let bf = f32_to_bf16(self.v[rn as usize] as u32);
+                let x = self.v[rn as usize] as u32;
+                let bf = f32_to_bf16(x);
+                self.fpsr |= fp_status_bfcvt(x, bf);
                 self.v[rd as usize] = bf as u128;
                 return Ok(CpuExit::Continue);
             }
@@ -3778,7 +3780,9 @@ impl AArch64Cpu {
         let op = self.v[rn];
         let mut narrowed = 0u64;
         for e in 0..4 {
-            let bf = f32_to_bf16((op >> (e * 32)) as u32);
+            let x = (op >> (e * 32)) as u32;
+            let bf = f32_to_bf16(x);
+            self.fpsr |= fp_status_bfcvt(x, bf);
             narrowed |= (bf as u64) << (e * 16);
         }
         if q == 0 {
