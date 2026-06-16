@@ -33294,3 +33294,142 @@ fn diff_sve_indexed_fp_fpsr_exceptions() {
 
     run_fpsr_batch("sve_indexed_fp_fpsr_exceptions", batch);
 }
+
+// commit f46267387c26 temp: set sve fp reduce fpsr
+#[test]
+fn diff_sve_fp_reduce_fpsr() {
+    // SVE FP reduce: op0=011 (top byte 0x65), size in bits[23:22], opc5 in
+    // bits[20:16], group bits[15:13]=001 routes to exec_sve_fp_reduce, Pg in
+    // bits[12:10] (=0 here -> P0), Zn in bits[9:5], Vd in bits[4:0].
+    // opc5: FADDV=0b00000, FMAXNMV=0b00100, FADDA=0b11000.
+    fn enc(sz: u32, opc5: u32) -> u32 {
+        (0x65 << 24) | (sz << 22) | (opc5 << 16) | (0b001 << 13) | (RN << 5) | RD
+    }
+    // sNaN bit patterns (exponent all-ones, quiet-bit clear, a mantissa bit set).
+    let snan32: u64 = 0x7FA0_0000;
+    let snan64: u64 = 0x7FF4_0000_0000_0000;
+    let pinf16: u64 = 0x7C00;
+    let ninf16: u64 = 0xFC00;
+    let one16: u64 = 0x3C00; // 1.0 in IEEE half
+    let pinf32: u64 = f32::INFINITY.to_bits() as u64;
+    let ninf32: u64 = f32::NEG_INFINITY.to_bits() as u64;
+    let pinf64: u64 = f64::INFINITY.to_bits();
+    let ninf64: u64 = f64::NEG_INFINITY.to_bits();
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for initial_fpsr in [0u64, 0x10] {
+        // ---- FADDV (tree-reduce), half precision (sz=1, esize=2) ----
+        let insn = enc(1, 0b00000);
+        // IOC: +Inf + -Inf in two active H lanes (byte stride 2 -> pred bits 0,1).
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0003);
+        st.set_vreg(RN as usize, pinf16 | (ninf16 << 16), 0);
+        batch.push((format!("faddv_h_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // ---- FADDV (tree-reduce), single precision (sz=2, esize=4) ----
+        let insn = enc(2, 0b00000);
+        // IOC: +Inf + -Inf in two active S lanes (byte stride 4 -> pred bits 0,4).
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0011);
+        st.set_vreg(RN as usize, pinf32 | (ninf32 << 32), 0);
+        batch.push((format!("faddv_s_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        // IXC: 2^24 + 1.0 is not representable in f32.
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0011);
+        st.set_vreg(
+            RN as usize,
+            (16_777_216.0f32.to_bits() as u64) | ((1.0f32.to_bits() as u64) << 32),
+            0,
+        );
+        batch.push((format!("faddv_s_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // ---- FADDV (tree-reduce), double precision (sz=3, esize=8) ----
+        let insn = enc(3, 0b00000);
+        // IOC: +Inf + -Inf, two active D lanes (byte stride 8 -> pred bits 0,8).
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0101);
+        st.set_vreg(RN as usize, pinf64, ninf64);
+        batch.push((format!("faddv_d_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        // IXC: 2^53 + 1.0 not representable in f64.
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0101);
+        st.set_vreg(
+            RN as usize,
+            9_007_199_254_740_992.0f64.to_bits(),
+            1.0f64.to_bits(),
+        );
+        batch.push((format!("faddv_d_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // ---- FMAXNMV (tree-reduce) IOC via sNaN ----
+        let insn = enc(2, 0b00100);
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0011);
+        st.set_vreg(RN as usize, snan32 | (1.0f32.to_bits() as u64) << 32, 0);
+        batch.push((format!("fmaxnmv_s_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        let insn = enc(3, 0b00100);
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0101);
+        st.set_vreg(RN as usize, snan64, 1.0f64.to_bits());
+        batch.push((format!("fmaxnmv_d_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // ---- FADDA (strict ordered accumulate) ----
+        // acc seeded from Vdn[0] (=Vd=RD); addend lanes from Zm (=Zn field=RN).
+        // IOC (half): acc=+Inf, first active addend=-Inf.
+        let insn = enc(1, 0b11000);
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001); // H lane 0 active
+        st.set_vreg(RD as usize, pinf16, 0); // acc seed = Vdn[0]
+        st.set_vreg(RN as usize, ninf16, 0); // Zm[0] = -Inf
+        batch.push((format!("fadda_h_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        // IXC (half): acc=2048 (2^11), addend=1.0 -> 2049 not representable in f16.
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001);
+        st.set_vreg(RD as usize, 0x6800, 0); // 2048.0 in half
+        st.set_vreg(RN as usize, one16, 0);
+        batch.push((format!("fadda_h_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // IOC (single): acc=+Inf, first active addend=-Inf.
+        let insn = enc(2, 0b11000);
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001); // S lane 0 active
+        st.set_vreg(RD as usize, pinf32, 0);
+        st.set_vreg(RN as usize, ninf32, 0);
+        batch.push((format!("fadda_s_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        // IXC (single): acc=2^24, addend=1.0 -> 2^24+1 not representable.
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001);
+        st.set_vreg(RD as usize, 16_777_216.0f32.to_bits() as u64, 0);
+        st.set_vreg(RN as usize, 1.0f32.to_bits() as u64, 0);
+        batch.push((format!("fadda_s_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+
+        // IOC (double): acc=+Inf, first active addend=-Inf.
+        let insn = enc(3, 0b11000);
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001); // D lane 0 active
+        st.set_vreg(RD as usize, pinf64, 0);
+        st.set_vreg(RN as usize, ninf64, 0);
+        batch.push((format!("fadda_d_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        // IXC (double): acc=2^53, addend=1.0 -> 2^53+1 not representable.
+        let mut st = ArmState::zeroed();
+        st.fpsr = initial_fpsr;
+        st.set_preg(0, 0x0001);
+        st.set_vreg(RD as usize, 9_007_199_254_740_992.0f64.to_bits(), 0);
+        st.set_vreg(RN as usize, 1.0f64.to_bits(), 0);
+        batch.push((format!("fadda_d_ixc_fpsr{initial_fpsr:#x}"), insn, st));
+    }
+
+    run_fpsr_batch("sve_fp_reduce_fpsr", batch);
+}

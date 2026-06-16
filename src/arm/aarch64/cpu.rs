@@ -12361,12 +12361,15 @@ impl AArch64Cpu {
             let mut acc = read_elem(&vd_bytes, 0, esize);
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 1 {
-                    acc = sve_fp_combine(
+                    let x = read_elem(&m_reg, e * esize, esize);
+                    let r = sve_fp_combine(
                         FpKind::Add,
                         esize,
                         acc,
-                        read_elem(&m_reg, e * esize, esize),
+                        x,
                     );
+                    self.fpsr |= fp_status_binop(esize, FpKind::Add, acc, x, r);
+                    acc = r;
                 }
             }
             self.v[vd] = (acc as u128) & mask;
@@ -12391,7 +12394,9 @@ impl AArch64Cpu {
                 }
             })
             .collect();
-        self.v[vd] = (sve_fp_tree_reduce(&buf, kind, esize) as u128) & mask;
+        let (r, status) = sve_fp_tree_reduce_status(&buf, kind, esize);
+        self.fpsr |= status;
+        self.v[vd] = (r as u128) & mask;
         Ok(CpuExit::Continue)
     }
 
@@ -20356,6 +20361,17 @@ fn sve_fp_tree_reduce(buf: &[u64], kind: FpKind, esize: usize) -> u64 {
     let lo = sve_fp_tree_reduce(&buf[..h], kind, esize);
     let hi = sve_fp_tree_reduce(&buf[h..], kind, esize);
     sve_fp_combine(kind, esize, lo, hi)
+}
+
+fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize) -> (u64, u32) {
+    if buf.len() == 1 {
+        return (buf[0], 0);
+    }
+    let h = buf.len() / 2;
+    let (lo, sl) = sve_fp_tree_reduce_status(&buf[..h], kind, esize);
+    let (hi, sh) = sve_fp_tree_reduce_status(&buf[h..], kind, esize);
+    let r = sve_fp_combine(kind, esize, lo, hi);
+    (r, sl | sh | fp_status_binop(esize, kind, lo, hi, r))
 }
 
 /// Identity element used to pad inactive lanes in an SVE FP reduction.
