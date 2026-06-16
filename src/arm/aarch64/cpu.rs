@@ -3493,6 +3493,7 @@ impl AArch64Cpu {
         let pairs = datasize / (2 * esize as usize);
         let mask = elem_mask(esize) as u128;
         let es = esize as usize;
+        let es_bytes = (esize / 8) as usize;
         let op1 = self.v[rn];
         let op2 = self.v[rm];
         let op3 = self.v[rd];
@@ -3516,6 +3517,8 @@ impl AArch64Cpu {
             };
             let r_re = fp_muladd_bits(d_re, xr, yr, esize);
             let r_im = fp_muladd_bits(d_im, xi, yi, esize);
+            self.fpsr |= fp_status_fma(es_bytes, d_re, xr, yr, r_re);
+            self.fpsr |= fp_status_fma(es_bytes, d_im, xi, yi, r_im);
             result |= (r_re as u128 & mask) << (2 * e * es);
             result |= (r_im as u128 & mask) << ((2 * e + 1) * es);
         }

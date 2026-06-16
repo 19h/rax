@@ -34823,3 +34823,99 @@ fn diff_simd_complex_fpsr_exceptions() {
     }
     run_fpsr_batch("simd_complex_fpsr_exceptions", batch);
 }
+
+// commit e55c1634f025 temp: set simd indexed complex fpsr
+#[test]
+fn diff_simd_fcmla_indexed_fpsr_exceptions() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // sNaN bit patterns: exponent all ones, mantissa MSB clear, low bit set.
+    let snan16: u64 = 0x7D00; // f16 signaling NaN
+    let snan32: u64 = 0x7FA0_0000; // f32 signaling NaN
+    let fmax32: u64 = 0x7F7F_FFFF; // f32 FLT_MAX
+
+    for &(size, esize, q) in &[(0b01u32, 16u32, 1u32), (0b10u32, 32u32, 1u32)] {
+        let datasize = if q == 1 { 128 } else { 64 };
+        let lanes = datasize / esize as usize;
+        let max_index = if size == 0b10 { 2 } else { 4 };
+        for rot in 0..4u32 {
+            for index in 0..max_index {
+                let insn = enc_fcmla_idx(q, size, rot, index);
+
+                // --- IOC case: Vn (the multiplicand operand) is all sNaN. ---
+                for initial_fpsr in [0u64, 0x10] {
+                    let mut st = ArmState::zeroed();
+                    st.fpcr = 0;
+                    st.fpsr = initial_fpsr;
+                    let snan = if esize == 16 { snan16 } else { snan32 };
+                    // Pack `lanes` copies of snan into the 128-bit V register.
+                    let mut lo = 0u64;
+                    let mut hi = 0u64;
+                    for l in 0..lanes {
+                        let bit = l * esize as usize;
+                        if bit < 64 {
+                            lo |= snan << bit;
+                        } else {
+                            hi |= snan << (bit - 64);
+                        }
+                    }
+                    st.set_vreg(RN as usize, lo, hi);
+                    // Vm (indexed operand) and Vd (accumulator) finite/nonzero.
+                    let one: u64 = if esize == 16 { 0x3C00 } else { 0x3F80_0000 };
+                    let mut mlo = 0u64;
+                    let mut mhi = 0u64;
+                    for l in 0..lanes {
+                        let bit = l * esize as usize;
+                        if bit < 64 {
+                            mlo |= one << bit;
+                        } else {
+                            mhi |= one << (bit - 64);
+                        }
+                    }
+                    st.set_vreg(RM as usize, mlo, mhi);
+                    st.set_vreg(RD as usize, mlo, mhi);
+                    batch.push((
+                        format!(
+                            "fcmla_idx_snan_e{esize}_r{rot}_i{index}_fpsr{initial_fpsr:#x}"
+                        ),
+                        insn,
+                        st,
+                    ));
+                }
+
+                // --- OFC|IXC case (f32 only): FLT_MAX * 2 finite overflow. ---
+                if esize == 32 {
+                    let mut st = ArmState::zeroed();
+                    st.fpcr = 0;
+                    st.fpsr = 0;
+                    let two: u64 = 0x4000_0000; // 2.0f32
+                    let mut nlo = 0u64;
+                    let mut nhi = 0u64;
+                    let mut mlo = 0u64;
+                    let mut mhi = 0u64;
+                    for l in 0..lanes {
+                        let bit = l * esize as usize;
+                        if bit < 64 {
+                            nlo |= fmax32 << bit;
+                            mlo |= two << bit;
+                        } else {
+                            nhi |= fmax32 << (bit - 64);
+                            mhi |= two << (bit - 64);
+                        }
+                    }
+                    st.set_vreg(RN as usize, nlo, nhi);
+                    st.set_vreg(RM as usize, mlo, mhi);
+                    // Zero accumulator so result is the (overflowing) product.
+                    st.set_vreg(RD as usize, 0, 0);
+                    batch.push((
+                        format!("fcmla_idx_ovf_e{esize}_r{rot}_i{index}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_fpsr_batch("simd_fcmla_indexed_fpsr_exceptions", batch);
+}
