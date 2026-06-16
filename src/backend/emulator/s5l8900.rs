@@ -24,12 +24,12 @@ use crate::arm::{
 use crate::cpu::{
     Aarch32CpuState, Aarch32Registers, Aarch32SystemRegisters, CpuState, VCpu, VcpuExit,
 };
-use crate::devices::crypto::{AesKey, aes_cbc_decrypt, sha1};
+use crate::devices::crypto::{aes_cbc_decrypt, sha1, AesKey};
 use crate::devices::s3c64xx::S3cUart;
 use crate::devices::s5l8900::{
-    AES_UID_KEY, AesKeyType, GPIO_NUMINTGROUPS, NAND_BYTES_PER_SPARE, Pl192, S5lAes, S5lChipId,
-    S5lClock, S5lDmac, S5lGpio, S5lI2c, S5lLcd, S5lNand, S5lNandEcc, S5lSdio, S5lSpi, S5lSysic,
-    S5lTimer, S5lUsb,
+    AesKeyType, Pl192, S5lAes, S5lChipId, S5lClock, S5lDmac, S5lGpio, S5lI2c, S5lLcd, S5lNand,
+    S5lNandEcc, S5lSdio, S5lSpi, S5lSysic, S5lTimer, S5lUsb, AES_UID_KEY, GPIO_NUMINTGROUPS,
+    NAND_BYTES_PER_SPARE,
 };
 use crate::error::{Error, Result};
 
@@ -466,6 +466,20 @@ fn nand_dir() -> Option<std::path::PathBuf> {
 /// allocation. (issues #43, #50)
 fn dma_range_in_bounds(mem_end: u64, addr: u32, len: usize) -> bool {
     (addr as u64).saturating_add(len as u64) <= mem_end
+}
+
+/// Convert the padded `GuestMemoryMmap` end back to the end of real guest RAM.
+///
+/// S5L gets only the mmap, not `GuestMemoryWrapper::size()`. The mmap created
+/// by the VMM includes `GUEST_MEMORY_PADDING` after the memory reported to the
+/// guest; DMA bounds must reject transfers beyond reported RAM, not merely
+/// beyond that padded host allocation. Small unpadded test mappings keep their
+/// full size.
+fn dma_ram_end_from_mmap_end(mmap_end: u64) -> u64 {
+    mmap_end
+        .checked_sub(crate::memory::GUEST_MEMORY_PADDING)
+        .filter(|&end| end > 0)
+        .unwrap_or(mmap_end)
 }
 
 /// Last memory fault recorded by the bridge (for DFSR/DFAR reporting).
@@ -5655,7 +5669,8 @@ impl S5L8900Vcpu {
         // allocating. The length comes from the guest-supplied 8900 header, so an
         // unbounded `vec![0u8; data_len]` could be forced to multi-GB (host
         // OOM/DoS) before `read_slice` ever rejects an out-of-range body. (issue #50)
-        let mem_end = self.bridge.mem.last_addr().raw_value().saturating_add(1);
+        let mem_end =
+            dma_ram_end_from_mmap_end(self.bridge.mem.last_addr().raw_value().saturating_add(1));
         if !dma_range_in_bounds(mem_end, body_addr, data_len) {
             debug!(len = data_len, "8900 data length exceeds guest memory");
             return;
@@ -5729,9 +5744,10 @@ impl S5L8900Vcpu {
         // before `read_slice` ever validates the source range. Require both the
         // source (`inaddr`) and destination (`outaddr`) DMA ranges to fit in
         // guest memory. (issue #43)
-        let mem_end = self.bridge.mem.last_addr().raw_value().saturating_add(1);
-        let in_bounds = dma_range_in_bounds(mem_end, inaddr, len)
-            && dma_range_in_bounds(mem_end, outaddr, len);
+        let mem_end =
+            dma_ram_end_from_mmap_end(self.bridge.mem.last_addr().raw_value().saturating_add(1));
+        let in_bounds =
+            dma_range_in_bounds(mem_end, inaddr, len) && dma_range_in_bounds(mem_end, outaddr, len);
         if let Some(kb) = key_bytes {
             if let Some(key) = AesKey::new(&kb) {
                 if len > 0 && len % 16 == 0 && in_bounds {
@@ -5827,16 +5843,32 @@ mod dos_bounds_tests {
     // multi-GB host allocation.
     #[test]
     fn dma_range_in_bounds_rejects_oversized_sizes() {
-        let mem_end = 0x4000; // 16 KiB
+        // 16 KiB of guest RAM.
+        let mem_end = 0x4000;
+
         // Valid ranges within RAM are accepted (the bound must not over-reject).
         assert!(dma_range_in_bounds(mem_end, 0, 0x1000));
         assert!(dma_range_in_bounds(mem_end, 0x3000, 0x1000)); // exactly fills RAM
         assert!(dma_range_in_bounds(mem_end, 0, 0)); // empty
+
         // Out-of-range / oversized requests are rejected (no allocation).
         assert!(!dma_range_in_bounds(mem_end, 0x3001, 0x1000)); // one byte over
         assert!(!dma_range_in_bounds(mem_end, 0, 0x8000_0000)); // ~2 GiB (issue #43)
         assert!(!dma_range_in_bounds(mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB (issue #50)
         assert!(!dma_range_in_bounds(mem_end, u32::MAX, 16)); // base near top, no wrap
+    }
+
+    #[test]
+    fn dma_bound_uses_reported_ram_not_padded_mmap() {
+        let reported = 0x0800_0000u64; // 128 MiB
+        let padded_end = reported + crate::memory::GUEST_MEMORY_PADDING;
+        let mem_end = dma_ram_end_from_mmap_end(padded_end);
+
+        assert_eq!(mem_end, reported);
+        assert!(!dma_range_in_bounds(mem_end, 0, 0x1000_0000)); // 256 MiB
+        assert!(!dma_range_in_bounds(mem_end, 0, 0xFFFF_FFF0)); // ~4 GiB
+        assert!(dma_range_in_bounds(mem_end, 0, 0x0010_0000)); // 1 MiB
+        assert_eq!(dma_ram_end_from_mmap_end(0x4000), 0x4000);
     }
 
     // issue #50: a crafted 8900 header advertising a huge data_len must be
