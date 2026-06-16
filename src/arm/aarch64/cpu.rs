@@ -5430,6 +5430,8 @@ impl AArch64Cpu {
             let mm = Self::fp16_to_f32(h2).to_bits();
             let acc = (vd >> (32 * e)) as u32;
             let r = fp_muladd_bits(acc as u64, nn as u64, mm as u64, 32) as u32;
+            self.fpsr |=
+                fp_status_fma(4, acc as u64, nn as u64, mm as u64, r as u64);
             result |= (r as u128) << (32 * e);
         }
         // Q==0 leaves the upper 64 bits zero.

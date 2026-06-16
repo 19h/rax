@@ -34402,3 +34402,62 @@ fn diff_simd_bfmlal_fpsr() {
     }
     run_fpsr_batch("simd_bfmlal_fpsr", batch);
 }
+
+// commit 71deeb5bdf41 temp: set simd fmlal fpsr
+#[test]
+fn diff_simd_fmlal_fpsr_exceptions() {
+    // FP16 bit patterns (fpcr=0: round-to-nearest, no FTZ, no AH).
+    const H_ZERO: u64 = 0x0000; // +0.0
+    const H_ONE: u64 = 0x3C00; // +1.0
+    const H_INF: u64 = 0x7C00; // +inf
+    // F32 accumulator = 2^24 (exactly representable); 2^24 + 1*1 is not -> IXC.
+    const F32_2P24: u64 = 0x4B80_0000;
+
+    // FEAT_FHM vector forms decoded by exec_fmlal(indexed=false):
+    //   FMLAL/FMLSL : U==0, opcode 0b11101; sub (FMLSL) = bit23.
+    //   FMLAL2/FMLSL2: U==1, opcode 0b11001; sub (FMLSL2) = bit23.
+    // enc_three_same places `size` at bits[23:22], so size bit1 (=0b10) sets
+    // bit23 = the sub bit. The decode rejects bit22 (size&1) -> keep it clear.
+    // (u, size, opcode, top, name)
+    let forms: &[(u32, u32, u32, bool, &str)] = &[
+        (0, 0b00, 0b11101, false, "fmlal"),
+        (0, 0b10, 0b11101, false, "fmlsl"),
+        (1, 0b00, 0b11001, true, "fmlal2"),
+        (1, 0b10, 0b11001, true, "fmlsl2"),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(u, size, opcode, top, name) in forms {
+        // q=0 -> 2 FP32 result lanes; "2" forms read FP16 source lanes [2..],
+        // non-"2" forms read FP16 source lanes [0..]. The FP32 accumulator is
+        // always read from the low result lanes regardless of the "2" variant.
+        let insn = enc_three_same(0, u, size, opcode);
+        let lane_shift: u32 = if top { 16 * 2 } else { 0 };
+        for initial_fpsr in [0u64, 0x10] {
+            // Invalid: product 0 * inf -> IOC via fp_invalid_fma_default_nan.
+            let mut st_ioc = ArmState::zeroed();
+            st_ioc.fpsr = initial_fpsr;
+            st_ioc.set_vreg(RN as usize, H_ZERO << lane_shift, 0);
+            st_ioc.set_vreg(RM as usize, H_INF << lane_shift, 0);
+            st_ioc.set_vreg(RD as usize, 0, 0); // FP32 accumulator lane 0 = +0.0
+            batch.push((
+                format!("{name}_ioc_zero_times_inf_fpsr{initial_fpsr:#x}"),
+                insn,
+                st_ioc,
+            ));
+
+            // Inexact: acc(2^24) + 1.0*1.0 -> 2^24+1 not representable -> IXC.
+            let mut st_ixc = ArmState::zeroed();
+            st_ixc.fpsr = initial_fpsr;
+            st_ixc.set_vreg(RN as usize, H_ONE << lane_shift, 0);
+            st_ixc.set_vreg(RM as usize, H_ONE << lane_shift, 0);
+            st_ixc.set_vreg(RD as usize, F32_2P24, 0); // FP32 accumulator lane 0
+            batch.push((
+                format!("{name}_ixc_acc_2p24_fpsr{initial_fpsr:#x}"),
+                insn,
+                st_ixc,
+            ));
+        }
+    }
+    run_fpsr_batch("simd_fmlal_fpsr_exceptions", batch);
+}
