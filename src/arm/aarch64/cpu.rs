@@ -11980,10 +11980,18 @@ impl AArch64Cpu {
             let mut pd = 0u32;
             for e in 0..(16 / esz) {
                 let off = e * esz;
-                if (pred >> off) & 1 == 1
-                    && sve_fp_compare(esz, cc, read_elem(&n, off, esz), read_elem(&m, off, esz))
-                {
-                    pd |= 1 << off;
+                if (pred >> off) & 1 == 1 {
+                    let a = read_elem(&n, off, esz);
+                    let b = read_elem(&m, off, esz);
+                    if fp_is_snan_bits(esz, a)
+                        || fp_is_snan_bits(esz, b)
+                        || (cc.0 == 0b010 && (fp_is_nan_bits(esz, a) || fp_is_nan_bits(esz, b)))
+                    {
+                        self.fpsr |= FPSR_IOC;
+                    }
+                    if sve_fp_compare(esz, cc, a, b) {
+                        pd |= 1 << off;
+                    }
                 }
             }
             // FP compares write only the predicate; they do not set NZCV.
@@ -12015,10 +12023,14 @@ impl AArch64Cpu {
             let mut pd = 0u32;
             for e in 0..(16 / esz) {
                 let off = e * esz;
-                if (pred >> off) & 1 == 1
-                    && sve_fp_compare_zero(esz, sub, bit4, read_elem(&n, off, esz))
-                {
-                    pd |= 1 << off;
+                if (pred >> off) & 1 == 1 {
+                    let a = read_elem(&n, off, esz);
+                    if fp_is_snan_bits(esz, a) {
+                        self.fpsr |= FPSR_IOC;
+                    }
+                    if sve_fp_compare_zero(esz, sub, bit4, a) {
+                        pd |= 1 << off;
+                    }
                 }
             }
             // FP compares write only the predicate; they do not set NZCV.

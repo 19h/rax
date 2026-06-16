@@ -33656,3 +33656,110 @@ fn diff_sve_fp_int_cvt_fpsr_excs() {
     }
     run_fpsr_batch("sve_fp_int_cvt_fpsr_excs", batch);
 }
+
+// commit 51e735894441 temp: set sve fp compare fpsr
+#[test]
+fn diff_sve_fp_cmp_fpsr_invalid() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // Per-size NaN bit patterns. size field: 1=half(16), 2=single(32),
+    // 3=double(64). esz = (1<<size) bytes -> 2/4/8.
+    // (size, name, element bit-width, sNaN bits, qNaN bits)
+    let sizes: [(u32, &str, usize, u64, u64); 3] = [
+        (1, "h", 16, 0x7C01, 0x7E00),
+        (2, "s", 32, 0x7F80_0001, 0x7FC0_0000),
+        (3, "d", 64, 0x7FF0_0000_0000_0001, 0x7FF8_0000_0000_0000),
+    ];
+
+    // Fill all 128 bits with `pat` replicated across `bits`-wide lanes.
+    fn fill(bits: usize, pat: u64) -> (u64, u64) {
+        let mut v: u128 = 0;
+        let lanes = 128 / bits;
+        for lane in 0..lanes {
+            v |= (pat as u128) << (lane * bits);
+        }
+        (v as u64, (v >> 64) as u64)
+    }
+
+    for &(size, sname, bits, snan, qnan) in &sizes {
+        // Register-compare conditions (bits[15:13]=cc13, bit4). The 51e73589
+        // fix raises FPSR.IOC when either operand is an sNaN (every condition),
+        // and additionally when cc.0 (==cc13) == 0b010 (FCMGE/FCMGT) and either
+        // operand is a qNaN. Only those qNaN cases are part of this commit, so
+        // qNaN inputs are exercised solely on cc13==0b010.
+        // (cc13, bit4, name, qnan_raises_ioc)
+        let reg_conds: [(u32, u32, &str, bool); 7] = [
+            (0b010, 0, "fcmge", true),
+            (0b010, 1, "fcmgt", true),
+            (0b011, 0, "fcmeq", false),
+            (0b011, 1, "fcmne", false),
+            (0b110, 0, "fcmuo", false),
+            (0b110, 1, "facge", false),
+            (0b111, 1, "facgt", false),
+        ];
+        for &(cc13, bit4, cname, qnan_active) in &reg_conds {
+            let insn = enc_sve_fp_cmp(size, cc13, bit4);
+            // sNaN input on Vn: IOC for every valid condition.
+            for &initial_fpsr in &[0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(1, 0xFFFF); // Pg = P1, all-active at VL=128
+                let (lo, hi) = fill(bits, snan);
+                st.set_vreg(RN as usize, lo, hi);
+                // Vm = finite -0.0 so only the sNaN drives IOC.
+                let (lo, hi) = fill(bits, 1u64 << (bits - 1));
+                st.set_vreg(RM as usize, lo, hi);
+                batch.push((
+                    format!("sve_{cname}_{sname}_snan_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+            // qNaN-only input on the conditions whose 51e73589 path raises IOC
+            // for qNaN (cc13 == 0b010).
+            if qnan_active {
+                let mut st = ArmState::zeroed();
+                st.fpsr = 0;
+                st.fpcr = 0;
+                st.set_preg(1, 0xFFFF);
+                let (lo, hi) = fill(bits, qnan);
+                st.set_vreg(RN as usize, lo, hi);
+                let (lo, hi) = fill(bits, 1u64 << (bits - 1)); // -0.0, finite
+                st.set_vreg(RM as usize, lo, hi);
+                batch.push((format!("sve_{cname}_{sname}_qnan"), insn, st));
+            }
+        }
+
+        // Compare-with-zero conditions (bits[17:16]=sub, bit4). The 51e73589
+        // fix raises FPSR.IOC for these forms ONLY on sNaN inputs (no qNaN
+        // path for zero-compares in this commit). Valid forms:
+        // (00,0)GE (00,1)GT (01,0)LT (01,1)LE (10,0)EQ (11,0)NE.
+        let zero_conds: [(u32, u32, &str); 6] = [
+            (0b00, 0, "fcmge0"),
+            (0b00, 1, "fcmgt0"),
+            (0b01, 0, "fcmlt0"),
+            (0b01, 1, "fcmle0"),
+            (0b10, 0, "fcmeq0"),
+            (0b11, 0, "fcmne0"),
+        ];
+        for &(sub, bit4, cname) in &zero_conds {
+            let insn = enc_sve_fp_cmp0(size, sub, bit4);
+            for &initial_fpsr in &[0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(1, 0xFFFF);
+                let (lo, hi) = fill(bits, snan);
+                st.set_vreg(RN as usize, lo, hi);
+                batch.push((
+                    format!("sve_{cname}_{sname}_snan_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("sve_fp_cmp_fpsr_invalid", batch);
+}
