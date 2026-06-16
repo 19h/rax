@@ -12263,20 +12263,22 @@ impl AArch64Cpu {
             let m = self.v[zn].to_le_bytes(); // Zm
             let mut res = [0u8; 16];
             for p in 0..h {
-                let dnv = sve_fp_combine(
-                    kind,
-                    esize,
-                    read_elem(&dn, 2 * p * esize, esize),
-                    read_elem(&dn, (2 * p + 1) * esize, esize),
-                );
-                let mv = sve_fp_combine(
-                    kind,
-                    esize,
-                    read_elem(&m, 2 * p * esize, esize),
-                    read_elem(&m, (2 * p + 1) * esize, esize),
-                );
-                write_elem(&mut res, 2 * p * esize, esize, dnv);
-                write_elem(&mut res, (2 * p + 1) * esize, esize, mv);
+                let even_off = 2 * p * esize;
+                let odd_off = (2 * p + 1) * esize;
+                let dn0 = read_elem(&dn, even_off, esize);
+                let dn1 = read_elem(&dn, odd_off, esize);
+                let m0 = read_elem(&m, even_off, esize);
+                let m1 = read_elem(&m, odd_off, esize);
+                let dnv = sve_fp_combine(kind, esize, dn0, dn1);
+                let mv = sve_fp_combine(kind, esize, m0, m1);
+                if (pred >> even_off) & 1 == 1 {
+                    self.fpsr |= fp_status_binop(esize, kind, dn0, dn1, dnv);
+                }
+                if (pred >> odd_off) & 1 == 1 {
+                    self.fpsr |= fp_status_binop(esize, kind, m0, m1, mv);
+                }
+                write_elem(&mut res, even_off, esize, dnv);
+                write_elem(&mut res, odd_off, esize, mv);
             }
             let mut dst = dn;
             for e in 0..elements {

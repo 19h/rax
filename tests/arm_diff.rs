@@ -33985,3 +33985,102 @@ fn diff_sve2_fcvt_narrow_fpsr() {
 
     run_fpsr_batch("sve2_fcvt_narrow_fpsr", batch);
 }
+
+// commit 4f178c517a7a temp: set sve fpairwise fpsr
+#[test]
+fn diff_sve2_fpairwise_faddp_fpsr() {
+    // The commit makes the SVE FP pairwise path OR fp_status_binop(esize, kind, ..)
+    // into FPSR for each active even/odd pair. The dispatch maps opc=0b000 to
+    // FpKind::Add, so the FADDP form is the one whose pairwise adds actually feed
+    // the helper a status (FMAXP/FMINP map to Max/Min, which return 0). Before the
+    // fix the pairwise path produced the result but never updated FPSR, so any
+    // inexact / invalid / overflow pair diverges from the hardware oracle.
+    //
+    // enc_sve2_fpairwise(size, opc): size 1=H, 2=S, 3=D (size==00 reserved);
+    // opc 0b000 => FADDP (kind Add). Encoding places Zdn=z0 (RD), Zm=z1 (RN).
+    // Even lane of each pair comes from Zdn, odd lane from Zm; both halves of the
+    // 128-bit reg are filled so every active pair trips a flag. Pg=p0 all-active.
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // ---- half precision (size=1) ----
+    // 1.0h = 0x3c00; 0x1000 = 2^-11 (half a ULP at 1.0) so 1.0h + 2^-11 rounds
+    // back to 1.0 -> IXC. inf + -inf -> IOC. 0x7bff (largest finite half) added to
+    // itself overflows to inf -> OFC|IXC.
+    {
+        let h_one: u16 = 0x3c00;
+        let h_tiny: u16 = 0x1000; // 2^-11, lost when added to 1.0 -> IXC
+        let h_inf: u16 = 0x7c00;
+        let h_ninf: u16 = 0xfc00;
+        let h_max: u16 = 0x7bff; // largest finite half; max+max -> inf -> OFC|IXC
+        let pack_h = |l0: u16, l1: u16, l2: u16, l3: u16| -> u64 {
+            (l0 as u64) | ((l1 as u64) << 16) | ((l2 as u64) << 32) | ((l3 as u64) << 48)
+        };
+        // Zdn pairs: (1.0,tiny)=IXC, (inf,-inf)=IOC, (max,max)=OFC|IXC, (1.0,tiny)=IXC.
+        let lo = pack_h(h_one, h_tiny, h_inf, h_ninf);
+        let hi = pack_h(h_max, h_max, h_one, h_tiny);
+        let insn = enc_sve2_fpairwise(1, 0b000);
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            st.set_vreg(RD as usize, lo, hi); // Zdn
+            st.set_vreg(RN as usize, lo, hi); // Zm
+            batch.push((format!("faddp_h_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    // ---- single precision (size=2) ----
+    {
+        let one = 1.0f32.to_bits() as u64;
+        let tiny = 0x3380_0000u64; // 2^-24, half a ULP at 1.0 -> lost -> IXC
+        let inf = f32::INFINITY.to_bits() as u64;
+        let ninf = f32::NEG_INFINITY.to_bits() as u64;
+        let maxf = f32::MAX.to_bits() as u64; // MAX+MAX -> inf -> OFC|IXC
+        let pack_s = |l0: u64, l1: u64| -> u64 { l0 | (l1 << 32) };
+        let lo = pack_s(one, tiny); // pair0: 1.0+2^-24 -> IXC
+        let hi = pack_s(inf, ninf); // pair1: inf + -inf -> IOC
+        let lo2 = pack_s(maxf, maxf); // pair: MAX+MAX -> OFC|IXC
+        let hi2 = pack_s(one, tiny); // pair: IXC
+        let insn = enc_sve2_fpairwise(2, 0b000);
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            st.set_vreg(RD as usize, lo, hi); // Zdn: IXC pair + IOC pair
+            st.set_vreg(RN as usize, lo2, hi2); // Zm: OFC|IXC pair + IXC pair
+            batch.push((format!("faddp_s_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    // ---- double precision (size=3) ----
+    // 2 D lanes => one pair per 128-bit reg.
+    {
+        let one = 1.0f64.to_bits();
+        let tiny = 0x3C90_0000_0000_0000u64; // 2^-54, half a ULP at 1.0 -> lost -> IXC
+        let inf = f64::INFINITY.to_bits();
+        let ninf = f64::NEG_INFINITY.to_bits();
+        let maxf = f64::MAX.to_bits(); // MAX+MAX -> inf -> OFC|IXC
+        let insn = enc_sve2_fpairwise(3, 0b000);
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            st.set_vreg(RD as usize, one, tiny); // Zdn pair: 1.0+2^-54 -> IXC
+            st.set_vreg(RN as usize, inf, ninf); // Zm pair: inf + -inf -> IOC
+            batch.push((format!("faddp_d_ixc_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+
+            let mut st2 = ArmState::zeroed();
+            st2.fpsr = initial_fpsr;
+            st2.fpcr = 0;
+            st2.set_preg(0, 0xFFFF);
+            st2.set_vreg(RD as usize, maxf, maxf); // Zdn pair: MAX+MAX -> OFC|IXC
+            st2.set_vreg(RN as usize, one, tiny); // Zm pair: IXC
+            batch.push((format!("faddp_d_ofc_fpsr{initial_fpsr:#x}"), insn, st2));
+        }
+    }
+
+    run_fpsr_batch("sve2_fpairwise_faddp_fpsr", batch);
+}
