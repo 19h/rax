@@ -19243,10 +19243,26 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
         && fp_is_finite_bits(esize, op2)
     {
         if esize == 8 {
+            if fp64_is_zero(op1) || fp64_is_zero(op2) {
+                return 0;
+            }
+            if fp64_is_zero(addend) && fp64_mul_exact(op1, op2) {
+                return 0;
+            }
             return fp_status_assume_inexact(esize, result);
         }
         let exact = sve_fp_to_f64(esize, addend) + sve_fp_to_f64(esize, op1) * sve_fp_to_f64(esize, op2);
-        fp_status_from_exact_f64(esize, exact, result)
+        let status = fp_status_from_exact_f64(esize, exact, result);
+        if status == 0
+            && esize == 4
+            && !fp32_is_zero(op1 as u32)
+            && !fp32_is_zero(op2 as u32)
+            && f32::from_bits(result as u32) == f32::from_bits(addend as u32)
+        {
+            FPSR_IXC
+        } else {
+            status
+        }
     } else {
         0
     }
@@ -19360,6 +19376,16 @@ fn fp_status_binop_f32(kind: FpKind, a: u32, b: u32, result: u32) -> u32 {
         if fp32_is_tiny(result) || (fp32_is_zero(result) && exact != 0.0) {
             status |= FPSR_UFC;
         }
+    } else if matches!(kind, Add | Addp | Sub | Abd) {
+        let r = f32::from_bits(result);
+        let x = f32::from_bits(a);
+        let y = f32::from_bits(b);
+        let y_effectively_lost = !fp32_is_zero(b) && r == x;
+        let x_effectively_lost = matches!(kind, Add | Addp) && !fp32_is_zero(a) && r == y;
+        let subtrahend_lost = matches!(kind, Sub | Abd) && !fp32_is_zero(b) && r == x.abs();
+        if y_effectively_lost || x_effectively_lost || subtrahend_lost {
+            status |= FPSR_IXC;
+        }
     }
     status
 }
@@ -19401,6 +19427,10 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
     }
 
     if matches!(kind, Div) && !fp64_div_exact(a, b) {
+        return FPSR_IXC;
+    }
+
+    if matches!(kind, Mul) && !fp64_mul_exact(a, b) {
         return FPSR_IXC;
     }
 

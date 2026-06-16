@@ -32891,3 +32891,39 @@ fn diff_fp_scalar_fcmp_qnan_invalid_fpsr() {
     }
     run_fpsr_batch("fp_scalar_fcmp_qnan_invalid_fpsr", batch);
 }
+
+// commit d5b1016b39f2 temp: refine scalar fp exactness fpsr
+#[test]
+fn diff_fp_scalar_fmul_fpsr_inexact() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // FMUL, double precision (fp_type=01, opcode=0b0000).
+    // The commit added, in fp_status_binop_f64, the rule
+    //   `if matches!(kind, Mul) && !fp64_mul_exact(a, b) { return FPSR_IXC; }`
+    // so a finite scalar double FMUL whose true product needs more than 53
+    // significant bits now reports IXC (inexact). Pre-fix the interpreter
+    // emitted fpsr=0 and diverged from the EL0 oracle (which sets IXC).
+    let insn = enc_fp2(1, 0b0000);
+    // Operand pairs whose exact f64 product is inexact (> 53 significant bits).
+    // 1.0 + 1 ULP, taken straight from the bit pattern (1.0000000000000002).
+    let one_ulp = f64::from_bits(0x3ff0000000000001u64);
+    let pairs: [(f64, f64); 2] = [
+        (one_ulp, one_ulp), // (1.0 + 1 ULP)^2 = 1 + 2^-51 + 2^-104, not f64-exact
+        (1.1f64, 1.1f64),   // 1.1 * 1.1, not f64-exact
+    ];
+    for (idx, &(a, b)) in pairs.iter().enumerate() {
+        for initial_fpsr in [0, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, a.to_bits(), 0);
+            st.set_vreg(RM as usize, b.to_bits(), 0);
+            batch.push((
+                format!("fmul_d_ixc_p{idx}_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fmul_fpsr_inexact", batch);
+}
