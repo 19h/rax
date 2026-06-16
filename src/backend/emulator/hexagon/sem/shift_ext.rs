@@ -13,7 +13,7 @@
 //! and `sem/shift.rs` for the established pattern.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_s, fimm_u, fld};
+use super::{fimm_s, fimm_u, fld, SemCtx};
 
 // ---- lane accessors (mirror fGET*/fSET* macros) ---------------------------
 
@@ -123,15 +123,23 @@ fn ashiftl_64(src: u64, shamt: u32) -> u64 {
         ((src as i64) << shamt) as u64
     }
 }
-/// `fASHIFTR(SRC,SHAMT,8_8)`: 64-bit arithmetic right shift.
+/// `fASHIFTR(SRC,SHAMT,8_8)`: 64-bit arithmetic right shift, `>=64 -> sign`.
 #[inline]
 fn ashiftr_64(src: u64, shamt: u32) -> u64 {
-    ((src as i64) >> shamt) as u64
+    if shamt >= 64 {
+        ((src as i64) >> 63) as u64
+    } else {
+        ((src as i64) >> shamt) as u64
+    }
 }
 /// `fLSHIFTR(SRC,SHAMT,8_8)`: 64-bit logical right shift, `>=64 -> 0`.
 #[inline]
 fn lshiftr_64(src: u64, shamt: u32) -> u64 {
-    if shamt >= 64 { 0 } else { src >> shamt }
+    if shamt >= 64 {
+        0
+    } else {
+        src >> shamt
+    }
 }
 
 // ---- count leading sign bits (clb) ----------------------------------------
@@ -182,7 +190,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     let rx = fld(d, b'x');
     let rs = || fld(d, b's');
     let rt = || fld(d, b't');
-    let ui = || fimm_u(d, b'i', ctx.immext);
+    // Shift/rotate/align counts are fixed-width immediate fields. They are not
+    // constant-extendable, so ignore a packet's ImmExt for this operand class.
+    let ui = || fimm_u(d, b'i', None);
 
     match op {
         // ---- per-halfword immediate vector shifts (4 lanes) ----
@@ -663,7 +673,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::S2_valignib => {
             let rss = ctx.rp(rs());
             let rtt = ctx.rp(rt());
-            let sh = ui();
+            let sh = ui() & 7;
             let v = lshiftr_64(rss, sh * 8) | ashiftl_64(rtt, (8 - sh) * 8);
             ctx.set_rp(rd, v);
         }
@@ -1023,4 +1033,69 @@ fn tableidx(ctx: &mut SemCtx, d: &DecodedOp, rx: u8, n: u32) {
     };
     let rxv = (ctx.r(rx) & !(mask << n)) | ((field & mask) << n);
     ctx.set_r(rx, rxv);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::emulator::hexagon::opcode::decode_word;
+    use crate::cpu::HexagonRegisters;
+
+    fn run(
+        opcode: Opcode,
+        decoded: &DecodedOp,
+        regs: &HexagonRegisters,
+        immext: Option<u32>,
+    ) -> SemCtx<'static> {
+        // Leaked buffers keep the borrow simple in these small unit tests.
+        let new_r = Box::leak(Box::new([None; 32]));
+        let new_p = Box::leak(Box::new([None; 4]));
+        let vnone = Box::leak(Box::new([None; 32]));
+        let qnone = Box::leak(Box::new([None; 4]));
+        let regs: &'static HexagonRegisters = Box::leak(Box::new(regs.clone()));
+        let mut ctx = SemCtx {
+            regs,
+            new_r,
+            new_p,
+            immext,
+            usr_or: 0,
+            vnew: vnone,
+            vtmp: vnone,
+            qnew: qnone,
+            v_writes: Vec::new(),
+            q_writes: Vec::new(),
+        };
+        assert!(exec(opcode, decoded, &mut ctx), "{opcode:?} should execute");
+        ctx
+    }
+
+    #[test]
+    fn shift_ext_immediate_count_ignores_constant_extender() {
+        let decoded = decode_word(0x8080_0040).expect("decodes to S2_asl_i_vh");
+        assert_eq!(decoded.opcode, Opcode::S2_asl_i_vh);
+
+        let mut regs = HexagonRegisters::default();
+        regs.r[0] = 0x1111_2222;
+        regs.r[1] = 0x3333_4444;
+
+        let ctx = run(decoded.opcode, &decoded, &regs, Some(0x00ff_ffff));
+        assert_eq!(ctx.new_r[0], Some(0x1111_2222));
+        assert_eq!(ctx.new_r[1], Some(0x3333_4444));
+    }
+
+    #[test]
+    fn valignib_offset_does_not_underflow_with_extender() {
+        let decoded = decode_word(0xc000_0000).expect("decodes to S2_valignib");
+        assert_eq!(decoded.opcode, Opcode::S2_valignib);
+
+        let regs = HexagonRegisters::default();
+        let _ = run(decoded.opcode, &decoded, &regs, Some(0x00ff_ffff));
+    }
+
+    #[test]
+    fn ashiftr_64_guards_oversized_shift() {
+        assert_eq!(ashiftr_64(0x8000_0000_0000_0000, 64), u64::MAX);
+        assert_eq!(ashiftr_64(0x0123_4567_89ab_cdef, 200), 0);
+        assert_eq!(ashiftr_64(0xff00_0000_0000_0000, 8), 0xffff_0000_0000_0000);
+    }
 }
