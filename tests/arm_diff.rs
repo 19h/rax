@@ -34521,3 +34521,80 @@ fn diff_simd_fdiv_fpsr_exceptions() {
 
     run_fpsr_batch("simd_fdiv_fpsr_exceptions", batch);
 }
+
+// commit 1a6cb0054330 temp: set simd cvtf fpsr
+#[test]
+fn diff_simd_cvtf_fpsr_inexact() {
+    // enc_scalar_two_reg is added later in this branch; define it locally so the
+    // test compiles at this commit.
+    fn enc_scalar_two_reg(u: u32, size: u32, opcode: u32) -> u32 {
+        (1 << 30)
+            | (u << 29)
+            | (0b11110 << 24)
+            | (size << 22)
+            | (0b10000 << 17)
+            | (opcode << 12)
+            | (0b10 << 10)
+            | (RN << 5)
+            | RD
+    }
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (u, name) for SCVTF (signed) and UCVTF (unsigned).
+    for &(u, op) in &[(0u32, "scvtf"), (1u32, "ucvtf")] {
+        for initial_fpsr in [0u64, 0x10] {
+            // S form: 24-bit mantissa, 2^24+1 = 16_777_217 is not representable.
+            // Vector Q (4x32): enc_two_reg(q=1, u, size=0b00, opcode=0b11101).
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                let lane = 16_777_217u32;
+                let mut packed = 0u128;
+                for i in 0..4 {
+                    packed |= (lane as u128) << (32 * i);
+                }
+                st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+                batch.push((
+                    format!("{op}_vec_s_ixc_fpsr{initial_fpsr:#x}"),
+                    enc_two_reg(1, u, 0b00, 0b11101),
+                    st,
+                ));
+            }
+            // S form scalar: enc_scalar_two_reg(u, size=0b00, opcode=0b11101).
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.set_vreg(RN as usize, 16_777_217u32 as u64, 0);
+                batch.push((
+                    format!("{op}_scl_s_ixc_fpsr{initial_fpsr:#x}"),
+                    enc_scalar_two_reg(u, 0b00, 0b11101),
+                    st,
+                ));
+            }
+            // D form: 53-bit mantissa, 2^53+1 = 9_007_199_254_740_993 inexact.
+            // Vector Q (2x64): enc_two_reg(q=1, u, size=0b01, opcode=0b11101).
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                let lane = 9_007_199_254_740_993u64;
+                st.set_vreg(RN as usize, lane, lane);
+                batch.push((
+                    format!("{op}_vec_d_ixc_fpsr{initial_fpsr:#x}"),
+                    enc_two_reg(1, u, 0b01, 0b11101),
+                    st,
+                ));
+            }
+            // D form scalar: enc_scalar_two_reg(u, size=0b01, opcode=0b11101).
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.set_vreg(RN as usize, 9_007_199_254_740_993u64, 0);
+                batch.push((
+                    format!("{op}_scl_d_ixc_fpsr{initial_fpsr:#x}"),
+                    enc_scalar_two_reg(u, 0b01, 0b11101),
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("simd_cvtf_fpsr_inexact", batch);
+}

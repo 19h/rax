@@ -6010,6 +6010,20 @@ impl AArch64Cpu {
             } else {
                 fp_two_reg_f64(kind.unwrap(), a)
             };
+            if let Some(unsigned) = cvtf {
+                let raw_int = if unsigned {
+                    if sz == 0 {
+                        (a as u32) as u128
+                    } else {
+                        a as u128
+                    }
+                } else if sz == 0 {
+                    (a as u32 as i32 as i128).unsigned_abs()
+                } else {
+                    (a as i64 as i128).unsigned_abs()
+                };
+                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, esize, r);
+            }
             write_elem(&mut dst, off, esize, r);
         }
         self.v[rd] = u128::from_le_bytes(dst);
