@@ -1193,22 +1193,22 @@ impl RiscVCpu {
             }
             Op::ScW => {
                 let ok = self.reservation == Some(addr);
+                self.reservation = None;
                 if ok {
                     self.mem
                         .write_u32(addr, self.x(insn.rs2) as u32)
                         .map_err(|_| acc_fault(true, addr))?;
                 }
-                self.reservation = None;
                 self.set_x(insn.rd, if ok { 0 } else { 1 });
             }
             Op::ScD => {
                 let ok = self.reservation == Some(addr);
+                self.reservation = None;
                 if ok {
                     self.mem
                         .write_u64(addr, self.x(insn.rs2))
                         .map_err(|_| acc_fault(true, addr))?;
                 }
-                self.reservation = None;
                 self.set_x(insn.rd, if ok { 0 } else { 1 });
             }
             _ => unreachable!(),
