@@ -13,6 +13,8 @@
 //! previous-packet values); writes are buffered in `new_r`/`new_p` and committed
 //! when the packet completes, matching VLIW semantics.
 
+use std::cell::Cell;
+
 use super::opcode::DecodedOp;
 use crate::cpu::HexagonRegisters;
 
@@ -78,9 +80,30 @@ pub struct SemCtx<'a> {
     pub v_writes: Vec<(u8, [u32; 32])>,
     /// HVX vector-predicate writes produced by this instruction.
     pub q_writes: Vec<(u8, [u32; 4])>,
+    /// Set when a semantic handler touches a nonexistent HVX vector or
+    /// predicate register. The packet driver rejects the instruction and
+    /// discards this context's writes instead of committing a partial result.
+    pub invalid_hvx_access: Cell<bool>,
 }
 
 impl SemCtx<'_> {
+    #[inline]
+    fn mark_invalid_hvx_access(&self) {
+        self.invalid_hvx_access.set(true);
+    }
+
+    #[inline]
+    fn reject_hvx_write(&mut self) {
+        self.invalid_hvx_access.set(true);
+        self.v_writes.clear();
+        self.q_writes.clear();
+    }
+
+    #[inline]
+    pub fn invalid_hvx_access(&self) -> bool {
+        self.invalid_hvx_access.get()
+    }
+
     /// Read a 32-bit GPR.
     #[inline]
     pub fn r(&self, reg: u8) -> u32 {
@@ -138,7 +161,13 @@ impl SemCtx<'_> {
     /// u32 words (128 bytes).
     #[inline]
     pub fn vread(&self, reg: u8) -> [u32; 32] {
-        self.regs.v[reg as usize]
+        match self.regs.v.get(reg as usize) {
+            Some(v) => *v,
+            None => {
+                self.mark_invalid_hvx_access();
+                [0u32; 32]
+            }
+        }
     }
 
     /// Read a vector's `.new` value: an in-flight write produced earlier in the
@@ -146,33 +175,61 @@ impl SemCtx<'_> {
     /// the old architectural value.
     #[inline]
     pub fn vread_new(&self, reg: u8) -> [u32; 32] {
-        self.vnew[reg as usize]
-            .or(self.vtmp[reg as usize])
-            .unwrap_or(self.regs.v[reg as usize])
+        let i = reg as usize;
+        if i >= self.regs.v.len() {
+            self.mark_invalid_hvx_access();
+            return [0u32; 32];
+        }
+        self.vnew[i].or(self.vtmp[i]).unwrap_or(self.regs.v[i])
     }
 
     /// Write an HVX vector register.
     #[inline]
     pub fn set_v(&mut self, reg: u8, value: [u32; 32]) {
+        if self.invalid_hvx_access.get() {
+            return;
+        }
+        if (reg as usize) >= self.regs.v.len() {
+            self.reject_hvx_write();
+            return;
+        }
         self.v_writes.push((reg, value));
     }
 
     /// Read a vector-predicate register Q0..Q3 (old), as 4 LE u32 (128 bits).
     #[inline]
     pub fn qread(&self, reg: u8) -> [u32; 4] {
-        self.regs.q[reg as usize]
+        match self.regs.q.get(reg as usize) {
+            Some(q) => *q,
+            None => {
+                self.mark_invalid_hvx_access();
+                [0u32; 4]
+            }
+        }
     }
 
     /// Read a vector-predicate's `.new` value (in-flight if produced earlier in
     /// the packet, else the old architectural value).
     #[inline]
     pub fn qread_new(&self, reg: u8) -> [u32; 4] {
-        self.qnew[reg as usize].unwrap_or(self.regs.q[reg as usize])
+        let i = reg as usize;
+        if i >= self.regs.q.len() {
+            self.mark_invalid_hvx_access();
+            return [0u32; 4];
+        }
+        self.qnew[i].unwrap_or(self.regs.q[i])
     }
 
     /// Write a vector-predicate register.
     #[inline]
     pub fn set_q(&mut self, reg: u8, value: [u32; 4]) {
+        if self.invalid_hvx_access.get() {
+            return;
+        }
+        if (reg as usize) >= self.regs.q.len() {
+            self.reject_hvx_write();
+            return;
+        }
         self.q_writes.push((reg, value));
     }
 
@@ -254,7 +311,7 @@ pub(crate) fn fimm_u(d: &DecodedOp, letter: u8, immext: Option<u32>) -> u32 {
 pub fn dispatch(d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     // Each class returns `false` for opcodes it does not own; try them in turn.
     let op = d.opcode;
-    alu::exec(op, d, ctx)
+    let handled = alu::exec(op, d, ctx)
         || alu_pred::exec(op, d, ctx)
         || bitmanip::exec(op, d, ctx)
         || compare::exec(op, d, ctx)
@@ -287,5 +344,58 @@ pub fn dispatch(d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         || mpy_ext::exec(op, d, ctx)
         || shift_ext::exec(op, d, ctx)
         || alu_ext::exec(op, d, ctx)
-        || float_ext::exec(op, d, ctx)
+        || float_ext::exec(op, d, ctx);
+    handled && !ctx.invalid_hvx_access()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::emulator::hexagon::opcode::{decode_word, Opcode};
+
+    fn test_ctx(regs: &HexagonRegisters) -> SemCtx<'_> {
+        let new_r = Box::leak(Box::new([None; 32]));
+        let new_p = Box::leak(Box::new([None; 4]));
+        let vnone = Box::leak(Box::new([None; 32]));
+        let qnone = Box::leak(Box::new([None; 4]));
+        SemCtx {
+            regs,
+            new_r,
+            new_p,
+            immext: None,
+            usr_or: 0,
+            vnew: vnone,
+            vtmp: vnone,
+            qnew: qnone,
+            v_writes: Vec::new(),
+            q_writes: Vec::new(),
+            invalid_hvx_access: Cell::new(false),
+        }
+    }
+
+    #[test]
+    fn hvx_out_of_range_access_marks_instruction_invalid() {
+        let regs = HexagonRegisters::default();
+        let mut ctx = test_ctx(&regs);
+
+        assert_eq!(ctx.vread(32), [0u32; 32]);
+        assert!(ctx.invalid_hvx_access());
+        ctx.set_v(31, [1u32; 32]);
+        assert!(ctx.v_writes.is_empty());
+    }
+
+    #[test]
+    fn invalid_hvx_pair_dispatch_is_rejected_without_writes() {
+        let word = 0x1f40_00ff; // V6_vcombine with Vdd base 31.
+        let decoded = decode_word(word).expect("decodes");
+        assert_eq!(decoded.opcode, Opcode::V6_vcombine);
+        assert_eq!(fld(&decoded, b'd'), 31);
+
+        let regs = HexagonRegisters::default();
+        let mut ctx = test_ctx(&regs);
+        assert!(!dispatch(&decoded, &mut ctx));
+        assert!(ctx.invalid_hvx_access());
+        assert!(ctx.v_writes.is_empty());
+        assert!(ctx.q_writes.is_empty());
+    }
 }

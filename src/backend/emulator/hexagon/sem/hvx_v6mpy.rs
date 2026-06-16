@@ -266,6 +266,7 @@ mod tests {
             qnew: &qnone,
             v_writes: Vec::new(),
             q_writes: Vec::new(),
+            invalid_hvx_access: std::cell::Cell::new(false),
         };
         assert!(!exec(decoded.opcode, &decoded, &mut ctx));
         assert!(ctx.v_writes.is_empty());

@@ -681,6 +681,7 @@ mod tests {
             qnew: &qnone,
             v_writes: Vec::new(),
             q_writes: Vec::new(),
+            invalid_hvx_access: std::cell::Cell::new(false),
         };
         // Must not panic; with the extender ignored the count is 0 -> Rd = Rs.
         assert!(exec(decoded.opcode, &decoded, &mut ctx));

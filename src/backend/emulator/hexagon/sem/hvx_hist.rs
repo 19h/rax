@@ -250,6 +250,7 @@ mod tests {
             qnew: &qnone,
             v_writes: Vec::new(),
             q_writes: Vec::new(),
+            invalid_hvx_access: std::cell::Cell::new(false),
         };
         exec(decoded.opcode, &decoded, &mut ctx)
     }

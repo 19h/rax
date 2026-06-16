@@ -417,7 +417,7 @@ impl HexagonVcpu {
         let Some(reg) = self.regs.v.get(vreg as usize) else {
             return 0;
         };
-        
+
         let bytes = vec_to_bytes(reg);
         let off = idx * esz as usize;
         match esz {
@@ -1869,14 +1869,37 @@ impl HexagonVcpu {
                 qnew: &self.new_q,
                 v_writes: Vec::new(),
                 q_writes: Vec::new(),
+                invalid_hvx_access: std::cell::Cell::new(false),
                 immext,
                 usr_or: 0,
             };
             if !super::sem::dispatch(&dop, &mut ctx) {
+                if ctx.invalid_hvx_access() {
+                    return Err(Error::Emulator(format!(
+                        "invalid HVX register operand for {:?}",
+                        dop.opcode
+                    )));
+                }
                 return Ok(false);
             }
             (ctx.usr_or, ctx.v_writes, ctx.q_writes)
         };
+        if let Some((i, _)) = v_writes
+            .iter()
+            .find(|(i, _)| (*i as usize) >= self.new_v.len())
+        {
+            return Err(Error::Emulator(format!(
+                "invalid HVX vector register write V{i}"
+            )));
+        }
+        if let Some((i, _)) = q_writes
+            .iter()
+            .find(|(i, _)| (*i as usize) >= self.new_q.len())
+        {
+            return Err(Error::Emulator(format!(
+                "invalid HVX predicate register write Q{i}"
+            )));
+        }
         for (i, val) in v_writes {
             self.new_v[i as usize] = Some(val);
             // Track the in-packet vector producer for new-value vector stores.

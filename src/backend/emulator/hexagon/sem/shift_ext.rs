@@ -1064,6 +1064,7 @@ mod tests {
             qnew: qnone,
             v_writes: Vec::new(),
             q_writes: Vec::new(),
+            invalid_hvx_access: std::cell::Cell::new(false),
         };
         assert!(exec(opcode, decoded, &mut ctx), "{opcode:?} should execute");
         ctx
