@@ -11893,7 +11893,9 @@ impl AArch64Cpu {
                 if neg_add {
                     a = fp_neg_bits(a, ebits);
                 }
-                let r = fp_muladd_bits(a, n, read_elem(&mb, off, esz), ebits);
+                let m = read_elem(&mb, off, esz);
+                let r = fp_muladd_bits(a, n, m, ebits);
+                self.fpsr |= fp_status_fma(esz, a, n, m, r);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);

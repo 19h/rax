@@ -33433,3 +33433,67 @@ fn diff_sve_fp_reduce_fpsr() {
 
     run_fpsr_batch("sve_fp_reduce_fpsr", batch);
 }
+
+// commit ddd6bc6b4055 temp: set sve pred fp fma fpsr
+#[test]
+fn diff_sve_pred_fp_fma_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // size: 1=half(esz 2), 2=single(esz 4), 3=double(esz 8). size==0 is #UD.
+    // (size, snan_bits, inf_bits, one_bits, lane_bytes)
+    let cases: [(u32, u64, u64, u64, usize); 3] = [
+        (1, 0x7D00, 0x7C00, 0x3C00, 2),                          // half
+        (2, 0x7FA0_0000, 0x7F80_0000, 0x3F80_0000, 4),           // single
+        (3, 0x7FF4_0000_0000_0000, 0x7FF0_0000_0000_0000, 0x3FF0_0000_0000_0000, 8), // double
+    ];
+
+    for &(size, snan, inf, one, lanebytes) in &cases {
+        let insn = enc_sve_fp_fma(size, 0b000); // FMLA: Zd=addend, Zn=RN, Zm=RM, Pg=P0
+        let lanes = 16 / lanebytes;
+
+        // Broadcast a value across all lanes of a 128-bit register.
+        let broadcast = |v: u64| -> u128 {
+            let mut acc = 0u128;
+            for lane in 0..lanes {
+                acc |= (v as u128) << (lane * lanebytes * 8);
+            }
+            acc
+        };
+
+        for &initial_fpsr in &[0u64, 0x10] {
+            // (1) signaling NaN multiplicand -> IOC from fp_status_fma.
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_preg(0, 0xFFFF);
+            let n = broadcast(snan);
+            let m = broadcast(one);
+            st.set_vreg(RD as usize, 0, 0); // addend Za = +0.0
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("sve_fmla_snan_ioc_sz{size}_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
+
+            // (2) 0 * inf invalid product -> IOC from fp_status_fma.
+            let mut st2 = ArmState::zeroed();
+            st2.fpsr = initial_fpsr;
+            st2.fpcr = 0;
+            st2.set_preg(0, 0xFFFF);
+            let n2 = broadcast(0); // +0.0
+            let m2 = broadcast(inf); // +inf
+            st2.set_vreg(RD as usize, 0, 0); // addend Za = +0.0
+            st2.set_vreg(RN as usize, n2 as u64, (n2 >> 64) as u64);
+            st2.set_vreg(RM as usize, m2 as u64, (m2 >> 64) as u64);
+            batch.push((
+                format!("sve_fmla_zero_inf_ioc_sz{size}_fpsr{initial_fpsr:#x}"),
+                insn,
+                st2,
+            ));
+        }
+    }
+
+    run_fpsr_batch("sve_pred_fp_fma_fpsr", batch);
+}
