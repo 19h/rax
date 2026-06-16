@@ -846,6 +846,8 @@ pub enum FpRoundMode {
     /// Round to nearest, ties to even
     #[default]
     RoundNearest,
+    /// Round to nearest, ties away from zero
+    RoundNearestTiesAway,
     /// Round toward zero (truncate)
     RoundTowardZero,
     /// Round toward positive infinity

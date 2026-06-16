@@ -930,6 +930,9 @@ impl Aarch64Lowerer {
             FpRoundMode::RoundUp => Ok(0b01),
             FpRoundMode::RoundDown => Ok(0b10),
             FpRoundMode::RoundTowardZero => Ok(0b11),
+            FpRoundMode::RoundNearestTiesAway => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native FpToInt ties-away rmode".to_string(),
+            }),
             FpRoundMode::Dynamic => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native FpToInt dynamic rounding".to_string(),
             }),
@@ -994,8 +997,14 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         let sf = Self::sf(int_width)?;
         let ptype = Self::fp_type(fp_precision)?;
-        let rmode = Self::fp_to_int_rmode(round)?;
-        let opcode = if signed { 0b000 } else { 0b001 };
+        let (rmode, opcode) = if round == FpRoundMode::RoundNearestTiesAway {
+            (0b00, if signed { 0b100 } else { 0b101 })
+        } else {
+            (
+                Self::fp_to_int_rmode(round)?,
+                if signed { 0b000 } else { 0b001 },
+            )
+        };
         self.emit(
             (sf << 31)
                 | (0b0011110 << 24)
@@ -6889,6 +6898,7 @@ impl Aarch64Lowerer {
             FpRoundMode::RoundUp => 0b01001,          // FRINTP
             FpRoundMode::RoundDown => 0b01010,        // FRINTM
             FpRoundMode::RoundTowardZero => 0b01011,  // FRINTZ
+            FpRoundMode::RoundNearestTiesAway => 0b01100, // FRINTA
             FpRoundMode::Dynamic => 0b01111,          // FRINTI
         };
         self.lower_fp_unary(dst, src, precision, opcode)
@@ -27380,6 +27390,26 @@ mod tests {
             round: FpRoundMode::RoundUp,
         }));
         assert_eq!(words, vec![0x9e69_0062, 0xd65f_03c0]);
+
+        let words = code_words(&lower_single_op(OpKind::FpToInt {
+            dst: x(0),
+            src: v(1),
+            fp_precision: FpPrecision::F32,
+            int_width: OpWidth::W32,
+            signed: true,
+            round: FpRoundMode::RoundNearestTiesAway,
+        }));
+        assert_eq!(words, vec![0x1e24_0020, 0xd65f_03c0]);
+
+        let words = code_words(&lower_single_op(OpKind::FpToInt {
+            dst: x(2),
+            src: v(3),
+            fp_precision: FpPrecision::F64,
+            int_width: OpWidth::W64,
+            signed: false,
+            round: FpRoundMode::RoundNearestTiesAway,
+        }));
+        assert_eq!(words, vec![0x9e65_0062, 0xd65f_03c0]);
     }
 
     #[test]
@@ -27435,6 +27465,32 @@ mod tests {
             },
             4_294_967_297.0,
             1,
+        );
+        assert_fp_to_int_f32(
+            "fcvtas_w_s_ties_away_positive",
+            OpKind::FpToInt {
+                dst: x(0),
+                src: v(1),
+                fp_precision: FpPrecision::F32,
+                int_width: OpWidth::W32,
+                signed: true,
+                round: FpRoundMode::RoundNearestTiesAway,
+            },
+            2.5,
+            3,
+        );
+        assert_fp_to_int_f32(
+            "fcvtas_w_s_ties_away_negative",
+            OpKind::FpToInt {
+                dst: x(0),
+                src: v(1),
+                fp_precision: FpPrecision::F32,
+                int_width: OpWidth::W32,
+                signed: true,
+                round: FpRoundMode::RoundNearestTiesAway,
+            },
+            -2.5,
+            u64::from((-3_i32) as u32),
         );
     }
 

@@ -2678,8 +2678,8 @@ impl Aarch64Lifter {
                 let (signed, round) = match insn.mnemonic {
                     Mnemonic::FCVTNS => (true, FpRoundMode::RoundNearest),
                     Mnemonic::FCVTNU => (false, FpRoundMode::RoundNearest),
-                    Mnemonic::FCVTAS => (true, FpRoundMode::Dynamic),
-                    Mnemonic::FCVTAU => (false, FpRoundMode::Dynamic),
+                    Mnemonic::FCVTAS => (true, FpRoundMode::RoundNearestTiesAway),
+                    Mnemonic::FCVTAU => (false, FpRoundMode::RoundNearestTiesAway),
                     Mnemonic::FCVTPS => (true, FpRoundMode::RoundUp),
                     Mnemonic::FCVTPU => (false, FpRoundMode::RoundUp),
                     Mnemonic::FCVTMS => (true, FpRoundMode::RoundDown),
@@ -2755,7 +2755,7 @@ impl Aarch64Lifter {
                     Mnemonic::FRINTP => FpRoundMode::RoundUp,
                     Mnemonic::FRINTM => FpRoundMode::RoundDown,
                     Mnemonic::FRINTZ => FpRoundMode::RoundTowardZero,
-                    Mnemonic::FRINTA => FpRoundMode::RoundNearest,
+                    Mnemonic::FRINTA => FpRoundMode::RoundNearestTiesAway,
                     Mnemonic::FRINTX => FpRoundMode::Dynamic,
                     Mnemonic::FRINTI => FpRoundMode::Dynamic,
                     _ => unreachable!(),
@@ -5558,6 +5558,76 @@ mod tests {
                 assert_eq!(*mode, FpRoundMode::RoundNearest);
             }
             other => panic!("expected FRound, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fcvtas_scalar_uses_ties_away() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        let insn = DecodedInsn::new(Mnemonic::FCVTAS, crate::arm::ExecutionState::Aarch64, 0, 4)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: 0,
+                size: FpRegSize::S,
+            }))
+            .with_operand(Operand::FpReg(FpRegister {
+                num: 1,
+                size: FpRegSize::S,
+            }));
+        let ops = lifter
+            .lift_insn_inner(&insn, 0x1000, &mut ctx)
+            .unwrap()
+            .0;
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FpToInt {
+                fp_precision,
+                int_width,
+                signed,
+                round,
+                ..
+            } => {
+                assert_eq!(*fp_precision, FpPrecision::F32);
+                assert_eq!(*int_width, OpWidth::W32);
+                assert!(*signed);
+                assert_eq!(*round, FpRoundMode::RoundNearestTiesAway);
+            }
+            other => panic!("expected FpToInt, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_lift_fcvtau_scalar_uses_ties_away() {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        let insn = DecodedInsn::new(Mnemonic::FCVTAU, crate::arm::ExecutionState::Aarch64, 0, 4)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: 0,
+                size: FpRegSize::D,
+            }))
+            .with_operand(Operand::FpReg(FpRegister {
+                num: 1,
+                size: FpRegSize::D,
+            }));
+        let ops = lifter
+            .lift_insn_inner(&insn, 0x1000, &mut ctx)
+            .unwrap()
+            .0;
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::FpToInt {
+                fp_precision,
+                int_width,
+                signed,
+                round,
+                ..
+            } => {
+                assert_eq!(*fp_precision, FpPrecision::F64);
+                assert_eq!(*int_width, OpWidth::W64);
+                assert!(!*signed);
+                assert_eq!(*round, FpRoundMode::RoundNearestTiesAway);
+            }
+            other => panic!("expected FpToInt, got {:?}", other),
         }
     }
 

@@ -2297,10 +2297,15 @@ impl SmirInterpreter {
                 fp_precision,
                 int_width,
                 signed,
-                round: _,
+                round,
             } => {
                 let f = self.read_fp(ctx, *src, *fp_precision);
-                let val = if *signed { (f as i64) as u64 } else { f as u64 };
+                let rounded = self.round_fp_value(ctx, f, *round);
+                let val = if *signed {
+                    (rounded as i64) as u64
+                } else {
+                    rounded as u64
+                };
                 ctx.write_vreg(*dst, val & int_width.mask());
             }
 
@@ -2308,10 +2313,10 @@ impl SmirInterpreter {
                 dst,
                 src,
                 precision,
-                mode: _,
+                mode,
             } => {
                 let a = self.read_fp(ctx, *src, *precision);
-                self.write_fp(ctx, *dst, a.round(), *precision);
+                self.write_fp(ctx, *dst, self.round_fp_value(ctx, a, *mode), *precision);
             }
 
             // ==================================================================
@@ -6065,6 +6070,46 @@ impl SmirInterpreter {
         ctx.write_vreg(vreg, bits);
     }
 
+    fn dynamic_fp_round_mode(&self, ctx: &SmirContext) -> FpRoundMode {
+        match &ctx.arch_regs {
+            ArchRegState::Aarch64(arm) => match (arm.fpcr >> 22) & 0x3 {
+                0b00 => FpRoundMode::RoundNearest,
+                0b01 => FpRoundMode::RoundUp,
+                0b10 => FpRoundMode::RoundDown,
+                _ => FpRoundMode::RoundTowardZero,
+            },
+            ArchRegState::X86_64(x86) => match (x86.mxcsr >> 13) & 0x3 {
+                0b00 => FpRoundMode::RoundNearest,
+                0b01 => FpRoundMode::RoundDown,
+                0b10 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            },
+            ArchRegState::RiscV(rv) => match (rv.fcsr >> 5) & 0x7 {
+                0b000 => FpRoundMode::RoundNearest,
+                0b001 => FpRoundMode::RoundTowardZero,
+                0b010 => FpRoundMode::RoundDown,
+                0b011 => FpRoundMode::RoundUp,
+                0b100 => FpRoundMode::RoundNearestTiesAway,
+                _ => FpRoundMode::RoundNearest,
+            },
+            _ => FpRoundMode::RoundNearest,
+        }
+    }
+
+    fn round_fp_value(&self, ctx: &SmirContext, value: f64, mode: FpRoundMode) -> f64 {
+        match match mode {
+            FpRoundMode::Dynamic => self.dynamic_fp_round_mode(ctx),
+            other => other,
+        } {
+            FpRoundMode::RoundNearest => value.round_ties_even(),
+            FpRoundMode::RoundNearestTiesAway => value.round(),
+            FpRoundMode::RoundTowardZero => value.trunc(),
+            FpRoundMode::RoundUp => value.ceil(),
+            FpRoundMode::RoundDown => value.floor(),
+            FpRoundMode::Dynamic => unreachable!(),
+        }
+    }
+
     /// v6mpy product-term table: `(vsel, byte, ci, osel)` — which Vuu vector
     /// (0=lo,1=hi), which byte (0..3) of the word lane, which of the six
     /// coefficients (0=c00..2=c02, 3=c10..5=c12), and which output vector
@@ -7891,6 +7936,57 @@ mod tests {
                 .wrapping_add((i64::MIN as u64).wrapping_mul(8))
                 .wrapping_add((-1i64) as u64)
         );
+    }
+
+    #[test]
+    fn fp_to_int_honors_rounding_mode() {
+        let interp = SmirInterpreter::new();
+        let src = VReg::Arch(ArchReg::Arm(ArmReg::V(1)));
+        let dst = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
+        let mut memory = FlatMemory::new(0x1000);
+
+        let cases: [(FpRoundMode, f64, u64); 7] = [
+            (FpRoundMode::RoundNearest, 2.5, 2_u64),
+            (FpRoundMode::RoundNearestTiesAway, 2.5, 3),
+            (
+                FpRoundMode::RoundNearestTiesAway,
+                -2.5,
+                (-3_i64) as u64,
+            ),
+            (FpRoundMode::RoundUp, 2.1, 3),
+            (FpRoundMode::RoundDown, -2.1, (-3_i64) as u64),
+            (FpRoundMode::RoundTowardZero, -2.9, (-2_i64) as u64),
+            (FpRoundMode::Dynamic, 2.1, 3),
+        ];
+
+        for (mode, input, expected) in cases {
+            let mut ctx = SmirContext::new_aarch64();
+            ctx.write_vreg(src, input.to_bits());
+            if mode == FpRoundMode::Dynamic {
+                ctx.write_vreg(VReg::Arch(ArchReg::Arm(ArmReg::Fpcr)), 0b01 << 22);
+            }
+
+            interp
+                .execute_op(
+                    &mut ctx,
+                    &mut memory,
+                    &SmirOp::new(
+                        OpId(0),
+                        0x1000,
+                        OpKind::FpToInt {
+                            dst,
+                            src,
+                            fp_precision: FpPrecision::F64,
+                            int_width: OpWidth::W64,
+                            signed: true,
+                            round: mode,
+                        },
+                    ),
+                )
+                .unwrap();
+
+            assert_eq!(ctx.read_vreg(dst), expected, "{mode:?} input {input}");
+        }
     }
 
     #[test]
