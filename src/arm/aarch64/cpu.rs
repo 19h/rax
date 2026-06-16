@@ -3224,6 +3224,7 @@ impl AArch64Cpu {
                 (1, 0, 0b11101) => int16_to_fp16(s, false), // UCVTF
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
+            self.fpsr |= fp16_two_reg_status(u, a, opcode, s, r);
             dst |= (r as u128) << (e * 16);
         }
 
@@ -19641,6 +19642,74 @@ fn fp16_three_same_status(u: u32, a_bit: u32, opcode: u32, n: u16, m: u16, r: u1
         _ => None,
     };
     kind.map_or(0, |k| fp_status_binop(2, k, n as u64, m as u64, r as u64))
+}
+
+fn fp_status_estimate(esize: usize, rsqrt: bool, a: u64, result: u64) -> u32 {
+    if fp_is_snan_bits(esize, a) {
+        return FPSR_IOC;
+    }
+    if fp_is_nan_bits(esize, a) {
+        return 0;
+    }
+    if rsqrt && fp_sign_bit(esize, a) != 0 && !fp_is_zero_bits(esize, a) {
+        return FPSR_IOC;
+    }
+    if fp_is_zero_bits(esize, a) {
+        return FPSR_DZC;
+    }
+    if fp_is_finite_bits(esize, a) && fp_is_inf_bits(esize, result) {
+        return FPSR_OFC | FPSR_IXC;
+    }
+    0
+}
+
+fn fp16_two_reg_status(u: u32, a_bit: u32, opcode: u32, s: u16, r: u16) -> u32 {
+    use TwoRegFp::*;
+    let kind = match (u, a_bit, opcode) {
+        (1, 1, 0b11111) => return fp_status_unop(2, Some(Fsqrt), s as u64, r as u64),
+        (0, 1, 0b11101) => return fp_status_estimate(2, false, s as u64, r as u64),
+        (1, 1, 0b11101) => return fp_status_estimate(2, true, s as u64, r as u64),
+        (0, 1, 0b01100)
+        | (0, 1, 0b01101)
+        | (0, 1, 0b01110)
+        | (1, 1, 0b01100)
+        | (1, 1, 0b01101) => {
+            return if fp16_is_snan(s) { FPSR_IOC } else { 0 };
+        }
+        (0, 0, 0b11000) => Some(RintN),
+        (0, 0, 0b11001) => Some(RintM),
+        (0, 1, 0b11000) => Some(RintP),
+        (0, 1, 0b11001) => Some(RintZ),
+        (1, 0, 0b11000) => Some(RintA),
+        (1, 0, 0b11001) => Some(RintX),
+        (1, 1, 0b11001) => Some(RintI),
+        (0, 0, 0b11010) => Some(CvtNS),
+        (0, 0, 0b11011) => Some(CvtMS),
+        (0, 0, 0b11100) => Some(CvtAS),
+        (0, 1, 0b11010) => Some(CvtPS),
+        (0, 1, 0b11011) => Some(CvtZS),
+        (1, 0, 0b11010) => Some(CvtNU),
+        (1, 0, 0b11011) => Some(CvtMU),
+        (1, 0, 0b11100) => Some(CvtAU),
+        (1, 1, 0b11010) => Some(CvtPU),
+        (1, 1, 0b11011) => Some(CvtZU),
+        (0, 0, 0b11101) => {
+            let raw = (s as i16 as i128).unsigned_abs();
+            return fp_status_int_to_fp_scaled(raw, 2, r as u64);
+        }
+        (1, 0, 0b11101) => return fp_status_int_to_fp_scaled(s as u128, 2, r as u64),
+        _ => None,
+    };
+    kind.map_or(0, |k| {
+        if matches!(
+            k,
+            CvtNS | CvtMS | CvtPS | CvtZS | CvtAS | CvtNU | CvtMU | CvtPU | CvtZU | CvtAU
+        ) {
+            fp_status_fp_to_int_unop(2, k, s as u64)
+        } else {
+            fp_status_unop(2, Some(k), s as u64, r as u64)
+        }
+    })
 }
 
 fn fp_status_cvt_precision(src: u64, src_prec: usize, dst_prec: usize, result: u64) -> u32 {

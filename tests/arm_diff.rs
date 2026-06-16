@@ -35095,3 +35095,41 @@ fn diff_simd_fp16_three_same_fpsr() {
 
     run_fpsr_batch("simd_fp16_three_same_fpsr", batch);
 }
+
+// commit e134453b642b temp: set simd fp16 two-reg fpsr
+#[test]
+fn diff_simd_fp16_two_reg_fpsr() {
+    // Replicate a 16-bit FP16 pattern across all 8 lanes of a 128-bit V reg.
+    let rep = |p: u16| -> u64 { (p as u64) * 0x0001_0001_0001_0001u64 };
+
+    // (u, a, opcode, fp16-input-bits, name) for the FP16 two-reg-misc table.
+    // FP16 constants: -4.0=0xC400, 2.0=0x4000, +0.0=0x0000, -2.0=0xC000,
+    // 2.5=0x4100, +inf=0x7C00 (out-of-range for FCVTZS).
+    let cases: &[(u32, u32, u32, u16, &str)] = &[
+        (1, 1, 0b11111, 0xC400, "fsqrt_neg_ioc"),   // FSQRT(-4.0) -> IOC
+        (1, 1, 0b11111, 0x4000, "fsqrt_irr_ixc"),   // FSQRT(2.0) inexact -> IXC
+        (0, 1, 0b11101, 0x0000, "frecpe_zero_dzc"), // FRECPE(+0.0) -> DZC
+        (1, 1, 0b11101, 0xC000, "frsqrte_neg_ioc"), // FRSQRTE(-2.0) -> IOC
+        (0, 1, 0b11011, 0x4100, "fcvtzs_frac_ixc"), // FCVTZS(2.5) -> IXC
+        (0, 1, 0b11011, 0x7C00, "fcvtzs_inf_ioc"),  // FCVTZS(+inf) -> IOC
+        // SCVTF of an integer not representable in FP16's 11-bit mantissa:
+        // 16385 (0x4001 as i16) rounds -> IXC.
+        (0, 0, 0b11101, 0x4001, "scvtf_inexact_ixc"),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(u, a, opcode, bits, name) in cases {
+        // Cover both 64-bit (q=0, 4 lanes) and 128-bit (q=1, 8 lanes) vectors.
+        for q in 0..2u32 {
+            let insn = enc_fp16_2r(q, u, a, opcode);
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0; // round-to-nearest, no FTZ, no alt handling.
+                st.set_vreg(RN as usize, rep(bits), rep(bits));
+                batch.push((format!("{name}_q{q}_fpsr{initial_fpsr:#x}"), insn, st));
+            }
+        }
+    }
+    run_fpsr_batch("simd_fp16_two_reg_fpsr", batch);
+}
