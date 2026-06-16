@@ -8,6 +8,18 @@
 
 use crate::generated::test_helpers::*;
 
+fn assert_unallocated_encoding(encoding: u32) {
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
+}
+
 // ============================================================================
 // aarch64_integer_ins_ext_extract_immediate Tests
 // ============================================================================
@@ -43,15 +55,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_sf_1_max_0_93800000() {
     // Test aarch64_integer_ins_ext_extract_immediate field sf = 1 (Max)
     // Fields: N=0, Rd=0, Rm=0, sf=1, imms=0, Rn=0
     let encoding: u32 = 0x93800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -85,15 +89,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_n_1_max_0_13c00000() {
     // Test aarch64_integer_ins_ext_extract_immediate field N = 1 (Max)
     // Fields: N=1, Rd=0, Rm=0, Rn=0, imms=0, sf=0
     let encoding: u32 = 0x13C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -379,15 +375,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_32_poweroftwo_0_138
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 32 (PowerOfTwo)
     // Fields: sf=0, Rd=0, Rm=0, N=0, imms=32, Rn=0
     let encoding: u32 = 0x13808000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -402,12 +390,13 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_63_max_0_1380fc00()
     let encoding: u32 = 0x1380FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // Native EL0 hardware traps this 32-bit form: imms<5> is set.
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -610,15 +599,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_combo_1_0_93800000() {
     // Test aarch64_integer_ins_ext_extract_immediate field combination: sf=1, N=0, Rm=0, imms=0, Rn=0, Rd=0
     // Fields: Rm=0, Rd=0, N=0, imms=0, Rn=0, sf=1
     let encoding: u32 = 0x93800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -652,15 +633,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_combo_3_0_13c00000() {
     // Test aarch64_integer_ins_ext_extract_immediate field combination: sf=0, N=1, Rm=0, imms=0, Rn=0, Rd=0
     // Fields: Rd=0, imms=0, Rm=0, sf=0, N=1, Rn=0
     let encoding: u32 = 0x13C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -946,15 +919,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_combo_17_0_13808000() {
     // Test aarch64_integer_ins_ext_extract_immediate field combination: sf=0, N=0, Rm=0, imms=32, Rn=0, Rd=0
     // Fields: sf=0, Rm=0, imms=32, Rn=0, Rd=0, N=0
     let encoding: u32 = 0x13808000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -969,12 +934,13 @@ fn test_aarch64_integer_ins_ext_extract_immediate_combo_18_0_1380fc00() {
     let encoding: u32 = 0x1380FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // Native EL0 hardware traps this 32-bit form: imms<5> is set.
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -1303,15 +1269,7 @@ fn test_aarch64_integer_ins_ext_extract_immediate_special_sf_1_size_variant_1_0_
     // Test aarch64_integer_ins_ext_extract_immediate special value sf = 1 (Size variant 1)
     // Fields: Rm=0, Rn=0, imms=1, Rd=0, sf=1, N=0
     let encoding: u32 = 0x93800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -1621,15 +1579,7 @@ fn test_aarch64_integer_bitfield_field_sf_1_max_0_93000000() {
     // Test aarch64_integer_bitfield field sf = 1 (Max)
     // Fields: immr=0, sf=1, Rn=0, Rd=0, N=0, imms=0, opc=0
     let encoding: u32 = 0x93000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1959,15 +1909,7 @@ fn test_aarch64_integer_bitfield_field_immr_32_poweroftwo_0_13200000() {
     // Test aarch64_integer_bitfield field immr = 32 (PowerOfTwo)
     // Fields: sf=0, imms=0, opc=0, N=0, immr=32, Rd=0, Rn=0
     let encoding: u32 = 0x13200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1982,12 +1924,13 @@ fn test_aarch64_integer_bitfield_field_immr_63_max_0_133f0000() {
     let encoding: u32 = 0x133F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // Native EL0 hardware traps this 32-bit form: immr<5> is set.
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2190,15 +2133,7 @@ fn test_aarch64_integer_bitfield_field_imms_32_poweroftwo_0_13008000() {
     // Test aarch64_integer_bitfield field imms = 32 (PowerOfTwo)
     // Fields: sf=0, N=0, immr=0, opc=0, imms=32, Rn=0, Rd=0
     let encoding: u32 = 0x13008000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -2422,15 +2357,7 @@ fn test_aarch64_integer_bitfield_combo_1_0_93000000() {
     // Test aarch64_integer_bitfield field combination: sf=1, opc=0, N=0, immr=0, imms=0, Rn=0, Rd=0
     // Fields: immr=0, opc=0, imms=0, Rn=0, Rd=0, sf=1, N=0
     let encoding: u32 = 0x93000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -2760,15 +2687,7 @@ fn test_aarch64_integer_bitfield_combo_17_0_13200000() {
     // Test aarch64_integer_bitfield field combination: sf=0, opc=0, N=0, immr=32, imms=0, Rn=0, Rd=0
     // Fields: immr=32, sf=0, opc=0, Rd=0, Rn=0, imms=0, N=0
     let encoding: u32 = 0x13200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -2783,12 +2702,13 @@ fn test_aarch64_integer_bitfield_combo_18_0_133f0000() {
     let encoding: u32 = 0x133F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
+    // Native EL0 hardware traps this 32-bit form: immr<5> is set.
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
     );
 }
 
@@ -2991,15 +2911,7 @@ fn test_aarch64_integer_bitfield_combo_28_0_13008000() {
     // Test aarch64_integer_bitfield field combination: sf=0, opc=0, N=0, immr=0, imms=32, Rn=0, Rd=0
     // Fields: imms=32, Rd=0, sf=0, N=0, opc=0, immr=0, Rn=0
     let encoding: u32 = 0x13008000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -3265,15 +3177,7 @@ fn test_aarch64_integer_bitfield_special_sf_1_size_variant_1_0_93010400() {
     // Test aarch64_integer_bitfield special value sf = 1 (Size variant 1)
     // Fields: immr=1, Rn=0, Rd=0, opc=0, imms=1, N=0, sf=1
     let encoding: u32 = 0x93010400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -3954,15 +3858,7 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_3_max_0_12e00000() {
     // Test aarch64_integer_ins_ext_insert_movewide field hw = 3 (Max)
     // Fields: Rd=0, opc=0, imm16=0, hw=3, sf=0
     let encoding: u32 = 0x12E00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -4879,15 +4775,7 @@ fn test_aarch64_integer_ins_ext_insert_movewide_combo_8_0_12e00000() {
     // Test aarch64_integer_ins_ext_insert_movewide field combination: sf=0, opc=0, hw=3, imm16=0, Rd=0
     // Fields: sf=0, hw=3, opc=0, Rd=0, imm16=0
     let encoding: u32 = 0x12E00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide

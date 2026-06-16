@@ -416,6 +416,14 @@ impl Aarch64Decoder {
                 4,
             ));
         }
+        if !is_64bit && (immr >= 32 || imms >= 32) {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        }
 
         let base_mnemonic = match opc {
             0b00 => Mnemonic::SBFM,
@@ -3793,16 +3801,37 @@ mod tests {
 
         // --- 2-source still decodes correctly (must not regress) ---
         // FADD S0,S1,S2 / FADD D0,D1,D2 / FDIV S0,S1,S2
-        assert_eq!(Aarch64Decoder::decode(0x1E22_2820).unwrap().mnemonic, Mnemonic::FADD);
-        assert_eq!(Aarch64Decoder::decode(0x1E62_2820).unwrap().mnemonic, Mnemonic::FADD);
-        assert_eq!(Aarch64Decoder::decode(0x1E22_1820).unwrap().mnemonic, Mnemonic::FDIV);
-        assert_eq!(fp_size(&Aarch64Decoder::decode(0x1E22_2820).unwrap(), 0), FpRegSize::S);
-        assert_eq!(fp_size(&Aarch64Decoder::decode(0x1E62_2820).unwrap(), 0), FpRegSize::D);
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E22_2820).unwrap().mnemonic,
+            Mnemonic::FADD
+        );
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E62_2820).unwrap().mnemonic,
+            Mnemonic::FADD
+        );
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E22_1820).unwrap().mnemonic,
+            Mnemonic::FDIV
+        );
+        assert_eq!(
+            fp_size(&Aarch64Decoder::decode(0x1E22_2820).unwrap(), 0),
+            FpRegSize::S
+        );
+        assert_eq!(
+            fp_size(&Aarch64Decoder::decode(0x1E62_2820).unwrap(), 0),
+            FpRegSize::D
+        );
 
         // --- 1-source still decodes correctly ---
         // FABS S0,S1 / FNEG S0,S1
-        assert_eq!(Aarch64Decoder::decode(0x1E20_C020).unwrap().mnemonic, Mnemonic::FABS);
-        assert_eq!(Aarch64Decoder::decode(0x1E21_4020).unwrap().mnemonic, Mnemonic::FNEG);
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E20_C020).unwrap().mnemonic,
+            Mnemonic::FABS
+        );
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E21_4020).unwrap().mnemonic,
+            Mnemonic::FNEG
+        );
 
         // --- the fix: classes that merely share bit 21 must not mis-decode ---
         // FCSEL S0,S1,S2,NE ([11:10]=11): old table read [15:10]=0x07 as FCMP.
@@ -3814,7 +3843,10 @@ mod tests {
             Some(Operand::Cond(Condition::NE))
         ));
         // FCCMP S1,S2,#0,EQ ([11:10]=01): old table read [15:10]=0x01 as FCMP.
-        assert_eq!(Aarch64Decoder::decode(0x1E22_0420).unwrap().mnemonic, Mnemonic::UNKNOWN);
+        assert_eq!(
+            Aarch64Decoder::decode(0x1E22_0420).unwrap().mnemonic,
+            Mnemonic::UNKNOWN
+        );
         // FCMP S1,S2 ([13:10]=1000): compare class, not 2-source arithmetic.
         let fcmp = Aarch64Decoder::decode(0x1E22_2020).unwrap();
         assert_eq!(fcmp.mnemonic, Mnemonic::FCMP);
@@ -3823,7 +3855,10 @@ mod tests {
 
         // --- reserved type 0b10 must be undefined, not aliased to single ---
         // 2-source FADD-shaped word with ptype=0b10.
-        assert_eq!(Aarch64Decoder::decode(0x1EA2_2820).unwrap().mnemonic, Mnemonic::UNDEFINED);
+        assert_eq!(
+            Aarch64Decoder::decode(0x1EA2_2820).unwrap().mnemonic,
+            Mnemonic::UNDEFINED
+        );
 
         // --- 3-source: half precision keeps H, reserved 0b10 is undefined ---
         // FMADD H0,H1,H2,H3 (type=0b11): old `size & 1` mislabeled the size as D.
@@ -3831,7 +3866,10 @@ mod tests {
         assert_eq!(fmadd_h.mnemonic, Mnemonic::FMADD);
         assert_eq!(fp_size(&fmadd_h, 0), FpRegSize::H);
         // type=0b10 reserved → undefined (old `size & 1` aliased it to single).
-        assert_eq!(Aarch64Decoder::decode(0x1F82_0C20).unwrap().mnemonic, Mnemonic::UNDEFINED);
+        assert_eq!(
+            Aarch64Decoder::decode(0x1F82_0C20).unwrap().mnemonic,
+            Mnemonic::UNDEFINED
+        );
     }
 
     #[test]

@@ -8,6 +8,18 @@
 
 use crate::generated::test_helpers::*;
 
+fn assert_unallocated_encoding(encoding: u32) {
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
+}
+
 // ============================================================================
 // aarch64_integer_logical_shiftedreg Tests
 // ============================================================================
@@ -2428,15 +2440,7 @@ fn test_aarch64_integer_logical_immediate_field_n_1_max_0_12400000() {
     // Test aarch64_integer_logical_immediate field N = 1 (Max)
     // Fields: Rn=0, opc=0, Rd=0, immr=0, N=1, sf=0, imms=0
     let encoding: u32 = 0x12400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3228,15 +3232,7 @@ fn test_aarch64_integer_logical_immediate_combo_7_0_12400000() {
     // Test aarch64_integer_logical_immediate field combination: sf=0, opc=0, N=1, immr=0, imms=0, Rn=0, Rd=0
     // Fields: immr=0, imms=0, Rn=0, opc=0, Rd=0, N=1, sf=0
     let encoding: u32 = 0x12400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_logical_immediate

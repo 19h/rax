@@ -8,6 +8,18 @@
 
 use crate::generated::test_helpers::*;
 
+fn assert_unallocated_encoding(encoding: u32) {
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(
+        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
+        "expected unallocated encoding for {:#010X}: {:?}",
+        encoding,
+        exit
+    );
+}
+
 // ============================================================================
 // aarch64_integer_arithmetic_add_sub_shiftedreg Tests
 // ============================================================================
@@ -4591,15 +4603,7 @@ fn test_aarch64_integer_arithmetic_add_sub_extendedreg_field_imm3_7_max_0_0b201c
     // Test aarch64_integer_arithmetic_add_sub_extendedreg field imm3 = 7 (Max)
     // Fields: Rn=0, Rm=0, S=0, Rd=0, imm3=7, option=0, sf=0, op=0
     let encoding: u32 = 0x0B201C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_arithmetic_add_sub_extendedreg
@@ -5221,15 +5225,7 @@ fn test_aarch64_integer_arithmetic_add_sub_extendedreg_combo_21_0_0b201c00() {
     // Test aarch64_integer_arithmetic_add_sub_extendedreg field combination: sf=0, op=0, S=0, Rm=0, option=0, imm3=7, Rn=0, Rd=0
     // Fields: sf=0, imm3=7, Rd=0, option=0, Rn=0, Rm=0, S=0, op=0
     let encoding: u32 = 0x0B201C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_unallocated_encoding(encoding);
 }
 
 /// Provenance: aarch64_integer_arithmetic_add_sub_extendedreg

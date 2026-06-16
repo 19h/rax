@@ -991,7 +991,7 @@ fn test_aarch64_integer_flags_xaflag_flags_positiveresult_7_d500403f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(cpu.get_pstate().n, false, "N should be false");
+    assert_eq!(cpu.get_pstate().n, true, "N should be true");
     assert_eq!(cpu.get_pstate().z, false, "Z should be false");
     assert_eq!(cpu.get_pstate().c, false, "C should be false");
     assert_eq!(cpu.get_pstate().v, false, "V should be false");
