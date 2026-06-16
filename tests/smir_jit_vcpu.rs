@@ -166,6 +166,20 @@ fn run_interp(vcpu: &mut X86_64Vcpu) {
     }
 }
 
+#[test]
+fn interp_lea_scaled_index_wraps() {
+    // lea rdx,[rsi*8]; hlt
+    let mut v = make_vcpu_code(&[0x48, 0x8D, 0x14, 0xF5, 0x00, 0x00, 0x00, 0x00, 0xF4]);
+    let mut r = v.get_regs().unwrap();
+    r.rsi = 0x8000_0000_0000_0000;
+    v.set_regs(&r).unwrap();
+
+    run_interp(&mut v);
+
+    let r = v.get_regs().unwrap();
+    assert_eq!(r.rdx, 0x8000_0000_0000_0000u64.wrapping_mul(8));
+}
+
 /// The JIT-tier final state must equal the interpreter's, register for register.
 #[test]
 fn jit_matches_interpreter() {

@@ -5940,7 +5940,7 @@ impl SmirInterpreter {
         match addr {
             Address::Direct(r) => ctx.read_vreg(*r),
             Address::BaseOffset { base, offset, .. } => {
-                (ctx.read_vreg(*base) as i64 + offset) as u64
+                ctx.read_vreg(*base).wrapping_add(*offset as u64)
             }
             Address::BaseIndexScale {
                 base,
@@ -5951,18 +5951,20 @@ impl SmirInterpreter {
             } => {
                 let base_val = base.map(|b| ctx.read_vreg(b)).unwrap_or(0);
                 let index_val = ctx.read_vreg(*index);
-                (base_val as i64 + (index_val as i64 * *scale as i64) + *disp as i64) as u64
+                base_val
+                    .wrapping_add(index_val.wrapping_mul(*scale as u64))
+                    .wrapping_add(*disp as i64 as u64)
             }
             Address::PcRel { offset, base, .. } => {
                 let base_pc = base.unwrap_or(ctx.pc);
-                (base_pc as i64 + offset) as u64
+                base_pc.wrapping_add(*offset as u64)
             }
             Address::GpRel { offset } => {
                 let gp = match &ctx.arch_regs {
                     ArchRegState::Hexagon(hex) => hex.gp as u64,
                     _ => 0,
                 };
-                (gp as i64 + *offset as i64) as u64
+                gp.wrapping_add(*offset as i64 as u64)
             }
             Address::Absolute(a) => *a,
             Address::SegmentRel {
@@ -5974,10 +5976,12 @@ impl SmirInterpreter {
             } => {
                 // [segment_base + base + index*scale + disp]. The segment base
                 // lives in the FsBase/GsBase architectural register.
-                let seg = ctx.read_vreg(*segment) as i64;
-                let base_val = base.map(|b| ctx.read_vreg(b)).unwrap_or(0) as i64;
-                let index_val = index.map(|i| ctx.read_vreg(i)).unwrap_or(0) as i64;
-                (seg + base_val + index_val * *scale as i64 + *disp) as u64
+                let seg = ctx.read_vreg(*segment);
+                let base_val = base.map(|b| ctx.read_vreg(b)).unwrap_or(0);
+                let index_val = index.map(|i| ctx.read_vreg(i)).unwrap_or(0);
+                seg.wrapping_add(base_val)
+                    .wrapping_add(index_val.wrapping_mul(*scale as u64))
+                    .wrapping_add(*disp as u64)
             }
         }
     }
@@ -7786,6 +7790,119 @@ mod tests {
             value[idx] = u64::from_le_bytes(lane);
         }
         value
+    }
+
+    #[test]
+    fn lea_scaled_index_address_wraps() {
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rsi, i64::MIN as u64);
+
+        let mut memory = FlatMemory::new(0x1000);
+        let interp = SmirInterpreter::new();
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::Lea {
+                        dst: rdx,
+                        addr: Address::BaseIndexScale {
+                            base: None,
+                            index: rsi,
+                            scale: 8,
+                            disp: 0,
+                            disp_size: DispSize::Auto,
+                        },
+                    },
+                ),
+            )
+            .unwrap();
+
+        assert_eq!(ctx.read_vreg(rdx), (i64::MIN as u64).wrapping_mul(8));
+    }
+
+    #[test]
+    fn compute_address_wraps_signed_offsets() {
+        let interp = SmirInterpreter::new();
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let fs_base = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.pc = i64::MIN as u64;
+        ctx.write_vreg(rax, i64::MIN as u64);
+        ctx.write_vreg(rbx, i64::MIN as u64);
+        ctx.write_vreg(fs_base, i64::MIN as u64);
+
+        assert_eq!(
+            interp.compute_address(
+                &ctx,
+                &Address::BaseOffset {
+                    base: rax,
+                    offset: -1,
+                    disp_size: DispSize::Auto,
+                },
+            ),
+            (i64::MIN as u64).wrapping_add((-1i64) as u64)
+        );
+        assert_eq!(
+            interp.compute_address(
+                &ctx,
+                &Address::BaseIndexScale {
+                    base: Some(rax),
+                    index: rbx,
+                    scale: 8,
+                    disp: -1,
+                    disp_size: DispSize::Auto,
+                },
+            ),
+            (i64::MIN as u64)
+                .wrapping_add((i64::MIN as u64).wrapping_mul(8))
+                .wrapping_add((-1i64) as u64)
+        );
+        assert_eq!(
+            interp.compute_address(
+                &ctx,
+                &Address::PcRel {
+                    offset: -1,
+                    disp_size: DispSize::Auto,
+                    base: None,
+                },
+            ),
+            (i64::MIN as u64).wrapping_add((-1i64) as u64)
+        );
+        assert_eq!(
+            interp.compute_address(
+                &ctx,
+                &Address::SegmentRel {
+                    segment: fs_base,
+                    base: Some(rax),
+                    index: Some(rbx),
+                    scale: 8,
+                    disp: -1,
+                },
+            ),
+            (i64::MIN as u64)
+                .wrapping_add(i64::MIN as u64)
+                .wrapping_add((i64::MIN as u64).wrapping_mul(8))
+                .wrapping_add((-1i64) as u64)
+        );
+    }
+
+    #[test]
+    fn gp_relative_address_wraps_negative_offsets() {
+        let interp = SmirInterpreter::new();
+        let mut ctx = SmirContext::new_hexagon();
+        ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::Gp), 0);
+
+        assert_eq!(
+            interp.compute_address(&ctx, &Address::GpRel { offset: -1 }),
+            u64::MAX
+        );
     }
 
     #[test]
