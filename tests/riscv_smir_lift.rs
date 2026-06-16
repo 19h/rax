@@ -416,7 +416,6 @@ fn sweep(seed: u64, opcodes: &[u32], count: usize) {
                 | Op::Ebreak
                 | Op::Fence
                 | Op::FenceI
-                | Op::CboZero
                 | Op::Mret
                 | Op::Sret
                 | Op::Wfi
@@ -472,7 +471,6 @@ fn sweep(seed: u64, opcodes: &[u32], count: usize) {
 /// report it so the harness can point it into the scratch window. Also clamp
 /// the immediate offset small so the access stays in-window.
 fn retarget_mem(w: u32, insn: &Op) -> (u32, Option<u32>) {
-    let _ = insn;
     let opc = w & 0x7f;
     match opc {
         0x03 | 0x07 => {
@@ -490,6 +488,11 @@ fn retarget_mem(w: u32, insn: &Op) -> (u32, Option<u32>) {
         }
         0x2f => {
             // AMO: address = x[rs1]; set rs1 = x10 (aligned base).
+            let w = (w & !(0x1f << 15)) | (10 << 15);
+            (w, Some(10))
+        }
+        0x0f if matches!(insn, Op::CboZero) => {
+            // CBO.ZERO: address = x[rs1] aligned down to a 64-byte block.
             let w = (w & !(0x1f << 15)) | (10 << 15);
             (w, Some(10))
         }
@@ -1031,7 +1034,6 @@ fn lift_exhaustive_audit() {
                 | "Ebreak"
                 | "Fence"
                 | "FenceI"
-                | "CboZero"
                 | "Mret"
                 | "Sret"
                 | "Wfi"

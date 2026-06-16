@@ -1514,7 +1514,9 @@ fn decode_fence(w: u32, isa: &Isa) -> Insn {
     match funct3(w) {
         0 => base(Op::Fence, w),
         1 if isa.zifencei => base(Op::FenceI, w),
-        2 if rd(w) == 0 && rs2(w) == 4 => base(Op::CboZero, w),
+        2 if isa.zicboz && rd(w) == 0 && ((w >> 20) & 0xfff) == 0x004 => {
+            base(Op::CboZero, w)
+        }
         _ => Insn::illegal(w, 4),
     }
 }
@@ -1912,5 +1914,19 @@ mod tests {
         let i = dec(w);
         assert_eq!(i.op, Op::Slli);
         assert_eq!(i.imm, 40);
+    }
+
+    #[test]
+    fn decode_cbo_zero_requires_zicboz_and_full_funct12() {
+        let cbo_zero = (0x004u32 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        assert_eq!(dec(cbo_zero).op, Op::CboZero);
+
+        let mut no_zicboz = Isa::rv64gc();
+        no_zicboz.zicboz = false;
+        assert!(decode(cbo_zero, Xlen::Rv64, &no_zicboz).is_illegal());
+
+        let reserved_high_funct12 = cbo_zero | (1 << 31);
+        assert_eq!((reserved_high_funct12 >> 20) & 0x1f, 4);
+        assert!(decode(reserved_high_funct12, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
     }
 }

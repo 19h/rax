@@ -49,6 +49,8 @@ pub struct RiscVExtensions {
     pub zicsr: bool,
     /// Zifencei extension: Instruction-stream fence
     pub zifencei: bool,
+    /// Zicboz extension: Cache-block zero
+    pub zicboz: bool,
     /// Zba extension: Address bit manipulation
     pub zba: bool,
     /// Zbb extension: Basic bit manipulation
@@ -94,6 +96,7 @@ impl RiscVExtensions {
             c: true,
             zicsr: true,
             zifencei: true,
+            zicboz: true,
             zba: true,
             zbb: true,
             zbc: true,
@@ -189,6 +192,7 @@ impl RiscVLifter {
             c: self.extensions.c,
             zicsr: self.extensions.zicsr,
             zifencei: self.extensions.zifencei,
+            zicboz: self.extensions.zicboz,
             zba: self.extensions.zba,
             zbb: self.extensions.zbb,
             zbc: self.extensions.zbc,
@@ -3800,6 +3804,40 @@ impl RiscVLifter {
                     },
                 ));
             }
+            0b010 if self.extensions.zicboz
+                && Self::rd(insn) == 0
+                && ((insn >> 20) & 0xfff) == 0x004 =>
+            {
+                let base = self.get_x_reg(Self::rs1(insn), ctx);
+                let aligned = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::And {
+                        dst: aligned,
+                        src1: base,
+                        src2: SrcOperand::Imm(!0x3f),
+                        width: self.op_width(),
+                        flags: FlagUpdate::None,
+                    },
+                ));
+
+                for offset in (0..64).step_by(8) {
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Store {
+                            src: VReg::Imm(0),
+                            addr: Address::BaseOffset {
+                                base: aligned,
+                                offset,
+                                disp_size: DispSize::Auto,
+                            },
+                            width: MemWidth::B8,
+                        },
+                    ));
+                }
+            }
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr,
@@ -5726,6 +5764,70 @@ mod tests {
                 "enabled Zcb instruction {word:#06x} lifted to no ops"
             );
         }
+    }
+
+    #[test]
+    fn cbo_zero_lifts_aligned_cache_block_zeroing() {
+        let cbo_zero = (0x004u32 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        assert_invalid_lift(RiscVLifter::new_rv64(RiscVExtensions::rv64i()), cbo_zero);
+
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut lift_ctx = test_ctx();
+        let result = lifter
+            .lift_insn(0x1000, &cbo_zero.to_le_bytes(), &mut lift_ctx)
+            .expect("enabled Zicboz CBO.ZERO should lift");
+        assert!(matches!(result.control_flow, ControlFlow::NextInsn));
+        assert_eq!(result.ops.len(), 9);
+        assert!(matches!(result.ops[0].kind, OpKind::And { .. }));
+        assert_eq!(
+            result
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::Store { width: MemWidth::B8, .. }))
+                .count(),
+            8
+        );
+
+        let mut ops = result.ops;
+        for (idx, op) in ops.iter_mut().enumerate() {
+            op.id = OpId(idx as u16);
+        }
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops,
+            terminator: Terminator::Trap {
+                kind: crate::smir::TrapKind::Breakpoint,
+            },
+            exec_count: 0,
+        };
+
+        let mut ctx = crate::smir::SmirContext::new_riscv();
+        ctx.source_arch = SourceArch::RiscV64;
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(10)), 0x4043);
+
+        let mut memory = crate::smir::FlatMemory::with_base(0, 0x10000);
+        {
+            use crate::smir::SmirMemory;
+            memory.write(0x4000, &[0xa5; 0xc0]).unwrap();
+        }
+
+        let interp = crate::smir::SmirInterpreter::new();
+        interp.execute_block(&mut ctx, &mut memory, &block);
+
+        let mut before = [0u8; 0x40];
+        let mut zeroed = [0xffu8; 0x40];
+        let mut after = [0u8; 0x40];
+        {
+            use crate::smir::SmirMemory;
+            memory.read(0x4000, &mut before).unwrap();
+            memory.read(0x4040, &mut zeroed).unwrap();
+            memory.read(0x4080, &mut after).unwrap();
+        }
+        assert_eq!(before, [0xa5; 0x40]);
+        assert_eq!(zeroed, [0; 0x40]);
+        assert_eq!(after, [0xa5; 0x40]);
     }
 
     #[test]

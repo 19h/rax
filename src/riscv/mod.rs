@@ -89,6 +89,8 @@ pub struct Isa {
     pub zicsr: bool,
     /// Zifencei: instruction-stream fence.
     pub zifencei: bool,
+    /// Zicboz: cache-block zero.
+    pub zicboz: bool,
     /// Zba: address generation.
     pub zba: bool,
     /// Zbb: basic bit manipulation.
@@ -125,7 +127,7 @@ pub struct Isa {
 }
 
 impl Isa {
-    /// RV64GC general-purpose set: IMAFDC + Zicsr + Zifencei + Zba/Zbb.
+    /// Standard test/differential configuration used by this crate.
     pub const fn rv64gc() -> Self {
         Isa {
             m: true,
@@ -135,6 +137,7 @@ impl Isa {
             c: true,
             zicsr: true,
             zifencei: true,
+            zicboz: true,
             zba: true,
             zbb: true,
             zbc: true,
@@ -164,6 +167,7 @@ impl Isa {
             c: false,
             zicsr: false,
             zifencei: false,
+            zicboz: false,
             zba: false,
             zbb: false,
             zbc: false,

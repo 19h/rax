@@ -4679,6 +4679,29 @@ mod tests {
     }
 
     #[test]
+    fn cbo_zero_zeroes_aligned_cache_block() {
+        let mut c = cpu();
+        let pattern = [0xa5; 0xc0];
+        c.write_memory(0x4000, &pattern).unwrap();
+        c.set_x(10, 0x4043);
+        c.set_pc(0x200);
+
+        let cbo_zero = (0x004u32 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        assert_eq!(run_one(&mut c, cbo_zero), RiscVExit::Continue);
+
+        let mut before = [0u8; 0x40];
+        let mut zeroed = [0xffu8; 0x40];
+        let mut after = [0u8; 0x40];
+        c.read_memory(0x4000, &mut before).unwrap();
+        c.read_memory(0x4040, &mut zeroed).unwrap();
+        c.read_memory(0x4080, &mut after).unwrap();
+
+        assert_eq!(before, [0xa5; 0x40]);
+        assert_eq!(zeroed, [0; 0x40]);
+        assert_eq!(after, [0xa5; 0x40]);
+    }
+
+    #[test]
     fn csr_readwrite_and_illegal() {
         let mut c = cpu();
         // csrrwi x5, mscratch(0x340), 0 then csrrw to set, read back.
