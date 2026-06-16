@@ -1680,6 +1680,7 @@ impl AArch64Cpu {
                         _ => (n, fp_neg_bits(a, eb)),                       // FNMSUB
                     };
                     let r = fp_muladd_bits(aa, nn, m, eb);
+                    self.fpsr |= fp_status_fma((eb / 8) as usize, aa, nn, m, r);
                     self.v[rd] = (r & m_mask) as u128;
                 }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
@@ -1740,6 +1741,7 @@ impl AArch64Cpu {
                 0b00 => {
                     let (n, m) = (self.v[rn as usize] as u32, self.v[rm as usize] as u32);
                     let mut r = fp_three_same_f32(kind, n, m, 0);
+                    self.fpsr |= fp_status_binop_f32(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000_0000;
                     }
@@ -1748,6 +1750,7 @@ impl AArch64Cpu {
                 0b01 => {
                     let (n, m) = (self.v[rn as usize] as u64, self.v[rm as usize] as u64);
                     let mut r = fp_three_same_f64(kind, n, m, 0);
+                    self.fpsr |= fp_status_binop_f64(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000_0000_0000_0000;
                     }
@@ -1830,6 +1833,7 @@ impl AArch64Cpu {
                         _ => fp16_round(val) as u64,
                     }
                 };
+                self.fpsr |= fp_status_cvt_precision(sb as u64, src_prec, dst_prec, r);
                 self.v[rd as usize] = r as u128;
                 return Ok(CpuExit::Continue);
             }
@@ -1872,6 +1876,7 @@ impl AArch64Cpu {
                         None => a,
                         Some(k) => fp_two_reg_f32(k, a),
                     };
+                    self.fpsr |= fp_status_unop_f32(kind, a, r);
                     self.v[rd as usize] = r as u128;
                 }
                 0b01 => {
@@ -1880,6 +1885,7 @@ impl AArch64Cpu {
                         None => a,
                         Some(k) => fp_two_reg_f64(k, a),
                     };
+                    self.fpsr |= fp_status_unop_f64(kind, a, r);
                     self.v[rd as usize] = r as u128;
                 }
                 0b11 => {
@@ -1928,18 +1934,22 @@ impl AArch64Cpu {
             match fp_type {
                 0b00 => {
                     // Single precision
-                    let op1 = f32::from_bits(self.v[rn as usize] as u32);
+                    let op1_bits = self.v[rn as usize] as u32;
+                    let op1 = f32::from_bits(op1_bits);
+                    let op2_bits = if cmp_with_zero {
+                        0
+                    } else {
+                        self.v[rm as usize] as u32
+                    };
                     let op2 = if cmp_with_zero {
                         0.0f32
                     } else {
-                        f32::from_bits(self.v[rm as usize] as u32)
+                        f32::from_bits(op2_bits)
                     };
 
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
-                        // Unordered
-                        if opc & 1 != 0 {
-                            // FCMPE - signal exception
-                            // For now, just set flags
+                        if (opc & 1) != 0 || is_snan32(op1_bits) || is_snan32(op2_bits) {
+                            self.fpsr |= FPSR_IOC;
                         }
                         (false, false, true, true)
                     } else if op1 == op2 {
@@ -1957,14 +1967,23 @@ impl AArch64Cpu {
                 }
                 0b01 => {
                     // Double precision
-                    let op1 = f64::from_bits(self.v[rn as usize] as u64);
+                    let op1_bits = self.v[rn as usize] as u64;
+                    let op1 = f64::from_bits(op1_bits);
+                    let op2_bits = if cmp_with_zero {
+                        0
+                    } else {
+                        self.v[rm as usize] as u64
+                    };
                     let op2 = if cmp_with_zero {
                         0.0f64
                     } else {
-                        f64::from_bits(self.v[rm as usize] as u64)
+                        f64::from_bits(op2_bits)
                     };
 
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
+                        if (opc & 1) != 0 || is_snan64(op1_bits) || is_snan64(op2_bits) {
+                            self.fpsr |= FPSR_IOC;
+                        }
                         (false, false, true, true)
                     } else if op1 == op2 {
                         (false, true, true, false)
@@ -1981,13 +2000,22 @@ impl AArch64Cpu {
                 }
                 0b11 => {
                     // Half precision (compared exactly via f64).
-                    let op1 = fp16_to_f64(self.v[rn as usize] as u16);
+                    let op1_bits = self.v[rn as usize] as u16;
+                    let op1 = fp16_to_f64(op1_bits);
+                    let op2_bits = if cmp_with_zero {
+                        0
+                    } else {
+                        self.v[rm as usize] as u16
+                    };
                     let op2 = if cmp_with_zero {
                         0.0f64
                     } else {
-                        fp16_to_f64(self.v[rm as usize] as u16)
+                        fp16_to_f64(op2_bits)
                     };
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
+                        if (opc & 1) != 0 || fp16_is_snan(op1_bits) || fp16_is_snan(op2_bits) {
+                            self.fpsr |= FPSR_IOC;
+                        }
                         (false, false, true, true)
                     } else if op1 == op2 {
                         (false, true, true, false)
@@ -2015,6 +2043,7 @@ impl AArch64Cpu {
             let cond = ((insn >> 12) & 0xF) as u8;
             let rn = ((insn >> 5) & 0x1F) as usize;
             let nzcv_imm = (insn & 0xF) as u8;
+            let signal_all_nans = ((insn >> 4) & 1) != 0;
 
             let to_f64 = |bits: u128| -> Option<f64> {
                 Some(match fp_type {
@@ -2030,6 +2059,30 @@ impl AArch64Cpu {
             };
 
             if self.condition_holds(cond) {
+                let invalid = match fp_type {
+                    0b00 => {
+                        let an = self.v[rn] as u32;
+                        let bm = self.v[rm] as u32;
+                        (is_nan32(an) || is_nan32(bm))
+                            && (signal_all_nans || is_snan32(an) || is_snan32(bm))
+                    }
+                    0b01 => {
+                        let an = self.v[rn] as u64;
+                        let bm = self.v[rm] as u64;
+                        (is_nan64(an) || is_nan64(bm))
+                            && (signal_all_nans || is_snan64(an) || is_snan64(bm))
+                    }
+                    0b11 => {
+                        let an = self.v[rn] as u16;
+                        let bm = self.v[rm] as u16;
+                        (fp16_is_nan(an) || fp16_is_nan(bm))
+                            && (signal_all_nans || fp16_is_snan(an) || fp16_is_snan(bm))
+                    }
+                    _ => false,
+                };
+                if invalid {
+                    self.fpsr |= FPSR_IOC;
+                }
                 let (n, z, c, v) = if a.is_nan() || b.is_nan() {
                     (false, false, true, true)
                 } else if a == b {
@@ -3266,13 +3319,19 @@ impl AArch64Cpu {
                             }
                             let dmin = -(1i128 << (dbits - 1));
                             let dmax = (1i128 << (dbits - 1)) - 1;
-                            let prod = (2 * av * bv).clamp(dmin, dmax);
+                            let raw_prod = 2 * av * bv;
+                            let prod_saturated = raw_prod < dmin || raw_prod > dmax;
+                            let prod = raw_prod.clamp(dmin, dmax);
                             let acc = match opcode {
                                 0b1001 => sext_elem_wide(dval as u128, dbits) + prod,
                                 0b1011 => sext_elem_wide(dval as u128, dbits) - prod,
                                 _ => prod,
                             };
-                            (sat_signed_wide(acc, dbits)) & dmask
+                            let (r, acc_saturated) = sat_signed_q(acc, dbits);
+                            if prod_saturated || acc_saturated {
+                                self.fpsr |= FPSR_QC;
+                            }
+                            r as u128 & dmask
                         }
                         _ => return Err(ArmError::UndefinedInstruction(insn)),
                     };
@@ -4318,7 +4377,10 @@ impl AArch64Cpu {
                     let off = e * esize;
                     let a = read_elem(&src, off, esize);
                     let d = read_elem(&old, off, esize);
-                    let r = adv_simd_shift_imm_elem(u, opcode, bits, shift, a, d);
+                    let (r, saturated) = adv_simd_shift_imm_elem(u, opcode, bits, shift, a, d);
+                    if saturated {
+                        self.fpsr |= FPSR_QC;
+                    }
                     write_elem(&mut dst, off, esize, r);
                 }
                 self.v[rd] = u128::from_le_bytes(dst);
@@ -4366,27 +4428,39 @@ impl AArch64Cpu {
                 let mut packed: u64 = 0;
                 for e in 0..elements {
                     let s = ((vn >> (e * src_bits as usize)) & elem_mask_u128(src_bits)) as u64;
-                    let r: u64 = match (u, opcode) {
+                    let (r, saturated): (u64, bool) = match (u, opcode) {
                         (0, 0b10000) | (0, 0b10001) => {
                             // SHRN / RSHRN: truncating narrow.
-                            simd_rshift(s, shift, src_bits, false, rounding) & elem_mask(bits)
+                            (
+                                simd_rshift(s, shift, src_bits, false, rounding) & elem_mask(bits),
+                                false,
+                            )
                         }
                         (1, 0b10000) | (1, 0b10001) => {
                             // SQSHRUN / SQRSHRUN: signed source, unsigned saturate.
-                            sat_unsigned(simd_rshift_full(s, shift, src_bits, true, rounding), bits)
+                            sat_unsigned_q(
+                                simd_rshift_full(s, shift, src_bits, true, rounding),
+                                bits,
+                            )
                         }
                         (0, 0b10010) | (0, 0b10011) => {
                             // SQSHRN / SQRSHRN: signed source, signed saturate.
-                            sat_signed(simd_rshift_full(s, shift, src_bits, true, rounding), bits)
+                            sat_signed_q(
+                                simd_rshift_full(s, shift, src_bits, true, rounding),
+                                bits,
+                            )
                         }
                         _ => {
                             // UQSHRN / UQRSHRN: unsigned source, unsigned saturate.
-                            sat_unsigned(
+                            sat_unsigned_q(
                                 simd_rshift_full(s, shift, src_bits, false, rounding),
                                 bits,
                             )
                         }
                     };
+                    if saturated {
+                        self.fpsr |= FPSR_QC;
+                    }
                     packed |= (r & elem_mask(bits)) << (e * bits as usize);
                 }
                 let mut bytes = self.v[rd].to_le_bytes();
@@ -4421,7 +4495,8 @@ impl AArch64Cpu {
                 for e in 0..elements {
                     let off = e * esize;
                     let a = read_elem(&src, off, esize);
-                    let r = fixed_point_convert(opcode, u, bits, a, scale);
+                    let (r, status) = fixed_point_convert(opcode, u, bits, a, scale);
+                    self.fpsr |= status;
                     write_elem(&mut dst, off, esize, r);
                 }
                 self.v[rd] = u128::from_le_bytes(dst);
@@ -4594,13 +4669,21 @@ impl AArch64Cpu {
                 };
                 let mut prod = av * bv;
                 if sat_double {
-                    prod = (prod * 2).clamp(dmin, dmax);
+                    let raw_prod = prod * 2;
+                    if raw_prod < dmin || raw_prod > dmax {
+                        self.fpsr |= FPSR_QC;
+                    }
+                    prod = raw_prod.clamp(dmin, dmax);
                 }
                 let elem: u128 = if accum {
                     let d = ((vd_old >> (e * dst_bits as usize)) & elem_mask_u128(dst_bits)) as u64;
                     if sat_double {
                         let acc = sext_elem(d, dst_bits) + if subtract { -prod } else { prod };
-                        sat_signed(acc, dst_bits) as u128
+                        let (r, saturated) = sat_signed_q(acc, dst_bits);
+                        if saturated {
+                            self.fpsr |= FPSR_QC;
+                        }
+                        r as u128
                     } else {
                         let r = if subtract {
                             (d as i128).wrapping_sub(prod)
@@ -4649,20 +4732,40 @@ impl AArch64Cpu {
                     let p = (uext_elem(a, bits) * uext_elem(vm_elem, bits)) as u64;
                     d.wrapping_sub(p) & emask // MLS
                 }
-                (0, 0b1100) => adv_simd_three_same_int(0, 0b10110, bits, a, vm_elem, 0), // SQDMULH
-                (0, 0b1101) => adv_simd_three_same_int(1, 0b10110, bits, a, vm_elem, 0), // SQRDMULH
+                (0, 0b1100) => {
+                    let min = -(1i128 << (bits - 1));
+                    if sext_elem(a, bits) == min && sext_elem(vm_elem, bits) == min {
+                        self.fpsr |= FPSR_QC;
+                    }
+                    adv_simd_three_same_int(0, 0b10110, bits, a, vm_elem, 0).0 // SQDMULH
+                }
+                (0, 0b1101) => {
+                    let min = -(1i128 << (bits - 1));
+                    if sext_elem(a, bits) == min && sext_elem(vm_elem, bits) == min {
+                        self.fpsr |= FPSR_QC;
+                    }
+                    adv_simd_three_same_int(1, 0b10110, bits, a, vm_elem, 0).0 // SQRDMULH
+                }
                 (1, 0b1101) => {
                     // SQRDMLAH: accumulate the (unsaturated) rounded doubling
                     // product, then saturate once.
                     let prod = sext_elem(a, bits) * sext_elem(vm_elem, bits);
                     let rounded = (prod * 2 + (1i128 << (bits - 1))) >> bits;
-                    sat_signed(sext_elem(d, bits) + rounded, bits)
+                    let (r, saturated) = sat_signed_q(sext_elem(d, bits) + rounded, bits);
+                    if saturated {
+                        self.fpsr |= FPSR_QC;
+                    }
+                    r
                 }
                 (1, 0b1111) => {
                     // SQRDMLSH
                     let prod = sext_elem(a, bits) * sext_elem(vm_elem, bits);
                     let rounded = (prod * 2 + (1i128 << (bits - 1))) >> bits;
-                    sat_signed(sext_elem(d, bits) - rounded, bits)
+                    let (r, saturated) = sat_signed_q(sext_elem(d, bits) - rounded, bits);
+                    if saturated {
+                        self.fpsr |= FPSR_QC;
+                    }
+                    r
                 }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
             };
@@ -5138,7 +5241,10 @@ impl AArch64Cpu {
                 (read_elem(&src1, off, esize), read_elem(&src2, off, esize))
             };
             let d = read_elem(&old_d, off, esize);
-            let res = adv_simd_three_same_int(u, opcode, bits, a, b, d);
+            let (res, saturated) = adv_simd_three_same_int(u, opcode, bits, a, b, d);
+            if saturated {
+                self.fpsr |= FPSR_QC;
+            }
             write_elem(&mut dst, off, esize, res);
         }
 
@@ -5372,7 +5478,10 @@ impl AArch64Cpu {
                     } else {
                         0
                     };
-                    let r = adv_simd_two_reg_int(u, opcode, bits, a, d).unwrap();
+                    let (r, saturated) = adv_simd_two_reg_int(u, opcode, bits, a, d).unwrap();
+                    if saturated {
+                        self.fpsr |= FPSR_QC;
+                    }
                     write_elem(&mut dst, off, esize, r);
                 }
                 self.v[rd] = u128::from_le_bytes(dst);
@@ -5432,12 +5541,15 @@ impl AArch64Cpu {
             let mut packed = 0u64;
             for e in 0..out_elems {
                 let s = ((vn >> (e * dbits as usize)) & elem_mask_u128(dbits)) as u64;
-                let r: u64 = match (u, opcode) {
-                    (0, 0b10010) => s & elem_mask(bits),                     // XTN
-                    (1, 0b10010) => sat_unsigned(sext_elem(s, dbits), bits), // SQXTUN
-                    (0, 0b10100) => sat_signed(sext_elem(s, dbits), bits),   // SQXTN
-                    _ => sat_unsigned(uext_elem(s, dbits) as i128, bits),    // UQXTN
+                let (r, saturated): (u64, bool) = match (u, opcode) {
+                    (0, 0b10010) => (s & elem_mask(bits), false), // XTN
+                    (1, 0b10010) => sat_unsigned_q(sext_elem(s, dbits), bits), // SQXTUN
+                    (0, 0b10100) => sat_signed_q(sext_elem(s, dbits), bits), // SQXTN
+                    _ => sat_unsigned_q(uext_elem(s, dbits) as i128, bits), // UQXTN
                 };
+                if saturated {
+                    self.fpsr |= FPSR_QC;
+                }
                 packed |= (r & elem_mask(bits)) << (e * bits as usize);
             }
             let mut bytes = self.v[rd].to_le_bytes();
@@ -9745,12 +9857,8 @@ impl AArch64Cpu {
             let off = e * esize;
             let a = read_elem(&src, off, esize);
             let b = read_elem(&src2, off, esize);
-            write_elem(
-                &mut dst,
-                off,
-                esize,
-                adv_simd_three_same_int(u, neon_op, bits, a, b, 0),
-            );
+            let r = adv_simd_three_same_int(u, neon_op, bits, a, b, 0).0;
+            write_elem(&mut dst, off, esize, r);
         }
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
@@ -10354,28 +10462,27 @@ impl AArch64Cpu {
 
         // WHILERW / WHILEWR (memory-hazard predicate): 0x25, bit21==1,
         // bits[15:10]==001100, bit4 picks WHILERW(1)/WHILEWR(0). Both produce a
-        // monotone prefix of `count` active elements, then set NZCV like the
-        // WHILE family. The count (clamped to the element count) follows qemu:
-        //   WHILEWR: Xn>=Xm -> all; else (Xm - Xn) >> esz   (no WAR hazard)
-        //   WHILERW: Xn==Xm -> all; else |Xn - Xm| >> esz   (no RAW hazard)
+        // monotone prefix of active elements, then set NZCV like the WHILE
+        // family. A sub-element distance and a distance spanning at least one
+        // whole vector both produce a full predicate.
         if (insn >> 21) & 1 == 1 && b15_10 == 0b001100 {
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rm = ((insn >> 16) & 0x1F) as u8;
             let rw = (insn >> 4) & 1 == 1;
             let xn = self.get_x(rn);
             let xm = self.get_x(rm);
-            let tmax = elements as u64;
-            let count = if rw {
-                if xn == xm {
-                    tmax
-                } else {
-                    let d = if xn >= xm { xn - xm } else { xm - xn };
-                    (d >> size).min(tmax)
-                }
+            let full_count = elements as u64;
+            let raw_count = if rw {
+                xn.abs_diff(xm) >> size
             } else if xn >= xm {
-                tmax
+                full_count
             } else {
-                ((xm - xn) >> size).min(tmax)
+                (xm - xn) >> size
+            };
+            let count = if raw_count == 0 || raw_count >= full_count {
+                full_count
+            } else {
+                raw_count
             };
             let mut pred = 0u32;
             for e in 0..count as usize {
@@ -10451,7 +10558,8 @@ impl AArch64Cpu {
             && (insn >> 16) & 0x3F == 0b011000
             && (insn >> 14) & 0x3 == 0b01
             && (insn >> 9) & 1 == 0 // fixed 0 between Pg and Pn
-            && (insn >> 4) & 1 == 0 // fixed 0 between Pn and Pdm
+            && (insn >> 4) & 1 == 0
+        // fixed 0 between Pn and Pdm
         {
             let setflags = (insn >> 22) & 1 == 1;
             let pg = ((insn >> 10) & 0xF) as usize;
@@ -11891,6 +11999,18 @@ impl AArch64Cpu {
                 } else {
                     sve_recps(esz, x, y)
                 };
+                self.fpsr |= if esz == 8 {
+                    fp_status_assume_inexact(esz, r)
+                } else {
+                    let xf = sve_fp_to_f64(esz, x);
+                    let yf = sve_fp_to_f64(esz, y);
+                    let exact = if rsqrt {
+                        (3.0 - xf * yf) * 0.5
+                    } else {
+                        2.0 - xf * yf
+                    };
+                    fp_status_from_exact_f64(esz, exact, r)
+                };
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -11913,7 +12033,20 @@ impl AArch64Cpu {
             let mut dst = [0u8; 16];
             for e in 0..(16 / esz) {
                 let off = e * esz;
-                let r = sve_ftsmul(esz, read_elem(&n, off, esz), read_elem(&m, off, esz) & 1);
+                let x = read_elem(&n, off, esz);
+                let sgn = read_elem(&m, off, esz) & 1;
+                let r = sve_ftsmul(esz, x, sgn);
+                self.fpsr |= if esz == 8 {
+                    if fp64_mul_exact(x, x) {
+                        0
+                    } else {
+                        fp_status_assume_inexact(esz, r)
+                    }
+                } else {
+                    let exact = sve_fp_to_f64(esz, x) * sve_fp_to_f64(esz, x);
+                    let signed_exact = if sgn != 0 { -exact } else { exact };
+                    fp_status_from_exact_f64(esz, signed_exact, r)
+                };
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -11938,7 +12071,25 @@ impl AArch64Cpu {
             let mut dst = [0u8; 16];
             for e in 0..(16 / esz) {
                 let off = e * esz;
-                let r = sve_ftmad(esz, read_elem(&dn, off, esz), read_elem(&m, off, esz), imm);
+                let nn = read_elem(&dn, off, esz);
+                let mm = read_elem(&m, off, esz);
+                let r = sve_ftmad(esz, nn, mm, imm);
+                self.fpsr |= if esz == 8 {
+                    fp_status_assume_inexact(esz, r)
+                } else {
+                    let neg = match esz {
+                        2 => mm & 0x8000 != 0,
+                        _ => mm & 0x8000_0000 != 0,
+                    };
+                    let coeff = match esz {
+                        2 => fp16_to_f64(FTMAD_COEFF_H[imm + if neg { 8 } else { 0 }]),
+                        _ => f32::from_bits(FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }]) as f64,
+                    };
+                    let exact =
+                        sve_fp_to_f64(esz, nn) * sve_fp_to_f64(esz, mm & elem_mask((esz * 8 - 1) as u32))
+                            + coeff;
+                    fp_status_from_exact_f64(esz, exact, r)
+                };
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12511,8 +12662,10 @@ impl AArch64Cpu {
             let addr = base.wrapping_add((imm9 * 16) as u64);
             let bytes = self.v[zt].to_le_bytes();
             for (i, b) in bytes.iter().enumerate() {
-                self.memory
-                    .write_u8(self.translate_address(addr.wrapping_add(i as u64), true, false)?, *b)?;
+                self.memory.write_u8(
+                    self.translate_address(addr.wrapping_add(i as u64), true, false)?,
+                    *b,
+                )?;
             }
             return Ok(CpuExit::Continue);
         }
@@ -12660,7 +12813,8 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0.wrapping_add((e * mbytes) as u64), false, false)?;
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * mbytes) as u64), false, false)?;
                 let raw: u64 = match mbytes {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -12724,7 +12878,8 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0.wrapping_add((e * mbytes) as u64), true, false)?;
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * mbytes) as u64), true, false)?;
                 let val = read_elem(&src, e * esize, esize);
                 match mbytes {
                     1 => self.memory.write_u8(pa, val as u8)?,
@@ -13073,7 +13228,8 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
                 let val: u64 = match esize {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -13098,7 +13254,8 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
                 let val: u64 = match esize {
                     1 => self.memory.read_u8(pa)? as u64,
                     2 => self.memory.read_u16(pa)? as u64,
@@ -13122,7 +13279,8 @@ impl AArch64Cpu {
                 if (pred >> (e * esize)) & 1 == 0 {
                     continue;
                 }
-                let pa = self.translate_address(addr0.wrapping_add((e * esize) as u64), true, false)?;
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * esize) as u64), true, false)?;
                 let val = read_elem(&src, e * esize, esize);
                 match esize {
                     1 => self.memory.write_u8(pa, val as u8)?,
@@ -13614,6 +13772,10 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
 
+        if sf == 0 && n != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         // Decode bitmask immediate
         let imm = decode_bitmask(n != 0, imms, immr, sf != 0)?;
 
@@ -13676,6 +13838,10 @@ impl AArch64Cpu {
         let imm16 = ((insn >> 5) & 0xFFFF) as u64;
         let rd = (insn & 0x1F) as u8;
 
+        if sf == 0 && hw >= 2 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         let shift = hw * 16;
 
         let result = match opc {
@@ -13720,6 +13886,9 @@ impl AArch64Cpu {
         let rd = (insn & 0x1F) as u8;
 
         let datasize = if sf != 0 { 64u32 } else { 32 };
+        if (sf == 0 && (n != 0 || immr >= 32 || imms >= 32)) || (sf != 0 && n == 0) {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         // Decode wmask and tmask
         let (wmask, tmask) = decode_bitmasks(n != 0, imms, immr, false, datasize)?;
@@ -13784,6 +13953,9 @@ impl AArch64Cpu {
         let rd = (insn & 0x1F) as u8;
 
         let datasize = if sf != 0 { 64u32 } else { 32 };
+        if (sf == 0 && (n != 0 || imms >= 32)) || (sf != 0 && n == 0) {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let lsb = imms;
 
         let operand1 = if sf != 0 {
@@ -13958,7 +14130,7 @@ impl AArch64Cpu {
                 // XAFLAG
                 (0, 0b001) => {
                     let (z, c) = (self.get_z(), self.get_c());
-                    self.set_nzcv(!c && z, z && c, c || z, !c && z);
+                    self.set_nzcv(!c && !z, z && c, c || z, !c && z);
                 }
                 // AXFLAG
                 (0, 0b010) => {
@@ -14582,6 +14754,10 @@ impl AArch64Cpu {
                 _ => unreachable!(),
             }
         };
+        if v == 0 && opc == 0b01 && mode == 0b00 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         // opc=0b11, V=0 is the FEAT_LRCPC3 unprivileged 64-bit pair (LDTP/STTP/
         // LDTNP/STTNP): its memory accesses are checked at EL0 even when run at
         // EL1, so route them through the unprivileged translation. (#39)
@@ -14879,10 +15055,7 @@ impl AArch64Cpu {
                     } else {
                         let val = (self.v[reg] >> shift) & emask;
                         for b in 0..ebytes as usize {
-                            self.mem_write_u8(
-                                addr.wrapping_add(b as u64),
-                                (val >> (b * 8)) as u8,
-                            )?;
+                            self.mem_write_u8(addr.wrapping_add(b as u64), (val >> (b * 8)) as u8)?;
                         }
                     }
                     addr = addr.wrapping_add(ebytes);
@@ -15444,22 +15617,54 @@ impl AArch64Cpu {
             let option = ((insn >> 13) & 0x7) as u8;
             let imm3 = ((insn >> 10) & 0x7) as u32;
 
-            let operand1 = if rn == 31 {
-                self.current_sp()
-            } else {
-                self.get_x(rn)
-            };
+            if imm3 > 4 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
 
             let operand2 = self.extend_reg(rm, option, imm3)?;
 
             let (result, carry, overflow) = if op == 0 {
-                let (r, c) = operand1.overflowing_add(operand2);
-                let v = (!(operand1 ^ operand2) & (operand1 ^ r)) >> 63 != 0;
-                (r, c, v)
+                if sf != 0 {
+                    let operand1 = if rn == 31 {
+                        self.current_sp()
+                    } else {
+                        self.get_x(rn)
+                    };
+                    let (r, c) = operand1.overflowing_add(operand2);
+                    let v = (!(operand1 ^ operand2) & (operand1 ^ r)) >> 63 != 0;
+                    (r, c, v)
+                } else {
+                    let operand1 = if rn == 31 {
+                        self.current_sp() as u32
+                    } else {
+                        self.get_w(rn)
+                    };
+                    let operand2 = operand2 as u32;
+                    let (r, c) = operand1.overflowing_add(operand2);
+                    let v = (!(operand1 ^ operand2) & (operand1 ^ r)) >> 31 != 0;
+                    (r as u64, c, v)
+                }
             } else {
-                let (r, c) = operand1.overflowing_sub(operand2);
-                let v = ((operand1 ^ operand2) & (operand1 ^ r)) >> 63 != 0;
-                (r, !c, v)
+                if sf != 0 {
+                    let operand1 = if rn == 31 {
+                        self.current_sp()
+                    } else {
+                        self.get_x(rn)
+                    };
+                    let (r, c) = operand1.overflowing_sub(operand2);
+                    let v = ((operand1 ^ operand2) & (operand1 ^ r)) >> 63 != 0;
+                    (r, !c, v)
+                } else {
+                    let operand1 = if rn == 31 {
+                        self.current_sp() as u32
+                    } else {
+                        self.get_w(rn)
+                    };
+                    let operand2 = operand2 as u32;
+                    let (r, c) = operand1.overflowing_sub(operand2);
+                    let v = ((operand1 ^ operand2) & (operand1 ^ r)) >> 31 != 0;
+                    (r as u64, !c, v)
+                }
             };
 
             if s != 0 {
@@ -15611,6 +15816,10 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let nzcv = (insn & 0xF) as u8;
 
+        if ((insn >> 10) & 1) != 0 || ((insn >> 4) & 1) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         if self.condition_holds(cond) {
             let operand2 = if imm_or_reg != 0 {
                 rm_imm5 as u64
@@ -15669,6 +15878,10 @@ impl AArch64Cpu {
         let op2 = (insn >> 10) & 0x3;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
+
+        if ((insn >> 29) & 1) != 0 || (op2 & 0b10) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         let cond_met = self.condition_holds(cond);
 
@@ -15756,8 +15969,10 @@ impl AArch64Cpu {
                     self.set_x(rd, v);
                     return Ok(CpuExit::Continue);
                 }
-                _ => {}
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
             }
+        } else if opcode2 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
         }
 
         if sf != 0 {
@@ -15905,36 +16120,30 @@ impl AArch64Cpu {
                     operand1.rotate_right(shift)
                 }
                 0b010000 => {
-                    // CRC32B
-                    crc32(operand1, operand2 as u8 as u64, 8)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010001 => {
-                    // CRC32H
-                    crc32(operand1, operand2 as u16 as u64, 16)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010010 => {
-                    // CRC32W
-                    crc32(operand1, operand2 as u32 as u64, 32)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010011 => {
                     // CRC32X
-                    crc32(operand1, operand2, 64)
+                    crc32(self.get_w(rn) as u64, operand2, 64)
                 }
                 0b010100 => {
-                    // CRC32CB
-                    crc32c(operand1, operand2 as u8 as u64, 8)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010101 => {
-                    // CRC32CH
-                    crc32c(operand1, operand2 as u16 as u64, 16)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010110 => {
-                    // CRC32CW
-                    crc32c(operand1, operand2 as u32 as u64, 32)
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
                 0b010111 => {
                     // CRC32CX
-                    crc32c(operand1, operand2, 64)
+                    crc32c(self.get_w(rn) as u64, operand2, 64)
                 }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
             };
@@ -16599,7 +16808,10 @@ unsafe extern "C" fn rax_a64_vec_store(
     bytes[0..8].copy_from_slice(&st.v[i].to_le_bytes());
     bytes[8..16].copy_from_slice(&st.v[i + 1].to_le_bytes());
     for j in 0..(size as usize).min(16) {
-        if cpu.mem_write_u8(addr.wrapping_add(j as u64), bytes[j]).is_err() {
+        if cpu
+            .mem_write_u8(addr.wrapping_add(j as u64), bytes[j])
+            .is_err()
+        {
             return 0;
         }
     }
@@ -17629,11 +17841,24 @@ fn sat_signed(v: i128, bits: u32) -> u64 {
     (v.clamp(min, max) as u64) & elem_mask(bits)
 }
 
+#[inline]
+fn sat_signed_q(v: i128, bits: u32) -> (u64, bool) {
+    let max = (1i128 << (bits - 1)) - 1;
+    let min = -(1i128 << (bits - 1));
+    ((v.clamp(min, max) as u64) & elem_mask(bits), v < min || v > max)
+}
+
 /// Saturate a value to the `bits`-bit unsigned range, returned as raw bits.
 #[inline]
 fn sat_unsigned(v: i128, bits: u32) -> u64 {
     let max = (1i128 << bits) - 1;
     (v.clamp(0, max) as u64) & elem_mask(bits)
+}
+
+#[inline]
+fn sat_unsigned_q(v: i128, bits: u32) -> (u64, bool) {
+    let max = (1i128 << bits) - 1;
+    ((v.clamp(0, max) as u64) & elem_mask(bits), v < 0 || v > max)
 }
 
 /// All-ones if `cond`, else 0, in the low `bits` bits (comparison result).
@@ -17653,7 +17878,7 @@ fn adv_simd_shift_reg(
     signed: bool,
     rounding: bool,
     saturating: bool,
-) -> u64 {
+) -> (u64, bool) {
     let m = elem_mask(bits);
     if signed {
         let sval = sext_elem(a, bits);
@@ -17663,19 +17888,22 @@ fn adv_simd_shift_reg(
             if s >= bits || s >= 64 {
                 if saturating {
                     if sval == 0 {
-                        0
+                        (0, false)
                     } else {
-                        sat_signed(if sval > 0 { i128::MAX } else { i128::MIN }, bits)
+                        (
+                            sat_signed(if sval > 0 { i128::MAX } else { i128::MIN }, bits),
+                            true,
+                        )
                     }
                 } else {
-                    0
+                    (0, false)
                 }
             } else {
                 let res = sval << s;
                 if saturating {
-                    sat_signed(res, bits)
+                    sat_signed_q(res, bits)
                 } else {
-                    (res as u64) & m
+                    ((res as u64) & m, false)
                 }
             }
         } else {
@@ -17684,16 +17912,16 @@ fn adv_simd_shift_reg(
             if rsh > bits {
                 // Round constant dominates: rounded -> 0, unrounded -> sign.
                 if rounding {
-                    0
+                    (0, false)
                 } else if sval < 0 {
-                    m
+                    (m, false)
                 } else {
-                    0
+                    (0, false)
                 }
             } else {
                 let round = if rounding { 1i128 << (rsh - 1) } else { 0 };
                 let res = (sval + round) >> rsh;
-                (res as u64) & m
+                ((res as u64) & m, false)
             }
         }
     } else {
@@ -17702,26 +17930,26 @@ fn adv_simd_shift_reg(
             let s = sh as u32;
             if s >= bits || s >= 64 {
                 if saturating {
-                    if uval == 0 { 0 } else { m }
+                    if uval == 0 { (0, false) } else { (m, true) }
                 } else {
-                    0
+                    (0, false)
                 }
             } else {
                 let res = uval << s;
                 if saturating {
-                    sat_unsigned(res, bits)
+                    sat_unsigned_q(res, bits)
                 } else {
-                    (res as u64) & m
+                    ((res as u64) & m, false)
                 }
             }
         } else {
             let rsh = (-sh) as u32;
             if rsh > bits {
-                0
+                (0, false)
             } else {
                 let round = if rounding { 1i128 << (rsh - 1) } else { 0 };
                 let res = (uval + round) >> rsh;
-                (res as u64) & m
+                ((res as u64) & m, false)
             }
         }
     }
@@ -17786,7 +18014,14 @@ fn sat_signed_wide(v: i128, bits: u32) -> u128 {
 /// destination element (used by accumulating ops MLA/MLS/SABA/UABA). `u` is the
 /// U bit and `opcode` the 5-bit opcode. For pairwise opcodes (SMAXP/SMINP/ADDP)
 /// the caller supplies the adjacent pair as `(a, b)`.
-fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u64) -> u64 {
+fn adv_simd_three_same_int(
+    u: u32,
+    opcode: u32,
+    bits: u32,
+    a: u64,
+    b: u64,
+    d: u64,
+) -> (u64, bool) {
     let m = elem_mask(bits);
     let sa = sext_elem(a, bits);
     let sb = sext_elem(b, bits);
@@ -17798,52 +18033,52 @@ fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u6
         0b00000 => {
             // SHADD / UHADD
             if u == 0 {
-                ((sa + sb) >> 1) as u64 & m
+                (((sa + sb) >> 1) as u64 & m, false)
             } else {
-                ((ua + ub) >> 1) as u64 & m
+                (((ua + ub) >> 1) as u64 & m, false)
             }
         }
         0b00010 => {
             // SRHADD / URHADD
             if u == 0 {
-                ((sa + sb + 1) >> 1) as u64 & m
+                (((sa + sb + 1) >> 1) as u64 & m, false)
             } else {
-                ((ua + ub + 1) >> 1) as u64 & m
+                (((ua + ub + 1) >> 1) as u64 & m, false)
             }
         }
         0b00100 => {
             // SHSUB / UHSUB
             if u == 0 {
-                ((sa - sb) >> 1) as u64 & m
+                (((sa - sb) >> 1) as u64 & m, false)
             } else {
-                ((ua - ub) >> 1) as u64 & m
+                (((ua - ub) >> 1) as u64 & m, false)
             }
         }
         0b00001 => {
             // SQADD / UQADD
             if u == 0 {
-                sat_signed(sa + sb, bits)
+                sat_signed_q(sa + sb, bits)
             } else {
-                sat_unsigned(ua + ub, bits)
+                sat_unsigned_q(ua + ub, bits)
             }
         }
         0b00101 => {
             // SQSUB / UQSUB
             if u == 0 {
-                sat_signed(sa - sb, bits)
+                sat_signed_q(sa - sb, bits)
             } else {
-                sat_unsigned(ua - ub, bits)
+                sat_unsigned_q(ua - ub, bits)
             }
         }
         0b00110 => {
             // CMGT / CMHI
             let c = if u == 0 { sa > sb } else { ua > ub };
-            bool_mask(c, bits)
+            (bool_mask(c, bits), false)
         }
         0b00111 => {
             // CMGE / CMHS
             let c = if u == 0 { sa >= sb } else { ua >= ub };
-            bool_mask(c, bits)
+            (bool_mask(c, bits), false)
         }
         0b01000 | 0b01001 | 0b01010 | 0b01011 => {
             // SSHL/USHL (1000), SQSHL/UQSHL (1001), SRSHL/URSHL (1010),
@@ -17856,25 +18091,25 @@ fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u6
         0b01100 => {
             // SMAX / UMAX  (also SMAXP/UMAXP share this op via pairwise sourcing)
             if u == 0 {
-                (sa.max(sb) as u64) & m
+                ((sa.max(sb) as u64) & m, false)
             } else {
-                (ua.max(ub) as u64) & m
+                ((ua.max(ub) as u64) & m, false)
             }
         }
         0b01101 => {
             // SMIN / UMIN
             if u == 0 {
-                (sa.min(sb) as u64) & m
+                ((sa.min(sb) as u64) & m, false)
             } else {
-                (ua.min(ub) as u64) & m
+                ((ua.min(ub) as u64) & m, false)
             }
         }
         0b01110 => {
             // SABD / UABD
             if u == 0 {
-                ((sa - sb).abs() as u64) & m
+                (((sa - sb).abs() as u64) & m, false)
             } else {
-                ((ua - ub).abs() as u64) & m
+                (((ua - ub).abs() as u64) & m, false)
             }
         }
         0b01111 => {
@@ -17884,52 +18119,52 @@ fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u6
             } else {
                 (ua - ub).abs()
             };
-            ((ud as i128 + abd) as u64) & m
+            (((ud as i128 + abd) as u64) & m, false)
         }
         0b10000 => {
             // ADD / SUB
             if u == 0 {
-                ((ua + ub) as u64) & m
+                (((ua + ub) as u64) & m, false)
             } else {
-                ((ua - ub) as u64) & m
+                (((ua - ub) as u64) & m, false)
             }
         }
         0b10001 => {
             // CMTST / CMEQ
             let c = if u == 0 { (ua & ub) != 0 } else { ua == ub };
-            bool_mask(c, bits)
+            (bool_mask(c, bits), false)
         }
         0b10010 => {
             // MLA / MLS
             let prod = (ua * ub) as u64;
             if u == 0 {
-                (ud as u64).wrapping_add(prod) & m
+                ((ud as u64).wrapping_add(prod) & m, false)
             } else {
-                (ud as u64).wrapping_sub(prod) & m
+                ((ud as u64).wrapping_sub(prod) & m, false)
             }
         }
         0b10011 => {
             // MUL / PMUL
             if u == 0 {
-                ((ua * ub) as u64) & m
+                (((ua * ub) as u64) & m, false)
             } else {
-                poly_mul_8(a, b)
+                (poly_mul_8(a, b), false)
             }
         }
         0b10100 => {
             // SMAXP / UMAXP (pairwise max -- same kernel as SMAX/UMAX)
             if u == 0 {
-                (sa.max(sb) as u64) & m
+                ((sa.max(sb) as u64) & m, false)
             } else {
-                (ua.max(ub) as u64) & m
+                ((ua.max(ub) as u64) & m, false)
             }
         }
         0b10101 => {
             // SMINP / UMINP
             if u == 0 {
-                (sa.min(sb) as u64) & m
+                ((sa.min(sb) as u64) & m, false)
             } else {
-                (ua.min(ub) as u64) & m
+                ((ua.min(ub) as u64) & m, false)
             }
         }
         0b10110 => {
@@ -17940,13 +18175,13 @@ fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u6
             } else {
                 prod * 2
             };
-            sat_signed(rounded >> bits, bits)
+            sat_signed_q(rounded >> bits, bits)
         }
         0b10111 => {
             // ADDP (pairwise add)
-            ((ua + ub) as u64) & m
+            (((ua + ub) as u64) & m, false)
         }
-        _ => a & m,
+        _ => (a & m, false),
     }
 }
 
@@ -18066,62 +18301,126 @@ fn simd_rshift_full(a: u64, shift: u32, bits: u32, signed: bool, rounding: bool)
     }
 }
 
+fn fp_int_scaled_exact(abs_int: u128, precision_bits: u32) -> bool {
+    if abs_int == 0 {
+        return true;
+    }
+    let normalized = abs_int >> abs_int.trailing_zeros();
+    128 - normalized.leading_zeros() <= precision_bits
+}
+
+fn fp_to_int_status(scaled: f64, signed: bool, bits: u32) -> u32 {
+    if scaled.is_nan() || scaled.is_infinite() {
+        return FPSR_IOC;
+    }
+    let rounded = scaled.trunc();
+    let invalid = if signed {
+        rounded < -(1i128 << (bits - 1)) as f64 || rounded > ((1i128 << (bits - 1)) - 1) as f64
+    } else {
+        rounded < 0.0 || rounded > (elem_mask_u128(bits) as f64)
+    };
+    if invalid {
+        FPSR_IOC
+    } else if scaled != rounded {
+        FPSR_IXC
+    } else {
+        0
+    }
+}
+
 /// One element of a NEON fixed-point <-> floating-point conversion (`bits` is
-/// 16, 32 or 64, `scale` is 2^fbits). Returns the raw result element.
-fn fixed_point_convert(opcode: u32, u: u32, bits: u32, a: u64, scale: f64) -> u64 {
+/// 16, 32 or 64, `scale` is 2^fbits). Returns the raw result element and FPSR
+/// exception bits produced by that element.
+fn fixed_point_convert(opcode: u32, u: u32, bits: u32, a: u64, scale: f64) -> (u64, u32) {
     if bits == 16 {
         // FP16 variants (FEAT_FP16).
         if opcode == 0b11100 {
+            let raw = if u == 0 {
+                (a as u16 as i16 as i128).unsigned_abs()
+            } else {
+                a as u16 as u128
+            };
             let f = if u == 0 {
                 (a as u16 as i16 as f64) / scale
             } else {
                 (a as u16 as f64) / scale
             };
-            AArch64Cpu::f32_to_fp16(f as f32) as u64
+            let status = if fp_int_scaled_exact(raw, 11) {
+                0
+            } else {
+                FPSR_IXC
+            };
+            (AArch64Cpu::f32_to_fp16(f as f32) as u64, status)
         } else {
             let f = (AArch64Cpu::fp16_to_f32(a as u16) as f64) * scale;
             let t = f.trunc();
-            if u == 0 {
+            let status = fp_to_int_status(f, u == 0, bits);
+            let r = if u == 0 {
                 (t.clamp(i16::MIN as f64, i16::MAX as f64) as i16 as u16) as u64
             } else {
                 t.clamp(0.0, u16::MAX as f64) as u16 as u64
-            }
+            };
+            (r, status)
         }
     } else if opcode == 0b11100 {
         // SCVTF / UCVTF: integer * 2^-fbits -> float
         if bits == 32 {
+            let raw = if u == 0 {
+                (a as u32 as i32 as i128).unsigned_abs()
+            } else {
+                a as u32 as u128
+            };
             let f = if u == 0 {
                 (a as u32 as i32 as f64) / scale
             } else {
                 (a as u32 as f64) / scale
             };
-            (f as f32).to_bits() as u64
+            let status = if fp_int_scaled_exact(raw, 24) {
+                0
+            } else {
+                FPSR_IXC
+            };
+            ((f as f32).to_bits() as u64, status)
         } else {
+            let raw = if u == 0 {
+                (a as i64 as i128).unsigned_abs()
+            } else {
+                a as u128
+            };
             let f = if u == 0 {
                 (a as i64 as f64) / scale
             } else {
                 (a as f64) / scale
             };
-            f.to_bits()
+            let status = if fp_int_scaled_exact(raw, 53) {
+                0
+            } else {
+                FPSR_IXC
+            };
+            (f.to_bits(), status)
         }
     } else {
         // FCVTZS / FCVTZU: float * 2^fbits -> integer (round toward zero)
         if bits == 32 {
             let f = (f32::from_bits(a as u32) as f64) * scale;
             let t = f.trunc();
-            if u == 0 {
+            let status = fp_to_int_status(f, u == 0, bits);
+            let r = if u == 0 {
                 (t.clamp(i32::MIN as f64, i32::MAX as f64) as i32 as u32) as u64
             } else {
                 t.clamp(0.0, u32::MAX as f64) as u32 as u64
-            }
+            };
+            (r, status)
         } else {
             let f = f64::from_bits(a) * scale;
             let t = f.trunc();
-            if u == 0 {
+            let status = fp_to_int_status(f, u == 0, bits);
+            let r = if u == 0 {
                 (t.clamp(i64::MIN as f64, i64::MAX as f64) as i64) as u64
             } else {
                 t.clamp(0.0, u64::MAX as f64) as u64
-            }
+            };
+            (r, status)
         }
     }
 }
@@ -18143,19 +18442,26 @@ fn simd_rshift(a: u64, shift: u32, bits: u32, signed: bool, rounding: bool) -> u
 /// One element of a same-size Advanced SIMD shift-by-immediate. `a` is the
 /// source element, `d` the current destination element (for the accumulating
 /// and insert forms). Returns the raw result element.
-fn adv_simd_shift_imm_elem(u: u32, opcode: u32, bits: u32, shift: u32, a: u64, d: u64) -> u64 {
+fn adv_simd_shift_imm_elem(
+    u: u32,
+    opcode: u32,
+    bits: u32,
+    shift: u32,
+    a: u64,
+    d: u64,
+) -> (u64, bool) {
     let m = elem_mask(bits);
     let signed = u == 0;
     match opcode {
-        0b00000 => simd_rshift(a, shift, bits, signed, false), // SSHR / USHR
+        0b00000 => (simd_rshift(a, shift, bits, signed, false), false), // SSHR / USHR
         0b00010 => {
             // SSRA / USRA: accumulate shifted value into destination.
-            (d.wrapping_add(simd_rshift(a, shift, bits, signed, false))) & m
+            ((d.wrapping_add(simd_rshift(a, shift, bits, signed, false))) & m, false)
         }
-        0b00100 => simd_rshift(a, shift, bits, signed, true), // SRSHR / URSHR
+        0b00100 => (simd_rshift(a, shift, bits, signed, true), false), // SRSHR / URSHR
         0b00110 => {
             // SRSRA / URSRA
-            (d.wrapping_add(simd_rshift(a, shift, bits, signed, true))) & m
+            ((d.wrapping_add(simd_rshift(a, shift, bits, signed, true))) & m, false)
         }
         0b01000 => {
             // SRI (u==1): shift right and insert.
@@ -18165,32 +18471,32 @@ fn adv_simd_shift_imm_elem(u: u32, opcode: u32, bits: u32, shift: u32, a: u64, d
                 (1u64 << (bits - shift)) - 1
             };
             let shifted = (uext_elem(a, bits) >> shift) as u64 & low_mask;
-            shifted | (d & !low_mask & m)
+            (shifted | (d & !low_mask & m), false)
         }
         0b01010 => {
             if u == 0 {
                 // SHL
-                ((uext_elem(a, bits) << shift) as u64) & m
+                (((uext_elem(a, bits) << shift) as u64) & m, false)
             } else {
                 // SLI: shift left and insert.
                 let low_mask = (1u64 << shift) - 1;
                 let shifted = ((uext_elem(a, bits) << shift) as u64) & m & !low_mask;
-                shifted | (d & low_mask)
+                (shifted | (d & low_mask), false)
             }
         }
         0b01100 => {
             // SQSHLU: signed value, saturating left shift to unsigned range.
-            sat_unsigned(sext_elem(a, bits) << shift, bits)
+            sat_unsigned_q(sext_elem(a, bits) << shift, bits)
         }
         0b01110 => {
             // SQSHL / UQSHL: saturating left shift.
             if signed {
-                sat_signed(sext_elem(a, bits) << shift, bits)
+                sat_signed_q(sext_elem(a, bits) << shift, bits)
             } else {
-                sat_unsigned((uext_elem(a, bits) as i128) << shift, bits)
+                sat_unsigned_q((uext_elem(a, bits) as i128) << shift, bits)
             }
         }
-        _ => a & m,
+        _ => (a & m, false),
     }
 }
 
@@ -18249,24 +18555,30 @@ fn count_leading_zeros_elem(a: u64, bits: u32) -> u64 {
 /// preserves element size (not REV / widening / narrowing / FP). `a` is the
 /// source element and `d` the current destination (for SUQADD/USQADD). Returns
 /// `Some(result)` or `None` if the opcode is handled elsewhere.
-fn adv_simd_two_reg_int(u: u32, opcode: u32, bits: u32, a: u64, d: u64) -> Option<u64> {
+fn adv_simd_two_reg_int(
+    u: u32,
+    opcode: u32,
+    bits: u32,
+    a: u64,
+    d: u64,
+) -> Option<(u64, bool)> {
     let m = elem_mask(bits);
     let sa = sext_elem(a, bits);
     Some(match (u, opcode) {
-        (0, 0b00011) => sat_signed(sext_elem(d, bits) + uext_elem(a, bits) as i128, bits), // SUQADD
-        (1, 0b00011) => sat_unsigned(uext_elem(d, bits) as i128 + sext_elem(a, bits), bits), // USQADD
-        (0, 0b00100) => count_leading_sign(a, bits) & m,                                     // CLS
-        (1, 0b00100) => count_leading_zeros_elem(a, bits) & m,                               // CLZ
-        (0, 0b00101) => (a & 0xFF).count_ones() as u64, // CNT (per byte; bits==8)
-        (0, 0b00111) => sat_signed(sext_elem(a, bits).abs(), bits), // SQABS
-        (1, 0b00111) => sat_signed(-sext_elem(a, bits), bits), // SQNEG
-        (0, 0b01000) => bool_mask(sa > 0, bits),        // CMGT #0
-        (1, 0b01000) => bool_mask(sa >= 0, bits),       // CMGE #0
-        (0, 0b01001) => bool_mask(sa == 0, bits),       // CMEQ #0
-        (1, 0b01001) => bool_mask(sa <= 0, bits),       // CMLE #0
-        (0, 0b01010) => bool_mask(sa < 0, bits),        // CMLT #0
-        (0, 0b01011) => (sa.unsigned_abs() as u64) & m, // ABS
-        (1, 0b01011) => ((-sa) as u64) & m,             // NEG
+        (0, 0b00011) => sat_signed_q(sext_elem(d, bits) + uext_elem(a, bits) as i128, bits), // SUQADD
+        (1, 0b00011) => sat_unsigned_q(uext_elem(d, bits) as i128 + sext_elem(a, bits), bits), // USQADD
+        (0, 0b00100) => (count_leading_sign(a, bits) & m, false), // CLS
+        (1, 0b00100) => (count_leading_zeros_elem(a, bits) & m, false), // CLZ
+        (0, 0b00101) => ((a & 0xFF).count_ones() as u64, false), // CNT (per byte; bits==8)
+        (0, 0b00111) => sat_signed_q(sext_elem(a, bits).abs(), bits), // SQABS
+        (1, 0b00111) => sat_signed_q(-sext_elem(a, bits), bits), // SQNEG
+        (0, 0b01000) => (bool_mask(sa > 0, bits), false),        // CMGT #0
+        (1, 0b01000) => (bool_mask(sa >= 0, bits), false),       // CMGE #0
+        (0, 0b01001) => (bool_mask(sa == 0, bits), false),       // CMEQ #0
+        (1, 0b01001) => (bool_mask(sa <= 0, bits), false),       // CMLE #0
+        (0, 0b01010) => (bool_mask(sa < 0, bits), false),        // CMLT #0
+        (0, 0b01011) => ((sa.unsigned_abs() as u64) & m, false), // ABS
+        (1, 0b01011) => (((-sa) as u64) & m, false),             // NEG
         _ => return None,
     })
 }
@@ -18317,6 +18629,13 @@ enum FpKind {
     MaxNmp,
     MinNmp,
 }
+
+const FPSR_IOC: u32 = 1 << 0;
+const FPSR_DZC: u32 = 1 << 1;
+const FPSR_OFC: u32 = 1 << 2;
+const FPSR_UFC: u32 = 1 << 3;
+const FPSR_IXC: u32 = 1 << 4;
+const FPSR_QC: u32 = 1 << 27;
 
 /// Decode the FP three-same opcode from (U, size<1>, opcode) into an `FpKind`.
 fn fp_three_same_decode(u: u32, a: u32, opcode: u32) -> Option<FpKind> {
@@ -18603,6 +18922,510 @@ fn is_nan64(x: u64) -> bool {
 #[inline]
 fn is_snan64(x: u64) -> bool {
     is_nan64(x) && x & 0x0008_0000_0000_0000 == 0
+}
+
+#[inline]
+fn fp32_abs(x: u32) -> u32 {
+    x & 0x7fff_ffff
+}
+
+#[inline]
+fn fp64_abs(x: u64) -> u64 {
+    x & 0x7fff_ffff_ffff_ffff
+}
+
+#[inline]
+fn fp32_is_zero(x: u32) -> bool {
+    fp32_abs(x) == 0
+}
+
+#[inline]
+fn fp64_is_zero(x: u64) -> bool {
+    fp64_abs(x) == 0
+}
+
+#[inline]
+fn fp32_is_inf(x: u32) -> bool {
+    fp32_abs(x) == 0x7f80_0000
+}
+
+#[inline]
+fn fp64_is_inf(x: u64) -> bool {
+    fp64_abs(x) == 0x7ff0_0000_0000_0000
+}
+
+#[inline]
+fn fp32_is_finite(x: u32) -> bool {
+    fp32_abs(x) < 0x7f80_0000
+}
+
+#[inline]
+fn fp64_is_finite(x: u64) -> bool {
+    fp64_abs(x) < 0x7ff0_0000_0000_0000
+}
+
+#[inline]
+fn fp32_is_tiny(x: u32) -> bool {
+    let a = fp32_abs(x);
+    a != 0 && a < 0x0080_0000
+}
+
+#[inline]
+fn fp64_is_tiny(x: u64) -> bool {
+    let a = fp64_abs(x);
+    a != 0 && a < 0x0010_0000_0000_0000
+}
+
+fn gcd_u64(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let r = a % b;
+        a = b;
+        b = r;
+    }
+    a
+}
+
+fn fp64_mant_exp(bits: u64) -> Option<(u64, i32)> {
+    let abs = fp64_abs(bits);
+    if abs == 0 || abs >= 0x7ff0_0000_0000_0000 {
+        return None;
+    }
+    let exp = ((abs >> 52) & 0x7ff) as i32;
+    let frac = abs & 0x000f_ffff_ffff_ffff;
+    if exp == 0 {
+        Some((frac, -1074))
+    } else {
+        Some(((1u64 << 52) | frac, exp - 1075))
+    }
+}
+
+fn fp64_div_exact(a: u64, b: u64) -> bool {
+    let Some((na, ea)) = fp64_mant_exp(a) else {
+        return true;
+    };
+    let Some((nb, eb)) = fp64_mant_exp(b) else {
+        return true;
+    };
+    if nb == 0 {
+        return true;
+    }
+    let g = gcd_u64(na, nb);
+    let mut numer = na / g;
+    let denom = nb / g;
+    if !denom.is_power_of_two() {
+        return false;
+    }
+    while numer & 1 == 0 {
+        numer >>= 1;
+    }
+    let exp = ea - eb - denom.trailing_zeros() as i32;
+    let sig_bits = 64 - numer.leading_zeros() as i32;
+    sig_bits <= 53 || exp + sig_bits <= -1021
+}
+
+fn is_square_u64(n: u64) -> bool {
+    let r = (n as f64).sqrt() as u64;
+    r * r == n || r.saturating_add(1).saturating_mul(r.saturating_add(1)) == n
+}
+
+fn fp64_sqrt_exact(bits: u64) -> bool {
+    let Some((mut mant, mut exp)) = fp64_mant_exp(bits) else {
+        return true;
+    };
+    while mant & 1 == 0 {
+        mant >>= 1;
+        exp += 1;
+    }
+    if exp & 1 != 0 {
+        mant <<= 1;
+    }
+    is_square_u64(mant)
+}
+
+fn fp64_mul_exact(a: u64, b: u64) -> bool {
+    let Some((ma, ea)) = fp64_mant_exp(a) else {
+        return true;
+    };
+    let Some((mb, eb)) = fp64_mant_exp(b) else {
+        return true;
+    };
+    let mut product = ma as u128 * mb as u128;
+    if product == 0 {
+        return true;
+    }
+    while product & 1 == 0 {
+        product >>= 1;
+    }
+    let exp = ea + eb;
+    let sig_bits = 128 - product.leading_zeros() as i32;
+    sig_bits <= 53 || exp + sig_bits <= -1021
+}
+
+fn fp16_abs_bits(x: u16) -> u16 {
+    x & 0x7fff
+}
+
+fn fp16_is_tiny(x: u16) -> bool {
+    let a = fp16_abs_bits(x);
+    a != 0 && a < 0x0400
+}
+
+fn fp_status_from_exact_f64(esize: usize, exact: f64, result: u64) -> u32 {
+    if !exact.is_finite() {
+        return 0;
+    }
+    match esize {
+        2 => {
+            let r = result as u16;
+            if fp16_is_inf(r) {
+                return FPSR_OFC | FPSR_IXC;
+            }
+            if exact != fp16_to_f64(r) {
+                let underflow = fp16_is_tiny(r) || (fp16_is_zero(r) && exact != 0.0);
+                FPSR_IXC | if underflow { FPSR_UFC } else { 0 }
+            } else {
+                0
+            }
+        }
+        4 => {
+            let r = result as u32;
+            if fp32_is_inf(r) {
+                return FPSR_OFC | FPSR_IXC;
+            }
+            if exact != f32::from_bits(r) as f64 {
+                let underflow = fp32_is_tiny(r) || (fp32_is_zero(r) && exact != 0.0);
+                FPSR_IXC | if underflow { FPSR_UFC } else { 0 }
+            } else {
+                0
+            }
+        }
+        _ => 0,
+    }
+}
+
+fn fp_status_assume_inexact(esize: usize, result: u64) -> u32 {
+    let underflow = match esize {
+        2 => fp16_is_tiny(result as u16) || fp16_is_zero(result as u16),
+        4 => fp32_is_tiny(result as u32) || fp32_is_zero(result as u32),
+        _ => fp64_is_tiny(result) || fp64_is_zero(result),
+    };
+    let overflow = match esize {
+        2 => fp16_is_inf(result as u16),
+        4 => fp32_is_inf(result as u32),
+        _ => fp64_is_inf(result),
+    };
+    if overflow {
+        FPSR_OFC | FPSR_IXC
+    } else if underflow {
+        FPSR_UFC | FPSR_IXC
+    } else {
+        FPSR_IXC
+    }
+}
+
+fn fp_is_snan_bits(esize: usize, x: u64) -> bool {
+    match esize {
+        2 => fp16_is_snan(x as u16),
+        4 => is_snan32(x as u32),
+        _ => is_snan64(x),
+    }
+}
+
+fn fp_is_zero_bits(esize: usize, x: u64) -> bool {
+    match esize {
+        2 => fp16_is_zero(x as u16),
+        4 => fp32_is_zero(x as u32),
+        _ => fp64_is_zero(x),
+    }
+}
+
+fn fp_is_inf_bits(esize: usize, x: u64) -> bool {
+    match esize {
+        2 => fp16_is_inf(x as u16),
+        4 => fp32_is_inf(x as u32),
+        _ => fp64_is_inf(x),
+    }
+}
+
+fn fp_is_finite_bits(esize: usize, x: u64) -> bool {
+    match esize {
+        2 => fp16_abs_bits(x as u16) < 0x7c00,
+        4 => fp32_is_finite(x as u32),
+        _ => fp64_is_finite(x),
+    }
+}
+
+fn fp_sign_bit(esize: usize, x: u64) -> u64 {
+    x >> (esize * 8 - 1)
+}
+
+fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> u32 {
+    if fp_is_snan_bits(esize, addend)
+        || fp_is_snan_bits(esize, op1)
+        || fp_is_snan_bits(esize, op2)
+    {
+        return FPSR_IOC;
+    }
+
+    let invalid_product =
+        (fp_is_zero_bits(esize, op1) && fp_is_inf_bits(esize, op2))
+            || (fp_is_inf_bits(esize, op1) && fp_is_zero_bits(esize, op2));
+    let invalid_sum = fp_is_inf_bits(esize, addend)
+        && (fp_is_inf_bits(esize, op1) || fp_is_inf_bits(esize, op2))
+        && (fp_sign_bit(esize, addend) != (fp_sign_bit(esize, op1) ^ fp_sign_bit(esize, op2)));
+    if invalid_product || invalid_sum {
+        return FPSR_IOC;
+    }
+
+    if fp_is_finite_bits(esize, addend)
+        && fp_is_finite_bits(esize, op1)
+        && fp_is_finite_bits(esize, op2)
+    {
+        if esize == 8 {
+            return fp_status_assume_inexact(esize, result);
+        }
+        let exact = sve_fp_to_f64(esize, addend) + sve_fp_to_f64(esize, op1) * sve_fp_to_f64(esize, op2);
+        fp_status_from_exact_f64(esize, exact, result)
+    } else {
+        0
+    }
+}
+
+fn fp_status_cvt_precision(src: u64, src_prec: usize, dst_prec: usize, result: u64) -> u32 {
+    let snan = match src_prec {
+        2 => fp16_is_snan(src as u16),
+        4 => is_snan32(src as u32),
+        _ => is_snan64(src),
+    };
+    if snan {
+        return FPSR_IOC;
+    }
+    let is_nan = match src_prec {
+        2 => fp16_is_nan(src as u16),
+        4 => is_nan32(src as u32),
+        _ => is_nan64(src),
+    };
+    if is_nan {
+        return 0;
+    }
+    let exact = match src_prec {
+        2 => fp16_to_f64(src as u16),
+        4 => f32::from_bits(src as u32) as f64,
+        _ => f64::from_bits(src),
+    };
+    if dst_prec == 8 {
+        0
+    } else {
+        fp_status_from_exact_f64(dst_prec, exact, result)
+    }
+}
+
+fn fp_invalid_binop_f32(kind: FpKind, a: u32, b: u32) -> bool {
+    use FpKind::*;
+    if is_snan32(a) || is_snan32(b) {
+        return true;
+    }
+    match kind {
+        Add | Addp => fp32_is_inf(a) && fp32_is_inf(b) && ((a ^ b) >> 31) != 0,
+        Sub | Abd => fp32_is_inf(a) && fp32_is_inf(b) && ((a ^ b) >> 31) == 0,
+        Mul | Mla | Mls => {
+            (fp32_is_zero(a) && fp32_is_inf(b)) || (fp32_is_inf(a) && fp32_is_zero(b))
+        }
+        Div => (fp32_is_zero(a) && fp32_is_zero(b)) || (fp32_is_inf(a) && fp32_is_inf(b)),
+        Max | Maxp | Min | Minp | MaxNm | MaxNmp | MinNm | MinNmp => false,
+        _ => false,
+    }
+}
+
+fn fp_invalid_binop_f64(kind: FpKind, a: u64, b: u64) -> bool {
+    use FpKind::*;
+    if is_snan64(a) || is_snan64(b) {
+        return true;
+    }
+    match kind {
+        Add | Addp => fp64_is_inf(a) && fp64_is_inf(b) && ((a ^ b) >> 63) != 0,
+        Sub | Abd => fp64_is_inf(a) && fp64_is_inf(b) && ((a ^ b) >> 63) == 0,
+        Mul | Mla | Mls => {
+            (fp64_is_zero(a) && fp64_is_inf(b)) || (fp64_is_inf(a) && fp64_is_zero(b))
+        }
+        Div => (fp64_is_zero(a) && fp64_is_zero(b)) || (fp64_is_inf(a) && fp64_is_inf(b)),
+        Max | Maxp | Min | Minp | MaxNm | MaxNmp | MinNm | MinNmp => false,
+        _ => false,
+    }
+}
+
+fn fp_status_binop_f32(kind: FpKind, a: u32, b: u32, result: u32) -> u32 {
+    use FpKind::*;
+    if !matches!(
+        kind,
+        Add | Sub | Mul | Div | Addp | Abd | Max | Min | MaxNm | MinNm
+    ) {
+        return 0;
+    }
+
+    if fp_invalid_binop_f32(kind, a, b) {
+        return FPSR_IOC;
+    }
+
+    if matches!(kind, Div) && fp32_is_zero(b) && !fp32_is_zero(a) && fp32_is_finite(a) {
+        return FPSR_DZC;
+    }
+
+    if !matches!(kind, Add | Sub | Mul | Div | Addp | Abd)
+        || !fp32_is_finite(a)
+        || !fp32_is_finite(b)
+    {
+        return 0;
+    }
+
+    let mut status = 0;
+    if fp32_is_inf(result) {
+        return FPSR_OFC | FPSR_IXC;
+    }
+
+    let x = f32::from_bits(a) as f64;
+    let y = f32::from_bits(b) as f64;
+    let exact = match kind {
+        Add | Addp => x + y,
+        Sub => x - y,
+        Mul => x * y,
+        Div => x / y,
+        Abd => (x - y).abs(),
+        _ => return 0,
+    };
+    let rounded = f32::from_bits(result) as f64;
+    if exact != rounded {
+        status |= FPSR_IXC;
+        if fp32_is_tiny(result) || (fp32_is_zero(result) && exact != 0.0) {
+            status |= FPSR_UFC;
+        }
+    }
+    status
+}
+
+fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
+    use FpKind::*;
+    if !matches!(
+        kind,
+        Add | Sub | Mul | Div | Addp | Abd | Max | Min | MaxNm | MinNm
+    ) {
+        return 0;
+    }
+
+    if fp_invalid_binop_f64(kind, a, b) {
+        return FPSR_IOC;
+    }
+
+    if matches!(kind, Div) && fp64_is_zero(b) && !fp64_is_zero(a) && fp64_is_finite(a) {
+        return FPSR_DZC;
+    }
+
+    if !matches!(kind, Add | Sub | Mul | Div | Addp | Abd)
+        || !fp64_is_finite(a)
+        || !fp64_is_finite(b)
+    {
+        return 0;
+    }
+
+    if fp64_is_inf(result) {
+        return FPSR_OFC | FPSR_IXC;
+    }
+
+    if (fp64_is_tiny(result) || fp64_is_zero(result))
+        && !fp64_is_zero(a)
+        && !fp64_is_zero(b)
+        && matches!(kind, Mul | Div)
+    {
+        return FPSR_UFC | FPSR_IXC;
+    }
+
+    if matches!(kind, Div) && !fp64_div_exact(a, b) {
+        return FPSR_IXC;
+    }
+
+    0
+}
+
+fn fp_status_unop_f32(kind: Option<TwoRegFp>, a: u32, result: u32) -> u32 {
+    match kind {
+        Some(TwoRegFp::Fsqrt) => {
+            if is_snan32(a) || (a & 0x8000_0000) != 0 && fp32_abs(a) != 0 && !is_nan32(a) {
+                return FPSR_IOC;
+            }
+            if fp32_is_finite(a) && a & 0x8000_0000 == 0 {
+                let exact = (f32::from_bits(a) as f64).sqrt();
+                let rounded = f32::from_bits(result) as f64;
+                if exact != rounded {
+                    return FPSR_IXC;
+                }
+            }
+            0
+        }
+        Some(
+            TwoRegFp::RintN
+            | TwoRegFp::RintP
+            | TwoRegFp::RintM
+            | TwoRegFp::RintZ
+            | TwoRegFp::RintA
+            | TwoRegFp::RintX
+            | TwoRegFp::RintI,
+        ) => {
+            if is_snan32(a) {
+                return FPSR_IOC;
+            }
+            if !matches!(kind, Some(TwoRegFp::RintX)) {
+                return 0;
+            }
+            let x = f32::from_bits(a);
+            if x.is_finite() && x.fract() != 0.0 {
+                FPSR_IXC
+            } else {
+                0
+            }
+        }
+        _ => 0,
+    }
+}
+
+fn fp_status_unop_f64(kind: Option<TwoRegFp>, a: u64, result: u64) -> u32 {
+    match kind {
+        Some(TwoRegFp::Fsqrt) => {
+            if is_snan64(a)
+                || (a & 0x8000_0000_0000_0000) != 0 && fp64_abs(a) != 0 && !is_nan64(a)
+            {
+                return FPSR_IOC;
+            }
+            if fp64_is_finite(a) && a & 0x8000_0000_0000_0000 == 0 {
+                if !fp64_sqrt_exact(a) {
+                    return FPSR_IXC;
+                }
+            }
+            0
+        }
+        Some(
+            TwoRegFp::RintN
+            | TwoRegFp::RintP
+            | TwoRegFp::RintM
+            | TwoRegFp::RintZ
+            | TwoRegFp::RintA
+            | TwoRegFp::RintX
+            | TwoRegFp::RintI,
+        ) => {
+            if is_snan64(a) {
+                return FPSR_IOC;
+            }
+            if !matches!(kind, Some(TwoRegFp::RintX)) {
+                return 0;
+            }
+            let x = f64::from_bits(a);
+            if x.is_finite() && x.fract() != 0.0 {
+                FPSR_IXC
+            } else {
+                0
+            }
+        }
+        _ => 0,
+    }
 }
 
 /// ARM FPProcessNaNs for two f32 operands (FPCR.DN=0): a signaling NaN is
@@ -20137,6 +20960,11 @@ fn fp16_is_nan(h: u16) -> bool {
 }
 
 #[inline]
+fn fp16_is_snan(h: u16) -> bool {
+    fp16_is_nan(h) && (h & 0x0200) == 0
+}
+
+#[inline]
 fn fp16_is_inf(h: u16) -> bool {
     (h & 0x7FFF) == 0x7C00
 }
@@ -21530,7 +22358,13 @@ mod tests {
         // Encoders mirror tests/arm_diff.rs: Rn=x1, Zm=z2, Zt=z0, Pg=p0.
         let gather_d = |msz: u32, scaled: bool, u: u32| -> u32 {
             let ig1 = if scaled { 0b11 } else { 0b10 };
-            (0b1100010 << 25) | (msz << 23) | (ig1 << 21) | (2 << 16) | (1 << 15) | (u << 14) | (1 << 5)
+            (0b1100010 << 25)
+                | (msz << 23)
+                | (ig1 << 21)
+                | (2 << 16)
+                | (1 << 15)
+                | (u << 14)
+                | (1 << 5)
         };
         let gather_s = |msz: u32, scaled: bool, u: u32| -> u32 {
             // 1000010 msz xs scaled Zm 0 U ff Pg Rn Zt (xs=0 unsigned offset).
@@ -21581,8 +22415,16 @@ mod tests {
         assert_eq!(run(0xc422_0020), CpuExit::Continue);
 
         // Allocated forms still decode/execute (no active lanes -> no access).
-        for insn in [gather_d(3, false, 1), gather_d(1, true, 1), scatter_d(2, true)] {
-            assert_eq!(run(insn), CpuExit::Continue, "encoding {insn:#x} should execute");
+        for insn in [
+            gather_d(3, false, 1),
+            gather_d(1, true, 1),
+            scatter_d(2, true),
+        ] {
+            assert_eq!(
+                run(insn),
+                CpuExit::Continue,
+                "encoding {insn:#x} should execute"
+            );
         }
     }
 
@@ -23707,7 +24549,10 @@ mod tests {
         assert!(is_permission_error(cpu.exec_ldst_reg(ldtr_x0_x1_0())));
 
         cpu.uao = true;
-        assert_eq!(cpu.exec_ldst_reg(ldtr_x0_x1_0()).unwrap(), CpuExit::Continue);
+        assert_eq!(
+            cpu.exec_ldst_reg(ldtr_x0_x1_0()).unwrap(),
+            CpuExit::Continue
+        );
         assert_eq!(cpu.get_x(0), 0xCAFE_F00D_DEAD_BEEF);
 
         cpu.uao = false;
@@ -23716,7 +24561,10 @@ mod tests {
         assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0xCAFE_F00D_DEAD_BEEF);
 
         cpu.uao = true;
-        assert_eq!(cpu.exec_ldst_reg(sttr_x0_x1_0()).unwrap(), CpuExit::Continue);
+        assert_eq!(
+            cpu.exec_ldst_reg(sttr_x0_x1_0()).unwrap(),
+            CpuExit::Continue
+        );
         assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
     }
 
@@ -23865,7 +24713,10 @@ mod tests {
 
         // A vector load straddling into the UNMAPPED page 0x2000 must fault.
         let ok = unsafe { rax_a64_vec_load(&mut regs, 0x1FF9, 1, 8) };
-        assert_eq!(ok, 0, "page-straddling vector load must fault on the unmapped page");
+        assert_eq!(
+            ok, 0,
+            "page-straddling vector load must fault on the unmapped page"
+        );
     }
 
     // -------------------------------------------------------------------------

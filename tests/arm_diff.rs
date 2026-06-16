@@ -32475,3 +32475,202 @@ fn diff_neon_comprehensive_sweep() {
         faults.len()
     );
 }
+
+// commit ddd5a974a0a4 temp: improve aarch64 native-oracle semantics
+#[test]
+fn diff_fp_scalar_native_oracle_fpsr() {
+    // enc_fcvt_precision is added later in this branch; define it locally so the
+    // test compiles at this commit.
+    fn enc_fcvt_precision(src_type: u32, dst_type: u32) -> u32 {
+        (0b00011110 << 24)
+            | (src_type << 22)
+            | (1 << 21)
+            | (0b0001 << 17)
+            | (dst_type << 15)
+            | (0b10000 << 10)
+            | (RN << 5)
+            | RD
+    }
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // ---- FP 1-source: fp_status_unop_f32/f64 (FSQRT opcode 0b000011, FRINTX 0b01110) ----
+    {
+        let mut push1 = |label: &str, opcode: u32, ft: u32, src: u64, fpsr: u64| {
+            let mut st = ArmState::zeroed();
+            st.fpsr = fpsr;
+            st.set_vreg(RN as usize, src, 0);
+            batch.push((format!("{label}_t{ft}_fpsr{fpsr:#x}"), enc_fp1(ft, opcode), st));
+        };
+        // f32
+        let s_neg1 = (-1.0f32).to_bits() as u64; // FSQRT(neg) -> IOC
+        let s_two = (2.0f32).to_bits() as u64; // FSQRT(2) inexact -> IXC
+        let s_1p5 = (1.5f32).to_bits() as u64; // FRINTX(1.5) inexact -> IXC
+        let s_snan = 0x7fa0_0001u64; // signaling NaN -> IOC
+        for &fpsr in &[0u64, 0x10] {
+            push1("fsqrt_invalid_neg", 0b000011, 0, s_neg1, fpsr);
+            push1("fsqrt_inexact", 0b000011, 0, s_two, fpsr);
+            push1("frintx_inexact", 0b01110, 0, s_1p5, fpsr);
+            push1("fsqrt_snan_invalid", 0b000011, 0, s_snan, fpsr);
+            push1("frintx_snan_invalid", 0b01110, 0, s_snan, fpsr);
+        }
+        // f64
+        let d_neg1 = (-1.0f64).to_bits(); // FSQRT(neg) -> IOC
+        let d_two = (2.0f64).to_bits(); // FSQRT(2) inexact -> IXC
+        let d_1p5 = (1.5f64).to_bits(); // FRINTX(1.5) inexact -> IXC
+        let d_snan = 0x7ff0_0000_0000_0001u64; // signaling NaN -> IOC
+        for &fpsr in &[0u64, 0x10] {
+            push1("fsqrt_invalid_neg", 0b000011, 1, d_neg1, fpsr);
+            push1("fsqrt_inexact", 0b000011, 1, d_two, fpsr);
+            push1("frintx_inexact", 0b01110, 1, d_1p5, fpsr);
+            push1("fsqrt_snan_invalid", 0b000011, 1, d_snan, fpsr);
+            push1("frintx_snan_invalid", 0b01110, 1, d_snan, fpsr);
+        }
+    }
+
+    // ---- FP precision convert: fp_status_cvt_precision (FCVT) ----
+    {
+        let mut pushc = |label: &str, src_ty: u32, dst_ty: u32, src: u64| {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RN as usize, src, 0);
+            batch.push((label.to_string(), enc_fcvt_precision(src_ty, dst_ty), st));
+        };
+        // double -> single (src_ty=01, dst_ty=00)
+        pushc(
+            "fcvt_d2s_inexact",
+            0b01,
+            0b00,
+            (0.1f64).to_bits(), // 0.1 not representable exactly in f32 -> IXC
+        );
+        pushc(
+            "fcvt_d2s_overflow",
+            0b01,
+            0b00,
+            f64::MAX.to_bits(), // > f32::MAX -> OFC | IXC
+        );
+        pushc(
+            "fcvt_d2s_snan_invalid",
+            0b01,
+            0b00,
+            0x7ff0_0000_0000_0001u64, // sNaN -> IOC
+        );
+        // single -> half (src_ty=00, dst_ty=11), baseline FCVT (FEAT_FP16).
+        pushc(
+            "fcvt_s2h_inexact",
+            0b00,
+            0b11,
+            (0.1f32).to_bits() as u64, // 0.1 not representable in f16 -> IXC
+        );
+        pushc(
+            "fcvt_s2h_overflow",
+            0b00,
+            0b11,
+            (70000.0f32).to_bits() as u64, // > f16::MAX (65504) -> OFC | IXC
+        );
+        pushc(
+            "fcvt_s2h_snan_invalid",
+            0b00,
+            0b11,
+            0x7fa0_0001u64, // sNaN -> IOC
+        );
+        // double -> half (src_ty=01, dst_ty=11)
+        pushc(
+            "fcvt_d2h_inexact",
+            0b01,
+            0b11,
+            (0.1f64).to_bits(), // -> IXC
+        );
+    }
+
+    // ---- FP 3-source: fp_status_fma (FMADD o1=0 o0=0, FNMADD o1=1 o0=0) ----
+    {
+        let mut pushf = |label: &str, ft: u32, o1: u32, o0: u32, n: u64, m: u64, a: u64| {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RN as usize, n, 0);
+            st.set_vreg(RM as usize, m, 0);
+            st.set_vreg(RA as usize, a, 0);
+            batch.push((format!("{label}_t{ft}"), enc_fp3(ft, o1, o0), st));
+        };
+        // f32: 0 * inf + 1.0 -> invalid (IOC)
+        let s_zero = (0.0f32).to_bits() as u64;
+        let s_inf = f32::INFINITY.to_bits() as u64;
+        let s_one = (1.0f32).to_bits() as u64;
+        let s_snan = 0x7fa0_0001u64;
+        pushf("fmadd_invalid_zero_inf", 0, 0, 0, s_zero, s_inf, s_one);
+        pushf("fmadd_snan_addend_invalid", 0, 0, 0, s_one, s_one, s_snan);
+        pushf("fnmadd_snan_op_invalid", 0, 1, 0, s_snan, s_one, s_one);
+        // f64: 0 * inf + 1.0 -> invalid (IOC)
+        let d_zero = (0.0f64).to_bits();
+        let d_inf = f64::INFINITY.to_bits();
+        let d_one = (1.0f64).to_bits();
+        let d_snan = 0x7ff0_0000_0000_0001u64;
+        pushf("fmadd_invalid_zero_inf", 1, 0, 0, d_zero, d_inf, d_one);
+        pushf("fmadd_snan_addend_invalid", 1, 0, 0, d_one, d_one, d_snan);
+        pushf("fnmadd_snan_op_invalid", 1, 1, 0, d_snan, d_one, d_one);
+        // f64 FMADD overflow: MAX * 2 + 0 -> OFC | IXC
+        pushf(
+            "fmadd_overflow",
+            1,
+            0,
+            0,
+            f64::MAX.to_bits(),
+            (2.0f64).to_bits(),
+            (0.0f64).to_bits(),
+        );
+    }
+
+    // ---- FP 2-source: fp_status_binop_f32/f64 (FADD 0b0010, FMUL 0b0000, FDIV 0b0001) ----
+    {
+        let mut push2 = |label: &str, ft: u32, opcode: u32, n: u64, m: u64| {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RN as usize, n, 0);
+            st.set_vreg(RM as usize, m, 0);
+            batch.push((format!("{label}_t{ft}"), enc_fp2(ft, opcode), st));
+        };
+        // f32
+        push2(
+            "fdiv_divzero",
+            0,
+            0b0001,
+            (1.0f32).to_bits() as u64,
+            (0.0f32).to_bits() as u64,
+        ); // DZC
+        push2(
+            "fmul_overflow",
+            0,
+            0b0000,
+            f32::MAX.to_bits() as u64,
+            (2.0f32).to_bits() as u64,
+        ); // OFC | IXC
+        push2(
+            "fadd_invalid_inf_cancel",
+            0,
+            0b0010,
+            f32::INFINITY.to_bits() as u64,
+            f32::NEG_INFINITY.to_bits() as u64,
+        ); // IOC
+        // f64
+        push2(
+            "fdiv_divzero",
+            1,
+            0b0001,
+            (1.0f64).to_bits(),
+            (0.0f64).to_bits(),
+        ); // DZC
+        push2(
+            "fmul_overflow",
+            1,
+            0b0000,
+            f64::MAX.to_bits(),
+            (2.0f64).to_bits(),
+        ); // OFC | IXC
+        push2(
+            "fadd_invalid_inf_cancel",
+            1,
+            0b0010,
+            f64::INFINITY.to_bits(),
+            f64::NEG_INFINITY.to_bits(),
+        ); // IOC
+    }
+
+    run_fpsr_batch("fp_scalar_native_oracle_fpsr", batch);
+}
