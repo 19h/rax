@@ -11937,6 +11937,9 @@ impl AArch64Cpu {
                         }
                     }
                 };
+                if rsqrt && fp_sign_bit(esz, x) != 0 && !fp_is_zero_bits(esz, x) && !fp_is_nan_bits(esz, x) {
+                    self.fpsr |= FPSR_IOC;
+                }
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -19195,6 +19198,14 @@ fn fp_is_snan_bits(esize: usize, x: u64) -> bool {
         2 => fp16_is_snan(x as u16),
         4 => is_snan32(x as u32),
         _ => is_snan64(x),
+    }
+}
+
+fn fp_is_nan_bits(esize: usize, x: u64) -> bool {
+    match esize {
+        2 => fp16_is_nan(x as u16),
+        4 => is_nan32(x as u32),
+        _ => is_nan64(x),
     }
 }
 

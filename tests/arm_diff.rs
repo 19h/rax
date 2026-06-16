@@ -32999,3 +32999,46 @@ fn diff_sve_fp_unary_fpsr_exceptions() {
 
     run_fpsr_batch("sve_fp_unary_fpsr_exceptions", batch);
 }
+
+// commit e15fade14446 temp: set sve frsqrte invalid fpsr
+#[test]
+fn diff_sve_frsqrte_fpsr_invalid_negative() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (size, esz_bytes, negative-finite bits, negative-inf bits, positive-finite bits)
+    let cases: &[(u32, usize, u64, u64, u64)] = &[
+        (1, 2, 0xbc00, 0xfc00, 0x3c00), // half: -1.0, -inf, +1.0
+        (2, 4, (-1.0f32).to_bits() as u64, 0xff80_0000, 1.0f32.to_bits() as u64), // single
+        (3, 8, (-1.0f64).to_bits(), 0xfff0_0000_0000_0000, 1.0f64.to_bits()), // double
+    ];
+    for &(size, esz, neg, neginf, pos) in cases {
+        let insn = enc_sve_frecpe(size, 1); // FRSQRTE (rsqrt=1), unpredicated
+        let bits = (esz * 8) as u32;
+        let mask: u128 = if bits == 64 { u128::from(u64::MAX) } else { (1u128 << bits) - 1 };
+        let lanes = 16 / esz;
+        for initial_fpsr in [0u64, 0x10] {
+            // All-negative-finite vector: every active lane raises IOC.
+            let mut zn = 0u128;
+            for l in 0..lanes {
+                zn |= ((neg as u128) & mask) << (l * esz * 8);
+            }
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            batch.push((format!("frsqrte_neg_s{size}_fpsr{initial_fpsr:#x}"), insn, st));
+
+            // Mixed: negative-inf, positive-finite alternating -> only neg lanes flag.
+            let mut zn = 0u128;
+            for l in 0..lanes {
+                let v = if l % 2 == 0 { neginf } else { pos };
+                zn |= ((v as u128) & mask) << (l * esz * 8);
+            }
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            batch.push((format!("frsqrte_mix_s{size}_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+    run_fpsr_batch("sve_frsqrte_fpsr_invalid_negative", batch);
+}
