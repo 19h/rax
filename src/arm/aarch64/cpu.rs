@@ -5377,6 +5377,9 @@ impl AArch64Cpu {
             } else {
                 fp_three_same_f64(kind, a, b, d)
             };
+            if kind == FpKind::Div {
+                self.fpsr |= fp_status_binop(esize, kind, a, b, res);
+            }
             write_elem(&mut dst, off, esize, res);
         }
 

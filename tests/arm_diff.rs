@@ -34461,3 +34461,63 @@ fn diff_simd_fmlal_fpsr_exceptions() {
     }
     run_fpsr_batch("simd_fmlal_fpsr_exceptions", batch);
 }
+
+// commit d48c0c245648 temp: set simd fdiv fpsr
+#[test]
+fn diff_simd_fdiv_fpsr_exceptions() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // size=0 -> FDIV Vd.4S (single); size=1 -> FDIV Vd.2D (double).
+    // enc_three_same(q=1, u=1, size, opcode=0b11111): (u=1,a=0,op=0b11111)=>Div,
+    // with size==0b00 -> single (a=0,sz=0), size==0b01 -> double (a=0,sz=1).
+    for &(size, name) in &[(0u32, "s"), (1u32, "d")] {
+        let insn = enc_three_same(1, 1, size, 0b11111);
+
+        // (numerator_bits, denominator_bits, cause) per exception class.
+        let s_cases: [(u32, u32, &str); 4] = [
+            (1.0f32.to_bits(), 0.0f32.to_bits(), "dzc"),       // 1/0 -> DZC
+            (0.0f32.to_bits(), 0.0f32.to_bits(), "ioc"),       // 0/0 -> IOC
+            (f32::MAX.to_bits(), (1e-30f32).to_bits(), "ofc"), // MAX/tiny -> OFC|IXC
+            (1.0f32.to_bits(), (3.0f32).to_bits(), "ixc"),     // 1/3 -> IXC
+        ];
+        let d_cases: [(u64, u64, &str); 4] = [
+            (1.0f64.to_bits(), 0.0f64.to_bits(), "dzc"),
+            (0.0f64.to_bits(), 0.0f64.to_bits(), "ioc"),
+            (f64::MAX.to_bits(), (1e-300f64).to_bits(), "ofc"),
+            (1.0f64.to_bits(), (3.0f64).to_bits(), "ixc"),
+        ];
+
+        for case in 0..4 {
+            let (cause, n128, m128) = if size == 0 {
+                let (n, m, cause) = s_cases[case];
+                let mut nn = 0u128;
+                let mut mm = 0u128;
+                for lane in 0..4 {
+                    nn |= (n as u128) << (32 * lane);
+                    mm |= (m as u128) << (32 * lane);
+                }
+                (cause, nn, mm)
+            } else {
+                let (n, m, cause) = d_cases[case];
+                let nn = (n as u128) | ((n as u128) << 64);
+                let mm = (m as u128) | ((m as u128) << 64);
+                (cause, nn, mm)
+            };
+
+            for initial_fpsr in [0, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_vreg(RN as usize, n128 as u64, (n128 >> 64) as u64);
+                st.set_vreg(RM as usize, m128 as u64, (m128 >> 64) as u64);
+                batch.push((
+                    format!("simd_fdiv_{name}_{cause}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("simd_fdiv_fpsr_exceptions", batch);
+}
