@@ -1,3 +1,4 @@
 # Built on demand by build.sh / tests/arm_diff.rs
 oracle
+oracle-native
 *.o

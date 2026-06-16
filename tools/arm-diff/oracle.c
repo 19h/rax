@@ -69,6 +69,8 @@ typedef struct {
 #define SCRATCH_ADDR 0x200000ull
 #define SCRATCH_SIZE 4096
 #define SCRATCH_BASE (SCRATCH_ADDR + 64)
+#define GUEST_STACK_ADDR 0x4000000ull
+#define GUEST_STACK_SIZE (64ull * 1024ull * 1024ull)
 
 /* Optional test-only relocation mode for control-flow instructions. If an
  * input case sets ArmState.pc to PCREL_MAGIC, any X register whose high 24 bits
@@ -76,6 +78,7 @@ typedef struct {
  * test runs. Captured code-page addresses are then normalized back to offsets
  * from harness_testslot. */
 #define PCREL_MAGIC 0x524158504352454cull /* "RAXPCREL" */
+#define PCREL_PAGE_MAGIC 0x5241585043504147ull /* "RAXPCPAG" */
 #define PCREL_MASK  0xffffff0000000000ull
 #define PCREL_TOKEN 0x5241580000000000ull /* high 24 bits: "RAX" */
 
@@ -226,6 +229,8 @@ static ArmState          g_block;        /* input register block           */
 static ArmState         *g_out;          /* captured outputs               */
 static volatile uint32_t g_trapped;      /* non-zero = faulted             */
 static uint64_t          g_code;         /* address of the test code page  */
+static uint64_t          g_done_pc;      /* final harness BRK capture PC   */
+static volatile uint32_t g_strict_sigtrap; /* treat in-slot BRK as a trap    */
 static mcontext_t        g_saved_mc;     /* harness mcontext (to resume)   */
 static uint8_t           g_saved_reserved[4096];
 
@@ -238,7 +243,7 @@ static uint64_t testslot_base(uint32_t *code, size_t slot) {
 }
 
 static void apply_pcrel_input(ArmState *st, uint32_t *code, size_t slot) {
-    if (st->pc != PCREL_MAGIC) return;
+    if (st->pc != PCREL_MAGIC && st->pc != PCREL_PAGE_MAGIC) return;
     uint64_t base = testslot_base(code, slot);
     for (int i = 0; i < 31; i++) {
         if (is_pcrel_marker(st->x[i])) {
@@ -251,9 +256,22 @@ static void apply_pcrel_input(ArmState *st, uint32_t *code, size_t slot) {
 
 static void normalize_pcrel_output(const ArmState *in, ArmState *out,
                                    uint32_t *code, size_t slot, size_t words) {
-    if (in->pc != PCREL_MAGIC) return;
+    if (in->pc != PCREL_MAGIC && in->pc != PCREL_PAGE_MAGIC) return;
     uint64_t base = testslot_base(code, slot);
     uint64_t end = (uint64_t)(uintptr_t)(code + words);
+    if (in->pc == PCREL_PAGE_MAGIC) {
+        uint64_t page = base & ~0xfffull;
+        const uint64_t range = 64ull * 1024ull * 1024ull;
+        for (int i = 0; i < 31; i++) {
+            if (out->x[i] >= page - range && out->x[i] < page + range) {
+                out->x[i] -= page;
+            }
+        }
+        if (out->pc >= page - range && out->pc < page + range) {
+            out->pc -= page;
+        }
+        return;
+    }
     for (int i = 0; i < 31; i++) {
         if (out->x[i] >= base && out->x[i] < end) {
             out->x[i] -= base;
@@ -307,8 +325,12 @@ static void handler(int sig, siginfo_t *si, void *uc_) {
     }
 
     /* Capture phase. A non-SIGTRAP signal means the instruction faulted
-     * (e.g. SIGILL from an undefined encoding); record it but still capture. */
-    if (sig != SIGTRAP) g_trapped = (uint32_t)sig;
+     * (e.g. SIGILL from an undefined encoding). Normally SIGTRAP is the
+     * harness' final BRK sentinel; exception tests can opt into distinguishing
+     * a BRK instruction under test from that final sentinel. */
+    if (sig != SIGTRAP || (g_strict_sigtrap && mc->pc != g_done_pc)) {
+        g_trapped = (uint32_t)sig;
+    }
 
     for (int i = 0; i < 31; i++) g_out->x[i] = mc->regs[i];
     g_out->sp     = mc->sp;
@@ -376,11 +398,15 @@ int main(void) {
     memcpy(code, harness_prologue, words * 4);
     __builtin___clear_cache((char *)code, (char *)(code + words));
     g_code = (uint64_t)(uintptr_t)code;
+    g_done_pc = (uint64_t)(uintptr_t)(code + slot + 3);
 
     /* Shared scratch memory window at a fixed address. */
     void *scratch = mmap((void *)SCRATCH_ADDR, SCRATCH_SIZE, PROT_READ | PROT_WRITE,
                          MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
     if (scratch == MAP_FAILED) { perror("mmap scratch"); return 8; }
+    void *guest_stack = mmap((void *)GUEST_STACK_ADDR, GUEST_STACK_SIZE, PROT_READ | PROT_WRITE,
+                             MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (guest_stack == MAP_FAILED) { perror("mmap guest stack"); return 9; }
 
     uint32_t magic = 0, count = 0;
     if (read_exact(0, &magic, 4) || read_exact(0, &count, 4)) return 3;
@@ -396,7 +422,19 @@ int main(void) {
         code[slot] = in.insn;
         code[slot + 1] = in.flags; /* second instruction (NOP for single tests) */
         code[slot + 2] = in.insn3; /* third instruction (NOP for one/two-slot tests) */
-        __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 3));
+        if (in.reserved & 2u) {
+            for (int i = 3; i < 8; i++) {
+                code[slot + i] = 0xd503201fu; /* literal data word / NOP */
+            }
+            code[slot + 8] = 0xd4200000u; /* shifted harness BRK */
+            g_done_pc = (uint64_t)(uintptr_t)(code + slot + 8);
+            __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 9));
+        } else {
+            code[slot + 3] = 0xd4200000u; /* default harness BRK */
+            g_done_pc = (uint64_t)(uintptr_t)(code + slot + 3);
+            __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 4));
+        }
+        g_strict_sigtrap = in.reserved & 1u;
 
         /* Install the scratch window contents before the test runs. */
         memcpy((void *)SCRATCH_ADDR, in.st.scratch, sizeof in.st.scratch);

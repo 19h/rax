@@ -1,9 +1,11 @@
-//! AArch64 differential test harness: rax interpreter vs. QEMU (hardware oracle).
+//! AArch64 differential test harness: rax interpreter vs. an EL0 hardware oracle.
 //!
 //! The rax software interpreter (`src/arm/aarch64/cpu.rs`) is checked against a
-//! hardware-semantics reference produced by running each instruction under
-//! `qemu-aarch64` (user mode). The reference harness is `tools/arm-diff/oracle.c`,
-//! built on demand into a static AArch64 ELF.
+//! hardware-semantics reference produced by running each instruction through
+//! `tools/arm-diff/oracle.c`. On aarch64 hosts this test builds that harness
+//! natively and executes it directly in EL0, using signal frames as the
+//! KVM-like architectural snapshot boundary. On other hosts it keeps the older
+//! `qemu-aarch64` user-mode fallback.
 //!
 //! For each `(instruction, initial architectural state)` pair we:
 //!   1. run it on the oracle (X0..X30, SP, NZCV, V0..V31 captured), and
@@ -11,10 +13,11 @@
 //! then compare the full register file. Any divergence is an interpreter bug.
 //!
 //! Robustness (mirrors `tests/differential.rs` for x86-vs-KVM):
-//!   - if the cross compiler or `qemu-aarch64` is unavailable, every test
-//!     self-skips (returns without failing) so the suite is green anywhere.
-//!   - only register-only instructions (no memory / branch / system) are tested;
-//!     these are exactly where the SIMD/FP semantic bugs live.
+//!   - if neither a native aarch64 compiler path nor the qemu-aarch64 fallback
+//!     is available, every test self-skips (returns without failing) so the
+//!     suite is green anywhere.
+//!   - tests stay within EL0-safe architectural behavior. Memory cases use the
+//!     shared scratch window; privileged/system behavior is out of scope here.
 //!
 //! Scope is intentionally exhaustive *within* a family: encodings are enumerated
 //! over their opcode/size/Q/U fields with fixed register fields, and many
@@ -23,7 +26,7 @@
 #![cfg(target_os = "linux")]
 
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
@@ -76,15 +79,24 @@ const NOP: u32 = 0xd503201f;
 const SCRATCH_ADDR: u64 = 0x20_0000;
 /// Base pointer tests aim a register at (matches oracle.c SCRATCH_BASE).
 const SCRATCH_BASE: u64 = SCRATCH_ADDR + 64;
+/// Recoverable guest stack range for SP-writing oracle tests.
+const GUEST_STACK_ADDR: u64 = 0x400_0000;
+const GUEST_STACK_SIZE: u64 = 64 * 1024 * 1024;
 /// Enables oracle PC-relative register relocation for control-flow tests.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 const PCREL_MAGIC: u64 = 0x5241_5850_4352_454c;
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+const PCREL_PAGE_MAGIC: u64 = 0x5241_5850_4350_4147;
 const PCREL_TOKEN: u64 = 0x5241_5800_0000_0000;
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn pcrel_marker(offset: i32) -> u64 {
     PCREL_TOKEN | u64::from(offset as u32)
+}
+
+fn pcrel_offset(value: u64) -> Option<u64> {
+    if value & 0xffff_ffff_0000_0000 == PCREL_TOKEN {
+        Some(u64::from(value as u32))
+    } else {
+        None
+    }
 }
 
 impl ArmState {
@@ -158,25 +170,76 @@ fn read_struct<T: Copy>(buf: &[u8], off: usize) -> T {
 }
 
 // ---------------------------------------------------------------------------
-// Oracle: build on demand, then run a whole batch through one qemu invocation.
+// Oracle: build on demand, then run a whole batch through one oracle process.
 // ---------------------------------------------------------------------------
 
-/// Build the oracle if needed; return its path, or `None` if the toolchain is
-/// unavailable (test self-skips).
-fn oracle_path() -> Option<PathBuf> {
+#[derive(Clone, Debug)]
+enum OracleRunner {
+    Native(PathBuf),
+    Qemu(PathBuf),
+}
+
+impl OracleRunner {
+    fn command(&self) -> Command {
+        match self {
+            OracleRunner::Native(path) => Command::new(path),
+            OracleRunner::Qemu(path) => {
+                let mut cmd = Command::new("qemu-aarch64");
+                cmd.arg(path);
+                cmd
+            }
+        }
+    }
+
+    fn is_native(&self) -> bool {
+        matches!(self, OracleRunner::Native(_))
+    }
+}
+
+fn source_newer_than(source: &Path, bin: &Path) -> bool {
+    match (bin.metadata(), source.metadata()) {
+        (Ok(b), Ok(s)) => match (b.modified(), s.modified()) {
+            (Ok(bm), Ok(sm)) => bm < sm,
+            _ => true,
+        },
+        _ => true,
+    }
+}
+
+#[cfg(target_arch = "aarch64")]
+fn native_oracle_path() -> Option<PathBuf> {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tools/arm-diff");
+    let source = dir.join("oracle.c");
+    let bin = dir.join("oracle-native");
+    if source_newer_than(&source, &bin) {
+        let cc = std::env::var_os("AARCH64_NATIVE_CC")
+            .or_else(|| std::env::var_os("CC"))
+            .unwrap_or_else(|| "cc".into());
+        let status = Command::new(cc)
+            .arg("-O2")
+            .arg("-Wall")
+            .arg("-Wextra")
+            .arg("-o")
+            .arg(&bin)
+            .arg(&source)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+        match status {
+            Ok(s) if s.success() => {}
+            _ => return None,
+        }
+    }
+    if bin.exists() { Some(bin) } else { None }
+}
+
+fn qemu_oracle_path() -> Option<PathBuf> {
     if which("qemu-aarch64").is_none() {
         return None;
     }
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tools/arm-diff");
     let bin = dir.join("oracle");
-    let need_build = match (bin.metadata(), dir.join("oracle.c").metadata()) {
-        (Ok(b), Ok(c)) => match (b.modified(), c.modified()) {
-            (Ok(bm), Ok(cm)) => bm < cm,
-            _ => true,
-        },
-        _ => true,
-    };
-    if need_build {
+    if source_newer_than(&dir.join("oracle.c"), &bin) {
         let status = Command::new("bash")
             .arg(dir.join("build.sh"))
             .stdout(Stdio::null())
@@ -190,6 +253,105 @@ fn oracle_path() -> Option<PathBuf> {
     if bin.exists() { Some(bin) } else { None }
 }
 
+/// Build the best available oracle if needed; return it, or `None` if the
+/// toolchain is unavailable (test self-skips).
+fn oracle_path() -> Option<OracleRunner> {
+    #[cfg(target_arch = "aarch64")]
+    if std::env::var_os("RAX_ARM_DIFF_FORCE_QEMU").is_none() {
+        if let Some(path) = native_oracle_path() {
+            return Some(OracleRunner::Native(path));
+        }
+    }
+
+    qemu_oracle_path().map(OracleRunner::Qemu)
+}
+
+#[derive(Debug)]
+struct HostCaps {
+    flags: std::collections::BTreeSet<String>,
+}
+
+impl HostCaps {
+    fn current() -> Self {
+        let mut flags = std::collections::BTreeSet::new();
+        if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+            for line in cpuinfo.lines() {
+                let Some((name, value)) = line.split_once(':') else {
+                    continue;
+                };
+                if matches!(name.trim(), "Features" | "flags") {
+                    flags.extend(value.split_whitespace().map(|s| s.to_ascii_lowercase()));
+                }
+            }
+        }
+        HostCaps { flags }
+    }
+
+    fn has(&self, flag: &str) -> bool {
+        self.flags.contains(flag)
+    }
+}
+
+fn native_host_caps() -> &'static HostCaps {
+    static CAPS: std::sync::OnceLock<HostCaps> = std::sync::OnceLock::new();
+    CAPS.get_or_init(HostCaps::current)
+}
+
+fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
+    if !oracle.is_native() {
+        return false;
+    }
+    let caps = native_host_caps();
+    let mnemonic = label
+        .split_whitespace()
+        .next()
+        .unwrap_or(label)
+        .to_ascii_lowercase();
+
+    if mnemonic.starts_with("sm3") {
+        return !caps.has("sm3");
+    }
+    if mnemonic.starts_with("sm4") {
+        return !caps.has("sm4");
+    }
+    if matches!(mnemonic.as_str(), "subp" | "subps" | "irg" | "gmi") {
+        return !caps.has("mte");
+    }
+    if mnemonic.starts_with("fmmla") {
+        return !(caps.has("f32mm") || caps.has("svef32mm"));
+    }
+    if matches!(mnemonic.as_str(), "cfinv" | "xaflag" | "axflag") {
+        return !caps.has("flagm");
+    }
+
+    let sve2p1 = [
+        "addqv", "andqv", "eorqv", "orqv", "smaxqv", "sminqv", "umaxqv", "uminqv", "faddqv",
+        "fmaxqv", "fminqv", "fmaxnmqv", "fminnmqv", "dupq", "extq", "revd", "tblq", "tbxq",
+        "uzpq1", "uzpq2", "zipq1", "zipq2", "pext", "pmov", "psel", "sqcvtn", "sqcvtun", "uqcvtn",
+    ];
+    if sve2p1.iter().any(|m| mnemonic == *m) {
+        return !caps.has("sve2p1");
+    }
+
+    let b16b16 = [
+        "bfadd", "bfclamp", "bfmax", "bfmaxnm", "bfmin", "bfminnm", "bfmla", "bfmls", "bfmlslb",
+        "bfmlslt", "bfmul", "bfsub", "fdot",
+    ];
+    if b16b16.iter().any(|m| mnemonic == *m) {
+        return !caps.has("sveb16b16");
+    }
+    if matches!(mnemonic.as_str(), "sdot" | "udot") && label.contains(".h") {
+        return !caps.has("sveb16b16");
+    }
+
+    let faminmax_or_sve2p1 = ["fclamp", "sclamp", "uclamp"];
+    if faminmax_or_sve2p1.iter().any(|m| mnemonic == *m) {
+        return !(caps.has("faminmax") || caps.has("sve2p1"));
+    }
+
+    false
+}
+
 fn which(prog: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
     for dir in std::env::split_paths(&path) {
@@ -201,8 +363,8 @@ fn which(prog: &str) -> Option<PathBuf> {
     None
 }
 
-/// Run `cases` through the oracle under qemu; returns one `OutCase` per input.
-fn run_oracle(oracle: &PathBuf, cases: &[(u32, u32, ArmState)]) -> Option<Vec<OutCase>> {
+/// Run `cases` through the selected oracle; returns one `OutCase` per input.
+fn run_oracle(oracle: &OracleRunner, cases: &[(u32, u32, ArmState)]) -> Option<Vec<OutCase>> {
     let cases3: Vec<(u32, u32, u32, ArmState)> = cases
         .iter()
         .map(|(insn, insn2, st)| (*insn, *insn2, NOP, *st))
@@ -210,24 +372,37 @@ fn run_oracle(oracle: &PathBuf, cases: &[(u32, u32, ArmState)]) -> Option<Vec<Ou
     run_oracle3(oracle, &cases3)
 }
 
-/// Run three-instruction cases through the oracle under qemu.
-fn run_oracle3(oracle: &PathBuf, cases: &[(u32, u32, u32, ArmState)]) -> Option<Vec<OutCase>> {
+/// Run three-instruction cases through the selected oracle.
+fn run_oracle3(oracle: &OracleRunner, cases: &[(u32, u32, u32, ArmState)]) -> Option<Vec<OutCase>> {
+    let cases_reserved: Vec<(u32, u32, u32, u32, ArmState)> = cases
+        .iter()
+        .map(|(insn, insn2, insn3, st)| (*insn, *insn2, *insn3, 0, *st))
+        .collect();
+    run_oracle3_reserved(oracle, &cases_reserved)
+}
+
+/// Run three-instruction cases through the selected oracle, using the wire
+/// format's reserved field for oracle mode flags.
+fn run_oracle3_reserved(
+    oracle: &OracleRunner,
+    cases: &[(u32, u32, u32, u32, ArmState)],
+) -> Option<Vec<OutCase>> {
     let mut payload = Vec::with_capacity(8 + cases.len() * std::mem::size_of::<InCase>());
     payload.extend_from_slice(&WIRE_MAGIC.to_le_bytes());
     payload.extend_from_slice(&(cases.len() as u32).to_le_bytes());
-    for (insn, insn2, insn3, st) in cases {
+    for (insn, insn2, insn3, reserved, st) in cases {
         let ic = InCase {
             insn: *insn,
             flags: *insn2,
             insn3: *insn3,
-            reserved: 0,
+            reserved: *reserved,
             st: *st,
         };
         payload.extend_from_slice(as_bytes(&ic));
     }
 
-    let mut child = Command::new("qemu-aarch64")
-        .arg(oracle)
+    let mut child = oracle
+        .command()
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -291,6 +466,8 @@ fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
         let (lo, hi) = input.vreg(r as usize);
         cpu.set_simd_reg(r, lo, hi).ok()?;
     }
+    cpu.set_fpcr(input.fpcr as u32).ok()?;
+    cpu.set_fpsr(input.fpsr as u32).ok()?;
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
@@ -327,12 +504,126 @@ fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
         pstate |= 1 << 28;
     }
     out.pstate = pstate;
+    out.fpcr = cpu.get_fpcr()? as u64;
+    out.fpsr = cpu.get_fpsr()? as u64;
     for r in 0..32u8 {
         if let Some((lo, hi)) = cpu.get_simd_reg(r) {
             out.set_vreg(r as usize, lo, hi);
         }
     }
     // Read the scratch window back.
+    for (i, w) in out.scratch.iter_mut().enumerate() {
+        *w = cpu.mem_read_u64(SCRATCH_ADDR + (i as u64) * 8).ok()?;
+    }
+    for r in 0..16usize {
+        out.set_preg(r, cpu.sve_pred(r) as u16);
+    }
+    Some(out)
+}
+
+/// Run one instruction and return rax's structured exit. `None` means the
+/// interpreter rejected the encoding with an execution error.
+fn run_rax_exit(insn: u32, input: &ArmState) -> Option<CpuExit> {
+    let mem = FlatMemory::new(0, 0x30_0000);
+    let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
+
+    for i in 0..31u8 {
+        cpu.set_gpr(i, input.x[i as usize]);
+    }
+    cpu.set_current_sp(input.sp);
+    let ps = input.pstate;
+    cpu.set_nzcv(
+        ps & (1 << 31) != 0,
+        ps & (1 << 30) != 0,
+        ps & (1 << 29) != 0,
+        ps & (1 << 28) != 0,
+    );
+    for r in 0..32u8 {
+        let (lo, hi) = input.vreg(r as usize);
+        cpu.set_simd_reg(r, lo, hi).ok()?;
+    }
+    cpu.set_fpcr(input.fpcr as u32).ok()?;
+    cpu.set_fpsr(input.fpsr as u32).ok()?;
+    for r in 0..16usize {
+        cpu.set_sve_pred(r, input.preg(r) as u32);
+    }
+
+    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    cpu.set_pc(0);
+    cpu.step().ok()
+}
+
+/// Run one instruction with controlled words at PC+4 and PC+8. This is used
+/// for PC-relative literal loads: the oracle executes those words as harmless
+/// NOPs after the load, while rax only needs the bytes to be present in memory.
+fn run_rax_literal(insn: u32, word1: u32, word2: u32, input: &ArmState) -> Option<ArmState> {
+    let mem = FlatMemory::new(0, 0x30_0000);
+    let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
+
+    for i in 0..31u8 {
+        cpu.set_gpr(i, input.x[i as usize]);
+    }
+    cpu.set_current_sp(input.sp);
+    let ps = input.pstate;
+    cpu.set_nzcv(
+        ps & (1 << 31) != 0,
+        ps & (1 << 30) != 0,
+        ps & (1 << 29) != 0,
+        ps & (1 << 28) != 0,
+    );
+    for r in 0..32u8 {
+        let (lo, hi) = input.vreg(r as usize);
+        cpu.set_simd_reg(r, lo, hi).ok()?;
+    }
+    cpu.set_fpcr(input.fpcr as u32).ok()?;
+    cpu.set_fpsr(input.fpsr as u32).ok()?;
+    for r in 0..16usize {
+        cpu.set_sve_pred(r, input.preg(r) as u32);
+    }
+    let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
+    cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
+
+    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    cpu.write_memory(4, &word1.to_le_bytes()).ok()?;
+    cpu.write_memory(8, &word2.to_le_bytes()).ok()?;
+    cpu.write_memory(12, &NOP.to_le_bytes()).ok()?;
+    cpu.write_memory(16, &NOP.to_le_bytes()).ok()?;
+    cpu.write_memory(20, &NOP.to_le_bytes()).ok()?;
+    cpu.write_memory(24, &NOP.to_le_bytes()).ok()?;
+    cpu.write_memory(28, &NOP.to_le_bytes()).ok()?;
+    cpu.set_pc(0);
+    match cpu.step() {
+        Ok(CpuExit::Continue) => {}
+        _ => return None,
+    }
+
+    let mut out = ArmState::zeroed();
+    for i in 0..31u8 {
+        out.x[i as usize] = cpu.get_gpr(i);
+    }
+    out.sp = cpu.current_sp();
+    out.pc = cpu.get_pc();
+    let mut pstate = 0u64;
+    if cpu.get_n() {
+        pstate |= 1 << 31;
+    }
+    if cpu.get_z() {
+        pstate |= 1 << 30;
+    }
+    if cpu.get_c() {
+        pstate |= 1 << 29;
+    }
+    if cpu.get_v() {
+        pstate |= 1 << 28;
+    }
+    out.pstate = pstate;
+    out.fpcr = cpu.get_fpcr()? as u64;
+    out.fpsr = cpu.get_fpsr()? as u64;
+    for r in 0..32u8 {
+        if let Some((lo, hi)) = cpu.get_simd_reg(r) {
+            out.set_vreg(r as usize, lo, hi);
+        }
+    }
     for (i, w) in out.scratch.iter_mut().enumerate() {
         *w = cpu.mem_read_u64(SCRATCH_ADDR + (i as u64) * 8).ok()?;
     }
@@ -353,8 +644,8 @@ struct Mismatch {
     detail: String,
 }
 
-/// Compare one case. `cmp_flags` selects whether NZCV is compared (only for
-/// flag-setting instructions; otherwise both should be unchanged anyway).
+/// Compare one case against the complete EL0 architectural state captured by
+/// the oracle.
 fn compare_case(
     label: &str,
     insn: u32,
@@ -409,6 +700,18 @@ fn compare_case(
     let hw_nzcv = (oracle.st.pstate >> 28) & 0xF;
     if rax_nzcv != hw_nzcv {
         diffs.push(format!("nzcv: rax={:#x} hw={:#x}", rax_nzcv, hw_nzcv));
+    }
+    if rax.fpcr != oracle.st.fpcr {
+        diffs.push(format!(
+            "fpcr: rax={:#010x} hw={:#010x}",
+            rax.fpcr, oracle.st.fpcr
+        ));
+    }
+    if rax.fpsr != oracle.st.fpsr {
+        diffs.push(format!(
+            "fpsr: rax={:#010x} hw={:#010x}",
+            rax.fpsr, oracle.st.fpsr
+        ));
     }
     for r in 0..32 {
         let (rlo, rhi) = rax.vreg(r);
@@ -938,7 +1241,7 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] {name}: qemu/cross-toolchain unavailable -> skipping");
+            eprintln!("[arm_diff] {name}: native/qemu oracle unavailable -> skipping");
             return;
         }
     };
@@ -949,6 +1252,9 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
         None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
             eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
             return;
         }
@@ -957,6 +1263,9 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
 
     let mut mismatches = Vec::new();
     for (i, ((insn, _insn2, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        if out.trapped != 0 && native_hardware_lacks_label(&oracle, &labels[i]) {
+            continue;
+        }
         compare_case(&labels[i], *insn, st, out, &mut mismatches);
     }
 
@@ -978,6 +1287,123 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
             eprintln!("  {count:5}x  {label}");
         }
         eprintln!("-- first 25 examples --");
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+fn run_batch_literal(name: &str, batch: Vec<(String, u32, u32, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: native/qemu oracle unavailable -> skipping");
+            return;
+        }
+    };
+
+    let cases: Vec<(u32, u32, u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, word1, word2, st)| (*insn, *word1, *word2, 2, *st))
+        .collect();
+    let outs = match run_oracle3_reserved(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, word1, word2, _reserved, st), out)) in cases.iter().zip(outs.iter()).enumerate()
+    {
+        let rax = run_rax_literal(*insn, *word1, *word2, st);
+        if out.trapped != 0 {
+            if rax.is_some() {
+                mismatches.push(Mismatch {
+                    label: batch[i].0.clone(),
+                    insn: *insn,
+                    detail: format!("hw faulted (sig {}) but rax executed", out.trapped),
+                });
+            }
+            continue;
+        }
+        let rax = match rax {
+            Some(r) => r,
+            None => {
+                mismatches.push(Mismatch {
+                    label: batch[i].0.clone(),
+                    insn: *insn,
+                    detail: "hw executed but rax rejected".into(),
+                });
+                continue;
+            }
+        };
+        let mut diffs = Vec::new();
+        for r in 0..31 {
+            if rax.x[r] != out.st.x[r] {
+                diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
+            }
+        }
+        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
+            diffs.push(format!(
+                "nzcv: rax={:#x} hw={:#x}",
+                (rax.pstate >> 28) & 0xF,
+                (out.st.pstate >> 28) & 0xF
+            ));
+        }
+        for r in 0..32 {
+            if rax.vreg(r) != out.st.vreg(r) {
+                diffs.push(format!("v{r} differs"));
+            }
+        }
+        for r in 0..16 {
+            if rax.preg(r) != out.st.preg(r) {
+                diffs.push(format!(
+                    "p{r}: rax={:#06x} hw={:#06x}",
+                    rax.preg(r),
+                    out.st.preg(r)
+                ));
+            }
+        }
+        for k in 0..32 {
+            if rax.scratch[k] != out.st.scratch[k] {
+                diffs.push(format!(
+                    "scratch[{k}]: rax={:#x} hw={:#x}",
+                    rax.scratch[k], out.st.scratch[k]
+                ));
+            }
+        }
+        if !diffs.is_empty() {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: diffs.join("  |  "),
+            });
+        }
+    }
+
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== {name}: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
         for m in mismatches.iter().take(25) {
             eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
         }
@@ -21693,6 +22119,8 @@ fn run_rax_pair(insn: u32, insn2: u32, input: &ArmState) -> Option<ArmState> {
         let (lo, hi) = input.vreg(r as usize);
         cpu.set_simd_reg(r, lo, hi).ok()?;
     }
+    cpu.set_fpcr(input.fpcr as u32).ok()?;
+    cpu.set_fpsr(input.fpsr as u32).ok()?;
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
@@ -21729,6 +22157,8 @@ fn run_rax_pair(insn: u32, insn2: u32, input: &ArmState) -> Option<ArmState> {
         pstate |= 1 << 28;
     }
     out.pstate = pstate;
+    out.fpcr = cpu.get_fpcr()? as u64;
+    out.fpsr = cpu.get_fpsr()? as u64;
     for r in 0..32u8 {
         if let Some((lo, hi)) = cpu.get_simd_reg(r) {
             out.set_vreg(r as usize, lo, hi);
@@ -21851,6 +22281,192 @@ fn run_batch_pair(name: &str, batch: Vec<(String, u32, u32, ArmState)>) {
     }
 }
 
+const BRK: u32 = 0xd420_0000;
+
+fn run_rax_branch_program(insn: u32, marker: u32, input: &ArmState) -> Option<ArmState> {
+    let mem = FlatMemory::new(0, 0x30_0000);
+    let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
+    for i in 0..31u8 {
+        let mut value = input.x[i as usize];
+        if input.pc == PCREL_MAGIC {
+            if let Some(offset) = pcrel_offset(value) {
+                value = offset;
+            }
+        }
+        cpu.set_gpr(i, value);
+    }
+    cpu.set_current_sp(input.sp);
+    let ps = input.pstate;
+    cpu.set_nzcv(
+        ps & (1 << 31) != 0,
+        ps & (1 << 30) != 0,
+        ps & (1 << 29) != 0,
+        ps & (1 << 28) != 0,
+    );
+    for r in 0..32u8 {
+        let (lo, hi) = input.vreg(r as usize);
+        cpu.set_simd_reg(r, lo, hi).ok()?;
+    }
+    cpu.set_fpcr(input.fpcr as u32).ok()?;
+    cpu.set_fpsr(input.fpsr as u32).ok()?;
+    for r in 0..16usize {
+        cpu.set_sve_pred(r, input.preg(r) as u32);
+    }
+    let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
+    cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
+    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    cpu.write_memory(4, &marker.to_le_bytes()).ok()?;
+    cpu.write_memory(8, &BRK.to_le_bytes()).ok()?;
+    cpu.write_memory(12, &BRK.to_le_bytes()).ok()?;
+    cpu.set_pc(0);
+
+    let mut steps = 0usize;
+    let pc = loop {
+        match cpu.step() {
+            Ok(CpuExit::Continue) => {}
+            Ok(CpuExit::Breakpoint(_)) => break cpu.get_pc().wrapping_sub(4),
+            _ => return None,
+        }
+        steps += 1;
+        if steps > 4 {
+            return None;
+        }
+    };
+
+    let mut out = ArmState::zeroed();
+    for i in 0..31u8 {
+        out.x[i as usize] = cpu.get_gpr(i);
+    }
+    out.sp = cpu.current_sp();
+    out.pc = pc;
+    let mut pstate = 0u64;
+    if cpu.get_n() {
+        pstate |= 1 << 31;
+    }
+    if cpu.get_z() {
+        pstate |= 1 << 30;
+    }
+    if cpu.get_c() {
+        pstate |= 1 << 29;
+    }
+    if cpu.get_v() {
+        pstate |= 1 << 28;
+    }
+    out.pstate = pstate;
+    out.fpcr = cpu.get_fpcr()? as u64;
+    out.fpsr = cpu.get_fpsr()? as u64;
+    for r in 0..32u8 {
+        if let Some((lo, hi)) = cpu.get_simd_reg(r) {
+            out.set_vreg(r as usize, lo, hi);
+        }
+    }
+    for (i, w) in out.scratch.iter_mut().enumerate() {
+        *w = cpu.mem_read_u64(SCRATCH_ADDR + (i as u64) * 8).ok()?;
+    }
+    for r in 0..16usize {
+        out.set_preg(r, cpu.sve_pred(r) as u16);
+    }
+    Some(out)
+}
+
+fn run_batch_branch(name: &str, batch: Vec<(String, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let marker = (1 << 31) | (0b10 << 29) | (0b100101 << 23) | (0xeeee << 5) | RD;
+    let cases: Vec<(u32, u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, marker, BRK, *st))
+        .collect();
+    let outs = match run_oracle3(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _marker, _brk, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        let rax = run_rax_branch_program(*insn, marker, st);
+        if out.trapped != 0 {
+            if rax.is_some() {
+                mismatches.push(Mismatch {
+                    label: batch[i].0.clone(),
+                    insn: *insn,
+                    detail: format!("hw faulted (sig {}) but rax executed", out.trapped),
+                });
+            }
+            continue;
+        }
+        let rax = match rax {
+            Some(r) => r,
+            None => {
+                mismatches.push(Mismatch {
+                    label: batch[i].0.clone(),
+                    insn: *insn,
+                    detail: "hw executed but rax rejected".into(),
+                });
+                continue;
+            }
+        };
+        let mut diffs = Vec::new();
+        for r in 0..31 {
+            if rax.x[r] != out.st.x[r] {
+                diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
+            }
+        }
+        if rax.sp != out.st.sp {
+            diffs.push(format!("sp: rax={:#x} hw={:#x}", rax.sp, out.st.sp));
+        }
+        if rax.pc != out.st.pc {
+            diffs.push(format!("pc: rax={:#x} hw={:#x}", rax.pc, out.st.pc));
+        }
+        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
+            diffs.push(format!(
+                "nzcv: rax={:#x} hw={:#x}",
+                (rax.pstate >> 28) & 0xF,
+                (out.st.pstate >> 28) & 0xF
+            ));
+        }
+        if !diffs.is_empty() {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: diffs.join("  |  "),
+            });
+        }
+    }
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== {name}: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
 #[test]
 fn diff_dp_addsub_shifted() {
     run_family("dp_addsub_shifted", addsub_shift_cases(), 12, 0x1001);
@@ -21862,6 +22478,1097 @@ fn diff_dp_logical_shifted() {
 }
 
 #[test]
+fn diff_addsub_logical_register_encoding_sweep() {
+    fn logical_shifted(sf: u32, opc: u32, shift: u32, n: u32, imm6: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b01010 << 24)
+            | (shift << 22)
+            | (n << 21)
+            | (RM << 16)
+            | (imm6 << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn addsub_shifted(sf: u32, op: u32, s: u32, shift: u32, imm6: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b01011 << 24)
+            | (shift << 22)
+            | (RM << 16)
+            | (imm6 << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn addsub_extended(sf: u32, op: u32, s: u32, option: u32, imm3: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b01011 << 24)
+            | (1 << 21)
+            | (RM << 16)
+            | (option << 13)
+            | (imm3 << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn addsub_carry(sf: u32, op: u32, s: u32) -> u32 {
+        (sf << 31) | (op << 30) | (s << 29) | (0b11010000 << 21) | (RM << 16) | (RN << 5) | RD
+    }
+
+    let mut rng = Rng::new(0xadd5_0b00);
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            for shift in 0..=3 {
+                for n in 0..=1 {
+                    for imm6 in 0..64 {
+                        let label =
+                            format!("logical_shifted sf{sf} opc{opc} sh{shift} n{n} i{imm6}");
+                        let insn = logical_shifted(sf, opc, shift, n, imm6);
+                        for _ in 0..2 {
+                            batch.push((label.clone(), insn, gen_input(&mut rng)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for shift in 0..=3 {
+                    for imm6 in 0..64 {
+                        let label = format!("addsub_shifted sf{sf} op{op} s{s} sh{shift} i{imm6}");
+                        let insn = addsub_shifted(sf, op, s, shift, imm6);
+                        for _ in 0..2 {
+                            batch.push((label.clone(), insn, gen_input(&mut rng)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for option in 0..=7 {
+                    for imm3 in 0..=7 {
+                        let label =
+                            format!("addsub_extended sf{sf} op{op} s{s} opt{option} i{imm3}");
+                        let insn = addsub_extended(sf, op, s, option, imm3);
+                        for _ in 0..2 {
+                            batch.push((label.clone(), insn, gen_input(&mut rng)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                let label = format!("addsub_carry sf{sf} op{op} s{s}");
+                let insn = addsub_carry(sf, op, s);
+                for _ in 0..8 {
+                    batch.push((label.clone(), insn, gen_input(&mut rng)));
+                }
+            }
+        }
+    }
+
+    run_batch("addsub_logical_register_encoding_sweep", batch);
+}
+
+#[test]
+fn diff_cond_compare_select_encoding_sweep() {
+    fn cond_compare(sf: u32, op: u32, imm: bool, rm_imm5: u32, cond: u32, nzcv: u32) -> u32 {
+        cond_compare_raw(sf, op, imm, rm_imm5, cond, nzcv, 0, 0)
+    }
+
+    fn cond_compare_raw(
+        sf: u32,
+        op: u32,
+        imm: bool,
+        rm_imm5: u32,
+        cond: u32,
+        nzcv: u32,
+        o2: u32,
+        o3: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (0b111010010 << 21)
+            | ((rm_imm5 & 0x1F) << 16)
+            | (cond << 12)
+            | ((imm as u32) << 11)
+            | (o2 << 10)
+            | (RN << 5)
+            | (o3 << 4)
+            | (nzcv & 0xF)
+    }
+
+    fn cond_select(sf: u32, op: u32, s: u32, op2: u32, cond: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b11010100 << 21)
+            | (RM << 16)
+            | (cond << 12)
+            | (op2 << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    let mut rng = Rng::new(0xc0dd_cafe);
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for imm in [false, true] {
+                let rm_imm5 = if imm { 5 } else { RM };
+                for cond in 0..16 {
+                    for fallback_nzcv in 0..16 {
+                        for pstate_nzcv in 0..16 {
+                            let mut st = gen_input(&mut rng);
+                            st.pstate = (pstate_nzcv as u64) << 28;
+                            let label = format!(
+                                "cond_compare sf{sf} op{op} imm{} cond{cond:x} nzcv{fallback_nzcv:x} pstate{pstate_nzcv:x}",
+                                imm as u8
+                            );
+                            batch.push((
+                                label,
+                                cond_compare(sf, op, imm, rm_imm5, cond, fallback_nzcv),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for imm in [false, true] {
+                let rm_imm5 = if imm { 7 } else { RM };
+                for cond in [0, 1, 8, 14] {
+                    for nzcv in [0, 0b0110, 0b1111] {
+                        for (o2, o3) in [(1, 0), (0, 1), (1, 1)] {
+                            let mut st = gen_input(&mut rng);
+                            st.pstate = ((nzcv ^ 0b1010) as u64) << 28;
+                            let label = format!(
+                                "cond_compare_reserved sf{sf} op{op} imm{} cond{cond:x} o2{o2} o3{o3}",
+                                imm as u8
+                            );
+                            batch.push((
+                                label,
+                                cond_compare_raw(sf, op, imm, rm_imm5, cond, nzcv, o2, o3),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for op2 in 0..=1 {
+                for cond in 0..16 {
+                    for pstate_nzcv in 0..16 {
+                        let mut st = gen_input(&mut rng);
+                        st.pstate = (pstate_nzcv as u64) << 28;
+                        let label = format!(
+                            "cond_select sf{sf} op{op} op2{op2} cond{cond:x} pstate{pstate_nzcv:x}"
+                        );
+                        batch.push((label, cond_select(sf, op, 0, op2, cond), st));
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for op2 in 0..=3 {
+                    if s == 0 && op2 <= 1 {
+                        continue;
+                    }
+                    for cond in [0, 1, 8, 14] {
+                        let mut st = gen_input(&mut rng);
+                        st.pstate = 0b0110u64 << 28;
+                        let label = format!(
+                            "cond_select_reserved sf{sf} op{op} s{s} op2{op2} cond{cond:x}"
+                        );
+                        batch.push((label, cond_select(sf, op, s, op2, cond), st));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("cond_compare_select_encoding_sweep", batch);
+}
+
+#[test]
+fn diff_dp1_dp2_dp3_encoding_sweep() {
+    fn dp1(sf: u32, s: u32, opcode2: u32, opcode: u32) -> u32 {
+        (sf << 31)
+            | (s << 29)
+            | (0b1011010110 << 21)
+            | ((opcode2 & 0x1F) << 16)
+            | ((opcode & 0x3F) << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn dp2(sf: u32, s: u32, opcode: u32) -> u32 {
+        (sf << 31)
+            | (s << 29)
+            | (0b0011010110 << 21)
+            | (RM << 16)
+            | ((opcode & 0x3F) << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn dp3(sf: u32, op54: u32, op31: u32, o0: u32, ra: u32) -> u32 {
+        (sf << 31)
+            | (op54 << 29)
+            | (0b11011 << 24)
+            | (op31 << 21)
+            | (RM << 16)
+            | (o0 << 15)
+            | ((ra & 0x1F) << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn dp2_label(sf: u32, s: u32, opcode: u32) -> String {
+        match (sf, s, opcode) {
+            (1, 0, 0b000000) => "subp".into(),
+            (1, 1, 0b000000) => "subps".into(),
+            (1, 0, 0b000100) => "irg".into(),
+            (1, 0, 0b000101) => "gmi".into(),
+            _ => format!("dp2 sf{sf} s{s} op{opcode:06b}"),
+        }
+    }
+
+    let mut rng = Rng::new(0xd123_d123);
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for s in 0..=1 {
+            for opcode2 in [0, 1, 2, 31] {
+                if sf == 1 && s == 0 && opcode2 == 1 {
+                    // PAuth values depend on EL1-managed keys; EL0 cannot make
+                    // them a deterministic oracle. Reserved PAuth-space cases
+                    // are covered by generated/decoder tests instead.
+                    continue;
+                }
+                for opcode in 0..64 {
+                    let label = format!("dp1 sf{sf} s{s} op2{opcode2:05b} op{opcode:06b}");
+                    let samples = if s == 0 && opcode2 == 0 && opcode <= 5 {
+                        3
+                    } else {
+                        1
+                    };
+                    for _ in 0..samples {
+                        batch.push((
+                            label.clone(),
+                            dp1(sf, s, opcode2, opcode),
+                            gen_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for s in 0..=1 {
+            for opcode in 0..64 {
+                if sf == 1 && s == 0 && opcode == 0b001100 {
+                    // PACGA is deterministic on a given machine but depends on
+                    // PAC keys EL0 cannot set, so it is not value-comparable.
+                    continue;
+                }
+                let label = dp2_label(sf, s, opcode);
+                let samples = if matches!(
+                    opcode,
+                    0b000010 | 0b000011 | 0b001000 | 0b001001 | 0b001010 | 0b001011 | 0b010000
+                        ..=0b010111
+                ) {
+                    4
+                } else {
+                    1
+                };
+                for _ in 0..samples {
+                    batch.push((label.clone(), dp2(sf, s, opcode), gen_input(&mut rng)));
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for op54 in 0..=3 {
+            for op31 in 0..=7 {
+                for o0 in 0..=1 {
+                    for ra in [RA, 31] {
+                        let label =
+                            format!("dp3 sf{sf} op54{op54:02b} op31{op31:03b} o{o0} ra{ra}");
+                        let samples = if op54 == 0 { 3 } else { 1 };
+                        for _ in 0..samples {
+                            batch.push((
+                                label.clone(),
+                                dp3(sf, op54, op31, o0, ra),
+                                gen_input(&mut rng),
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("dp1_dp2_dp3_encoding_sweep", batch);
+}
+
+#[test]
+fn diff_data_processing_immediate_encoding_sweep() {
+    fn addsub_imm(sf: u32, op: u32, s: u32, sh: u32, imm12: u32, rn: u32, rd: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b10001 << 24)
+            | (sh << 22)
+            | ((imm12 & 0xFFF) << 10)
+            | ((rn & 0x1F) << 5)
+            | (rd & 0x1F)
+    }
+
+    fn logical_imm(sf: u32, opc: u32, n: u32, immr: u32, imms: u32, rn: u32, rd: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100100 << 23)
+            | (n << 22)
+            | ((immr & 0x3F) << 16)
+            | ((imms & 0x3F) << 10)
+            | ((rn & 0x1F) << 5)
+            | (rd & 0x1F)
+    }
+
+    fn move_wide(sf: u32, opc: u32, hw: u32, imm16: u32) -> u32 {
+        (sf << 31) | (opc << 29) | (0b100101 << 23) | (hw << 21) | ((imm16 & 0xFFFF) << 5) | RD
+    }
+
+    let mut rng = Rng::new(0x1eed_1eed);
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for sh in 0..=1 {
+                    for rn in [RN, 31] {
+                        for rd in [RD, 31] {
+                            let mut batch = Vec::with_capacity(4096);
+                            let label =
+                                format!("addsub_imm sf{sf} op{op} s{s} sh{sh} rn{rn} rd{rd}");
+                            for imm12 in 0..4096 {
+                                let mut st = gen_input(&mut rng);
+                                if rd == 31 && s == 0 {
+                                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+                                }
+                                batch.push((
+                                    label.clone(),
+                                    addsub_imm(sf, op, s, sh, imm12, rn, rd),
+                                    st,
+                                ));
+                            }
+                            run_batch(
+                                &format!(
+                                    "data_processing_immediate_addsub sf{sf} op{op} s{s} sh{sh} rn{rn} rd{rd}"
+                                ),
+                                batch,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            for n in 0..=1 {
+                for rn in [RN, 31] {
+                    for rd in [RD, 31] {
+                        let mut batch = Vec::with_capacity(4096);
+                        let label = format!("logical_imm sf{sf} opc{opc} n{n} rn{rn} rd{rd}");
+                        for immr in 0..64 {
+                            for imms in 0..64 {
+                                batch.push((
+                                    label.clone(),
+                                    logical_imm(sf, opc, n, immr, imms, rn, rd),
+                                    gen_input(&mut rng),
+                                ));
+                            }
+                        }
+                        run_batch(
+                            &format!(
+                                "data_processing_immediate_logical sf{sf} opc{opc} n{n} rn{rn} rd{rd}"
+                            ),
+                            batch,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    let mut batch = Vec::new();
+    let imm16s = [
+        0x0000, 0x0001, 0x00ff, 0x0100, 0x7fff, 0x8000, 0xff00, 0xffff,
+    ];
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            for hw in 0..=3 {
+                let label = format!("move_wide sf{sf} opc{opc} hw{hw}");
+                for imm16 in imm16s {
+                    for _ in 0..4 {
+                        batch.push((
+                            label.clone(),
+                            move_wide(sf, opc, hw, imm16),
+                            gen_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("data_processing_immediate_movewide", batch);
+}
+
+#[test]
+fn diff_pc_relative_scalar() {
+    fn pc_rel(op: u32, rd: u32, imm: i32) -> u32 {
+        let imm = imm as u32;
+        let immlo = imm & 0x3;
+        let immhi = (imm >> 2) & 0x7ffff;
+        (op << 31) | (immlo << 29) | (0b10000 << 24) | (immhi << 5) | (rd & 0x1f)
+    }
+
+    fn adr(rd: u32, imm: i32) -> u32 {
+        pc_rel(0, rd, imm)
+    }
+
+    fn adrp(rd: u32, pages: i32) -> u32 {
+        pc_rel(1, rd, pages)
+    }
+
+    let mut rng = Rng::new(0x5157_1000);
+    let mut batch = Vec::new();
+    for rd in [0, 5, 30] {
+        for imm in [0, 1, 2, 3, 4, 8, 12] {
+            let mut st = gen_input(&mut rng);
+            st.pc = PCREL_MAGIC;
+            st.x[rd as usize] = 0x7777_7777_7777_7777;
+            batch.push((format!("adr_x{rd}_imm{imm}"), adr(rd, imm), st));
+        }
+    }
+
+    for rd in [0, 5, 30] {
+        for pages in [-2, -1, 0, 1, 2] {
+            let mut st = gen_input(&mut rng);
+            st.pc = PCREL_PAGE_MAGIC;
+            st.x[rd as usize] = 0x8888_8888_8888_8888;
+            batch.push((format!("adrp_x{rd}_pages{pages}"), adrp(rd, pages), st));
+        }
+    }
+
+    run_batch("pc_relative_scalar", batch);
+}
+
+#[test]
+fn diff_load_literal_scalar() {
+    fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        (opc << 30) | (0b011 << 27) | (v << 26) | (imm19 << 5) | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_1001);
+    let word1 = NOP;
+    let word2 = NOP;
+    let mut batch = Vec::new();
+
+    for rt in [0, 5, 30] {
+        for (label, insn) in [
+            ("ldr_lit_w", ldr_literal(0, 0, rt, 4)),
+            ("ldr_lit_x", ldr_literal(1, 0, rt, 4)),
+            ("ldrsw_lit_x", ldr_literal(2, 0, rt, 4)),
+            ("ldr_lit_w_pc0", ldr_literal(0, 0, rt, 0)),
+            ("ldr_lit_x_pc8", ldr_literal(1, 0, rt, 8)),
+            ("ldrsw_lit_x_pc8", ldr_literal(2, 0, rt, 8)),
+            ("prfm_lit", ldr_literal(3, 0, rt, 4)),
+        ] {
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = 0x9999_9999_9999_9999;
+            batch.push((format!("{label}_x{rt}"), insn, word1, word2, st));
+        }
+    }
+
+    for rt in [0, 7, 31] {
+        for (label, insn) in [
+            ("ldr_lit_s", ldr_literal(0, 1, rt, 4)),
+            ("ldr_lit_d", ldr_literal(1, 1, rt, 4)),
+            ("ldr_lit_q", ldr_literal(2, 1, rt, 4)),
+            ("ldr_lit_s_pc0", ldr_literal(0, 1, rt, 0)),
+            ("ldr_lit_d_pc8", ldr_literal(1, 1, rt, 8)),
+            ("ldr_lit_q_pc8", ldr_literal(2, 1, rt, 8)),
+            ("ldr_lit_simd_unallocated", ldr_literal(3, 1, rt, 4)),
+        ] {
+            let mut st = gen_input(&mut rng);
+            st.set_vreg(rt as usize, 0xaaaa_aaaa_aaaa_aaaa, 0xbbbb_bbbb_bbbb_bbbb);
+            batch.push((format!("{label}_v{rt}"), insn, word1, word2, st));
+        }
+    }
+
+    run_batch_literal("load_literal_scalar", batch);
+}
+
+#[test]
+fn diff_branch_control_flow_el0() {
+    fn b_imm(link: bool, offset: i32) -> u32 {
+        let imm26 = ((offset >> 2) as u32) & 0x03ff_ffff;
+        0x1400_0000 | ((link as u32) << 31) | imm26
+    }
+
+    fn b_cond(cond: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        0x5400_0000 | (imm19 << 5) | (cond & 0xf)
+    }
+
+    fn cbz_cbnz(sf: u32, op: u32, rt: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        (sf << 31) | (0b011010 << 25) | (op << 24) | (imm19 << 5) | (rt & 0x1f)
+    }
+
+    fn tbz_tbnz(op: u32, bit: u32, rt: u32, offset: i32) -> u32 {
+        let b5 = (bit >> 5) & 1;
+        let b40 = bit & 0x1f;
+        let imm14 = ((offset >> 2) as u32) & 0x3fff;
+        (b5 << 31) | (0b011011 << 25) | (op << 24) | (b40 << 19) | (imm14 << 5) | (rt & 0x1f)
+    }
+
+    fn br(rn: u32) -> u32 {
+        0xd61f_0000 | ((rn & 0x1f) << 5)
+    }
+
+    fn blr(rn: u32) -> u32 {
+        0xd63f_0000 | ((rn & 0x1f) << 5)
+    }
+
+    fn ret(rn: u32) -> u32 {
+        0xd65f_0000 | ((rn & 0x1f) << 5)
+    }
+
+    fn branch_input(rng: &mut Rng) -> ArmState {
+        let mut st = gen_input(rng);
+        st.pc = PCREL_MAGIC;
+        st.x[RD as usize] = 0x1111;
+        st
+    }
+
+    let mut rng = Rng::new(0xbaba_b123);
+    let mut batch = Vec::new();
+
+    for cond in 0..16 {
+        for nzcv in 0..16 {
+            let mut st = branch_input(&mut rng);
+            st.pstate = (nzcv as u64) << 28;
+            batch.push((
+                format!("b_cond cond{cond:x} nzcv{nzcv:x}"),
+                b_cond(cond, 12),
+                st,
+            ));
+        }
+    }
+
+    for link in [false, true] {
+        let st = branch_input(&mut rng);
+        batch.push((
+            if link {
+                "bl_imm_to_brk"
+            } else {
+                "b_imm_to_brk"
+            }
+            .to_string(),
+            b_imm(link, 12),
+            st,
+        ));
+    }
+
+    let cb_values = [
+        0,
+        1,
+        0x0000_0001_0000_0000,
+        0xffff_ffff_0000_0000,
+        0xffff_ffff_ffff_ffff,
+    ];
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for value in cb_values {
+                let mut st = branch_input(&mut rng);
+                st.x[RN as usize] = value;
+                batch.push((
+                    format!(
+                        "cb{} sf{sf} value{value:#x}",
+                        if op == 0 { "z" } else { "nz" }
+                    ),
+                    cbz_cbnz(sf, op, RN, 12),
+                    st,
+                ));
+            }
+        }
+    }
+
+    for op in 0..=1 {
+        for bit in [0, 1, 5, 31, 32, 63] {
+            for value in [0, 1u64 << bit] {
+                let mut st = branch_input(&mut rng);
+                st.x[RN as usize] = value;
+                batch.push((
+                    format!(
+                        "tb{} bit{bit} value{value:#x}",
+                        if op == 0 { "z" } else { "nz" }
+                    ),
+                    tbz_tbnz(op, bit, RN, 12),
+                    st,
+                ));
+            }
+        }
+    }
+
+    let mut st = branch_input(&mut rng);
+    st.x[RM as usize] = pcrel_marker(12);
+    batch.push(("br_x2_to_brk".into(), br(RM), st));
+
+    let mut st = branch_input(&mut rng);
+    st.x[RM as usize] = pcrel_marker(12);
+    batch.push(("blr_x2_to_brk".into(), blr(RM), st));
+
+    let mut st = branch_input(&mut rng);
+    st.x[30] = pcrel_marker(12);
+    batch.push(("ret_x30_to_brk".into(), ret(30), st));
+
+    let mut st = branch_input(&mut rng);
+    st.x[RM as usize] = pcrel_marker(12);
+    batch.push(("ret_x2_to_brk".into(), ret(RM), st));
+
+    run_batch_branch("branch_control_flow_el0", batch);
+}
+
+#[test]
+fn diff_branch_system_hints_barriers_el0() {
+    fn hint(crm: u32, op2: u32) -> u32 {
+        0xd503_201f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
+    }
+
+    fn barrier(crm: u32, op2: u32) -> u32 {
+        0xd503_301f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0x5157_0001);
+    let mut batch = Vec::new();
+
+    for (label, insn) in [
+        ("nop", hint(0, 0)),
+        ("yield", hint(0, 1)),
+        ("sev", hint(0, 4)),
+        ("sevl", hint(0, 5)),
+        ("esb", hint(2, 0)),
+        ("psb_csync", hint(2, 1)),
+        ("tsb_csync", hint(2, 2)),
+        ("csdb", hint(2, 4)),
+        ("bti", hint(4, 0)),
+        ("bti_c", hint(4, 2)),
+        ("bti_j", hint(4, 4)),
+        ("bti_jc", hint(4, 6)),
+        ("clrex", barrier(0, 2)),
+        ("dsb_sy", barrier(0xf, 4)),
+        ("dmb_sy", barrier(0xf, 5)),
+        ("isb", barrier(0xf, 6)),
+    ] {
+        batch.push((format!("branch_system_{label}"), insn, gen_input(&mut rng)));
+    }
+
+    // WFE/WFI are architecturally hints but are modeled as blocking exits by
+    // rax and can be controlled by the host kernel at EL0, so they are covered
+    // by structured-exit tests rather than value-state comparison here.
+    run_batch("branch_system_hints_barriers_el0", batch);
+}
+
+#[test]
+fn diff_branch_system_exceptions_el0() {
+    #[derive(Clone, Copy)]
+    enum ExpectedExit {
+        Breakpoint(u32),
+        Hvc(u16),
+        Smc(u16),
+        Halt,
+        Undefined,
+    }
+
+    impl ExpectedExit {
+        fn matches(self, actual: Option<CpuExit>) -> bool {
+            match (self, actual) {
+                (ExpectedExit::Breakpoint(imm), Some(CpuExit::Breakpoint(got))) => got == imm,
+                (ExpectedExit::Hvc(imm), Some(CpuExit::Hvc(got))) => got == imm,
+                (ExpectedExit::Smc(imm), Some(CpuExit::Smc(got))) => got == imm,
+                (ExpectedExit::Halt, Some(CpuExit::Halt)) => true,
+                (ExpectedExit::Undefined, None | Some(CpuExit::Undefined(_))) => true,
+                _ => false,
+            }
+        }
+    }
+
+    fn exception(opc: u32, ll: u32, imm16: u32) -> u32 {
+        0xd400_0000 | ((opc & 0x7) << 21) | ((imm16 & 0xffff) << 5) | (ll & 0x3)
+    }
+
+    let mut rng = Rng::new(0x5157_0002);
+    let mut batch: Vec<(String, u32, ExpectedExit, ArmState)> = Vec::new();
+
+    // SVC is intentionally absent: native Linux consumes it as a syscall, not
+    // as a raw architectural exception visible to this EL0 oracle.
+    for imm in [0, 1, 0x1234, 0xffff] {
+        batch.push((
+            format!("brk_imm{imm:#x}"),
+            exception(0b001, 0b00, imm),
+            ExpectedExit::Breakpoint(imm),
+            gen_input(&mut rng),
+        ));
+    }
+    for imm in [0, 0x22, 0xbeef] {
+        batch.push((
+            format!("hvc_imm{imm:#x}"),
+            exception(0b000, 0b10, imm),
+            ExpectedExit::Hvc(imm as u16),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("smc_imm{imm:#x}"),
+            exception(0b000, 0b11, imm),
+            ExpectedExit::Smc(imm as u16),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("hlt_imm{imm:#x}"),
+            exception(0b010, 0b00, imm),
+            ExpectedExit::Halt,
+            gen_input(&mut rng),
+        ));
+    }
+    for ll in 1..=3 {
+        batch.push((
+            format!("dcps{ll}"),
+            exception(0b101, ll, 0x3344),
+            ExpectedExit::Halt,
+            gen_input(&mut rng),
+        ));
+    }
+    for (opc, ll) in [(0b000, 0b00), (0b001, 0b01), (0b011, 0b00), (0b111, 0b11)] {
+        batch.push((
+            format!("exception_unallocated_opc{opc:b}_ll{ll:b}"),
+            exception(opc, ll, 0x4567),
+            ExpectedExit::Undefined,
+            gen_input(&mut rng),
+        ));
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] branch_system_exceptions_el0: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, _, st)| (*insn, NOP, NOP, 1, *st))
+        .collect();
+    let outs = match run_oracle3_reserved(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] branch_system_exceptions_el0: native oracle run failed");
+            }
+            eprintln!("[arm_diff] branch_system_exceptions_el0: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _, _, _, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        if out.trapped == 0 {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: "hardware completed, expected an EL0 exception/trap".into(),
+            });
+            continue;
+        }
+        let rax_exit = run_rax_exit(*insn, st);
+        if !batch[i].2.matches(rax_exit.clone()) {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: format!(
+                    "hardware trapped with signal {}, rax exit was {:?}",
+                    out.trapped, rax_exit
+                ),
+            });
+        }
+    }
+
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== branch_system_exceptions_el0: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "branch_system_exceptions_el0: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+#[test]
+fn diff_system_fpcr_fpsr_el0() {
+    fn mrs_fpcr(rt: u32) -> u32 {
+        0xd53b_4400 | (rt & 0x1f)
+    }
+
+    fn mrs_fpsr(rt: u32) -> u32 {
+        0xd53b_4420 | (rt & 0x1f)
+    }
+
+    fn msr_fpcr(rt: u32) -> u32 {
+        0xd51b_4400 | (rt & 0x1f)
+    }
+
+    fn msr_fpsr(rt: u32) -> u32 {
+        0xd51b_4420 | (rt & 0x1f)
+    }
+
+    let fpcr_values = [
+        0,
+        1 << 22,
+        2 << 22,
+        3 << 22,
+        1 << 24,
+        1 << 25,
+        1 << 26,
+        (3 << 22) | (1 << 24) | (1 << 25),
+    ];
+    let fpsr_values = [0, 1, 0x1f, 1 << 27, (1 << 27) | 0x1f];
+
+    let mut rng = Rng::new(0x5157_0003);
+    let mut batch = Vec::new();
+
+    for value in fpcr_values {
+        let mut st = gen_input(&mut rng);
+        st.fpcr = value;
+        st.x[RD as usize] = 0xdead_beef_dead_beef;
+        batch.push((format!("mrs_fpcr_{value:#x}"), mrs_fpcr(RD), st));
+
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = value;
+        batch.push((format!("msr_fpcr_{value:#x}"), msr_fpcr(RN), st));
+    }
+
+    for value in fpsr_values {
+        let mut st = gen_input(&mut rng);
+        st.fpsr = value;
+        st.x[RD as usize] = 0xdead_beef_dead_beef;
+        batch.push((format!("mrs_fpsr_{value:#x}"), mrs_fpsr(RD), st));
+
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = value;
+        batch.push((format!("msr_fpsr_{value:#x}"), msr_fpsr(RN), st));
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] system_fpcr_fpsr_el0: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, NOP, *st))
+        .collect();
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] system_fpcr_fpsr_el0: native oracle run failed");
+            }
+            eprintln!("[arm_diff] system_fpcr_fpsr_el0: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        compare_case(&batch[i].0, *insn, st, out, &mut mismatches);
+    }
+
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== system_fpcr_fpsr_el0: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "system_fpcr_fpsr_el0: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+#[test]
+fn diff_system_flagm_el0() {
+    fn flagm(op2: u32) -> u32 {
+        0xd500_401f | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0x5157_0004);
+    let mut batch = Vec::new();
+    for (label, insn) in [
+        ("cfinv", flagm(0)),
+        ("xaflag", flagm(1)),
+        ("axflag", flagm(2)),
+    ] {
+        for nzcv in 0..16 {
+            let mut st = gen_input(&mut rng);
+            st.pstate = (nzcv as u64) << 28;
+            batch.push((format!("{label} nzcv{nzcv:x}"), insn, st));
+        }
+    }
+
+    run_batch("system_flagm_el0", batch);
+}
+
+#[test]
+fn diff_system_dc_zva_el0() {
+    fn dc_zva(rt: u32) -> u32 {
+        0xd50b_7420 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0005);
+    let mut batch = Vec::new();
+    for addr in [
+        SCRATCH_ADDR,
+        SCRATCH_ADDR + 1,
+        SCRATCH_BASE,
+        SCRATCH_BASE + 17,
+        SCRATCH_BASE + 63,
+        SCRATCH_BASE + 64,
+        SCRATCH_ADDR + 191,
+    ] {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = addr;
+        // Keep every captured byte visibly nonzero unless the instruction
+        // clears it; random `interesting()` inputs frequently include zeros.
+        for (i, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x0101_0101_0101_0101u64.wrapping_mul((i as u64) + 1);
+        }
+        batch.push((format!("dc_zva_addr_{addr:#x}"), dc_zva(RN), st));
+    }
+
+    run_batch("system_dc_zva_el0", batch);
+}
+
+#[test]
+fn diff_system_nzcv_el0() {
+    fn mrs_nzcv(rt: u32) -> u32 {
+        0xd53b_4200 | (rt & 0x1f)
+    }
+
+    fn msr_nzcv(rt: u32) -> u32 {
+        0xd51b_4200 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0006);
+    let mut batch = Vec::new();
+    for nzcv in 0..16u64 {
+        let mut st = gen_input(&mut rng);
+        st.pstate = nzcv << 28;
+        st.x[RD as usize] = 0x5555_aaaa_ffff_0000;
+        batch.push((format!("mrs_nzcv_{nzcv:x}"), mrs_nzcv(RD), st));
+
+        let mut st = gen_input(&mut rng);
+        st.pstate = ((!nzcv) & 0xf) << 28;
+        st.x[RN as usize] = (nzcv << 28) | 0x0fff_ffff;
+        batch.push((format!("msr_nzcv_{nzcv:x}"), msr_nzcv(RN), st));
+    }
+
+    run_batch("system_nzcv_el0", batch);
+}
+
+#[test]
+fn diff_system_dczid_el0() {
+    fn mrs_dczid_el0(rt: u32) -> u32 {
+        0xd53b_00e0 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0007);
+    let mut batch = Vec::new();
+    for rt in [0, 3, 17] {
+        let mut st = gen_input(&mut rng);
+        st.x[rt as usize] = 0xaaaa_5555_ffff_0000;
+        batch.push((format!("mrs_dczid_el0_x{rt}"), mrs_dczid_el0(rt), st));
+    }
+
+    run_batch("system_dczid_el0", batch);
+}
+
+#[test]
 fn diff_dp2_source() {
     run_family("dp2_source", dp2_cases(), 40, 0x1003);
 }
@@ -21869,6 +23576,85 @@ fn diff_dp2_source() {
 #[test]
 fn diff_dp3_source() {
     run_family("dp3_source", dp3_cases(), 40, 0x1004);
+}
+
+#[test]
+fn diff_unallocated_32bit_bitfield_extract_edges() {
+    let mut rng = Rng::new(0x1bad_b17f);
+    let cases = [
+        ("sbfm_x_n_clear_unallocated", 0x9300_0000),
+        ("sbfm_x_n_clear_variant_unallocated", 0x9301_0400),
+        ("sbfm_w_n_set_unallocated", 0x1340_0000),
+        ("sbfm_w_immr_32_unallocated", 0x1320_0000),
+        ("sbfm_w_immr_high_unallocated", 0x133f_0000),
+        ("sbfm_w_imms_32_unallocated", 0x1300_8000),
+        ("sbfm_w_imms_high_unallocated", 0x1300_fc00),
+        ("extr_x_n_clear_unallocated", 0x9380_0000),
+        ("extr_x_n_clear_variant_unallocated", 0x9380_0400),
+        ("extr_w_n_set_unallocated", 0x13c0_0000),
+        ("extr_w_imms_32_unallocated", 0x1380_8000),
+        ("extr_w_imms_high_unallocated", 0x1382_fc20),
+    ];
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..8 {
+            batch.push((label.to_string(), insn, gen_input(&mut rng)));
+        }
+    }
+    run_batch("unallocated_32bit_bitfield_extract_edges", batch);
+}
+
+#[test]
+fn diff_bitfield_extract_encoding_sweep() {
+    fn bitfield(sf: u32, opc: u32, n: u32, immr: u32, imms: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100110 << 23)
+            | (n << 22)
+            | (immr << 16)
+            | (imms << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn extract(sf: u32, n: u32, rm: u32, imms: u32) -> u32 {
+        (sf << 31) | (0b100111 << 23) | (n << 22) | (rm << 16) | (imms << 10) | (RN << 5) | RD
+    }
+
+    let mut rng = Rng::new(0xb17f_1e1d);
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            for n in 0..=1 {
+                for immr in 0..64 {
+                    for imms in 0..64 {
+                        batch.push((
+                            format!("bitfield sf{sf} opc{opc} n{n} r{immr} s{imms}"),
+                            bitfield(sf, opc, n, immr, imms),
+                            gen_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    for sf in 0..=1 {
+        for n in 0..=1 {
+            for rm in [RN, RM] {
+                for imms in 0..64 {
+                    batch.push((
+                        format!("extract sf{sf} n{n} rm{rm} s{imms}"),
+                        extract(sf, n, rm, imms),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("bitfield_extract_encoding_sweep", batch);
 }
 
 #[test]
@@ -29297,6 +31083,141 @@ fn diff_fp_scalar_sqrt() {
     run_batch("fp_scalar_sqrt", batch);
 }
 
+fn run_fpsr_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, NOP, *st))
+        .collect();
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        compare_case(&batch[i].0, *insn, st, out, &mut mismatches);
+    }
+
+    if !mismatches.is_empty() {
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+#[test]
+fn diff_fp_scalar_fpsr_divzero() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &ft in &[0u32, 1] {
+        let insn = enc_fp2(ft, 0b0001); // FDIV
+        for initial_fpsr in [0, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            if ft == 0 {
+                st.set_vreg(RN as usize, (1.0f32).to_bits() as u64, 0);
+                st.set_vreg(RM as usize, (0.0f32).to_bits() as u64, 0);
+            } else {
+                st.set_vreg(RN as usize, (1.0f64).to_bits(), 0);
+                st.set_vreg(RM as usize, (0.0f64).to_bits(), 0);
+            }
+            batch.push((format!("fdiv_t{ft}_dzc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fpsr_divzero", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fpsr_sqrt_invalid() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &ft in &[0u32, 1] {
+        let insn = enc_fp1(ft, 0b000011); // FSQRT
+        for initial_fpsr in [0, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            if ft == 0 {
+                st.set_vreg(RN as usize, (-1.0f32).to_bits() as u64, 0);
+            } else {
+                st.set_vreg(RN as usize, (-1.0f64).to_bits(), 0);
+            }
+            batch.push((format!("fsqrt_t{ft}_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fpsr_sqrt_invalid", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fpsr_exceptions() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &ft in &[0u32, 1] {
+        let mut push2 = |label: &str, opcode: u32, n: u64, m: u64, fpsr: u64| {
+            let mut st = ArmState::zeroed();
+            st.fpsr = fpsr;
+            st.set_vreg(RN as usize, n, 0);
+            st.set_vreg(RM as usize, m, 0);
+            batch.push((
+                format!("{label}_t{ft}_fpsr{fpsr:#x}"),
+                enc_fp2(ft, opcode),
+                st,
+            ));
+        };
+
+        if ft == 0 {
+            let inf = f32::INFINITY.to_bits() as u64;
+            let ninf = f32::NEG_INFINITY.to_bits() as u64;
+            let zero = 0.0f32.to_bits() as u64;
+            let max = f32::MAX.to_bits() as u64;
+            let two = 2.0f32.to_bits() as u64;
+            let min_normal = f32::MIN_POSITIVE.to_bits() as u64;
+            let three = 3.0f32.to_bits() as u64;
+            let one = 1.0f32.to_bits() as u64;
+            let tiny_addend = f32::from_bits(0x3300_0000).to_bits() as u64; // 2^-25
+            push2("fadd_invalid_inf_cancel", 0b0010, inf, ninf, 0);
+            push2("fmul_invalid_zero_inf", 0b0000, zero, inf, 0);
+            push2("fdiv_invalid_zero_zero", 0b0001, zero, zero, 0);
+            push2("fdiv_invalid_inf_inf", 0b0001, inf, inf, 0);
+            push2("fmul_overflow", 0b0000, max, two, 0);
+            push2("fdiv_underflow", 0b0001, min_normal, three, 0);
+            push2("fadd_inexact", 0b0010, one, tiny_addend, 1);
+        } else {
+            let inf = f64::INFINITY.to_bits();
+            let ninf = f64::NEG_INFINITY.to_bits();
+            let zero = 0.0f64.to_bits();
+            let max = f64::MAX.to_bits();
+            let two = 2.0f64.to_bits();
+            let min_normal = f64::MIN_POSITIVE.to_bits();
+            let three = 3.0f64.to_bits();
+            push2("fadd_invalid_inf_cancel", 0b0010, inf, ninf, 0);
+            push2("fmul_invalid_zero_inf", 0b0000, zero, inf, 0);
+            push2("fdiv_invalid_zero_zero", 0b0001, zero, zero, 0);
+            push2("fdiv_invalid_inf_inf", 0b0001, inf, inf, 0);
+            push2("fmul_overflow", 0b0000, max, two, 0);
+            push2("fdiv_underflow", 0b0001, min_normal, three, 0);
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fpsr_exceptions", batch);
+}
+
 /// FCCMP/FCCMPE: scalar FP conditional compare. Output is only NZCV (the flag
 /// rules are deterministic even for NaN operands), so comparison is exact.
 #[test]
@@ -30230,7 +32151,7 @@ fn diff_fp_csel() {
 // ===========================================================================
 // Comprehensive SVE2 differential sweep. Runs an llvm-mc-generated encoding
 // table (tests/sve2_gen.rs, covering every SVE2/SVE2.1 data-processing mnemonic
-// across all element sizes and key variants) through the qemu-aarch64 oracle
+// across all element sizes and key variants) through the selected oracle
 // with random + interesting (special-FP-laden) inputs, classifying each
 // mnemonic as decode-gap (hw runs, rax rejects), value-mismatch (rax computes a
 // wrong answer), fault-disagree, or OK. Asserts zero divergences.
@@ -30275,6 +32196,9 @@ fn diff_sve2_comprehensive_sweep() {
         e[3] += 1;
         let rax = run_rax(*insn, st);
         if out.trapped != 0 {
+            if native_hardware_lacks_label(&oracle, label) {
+                continue;
+            }
             if rax.is_some() {
                 e[2] += 1;
                 sample
@@ -30438,6 +32362,9 @@ fn diff_neon_comprehensive_sweep() {
         e[3] += 1;
         let rax = run_rax(*insn, st);
         if out.trapped != 0 {
+            if native_hardware_lacks_label(&oracle, label) {
+                continue;
+            }
             if rax.is_some() {
                 e[2] += 1;
                 sample
