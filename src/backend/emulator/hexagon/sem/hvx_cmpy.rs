@@ -78,8 +78,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 set_w(&mut hi, i, (prod >> 16) as u32);
                 set_w(&mut lo, i, (prod << 16) as u32);
             }
-            ctx.set_v(rd, from_bytes(&lo));
-            ctx.set_v(rd + 1, from_bytes(&hi));
+            ctx.set_v_pair(rd, from_bytes(&lo), from_bytes(&hi));
         }
 
         // Vd.w = vmpyo(Vu.w, Vv.h):<<1:sat
@@ -141,8 +140,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         //   Vxx.v[0].w[i].h[1] = prod & 0xffff;          (low reg repacked)
         Opcode::V6_vmpyowh_64_acc => {
             let x = fld(d, b'x');
-            let vlo = to_bytes(&ctx.vread(x));
-            let vhi = to_bytes(&ctx.vread(x + 1));
+            let (vlo, vhi) = ctx.vread_pair(x);
+            let vlo = to_bytes(&vlo);
+            let vhi = to_bytes(&vhi);
             let mut out_lo = [0u8; 128];
             let mut out_hi = [0u8; 128];
             for i in 0..32 {
@@ -153,8 +153,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 let lo_h1 = (prod as u32) & 0xffff;
                 set_w(&mut out_lo, i, (lo_h1 << 16) | lo_h0);
             }
-            ctx.set_v(x, from_bytes(&out_lo));
-            ctx.set_v(x + 1, from_bytes(&out_hi));
+            ctx.set_v_pair(x, from_bytes(&out_lo), from_bytes(&out_hi));
         }
 
         _ => return false,

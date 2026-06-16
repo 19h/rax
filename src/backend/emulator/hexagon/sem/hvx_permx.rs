@@ -68,8 +68,7 @@ fn qbit(q: &[u32; 4], i: usize) -> bool {
 /// Write the (even, odd) halves of a 256-byte vector pair to `Vdd`.
 #[inline]
 fn set_pair(ctx: &mut SemCtx, rd: u8, lo: &Bytes, hi: &Bytes) {
-    ctx.set_v(rd, from_bytes(lo));
-    ctx.set_v(rd + 1, from_bytes(hi));
+    ctx.set_v_pair(rd, from_bytes(lo), from_bytes(hi));
 }
 
 /// Execute a hvx_permx opcode. Returns `false` if `op` is not handled here.
@@ -276,8 +275,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vu = ctx.vread(fld(d, b'u'));
             let vv = ctx.vread(fld(d, b'v'));
             let rd = fld(d, b'd');
-            ctx.set_v(rd, vv);
-            ctx.set_v(rd + 1, vu);
+            ctx.set_v_pair(rd, vv, vu);
         }
 
         _ => return false,

@@ -90,13 +90,13 @@ fn rt_uhalf(rt: u32, n: usize) -> i32 {
 /// into (low, high) 128-byte halves.
 #[inline]
 fn read_pair(ctx: &SemCtx, reg: u8) -> (Bytes, Bytes) {
-    (to_bytes(&ctx.vread(reg)), to_bytes(&ctx.vread(reg + 1)))
+    let (lo, hi) = ctx.vread_pair(reg);
+    (to_bytes(&lo), to_bytes(&hi))
 }
 /// Write a vector-register pair: `lo` -> Vd[reg] (even), `hi` -> Vd[reg+1] (odd).
 #[inline]
 fn write_pair(ctx: &mut SemCtx, reg: u8, lo: &Bytes, hi: &Bytes) {
-    ctx.set_v(reg, from_bytes(lo));
-    ctx.set_v(reg + 1, from_bytes(hi));
+    ctx.set_v_pair(reg, from_bytes(lo), from_bytes(hi));
 }
 
 /// Execute a hvx_mpyv opcode. Returns `false` if `op` is not handled here.

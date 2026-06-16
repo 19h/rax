@@ -188,8 +188,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         | Opcode::V6_vasrvuhubsat
         | Opcode::V6_vasrvuhubrndsat => {
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase)); // Vuu.v[0]
-            let v1 = to_bytes(&ctx.vread(ubase + 1)); // Vuu.v[1]
+            let (v0, v1) = ctx.vread_pair(ubase);
+            let v0 = to_bytes(&v0); // Vuu.v[0]
+            let v1 = to_bytes(&v1); // Vuu.v[1]
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let mut out = [0u8; 128];
             match op {
@@ -282,8 +283,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let vu = to_bytes(&ctx.vread(fld(d, b'u')));
             let vv = to_bytes(&ctx.vread(fld(d, b'v')));
             let xbase = fld(d, b'x');
-            let mut x0 = to_bytes(&ctx.vread(xbase)); // Vxx.v[0]
-            let mut x1 = to_bytes(&ctx.vread(xbase + 1)); // Vxx.v[1]
+            let (x0, x1) = ctx.vread_pair(xbase);
+            let mut x0 = to_bytes(&x0); // Vxx.v[0]
+            let mut x1 = to_bytes(&x1); // Vxx.v[1]
             for i in 0..32 {
                 let shift = (get_w(&vu, i)) << 32; // fSE32_64(Vu.w[i]) << 32
                 let xlo = x0_word(&x0, i);
@@ -303,8 +305,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 set_w(&mut x1, i, ((result >> 32) & 0xffff_ffff) as u32);
                 set_w(&mut x0, i, (result & 0xffff_ffff) as u32);
             }
-            ctx.set_v(xbase, from_bytes(&x0));
-            ctx.set_v(xbase + 1, from_bytes(&x1));
+            ctx.set_v_pair(xbase, from_bytes(&x0), from_bytes(&x1));
             true
         }
 

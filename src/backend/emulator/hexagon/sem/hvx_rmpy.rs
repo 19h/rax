@@ -78,6 +78,17 @@ fn rt_uh(rt: u32, n: usize) -> i64 {
     ((rt >> (n * 16)) & 0xffff) as i64
 }
 
+#[inline]
+fn vread_pair(ctx: &SemCtx, reg: u8) -> (Bytes, Bytes) {
+    let (lo, hi) = ctx.vread_pair(reg);
+    (to_bytes(&lo), to_bytes(&hi))
+}
+
+#[inline]
+fn set_pair(ctx: &mut SemCtx, reg: u8, lo: &Bytes, hi: &Bytes) {
+    ctx.set_v_pair(reg, from_bytes(lo), from_bytes(hi));
+}
+
 /// Execute a hvx_rmpy opcode. Returns `false` if `op` is not handled here.
 pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     match op {
@@ -189,21 +200,17 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vrsadubi | Opcode::V6_vrsadubi_acc => {
             let acc = op == Opcode::V6_vrsadubi_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let imm = fimm_u(d, b'i', ctx.immext) as usize & 1;
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc {
-                to_bytes(&ctx.vread(dbase))
+            let (acc0, acc1) = if acc {
+                vread_pair(ctx, dbase)
             } else {
-                [0u8; 128]
+                ([0u8; 128], [0u8; 128])
             };
-            let mut o1 = if acc {
-                to_bytes(&ctx.vread(dbase + 1))
-            } else {
-                [0u8; 128]
-            };
+            let mut o0 = acc0;
+            let mut o1 = acc1;
             let lo = |sel: usize| if sel == 0 { &v0 } else { &v1 };
             for i in 0..32 {
                 let base = i * 4;
@@ -222,29 +229,24 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 s1 += (ub(&v0, base + 3) - rt_ub(rt, (1usize.wrapping_sub(imm)) & 3)).abs();
                 set_w(&mut o1, i, s1 as u32);
             }
-            ctx.set_v(dbase, from_bytes(&o0));
-            ctx.set_v(dbase + 1, from_bytes(&o1));
+            set_pair(ctx, dbase, &o0, &o1);
         }
         // ---- vdsad: pair, sum-of-abs-diff of halfwords, sliding window ----
         Opcode::V6_vdsaduh | Opcode::V6_vdsaduh_acc => {
             let acc = op == Opcode::V6_vdsaduh_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let r0 = rt_uh(rt, 0);
             let r1 = rt_uh(rt, 1);
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc {
-                to_bytes(&ctx.vread(dbase))
+            let (acc0, acc1) = if acc {
+                vread_pair(ctx, dbase)
             } else {
-                [0u8; 128]
+                ([0u8; 128], [0u8; 128])
             };
-            let mut o1 = if acc {
-                to_bytes(&ctx.vread(dbase + 1))
-            } else {
-                [0u8; 128]
-            };
+            let mut o0 = acc0;
+            let mut o1 = acc1;
             for i in 0..32 {
                 // each word lane holds two unsigned halfwords (h[0], h[1])
                 let a0 = get_uh(&v0, i * 2 + 0);
@@ -259,8 +261,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 s1 += (b0 - r1).abs();
                 set_w(&mut o1, i, s1 as u32);
             }
-            ctx.set_v(dbase, from_bytes(&o0));
-            ctx.set_v(dbase + 1, from_bytes(&o1));
+            set_pair(ctx, dbase, &o0, &o1);
         }
         // ---- vdmpybus: single vector, 2-wide, ub*b -> h ----
         Opcode::V6_vdmpybus | Opcode::V6_vdmpybus_acc => {
@@ -285,20 +286,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vdmpybus_dv | Opcode::V6_vdmpybus_dv_acc => {
             let acc = op == Opcode::V6_vdmpybus_dv_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc {
-                to_bytes(&ctx.vread(dbase))
+            let (acc0, acc1) = if acc {
+                vread_pair(ctx, dbase)
             } else {
-                [0u8; 128]
+                ([0u8; 128], [0u8; 128])
             };
-            let mut o1 = if acc {
-                to_bytes(&ctx.vread(dbase + 1))
-            } else {
-                [0u8; 128]
-            };
+            let mut o0 = acc0;
+            let mut o1 = acc1;
             for i in 0..64 {
                 let mut s0 = if acc { get_h(&o0, i) } else { 0 };
                 s0 += ub(&v0, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -309,8 +306,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 s1 += ub(&v1, i * 2 + 0) * rt_sb(rt, (2 * i + 1) % 4);
                 set_h(&mut o1, i, s1 as u16);
             }
-            ctx.set_v(dbase, from_bytes(&o0));
-            ctx.set_v(dbase + 1, from_bytes(&o1));
+            set_pair(ctx, dbase, &o0, &o1);
         }
         // ---- vdmpyhb: single vector, 2-wide, h*b -> w ----
         Opcode::V6_vdmpyhb | Opcode::V6_vdmpyhb_acc => {
@@ -335,20 +331,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vdmpyhb_dv | Opcode::V6_vdmpyhb_dv_acc => {
             let acc = op == Opcode::V6_vdmpyhb_dv_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc {
-                to_bytes(&ctx.vread(dbase))
+            let (acc0, acc1) = if acc {
+                vread_pair(ctx, dbase)
             } else {
-                [0u8; 128]
+                ([0u8; 128], [0u8; 128])
             };
-            let mut o1 = if acc {
-                to_bytes(&ctx.vread(dbase + 1))
-            } else {
-                [0u8; 128]
-            };
+            let mut o0 = acc0;
+            let mut o1 = acc1;
             for i in 0..32 {
                 let mut s0 = if acc { get_w(&o0, i) } else { 0 };
                 s0 += get_h(&v0, i * 2 + 0) * rt_sb(rt, (2 * i) % 4);
@@ -359,8 +351,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 s1 += get_h(&v1, i * 2 + 0) * rt_sb(rt, (2 * i + 1) % 4);
                 set_w(&mut o1, i, s1 as u32);
             }
-            ctx.set_v(dbase, from_bytes(&o0));
-            ctx.set_v(dbase + 1, from_bytes(&o1));
+            set_pair(ctx, dbase, &o0, &o1);
         }
         // ---- vdmpyhsat: single vector, h*h:sat -> w ----
         Opcode::V6_vdmpyhsat | Opcode::V6_vdmpyhsat_acc => {
@@ -408,8 +399,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vdmpyhisat | Opcode::V6_vdmpyhisat_acc => {
             let acc = op == Opcode::V6_vdmpyhisat_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
             let mut out = if acc {
@@ -432,8 +422,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vdmpyhsuisat | Opcode::V6_vdmpyhsuisat_acc => {
             let acc = op == Opcode::V6_vdmpyhsuisat_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let dst = if acc { fld(d, b'x') } else { fld(d, b'd') };
             let mut out = if acc {
@@ -484,20 +473,16 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vtmpyhb | Opcode::V6_vtmpyhb_acc => {
             let acc = op == Opcode::V6_vtmpyhb_acc;
             let ubase = fld(d, b'u');
-            let v0 = to_bytes(&ctx.vread(ubase));
-            let v1 = to_bytes(&ctx.vread(ubase + 1));
+            let (v0, v1) = vread_pair(ctx, ubase);
             let rt = ctx.r(fld(d, b't'));
             let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-            let mut o0 = if acc {
-                to_bytes(&ctx.vread(dbase))
+            let (acc0, acc1) = if acc {
+                vread_pair(ctx, dbase)
             } else {
-                [0u8; 128]
+                ([0u8; 128], [0u8; 128])
             };
-            let mut o1 = if acc {
-                to_bytes(&ctx.vread(dbase + 1))
-            } else {
-                [0u8; 128]
-            };
+            let mut o0 = acc0;
+            let mut o1 = acc1;
             for i in 0..32 {
                 // each word holds two halfwords h[0],h[1]
                 let v0h0 = get_h(&v0, i * 2 + 0);
@@ -517,8 +502,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
                 s1 += v1h1;
                 set_w(&mut o1, i, s1 as u32);
             }
-            ctx.set_v(dbase, from_bytes(&o0));
-            ctx.set_v(dbase + 1, from_bytes(&o1));
+            set_pair(ctx, dbase, &o0, &o1);
         }
         _ => return false,
     }
@@ -530,21 +514,17 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
 fn rmpy_pair_imm(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, unsigned_rt: bool) {
     let acc = op == acc_op;
     let ubase = fld(d, b'u');
-    let v0 = to_bytes(&ctx.vread(ubase));
-    let v1 = to_bytes(&ctx.vread(ubase + 1));
+    let (v0, v1) = vread_pair(ctx, ubase);
     let rt = ctx.r(fld(d, b't'));
     let imm = fimm_u(d, b'i', ctx.immext) as usize & 1;
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc {
-        to_bytes(&ctx.vread(dbase))
+    let (acc0, acc1) = if acc {
+        vread_pair(ctx, dbase)
     } else {
-        [0u8; 128]
+        ([0u8; 128], [0u8; 128])
     };
-    let mut o1 = if acc {
-        to_bytes(&ctx.vread(dbase + 1))
-    } else {
-        [0u8; 128]
-    };
+    let mut o0 = acc0;
+    let mut o1 = acc1;
     let rb = |n: usize| {
         if unsigned_rt {
             rt_ub(rt, n)
@@ -569,8 +549,7 @@ fn rmpy_pair_imm(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, un
         s1 += ub(&v0, base + 3) * rb((1usize.wrapping_sub(imm)) & 3);
         set_w(&mut o1, i, s1 as u32);
     }
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    set_pair(ctx, dbase, &o0, &o1);
 }
 
 /// vtmpyb / vtmpybus: pair, 3-wide sliding-window byte multiply -> halfword pair.
@@ -578,20 +557,16 @@ fn rmpy_pair_imm(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, un
 fn tmpy_b(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, unsigned_vu: bool) {
     let acc = op == acc_op;
     let ubase = fld(d, b'u');
-    let v0 = to_bytes(&ctx.vread(ubase));
-    let v1 = to_bytes(&ctx.vread(ubase + 1));
+    let (v0, v1) = vread_pair(ctx, ubase);
     let rt = ctx.r(fld(d, b't'));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc {
-        to_bytes(&ctx.vread(dbase))
+    let (acc0, acc1) = if acc {
+        vread_pair(ctx, dbase)
     } else {
-        [0u8; 128]
+        ([0u8; 128], [0u8; 128])
     };
-    let mut o1 = if acc {
-        to_bytes(&ctx.vread(dbase + 1))
-    } else {
-        [0u8; 128]
-    };
+    let mut o0 = acc0;
+    let mut o1 = acc1;
     let vb = |b: &Bytes, i: usize| if unsigned_vu { ub(b, i) } else { sb(b, i) };
     for i in 0..64 {
         // each halfword holds two bytes b[0],b[1]
@@ -612,6 +587,5 @@ fn tmpy_b(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx, acc_op: Opcode, unsigned_
         s1 += v1b1;
         set_h(&mut o1, i, s1 as u16);
     }
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    set_pair(ctx, dbase, &o0, &o1);
 }

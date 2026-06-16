@@ -110,8 +110,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let sel = ctx.r(fld(d, b't'));
             let (lo, hi) = vlut16(ctx, d, sel, false, None);
             let dd = fld(d, b'd');
-            ctx.set_v(dd, lo);
-            ctx.set_v(dd + 1, hi);
+            ctx.set_v_pair(dd, lo, hi);
             true
         }
         // Vdd.h = vlut16(Vu.b, Vv.h, Rt):nomatch
@@ -119,8 +118,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let sel = ctx.r(fld(d, b't'));
             let (lo, hi) = vlut16(ctx, d, sel, true, None);
             let dd = fld(d, b'd');
-            ctx.set_v(dd, lo);
-            ctx.set_v(dd + 1, hi);
+            ctx.set_v_pair(dd, lo, hi);
             true
         }
         // Vdd.h = vlut16(Vu.b, Vv.h, #u3)
@@ -128,28 +126,25 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             let imm = fimm_u(d, b'i', ctx.immext);
             let (lo, hi) = vlut16(ctx, d, imm, false, None);
             let dd = fld(d, b'd');
-            ctx.set_v(dd, lo);
-            ctx.set_v(dd + 1, hi);
+            ctx.set_v_pair(dd, lo, hi);
             true
         }
         // Vxx.h |= vlut16(Vu.b, Vv.h, Rt)
         Opcode::V6_vlutvwh_oracc => {
             let xr = fld(d, b'x');
-            let prev = (ctx.vread(xr), ctx.vread(xr + 1));
+            let prev = ctx.vread_pair(xr);
             let sel = ctx.r(fld(d, b't'));
             let (lo, hi) = vlut16(ctx, d, sel, false, Some(prev));
-            ctx.set_v(xr, lo);
-            ctx.set_v(xr + 1, hi);
+            ctx.set_v_pair(xr, lo, hi);
             true
         }
         // Vxx.h |= vlut16(Vu.b, Vv.h, #u3)
         Opcode::V6_vlutvwh_oracci => {
             let xr = fld(d, b'x');
-            let prev = (ctx.vread(xr), ctx.vread(xr + 1));
+            let prev = ctx.vread_pair(xr);
             let imm = fimm_u(d, b'i', ctx.immext);
             let (lo, hi) = vlut16(ctx, d, imm, false, Some(prev));
-            ctx.set_v(xr, lo);
-            ctx.set_v(xr + 1, hi);
+            ctx.set_v_pair(xr, lo, hi);
             true
         }
 

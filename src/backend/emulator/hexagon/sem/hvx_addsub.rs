@@ -251,30 +251,29 @@ fn dv_inputs(d: &DecodedOp, ctx: &mut SemCtx) -> (Bytes, Bytes, Bytes, Bytes, u8
     let ubase = fld(d, b'u');
     let vbase = fld(d, b'v');
     let dbase = fld(d, b'd');
-    let u0 = to_bytes(&ctx.vread(ubase));
-    let u1 = to_bytes(&ctx.vread(ubase + 1));
-    let v0 = to_bytes(&ctx.vread(vbase));
-    let v1 = to_bytes(&ctx.vread(vbase + 1));
+    let (u0, u1) = ctx.vread_pair(ubase);
+    let (v0, v1) = ctx.vread_pair(vbase);
+    let u0 = to_bytes(&u0);
+    let u1 = to_bytes(&u1);
+    let v0 = to_bytes(&v0);
+    let v1 = to_bytes(&v1);
     (u0, u1, v0, v1, dbase)
 }
 
 fn dv_b_dispatch(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(u8, u8) -> u8) {
     let (u0, u1, v0, v1, dbase) = dv_inputs(d, ctx);
     let (o0, o1) = dv_b(&u0, &u1, &v0, &v1, f);
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    ctx.set_v_pair(dbase, from_bytes(&o0), from_bytes(&o1));
 }
 fn dv_h_dispatch(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(u16, u16) -> u16) {
     let (u0, u1, v0, v1, dbase) = dv_inputs(d, ctx);
     let (o0, o1) = dv_h(&u0, &u1, &v0, &v1, f);
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    ctx.set_v_pair(dbase, from_bytes(&o0), from_bytes(&o1));
 }
 fn dv_w_dispatch(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(u32, u32) -> u32) {
     let (u0, u1, v0, v1, dbase) = dv_inputs(d, ctx);
     let (o0, o1) = dv_w(&u0, &u1, &v0, &v1, f);
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    ctx.set_v_pair(dbase, from_bytes(&o0), from_bytes(&o1));
 }
 
 /// Widening byte->halfword: `f` combines the two i32-extended bytes; even byte
@@ -283,16 +282,13 @@ fn widen_ubh(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(i32, i32) -> i32, acc: 
     let vu = to_bytes(&ctx.vread(fld(d, b'u')));
     let vv = to_bytes(&ctx.vread(fld(d, b'v')));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc {
-        to_bytes(&ctx.vread(dbase))
+    let (acc0, acc1) = if acc {
+        ctx.vread_pair(dbase)
     } else {
-        [0u8; 128]
+        ([0u32; 32], [0u32; 32])
     };
-    let mut o1 = if acc {
-        to_bytes(&ctx.vread(dbase + 1))
-    } else {
-        [0u8; 128]
-    };
+    let mut o0 = if acc { to_bytes(&acc0) } else { [0u8; 128] };
+    let mut o1 = if acc { to_bytes(&acc1) } else { [0u8; 128] };
     for i in 0..64 {
         let lo = f(vu[i * 2] as i32, vv[i * 2] as i32);
         let hi = f(vu[i * 2 + 1] as i32, vv[i * 2 + 1] as i32);
@@ -301,8 +297,7 @@ fn widen_ubh(d: &DecodedOp, ctx: &mut SemCtx, f: impl Fn(i32, i32) -> i32, acc: 
         set_h(&mut o0, i, (p0 + lo) as u16);
         set_h(&mut o1, i, (p1 + hi) as u16);
     }
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    ctx.set_v_pair(dbase, from_bytes(&o0), from_bytes(&o1));
 }
 
 /// Widening halfword->word: `f` combines two i64-extended halfwords; even
@@ -318,16 +313,13 @@ fn widen_hw(
     let vu = to_bytes(&ctx.vread(fld(d, b'u')));
     let vv = to_bytes(&ctx.vread(fld(d, b'v')));
     let dbase = if acc { fld(d, b'x') } else { fld(d, b'd') };
-    let mut o0 = if acc {
-        to_bytes(&ctx.vread(dbase))
+    let (acc0, acc1) = if acc {
+        ctx.vread_pair(dbase)
     } else {
-        [0u8; 128]
+        ([0u32; 32], [0u32; 32])
     };
-    let mut o1 = if acc {
-        to_bytes(&ctx.vread(dbase + 1))
-    } else {
-        [0u8; 128]
-    };
+    let mut o0 = if acc { to_bytes(&acc0) } else { [0u8; 128] };
+    let mut o1 = if acc { to_bytes(&acc1) } else { [0u8; 128] };
     let ext = |h: u16| -> i64 { if unsigned { h as i64 } else { h as i16 as i64 } };
     for i in 0..32 {
         let lo = f(ext(get_h(&vu, i * 2)), ext(get_h(&vv, i * 2)));
@@ -337,8 +329,7 @@ fn widen_hw(
         set_w(&mut o0, i, (p0 + lo) as u32);
         set_w(&mut o1, i, (p1 + hi) as u32);
     }
-    ctx.set_v(dbase, from_bytes(&o0));
-    ctx.set_v(dbase + 1, from_bytes(&o1));
+    ctx.set_v_pair(dbase, from_bytes(&o0), from_bytes(&o1));
 }
 
 /// `Vd.ub = v(add|sub)(Vu.ub, Vv.b):sat`: per byte, unsigned Vu, signed Vv,

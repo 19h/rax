@@ -183,6 +183,26 @@ impl SemCtx<'_> {
         self.vnew[i].or(self.vtmp[i]).unwrap_or(self.regs.v[i])
     }
 
+    /// Validate an even-aligned HVX vector-register pair base.
+    #[inline]
+    pub fn validate_v_pair_base(&self, reg: u8) -> bool {
+        if reg & 1 != 0 {
+            self.mark_invalid_hvx_access();
+            return false;
+        }
+        true
+    }
+
+    /// Read an even-aligned HVX vector-register pair. Odd pair bases are
+    /// architecturally invalid and must be rejected instead of wrapping to V32.
+    #[inline]
+    pub fn vread_pair(&self, reg: u8) -> ([u32; 32], [u32; 32]) {
+        if !self.validate_v_pair_base(reg) {
+            return ([0u32; 32], [0u32; 32]);
+        }
+        (self.vread(reg), self.vread(reg + 1))
+    }
+
     /// Write an HVX vector register.
     #[inline]
     pub fn set_v(&mut self, reg: u8, value: [u32; 32]) {
@@ -194,6 +214,17 @@ impl SemCtx<'_> {
             return;
         }
         self.v_writes.push((reg, value));
+    }
+
+    /// Write an even-aligned HVX vector-register pair.
+    #[inline]
+    pub fn set_v_pair(&mut self, reg: u8, lo: [u32; 32], hi: [u32; 32]) {
+        if !self.validate_v_pair_base(reg) {
+            self.reject_hvx_write();
+            return;
+        }
+        self.set_v(reg, lo);
+        self.set_v(reg + 1, hi);
     }
 
     /// Read a vector-predicate register Q0..Q3 (old), as 4 LE u32 (128 bits).
@@ -385,11 +416,23 @@ mod tests {
     }
 
     #[test]
-    fn invalid_hvx_pair_dispatch_is_rejected_without_writes() {
-        let word = 0x1f40_00ff; // V6_vcombine with Vdd base 31.
+    fn hvx_pair_helpers_reject_odd_pair_bases() {
+        let regs = HexagonRegisters::default();
+        let mut ctx = test_ctx(&regs);
+
+        assert_eq!(ctx.vread_pair(31), ([0u32; 32], [0u32; 32]));
+        assert!(ctx.invalid_hvx_access());
+
+        let mut ctx = test_ctx(&regs);
+        ctx.set_v_pair(31, [1u32; 32], [2u32; 32]);
+        assert!(ctx.invalid_hvx_access());
+        assert!(ctx.v_writes.is_empty());
+    }
+
+    fn assert_odd_hvx_pair_word_rejected(word: u32, opcode: Opcode, pair_field: u8) {
         let decoded = decode_word(word).expect("decodes");
-        assert_eq!(decoded.opcode, Opcode::V6_vcombine);
-        assert_eq!(fld(&decoded, b'd'), 31);
+        assert_eq!(decoded.opcode, opcode);
+        assert_eq!(fld(&decoded, pair_field), 31);
 
         let regs = HexagonRegisters::default();
         let mut ctx = test_ctx(&regs);
@@ -397,5 +440,18 @@ mod tests {
         assert!(ctx.invalid_hvx_access());
         assert!(ctx.v_writes.is_empty());
         assert!(ctx.q_writes.is_empty());
+    }
+
+    #[test]
+    fn invalid_hvx_pair_dispatch_is_rejected_without_writes() {
+        let word = 0x1f40_00ff; // V6_vcombine with Vdd base 31.
+        assert_odd_hvx_pair_word_rejected(word, Opcode::V6_vcombine, b'd');
+    }
+
+    #[test]
+    fn issue_162_rejects_odd_pair_bases_across_hvx_families() {
+        assert_odd_hvx_pair_word_rejected(0x1c20_207f, Opcode::V6_vmpyowh_64_acc, b'x');
+        assert_odd_hvx_pair_word_rejected(0x1c60_009f, Opcode::V6_vaddb_dv, b'd');
+        assert_odd_hvx_pair_word_rejected(0x1b00_20df, Opcode::V6_vlutvwh, b'd');
     }
 }

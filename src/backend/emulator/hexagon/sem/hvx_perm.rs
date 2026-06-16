@@ -68,8 +68,7 @@ fn sat_h(x: i32) -> u16 {
 /// Write the (even, odd) halves of a 256-byte vector pair to `Vdd`.
 #[inline]
 fn set_pair(ctx: &mut SemCtx, rd: u8, lo: &Bytes, hi: &Bytes) {
-    ctx.set_v(rd, from_bytes(lo));
-    ctx.set_v(rd + 1, from_bytes(hi));
+    ctx.set_v_pair(rd, from_bytes(lo), from_bytes(hi));
 }
 
 /// Execute a hvx_perm opcode. Returns `false` if `op` is not handled here.
@@ -87,8 +86,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vcombine => {
             let vu = ctx.vread(fld(d, b'u'));
             let vv = ctx.vread(fld(d, b'v'));
-            ctx.set_v(rd, vv);
-            ctx.set_v(rd + 1, vu);
+            ctx.set_v_pair(rd, vv, vu);
         }
 
         // ---- splat scalar to all lanes -----------------------------------
@@ -476,8 +474,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vunpackob => {
             let rx = fld(d, b'x');
             let vu = to_bytes(&ctx.vread(fld(d, b'u')));
-            let mut lo = to_bytes(&ctx.vread(rx));
-            let mut hi = to_bytes(&ctx.vread(rx + 1));
+            let (lo, hi) = ctx.vread_pair(rx);
+            let mut lo = to_bytes(&lo);
+            let mut hi = to_bytes(&hi);
             for i in 0..128 {
                 let add = (vu[i] as u16) << 8;
                 if i < 64 {
@@ -494,8 +493,9 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         Opcode::V6_vunpackoh => {
             let rx = fld(d, b'x');
             let vu = to_bytes(&ctx.vread(fld(d, b'u')));
-            let mut lo = to_bytes(&ctx.vread(rx));
-            let mut hi = to_bytes(&ctx.vread(rx + 1));
+            let (lo, hi) = ctx.vread_pair(rx);
+            let mut lo = to_bytes(&lo);
+            let mut hi = to_bytes(&hi);
             for i in 0..64 {
                 let add = (get_h(&vu, i) as u32) << 16;
                 if i < 32 {

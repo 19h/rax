@@ -172,6 +172,10 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         // Vdd.v[0] = Vv (low), Vdd.v[1] = Vu (high). CANCEL when false.
         Opcode::V6_vccombine | Opcode::V6_vnccombine => {
             let ps = ctx.p(fld(d, b's')) & 1;
+            let dbase = fld(d, b'd');
+            if !ctx.validate_v_pair_base(dbase) {
+                return true;
+            }
             let take = if matches!(op, Opcode::V6_vnccombine) {
                 ps == 0
             } else {
@@ -180,9 +184,7 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
             if take {
                 let vu = ctx.vread(fld(d, b'u'));
                 let vv = ctx.vread(fld(d, b'v'));
-                let dbase = fld(d, b'd');
-                ctx.set_v(dbase, vv);
-                ctx.set_v(dbase + 1, vu);
+                ctx.set_v_pair(dbase, vv, vu);
             }
             true
         }

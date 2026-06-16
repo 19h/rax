@@ -104,14 +104,14 @@ fn rtt_uh(rtt: u64, n: usize) -> i64 {
 /// Read a vector register pair `(low=R, high=R+1)` as two 128-byte buffers.
 #[inline]
 fn vread_pair(ctx: &SemCtx, reg: u8) -> (Bytes, Bytes) {
-    (to_bytes(&ctx.vread(reg)), to_bytes(&ctx.vread(reg + 1)))
+    let (lo, hi) = ctx.vread_pair(reg);
+    (to_bytes(&lo), to_bytes(&hi))
 }
 
 /// Write a vector register pair (low half -> R, high half -> R+1).
 #[inline]
 fn set_pair(ctx: &mut SemCtx, reg: u8, lo: &Bytes, hi: &Bytes) {
-    ctx.set_v(reg, from_bytes(lo));
-    ctx.set_v(reg + 1, from_bytes(hi));
+    ctx.set_v_pair(reg, from_bytes(lo), from_bytes(hi));
 }
 
 /// Execute a hvx_mpys opcode. Returns `false` if `op` is not handled here.
