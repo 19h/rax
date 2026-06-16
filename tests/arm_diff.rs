@@ -33923,3 +33923,65 @@ fn diff_sve_flogb_fpsr() {
     }
     run_fpsr_batch("sve_flogb_fpsr", batch);
 }
+
+// commit f5d9f8780dc1 temp: set sve2 fcvt fpsr
+#[test]
+fn diff_sve2_fcvt_narrow_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // (opc, opc2, src_sz, dst_sz, bf, name)
+    let convs: &[(u32, u32, usize, usize, bool, &str)] = &[
+        (0b10, 0b00, 4, 2, false, "fcvtnt_s2h"),   // f32 -> f16 (top)
+        (0b11, 0b10, 8, 4, false, "fcvtnt_d2s"),   // f64 -> f32 (top)
+        (0b00, 0b10, 8, 4, false, "fcvtxnt_d2s"),  // f64 -> f32 round-to-odd (top)
+        (0b10, 0b10, 4, 2, true, "bfcvtnt_s2bf16"),// f32 -> bf16 (top)
+    ];
+
+    for &(opc, opc2, src_sz, dst_sz, bf, name) in convs {
+        let insn = enc_sve2_fcvtx(opc, opc2);
+        let cont = src_sz.max(dst_sz); // container = wider element
+        let containers = 16 / cont;
+
+        // Special source values chosen to drive each new flag-emitting path.
+        // For narrow non-bf: inexact (IXC), overflow (OFC|IXC), sNaN (IOC).
+        // For bf (BFCVTNT): inexact mantissa truncation (IXC).
+        let specials: &[u64] = if bf {
+            // f32 with nonzero low-16 mantissa bits -> inexact bf16 narrowing.
+            &[0x3f80_8000, 0x4049_1234, 0xbf80_0001, 0x3fc0_5555]
+        } else {
+            match src_sz {
+                4 => &[
+                    (2049.0f32).to_bits() as u64,   // not representable in f16 -> IXC
+                    (70000.0f32).to_bits() as u64,  // > f16 max -> OFC | IXC
+                    0x7fa0_0001,                    // sNaN f32 -> IOC
+                    (3.14159f32).to_bits() as u64,  // inexact -> IXC
+                ],
+                _ => &[
+                    (16_777_217.0f64).to_bits(),    // not representable in f32 -> IXC
+                    (1.0e300f64).to_bits(),         // > f32 max -> OFC | IXC
+                    0x7ff0_0000_0000_0001,          // sNaN f64 -> IOC
+                    (2.718281828f64).to_bits(),     // inexact -> IXC
+                ],
+            }
+        };
+
+        for initial_fpsr in [0u64, 0x10] {
+            let mut zn = 0u128;
+            for c in 0..containers {
+                let bits = specials[c % specials.len()] as u128;
+                // Narrow forms read the source from the whole (low) container.
+                zn |= bits << ((c * cont) * 8);
+            }
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0; // round-to-nearest, no FZ/AH: baseline FPSR semantics
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            // Preserved (bottom) halves of the destination.
+            st.set_vreg(RD as usize, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+            st.set_preg(0, 0xffff); // all containers active
+            batch.push((format!("{name}_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    run_fpsr_batch("sve2_fcvt_narrow_fpsr", batch);
+}

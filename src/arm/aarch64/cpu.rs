@@ -12513,10 +12513,18 @@ impl AArch64Cpu {
                     }
                 };
                 if narrow {
-                    let res = convert(read_elem(&operand, coff, src_sz));
+                    let x = read_elem(&operand, coff, src_sz);
+                    let res = convert(x);
+                    self.fpsr |= if bf {
+                        fp_status_bfcvt(x as u32, res as u16)
+                    } else {
+                        fp_status_cvt_precision(x, src_sz, dst_sz, res)
+                    };
                     write_elem(&mut dst, coff + dst_sz, dst_sz, res); // top half
                 } else {
-                    let res = convert(read_elem(&operand, coff + src_sz, src_sz)); // top half
+                    let x = read_elem(&operand, coff + src_sz, src_sz); // top half
+                    let res = convert(x);
+                    self.fpsr |= fp_status_cvt_precision(x, src_sz, dst_sz, res);
                     write_elem(&mut dst, coff, dst_sz, res);
                 }
             }
