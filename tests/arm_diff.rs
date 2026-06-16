@@ -33175,3 +33175,122 @@ fn diff_sve_fscale_fpsr() {
     }
     run_fpsr_batch("sve_fscale_fpsr", batch);
 }
+
+// commit c2d3228c340d temp: set sve indexed fp fpsr
+#[test]
+fn diff_sve_indexed_fp_fpsr_exceptions() {
+    // op (bits[15:10]): FMUL=0b001000, FMLA=0b000000, FMLS=0b000001.
+    // size: 1=.h, 2=.s, 3(_)=.d. index=0, Zm=RM (broadcast lane 0).
+    const FMUL: u32 = 0b001000;
+    const FMLA: u32 = 0b000000;
+    const FMLS: u32 = 0b000001;
+
+    // (name, inf bits, zero bits, maxnorm bits, two bits) per size.
+    let h_inf = 0x7c00u64;
+    let h_zero = 0x0000u64;
+    let h_max = 0x7bffu64; // largest finite fp16
+    let h_two = 0x4000u64; // 2.0
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &size in &[1u32, 2, 3] {
+        let (inf, zero, maxn, two) = match size {
+            1 => (h_inf, h_zero, h_max, h_two),
+            2 => (
+                f32::INFINITY.to_bits() as u64,
+                0.0f32.to_bits() as u64,
+                f32::MAX.to_bits() as u64,
+                2.0f32.to_bits() as u64,
+            ),
+            _ => (
+                f64::INFINITY.to_bits(),
+                0.0f64.to_bits(),
+                f64::MAX.to_bits(),
+                2.0f64.to_bits(),
+            ),
+        };
+
+        for initial_fpsr in [0u64, 0x10] {
+            // --- FMUL: fp_status_binop path ---
+            // invalid: inf * 0 -> IOC
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                st.set_vreg(RN as usize, inf, inf); // Zn lanes = inf
+                st.set_vreg(RM as usize, zero, 0); // Zm[0] = 0
+                batch.push((
+                    format!("sve_idx_fmul_sz{size}_ioc_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fp_idx(FMUL, size, 0, RM),
+                    st,
+                ));
+            }
+            // overflow + inexact: maxnorm * 2 -> OFC|IXC
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                st.set_vreg(RN as usize, maxn, maxn);
+                st.set_vreg(RM as usize, two, 0);
+                batch.push((
+                    format!("sve_idx_fmul_sz{size}_ofc_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fp_idx(FMUL, size, 0, RM),
+                    st,
+                ));
+            }
+
+            // --- FMLA: fp_status_fma path. acc(Zd)=0, op1(Zn)=inf, op2(Zm)=0
+            //     -> inf*0 invalid -> IOC ---
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                st.set_vreg(RD as usize, 0, 0); // accumulator = +0
+                st.set_vreg(RN as usize, inf, inf);
+                st.set_vreg(RM as usize, zero, 0);
+                batch.push((
+                    format!("sve_idx_fmla_sz{size}_ioc_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fp_idx(FMLA, size, 0, RM),
+                    st,
+                ));
+            }
+            // FMLA overflow: acc=0, maxnorm * 2 -> OFC|IXC
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                st.set_vreg(RD as usize, 0, 0);
+                st.set_vreg(RN as usize, maxn, maxn);
+                st.set_vreg(RM as usize, two, 0);
+                batch.push((
+                    format!("sve_idx_fmla_sz{size}_ofc_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fp_idx(FMLA, size, 0, RM),
+                    st,
+                ));
+            }
+
+            // --- FMLS: fp_status_fma path (Zn negated). op1=inf, op2=0
+            //     -> (-inf)*0 invalid -> IOC ---
+            {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                st.set_preg(0, 0xFFFF);
+                st.set_vreg(RD as usize, 0, 0);
+                st.set_vreg(RN as usize, inf, inf);
+                st.set_vreg(RM as usize, zero, 0);
+                batch.push((
+                    format!("sve_idx_fmls_sz{size}_ioc_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fp_idx(FMLS, size, 0, RM),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("sve_indexed_fp_fpsr_exceptions", batch);
+}

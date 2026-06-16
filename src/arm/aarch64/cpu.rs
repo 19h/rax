@@ -11780,16 +11780,20 @@ impl AArch64Cpu {
             for e in 0..(16 / esz) {
                 let off = e * esz;
                 let ne = read_elem(&n, off, esz);
-                let r = if is_fmul {
-                    match esz {
+                let (r, status) = if is_fmul {
+                    let r = match esz {
                         2 => fp16_mul(ne as u16, mm as u16) as u64,
                         4 => fp_three_same_f32(FpKind::Mul, ne as u32, mm as u32, 0) as u64,
                         _ => fp_three_same_f64(FpKind::Mul, ne, mm, 0),
-                    }
+                    };
+                    (r, fp_status_binop(esz, FpKind::Mul, ne, mm, r))
                 } else {
                     let nn = if is_fmls { fp_neg_bits(ne, ebits) } else { ne };
-                    fp_muladd_bits(read_elem(&acc, off, esz), nn, mm, ebits)
+                    let aa = read_elem(&acc, off, esz);
+                    let r = fp_muladd_bits(aa, nn, mm, ebits);
+                    (r, fp_status_fma(esz, aa, nn, mm, r))
                 };
+                self.fpsr |= status;
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
