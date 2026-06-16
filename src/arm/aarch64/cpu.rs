@@ -12453,7 +12453,11 @@ impl AArch64Cpu {
                 if (pred >> off) & 1 == 0 {
                     continue;
                 }
-                let r = sve_flogb(esz, read_elem(&src, off, esz));
+                let x = read_elem(&src, off, esz);
+                if fp_is_zero_bits(esz, x) || fp_is_nan_bits(esz, x) {
+                    self.fpsr |= FPSR_IOC;
+                }
+                let r = sve_flogb(esz, x);
                 write_elem(&mut dst, off, esz, r as u64);
             }
             self.v[zd] = u128::from_le_bytes(dst);

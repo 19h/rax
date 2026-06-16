@@ -33852,3 +33852,74 @@ fn diff_simd_bfcvt_fpsr() {
     }
     run_fpsr_batch("simd_bfcvt_fpsr", batch);
 }
+
+// commit d7c21eed0c5e temp: set sve flogb fpsr
+#[test]
+fn diff_sve_flogb_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // size field (insn[18:17]); interp computes esz = 1 << size:
+    //   1 => esz 2 (half), 2 => esz 4 (single), 3 => esz 8 (double).
+    // size 0 is reserved (#UD), so it is omitted.
+    let cases: &[(u32, &str, &[u64])] = &[
+        (
+            1,
+            "h",
+            &[
+                0x0000, // +0   -> FPSR_IOC
+                0x8000, // -0   -> FPSR_IOC
+                0x7E00, // qNaN -> FPSR_IOC
+                0x7C01, // sNaN -> FPSR_IOC
+            ],
+        ),
+        (
+            2,
+            "s",
+            &[
+                0x0000_0000, // +0
+                0x8000_0000, // -0
+                0x7FC0_0000, // qNaN
+                0x7F80_0001, // sNaN
+            ],
+        ),
+        (
+            3,
+            "d",
+            &[
+                0x0000_0000_0000_0000, // +0
+                0x8000_0000_0000_0000, // -0
+                0x7FF8_0000_0000_0000, // qNaN
+                0x7FF0_0000_0000_0001, // sNaN
+            ],
+        ),
+    ];
+    for &(size, name, inputs) in cases {
+        let insn = enc_sve_flogb(size);
+        let esz = match size {
+            1 => 2usize,
+            2 => 4,
+            _ => 8,
+        };
+        let lanes = 16 / esz;
+        for &bits in inputs {
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                // Broadcast the IOC-triggering pattern across every lane.
+                let mut zn: u128 = 0;
+                for l in 0..lanes {
+                    zn |= (bits as u128) << (l * esz * 8);
+                }
+                st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+                // All-active governing predicate P0 so every lane is processed.
+                st.set_preg(0, 0xFFFF);
+                batch.push((
+                    format!("flogb_{name}_ioc_{bits:#x}_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("sve_flogb_fpsr", batch);
+}
