@@ -32827,3 +32827,67 @@ fn diff_fp_scalar_fp16_arith_fpsr() {
     }
     run_fpsr_batch("fp_scalar_fp16_arith_fpsr", batch);
 }
+
+// commit c5fe37974985 temp: fix scalar fp compare invalid flag
+#[test]
+fn diff_fp_scalar_fcmp_qnan_invalid_fpsr() {
+    // enc_fcmp_reg / enc_fcmp_zero are added later in this branch; define them
+    // locally so the test compiles at this commit.
+    fn enc_fcmp_reg(fp_type: u32) -> u32 {
+        (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (RM << 16) | (0b1000 << 10) | (RN << 5)
+    }
+    fn enc_fcmp_zero(fp_type: u32) -> u32 {
+        (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (0b1000 << 10) | (RN << 5) | (1 << 3)
+    }
+    // Quiet-NaN bit patterns (mantissa MSB set => quiet, not signaling).
+    fn qnan_bits(ft: u32) -> u64 {
+        match ft {
+            0b00 => 0x7FC0_0000,           // f32 qNaN
+            0b01 => 0x7FF8_0000_0000_0000, // f64 qNaN
+            _ => 0x0000_7E00,              // f16 qNaN
+        }
+    }
+    // 1.0 in each precision, used as the non-NaN reg operand.
+    fn one_bits(ft: u32) -> u64 {
+        match ft {
+            0b00 => 0x3F80_0000,
+            0b01 => 0x3FF0_0000_0000_0000,
+            _ => 0x0000_3C00,
+        }
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // ftype: 00=single, 01=double, 11=half.
+    for &ft in &[0b00u32, 0b01, 0b11] {
+        let qn = qnan_bits(ft);
+        let one = one_bits(ft);
+        // Four scalar compare forms. The E (signaling) bit is opcode2 bit[4].
+        // Pre-fix code keyed IOC off bit[3] (cmp-with-#0.0); the fix keys it off
+        // bit[4] (the E variant). For a *quiet* NaN this diverges on
+        // FCMPE Fn,Fm (pre-fix no IOC) and FCMP Fn,#0.0 (pre-fix spurious IOC).
+        let forms: [(u32, &str, bool); 4] = [
+            (enc_fcmp_reg(ft), "fcmp_reg", true),                // qNaN in Rm
+            (enc_fcmp_reg(ft) | (1 << 4), "fcmpe_reg", true),    // qNaN in Rm, signaling
+            (enc_fcmp_zero(ft), "fcmp_zero", false),             // FCMP Fn,#0.0
+            (enc_fcmp_zero(ft) | (1 << 4), "fcmpe_zero", false), // FCMPE Fn,#0.0, signaling
+        ];
+        for (insn, fname, has_rm) in forms {
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                // Drive a quiet-NaN operand through the compare.
+                st.set_vreg(RN as usize, qn, 0);
+                if has_rm {
+                    st.set_vreg(RM as usize, one, 0);
+                }
+                batch.push((
+                    format!("{fname}_t{ft:#b}_qnan_fpsr{initial_fpsr:#x}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+    }
+    run_fpsr_batch("fp_scalar_fcmp_qnan_invalid_fpsr", batch);
+}

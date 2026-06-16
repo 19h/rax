@@ -1932,6 +1932,7 @@ impl AArch64Cpu {
             let rn = ((insn >> 5) & 0x1F) as u8;
             let opc = (insn >> 3) & 0x3;
             let cmp_with_zero = (insn & 0x8) != 0;
+            let signal_all_nans = (insn & 0x10) != 0;
 
             match fp_type {
                 0b00 => {
@@ -1950,7 +1951,7 @@ impl AArch64Cpu {
                     };
 
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
-                        if (opc & 1) != 0 || is_snan32(op1_bits) || is_snan32(op2_bits) {
+                        if signal_all_nans || is_snan32(op1_bits) || is_snan32(op2_bits) {
                             self.fpsr |= FPSR_IOC;
                         }
                         (false, false, true, true)
@@ -1983,7 +1984,7 @@ impl AArch64Cpu {
                     };
 
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
-                        if (opc & 1) != 0 || is_snan64(op1_bits) || is_snan64(op2_bits) {
+                        if signal_all_nans || is_snan64(op1_bits) || is_snan64(op2_bits) {
                             self.fpsr |= FPSR_IOC;
                         }
                         (false, false, true, true)
@@ -2015,7 +2016,7 @@ impl AArch64Cpu {
                         fp16_to_f64(op2_bits)
                     };
                     let (n, z, c, v) = if op1.is_nan() || op2.is_nan() {
-                        if (opc & 1) != 0 || fp16_is_snan(op1_bits) || fp16_is_snan(op2_bits) {
+                        if signal_all_nans || fp16_is_snan(op1_bits) || fp16_is_snan(op2_bits) {
                             self.fpsr |= FPSR_IOC;
                         }
                         (false, false, true, true)
