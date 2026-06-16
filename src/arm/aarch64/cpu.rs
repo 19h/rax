@@ -12621,9 +12621,11 @@ impl AArch64Cpu {
                 _ if round_odd => round_odd_f64_to_f32(f64::from_bits(x)) as u64, // FCVTX
                 _ => (f64::from_bits(x) as f32).to_bits() as u64, // double -> single
             };
-            if !bf {
-                self.fpsr |= fp_status_cvt_precision(x, src_sz, dst_sz, res);
-            }
+            self.fpsr |= if bf {
+                fp_status_bfcvt(x as u32, res as u16)
+            } else {
+                fp_status_cvt_precision(x, src_sz, dst_sz, res)
+            };
             write_elem(&mut dst, off, cont, res);
         }
         self.v[zd] = u128::from_le_bytes(dst);
@@ -19401,6 +19403,24 @@ fn fp_status_cvt_precision(src: u64, src_prec: usize, dst_prec: usize, result: u
         0
     } else {
         fp_status_from_exact_f64(dst_prec, exact, result)
+    }
+}
+
+fn fp_status_bfcvt(src: u32, result: u16) -> u32 {
+    if is_snan32(src) {
+        return FPSR_IOC;
+    }
+    if is_nan32(src) || fp32_is_inf(src) || (src & 0xFFFF) == 0 {
+        return 0;
+    }
+
+    let result_abs = result & 0x7FFF;
+    if result_abs == 0x7F80 {
+        FPSR_OFC | FPSR_IXC
+    } else if (result_abs & 0x7F80) == 0 {
+        FPSR_UFC | FPSR_IXC
+    } else {
+        FPSR_IXC
     }
 }
 

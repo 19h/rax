@@ -33763,3 +33763,42 @@ fn diff_sve_fp_cmp_fpsr_invalid() {
 
     run_fpsr_batch("sve_fp_cmp_fpsr_invalid", batch);
 }
+
+// commit 3050e8c62aaf temp: set sve bfcvt fpsr
+#[test]
+fn diff_sve_bfcvt_fpsr_exceptions() {
+    fn pack_u32(values: [u32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let insn = enc_sve_bfcvt(); // BFCVT Zd.H, Pg/M, Zn.S ; Zn=Z1, Zd=Z0, Pg=P0
+    let patterns: [(&str, [u32; 4]); 4] = [
+        // Plain inexact: 1.0 with extra low mantissa bits that don't fit bf16 -> IXC.
+        ("ixc", [0x3F80_8001, 0x3F80_8001, 0x3F80_8001, 0x3F80_8001]),
+        // sNaN inputs (exp all-ones, MSB of mantissa clear, nonzero) -> IOC.
+        ("ioc_snan", [0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001]),
+        // Max finite f32 rounds up to bf16 infinity -> OFC|IXC.
+        ("ofc", [0x7F7F_FFFF, 0xFF7F_FFFF, 0x7F7F_FFFF, 0xFF7F_FFFF]),
+        // Mixed: snan, inexact-normal, overflow, finite-exact for cross coverage.
+        ("mixed", [0x7FA0_0001, 0x3F80_8001, 0x7F7F_FFFF, 0x3F80_0000]),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (name, lanes) in patterns {
+        for initial_fpsr in [0u64, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0; // round-to-nearest, no FTZ/AH: baseline semantics
+            let (lo, hi) = pack_u32(lanes);
+            st.set_vreg(RN as usize, lo, hi);
+            st.set_vreg(RD as usize, 0, 0);
+            st.set_preg(0, 0xFFFF); // all lanes active at VL=128
+            batch.push((format!("sve_bfcvt_{name}_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+    run_fpsr_batch("sve_bfcvt_fpsr_exceptions", batch);
+}
