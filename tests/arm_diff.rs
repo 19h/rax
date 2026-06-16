@@ -34919,3 +34919,96 @@ fn diff_simd_fcmla_indexed_fpsr_exceptions() {
 
     run_fpsr_batch("simd_fcmla_indexed_fpsr_exceptions", batch);
 }
+
+// commit d0201befcbed temp: set simd indexed fp fpsr
+#[test]
+fn diff_simd_indexed_fp_fpsr_exceptions() {
+    // (u, opcode, name): Advanced-SIMD vector-x-indexed-element FP ops.
+    //   FMUL  (0,0b1001) -> fp_status_binop(Mul)
+    //   FMULX (1,0b1001) -> fp_status_mulx
+    //   FMLA  (0,0b0001) -> fp_status_fma
+    //   FMLS  (0,0b0101) -> fp_status_fma (neg op1)
+    // The fix routes the returned exception status into self.fpsr.
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b1001, "fmul"),
+        (1, 0b1001, "fmulx"),
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+    ];
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in ops {
+        // size 0b10 = f32 (index 0..=3, Q either); size 0b11 = f64 (index 0..=1, Q=1 only)
+        for &(size, qs, maxidx) in &[
+            (0b10u32, &[0u32, 1][..], 4u32),
+            (0b11u32, &[1u32][..], 2u32),
+        ] {
+            let f64op = size == 0b11;
+            let lanes = if f64op { 2usize } else { 4usize };
+            for &q in qs {
+                for index in 0..maxidx {
+                    let insn = enc_indexed(q, u, size, opcode, RM as u32, index);
+
+                    for &initial_fpsr in &[0u64, 0x10] {
+                        let mut st = ArmState::zeroed();
+                        st.fpsr = initial_fpsr;
+                        st.fpcr = 0;
+
+                        // Choose inputs that trip a flag on the path the commit added:
+                        //  - FMULX: sNaN operand => fp_status_mulx returns IOC.
+                        //  - FMUL / FMLA / FMLS: huge * huge => inf result =>
+                        //    fp_status_binop / fp_status_fma return OFC | IXC.
+                        let (n_bits, m_bits, d_bits): (u64, u64, u64) = if name == "fmulx" {
+                            if f64op {
+                                // f64 signalling NaN in V[Rn].
+                                (0x7FF0_0000_0000_0001u64, (2.0f64).to_bits(), 0u64)
+                            } else {
+                                // f32 signalling NaN in V[Rn].
+                                (0x7F80_0001u64, (2.0f32).to_bits() as u64, 0u64)
+                            }
+                        } else if f64op {
+                            // big * big overflows to +inf (FMLA/FMLS use addend 0).
+                            (
+                                (1.0e308f64).to_bits(),
+                                (1.0e3f64).to_bits(),
+                                0u64,
+                            )
+                        } else {
+                            (
+                                (3.0e38f32).to_bits() as u64,
+                                (1.0e3f32).to_bits() as u64,
+                                0u64,
+                            )
+                        };
+
+                        // Broadcast the trigger value into every lane so whichever
+                        // element index the encoding selects carries it.
+                        let pack = |bits: u64| -> u128 {
+                            let mut p: u128 = 0;
+                            for l in 0..lanes {
+                                let sh = if f64op { 64 * l } else { 32 * l };
+                                p |= (bits as u128) << sh;
+                            }
+                            p
+                        };
+                        let np = pack(n_bits);
+                        let mp = pack(m_bits);
+                        let dp = pack(d_bits);
+                        st.set_vreg(RN as usize, np as u64, (np >> 64) as u64);
+                        st.set_vreg(RM as usize, mp as u64, (mp >> 64) as u64);
+                        st.set_vreg(RD as usize, dp as u64, (dp >> 64) as u64);
+
+                        batch.push((
+                            format!("{name}_sz{size}_q{q}_idx{index}_fpsr{initial_fpsr:#x}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_fpsr_batch("simd_indexed_fp_fpsr_exceptions", batch);
+}

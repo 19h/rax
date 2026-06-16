@@ -4634,22 +4634,47 @@ impl AArch64Cpu {
                 let off = e * esize;
                 let a = read_elem(&vn, off, esize);
                 let d = read_elem(&vd_old, off, esize);
-                let r = if bits == 16 {
+                let (r, status) = if bits == 16 {
                     let an = a as u16;
                     let bn = vm_elem as u16;
                     let dn = d as u16;
-                    (match kind {
+                    let r = match kind {
                         FpKind::Mul => fp16_mul(an, bn),
                         FpKind::Mulx => fp16_mulx(an, bn),
                         FpKind::Mla => fp16_mla(dn, an, bn),
                         FpKind::Mls => fp16_mls(dn, an, bn),
                         _ => return Err(ArmError::UndefinedInstruction(insn)),
-                    }) as u64
+                    } as u64;
+                    let status = match kind {
+                        FpKind::Mul => fp_status_binop(esize, FpKind::Mul, a, vm_elem, r),
+                        FpKind::Mulx => fp_status_mulx(esize, a, vm_elem, r),
+                        FpKind::Mla => fp_status_fma(esize, d, a, vm_elem, r),
+                        FpKind::Mls => fp_status_fma(esize, d, fp_neg_bits(a, bits), vm_elem, r),
+                        _ => 0,
+                    };
+                    (r, status)
                 } else if bits == 32 {
-                    fp_three_same_f32(kind, a as u32, vm_elem as u32, d as u32) as u64
+                    let r = fp_three_same_f32(kind, a as u32, vm_elem as u32, d as u32) as u64;
+                    let status = match kind {
+                        FpKind::Mul => fp_status_binop(esize, FpKind::Mul, a, vm_elem, r),
+                        FpKind::Mulx => fp_status_mulx(esize, a, vm_elem, r),
+                        FpKind::Mla => fp_status_fma(esize, d, a, vm_elem, r),
+                        FpKind::Mls => fp_status_fma(esize, d, fp_neg_bits(a, bits), vm_elem, r),
+                        _ => 0,
+                    };
+                    (r, status)
                 } else {
-                    fp_three_same_f64(kind, a, vm_elem, d)
+                    let r = fp_three_same_f64(kind, a, vm_elem, d);
+                    let status = match kind {
+                        FpKind::Mul => fp_status_binop(esize, FpKind::Mul, a, vm_elem, r),
+                        FpKind::Mulx => fp_status_mulx(esize, a, vm_elem, r),
+                        FpKind::Mla => fp_status_fma(esize, d, a, vm_elem, r),
+                        FpKind::Mls => fp_status_fma(esize, d, fp_neg_bits(a, bits), vm_elem, r),
+                        _ => 0,
+                    };
+                    (r, status)
                 };
+                self.fpsr |= status;
                 write_elem(&mut dst, off, esize, r);
             }
             self.v[rd] = u128::from_le_bytes(dst);
@@ -19254,6 +19279,33 @@ fn fp64_mul_exact(a: u64, b: u64) -> bool {
     sig_bits <= 53 || exp + sig_bits <= -1021
 }
 
+fn fp64_mul_exact_result(a: u64, b: u64, result: u64) -> bool {
+    if fp64_is_zero(a) || fp64_is_zero(b) {
+        return fp64_is_zero(result);
+    }
+    let Some((ma, ea)) = fp64_signed_mant_exp(a) else {
+        return true;
+    };
+    let Some((mb, eb)) = fp64_signed_mant_exp(b) else {
+        return true;
+    };
+    let Some((mr, er)) = fp64_signed_mant_exp(result) else {
+        return false;
+    };
+    let Some(product) = ma.checked_mul(mb) else {
+        return false;
+    };
+    let ep = ea + eb;
+    let common = ep.min(er);
+    let Some(lhs) = shift_i128_checked(product, ep - common) else {
+        return false;
+    };
+    let Some(rhs) = shift_i128_checked(mr, er - common) else {
+        return false;
+    };
+    lhs == rhs
+}
+
 fn fp64_signed_mant_exp(bits: u64) -> Option<(i128, i32)> {
     let (mant, exp) = fp64_mant_exp(bits)?;
     let signed = if bits >> 63 != 0 {
@@ -19293,6 +19345,43 @@ fn fp64_addsub_exact(a: u64, b: u64, sub: bool) -> bool {
     let exp = common + tz as i32;
     let sig_bits = 128 - mag.leading_zeros() as i32;
     sig_bits <= 53 || exp + sig_bits <= -1021
+}
+
+fn shift_i128_checked(value: i128, shift: i32) -> Option<i128> {
+    if shift < 0 || shift >= 120 {
+        return None;
+    }
+    value.checked_shl(shift as u32)
+}
+
+fn fp64_fma_exact(addend: u64, op1: u64, op2: u64, result: u64) -> bool {
+    let Some((ma, ea)) = fp64_signed_mant_exp(addend) else {
+        return true;
+    };
+    let Some((m1, e1)) = fp64_signed_mant_exp(op1) else {
+        return true;
+    };
+    let Some((m2, e2)) = fp64_signed_mant_exp(op2) else {
+        return true;
+    };
+    let Some((mr, er)) = fp64_signed_mant_exp(result) else {
+        return false;
+    };
+    let Some(mp) = m1.checked_mul(m2) else {
+        return false;
+    };
+    let ep = e1 + e2;
+    let common = ea.min(ep).min(er);
+    let Some(lhs_a) = shift_i128_checked(ma, ea - common) else {
+        return false;
+    };
+    let Some(lhs_p) = shift_i128_checked(mp, ep - common) else {
+        return false;
+    };
+    let Some(rhs) = shift_i128_checked(mr, er - common) else {
+        return false;
+    };
+    lhs_a.checked_add(lhs_p) == Some(rhs)
 }
 
 fn fp16_abs_bits(x: u16) -> u16 {
@@ -19427,10 +19516,14 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
             if fp64_is_zero(op1) || fp64_is_zero(op2) {
                 return 0;
             }
-            if fp64_is_zero(addend) && fp64_mul_exact(op1, op2) {
-                return 0;
+            if fp64_is_inf(result) {
+                return FPSR_OFC | FPSR_IXC;
             }
-            return fp_status_assume_inexact(esize, result);
+            if fp64_fma_exact(addend, op1, op2, result) {
+                return 0;
+            } else {
+                return FPSR_IXC;
+            }
         }
         let exact = sve_fp_to_f64(esize, addend) + sve_fp_to_f64(esize, op1) * sve_fp_to_f64(esize, op2);
         let status = fp_status_from_exact_f64(esize, exact, result);
@@ -19446,6 +19539,28 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
         }
     } else {
         0
+    }
+}
+
+fn fp_status_mulx(esize: usize, a: u64, b: u64, result: u64) -> u32 {
+    if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
+        return FPSR_IOC;
+    }
+    if !fp_is_finite_bits(esize, a) || !fp_is_finite_bits(esize, b) {
+        return 0;
+    }
+    if esize == 8 {
+        if fp64_is_inf(result) {
+            return FPSR_OFC | FPSR_IXC;
+        }
+        if fp64_mul_exact_result(a, b, result) {
+            0
+        } else {
+            FPSR_IXC
+        }
+    } else {
+        let exact = sve_fp_to_f64(esize, a) * sve_fp_to_f64(esize, b);
+        fp_status_from_exact_f64(esize, exact, result)
     }
 }
 
@@ -19620,7 +19735,7 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
     if (fp64_is_tiny(result) || fp64_is_zero(result))
         && !fp64_is_zero(a)
         && !fp64_is_zero(b)
-        && matches!(kind, Mul | Div)
+        && matches!(kind, Div)
     {
         return FPSR_UFC | FPSR_IXC;
     }
@@ -19629,8 +19744,12 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
         return FPSR_IXC;
     }
 
-    if matches!(kind, Mul) && !fp64_mul_exact(a, b) {
-        return FPSR_IXC;
+    if matches!(kind, Mul) {
+        if fp64_mul_exact_result(a, b, result) {
+            return 0;
+        }
+        let underflow = fp64_is_tiny(result) || fp64_is_zero(result);
+        return FPSR_IXC | if underflow { FPSR_UFC } else { 0 };
     }
 
     if matches!(kind, Add | Addp | Sub | Abd) {
