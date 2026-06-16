@@ -34734,3 +34734,92 @@ fn diff_simd_fp_to_int_fpsr_exceptions() {
     }
     run_fpsr_batch("simd_fp_to_int_fpsr_exceptions", batch);
 }
+
+// commit 21939b27dea3 temp: set simd complex fpsr
+#[test]
+fn diff_simd_complex_fpsr_exceptions() {
+    // inf / zero bit patterns per element size (16/32/64).
+    let inf = |esize: u32| -> u64 {
+        match esize {
+            16 => 0x7C00u64,
+            32 => 0x7F80_0000u64,
+            _ => 0x7FF0_0000_0000_0000u64,
+        }
+    };
+    let neg_inf = |esize: u32| -> u64 {
+        let s: u64 = 1u64 << (esize - 1);
+        inf(esize) | s
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (size, esize): 01=f16, 10=f32, 11=f64.
+    for &(size, esize) in &[(0b01u32, 16u32), (0b10, 32), (0b11, 64)] {
+        for q in 0..2u32 {
+            if esize == 64 && q == 0 {
+                continue; // a 64-bit complex pair needs the full 128 bits
+            }
+            for initial_fpsr in [0u64, 0x10] {
+                // pack identical (re, im) values into every lane of the 128-bit reg.
+                let pack = |re: u64, im: u64| -> (u64, u64) {
+                    let mut lo: u128 = 0;
+                    let mut hi: u128 = 0;
+                    let datasize = if q == 1 { 128usize } else { 64 };
+                    let lanes = datasize / esize as usize; // total real+imag slots
+                    let mask: u128 = if esize == 64 {
+                        u64::MAX as u128
+                    } else {
+                        ((1u128) << esize) - 1
+                    };
+                    for slot in 0..lanes {
+                        let v = if slot % 2 == 0 { re } else { im } as u128 & mask;
+                        let bitpos = slot * esize as usize;
+                        if bitpos < 64 {
+                            lo |= v << bitpos;
+                        } else {
+                            hi |= v << (bitpos - 64);
+                        }
+                    }
+                    (lo as u64, hi as u64)
+                };
+
+                // FCADD (1-bit rotation). rot==0: re = a_re + (-b_im).
+                // a_re = +inf, b_im = +inf  =>  +inf + (-inf) => IOC invalid.
+                {
+                    let insn = enc_fcadd(q, size, 0);
+                    let mut st = ArmState::zeroed();
+                    st.fpsr = initial_fpsr;
+                    st.fpcr = 0;
+                    let (n_lo, n_hi) = pack(inf(esize), neg_inf(esize)); // a_re=+inf, a_im=-inf
+                    let (m_lo, m_hi) = pack(inf(esize), inf(esize)); // b_re=+inf, b_im=+inf
+                    st.set_vreg(RN as usize, n_lo, n_hi);
+                    st.set_vreg(RM as usize, m_lo, m_hi);
+                    batch.push((
+                        format!("fcadd_ioc_e{esize}_q{q}_fpsr{initial_fpsr:#x}"),
+                        insn,
+                        st,
+                    ));
+                }
+
+                // FCMLA (2-bit rotation). rot==0: r_re = d_re + a_re * b_re.
+                // a_re = 0, b_re = +inf  =>  0 * inf => IOC invalid on the FMA path.
+                {
+                    let insn = enc_fcmla(q, size, 0);
+                    let mut st = ArmState::zeroed();
+                    st.fpsr = initial_fpsr;
+                    st.fpcr = 0;
+                    let (n_lo, n_hi) = pack(0, 0); // a_re=0, a_im=0
+                    let (m_lo, m_hi) = pack(inf(esize), inf(esize)); // b_re=+inf, b_im=+inf
+                    st.set_vreg(RN as usize, n_lo, n_hi);
+                    st.set_vreg(RM as usize, m_lo, m_hi);
+                    // d (accumulator in Vd) = 0 by default.
+                    batch.push((
+                        format!("fcmla_ioc_e{esize}_q{q}_fpsr{initial_fpsr:#x}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    run_fpsr_batch("simd_complex_fpsr_exceptions", batch);
+}

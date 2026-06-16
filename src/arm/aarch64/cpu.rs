@@ -3432,10 +3432,12 @@ impl AArch64Cpu {
                     ),
                     _ => (a_im, b_im, a_im, fp_neg_bits(b_re, esize)),
                 };
-                (
-                    fp_muladd_bits(d_re, xr, yr, esize),
-                    fp_muladd_bits(d_im, xi, yi, esize),
-                )
+                let r_re = fp_muladd_bits(d_re, xr, yr, esize);
+                let r_im = fp_muladd_bits(d_im, xi, yi, esize);
+                let es = (esize / 8) as usize;
+                self.fpsr |= fp_status_fma(es, d_re, xr, yr, r_re);
+                self.fpsr |= fp_status_fma(es, d_im, xi, yi, r_im);
+                (r_re, r_im)
             } else {
                 // FCADD: rot==0 (90deg): re = a_re + (-b_im), im = a_im + b_re.
                 //        rot==1 (270deg): re = a_re + b_im, im = a_im + (-b_re).
@@ -3445,10 +3447,12 @@ impl AArch64Cpu {
                 } else {
                     (b_im, fp_neg_bits(b_re, esize))
                 };
-                (
-                    fp_add_bits(a_re, add_re, esize),
-                    fp_add_bits(a_im, add_im, esize),
-                )
+                let r_re = fp_add_bits(a_re, add_re, esize);
+                let r_im = fp_add_bits(a_im, add_im, esize);
+                let es = (esize / 8) as usize;
+                self.fpsr |= fp_status_binop(es, FpKind::Add, a_re, add_re, r_re);
+                self.fpsr |= fp_status_binop(es, FpKind::Add, a_im, add_im, r_im);
+                (r_re, r_im)
             };
             result |= (r_re as u128 & mask) << (re * esize as usize);
             result |= (r_im as u128 & mask) << (im * esize as usize);
