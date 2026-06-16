@@ -416,6 +416,7 @@ fn sweep(seed: u64, opcodes: &[u32], count: usize) {
                 | Op::Ebreak
                 | Op::Fence
                 | Op::FenceI
+                | Op::CboZero
                 | Op::Mret
                 | Op::Sret
                 | Op::Wfi
@@ -1030,6 +1031,7 @@ fn lift_exhaustive_audit() {
                 | "Ebreak"
                 | "Fence"
                 | "FenceI"
+                | "CboZero"
                 | "Mret"
                 | "Sret"
                 | "Wfi"
