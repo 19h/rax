@@ -19212,6 +19212,30 @@ fn fp64_is_tiny(x: u64) -> bool {
     a != 0 && a < 0x0010_0000_0000_0000
 }
 
+fn fp32_top_exp(x: u32) -> Option<i32> {
+    let abs = fp32_abs(x);
+    if abs == 0 || abs >= 0x7f80_0000 {
+        return None;
+    }
+    let exp = ((abs >> 23) & 0xff) as i32;
+    let frac = abs & 0x007f_ffff;
+    if exp == 0 {
+        Some(frac.ilog2() as i32 - 149)
+    } else {
+        Some(exp - 127)
+    }
+}
+
+fn fp32_operand_lost(anchor: u32, lost: u32) -> bool {
+    let Some(anchor_exp) = fp32_top_exp(anchor) else {
+        return false;
+    };
+    let Some(lost_exp) = fp32_top_exp(lost) else {
+        return false;
+    };
+    anchor_exp - lost_exp > 24
+}
+
 fn gcd_u64(mut a: u64, mut b: u64) -> u64 {
     while b != 0 {
         let r = a % b;
@@ -19382,13 +19406,23 @@ fn fp64_fma_exact(addend: u64, op1: u64, op2: u64, result: u64) -> bool {
     let Some((m2, e2)) = fp64_signed_mant_exp(op2) else {
         return true;
     };
-    let Some((mr, er)) = fp64_signed_mant_exp(result) else {
-        return false;
-    };
     let Some(mp) = m1.checked_mul(m2) else {
         return false;
     };
     let ep = e1 + e2;
+    if fp64_is_zero(result) {
+        let common = ea.min(ep);
+        let Some(lhs_a) = shift_i128_checked(ma, ea - common) else {
+            return false;
+        };
+        let Some(lhs_p) = shift_i128_checked(mp, ep - common) else {
+            return false;
+        };
+        return lhs_a.checked_add(lhs_p) == Some(0);
+    }
+    let Some((mr, er)) = fp64_signed_mant_exp(result) else {
+        return false;
+    };
     let common = ea.min(ep).min(er);
     let Some(lhs_a) = shift_i128_checked(ma, ea - common) else {
         return false;
@@ -19919,12 +19953,14 @@ fn fp_status_binop_f32(kind: FpKind, a: u32, b: u32, result: u32) -> u32 {
         let r = f32::from_bits(result);
         let x = f32::from_bits(a);
         let y = f32::from_bits(b);
-        let y_effectively_lost = !fp32_is_zero(b) && r == x;
-        let x_effectively_lost = matches!(kind, Add | Addp) && !fp32_is_zero(a) && r == y;
-        let subtrahend_lost = matches!(kind, Sub | Abd) && !fp32_is_zero(b) && r == x.abs();
-        let minuend_lost = matches!(kind, Abd) && !fp32_is_zero(a) && r == y.abs();
+        let y_effectively_lost = r == x && fp32_operand_lost(a, b);
+        let x_effectively_lost = matches!(kind, Add | Addp) && r == y && fp32_operand_lost(b, a);
+        let subtrahend_lost =
+            matches!(kind, Sub | Abd) && r == x.abs() && fp32_operand_lost(a, b);
+        let minuend_lost =
+            matches!(kind, Abd) && r == y.abs() && fp32_operand_lost(b, a);
         let subtract_minuend_lost = matches!(kind, Sub)
-            && !fp32_is_zero(a)
+            && fp32_operand_lost(b, a)
             && result == (-f32::from_bits(b)).to_bits();
         if y_effectively_lost
             || x_effectively_lost

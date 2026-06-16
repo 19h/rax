@@ -35269,3 +35269,64 @@ fn diff_simd_three_same_fp_special_fpsr() {
 
     run_fpsr_batch("simd_three_same_fp_special_fpsr", batch);
 }
+
+// commit 0e946e078c05 temp: refine fp inexact status
+#[test]
+fn diff_fp_scalar_fpsr_fma_exact_zero() {
+    // Targets the f64 exact-cancellation branch the commit added to
+    // fp64_fma_exact (src/arm/aarch64/cpu.rs): when an FMA's addend exactly
+    // cancels op1*op2 so the result is +0.0, signed_mant_exp(result) was None,
+    // so the pre-fix path `return false` and fp_status_fma reported a spurious
+    // FPSR_IXC. The new `if fp64_is_zero(result)` branch recognises the exact
+    // zero (lhs_a + lhs_p == 0) and returns true, matching the EL0 oracle which
+    // raises no exception. Without the fix the interpreter's fpsr diverges.
+    //
+    // Scalar 3-source FP routes through fp_status_fma_with_fpcr(8, addend=aa,
+    // op1=nn, op2=m, ...). enc_fp3(fp_type, o1, o0): op1=V[RN], op2=V[RM],
+    // addend=V[RA]; (o1,o0)=(0,0)=FMADD, (0,1)=FMSUB. fpcr=0 (RNE, no FZ/AH).
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // FMADD double: 2.0 * 3.0 + (-6.0) == +0.0 exactly.
+    {
+        let insn = enc_fp3(1, 0, 0); // FMADD double
+        for initial_fpsr in [0, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, (2.0f64).to_bits(), 0); // op1
+            st.set_vreg(RM as usize, (3.0f64).to_bits(), 0); // op2
+            st.set_vreg(RA as usize, (-6.0f64).to_bits(), 0); // addend
+            batch.push((format!("fmadd_d_exact_zero_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    // FMADD double, larger magnitudes still exactly cancelling:
+    // 1024.0 * 0.5 + (-512.0) == +0.0.
+    {
+        let insn = enc_fp3(1, 0, 0); // FMADD double
+        let mut st = ArmState::zeroed();
+        st.fpsr = 0;
+        st.fpcr = 0;
+        st.set_vreg(RN as usize, (1024.0f64).to_bits(), 0); // op1
+        st.set_vreg(RM as usize, (0.5f64).to_bits(), 0); // op2
+        st.set_vreg(RA as usize, (-512.0f64).to_bits(), 0); // addend
+        batch.push(("fmadd_d_exact_zero_big".to_string(), insn, st));
+    }
+
+    // FMSUB double: addend - op1*op2 == +0.0 (r = a + (-n)*m). 6.0 - 2.0*3.0 == 0.
+    // Exercises the same fp64_fma_exact zero branch via the negated-product form.
+    {
+        let insn = enc_fp3(1, 0, 1); // FMSUB double
+        for initial_fpsr in [0, 0x10] {
+            let mut st = ArmState::zeroed();
+            st.fpsr = initial_fpsr;
+            st.fpcr = 0;
+            st.set_vreg(RN as usize, (2.0f64).to_bits(), 0); // op1 (negated internally)
+            st.set_vreg(RM as usize, (3.0f64).to_bits(), 0); // op2
+            st.set_vreg(RA as usize, (6.0f64).to_bits(), 0); // addend
+            batch.push((format!("fmsub_d_exact_zero_fpsr{initial_fpsr:#x}"), insn, st));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fpsr_fma_exact_zero", batch);
+}
