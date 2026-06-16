@@ -33042,3 +33042,97 @@ fn diff_sve_frsqrte_fpsr_invalid_negative() {
     }
     run_fpsr_batch("sve_frsqrte_fpsr_invalid_negative", batch);
 }
+
+// commit ecd9eeda1b3f temp: set sve pred fp binop fpsr
+#[test]
+fn diff_sve_fp_pred_binop_fpsr() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    // (sz, esize_bytes) for half, single, double. size==00 is reserved for
+    // these slots, so the legal element sizes are 01/10/11 -> H/S/D.
+    for &(sz, eb) in &[(1u32, 2usize), (2u32, 4usize), (3u32, 8usize)] {
+        let lanes = 16 / eb;
+
+        // Per-esize raw-bit operand sets keyed by element size. Each tuple is
+        // (opc5, name, dn_bits, m_bits) where dn = Zdn (V[RD], first source =
+        // FpKind operand `a`) and m = Zm (V[RN], second source = `b`). None of
+        // these opc5 values is FSCALE (0b01001) or a reserved slot, so they all
+        // reach the (kind, swap) match and the patched fp_status_binop() call.
+        let cases: Vec<(u32, &str, u64, u64)> = match eb {
+            2 => vec![
+                // FADD (opc5=0b00000): +inf + -inf => IOC. inf=0x7c00, -inf=0xfc00.
+                (0b00000, "fadd_ioc", 0x7c00, 0xfc00),
+                // FDIV (opc5=0b01101): 1.0 / 0.0 => DZC. 1.0=0x3c00, 0.0=0x0000.
+                (0b01101, "fdiv_dzc", 0x3c00, 0x0000),
+                // FMUL (opc5=0b00010): max_normal * 2.0 => OFC|IXC. max=0x7bff, 2.0=0x4000.
+                (0b00010, "fmul_ofc", 0x7bff, 0x4000),
+                // FADD inexact: 1.0 + smallest subnormal (2^-24) => IXC.
+                // 1.0=0x3c00, subnormal lsb=0x0001.
+                (0b00000, "fadd_ixc", 0x3c00, 0x0001),
+            ],
+            4 => vec![
+                (0b00000, "fadd_ioc",
+                    f32::INFINITY.to_bits() as u64,
+                    f32::NEG_INFINITY.to_bits() as u64),
+                (0b01101, "fdiv_dzc",
+                    (1.0f32).to_bits() as u64,
+                    (0.0f32).to_bits() as u64),
+                (0b00010, "fmul_ofc",
+                    f32::MAX.to_bits() as u64,
+                    (2.0f32).to_bits() as u64),
+                // 1.0 + 2^-24 is not representable in f32 => IXC.
+                (0b00000, "fadd_ixc",
+                    (1.0f32).to_bits() as u64,
+                    (2.0f32.powi(-24)).to_bits() as u64),
+            ],
+            _ => vec![
+                (0b00000, "fadd_ioc",
+                    f64::INFINITY.to_bits(),
+                    f64::NEG_INFINITY.to_bits()),
+                (0b01101, "fdiv_dzc",
+                    (1.0f64).to_bits(),
+                    (0.0f64).to_bits()),
+                (0b00010, "fmul_ofc",
+                    f64::MAX.to_bits(),
+                    (2.0f64).to_bits()),
+                // 1.0 + 2^-53 is not representable in f64 => IXC.
+                (0b00000, "fadd_ixc",
+                    (1.0f64).to_bits(),
+                    (2.0f64.powi(-53)).to_bits()),
+            ],
+        };
+
+        for (opc5, name, dn_bits, m_bits) in cases {
+            for initial_fpsr in [0u64, 0x10] {
+                let mut st = ArmState::zeroed();
+                st.fpsr = initial_fpsr;
+                st.fpcr = 0;
+                // Governing predicate P0 all-active (16 byte-lanes at VL=128).
+                st.set_preg(0, 0xffff);
+
+                let mask: u128 = if eb == 8 {
+                    u64::MAX as u128
+                } else {
+                    (1u128 << (eb * 8)) - 1
+                };
+                let mut d = 0u128;
+                let mut n = 0u128;
+                for lane in 0..lanes {
+                    d |= ((dn_bits as u128) & mask) << (eb * 8 * lane);
+                    n |= ((m_bits as u128) & mask) << (eb * 8 * lane);
+                }
+                // Zdn = V[RD] (first source / dest), Zm = V[RN] (second source).
+                st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+                st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+
+                batch.push((
+                    format!("sve_fpp_{name}_sz{sz}_fpsr{initial_fpsr:#x}"),
+                    enc_sve_fpp(sz, opc5),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("sve_fp_pred_binop_fpsr", batch);
+}

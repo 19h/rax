@@ -12328,6 +12328,7 @@ impl AArch64Cpu {
                 8 => fp_three_same_f64(kind, x, y, 0),
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
+            self.fpsr |= fp_status_binop(esize, kind, x, y, r);
             write_elem(&mut dst, off, esize, r);
         }
         self.v[zd] = u128::from_le_bytes(dst);
@@ -19131,6 +19132,47 @@ fn fp64_mul_exact(a: u64, b: u64) -> bool {
     sig_bits <= 53 || exp + sig_bits <= -1021
 }
 
+fn fp64_signed_mant_exp(bits: u64) -> Option<(i128, i32)> {
+    let (mant, exp) = fp64_mant_exp(bits)?;
+    let signed = if bits >> 63 != 0 {
+        -(mant as i128)
+    } else {
+        mant as i128
+    };
+    Some((signed, exp))
+}
+
+fn fp64_addsub_exact(a: u64, b: u64, sub: bool) -> bool {
+    let Some((ma, ea)) = fp64_signed_mant_exp(a) else {
+        return true;
+    };
+    let Some((mut mb, eb)) = fp64_signed_mant_exp(b) else {
+        return true;
+    };
+    if sub {
+        mb = -mb;
+    }
+    if ma == 0 || mb == 0 {
+        return true;
+    }
+    let common = ea.min(eb);
+    let sa = (ea - common) as u32;
+    let sb = (eb - common) as u32;
+    if sa >= 120 || sb >= 120 {
+        return false;
+    }
+    let sum = (ma << sa) + (mb << sb);
+    if sum == 0 {
+        return true;
+    }
+    let mut mag = sum.unsigned_abs();
+    let tz = mag.trailing_zeros();
+    mag >>= tz;
+    let exp = common + tz as i32;
+    let sig_bits = 128 - mag.leading_zeros() as i32;
+    sig_bits <= 53 || exp + sig_bits <= -1021
+}
+
 fn fp16_abs_bits(x: u16) -> u16 {
     x & 0x7fff
 }
@@ -19451,6 +19493,21 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
         return FPSR_IXC;
     }
 
+    if matches!(kind, Add | Addp | Sub | Abd) {
+        if !fp64_addsub_exact(a, b, matches!(kind, Sub | Abd)) {
+            return FPSR_IXC;
+        }
+        let r = f64::from_bits(result);
+        let x = f64::from_bits(a);
+        let y = f64::from_bits(b);
+        let y_effectively_lost = !fp64_is_zero(b) && r == x;
+        let x_effectively_lost = matches!(kind, Add | Addp) && !fp64_is_zero(a) && r == y;
+        let subtrahend_lost = matches!(kind, Sub | Abd) && !fp64_is_zero(b) && r == x.abs();
+        if y_effectively_lost || x_effectively_lost || subtrahend_lost {
+            return FPSR_IXC;
+        }
+    }
+
     0
 }
 
@@ -19504,6 +19561,14 @@ fn fp_status_binop_f16(kind: FpKind, a: u16, b: u16, result: u16) -> u32 {
         _ => return 0,
     };
     fp_status_from_exact_f64(2, exact, result as u64)
+}
+
+fn fp_status_binop(esize: usize, kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
+    match esize {
+        2 => fp_status_binop_f16(kind, a as u16, b as u16, result as u16),
+        4 => fp_status_binop_f32(kind, a as u32, b as u32, result as u32),
+        _ => fp_status_binop_f64(kind, a, b, result),
+    }
 }
 
 fn fp_status_unop_f32(kind: Option<TwoRegFp>, a: u32, result: u32) -> u32 {
