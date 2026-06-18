@@ -381,9 +381,9 @@ pub struct Vmm {
     /// Whether GDB requested a stop.
     #[cfg(feature = "debug")]
     gdb_stopped: bool,
-    /// Software breakpoints: addr -> original byte.
+    /// Internal debugger execute breakpoints.
     #[cfg(feature = "debug")]
-    gdb_breakpoints: std::collections::HashMap<u64, u8>,
+    gdb_breakpoints: std::collections::HashSet<u64>,
     /// Wait for GDB connection before starting.
     #[cfg(feature = "debug")]
     wait_gdb: bool,
@@ -651,6 +651,10 @@ impl Vmm {
                     vcpu.attach_x86_64_bios(Some(real_mode.cdrom.clone()), real_mode.mem_bytes);
                 }
             }
+            #[cfg(feature = "debug")]
+            if config.gdb_port.is_some() {
+                vcpu.set_debugger_active(true);
+            }
 
             // Share the PL011 console device with the vCPU so its memory
             // bridge services UART MMIO against the instance the VMM feeds.
@@ -729,7 +733,7 @@ impl Vmm {
             #[cfg(feature = "debug")]
             gdb_stopped: false,
             #[cfg(feature = "debug")]
-            gdb_breakpoints: std::collections::HashMap::new(),
+            gdb_breakpoints: std::collections::HashSet::new(),
             #[cfg(feature = "debug")]
             wait_gdb: config.wait_gdb,
             snapshot_config: if config.snapshot_interval > 0 || !config.snapshot_at.is_empty() {
@@ -1228,42 +1232,24 @@ impl Vmm {
                         // INT3 was hit - RIP is now AFTER the INT3, back up 1 byte
                         let bp_addr = vcpu.get_regs().map(|r| r.rip).unwrap_or(0) - 1;
 
-                        // Check if this is one of our breakpoints
-                        if let Some(orig_byte) = self.gdb_breakpoints.get(&bp_addr) {
+                        if self.gdb_breakpoints.contains(&bp_addr) {
                             debug!(addr = format!("{:#x}", bp_addr), "Software breakpoint hit");
-                            // Restore original byte so we can re-execute the instruction
-                            let mem = self.guest_mem.memory();
-                            let _ =
-                                mem.write_slice(&[*orig_byte], vm_memory::GuestAddress(bp_addr));
-                            debug!(
-                                addr = format!("{:#x}", bp_addr),
-                                orig = format!("{:#x}", orig_byte),
-                                "Restored original byte"
-                            );
-                            // Invalidate decode cache so the CPU re-reads the instruction
-                            vcpu.invalidate_code_cache(bp_addr);
-
-                            // Back up RIP to point at the breakpoint address (so user can re-execute)
                             let mut regs = vcpu.get_regs().unwrap_or_default();
                             regs.rip = bp_addr;
                             let _ = vcpu.set_regs(&regs);
-                        } else {
-                            // Natural INT3 in the code (not our breakpoint)
-                            // Don't back up RIP - leave it past the INT3 so continue works
-                            debug!(
-                                addr = format!("{:#x}", bp_addr),
-                                "Natural INT3 instruction hit"
-                            );
+
+                            if let Some(ref channels) = self.gdb_channels {
+                                let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
+                            }
+                            self.gdb_stopped = true;
+                            self.gdb_single_step = false;
+                            continue;
                         }
 
-                        // Notify GDB
-                        if let Some(ref channels) = self.gdb_channels {
-                            let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
-                            // SIGTRAP
-                        }
-                        self.gdb_stopped = true;
-                        self.gdb_single_step = false;
-                        continue;
+                        debug!(
+                            addr = format!("{:#x}", bp_addr),
+                            "Natural INT3 instruction hit"
+                        );
                     }
                     // Other exceptions - just continue for now
                     continue;
@@ -1282,14 +1268,6 @@ impl Vmm {
                 #[cfg(feature = "debug")]
                 VcpuExit::GdbStep => {
                     debug!("GDB single step complete");
-
-                    // Re-apply all breakpoints (in case we stepped over one)
-                    let mem = self.guest_mem.memory();
-                    for (addr, _orig) in &self.gdb_breakpoints {
-                        let _ = mem.write_slice(&[0xCC], vm_memory::GuestAddress(*addr));
-                        // Invalidate decode cache for this breakpoint address
-                        vcpu.invalidate_code_cache(*addr);
-                    }
 
                     if let Some(ref channels) = self.gdb_channels {
                         let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
@@ -1563,69 +1541,65 @@ impl Vmm {
                     .write_slice(&data, vm_memory::GuestAddress(addr))
                     .is_ok()
                 {
+                    if !data.is_empty() {
+                        if let Some(vcpu) = self.vcpus.get_mut(0) {
+                            let end =
+                                addr.saturating_add(data.len().saturating_sub(1) as u64);
+                            let end_page = end & !0xFFF;
+                            let mut page = addr & !0xFFF;
+                            loop {
+                                vcpu.invalidate_code_cache(page);
+                                if page == end_page {
+                                    break;
+                                }
+                                page = page.wrapping_add(0x1000);
+                            }
+                        }
+                    }
                     let _ = channels.resp_tx.send(GdbResponse::Ok);
                 } else {
                     let _ = channels.resp_tx.send(GdbResponse::Error(1));
                 }
             }
             GdbCommand::SetBreakpoint { addr } => {
-                // Read original byte and patch with INT3 (0xCC)
-                let mem = self.guest_mem.memory();
-                let mut orig = [0u8; 1];
-                if mem
-                    .read_slice(&mut orig, vm_memory::GuestAddress(addr))
-                    .is_ok()
-                {
-                    if mem
-                        .write_slice(&[0xCC], vm_memory::GuestAddress(addr))
-                        .is_ok()
-                    {
-                        // Store original byte for later restoration
-                        self.gdb_breakpoints.insert(addr, orig[0]);
-                        debug!(
-                            addr = format!("{:#x}", addr),
-                            orig = format!("{:#x}", orig[0]),
-                            "Set breakpoint"
-                        );
-                        // Invalidate decode cache so CPU re-reads the instruction
-                        if let Some(vcpu) = self.vcpus.get_mut(0) {
-                            vcpu.invalidate_code_cache(addr);
-                        }
+                let result = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))
+                    .and_then(|vcpu| vcpu.set_debug_breakpoint(addr));
+                match result {
+                    Ok(()) => {
+                        self.gdb_breakpoints.insert(addr);
+                        debug!(addr = format!("{:#x}", addr), "Set internal breakpoint");
                         let _ = channels.resp_tx.send(GdbResponse::Ok);
-                    } else {
+                    }
+                    Err(e) => {
+                        debug!(addr = format!("{:#x}", addr), error = %e, "Failed to set breakpoint");
                         let _ = channels.resp_tx.send(GdbResponse::Error(1));
                     }
-                } else {
-                    let _ = channels.resp_tx.send(GdbResponse::Error(1));
                 }
             }
             GdbCommand::RemoveBreakpoint { addr } => {
-                // Restore original byte from tracking map
-                let mem = self.guest_mem.memory();
-                if let Some(orig) = self.gdb_breakpoints.remove(&addr) {
-                    if mem
-                        .write_slice(&[orig], vm_memory::GuestAddress(addr))
-                        .is_ok()
-                    {
-                        debug!(
-                            addr = format!("{:#x}", addr),
-                            orig = format!("{:#x}", orig),
-                            "Removed breakpoint"
-                        );
-                        // Invalidate decode cache so CPU re-reads the instruction
-                        if let Some(vcpu) = self.vcpus.get_mut(0) {
-                            vcpu.invalidate_code_cache(addr);
-                        }
+                let was_tracked = self.gdb_breakpoints.remove(&addr);
+                let result = if was_tracked {
+                    self.vcpus
+                        .get_mut(0)
+                        .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))
+                        .and_then(|vcpu| vcpu.clear_debug_breakpoint(addr))
+                } else {
+                    Ok(())
+                };
+
+                match result {
+                    Ok(()) => {
+                        debug!(addr = format!("{:#x}", addr), "Removed internal breakpoint");
                         let _ = channels.resp_tx.send(GdbResponse::Ok);
-                    } else {
-                        // Failed to write, put it back in the map
-                        self.gdb_breakpoints.insert(addr, orig);
+                    }
+                    Err(e) => {
+                        self.gdb_breakpoints.insert(addr);
+                        debug!(addr = format!("{:#x}", addr), error = %e, "Failed to remove breakpoint");
                         let _ = channels.resp_tx.send(GdbResponse::Error(1));
                     }
-                } else {
-                    // No breakpoint at this address
-                    debug!(addr = format!("{:#x}", addr), "No breakpoint to remove");
-                    let _ = channels.resp_tx.send(GdbResponse::Ok);
                 }
             }
             GdbCommand::QueryHaltReason => {

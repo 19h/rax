@@ -7,7 +7,6 @@ mod commands;
 pub mod protocol;
 pub mod registers;
 
-use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -98,8 +97,6 @@ pub fn create_channels() -> (GdbChannels, VmmGdbChannels) {
 pub struct GdbServer {
     listener: TcpListener,
     channels: GdbChannels,
-    /// Software breakpoints: addr -> original byte.
-    breakpoints: HashMap<u64, u8>,
     /// Whether we're waiting for initial connection.
     wait_for_connection: bool,
 }
@@ -113,7 +110,6 @@ impl GdbServer {
         Ok(GdbServer {
             listener,
             channels,
-            breakpoints: HashMap::new(),
             wait_for_connection: wait,
         })
     }
@@ -200,7 +196,7 @@ impl GdbServer {
 
     /// Handle a single GDB packet. Returns Ok(true) to continue, Ok(false) to disconnect.
     fn handle_packet(&mut self, packet: &str, stream: &mut TcpStream) -> std::io::Result<bool> {
-        commands::handle_command(packet, stream, &self.channels, &mut self.breakpoints)
+        commands::handle_command(packet, stream, &self.channels)
     }
 
     /// Wait for initial GDB connection (blocks until connected).

@@ -1,6 +1,5 @@
 //! GDB RSP command handlers.
 
-use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::time::Duration;
@@ -113,7 +112,6 @@ pub fn handle_command(
     packet: &str,
     stream: &mut TcpStream,
     channels: &GdbChannels,
-    breakpoints: &mut HashMap<u64, u8>,
 ) -> std::io::Result<bool> {
     // Get first character (command type)
     let cmd = packet.chars().next().unwrap_or(' ');

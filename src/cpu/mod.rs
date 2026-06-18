@@ -138,6 +138,37 @@ pub trait VCpu: Send {
         false
     }
 
+    /// Mark whether an external debugger is controlling this vCPU.
+    ///
+    /// Software backends use this to keep debug execution precise (for example by
+    /// disabling JIT tiers). Hardware backends may ignore it.
+    #[cfg(feature = "debug")]
+    fn set_debugger_active(&mut self, active: bool) {
+        let _ = active;
+    }
+
+    /// Set an internal debugger execute breakpoint.
+    ///
+    /// This must not modify guest memory: guest-owned `INT3` instructions and
+    /// anti-debug code that reads its own text must continue to observe the
+    /// original bytes.
+    #[cfg(feature = "debug")]
+    fn set_debug_breakpoint(&mut self, addr: u64) -> Result<()> {
+        let _ = addr;
+        Err(Error::InvalidConfig(
+            "internal debugger breakpoints are not supported by this backend".to_string(),
+        ))
+    }
+
+    /// Clear an internal debugger execute breakpoint.
+    #[cfg(feature = "debug")]
+    fn clear_debug_breakpoint(&mut self, addr: u64) -> Result<()> {
+        let _ = addr;
+        Err(Error::InvalidConfig(
+            "internal debugger breakpoints are not supported by this backend".to_string(),
+        ))
+    }
+
     /// Invalidate any cached instruction decodes for the given address.
     /// Called when modifying code memory (e.g., for software breakpoints).
     #[cfg(feature = "debug")]

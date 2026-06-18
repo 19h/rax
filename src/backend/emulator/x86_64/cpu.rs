@@ -277,6 +277,16 @@ pub struct X86_64Vcpu {
     /// Single-step mode for GDB debugging.
     #[cfg(feature = "debug")]
     single_step: bool,
+    /// True while the GDB stub is enabled for this vCPU. Debug execution must
+    /// stay on the interpreter so breakpoints and single-step stops happen at
+    /// exact guest instruction boundaries.
+    #[cfg(feature = "debug")]
+    debugger_active: bool,
+    /// Internal debugger execute breakpoints. These are intentionally tracked
+    /// out-of-band instead of patching guest memory with INT3, preserving guest
+    /// code bytes and natural INT3/#BP behavior.
+    #[cfg(feature = "debug")]
+    debug_breakpoints: std::collections::HashSet<u64>,
     /// Per-vCPU El-Torito boot CD served by the real-mode mini-BIOS.
     pub(super) bios_cdrom: Option<Arc<Vec<u8>>>,
     /// Guest RAM size reported by real-mode BIOS memory-detection calls.
@@ -878,6 +888,10 @@ impl X86_64Vcpu {
             lazy_flags: LazyFlags::default(),
             #[cfg(feature = "debug")]
             single_step: false,
+            #[cfg(feature = "debug")]
+            debugger_active: false,
+            #[cfg(feature = "debug")]
+            debug_breakpoints: std::collections::HashSet::new(),
             bios_cdrom: None,
             bios_mem_bytes: 0,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -894,6 +908,26 @@ impl X86_64Vcpu {
             jit_mem_log: None,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem_trace: None,
+        }
+    }
+
+    #[cfg(feature = "debug")]
+    #[inline]
+    fn debug_breakpoint_at_current_rip(&self) -> Option<u64> {
+        let rip = self.regs.rip;
+        self.debug_breakpoints.contains(&rip).then_some(rip)
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline]
+    fn jit_disabled_for_debugger(&self) -> bool {
+        #[cfg(feature = "debug")]
+        {
+            self.debugger_active
+        }
+        #[cfg(not(feature = "debug"))]
+        {
+            false
         }
     }
 
@@ -2752,6 +2786,14 @@ impl VCpu for X86_64Vcpu {
             // the next fetch, so no per-store immediate scan is needed.
             self.drain_smc();
 
+            #[cfg(feature = "debug")]
+            if !self.single_step {
+                if let Some(addr) = self.debug_breakpoint_at_current_rip() {
+                    publish_instruction_count(self.insn_count);
+                    return Ok(VcpuExit::GdbBreakpoint { addr });
+                }
+            }
+
             // SMIR hot-block JIT fast path: if the region at RIP has been
             // compiled, run it natively until a frontier/yield exit and continue.
             // Cheap O(1) guard keeps the interpreter path untouched until any
@@ -2760,7 +2802,7 @@ impl VCpu for X86_64Vcpu {
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             let _jit_rip_before = {
                 let rip = self.regs.rip;
-                if !self.jit_cache.is_empty() {
+                if !self.jit_disabled_for_debugger() && !self.jit_cache.is_empty() {
                     let key = (rip, self.jit_mode_tag());
                     if let Some(slot) = self.jit_cache.get(&key).cloned() {
                         if let Some(region) = slot {
@@ -2787,7 +2829,9 @@ impl VCpu for X86_64Vcpu {
                 Ok(None) => {
                     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
                     {
-                        self.jit_sample_backedge(_jit_rip_before);
+                        if !self.jit_disabled_for_debugger() {
+                            self.jit_sample_backedge(_jit_rip_before);
+                        }
                         // A region run on promotion may have bailed a call-out exit.
                         if let Some(exit) = self.jit_callout_exit.take() {
                             publish_instruction_count(self.insn_count);
@@ -2998,20 +3042,31 @@ impl VCpu for X86_64Vcpu {
     }
 
     #[cfg(feature = "debug")]
-    fn invalidate_code_cache(&mut self, addr: u64) {
-        // Invalidate all decode cache entries on the same page as addr.
-        // This ensures we re-decode instructions after breakpoint modification.
-        let page_base = addr & !0xFFF;
-        for idx in 0..DECODE_CACHE_SIZE {
-            let entry = &mut self.decode_cache[idx];
-            // Use bytes_len (not rip) as the validity sentinel — matching the
-            // cache-hit guard — so a legitimately-cached instruction at RIP 0 is
-            // still invalidated when its page is written. (#77)
-            if entry.bytes_len != 0 && (entry.rip & !0xFFF) == page_base {
-                entry.rip = 0; // Invalidate
-                entry.bytes_len = 0; // mark empty so a real rip==0 can't false-hit
-            }
+    fn set_debugger_active(&mut self, active: bool) {
+        self.debugger_active = active;
+
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        if active {
+            self.jit_cache.clear();
+            self.jit_hot.clear();
         }
+    }
+
+    #[cfg(feature = "debug")]
+    fn set_debug_breakpoint(&mut self, addr: u64) -> Result<()> {
+        self.debug_breakpoints.insert(addr);
+        Ok(())
+    }
+
+    #[cfg(feature = "debug")]
+    fn clear_debug_breakpoint(&mut self, addr: u64) -> Result<()> {
+        self.debug_breakpoints.remove(&addr);
+        Ok(())
+    }
+
+    #[cfg(feature = "debug")]
+    fn invalidate_code_cache(&mut self, addr: u64) {
+        self.invalidate_code_page(addr & !0xFFF);
     }
 
     fn instruction_count(&self) -> u64 {
@@ -3573,6 +3628,10 @@ impl X86_64Vcpu {
     /// native code uninterruptibly — callers should only invoke this for
     /// regions known to terminate (e.g. promoted hot loops with an exit edge).
     pub fn jit_try_block(&mut self) -> Result<bool> {
+        if self.jit_disabled_for_debugger() {
+            return Ok(false);
+        }
+
         match self.jit_compile_region()? {
             Some(region) => {
                 if std::env::var_os("RAX_JIT_LOG").is_some() {
@@ -3595,6 +3654,10 @@ impl X86_64Vcpu {
     /// register-state-independent and may be re-run for any later entry to the
     /// same RIP (until the underlying guest code changes; see SMC invalidation).
     pub(super) fn jit_compile_region(&mut self) -> Result<Option<JitRegion>> {
+        if self.jit_disabled_for_debugger() {
+            return Ok(None);
+        }
+
         self.jit_compile_region_with_edge_exits(false)
     }
 
@@ -4340,6 +4403,10 @@ impl X86_64Vcpu {
     /// compiles exactly there. Ineligible heads are cached as `None` so they are
     /// never retried.
     fn jit_sample_backedge(&mut self, rip_before: u64) {
+        if self.jit_disabled_for_debugger() {
+            return;
+        }
+
         // Diagnostic kill-switch: RAX_NO_JIT disables hot-region promotion so the
         // interpreter handles everything (isolates JIT-codegen bugs from the
         // sampling/SMC infrastructure). Cached once — back-edges are hot.
@@ -4612,6 +4679,91 @@ mod decode_cache_invalidation_tests {
     }
 }
 
+#[cfg(all(test, feature = "debug"))]
+mod debugger_breakpoint_tests {
+    use super::*;
+    use std::sync::Arc;
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+
+    fn test_vcpu_with_mem(code: &[u8]) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        mem.write_slice(code, GuestAddress(0)).unwrap();
+        (X86_64Vcpu::new(0, mem.clone()), mem)
+    }
+
+    #[test]
+    fn debug_breakpoint_stops_without_patching_guest_memory() {
+        let code = [
+            0xb8, 0x34, 0x12, 0x00, 0x00, // MOV EAX, 0x1234
+            0xf4, // HLT
+        ];
+        let (mut vcpu, mem) = test_vcpu_with_mem(&code);
+
+        vcpu.set_debug_breakpoint(0).unwrap();
+
+        let exit = vcpu.run().unwrap();
+        assert!(matches!(exit, VcpuExit::GdbBreakpoint { addr: 0 }));
+        assert_eq!(vcpu.regs.rip, 0, "breakpoint stop must not advance RIP");
+        assert_eq!(vcpu.regs.rax, 0, "breakpoint stop must not execute code");
+
+        let mut first_byte = [0u8; 1];
+        mem.read_slice(&mut first_byte, GuestAddress(0)).unwrap();
+        assert_eq!(
+            first_byte[0], code[0],
+            "debugger breakpoints must not patch guest code bytes"
+        );
+
+        vcpu.clear_debug_breakpoint(0).unwrap();
+        assert!(matches!(vcpu.run().unwrap(), VcpuExit::Hlt));
+        assert_eq!(vcpu.regs.rax, 0x1234);
+    }
+
+    #[test]
+    fn breakpoint_on_real_int3_preserves_guest_int3_after_clear() {
+        let (mut vcpu, mem) = test_vcpu_with_mem(&[0xcc, 0xf4]);
+
+        vcpu.set_debug_breakpoint(0).unwrap();
+        let exit = vcpu.run().unwrap();
+        assert!(matches!(exit, VcpuExit::GdbBreakpoint { addr: 0 }));
+        assert_eq!(vcpu.regs.rip, 0);
+
+        let mut first_byte = [0u8; 1];
+        mem.read_slice(&mut first_byte, GuestAddress(0)).unwrap();
+        assert_eq!(first_byte[0], 0xcc, "the guest's real INT3 must remain");
+
+        vcpu.clear_debug_breakpoint(0).unwrap();
+        let err = vcpu.run().unwrap_err().to_string();
+        assert!(
+            err.contains("IDT entry 3 not present"),
+            "after the debugger breakpoint is removed, the real guest INT3 must inject #BP"
+        );
+    }
+
+    #[test]
+    fn single_step_executes_current_rip_even_with_internal_breakpoint() {
+        let code = [
+            0xb8, 0x34, 0x12, 0x00, 0x00, // MOV EAX, 0x1234
+            0xf4, // HLT
+        ];
+        let (mut vcpu, mem) = test_vcpu_with_mem(&code);
+
+        vcpu.set_debug_breakpoint(0).unwrap();
+        vcpu.set_single_step(true);
+
+        assert!(matches!(vcpu.run().unwrap(), VcpuExit::GdbStep));
+        assert_eq!(vcpu.regs.rip, 3);
+        assert_eq!(vcpu.regs.rax, 0x1234);
+
+        let mut first_byte = [0u8; 1];
+        mem.read_slice(&mut first_byte, GuestAddress(0)).unwrap();
+        assert_eq!(
+            first_byte[0], code[0],
+            "single-step must not patch guest code bytes either"
+        );
+    }
+}
+
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 mod tests {
     use super::*;
@@ -4661,6 +4813,37 @@ mod tests {
 
         assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
         assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
+    }
+
+    #[cfg(feature = "debug")]
+    #[test]
+    fn debugger_active_disables_jit_sampling() {
+        let mut vcpu = test_vcpu();
+        vcpu.regs.rip = 0x80;
+        vcpu.jit_hot.insert(0x80, 7);
+
+        vcpu.set_debugger_active(true);
+        assert!(
+            vcpu.jit_hot.is_empty(),
+            "entering debugger mode should drop pending JIT hotness state"
+        );
+        assert!(vcpu.jit_disabled_for_debugger());
+
+        vcpu.jit_hot.insert(0x80, 7);
+        vcpu.jit_sample_backedge(0x100);
+        assert_eq!(
+            vcpu.jit_hot.get(&0x80),
+            Some(&7),
+            "debugger mode must not sample or promote JIT regions"
+        );
+        assert!(
+            !vcpu.jit_try_block().unwrap(),
+            "explicit JIT execution must be disabled while a debugger is active"
+        );
+        assert!(
+            vcpu.jit_compile_region().unwrap().is_none(),
+            "explicit JIT compilation must be disabled while a debugger is active"
+        );
     }
 
     #[test]
