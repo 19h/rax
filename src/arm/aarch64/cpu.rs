@@ -14090,6 +14090,154 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // LDNT1 (non-temporal contiguous load, scalar+scalar register):
+        // 1010010 msz 00 Rm 110 Pg Rn Zt. The non-temporal hint has no
+        // architectural state effect.
+        if !is_store
+            && insn >> 25 == 0b1010010
+            && b15_13 == 0b110
+            && (insn >> 21) & 0x3 == 0
+        {
+            let rm = ((insn >> 16) & 0x1F) as u8;
+            if rm == 31 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let esize = 1usize << ((insn >> 23) & 0x3);
+            let elements = 16 / esize;
+            let addr0 = base.wrapping_add(self.get_x(rm).wrapping_mul(esize as u64));
+            let mut dst = [0u8; 16];
+            for e in 0..elements {
+                if (pred >> (e * esize)) & 1 == 0 {
+                    continue;
+                }
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * esize) as u64), false, false)?;
+                let val: u64 = match esize {
+                    1 => self.memory.read_u8(pa)? as u64,
+                    2 => self.memory.read_u16(pa)? as u64,
+                    4 => self.memory.read_u32(pa)? as u64,
+                    _ => self.memory.read_u64(pa)?,
+                };
+                write_elem(&mut dst, e * esize, esize, val);
+            }
+            self.v[zt] = u128::from_le_bytes(dst);
+            return Ok(CpuExit::Continue);
+        }
+
+        // STNT1 (non-temporal contiguous store, scalar+scalar register):
+        // 1110010 msz 00 Rm 011 Pg Rn Zt. A packed ST1 with a hint.
+        if is_store
+            && insn >> 25 == 0b1110010
+            && b15_13 == 0b011
+            && (insn >> 21) & 0x3 == 0
+        {
+            let rm = ((insn >> 16) & 0x1F) as u8;
+            if rm == 31 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let esize = 1usize << ((insn >> 23) & 0x3);
+            let elements = 16 / esize;
+            let addr0 = base.wrapping_add(self.get_x(rm).wrapping_mul(esize as u64));
+            let src = self.v[zt].to_le_bytes();
+            for e in 0..elements {
+                if (pred >> (e * esize)) & 1 == 0 {
+                    continue;
+                }
+                let pa =
+                    self.translate_address(addr0.wrapping_add((e * esize) as u64), true, false)?;
+                let val = read_elem(&src, e * esize, esize);
+                match esize {
+                    1 => self.memory.write_u8(pa, val as u8)?,
+                    2 => self.memory.write_u16(pa, val as u16)?,
+                    4 => self.memory.write_u32(pa, val as u32)?,
+                    _ => self.memory.write_u64(pa, val)?,
+                }
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // LD2/LD3/LD4 (contiguous, scalar+scalar register):
+        // 1010010 msz opc Rm 110 Pg Rn Zt, opc in {01,10,11}.
+        if !is_store
+            && insn >> 25 == 0b1010010
+            && b15_13 == 0b110
+            && (insn >> 21) & 0x3 != 0
+        {
+            let rm = ((insn >> 16) & 0x1F) as u8;
+            if rm == 31 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let nreg = (((insn >> 21) & 0x3) + 1) as usize;
+            let msz = (insn >> 23) & 0x3;
+            let esize = 1usize << msz;
+            let mbytes = esize;
+            let elements = 16 / esize;
+            let addr0 = base.wrapping_add(self.get_x(rm).wrapping_mul(esize as u64));
+            let mut regs = [[0u8; 16]; 4];
+            let mut a = addr0;
+            for e in 0..elements {
+                let active = (pred >> (e * esize)) & 1 == 1;
+                for reg in regs.iter_mut().take(nreg) {
+                    if active {
+                        let pa = self.translate_address(a, false, false)?;
+                        let val: u64 = match mbytes {
+                            1 => self.memory.read_u8(pa)? as u64,
+                            2 => self.memory.read_u16(pa)? as u64,
+                            4 => self.memory.read_u32(pa)? as u64,
+                            _ => self.memory.read_u64(pa)?,
+                        };
+                        write_elem(reg, e * esize, esize, val);
+                    }
+                    a = a.wrapping_add(mbytes as u64);
+                }
+            }
+            for (r, reg) in regs.iter().enumerate().take(nreg) {
+                self.v[(zt + r) % 32] = u128::from_le_bytes(*reg);
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // ST2/ST3/ST4 (contiguous, scalar+scalar register):
+        // 1110010 msz opc Rm 011 Pg Rn Zt, opc in {01,10,11}.
+        if is_store
+            && insn >> 25 == 0b1110010
+            && b15_13 == 0b011
+            && (insn >> 21) & 0x3 != 0
+        {
+            let rm = ((insn >> 16) & 0x1F) as u8;
+            if rm == 31 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let nreg = (((insn >> 21) & 0x3) + 1) as usize;
+            let msz = (insn >> 23) & 0x3;
+            let esize = 1usize << msz;
+            let mbytes = esize;
+            let elements = 16 / esize;
+            let addr0 = base.wrapping_add(self.get_x(rm).wrapping_mul(esize as u64));
+            let mut srcs = [[0u8; 16]; 4];
+            for (r, src) in srcs.iter_mut().enumerate().take(nreg) {
+                *src = self.v[(zt + r) % 32].to_le_bytes();
+            }
+            let mut a = addr0;
+            for e in 0..elements {
+                let active = (pred >> (e * esize)) & 1 == 1;
+                for src in srcs.iter().take(nreg) {
+                    if active {
+                        let pa = self.translate_address(a, true, false)?;
+                        let val = read_elem(src, e * esize, esize);
+                        match mbytes {
+                            1 => self.memory.write_u8(pa, val as u8)?,
+                            2 => self.memory.write_u16(pa, val as u16)?,
+                            4 => self.memory.write_u32(pa, val as u32)?,
+                            _ => self.memory.write_u64(pa, val)?,
+                        }
+                    }
+                    a = a.wrapping_add(mbytes as u64);
+                }
+            }
+            return Ok(CpuExit::Continue);
+        }
+
         // LD2/LD3/LD4 (contiguous, de-interleaving): 1010010 msz opc 0 imm4 111
         // Pg Rn Zt. opc=bits[22:21] in {01,10,11} -> nreg in {2,3,4}. Reads
         // nreg*elements consecutive structures and de-interleaves them so that
