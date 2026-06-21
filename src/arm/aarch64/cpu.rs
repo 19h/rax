@@ -15907,6 +15907,10 @@ impl AArch64Cpu {
     }
 
     fn exec_b_cond(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 4) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         let imm19 = ((insn >> 5) & 0x7FFFF) as i64;
         let cond = (insn & 0xF) as u8;
 
@@ -15928,8 +15932,13 @@ impl AArch64Cpu {
             // LL (bits 1:0) the target level — SVC/HVC/SMC share opc=000 and
             // differ only in LL.
             let opc = (insn >> 21) & 0x7;
+            let op2 = (insn >> 2) & 0x7;
             let ll = insn & 0x3;
             let imm16 = ((insn >> 5) & 0xFFFF) as u16;
+
+            if op2 != 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
 
             return match (opc, ll) {
                 (0b000, 0b01) => Ok(CpuExit::Svc(imm16 as u32)),
@@ -15960,6 +15969,10 @@ impl AArch64Cpu {
             return self.exec_sys_insn(insn, l == 1);
         }
 
+        if l == 1 && op0 == 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         // MSR/MRS (system register access)
         // L=0: MSR (write), L=1: MRS (read)
         // op0 = 10 or 11 for different register categories
@@ -15983,8 +15996,8 @@ impl AArch64Cpu {
         let el0_sys_access = !is_read
             && op1 == 3
             && crn == 7
-            && op2 == 1
-            && matches!(crm, 4 | 5 | 10 | 11 | 12 | 13 | 14);
+            && (matches!((crm, op2), (4, 1 | 3 | 4) | (5 | 11, 1))
+                || (matches!(crm, 10 | 12 | 13 | 14) && matches!(op2, 1 | 3 | 5)));
         if self.current_el == 0 && !el0_sys_access {
             return Err(ArmError::UndefinedInstruction(insn));
         }
@@ -15997,8 +16010,9 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
-        // DC ZVA: zero a block of memory at X[rt]
-        if (op1, crn, crm, op2) == (3, 7, 4, 1) {
+        // DC ZVA / DC GZVA: zero a block of memory at X[rt]. Allocation tags
+        // are not modeled, so the tag-generation side of GZVA is ignored.
+        if (op1, crn, crm) == (3, 7, 4) && matches!(op2, 1 | 4) {
             let block = 4usize << (self.sysregs.dczid_el0 & 0xF);
             let va = self.get_x(rt) & !(block as u64 - 1);
             for off in (0..block as u64).step_by(8) {
@@ -16034,9 +16048,13 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
-        // DC CVAC/CVAP/CVADP/CIVAC: cache contents are not modeled, but the
-        // VA operand can still fault before the maintenance operation retires.
-        if op1 == 3 && crn == 7 && op2 == 1 && matches!(crm, 10 | 12 | 13 | 14) {
+        // DC GVA and DC CVA*/CGD* VA operations: cache/tag side effects are not
+        // modeled, but the VA operand can still fault before the operation retires.
+        if op1 == 3
+            && crn == 7
+            && (matches!((crm, op2), (4, 3))
+                || (matches!(crm, 10 | 12 | 13 | 14) && matches!(op2, 1 | 3 | 5)))
+        {
             let _ = self.mem_read_u8(self.get_x(rt))?;
             return Ok(CpuExit::Continue);
         }
@@ -16049,9 +16067,14 @@ impl AArch64Cpu {
     fn exec_system(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let crn = ((insn >> 12) & 0xF) as u8;
         let op1 = ((insn >> 16) & 0x7) as u8;
+        let crm = ((insn >> 8) & 0xF) as u8;
         let op2 = ((insn >> 5) & 0x7) as u8;
+        let rt = (insn & 0x1F) as u8;
 
         if crn == 4 {
+            if rt != 31 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             // PSTATE space: MSR (immediate) writes of PSTATE fields (CRm
             // carries the immediate) plus the FEAT_FlagM flag-format ops.
             // Kernels lean on DAIFSet/DAIFClr for interrupt masking, so these
@@ -16112,12 +16135,20 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        if crn == 1 && op1 == 3 && crm == 0 && matches!(op2, 0b000 | 0b001) {
+            // WFET/WFIT timed wait hints. Timing is not modeled; a zero or
+            // expired timeout retires without changing architectural state.
+            return Ok(CpuExit::Continue);
+        }
+
         if crn == 2 && op1 == 3 {
+            if rt != 31 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             // Hints: HINT #imm7 where imm7 = CRm:op2. Only CRm=0 carries the
             // classic NOP/YIELD/WFE/WFI/SEV/SEVL group; higher CRm values are
             // BTI landing pads, pointer-auth hints (PACIASP/AUTIASP), etc.,
             // which behave as NOPs here.
-            let crm = ((insn >> 8) & 0xF) as u8;
             if crm != 0 {
                 return Ok(CpuExit::Continue);
             }
@@ -16156,18 +16187,23 @@ impl AArch64Cpu {
                 }
                 _ => Ok(CpuExit::Continue),
             }
-        } else if crn == 3 {
-            // Barriers
+        } else if crn == 3 && op1 == 3 {
+            if rt != 31 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             match op2 {
                 0b010 => Ok(CpuExit::Continue), // CLREX
                 0b100 => Ok(CpuExit::Continue), // DSB
                 0b101 => Ok(CpuExit::Continue), // DMB
                 0b110 => Ok(CpuExit::Continue), // ISB
-                _ => Ok(CpuExit::Continue),
+                0b111 if crm == 0 => Ok(CpuExit::Continue), // SB
+                0b001 if matches!(crm, 0b0010 | 0b0110 | 0b1010 | 0b1110) => {
+                    Ok(CpuExit::Continue) // DSB nXS
+                }
+                _ => Err(ArmError::UndefinedInstruction(insn)),
             }
         } else {
-            // Other system instructions (cache maintenance, etc.)
-            Ok(CpuExit::Continue)
+            Err(ArmError::UndefinedInstruction(insn))
         }
     }
 

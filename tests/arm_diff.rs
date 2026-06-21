@@ -28015,6 +28015,33 @@ fn diff_branch_control_flow_el0() {
 }
 
 #[test]
+fn diff_branch_cond_fixed_bit_legality_grid() {
+    fn b_cond(cond: u32, offset: i32, bit4: u32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        0x5400_0000 | (imm19 << 5) | ((bit4 & 1) << 4) | (cond & 0xf)
+    }
+
+    let mut rng = Rng::new(0xa64_ba17);
+    let mut batch = Vec::new();
+    for bit4 in 0..=1 {
+        for cond in 0..16 {
+            for nzcv in 0..16 {
+                let mut st = gen_input(&mut rng);
+                st.pc = PCREL_MAGIC;
+                st.pstate = (nzcv as u64) << 28;
+                batch.push((
+                    format!("b_cond_bit4{bit4}_cond{cond:x}_nzcv{nzcv:x}"),
+                    b_cond(cond, 12, bit4),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_branch("branch_cond_fixed_bit_legality_grid", batch);
+}
+
+#[test]
 fn diff_generated_branch_immediate_sweep() {
     let mut rng = Rng::new(0xa64_ba11);
     let mut batch = Vec::new();
@@ -28428,6 +28455,10 @@ fn diff_branch_system_exceptions_el0() {
         0xd400_0000 | ((opc & 0x7) << 21) | ((imm16 & 0xffff) << 5) | (ll & 0x3)
     }
 
+    fn exception_with_op2(opc: u32, ll: u32, imm16: u32, op2: u32) -> u32 {
+        exception(opc, ll, imm16) | ((op2 & 0x7) << 2)
+    }
+
     let mut rng = Rng::new(0x5157_0002);
     let mut batch: Vec<(String, u32, ExpectedExit, ArmState)> = Vec::new();
 
@@ -28476,6 +28507,22 @@ fn diff_branch_system_exceptions_el0() {
             ExpectedExit::Undefined,
             gen_input(&mut rng),
         ));
+    }
+    for (name, opc, ll) in [
+        ("brk", 0b001, 0b00),
+        ("hvc", 0b000, 0b10),
+        ("smc", 0b000, 0b11),
+        ("hlt", 0b010, 0b00),
+        ("dcps1", 0b101, 0b01),
+    ] {
+        for op2 in [1, 7] {
+            batch.push((
+                format!("{name}_reserved_op2{op2}"),
+                exception_with_op2(opc, ll, 0x2468, op2),
+                ExpectedExit::Undefined,
+                gen_input(&mut rng),
+            ));
+        }
     }
 
     let oracle = match oracle_path() {
@@ -28645,6 +28692,147 @@ fn diff_generated_system_barrier_sweep() {
 }
 
 #[test]
+fn diff_system_barrier_encoding_legality_grid() {
+    fn barrier(crm: u32, op2: u32) -> u32 {
+        0xd503_301f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0xa64_5bb0);
+    let mut batch = Vec::new();
+    for crm in 0..=15u32 {
+        for op2 in 0..=7u32 {
+            batch.push((
+                format!("barrier_crm{crm:x}_op2{op2}"),
+                barrier(crm, op2),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("system_barrier_encoding_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_l0_op0_encoding_legality_grid() {
+    fn system_l0_op0(op1: u32, crn: u32, crm: u32, op2: u32) -> u32 {
+        0xd500_001f
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0xa64_5bb1);
+    let mut batch = Vec::new();
+    for op1 in [0u32, 3] {
+        for crn in 0..=15u32 {
+            for crm in [0u32, 1, 2, 4, 0xf] {
+                for op2 in 0..=7u32 {
+                    if op1 == 3 && crn == 2 && crm == 0 && matches!(op2, 2 | 3) {
+                        continue;
+                    }
+                    if op1 == 3 && crn == 2 && crm == 1 && matches!(op2, 4 | 6) {
+                        continue;
+                    }
+                    batch.push((
+                        format!("system_l0_op0_op1{op1}_crn{crn:x}_crm{crm:x}_op2{op2}"),
+                        system_l0_op0(op1, crn, crm, op2),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_l0_op0_encoding_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_l0_op0_rt_legality_grid() {
+    fn system_l0_op0(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0xa64_5bb2);
+    let mut batch = Vec::new();
+
+    for (label, op1, crn, crm, op2) in [
+        ("pstate_cfinv", 0, 4, 0, 0),
+        ("pstate_xaflag", 0, 4, 0, 1),
+        ("pstate_ssbs", 3, 4, 1, 1),
+        ("hint_nop", 3, 2, 0, 0),
+        ("hint_dgh", 3, 2, 0, 6),
+        ("hint_bti", 3, 2, 4, 0),
+        ("barrier_dsb", 3, 3, 0xf, 4),
+        ("barrier_isb", 3, 3, 0xf, 6),
+        ("barrier_sb", 3, 3, 0, 7),
+        ("barrier_dsb_nxs", 3, 3, 2, 1),
+    ] {
+        for rt in [31, 0, RN] {
+            batch.push((
+                format!("{label}_rt{rt}"),
+                system_l0_op0(op1, crn, crm, op2, rt),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for op2 in 0..=1 {
+        for rt in [31, 0, RN] {
+            let mut st = ArmState::zeroed();
+            if rt != 31 {
+                st.x[rt as usize] = 0;
+            }
+            batch.push((
+                format!("wfxt_op2{op2}_rt{rt}"),
+                system_l0_op0(3, 1, 0, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_legality("system_l0_op0_rt_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_l1_op0_0_unallocated_legality_grid() {
+    fn system_l1_op0_0(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0xa64_5bb3);
+    let mut batch = Vec::new();
+    for op1 in 0..=7u32 {
+        for crn in [0u32, 4, 13, 14] {
+            for crm in [0u32, 1, 2, 4] {
+                for op2 in [0u32, 1, 7] {
+                    for rt in [0u32, 30] {
+                        batch.push((
+                            format!("system_l1_op0_0_op1{op1}_crn{crn:x}_crm{crm:x}_op2{op2}_rt{rt}"),
+                            system_l1_op0_0(op1, crn, crm, op2, rt),
+                            gen_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_l1_op0_0_unallocated_legality_grid", batch);
+}
+
+#[test]
 fn diff_system_wfxt_zero_timeout() {
     fn wfxt(op2: u32, rt: u32) -> u32 {
         0xd500_0000 | (3 << 16) | (1 << 12) | ((op2 & 0x7) << 5) | (rt & 0x1f)
@@ -28692,6 +28880,41 @@ fn diff_generated_system_sysop_el0_trap_sweep() {
     }
     assert!(!batch.is_empty(), "expected generated SYS/SYSL EL0 trap cases");
     run_batch_el0_trap("generated_system_sysop_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_sys_op1_3_c7_el0_legality_grid() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0xa64_5159);
+    let mut batch = Vec::new();
+    for crm in 0..=15u32 {
+        for op2 in 0..=7u32 {
+            for rt in [RN, 31] {
+                let native_va_sys = matches!((crm, op2), (4, 1 | 3 | 4) | (5 | 11, 1))
+                    || (matches!(crm, 10 | 12 | 13 | 14) && matches!(op2, 1 | 3 | 5));
+                if rt == 31 && native_va_sys {
+                    continue;
+                }
+                let mut st = mem_input(&mut rng);
+                st.x[RN as usize] = SCRATCH_ADDR;
+                batch.push((
+                    format!("sys_op1_3_c7_crm{crm:x}_op2{op2}_rt{rt}"),
+                    sys(3, 7, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_sys_op1_3_c7_el0_legality_grid", batch);
 }
 
 #[test]
@@ -29724,6 +29947,46 @@ fn diff_system_user_cache_maintenance_el0() {
 }
 
 #[test]
+fn diff_system_user_cache_maintenance_extra_el0() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("dc_gva", sys(3, 7, 4, 3, RN)),
+        ("dc_gzva", sys(3, 7, 4, 4, RN)),
+        ("dc_cgdcvac", sys(3, 7, 10, 3, RN)),
+        ("dc_cgdvac", sys(3, 7, 10, 5, RN)),
+        ("dc_cgdcvap", sys(3, 7, 12, 3, RN)),
+        ("dc_cgdvap", sys(3, 7, 12, 5, RN)),
+        ("dc_cgdcvadp", sys(3, 7, 13, 3, RN)),
+        ("dc_cgdvadp", sys(3, 7, 13, 5, RN)),
+        ("dc_cgdcivac", sys(3, 7, 14, 3, RN)),
+        ("dc_cgdivac", sys(3, 7, 14, 5, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0029);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for addr in [SCRATCH_ADDR, SCRATCH_BASE + 63] {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = addr;
+            for (i, word) in st.scratch.iter_mut().enumerate() {
+                *word = 0x0101_0101_0101_0101u64.wrapping_mul((i as u64) + 1);
+            }
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_extra_el0", batch);
+}
+
+#[test]
 fn diff_system_user_cache_maintenance_xzr_edges() {
     fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
         0xd508_0000
@@ -29782,6 +30045,43 @@ fn diff_system_user_cache_maintenance_fault_edges() {
     }
 
     run_batch_el0("system_user_cache_maintenance_fault_edges", batch);
+}
+
+#[test]
+fn diff_system_user_cache_maintenance_extra_fault_edges() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("dc_gva_fault", sys(3, 7, 4, 3, RN)),
+        ("dc_gzva_fault", sys(3, 7, 4, 4, RN)),
+        ("dc_cgdcvac_fault", sys(3, 7, 10, 3, RN)),
+        ("dc_cgdvac_fault", sys(3, 7, 10, 5, RN)),
+        ("dc_cgdcvap_fault", sys(3, 7, 12, 3, RN)),
+        ("dc_cgdvap_fault", sys(3, 7, 12, 5, RN)),
+        ("dc_cgdcvadp_fault", sys(3, 7, 13, 3, RN)),
+        ("dc_cgdvadp_fault", sys(3, 7, 13, 5, RN)),
+        ("dc_cgdcivac_fault", sys(3, 7, 14, 3, RN)),
+        ("dc_cgdivac_fault", sys(3, 7, 14, 5, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_002a);
+    let mut batch = Vec::new();
+    for addr in [0x8000_0000u64, 0xffff_ffff_ffff_f000] {
+        for (label, insn) in cases {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = addr;
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_extra_fault_edges", batch);
 }
 
 #[test]
