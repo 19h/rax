@@ -25795,8 +25795,8 @@ fn diff_cond_compare_select_encoding_sweep() {
         for op in 0..=1 {
             for imm in [false, true] {
                 let rm_imm5 = if imm { 7 } else { RM };
-                for cond in [0, 1, 8, 14] {
-                    for nzcv in [0, 0b0110, 0b1111] {
+                for cond in 0..16 {
+                    for nzcv in 0..16 {
                         for (o2, o3) in [(1, 0), (0, 1), (1, 1)] {
                             let mut st = gen_input(&mut rng);
                             st.pstate = ((nzcv ^ 0b1010) as u64) << 28;
@@ -25840,7 +25840,7 @@ fn diff_cond_compare_select_encoding_sweep() {
                     if s == 0 && op2 <= 1 {
                         continue;
                     }
-                    for cond in [0, 1, 8, 14] {
+                    for cond in 0..16 {
                         let mut st = gen_input(&mut rng);
                         st.pstate = 0b0110u64 << 28;
                         let label = format!(
@@ -27587,8 +27587,8 @@ fn diff_integer_flagm_rmif_setf() {
     let mut rng = Rng::new(0x5157_000b);
     let mut batch = Vec::new();
 
-    for imm6 in [0, 1, 7, 13, 31, 32, 63] {
-        for mask in [0, 1, 2, 4, 8, 0xf] {
+    for imm6 in 0..64 {
+        for mask in 0..16 {
             for value in [0, 1, 0xf, 0x8000_0000_0000_0000, u64::MAX, rng.next()] {
                 let mut st = gen_input(&mut rng);
                 st.x[RN as usize] = value;
@@ -27597,8 +27597,8 @@ fn diff_integer_flagm_rmif_setf() {
         }
     }
 
-    for imm6 in [0, 17, 63] {
-        for mask in [1, 2, 4, 8, 0xf] {
+    for imm6 in 0..64 {
+        for mask in 0..16 {
             for nzcv in [0, 0x5, 0xa, 0xf] {
                 let mut st = gen_input(&mut rng);
                 st.pstate = (nzcv as u64) << 28;
@@ -32262,13 +32262,19 @@ fn enc_brkp(b: u32, s: u32, pm: u32, pg: u32, pn: u32, pd: u32) -> u32 {
 fn diff_sve_index() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for sz in 0..4u32 {
-        cases.push((format!("index_ii sz{sz}"), enc_index_ii(sz, 1, 0)));
-        cases.push((format!("index_iin sz{sz}"), enc_index_ii(sz, 0x1F, 5))); // negative step
-        cases.push((format!("index_ri sz{sz}"), enc_index_ri(sz, 3)));
-        cases.push((format!("index_ir sz{sz}"), enc_index_ir(sz, 2)));
+        for imm_step in 0..32u32 {
+            for imm_base in 0..32u32 {
+                cases.push((
+                    format!("index_ii sz{sz} b{imm_base} s{imm_step}"),
+                    enc_index_ii(sz, imm_step, imm_base),
+                ));
+            }
+            cases.push((format!("index_ri sz{sz} s{imm_step}"), enc_index_ri(sz, imm_step)));
+            cases.push((format!("index_ir sz{sz} b{imm_step}"), enc_index_ir(sz, imm_step)));
+        }
         cases.push((format!("index_rr sz{sz}"), enc_index_rr(sz)));
     }
-    run_family("sve_index", cases, 12, 0x1_0020);
+    run_family("sve_index", cases, 2, 0x1_0020);
 }
 
 #[test]
@@ -33374,20 +33380,22 @@ fn enc_sve_stack_alloc(op: u32, rn: u32, rd: u32, imm6: i32) -> u32 {
 
 #[test]
 fn diff_sve_stack_alloc_sp() {
-    let cases: &[(&str, u32)] = &[
-        ("addvl_x_sp_pos", enc_sve_stack_alloc(0b001, 31, 0, 3)),
-        ("addvl_sp_sp_neg", enc_sve_stack_alloc(0b001, 31, 31, -2)),
-        ("addpl_x_sp_pos", enc_sve_stack_alloc(0b011, 31, 2, 5)),
-        ("addpl_sp_x_neg", enc_sve_stack_alloc(0b011, 1, 31, -3)),
-    ];
     let mut rng = Rng::new(0x1_006a);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = ArmState::zeroed();
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x1000 + ((i as u64) << 8);
-            st.x[1] = st.sp + 0x400 + (rng.next() & 0xf0);
-            batch.push(((*label).to_string(), *insn, st));
+    for imm6 in -32..32 {
+        let cases = [
+            ("addvl_x_sp", enc_sve_stack_alloc(0b001, 31, 0, imm6)),
+            ("addvl_sp_sp", enc_sve_stack_alloc(0b001, 31, 31, imm6)),
+            ("addpl_x_sp", enc_sve_stack_alloc(0b011, 31, 2, imm6)),
+            ("addpl_sp_x", enc_sve_stack_alloc(0b011, 1, 31, imm6)),
+        ];
+        for (label, insn) in cases {
+            for i in 0..3 {
+                let mut st = ArmState::zeroed();
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x1000 + ((i as u64) << 8);
+                st.x[1] = st.sp + 0x400 + (rng.next() & 0xf0);
+                batch.push((format!("{label} i{imm6}"), insn, st));
+            }
         }
     }
     run_batch("sve_stack_alloc_sp", batch);
@@ -33454,8 +33462,7 @@ fn diff_sve2_shift_imm_sat() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for &(op6, name) in ops.iter() {
         for &bits in &[8u32, 16, 32, 64] {
-            let amts = [1u32, 2, (bits / 2).max(1), bits - 1];
-            for &amt in amts.iter() {
+            for amt in 1..bits {
                 let insn = enc_sve_shift_imm_pred(op6, bits, amt);
                 let nm = format!("{name} b{bits} a{amt}");
                 for &p in pats.iter() {
@@ -33464,7 +33471,7 @@ fn diff_sve2_shift_imm_sat() {
                     st.set_preg(1, 0xFFFF);
                     batch.push((nm.clone(), insn, st));
                 }
-                for _ in 0..3 {
+                for _ in 0..1 {
                     let mut st = ArmState::zeroed();
                     st.set_vreg(0, rng.next(), rng.next());
                     st.set_preg(1, rng.next() as u16);
@@ -33735,12 +33742,8 @@ fn diff_sve_shift_imm() {
     for &esize in &[1usize, 2, 4, 8] {
         let ebits = esize * 8;
         for &(opc, name) in &ops {
-            let amounts: Vec<usize> = if opc == 0b011 {
-                vec![0, 1, ebits / 2, ebits - 1]
-            } else {
-                vec![1, 2, ebits / 2, ebits]
-            };
-            for &amount in &amounts {
+            let amounts = if opc == 0b011 { 0..ebits } else { 1..(ebits + 1) };
+            for amount in amounts {
                 let tszimm = if opc == 0b011 {
                     ebits + amount
                 } else {
@@ -33756,7 +33759,7 @@ fn diff_sve_shift_imm() {
                     | (tszl << 8)
                     | (imm3 << 5)
                     | RD;
-                for _ in 0..8 {
+                for _ in 0..3 {
                     let mut st = ArmState::zeroed();
                     st.set_vreg(0, rng.next(), rng.next());
                     st.set_preg(0, rng.next() as u16);
