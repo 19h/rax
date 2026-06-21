@@ -43540,25 +43540,40 @@ fn enc_fcvt_precision(src_type: u32, dst_type: u32) -> u32 {
 
 /// Scalar GPR -> FP conversion: `sf 0011110 ptype 1 00 opcode 000000 Rn Rd`.
 fn enc_fp_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32) -> u32 {
+    enc_fp_gpr_to_fp_regs(sf, fp_type, opcode, RN, RD)
+}
+
+fn enc_fp_gpr_to_fp_regs(sf: u32, fp_type: u32, opcode: u32, rn: u32, rd: u32) -> u32 {
     (sf << 31)
         | (0b0011110 << 24)
         | (fp_type << 22)
         | (1 << 21)
         | (opcode << 16)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rd & 0x1F)
 }
 
 /// Scalar FP -> GPR conversion: `sf 0011110 ptype 1 rmode opcode 000000 Rn Rd`.
 fn enc_fp_to_gpr(sf: u32, fp_type: u32, rmode: u32, opcode: u32) -> u32 {
+    enc_fp_to_gpr_regs(sf, fp_type, rmode, opcode, RN, RD)
+}
+
+fn enc_fp_to_gpr_regs(
+    sf: u32,
+    fp_type: u32,
+    rmode: u32,
+    opcode: u32,
+    rn: u32,
+    rd: u32,
+) -> u32 {
     (sf << 31)
         | (0b0011110 << 24)
         | (fp_type << 22)
         | (1 << 21)
         | (rmode << 19)
         | (opcode << 16)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rd & 0x1F)
 }
 
 /// Scalar FCMP <Fn>, #0.0.
@@ -43592,19 +43607,41 @@ fn enc_fccmp_reg(fp_type: u32, signal_all_nans: bool, cond: u32, nzcv: u32) -> u
 /// Scalar fixed-point GPR -> FP conversion:
 /// `sf 0011110 ptype 0 00 opcode scale Rn Rd`, where `fbits = 64 - scale`.
 fn enc_fp_fixed_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32, fbits: u32) -> u32 {
+    enc_fp_fixed_gpr_to_fp_regs(sf, fp_type, opcode, fbits, RN, RD)
+}
+
+fn enc_fp_fixed_gpr_to_fp_regs(
+    sf: u32,
+    fp_type: u32,
+    opcode: u32,
+    fbits: u32,
+    rn: u32,
+    rd: u32,
+) -> u32 {
     let scale = 64 - fbits;
     (sf << 31)
         | (0b0011110 << 24)
         | (fp_type << 22)
         | (opcode << 16)
         | (scale << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rd & 0x1F)
 }
 
 /// Scalar fixed-point FP -> GPR conversion:
 /// `sf 0011110 ptype 0 11 opcode scale Rn Rd`, where `fbits = 64 - scale`.
 fn enc_fp_fixed_fp_to_gpr(sf: u32, fp_type: u32, opcode: u32, fbits: u32) -> u32 {
+    enc_fp_fixed_fp_to_gpr_regs(sf, fp_type, opcode, fbits, RN, RD)
+}
+
+fn enc_fp_fixed_fp_to_gpr_regs(
+    sf: u32,
+    fp_type: u32,
+    opcode: u32,
+    fbits: u32,
+    rn: u32,
+    rd: u32,
+) -> u32 {
     let scale = 64 - fbits;
     (sf << 31)
         | (0b0011110 << 24)
@@ -43612,8 +43649,8 @@ fn enc_fp_fixed_fp_to_gpr(sf: u32, fp_type: u32, opcode: u32, fbits: u32) -> u32
         | (0b11 << 19)
         | (opcode << 16)
         | (scale << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rd & 0x1F)
 }
 
 /// Fill v0..v3 low elements with finite (non-zero) floats. `nonneg` keeps them
@@ -47231,6 +47268,141 @@ fn diff_fp_scalar_cvtf_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fp_scalar_gpr_conversion_zero_registers() {
+    let mut rng = Rng::new(0xF031_2031);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(label, sf, fp_type, opcode, rd) in &[
+        ("scvtf_s_wzr", 0, 0b00, 0b010, 0),
+        ("ucvtf_s_wzr", 0, 0b00, 0b011, 2),
+        ("scvtf_h_wzr", 0, 0b11, 0b010, 3),
+        ("scvtf_d_xzr", 1, 0b01, 0b010, 4),
+        ("ucvtf_d_xzr", 1, 0b01, 0b011, 5),
+    ] {
+        for rmode in 0..4u64 {
+            let mut st = gen_input(&mut rng);
+            st.fpcr = rmode << 22;
+            st.fpsr = 0;
+            batch.push((
+                format!("{label}_rmode{rmode}"),
+                enc_fp_gpr_to_fp_regs(sf, fp_type, opcode, 31, rd),
+                st,
+            ));
+        }
+    }
+
+    for &(label, sf, fp_type, rmode, opcode, src_bits) in &[
+        (
+            "fcvtzs_wzr_s",
+            0,
+            0b00,
+            0b11,
+            0b000,
+            (3.75f32).to_bits() as u64,
+        ),
+        (
+            "fcvtzu_xzr_d",
+            1,
+            0b01,
+            0b11,
+            0b001,
+            (42.5f64).to_bits(),
+        ),
+        (
+            "fcvtas_wzr_s",
+            0,
+            0b00,
+            0b00,
+            0b100,
+            (-2.5f32).to_bits() as u64,
+        ),
+        (
+            "fcvtau_xzr_d",
+            1,
+            0b01,
+            0b00,
+            0b101,
+            (2.5f64).to_bits(),
+        ),
+        ("fcvtzs_xzr_h", 1, 0b11, 0b11, 0b000, 0x3e00),
+        (
+            "fjcvtzs_wzr_d",
+            0,
+            0b01,
+            0b11,
+            0b110,
+            (42.0f64).to_bits(),
+        ),
+    ] {
+        for _ in 0..4 {
+            let mut st = gen_input(&mut rng);
+            st.fpsr = 0;
+            st.set_vreg(RN as usize, src_bits, 0);
+            batch.push((
+                label.to_string(),
+                enc_fp_to_gpr_regs(sf, fp_type, rmode, opcode, RN, 31),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fp_scalar_gpr_conversion_zero_registers", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fmov_general_zero_registers() {
+    let mut rng = Rng::new(0xF031_F000);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(label, sf, fp_type, rmode, rd) in &[
+        ("fmov_s_wzr", 0, 0b00, 0b00, 0),
+        ("fmov_d_xzr", 1, 0b01, 0b00, 1),
+        ("fmov_vd1_xzr", 1, 0b10, 0b01, 2),
+        ("fmov_h_wzr", 0, 0b11, 0b00, 3),
+        ("fmov_h_xzr", 1, 0b11, 0b00, 4),
+    ] {
+        for _ in 0..4 {
+            let st = gen_input(&mut rng);
+            batch.push((
+                label.to_string(),
+                enc_fp_to_gpr_regs(sf, fp_type, rmode, 0b111, 31, rd),
+                st,
+            ));
+        }
+    }
+
+    for &(label, sf, fp_type, rmode, src_bits) in &[
+        ("fmov_wzr_s", 0, 0b00, 0b00, (3.25f32).to_bits() as u64),
+        ("fmov_xzr_d", 1, 0b01, 0b00, (-7.5f64).to_bits()),
+        (
+            "fmov_xzr_vd1",
+            1,
+            0b10,
+            0b01,
+            0x0123_4567_89ab_cdef,
+        ),
+        ("fmov_wzr_h", 0, 0b11, 0b00, 0x3e00),
+        ("fmov_xzr_h", 1, 0b11, 0b00, 0xbe00),
+    ] {
+        for _ in 0..4 {
+            let mut st = gen_input(&mut rng);
+            if fp_type == 0b10 {
+                st.set_vreg(RN as usize, rng.next(), src_bits);
+            } else {
+                st.set_vreg(RN as usize, src_bits, rng.next());
+            }
+            batch.push((
+                label.to_string(),
+                enc_fp_to_gpr_regs(sf, fp_type, rmode, 0b110, RN, 31),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fp_scalar_fmov_general_zero_registers", batch);
+}
+
+#[test]
 fn diff_fpcr_fiz_fp_scalar_fp_to_int_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -47711,6 +47883,64 @@ fn diff_fp_scalar_fixed_cvtf_fpcr_rounding() {
     push("ucvtf_d_x_umax_f1", 1, 0b01, 0b011, u64::MAX, 1);
 
     run_fpsr_batch("fp_scalar_fixed_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fixed_gpr_conversion_zero_registers() {
+    let mut rng = Rng::new(0xF031_F17E);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(label, sf, fp_type, opcode, fbits, rd) in &[
+        ("scvtf_fixed_s_wzr_f1", 0, 0b00, 0b010, 1, 0),
+        ("ucvtf_fixed_h_wzr_f16", 0, 0b11, 0b011, 16, 2),
+        ("scvtf_fixed_d_xzr_f8", 1, 0b01, 0b010, 8, 3),
+        ("ucvtf_fixed_h_xzr_f25", 1, 0b11, 0b011, 25, 4),
+    ] {
+        for rmode in 0..4u64 {
+            let mut st = gen_input(&mut rng);
+            st.fpcr = rmode << 22;
+            st.fpsr = 0;
+            batch.push((
+                format!("{label}_rmode{rmode}"),
+                enc_fp_fixed_gpr_to_fp_regs(sf, fp_type, opcode, fbits, 31, rd),
+                st,
+            ));
+        }
+    }
+
+    for &(label, sf, fp_type, opcode, fbits, src_bits) in &[
+        (
+            "fcvtzs_fixed_wzr_s_f2",
+            0,
+            0b00,
+            0b000,
+            2,
+            (1.25f32).to_bits() as u64,
+        ),
+        (
+            "fcvtzu_fixed_xzr_d_f3",
+            1,
+            0b01,
+            0b001,
+            3,
+            (2.5f64).to_bits(),
+        ),
+        ("fcvtzs_fixed_xzr_h_f1", 1, 0b11, 0b000, 1, 0x3e00),
+        ("fcvtzu_fixed_wzr_h_f4", 0, 0b11, 0b001, 4, 0x3c00),
+    ] {
+        for _ in 0..4 {
+            let mut st = gen_input(&mut rng);
+            st.fpsr = 0;
+            st.set_vreg(RN as usize, src_bits, 0);
+            batch.push((
+                label.to_string(),
+                enc_fp_fixed_fp_to_gpr_regs(sf, fp_type, opcode, fbits, RN, 31),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fp_scalar_fixed_gpr_conversion_zero_registers", batch);
 }
 
 #[test]
