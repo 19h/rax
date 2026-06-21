@@ -1765,10 +1765,12 @@ impl AArch64Cpu {
             if (op2 & 0b1000) == 0 {
                 // Logical (shifted register)
                 return self.exec_logical_shifted(insn);
-            } else {
-                // Add/sub (shifted/extended register)
+            } else if (op2 & 1) == 0 || op2 == 0b1001 {
+                // Add/sub shifted register uses op2=1xx0; extended register
+                // is only op2=1001. The other 1xx1 encodings are unallocated.
                 return self.exec_add_sub_shifted_ext(insn);
             }
+            return Err(ArmError::UndefinedInstruction(insn));
         } else {
             // op1 = 1
             match op2 {
@@ -11566,8 +11568,8 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
-        // PFALSE Pd: writes an all-false predicate (bits[15:10]==111001).
-        if b15_10 == 0b111001 {
+        // PFALSE Pd: writes an all-false predicate.
+        if insn & 0xFFFF_FFF0 == 0x2518_E400 {
             self.sve_p[pd] = 0;
             return Ok(CpuExit::Continue);
         }
@@ -11575,7 +11577,11 @@ impl AArch64Cpu {
         // PTRUE / PTRUES Pd.T, pattern: bits[15:10]==111000, S=bit16. PTRUES
         // sets NZCV = PredTest(result, result) — i.e. the result governs itself,
         // so C = !LastActive collapses to (result == 0).
-        if b15_10 == 0b111000 {
+        if (insn >> 24) & 0xFF == 0x25
+            && (insn >> 17) & 0x1F == 0b01100
+            && b15_10 == 0b111000
+            && (insn >> 4) & 1 == 0
+        {
             let s = (insn >> 16) & 1;
             let pattern = (insn >> 5) & 0x1F;
             let count = sve_pattern_count(pattern, elements);
@@ -13810,6 +13816,11 @@ impl AArch64Cpu {
             0b100 => {}
             _ => return Ok(CpuExit::Undefined(insn)),
         }
+
+        if (insn >> 24) & 0xFF == 0b01100100 && (insn >> 19) & 0x7 != 0b010 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+
         // FP pairwise (FADDP/FMAXNMP/FMINNMP/FMAXP/FMINP): 0x64, bits[21:19]==010.
         // Interleaves the pairwise results of Zdn and Zm (even = Zdn pair, odd =
         // Zm pair), merged into Zdn under Pg. opc=bits[18:16].
@@ -15897,6 +15908,7 @@ impl AArch64Cpu {
 
     fn exec_extract(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
+        let opc = (insn >> 29) & 0x3;
         let n = (insn >> 22) & 1;
         let rm = ((insn >> 16) & 0x1F) as u8;
         let imms = ((insn >> 10) & 0x3F) as u32;
@@ -15904,7 +15916,7 @@ impl AArch64Cpu {
         let rd = (insn & 0x1F) as u8;
 
         let datasize = if sf != 0 { 64u32 } else { 32 };
-        if (sf == 0 && (n != 0 || imms >= 32)) || (sf != 0 && n == 0) {
+        if opc != 0 || (sf == 0 && (n != 0 || imms >= 32)) || (sf != 0 && n == 0) {
             return Err(ArmError::UndefinedInstruction(insn));
         }
         let lsb = imms;
@@ -17991,7 +18003,7 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let nzcv = (insn & 0xF) as u8;
 
-        if ((insn >> 10) & 1) != 0 || ((insn >> 4) & 1) != 0 {
+        if ((insn >> 29) & 1) == 0 || ((insn >> 10) & 1) != 0 || ((insn >> 4) & 1) != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
         }
 

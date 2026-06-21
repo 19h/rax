@@ -26349,6 +26349,54 @@ fn diff_addsub_logical_register_encoding_sweep() {
 }
 
 #[test]
+fn diff_addsub_extended_reserved_fixed_bits_legality() {
+    fn addsub_extended_fixed_bits(
+        sf: u32,
+        op: u32,
+        s: u32,
+        bits23_22: u32,
+        option: u32,
+        imm3: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b01011 << 24)
+            | ((bits23_22 & 0x3) << 22)
+            | (1 << 21)
+            | (RM << 16)
+            | (option << 13)
+            | (imm3 << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    let mut rng = Rng::new(0xadd5_0b01);
+    let mut batch = Vec::new();
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for bits23_22 in 1..=3 {
+                    for option in [0u32, 2, 3, 5, 6, 7] {
+                        for imm3 in [0u32, 4] {
+                            batch.push((
+                                format!(
+                                    "addsub_extended_reserved sf{sf} op{op} s{s} b{bits23_22} opt{option} i{imm3}"
+                                ),
+                                addsub_extended_fixed_bits(sf, op, s, bits23_22, option, imm3),
+                                gen_input(&mut rng),
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("addsub_extended_reserved_fixed_bits_legality", batch);
+}
+
+#[test]
 fn diff_cond_compare_select_encoding_sweep() {
     fn cond_compare(sf: u32, op: u32, imm: bool, rm_imm5: u32, cond: u32, nzcv: u32) -> u32 {
         cond_compare_raw(sf, op, imm, rm_imm5, cond, nzcv, 0, 0)
@@ -26479,6 +26527,46 @@ fn diff_cond_compare_select_encoding_sweep() {
     }
 
     run_batch("cond_compare_select_encoding_sweep", batch);
+}
+
+#[test]
+fn diff_cond_compare_reserved_s_bit_legality() {
+    fn cond_compare_s_bit(sf: u32, op: u32, imm: bool, rm_imm5: u32, cond: u32, nzcv: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (0b11010010 << 21)
+            | ((rm_imm5 & 0x1F) << 16)
+            | (cond << 12)
+            | ((imm as u32) << 11)
+            | (RN << 5)
+            | (nzcv & 0xF)
+    }
+
+    let mut rng = Rng::new(0xcc0d_0001);
+    let mut batch = Vec::new();
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for imm in [false, true] {
+                let rm_imm5 = if imm { 5 } else { RM };
+                for cond in [0u32, 1, 0xe, 0xf] {
+                    for nzcv in [0u32, 0b0101, 0b1010, 0b1111] {
+                        let mut st = gen_input(&mut rng);
+                        st.pstate = ((nzcv ^ 0b0011) as u64) << 28;
+                        batch.push((
+                            format!(
+                                "cond_compare_reserved_s sf{sf} op{op} imm{} cond{cond:x} nzcv{nzcv:x}",
+                                imm as u8
+                            ),
+                            cond_compare_s_bit(sf, op, imm, rm_imm5, cond, nzcv),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("cond_compare_reserved_s_bit_legality", batch);
 }
 
 #[test]
@@ -31405,6 +31493,38 @@ fn diff_bitfield_extract_encoding_sweep() {
     }
 
     run_batch("bitfield_extract_encoding_sweep", batch);
+}
+
+#[test]
+fn diff_extract_reserved_opc_legality() {
+    fn extract_reserved(sf: u32, opc: u32, n: u32, rm: u32, imms: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100111 << 23)
+            | (n << 22)
+            | (rm << 16)
+            | (imms << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    let mut rng = Rng::new(0xe477_0001);
+    let mut batch = Vec::new();
+    for opc in 1..=3 {
+        for (sf, n, imms_values) in [(0u32, 0u32, [0u32, 7, 31]), (1, 1, [0, 17, 63])] {
+            for rm in [RN, RM] {
+                for imms in imms_values {
+                    batch.push((
+                        format!("extract_reserved sf{sf} opc{opc} n{n} rm{rm} s{imms}"),
+                        extract_reserved(sf, opc, n, rm, imms),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("extract_reserved_opc_legality", batch);
 }
 
 #[test]
@@ -36968,6 +37088,23 @@ fn diff_sve_pred_gen() {
     run_batch("sve_pred_gen", batch);
 }
 
+#[test]
+fn diff_sve_pred_true_false_fixed_field_legality() {
+    let invalids = [
+        ("ptrue_fuzz_wrong_fields", 0x25ee_e1fb),
+        ("ptrue_bit4_set", enc_ptrue(0, 0, 0) | (1 << 4)),
+        ("ptrue_wrong_op", (0x25 << 24) | (3 << 22) | (0b10111 << 17) | (0b111000 << 10)),
+        ("pfalse_bit16_set", PFALSE | (1 << 16)),
+        ("pfalse_pattern_bit_set", PFALSE | (1 << 5)),
+        ("pfalse_bit4_set", PFALSE | (1 << 4)),
+    ];
+    let batch: Vec<(String, u32, ArmState)> = invalids
+        .into_iter()
+        .map(|(label, insn)| (label.into(), insn, ArmState::zeroed()))
+        .collect();
+    run_batch_el0_legality("sve_pred_true_false_fixed_field_legality", batch);
+}
+
 /// SVE predicated integer ALU (destructive): `00000100 sz group opc Pg Zm Zdn`.
 /// Zdn=z0, Zm=z1, Pg=p0.
 fn enc_sve_palu(sz: u32, group: u32, opc: u32) -> u32 {
@@ -40924,6 +41061,29 @@ fn diff_sve_fp_pred() {
         }
     }
     run_batch("sve_fp_pred", batch);
+}
+
+#[test]
+fn diff_sve_fp_pred_rejects_0x64_binary_slots() {
+    let invalids = [
+        ("fuzz_64679aa6", 0x6467_9aa6),
+        (
+            "top64_bit21_pred_fmin",
+            (0x64 << 24)
+                | (1 << 22)
+                | (1 << 21)
+                | (0b00111 << 16)
+                | (0b100 << 13)
+                | (6 << 10)
+                | (RN << 5)
+                | RD,
+        ),
+    ];
+    let batch = invalids
+        .into_iter()
+        .map(|(label, insn)| (label.into(), insn, ArmState::zeroed()))
+        .collect();
+    run_batch_el0_legality("sve_fp_pred_rejects_0x64_binary_slots", batch);
 }
 
 #[test]

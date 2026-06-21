@@ -545,6 +545,7 @@ impl Aarch64Decoder {
 
     fn decode_extract(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let sf = (raw >> 31) & 1;
+        let opc = (raw >> 29) & 0x3;
         let n = (raw >> 22) & 1;
         let rm = ((raw >> 16) & 0x1F) as u8;
         let imms = ((raw >> 10) & 0x3F) as u8;
@@ -552,6 +553,15 @@ impl Aarch64Decoder {
         let rd = (raw & 0x1F) as u8;
 
         let is_64bit = sf == 1;
+
+        if opc != 0 {
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
+        }
 
         // sf and N must match
         if sf != n {
@@ -1646,7 +1656,7 @@ impl Aarch64Decoder {
                 Self::decode_logical_shifted_reg(raw)
             } else if (op2 & 0x9) == 0x8 {
                 Self::decode_add_sub_shifted_reg(raw)
-            } else if (op2 & 0x9) == 0x9 {
+            } else if op2 == 0b1001 {
                 Self::decode_add_sub_extended_reg(raw)
             } else {
                 Ok(DecodedInsn::new(
@@ -1966,6 +1976,7 @@ impl Aarch64Decoder {
     fn decode_cond_compare(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let sf = (raw >> 31) & 1;
         let op = (raw >> 30) & 1;
+        let s = (raw >> 29) & 1;
         let o2 = (raw >> 10) & 1;
         let o3 = (raw >> 4) & 1;
         let rm_or_imm = ((raw >> 16) & 0x1F) as u8;
@@ -1974,7 +1985,7 @@ impl Aarch64Decoder {
         let nzcv = (raw & 0xF) as u8;
         let is_imm = (raw >> 11) & 1 == 1;
 
-        if o2 != 0 || o3 != 0 {
+        if s == 0 || o2 != 0 || o3 != 0 {
             return Ok(DecodedInsn::new(
                 Mnemonic::UNDEFINED,
                 ExecutionState::Aarch64,
@@ -3322,16 +3333,22 @@ impl Aarch64Decoder {
                     })))
             }
 
-            // PTRUE/PFALSE
-            0b001 if op1 == 0b01 && (op3 & 0x30) == 0x10 => {
-                let s = (raw >> 16) & 1;
-                let mnemonic = if s == 0 {
-                    Mnemonic::SVE_PTRUE
-                } else {
-                    Mnemonic::SVE_PFALSE
-                };
+            // PTRUE/PTRUES
+            0b001
+                if (raw >> 24) & 0xFF == 0x25
+                    && op2 == 0b01100
+                    && op3 == 0b111000
+                    && (raw >> 4) & 1 == 0 =>
+            {
                 let pd = (raw & 0xF) as u8;
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                Ok(DecodedInsn::new(Mnemonic::SVE_PTRUE, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_p(pd)))
+            }
+
+            // PFALSE
+            0b001 if raw & 0xFFFF_FFF0 == 0x2518_E400 => {
+                let pd = (raw & 0xF) as u8;
+                Ok(DecodedInsn::new(Mnemonic::SVE_PFALSE, ExecutionState::Aarch64, raw, 4)
                     .with_operand(sve_p(pd)))
             }
 
@@ -5105,6 +5122,81 @@ mod tests {
         assert!(
             matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(1))
         );
+    }
+
+    #[test]
+    fn test_add_sub_extended_reserved_fixed_bits_decode_unknown() {
+        fn addsub_extended(bits23_22: u32) -> u32 {
+            (1 << 31)
+                | (0b01011 << 24)
+                | ((bits23_22 & 0x3) << 22)
+                | (1 << 21)
+                | (2 << 16)
+                | (3 << 13)
+                | (1 << 5)
+        }
+
+        for bits23_22 in 1..=3 {
+            let insn = Aarch64Decoder::decode(addsub_extended(bits23_22)).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
+        }
+    }
+
+    #[test]
+    fn test_extract_reserved_opc_decode_undefined() {
+        fn extract_reserved(opc: u32) -> u32 {
+            (opc << 29) | (0b100111 << 23) | (2 << 16) | (7 << 10) | (1 << 5)
+        }
+
+        for opc in 1..=3 {
+            let insn = Aarch64Decoder::decode(extract_reserved(opc)).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+        }
+    }
+
+    #[test]
+    fn test_cond_compare_reserved_s_bit_decode_undefined() {
+        fn cond_compare_s_clear(op: u32, imm: bool) -> u32 {
+            (op << 30) | (0b11010010 << 21) | (2 << 16) | ((imm as u32) << 11) | (1 << 5)
+        }
+
+        for op in 0..=1 {
+            for imm in [false, true] {
+                let insn = Aarch64Decoder::decode(cond_compare_s_clear(op, imm)).unwrap();
+                assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+            }
+        }
+    }
+
+    #[test]
+    fn test_sve_pred_true_false_fixed_fields_decode_unknown() {
+        fn ptrue(sz: u32, pat: u32, s: u32) -> u32 {
+            (0x25 << 24)
+                | (sz << 22)
+                | ((0b011000 | s) << 16)
+                | (0b111000 << 10)
+                | ((pat & 0x1F) << 5)
+        }
+
+        for raw in [ptrue(0, 0, 0), ptrue(3, 31, 1)] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::SVE_PTRUE);
+        }
+
+        let insn = Aarch64Decoder::decode(0x2518_E400).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::SVE_PFALSE);
+
+        for raw in [
+            0x25ee_e1fb,
+            ptrue(0, 0, 0) | (1 << 4),
+            (0x25 << 24) | (3 << 22) | (0b10111 << 17) | (0b111000 << 10),
+            0x2518_E400 | (1 << 16),
+            0x2518_E400 | (1 << 5),
+            0x2518_E400 | (1 << 4),
+        ] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
+        }
     }
 
     #[test]
