@@ -33134,6 +33134,7 @@ fn diff_fpcr_fiz_sve_fcvt_subnormal_inputs() {
 
 #[test]
 fn diff_sve2_fcvtx() {
+    const FPCR_FZ16: u64 = 1 << 19;
     // SVE2 FCVTNT/FCVTLT/FCVTXNT operate on the top/odd half of each container.
     // Narrow (NT/XNT) reads the wide source from the whole container and writes
     // the converted narrow result into the top half (bottom half preserved).
@@ -33168,6 +33169,26 @@ fn diff_sve2_fcvtx() {
             batch.push((name.to_string(), insn, st));
         }
     }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let mut zn = 0u128;
+    for (lane, bits) in [
+        0x0000u16, 0x0001, 0x0000, 0x03ff, 0x0000, 0x0400, 0x0000, 0x7bff,
+    ]
+    .iter()
+    .enumerate()
+    {
+        zn |= (*bits as u128) << (16 * lane);
+    }
+    st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+    batch.push((
+        "fcvtlt_h2s_fz16_keeps_subnormal_inputs".to_string(),
+        enc_sve2_fcvtx(0b10, 0b01),
+        st,
+    ));
+
     run_batch("sve2_fcvtx", batch);
 }
 
@@ -41528,6 +41549,15 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
     st.set_vreg(RN as usize, 0x0001, 0);
+    batch.push((
+        "scalar_fcvt_s_h_fz16_keeps_subnormal_input".to_string(),
+        enc_fcvt_precision(0b11, 0b00),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
     batch.push(("scalar_fcmp_zero_h_fz16_min_subnorm".to_string(), enc_fcmp_zero(0b11), st));
 
     let mut st = ArmState::zeroed();
@@ -41574,6 +41604,16 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x7bff);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_frecpe_h_fz16_tiny_output".to_string(),
+        enc_fp16_2r(1, 0, 1, 0b11101),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
     let (lo, hi) = pack_h(0x0001);
     st.set_vreg(RN as usize, lo, hi);
     batch.push((
@@ -41607,6 +41647,16 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     st.fpcr = FPCR_FZ16;
     let (lo, hi) = pack_h(0x0001);
     st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcvtl_h2s_fz16_keeps_subnormal_input".to_string(),
+        enc_two_reg(0, 0, 0, 0b10111),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
     let (lo, hi) = pack_h(0);
     st.set_vreg(RM as usize, lo, hi);
     batch.push((
@@ -41626,6 +41676,19 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
         enc_fp16_idx(1, 0, 0b1001, 0),
         st,
     ));
+
+    for &(name, insn) in &[
+        ("simd_fmul_h_idx_fz16_tiny_output", enc_fp16_idx(1, 0, 0b1001, 0)),
+        ("simd_fmulx_h_idx_fz16_tiny_output", enc_fp16_idx(1, 1, 0b1001, 0)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        let (lo, hi) = pack_h(0x0400);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(0x3800);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((name.to_string(), insn, st));
+    }
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
@@ -43254,6 +43317,45 @@ fn diff_fp_scalar_fixed_cvtf_fpcr_rounding() {
     push("ucvtf_d_x_umax_f1", 1, 0b01, 0b011, u64::MAX, 1);
 
     run_fpsr_batch("fp_scalar_fixed_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_fz16_int_to_fp16_subnormal_outputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.x[RN as usize] = 1;
+    batch.push((
+        "scalar_scvtf_h_x_f64".to_string(),
+        enc_fp_fixed_gpr_to_fp(1, 0b11, 0b010, 64),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.x[RN as usize] = 1;
+    batch.push((
+        "scalar_ucvtf_h_w_f16".to_string(),
+        enc_fp_fixed_gpr_to_fp(0, 0b11, 0b011, 16),
+        st,
+    ));
+
+    let mut packed = 0u128;
+    for lane in 0..4 {
+        packed |= 1u128 << (16 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+    batch.push((
+        "simd_scvtf_h_f16".to_string(),
+        enc_shift_imm(0, 0, 0b11100, 2 * 16 - 16),
+        st,
+    ));
+
+    run_batch("fpcr_fz16_int_to_fp16_subnormal_outputs", batch);
 }
 
 #[test]
