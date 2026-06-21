@@ -36103,6 +36103,36 @@ fn diff_sve_shift_pred() {
 }
 
 #[test]
+fn diff_sve_shift_pred_unallocated_edges() {
+    let mut rng = Rng::new(0x1_002a_1);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for sz in 0..4u32 {
+        for (opc, name) in [(0b010u32, "base2"), (0b110, "rev_base2")] {
+            let insn = enc_sve_shift(sz, opc);
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("shift_pred_{name}_unallocated_sz{sz}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..8 {
+                batch.push((
+                    format!("shift_pred_{name}_unallocated_sz{sz}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve_shift_pred_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_sve_shift_wide_unpred() {
     fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
         let bits = 8u32 << sz;
@@ -37758,6 +37788,42 @@ fn diff_sve_shift_imm() {
     run_batch("sve_shift_imm", batch);
 }
 
+#[test]
+fn diff_sve_shift_imm_unallocated_edges() {
+    let invalid_ops = [
+        (0b000_010u32, "op2"),
+        (0b000_101, "op5"),
+        (0b001_000, "op8"),
+        (0b001_110, "op14"),
+    ];
+    let mut rng = Rng::new(0x1_002e_1);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &bits in &[8u32, 16, 32, 64] {
+        for (op6, name) in invalid_ops {
+            let insn = enc_sve_shift_imm_pred(op6, bits, 1);
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(1, pred);
+                batch.push((
+                    format!("shift_imm_{name}_unallocated_b{bits}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("shift_imm_{name}_unallocated_b{bits}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve_shift_imm_unallocated_edges", batch);
+}
+
 /// SVE CPY immediate: `00000101 sz 01 Pg M sh imm8 Zd`. Pg=p0, Zd=z0.
 fn enc_cpy_imm(sz: u32, m: u32, sh: u32, imm8: i32) -> u32 {
     (0x05 << 24)
@@ -38090,6 +38156,41 @@ fn diff_sve_fp_unary() {
         }
     }
     run_batch("sve_fp_unary", batch);
+}
+
+#[test]
+fn diff_sve_fp_unary_unallocated_edges() {
+    let invalid_ops = [
+        (0b000101u32, "op5"),
+        (0b001110, "op14"),
+        (0b001111, "op15"),
+    ];
+    let mut rng = Rng::new(0x1_002b_1);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 1..4u32 {
+        for (opc6, name) in invalid_ops {
+            let insn = (0x65 << 24) | (size << 22) | (opc6 << 16) | (0b101 << 13) | (RN << 5) | RD;
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("sve_fp_unary_{name}_unallocated_s{size}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("sve_fp_unary_{name}_unallocated_s{size}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve_fp_unary_unallocated_edges", batch);
 }
 
 #[test]
@@ -39951,6 +40052,43 @@ fn diff_sve_palu_div_unallocated_edges() {
     }
 
     run_batch_el0_legality("sve_palu_div_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_sve_palu_selector_unallocated_edges() {
+    let invalid_ops = [
+        (0u32, 2u32, "group0_op2"),
+        (0, 4, "group0_op4"),
+        (1, 6, "group1_op6"),
+        (2, 1, "group2_op1"),
+        (3, 4, "group3_op4"),
+    ];
+    let mut rng = Rng::new(0x1_0026);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for sz in 0..4u32 {
+        for (group, opc, name) in invalid_ops {
+            let insn = enc_sve_palu(sz, group, opc);
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("palu_{name}_unallocated_sz{sz}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("palu_{name}_unallocated_sz{sz}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve_palu_selector_unallocated_edges", batch);
 }
 
 #[test]
@@ -43622,6 +43760,78 @@ fn diff_sve2_pred_alu() {
         }
     }
     run_batch("sve2_pred_alu", batch);
+}
+
+#[test]
+fn diff_sve2_pred_alu_binary_unallocated_edges() {
+    let invalid_ops = [
+        (0b000000u32, "op0"),
+        (0b000001, "op1"),
+        (0b000100, "op4"),
+        (0b000101, "op5"),
+    ];
+    let mut rng = Rng::new(0x7_f101);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for (opc6, name) in invalid_ops {
+            let insn = enc_sve2_pred_alu(size, opc6, 0b100);
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("sve2_pred_alu_binary_{name}_unallocated_s{size}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("sve2_pred_alu_binary_{name}_unallocated_s{size}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve2_pred_alu_binary_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_sve2_pred_alu_unary_unallocated_edges() {
+    let invalid_ops = [
+        (0b001010u32, "op10"),
+        (0b001011, "op11"),
+        (0b001110, "op14"),
+        (0b001111, "op15"),
+    ];
+    let mut rng = Rng::new(0x7_f102);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for (opc6, name) in invalid_ops {
+            let insn = enc_sve2_pred_alu(size, opc6, 0b101);
+            for (pred_name, pred) in [("inactive", 0), ("active", u16::MAX)] {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("sve2_pred_alu_unary_{name}_unallocated_s{size}_{pred_name}"),
+                    insn,
+                    st,
+                ));
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("sve2_pred_alu_unary_{name}_unallocated_s{size}"),
+                    insn,
+                    gen_sve_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve2_pred_alu_unary_unallocated_edges", batch);
 }
 
 #[test]

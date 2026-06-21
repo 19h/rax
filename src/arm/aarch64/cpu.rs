@@ -9960,8 +9960,12 @@ impl AArch64Cpu {
             // Unary, source = rfield, dest = rd, merging. bits[21:19]==001 ->
             // SQABS/SQNEG; bits[21:19]==000 -> URECPE/URSQRTE (S-only unsigned
             // reciprocal estimates).
+            let opc6 = (insn >> 16) & 0x3F;
             let src = self.v[rfield].to_le_bytes();
-            let recip = (insn >> 19) & 0x7 == 0b000;
+            let recip = opc6 >> 3 == 0b000;
+            if !matches!(opc6, 0b000000 | 0b000001 | 0b001000 | 0b001001) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             if recip && esize != 4 {
                 return Ok(CpuExit::Undefined(insn));
             }
@@ -9993,6 +9997,17 @@ impl AArch64Cpu {
         }
 
         let opc6 = (insn >> 16) & 0x3F;
+        if !matches!(
+            opc6,
+            0b000010
+                | 0b000011
+                | 0b000110
+                | 0b000111
+                | 0b001000..=0b001111
+                | 0b010000..=0b011111
+        ) {
+            return Ok(CpuExit::Undefined(insn));
+        }
         let reversed = matches!(
             opc6,
             0b000110
@@ -10273,6 +10288,15 @@ impl AArch64Cpu {
             return Ok(CpuExit::Undefined(insn));
         }
         let opc = (insn >> 16) & 0x7;
+        if !matches!(
+            (group, opc),
+            (0b000, 0b000 | 0b001 | 0b011)
+                | (0b001, 0b000..=0b101)
+                | (0b010, 0b000 | 0b010 | 0b011 | 0b100 | 0b101 | 0b110 | 0b111)
+                | (0b011, 0b000..=0b011)
+        ) {
+            return Ok(CpuExit::Undefined(insn));
+        }
         let pred = self.sve_p[pg];
         let elements = 16 / esize;
         let bits = (esize * 8) as u32;
@@ -10376,6 +10400,20 @@ impl AArch64Cpu {
         // The operation is the full bits[21:16]; the low three bits alone do not
         // distinguish e.g. ASRD (000_100) from SRSHR (001_100).
         let op6 = (insn >> 16) & 0x3F;
+        if !matches!(
+            op6,
+            0b000_000
+                | 0b000_001
+                | 0b000_011
+                | 0b000_100
+                | 0b000_110
+                | 0b000_111
+                | 0b001_100
+                | 0b001_101
+                | 0b001_111
+        ) {
+            return Ok(CpuExit::Undefined(insn));
+        }
         // Shift-left ops take amount = tszimm - bits; shift-right ops take
         // amount = 2*bits - tszimm.
         let is_shl = matches!(op6, 0b000_011 | 0b000_110 | 0b000_111 | 0b001_111);
@@ -10524,6 +10562,9 @@ impl AArch64Cpu {
         // value and shift-amount operands; base op is bits[17:16].
         let reversed = opc & 0b100 != 0;
         let base_op = opc & 0b011;
+        if base_op == 0b010 {
+            return Ok(CpuExit::Undefined(insn));
+        }
         let mut dst = a_reg;
         for e in 0..elements {
             if (pred >> (e * esize)) & 1 == 0 {
@@ -14062,6 +14103,12 @@ impl AArch64Cpu {
             return Ok(CpuExit::Undefined(insn));
         }
         let b20_16 = (insn >> 16) & 0x1F;
+        if !matches!(
+            b20_16,
+            0b00000..=0b00100 | 0b00110 | 0b00111 | 0b01100 | 0b01101
+        ) {
+            return Ok(CpuExit::Undefined(insn));
+        }
         // FRINT* rounding -> (TwoRegFp variant, fp16 mode).
         let rint = |m: u32| -> Option<(TwoRegFp, u8)> {
             Some(match m {
