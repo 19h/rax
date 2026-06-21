@@ -27678,6 +27678,10 @@ fn diff_system_dit_el0() {
         ));
     }
 
+    let mut st = gen_input(&mut rng);
+    st.x[RD as usize] = 0xdead_beef_dead_beef;
+    batch.push(("dit reg xzr readback".to_string(), msr_dit_reg(31), mrs_dit(RD), st));
+
     run_batch_el0_pair("system_dit_el0", batch);
 }
 
@@ -32197,6 +32201,38 @@ fn diff_sve_index() {
     run_family("sve_index", cases, 12, 0x1_0020);
 }
 
+#[test]
+fn diff_sve_index_zero_registers() {
+    fn index_rr_regs(sz: u32, rn: u32, rm: u32) -> u32 {
+        (0b00000100 << 24)
+            | (sz << 22)
+            | (1 << 21)
+            | ((rm & 0x1f) << 16)
+            | (0b010011 << 10)
+            | ((rn & 0x1f) << 5)
+            | RD
+    }
+
+    let mut rng = Rng::new(0x1_0076);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        for (label, insn) in [
+            ("index_xzr_base", index_rr_regs(sz, 31, RM)),
+            ("index_xzr_step", index_rr_regs(sz, RN, 31)),
+            ("index_xzr_both", index_rr_regs(sz, 31, 31)),
+        ] {
+            for i in 0..8 {
+                let mut st = gen_sve_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xf000 + ((i as u64) << 4);
+                st.x[RN as usize] = rng.next();
+                st.x[RM as usize] = rng.next();
+                batch.push((format!("{label} sz{sz}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_index_zero_registers", batch);
+}
+
 /// SVE REV Zd.T, Zn.T: `00000101 sz 1 11000 001110 Zn Zd`.
 fn enc_sve_rev(sz: u32) -> u32 {
     (0b00000101 << 24)
@@ -32415,6 +32451,46 @@ fn diff_sve_pcount() {
 }
 
 #[test]
+fn diff_sve_pcount_xzr_dest() {
+    let mut rng = Rng::new(0x1_0078);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let cntp = (0x25 << 24)
+            | (sz << 22)
+            | (0b100000 << 16)
+            | (0b10 << 14)
+            | (1 << 10)
+            | (2 << 5)
+            | 31;
+        let incp_r = (0x25 << 24)
+            | (sz << 22)
+            | (0b101100 << 16)
+            | (0b1000 << 12)
+            | (1 << 11)
+            | (1 << 5)
+            | 31;
+        let decp_r = (0x25 << 24)
+            | (sz << 22)
+            | (0b101101 << 16)
+            | (0b1000 << 12)
+            | (1 << 11)
+            | (1 << 5)
+            | 31;
+        for (name, insn) in [("cntp_xzr", cntp), ("incpr_xzr", incp_r), ("decpr_xzr", decp_r)] {
+            for i in 0..8 {
+                let mut st = ArmState::zeroed();
+                st.sp =
+                    GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x12000 + ((i as u64) << 4);
+                st.set_preg(1, rng.next() as u16);
+                st.set_preg(2, rng.next() as u16);
+                batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_pcount_xzr_dest", batch);
+}
+
+#[test]
 fn diff_sve_clast_gpr_no_active_zero_extends() {
     let mut batch = Vec::new();
     let sentinel = 0x0f0f_f0f0_f00f_0ff0u64;
@@ -32432,6 +32508,38 @@ fn diff_sve_clast_gpr_no_active_zero_extends() {
     }
 
     run_batch("sve_clast_gpr_no_active_zero_extends", batch);
+}
+
+#[test]
+fn diff_sve_lastx_xzr_dest() {
+    let mut rng = Rng::new(0x1_0079);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let lasta =
+            (0x05 << 24) | (size << 22) | (0b100000 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        let lastb =
+            (0x05 << 24) | (size << 22) | (0b100001 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        let clasta =
+            (0x05 << 24) | (size << 22) | (0b110000 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        let clastb =
+            (0x05 << 24) | (size << 22) | (0b110001 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        for (name, insn) in [
+            ("lasta_xzr", lasta),
+            ("lastb_xzr", lastb),
+            ("clasta_xzr", clasta),
+            ("clastb_xzr", clastb),
+        ] {
+            for (i, pred) in [0xffffu16, 0x5555, 0x0001, 0x0000].into_iter().enumerate() {
+                let mut st = ArmState::zeroed();
+                st.sp =
+                    GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x13000 + ((i as u64) << 4);
+                st.set_vreg(RN as usize, rng.next(), rng.next());
+                st.set_preg(0, pred);
+                batch.push((format!("{name} sz{size}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_lastx_xzr_dest", batch);
 }
 
 #[test]
@@ -32509,6 +32617,44 @@ fn diff_sve_sincdecp() {
         }
     }
     run_batch("sve_sincdecp", batch);
+}
+
+#[test]
+fn diff_sve_sincdecp_xzr_dest() {
+    let mut rng = Rng::new(0x1_0077);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for esz in 0..4u32 {
+        for d in 0..2u32 {
+            for u in 0..2u32 {
+                for sf64 in 0..2u32 {
+                    let insn = enc_sve_sincdecp_r(esz, d, u, sf64, 1, 31);
+                    for (i, pred) in [0xffffu16, 0x5555, 0x0001, 0x0000].into_iter().enumerate() {
+                        let mut st = ArmState::zeroed();
+                        st.sp =
+                            GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x11000 + ((i as u64) << 4);
+                        st.set_preg(1, pred);
+                        batch.push((
+                            format!("sincdecp_xzr e{esz} d{d} u{u} s{sf64}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                    for i in 0..4 {
+                        let mut st = ArmState::zeroed();
+                        st.sp =
+                            GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x11100 + ((i as u64) << 4);
+                        st.set_preg(1, rng.next() as u16);
+                        batch.push((
+                            format!("sincdecp_xzr_rnd e{esz} d{d} u{u} s{sf64}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve_sincdecp_xzr_dest", batch);
 }
 
 #[test]
@@ -33435,6 +33581,83 @@ fn diff_sve_while_gt() {
 }
 
 #[test]
+fn diff_sve_while_zero_registers() {
+    fn while_lt_regs(sz: u32, sf: u32, unsigned: bool, le: bool, rn: u32, rm: u32) -> u32 {
+        let b1110 = if unsigned { 0b11 } else { 0b01 };
+        (0x25 << 24)
+            | (sz << 22)
+            | (1 << 21)
+            | ((rm & 0x1f) << 16)
+            | (sf << 12)
+            | (b1110 << 10)
+            | ((rn & 0x1f) << 5)
+            | ((le as u32) << 4)
+    }
+
+    fn while_gt_regs(esz: u32, sf: u32, unsigned: bool, strict: bool, rn: u32, rm: u32) -> u32 {
+        (0x25 << 24)
+            | (esz << 22)
+            | (1 << 21)
+            | ((rm & 0x1f) << 16)
+            | (sf << 12)
+            | ((unsigned as u32) << 11)
+            | ((rn & 0x1f) << 5)
+            | ((strict as u32) << 4)
+    }
+
+    let mut rng = Rng::new(0x1_007a);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        for sf in 0..2u32 {
+            for unsigned in [false, true] {
+                for inclusive in [false, true] {
+                    for (label, insn) in [
+                        (
+                            "while_lt_xzr_start",
+                            while_lt_regs(sz, sf, unsigned, inclusive, 31, RM),
+                        ),
+                        (
+                            "while_lt_xzr_limit",
+                            while_lt_regs(sz, sf, unsigned, inclusive, RN, 31),
+                        ),
+                        (
+                            "while_lt_xzr_both",
+                            while_lt_regs(sz, sf, unsigned, inclusive, 31, 31),
+                        ),
+                        (
+                            "while_gt_xzr_start",
+                            while_gt_regs(sz, sf, unsigned, inclusive, 31, RM),
+                        ),
+                        (
+                            "while_gt_xzr_limit",
+                            while_gt_regs(sz, sf, unsigned, inclusive, RN, 31),
+                        ),
+                        (
+                            "while_gt_xzr_both",
+                            while_gt_regs(sz, sf, unsigned, inclusive, 31, 31),
+                        ),
+                    ] {
+                        let mut st = ArmState::zeroed();
+                        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x15000;
+                        st.x[RN as usize] = rng.next() % 32;
+                        st.x[RM as usize] = rng.next() % 32;
+                        batch.push((
+                            format!(
+                                "{} sz{sz} sf{sf} u{} i{}",
+                                label, unsigned as u32, inclusive as u32
+                            ),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve_while_zero_registers", batch);
+}
+
+#[test]
 fn diff_sve_shift_imm() {
     let ops = [(0b000u32, "asr"), (0b001, "lsr"), (0b011, "lsl")];
     let mut rng = Rng::new(0x1_002E);
@@ -33552,6 +33775,26 @@ fn diff_sve_cpy_sp_source() {
         }
     }
     run_batch("sve_cpy_sp_source", batch);
+}
+
+#[test]
+fn diff_sve_dup_sp_source() {
+    fn dup_sp(sz: u32) -> u32 {
+        (0x05 << 24) | (sz << 22) | (0b100000 << 16) | (0b001110 << 10) | (31 << 5) | RD
+    }
+
+    let mut rng = Rng::new(0x1_0075);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let insn = dup_sp(sz);
+        for i in 0..10 {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xe000 + ((i as u64) << 4);
+            st.set_vreg(0, rng.next(), rng.next());
+            batch.push((format!("dup_sp sz{sz}"), insn, st));
+        }
+    }
+    run_batch("sve_dup_sp_source", batch);
 }
 
 #[test]
@@ -37828,6 +38071,33 @@ fn diff_sve_insr() {
 }
 
 #[test]
+fn diff_sve_insr_zero_register() {
+    fn insr_gpr(size: u32, rm: u32) -> u32 {
+        (0x05 << 24)
+            | (size << 22)
+            | (1 << 21)
+            | (0b00100 << 16)
+            | (0b001110 << 10)
+            | ((rm & 0x1f) << 5)
+            | RD
+    }
+
+    let mut rng = Rng::new(0x9_2002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let insn = insr_gpr(size, 31);
+        for i in 0..10 {
+            let mut st = ArmState::zeroed();
+            st.sp =
+                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x16000 + ((i as u64) << 4);
+            st.set_vreg(0, rng.next(), rng.next());
+            batch.push((format!("insr_xzr s{size}"), insn, st));
+        }
+    }
+    run_batch("sve_insr_zero_register", batch);
+}
+
+#[test]
 fn diff_sve_clast_dst() {
     // CLASTA/CLASTB to vector and SIMD-scalar destinations.
     let mut rng = Rng::new(0x9_3001);
@@ -37898,6 +38168,41 @@ fn diff_sve_cterm() {
         }
     }
     run_batch("sve_cterm", batch);
+}
+
+#[test]
+fn diff_sve_cterm_zero_registers() {
+    fn cterm_regs(sf: u32, ne: u32, rn: u32, rm: u32) -> u32 {
+        (0x25 << 24)
+            | (1 << 23)
+            | (sf << 22)
+            | (1 << 21)
+            | ((rm & 0x1f) << 16)
+            | (0b001000 << 10)
+            | ((rn & 0x1f) << 5)
+            | (ne << 4)
+    }
+
+    let cases: &[(&str, u32)] = &[
+        ("ctermeq_wzr_left", cterm_regs(0, 0, 31, RM)),
+        ("ctermne_wzr_right", cterm_regs(0, 1, RN, 31)),
+        ("ctermeq_xzr_both", cterm_regs(1, 0, 31, 31)),
+        ("ctermne_xzr_both", cterm_regs(1, 1, 31, 31)),
+    ];
+    let mut rng = Rng::new(0x8_7002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in cases {
+        for nzcv in 0..16u64 {
+            let mut st = ArmState::zeroed();
+            st.sp =
+                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x14000 + (nzcv << 4);
+            st.x[RN as usize] = rng.next();
+            st.x[RM as usize] = rng.next();
+            st.pstate = nzcv << 28;
+            batch.push(((*label).to_string(), *insn, st));
+        }
+    }
+    run_batch("sve_cterm_zero_registers", batch);
 }
 
 #[test]
@@ -49199,6 +49504,61 @@ fn diff_simd_copy() {
         }
     }
     run_family("simd_copy", cases, 8, 0x9001);
+}
+
+#[test]
+fn diff_simd_copy_zero_registers() {
+    fn enc_copy_regs(q: u32, op: u32, imm5: u32, imm4: u32, rn: u32, rd: u32) -> u32 {
+        (q << 30)
+            | (op << 29)
+            | (0b01110 << 24)
+            | (imm5 << 16)
+            | (imm4 << 11)
+            | (1 << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x9002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let imm5 = copy_imm5(size, 0);
+        for q in 0..2u32 {
+            if q == 1 || size != 3 {
+                batch.push((
+                    format!("dupgen_xzr sz{size} q{q}"),
+                    enc_copy_regs(q, 0, imm5, 0b0001, 31, RD),
+                    gen_input(&mut rng),
+                ));
+            }
+            let smov_valid = size < 2 || (size == 2 && q == 1);
+            if smov_valid {
+                batch.push((
+                    format!("smov_xzr_dest sz{size} q{q}"),
+                    enc_copy_regs(q, 0, imm5, 0b0101, RN, 31),
+                    gen_input(&mut rng),
+                ));
+            }
+            let umov_valid = (size <= 2 && q == 0) || (size == 3 && q == 1);
+            if umov_valid {
+                batch.push((
+                    format!("umov_xzr_dest sz{size} q{q}"),
+                    enc_copy_regs(q, 0, imm5, 0b0111, RN, 31),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+
+        let mut st = gen_input(&mut rng);
+        st.sp =
+            GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000 + ((size as u64) << 4);
+        batch.push((
+            format!("insgen_xzr sz{size}"),
+            enc_copy_regs(1, 0, imm5, 0b0011, 31, RD),
+            st,
+        ));
+    }
+    run_batch("simd_copy_zero_registers", batch);
 }
 
 /// Advanced SIMD two-register miscellaneous: `0 Q U 01110 size 10000 opcode 10 Rn Rd`.
