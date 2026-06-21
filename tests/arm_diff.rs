@@ -30686,6 +30686,28 @@ fn diff_simd_three_same() {
 }
 
 #[test]
+fn diff_simd_three_same_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0051);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(q, u, size, opcode, name) in &[
+        (0, 0, 0, 0b00011, "and_bit31"),
+        (0, 1, 1, 0b00011, "bsl_bit31"),
+        (1, 1, 0, 0b00110, "cmhi_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("{name}_q{q}_u{u}"),
+                enc_three_same(q, u, size, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_three_same_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_simd_sqrdmlsh_tie() {
     let mut lanes = 0u128;
     for lane in 0..8 {
@@ -30723,6 +30745,27 @@ fn diff_simd_sqrdmlsh_tie() {
         st,
     ));
     run_batch("simd_sqrdmlsh_tie", batch);
+}
+
+#[test]
+fn diff_simd_three_same_extra_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0050);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        batch.push((
+            format!("three_same_extra_bit31_vector_q{q}"),
+            enc_three_same_extra(q, 0b01, 0b100001) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+    batch.push((
+        "three_same_extra_bit31_scalar".to_string(),
+        enc_scalar_three_same_extra(0b01, 0b100001) | (1 << 31),
+        gen_input(&mut rng),
+    ));
+
+    run_batch_el0_legality("simd_three_same_extra_unallocated_edges", batch);
 }
 
 // A few finite FP16 bit patterns; products stay exactly representable in FP32,
@@ -30801,6 +30844,17 @@ fn diff_fmlal() {
 fn diff_fmlal_unallocated_edges() {
     let mut rng = Rng::new(0x1_0030);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    batch.push((
+        "fmlal_bit31_vector".to_string(),
+        enc_three_same(1, 0, 0b00, 0b11101) | (1 << 31),
+        gen_input(&mut rng),
+    ));
+    batch.push((
+        "fmlal_bit31_indexed".to_string(),
+        enc_fmlal_idx(1, 0, 0, 0) | (1 << 31),
+        gen_input(&mut rng),
+    ));
 
     for &(u, opcode, name) in &[(0u32, 0b11101u32, "fmlal"), (1, 0b11001, "fmlal2")] {
         for &size in &[0b01u32, 0b11] {
@@ -31991,6 +32045,20 @@ fn diff_simd_fp16_scalar_three_same_unallocated_edges() {
         ));
     }
 
+    for &(u, a, opcode, name) in &[
+        (0, 0, 0b011, "fmulx_bit31"),
+        (0, 0, 0b100, "fcmeq_bit31"),
+        (1, 1, 0b010, "fabd_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("scalar_fp16_3same_{name}"),
+                enc_fp16_3s_scalar(u, a, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
     run_batch_el0_legality("simd_fp16_scalar_three_same_unallocated_edges", batch);
 }
 
@@ -32583,6 +32651,34 @@ fn diff_simd_fp16_two_reg_unallocated_edges() {
         ));
     }
 
+    for &(q, u, a, opcode, name) in &[
+        (0, 0, 0, 0b11000, "frintn_bit31"),
+        (0, 1, 0, 0b11000, "frinta_bit31"),
+        (1, 1, 1, 0b11111, "fsqrt_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("vector_fp16_2reg_{name}_q{q}_u{u}"),
+                enc_fp16_2r(q, u, a, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(u, a, opcode, name) in &[
+        (0, 1, 0b11111, "frecpx_bit31"),
+        (0, 1, 0b01100, "fcmgt0_bit31"),
+        (1, 1, 0b11011, "fcvtzu_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("scalar_fp16_2reg_{name}"),
+                enc_fp16_2r_scalar(u, a, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
     run_batch_el0_legality("simd_fp16_two_reg_unallocated_edges", batch);
 }
 
@@ -32766,6 +32862,20 @@ fn diff_simd_fp16_3same_unallocated_edges() {
             batch.push((
                 format!("fp16_3same_invalid_u{u}_a{a}_q{q}_op{opcode:03b}"),
                 enc_fp16_3s(q, u, a, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(q, u, a, opcode, name) in &[
+        (0, 0, 0, 0b010, "fadd_bit31"),
+        (0, 1, 0, 0b111, "fdiv_bit31"),
+        (1, 1, 0, 0b011, "fmul_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("fp16_3same_{name}_q{q}_u{u}"),
+                enc_fp16_3s(q, u, a, opcode) | (1 << 31),
                 gen_input(&mut rng),
             ));
         }
@@ -33291,6 +33401,14 @@ fn diff_simd_dot_unallocated_edges() {
     let mut rng = Rng::new(0x1_001d);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
+    for &(q, u) in &[(0u32, 0u32), (0, 1), (1, 1)] {
+        batch.push((
+            format!("dot_bit31_q{q}_u{u}"),
+            enc_dot(q, u) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+
     for &size in &[0b00u32, 0b01, 0b11] {
         for q in 0..2u32 {
             for u in 0..2u32 {
@@ -33408,6 +33526,19 @@ fn diff_simd_complex() {
 fn diff_simd_complex_unallocated_edges() {
     let mut rng = Rng::new(0x1_0032);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        batch.push((
+            format!("fcadd_bit31_q{q}"),
+            enc_fcadd(q, 0b01, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("fcmla_bit31_q{q}"),
+            enc_fcmla(q, 0b01, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
 
     for q in 0..2u32 {
         for rot in 0..2u32 {
@@ -34106,6 +34237,8 @@ fn diff_simd_complex_indexed() {
 #[test]
 fn diff_simd_complex_indexed_unallocated_edges() {
     let cases = vec![
+        ("fcmla_idx_bit31_q0".into(), enc_fcmla_idx(0, 0b01, 0, 0) | (1 << 31)),
+        ("fcmla_idx_bit31_q1".into(), enc_fcmla_idx(1, 0b01, 0, 0) | (1 << 31)),
         ("fcmla_idx_size0".into(), enc_fcmla_idx_raw(1, 0b00, 0, 0, 0)),
         ("fcmla_idx_size3".into(), enc_fcmla_idx_raw(1, 0b11, 0, 0, 0)),
         ("fcmla_idx_f16_q0_h1_l0".into(), enc_fcmla_idx_raw(0, 0b01, 0, 1, 0)),
@@ -54511,6 +54644,34 @@ fn diff_simd_bf16_unallocated_edges() {
     let mut rng = Rng::new(0x1_0031);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
+    for q in 0..2u32 {
+        batch.push((
+            format!("bfdot_bit31_q{q}"),
+            enc_bfdot(q) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("bfdot_idx_bit31_q{q}"),
+            enc_bfdot_idx(q, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("bfmlal_idx_bit31_q{q}"),
+            enc_bfmlal_idx(q, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+    batch.push((
+        "bfmmla_bit31".to_string(),
+        enc_bfmmla() | (1 << 31),
+        gen_input(&mut rng),
+    ));
+    batch.push((
+        "bfcvtn_bit31_q0".to_string(),
+        (0x0EA1_6800 | (RN << 5) | RD) | (1 << 31),
+        gen_input(&mut rng),
+    ));
+
     for &size in &[0b00u32, 0b10] {
         for q in 0..2u32 {
             for _ in 0..4 {
@@ -55205,6 +55366,16 @@ fn diff_simd_dot_indexed() {
 fn diff_simd_dot_indexed_unallocated_edges() {
     let mut rng = Rng::new(0x1_001e);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for us in 0..2u32 {
+            batch.push((
+                format!("mixed_dot_idx_bit31_q{q}_us{us}"),
+                enc_usdot_idx(q, us, 0) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
 
     for u in 0..2u32 {
         for index in 0..4u32 {
@@ -64894,6 +65065,17 @@ fn enc_3diff(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
         | RD
 }
 
+fn enc_scalar_3diff(size: u32, opcode: u32) -> u32 {
+    (1 << 30)
+        | (0b11110 << 24)
+        | (size << 22)
+        | (1 << 21)
+        | (RM << 16)
+        | (opcode << 12)
+        | (RN << 5)
+        | RD
+}
+
 #[test]
 fn diff_simd_three_diff() {
     // (opcode, U-options, name)
@@ -65019,6 +65201,14 @@ fn diff_simd_three_diff_unallocated_edges() {
     let mut rng = Rng::new(0x1_0034);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
+    for &(q, u) in &[(0u32, 0u32), (0, 1), (1, 1)] {
+        batch.push((
+            format!("three_diff_bit31_q{q}_u{u}"),
+            enc_3diff(q, u, 0b00, 0b0000) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+
     for &(opcode, u, name) in &[
         (0b0000, 0, "saddl_size3"),
         (0b0001, 0, "saddw_size3"),
@@ -65071,6 +65261,28 @@ fn diff_simd_three_diff_unallocated_edges() {
     }
 
     run_batch_el0_legality("simd_three_diff_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_simd_scalar_three_diff_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0053);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(size, opcode, name) in &[
+        (0b01u32, 0b1001u32, "sqdmlal_h_bit31"),
+        (0b10, 0b1011, "sqdmlsl_s_bit31"),
+        (0b01, 0b1101, "sqdmull_h_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("scalar_3diff_{name}"),
+                enc_scalar_3diff(size, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_scalar_three_diff_unallocated_edges", batch);
 }
 
 /// Advanced SIMD across-lanes reduction: `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
@@ -65159,6 +65371,14 @@ fn diff_simd_across_int_edges() {
 fn diff_simd_across_int_unallocated_edges() {
     let mut rng = Rng::new(0x1_0035);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(q, u) in &[(0u32, 0u32), (0, 1), (1, 1)] {
+        batch.push((
+            format!("across_bit31_q{q}_u{u}"),
+            enc_across(q, u, 0b00, 0b11011) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
 
     for &(u, opcode, name) in &[
         (0, 0b11011, "addv"),
@@ -65366,6 +65586,20 @@ fn diff_simd_three_same_fp_unallocated_edges() {
             enc_three_same(0, u, (a << 1) | 1, opcode),
             gen_input(&mut rng),
         ));
+    }
+
+    for &(q, u, a, opcode, name) in &[
+        (0, 0, 0, 0b11010, "fadd_bit31"),
+        (0, 1, 0, 0b11111, "fdiv_bit31"),
+        (1, 1, 0, 0b11011, "fmul_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("{name}_q{q}_u{u}"),
+                enc_three_same(q, u, a << 1, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
     }
 
     run_batch_el0_legality("simd_three_same_fp_unallocated_edges", batch);
@@ -65993,6 +66227,29 @@ fn diff_simd_scalar_pairwise_extrema() {
 }
 
 #[test]
+fn diff_simd_scalar_pairwise_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0052);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, size, opcode, name) in &[
+        (0, 0b11, 0b11011, "addp_d_bit31"),
+        (0, 0b00, 0b01101, "faddp_h_bit31"),
+        (1, 0b00, 0b01111, "fmaxp_s_bit31"),
+        (1, 0b11, 0b01100, "fminnmp_d_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("scalar_pairwise_{name}"),
+                enc_simd_scalar_pairwise(u, size, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_scalar_pairwise_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_simd_scalar_fp16_pairwise_unallocated_edges() {
     let mut rng = Rng::new(0x1_002f);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -66378,6 +66635,20 @@ fn diff_simd_permute_unallocated_edges() {
         }
     }
 
+    for &(opcode, size, name) in &[
+        (0b001u32, 0b00u32, "uzp1_bit31"),
+        (0b010, 0b01, "trn1_bit31"),
+        (0b111, 0b10, "zip2_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("permute_{name}_q0"),
+                enc_permute(0, size, opcode) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
     run_batch_el0_legality("simd_permute_unallocated_edges", batch);
 }
 
@@ -66418,6 +66689,16 @@ fn diff_simd_ext_unallocated_edges() {
             batch.push((
                 format!("ext_reserved_{name}_q{q}"),
                 enc_ext(q, 0) | (1 << bit),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for q in 0..2u32 {
+        for _ in 0..4 {
+            batch.push((
+                format!("ext_reserved_bit31_q{q}"),
+                enc_ext(q, q * 8) | (1 << 31),
                 gen_input(&mut rng),
             ));
         }
@@ -66476,6 +66757,16 @@ fn diff_simd_tbl_unallocated_edges() {
                     gen_input(&mut rng),
                 ));
             }
+        }
+    }
+
+    for &(op, len, name) in &[(0u32, 0u32, "tbl_bit31"), (1, 3, "tbx_bit31")] {
+        for _ in 0..4 {
+            batch.push((
+                format!("{name}_q0_len{len}"),
+                enc_tbl(0, len, op) | (1 << 31),
+                gen_input(&mut rng),
+            ));
         }
     }
 
@@ -66578,6 +66869,14 @@ fn diff_simd_copy_unallocated_edges() {
     let mut rng = Rng::new(0x9003);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
+    for &(q, op) in &[(0u32, 0u32), (0, 1), (1, 1)] {
+        batch.push((
+            format!("copy_bit31_q{q}_op{op}"),
+            enc_copy(q, op, copy_imm5(0, 0), 0b0000) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+
     for q in 0..2u32 {
         for op in 0..2u32 {
             for &imm4 in &[0b0000, 0b0001, 0b0011, 0b0101, 0b0111, 0b1111] {
@@ -66646,6 +66945,11 @@ fn diff_simd_copy_scalar_unallocated_edges() {
     batch.push((
         "scalar_copy_imm5_zero".to_string(),
         enc_copy_scalar(0, 0),
+        gen_input(&mut rng),
+    ));
+    batch.push((
+        "scalar_copy_bit31".to_string(),
+        enc_copy_scalar(copy_imm5(0, 0), 0) | (1 << 31),
         gen_input(&mut rng),
     ));
 
@@ -66879,6 +67183,21 @@ fn diff_simd_two_reg_unallocated_edges() {
             batch.push((
                 name.to_string(),
                 enc_scalar_two_reg(u, size, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(q, u, size, opcode, name) in &[
+        (0, 0, 0, 0b00000, "rev64_bit31"),
+        (0, 1, 0, 0b00000, "rev32_bit31"),
+        (1, 1, 0, 0b01011, "neg_bit31"),
+        (1, 1, 2, 0b11111, "fsqrt_bit31"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                format!("{name}_q{q}_u{u}"),
+                enc_two_reg(q, u, size, opcode) | (1 << 31),
                 gen_input(&mut rng),
             ));
         }

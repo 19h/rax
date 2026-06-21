@@ -2853,6 +2853,9 @@ impl AArch64Cpu {
         // opcode 1101/1001/1011. Signed doubling widening multiply, then
         // (optionally) a saturating accumulate; one element, rest zeroed.
         if op_bits == 0b11110 && (insn >> 21) & 1 == 1 && (insn >> 10) & 0x3 == 0b00 {
+            if (insn >> 31) != 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let size = (insn >> 22) & 0x3;
             let opcode = (insn >> 12) & 0xF;
             let (accum, subtract) = match opcode {
@@ -3031,6 +3034,9 @@ impl AArch64Cpu {
             && (insn >> 12) & 0xF == 0b0000
             && (insn >> 10) & 1 == 0
         {
+            if (insn >> 31) != 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             if self.config.version < ArmVersion::V9_4A {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
@@ -3263,6 +3269,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD FP16 three-same register instructions.
     fn exec_simd_fp16_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let a = (insn >> 23) & 1; // Selects between two groups of operations
@@ -3531,6 +3540,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD FP16 two-reg misc instructions.
     fn exec_simd_fp16_two_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let a = (insn >> 23) & 1; // bit23 sub-group selector (the FP16 "sz" low bit)
@@ -3646,6 +3658,9 @@ impl AArch64Cpu {
     /// Execute SIMD three-different (disparate) instructions.
     /// These are widening/narrowing operations like multiply-accumulate long.
     fn exec_simd_three_different(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
@@ -3821,6 +3836,9 @@ impl AArch64Cpu {
     /// over interleaved (real, imaginary) element pairs (FEAT_FCMA). `is_fcmla`
     /// selects FCMLA (2-bit rotation) vs FCADD (1-bit rotation).
     fn exec_simd_complex(&mut self, insn: u32, is_fcmla: bool) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let size = (insn >> 22) & 0x3;
         let rm = ((insn >> 16) & 0x1F) as usize;
@@ -3932,6 +3950,9 @@ impl AArch64Cpu {
     /// Execute FCMLA by element: like vector FCMLA, but the Vm complex pair is
     /// selected once by the H:L (f16) / H (f32) index and reused for every lane.
     fn exec_simd_complex_indexed(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let size = (insn >> 22) & 0x3;
         let rot = (insn >> 13) & 0x3;
@@ -4039,6 +4060,9 @@ impl AArch64Cpu {
         op1_signed: bool,
         op2_signed: bool,
     ) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let rm = ((insn >> 16) & 0x1F) as usize;
         let rn = ((insn >> 5) & 0x1F) as usize;
@@ -4072,6 +4096,9 @@ impl AArch64Cpu {
     /// (FEAT_RDM; vector + scalar) and SMMLA/UMMLA/USMMLA (FEAT_I8MM int8 2x2
     /// matrix multiply-accumulate; .4s,.16b,.16b, Q==1 only).
     fn exec_simd_three_same_extra(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let op_bits = (insn >> 24) & 0x1F;
         let scalar = op_bits == 0b11110;
         let q = (insn >> 30) & 1;
@@ -4165,6 +4192,9 @@ impl AArch64Cpu {
         op1_signed: bool,
         op2_signed: bool,
     ) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let l = (insn >> 21) & 1;
         let m = (insn >> 20) & 1;
@@ -4203,6 +4233,9 @@ impl AArch64Cpu {
     /// multiply-accumulate. Q (bit30) selects the Bottom (0) or Top (1) bf16 of
     /// each f32 pair. The result is always a full 128-bit, 4-lane f32 vector.
     fn exec_simd_bfmlal(&mut self, insn: u32, is_indexed: bool) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let sel = ((insn >> 30) & 1) as usize; // Q: 0=B (low 16), 1=T (high 16)
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
@@ -4266,6 +4299,9 @@ impl AArch64Cpu {
     /// unrounded precision and rounded once to f32 with round-to-odd (the
     /// standard FPCR.EBF==0 path).
     fn exec_simd_bfdot(&mut self, insn: u32, is_indexed: bool) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
@@ -4306,6 +4342,9 @@ impl AArch64Cpu {
     /// (round-to-nearest-even). BFCVTN (Q=0) writes the low 64 bits and zeroes
     /// the high half; BFCVTN2 (Q=1) writes the high 64 bits, preserving the low.
     fn exec_simd_bfcvtn(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
@@ -4328,6 +4367,9 @@ impl AArch64Cpu {
     /// Execute BFMMLA (FEAT_BF16): 2x4-by-4x2 bf16 matrix multiply accumulating
     /// into a 2x2 f32 matrix, with the same round-to-odd accumulation as BFDOT.
     fn exec_simd_bfmmla(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rm = ((insn >> 16) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
@@ -4639,6 +4681,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD across lanes (reduction operations).
     fn exec_simd_across_lanes(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
@@ -4771,6 +4816,9 @@ impl AArch64Cpu {
     /// f32 (U=1, bit22=0) or f64 (U=1, bit22=1). bit23 selects min for the
     /// max/min forms. Writes lane 0, zeroing the rest.
     fn exec_simd_scalar_pairwise(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
         let opcode = (insn >> 12) & 0x1F;
@@ -5489,6 +5537,9 @@ impl AArch64Cpu {
     /// (element/general), SMOV, UMOV. Element size and lane index come from the
     /// `imm5` field (lowest set bit selects the size).
     fn exec_simd_copy(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let op = (insn >> 29) & 1;
         let scalar = (insn >> 24) & 0x1F == 0b11110; // DUP <V><d>,<Vn>.<T>[i] (MOV)
@@ -5619,6 +5670,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD permute operations (ZIP, UZP, TRN).
     fn exec_simd_permute(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let size = (insn >> 22) & 0x3;
         let rm = ((insn >> 16) & 0x1F) as usize;
@@ -5777,6 +5831,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD extract (EXT).
     fn exec_simd_extract(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let rm = ((insn >> 16) & 0x1F) as usize;
         let imm4 = ((insn >> 11) & 0xF) as usize;
@@ -5809,6 +5866,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD three-same register instructions.
     fn exec_simd_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
@@ -6081,6 +6141,9 @@ impl AArch64Cpu {
     /// lanes. The non-`2` forms take the lower half of the FP16 lanes, the `2`
     /// forms the upper half. `a` (size<1>) selects add vs subtract.
     fn exec_fmlal(&mut self, insn: u32, indexed: bool) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
@@ -6157,6 +6220,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD two-register miscellaneous instructions.
     fn exec_simd_two_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
@@ -28381,6 +28447,19 @@ mod tests {
                 "expected {insn:#010x} to be undefined, got {exit:?}"
             );
         }
+
+        let mut invalid = create_cpu_with_insn(0x8fc0_0000); // bit31 set
+        invalid.config.version = ArmVersion::V9_4A;
+        invalid.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        assert!(matches!(
+            invalid.step(),
+            Err(ArmError::UndefinedInstruction(0x8fc0_0000))
+        ));
+
+        let mut valid = create_cpu_with_insn(0x0fc0_0000);
+        valid.config.version = ArmVersion::V9_4A;
+        valid.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        assert_eq!(valid.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
