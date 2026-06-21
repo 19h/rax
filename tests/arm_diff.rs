@@ -1235,6 +1235,317 @@ fn run_family(name: &str, cases: Vec<(String, u32)>, n_inputs: usize, seed: u64)
     run_batch(name, batch);
 }
 
+fn parse_generated_a64_encodings(family: &str, source: &str) -> Vec<(String, u32)> {
+    source
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            let rest = line.strip_prefix("let encoding: u32 = ")?;
+            let hex = rest.strip_suffix(';')?.strip_prefix("0x")?;
+            let insn = u32::from_str_radix(hex, 16).ok()?;
+            Some((format!("{family} {insn:#010x}"), insn))
+        })
+        .collect()
+}
+
+fn parse_generated_a64_cases_with_fields(
+    family: &str,
+    source: &str,
+) -> Vec<(String, u32, std::collections::BTreeMap<String, i32>)> {
+    let mut fields = std::collections::BTreeMap::new();
+    let mut out = Vec::new();
+    for line in source.lines() {
+        let line = line.trim();
+        if let Some(rest) = line.strip_prefix("// Fields: ") {
+            fields.clear();
+            for part in rest.split(',') {
+                let Some((name, value)) = part.trim().split_once('=') else {
+                    continue;
+                };
+                if let Ok(value) = value.parse::<i32>() {
+                    fields.insert(name.to_string(), value);
+                }
+            }
+            continue;
+        }
+        let Some(rest) = line.strip_prefix("let encoding: u32 = ") else {
+            continue;
+        };
+        let Some(hex) = rest.strip_suffix(';').and_then(|s| s.strip_prefix("0x")) else {
+            continue;
+        };
+        if let Ok(insn) = u32::from_str_radix(hex, 16) {
+            out.push((format!("{family} {insn:#010x}"), insn, fields.clone()));
+        }
+    }
+    out
+}
+
+fn generated_integer_dp_cases() -> Vec<(String, u32)> {
+    let sources = [
+        (
+            "integer/add_sub",
+            include_str!("arm/generated/a64/integer/add_sub.rs"),
+        ),
+        (
+            "integer/bitfield",
+            include_str!("arm/generated/a64/integer/bitfield.rs"),
+        ),
+        (
+            "integer/conditional",
+            include_str!("arm/generated/a64/integer/conditional.rs"),
+        ),
+        ("integer/flags", include_str!("arm/generated/a64/integer/flags.rs")),
+        (
+            "integer/logical",
+            include_str!("arm/generated/a64/integer/logical.rs"),
+        ),
+        (
+            "integer/mul_div",
+            include_str!("arm/generated/a64/integer/mul_div.rs"),
+        ),
+        ("integer/other", include_str!("arm/generated/a64/integer/other.rs")),
+        ("integer/shift", include_str!("arm/generated/a64/integer/shift.rs")),
+    ];
+
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn) in parse_generated_a64_encodings(family, source) {
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_branch_immediate_cases() -> Vec<(String, u32)> {
+    let sources = [
+        (
+            "branch/conditional",
+            include_str!("arm/generated/a64/branch/conditional.rs"),
+        ),
+        (
+            "branch/unconditional",
+            include_str!("arm/generated/a64/branch/unconditional.rs"),
+        ),
+    ];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn, fields) in parse_generated_a64_cases_with_fields(family, source) {
+            if !branch_immediate_in_tiny_program(&fields) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_single_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/single.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/single", source) {
+        if !memory_single_in_scratch_window(insn, &fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_pair_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/pair.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/pair", source) {
+        if !memory_pair_in_scratch_window(insn, &fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_atomic_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/atomic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/atomic", source) {
+        if (insn >> 27) & 0x7 != 0b111 || (insn >> 21) & 1 == 0 {
+            continue;
+        }
+        if !memory_atomic_in_scratch_window(&fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_ordered_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/ordered.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/ordered", source) {
+        if !memory_ordered_in_scratch_window(&fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_vector_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/vector.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("memory/vector", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_literal_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/literal.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/literal", source) {
+        if !memory_literal_in_code_window(&fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_memory_exclusive_load_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/exclusive.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("memory/exclusive", source) {
+        if !memory_exclusive_load_in_scratch_window(&fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn memory_single_in_scratch_window(insn: u32, fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    if fields.contains_key("M") {
+        return false;
+    }
+    if fields.contains_key("Rm") {
+        return false;
+    }
+    let op2 = (insn >> 10) & 0x3;
+    if matches!(op2, 0b01 | 0b11) {
+        let rn = fields.get("Rn").copied().unwrap_or(-1);
+        let rt = fields.get("Rt").copied().unwrap_or(-2);
+        if rn == rt && rt != 31 {
+            return false;
+        }
+    }
+    if let Some(&imm9) = fields.get("imm9") {
+        let signed = if imm9 >= 256 { imm9 - 512 } else { imm9 };
+        return (-32..=64).contains(&signed);
+    }
+    if let Some(&imm12) = fields.get("imm12") {
+        let size = fields.get("size").copied().unwrap_or(0).clamp(0, 3);
+        return imm12 * (1 << size) <= 64;
+    }
+    true
+}
+
+fn memory_pair_in_scratch_window(insn: u32, fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    if (insn >> 26) & 1 == 0 && (insn >> 30) & 0x3 == 0b11 {
+        return false;
+    }
+    let l = fields.get("L").copied().unwrap_or(0);
+    let rt = fields.get("Rt").copied().unwrap_or(-2);
+    let rt2 = fields.get("Rt2").copied().unwrap_or(-3);
+    if l == 1 && rt == rt2 {
+        return false;
+    }
+    let mode = (insn >> 23) & 0x3;
+    if matches!(mode, 0b01 | 0b11) {
+        let rn = fields.get("Rn").copied().unwrap_or(-1);
+        if rn != 31 && (rn == rt || rn == rt2) {
+            return false;
+        }
+    }
+    if let Some(&imm7) = fields.get("imm7") {
+        let signed = if imm7 >= 64 { imm7 - 128 } else { imm7 };
+        return (-4..=4).contains(&signed);
+    }
+    true
+}
+
+fn memory_atomic_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    let rn = fields.get("Rn").copied().unwrap_or(-1);
+    let rs = fields.get("Rs").copied().unwrap_or(-2);
+    let rt = fields.get("Rt").copied().unwrap_or(-3);
+    rn != rs && rn != rt
+}
+
+fn memory_ordered_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    fields.get("Rn").copied().unwrap_or(-1) != 31
+}
+
+fn memory_literal_in_code_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    matches!(fields.get("imm19").copied(), Some(0 | 1))
+}
+
+fn memory_exclusive_load_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    if fields.get("L").copied() != Some(1) {
+        return false;
+    }
+    if fields.contains_key("sz") {
+        let rt = fields.get("Rt").copied().unwrap_or(-2);
+        let rt2 = fields.get("Rt2").copied().unwrap_or(-3);
+        if rt == rt2 {
+            return false;
+        }
+    }
+    true
+}
+
+fn branch_immediate_in_tiny_program(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    fields.get("imm26").or_else(|| fields.get("imm19")).or_else(|| fields.get("imm14")) == Some(&3)
+}
+
+fn gen_memory_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    for i in 0..31 {
+        st.x[i] = SCRATCH_BASE + 64;
+    }
+    st.sp = SCRATCH_BASE + 64;
+    for word in &mut st.scratch {
+        *word = rng.next();
+    }
+    st
+}
+
 /// Run an explicit batch of (label, insn, input-state) triples against the
 /// oracle and assert no divergences. Self-skips if the toolchain is absent.
 fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
@@ -22473,6 +22784,33 @@ fn diff_dp_addsub_shifted() {
 }
 
 #[test]
+fn diff_addsub_shifted_rd31_preserves_sp() {
+    let encodings = [
+        ("add_shifted_w_rd31_rn0_rm0", 0x0b00_001f),
+        ("add_shifted_w_rd31_rn31_rm0", 0x0b00_03ff),
+        ("add_shifted_w_rd31_rn0_rm0_lsl1", 0x0b00_041f),
+        ("add_shifted_w_rd31_rn0_rm31", 0x0b1f_001f),
+    ];
+    let mut batch = Vec::new();
+    for (label, insn) in encodings {
+        for (i, x0) in [
+            0x0000_0000_4000_0000,
+            0xffff_ffff_ffff_ffff,
+            0x0123_4567_89ab_cdef,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let mut st = ArmState::zeroed();
+            st.x[0] = x0;
+            st.sp = 0x1234_5678_9abc_def0u64.wrapping_add(i as u64 * 0x10);
+            batch.push((format!("{label}_{i}"), insn, st));
+        }
+    }
+    run_batch("addsub_shifted_rd31_preserves_sp", batch);
+}
+
+#[test]
 fn diff_dp_logical_shifted() {
     run_family("dp_logical_shifted", logical_shift_cases(), 12, 0x1002);
 }
@@ -22846,6 +23184,16 @@ fn diff_dp1_dp2_dp3_encoding_sweep() {
 }
 
 #[test]
+fn diff_generated_integer_dp_sweep() {
+    run_family(
+        "generated_integer_dp_sweep",
+        generated_integer_dp_cases(),
+        8,
+        0xa64_1d00,
+    );
+}
+
+#[test]
 fn diff_data_processing_immediate_encoding_sweep() {
     fn addsub_imm(sf: u32, op: u32, s: u32, sh: u32, imm12: u32, rn: u32, rd: u32) -> u32 {
         (sf << 31)
@@ -23047,6 +23395,18 @@ fn diff_load_literal_scalar() {
 }
 
 #[test]
+fn diff_generated_memory_literal_sweep() {
+    let mut rng = Rng::new(0xa64_117e);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_literal_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, NOP, NOP, gen_input(&mut rng)));
+        }
+    }
+    run_batch_literal("generated_memory_literal_sweep", batch);
+}
+
+#[test]
 fn diff_branch_control_flow_el0() {
     fn b_imm(link: bool, offset: i32) -> u32 {
         let imm26 = ((offset >> 2) as u32) & 0x03ff_ffff;
@@ -23176,6 +23536,20 @@ fn diff_branch_control_flow_el0() {
     batch.push(("ret_x2_to_brk".into(), ret(RM), st));
 
     run_batch_branch("branch_control_flow_el0", batch);
+}
+
+#[test]
+fn diff_generated_branch_immediate_sweep() {
+    let mut rng = Rng::new(0xa64_ba11);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_branch_immediate_cases() {
+        for _ in 0..8 {
+            let mut st = gen_input(&mut rng);
+            st.pc = PCREL_MAGIC;
+            batch.push((label.clone(), insn, st));
+        }
+    }
+    run_batch_branch("generated_branch_immediate_sweep", batch);
 }
 
 #[test]
@@ -30378,6 +30752,18 @@ fn diff_excl_load() {
 }
 
 #[test]
+fn diff_generated_memory_exclusive_load_sweep() {
+    let mut rng = Rng::new(0xa64_e1d0);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_exclusive_load_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_exclusive_load_sweep", batch);
+}
+
+#[test]
 fn diff_excl_pair() {
     let mut cases: Vec<(String, u32, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -30593,6 +30979,18 @@ fn diff_mem_atomic() {
         }
     }
     run_batch("mem_atomic", batch);
+}
+
+#[test]
+fn diff_generated_memory_atomic_sweep() {
+    let mut rng = Rng::new(0xa64_a701);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_atomic_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_atomic_sweep", batch);
 }
 
 /// AdvSIMD load/store multiple structures: `0 Q 0011 0 0 post L rm opcode size Rn Rt`.
@@ -30841,6 +31239,81 @@ fn diff_mem_ldst_imm() {
         }
     }
     run_batch("mem_ldst_imm", batch);
+}
+
+#[test]
+fn diff_mem_ordered_unscaled() {
+    let cases: &[(&str, u32)] = &[
+        ("stlurb", 0x1900_1020),
+        ("stlurh", 0x5900_1020),
+        ("stlur_w", 0x9900_1020),
+        ("stlur_x", 0xd900_0020),
+        ("ldapurb", 0x1940_1020),
+        ("ldapurh", 0x5940_1020),
+        ("ldapur_w", 0x9940_1020),
+        ("ldapur_x", 0xd940_0020),
+        ("ldapursb_x", 0x1980_1020),
+        ("ldapursb_w", 0x19c0_1020),
+        ("ldapursh_x", 0x5980_1020),
+        ("ldapursh_w", 0x59c0_1020),
+        ("ldapursw_x", 0x9980_1020),
+    ];
+    let mut rng = Rng::new(0x1_0051);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..4 {
+            batch.push(((*label).to_string(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ordered_unscaled", batch);
+}
+
+#[test]
+fn diff_generated_memory_ordered_sweep() {
+    let mut rng = Rng::new(0xa64_0d01);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_ordered_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_ordered_sweep", batch);
+}
+
+#[test]
+fn diff_generated_memory_single_sweep() {
+    let mut rng = Rng::new(0xa64_1d51);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_single_cases() {
+        for _ in 0..2 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_single_sweep", batch);
+}
+
+#[test]
+fn diff_generated_memory_pair_sweep() {
+    let mut rng = Rng::new(0xa64_1d52);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_pair_cases() {
+        for _ in 0..2 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_pair_sweep", batch);
+}
+
+#[test]
+fn diff_generated_memory_vector_sweep() {
+    let mut rng = Rng::new(0xa64_0d7e);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_vector_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_memory_vector_sweep", batch);
 }
 
 #[test]

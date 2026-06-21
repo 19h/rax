@@ -1486,6 +1486,14 @@ impl AArch64Cpu {
             return self.exec_ldst_exclusive(insn);
         }
 
+        // FEAT_LRCPC3 ordered unscaled load/stores: STLUR* / LDAPUR*.
+        // These share top-byte space with MTE's 0xD9 encodings, so route the
+        // even bits[23:21] ordered forms before the MTE tag handler below.
+        if bits_29_27 == 0b011 && bit_24 == 1 && op1 == 0 && matches!((insn >> 21) & 0x7, 0 | 2 | 4 | 6)
+        {
+            return self.exec_ordered_unscaled(insn);
+        }
+
         // FEAT_MTE tag load/stores: bits[31:24] = 0xD9. Without tag-capable
         // memory the tag side is a no-op, but the architected data side-
         // effects (granule zeroing, writeback, LDG's register write) are
@@ -1574,6 +1582,44 @@ impl AArch64Cpu {
 
         // Fallback to single register for any remaining cases
         self.exec_ldst_reg(insn)
+    }
+
+    fn exec_ordered_unscaled(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let size = (insn >> 30) & 0x3;
+        let opc = (insn >> 22) & 0x3;
+        let imm9 = (((insn >> 12) & 0x1FF) as i32) << 23 >> 23;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rt = (insn & 0x1F) as u8;
+        let base = self.gpr_or_sp(rn);
+        let address = (base as i64).wrapping_add(imm9 as i64) as u64;
+
+        match opc {
+            0b00 => match size {
+                0 => self.mem_write_u8(address, self.get_w(rt) as u8)?,
+                1 => self.mem_write_u16(address, self.get_w(rt) as u16)?,
+                2 => self.mem_write_u32(address, self.get_w(rt))?,
+                _ => self.mem_write_u64(address, self.get_x(rt))?,
+            },
+            0b01 => match size {
+                0 => self.set_w(rt, self.mem_read_u8(address)? as u32),
+                1 => self.set_w(rt, self.mem_read_u16(address)? as u32),
+                2 => self.set_w(rt, self.mem_read_u32(address)?),
+                _ => self.set_x(rt, self.mem_read_u64(address)?),
+            },
+            0b10 => match size {
+                0 => self.set_x(rt, self.mem_read_u8(address)? as i8 as i64 as u64),
+                1 => self.set_x(rt, self.mem_read_u16(address)? as i16 as i64 as u64),
+                2 => self.set_x(rt, self.mem_read_u32(address)? as i32 as i64 as u64),
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            },
+            0b11 => match size {
+                0 => self.set_w(rt, self.mem_read_u8(address)? as i8 as i32 as u32),
+                1 => self.set_w(rt, self.mem_read_u16(address)? as i16 as i32 as u32),
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            },
+            _ => unreachable!(),
+        }
+        Ok(CpuExit::Continue)
     }
 
     /// Execute data processing (register) instruction.
@@ -15822,9 +15868,7 @@ impl AArch64Cpu {
                 self.set_v(overflow);
             }
 
-            if rd == 31 && s == 0 {
-                self.set_current_sp(result);
-            } else if sf != 0 {
+            if sf != 0 {
                 self.set_x(rd, result);
             } else {
                 self.set_w(rd, result as u32);
