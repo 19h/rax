@@ -1851,7 +1851,7 @@ impl AArch64Cpu {
             match fp_type {
                 0b00 => {
                     let (n, m) = (self.v[rn as usize] as u32, self.v[rm as usize] as u32);
-                    let mut r = fp_three_same_f32(kind, n, m, 0);
+                    let mut r = fp_three_same_f32_with_fpcr(kind, n, m, 0, self.fpcr);
                     self.fpsr |= fp_status_binop_f32(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000_0000;
@@ -1860,7 +1860,7 @@ impl AArch64Cpu {
                 }
                 0b01 => {
                     let (n, m) = (self.v[rn as usize] as u64, self.v[rm as usize] as u64);
-                    let mut r = fp_three_same_f64(kind, n, m, 0);
+                    let mut r = fp_three_same_f64_with_fpcr(kind, n, m, 0, self.fpcr);
                     self.fpsr |= fp_status_binop_f64(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000_0000_0000_0000;
@@ -5531,9 +5531,9 @@ impl AArch64Cpu {
             };
             let d = read_elem(&old_d, off, esize);
             let res = if sz == 0 {
-                fp_three_same_f32(kind, a as u32, b as u32, d as u32) as u64
+                fp_three_same_f32_with_fpcr(kind, a as u32, b as u32, d as u32, self.fpcr) as u64
             } else {
-                fp_three_same_f64(kind, a, b, d)
+                fp_three_same_f64_with_fpcr(kind, a, b, d, self.fpcr)
             };
             self.fpsr |= fp_three_same_status(esize, kind, a, b, d, res);
             write_elem(&mut dst, off, esize, res);
@@ -6001,7 +6001,7 @@ impl AArch64Cpu {
                 let mut dst = [0u8; 16];
                 for e in 0..nelem {
                     let s = read_elem(&src, part * 8 + e * sp, sp);
-                    let r = fp_cvt_elem(s, sp, dp, false);
+                    let r = fp_cvt_elem(s, sp, dp, false, self.fpcr);
                     self.fpsr |= fp_status_cvt_precision(s, sp, dp, r);
                     write_elem(&mut dst, e * dp, dp, r);
                 }
@@ -6020,7 +6020,7 @@ impl AArch64Cpu {
                 let base = if scalar { 0 } else { part * 8 };
                 for e in 0..nelem {
                     let s = read_elem(&src, e * sp, sp);
-                    let r = fp_cvt_elem(s, sp, dp, round_odd);
+                    let r = fp_cvt_elem(s, sp, dp, round_odd, self.fpcr);
                     self.fpsr |= fp_status_cvt_precision(s, sp, dp, r);
                     write_elem(&mut dst, base + e * dp, dp, r);
                 }
@@ -13199,13 +13199,10 @@ impl AArch64Cpu {
                     continue;
                 }
                 let convert = |x: u64| -> u64 {
-                    match (src_sz, dst_sz, round_odd) {
-                        (4, 2, _) if bf => f32_to_bf16(x as u32) as u64,
-                        (4, 2, _) => Self::f32_to_fp16(f32::from_bits(x as u32)) as u64,
-                        (8, 4, false) => (f64::from_bits(x) as f32).to_bits() as u64,
-                        (8, 4, true) => round_odd_f64_to_f32(f64::from_bits(x)) as u64,
-                        (2, 4, _) => Self::fp16_to_f32(x as u16).to_bits() as u64,
-                        _ => (f32::from_bits(x as u32) as f64).to_bits(),
+                    if bf {
+                        f32_to_bf16(x as u32) as u64
+                    } else {
+                        fp_cvt_elem(x, src_sz, dst_sz, round_odd, self.fpcr)
                     }
                 };
                 if narrow {
@@ -13329,15 +13326,10 @@ impl AArch64Cpu {
             let res = if !bf && fp_is_nan_bits(src_sz, x) {
                 fp_convert_nan(x, src_sz, dst_sz)
             } else {
-                match (src_sz, dst_sz) {
-                    (2, 4) => Self::fp16_to_f32(x as u16).to_bits() as u64,
-                    (2, 8) => fp16_to_f64(x as u16).to_bits(),
-                    (4, 2) if bf => f32_to_bf16(x as u32) as u64, // BFCVT
-                    (4, 2) => Self::f32_to_fp16(f32::from_bits(x as u32)) as u64,
-                    (4, 8) => (f32::from_bits(x as u32) as f64).to_bits(),
-                    (8, 2) => fp16_round(f64::from_bits(x)) as u64,
-                    _ if round_odd => round_odd_f64_to_f32(f64::from_bits(x)) as u64, // FCVTX
-                    _ => (f64::from_bits(x) as f32).to_bits() as u64, // double -> single
+                if bf {
+                    f32_to_bf16(x as u32) as u64
+                } else {
+                    fp_cvt_elem(x, src_sz, dst_sz, round_odd, self.fpcr)
                 }
             };
             self.fpsr |= if bf {
@@ -19887,8 +19879,8 @@ fn fp_three_same_decode(u: u32, a: u32, opcode: u32) -> Option<FpKind> {
 /// One element of an FP precision conversion (FCVTL/FCVTN and the scalar FCVT):
 /// `src_prec`/`dst_prec` are byte widths (2=f16, 4=f32, 8=f64). NaN goes through
 /// FPConvertNaN; `round_odd` selects FCVTX (f64->f32 round-to-odd, which carries
-/// its own NaN handling). Round-to-nearest-even otherwise.
-fn fp_cvt_elem(bits: u64, src_prec: usize, dst_prec: usize, round_odd: bool) -> u64 {
+/// its own NaN handling). Other narrowing conversions use FPCR rounding.
+fn fp_cvt_elem(bits: u64, src_prec: usize, dst_prec: usize, round_odd: bool, fpcr: u32) -> u64 {
     if round_odd {
         return round_odd_f64_to_f32(f64::from_bits(bits)) as u64;
     }
@@ -19906,9 +19898,10 @@ fn fp_cvt_elem(bits: u64, src_prec: usize, dst_prec: usize, round_odd: bool) -> 
         _ => fp16_to_f64(bits as u16),
     };
     match dst_prec {
+        4 if src_prec == 8 => f64_to_f32_bits_with_fpcr(val, fpcr) as u64,
         4 => (val as f32).to_bits() as u64,
         8 => val.to_bits(),
-        _ => fp16_round(val) as u64,
+        _ => f64_to_fp16_bits_with_fpcr(val, fpcr) as u64,
     }
 }
 
@@ -21586,6 +21579,201 @@ fn fp_three_same_f32(kind: FpKind, a: u32, b: u32, d: u32) -> u32 {
     }
 }
 
+fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) -> u32 {
+    use FpKind::*;
+    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul) {
+        return fp_three_same_f32(kind, a, b, d);
+    }
+
+    let x = f32::from_bits(a);
+    let y = f32::from_bits(b);
+    if !x.is_finite() || !y.is_finite() {
+        return fp_three_same_f32(kind, a, b, d);
+    }
+
+    let exact = match kind {
+        Add | Addp => x as f64 + y as f64,
+        Sub => x as f64 - y as f64,
+        Mul => x as f64 * y as f64,
+        _ => unreachable!(),
+    };
+    f64_to_f32_bits_with_fpcr(exact, fpcr)
+}
+
+fn add_shifted_limb(dst: &mut Vec<u64>, index: usize, limb: u64) {
+    if limb == 0 {
+        return;
+    }
+    if dst.len() <= index {
+        dst.resize(index + 1, 0);
+    }
+    let mut i = index;
+    let mut carry = limb as u128;
+    while carry != 0 {
+        if dst.len() <= i {
+            dst.push(0);
+        }
+        let sum = dst[i] as u128 + carry;
+        dst[i] = sum as u64;
+        carry = sum >> 64;
+        i += 1;
+    }
+}
+
+fn add_shifted_u128(dst: &mut Vec<u64>, value: u128, shift: u32) {
+    if value == 0 {
+        return;
+    }
+    let word_shift = (shift / 64) as usize;
+    let bit_shift = shift % 64;
+    for limb_index in 0..2 {
+        let limb = (value >> (limb_index * 64)) as u64;
+        if limb == 0 {
+            continue;
+        }
+        let index = word_shift + limb_index;
+        if bit_shift == 0 {
+            add_shifted_limb(dst, index, limb);
+        } else {
+            add_shifted_limb(dst, index, limb << bit_shift);
+            add_shifted_limb(dst, index + 1, limb >> (64 - bit_shift));
+        }
+    }
+}
+
+fn cmp_u64_words(a: &[u64], b: &[u64]) -> std::cmp::Ordering {
+    let alen = a.iter().rposition(|&x| x != 0).map_or(0, |i| i + 1);
+    let blen = b.iter().rposition(|&x| x != 0).map_or(0, |i| i + 1);
+    if alen != blen {
+        return alen.cmp(&blen);
+    }
+    for i in (0..alen).rev() {
+        if a[i] != b[i] {
+            return a[i].cmp(&b[i]);
+        }
+    }
+    std::cmp::Ordering::Equal
+}
+
+fn scaled_i128_terms_sign(terms: &[(i128, i32)]) -> std::cmp::Ordering {
+    let Some(min_exp) = terms
+        .iter()
+        .filter(|(mant, _)| *mant != 0)
+        .map(|(_, exp)| *exp)
+        .min()
+    else {
+        return std::cmp::Ordering::Equal;
+    };
+    let mut pos = Vec::new();
+    let mut neg = Vec::new();
+    for &(mant, exp) in terms {
+        if mant == 0 {
+            continue;
+        }
+        let shift = (exp - min_exp) as u32;
+        if mant > 0 {
+            add_shifted_u128(&mut pos, mant as u128, shift);
+        } else {
+            add_shifted_u128(&mut neg, mant.unsigned_abs(), shift);
+        }
+    }
+    cmp_u64_words(&pos, &neg)
+}
+
+fn fp64_exact_cmp_to_nearest(
+    terms: &[(i128, i32)],
+    nearest: u64,
+) -> Option<(std::cmp::Ordering, bool)> {
+    let exact_sign = scaled_i128_terms_sign(terms);
+    if exact_sign == std::cmp::Ordering::Equal {
+        return Some((std::cmp::Ordering::Equal, false));
+    }
+    let exact_negative = exact_sign == std::cmp::Ordering::Less;
+    if fp64_is_inf(nearest) {
+        let cmp = if (nearest >> 63) != 0 {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Less
+        };
+        return Some((cmp, exact_negative));
+    }
+    if fp64_is_zero(nearest) {
+        return Some((exact_sign, exact_negative));
+    }
+    let (nearest_mant, nearest_exp) = fp64_signed_mant_exp(nearest)?;
+    let mut cmp_terms = Vec::with_capacity(terms.len() + 1);
+    cmp_terms.extend_from_slice(terms);
+    cmp_terms.push((-nearest_mant, nearest_exp));
+    Some((scaled_i128_terms_sign(&cmp_terms), exact_negative))
+}
+
+fn fp64_adjust_nearest_with_fpcr(
+    nearest: u64,
+    cmp_exact_nearest: std::cmp::Ordering,
+    exact_negative: bool,
+    fpcr: u32,
+) -> u64 {
+    use std::cmp::Ordering::*;
+
+    if cmp_exact_nearest == Equal {
+        return nearest;
+    }
+
+    if fp64_is_inf(nearest) {
+        let max_finite = if exact_negative {
+            0xffef_ffff_ffff_ffff
+        } else {
+            0x7fef_ffff_ffff_ffff
+        };
+        return match (fpcr >> 22) & 0x3 {
+            1 if exact_negative => max_finite,
+            2 if !exact_negative => max_finite,
+            3 => max_finite,
+            _ => nearest,
+        };
+    }
+
+    match (fpcr >> 22) & 0x3 {
+        1 if cmp_exact_nearest == Greater => fp64_next_up_bits(nearest),
+        2 if cmp_exact_nearest == Less => fp64_next_down_bits(nearest),
+        3 if !exact_negative && cmp_exact_nearest == Less => fp64_next_down_bits(nearest),
+        3 if exact_negative && cmp_exact_nearest == Greater => fp64_next_up_bits(nearest),
+        _ => nearest,
+    }
+}
+
+fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) -> u64 {
+    use FpKind::*;
+    let nearest = fp_three_same_f64(kind, a, b, d);
+    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul) {
+        return nearest;
+    }
+
+    let Some((ma, ea)) = fp64_signed_mant_exp(a) else {
+        return nearest;
+    };
+    let Some((mut mb, eb)) = fp64_signed_mant_exp(b) else {
+        return nearest;
+    };
+    if matches!(kind, Sub) {
+        mb = -mb;
+    }
+
+    let terms = if matches!(kind, Mul) {
+        let Some(product) = ma.checked_mul(mb) else {
+            return nearest;
+        };
+        [(product, ea + eb), (0, 0)]
+    } else {
+        [(ma, ea), (mb, eb)]
+    };
+
+    let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&terms, nearest) else {
+        return nearest;
+    };
+    fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr)
+}
+
 /// Compute one f64 element of an Advanced SIMD three-same FP operation.
 fn fp_three_same_f64(kind: FpKind, a: u64, b: u64, d: u64) -> u64 {
     use FpKind::*;
@@ -23007,6 +23195,42 @@ fn fp32_next_down_bits(bits: u32) -> u32 {
         return 0x8000_0001;
     }
     if (bits >> 31) != 0 {
+        bits + 1
+    } else {
+        bits - 1
+    }
+}
+
+fn fp64_next_up_bits(bits: u64) -> u64 {
+    let x = f64::from_bits(bits);
+    if x.is_nan() || bits == 0x7ff0_0000_0000_0000 {
+        return bits;
+    }
+    if bits == 0xfff0_0000_0000_0000 {
+        return 0xffef_ffff_ffff_ffff;
+    }
+    if bits == 0x8000_0000_0000_0000 {
+        return 1;
+    }
+    if (bits >> 63) != 0 {
+        bits - 1
+    } else {
+        bits + 1
+    }
+}
+
+fn fp64_next_down_bits(bits: u64) -> u64 {
+    let x = f64::from_bits(bits);
+    if x.is_nan() || bits == 0xfff0_0000_0000_0000 {
+        return bits;
+    }
+    if bits == 0x7ff0_0000_0000_0000 {
+        return 0x7fef_ffff_ffff_ffff;
+    }
+    if bits == 0 {
+        return 0x8000_0000_0000_0001;
+    }
+    if (bits >> 63) != 0 {
         bits + 1
     } else {
         bits - 1

@@ -30929,6 +30929,61 @@ fn diff_sve_fcvt() {
 }
 
 #[test]
+fn diff_sve_fcvt_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let d_lanes = [16_777_217.0f64, -16_777_217.0f64];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvt_d2s_rmode{rmode}"),
+            enc_sve_fcvt(0b11, 0b10),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let s_lanes = [2049.0f32, -2049.0f32, 2049.0f32, -2049.0f32];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvt_s2h_rmode{rmode}"),
+            enc_sve_fcvt(0b10, 0b00),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let d_lanes = [2049.0f64, -2049.0f64];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvt_d2h_rmode{rmode}"),
+            enc_sve_fcvt(0b11, 0b00),
+            st,
+        ));
+    }
+
+    run_batch("sve_fcvt_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve2_fcvtx() {
     // SVE2 FCVTNT/FCVTLT/FCVTXNT operate on the top/odd half of each container.
     // Narrow (NT/XNT) reads the wide source from the whole container and writes
@@ -30965,6 +31020,46 @@ fn diff_sve2_fcvtx() {
         }
     }
     run_batch("sve2_fcvtx", batch);
+}
+
+#[test]
+fn diff_sve2_fcvtnt_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let s_lanes = [2049.0f32, -2049.0f32, 2049.0f32, -2049.0f32];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvtnt_s2h_rmode{rmode}"),
+            enc_sve2_fcvtx(0b10, 0b00),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let d_lanes = [16_777_217.0f64, -16_777_217.0f64];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvtnt_d2s_rmode{rmode}"),
+            enc_sve2_fcvtx(0b11, 0b10),
+            st,
+        ));
+    }
+
+    run_batch("sve2_fcvtnt_fpcr_rounding", batch);
 }
 
 #[test]
@@ -35843,6 +35938,86 @@ fn diff_fp_scalar_frint_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fp_scalar_f32_arith_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(opcode, name, lhs, rhs) in &[
+            (0b0010, "fadd_pos", 16_777_216.0f32, 1.0f32),
+            (0b0010, "fadd_neg", -16_777_216.0f32, -1.0f32),
+            (0b0011, "fsub_pos", 16_777_216.0f32, -1.0f32),
+            (0b0011, "fsub_neg", -16_777_216.0f32, 1.0f32),
+            (
+                0b0000,
+                "fmul_pos",
+                f32::from_bits(0x3f80_0001),
+                f32::from_bits(0x3f80_0001),
+            ),
+            (
+                0b1000,
+                "fnmul_pos",
+                f32::from_bits(0x3f80_0001),
+                f32::from_bits(0x3f80_0001),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_vreg(RN as usize, lhs.to_bits() as u64, 0);
+            st.set_vreg(RM as usize, rhs.to_bits() as u64, 0);
+            batch.push((format!("{name}_rmode{rmode}"), enc_fp2(0, opcode), st));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_f32_arith_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fp_scalar_f64_arith_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(opcode, name, lhs, rhs) in &[
+            (0b0010, "fadd_pos", 9_007_199_254_740_992.0f64, 1.0f64),
+            (
+                0b0010,
+                "fadd_neg",
+                -9_007_199_254_740_992.0f64,
+                -1.0f64,
+            ),
+            (0b0011, "fsub_pos", 9_007_199_254_740_992.0f64, -1.0f64),
+            (
+                0b0011,
+                "fsub_neg",
+                -9_007_199_254_740_992.0f64,
+                1.0f64,
+            ),
+            (
+                0b0000,
+                "fmul_pos",
+                f64::from_bits(0x3ff0_0000_0000_0001),
+                f64::from_bits(0x3ff0_0000_0000_0001),
+            ),
+            (
+                0b1000,
+                "fnmul_pos",
+                f64::from_bits(0x3ff0_0000_0000_0001),
+                f64::from_bits(0x3ff0_0000_0000_0001),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_vreg(RN as usize, lhs.to_bits(), 0);
+            st.set_vreg(RM as usize, rhs.to_bits(), 0);
+            batch.push((format!("{name}_rmode{rmode}"), enc_fp2(1, opcode), st));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_f64_arith_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_fp_scalar_fcvt_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
@@ -36629,6 +36804,174 @@ fn diff_simd_three_same_fp() {
     run_batch("simd_three_same_fp", batch);
 }
 
+#[test]
+fn diff_simd_f32_arith_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &(u, opcode, name, rhs_sign) in &[
+            (0, 0b11010, "fadd", 1.0f32),
+            (0, 0b11010, "fadd_neg", -1.0f32),
+            (0, 0b11010, "faddp", 1.0f32),
+            (0, 0b11010, "faddp_neg", -1.0f32),
+            (0, 0b11010, "fsub", -1.0f32),
+            (0, 0b11010, "fsub_neg", 1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let lhs = if name.ends_with("neg") {
+                -16_777_216.0f32
+            } else {
+                16_777_216.0f32
+            };
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for lane in 0..4 {
+                n |= (lhs.to_bits() as u128) << (32 * lane);
+                m |= (rhs_sign.to_bits() as u128) << (32 * lane);
+            }
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            let (enc_u, a_bit, enc_opcode) = match name {
+                "faddp" | "faddp_neg" => (1, 0, 0b11010),
+                "fsub" | "fsub_neg" => (0, 1, 0b11010),
+                _ => (u, 0, opcode),
+            };
+            batch.push((
+                format!("{name}_rmode{rmode}"),
+                enc_three_same(1, enc_u, a_bit << 1, enc_opcode),
+                st,
+            ));
+        }
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let lhs = f32::from_bits(0x3f80_0001);
+        let rhs = f32::from_bits(0x3f80_0001);
+        let mut n = 0u128;
+        let mut m = 0u128;
+        for lane in 0..4 {
+            n |= (lhs.to_bits() as u128) << (32 * lane);
+            m |= (rhs.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("fmul_rmode{rmode}"),
+            enc_three_same(1, 1, 0, 0b11011),
+            st,
+        ));
+    }
+
+    run_batch("simd_f32_arith_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_f64_arith_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &(u, opcode, name, rhs_sign) in &[
+            (0, 0b11010, "fadd", 1.0f64),
+            (0, 0b11010, "fadd_neg", -1.0f64),
+            (0, 0b11010, "faddp", 1.0f64),
+            (0, 0b11010, "faddp_neg", -1.0f64),
+            (0, 0b11010, "fsub", -1.0f64),
+            (0, 0b11010, "fsub_neg", 1.0f64),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let lhs = if name.ends_with("neg") {
+                -9_007_199_254_740_992.0f64
+            } else {
+                9_007_199_254_740_992.0f64
+            };
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for lane in 0..2 {
+                n |= (lhs.to_bits() as u128) << (64 * lane);
+                m |= (rhs_sign.to_bits() as u128) << (64 * lane);
+            }
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            let (enc_u, a_bit, enc_opcode) = match name {
+                "faddp" | "faddp_neg" => (1, 0, 0b11010),
+                "fsub" | "fsub_neg" => (0, 1, 0b11010),
+                _ => (u, 0, opcode),
+            };
+            batch.push((
+                format!("{name}_rmode{rmode}"),
+                enc_three_same(1, enc_u, (a_bit << 1) | 1, enc_opcode),
+                st,
+            ));
+        }
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let lhs = f64::from_bits(0x3ff0_0000_0000_0001);
+        let rhs = f64::from_bits(0x3ff0_0000_0000_0001);
+        let mut n = 0u128;
+        let mut m = 0u128;
+        for lane in 0..2 {
+            n |= (lhs.to_bits() as u128) << (64 * lane);
+            m |= (rhs.to_bits() as u128) << (64 * lane);
+        }
+        st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("fmul_rmode{rmode}"),
+            enc_three_same(1, 1, 1, 0b11011),
+            st,
+        ));
+    }
+
+    run_batch("simd_f64_arith_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_faddp_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let f32_lanes = [
+            16_777_216.0f32,
+            1.0f32,
+            -16_777_216.0f32,
+            -1.0f32,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in f32_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+        st.set_vreg(RM as usize, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("f32_rmode{rmode}"),
+            enc_three_same(1, 1, 0, 0b11010),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let n = (9_007_199_254_740_992.0f64.to_bits() as u128)
+            | ((1.0f64.to_bits() as u128) << 64);
+        let m = ((-9_007_199_254_740_992.0f64).to_bits() as u128)
+            | (((-1.0f64).to_bits() as u128) << 64);
+        st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("f64_rmode{rmode}"),
+            enc_three_same(1, 1, 1, 0b11010),
+            st,
+        ));
+    }
+
+    run_batch("simd_faddp_fpcr_rounding", batch);
+}
+
 /// Scalar Advanced SIMD three-same: `01 U 11110 size 1 Rm opcode 1 Rn Rd`.
 fn enc_scalar_3same(u: u32, size: u32, opcode: u32) -> u32 {
     (0b01 << 30)
@@ -37045,6 +37388,44 @@ fn diff_simd_frint_fpcr_rounding() {
     }
 
     run_batch("simd_frint_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fcvt_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let d_lanes = [16_777_217.0f64, -16_777_217.0f64];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvtn_d2s_rmode{rmode}"),
+            enc_two_reg(0, 0, 1, 0b10110),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let s_lanes = [2049.0f32, -2049.0f32, 2049.0f32, -2049.0f32];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("fcvtn_s2h_rmode{rmode}"),
+            enc_two_reg(0, 0, 0, 0b10110),
+            st,
+        ));
+    }
+
+    run_batch("simd_fcvt_fpcr_rounding", batch);
 }
 
 #[test]
