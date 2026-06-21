@@ -1327,7 +1327,6 @@ impl AArch64Cpu {
                 | (3, 3, 13, 0, 2) // TPIDR_EL0
                 | (3, 3, 13, 0, 3) // TPIDRRO_EL0
                 | (3, 3, 14, 0, 0) // CNTFRQ_EL0
-                | (3, 3, 14, 0, 1) // CNTPCT_EL0
                 | (3, 3, 14, 0, 2) // CNTVCT_EL0
                 // Random-number registers are architecturally EL0-readable.
                 | (3, 3, 2, 4, 0)  // RNDR
@@ -15243,6 +15242,12 @@ impl AArch64Cpu {
             // MRS
             let value = self.read_sysreg(encoding)?;
             self.set_x(rt, value);
+            if matches!(
+                (encoding.op0, encoding.op1, encoding.crn, encoding.crm, encoding.op2),
+                (3, 3, 2, 4, 0) | (3, 3, 2, 4, 1)
+            ) {
+                self.set_nzcv(false, false, false, false);
+            }
         } else {
             // MSR
             let value = self.get_x(rt);

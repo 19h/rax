@@ -25793,6 +25793,35 @@ fn diff_branch_system_hints_barriers_el0() {
 }
 
 #[test]
+fn diff_pauth_hint_roundtrip_el0() {
+    let pairs = [
+        ("pacia1716_autia1716", 0xd503_211f, 0xd503_219f, 17),
+        ("pacib1716_autib1716", 0xd503_215f, 0xd503_21df, 17),
+        ("paciasp_autiasp", 0xd503_233f, 0xd503_23bf, 30),
+        ("pacibsp_autibsp", 0xd503_237f, 0xd503_23ff, 30),
+    ];
+
+    let mut rng = Rng::new(0xa64_9a17);
+    let mut batch = Vec::new();
+    for (label, pac, aut, reg) in pairs {
+        for value in [
+            0,
+            1,
+            0x0000_7fff_ffff_fff0,
+            0xffff_8000_0000_0010,
+        ] {
+            let mut st = gen_input(&mut rng);
+            st.x[16] = rng.next();
+            st.x[reg] = value;
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+            batch.push((format!("{label}_{value:#x}"), pac, aut, st));
+        }
+    }
+
+    run_batch_pair("pauth_hint_roundtrip_el0", batch);
+}
+
+#[test]
 fn diff_generated_system_hints_udf_sweep() {
     let mut rng = Rng::new(0xa64_5157);
     let mut batch = Vec::new();
@@ -26414,6 +26443,195 @@ fn diff_system_el1_sysreg_el0_trap_sweep() {
     }
 
     run_batch_el0_trap("system_el1_sysreg_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_timer_control_el0_trap_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn msr(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("cntp_tval_el0", (1, 3, 14, 2, 0)),
+        ("cntp_ctl_el0", (1, 3, 14, 2, 1)),
+        ("cntp_cval_el0", (1, 3, 14, 2, 2)),
+        ("cntv_tval_el0", (1, 3, 14, 3, 0)),
+        ("cntv_ctl_el0", (1, 3, 14, 3, 1)),
+        ("cntv_cval_el0", (1, 3, 14, 3, 2)),
+    ];
+
+    let mut rng = Rng::new(0x5157_000d);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for rt in [0, RN, 30] {
+            batch.push((
+                format!("mrs_{name}_x{rt}"),
+                mrs(o0, op1, crn, crm, op2, rt),
+                gen_input(&mut rng),
+            ));
+
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((
+                format!("msr_{name}_x{rt}"),
+                msr(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_trap("system_timer_control_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_pac_key_el0_trap_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn msr(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("apiakeylo_el1", (1, 0, 2, 1, 0)),
+        ("apiakeyhi_el1", (1, 0, 2, 1, 1)),
+        ("apibkeylo_el1", (1, 0, 2, 1, 2)),
+        ("apibkeyhi_el1", (1, 0, 2, 1, 3)),
+        ("apdakeylo_el1", (1, 0, 2, 2, 0)),
+        ("apdakeyhi_el1", (1, 0, 2, 2, 1)),
+        ("apdbkeylo_el1", (1, 0, 2, 2, 2)),
+        ("apdbkeyhi_el1", (1, 0, 2, 2, 3)),
+        ("apgakeylo_el1", (1, 0, 2, 3, 0)),
+        ("apgakeyhi_el1", (1, 0, 2, 3, 1)),
+    ];
+
+    let mut rng = Rng::new(0x5157_000e);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for rt in [0, RN, 30] {
+            batch.push((
+                format!("mrs_{name}_x{rt}"),
+                mrs(o0, op1, crn, crm, op2, rt),
+                gen_input(&mut rng),
+            ));
+
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((
+                format!("msr_{name}_x{rt}"),
+                msr(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_trap("system_pac_key_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_el0_readonly_sysreg_write_trap_sweep() {
+    fn msr(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("ctr_el0", (1, 3, 0, 0, 1)),
+        ("dczid_el0", (1, 3, 0, 0, 7)),
+        ("tpidrro_el0", (1, 3, 13, 0, 3)),
+        ("cntfrq_el0", (1, 3, 14, 0, 0)),
+        ("cntpct_el0", (1, 3, 14, 0, 1)),
+        ("cntvct_el0", (1, 3, 14, 0, 2)),
+        ("rndr", (1, 3, 2, 4, 0)),
+        ("rndrrs", (1, 3, 2, 4, 1)),
+    ];
+
+    let mut rng = Rng::new(0x5157_000f);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for rt in [0, RN, 30] {
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((
+                format!("msr_{name}_x{rt}"),
+                msr(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_trap("system_el0_readonly_sysreg_write_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_el0_opaque_sysreg_read_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("ctr_el0", (1, 3, 0, 0, 1)),
+        ("cntfrq_el0", (1, 3, 14, 0, 0)),
+        ("cntpct_el0", (1, 3, 14, 0, 1)),
+        ("cntvct_el0", (1, 3, 14, 0, 2)),
+        ("tpidrro_el0", (1, 3, 13, 0, 3)),
+        ("rndr", (1, 3, 2, 4, 0)),
+        ("rndrrs", (1, 3, 2, 4, 1)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0010);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for _ in 0..4 {
+            batch.push((
+                format!("mrs_{name}_xzr"),
+                mrs(o0, op1, crn, crm, op2, 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0("system_el0_opaque_sysreg_read_sweep", batch);
 }
 
 #[test]
@@ -28616,6 +28834,9 @@ fn enc_rdffr(pd: u32) -> u32 {
 }
 fn enc_rdffr_pred(pd: u32, pg: u32) -> u32 {
     0x2518_F000 | ((pg & 0xF) << 5) | (pd & 0xF)
+}
+fn enc_rdffrs_pred(pd: u32, pg: u32) -> u32 {
+    enc_rdffr_pred(pd, pg) | (1 << 22)
 }
 
 /// SVE LD1RQ (load-replicate quadword): `1010010 msz 00 0 imm4 001`(imm) /
@@ -31352,6 +31573,28 @@ fn diff_sve_mmla() {
             st.set_vreg(0, rng.next(), rng.next());
             batch.push((name.to_string(), insn, st));
         }
+        for (zn, zm, za, edge) in [
+            (0, 0, 0, "zero"),
+            (u128::MAX, u128::MAX, 0, "all_ff"),
+            (
+                0x8080_8080_8080_8080_8080_8080_8080_8080u128,
+                0x7f7f_7f7f_7f7f_7f7f_7f7f_7f7f_7f7f_7f7fu128,
+                0,
+                "signed_min_max",
+            ),
+            (
+                0x00ff_807f_55aa_aa55_0102_0304_fefd_fcfbu128,
+                0xff00_7f80_aa55_55aa_0403_0201_0102_0304u128,
+                0x7fff_ffff_8000_0000_ffff_ffff_0000_0001u128,
+                "mixed_acc",
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+            st.set_vreg(0, za as u64, (za >> 64) as u64);
+            batch.push((format!("{name}_{edge}"), insn, st));
+        }
     }
     run_batch("sve_mmla", batch);
 }
@@ -31928,6 +32171,28 @@ fn diff_sve_ffr() {
             "wrffr+rdffr_pred".to_string(),
             enc_wrffr(1),
             enc_rdffr_pred(0, 2),
+            st,
+        ));
+    }
+    for (ffr, pg) in [
+        (0x0000, 0x0000),
+        (0xffff, 0x0000),
+        (0x0001, 0xffff),
+        (0x8000, 0xffff),
+        (0x00ff, 0x0f0f),
+        (0xaaaa, 0x5555),
+        (0x5555, 0xaaaa),
+        (0xf00f, 0x3333),
+    ] {
+        // WRFFR p1 ; RDFFRS p0, p2/Z -> p0 = p1 & p2 and NZCV = PredTest(p2, p0).
+        let mut st = ArmState::zeroed();
+        st.pstate = (rng.next() & 0xf) << 28;
+        st.set_preg(1, ffr);
+        st.set_preg(2, pg);
+        batch.push((
+            format!("wrffr+rdffrs ffr={ffr:#06x} pg={pg:#06x}"),
+            enc_wrffr(1),
+            enc_rdffrs_pred(0, 2),
             st,
         ));
     }
