@@ -324,6 +324,9 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if matches!(mnemonic_base, "cfinv" | "xaflag" | "axflag") {
         return !caps.has("flagm");
     }
+    if mnemonic_base == "sb" {
+        return !caps.has("sb");
+    }
 
     let sve2p1 = [
         "addqv", "andqv", "eorqv", "orqv", "smaxqv", "sminqv", "umaxqv", "uminqv", "faddqv",
@@ -1367,6 +1370,84 @@ fn parse_generated_a64_cases_with_fields(
     out
 }
 
+fn parse_generated_a64_cases_with_fields_and_asm(
+    family: &str,
+    source: &str,
+) -> Vec<(String, u32, std::collections::BTreeMap<String, i32>)> {
+    let mut provenance = String::new();
+    let mut fields = std::collections::BTreeMap::new();
+    let mut pending: Option<(String, std::collections::BTreeMap<String, i32>, u32)> = None;
+    let mut out = Vec::new();
+
+    fn push_pending(
+        out: &mut Vec<(String, u32, std::collections::BTreeMap<String, i32>)>,
+        family: &str,
+        pending: &mut Option<(String, std::collections::BTreeMap<String, i32>, u32)>,
+        asm: Option<&str>,
+    ) {
+        let Some((provenance, fields, insn)) = pending.take() else {
+            return;
+        };
+        let label = if let Some(asm) = asm {
+            format!("{asm} [{family} {insn:#010x}]")
+        } else {
+            let provenance_lower = provenance.to_ascii_lowercase();
+            let mnemonic = if let Some(rest) =
+                provenance_lower.strip_prefix("aarch64_vector_crypto_")
+            {
+                rest.split('_').next().unwrap_or(family).to_string()
+            } else {
+                provenance
+                    .split('_')
+                    .next()
+                    .unwrap_or(family)
+                    .to_ascii_lowercase()
+            };
+            let suffix = size_field_suffix(&fields).unwrap_or("");
+            format!("{mnemonic}{suffix} [{family} {insn:#010x}]")
+        };
+        out.push((label, insn, fields));
+    }
+
+    for line in source.lines() {
+        let line = line.trim();
+        if let Some(rest) = line.strip_prefix("/// Provenance: ") {
+            push_pending(&mut out, family, &mut pending, None);
+            provenance.clear();
+            provenance.push_str(rest);
+            fields.clear();
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("// Fields: ") {
+            fields.clear();
+            for part in rest.split(',') {
+                let Some((name, value)) = part.trim().split_once('=') else {
+                    continue;
+                };
+                if let Ok(value) = value.parse::<i32>() {
+                    fields.insert(name.to_string(), value);
+                }
+            }
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("let encoding: u32 = ") {
+            push_pending(&mut out, family, &mut pending, None);
+            let Some(hex) = rest.strip_suffix(';').and_then(|s| s.strip_prefix("0x")) else {
+                continue;
+            };
+            if let Ok(insn) = u32::from_str_radix(hex, 16) {
+                pending = Some((provenance.clone(), fields.clone(), insn));
+            }
+            continue;
+        }
+        if let Some(asm) = line.strip_prefix("// llvm-mc: ") {
+            push_pending(&mut out, family, &mut pending, Some(asm.trim()));
+        }
+    }
+    push_pending(&mut out, family, &mut pending, None);
+    out
+}
+
 fn generated_integer_dp_cases() -> Vec<(String, u32)> {
     let sources = [
         (
@@ -1427,6 +1508,21 @@ fn generated_integer_tag_addsub_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings("integer/tags", source) {
         if !integer_tag_addsub(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_integer_pac_strip_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/integer/pac.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("integer/pac", source) {
+        if !integer_pac_strip_or_hint(insn) {
             continue;
         }
         by_encoding.entry(insn).or_insert(label);
@@ -1880,6 +1976,60 @@ fn generated_sve_other_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_sve_prefetch_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/prefetch.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("sve/prefetch", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_base_imm_memory_cases() -> Vec<(String, u32)> {
+    let sources = [
+        ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
+    ];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source)
+        {
+            if !sve_base_imm_memory_in_scratch_window(&fields) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_contiguous_base_imm_memory_cases() -> Vec<(String, u32)> {
+    let sources = [
+        ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
+    ];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source)
+        {
+            if !sve_contiguous_base_imm_memory_in_scratch_window(&label, &fields) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_sve_int_to_fp16_convert_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/convert.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2137,6 +2287,61 @@ fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_system_exception_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/system/exceptions.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("system/exceptions", source) {
+        if generated_exception_expected_exit(insn).is_none() {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_system_barrier_mnemonic(insn: u32) -> Option<&'static str> {
+    let l = (insn >> 21) & 1;
+    let op0 = (insn >> 19) & 0x3;
+    let op1 = (insn >> 16) & 0x7;
+    let crn = (insn >> 12) & 0xf;
+    let op2 = (insn >> 5) & 0x7;
+    let rt = insn & 0x1f;
+    if l != 0 || op0 != 0 || op1 != 3 || crn != 3 || rt != 31 {
+        return None;
+    }
+    match op2 {
+        0b100 => Some("dsb"),
+        0b101 => Some("dmb"),
+        0b110 => Some("isb"),
+        0b111 => Some("sb"),
+        _ => None,
+    }
+}
+
+fn generated_system_barrier_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/system/other.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    let parsed = parse_generated_a64_cases_with_fields_and_asm("system/other", source);
+    for (_label, insn, fields) in parsed {
+        let Some(mnemonic) = generated_system_barrier_mnemonic(insn) else {
+            continue;
+        };
+        let crm = fields
+            .get("CRm")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 8) & 0xf) as i32);
+        let label = format!("{mnemonic} crm={crm} [system/other {insn:#010x}]");
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_memory_single_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/memory/single.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2321,6 +2526,69 @@ fn memory_exclusive_load_in_scratch_window(fields: &std::collections::BTreeMap<S
     true
 }
 
+fn sve_base_imm_memory_in_scratch_window(
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
+    if fields.contains_key("Pg")
+        || fields.contains_key("Rm")
+        || fields.contains_key("Zm")
+        || fields.contains_key("imm4")
+        || fields.contains_key("imm5")
+    {
+        return false;
+    }
+    let Some(imm9h) = fields.get("imm9h").copied() else {
+        return false;
+    };
+    let Some(imm9l) = fields.get("imm9l").copied() else {
+        return false;
+    };
+    if !(0..=63).contains(&imm9h) || !(0..=7).contains(&imm9l) {
+        return false;
+    }
+    if imm9h >= 32 {
+        return false;
+    }
+    let imm = (imm9h << 3) | imm9l;
+    imm <= 11
+}
+
+fn sve_contiguous_base_imm_memory_in_scratch_window(
+    label: &str,
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
+    let mnemonic = label.split_whitespace().next().unwrap_or("");
+    if !matches!(
+        mnemonic,
+        "ld1b" | "ld1h" | "ld1w" | "ld1d" | "ld1sb" | "ld1sh" | "ld1sw"
+            | "ld2b" | "ld2h" | "ld2w" | "ld2d"
+            | "ld3b" | "ld3h" | "ld3w" | "ld3d"
+            | "ld4b" | "ld4h" | "ld4w" | "ld4d"
+            | "st1b" | "st1h" | "st1w" | "st1d"
+            | "st2b" | "st2h" | "st2w" | "st2d"
+            | "st3b" | "st3h" | "st3w" | "st3d"
+            | "st4b" | "st4h" | "st4w" | "st4d"
+    ) {
+        return false;
+    }
+    if fields.contains_key("Rm")
+        || fields.contains_key("Zm")
+        || fields.contains_key("imm5")
+        || fields.contains_key("imm9h")
+        || fields.contains_key("imm9l")
+    {
+        return false;
+    }
+    let Some(imm4) = fields.get("imm4").copied() else {
+        return false;
+    };
+    if !(0..=15).contains(&imm4) || !fields.contains_key("Pg") {
+        return false;
+    }
+    let signed = if imm4 >= 8 { imm4 - 16 } else { imm4 };
+    (-1..=1).contains(&signed)
+}
+
 fn branch_immediate_in_tiny_program(fields: &std::collections::BTreeMap<String, i32>) -> bool {
     fields.get("imm26").or_else(|| fields.get("imm19")).or_else(|| fields.get("imm14")) == Some(&3)
 }
@@ -2350,6 +2618,52 @@ fn integer_tag_addsub(insn: u32) -> bool {
         && ((insn >> 29) & 1) == 0
         && ((insn >> 23) & 0x3f) == 0b100011
         && ((insn >> 22) & 1) == 0
+}
+
+fn integer_pac_strip_or_hint(insn: u32) -> bool {
+    if insn == 0xd503_20ff {
+        return true;
+    }
+    let sf = (insn >> 31) & 1;
+    let opcode2 = (insn >> 16) & 0x1f;
+    let opcode = (insn >> 10) & 0x3f;
+    sf == 1 && opcode2 == 0b00001 && matches!(opcode, 0b010000 | 0b010001)
+}
+
+#[derive(Clone, Copy)]
+enum GeneratedExceptionExit {
+    Breakpoint(u32),
+    Hvc(u16),
+    Smc(u16),
+    Halt,
+}
+
+impl GeneratedExceptionExit {
+    fn matches(self, actual: Option<CpuExit>) -> bool {
+        match (self, actual) {
+            (GeneratedExceptionExit::Breakpoint(imm), Some(CpuExit::Breakpoint(got))) => {
+                got == imm
+            }
+            (GeneratedExceptionExit::Hvc(imm), Some(CpuExit::Hvc(got))) => got == imm,
+            (GeneratedExceptionExit::Smc(imm), Some(CpuExit::Smc(got))) => got == imm,
+            (GeneratedExceptionExit::Halt, Some(CpuExit::Halt)) => true,
+            _ => false,
+        }
+    }
+}
+
+fn generated_exception_expected_exit(insn: u32) -> Option<GeneratedExceptionExit> {
+    let opc = (insn >> 21) & 0x7;
+    let ll = insn & 0x3;
+    let imm16 = ((insn >> 5) & 0xffff) as u16;
+    match (opc, ll) {
+        (0b000, 0b10) => Some(GeneratedExceptionExit::Hvc(imm16)),
+        (0b000, 0b11) => Some(GeneratedExceptionExit::Smc(imm16)),
+        (0b001, 0b00) => Some(GeneratedExceptionExit::Breakpoint(imm16 as u32)),
+        (0b010, 0b00) => Some(GeneratedExceptionExit::Halt),
+        (0b101, 0b01..=0b11) => Some(GeneratedExceptionExit::Halt),
+        _ => None,
+    }
 }
 
 fn vector_dotprod(insn: u32) -> bool {
@@ -2465,6 +2779,15 @@ fn gen_tag_addsub_input(rng: &mut Rng) -> ArmState {
     st
 }
 
+fn gen_pac_strip_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    for i in 0..31 {
+        st.x[i] = rng.next() & 0x0000_7fff_ffff_fff0;
+    }
+    st.sp = 0x10_0000 + (rng.next() & 0xffff0);
+    st
+}
+
 fn gen_float_input(rng: &mut Rng) -> ArmState {
     let mut st = gen_input(rng);
     for i in 0..31 {
@@ -2484,6 +2807,33 @@ fn gen_sve_input(rng: &mut Rng) -> ArmState {
     let mut st = gen_input(rng);
     for r in 0..16 {
         st.set_preg(r, rng.next() as u16);
+    }
+    st
+}
+
+fn gen_sve_base_imm_memory_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_sve_input(rng);
+    for i in 0..31 {
+        st.x[i] = SCRATCH_BASE;
+    }
+    st.sp = SCRATCH_BASE;
+    for word in &mut st.scratch {
+        *word = rng.next();
+    }
+    st
+}
+
+fn gen_sve_contiguous_memory_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_sve_input(rng);
+    for i in 0..31 {
+        st.x[i] = SCRATCH_BASE + 64;
+    }
+    st.sp = SCRATCH_BASE + 64;
+    for word in &mut st.scratch {
+        *word = rng.next();
+    }
+    for r in 0..16 {
+        st.set_preg(r, 1);
     }
     st
 }
@@ -24317,6 +24667,19 @@ fn diff_generated_integer_tag_addsub_sweep() {
 }
 
 #[test]
+fn diff_generated_integer_pac_strip_sweep() {
+    let mut rng = Rng::new(0xa64_9ac5);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_integer_pac_strip_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_pac_strip_input(&mut rng)));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated XPAC strip cases");
+    run_batch("generated_integer_pac_strip_sweep", batch);
+}
+
+#[test]
 fn diff_load_literal_scalar() {
     fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
         let imm19 = ((offset >> 2) as u32) & 0x7ffff;
@@ -24718,6 +25081,103 @@ fn diff_branch_system_exceptions_el0() {
             mismatches.len()
         );
     }
+}
+
+#[test]
+fn diff_generated_system_exception_sweep() {
+    let mut rng = Rng::new(0xa64_5eec);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_exception_cases() {
+        let expected = generated_exception_expected_exit(insn).unwrap();
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, expected, gen_input(&mut rng)));
+        }
+    }
+    assert!(
+        !batch.is_empty(),
+        "expected generated EL0 exception cases"
+    );
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] generated_system_exception_sweep: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, _, st)| (*insn, NOP, NOP, 1, *st))
+        .collect();
+    let outs = match run_oracle3_reserved(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] generated_system_exception_sweep: native oracle run failed");
+            }
+            eprintln!("[arm_diff] generated_system_exception_sweep: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _, _, _, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        if out.trapped == 0 {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: "hardware completed, expected an EL0 exception/trap".into(),
+            });
+            continue;
+        }
+        let rax_exit = run_rax_exit(*insn, st);
+        if !batch[i].2.matches(rax_exit.clone()) {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: format!(
+                    "hardware trapped with signal {}, rax exit was {:?}",
+                    out.trapped, rax_exit
+                ),
+            });
+        }
+    }
+
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== generated_system_exception_sweep: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "generated_system_exception_sweep: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+#[test]
+fn diff_generated_system_barrier_sweep() {
+    let mut rng = Rng::new(0xa64_5baf);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_barrier_cases() {
+        for _ in 0..5 {
+            batch.push((label.clone(), insn, gen_input(&mut rng)));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated system barrier cases");
+    run_batch("generated_system_barrier_sweep", batch);
 }
 
 #[test]
@@ -32811,6 +33271,42 @@ fn diff_generated_sve_other_sweep() {
         }
     }
     run_batch("generated_sve_other_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_prefetch_sweep() {
+    let mut rng = Rng::new(0xa64_9f01);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_prefetch_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_prefetch_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_base_imm_memory_sweep() {
+    let mut rng = Rng::new(0xa64_5e10);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_base_imm_memory_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_sve_base_imm_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_base_imm_memory_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_contiguous_base_imm_memory_sweep() {
+    let mut rng = Rng::new(0xa64_5e11);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_contiguous_base_imm_memory_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_sve_contiguous_memory_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_contiguous_base_imm_memory_sweep", batch);
 }
 
 #[test]
