@@ -323,6 +323,15 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if mnemonic_base.starts_with("sm4") {
         return !caps.has("sm4");
     }
+    if mnemonic_base.starts_with("sha512") {
+        return !caps.has("sha512");
+    }
+    if matches!(mnemonic_base, "eor3" | "bcax" | "xar" | "sha3_rax1") {
+        return !caps.has("sha3");
+    }
+    if mnemonic_base == "fjcvtzs" {
+        return !caps.has("jscvt");
+    }
     if matches!(mnemonic_base, "subp" | "subps" | "irg" | "gmi") {
         return !caps.has("mte");
     }
@@ -331,6 +340,18 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     }
     if matches!(mnemonic_base, "cfinv" | "xaflag" | "axflag") {
         return !caps.has("flagm");
+    }
+    if mnemonic_base == "dit" {
+        return !caps.has("dit");
+    }
+    if mnemonic_base == "cpuid" {
+        return !caps.has("cpuid");
+    }
+    if mnemonic_base.starts_with("dc_cvap") {
+        return !caps.has("dcpop");
+    }
+    if mnemonic_base.starts_with("dc_cvadp") {
+        return !caps.has("dcpodp");
     }
     if mnemonic_base == "sb" {
         return !caps.has("sb");
@@ -343,6 +364,9 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     }
     if matches!(mnemonic_base, "ldapr" | "ldaprb" | "ldaprh") {
         return !caps.has("lrcpc");
+    }
+    if mnemonic_base.contains("cntpctss") || mnemonic_base.contains("cntvctss") {
+        return !caps.has("ecv");
     }
 
     let sve2p1 = [
@@ -26361,6 +26385,79 @@ fn diff_system_flagm_el0() {
 }
 
 #[test]
+fn diff_system_dit_el0() {
+    fn msr_dit_imm(imm: u32) -> u32 {
+        0xd503_405f | ((imm & 1) << 8)
+    }
+
+    fn msr_dit_reg(rt: u32) -> u32 {
+        0xd51b_42a0 | (rt & 0x1f)
+    }
+
+    fn mrs_dit(rt: u32) -> u32 {
+        0xd53b_42a0 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0009);
+    let mut batch = Vec::new();
+
+    for imm in 0..=1 {
+        let mut st = gen_input(&mut rng);
+        st.x[RD as usize] = 0xdead_beef_dead_beef;
+        batch.push((format!("dit imm{imm} readback"), msr_dit_imm(imm), mrs_dit(RD), st));
+    }
+
+    for value in [0u64, 1, 2, 1 << 24, 1 << 25, u64::MAX] {
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = value;
+        st.x[RD as usize] = 0xdead_beef_dead_beef;
+        batch.push((
+            format!("dit reg {value:#x} readback"),
+            msr_dit_reg(RN),
+            mrs_dit(RD),
+            st,
+        ));
+    }
+
+    run_batch_el0_pair("system_dit_el0", batch);
+}
+
+#[test]
+fn diff_system_cpuid_xzr_el0() {
+    fn mrs_id_xzr(op1: u32, crm: u32, op2: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | 31
+    }
+
+    let mut rng = Rng::new(0x5157_000a);
+    let mut batch = Vec::new();
+    for (label, op1, crm, op2) in [
+        ("cpuid midr", 0, 0, 0),
+        ("cpuid mpidr", 0, 0, 5),
+        ("cpuid revidr", 0, 0, 6),
+        ("cpuid id_aa64pfr0", 0, 4, 0),
+        ("cpuid id_aa64pfr1", 0, 4, 1),
+        ("cpuid id_aa64dfr0", 0, 5, 0),
+        ("cpuid id_aa64dfr1", 0, 5, 1),
+        ("cpuid id_aa64isar0", 0, 6, 0),
+        ("cpuid id_aa64isar1", 0, 6, 1),
+        ("cpuid id_aa64isar2", 0, 6, 2),
+        ("cpuid id_aa64mmfr0", 0, 7, 0),
+        ("cpuid id_aa64mmfr1", 0, 7, 1),
+        ("cpuid id_aa64mmfr2", 0, 7, 2),
+    ] {
+        batch.push((label.to_string(), mrs_id_xzr(op1, crm, op2), gen_input(&mut rng)));
+    }
+
+    run_batch_el0("system_cpuid_xzr_el0", batch);
+}
+
+#[test]
 fn diff_system_dc_zva_el0() {
     fn dc_zva(rt: u32) -> u32 {
         0xd50b_7420 | (rt & 0x1f)
@@ -26405,6 +26502,8 @@ fn diff_system_user_cache_maintenance_el0() {
         ("ic_ivau", sys(3, 7, 5, 1, RN)),
         ("dc_cvac", sys(3, 7, 10, 1, RN)),
         ("dc_cvau", sys(3, 7, 11, 1, RN)),
+        ("dc_cvap", sys(3, 7, 12, 1, RN)),
+        ("dc_cvadp", sys(3, 7, 13, 1, RN)),
         ("dc_civac", sys(3, 7, 14, 1, RN)),
     ];
 
@@ -26641,6 +26740,8 @@ fn diff_system_el0_readonly_sysreg_write_trap_sweep() {
         ("cntfrq_el0", (1, 3, 14, 0, 0)),
         ("cntpct_el0", (1, 3, 14, 0, 1)),
         ("cntvct_el0", (1, 3, 14, 0, 2)),
+        ("cntpctss_el0", (1, 3, 14, 0, 5)),
+        ("cntvctss_el0", (1, 3, 14, 0, 6)),
         ("rndr", (1, 3, 2, 4, 0)),
         ("rndrrs", (1, 3, 2, 4, 1)),
     ];
@@ -26679,6 +26780,8 @@ fn diff_system_el0_opaque_sysreg_read_sweep() {
         ("cntfrq_el0", (1, 3, 14, 0, 0)),
         ("cntpct_el0", (1, 3, 14, 0, 1)),
         ("cntvct_el0", (1, 3, 14, 0, 2)),
+        ("cntpctss_el0", (1, 3, 14, 0, 5)),
+        ("cntvctss_el0", (1, 3, 14, 0, 6)),
         ("tpidrro_el0", (1, 3, 13, 0, 3)),
         ("rndr", (1, 3, 2, 4, 0)),
         ("rndrrs", (1, 3, 2, 4, 1)),
@@ -27305,6 +27408,38 @@ fn diff_simd_fp16_scalar() {
     run_batch("simd_fp16_scalar", batch);
 }
 
+#[test]
+fn diff_fp_fjcvtzs_jscvt() {
+    let insn = 0x1e7e_0020; // FJCVTZS W0, D1
+    let mut rng = Rng::new(0x1_0022);
+    let mut batch = Vec::new();
+    for value in [
+        0.0f64,
+        -0.0,
+        1.0,
+        -1.0,
+        1.5,
+        -1.5,
+        2_147_483_647.0,
+        2_147_483_647.5,
+        2_147_483_648.0,
+        -2_147_483_648.0,
+        -2_147_483_648.5,
+        4_294_967_295.0,
+        4_294_967_296.0,
+        4_294_967_297.0,
+        -2_147_483_649.0,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+        f64::from_bits(0x7ff8_0000_1234_5678),
+    ] {
+        let mut st = gen_input(&mut rng);
+        st.set_vreg(1, value.to_bits(), rng.next());
+        batch.push((format!("fjcvtzs {:#018x}", value.to_bits()), insn, st));
+    }
+    run_batch("fp_fjcvtzs_jscvt", batch);
+}
+
 /// A binary16 NaN (signaling or quiet), random sign/payload (payload != 0).
 fn rand_fp16_nan(rng: &mut Rng) -> u16 {
     let sign = (rng.next() & 1) as u16;
@@ -27665,6 +27800,27 @@ fn diff_crypto_sha() {
         cases.push((name.to_string(), enc_sha2(opcode)));
     }
     run_family("crypto_sha", cases, 40, 0x1_000D);
+}
+
+fn enc_xar(imm6: u32) -> u32 {
+    0xce82_0020 | ((imm6 & 0x3f) << 10)
+}
+
+#[test]
+fn diff_crypto_sha512_sha3() {
+    let mut cases: Vec<(String, u32)> = vec![
+        ("sha512h".to_string(), 0xce62_8020),
+        ("sha512h2".to_string(), 0xce62_8420),
+        ("sha512su0".to_string(), 0xcec0_8020),
+        ("sha512su1".to_string(), 0xce62_8820),
+        ("sha3_rax1".to_string(), 0xce62_8c20),
+        ("eor3".to_string(), 0xce02_0c20),
+        ("bcax".to_string(), 0xce22_0c20),
+    ];
+    for imm in [0, 1, 13, 63] {
+        cases.push((format!("xar #{imm}"), enc_xar(imm)));
+    }
+    run_family("crypto_sha512_sha3", cases, 40, 0x1_0021);
 }
 
 /// SM4E Vd.4S, Vn.4S: `11001110 11000000 100001 Rn Rd`. Rd=v0, Rn=v1.

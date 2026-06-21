@@ -654,6 +654,10 @@ impl SystemRegisters {
             (3, 3, 14, 0, 1) => Some(self.cntpct_el0),
             // CNTVCT_EL0
             (3, 3, 14, 0, 2) => Some(self.cntvct_el0),
+            // CNTVCTSS_EL0 (FEAT_ECV): self-synchronized virtual count.
+            // The model has no out-of-order counter visibility, so this is the
+            // same value as CNTVCT_EL0.
+            (3, 3, 14, 0, 6) => Some(self.cntvct_el0),
             // CNTP_CTL_EL0 (ISTATUS computed from the live counter)
             (3, 3, 14, 2, 1) => {
                 let mut ctl = self.cntp_ctl_el0 & 0x3;

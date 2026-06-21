@@ -1043,6 +1043,10 @@ impl AArch64Cpu {
             (3, 3, 4, 2, 1) => {
                 return Ok((self.daif as u64) << 6);
             }
+            // DIT
+            (3, 3, 4, 2, 5) => {
+                return Ok(if self.dit { 1 << 24 } else { 0 });
+            }
             // CurrentEL
             (3, 0, 4, 2, 2) => {
                 return Ok((self.current_el as u64) << 2);
@@ -1221,6 +1225,11 @@ impl AArch64Cpu {
                 self.daif = ((value >> 6) & 0xF) as u8;
                 return Ok(());
             }
+            // DIT
+            (3, 3, 4, 2, 5) => {
+                self.dit = ((value >> 24) & 1) != 0;
+                return Ok(());
+            }
             // SPSel
             (3, 0, 4, 2, 0) => {
                 self.sp_sel = (value & 1) != 0;
@@ -1309,6 +1318,9 @@ impl AArch64Cpu {
     }
 
     fn sysreg_read_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
+        if encoding.op0 == 3 && encoding.crn == 0 {
+            return true;
+        }
         matches!(
             (
                 encoding.op0,
@@ -1319,6 +1331,7 @@ impl AArch64Cpu {
             ),
             // EL0-visible status/control registers.
             (3, 3, 4, 2, 0)  // NZCV
+                | (3, 3, 4, 2, 5)  // DIT
                 | (3, 3, 4, 4, 0)  // FPCR
                 | (3, 3, 4, 4, 1)  // FPSR
                 // EL0-visible cache/timer/thread state.
@@ -1328,6 +1341,7 @@ impl AArch64Cpu {
                 | (3, 3, 13, 0, 3) // TPIDRRO_EL0
                 | (3, 3, 14, 0, 0) // CNTFRQ_EL0
                 | (3, 3, 14, 0, 2) // CNTVCT_EL0
+                | (3, 3, 14, 0, 6) // CNTVCTSS_EL0
                 // Random-number registers are architecturally EL0-readable.
                 | (3, 3, 2, 4, 0)  // RNDR
                 | (3, 3, 2, 4, 1)  // RNDRRS
@@ -1344,6 +1358,7 @@ impl AArch64Cpu {
                 encoding.op2,
             ),
             (3, 3, 4, 2, 0)  // NZCV
+                | (3, 3, 4, 2, 5)  // DIT
                 | (3, 3, 4, 4, 0)  // FPCR
                 | (3, 3, 4, 4, 1)  // FPSR
                 | (3, 3, 13, 0, 2) // TPIDR_EL0
@@ -2313,7 +2328,8 @@ impl AArch64Cpu {
                 // zero, modulo 2^32). Z=1 iff exact (finite, integral, in range);
                 // N=C=V=0.
                 (0, 0b01, 0b11, 0b110) => {
-                    let x = f64::from_bits(self.v[rn as usize] as u64);
+                    let bits = self.v[rn as usize] as u64;
+                    let x = f64::from_bits(bits);
                     let (res, exact): (i32, bool) = if !x.is_finite() {
                         (0, false)
                     } else {
@@ -2331,6 +2347,7 @@ impl AArch64Cpu {
                     };
                     self.set_w(rd, res as u32);
                     self.set_nzcv(false, exact, false, false);
+                    self.fpsr |= fp_status_fjcvtzs(bits);
                 }
                 _ => {
                     return Err(ArmError::Unimplemented(format!(
@@ -15130,7 +15147,9 @@ impl AArch64Cpu {
             // carries the immediate) plus the FEAT_FlagM flag-format ops.
             // Kernels lean on DAIFSet/DAIFClr for interrupt masking, so these
             // must not fall through as hints.
-            if self.current_el == 0 && !(op1 == 0 && op2 <= 0b010) {
+            if self.current_el == 0
+                && !((op1 == 0 && op2 <= 0b010) || (op1 == 3 && op2 == 0b010))
+            {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
             let imm = ((insn >> 8) & 0xF) as u8;
@@ -19332,6 +19351,22 @@ fn fp_to_int_status(scaled: f64, signed: bool, bits: u32) -> u32 {
     }
     let rounded = scaled.trunc();
     fp_to_int_rounded_status(scaled, rounded, signed, bits)
+}
+
+fn fp_status_fjcvtzs(bits: u64) -> u32 {
+    let input = f64::from_bits(bits);
+    if is_nan64(bits) || !input.is_finite() {
+        return FPSR_IOC;
+    }
+    let rounded = input.trunc();
+    if rounded < i32::MIN as f64 || rounded > i32::MAX as f64 {
+        return FPSR_IOC;
+    }
+    if input != rounded {
+        FPSR_IXC
+    } else {
+        0
+    }
 }
 
 fn fp_to_int_rounded_status(input: f64, rounded: f64, signed: bool, bits: u32) -> u32 {
