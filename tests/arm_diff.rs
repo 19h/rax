@@ -37212,6 +37212,7 @@ fn diff_sve2_fcvtx() {
     // result into the whole container. Predication is at container granularity.
     let convs = [
         (0b10u32, 0b00u32, 4usize, 2usize, true, "fcvtnt_s2h"),
+        (0b10, 0b10, 4, 2, true, "bfcvtnt_s2bf16"),
         (0b11, 0b10, 8, 4, true, "fcvtnt_d2s"),
         (0b00, 0b10, 8, 4, true, "fcvtxnt_d2s"),
         (0b10, 0b01, 2, 4, false, "fcvtlt_h2s"),
@@ -37219,7 +37220,7 @@ fn diff_sve2_fcvtx() {
     ];
     let mut rng = Rng::new(0x6_1001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    for (opc, opc2, src_sz, dst_sz, narrow, name) in convs {
+    for &(opc, opc2, src_sz, dst_sz, narrow, name) in &convs {
         let insn = enc_sve2_fcvtx(opc, opc2);
         let cont = src_sz.max(dst_sz);
         let containers = 16 / cont;
@@ -37237,6 +37238,30 @@ fn diff_sve2_fcvtx() {
             st.set_vreg(0, rng.next(), rng.next()); // prior Zd (preserved half)
             st.set_preg(0, rng.next() as u16);
             batch.push((name.to_string(), insn, st));
+        }
+    }
+    for &(opc, opc2, src_sz, dst_sz, narrow, name) in &convs {
+        let insn = enc_sve2_fcvtx(opc, opc2);
+        let cont = src_sz.max(dst_sz);
+        let containers = 16 / cont;
+        let mixed = if cont == 8 { 0x0001 } else { 0x0101 };
+        let special_values: &[u64] = match src_sz {
+            2 => &[0x7c01, 0x7e00, 0x7c00, 0xfc00],
+            4 => &[0x7fa0_0001, 0x7fc0_1234, 0x7f80_0000, 0xff80_0000],
+            _ => &[0x7ff0_0000_0000_0001, 0x7ff8_0000_0000_1234],
+        };
+        for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+            let mut zn = 0u128;
+            for c in 0..containers {
+                let bits = special_values[c % special_values.len()] as u128;
+                let off_bytes = if narrow { c * cont } else { c * cont + src_sz };
+                zn |= bits << (off_bytes * 8);
+            }
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RD as usize, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+            st.set_preg(0, pg);
+            batch.push((format!("{name}_special_{mask_name}"), insn, st));
         }
     }
 
@@ -37387,7 +37412,7 @@ fn diff_sve2_fmlal() {
         (1, 0, "fmlslb"),
         (1, 1, "fmlslt"),
     ];
-    for (sub, top, name) in variants {
+    for &(sub, top, name) in &variants {
         let insn = enc_sve2_fmlal(sub, top);
         for _ in 0..24 {
             let mut zn = 0u128;
@@ -37406,6 +37431,27 @@ fn diff_sve2_fmlal() {
             st.set_vreg(0, zd as u64, (zd >> 64) as u64);
             batch.push((name.to_string(), insn, st));
         }
+    }
+    for &(sub, top, name) in &variants {
+        let insn = enc_sve2_fmlal(sub, top);
+        let zn_lanes = [0x7c01u16, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00];
+        let zm_lanes = [0x3c00u16, 0xbc00, 0x0000, 0x8000, 0x7c01, 0x7e00, 0x4000, 0xc000];
+        let zd_lanes = [0u32, 0x7fa0_0001, 0x7fc0_1234, 0xff80_0000];
+        let mut zn = 0u128;
+        let mut zm = 0u128;
+        let mut zd = 0u128;
+        for h in 0..8 {
+            zn |= (zn_lanes[h] as u128) << (h * 16);
+            zm |= (zm_lanes[h] as u128) << (h * 16);
+        }
+        for s in 0..4 {
+            zd |= (zd_lanes[s] as u128) << (s * 32);
+        }
+        let mut st = ArmState::zeroed();
+        st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+        st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        st.set_vreg(RD as usize, zd as u64, (zd >> 64) as u64);
+        batch.push((format!("{name}_nan_inf"), insn, st));
     }
     run_batch("sve2_fmlal", batch);
 }
@@ -37652,6 +37698,17 @@ fn diff_sve_bfdot() {
             [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
             [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
         ),
+        (
+            "nan_inf",
+            [
+                0.0,
+                f32::from_bits(0x7fc0_1234),
+                f32::from_bits(0x7fa0_0001),
+                f32::NEG_INFINITY,
+            ],
+            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
+            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
+        ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {
         let mut st = ArmState::zeroed();
@@ -37754,6 +37811,17 @@ fn diff_sve_bfmlal() {
             [0.0, 1.0, -1.0, 8.0],
             [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
             [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+        (
+            "nan_inf",
+            [
+                0.0,
+                f32::from_bits(0x7fc0_1234),
+                f32::from_bits(0x7fa0_0001),
+                f32::NEG_INFINITY,
+            ],
+            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
+            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
         ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {
@@ -38057,6 +38125,32 @@ fn diff_sve2_fmlal_indexed() {
                     st.set_vreg(0, za as u64, (za >> 64) as u64);
                     batch.push((format!("fmlal_idx sub{sub} t{top} i{index}"), insn, st));
                 }
+                let zn_lanes = [
+                    0x7c01u16, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00,
+                ];
+                let zm_lanes = [
+                    0x7c01u16, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00,
+                ];
+                let za_lanes = [0u32, 0x7fa0_0001, 0x7fc0_1234, 0xff80_0000];
+                let mut zn = 0u128;
+                let mut zm = 0u128;
+                let mut za = 0u128;
+                for h in 0..8 {
+                    zn |= (zn_lanes[h] as u128) << (h * 16);
+                    zm |= (zm_lanes[h] as u128) << (h * 16);
+                }
+                for s in 0..4 {
+                    za |= (za_lanes[s] as u128) << (s * 32);
+                }
+                let mut st = ArmState::zeroed();
+                st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+                st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+                batch.push((
+                    format!("fmlal_idx sub{sub} t{top} i{index} nan_inf"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
@@ -43409,6 +43503,17 @@ fn diff_sve_fmmla() {
             [f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000), 1.0, -1.0],
             [1.0, -1.0, f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000)],
         ),
+        (
+            "nan_inf",
+            [
+                0.0,
+                f32::from_bits(0x7fc0_1234),
+                f32::from_bits(0x7fa0_0001),
+                f32::NEG_INFINITY,
+            ],
+            [0.0, -0.0, f32::INFINITY, f32::NEG_INFINITY],
+            [f32::INFINITY, f32::INFINITY, 0.0, -0.0],
+        ),
     ];
     for (pattern_name, za, zn, zm) in patterns {
         let mut st = ArmState::zeroed();
@@ -43531,6 +43636,17 @@ fn diff_sve_bfmmla() {
             [0.0, 1.0, -1.0, 8.0],
             [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
             [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+        (
+            "nan_inf",
+            [
+                0.0,
+                f32::from_bits(0x7fc0_1234),
+                f32::from_bits(0x7fa0_0001),
+                f32::NEG_INFINITY,
+            ],
+            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
+            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
         ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {

@@ -12750,6 +12750,9 @@ impl AArch64Cpu {
                 } else {
                     ah_nan_result
                 }
+                .or_else(|| {
+                    fmlal_default_invalid_result(aa as u32, nn as u32, mm as u32, self.fpcr)
+                })
                 .unwrap_or_else(|| {
                     fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
                         as u32
@@ -12850,6 +12853,9 @@ impl AArch64Cpu {
                 } else {
                     ah_nan_result
                 }
+                .or_else(|| {
+                    fmlal_default_invalid_result(aa as u32, nn as u32, mm as u32, self.fpcr)
+                })
                 .unwrap_or_else(|| {
                     fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
                         as u32
@@ -24961,6 +24967,18 @@ fn fmlal_ah_result(addend: u32, op1: u32, op2: u32, fpcr: u32) -> Option<u32> {
         }
     }
     None
+}
+
+#[inline]
+fn fmlal_default_invalid_result(addend: u32, op1: u32, op2: u32, fpcr: u32) -> Option<u32> {
+    if fpcr & FPCR_AH != 0 || !is_nan32(addend) || is_snan32(addend) {
+        return None;
+    }
+    if fp_invalid_fma_default_nan(4, addend as u64, op1 as u64, op2 as u64) {
+        Some(0x7fc0_0000)
+    } else {
+        None
+    }
 }
 
 #[inline]
