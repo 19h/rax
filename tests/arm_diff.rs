@@ -51658,6 +51658,99 @@ fn diff_mem_ldp_stp() {
 }
 
 #[test]
+fn diff_mem_ldp_stp_gpr_edges() {
+    let patterns: &[(&str, u64, u64, u64, u64)] = &[
+        ("zero", 0, 0, 0, 0),
+        ("ones", u64::MAX, u64::MAX, u64::MAX, u64::MAX),
+        (
+            "sign_bits",
+            0x8000_0000_7fff_ffff,
+            0x0000_0001_ffff_fffe,
+            0x7fff_ffff_8000_0001,
+            0xffff_fffe_0000_0001,
+        ),
+        (
+            "byte_ramp",
+            0x8877_6655_4433_2211,
+            0x1122_3344_5566_7788,
+            0xf0f0_0f0f_aa55_55aa,
+            0x0f0f_f0f0_55aa_aa55,
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for &(pattern, mem0, mem1, src0, src1) in patterns {
+        for &(name, insn) in &[
+            ("ldp_w", enc_ldp(0b00, 0, 0b10, 1, 0)),
+            ("ldp_x", enc_ldp(0b10, 0, 0b10, 1, 0)),
+            ("ldpsw", enc_ldp(0b01, 0, 0b10, 1, 0)),
+            ("stp_w", enc_ldp(0b00, 0, 0b10, 0, 0)),
+            ("stp_x", enc_ldp(0b10, 0, 0b10, 0, 0)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.x[RD as usize] = src0;
+            st.x[RM as usize] = src1;
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[8] = mem0;
+            st.scratch[9] = mem1;
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("mem_ldp_stp_gpr_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldp_stp_simd_edges() {
+    let patterns: &[(&str, [u64; 4], (u64, u64), (u64, u64))] = &[
+        ("zero", [0, 0, 0, 0], (0, 0), (0, 0)),
+        (
+            "ones",
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+            (u64::MAX, u64::MAX),
+            (u64::MAX, u64::MAX),
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+            ],
+            (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for &(pattern, mem, src0, src1) in patterns {
+        for &(name, insn) in &[
+            ("ldp_s", enc_ldp(0b00, 1, 0b10, 1, 0)),
+            ("ldp_d", enc_ldp(0b01, 1, 0b10, 1, 0)),
+            ("ldp_q", enc_ldp(0b10, 1, 0b10, 1, 0)),
+            ("stp_s", enc_ldp(0b00, 1, 0b10, 0, 0)),
+            ("stp_d", enc_ldp(0b01, 1, 0b10, 0, 0)),
+            ("stp_q", enc_ldp(0b10, 1, 0b10, 0, 0)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.set_vreg(RD as usize, src0.0, src0.1);
+            st.set_vreg(RM as usize, src1.0, src1.1);
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[8] = mem[0];
+            st.scratch[9] = mem[1];
+            st.scratch[10] = mem[2];
+            st.scratch[11] = mem[3];
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("mem_ldp_stp_simd_edges", batch);
+}
+
+#[test]
 fn diff_mem_ldp_stp_sp_base() {
     let cases: Vec<(String, u32)> = vec![
         (
@@ -51699,6 +51792,99 @@ fn diff_mem_ldp_stp_sp_base() {
         }
     }
     run_batch("mem_ldp_stp_sp_base", batch);
+}
+
+#[test]
+fn diff_mem_ldp_stp_gpr_sp_base_edges() {
+    let patterns: &[(&str, u64, u64, u64, u64)] = &[
+        ("zero", 0, 0, 0, 0),
+        ("ones", u64::MAX, u64::MAX, u64::MAX, u64::MAX),
+        (
+            "sign_bits",
+            0x8000_0000_7fff_ffff,
+            0x0000_0001_ffff_fffe,
+            0x7fff_ffff_8000_0001,
+            0xffff_fffe_0000_0001,
+        ),
+        (
+            "byte_ramp",
+            0x8877_6655_4433_2211,
+            0x1122_3344_5566_7788,
+            0xf0f0_0f0f_aa55_55aa,
+            0x0f0f_f0f0_55aa_aa55,
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for &(pattern, mem0, mem1, src0, src1) in patterns {
+        for &(name, insn) in &[
+            ("ldp_w_sp", enc_ldp_regs(0b00, 0, 0b10, 1, 0, RD, RM, 31)),
+            ("ldp_x_sp", enc_ldp_regs(0b10, 0, 0b10, 1, 0, RD, RM, 31)),
+            ("ldpsw_sp", enc_ldp_regs(0b01, 0, 0b10, 1, 0, RD, RM, 31)),
+            ("stp_w_sp", enc_ldp_regs(0b00, 0, 0b10, 0, 0, RD, RM, 31)),
+            ("stp_x_sp", enc_ldp_regs(0b10, 0, 0b10, 0, 0, RD, RM, 31)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.sp = SCRATCH_BASE + 64;
+            st.x[RD as usize] = src0;
+            st.x[RM as usize] = src1;
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[16] = mem0;
+            st.scratch[17] = mem1;
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("mem_ldp_stp_gpr_sp_base_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldp_stp_simd_sp_base_edges() {
+    let patterns: &[(&str, [u64; 4], (u64, u64), (u64, u64))] = &[
+        ("zero", [0, 0, 0, 0], (0, 0), (0, 0)),
+        (
+            "ones",
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+            (u64::MAX, u64::MAX),
+            (u64::MAX, u64::MAX),
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+            ],
+            (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for &(pattern, mem, src0, src1) in patterns {
+        for &(name, insn) in &[
+            ("ldp_s_sp", enc_ldp_regs(0b00, 1, 0b10, 1, 0, RD, RM, 31)),
+            ("ldp_d_sp", enc_ldp_regs(0b01, 1, 0b10, 1, 0, RD, RM, 31)),
+            ("ldp_q_sp", enc_ldp_regs(0b10, 1, 0b10, 1, 0, RD, RM, 31)),
+            ("stp_s_sp", enc_ldp_regs(0b00, 1, 0b10, 0, 0, RD, RM, 31)),
+            ("stp_d_sp", enc_ldp_regs(0b01, 1, 0b10, 0, 0, RD, RM, 31)),
+            ("stp_q_sp", enc_ldp_regs(0b10, 1, 0b10, 0, 0, RD, RM, 31)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.sp = SCRATCH_BASE + 64;
+            st.set_vreg(RD as usize, src0.0, src0.1);
+            st.set_vreg(RM as usize, src1.0, src1.1);
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[16] = mem[0];
+            st.scratch[17] = mem[1];
+            st.scratch[18] = mem[2];
+            st.scratch[19] = mem[3];
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("mem_ldp_stp_simd_sp_base_edges", batch);
 }
 
 /// Load/store register, unsigned immediate offset:
