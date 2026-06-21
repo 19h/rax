@@ -30798,6 +30798,28 @@ fn diff_fmlal() {
 }
 
 #[test]
+fn diff_fmlal_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0030);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[(0u32, 0b11101u32, "fmlal"), (1, 0b11001, "fmlal2")] {
+        for &size in &[0b01u32, 0b11] {
+            for q in 0..2u32 {
+                for _ in 0..6 {
+                    batch.push((
+                        format!("{name}_reserved_size{size}_q{q}"),
+                        enc_three_same(q, u, size, opcode),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("fmlal_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_fmlal_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
@@ -31295,6 +31317,38 @@ fn diff_mem_ldst_single() {
         }
     }
     run_batch("mem_ldst_single", batch);
+}
+
+#[test]
+fn diff_mem_ldst_single_no_offset_rm_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0006);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for esz in 0..4u32 {
+        for selem in 1..=4u32 {
+            for l in 0..2u32 {
+                for _ in 0..4 {
+                    batch.push((
+                        format!("ldst{selem}_single_e{esz}_l{l}_noff_rm2"),
+                        enc_single_regs(esz, selem, 0, l, 0, RM, RD, RN),
+                        mem_input(&mut rng),
+                    ));
+                }
+            }
+
+            for q in 0..2u32 {
+                for _ in 0..4 {
+                    batch.push((
+                        format!("ld{selem}r_e{esz}_q{q}_noff_rm2"),
+                        enc_single_rep_regs(esz, selem, q, 0, RM, RD, RN),
+                        mem_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldst_single_no_offset_rm_unallocated_edges", batch);
 }
 
 #[test]
@@ -31912,6 +31966,35 @@ fn diff_simd_fp16_scalar() {
 }
 
 #[test]
+fn diff_simd_fp16_scalar_three_same_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0037);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, a, opcode, name) in &[
+        (0, 0, 0b000, "fmaxnm"),
+        (0, 0, 0b001, "fmla"),
+        (0, 0, 0b010, "fadd"),
+        (0, 0, 0b110, "fmax"),
+        (0, 1, 0b001, "fmls"),
+        (0, 1, 0b010, "fsub"),
+        (1, 0, 0b000, "fmaxnmp"),
+        (1, 0, 0b010, "faddp"),
+        (1, 0, 0b011, "fmul"),
+        (1, 0, 0b111, "fdiv"),
+        (1, 1, 0b000, "fminnmp"),
+        (1, 1, 0b110, "fminp"),
+    ] {
+        batch.push((
+            format!("scalar_fp16_3same_{name}"),
+            enc_fp16_3s_scalar(u, a, opcode),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_fp16_scalar_three_same_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_simd_fp16_vector_fpcr_rounding() {
     let pack_h = |lanes: &[u16; 8]| -> (u64, u64) {
         let mut packed = 0u128;
@@ -32360,6 +32443,49 @@ fn diff_simd_scalar_fp16_indexed() {
     run_batch("simd_scalar_fp16_indexed", batch);
 }
 
+#[test]
+fn diff_simd_fp16_indexed_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0039);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b0001u32, "fmla"),
+        (0, 0b0101, "fmls"),
+        (0, 0b1001, "fmul"),
+        (1, 0b1001, "fmulx"),
+    ] {
+        for &index in &[0u32, 7] {
+            for q in 0..2u32 {
+                batch.push((
+                    format!("vector_{name}_reserved_size1_q{q}_i{index}"),
+                    enc_fp16_idx(q, u, opcode, index) | (1 << 22),
+                    gen_input(&mut rng),
+                ));
+            }
+            batch.push((
+                format!("scalar_{name}_reserved_size1_i{index}"),
+                enc_fp16_idx_scalar(u, opcode, index) | (1 << 22),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(u, opcode, name) in &[(0u32, 0b0000u32, "opcode0"), (1, 0b1111, "opcode15")] {
+        batch.push((
+            format!("vector_{name}"),
+            enc_fp16_idx(1, u, opcode, 0),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("scalar_{name}"),
+            enc_fp16_idx_scalar(u, opcode, 0),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_fp16_indexed_unallocated_edges", batch);
+}
+
 /// Advanced SIMD two-register miscellaneous (FP16):
 /// `0 Q U 01110 a 1 11100 opcode 10 Rn Rd`. Rd=v0, Rn=v1.
 fn enc_fp16_2r(q: u32, u: u32, a: u32, opcode: u32) -> u32 {
@@ -32423,6 +32549,41 @@ fn diff_simd_fp16_2reg() {
         }
     }
     run_batch("simd_fp16_2reg", batch);
+}
+
+#[test]
+fn diff_simd_fp16_two_reg_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0038);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        batch.push((
+            format!("vector_frecpx_q{q}"),
+            enc_fp16_2r(q, 0, 1, 0b11111),
+            gen_input(&mut rng),
+        ));
+    }
+
+    for &(u, a, opcode, name) in &[
+        (0, 1, 0b01111, "fabs"),
+        (1, 1, 0b01111, "fneg"),
+        (0, 0, 0b11000, "frintn"),
+        (0, 0, 0b11001, "frintm"),
+        (0, 1, 0b11000, "frintp"),
+        (0, 1, 0b11001, "frintz"),
+        (1, 0, 0b11000, "frinta"),
+        (1, 0, 0b11001, "frintx"),
+        (1, 1, 0b11001, "frinti"),
+        (1, 1, 0b11111, "fsqrt"),
+    ] {
+        batch.push((
+            format!("scalar_fp16_2reg_{name}"),
+            enc_fp16_2r_scalar(u, a, opcode),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_fp16_two_reg_unallocated_edges", batch);
 }
 
 #[test]
@@ -32584,6 +32745,33 @@ fn diff_simd_fp16_3same() {
         }
     }
     run_batch("simd_fp16_3same", batch);
+}
+
+#[test]
+fn diff_simd_fp16_3same_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0036);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, a, opcode) in &[
+        (0, 0, 0b101),
+        (0, 1, 0b011),
+        (0, 1, 0b100),
+        (0, 1, 0b101),
+        (1, 0, 0b001),
+        (1, 1, 0b001),
+        (1, 1, 0b011),
+        (1, 1, 0b111),
+    ] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("fp16_3same_invalid_u{u}_a{a}_q{q}_op{opcode:03b}"),
+                enc_fp16_3s(q, u, a, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_fp16_3same_unallocated_edges", batch);
 }
 
 #[test]
@@ -33027,6 +33215,17 @@ fn enc_dot(q: u32, u: u32) -> u32 {
         | RD
 }
 
+fn enc_dot_size(q: u32, u: u32, size: u32) -> u32 {
+    (q << 30)
+        | (u << 29)
+        | (0b01110 << 24)
+        | (size << 22)
+        | (RM << 16)
+        | (0b100101 << 10)
+        | (RN << 5)
+        | RD
+}
+
 #[test]
 fn diff_simd_dot() {
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -33085,6 +33284,28 @@ fn diff_simd_dot_edges() {
     }
 
     run_batch("simd_dot_edges", batch);
+}
+
+#[test]
+fn diff_simd_dot_unallocated_edges() {
+    let mut rng = Rng::new(0x1_001d);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &size in &[0b00u32, 0b01, 0b11] {
+        for q in 0..2u32 {
+            for u in 0..2u32 {
+                for _ in 0..4 {
+                    batch.push((
+                        format!("dot_reserved_size{size}_q{q}_u{u}"),
+                        enc_dot_size(q, u, size),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_dot_unallocated_edges", batch);
 }
 
 /// Fill a 128-bit vector with `lanes` finite FP values of width `esize` bits.
@@ -33181,6 +33402,46 @@ fn diff_simd_complex() {
         }
     }
     run_batch("simd_complex", batch);
+}
+
+#[test]
+fn diff_simd_complex_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0032);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for rot in 0..2u32 {
+            batch.push((
+                format!("fcadd_size0_q{q}_r{rot}"),
+                enc_fcadd(q, 0b00, rot),
+                gen_input(&mut rng),
+            ));
+        }
+        for rot in 0..4u32 {
+            batch.push((
+                format!("fcmla_size0_q{q}_r{rot}"),
+                enc_fcmla(q, 0b00, rot),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for rot in 0..2u32 {
+        batch.push((
+            format!("fcadd_f64_q0_r{rot}"),
+            enc_fcadd(0, 0b11, rot),
+            gen_input(&mut rng),
+        ));
+    }
+    for rot in 0..4u32 {
+        batch.push((
+            format!("fcmla_f64_q0_r{rot}"),
+            enc_fcmla(0, 0b11, rot),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_complex_unallocated_edges", batch);
 }
 
 #[test]
@@ -33955,6 +34216,21 @@ fn enc_dot_idx(q: u32, u: u32, index: u32) -> u32 {
     (q << 30)
         | (u << 29)
         | (0b01111 << 24)
+        | (0b10 << 22)
+        | (l << 21)
+        | (RM << 16)
+        | (0b1110 << 12)
+        | (h << 11)
+        | (RN << 5)
+        | RD
+}
+
+fn enc_dot_idx_scalar(u: u32, index: u32) -> u32 {
+    let h = (index >> 1) & 1;
+    let l = index & 1;
+    (1 << 30)
+        | (u << 29)
+        | (0b11111 << 24)
         | (0b10 << 22)
         | (l << 21)
         | (RM << 16)
@@ -53766,6 +54042,17 @@ fn enc_bfmmla() -> u32 {
         | RD
 }
 
+fn enc_bf16_three_same_extra(q: u32, size: u32, lo6: u32) -> u32 {
+    (q << 30)
+        | (1 << 29)
+        | (0b01110 << 24)
+        | ((size & 0x3) << 22)
+        | (RM << 16)
+        | ((lo6 & 0x3f) << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// SMMLA/UMMLA/USMMLA: `0 Q U 01110 10 0 Rm op Rn Rd`.
 /// `lo6` is 101001 for SMMLA/UMMLA and 101011 for USMMLA.
 fn enc_simd_i8mm_mmla(q: u32, u: u32, lo6: u32) -> u32 {
@@ -54217,6 +54504,41 @@ fn diff_simd_bf16() {
         }
     }
     run_batch("simd_bf16", batch);
+}
+
+#[test]
+fn diff_simd_bf16_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0031);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &size in &[0b00u32, 0b10] {
+        for q in 0..2u32 {
+            for _ in 0..4 {
+                batch.push((
+                    format!("bf_dot_mlal_reserved_size{size}_q{q}"),
+                    enc_bf16_three_same_extra(q, size, 0b111111),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    for q in 0..2u32 {
+        for &size in &[0b00u32, 0b01, 0b10, 0b11] {
+            if q == 1 && size == 0b01 {
+                continue;
+            }
+            for _ in 0..4 {
+                batch.push((
+                    format!("bfmmla_reserved_size{size}_q{q}"),
+                    enc_bf16_three_same_extra(q, size, 0b111011),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_bf16_unallocated_edges", batch);
 }
 
 #[test]
@@ -54877,6 +55199,26 @@ fn diff_simd_dot_indexed() {
         }
     }
     run_family("simd_dot_indexed", cases, 24, 0x1_0019);
+}
+
+#[test]
+fn diff_simd_dot_indexed_unallocated_edges() {
+    let mut rng = Rng::new(0x1_001e);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for u in 0..2u32 {
+        for index in 0..4u32 {
+            for _ in 0..4 {
+                batch.push((
+                    format!("dot_idx_scalar_u{u}_i{index}"),
+                    enc_dot_idx_scalar(u, index),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_dot_indexed_unallocated_edges", batch);
 }
 
 #[test]
@@ -64646,6 +64988,65 @@ fn diff_simd_three_diff_edges() {
     run_batch("simd_three_diff_edges", batch);
 }
 
+#[test]
+fn diff_simd_three_diff_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0034);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(opcode, u, name) in &[
+        (0b0000, 0, "saddl_size3"),
+        (0b0001, 0, "saddw_size3"),
+        (0b0100, 0, "addhn_size3"),
+        (0b1000, 0, "smlal_size3"),
+        (0b1100, 1, "umull_size3"),
+    ] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("{name}_q{q}"),
+                enc_3diff(q, u, 0b11, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(opcode, name) in &[(0b1001, "sqdmlal"), (0b1011, "sqdmlsl"), (0b1101, "sqdmull")] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("{name}_size0_q{q}"),
+                enc_3diff(q, 0, 0b00, opcode),
+                gen_input(&mut rng),
+            ));
+            batch.push((
+                format!("{name}_unsigned_q{q}"),
+                enc_3diff(q, 1, 0b01, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &size in &[0b00u32, 0b11] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("pmull_unsigned_size{size}_q{q}"),
+                enc_3diff(q, 1, size, 0b1110),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for size in 0..4u32 {
+        for q in 0..2u32 {
+            batch.push((
+                format!("three_diff_opcode1111_size{size}_q{q}"),
+                enc_3diff(q, 0, size, 0b1111),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_three_diff_unallocated_edges", batch);
+}
+
 /// Advanced SIMD across-lanes reduction: `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
 fn enc_across(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
     (q << 30)
@@ -64726,6 +65127,47 @@ fn diff_simd_across_int_edges() {
     }
 
     run_batch("simd_across_int_edges", batch);
+}
+
+#[test]
+fn diff_simd_across_int_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0035);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0, 0b11011, "addv"),
+        (0, 0b00011, "saddlv"),
+        (1, 0b00011, "uaddlv"),
+        (0, 0b01010, "smaxv"),
+        (1, 0b01010, "umaxv"),
+    ] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("{name}_size3_q{q}"),
+                enc_across(q, u, 0b11, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+        batch.push((
+            format!("{name}_size2_q0"),
+            enc_across(0, u, 0b10, opcode),
+            gen_input(&mut rng),
+        ));
+    }
+
+    for &(u, opcode) in &[(0u32, 0b00000u32), (1, 0b00000), (0, 0b11111), (1, 0b11111)] {
+        for size in 0..3u32 {
+            for q in 0..2u32 {
+                batch.push((
+                    format!("across_opcode{opcode:05b}_u{u}_size{size}_q{q}"),
+                    enc_across(q, u, size, opcode),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_across_int_unallocated_edges", batch);
 }
 
 #[test]
@@ -64854,6 +65296,53 @@ fn diff_simd_three_same_fp() {
         }
     }
     run_batch("simd_three_same_fp", batch);
+}
+
+#[test]
+fn diff_simd_three_same_fp_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0033);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let invalid: &[(u32, u32, u32)] = &[
+        (0, 0, 0b11101),
+        (0, 1, 0b11011),
+        (0, 1, 0b11100),
+        (0, 1, 0b11101),
+        (1, 0, 0b11001),
+        (1, 1, 0b11001),
+        (1, 1, 0b11011),
+        (1, 1, 0b11111),
+    ];
+    for &(u, a, opcode) in invalid {
+        for sz in 0..2u32 {
+            for q in 0..2u32 {
+                if sz == 1 && q == 0 {
+                    continue;
+                }
+                batch.push((
+                    format!("fp3same_invalid_u{u}_a{a}_sz{sz}_q{q}_op{opcode:05b}"),
+                    enc_three_same(q, u, (a << 1) | sz, opcode),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    for &(u, a, opcode, name) in &[
+        (0, 0, 0b11010, "fadd"),
+        (0, 1, 0b11010, "fsub"),
+        (1, 0, 0b11011, "fmul"),
+        (1, 0, 0b11111, "fdiv"),
+        (1, 1, 0b11010, "fabd"),
+    ] {
+        batch.push((
+            format!("{name}_f64_q0"),
+            enc_three_same(0, u, (a << 1) | 1, opcode),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_three_same_fp_unallocated_edges", batch);
 }
 
 #[test]
@@ -65475,6 +65964,30 @@ fn diff_simd_scalar_pairwise_extrema() {
     }
 
     run_batch("simd_scalar_pairwise_extrema", batch);
+}
+
+#[test]
+fn diff_simd_scalar_fp16_pairwise_unallocated_edges() {
+    let mut rng = Rng::new(0x1_002f);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(opcode, name) in &[
+        (0b01100u32, "fmaxnmp"),
+        (0b01101, "faddp"),
+        (0b01111, "fmaxp"),
+    ] {
+        for &size in &[0b01u32, 0b11] {
+            for _ in 0..6 {
+                batch.push((
+                    format!("scalar_fp16_pairwise_{name}_reserved_size{size}"),
+                    enc_simd_scalar_pairwise(0, size, opcode),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_scalar_fp16_pairwise_unallocated_edges", batch);
 }
 
 #[test]

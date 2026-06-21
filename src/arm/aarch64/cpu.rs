@@ -2948,9 +2948,13 @@ impl AArch64Cpu {
                 if size == 0b11 {
                     return self.exec_simd_bfmlal(insn, false); // BFMLALB/T vector
                 }
+                return Err(ArmError::UndefinedInstruction(insn));
             }
-            if lo6 == 0b111011 && size == 0b01 {
-                return self.exec_simd_bfmmla(insn); // BFMMLA
+            if lo6 == 0b111011 {
+                if (insn >> 30) & 1 == 1 && size == 0b01 {
+                    return self.exec_simd_bfmmla(insn); // BFMMLA
+                }
+                return Err(ArmError::UndefinedInstruction(insn));
             }
         }
 
