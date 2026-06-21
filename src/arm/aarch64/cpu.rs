@@ -15057,6 +15057,10 @@ impl AArch64Cpu {
         let op2 = ((insn >> 5) & 0x7) as u8;
         let rt = (insn & 0x1F) as u8;
 
+        if self.current_el == 0 && (is_read || op1 != 3) {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         if is_read {
             // SYSL: nothing implemented reads back state
             if rt != 31 {

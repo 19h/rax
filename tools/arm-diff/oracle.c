@@ -233,6 +233,17 @@ static uint64_t          g_done_pc;      /* final harness BRK capture PC   */
 static volatile uint32_t g_strict_sigtrap; /* treat in-slot BRK as a trap    */
 static mcontext_t        g_saved_mc;     /* harness mcontext (to resume)   */
 static uint8_t           g_saved_reserved[4096];
+static uint64_t          g_saved_tpidr_el0;
+
+static inline uint64_t read_tpidr_el0(void) {
+    uint64_t v;
+    __asm__ __volatile__("mrs %0, tpidr_el0" : "=r"(v));
+    return v;
+}
+
+static inline void write_tpidr_el0(uint64_t v) {
+    __asm__ __volatile__("msr tpidr_el0, %0" :: "r"(v) : "memory");
+}
 
 static int is_pcrel_marker(uint64_t value) {
     return (value & PCREL_MASK) == PCREL_TOKEN;
@@ -331,6 +342,7 @@ static void handler(int sig, siginfo_t *si, void *uc_) {
     if (sig != SIGTRAP || (g_strict_sigtrap && mc->pc != g_done_pc)) {
         g_trapped = (uint32_t)sig;
     }
+    write_tpidr_el0(g_saved_tpidr_el0);
 
     for (int i = 0; i < 31; i++) g_out->x[i] = mc->regs[i];
     g_out->sp     = mc->sp;
@@ -444,6 +456,7 @@ int main(void) {
         g_out = &out;
         g_phase = 0;
         g_trapped = 0;
+        g_saved_tpidr_el0 = read_tpidr_el0();
 
         __asm__ __volatile__("brk #0" ::: "memory");
 

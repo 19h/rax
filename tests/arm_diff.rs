@@ -459,6 +459,10 @@ fn run_rax_el0(insn: u32, input: &ArmState) -> Option<ArmState> {
 }
 
 fn run_rax_at_el(insn: u32, input: &ArmState, initial_el: u8) -> Option<ArmState> {
+    run_rax_sequence_at_el(&[insn], input, initial_el)
+}
+
+fn run_rax_sequence_at_el(insns: &[u32], input: &ArmState, initial_el: u8) -> Option<ArmState> {
     // Memory must cover both the instruction (at 0) and the scratch window.
     let mem = FlatMemory::new(0, 0x30_0000);
     let mut config = AArch64Config::default();
@@ -490,12 +494,16 @@ fn run_rax_at_el(insn: u32, input: &ArmState, initial_el: u8) -> Option<ArmState
     let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
     cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
 
-    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    for (i, insn) in insns.iter().enumerate() {
+        cpu.write_memory((i as u64) * 4, &insn.to_le_bytes()).ok()?;
+    }
     cpu.set_pc(0);
 
-    match cpu.step() {
-        Ok(CpuExit::Continue) => {}
-        _ => return None,
+    for _ in insns {
+        match cpu.step() {
+            Ok(CpuExit::Continue) => {}
+            _ => return None,
+        }
     }
 
     let mut out = ArmState::zeroed();
@@ -689,7 +697,16 @@ fn compare_case_with_runner(
     runner: fn(u32, &ArmState) -> Option<ArmState>,
 ) {
     let rax = runner(insn, input);
+    compare_rax_outcome(label, insn, rax, oracle, mismatches);
+}
 
+fn compare_rax_outcome(
+    label: &str,
+    insn: u32,
+    rax: Option<ArmState>,
+    oracle: &OutCase,
+    mismatches: &mut Vec<Mismatch>,
+) {
     // Agreement on legality first.
     if oracle.trapped != 0 {
         if rax.is_some() {
@@ -2582,6 +2599,47 @@ fn generated_system_monitor_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_system_sysop_el0_trap_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/system/other.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    let parsed = parse_generated_a64_cases_with_fields_and_asm("system/other", source);
+    for (_label, insn, fields) in parsed {
+        let Some(op1) = fields.get("op1").copied() else {
+            continue;
+        };
+        if op1 == 3 {
+            continue;
+        }
+        let l = fields
+            .get("L")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 21) & 1) as i32);
+        let crn = fields
+            .get("CRn")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 12) & 0xf) as i32);
+        let crm = fields
+            .get("CRm")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 8) & 0xf) as i32);
+        let op2 = fields
+            .get("op2")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 5) & 0x7) as i32);
+        let rt = fields
+            .get("Rt")
+            .copied()
+            .unwrap_or_else(|| (insn & 0x1f) as i32);
+        let label =
+            format!("sysop l={l} op1={op1} crn={crn} crm={crm} op2={op2} rt={rt}");
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_debug_mrs_el0_trap_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/system/register.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -3627,6 +3685,55 @@ fn run_batch_el0_trap(name: &str, batch: Vec<(String, u32, ArmState)>) {
                 detail: format!("hw faulted (sig {}) but rax EL0 executed", out.trapped),
             });
         }
+    }
+
+    if !mismatches.is_empty() {
+        eprintln!(
+            "\n==== {name}: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "{name}: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+fn run_batch_el0_pair(name: &str, batch: Vec<(String, u32, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: native/qemu oracle unavailable -> skipping");
+            return;
+        }
+    };
+
+    let labels: Vec<String> = batch.iter().map(|(l, _, _, _)| l.clone()).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn1, insn2, st)| (*insn1, *insn2, *st))
+        .collect();
+
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+    assert_eq!(outs.len(), cases.len());
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn1, insn2, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        let rax = run_rax_sequence_at_el(&[*insn1, *insn2], st, 0);
+        compare_rax_outcome(&labels[i], *insn1, rax, out, &mut mismatches);
     }
 
     if !mismatches.is_empty() {
@@ -25955,6 +26062,19 @@ fn diff_generated_system_monitor_sweep() {
 }
 
 #[test]
+fn diff_generated_system_sysop_el0_trap_sweep() {
+    let mut rng = Rng::new(0xa64_5158);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_sysop_el0_trap_cases() {
+        for _ in 0..2 {
+            batch.push((label.clone(), insn, gen_input(&mut rng)));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated SYS/SYSL EL0 trap cases");
+    run_batch_el0_trap("generated_system_sysop_el0_trap_sweep", batch);
+}
+
+#[test]
 fn diff_generated_system_debug_mrs_el0_trap_sweep() {
     let mut rng = Rng::new(0xa64_5154);
     let mut batch = Vec::new();
@@ -26177,6 +26297,126 @@ fn diff_system_dc_zva_el0() {
 }
 
 #[test]
+fn diff_system_user_cache_maintenance_el0() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("ic_ivau", sys(3, 7, 5, 1, RN)),
+        ("dc_cvac", sys(3, 7, 10, 1, RN)),
+        ("dc_cvau", sys(3, 7, 11, 1, RN)),
+        ("dc_civac", sys(3, 7, 14, 1, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0008);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for addr in [SCRATCH_ADDR, SCRATCH_BASE + 63] {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = addr;
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_el0", batch);
+}
+
+#[test]
+fn diff_system_at_el0_trap_sweep() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("at_s1e1r", sys(0, 7, 8, 0, RN)),
+        ("at_s1e1w", sys(0, 7, 8, 1, RN)),
+        ("at_s1e0r", sys(0, 7, 8, 2, RN)),
+        ("at_s1e0w", sys(0, 7, 8, 3, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0009);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for addr in [0, SCRATCH_ADDR, SCRATCH_BASE + 63] {
+            let mut st = gen_input(&mut rng);
+            st.x[RN as usize] = addr;
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0_trap("system_at_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_el1_sysreg_el0_trap_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn msr(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("sctlr_el1", (1, 0, 1, 0, 0)),
+        ("ttbr0_el1", (1, 0, 2, 0, 0)),
+        ("ttbr1_el1", (1, 0, 2, 0, 1)),
+        ("tcr_el1", (1, 0, 2, 0, 2)),
+        ("esr_el1", (1, 0, 5, 2, 0)),
+        ("far_el1", (1, 0, 6, 0, 0)),
+        ("mair_el1", (1, 0, 10, 2, 0)),
+        ("vbar_el1", (1, 0, 12, 0, 0)),
+        ("tpidr_el1", (1, 0, 13, 0, 4)),
+    ];
+
+    let mut rng = Rng::new(0x5157_000a);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for rt in [0, RN, 30] {
+            let st = gen_input(&mut rng);
+            batch.push((
+                format!("mrs_{name}_x{rt}"),
+                mrs(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((
+                format!("msr_{name}_x{rt}"),
+                msr(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_trap("system_el1_sysreg_el0_trap_sweep", batch);
+}
+
+#[test]
 fn diff_system_nzcv_el0() {
     fn mrs_nzcv(rt: u32) -> u32 {
         0xd53b_4200 | (rt & 0x1f)
@@ -26201,6 +26441,77 @@ fn diff_system_nzcv_el0() {
     }
 
     run_batch_el0("system_nzcv_el0", batch);
+}
+
+#[test]
+fn diff_system_pstate_mrs_el0_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("nzcv", mrs(1, 3, 4, 2, 0, RD)),
+        ("daif", mrs(1, 3, 4, 2, 1, RD)),
+        ("currentel", mrs(1, 0, 4, 2, 2, RD)),
+        ("spsel", mrs(1, 0, 4, 2, 0, RD)),
+    ];
+
+    let mut rng = Rng::new(0x5157_000b);
+    let mut batch = Vec::new();
+    for (label, insn) in regs {
+        for nzcv in 0..16u64 {
+            let mut st = gen_input(&mut rng);
+            st.pstate = nzcv << 28;
+            st.x[RD as usize] = 0xdead_beef_dead_beef;
+            batch.push((format!("mrs_{label}_nzcv={nzcv:x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_pstate_mrs_el0_sweep", batch);
+}
+
+#[test]
+fn diff_system_tpidr_el0_pair_sweep() {
+    fn mrs_tpidr_el0(rt: u32) -> u32 {
+        0xd53b_d040 | (rt & 0x1f)
+    }
+
+    fn msr_tpidr_el0(rt: u32) -> u32 {
+        0xd51b_d040 | (rt & 0x1f)
+    }
+
+    let values = [
+        0,
+        1,
+        0x1000,
+        0x7fff_ffff_ffff,
+        0xdead_beef_dead_beef,
+        u64::MAX,
+    ];
+
+    let mut rng = Rng::new(0x5157_000c);
+    let mut batch = Vec::new();
+    for value in values {
+        for rd in [RD, 5, 30] {
+            let mut st = gen_input(&mut rng);
+            st.x[RN as usize] = value;
+            st.x[rd as usize] = 0xaaaa_5555_ffff_0000;
+            batch.push((
+                format!("msr_mrs_tpidr_el0_{value:#x}_x{rd}"),
+                msr_tpidr_el0(RN),
+                mrs_tpidr_el0(rd),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_pair("system_tpidr_el0_pair_sweep", batch);
 }
 
 #[test]
