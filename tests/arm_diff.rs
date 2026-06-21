@@ -32731,6 +32731,10 @@ fn diff_sve_sel() {
         )
     }
 
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << sz))
+    }
+
     let mut rng = Rng::new(0x1_0025);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for sz in 0..4u32 {
@@ -32748,8 +32752,18 @@ fn diff_sve_sel() {
             2 => 0x0101,
             _ => 0x0001,
         };
+        let lanes = 16usize >> sz;
+        let first = predicate_bit(sz, 0);
+        let last = predicate_bit(sz, lanes - 1);
         let (zn, zm) = sel_values(sz);
-        for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+        for (mask_name, pg) in [
+            ("all", 0xffff),
+            ("mixed", mixed),
+            ("first", first),
+            ("last", last),
+            ("endpoints", first | last),
+            ("inactive", 0x0000),
+        ] {
             let mut st = ArmState::zeroed();
             let (lo, hi) = pack_lanes(sz, &zn);
             st.set_vreg(1, lo, hi);
@@ -33095,6 +33109,29 @@ fn diff_sve_pcount_xzr_dest() {
                 st.set_preg(1, rng.next() as u16);
                 st.set_preg(2, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+            let mixed = match sz {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            for (case_name, p1, p2, sp_delta) in [
+                ("all", 0xffff, 0xffff, 0x00u64),
+                ("mixed", mixed, 0xaaaa, 0x10),
+                ("first", 0x0001, 0x0001, 0x20),
+                ("last", 0x8000, 0x8000, 0x30),
+                ("inactive", 0x0000, 0xffff, 0x40),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.sp = GUEST_STACK_ADDR
+                    + (GUEST_STACK_SIZE / 2)
+                    + 0x13000
+                    + ((sz as u64) << 8)
+                    + sp_delta;
+                st.set_preg(1, p1);
+                st.set_preg(2, p2);
+                batch.push((format!("{name}_sz{sz}_{case_name}"), insn, st));
             }
         }
     }
@@ -42536,6 +42573,19 @@ fn diff_sve_gather_d() {
     // Zm offsets are kept small so every gathered address stays in the window.
     let mut rng = Rng::new(0x4_0001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn deterministic_gather_d_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_vreg(2, 0, 8);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+        }
+        st
+    }
+
     for msz in 0..4u32 {
         for &scaled in &[false, true] {
             if scaled && msz == 0 {
@@ -42559,6 +42609,31 @@ fn diff_sve_gather_d() {
             }
         }
     }
+    for msz in 0..4u32 {
+        for &scaled in &[false, true] {
+            if scaled && msz == 0 {
+                continue;
+            }
+            for u in 0..2u32 {
+                if u == 0 && msz == 3 {
+                    continue;
+                }
+                let insn = enc_gather_d(msz, scaled, u);
+                for (mask_name, pg) in [
+                    ("all", 0xffff),
+                    ("first", 0x0001),
+                    ("second", 0x0100),
+                    ("inactive", 0x0000),
+                ] {
+                    batch.push((
+                        format!("gd_m{msz}_sc{}_u{u}_{mask_name}", scaled as u32),
+                        insn,
+                        deterministic_gather_d_input(pg),
+                    ));
+                }
+            }
+        }
+    }
     run_batch("sve_gather_d", batch);
 }
 
@@ -42567,6 +42642,19 @@ fn diff_sve_scatter_d() {
     // 64-bit scatter store: each active D lane writes to Xn + (Zm[e] << scale).
     let mut rng = Rng::new(0x4_1001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn deterministic_scatter_d_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_vreg(2, 0, 8);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
     for msz in 0..4u32 {
         for &scaled in &[false, true] {
             if scaled && msz == 0 {
@@ -42582,6 +42670,26 @@ fn diff_sve_scatter_d() {
                 st.set_vreg(2, zm as u64, (zm >> 64) as u64); // Zm offsets
                 st.set_preg(0, rng.next() as u16);
                 batch.push((name.clone(), insn, st));
+            }
+        }
+    }
+    for msz in 0..4u32 {
+        for &scaled in &[false, true] {
+            if scaled && msz == 0 {
+                continue;
+            }
+            let insn = enc_scatter_d(msz, scaled);
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("first", 0x0001),
+                ("second", 0x0100),
+                ("inactive", 0x0000),
+            ] {
+                batch.push((
+                    format!("sd_m{msz}_sc{}_{mask_name}", scaled as u32),
+                    insn,
+                    deterministic_scatter_d_input(pg),
+                ));
             }
         }
     }
@@ -42625,6 +42733,19 @@ fn diff_sve_ldff1_gather() {
     // pre-set; the loaded lane then equals the plain gather.
     let mut rng = Rng::new(0x4_F001);
     let mut batch: Vec<(String, u32, u32, ArmState)> = Vec::new();
+
+    fn deterministic_ldff1_gather_input(offset: u64) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_vreg(2, offset, 0);
+        st.set_preg(0, 0x0001);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x80ff_7f00_55aa_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+        }
+        st
+    }
+
     for msz in 0..4u32 {
         for &scaled in &[false, true] {
             if scaled && msz == 0 {
@@ -42642,6 +42763,27 @@ fn diff_sve_ldff1_gather() {
                     st.set_vreg(2, e0, 0); // element-0 offset
                     st.set_preg(0, 1); // only element 0 active
                     batch.push((name.clone(), enc_setffr(), insn, st));
+                }
+            }
+        }
+    }
+    for msz in 0..4u32 {
+        for &scaled in &[false, true] {
+            if scaled && msz == 0 {
+                continue;
+            }
+            for u in 0..2u32 {
+                if u == 0 && msz == 3 {
+                    continue;
+                }
+                let insn = enc_gather_d(msz, scaled, u) | (1 << 13);
+                for &offset in &[0u64, 8] {
+                    batch.push((
+                        format!("ldff1g_m{msz}_sc{}_u{u}_off{offset}", scaled as u32),
+                        enc_setffr(),
+                        insn,
+                        deterministic_ldff1_gather_input(offset),
+                    ));
                 }
             }
         }
@@ -42677,6 +42819,47 @@ fn diff_sve_ffr() {
         st.set_preg(2, rng.next() as u16);
         batch.push((
             "wrffr+rdffr_pred".to_string(),
+            enc_wrffr(1),
+            enc_rdffr_pred(0, 2),
+            st,
+        ));
+    }
+    {
+        // SETFFR overwrites the previous FFR state; RDFFR then exposes all-true.
+        let mut st = ArmState::zeroed();
+        st.set_ffr(0x1357);
+        st.set_preg(0, 0x2468);
+        batch.push((
+            "setffr+rdffr_overwrite".to_string(),
+            enc_setffr(),
+            enc_rdffr(0),
+            st,
+        ));
+    }
+    for &ffr in &[0x0000u16, 0x0001, 0x00ff, 0x8000, 0xaaaa, 0xffff] {
+        let mut st = ArmState::zeroed();
+        st.set_preg(1, ffr);
+        batch.push((
+            format!("wrffr+rdffr ffr={ffr:#06x}"),
+            enc_wrffr(1),
+            enc_rdffr(0),
+            st,
+        ));
+    }
+    for (ffr, pg) in [
+        (0x0000, 0xffff),
+        (0xffff, 0x0000),
+        (0x0001, 0x8001),
+        (0x8000, 0x8001),
+        (0x00ff, 0x0f0f),
+        (0xaaaa, 0x5555),
+        (0x5555, 0xaaaa),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.set_preg(1, ffr);
+        st.set_preg(2, pg);
+        batch.push((
+            format!("wrffr+rdffr_pred ffr={ffr:#06x} pg={pg:#06x}"),
             enc_wrffr(1),
             enc_rdffr_pred(0, 2),
             st,
@@ -42992,6 +43175,39 @@ fn diff_sve_scatter_ai_s() {
             }
         }
     }
+    fn deterministic_scatter_ai_s_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        let bases = [
+            SCRATCH_BASE as u32,
+            (SCRATCH_BASE + 8) as u32,
+            (SCRATCH_BASE + 16) as u32,
+            (SCRATCH_BASE + 24) as u32,
+        ];
+        let mut zn = 0u128;
+        for (lane, base) in bases.iter().enumerate() {
+            zn |= (*base as u128) << (lane * 32);
+        }
+        st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
+    for msz in 0..3u32 {
+        for &imm5 in &[0u32, 1, 2] {
+            let insn = enc_scatter_ai_s(msz, imm5);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("sais_m{msz}_i{imm5}_{mask_name}"),
+                    insn,
+                    deterministic_scatter_ai_s_input(pg),
+                ));
+            }
+        }
+    }
     run_batch("sve_scatter_ai_s", batch);
 }
 
@@ -43020,6 +43236,34 @@ fn diff_sve_gather_ai() {
             }
         }
     }
+    fn deterministic_gather_ai_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_vreg(1, SCRATCH_BASE, SCRATCH_BASE + 32);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1110_0908_0503_0201);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for &imm5 in &[0u32, 1, 2] {
+            for u in 0..2u32 {
+                if u == 0 && msz == 3 {
+                    continue;
+                }
+                let insn = enc_gather_ai(msz, imm5, u);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("gai_m{msz}_i{imm5}_u{u}_{mask_name}"),
+                        insn,
+                        deterministic_gather_ai_input(pg),
+                    ));
+                }
+            }
+        }
+    }
     run_batch("sve_gather_ai", batch);
 }
 
@@ -43038,6 +43282,29 @@ fn diff_sve_scatter_ai() {
                 st.set_vreg(1, b0, b1);
                 st.set_preg(0, rng.next() as u16);
                 batch.push((name.clone(), insn, st));
+            }
+        }
+    }
+    fn deterministic_scatter_ai_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_vreg(1, SCRATCH_BASE, SCRATCH_BASE + 32);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for &imm5 in &[0u32, 1, 2] {
+            let insn = enc_scatter_ai(msz, imm5);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("sai_m{msz}_i{imm5}_{mask_name}"),
+                    insn,
+                    deterministic_scatter_ai_input(pg),
+                ));
             }
         }
     }
@@ -43075,6 +43342,40 @@ fn diff_sve_gather_x32() {
             }
         }
     }
+    fn deterministic_gather_x32_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_vreg(2, 0, 4);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1110_0908_0503_0201);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for xs in 0..2u32 {
+            for &scaled in &[false, true] {
+                if scaled && msz == 0 {
+                    continue;
+                }
+                for u in 0..2u32 {
+                    if u == 0 && msz == 3 {
+                        continue;
+                    }
+                    let insn = enc_gather_x32(msz, xs, scaled, u);
+                    for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                        batch.push((
+                            format!("gx_m{msz}_x{xs}_sc{}_u{u}_{mask_name}", scaled as u32),
+                            insn,
+                            deterministic_gather_x32_input(pg),
+                        ));
+                    }
+                }
+            }
+        }
+    }
     run_batch("sve_gather_x32", batch);
 }
 
@@ -43102,6 +43403,35 @@ fn diff_sve_scatter_x32() {
             }
         }
     }
+    fn deterministic_scatter_x32_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_vreg(2, 0, 4);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for xs in 0..2u32 {
+            for &scaled in &[false, true] {
+                if scaled && msz == 0 {
+                    continue;
+                }
+                let insn = enc_scatter_x32(msz, xs, scaled);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("sx_m{msz}_x{xs}_sc{}_{mask_name}", scaled as u32),
+                        insn,
+                        deterministic_scatter_x32_input(pg),
+                    ));
+                }
+            }
+        }
+    }
     run_batch("sve_scatter_x32", batch);
 }
 
@@ -43110,6 +43440,24 @@ fn diff_sve_gather_s() {
     // 32-bit gather load: 4 S lanes from Xn + (extend(Zm[e],xs) << scale).
     let mut rng = Rng::new(0x4_2001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn deterministic_gather_s_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        let offsets = [0u32, 4, 8, 12];
+        let mut zm = 0u128;
+        for (lane, offset) in offsets.iter().enumerate() {
+            zm |= (*offset as u128) << (lane * 32);
+        }
+        st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1110_0908_0503_0201);
+        }
+        st
+    }
+
     for msz in 0..3u32 {
         for xs in 0..2u32 {
             for &scaled in &[false, true] {
@@ -43136,6 +43484,28 @@ fn diff_sve_gather_s() {
             }
         }
     }
+    for msz in 0..3u32 {
+        for xs in 0..2u32 {
+            for &scaled in &[false, true] {
+                if scaled && msz == 0 {
+                    continue;
+                }
+                for u in 0..2u32 {
+                    if u == 0 && msz == 2 {
+                        continue;
+                    }
+                    let insn = enc_gather_s(msz, xs, scaled, u);
+                    for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                        batch.push((
+                            format!("gs_m{msz}_x{xs}_sc{}_u{u}_{mask_name}", scaled as u32),
+                            insn,
+                            deterministic_gather_s_input(pg),
+                        ));
+                    }
+                }
+            }
+        }
+    }
     run_batch("sve_gather_s", batch);
 }
 
@@ -43143,6 +43513,24 @@ fn diff_sve_gather_s() {
 fn diff_sve_scatter_s() {
     let mut rng = Rng::new(0x4_3001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn deterministic_scatter_s_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        let offsets = [0u32, 4, 8, 12];
+        let mut zm = 0u128;
+        for (lane, offset) in offsets.iter().enumerate() {
+            zm |= (*offset as u128) << (lane * 32);
+        }
+        st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
     for msz in 0..3u32 {
         for xs in 0..2u32 {
             for &scaled in &[false, true] {
@@ -43160,6 +43548,23 @@ fn diff_sve_scatter_s() {
                     st.set_vreg(2, zm as u64, (zm >> 64) as u64);
                     st.set_preg(0, rng.next() as u16);
                     batch.push((name.clone(), insn, st));
+                }
+            }
+        }
+    }
+    for msz in 0..3u32 {
+        for xs in 0..2u32 {
+            for &scaled in &[false, true] {
+                if scaled && msz == 0 {
+                    continue;
+                }
+                let insn = enc_scatter_s(msz, xs, scaled);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("ss_m{msz}_x{xs}_sc{}_{mask_name}", scaled as u32),
+                        insn,
+                        deterministic_scatter_s_input(pg),
+                    ));
                 }
             }
         }
@@ -44222,6 +44627,99 @@ fn diff_sve_unpred() {
         cases.push((format!("sve_{name}"), enc_sve_logical(opc)));
     }
     run_family("sve_unpred", cases, 16, 0x1_001F);
+
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for lane in 0..lanes {
+            packed |= ((values[lane % values.len()] & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn arithmetic_patterns(sz: u32) -> Vec<(&'static str, (u64, u64), (u64, u64))> {
+        let bits = 8u32 << sz;
+        let sign = 1u64 << (bits - 1);
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let signed_max = sign - 1;
+        let signed_min = sign;
+        let signed_minus_one = mask;
+        vec![
+            (
+                "signed_add",
+                pack_lanes(sz, &[signed_max, signed_min, 0, mask]),
+                pack_lanes(sz, &[1, signed_minus_one, signed_minus_one, 1]),
+            ),
+            (
+                "signed_sub",
+                pack_lanes(sz, &[signed_min, signed_max, 0, mask]),
+                pack_lanes(sz, &[1, signed_minus_one, 1, signed_minus_one]),
+            ),
+            (
+                "unsigned",
+                pack_lanes(sz, &[mask, 0, 1, mask.wrapping_sub(1)]),
+                pack_lanes(sz, &[1, 1, 2, mask]),
+            ),
+        ]
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        for (opc6, op_name) in [
+            (0b000000u32, "add"),
+            (0b000001, "sub"),
+            (0b000100, "sqadd"),
+            (0b000101, "uqadd"),
+            (0b000110, "sqsub"),
+            (0b000111, "uqsub"),
+        ] {
+            let insn = enc_sve_arith(sz, opc6);
+            for (pattern_name, zn, zm) in arithmetic_patterns(sz) {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                st.set_vreg(1, zn.0, zn.1);
+                st.set_vreg(2, zm.0, zm.1);
+                batch.push((format!("{op_name}_sz{sz}_{pattern_name}"), insn, st));
+            }
+        }
+    }
+    for (opc, name) in [
+        (0b00u32, "and"),
+        (0b01, "orr"),
+        (0b10, "eor"),
+        (0b11, "bic"),
+    ] {
+        let insn = enc_sve_logical(opc);
+        for (pattern_name, zn, zm) in [
+            (
+                "checker",
+                (0x00ff_00ff_00ff_00ff, 0xff00_ff00_ff00_ff00),
+                (0x0f0f_0f0f_0f0f_0f0f, 0xf0f0_f0f0_f0f0_f0f0),
+            ),
+            (
+                "edges",
+                (0xffff_ffff_ffff_ffff, 0x0000_0000_0000_0000),
+                (0x0000_0000_0000_0000, 0xffff_ffff_ffff_ffff),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+            st.set_vreg(1, zn.0, zn.1);
+            st.set_vreg(2, zm.0, zm.1);
+            batch.push((format!("{name}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve_unpred_edges", batch);
 }
 
 #[test]
@@ -44240,6 +44738,32 @@ fn diff_sve2_ternary() {
         cases.push((name.to_string(), enc_sve2_tern(opc, o2)));
     }
     run_family("sve2_ternary", cases, 16, 0x5_0001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(opc, o2, name) in ops {
+        let insn = enc_sve2_tern(opc, o2);
+        for (pattern_name, zdn, zk, zm) in [
+            (
+                "checker",
+                (0x00ff_00ff_00ff_00ff, 0xff00_ff00_ff00_ff00),
+                (0x0f0f_0f0f_0f0f_0f0f, 0xf0f0_f0f0_f0f0_f0f0),
+                (0x3333_3333_3333_3333, 0xcccc_cccc_cccc_cccc),
+            ),
+            (
+                "edges",
+                (0xffff_ffff_ffff_ffff, 0x0000_0000_0000_0000),
+                (0x0000_0000_0000_0000, 0xffff_ffff_ffff_ffff),
+                (0x5555_5555_5555_5555, 0xaaaa_aaaa_aaaa_aaaa),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, zdn.0, zdn.1);
+            st.set_vreg(1, zk.0, zk.1);
+            st.set_vreg(2, zm.0, zm.1);
+            batch.push((format!("{name}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve2_ternary_edges", batch);
 }
 
 #[test]
