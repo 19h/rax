@@ -7290,6 +7290,16 @@ impl AArch64Cpu {
                 self.exec_sve_compact(insn, zd, zn, pg)
             }
 
+            // SVE2 SPLICE (constructive): 0x05, bits[21:16]==101101,
+            // bits[15:13]==100. Sources are the consecutive pair {Zn, Zn+1}.
+            0b000
+                if (insn >> 24) & 0xFF == 0b00000101
+                    && (insn >> 16) & 0x3F == 0b101101
+                    && (insn >> 13) & 0x7 == 0b100 =>
+            {
+                self.exec_sve_splice_pair(insn, zd, zn, pg)
+            }
+
             // SPLICE (destructive): 0x05, bits[21:16]==101100, bits[15:13]==100.
             // Zdn's active span is packed low, the rest filled from Zm.
             0b000
@@ -7723,9 +7733,9 @@ impl AArch64Cpu {
             // Routed before INDEX so the stack forms are not mis-decoded.
             0b000
                 if (insn >> 24) & 0xFF == 0b00000100
+                    && (insn >> 21) & 1 == 1
                     && (((insn >> 11) & 0x1F == 0b01010)
-                        || ((insn >> 21) & 1 == 1
-                            && matches!((insn >> 12) & 0xF, 0b1100 | 0b1110 | 0b1111))) =>
+                        || matches!((insn >> 12) & 0xF, 0b1100 | 0b1110 | 0b1111)) =>
             {
                 self.exec_sve_elem_count(insn)
             }
@@ -12293,11 +12303,34 @@ impl AArch64Cpu {
         zn: usize,
         pg: usize,
     ) -> Result<CpuExit, ArmError> {
+        self.exec_sve_splice_sources(insn, zd, zd, zn, pg)
+    }
+
+    /// Execute SVE2 SPLICE (constructive): source 1 is Zn and source 2 is the
+    /// next architectural vector register modulo 32.
+    fn exec_sve_splice_pair(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        pg: usize,
+    ) -> Result<CpuExit, ArmError> {
+        self.exec_sve_splice_sources(insn, zd, zn, (zn + 1) & 31, pg)
+    }
+
+    fn exec_sve_splice_sources(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        s1: usize,
+        s2: usize,
+        pg: usize,
+    ) -> Result<CpuExit, ArmError> {
         let esize = 1usize << ((insn >> 22) & 0x3); // bytes
         let elements = 16 / esize;
         let pred = self.sve_p[pg];
-        let op1 = self.v[zd].to_le_bytes(); // Zdn
-        let op2 = self.v[zn].to_le_bytes(); // Zm
+        let op1 = self.v[s1].to_le_bytes();
+        let op2 = self.v[s2].to_le_bytes();
         let mut dst = [0u8; 16];
         let mut x = 0usize;
         let mut lastnum: i32 = -1;
@@ -14958,6 +14991,43 @@ impl AArch64Cpu {
                 }
             }
             return Ok(CpuExit::Continue);
+        }
+
+        // LDNT1 gather (vector base + scalar offset, D elements): 1100010 msz
+        // 00 Rm 1 U 0 Pg Zn Zt. Each element's base is Zn.d[e], offset by Xm
+        // (or zero for Rm==31). The non-temporal hint has no architectural
+        // effect. Signed byte/half/word variants sign-extend into 64-bit lanes;
+        // there is no signed doubleword form.
+        if insn >> 25 == 0b1100010
+            && (insn >> 21) & 0x3 == 0b00
+            && (insn >> 15) & 1 == 1
+            && (insn >> 13) & 1 == 0
+        {
+            let msz = (insn >> 23) & 0x3;
+            let unsigned = (insn >> 14) & 1 == 1;
+            if !unsigned && msz == 3 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let rm = ((insn >> 16) & 0x1F) as u8;
+            let offset = if rm == 31 { 0 } else { self.get_x(rm) };
+            let zn_base = ((insn >> 5) & 0x1F) as usize;
+            let mbytes = 1usize << msz;
+            let esize = 8usize; // D
+            let elements = 16 / esize;
+            let bases = self.v[zn_base].to_le_bytes();
+            let mut addrs = [0u64; 4];
+            for (e, slot) in addrs.iter_mut().enumerate().take(elements) {
+                *slot = read_elem(&bases, e * esize, esize).wrapping_add(offset);
+            }
+            return self.exec_sve_gather_load(
+                &addrs[..elements],
+                mbytes,
+                esize,
+                !unsigned,
+                pred,
+                zt,
+                false,
+            );
         }
 
         // LD1 gather (vector base + immediate, D elements): 1100010 msz 01 imm5

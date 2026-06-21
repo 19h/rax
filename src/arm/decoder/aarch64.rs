@@ -3196,7 +3196,11 @@ impl Aarch64Decoder {
 
         match op0 {
             // Integer multiply-add predicated
-            0b000 if (op1 & 0x2) == 0 && (op2 & 0x10) == 0 && (op3 & 0x20) != 0 => {
+            0b000
+                if (raw >> 24) & 0xFF == 0x04
+                    && (raw >> 21) & 1 == 0
+                    && matches!((raw >> 13) & 0x7, 0b010 | 0b011) =>
+            {
                 let op = (raw >> 13) & 1;
                 let mnemonic = match op {
                     0 => Mnemonic::SVE_MLA,
@@ -5197,6 +5201,25 @@ mod tests {
             let insn = Aarch64Decoder::decode(raw).unwrap();
             assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
         }
+    }
+
+    #[test]
+    fn test_sve_int_mla_mls_decode() {
+        fn enc(size: u32, sub: bool, zm: u32, pg: u32, zn: u32, zda: u32) -> u32 {
+            (0x04 << 24)
+                | (size << 22)
+                | ((zm & 0x1F) << 16)
+                | ((0b010 | (sub as u32)) << 13)
+                | ((pg & 0x7) << 10)
+                | ((zn & 0x1F) << 5)
+                | (zda & 0x1F)
+        }
+
+        let mla = Aarch64Decoder::decode(0x041c_50a5).unwrap();
+        assert_eq!(mla.mnemonic, Mnemonic::SVE_MLA);
+
+        let mls = Aarch64Decoder::decode(enc(3, true, 31, 7, 30, 29)).unwrap();
+        assert_eq!(mls.mnemonic, Mnemonic::SVE_MLS);
     }
 
     #[test]

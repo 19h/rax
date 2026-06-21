@@ -36522,6 +36522,19 @@ fn enc_gather_ai(msz: u32, imm5: u32, u: u32) -> u32 {
         | RD
 }
 
+/// SVE LDNT1 gather (vector base + scalar offset, D-form):
+/// `1100010 msz 00 Rm 1 U 0 Pg Zn Zt`.
+fn enc_ldnt1_vs_d(msz: u32, unsigned: bool, rm: u32, pg: u32, zn: u32, zt: u32) -> u32 {
+    (0b1100010 << 25)
+        | (msz << 23)
+        | ((rm & 0x1F) << 16)
+        | (1 << 15)
+        | ((unsigned as u32) << 14)
+        | ((pg & 0x7) << 10)
+        | ((zn & 0x1F) << 5)
+        | (zt & 0x1F)
+}
+
 /// SVE ST1 scatter (vector base + immediate, D-form): `1110010 msz 10 imm5 101
 /// Pg Zn Zt`. Zn=z1, Zt=z0.
 fn enc_scatter_ai(msz: u32, imm5: u32) -> u32 {
@@ -36784,6 +36797,18 @@ fn enc_sve_compact(sz: u32) -> u32 {
 /// Zdn=z0 (both source-1 and destination).
 fn enc_sve_splice(sz: u32) -> u32 {
     (0b00000101 << 24) | (sz << 22) | (0b101100 << 16) | (0b100 << 13) | (RN << 5) | RD
+}
+
+/// SVE2 SPLICE (constructive): `00000101 size 101101 100 Pg Zn Zd`.
+/// Sources are the consecutive pair `{Zn, Zn+1}`.
+fn enc_sve2_splice_pair(sz: u32, zd: u32, zn: u32, pg: u32) -> u32 {
+    (0b00000101 << 24)
+        | (sz << 22)
+        | (0b101101 << 16)
+        | (0b100 << 13)
+        | ((pg & 0x7) << 10)
+        | ((zn & 0x1F) << 5)
+        | (zd & 0x1F)
 }
 
 /// SVE PFIRST Pdn.B, Pg, Pdn.B: `00100101 01011000 1100000 Pg Pdn`.
@@ -37109,6 +37134,50 @@ fn diff_sve_pred_true_false_fixed_field_legality() {
 /// Zdn=z0, Zm=z1, Pg=p0.
 fn enc_sve_palu(sz: u32, group: u32, opc: u32) -> u32 {
     (0x04 << 24) | (sz << 22) | (group << 19) | (opc << 16) | (RN << 5) | RD
+}
+
+/// SVE MLA/MLS Zda.T, Pg/M, Zn.T, Zm.T.
+fn enc_sve_mla(sz: u32, sub: bool, zda: u32, zn: u32, zm: u32, pg: u32) -> u32 {
+    (0x04 << 24)
+        | (sz << 22)
+        | ((zm & 0x1F) << 16)
+        | ((0b010 | (sub as u32)) << 13)
+        | ((pg & 0x7) << 10)
+        | ((zn & 0x1F) << 5)
+        | (zda & 0x1F)
+}
+
+#[test]
+fn diff_sve_int_mla_mls() {
+    let mut rng = Rng::new(0x1_0024);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for sz in 0..4u32 {
+        for sub in [false, true] {
+            let name = if sub { "mls" } else { "mla" };
+            let insn = enc_sve_mla(sz, sub, RD, RN, RM, 0);
+            for _ in 0..16 {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_preg(0, rng.next() as u16);
+                batch.push((format!("{name}_sz{sz}"), insn, st));
+            }
+
+            for (pred_name, pred) in [("all", 0xffff), ("mixed", 0x5555), ("inactive", 0)] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xff00_ff00_ff00_ff00, 0x00ff_00ff_00ff_00ff);
+                st.set_vreg(1, 0x0302_0100_fff0_1001, 0x7f80_8001_dead_beef);
+                st.set_vreg(2, 0x0504_0302_0100_ffff, 0x0002_0003_0004_0005);
+                st.set_preg(0, pred);
+                batch.push((format!("{name}_sz{sz}_{pred_name}"), insn, st));
+            }
+        }
+    }
+
+    let mut st = gen_sve_input(&mut rng);
+    st.set_preg(4, rng.next() as u16);
+    batch.push(("mla_fuzz_041c50a5".into(), 0x041c_50a5, st));
+
+    run_batch("sve_int_mla_mls", batch);
 }
 
 /// SVE SEL Zd.T, Pg, Zn, Zm: `00000101 sz 1 Zm 11 Pg Zn Zd`. Zd=z0, Zn=z1,
@@ -50839,6 +50908,43 @@ fn diff_sve_ldnt1() {
 }
 
 #[test]
+fn diff_sve_ldnt1_vector_base_scalar_offset() {
+    fn input(offset: u64, pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[24] = offset;
+        st.set_vreg(2, SCRATCH_BASE + 0x10, SCRATCH_BASE + 0x50);
+        st.set_vreg(1, 0xfeed_face_feed_face, 0xdead_beef_dead_beef);
+        st.set_preg(6, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_7f80_0102u64 ^ (idx as u64).wrapping_mul(0x1122_3344_5566_7788);
+        }
+        st
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for msz in 0..4u32 {
+        for unsigned in [false, true] {
+            if !unsigned && msz == 3 {
+                continue;
+            }
+            let name = if unsigned { "u" } else { "s" };
+            let insn = enc_ldnt1_vs_d(msz, unsigned, 24, 6, 2, 1);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("second", 0x0100), ("inactive", 0)] {
+                batch.push((format!("ldnt1_vbase_{name}_m{msz}_{mask_name}"), insn, input(3, pg)));
+            }
+        }
+    }
+    batch.push(("ldnt1sb_fuzz_c4189841".into(), 0xc418_9841, input(3, 0xffff)));
+    batch.push((
+        "ldnt1sb_rm31_zero_offset".into(),
+        enc_ldnt1_vs_d(0, false, 31, 6, 2, 1),
+        input(0x7777, 0xffff),
+    ));
+
+    run_batch("sve_ldnt1_vector_base_scalar_offset", batch);
+}
+
+#[test]
 fn diff_sve_ldn_stn() {
     // Multi-register de-interleaving loads (LD2/3/4) and interleaving stores
     // (ST2/3/4), all element sizes and structure counts.
@@ -52345,6 +52451,35 @@ fn diff_sve_splice() {
 
     fn predicate_bit(sz: u32, lane: usize) -> u16 {
         1u16 << (lane * (1usize << sz))
+    }
+
+    let fuzz_insn = enc_sve2_splice_pair(1, 2, 10, 3);
+    assert_eq!(fuzz_insn, 0x056d_8d42);
+    let mut fuzz = ArmState::zeroed();
+    fuzz.set_vreg(2, 0xfeed_face_feed_face, 0xdead_beef_dead_beef);
+    fuzz.set_vreg(10, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908);
+    fuzz.set_vreg(11, 0x1716_1514_1312_1110, 0x1f1e_1d1c_1b1a_1918);
+    fuzz.set_preg(3, predicate_bit(1, 1) | predicate_bit(1, 5));
+    batch.push(("splice_pair_fuzz_056d8d42".into(), fuzz_insn, fuzz));
+
+    for sz in 0..4u32 {
+        let insn = enc_sve2_splice_pair(sz, 2, 10, 3);
+        for _ in 0..12 {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(2, rng.next(), rng.next());
+            st.set_vreg(10, rng.next(), rng.next());
+            st.set_vreg(11, rng.next(), rng.next());
+            st.set_preg(3, rng.next() as u16);
+            batch.push((format!("splice_pair sz{sz}"), insn, st));
+        }
+
+        let wrap_insn = enc_sve2_splice_pair(sz, 5, 31, 7);
+        let mut wrap = ArmState::zeroed();
+        wrap.set_vreg(0, rng.next(), rng.next());
+        wrap.set_vreg(5, rng.next(), rng.next());
+        wrap.set_vreg(31, rng.next(), rng.next());
+        wrap.set_preg(7, rng.next() as u16);
+        batch.push((format!("splice_pair_wrap sz{sz}"), wrap_insn, wrap));
     }
 
     fn splice_patterns(sz: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
