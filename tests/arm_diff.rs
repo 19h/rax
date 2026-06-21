@@ -1399,6 +1399,53 @@ fn generated_float_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_vector_dotprod_cases() -> Vec<(String, u32)> {
+    let sources = [("vector/mul", include_str!("arm/generated/a64/vector/mul.rs"))];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn) in parse_generated_a64_encodings(family, source) {
+            if !vector_dotprod(insn) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_scalar_cmp_zero_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/compare.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/compare", source) {
+        if !vector_scalar_cmp_zero(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_scalar_shift_imm_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/shift.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/shift", source) {
+        if !vector_scalar_shift_imm_same_size(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings(
@@ -1634,6 +1681,31 @@ fn integer_tag_addsub(insn: u32) -> bool {
         && ((insn >> 29) & 1) == 0
         && ((insn >> 23) & 0x3f) == 0b100011
         && ((insn >> 22) & 1) == 0
+}
+
+fn vector_dotprod(insn: u32) -> bool {
+    let lo6 = (insn >> 10) & 0x3f;
+    (insn >> 24) & 0x1f == 0b01110
+        && ((insn >> 21) & 1) == 0
+        && (lo6 == 0b100101 || (((insn >> 29) & 1) == 0 && lo6 == 0b100111))
+}
+
+fn vector_scalar_cmp_zero(insn: u32) -> bool {
+    let opcode = (insn >> 12) & 0x1f;
+    (insn >> 24) & 0x1f == 0b11110
+        && ((insn >> 17) & 0x1f) == 0b10000
+        && ((insn >> 10) & 0x3) == 0b10
+        && matches!(opcode, 0b01000 | 0b01001 | 0b01010)
+}
+
+fn vector_scalar_shift_imm_same_size(insn: u32) -> bool {
+    let opcode = (insn >> 11) & 0x1f;
+    (insn >> 24) & 0x1f == 0b11111
+        && ((insn >> 10) & 1) == 1
+        && matches!(
+            opcode,
+            0b00000 | 0b00010 | 0b00100 | 0b00110 | 0b01000 | 0b01010 | 0b01100 | 0b01110
+        )
 }
 
 fn gen_memory_input(rng: &mut Rng) -> ArmState {
@@ -31717,6 +31789,36 @@ fn diff_generated_float_sweep() {
         }
     }
     run_batch("generated_float_sweep", batch);
+}
+
+#[test]
+fn diff_generated_vector_dotprod_legality_sweep() {
+    run_family(
+        "generated_vector_dotprod_legality_sweep",
+        generated_vector_dotprod_cases(),
+        4,
+        0xa64_ec70,
+    );
+}
+
+#[test]
+fn diff_generated_vector_scalar_cmp_zero_legality_sweep() {
+    run_family(
+        "generated_vector_scalar_cmp_zero_legality_sweep",
+        generated_vector_scalar_cmp_zero_cases(),
+        4,
+        0xa64_ec71,
+    );
+}
+
+#[test]
+fn diff_generated_vector_scalar_shift_imm_legality_sweep() {
+    run_family(
+        "generated_vector_scalar_shift_imm_legality_sweep",
+        generated_vector_scalar_shift_imm_cases(),
+        4,
+        0xa64_ec72,
+    );
 }
 
 #[test]

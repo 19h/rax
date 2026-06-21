@@ -2707,10 +2707,16 @@ impl AArch64Cpu {
         if op_bits == 0b01110 && (insn >> 21) & 1 == 0 {
             let lo6 = (insn >> 10) & 0x3F;
             if lo6 == 0b100101 {
+                if (insn >> 22) & 0x3 != 0b10 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 let signed = (insn >> 29) & 1 == 0; // SDOT (U=0) / UDOT (U=1)
                 return self.exec_simd_dot(insn, signed, signed);
             }
             if lo6 == 0b100111 && (insn >> 29) & 1 == 0 {
+                if (insn >> 22) & 0x3 != 0b10 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 // USDOT: Vn unsigned, Vm signed.
                 return self.exec_simd_dot(insn, false, true);
             }
@@ -4490,6 +4496,12 @@ impl AArch64Cpu {
                 if bits == 64 && q == 0 && !scalar {
                     return Err(ArmError::UndefinedInstruction(insn));
                 }
+                if scalar
+                    && bits != 64
+                    && matches!(opcode, 0b00000 | 0b00010 | 0b00100 | 0b00110 | 0b01000 | 0b01010)
+                {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 let is_left = matches!(opcode, 0b01010 | 0b01100 | 0b01110);
                 let shift = if is_left {
                     immhimmb - bits
@@ -5619,6 +5631,9 @@ impl AArch64Cpu {
             if adv_simd_two_reg_int(u, opcode, bits, 0, 0).is_some() {
                 // CNT is byte-only; NOT/RBIT handled above.
                 if opcode == 0b00101 && size != 0b00 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                if scalar && matches!(opcode, 0b01000 | 0b01001 | 0b01010) && size != 0b11 {
                     return Err(ArmError::UndefinedInstruction(insn));
                 }
                 // CLS/CLZ have no 64-bit element form.
@@ -23436,6 +23451,109 @@ mod tests {
         let mut good = create_cpu_with_insn(0x4f82_e020);
         good.sysregs.el1.cpacr |= 0b11 << 20;
         assert_eq!(good.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn simd_dot_rejects_non_word_size() {
+        // Vector SDOT/UDOT/USDOT always dot 8-bit lanes into 32-bit elements.
+        // The same opcode with size != 0b10 is unallocated.
+        for insn in [
+            0x0e00_9400, // SDOT size=0
+            0x0e40_9400, // SDOT size=1
+            0x0ec0_9400, // SDOT size=3
+            0x2e00_9400, // UDOT size=0
+            0x0e00_9c00, // USDOT size=0
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            let exit = cpu.step();
+            assert!(
+                matches!(exit, Ok(CpuExit::Undefined(got)) if got == insn)
+                    || matches!(exit, Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "expected {insn:#010x} to be undefined, got {exit:?}"
+            );
+        }
+
+        for insn in [
+            0x0e82_9420, // SDOT V0.2S, V1.8B, V2.8B
+            0x2e82_9420, // UDOT V0.2S, V1.8B, V2.8B
+            0x0e82_9c20, // USDOT V0.2S, V1.8B, V2.8B
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        }
+    }
+
+    #[test]
+    fn simd_scalar_cmp_zero_rejects_non_doubleword_size() {
+        // Scalar integer compare-with-zero has only the D-sized form. The
+        // generated boundary corpus includes B/H/S encodings, which hardware
+        // reports as unallocated.
+        for insn in [
+            0x5e20_8800, // CMGT size=0
+            0x5e60_8800, // CMGT size=1
+            0x5ea0_8800, // CMGT size=2
+            0x7e20_8800, // CMGE size=0
+            0x5e20_9800, // CMEQ size=0
+            0x5e20_a800, // CMLT size=0
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            let exit = cpu.step();
+            assert!(
+                matches!(exit, Ok(CpuExit::Undefined(got)) if got == insn)
+                    || matches!(exit, Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "expected {insn:#010x} to be undefined, got {exit:?}"
+            );
+        }
+
+        for insn in [
+            0x5ee0_8800, // CMGT D0, D0, #0
+            0x7ee0_8800, // CMGE D0, D0, #0
+            0x5ee0_9800, // CMEQ D0, D0, #0
+            0x5ee0_a800, // CMLT D0, D0, #0
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        }
+    }
+
+    #[test]
+    fn simd_scalar_shift_imm_rejects_non_doubleword_size() {
+        // Scalar same-size shift-immediate encodings are D-sized only. Vector
+        // B/H/S forms exist, but the scalar B/H/S encodings are unallocated.
+        for insn in [
+            0x5f08_0400, // SSHR size=B
+            0x5f18_0400, // SSHR size=H
+            0x5f20_0400, // SSHR size=S
+            0x7f08_4400, // SRI size=B
+            0x7f08_5400, // SLI size=B
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            let exit = cpu.step();
+            assert!(
+                matches!(exit, Ok(CpuExit::Undefined(got)) if got == insn)
+                    || matches!(exit, Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "expected {insn:#010x} to be undefined, got {exit:?}"
+            );
+        }
+
+        for insn in [
+            0x5f7f_0400, // SSHR D0, D0, #1
+            0x7f7f_0400, // USHR D0, D0, #1
+            0x7f7f_4400, // SRI D0, D0, #1
+            0x7f41_5400, // SLI D0, D0, #1
+            0x5f08_7420, // SQSHL B0, B1, #0
+            0x7f08_6420, // SQSHLU B0, B1, #0
+            0x7f08_7420, // UQSHL B0, B1, #0
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        }
     }
 
     #[test]
