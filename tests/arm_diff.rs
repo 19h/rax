@@ -27381,6 +27381,77 @@ fn diff_fpcr_ah_fmlal_nan_status() {
     run_batch("fpcr_ah_fmlal_nan_status", batch);
 }
 
+#[test]
+fn diff_fpcr_ah_sve_fmlal_input_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    for &(pattern_name, pattern) in &[
+        ("s_qnan_snan", 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128),
+        ("d_qnan_snan", 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128),
+        ("s_inf_zero", 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128),
+    ] {
+        for &(name, insn) in &[
+            ("fmlalb", enc_sve2_fmlal(0, 0)),
+            ("fmlalt", enc_sve2_fmlal(0, 1)),
+            ("fmlslb", enc_sve2_fmlal(1, 0)),
+            ("fmlslt", enc_sve2_fmlal(1, 1)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+            batch.push((format!("{name}_ah_input_status_{pattern_name}"), insn, st));
+        }
+    }
+
+    run_batch("fpcr_ah_sve_fmlal_input_status", batch);
+}
+
+fn enc_fmlal_idx(q: u32, top: u32, sub: u32, index: u32) -> u32 {
+    let h = (index >> 2) & 1;
+    let l = (index >> 1) & 1;
+    let m = index & 1;
+    (q << 30)
+        | (top << 29)
+        | (0b01111 << 24)
+        | (0b10 << 22)
+        | (l << 21)
+        | (m << 20)
+        | (RM << 16)
+        | (top << 15)
+        | (sub << 14)
+        | (h << 11)
+        | (RN << 5)
+        | RD
+}
+
+#[test]
+fn diff_fpcr_ah_fmlal_indexed_nan_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    for &(pattern_name, pattern) in &[
+        ("s_qnan_snan", 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128),
+        ("d_qnan_snan", 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128),
+        ("s_inf_zero", 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((
+            format!("fmlal_idx_ah_nan_status_{pattern_name}"),
+            enc_fmlal_idx(1, 0, 0, 3),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_ah_fmlal_indexed_nan_status", batch);
+}
+
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
 fn enc_single_fields(
@@ -28462,6 +28533,37 @@ fn diff_fpcr_fiz_simd_frecpe_frsqrte_subnormal_inputs() {
     }
 
     run_batch("fpcr_fiz_simd_frecpe_frsqrte_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_frecpe_frsqrte_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let h_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
+    let s_pattern = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("simd_frecpe_h_ah_status", enc_fp16_2r(1, 0, 1, 0b11101), h_pattern),
+        ("simd_frsqrte_h_ah_status", enc_fp16_2r(1, 1, 1, 0b11101), h_pattern),
+        ("simd_frecpe_s_ah_status", enc_two_reg(1, 0, 0b10, 0b11101), s_pattern),
+        ("simd_frsqrte_s_ah_status", enc_two_reg(1, 1, 0b10, 0b11101), s_pattern),
+        ("simd_frecpe_d_ah_status", enc_two_reg(1, 0, 0b11, 0b11101), d_pattern),
+        ("simd_frsqrte_d_ah_status", enc_two_reg(1, 1, 0b11, 0b11101), d_pattern),
+        ("sve_frecpe_h_ah_status", enc_sve_frecpe(1, 0), h_pattern),
+        ("sve_frsqrte_h_ah_status", enc_sve_frecpe(1, 1), h_pattern),
+        ("sve_frecpe_s_ah_status", enc_sve_frecpe(2, 0), s_pattern),
+        ("sve_frsqrte_s_ah_status", enc_sve_frecpe(2, 1), s_pattern),
+        ("sve_frecpe_d_ah_status", enc_sve_frecpe(3, 0), d_pattern),
+        ("sve_frsqrte_d_ah_status", enc_sve_frecpe(3, 1), d_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_frecpe_frsqrte_status", batch);
 }
 
 #[test]
@@ -43460,6 +43562,20 @@ fn diff_fpcr_ah_maxmin_reductions_qnan_number() {
         st.set_vreg(RN as usize, h_lo, h_hi);
         batch.push((format!("{label}_ah_qnan_number"), insn, st));
     }
+    let (h_lo, h_hi) = pack_h(&[
+        0x2000, 0x7fc0, 0x0001, 0x7fa0, 0x2000, 0x7fc0, 0x0001, 0x7fa0,
+    ]);
+    for &(label, insn) in &[
+        ("simd_fmaxv_4h", enc_across(0, 0, 0b00, 0b01111)),
+        ("simd_fminv_4h", enc_across(0, 0, 0b10, 0b01111)),
+        ("simd_fmaxv_8h", enc_across(1, 0, 0b00, 0b01111)),
+        ("simd_fminv_8h", enc_across(1, 0, 0b10, 0b01111)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, h_lo, h_hi);
+        batch.push((format!("{label}_ah_qnan_snan_subnorm"), insn, st));
+    }
     for &(label, insn) in &[
         ("simd_fmaxv_s", enc_across(1, 1, 0b00, 0b01111)),
         ("simd_fminv_s", enc_across(1, 1, 0b10, 0b01111)),
@@ -45371,6 +45487,112 @@ fn diff_simd_recps_rsqrts_fpcr_rounding() {
         }
     }
     run_batch("simd_recps_rsqrts_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_recps_rsqrts_nan_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let h_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
+    let s_pattern = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("simd_frecps_h_ah_nan_status", enc_fp16_3s(1, 0, 0, 0b111), h_pattern),
+        ("simd_frsqrts_h_ah_nan_status", enc_fp16_3s(1, 0, 1, 0b111), h_pattern),
+        ("simd_frecps_s_ah_nan_status", enc_three_same(1, 0, 0, 0b11111), s_pattern),
+        ("simd_frsqrts_s_ah_nan_status", enc_three_same(1, 0, 2, 0b11111), s_pattern),
+        ("simd_frecps_d_ah_nan_status", enc_three_same(1, 0, 1, 0b11111), d_pattern),
+        ("simd_frsqrts_d_ah_nan_status", enc_three_same(1, 0, 3, 0b11111), d_pattern),
+        ("sve_frecps_h_ah_nan_status", enc_sve_recps(1, 0), h_pattern),
+        ("sve_frsqrts_h_ah_nan_status", enc_sve_recps(1, 1), h_pattern),
+        ("sve_frecps_s_ah_nan_status", enc_sve_recps(2, 0), s_pattern),
+        ("sve_frsqrts_s_ah_nan_status", enc_sve_recps(2, 1), s_pattern),
+        ("sve_frecps_d_ah_nan_status", enc_sve_recps(3, 0), d_pattern),
+        ("sve_frsqrts_d_ah_nan_status", enc_sve_recps(3, 1), d_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_recps_rsqrts_nan_status", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_invalid_default_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let h_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
+    let s_inf_zero_pattern = 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128;
+    let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("simd_fsub_s_ah_invalid_nan", enc_three_same(1, 0, 2, 0b11010), s_inf_zero_pattern),
+        ("simd_fabd_s_ah_invalid_nan", enc_three_same(1, 1, 2, 0b11010), s_inf_zero_pattern),
+        ("simd_fdiv_h_ah_invalid_nan", enc_fp16_3s(1, 1, 0, 0b111), h_pattern),
+        ("simd_fdiv_s_ah_invalid_nan", enc_three_same(1, 1, 0, 0b11111), s_inf_zero_pattern),
+        ("simd_fdiv_d_ah_invalid_nan", enc_three_same(1, 1, 1, 0b11111), d_pattern),
+        ("simd_fmul_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b1001, RM, 2), s_inf_zero_pattern),
+        ("simd_fmla_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0001, RM, 2), s_inf_zero_pattern),
+        ("simd_fmls_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0101, RM, 2), s_inf_zero_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_invalid_default_nan_sign", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_fmulx_input_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let s_pattern = 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128;
+    let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("simd_fmulx_s_ah_input_status", enc_three_same(1, 0, 0, 0b11011), s_pattern),
+        ("simd_fmulx_d_ah_input_status", enc_three_same(1, 0, 1, 0b11011), d_pattern),
+        ("scalar_fmulx_s_ah_input_status", enc_scalar_3same(0, 0, 0b11011), s_pattern),
+        ("scalar_fmulx_d_ah_input_status", enc_scalar_3same(0, 1, 0b11011), d_pattern),
+        ("indexed_fmulx_s_ah_input_status", enc_indexed(1, 1, 0b10, 0b1001, RM, 2), s_pattern),
+        ("indexed_fmulx_d_ah_input_status", enc_indexed(1, 1, 0b11, 0b1001, RM, 1), d_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_fmulx_input_status", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_frecpx_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let s_pattern = 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128;
+    let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("scalar_frecpx_s_ah_status", enc_scalar_two_reg(0, 0b10, 0b11111), s_pattern),
+        ("scalar_frecpx_d_ah_status", enc_scalar_two_reg(0, 0b11, 0b11111), d_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_frecpx_status", batch);
 }
 
 #[test]

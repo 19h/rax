@@ -3509,11 +3509,13 @@ impl AArch64Cpu {
                 (1, 1, 0b11111) => fp16_sqrt_with_fpcr(s, self.fpcr), // FSQRT
                 (0, 1, 0b11111) => fp16_recpx(fp16_flush_input_with_fpcr(s, self.fpcr)), // FRECPX
                 (0, 1, 0b11101) => {
-                    let raw = fp16_recpe(fp16_flush_input_with_fpcr(s, self.fpcr));
+                    let raw =
+                        fp16_recpe(fp_estimate_input_with_fpcr(s as u64, 16, self.fpcr) as u16);
                     fp16_flush_output_with_fpcr(raw, self.fpcr)
                 }, // FRECPE
                 (1, 1, 0b11101) => {
-                    let raw = fp16_rsqrte(fp16_flush_input_with_fpcr(s, self.fpcr));
+                    let raw =
+                        fp16_rsqrte(fp_estimate_input_with_fpcr(s as u64, 16, self.fpcr) as u16);
                     fp16_flush_output_with_fpcr(raw, self.fpcr)
                 }, // FRSQRTE
                 // Compare against zero.
@@ -5966,18 +5968,25 @@ impl AArch64Cpu {
             let mm = Self::fp16_to_f32(h2).to_bits();
             let acc_raw = (vd >> (32 * e)) as u64;
             let acc = fp_flush_input_bits_with_fpcr(acc_raw, 32, self.fpcr) as u32;
-            let r = if self.fpcr & FPCR_AH != 0 && fp16_is_nan(h1) {
-                nn | 0x0040_0000
+            let ah_nan_result = if self.fpcr & FPCR_AH != 0 && fp16_is_nan(h1) {
+                Some(nn | 0x0040_0000)
             } else if self.fpcr & FPCR_AH != 0 && fp16_is_nan(h2) {
-                mm | 0x0040_0000
+                Some(mm | 0x0040_0000)
             } else if self.fpcr & FPCR_AH != 0 && is_nan32(acc) {
-                if is_snan32(acc) { acc | 0x0040_0000 } else { acc }
+                Some(if is_snan32(acc) { acc | 0x0040_0000 } else { acc })
             } else {
-                fp_muladd_bits_with_fpcr(acc as u64, nn as u64, mm as u64, 32, self.fpcr) as u32
+                None
             };
+            let r = ah_nan_result.unwrap_or_else(|| {
+                fp_muladd_bits_with_fpcr(acc as u64, nn as u64, mm as u64, 32, self.fpcr) as u32
+            });
             self.fpsr |=
                 fp_status_fma(4, acc as u64, nn as u64, mm as u64, r as u64)
-                    | fp_fz_input_status(4, acc_raw, self.fpcr);
+                    | if ah_nan_result.is_some() {
+                        0
+                    } else {
+                        fp_fz_input_status(4, acc_raw, self.fpcr)
+                    };
             result |= (r as u128) << (32 * e);
         }
         // Q==0 leaves the upper 64 bits zero.
@@ -6508,7 +6517,7 @@ impl AArch64Cpu {
             for e in 0..elements {
                 let off = e * esize;
                 let raw = read_elem(&src, off, esize);
-                let a = fp_flush_input_bits_with_fpcr(raw, (esize * 8) as u32, self.fpcr);
+                let a = fp_estimate_input_with_fpcr(raw, (esize * 8) as u32, self.fpcr);
                 let r = match (is_rsqrt, sz == 0) {
                     (false, true) => fp_recip_estimate_f32(a as u32) as u64,
                     (false, false) => fp_recip_estimate_f64(a),
@@ -6537,7 +6546,9 @@ impl AArch64Cpu {
             if fp_is_snan_bits(esize, a) {
                 self.fpsr |= FPSR_IOC;
             }
-            self.fpsr |= fp_fz_input_status(esize, raw, self.fpcr);
+            if self.fpcr & FPCR_AH == 0 {
+                self.fpsr |= fp_fz_input_status(esize, raw, self.fpcr);
+            }
             write_elem(&mut dst, 0, esize, r);
             self.v[rd] = u128::from_le_bytes(dst);
             return Some(Ok(CpuExit::Continue));
@@ -12650,12 +12661,15 @@ impl AArch64Cpu {
                 } else {
                     fp_flush_input_bits_with_fpcr(aa_raw, 32, self.fpcr) as u32
                 };
-                let r = if bf {
-                    bfmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
-                } else if self.fpcr & FPCR_AH != 0 {
+                let ah_nan_result = if !bf && self.fpcr & FPCR_AH != 0 {
                     fmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
                 } else {
                     None
+                };
+                let r = if bf {
+                    bfmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
+                } else {
+                    ah_nan_result
                 }
                 .unwrap_or_else(|| {
                     fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
@@ -12677,7 +12691,7 @@ impl AArch64Cpu {
                     bfmlal_f32_input_status(aa_raw, self.fpcr)
                         | bfmlal_f32_input_status(nn_raw, self.fpcr)
                         | bfmlal_f32_input_status(mm_raw, self.fpcr)
-                } else if self.fpcr & FPCR_AH != 0 {
+                } else if ah_nan_result.is_some() {
                     0
                 } else {
                     fp_fz_input_status(4, aa_raw, self.fpcr)
@@ -12747,12 +12761,15 @@ impl AArch64Cpu {
                 } else {
                     fp_flush_input_bits_with_fpcr(aa_raw, 32, self.fpcr) as u32
                 };
-                let r = if bf {
-                    bfmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
-                } else if self.fpcr & FPCR_AH != 0 {
+                let ah_nan_result = if !bf && self.fpcr & FPCR_AH != 0 {
                     fmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
                 } else {
                     None
+                };
+                let r = if bf {
+                    bfmlal_ah_result(aa_raw as u32, nn_raw as u32, mm_raw as u32, self.fpcr)
+                } else {
+                    ah_nan_result
                 }
                 .unwrap_or_else(|| {
                     fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
@@ -12774,7 +12791,7 @@ impl AArch64Cpu {
                     bfmlal_f32_input_status(aa_raw, self.fpcr)
                         | bfmlal_f32_input_status(nn_raw, self.fpcr)
                         | bfmlal_f32_input_status(mm_raw, self.fpcr)
-                } else if self.fpcr & FPCR_AH != 0 {
+                } else if ah_nan_result.is_some() {
                     0
                 } else {
                     fp_fz_input_status(4, aa_raw, self.fpcr)
@@ -13151,7 +13168,7 @@ impl AArch64Cpu {
             for e in 0..(16 / esz) {
                 let off = e * esz;
                 let raw = read_elem(&n, off, esz);
-                let x = fp_flush_input_bits_with_fpcr(raw, (esz * 8) as u32, self.fpcr);
+                let x = fp_estimate_input_with_fpcr(raw, (esz * 8) as u32, self.fpcr);
                 let r = match esz {
                     2 => {
                         (if rsqrt {
@@ -21255,6 +21272,19 @@ fn fp_flush_input_bits_with_fpcr(x: u64, esize: u32, fpcr: u32) -> u64 {
 }
 
 #[inline]
+fn fp_estimate_input_with_fpcr(x: u64, esize: u32, fpcr: u32) -> u64 {
+    let x = fp_flush_input_bits_with_fpcr(x, esize, fpcr);
+    if fpcr & FPCR_AH == 0 {
+        return x;
+    }
+    match esize {
+        32 if fp32_is_tiny(x as u32) => (x as u32 & 0x8000_0000) as u64,
+        64 if fp64_is_tiny(x) => x & 0x8000_0000_0000_0000,
+        _ => x,
+    }
+}
+
+#[inline]
 fn fp_flush_output_bits_with_fpcr(x: u64, esize: u32, fpcr: u32) -> u64 {
     match esize {
         32 => fp32_flush_output_with_fpcr(x as u32, fpcr) as u64,
@@ -21799,7 +21829,7 @@ fn fp_status_mulx_with_fpcr(esize: usize, a: u64, b: u64, result: u64, fpcr: u32
             _ => {}
         }
     }
-    fp_status_mulx(esize, a, b, result)
+    fp_status_mulx(esize, a, b, result) | input_status
 }
 
 fn fp_status_recps_rsqrts(esize: usize, rsqrt: bool, a: u64, b: u64, result: u64) -> u32 {
@@ -21891,6 +21921,9 @@ fn fp_status_recps_rsqrts_with_fpcr(
     result: u64,
     fpcr: u32,
 ) -> u32 {
+    if fpcr & FPCR_AH != 0 {
+        return 0;
+    }
     let input_status = fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr);
     if fp_input_flush_enabled(esize, fpcr) {
         match esize {
@@ -22079,6 +22112,9 @@ fn fp16_three_same_status_with_fpcr(
     r: u16,
     fpcr: u32,
 ) -> u32 {
+    if fpcr & FPCR_AH != 0 && matches!((u, a_bit, opcode), (0, 0, 0b111) | (0, 1, 0b111)) {
+        return 0;
+    }
     if fpcr & FPCR_AH != 0
         && matches!(
             (u, a_bit, opcode),
@@ -22116,6 +22152,9 @@ fn fp_status_estimate(esize: usize, rsqrt: bool, a: u64, result: u64) -> u32 {
 }
 
 fn fp_status_estimate_with_fpcr(esize: usize, rsqrt: bool, a: u64, result: u64, fpcr: u32) -> u32 {
+    if fpcr & FPCR_AH != 0 {
+        return 0;
+    }
     let a_flushed = fp_flush_input_bits_with_fpcr(a, (esize * 8) as u32, fpcr);
     fp_status_estimate(esize, rsqrt, a_flushed, result) | fp_fz_input_status(esize, a, fpcr)
 }
@@ -22177,6 +22216,11 @@ fn fp16_two_reg_status_with_fpcr(
     fpcr: u32,
 ) -> u32 {
     use TwoRegFp::*;
+    if fpcr & FPCR_AH != 0
+        && matches!((u, a_bit, opcode), (0, 1, 0b11101) | (1, 1, 0b11101))
+    {
+        return 0;
+    }
     if fpcr & FPCR_FZ16 == 0 {
         return fp16_two_reg_status(u, a_bit, opcode, s, r);
     }
@@ -23079,6 +23123,15 @@ fn fp32_ah_nan3(a: u32, b: u32, c: u32) -> Option<u32> {
     None
 }
 
+#[inline]
+fn fp32_ah_invalid_default_nan(result: u32, fpcr: u32) -> u32 {
+    if fpcr & FPCR_AH != 0 && result == 0x7fc0_0000 {
+        0xffc0_0000
+    } else {
+        result
+    }
+}
+
 fn fp64_nan2(a: u64, b: u64) -> Option<u64> {
     if is_snan64(a) {
         Some(a | 0x0008_0000_0000_0000)
@@ -23253,7 +23306,9 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
             return flush_output(n);
         }
     }
-    if fpcr & FPCR_AH != 0 && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd) {
+    if fpcr & FPCR_AH != 0
+        && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd | Recps | Rsqrts)
+    {
         if let Some(n) = fp32_ah_nan2(a, b) {
             return flush_output(if matches!(kind, Abd) { n & 0x7fff_ffff } else { n });
         }
@@ -23266,7 +23321,7 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
     if (fpcr >> 22) & 0x3 == 0
         || !matches!(kind, Add | Addp | Sub | Mul | Mulx | Mla | Mls | Recps | Rsqrts)
     {
-        return flush_output(fp_three_same_f32(kind, a, b, d));
+        return flush_output(fp32_ah_invalid_default_nan(fp_three_same_f32(kind, a, b, d), fpcr));
     }
 
     let x = f32::from_bits(a);
@@ -23274,7 +23329,10 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
     let acc = f32::from_bits(d);
     if matches!(kind, Mla | Mls) {
         if !x.is_finite() || !y.is_finite() || !acc.is_finite() {
-            return flush_output(fp_three_same_f32(kind, a, b, d));
+            return flush_output(fp32_ah_invalid_default_nan(
+                fp_three_same_f32(kind, a, b, d),
+                fpcr,
+            ));
         }
         let lhs = if matches!(kind, Mls) { -x } else { x };
         return flush_output(f64_to_f32_bits_with_fpcr(
@@ -23295,7 +23353,7 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
         return flush_output(f64_to_f32_bits_with_fpcr(exact, fpcr));
     }
     if !x.is_finite() || !y.is_finite() {
-        return flush_output(fp_three_same_f32(kind, a, b, d));
+        return flush_output(fp32_ah_invalid_default_nan(fp_three_same_f32(kind, a, b, d), fpcr));
     }
 
     let exact = match kind {
@@ -23475,7 +23533,9 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
     } else {
         fp_three_same_f64(kind, a, b, d)
     };
-    if fpcr & FPCR_AH != 0 && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd) {
+    if fpcr & FPCR_AH != 0
+        && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd | Recps | Rsqrts)
+    {
         if let Some(n) = fp64_ah_nan2(a, b) {
             return flush_output(if matches!(kind, Abd) {
                 n & 0x7fff_ffff_ffff_ffff
@@ -24212,7 +24272,9 @@ fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize, fpcr: u32)
     let h = buf.len() / 2;
     let (lo, sl) = sve_fp_tree_reduce_status(&buf[..h], kind, esize, fpcr);
     let (hi, sh) = sve_fp_tree_reduce_status(&buf[h..], kind, esize, fpcr);
-    let r = if buf.len() == 2 {
+    let pairwise_ah_maxmin = fpcr & FPCR_AH != 0
+        && matches!(kind, FpKind::Max | FpKind::Maxp | FpKind::Min | FpKind::Minp);
+    let r = if buf.len() == 2 || pairwise_ah_maxmin {
         sve_fp_pairwise_reduce_combine_with_fpcr(kind, esize, lo, hi, fpcr)
     } else {
         sve_fp_combine_with_fpcr(kind, esize, lo, hi, fpcr)
@@ -25839,6 +25901,11 @@ fn fp16_recps_with_fpcr(a: u16, b: u16, fpcr: u32) -> u16 {
     } else {
         (a, b)
     };
+    if fpcr & FPCR_AH != 0 {
+        if let Some(n) = fp16_ah_nan2(a, b) {
+            return n;
+        }
+    }
     if (fpcr >> 22) & 0x3 == 0
         || fp16_is_nan(a)
         || fp16_is_nan(b)
@@ -25866,6 +25933,11 @@ fn fp16_rsqrts_with_fpcr(a: u16, b: u16, fpcr: u32) -> u16 {
     } else {
         (a, b)
     };
+    if fpcr & FPCR_AH != 0 {
+        if let Some(n) = fp16_ah_nan2(a, b) {
+            return n;
+        }
+    }
     if (fpcr >> 22) & 0x3 == 0
         || fp16_is_nan(a)
         || fp16_is_nan(b)
