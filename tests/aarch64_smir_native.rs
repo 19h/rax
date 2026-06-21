@@ -1637,6 +1637,66 @@ fn raw_el0_advsimd_reduction_extra_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_advsimd_fp_maxmin_snan_status_oracle_matches_interpreter() {
+    let insns = [
+        0x6e22_f420, // fmaxp   v0.4s, v1.4s, v2.4s
+        0x6ee5_f483, // fminp   v3.2d, v4.2d, v5.2d
+        0x6e28_c4e6, // fmaxnmp v6.4s, v7.4s, v8.4s
+        0x6eeb_c549, // fminnmp v9.2d, v10.2d, v11.2d
+        0x6e30_f9ac, // fmaxv   s12, v13.4s
+        0x6eb0_f9ee, // fminv   s14, v15.4s
+        0x6e30_ca30, // fmaxnmv s16, v17.4s
+        0x6eb0_ca72, // fminnmv s18, v19.4s
+    ];
+    let pack_s_bits = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d_bits = |lanes: [u64; 2]| -> (u64, u64) { (lanes[0], lanes[1]) };
+    let snan_s = 0x7f80_0001u32;
+    let neg_snan_s = 0xff80_0002u32;
+    let snan_d = 0x7ff0_0000_0000_0001u64;
+    let neg_snan_d = 0xfff0_0000_0000_0002u64;
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()])),
+            (2, pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s])),
+            (4, pack_d_bits([snan_d, (-4.0_f64).to_bits()])),
+            (5, pack_d_bits([3.0_f64.to_bits(), neg_snan_d])),
+            (7, pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()])),
+            (8, pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s])),
+            (10, pack_d_bits([snan_d, (-4.0_f64).to_bits()])),
+            (11, pack_d_bits([3.0_f64.to_bits(), neg_snan_d])),
+            (13, pack_s_bits([1.0_f32.to_bits(), snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
+            (15, pack_s_bits([1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
+            (17, pack_s_bits([1.0_f32.to_bits(), snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
+            (19, pack_s_bits([1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 14, 16, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FP max/min sNaN v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FP max/min sNaN FPSR mismatch"
+    );
+}
+
+#[test]
 fn raw_el0_advsimd_scalar_pairwise_exact_zero_fpcr_rounding_oracle_matches_interpreter() {
     let insns = [
         0x7e30_d862, // faddp s2, v3.2s
@@ -1819,6 +1879,122 @@ fn raw_el0_advsimd_compare_oracle_matches_interpreter() {
             "raw EL0 AdvSIMD compare v{reg} mismatch"
         );
     }
+}
+
+#[test]
+fn raw_el0_advsimd_fp_ordered_compare_qnan_status_oracle_matches_interpreter() {
+    let insns = [
+        0x6e22_e420, // fcmge v0.4s, v1.4s, v2.4s
+        0x6ea5_e483, // fcmgt v3.4s, v4.4s, v5.4s
+        0x6e68_e4e6, // fcmge v6.2d, v7.2d, v8.2d
+        0x6eeb_e549, // fcmgt v9.2d, v10.2d, v11.2d
+    ];
+    let pack_s_bits = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d_bits = |lanes: [u64; 2]| -> (u64, u64) { (lanes[0], lanes[1]) };
+    let qnan_s = 0x7fc0_0001u32;
+    let neg_qnan_s = 0xffc0_0002u32;
+    let qnan_d = 0x7ff8_0000_0000_0001u64;
+    let neg_qnan_d = 0xfff8_0000_0000_0002u64;
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s_bits([qnan_s, neg_qnan_s, qnan_s, neg_qnan_s])),
+            (2, pack_s_bits([1.0_f32.to_bits(), 1.0_f32.to_bits(), qnan_s, neg_qnan_s])),
+            (4, pack_s_bits([1.0_f32.to_bits(), qnan_s, neg_qnan_s, (-2.0_f32).to_bits()])),
+            (5, pack_s_bits([qnan_s, 1.0_f32.to_bits(), neg_qnan_s, qnan_s])),
+            (7, pack_d_bits([qnan_d, neg_qnan_d])),
+            (8, pack_d_bits([1.0_f64.to_bits(), qnan_d])),
+            (10, pack_d_bits([1.0_f64.to_bits(), neg_qnan_d])),
+            (11, pack_d_bits([qnan_d, (-2.0_f64).to_bits()])),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD ordered FP qNaN compare v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD ordered FP qNaN compare FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_compare_zero_oracle_matches_interpreter() {
+    let insns = [
+        0x4e20_9820, // cmeq  v0.16b, v1.16b, #0
+        0x6e60_8862, // cmge  v2.8h, v3.8h, #0
+        0x4ea0_88a4, // cmgt  v4.4s, v5.4s, #0
+        0x6ee0_98e6, // cmle  v6.2d, v7.2d, #0
+        0x4e20_a928, // cmlt  v8.16b, v9.16b, #0
+        0x4ea0_d96a, // fcmeq v10.4s, v11.4s, #0.0
+        0x6ee0_c9ac, // fcmge v12.2d, v13.2d, #0.0
+        0x4ea0_c9ee, // fcmgt v14.4s, v15.4s, #0.0
+        0x5ee0_9a30, // cmeq  d16, d17, #0
+        0x5ee0_8a72, // cmgt  d18, d19, #0
+        0x7ee0_cab4, // fcmge d20, d21, #0.0
+        0x5ea0_caf6, // fcmgt s22, s23, #0.0
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (1usize, 0x0001_00ff_8000_7f00, 0x0000_ffff_0100_8001),
+            (3, 0x0001_ffff_8000_7fff, 0x0000_0002_fffe_8001),
+            (5, 0x0000_0001_ffff_ffff, 0x8000_0000_7fff_ffff),
+            (7, 0, (-7i64) as u64),
+            (9, 0x0001_00ff_8000_7f00, 0x0000_ffff_0100_8001),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        for (reg, (lo, hi)) in [
+            (11usize, pack_s4(0.0, -0.0, 1.0, -2.0)),
+            (13, (0.0_f64.to_bits(), (-3.0_f64).to_bits())),
+            (15, pack_s4(1.0, -1.0, 0.0, -0.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.v[34] = 0; // d17
+        g.v[38] = 1; // d19
+        g.v[42] = (-0.0_f64).to_bits(); // d21
+        g.v[46] = 1.0_f32.to_bits().into(); // s23
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD compare-zero v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD compare-zero FPSR mismatch"
+    );
 }
 
 #[test]
@@ -2407,6 +2583,47 @@ fn raw_el0_scalar_fp_misc_oracle_matches_interpreter() {
         let lo = 2 * reg;
         assert_eq!(hw.v[lo], interp.v[lo], "raw EL0 scalar FP misc d{reg}");
     }
+}
+
+#[test]
+fn raw_el0_scalar_fp_estimate_oracle_matches_interpreter() {
+    let insns = [
+        0x5ea1_d820, // frecpe  s0, s1
+        0x7ea1_d862, // frsqrte s2, s3
+        0x5ee1_d8a4, // frecpe  d4, d5
+        0x7ee1_d8e6, // frsqrte d6, d7
+        0x5ea1_f928, // frecpx  s8, s9
+        0x5ee1_f96a, // frecpx  d10, d11
+        0x5e2e_fdac, // frecps  s12, s13, s14
+        0x5ef1_fe0f, // frsqrts d15, d16, d17
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[2] = 2.0_f32.to_bits().into(); // s1
+        g.v[6] = 4.0_f32.to_bits().into(); // s3
+        g.v[10] = 2.0_f64.to_bits(); // d5
+        g.v[14] = 4.0_f64.to_bits(); // d7
+        g.v[18] = 2.0_f32.to_bits().into(); // s9
+        g.v[22] = 2.0_f64.to_bits(); // d11
+        g.v[26] = 0.5_f32.to_bits().into(); // s13
+        g.v[28] = 2.0_f32.to_bits().into(); // s14
+        g.v[32] = 0.5_f64.to_bits(); // d16
+        g.v[34] = 2.0_f64.to_bits(); // d17
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 15] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo], interp.v[lo],
+            "raw EL0 scalar FP estimate d/s{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 scalar FP estimate FPSR mismatch"
+    );
 }
 
 #[test]
@@ -3022,6 +3239,46 @@ fn raw_el0_scalar_fp_fused_exact_zero_fpcr_rounding_oracle_matches_interpreter()
 }
 
 #[test]
+fn raw_el0_scalar_fp_fixed_rounding_oracle_matches_interpreter() {
+    let insns = [
+        0x1e24_4020, // frintn s0, s1
+        0x1e24_c062, // frintp s2, s3
+        0x1e65_40a4, // frintm d4, d5
+        0x1e65_c0e6, // frintz d6, d7
+        0x1e26_4128, // frinta s8, s9
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[2] = 1.5_f32.to_bits().into();
+        g.v[6] = (-1.5_f32).to_bits().into();
+        g.v[10] = 2.25_f64.to_bits();
+        g.v[14] = (-2.75_f64).to_bits();
+        g.v[18] = (-2.5_f32).to_bits().into();
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 8] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo] as u32, interp.v[lo] as u32,
+            "raw EL0 scalar FP fixed rounding s{reg} mismatch"
+        );
+    }
+    for reg in [4usize, 6] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo], interp.v[lo],
+            "raw EL0 scalar FP fixed rounding d{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 scalar FP fixed rounding FPSR mismatch"
+    );
+}
+
+#[test]
 fn raw_el0_scalar_fp_rounding_mode_oracle_matches_interpreter() {
     let insns = [
         0x1e67_c020, // frinti d0, d1
@@ -3103,6 +3360,40 @@ fn raw_el0_scalar_fp_convert_compare_oracle_matches_interpreter() {
         interp.nzcv & 0xf000_0000,
         "raw EL0 scalar FP compare NZCV mismatch"
     );
+}
+
+#[test]
+fn raw_el0_scalar_fp_fmov_oracle_matches_interpreter() {
+    let insns = [
+        0x1e2e_1000, // fmov s0, #1.0
+        0x1e70_1001, // fmov d1, #-2.0
+        0x1e27_03e2, // fmov s2, wzr
+        0x9e67_03e3, // fmov d3, xzr
+        0x1e26_0004, // fmov w4, s0
+        0x9e66_0025, // fmov x5, d1
+        0x1e27_00e6, // fmov s6, w7
+        0x9e67_0128, // fmov d8, x9
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[7] = 1.5_f32.to_bits().into();
+        g.x[9] = (-7.5_f64).to_bits();
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 1, 2, 3, 6, 8] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo], interp.v[lo],
+            "raw EL0 scalar FP FMOV v{reg} mismatch"
+        );
+    }
+    for reg in [4usize, 5] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 scalar FP FMOV x{reg} mismatch"
+        );
+    }
 }
 
 #[test]
@@ -3340,6 +3631,350 @@ fn raw_el0_advsimd_fp_oracle_matches_interpreter() {
             "raw EL0 AdvSIMD FP v{reg} mismatch"
         );
     }
+}
+
+#[test]
+fn raw_el0_advsimd_indexed_fp_oracle_matches_interpreter() {
+    let insns = [
+        0x4fa2_1020, // fmla  v0.4s, v1.4s, v2.s[1]
+        0x4f85_5083, // fmls  v3.4s, v4.4s, v5.s[0]
+        0x4fc8_98e6, // fmul  v6.2d, v7.2d, v8.d[1]
+        0x6f8b_9949, // fmulx v9.4s, v10.4s, v11.s[2]
+        0x4fce_11ac, // fmla  v12.2d, v13.2d, v14.d[0]
+        0x5fb1_920f, // fmul  s15, s16, v17.s[1]
+        0x5fd4_1272, // fmla  d18, d19, v20.d[0]
+        0x5f97_5ad5, // fmls  s21, s22, v23.s[2]
+        0x7fda_9b38, // fmulx d24, d25, v26.d[1]
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s4(1.0, 2.0, 3.0, 4.0)),
+            (1, pack_s4(2.0, -2.0, 4.0, -4.0)),
+            (2, pack_s4(0.5, 0.25, -0.5, -0.25)),
+            (3, pack_s4(8.0, -8.0, 6.0, -6.0)),
+            (4, pack_s4(2.0, -2.0, 3.0, -3.0)),
+            (5, pack_s4(0.5, 0.25, -0.5, -0.25)),
+            (7, (2.0_f64.to_bits(), (-4.0_f64).to_bits())),
+            (8, (0.5_f64.to_bits(), 0.25_f64.to_bits())),
+            (9, pack_s4(0.0, 0.0, 0.0, 0.0)),
+            (10, pack_s4(2.0, -2.0, 4.0, -4.0)),
+            (11, pack_s4(0.5, 0.25, -0.5, -0.25)),
+            (12, (1.0_f64.to_bits(), 2.0_f64.to_bits())),
+            (13, (2.0_f64.to_bits(), (-2.0_f64).to_bits())),
+            (14, (0.5_f64.to_bits(), (-0.25_f64).to_bits())),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.v[30] = 0; // s15 destination before scalar FMUL.
+        g.v[32] = 4.0_f32.to_bits().into(); // s16
+        g.v[34] = u64::from(2.0_f32.to_bits()) | (u64::from(0.5_f32.to_bits()) << 32); // v17
+        g.v[36] = 1.0_f64.to_bits(); // d18 accumulator
+        g.v[38] = 2.0_f64.to_bits(); // d19
+        g.v[40] = 0.5_f64.to_bits(); // v20.d[0]
+        g.v[42] = 8.0_f32.to_bits().into(); // s21 accumulator
+        g.v[44] = 2.0_f32.to_bits().into(); // s22
+        g.v[46] = u64::from(0.5_f32.to_bits()) | (u64::from(0.25_f32.to_bits()) << 32);
+        g.v[47] = 1.0_f32.to_bits().into(); // v23.s[2]
+        g.v[48] = 0; // d24 destination before scalar FMULX.
+        g.v[50] = 4.0_f64.to_bits(); // d25
+        g.v[52] = 0.5_f64.to_bits();
+        g.v[53] = 0.25_f64.to_bits(); // v26.d[1]
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21, 24] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD indexed FP v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD indexed FP FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_fp_unary_convert_oracle_matches_interpreter() {
+    let insns = [
+        0x4ea0_f820, // fabs   v0.4s, v1.4s
+        0x6ee0_f862, // fneg   v2.2d, v3.2d
+        0x6ea1_f8a4, // fsqrt  v4.4s, v5.4s
+        0x4e21_88e6, // frintn v6.4s, v7.4s
+        0x4e61_9928, // frintm v8.2d, v9.2d
+        0x4ea1_896a, // frintp v10.4s, v11.4s
+        0x0e61_69ac, // fcvtn  v12.2s, v13.2d
+        0x0e61_79ee, // fcvtl  v14.2d, v15.2s
+        0x2e61_6a30, // fcvtxn v16.2s, v17.2d
+        0x4ee1_9a72, // frintz v18.2d, v19.2d
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s4(-1.0, 2.0, -3.0, 4.0)),
+            (3, ((-1.5_f64).to_bits(), 2.5_f64.to_bits())),
+            (5, pack_s4(4.0, 9.0, 16.0, 25.0)),
+            (7, pack_s4(1.5, -2.5, 3.0, -4.0)),
+            (9, (1.5_f64.to_bits(), (-2.5_f64).to_bits())),
+            (11, pack_s4(1.5, -2.5, 3.0, -4.0)),
+            (13, (1.5_f64.to_bits(), (-2.5_f64).to_bits())),
+            (15, pack_s4(1.5, -2.5, 3.0, -4.0)),
+            (17, (1.5_f64.to_bits(), (-2.5_f64).to_bits())),
+            (19, (1.5_f64.to_bits(), (-2.5_f64).to_bits())),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14, 16, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FP unary/convert v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FP unary/convert FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_fp_high_half_convert_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") || !host_has_aarch64_feature("asimdhp") {
+        eprintln!("[skip] host does not advertise AdvSIMD FP16");
+        return;
+    }
+
+    let insns = [
+        0x4e61_6820, // fcvtn2  v0.4s, v1.2d
+        0x4e61_7862, // fcvtl2  v2.2d, v3.4s
+        0x6e61_68a4, // fcvtxn2 v4.4s, v5.2d
+        0x4e21_68e6, // fcvtn2  v6.8h, v7.4s
+        0x4e21_7928, // fcvtl2  v8.4s, v9.8h
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_h8 = |lanes: [u16; 8]| -> (u64, u64) {
+        let lo = u64::from(lanes[0])
+            | (u64::from(lanes[1]) << 16)
+            | (u64::from(lanes[2]) << 32)
+            | (u64::from(lanes[3]) << 48);
+        let hi = u64::from(lanes[4])
+            | (u64::from(lanes[5]) << 16)
+            | (u64::from(lanes[6]) << 32)
+            | (u64::from(lanes[7]) << 48);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[0] = 0x1111_2222_3333_4444; // low half must be preserved by FCVTN2.
+        g.v[1] = 0x5555_6666_7777_8888;
+        g.v[2] = 1.5_f64.to_bits();
+        g.v[3] = (-2.5_f64).to_bits();
+        g.v[4] = 0xaaaa_bbbb_cccc_dddd; // low half must be preserved by FCVTL2.
+        g.v[5] = 0xeeee_ffff_0000_1111;
+        (g.v[6], g.v[7]) = pack_s4(1.0, -2.0, 3.0, -4.0);
+        g.v[8] = 0x2222_3333_4444_5555; // low half must be preserved by FCVTXN2.
+        g.v[9] = 0x6666_7777_8888_9999;
+        g.v[10] = 1.25_f64.to_bits();
+        g.v[11] = (-2.75_f64).to_bits();
+        g.v[12] = 0x0123_4567_89ab_cdef; // low half must be preserved by FCVTN2.
+        g.v[13] = 0xfedc_ba98_7654_3210;
+        (g.v[14], g.v[15]) = pack_s4(1.0, -2.0, 0.33333334, -0.10000001);
+        g.v[16] = 0x1357_2468_aaaa_5555; // low half must be preserved by FCVTL2.
+        g.v[17] = 0xdead_beef_cafe_f00d;
+        (g.v[18], g.v[19]) = pack_h8([
+            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x4200, 0xc200,
+        ]);
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FP high-half convert v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FP high-half convert FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_fp_to_int_convert_oracle_matches_interpreter() {
+    let insns = [
+        0x4e21_a820, // fcvtns v0.4s, v1.4s
+        0x6e21_a862, // fcvtnu v2.4s, v3.4s
+        0x4e61_b8a4, // fcvtms v4.2d, v5.2d
+        0x6e61_b8e6, // fcvtmu v6.2d, v7.2d
+        0x4ea1_a928, // fcvtps v8.4s, v9.4s
+        0x6ea1_a96a, // fcvtpu v10.4s, v11.4s
+        0x4e61_c9ac, // fcvtas v12.2d, v13.2d
+        0x6e61_c9ee, // fcvtau v14.2d, v15.2d
+        0x4ea1_ba30, // fcvtzs v16.4s, v17.4s
+        0x6ee1_ba72, // fcvtzu v18.2d, v19.2d
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s4(1.5, -2.5, 3.25, -4.75)),
+            (3, pack_s4(1.5, 2.5, 3.25, 4.75)),
+            (5, (1.75_f64.to_bits(), (-2.25_f64).to_bits())),
+            (7, (1.75_f64.to_bits(), 2.25_f64.to_bits())),
+            (9, pack_s4(1.25, -2.75, 3.5, -4.125)),
+            (11, pack_s4(1.25, 2.75, 3.5, 4.125)),
+            (13, (1.5_f64.to_bits(), (-2.5_f64).to_bits())),
+            (15, (1.5_f64.to_bits(), 2.5_f64.to_bits())),
+            (17, pack_s4(1.75, -2.25, 3.875, -4.125)),
+            (19, (1.75_f64.to_bits(), 2.25_f64.to_bits())),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14, 16, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FP-to-int convert v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FP-to-int convert FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_fp_to_int_status_oracle_matches_interpreter() {
+    let insns = [
+        0x4ea1_b820, // fcvtzs v0.4s, v1.4s
+        0x6ea1_b862, // fcvtzu v2.4s, v3.4s
+        0x4ee1_b8a4, // fcvtzs v4.2d, v5.2d
+        0x6ee1_b8e6, // fcvtzu v6.2d, v7.2d
+    ];
+    let pack_s4 = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (
+                1usize,
+                pack_s4(f32::INFINITY, f32::NEG_INFINITY, 2_147_483_904.0, -2_147_483_904.0),
+            ),
+            (
+                3,
+                pack_s4(-1.0, f32::INFINITY, 4_294_967_296.0, 1.0),
+            ),
+            (5, (f64::INFINITY.to_bits(), f64::NEG_INFINITY.to_bits())),
+            (7, ((-1.0_f64).to_bits(), f64::INFINITY.to_bits())),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FP-to-int status v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FP-to-int status FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_advsimd_int_to_fp_convert_oracle_matches_interpreter() {
+    let insns = [
+        0x4e21_d820, // scvtf v0.4s, v1.4s
+        0x6e21_d862, // ucvtf v2.4s, v3.4s
+        0x4e61_d8a4, // scvtf v4.2d, v5.2d
+        0x6e61_d8e6, // ucvtf v6.2d, v7.2d
+    ];
+    let pack_u32 = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_u32([1, (-2i32) as u32, 16_777_217, (-16_777_217i32) as u32])),
+            (3, pack_u32([1, 2, 16_777_217, u32::MAX])),
+            (5, (1, (-2i64) as u64)),
+            (7, (1, 9_007_199_254_740_993)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD int-to-FP convert v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD int-to-FP convert FPSR mismatch"
+    );
 }
 
 #[test]
@@ -3625,6 +4260,67 @@ fn raw_el0_advsimd_fp_fpcr_rounding_oracle_matches_interpreter() {
             "raw EL0 AdvSIMD FP FPCR rmode {rmode} FPSR mismatch"
         );
     }
+}
+
+#[test]
+fn raw_el0_advsimd_fpcr_fiz_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") {
+        eprintln!("[skip] host does not advertise AFP/FIZ");
+        return;
+    }
+
+    const FPCR_FIZ: u64 = 1;
+    let insns = [
+        0x4e22_d420, // fadd v0.4s, v1.4s, v2.4s
+        0x6e25_dc83, // fmul v3.4s, v4.4s, v5.4s
+        0x4e28_cce6, // fmla v6.4s, v7.4s, v8.4s
+        0x4eab_cd49, // fmls v9.4s, v10.4s, v11.4s
+    ];
+    let pack = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let min_subnorm = 0x0000_0001u32;
+    let neg_min_subnorm = 0x8000_0001u32;
+    let pos_zero = 0.0_f32.to_bits();
+    let neg_zero = (-0.0_f32).to_bits();
+    let one = 1.0_f32.to_bits();
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.fpcr = FPCR_FIZ;
+        for (reg, (lo, hi)) in [
+            (1usize, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (2, pack([pos_zero, neg_zero, one, one])),
+            (4, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (5, pack([one, one, one, one])),
+            (6, pack([one, one, one, one])),
+            (7, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (8, pack([one, one, one, one])),
+            (9, pack([one, one, one, one])),
+            (10, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (11, pack([one, one, one, one])),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+        g.fpsr = 0;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD FPCR.FIZ subnormal v{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 AdvSIMD FPCR.FIZ subnormal FPSR mismatch"
+    );
 }
 
 #[test]
