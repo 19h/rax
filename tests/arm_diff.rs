@@ -47691,6 +47691,29 @@ fn diff_sve_fmmla() {
 }
 
 #[test]
+fn diff_sve_f32mm_feature_legality_edges() {
+    let caps = native_host_caps();
+    if caps.has("f32mm") || caps.has("svef32mm") {
+        eprintln!(
+            "[arm_diff] sve_f32mm_feature_legality_edges: host supports F32MM -> skipping"
+        );
+        return;
+    }
+
+    let mut rng = Rng::new(0xf32_0001);
+    let mut batch = Vec::new();
+    for _ in 0..8 {
+        batch.push((
+            "f32mm_case_sve_fmmla_s".to_string(),
+            enc_sve_fmmla(0b10),
+            gen_sve_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("sve_f32mm_feature_legality_edges", batch);
+}
+
+#[test]
 fn diff_sve_fmmla_fpcr_rounding() {
     let insn = enc_sve_fmmla(0b10);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -48167,6 +48190,157 @@ fn diff_sve2_crypto_unallocated_edges() {
     }
 
     run_batch_el0_legality("sve2_crypto_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_sve2p1_feature_legality_edges() {
+    if native_host_caps().has("sve2p1") {
+        eprintln!("[arm_diff] sve2p1_feature_legality_edges: host supports SVE2.1 -> skipping");
+        return;
+    }
+
+    let mut rng = Rng::new(0x5e2_1001);
+    let cases: &[(&str, u32)] = &[
+        (
+            "sve21_case_dupq",
+            (0x05 << 24) | (1 << 21) | (1 << 16) | (0b001001 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_extq",
+            (0x05 << 24) | (0b0110 << 20) | (3 << 16) | (0b001001 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_revd",
+            (0x05 << 24) | (0b00101110 << 16) | (0b100 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_pmov",
+            (0x05 << 24) | (0b101 << 19) | (0b01 << 17) | (0b001110 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_tbxq",
+            (0x05 << 24) | (1 << 21) | (RM << 16) | (0b001101 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_addqv",
+            (0x04 << 24) | (0b000101 << 16) | (0b001 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_psel",
+            (0x25 << 24) | (1 << 21) | (1 << 18) | (0b01 << 14) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_pext",
+            (0x25 << 24) | (1 << 21) | (0b0111 << 12) | (1 << 4) | RD,
+        ),
+        (
+            "sve21_case_sclamp",
+            (0x44 << 24) | (0b11000 << 11) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_zipq",
+            (0x44 << 24) | (RM << 16) | (0b111 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_sqcvtn_pair",
+            (0x45 << 24) | (1 << 21) | (0b10001 << 16) | (0b010 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_hdot",
+            (0x44 << 24) | (RM << 16) | (0b11001 << 11) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_fdot",
+            (0x64 << 24) | (1 << 21) | (RM << 16) | (0b100000 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_fclamp",
+            (0x64 << 24)
+                | (0b01 << 22)
+                | (1 << 21)
+                | (RM << 16)
+                | (0b001001 << 10)
+                | (RN << 5)
+                | RD,
+        ),
+        (
+            "sve21_case_faddqv",
+            (0x64 << 24) | (0b010 << 19) | (0b101 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "sve21_case_bfmlsl",
+            (0x64 << 24)
+                | (0b11 << 22)
+                | (1 << 21)
+                | (RM << 16)
+                | (0b10100 << 11)
+                | (RN << 5)
+                | RD,
+        ),
+        (
+            "sve21_case_bfmlsl_indexed",
+            (0x64 << 24)
+                | (0b11 << 22)
+                | (1 << 21)
+                | (RM << 16)
+                | (0b01 << 14)
+                | (1 << 13)
+                | (RN << 5)
+                | RD,
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..4 {
+            batch.push(((*label).to_string(), *insn, gen_sve_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0_legality("sve2p1_feature_legality_edges", batch);
+}
+
+#[test]
+fn diff_sve_b16b16_feature_legality_edges() {
+    if native_host_caps().has("sveb16b16") {
+        eprintln!(
+            "[arm_diff] sve_b16b16_feature_legality_edges: host supports SVE_B16B16 -> skipping"
+        );
+        return;
+    }
+
+    let mut rng = Rng::new(0x16b1_6001);
+    let cases: &[(&str, u32)] = &[
+        (
+            "b16_case_unpred_binop",
+            (0x65 << 24) | (RM << 16) | (0b0000 << 12) | (RN << 5) | RD,
+        ),
+        (
+            "b16_case_pred_binop",
+            (0x65 << 24) | (RM << 16) | (0b100 << 13) | (RN << 5) | RD,
+        ),
+        (
+            "b16_case_pred_fma",
+            (0x65 << 24) | (1 << 21) | (RM << 16) | (RN << 5) | RD,
+        ),
+        (
+            "b16_case_clamp",
+            (0x64 << 24) | (1 << 21) | (RM << 16) | (0b001001 << 10) | (RN << 5) | RD,
+        ),
+        (
+            "b16_case_indexed_fma",
+            (0x64 << 24) | (1 << 21) | (RM << 16) | (0b000010 << 10) | (RN << 5) | RD,
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..4 {
+            batch.push(((*label).to_string(), *insn, gen_sve_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0_legality("sve_b16b16_feature_legality_edges", batch);
 }
 
 #[test]
@@ -56128,6 +56302,50 @@ fn diff_excl_stxp_unarmed() {
 }
 
 #[test]
+fn diff_excl_pair_invalid_size_unallocated_edges() {
+    fn pair_excl(size: u32, l: u32, o0: u32, rs: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
+        (size << 30)
+            | (0b001000 << 24)
+            | ((l & 1) << 22)
+            | (1 << 21)
+            | ((rs & 0x1f) << 16)
+            | ((o0 & 1) << 15)
+            | ((rt2 & 0x1f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_0178);
+    let mut batch = Vec::new();
+
+    for size in [0u32, 1] {
+        for o0 in 0..2u32 {
+            for _ in 0..4 {
+                let mut load = mem_input(&mut rng);
+                load.x[RN as usize] = SCRATCH_BASE;
+                batch.push((
+                    format!("ldxp_invalid_size{size}_o0{o0}"),
+                    pair_excl(size, 1, o0, 31, 4, 5, RN),
+                    load,
+                ));
+
+                let mut store = mem_input(&mut rng);
+                store.x[RN as usize] = SCRATCH_BASE;
+                store.x[4] = rng.next();
+                store.x[5] = rng.next();
+                batch.push((
+                    format!("stxp_invalid_size{size}_o0{o0}"),
+                    pair_excl(size, 0, o0, 6, 4, 5, RN),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("excl_pair_invalid_size_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_excl_pair_sp_base() {
     let mut rng = Rng::new(0x1_0063);
 
@@ -57859,6 +58077,60 @@ fn diff_mem_ldp_stp() {
 }
 
 #[test]
+fn diff_mem_ldp_stp_encoding_legality_grid() {
+    fn pair_label(opc: u32, v: u32, mode: u32, l: u32) -> String {
+        match (v, opc, mode, l) {
+            (0, 0b00, _, 0) => "stp_w".into(),
+            (0, 0b00, _, 1) => "ldp_w".into(),
+            (0, 0b10, _, 0) => "stp_x".into(),
+            (0, 0b10, _, 1) => "ldp_x".into(),
+            (0, 0b01, 0b00, 0) => "stgp_noalloc_undef".into(),
+            (0, 0b01, 0b00, 1) => "ldpsw_noalloc_undef".into(),
+            (0, 0b01, _, 0) => "stgp".into(),
+            (0, 0b01, _, 1) => "ldpsw".into(),
+            (0, 0b11, 0b00, 0) => "sttnp".into(),
+            (0, 0b11, 0b00, 1) => "ldtnp".into(),
+            (0, 0b11, _, 0) => "sttp".into(),
+            (0, 0b11, _, 1) => "ldtp".into(),
+            (1, 0b00, _, 0) => "stp_s".into(),
+            (1, 0b00, _, 1) => "ldp_s".into(),
+            (1, 0b01, _, 0) => "stp_d".into(),
+            (1, 0b01, _, 1) => "ldp_d".into(),
+            (1, 0b10, _, 0) => "stp_q".into(),
+            (1, 0b10, _, 1) => "ldp_q".into(),
+            (1, 0b11, _, _) => "pair_simd_opc3_undef".into(),
+            _ => unreachable!(),
+        }
+    }
+
+    let mut rng = Rng::new(0x1_0179);
+    let mut batch = Vec::new();
+
+    for v in 0..=1u32 {
+        for opc in 0..=3u32 {
+            for mode in 0..=3u32 {
+                for l in 0..=1u32 {
+                    let label = pair_label(opc, v, mode, l);
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + 64;
+                    st.x[RD as usize] = rng.next();
+                    st.x[RM as usize] = rng.next();
+                    st.set_vreg(RD as usize, rng.next(), rng.next());
+                    st.set_vreg(RM as usize, rng.next(), rng.next());
+                    batch.push((
+                        format!("{label}_opc{opc}_v{v}_mode{mode}_l{l}"),
+                        enc_ldp(opc, v, mode, l, 0),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldp_stp_encoding_legality_grid", batch);
+}
+
+#[test]
 fn diff_mem_mte_tag_memory_edges() {
     fn tag_mem(opc: u32, imm9: i32, op2: u32, rn: u32, rt: u32) -> u32 {
         (0xD9 << 24)
@@ -58428,6 +58700,51 @@ fn enc_prfm_reg(rt: u32, rm: u32, option: u32, s: u32) -> u32 {
         | (0b10 << 10)
         | (RN << 5)
         | (rt & 0x1f)
+}
+
+#[test]
+fn diff_mem_ldst_single_register_encoding_legality_grid() {
+    let mut rng = Rng::new(0x1_017b);
+    let mut batch = Vec::new();
+
+    for v in 0..=1u32 {
+        for size in 0..=3u32 {
+            for opc in 0..=3u32 {
+                let mut push = |label: String, insn: u32| {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + 64;
+                    st.x[RM as usize] = 8;
+                    st.x[RD as usize] = rng.next();
+                    st.set_vreg(RD as usize, rng.next(), rng.next());
+                    batch.push((label, insn, st));
+                };
+
+                push(
+                    format!("ldst_single_uimm_v{v}_size{size}_opc{opc}"),
+                    enc_ldst_uimm_regs(size, v, opc, 0, RD, RN),
+                );
+
+                for mode in 0..=3u32 {
+                    push(
+                        format!("ldst_single_simm_v{v}_size{size}_opc{opc}_mode{mode}"),
+                        enc_ldst_simm_regs(size, v, opc, mode, 0, RD, RN),
+                    );
+                }
+
+                let insn = if v == 0 {
+                    enc_ldst_reg_regs(size, opc, RM, 0b011, 0, RD, RN)
+                } else {
+                    enc_ldst_reg_simdfp_regs(size, opc, RM, 0b011, 0, RD, RN)
+                };
+                push(
+                    format!("ldst_single_reg_v{v}_size{size}_opc{opc}"),
+                    insn,
+                );
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldst_single_register_encoding_legality_grid", batch);
 }
 
 /// Build a memory-test input: base register x1 -> SCRATCH_BASE, random scratch
@@ -59131,6 +59448,29 @@ fn diff_mem_loregion_ordered_edges() {
     }
 
     run_batch("mem_loregion_ordered_edges", batch);
+}
+
+#[test]
+fn diff_mem_loregion_ordered_feature_legality_edges() {
+    let mut rng = Rng::new(0x1_017a);
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for &(load, name, rt) in &[(true, "load", RD), (false, "store", 3)] {
+            for _ in 0..4 {
+                let mut st = mem_input(&mut rng);
+                st.x[RN as usize] = SCRATCH_BASE + 64;
+                st.x[3] = rng.next();
+                batch.push((
+                    format!("loregion_{name}_size{size}"),
+                    enc_loregion_ordered_regs(size, load, rt, RN),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_loregion_ordered_feature_legality_edges", batch);
 }
 
 #[test]

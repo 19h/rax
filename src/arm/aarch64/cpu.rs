@@ -6847,6 +6847,7 @@ impl AArch64Cpu {
         // Early rejects for reserved field combinations that broader dispatch
         // arms below would otherwise accept.
         let top = (insn >> 24) & 0xFF;
+        let has_sve2p1 = self.config.features.contains(ArmFeatures::SVE2P1);
         // SVE2 PMUL is byte-only. For word/doubleword encodings the size bits
         // alter op1 enough that the broad arithmetic fallback below can catch
         // them unless they are rejected here.
@@ -6941,6 +6942,9 @@ impl AArch64Cpu {
                     && (insn >> 21) & 1 == 1
                     && (insn >> 10) & 0x3F == 0b001001 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let tsz = (insn >> 16) & 0x1F;
                 if tsz == 0 {
                     return Ok(CpuExit::Undefined(insn));
@@ -6977,6 +6981,9 @@ impl AArch64Cpu {
                     && (insn >> 20) & 0xF == 0b0110
                     && (insn >> 10) & 0x3F == 0b001001 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let imm = ((insn >> 16) & 0xF) as usize; // bytes
                 let low = self.v[zd]; // Zdn
                 let high = self.v[zn]; // Zm
@@ -6999,6 +7006,9 @@ impl AArch64Cpu {
                     && (insn >> 16) & 0xFF == 0b00101110
                     && (insn >> 13) & 0x7 == 0b100 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let pg = ((insn >> 10) & 0x7) as usize;
                 let pred = self.sve_p[pg];
                 if pred & 1 == 1 {
@@ -7021,6 +7031,9 @@ impl AArch64Cpu {
                     && (insn >> 19) & 0x7 == 0b101
                     && (insn >> 10) & 0x3F == 0b001110 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let sh = (insn >> 22) & 0x3;
                 let sl = (insn >> 17) & 0x3;
                 let (esz, idx): (usize, usize) = if sh == 0b00 && sl == 0b01 {
@@ -7098,6 +7111,9 @@ impl AArch64Cpu {
                     && (insn >> 21) & 1 == 1
                     && (insn >> 10) & 0x3F == 0b001101 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 self.exec_sve_tbx(zd, zn, zm, esize)
             }
 
@@ -7878,6 +7894,9 @@ impl AArch64Cpu {
                     && (insn >> 13) & 0x7 == 0b001
                     && (insn >> 18) & 1 == 1 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 self.exec_sve_qv_reduce_int(insn, esize)
             }
 
@@ -8057,6 +8076,9 @@ impl AArch64Cpu {
                     && (insn >> 9) & 1 == 0
                     && (insn >> 4) & 1 == 0 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let b2322 = (insn >> 22) & 0x3;
                 let b20 = (insn >> 20) & 1;
                 let b19 = (insn >> 19) & 1;
@@ -8098,6 +8120,9 @@ impl AArch64Cpu {
                     && (insn >> 12) & 0xF == 0b0111
                     && (insn >> 4) & 1 == 1 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let v_esz = ((insn >> 22) & 0x3) as usize;
                 let (n, imm) = if (insn >> 10) & 0x3 == 0b00 {
                     (1usize, ((insn >> 8) & 0x3) as usize) // PEXT_1
@@ -8274,6 +8299,9 @@ impl AArch64Cpu {
                     && (insn >> 21) & 1 == 0
                     && (insn >> 11) & 0x1F == 0b11000 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let unsigned = (insn >> 10) & 1 == 1;
                 let bits = (esize * 8) as u32;
                 let mask = elem_mask(bits);
@@ -8314,6 +8342,9 @@ impl AArch64Cpu {
                     && (insn >> 21) & 1 == 0
                     && (insn >> 13) & 0x7 == 0b111 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let opc = (insn >> 10) & 0x7;
                 let n = self.v[zn].to_le_bytes();
                 let m = self.v[zm].to_le_bytes();
@@ -8851,6 +8882,9 @@ impl AArch64Cpu {
                     && (insn >> 16) & 0x1F == 0b10001
                     && (insn >> 13) & 0x7 == 0b010 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let (signed_in, signed_out) = match (insn >> 10) & 0x7 {
                     0b000 => (true, true),   // SQCVTN
                     0b010 => (false, false), // UQCVTN
@@ -9400,6 +9434,9 @@ impl AArch64Cpu {
                     && (insn >> 21) & 1 == 0
                     && (insn >> 11) & 0x1F == 0b11001 =>
             {
+                if !has_sve2p1 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 let signed = (insn >> 10) & 1 == 0;
                 let indexed = (insn >> 22) & 0x3 == 0b10;
                 let zd = (insn & 0x1F) as usize;
@@ -12490,12 +12527,16 @@ impl AArch64Cpu {
     fn try_exec_sve_bf16(&mut self, insn: u32) -> Option<Result<CpuExit, ArmError>> {
         let top = (insn >> 24) & 0xFF;
         let zd = (insn & 0x1F) as usize;
+        let has_sve_b16b16 = self.config.features.contains(ArmFeatures::SVE_B16B16);
         // ---- 0x65: unpredicated 3-same, predicated binary, predicated FMA ----
         if top == 0b01100101 && (insn >> 22) & 0x3 == 0b00 {
             let bit21 = (insn >> 21) & 1;
             // Unpredicated BFADD/BFSUB/BFMUL: bit21==0, bits[15:12]==0000,
             // opc=bits[11:10]. Zm=bits[20:16], Zn=bits[9:5].
             if bit21 == 0 && (insn >> 12) & 0xF == 0b0000 {
+                if !has_sve_b16b16 {
+                    return Some(Ok(CpuExit::Undefined(insn)));
+                }
                 let kind = match (insn >> 10) & 0x3 {
                     0b00 => FpKind::Add,
                     0b01 => FpKind::Sub,
@@ -12519,6 +12560,9 @@ impl AArch64Cpu {
             // Predicated BFADD/.../BFMIN (merging): bit21==0, bits[15:13]==100,
             // opc=bits[20:16]. Zdn=Zd, Zm=bits[9:5], Pg=bits[12:10].
             if bit21 == 0 && (insn >> 13) & 0x7 == 0b100 {
+                if !has_sve_b16b16 {
+                    return Some(Ok(CpuExit::Undefined(insn)));
+                }
                 let kind = match (insn >> 16) & 0x1F {
                     0b00000 => FpKind::Add,
                     0b00001 => FpKind::Sub,
@@ -12550,6 +12594,9 @@ impl AArch64Cpu {
             // Predicated BFMLA (bit13==0) / BFMLS (bit13==1) (merging): bit21==1,
             // bits[15:14]==00. Zda=Zd, Zn=bits[9:5], Zm=bits[20:16], Pg=bits[12:10].
             if bit21 == 1 && (insn >> 14) & 0x3 == 0b00 {
+                if !has_sve_b16b16 {
+                    return Some(Ok(CpuExit::Undefined(insn)));
+                }
                 let sub = (insn >> 13) & 1 == 1;
                 let pred = self.sve_p[((insn >> 10) & 0x7) as usize];
                 let a = self.v[zd].to_le_bytes();
@@ -12578,6 +12625,9 @@ impl AArch64Cpu {
             let op6 = (insn >> 10) & 0x3F;
             // BFCLAMP (size==00): Zd = bf16 minnum(maxnum(Zn, Zd), Zm).
             if op6 == 0b001001 && (insn >> 22) & 0x3 == 0b00 {
+                if !has_sve_b16b16 {
+                    return Some(Ok(CpuExit::Undefined(insn)));
+                }
                 let n = self.v[((insn >> 5) & 0x1F) as usize].to_le_bytes();
                 let m = self.v[((insn >> 16) & 0x1F) as usize].to_le_bytes();
                 let d = self.v[zd].to_le_bytes();
@@ -12603,6 +12653,9 @@ impl AArch64Cpu {
                 0b000011 => (false, true),  // BFMLS
                 _ => return None,
             };
+            if !has_sve_b16b16 {
+                return Some(Ok(CpuExit::Undefined(insn)));
+            }
             let index = ((((insn >> 22) & 1) << 2) | ((insn >> 19) & 0x3)) as usize;
             let n = self.v[((insn >> 5) & 0x1F) as usize].to_le_bytes();
             let m = self.v[((insn >> 16) & 0x7) as usize].to_le_bytes();
@@ -12730,6 +12783,9 @@ impl AArch64Cpu {
             && (insn >> 21) & 1 == 1
             && matches!((insn >> 10) & 0x3F, 0b100000 | 0b010000)
         {
+            if !self.config.features.contains(ArmFeatures::SVE2P1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let indexed = (insn >> 10) & 0x3F == 0b010000;
             let n = self.v[zn];
             let (m, a) = if indexed {
@@ -12772,6 +12828,9 @@ impl AArch64Cpu {
         {
             let bf = (insn >> 22) & 0x3 == 0b11;
             let sub = (insn >> 13) & 1 == 1;
+            if bf && sub && !self.config.features.contains(ArmFeatures::SVE2P1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let top = (insn >> 10) & 1 == 1;
             let n = self.v[zn].to_le_bytes();
             let m = self.v[zm].to_le_bytes();
@@ -12873,6 +12932,9 @@ impl AArch64Cpu {
         {
             let bf = (insn >> 22) & 0x3 == 0b11;
             let sub = (insn >> 13) & 1 == 1; // FMLSL / BFMLSL
+            if bf && sub && !self.config.features.contains(ArmFeatures::SVE2P1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let top = (insn >> 10) & 1 == 1; // odd half of Zn
             let index = ((((insn >> 19) & 0x3) << 1) | ((insn >> 11) & 1)) as usize;
             let zmr = ((insn >> 16) & 0x7) as usize;
@@ -12974,6 +13036,9 @@ impl AArch64Cpu {
             match (insn >> 22) & 0x3 {
                 0b01 => return self.exec_simd_bfmmla(insn),
                 0b10 => {
+                    if !self.config.features.contains(ArmFeatures::SVE_F32MM) {
+                        return Ok(CpuExit::Undefined(insn));
+                    }
                     let (n, m, a) = (self.v[zn], self.v[zm], self.v[zd]);
                     let f = |v: u128, i: u32| f32::from_bits((v >> (i * 32)) as u32);
                     let (n00, n01, n10, n11) = (f(n, 0), f(n, 1), f(n, 2), f(n, 3));
@@ -13649,6 +13714,9 @@ impl AArch64Cpu {
             && (insn >> 21) & 1 == 1
             && (insn >> 10) & 0x3F == 0b001001
         {
+            if !self.config.features.contains(ArmFeatures::SVE2P1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let n = self.v[zn].to_le_bytes();
             let m = self.v[zm].to_le_bytes();
             let d = self.v[zd].to_le_bytes();
@@ -13678,6 +13746,9 @@ impl AArch64Cpu {
             && (insn >> 19) & 0x7 == 0b010
             && (insn >> 13) & 0x7 == 0b101
         {
+            if !self.config.features.contains(ArmFeatures::SVE2P1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let kind = match (insn >> 16) & 0x7 {
                 0b000 => FpKind::Add,
                 0b100 => FpKind::MaxNm,
@@ -16694,6 +16765,9 @@ impl AArch64Cpu {
         // LDTNP/STTNP): its memory accesses are checked at EL0 even when run at
         // EL1, so route them through the unprivileged translation. (#39)
         let unpriv = v == 0 && opc == 0b11;
+        if unpriv && !self.config.features.contains(ArmFeatures::RCPC3) {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         // opc=01, V=0 splits by the L bit: L=1 is LDPSW, L=0 is STGP
         // (FEAT_MTE store-allocation-tag pair). STGP stores two 64-bit
         // registers; the tag write is a no-op in our flat memory model, and
@@ -17166,9 +17240,15 @@ impl AArch64Cpu {
             if scale > 4 {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
+            let bit24 = (insn >> 24) & 1;
+            let bit21 = (insn >> 21) & 1;
+            let op2 = (insn >> 10) & 0x3;
+            if bit24 == 0 && bit21 == 0 && op2 == 0b10 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             // Register-offset form: the extend option must have bit 1 set
             // (UXTW/LSL/SXTW/SXTX); other options are unallocated.
-            if (insn >> 24) & 1 == 0 && (insn >> 21) & 1 == 1 && (insn >> 10) & 0x3 == 0b10 {
+            if bit24 == 0 && bit21 == 1 && op2 == 0b10 {
                 let option = (insn >> 13) & 0x7;
                 if option & 0b010 == 0 {
                     return Err(ArmError::UndefinedInstruction(insn));
@@ -27383,6 +27463,7 @@ mod tests {
     #[test]
     fn test_sve2_dupq_quadword_no_panic() {
         let mut cpu = create_cpu_with_insn(0x0530_2420); // DUPQ Z0.Q, Z1.Q[0]
+        cpu.config.features |= ArmFeatures::SVE2P1;
         let src_lo = 0x0123_4567_89ab_cdef;
         let src_hi = 0xfedc_ba98_7654_3210;
 
@@ -31106,6 +31187,7 @@ mod tests {
     #[test]
     fn issue_39_lrcpc3_pair_uses_unprivileged_permission_checks() {
         let (mut cpu, data_va) = create_issue_39_cpu();
+        cpu.config.features |= ArmFeatures::RCPC3;
         cpu.set_x(1, data_va);
         cpu.mem_write_u64(data_va + 8, 0x1234_5678_9ABC_DEF0)
             .unwrap();

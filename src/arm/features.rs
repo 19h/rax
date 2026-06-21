@@ -43,7 +43,7 @@ bitflags! {
         const CRC32 = 1 << 7;
 
         // =====================================================================
-        // SIMD/Vector Extensions (bits 8-23)
+        // SIMD/Vector Extensions (bits 8-23, 30-31)
         // =====================================================================
 
         /// NEON/Advanced SIMD.
@@ -93,6 +93,12 @@ bitflags! {
         /// SME2 (FEAT_SME2, ARMv9.4+).
         /// Enhanced SME with more tiles.
         const SME2 = 1 << 20;
+
+        /// SVE2.1 instructions (FEAT_SVE2p1).
+        const SVE2P1 = 1 << 30;
+
+        /// SVE/BF16 8-bit exponent arithmetic (FEAT_SVE_B16B16).
+        const SVE_B16B16 = 1 << 31;
 
         /// FRINTTS - floating-point round to int (FEAT_FRINTTS).
         const FRINTTS = 1 << 21;
@@ -160,6 +166,9 @@ bitflags! {
         /// Guarded Control Stack (FEAT_GCS, ARMv9.3+).
         /// Hardware shadow stack.
         const GCS = 1 << 38;
+
+        /// SVE single-precision matrix multiply (FEAT_SVE_F32MM).
+        const SVE_F32MM = 1 << 39;
 
         // =====================================================================
         // Virtualization (bits 40-47)
