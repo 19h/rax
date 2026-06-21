@@ -27703,6 +27703,90 @@ fn diff_simd_fp16_frint_fpcr_rounding() {
 }
 
 #[test]
+fn diff_simd_cvtf_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let h_lanes = [
+            2_049u16,
+            (-2_049i16) as u16,
+            65_520u16,
+            u16::MAX,
+            2_049u16,
+            (-2_049i16) as u16,
+            65_520u16,
+            u16::MAX,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in h_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (16 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_h_rmode{rmode}"),
+            enc_fp16_2r(1, 0, 0, 0b11101),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_h_rmode{rmode}"),
+            enc_fp16_2r(1, 1, 0, 0b11101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let s_lanes = [
+            16_777_217u32,
+            (-16_777_217i32) as u32,
+            u32::MAX,
+            16_777_217u32,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_s_rmode{rmode}"),
+            enc_two_reg(1, 0, 0, 0b11101),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_s_rmode{rmode}"),
+            enc_two_reg(1, 1, 0, 0b11101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let d_lanes = [
+            9_007_199_254_740_993u64,
+            (-9_007_199_254_740_993i64) as u64,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_d_rmode{rmode}"),
+            enc_two_reg(1, 0, 1, 0b11101),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_d_rmode{rmode}"),
+            enc_two_reg(1, 1, 1, 0b11101),
+            st,
+        ));
+    }
+
+    run_batch("simd_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_simd_fp16_3same() {
     // Full (U, a, opcode) table of the FP16 three-same group.
     let ops: &[(u32, u32, u32, &str)] = &[
@@ -34756,6 +34840,42 @@ fn enc_fp1(fp_type: u32, opcode: u32) -> u32 {
         | RD
 }
 
+/// Scalar FP precision conversion: `00011110 type 1 0001 opc 10000 Rn Rd`.
+fn enc_fcvt_precision(src_type: u32, dst_type: u32) -> u32 {
+    (0b00011110 << 24)
+        | (src_type << 22)
+        | (1 << 21)
+        | (0b0001 << 17)
+        | (dst_type << 15)
+        | (0b10000 << 10)
+        | (RN << 5)
+        | RD
+}
+
+/// Scalar GPR -> FP conversion: `sf 0011110 ptype 1 00 opcode 000000 Rn Rd`.
+fn enc_fp_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32) -> u32 {
+    (sf << 31)
+        | (0b0011110 << 24)
+        | (fp_type << 22)
+        | (1 << 21)
+        | (opcode << 16)
+        | (RN << 5)
+        | RD
+}
+
+/// Scalar fixed-point GPR -> FP conversion:
+/// `sf 0011110 ptype 0 00 opcode scale Rn Rd`, where `fbits = 64 - scale`.
+fn enc_fp_fixed_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32, fbits: u32) -> u32 {
+    let scale = 64 - fbits;
+    (sf << 31)
+        | (0b0011110 << 24)
+        | (fp_type << 22)
+        | (opcode << 16)
+        | (scale << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// Fill v0..v3 low elements with finite (non-zero) floats. `nonneg` keeps them
 /// >= 0 (for FSQRT).
 fn fill_scalar_fp(st: &mut ArmState, rng: &mut Rng, f64op: bool, nonneg: bool) {
@@ -35321,6 +35441,93 @@ fn diff_generated_sve_int_to_fp16_convert_sweep() {
 }
 
 #[test]
+fn diff_sve_cvtf_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let h_lanes = [
+            2_049u16,
+            (-2_049i16) as u16,
+            65_520u16,
+            u16::MAX,
+            2_049u16,
+            (-2_049i16) as u16,
+            65_520u16,
+            u16::MAX,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in h_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (16 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_hh_rmode{rmode}"),
+            enc_sve_cvt(0b01, 0b010, 0b01, 0),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_hh_rmode{rmode}"),
+            enc_sve_cvt(0b01, 0b010, 0b01, 1),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let s_lanes = [
+            16_777_217u32,
+            (-16_777_217i32) as u32,
+            u32::MAX,
+            16_777_217u32,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_ss_rmode{rmode}"),
+            enc_sve_cvt(0b10, 0b010, 0b10, 0),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_ss_rmode{rmode}"),
+            enc_sve_cvt(0b10, 0b010, 0b10, 1),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
+        let d_lanes = [
+            9_007_199_254_740_993u64,
+            (-9_007_199_254_740_993i64) as u64,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        batch.push((
+            format!("scvtf_dd_rmode{rmode}"),
+            enc_sve_cvt(0b11, 0b010, 0b11, 0),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_dd_rmode{rmode}"),
+            enc_sve_cvt(0b11, 0b010, 0b11, 1),
+            st,
+        ));
+    }
+
+    run_batch("sve_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_generated_sve_convert_sweep() {
     let mut rng = Rng::new(0xa64_c020);
     let mut batch = Vec::new();
@@ -35636,6 +35843,241 @@ fn diff_fp_scalar_frint_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fp_scalar_fcvt_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        for &(name, value) in &[
+            ("pos_2p24p1", 16_777_217.0f64),
+            ("neg_2p24p1", -16_777_217.0f64),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_vreg(RN as usize, value.to_bits(), 0);
+            batch.push((
+                format!("fcvt_s_d_{name}_rmode{rmode}"),
+                enc_fcvt_precision(0b01, 0b00),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_vreg(RN as usize, (value / 8192.0).to_bits(), 0);
+            batch.push((
+                format!("fcvt_h_d_{name}_rmode{rmode}"),
+                enc_fcvt_precision(0b01, 0b11),
+                st,
+            ));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_fcvt_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fp_scalar_cvtf_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let mut push = |label: &str, sf: u32, fp_type: u32, opcode: u32, raw: u64| {
+        for rmode in 0..4u64 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.x[RN as usize] = raw;
+            batch.push((
+                format!("{label}_rmode{rmode}"),
+                enc_fp_gpr_to_fp(sf, fp_type, opcode),
+                st,
+            ));
+        }
+    };
+
+    // f16/f32/f64 cannot exactly represent 2^11+1, 2^24+1 and 2^53+1.
+    push("scvtf_h_w_pos_2p11p1", 0, 0b11, 0b010, 2_049);
+    push(
+        "scvtf_h_w_neg_2p11p1",
+        0,
+        0b11,
+        0b010,
+        (-2_049i32) as u32 as u64,
+    );
+    push("ucvtf_h_w_pos_2p11p1", 0, 0b11, 0b011, 2_049);
+    push("ucvtf_h_w_overflow", 0, 0b11, 0b011, 65_520);
+
+    push("scvtf_s_w_pos_2p24p1", 0, 0b00, 0b010, 16_777_217);
+    push(
+        "scvtf_s_w_neg_2p24p1",
+        0,
+        0b00,
+        0b010,
+        (-16_777_217i32) as u32 as u64,
+    );
+    push("ucvtf_s_w_pos_2p24p1", 0, 0b00, 0b011, 16_777_217);
+    push("ucvtf_s_w_umax", 0, 0b00, 0b011, u32::MAX as u64);
+
+    push(
+        "scvtf_s_x_pos_2p24p1",
+        1,
+        0b00,
+        0b010,
+        16_777_217,
+    );
+    push(
+        "scvtf_s_x_neg_2p24p1",
+        1,
+        0b00,
+        0b010,
+        (-16_777_217i64) as u64,
+    );
+    push("ucvtf_s_x_pos_2p24p1", 1, 0b00, 0b011, 16_777_217);
+    push("ucvtf_s_x_umax", 1, 0b00, 0b011, u64::MAX);
+
+    push("scvtf_h_x_pos_2p11p1", 1, 0b11, 0b010, 2_049);
+    push(
+        "scvtf_h_x_neg_2p11p1",
+        1,
+        0b11,
+        0b010,
+        (-2_049i64) as u64,
+    );
+    push("ucvtf_h_x_pos_2p11p1", 1, 0b11, 0b011, 2_049);
+    push("ucvtf_h_x_overflow", 1, 0b11, 0b011, 65_520);
+
+    push(
+        "scvtf_d_x_pos_2p53p1",
+        1,
+        0b01,
+        0b010,
+        9_007_199_254_740_993,
+    );
+    push(
+        "scvtf_d_x_neg_2p53p1",
+        1,
+        0b01,
+        0b010,
+        (-9_007_199_254_740_993i64) as u64,
+    );
+    push(
+        "ucvtf_d_x_pos_2p53p1",
+        1,
+        0b01,
+        0b011,
+        9_007_199_254_740_993,
+    );
+    push("ucvtf_d_x_umax", 1, 0b01, 0b011, u64::MAX);
+
+    run_fpsr_batch("fp_scalar_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fixed_cvtf_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let mut push = |label: &str, sf: u32, fp_type: u32, opcode: u32, raw: u64, fbits: u32| {
+        for rmode in 0..4u64 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.x[RN as usize] = raw;
+            batch.push((
+                format!("{label}_rmode{rmode}"),
+                enc_fp_fixed_gpr_to_fp(sf, fp_type, opcode, fbits),
+                st,
+            ));
+        }
+    };
+
+    push("scvtf_h_w_pos_2p11p1_f1", 0, 0b11, 0b010, 2_049, 1);
+    push(
+        "scvtf_h_w_neg_2p11p1_f1",
+        0,
+        0b11,
+        0b010,
+        (-2_049i32) as u32 as u64,
+        1,
+    );
+    push("ucvtf_h_w_pos_2p11p1_f1", 0, 0b11, 0b011, 2_049, 1);
+    push("ucvtf_h_w_overflow_f1", 0, 0b11, 0b011, 131_040, 1);
+    push("ucvtf_h_w_sub_tie_f25", 0, 0b11, 0b011, 1, 25);
+    push(
+        "scvtf_h_w_neg_sub_tie_f25",
+        0,
+        0b11,
+        0b010,
+        (-1i32) as u32 as u64,
+        25,
+    );
+
+    push("scvtf_s_w_pos_2p24p1_f1", 0, 0b00, 0b010, 16_777_217, 1);
+    push(
+        "scvtf_s_w_neg_2p24p1_f1",
+        0,
+        0b00,
+        0b010,
+        (-16_777_217i32) as u32 as u64,
+        1,
+    );
+    push("ucvtf_s_w_pos_2p24p1_f1", 0, 0b00, 0b011, 16_777_217, 1);
+    push("ucvtf_s_w_umax_f1", 0, 0b00, 0b011, u32::MAX as u64, 1);
+
+    push("scvtf_s_x_pos_2p24p1_f1", 1, 0b00, 0b010, 16_777_217, 1);
+    push(
+        "scvtf_s_x_neg_2p24p1_f1",
+        1,
+        0b00,
+        0b010,
+        (-16_777_217i64) as u64,
+        1,
+    );
+    push("ucvtf_s_x_pos_2p24p1_f1", 1, 0b00, 0b011, 16_777_217, 1);
+    push("ucvtf_s_x_umax_f1", 1, 0b00, 0b011, u64::MAX, 1);
+
+    push("scvtf_h_x_pos_2p11p1_f1", 1, 0b11, 0b010, 2_049, 1);
+    push(
+        "scvtf_h_x_neg_2p11p1_f1",
+        1,
+        0b11,
+        0b010,
+        (-2_049i64) as u64,
+        1,
+    );
+    push("ucvtf_h_x_pos_2p11p1_f1", 1, 0b11, 0b011, 2_049, 1);
+    push("ucvtf_h_x_overflow_f1", 1, 0b11, 0b011, 131_040, 1);
+    push("ucvtf_h_x_sub_tie_f25", 1, 0b11, 0b011, 1, 25);
+    push(
+        "scvtf_h_x_neg_sub_tie_f25",
+        1,
+        0b11,
+        0b010,
+        (-1i64) as u64,
+        25,
+    );
+
+    push(
+        "scvtf_d_x_pos_2p53p1_f1",
+        1,
+        0b01,
+        0b010,
+        9_007_199_254_740_993,
+        1,
+    );
+    push(
+        "scvtf_d_x_neg_2p53p1_f1",
+        1,
+        0b01,
+        0b010,
+        (-9_007_199_254_740_993i64) as u64,
+        1,
+    );
+    push(
+        "ucvtf_d_x_pos_2p53p1_f1",
+        1,
+        0b01,
+        0b011,
+        9_007_199_254_740_993,
+        1,
+    );
+    push("ucvtf_d_x_umax_f1", 1, 0b01, 0b011, u64::MAX, 1);
+
+    run_fpsr_batch("fp_scalar_fixed_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_fp16_scalar_frint_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     let values = [
@@ -35905,6 +36347,93 @@ fn diff_simd_shift_fixedpoint() {
         }
     }
     run_batch("simd_shift_fixedpoint", batch);
+}
+
+#[test]
+fn diff_simd_fixed_cvtf_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let h_lanes = [
+            2_049u16,
+            (-2_049i16) as u16,
+            u16::MAX,
+            2_049u16,
+            2_049u16,
+            (-2_049i16) as u16,
+            u16::MAX,
+            2_049u16,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in h_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (16 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        let h_imm = 2 * 16 - 1;
+        batch.push((
+            format!("scvtf_h_f1_rmode{rmode}"),
+            enc_shift_imm(1, 0, 0b11100, h_imm),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_h_f1_rmode{rmode}"),
+            enc_shift_imm(1, 1, 0b11100, h_imm),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let s_lanes = [
+            16_777_217u32,
+            (-16_777_217i32) as u32,
+            u32::MAX,
+            16_777_217u32,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in s_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        let s_imm = 2 * 32 - 1;
+        batch.push((
+            format!("scvtf_s_f1_rmode{rmode}"),
+            enc_shift_imm(1, 0, 0b11100, s_imm),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_s_f1_rmode{rmode}"),
+            enc_shift_imm(1, 1, 0b11100, s_imm),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        let d_lanes = [
+            9_007_199_254_740_993u64,
+            (-9_007_199_254_740_993i64) as u64,
+        ];
+        let mut packed = 0u128;
+        for (lane, value) in d_lanes.iter().enumerate() {
+            packed |= (*value as u128) << (64 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        let d_imm = 2 * 64 - 1;
+        batch.push((
+            format!("scvtf_d_f1_rmode{rmode}"),
+            enc_shift_imm(1, 0, 0b11100, d_imm),
+            st,
+        ));
+        batch.push((
+            format!("ucvtf_d_f1_rmode{rmode}"),
+            enc_shift_imm(1, 1, 0b11100, d_imm),
+            st,
+        ));
+    }
+
+    run_batch("simd_fixed_cvtf_fpcr_rounding", batch);
 }
 
 /// Advanced SIMD three-different (widening/narrowing): `0 Q U 01110 size 1 Rm opcode 00 Rn Rd`.

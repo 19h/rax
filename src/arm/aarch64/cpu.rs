@@ -1942,9 +1942,10 @@ impl AArch64Cpu {
                     fp_convert_nan(sb as u64, src_prec, dst_prec)
                 } else {
                     match dst_prec {
+                        4 if src_prec == 8 => f64_to_f32_bits_with_fpcr(val, self.fpcr) as u64,
                         4 => (val as f32).to_bits() as u64,
                         8 => val.to_bits(),
-                        _ => fp16_round(val) as u64,
+                        _ => f64_to_fp16_bits_with_fpcr(val, self.fpcr) as u64,
                     }
                 };
                 self.fpsr |= fp_status_cvt_precision(sb as u64, src_prec, dst_prec, r);
@@ -2387,8 +2388,7 @@ impl AArch64Cpu {
                 // FCVT Sd, Dn (double to single)
                 (0b01, 0b00) => {
                     let val = f64::from_bits(self.v[rn as usize] as u64);
-                    let result = val as f32;
-                    self.v[rd as usize] = result.to_bits() as u128;
+                    self.v[rd as usize] = f64_to_f32_bits_with_fpcr(val, self.fpcr) as u128;
                 }
                 _ => {
                     return Err(ArmError::Unimplemented(format!(
@@ -2429,66 +2429,41 @@ impl AArch64Cpu {
                 // GPR int -> FP, value = int / 2^fbits (the 2^-fbits scale is an
                 // exact power of two, so a single FPRound of the integer suffices).
                 let signed = opcode == 0b010;
-                let raw_int: u128 = if signed {
+                let (negative, raw_int) = if signed {
                     if sf == 1 {
-                        (self.get_x(rn) as i64 as i128).unsigned_abs()
+                        let x = self.get_x(rn) as i64;
+                        (x < 0, (x as i128).unsigned_abs())
                     } else {
-                        (self.get_w(rn) as i32 as i128).unsigned_abs()
+                        let x = self.get_w(rn) as i32;
+                        (x < 0, (x as i128).unsigned_abs())
                     }
                 } else if sf == 1 {
-                    self.get_x(rn) as u128
+                    (false, self.get_x(rn) as u128)
                 } else {
-                    self.get_w(rn) as u128
+                    (false, self.get_w(rn) as u128)
                 };
-                let scale_f = 2f64.powi(-fbits);
                 let r: u64 = match ptype {
                     0b00 => {
-                        let f = if signed {
-                            (if sf == 1 {
-                                self.get_x(rn) as i64 as f32
-                            } else {
-                                self.get_w(rn) as i32 as f32
-                            })
-                        } else {
-                            (if sf == 1 {
-                                self.get_x(rn) as f32
-                            } else {
-                                self.get_w(rn) as f32
-                            })
-                        };
-                        (f * 2f32.powi(-fbits)).to_bits() as u64
+                        scaled_int_to_fp32_bits_with_fpcr(
+                            raw_int,
+                            negative,
+                            fbits as u32,
+                            self.fpcr,
+                        ) as u64
                     }
-                    0b01 => {
-                        let v = if signed {
-                            (if sf == 1 {
-                                self.get_x(rn) as i64 as f64
-                            } else {
-                                self.get_w(rn) as i32 as f64
-                            })
-                        } else {
-                            (if sf == 1 {
-                                self.get_x(rn) as f64
-                            } else {
-                                self.get_w(rn) as f64
-                            })
-                        };
-                        (v * scale_f).to_bits()
-                    }
+                    0b01 => scaled_int_to_fp64_bits_with_fpcr(
+                        raw_int,
+                        negative,
+                        fbits as u32,
+                        self.fpcr,
+                    ),
                     0b11 => {
-                        let v = if signed {
-                            (if sf == 1 {
-                                self.get_x(rn) as i64 as f64
-                            } else {
-                                self.get_w(rn) as i32 as f64
-                            })
-                        } else {
-                            (if sf == 1 {
-                                self.get_x(rn) as f64
-                            } else {
-                                self.get_w(rn) as f64
-                            })
-                        };
-                        fp16_round(v * scale_f) as u64
+                        scaled_int_to_fp16_bits_with_fpcr(
+                            raw_int,
+                            negative,
+                            fbits as u32,
+                            self.fpcr,
+                        ) as u64
                     }
                     _ => return Err(ArmError::UndefinedInstruction(insn)),
                 };
@@ -2498,7 +2473,7 @@ impl AArch64Cpu {
                     0b11 => 2,
                     _ => unreachable!(),
                 };
-                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, dst_prec, r);
+                self.fpsr |= fp_status_scaled_int_to_fp(raw_int, fbits as u32, dst_prec, r);
                 self.v[rd as usize] = r as u128;
                 return Ok(CpuExit::Continue);
             }
@@ -2551,47 +2526,24 @@ impl AArch64Cpu {
                 } else {
                     self.get_w(rn) as u64
                 };
-                let val: f64 = if signed {
+                let (negative, raw_int) = if signed {
                     if sf == 1 {
-                        iv as i64 as f64
+                        let x = iv as i64;
+                        (x < 0, (x as i128).unsigned_abs())
                     } else {
-                        iv as i32 as f64
+                        let x = iv as u32 as i32;
+                        (x < 0, (x as i128).unsigned_abs())
                     }
                 } else if sf == 1 {
-                    iv as f64
+                    (false, iv as u128)
                 } else {
-                    iv as u32 as f64
+                    (false, (iv as u32) as u128)
                 };
                 let r: u64 = match ptype {
-                    0b00 => {
-                        // Round the (exact-in-f64) value to f32.
-                        let f: f32 = if signed {
-                            if sf == 1 {
-                                iv as i64 as f32
-                            } else {
-                                iv as i32 as f32
-                            }
-                        } else if sf == 1 {
-                            iv as f32
-                        } else {
-                            iv as u32 as f32
-                        };
-                        f.to_bits() as u64
-                    }
-                    0b01 => val.to_bits(),
-                    0b11 => fp16_round(val) as u64,
+                    0b00 => int_to_fp32_bits_with_fpcr(raw_int, negative, self.fpcr) as u64,
+                    0b01 => int_to_fp64_bits_with_fpcr(raw_int, negative, self.fpcr),
+                    0b11 => int_to_fp16_bits_with_fpcr(raw_int, negative, self.fpcr) as u64,
                     _ => return Err(ArmError::UndefinedInstruction(insn)),
-                };
-                let raw_int = if signed {
-                    if sf == 1 {
-                        (iv as i64 as i128).unsigned_abs()
-                    } else {
-                        (iv as u32 as i32 as i128).unsigned_abs()
-                    }
-                } else if sf == 1 {
-                    iv as u128
-                } else {
-                    (iv as u32) as u128
                 };
                 let dst_prec = match ptype {
                     0b00 => 4usize,
@@ -3357,8 +3309,11 @@ impl AArch64Cpu {
                 (1, 1, 0b11010) => fp16_to_int16(s, false, 2), // FCVTPU
                 (1, 1, 0b11011) => fp16_to_int16(s, false, 3), // FCVTZU
                 // Integer to floating-point.
-                (0, 0, 0b11101) => int16_to_fp16(s, true), // SCVTF
-                (1, 0, 0b11101) => int16_to_fp16(s, false), // UCVTF
+                (0, 0, 0b11101) => {
+                    let x = s as i16;
+                    int_to_fp16_bits_with_fpcr((x as i128).unsigned_abs(), x < 0, self.fpcr)
+                }, // SCVTF
+                (1, 0, 0b11101) => int_to_fp16_bits_with_fpcr(s as u128, false, self.fpcr), // UCVTF
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
             self.fpsr |= fp16_two_reg_status(u, a, opcode, s, r);
@@ -4720,11 +4675,10 @@ impl AArch64Cpu {
                 let elements = datasize / esize;
                 let src = self.v[rn].to_le_bytes();
                 let mut dst = [0u8; 16];
-                let scale = (2.0f64).powi(fbits as i32);
                 for e in 0..elements {
                     let off = e * esize;
                     let a = read_elem(&src, off, esize);
-                    let (r, status) = fixed_point_convert(opcode, u, bits, a, scale);
+                    let (r, status) = fixed_point_convert(opcode, u, bits, a, fbits, self.fpcr);
                     self.fpsr |= status;
                     write_elem(&mut dst, off, esize, r);
                 }
@@ -6214,36 +6168,32 @@ impl AArch64Cpu {
             let off = e * esize;
             let a = read_elem(&src, off, esize);
             let r = if let Some(unsigned) = cvtf {
-                if sz == 0 {
-                    let f = if unsigned {
-                        a as u32 as f32
+                let (negative, raw_int) = if unsigned {
+                    if sz == 0 {
+                        (false, (a as u32) as u128)
                     } else {
-                        a as u32 as i32 as f32
-                    };
-                    f.to_bits() as u64
+                        (false, a as u128)
+                    }
+                } else if sz == 0 {
+                    let x = a as u32 as i32;
+                    (x < 0, (x as i128).unsigned_abs())
                 } else {
-                    let f = if unsigned { a as f64 } else { a as i64 as f64 };
-                    f.to_bits()
-                }
+                    let x = a as i64;
+                    (x < 0, (x as i128).unsigned_abs())
+                };
+                let r = if sz == 0 {
+                    int_to_fp32_bits_with_fpcr(raw_int, negative, self.fpcr) as u64
+                } else {
+                    int_to_fp64_bits_with_fpcr(raw_int, negative, self.fpcr)
+                };
+                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, esize, r);
+                r
             } else if sz == 0 {
                 fp_two_reg_f32_with_fpcr(kind.unwrap(), a as u32, self.fpcr) as u64
             } else {
                 fp_two_reg_f64_with_fpcr(kind.unwrap(), a, self.fpcr)
             };
-            if let Some(unsigned) = cvtf {
-                let raw_int = if unsigned {
-                    if sz == 0 {
-                        (a as u32) as u128
-                    } else {
-                        a as u128
-                    }
-                } else if sz == 0 {
-                    (a as u32 as i32 as i128).unsigned_abs()
-                } else {
-                    (a as i64 as i128).unsigned_abs()
-                };
-                self.fpsr |= fp_status_int_to_fp_scaled(raw_int, esize, r);
-            } else if let Some(kind) = kind {
+            if let Some(kind) = kind {
                 self.fpsr |= fp_status_unop(esize, Some(kind), a, r);
                 self.fpsr |= fp_status_fp_to_int_unop(esize, kind, a);
             }
@@ -13445,7 +13395,7 @@ impl AArch64Cpu {
                 res
             } else {
                 let x = read_elem(&operand, off, int_sz);
-                let res = sve_cvtf(int_sz, fp_sz, signed, x);
+                let res = sve_cvtf(int_sz, fp_sz, signed, x, self.fpcr);
                 let raw_int = if signed {
                     match int_sz {
                         2 => (x as u16 as i16 as i128).unsigned_abs(),
@@ -19412,30 +19362,222 @@ fn fp_status_int_to_fp_scaled(abs_int: u128, dst_prec: usize, result: u64) -> u3
     fp_status_assume_inexact(dst_prec, result)
 }
 
+fn fp_scaled_int_exact(
+    abs_int: u128,
+    fbits: u32,
+    precision_bits: u32,
+    min_subnormal_exp: i32,
+) -> bool {
+    if abs_int == 0 {
+        return true;
+    }
+    let trailing = abs_int.trailing_zeros();
+    let normalized = abs_int >> trailing;
+    let exponent = trailing as i32 - fbits as i32;
+    128 - normalized.leading_zeros() <= precision_bits && exponent >= min_subnormal_exp
+}
+
+fn fp_status_scaled_int_to_fp(abs_int: u128, fbits: u32, dst_prec: usize, result: u64) -> u32 {
+    let overflow = match dst_prec {
+        2 => fp16_is_inf(result as u16),
+        4 => fp32_is_inf(result as u32),
+        _ => fp64_is_inf(result),
+    };
+    if overflow {
+        return FPSR_OFC | FPSR_IXC;
+    }
+
+    let (precision_bits, min_subnormal_exp) = match dst_prec {
+        2 => (11, -24),
+        4 => (24, -149),
+        _ => (53, -1074),
+    };
+    if fp_scaled_int_exact(abs_int, fbits, precision_bits, min_subnormal_exp) {
+        return 0;
+    }
+    fp_status_assume_inexact(dst_prec, result)
+}
+
+fn round_shift_u128_with_fpcr(v: u128, shift: u32, negative: bool, fpcr: u32) -> u128 {
+    if shift == 0 {
+        return v;
+    }
+    if shift >= 128 {
+        return match (fpcr >> 22) & 0x3 {
+            1 if !negative && v != 0 => 1,
+            2 if negative && v != 0 => 1,
+            _ => 0,
+        };
+    }
+    let truncated = v >> shift;
+    let rem = v & ((1u128 << shift) - 1);
+    if rem == 0 {
+        return truncated;
+    }
+    let increment = match (fpcr >> 22) & 0x3 {
+        0 => {
+            let half = 1u128 << (shift - 1);
+            rem > half || (rem == half && (truncated & 1) != 0)
+        }
+        1 => !negative,
+        2 => negative,
+        _ => false,
+    };
+    truncated + u128::from(increment)
+}
+
+fn round_scaled_int_to_fp_bits(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    precision_bits: u32,
+    exp_bits: u32,
+    frac_bits: u32,
+    exp_bias: i32,
+    fpcr: u32,
+) -> u64 {
+    debug_assert_eq!(precision_bits, frac_bits + 1);
+    if abs_int == 0 {
+        return 0;
+    }
+
+    let sign = if negative {
+        1u64 << (exp_bits + frac_bits)
+    } else {
+        0
+    };
+    let frac_mask = (1u64 << frac_bits) - 1;
+    let max_exp = (1u64 << exp_bits) - 1;
+    let min_exp = 1 - exp_bias;
+    let bit_len = 128 - abs_int.leading_zeros();
+    let mut exponent = bit_len as i32 - 1 - fbits as i32;
+
+    if exponent < min_exp {
+        let sub_scale = frac_bits as i32 - fbits as i32 - min_exp;
+        let sub_sig = if sub_scale >= 0 {
+            abs_int << sub_scale as u32
+        } else {
+            round_shift_u128_with_fpcr(abs_int, (-sub_scale) as u32, negative, fpcr)
+        };
+        if sub_sig >= (1u128 << frac_bits) {
+            return sign | (1u64 << frac_bits);
+        }
+        return sign | sub_sig as u64;
+    }
+
+    let mut sig = if bit_len <= precision_bits {
+        abs_int << (precision_bits - bit_len)
+    } else {
+        round_shift_u128_with_fpcr(abs_int, bit_len - precision_bits, negative, fpcr)
+    };
+    if sig == (1u128 << precision_bits) {
+        sig >>= 1;
+        exponent += 1;
+    }
+
+    let biased_exp = (exponent + exp_bias) as u64;
+    if biased_exp >= max_exp {
+        let round_to_inf = match (fpcr >> 22) & 0x3 {
+            0 => true,
+            1 => !negative,
+            2 => negative,
+            _ => false,
+        };
+        return if round_to_inf {
+            sign | (max_exp << frac_bits)
+        } else {
+            sign | ((max_exp - 1) << frac_bits) | frac_mask
+        };
+    }
+
+    sign | (biased_exp << frac_bits) | ((sig as u64) & frac_mask)
+}
+
+fn round_int_to_fp_bits(
+    abs_int: u128,
+    negative: bool,
+    precision_bits: u32,
+    exp_bits: u32,
+    frac_bits: u32,
+    exp_bias: i32,
+    fpcr: u32,
+) -> u64 {
+    round_scaled_int_to_fp_bits(
+        abs_int,
+        negative,
+        0,
+        precision_bits,
+        exp_bits,
+        frac_bits,
+        exp_bias,
+        fpcr,
+    )
+}
+
+fn int_to_fp16_bits_with_fpcr(abs_int: u128, negative: bool, fpcr: u32) -> u16 {
+    round_int_to_fp_bits(abs_int, negative, 11, 5, 10, 15, fpcr) as u16
+}
+
+fn int_to_fp32_bits_with_fpcr(abs_int: u128, negative: bool, fpcr: u32) -> u32 {
+    round_int_to_fp_bits(abs_int, negative, 24, 8, 23, 127, fpcr) as u32
+}
+
+fn int_to_fp64_bits_with_fpcr(abs_int: u128, negative: bool, fpcr: u32) -> u64 {
+    round_int_to_fp_bits(abs_int, negative, 53, 11, 52, 1023, fpcr)
+}
+
+fn scaled_int_to_fp16_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u16 {
+    round_scaled_int_to_fp_bits(abs_int, negative, fbits, 11, 5, 10, 15, fpcr) as u16
+}
+
+fn scaled_int_to_fp32_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u32 {
+    round_scaled_int_to_fp_bits(abs_int, negative, fbits, 24, 8, 23, 127, fpcr) as u32
+}
+
+fn scaled_int_to_fp64_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u64 {
+    round_scaled_int_to_fp_bits(abs_int, negative, fbits, 53, 11, 52, 1023, fpcr)
+}
+
 /// One element of a NEON fixed-point <-> floating-point conversion (`bits` is
-/// 16, 32 or 64, `scale` is 2^fbits). Returns the raw result element and FPSR
-/// exception bits produced by that element.
-fn fixed_point_convert(opcode: u32, u: u32, bits: u32, a: u64, scale: f64) -> (u64, u32) {
+/// 16, 32 or 64, `fbits` is the fixed-point fractional width). Returns the raw
+/// result element and FPSR exception bits produced by that element.
+fn fixed_point_convert(
+    opcode: u32,
+    u: u32,
+    bits: u32,
+    a: u64,
+    fbits: u32,
+    fpcr: u32,
+) -> (u64, u32) {
     if bits == 16 {
         // FP16 variants (FEAT_FP16).
         if opcode == 0b11100 {
-            let raw = if u == 0 {
-                (a as u16 as i16 as i128).unsigned_abs()
+            let (negative, raw) = if u == 0 {
+                let x = a as u16 as i16;
+                (x < 0, (x as i128).unsigned_abs())
             } else {
-                a as u16 as u128
+                (false, a as u16 as u128)
             };
-            let f = if u == 0 {
-                (a as u16 as i16 as f64) / scale
-            } else {
-                (a as u16 as f64) / scale
-            };
-            let status = if fp_int_scaled_exact(raw, 11) {
-                0
-            } else {
-                FPSR_IXC
-            };
-            (AArch64Cpu::f32_to_fp16(f as f32) as u64, status)
+            let r = scaled_int_to_fp16_bits_with_fpcr(raw, negative, fbits, fpcr);
+            let status = fp_status_scaled_int_to_fp(raw, fbits, 2, r as u64);
+            (r as u64, status)
         } else {
+            let scale = (2.0f64).powi(fbits as i32);
             let f = (AArch64Cpu::fp16_to_f32(a as u16) as f64) * scale;
             let t = f.trunc();
             let status = fp_to_int_status(f, u == 0, bits);
@@ -19449,42 +19591,29 @@ fn fixed_point_convert(opcode: u32, u: u32, bits: u32, a: u64, scale: f64) -> (u
     } else if opcode == 0b11100 {
         // SCVTF / UCVTF: integer * 2^-fbits -> float
         if bits == 32 {
-            let raw = if u == 0 {
-                (a as u32 as i32 as i128).unsigned_abs()
+            let (negative, raw) = if u == 0 {
+                let x = a as u32 as i32;
+                (x < 0, (x as i128).unsigned_abs())
             } else {
-                a as u32 as u128
+                (false, a as u32 as u128)
             };
-            let f = if u == 0 {
-                (a as u32 as i32 as f64) / scale
-            } else {
-                (a as u32 as f64) / scale
-            };
-            let status = if fp_int_scaled_exact(raw, 24) {
-                0
-            } else {
-                FPSR_IXC
-            };
-            ((f as f32).to_bits() as u64, status)
+            let r = scaled_int_to_fp32_bits_with_fpcr(raw, negative, fbits, fpcr);
+            let status = fp_status_scaled_int_to_fp(raw, fbits, 4, r as u64);
+            (r as u64, status)
         } else {
-            let raw = if u == 0 {
-                (a as i64 as i128).unsigned_abs()
+            let (negative, raw) = if u == 0 {
+                let x = a as i64;
+                (x < 0, (x as i128).unsigned_abs())
             } else {
-                a as u128
+                (false, a as u128)
             };
-            let f = if u == 0 {
-                (a as i64 as f64) / scale
-            } else {
-                (a as f64) / scale
-            };
-            let status = if fp_int_scaled_exact(raw, 53) {
-                0
-            } else {
-                FPSR_IXC
-            };
-            (f.to_bits(), status)
+            let r = scaled_int_to_fp64_bits_with_fpcr(raw, negative, fbits, fpcr);
+            let status = fp_status_scaled_int_to_fp(raw, fbits, 8, r);
+            (r, status)
         }
     } else {
         // FCVTZS / FCVTZU: float * 2^fbits -> integer (round toward zero)
+        let scale = (2.0f64).powi(fbits as i32);
         if bits == 32 {
             let f = (f32::from_bits(a as u32) as f64) * scale;
             let t = f.trunc();
@@ -22854,6 +22983,148 @@ fn fp_convert_nan(src: u64, src_prec: usize, dst_prec: usize) -> u64 {
     (sign << (dm + de)) | (exp_all << dm) | quiet | aligned
 }
 
+fn fp32_next_up_bits(bits: u32) -> u32 {
+    let x = f32::from_bits(bits);
+    if x.is_nan() || bits == 0x7f80_0000 {
+        return bits;
+    }
+    if bits == 0x8000_0000 {
+        return 1;
+    }
+    if (bits >> 31) != 0 {
+        bits - 1
+    } else {
+        bits + 1
+    }
+}
+
+fn fp32_next_down_bits(bits: u32) -> u32 {
+    let x = f32::from_bits(bits);
+    if x.is_nan() || bits == 0xff80_0000 {
+        return bits;
+    }
+    if bits == 0 {
+        return 0x8000_0001;
+    }
+    if (bits >> 31) != 0 {
+        bits + 1
+    } else {
+        bits - 1
+    }
+}
+
+fn fp16_next_up_bits(bits: u16) -> u16 {
+    if ((bits & 0x7c00) == 0x7c00 && (bits & 0x03ff) != 0) || bits == 0x7c00 {
+        return bits;
+    }
+    if bits == 0x8000 {
+        return 1;
+    }
+    if (bits >> 15) != 0 {
+        bits - 1
+    } else {
+        bits + 1
+    }
+}
+
+fn fp16_next_down_bits(bits: u16) -> u16 {
+    if ((bits & 0x7c00) == 0x7c00 && (bits & 0x03ff) != 0) || bits == 0xfc00 {
+        return bits;
+    }
+    if bits == 0 {
+        return 0x8001;
+    }
+    if (bits >> 15) != 0 {
+        bits + 1
+    } else {
+        bits - 1
+    }
+}
+
+fn f64_to_f32_bits_with_fpcr(x: f64, fpcr: u32) -> u32 {
+    if x.is_nan() {
+        return fp_convert_nan(x.to_bits(), 8, 4) as u32;
+    }
+    let bits = (x as f32).to_bits();
+    if x.is_infinite() {
+        return bits;
+    }
+    let rounded = f32::from_bits(bits) as f64;
+    if rounded == x {
+        return bits;
+    }
+    match (fpcr >> 22) & 0x3 {
+        0 => bits,
+        1 => {
+            if rounded < x {
+                fp32_next_up_bits(bits)
+            } else {
+                bits
+            }
+        }
+        2 => {
+            if rounded > x {
+                fp32_next_down_bits(bits)
+            } else {
+                bits
+            }
+        }
+        _ => {
+            if (x.is_sign_positive() && rounded > x) || (x.is_sign_negative() && rounded < x) {
+                if x.is_sign_positive() {
+                    fp32_next_down_bits(bits)
+                } else {
+                    fp32_next_up_bits(bits)
+                }
+            } else {
+                bits
+            }
+        }
+    }
+}
+
+fn f64_to_fp16_bits_with_fpcr(x: f64, fpcr: u32) -> u16 {
+    if x.is_nan() {
+        return fp_convert_nan(x.to_bits(), 8, 2) as u16;
+    }
+    let bits = fp16_round(x);
+    if x.is_infinite() {
+        return bits;
+    }
+    let rounded = fp16_to_f64(bits);
+    if rounded == x {
+        return bits;
+    }
+    match (fpcr >> 22) & 0x3 {
+        0 => bits,
+        1 => {
+            if rounded < x {
+                fp16_next_up_bits(bits)
+            } else {
+                bits
+            }
+        }
+        2 => {
+            if rounded > x {
+                fp16_next_down_bits(bits)
+            } else {
+                bits
+            }
+        }
+        _ => {
+            if (x.is_sign_positive() && rounded > x) || (x.is_sign_negative() && rounded < x) {
+                if x.is_sign_positive() {
+                    fp16_next_down_bits(bits)
+                } else {
+                    fp16_next_up_bits(bits)
+                }
+            } else {
+                bits
+            }
+        }
+    }
+}
+
 fn fp16_to_f64(h: u16) -> f64 {
     AArch64Cpu::fp16_to_f32(h) as f64
 }
@@ -22954,62 +23225,35 @@ fn sve_fcvtz(fp_sz: usize, int_sz: usize, signed: bool, x: u64) -> u64 {
 }
 
 /// One element of an SVE integer -> FP conversion (SCVTF/UCVTF): convert the
-/// `int_sz`-byte integer (signed or unsigned) to an `fp_sz`-byte float with
-/// round-to-nearest-even. The integer is cast directly to the destination type
-/// to avoid a double rounding through an intermediate wider float.
-fn sve_cvtf(int_sz: usize, fp_sz: usize, signed: bool, x: u64) -> u64 {
+/// `int_sz`-byte integer (signed or unsigned) to an `fp_sz`-byte float using
+/// the FPCR rounding mode.
+fn sve_cvtf(int_sz: usize, fp_sz: usize, signed: bool, x: u64, fpcr: u32) -> u64 {
+    let (negative, raw) = if signed {
+        match int_sz {
+            2 => {
+                let v = x as u16 as i16;
+                (v < 0, (v as i128).unsigned_abs())
+            }
+            4 => {
+                let v = x as u32 as i32;
+                (v < 0, (v as i128).unsigned_abs())
+            }
+            _ => {
+                let v = x as i64;
+                (v < 0, (v as i128).unsigned_abs())
+            }
+        }
+    } else {
+        match int_sz {
+            2 => (false, (x as u16) as u128),
+            4 => (false, (x as u32) as u128),
+            _ => (false, x as u128),
+        }
+    };
     match fp_sz {
-        4 => {
-            let f: f32 = if signed {
-                match int_sz {
-                    2 => (x as u16 as i16) as f32,
-                    4 => (x as u32 as i32) as f32,
-                    _ => (x as i64) as f32,
-                }
-            } else {
-                match int_sz {
-                    2 => (x as u16) as f32,
-                    4 => (x as u32) as f32,
-                    _ => x as f32,
-                }
-            };
-            f.to_bits() as u64
-        }
-        8 => {
-            let f: f64 = if signed {
-                match int_sz {
-                    2 => (x as u16 as i16) as f64,
-                    4 => (x as u32 as i32) as f64,
-                    _ => (x as i64) as f64,
-                }
-            } else {
-                match int_sz {
-                    2 => (x as u16) as f64,
-                    4 => (x as u32) as f64,
-                    _ => x as f64,
-                }
-            };
-            f.to_bits()
-        }
-        _ => {
-            // fp16 destination: an integer large enough to round when widened to
-            // f64 (|x| >= 2^53) is far beyond fp16's range and saturates to Inf,
-            // so routing through an exact f64 then fp16_round is single-rounded.
-            let f: f64 = if signed {
-                match int_sz {
-                    2 => (x as u16 as i16) as f64,
-                    4 => (x as u32 as i32) as f64,
-                    _ => (x as i64) as f64,
-                }
-            } else {
-                match int_sz {
-                    2 => (x as u16) as f64,
-                    4 => (x as u32) as f64,
-                    _ => x as f64,
-                }
-            };
-            fp16_round(f) as u64
-        }
+        4 => int_to_fp32_bits_with_fpcr(raw, negative, fpcr) as u64,
+        8 => int_to_fp64_bits_with_fpcr(raw, negative, fpcr),
+        _ => int_to_fp16_bits_with_fpcr(raw, negative, fpcr) as u64,
     }
 }
 
