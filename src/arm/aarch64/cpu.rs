@@ -10934,7 +10934,9 @@ impl AArch64Cpu {
 
         // FDUP: broadcast an FP modified-immediate to all lanes. 0x25,
         // bits[21:13]==111001110. Unpredicated; size 0 reserved.
-        if (insn >> 13) & 0x1FF == 0b111001110 {
+        if (insn >> 24) & 0xFF == 0b00100101
+            && (insn >> 13) & 0x1FF == 0b111001110
+        {
             if esize < 2 {
                 return Ok(CpuExit::Undefined(insn));
             }

@@ -31238,6 +31238,42 @@ fn enc_sve_cmp_imm_u(size: u32, lo: u32, hi: u32, imm7: u32) -> u32 {
         | (hi << 4)
 }
 
+/// SVE ADD/SUB/SUBR immediate:
+/// `00100101 size 1000 op 11 sh imm8 Zdn`. op: 0=ADD,1=SUB,3=SUBR.
+fn enc_sve_addsub_imm(size: u32, op: u32, sh: u32, imm8: u32) -> u32 {
+    (0x25 << 24)
+        | (size << 22)
+        | (0b1000 << 18)
+        | (op << 16)
+        | (0b11 << 14)
+        | (sh << 13)
+        | ((imm8 & 0xFF) << 5)
+        | RD
+}
+
+/// SVE SQADD/UQADD/SQSUB/UQSUB immediate:
+/// `00100101 size op6 11 sh imm8 Zdn`, op6=100100..100111.
+fn enc_sve_sat_addsub_imm(size: u32, op6: u32, sh: u32, imm8: u32) -> u32 {
+    (0x25 << 24)
+        | (size << 22)
+        | (op6 << 16)
+        | (0b11 << 14)
+        | (sh << 13)
+        | ((imm8 & 0xFF) << 5)
+        | RD
+}
+
+/// SVE SMAX/UMAX/SMIN/UMIN immediate:
+/// `00100101 size op6 110 imm8 Zdn`, op6=101000..101011.
+fn enc_sve_minmax_imm(size: u32, op6: u32, imm8: u32) -> u32 {
+    (0x25 << 24)
+        | (size << 22)
+        | (op6 << 16)
+        | (0b110 << 13)
+        | ((imm8 & 0xFF) << 5)
+        | RD
+}
+
 /// SVE BFCVT (f32->bf16, predicated): `01100101 10 0010 10 101 Pg Zn Zd`. Pg=p0,
 /// Zn=z1(RN), Zd=z0(RD).
 fn enc_sve_bfcvt() -> u32 {
@@ -32278,7 +32314,7 @@ fn diff_sve_pred_gen() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     // PTRUE/PTRUES + PFALSE: deterministic, no register inputs.
     for sz in 0..4u32 {
-        for pat in [0u32, 1, 2, 3, 4, 5, 7, 8, 0b11101, 0b11110, 0b11111] {
+        for pat in 0..32u32 {
             for s in 0..2u32 {
                 batch.push((
                     format!("ptrue sz{sz} p{pat} s{s}"),
@@ -33720,13 +33756,17 @@ fn diff_sve_cpy() {
     for sz in 0..4u32 {
         // CPY immediate, merging and zeroing.
         for m in 0..2u32 {
-            for &(sh, imm) in &[(0u32, 0x5i32), (0, -7), (1, 0x12), (1, -1)] {
-                let insn = enc_cpy_imm(sz, m, sh, imm);
-                for _ in 0..6 {
+            for sh in 0..2u32 {
+                for imm8 in 0..=0xFFu32 {
+                    let insn = enc_cpy_imm(sz, m, sh, imm8 as i32);
                     let mut st = ArmState::zeroed();
                     st.set_vreg(0, rng.next(), rng.next());
                     st.set_preg(0, rng.next() as u16);
-                    batch.push((format!("cpyi sz{sz} m{m}"), insn, st));
+                    batch.push((
+                        format!("cpyi sz{sz} m{m} sh{sh} imm{imm8:#04x}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -35153,7 +35193,7 @@ fn diff_sve_ext() {
     // EXT extracts a VL-wide window from the byte concatenation Zm:Zdn at a
     // byte offset. imm8>=16 (at VL=128) wraps the offset to 0 (Zdn unchanged).
     let mut cases: Vec<(String, u32)> = Vec::new();
-    for imm8 in [0u32, 1, 2, 3, 7, 8, 11, 15, 16, 20, 31] {
+    for imm8 in 0..32u32 {
         cases.push((format!("sve_ext #{imm8}"), enc_sve_ext(imm8)));
     }
     run_family("sve_ext", cases, 16, 0x2_5001);
@@ -37773,7 +37813,7 @@ fn diff_sve_cmp_imm() {
     ];
     for size in 0..4u32 {
         for (cc13, bit4) in sconds {
-            for imm5 in [0u32, 5, 0x1F, 0x10, 1] {
+            for imm5 in 0..32u32 {
                 let insn = enc_sve_cmp_imm_s(size, cc13, bit4, imm5);
                 for _ in 0..3 {
                     let mut st = ArmState::zeroed();
@@ -37784,7 +37824,7 @@ fn diff_sve_cmp_imm() {
             }
         }
         for (lo, hi) in [(0u32, 0u32), (0, 1), (1, 0), (1, 1)] {
-            for imm7 in [0u32, 9, 0x7F, 0x40] {
+            for imm7 in 0..=0x7Fu32 {
                 let insn = enc_sve_cmp_imm_u(size, lo, hi, imm7);
                 for _ in 0..3 {
                     let mut st = ArmState::zeroed();
@@ -37796,6 +37836,92 @@ fn diff_sve_cmp_imm() {
         }
     }
     run_batch("sve_cmp_imm", batch);
+}
+
+#[test]
+fn diff_sve_addsub_imm_exhaustive() {
+    let mut rng = Rng::new(0x9_d041);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for (op, name) in [(0u32, "add"), (1, "sub"), (3, "subr")] {
+            for sh in 0..2u32 {
+                if size == 0 && sh == 1 {
+                    continue;
+                }
+                for imm8 in 0..=0xFFu32 {
+                    let mut st = gen_sve_input(&mut rng);
+                    st.set_vreg(RD as usize, rng.next(), rng.next());
+                    batch.push((
+                        format!("sve_{name}_imm s{size} sh{sh} i{imm8:#04x}"),
+                        enc_sve_addsub_imm(size, op, sh, imm8),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("sve_addsub_imm_exhaustive", batch);
+}
+
+#[test]
+fn diff_sve_sat_addsub_imm_exhaustive() {
+    let mut rng = Rng::new(0x9_d042);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for (op6, name) in [
+            (0b100100u32, "sqadd"),
+            (0b100101, "uqadd"),
+            (0b100110, "sqsub"),
+            (0b100111, "uqsub"),
+        ] {
+            for sh in 0..2u32 {
+                if size == 0 && sh == 1 {
+                    continue;
+                }
+                for imm8 in 0..=0xFFu32 {
+                    let mut st = gen_sve_input(&mut rng);
+                    st.set_vreg(RD as usize, rng.next(), rng.next());
+                    batch.push((
+                        format!("sve_{name}_imm s{size} sh{sh} i{imm8:#04x}"),
+                        enc_sve_sat_addsub_imm(size, op6, sh, imm8),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("sve_sat_addsub_imm_exhaustive", batch);
+}
+
+#[test]
+fn diff_sve_minmax_imm_exhaustive() {
+    let mut rng = Rng::new(0x9_d043);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for (op6, name) in [
+            (0b101000u32, "smax"),
+            (0b101001, "umax"),
+            (0b101010, "smin"),
+            (0b101011, "umin"),
+        ] {
+            for imm8 in 0..=0xFFu32 {
+                let mut st = gen_sve_input(&mut rng);
+                st.set_vreg(RD as usize, rng.next(), rng.next());
+                batch.push((
+                    format!("sve_{name}_imm s{size} i{imm8:#04x}"),
+                    enc_sve_minmax_imm(size, op6, imm8),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_minmax_imm_exhaustive", batch);
 }
 
 #[test]
@@ -38125,7 +38251,7 @@ fn diff_sve_fcpy_fdup() {
     let mut rng = Rng::new(0x9_4001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size in 1..4u32 {
-        for imm8 in [0x78u32, 0x80, 0x00, 0xe0, 0x55, 0xaa, 0x3f] {
+        for imm8 in 0..=0xFFu32 {
             let mut st = ArmState::zeroed();
             st.set_vreg(0, rng.next(), rng.next());
             st.set_preg(0, rng.next() as u16);
@@ -43538,6 +43664,16 @@ fn enc_fcvt_precision(src_type: u32, dst_type: u32) -> u32 {
         | RD
 }
 
+/// Scalar FP immediate: `00011110 type 1 imm8 100 00000 Rd`.
+fn enc_fp_imm(fp_type: u32, imm8: u32, rd: u32) -> u32 {
+    (0b00011110 << 24)
+        | (fp_type << 22)
+        | (1 << 21)
+        | ((imm8 & 0xFF) << 13)
+        | (0b100 << 10)
+        | (rd & 0x1F)
+}
+
 /// Scalar GPR -> FP conversion: `sf 0011110 ptype 1 00 opcode 000000 Rn Rd`.
 fn enc_fp_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32) -> u32 {
     enc_fp_gpr_to_fp_regs(sf, fp_type, opcode, RN, RD)
@@ -43724,6 +43860,25 @@ fn diff_fp_scalar() {
         }
     }
     run_batch("fp_scalar", batch);
+}
+
+#[test]
+fn diff_fp_scalar_immediate_exhaustive() {
+    let mut rng = Rng::new(0xF10A_1A7E);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &fp_type in &[0b00u32, 0b01, 0b11] {
+        for imm8 in 0..=0xFFu32 {
+            let rd = imm8 & 0x1F;
+            batch.push((
+                format!("fmov_imm_t{fp_type}_i{imm8:#04x}_v{rd}"),
+                enc_fp_imm(fp_type, imm8, rd),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch("fp_scalar_immediate_exhaustive", batch);
 }
 
 #[test]
@@ -49593,7 +49748,7 @@ fn diff_simd_modimm() {
     for op in 0..2u32 {
         for cmode in 0..16u32 {
             for q in 0..2 {
-                for &imm8 in &[0x00u32, 0xFF, 0x55, 0xA3, 0x80, 0x01] {
+                for imm8 in 0..=0xFFu32 {
                     cases.push((
                         format!("modimm op{op} cm{cmode:04b} q{q} #{imm8:#04x}"),
                         enc_modimm(q, op, cmode, imm8),
