@@ -1790,7 +1790,7 @@ impl AArch64Cpu {
                         (1, 0) => (fp_neg_bits(n, eb), fp_neg_bits(a, eb)), // FNMADD
                         _ => (n, fp_neg_bits(a, eb)),                       // FNMSUB
                     };
-                    let r = fp_muladd_bits(aa, nn, m, eb);
+                    let r = fp_muladd_bits_with_fpcr(aa, nn, m, eb, self.fpcr);
                     self.fpsr |= fp_status_fma((eb / 8) as usize, aa, nn, m, r);
                     self.v[rd] = (r & m_mask) as u128;
                 }
@@ -4777,7 +4777,13 @@ impl AArch64Cpu {
                     };
                     (r, status)
                 } else if bits == 32 {
-                    let r = fp_three_same_f32(kind, a as u32, vm_elem as u32, d as u32) as u64;
+                    let r = fp_three_same_f32_with_fpcr(
+                        kind,
+                        a as u32,
+                        vm_elem as u32,
+                        d as u32,
+                        self.fpcr,
+                    ) as u64;
                     let status = match kind {
                         FpKind::Mul => fp_status_binop(esize, FpKind::Mul, a, vm_elem, r),
                         FpKind::Mulx => fp_status_mulx(esize, a, vm_elem, r),
@@ -4787,7 +4793,7 @@ impl AArch64Cpu {
                     };
                     (r, status)
                 } else {
-                    let r = fp_three_same_f64(kind, a, vm_elem, d);
+                    let r = fp_three_same_f64_with_fpcr(kind, a, vm_elem, d, self.fpcr);
                     let status = match kind {
                         FpKind::Mul => fp_status_binop(esize, FpKind::Mul, a, vm_elem, r),
                         FpKind::Mulx => fp_status_mulx(esize, a, vm_elem, r),
@@ -12108,8 +12114,9 @@ impl AArch64Cpu {
                 let b = read_elem(&m, off, esize);
                 let r = match esize {
                     2 => sve_fp16_binop(kind, a as u16, b as u16) as u64,
-                    4 => fp_three_same_f32(kind, a as u32, b as u32, 0) as u64,
-                    8 => fp_three_same_f64(kind, a, b, 0),
+                    4 => fp_three_same_f32_with_fpcr(kind, a as u32, b as u32, 0, self.fpcr)
+                        as u64,
+                    8 => fp_three_same_f64_with_fpcr(kind, a, b, 0, self.fpcr),
                     _ => return Ok(CpuExit::Undefined(insn)),
                 };
                 self.fpsr |= fp_three_same_status(esize, kind, a, b, 0, r);
@@ -12443,14 +12450,20 @@ impl AArch64Cpu {
                 let (r, status) = if is_fmul {
                     let r = match esz {
                         2 => fp16_mul(ne as u16, mm as u16) as u64,
-                        4 => fp_three_same_f32(FpKind::Mul, ne as u32, mm as u32, 0) as u64,
-                        _ => fp_three_same_f64(FpKind::Mul, ne, mm, 0),
+                        4 => fp_three_same_f32_with_fpcr(
+                            FpKind::Mul,
+                            ne as u32,
+                            mm as u32,
+                            0,
+                            self.fpcr,
+                        ) as u64,
+                        _ => fp_three_same_f64_with_fpcr(FpKind::Mul, ne, mm, 0, self.fpcr),
                     };
                     (r, fp_status_binop(esz, FpKind::Mul, ne, mm, r))
                 } else {
                     let nn = if is_fmls { fp_neg_bits(ne, ebits) } else { ne };
                     let aa = read_elem(&acc, off, esz);
-                    let r = fp_muladd_bits(aa, nn, mm, ebits);
+                    let r = fp_muladd_bits_with_fpcr(aa, nn, mm, ebits, self.fpcr);
                     let status = fp_status_fma(esz, aa, nn, mm, r);
                     (r, fp_status_sve_underflow(esz, r, status))
                 };
@@ -12561,7 +12574,7 @@ impl AArch64Cpu {
                     a = fp_neg_bits(a, ebits);
                 }
                 let m = read_elem(&mb, off, esz);
-                let r = fp_muladd_bits(a, n, m, ebits);
+                let r = fp_muladd_bits_with_fpcr(a, n, m, ebits, self.fpcr);
                 let status = fp_status_fma(esz, a, n, m, r);
                 self.fpsr |= fp_status_sve_underflow(esz, r, status);
                 write_elem(&mut dst, off, esz, r);
@@ -13039,8 +13052,8 @@ impl AArch64Cpu {
             let (x, y) = if swap { (b, a) } else { (a, b) };
             let r = match esize {
                 2 => sve_fp16_binop(kind, x as u16, y as u16) as u64,
-                4 => fp_three_same_f32(kind, x as u32, y as u32, 0) as u64,
-                8 => fp_three_same_f64(kind, x, y, 0),
+                4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, self.fpcr) as u64,
+                8 => fp_three_same_f64_with_fpcr(kind, x, y, 0, self.fpcr),
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
             let status = fp_three_same_status(esize, kind, x, y, 0, r);
@@ -21581,12 +21594,20 @@ fn fp_three_same_f32(kind: FpKind, a: u32, b: u32, d: u32) -> u32 {
 
 fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) -> u32 {
     use FpKind::*;
-    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul) {
+    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls) {
         return fp_three_same_f32(kind, a, b, d);
     }
 
     let x = f32::from_bits(a);
     let y = f32::from_bits(b);
+    let acc = f32::from_bits(d);
+    if matches!(kind, Mla | Mls) {
+        if !x.is_finite() || !y.is_finite() || !acc.is_finite() {
+            return fp_three_same_f32(kind, a, b, d);
+        }
+        let lhs = if matches!(kind, Mls) { -x } else { x };
+        return f64_to_f32_bits_with_fpcr(lhs as f64 * y as f64 + acc as f64, fpcr);
+    }
     if !x.is_finite() || !y.is_finite() {
         return fp_three_same_f32(kind, a, b, d);
     }
@@ -21745,7 +21766,7 @@ fn fp64_adjust_nearest_with_fpcr(
 fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) -> u64 {
     use FpKind::*;
     let nearest = fp_three_same_f64(kind, a, b, d);
-    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul) {
+    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls) {
         return nearest;
     }
 
@@ -21759,7 +21780,19 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
         mb = -mb;
     }
 
-    let terms = if matches!(kind, Mul) {
+    let terms = if matches!(kind, Mla | Mls) {
+        let Some((md, ed)) = fp64_signed_mant_exp(d).or_else(|| fp64_is_zero(d).then_some((0, 0)))
+        else {
+            return nearest;
+        };
+        let Some(mut product) = ma.checked_mul(mb) else {
+            return nearest;
+        };
+        if matches!(kind, Mls) {
+            product = -product;
+        }
+        [(product, ea + eb), (md, ed)]
+    } else if matches!(kind, Mul) {
         let Some(product) = ma.checked_mul(mb) else {
             return nearest;
         };
@@ -22094,6 +22127,51 @@ fn fp_muladd_bits(acc: u64, x: u64, y: u64, esize: u32) -> u64 {
         16 => fp16_mla(acc as u16, x as u16, y as u16) as u64,
         32 => fp_three_same_f32(FpKind::Mla, x as u32, y as u32, acc as u32) as u64,
         _ => fp_three_same_f64(FpKind::Mla, x, y, acc),
+    }
+}
+
+fn fp_muladd_f32_with_fpcr(acc: u32, x: u32, y: u32, fpcr: u32) -> u32 {
+    if (fpcr >> 22) & 0x3 == 0 {
+        return fp_three_same_f32(FpKind::Mla, x, y, acc);
+    }
+    let xf = f32::from_bits(x);
+    let yf = f32::from_bits(y);
+    let af = f32::from_bits(acc);
+    if !xf.is_finite() || !yf.is_finite() || !af.is_finite() {
+        return fp_three_same_f32(FpKind::Mla, x, y, acc);
+    }
+    f64_to_f32_bits_with_fpcr(xf as f64 * yf as f64 + af as f64, fpcr)
+}
+
+fn fp_muladd_f64_with_fpcr(acc: u64, x: u64, y: u64, fpcr: u32) -> u64 {
+    let nearest = fp_three_same_f64(FpKind::Mla, x, y, acc);
+    if (fpcr >> 22) & 0x3 == 0 {
+        return nearest;
+    }
+    let Some((mx, ex)) = fp64_signed_mant_exp(x) else {
+        return nearest;
+    };
+    let Some((my, ey)) = fp64_signed_mant_exp(y) else {
+        return nearest;
+    };
+    let Some((ma, ea)) = fp64_signed_mant_exp(acc) else {
+        return nearest;
+    };
+    let Some(product) = mx.checked_mul(my) else {
+        return nearest;
+    };
+    let terms = [(product, ex + ey), (ma, ea)];
+    let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&terms, nearest) else {
+        return nearest;
+    };
+    fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr)
+}
+
+fn fp_muladd_bits_with_fpcr(acc: u64, x: u64, y: u64, esize: u32, fpcr: u32) -> u64 {
+    match esize {
+        16 => fp_muladd_bits(acc, x, y, esize),
+        32 => fp_muladd_f32_with_fpcr(acc as u32, x as u32, y as u32, fpcr) as u64,
+        _ => fp_muladd_f64_with_fpcr(acc, x, y, fpcr),
     }
 }
 
