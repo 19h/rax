@@ -27155,6 +27155,31 @@ fn diff_fmlal_fpcr_rounding() {
     run_batch("fmlal_fpcr_rounding", batch);
 }
 
+#[test]
+fn diff_fmlsl_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    let mut n = 0u128;
+    let mut m = 0u128;
+    for lane in 0..8 {
+        n |= (0x7e01u128) << (16 * lane); // positive quiet NaN
+        m |= (0x3c00u128) << (16 * lane); // 1.0
+    }
+    st.set_vreg(RD as usize, 0, 0);
+    st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+    st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+
+    run_batch(
+        "fmlsl_fpcr_ah_nan_sign",
+        vec![(
+            "fmlsl_ah_qnan".to_string(),
+            enc_three_same(1, 0, 0b10, 0b11101),
+            st,
+        )],
+    );
+}
+
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
 fn enc_single_fields(
@@ -27528,6 +27553,31 @@ fn diff_simd_fp16_vector_fpcr_rounding() {
     }
 
     run_batch("simd_fp16_vector_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fp16_fmls_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut zn = 0u128;
+    let mut zm = 0u128;
+    for lane in 0..8 {
+        zn |= (0x7e01u128) << (16 * lane); // positive quiet NaN
+        zm |= (0x3c00u128) << (16 * lane); // 1.0
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(0, 0, 0);
+    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+
+    run_batch(
+        "simd_fp16_fmls_fpcr_ah_nan_sign",
+        vec![(
+            "fp16_fmls_ah_qnan".to_string(),
+            enc_fp16_3s(1, 0, 1, 0b001),
+            st,
+        )],
+    );
 }
 
 #[test]
@@ -28384,6 +28434,81 @@ fn diff_simd_complex() {
 }
 
 #[test]
+fn diff_simd_fcadd_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (label, size, esz, qnan, one) in [
+        ("fcadd_h_ah_qnan", 0b01u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (
+            "fcadd_s_ah_qnan",
+            0b10,
+            4,
+            0x7fc0_2000u64,
+            1.0f32.to_bits() as u64,
+        ),
+        (
+            "fcadd_d_ah_qnan",
+            0b11,
+            8,
+            0x7ff8_0000_0000_2000u64,
+            1.0f64.to_bits(),
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        let mut m = 0u128;
+        for pair in 0..(16 / (2 * esz)) {
+            m |= (one as u128) << ((2 * pair) * esz * 8);
+            m |= (qnan as u128) << ((2 * pair + 1) * esz * 8);
+        }
+        st.set_vreg(RN as usize, 0, 0);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((label.to_string(), enc_fcadd(1, size, 0), st));
+    }
+
+    run_batch("simd_fcadd_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (size, esz, qnan, one) in [
+        (0b01u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (0b10, 4, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+        (0b11, 8, 0x7ff8_0000_0000_2000u64, 1.0f64.to_bits()),
+    ] {
+        for rot in 1..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for pair in 0..(16 / (2 * esz)) {
+                let (a_re, a_im, b_re, b_im) = match rot {
+                    1 => (0, one, one, qnan),
+                    2 => (one, 0, qnan, qnan),
+                    _ => (0, one, qnan, one),
+                };
+                n |= (a_re as u128) << ((2 * pair) * esz * 8);
+                n |= (a_im as u128) << ((2 * pair + 1) * esz * 8);
+                m |= (b_re as u128) << ((2 * pair) * esz * 8);
+                m |= (b_im as u128) << ((2 * pair + 1) * esz * 8);
+            }
+            st.set_vreg(RD as usize, 0, 0);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("fcmla_s{size}_rot{rot}_ah_qnan"),
+                enc_fcmla(1, size, rot),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_fcmla_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
 fn diff_simd_fcadd_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
@@ -28524,6 +28649,43 @@ fn diff_simd_fcmla_fpcr_rounding() {
     }
 
     run_batch("simd_fcmla_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_indexed_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (size, esz, qnan, one) in [
+        (0b01u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (0b10, 4, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+    ] {
+        for rot in 1..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            let mut n = 0u128;
+            for pair in 0..(16 / (2 * esz)) {
+                let (a_re, a_im) = if rot == 2 { (one, 0) } else { (0, one) };
+                n |= (a_re as u128) << ((2 * pair) * esz * 8);
+                n |= (a_im as u128) << ((2 * pair + 1) * esz * 8);
+            }
+            let (b_re, b_im) = match rot {
+                1 => (one, qnan),
+                2 => (qnan, qnan),
+                _ => (qnan, one),
+            };
+            let m = (b_re as u128) | ((b_im as u128) << (esz * 8));
+            st.set_vreg(RD as usize, 0, 0);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("fcmla_idx_s{size}_rot{rot}_ah_qnan"),
+                enc_fcmla_idx(1, size, rot, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_fcmla_indexed_fpcr_ah_nan_sign", batch);
 }
 
 /// FCMLA by element: `0 Q 1 01111 size L M Rm 0 rot 1 H 0 Rn Rd`. Vm=M:Rm (=v2),
@@ -32051,6 +32213,31 @@ fn diff_sve2_fmlal_fpcr_rounding() {
 }
 
 #[test]
+fn diff_sve2_fmlsl_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    let mut zn = 0u128;
+    let mut zm = 0u128;
+    for lane in 0..8 {
+        zn |= (0x7e01u128) << (16 * lane); // positive quiet NaN
+        zm |= (0x3c00u128) << (16 * lane); // 1.0
+    }
+    st.set_vreg(0, 0, 0);
+    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+
+    run_batch(
+        "sve2_fmlsl_fpcr_ah_nan_sign",
+        vec![(
+            "sve_fmlslb_ah_qnan".to_string(),
+            enc_sve2_fmlal(1, 0),
+            st,
+        )],
+    );
+}
+
+#[test]
 fn diff_sve_bfdot() {
     // BFDOT bf16 dot product, both the three-register and indexed forms.
     let mut rng = Rng::new(0x7_d001);
@@ -32271,6 +32458,31 @@ fn diff_sve2_fmlal_indexed_fpcr_rounding() {
     }
 
     run_batch("sve2_fmlal_indexed_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_sve2_fmlsl_indexed_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    let mut zn = 0u128;
+    let mut zm = 0u128;
+    for lane in 0..8 {
+        zn |= (0x7e01u128) << (16 * lane); // positive quiet NaN
+        zm |= (0x3c00u128) << (16 * lane); // 1.0
+    }
+    st.set_vreg(0, 0, 0);
+    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+
+    run_batch(
+        "sve2_fmlsl_indexed_fpcr_ah_nan_sign",
+        vec![(
+            "sve_fmlslb_idx_ah_qnan".to_string(),
+            enc_sve2_fmlal_idx(1, 0, 0, RM),
+            st,
+        )],
+    );
 }
 
 #[test]
@@ -32610,6 +32822,44 @@ fn diff_sve_fp_indexed_fpcr_rounding() {
 }
 
 #[test]
+fn diff_sve_fp_indexed_fmls_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (label, size, esz, qnan, one) in [
+        ("sve_fmls_h_idx_ah_qnan", 1, 2usize, 0x7e01u64, 0x3c00u64),
+        (
+            "sve_fmls_s_idx_ah_qnan",
+            2,
+            4,
+            0x7fc0_2000u64,
+            1.0f32.to_bits() as u64,
+        ),
+        (
+            "sve_fmls_d_idx_ah_qnan",
+            3,
+            8,
+            0x7ff8_0000_0000_2000u64,
+            1.0f64.to_bits(),
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        let mut zn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..(16 / esz) {
+            zn |= (qnan as u128) << (lane * esz * 8);
+            zm |= (one as u128) << (lane * esz * 8);
+        }
+        st.set_vreg(0, 0, 0);
+        st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+        st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+        batch.push((label.to_string(), enc_sve_fp_idx(0b000001, size, 0, RM), st));
+    }
+
+    run_batch("sve_fp_indexed_fmls_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
 fn diff_sve_recps() {
     // FRECPS / FRSQRTS reciprocal steps, all sizes, finite inputs.
     let mut rng = Rng::new(0x8_4001);
@@ -32771,6 +33021,41 @@ fn diff_sve_fp_fma_fpcr_rounding() {
     }
 
     run_batch("sve_fp_fma_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_sve_fp_fma_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (size, esz, qnan, one) in [
+        (1u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (2, 4, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+        (3, 8, 0x7ff8_0000_0000_2000u64, 1.0f64.to_bits()),
+    ] {
+        for (name, op3, n_val, a_val) in [
+            ("fmls", 1u32, qnan, 0),
+            ("fnmla", 2, qnan, qnan),
+            ("fnmls", 3, one, qnan),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_preg(0, 0xffff);
+            let mut n = 0u128;
+            let mut m = 0u128;
+            let mut a = 0u128;
+            for lane in 0..(16 / esz) {
+                n |= (n_val as u128) << (lane * esz * 8);
+                m |= (one as u128) << (lane * esz * 8);
+                a |= (a_val as u128) << (lane * esz * 8);
+            }
+            st.set_vreg(RD as usize, a as u64, (a >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((format!("{name}_s{size}_ah_qnan"), enc_sve_fp_fma(size, op3), st));
+        }
+    }
+
+    run_batch("sve_fp_fma_fpcr_ah_nan_sign", batch);
 }
 
 #[test]
@@ -33330,6 +33615,43 @@ fn diff_sve_fcmla_indexed_fpcr_rounding() {
 }
 
 #[test]
+fn diff_sve_fcmla_indexed_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (size, esz, qnan, one) in [
+        (2u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (3, 4, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+    ] {
+        for rot in 1..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            let mut zn = 0u128;
+            for pair in 0..(16 / (2 * esz)) {
+                let (a_re, a_im) = if rot == 2 { (one, 0) } else { (0, one) };
+                zn |= (a_re as u128) << ((2 * pair) * esz * 8);
+                zn |= (a_im as u128) << ((2 * pair + 1) * esz * 8);
+            }
+            let (b_re, b_im) = match rot {
+                1 => (one, qnan),
+                2 => (qnan, qnan),
+                _ => (qnan, one),
+            };
+            let zm = (b_re as u128) | ((b_im as u128) << (esz * 8));
+            st.set_vreg(RD as usize, 0, 0);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("sve_fcmla_idx_s{size}_rot{rot}_ah_qnan"),
+                enc_sve_fcmla_idx(size, 0, RM, rot),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fcmla_indexed_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
 fn diff_sve2_cdot() {
     // CDOT complex integer dot product, .s and .d, all four rotations.
     let mut rng = Rng::new(0x7_9001);
@@ -33451,6 +33773,43 @@ fn diff_sve_fcadd_fpcr_rounding() {
 }
 
 #[test]
+fn diff_sve_fcadd_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (label, size, esz, qnan, one) in [
+        ("sve_fcadd_h_ah_qnan", 1u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (
+            "sve_fcadd_s_ah_qnan",
+            2,
+            4,
+            0x7fc0_2000u64,
+            1.0f32.to_bits() as u64,
+        ),
+        (
+            "sve_fcadd_d_ah_qnan",
+            3,
+            8,
+            0x7ff8_0000_0000_2000u64,
+            1.0f64.to_bits(),
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        let mut zm = 0u128;
+        for pair in 0..(16 / (2 * esz)) {
+            zm |= (one as u128) << ((2 * pair) * esz * 8);
+            zm |= (qnan as u128) << ((2 * pair + 1) * esz * 8);
+        }
+        st.set_vreg(RD as usize, 0, 0);
+        st.set_vreg(RN as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((label.to_string(), enc_sve_fcadd(size, 0), st));
+    }
+
+    run_batch("sve_fcadd_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
 fn diff_sve_fcmla() {
     // FCMLA predicated FP complex multiply-add, all four rotations and sizes.
     let mut rng = Rng::new(0x7_8001);
@@ -33546,6 +33905,46 @@ fn diff_sve_fcmla_fpcr_rounding() {
     }
 
     run_batch("sve_fcmla_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_sve_fcmla_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for (size, esz, qnan, one) in [
+        (1u32, 2usize, 0x7e01u64, 0x3c00u64),
+        (2, 4, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+        (3, 8, 0x7ff8_0000_0000_2000u64, 1.0f64.to_bits()),
+    ] {
+        for rot in 1..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_preg(0, 0xffff);
+            let mut zn = 0u128;
+            let mut zm = 0u128;
+            for pair in 0..(16 / (2 * esz)) {
+                let (a_re, a_im, b_re, b_im) = match rot {
+                    1 => (0, one, one, qnan),
+                    2 => (one, 0, qnan, qnan),
+                    _ => (0, one, qnan, one),
+                };
+                zn |= (a_re as u128) << ((2 * pair) * esz * 8);
+                zn |= (a_im as u128) << ((2 * pair + 1) * esz * 8);
+                zm |= (b_re as u128) << ((2 * pair) * esz * 8);
+                zm |= (b_im as u128) << ((2 * pair + 1) * esz * 8);
+            }
+            st.set_vreg(RD as usize, 0, 0);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("sve_fcmla_s{size}_rot{rot}_ah_qnan"),
+                enc_sve_fcmla(size, rot),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fcmla_fpcr_ah_nan_sign", batch);
 }
 
 #[test]
@@ -37939,6 +38338,31 @@ fn diff_fp_scalar_fma_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fp_scalar_fma_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    for &(ft, qnan, one) in &[
+        (0u32, 0x7fc0_2000u64, 1.0f32.to_bits() as u64),
+        (1u32, 0x7ff8_0000_0000_2000u64, 1.0f64.to_bits()),
+    ] {
+        for &(name, o1, o0, n, a) in &[
+            ("fmsub", 0, 1, qnan, 0),
+            ("fnmadd", 1, 0, qnan, qnan),
+            ("fnmsub", 1, 1, one, qnan),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RN as usize, n, 0);
+            st.set_vreg(RM as usize, one, 0);
+            st.set_vreg(RA as usize, a, 0);
+            batch.push((format!("{name}_t{ft}_ah_qnan"), enc_fp3(ft, o1, o0), st));
+        }
+    }
+
+    run_batch("fp_scalar_fma_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
 fn diff_fp_scalar_fcvt_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
@@ -39082,6 +39506,36 @@ fn diff_simd_fma_fpcr_rounding() {
     run_batch("simd_fma_fpcr_rounding", batch);
 }
 
+#[test]
+fn diff_simd_fmls_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+    let cases = [
+        (
+            "fmls_s_ah_qnan",
+            enc_three_same(1, 0, 0b10, 0b11001),
+            0x7fc0_2000u64,
+            1.0f32.to_bits() as u64,
+        ),
+        (
+            "fmls_d_ah_qnan",
+            enc_three_same(1, 0, 0b11, 0b11001),
+            0x7ff8_0000_0000_2000u64,
+            1.0f64.to_bits(),
+        ),
+    ];
+    for (label, insn, n, m) in cases {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(0, 0, 0);
+        st.set_vreg(1, n, n);
+        st.set_vreg(2, m, m);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("simd_fmls_fpcr_ah_nan_sign", batch);
+}
+
 /// Scalar Advanced SIMD three-same: `01 U 11110 size 1 Rm opcode 1 Rn Rd`.
 fn enc_scalar_3same(u: u32, size: u32, opcode: u32) -> u32 {
     (0b01 << 30)
@@ -39897,6 +40351,58 @@ fn diff_simd_indexed_fpcr_rounding() {
     }
 
     run_batch("simd_indexed_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_indexed_fmls_fpcr_ah_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    let mut h = ArmState::zeroed();
+    h.fpcr = FPCR_AH;
+    let mut hn = 0u128;
+    let mut hm = 0u128;
+    for lane in 0..8 {
+        hn |= (0x7e01u128) << (16 * lane); // positive quiet NaN
+        hm |= (0x3c00u128) << (16 * lane); // 1.0
+    }
+    h.set_vreg(0, 0, 0);
+    h.set_vreg(1, hn as u64, (hn >> 64) as u64);
+    h.set_vreg(2, hm as u64, (hm >> 64) as u64);
+    batch.push(("fmls_h_idx_ah_qnan".to_string(), enc_fp16_idx(1, 0, 0b0101, 0), h));
+
+    for (label, size, qnan, one, lanes) in [
+        (
+            "fmls_s_idx_ah_qnan",
+            0b10,
+            0x7fc0_2000u64,
+            1.0f32.to_bits() as u64,
+            4,
+        ),
+        (
+            "fmls_d_idx_ah_qnan",
+            0b11,
+            0x7ff8_0000_0000_2000u64,
+            1.0f64.to_bits(),
+            2,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        let mut n = 0u128;
+        let mut m = 0u128;
+        let elem_bits = 8usize * (1usize << size);
+        for lane in 0..lanes {
+            n |= (qnan as u128) << (lane * elem_bits);
+            m |= (one as u128) << (lane * elem_bits);
+        }
+        st.set_vreg(0, 0, 0);
+        st.set_vreg(1, n as u64, (n >> 64) as u64);
+        st.set_vreg(2, m as u64, (m >> 64) as u64);
+        batch.push((label.to_string(), enc_indexed(1, 0, size, 0b0101, RM, 0), st));
+    }
+
+    run_batch("simd_indexed_fmls_fpcr_ah_nan_sign", batch);
 }
 
 /// FCSEL: scalar FP conditional select. Output is a bit-exact register copy.
