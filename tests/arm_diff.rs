@@ -39127,6 +39127,77 @@ fn diff_simd_scalar_three_same() {
     run_family("simd_scalar_three_same", cases, 8, 0xD001);
 }
 
+#[test]
+fn diff_simd_scalar_fp_three_same_unallocated() {
+    // The scalar AdvSIMD FP three-same space is much smaller than the vector
+    // table: ordinary arithmetic and pairwise forms are unallocated here.
+    let mut batch = Vec::new();
+    let invalid: &[(u32, &[u32], &[u32])] = &[
+        (0, &[0, 1, 2, 3], &[0b11000, 0b11001, 0b11010, 0b11110]),
+        (
+            1,
+            &[0, 1],
+            &[0b11000, 0b11010, 0b11011, 0b11110, 0b11111],
+        ),
+        (1, &[2, 3], &[0b11000, 0b11110]),
+    ];
+    for &(u, sizes, opcodes) in invalid {
+        for &size in sizes {
+            for &opcode in opcodes {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 3.0f64.to_bits(), 0x8899_aabb_ccdd_eeff);
+                st.set_vreg(1, 1.0f64.to_bits(), 0);
+                st.set_vreg(2, 2.0f64.to_bits(), 0);
+                batch.push((
+                    format!("scalar_fp_3same_u{u}_size{size}_op{opcode:05b}"),
+                    enc_scalar_3same(u, size, opcode),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("simd_scalar_fp_three_same_unallocated", batch);
+}
+
+#[test]
+fn diff_simd_scalar_fabd_f64_exact_fpsr() {
+    let mut st = ArmState::zeroed();
+    st.set_vreg(1, 1.0f64.to_bits(), 0);
+    st.set_vreg(2, 2.0f64.to_bits(), 0);
+
+    run_batch(
+        "simd_scalar_fabd_f64_exact_fpsr",
+        vec![(
+            "fabd_d_exact".to_string(),
+            enc_scalar_3same(1, 3, 0b11010),
+            st,
+        )],
+    );
+}
+
+#[test]
+fn diff_simd_scalar_fp_nep_preserves_tail() {
+    const FPCR_NEP: u64 = 1 << 2;
+    let mut batch = Vec::new();
+    for (label, size, n, m) in [
+        (
+            "fmulx_s_nep",
+            0,
+            1.5f32.to_bits() as u64,
+            2.0f32.to_bits() as u64,
+        ),
+        ("fmulx_d_nep", 1, 1.5f64.to_bits(), 2.0f64.to_bits()),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_NEP;
+        st.set_vreg(0, 0x1122_3344_5566_7788, 0x8899_aabb_ccdd_eeff);
+        st.set_vreg(1, n, 0);
+        st.set_vreg(2, m, 0);
+        batch.push((label.to_string(), enc_scalar_3same(0, size, 0b11011), st));
+    }
+    run_batch("simd_scalar_fp_nep_preserves_tail", batch);
+}
+
 /// SIMD modified immediate: `0 Q op 0111100000 abc cmode o2 1 defgh Rd`.
 fn enc_modimm(q: u32, op: u32, cmode: u32, imm8: u32) -> u32 {
     let abc = (imm8 >> 5) & 0x7;

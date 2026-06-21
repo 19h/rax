@@ -5520,6 +5520,27 @@ impl AArch64Cpu {
         let sz = size & 1; // 0 => f32, 1 => f64
         let a_bit = (size >> 1) & 1;
 
+        if scalar {
+            // The scalar AdvSIMD FP three-same table only defines compare/step
+            // operations, FMULX, and FABD. Ordinary arithmetic,
+            // FMA, min/max, pairwise, and FDIV forms are vector-only here.
+            let legal_scalar = matches!(
+                (u, a_bit, opcode, sz),
+                (0, 0, 0b11011, _) // FMULX
+                    | (0, 0, 0b11100, _) // FCMEQ
+                    | (0, 0, 0b11111, _) // FRECPS
+                    | (0, 1, 0b11111, _) // FRSQRTS
+                    | (1, 0, 0b11100, _) // FCMGE
+                    | (1, 0, 0b11101, _) // FACGE
+                    | (1, 1, 0b11010, _) // FABD
+                    | (1, 1, 0b11100, _) // FCMGT
+                    | (1, 1, 0b11101, _) // FACGT
+            );
+            if !legal_scalar {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+        }
+
         // FEAT_FHM: FMLAL/FMLSL (U==0, opcode 0b11101) and FMLAL2/FMLSL2
         // (U==1, opcode 0b11001) widen FP16 lanes into FP32 accumulator lanes.
         // These are only defined for the vector (non-scalar) form.
@@ -21282,10 +21303,12 @@ fn fp_status_binop_f64(kind: FpKind, a: u64, b: u64, result: u64) -> u32 {
         let r = f64::from_bits(result);
         let x = f64::from_bits(a);
         let y = f64::from_bits(b);
-        let y_effectively_lost = !fp64_is_zero(b) && r == x;
-        let x_effectively_lost = matches!(kind, Add | Addp) && !fp64_is_zero(a) && r == y;
-        let subtrahend_lost = matches!(kind, Sub | Abd) && !fp64_is_zero(b) && r == x.abs();
-        if y_effectively_lost || x_effectively_lost || subtrahend_lost {
+        let y_effectively_lost = r == x && fp64_operand_lost(a, b);
+        let x_effectively_lost = matches!(kind, Add | Addp) && r == y && fp64_operand_lost(b, a);
+        let subtrahend_lost =
+            matches!(kind, Sub | Abd) && r == x.abs() && fp64_operand_lost(a, b);
+        let minuend_lost = matches!(kind, Abd) && r == y.abs() && fp64_operand_lost(b, a);
+        if y_effectively_lost || x_effectively_lost || subtrahend_lost || minuend_lost {
             return FPSR_IXC;
         }
     }
