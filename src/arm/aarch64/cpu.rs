@@ -10137,6 +10137,9 @@ impl AArch64Cpu {
                 Ok(CpuExit::Continue)
             }
             0b11110 => {
+                if (insn >> 21) & 0x7 != 0b001 {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 if !inv {
                     // SM4EKEY: Zd = SM4EKEY(Zn, Zm).
                     self.v[zd] = sm4_rounds(self.v[n], self.v[m], false);
