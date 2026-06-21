@@ -3108,6 +3108,52 @@ fn raw_el0_sve_permute_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_table_lookup_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x0523_2820, // tbl z0.b, { z1.b, z2.b }, z3.b
+        0x0566_2ca4, // tbx z4.h, z5.h, z6.h
+        0x05a9_3107, // tbl z7.s, { z8.s }, z9.s
+        0x05ec_2d6a, // tbx z10.d, z11.d, z12.d
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (1usize, 0x0807_0605_0403_0201, 0x100f_0e0d_0c0b_0a09),
+            (2, 0x1817_1615_1413_1211, 0x201f_1e1d_1c1b_1a19),
+            (3, 0x1f10_0f08_0700_0302, 0xff20_1a11_100f_0e0d),
+            (4, 0xaaaa_bbbb_cccc_dddd, 0x1111_2222_3333_4444),
+            (5, 0x0004_0003_0002_0001, 0x0008_0007_0006_0005),
+            (6, 0x0000_0004_0007_0008, 0x0003_0002_0001_0009),
+            (8, 0x0000_0002_0000_0001, 0x0000_0004_0000_0003),
+            (9, 0x0000_0000_0000_0003, 0x0000_0001_0000_0004),
+            (10, 0xaaaa_bbbb_cccc_dddd, 0x1111_2222_3333_4444),
+            (11, 0x0000_0000_0000_0001, 0x0000_0000_0000_0002),
+            (12, 0x0000_0000_0000_0001, 0x0000_0000_0000_0002),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 4, 7, 10] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE table lookup z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve2_bitperm_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("svebitperm") {
         eprintln!("[skip] host does not advertise SVE bit-permute");
@@ -3253,6 +3299,124 @@ fn raw_el0_sve2_widening_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve2_absdiff_accumulate_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4502_f820, // saba   z0.b, z1.b, z2.b
+        0x4545_fc83, // uaba   z3.h, z4.h, z5.h
+        0x4548_c0e6, // sabalb z6.h, z7.b, z8.b
+        0x458b_c549, // sabalt z9.s, z10.h, z11.h
+        0x45ce_c9ac, // uabalb z12.d, z13.s, z14.s
+        0x4591_ce0f, // uabalt z15.s, z16.h, z17.h
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (2, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (3, 0x0010_0020_0030_0040, 0x0050_0060_0070_0080),
+            (4, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (5, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (6, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (7, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (8, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (9, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (10, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (11, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (12, 0x0000_0000_0000_0010, 0xffff_ffff_ffff_fff0),
+            (13, 0x7fff_ffff_8000_0000, 0x0102_0304_fefd_fcfb),
+            (14, 0x0000_0001_0000_0002, 0xffff_ffff_0000_0004),
+            (15, 0x0000_0010_ffff_fff0, 0x7fff_0000_8000_0000),
+            (16, 0x0001_ffff_0010_fff0, 0x7fff_8000_0100_ff00),
+            (17, 0x0102_7f80_ff10_2030, 0x4050_6070_8090_a0b0),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 abs-diff accumulate z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_addsub_high_narrow_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4562_6020, // addhnb  z0.b, z1.h, z2.h
+        0x45a5_6483, // addhnt  z3.h, z4.s, z5.s
+        0x45e8_70e6, // subhnb  z6.s, z7.d, z8.d
+        0x456b_7549, // subhnt  z9.b, z10.h, z11.h
+        0x45ae_69ac, // raddhnb z12.h, z13.s, z14.s
+        0x45f1_6e0f, // raddhnt z15.s, z16.d, z17.d
+        0x4574_7a72, // rsubhnb z18.b, z19.h, z20.h
+        0x45b7_7ed5, // rsubhnt z21.h, z22.s, z23.s
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0xaaaa_aaaa_aaaa_aaaa, 0x5555_5555_5555_5555),
+            (1, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (2, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (3, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (4, 0x7fff_ffff_8000_0000, 0x0102_0304_fefd_fcfb),
+            (5, 0x0000_0001_0000_0002, 0xffff_ffff_0000_0004),
+            (6, 0xffff_ffff_0000_0000, 0x0000_0000_ffff_ffff),
+            (7, 0x7fff_ffff_ffff_ffff, 0x8000_0000_0000_0000),
+            (8, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_ffff),
+            (9, 0x0102_0304_0506_0708, 0x1112_1314_1516_1718),
+            (10, 0x8000_7fff_00ff_ff00, 0x1357_2468_aaaa_5555),
+            (11, 0x0001_ffff_0100_ff00, 0x7fff_8000_0010_fff0),
+            (12, 0xaaaa_bbbb_cccc_dddd, 0x1111_2222_3333_4444),
+            (13, 0xffff_ffff_0000_0000, 0x7fff_ffff_8000_0000),
+            (14, 0x0000_0001_ffff_ffff, 0x8000_0000_7fff_ffff),
+            (15, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (16, 0xffff_ffff_ffff_ffff, 0x7fff_ffff_ffff_ffff),
+            (17, 0x0000_0000_0000_0001, 0x8000_0000_0000_0000),
+            (18, 0x0f0f_0f0f_0f0f_0f0f, 0xf0f0_f0f0_f0f0_f0f0),
+            (19, 0xffff_0001_0100_00ff, 0x8000_7fff_1234_edcc),
+            (20, 0x0100_ff00_007f_ff80, 0x1234_edcc_00ff_ff01),
+            (21, 0xffff_0000_ffff_0000, 0x0000_ffff_0000_ffff),
+            (22, 0x4000_0000_c000_0000, 0x7fff_ffff_8000_0000),
+            (23, 0x0000_0001_7fff_ffff, 0x8000_0000_ffff_ffff),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 add/sub high-narrow z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve2_shift_narrow_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("sve2") {
         eprintln!("[skip] host does not advertise SVE2");
@@ -3294,6 +3458,61 @@ fn raw_el0_sve2_shift_narrow_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 SVE2 shift-narrow z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_shift_insert_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x450c_e020, // ssra  z0.b, z1.b, #4
+        0x4518_e462, // usra  z2.h, z3.h, #8
+        0x4550_e8a4, // srsra z4.s, z5.s, #16
+        0x45c0_ece6, // ursra z6.d, z7.d, #32
+        0x450f_f528, // sli   z8.b, z9.b, #7
+        0x4518_f16a, // sri   z10.h, z11.h, #8
+        0x455f_f5ac, // sli   z12.s, z13.s, #31
+        0x45c0_f1ee, // sri   z14.d, z15.d, #32
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (2, 0x0010_0020_0030_0040, 0x0050_0060_0070_0080),
+            (3, 0xffff_0001_0100_00ff, 0x8000_7fff_1234_edcc),
+            (4, 0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+            (5, 0x4000_0000_c000_0000, 0x7fff_ffff_8000_0000),
+            (6, 0x0000_0000_0000_0001, 0x7fff_ffff_ffff_ffff),
+            (7, 0x4000_0000_0000_0000, 0x8000_0000_0000_0000),
+            (8, 0x0f0f_0f0f_0f0f_0f0f, 0xf0f0_f0f0_f0f0_f0f0),
+            (9, 0x0102_0304_0506_0708, 0x1112_1314_1516_1718),
+            (10, 0x00ff_00ff_00ff_00ff, 0xff00_ff00_ff00_ff00),
+            (11, 0x1234_5678_9abc_def0, 0x0fed_cba9_8765_4321),
+            (12, 0x0000_ffff_0000_ffff, 0xffff_0000_ffff_0000),
+            (13, 0x0000_0002_0000_0001, 0x0000_0004_0000_0003),
+            (14, 0xffff_0000_ffff_0000, 0x0000_ffff_0000_ffff),
+            (15, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 shift insert/accumulate z{reg} low-128 mismatch"
         );
     }
 }
@@ -3431,6 +3650,297 @@ fn raw_el0_sve2_complex_mla_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 SVE2 complex MLA z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_cdot_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4482_1020, // cdot z0.s, z1.b, z2.b, #0
+        0x44c5_1483, // cdot z3.d, z4.h, z5.h, #90
+        0x4488_18e6, // cdot z6.s, z7.b, z8.b, #180
+        0x44cb_1d49, // cdot z9.d, z10.h, z11.h, #270
+        0x44bc_41ac, // cdot z12.s, z13.b, z4.b[3], #0
+        0x44f5_460f, // cdot z15.d, z16.h, z5.h[1], #90
+        0x44b7_4a72, // cdot z18.s, z19.b, z7.b[2], #180
+        0x44fb_4ed5, // cdot z21.d, z22.h, z11.h[1], #270
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (2, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (3, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            (4, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (5, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (6, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (7, 0x807f_4030_2010_00f0, 0x7e81_c0d0_e0f0_1020),
+            (8, 0x0102_fe80_7f40_3020, 0xff00_807f_1122_3344),
+            (9, 0xffff_ffff_ffff_ffff, 0x0000_0000_0000_0001),
+            (10, 0x4000_c000_7fff_8000, 0x1234_edcc_7000_9000),
+            (11, 0x4000_4000_8000_8000, 0x2000_e000_7000_9000),
+            (12, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (13, 0x1020_3040_5060_7080, 0x90a0_b0c0_d0e0_f001),
+            (15, 0x0000_0010_ffff_fff0, 0x7fff_0000_8000_0000),
+            (16, 0x7fff_8000_4000_c000, 0x0001_ffff_7000_9000),
+            (18, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (19, 0x0102_0304_0506_0708, 0x8081_7e7f_fefd_fcfa),
+            (21, 0x0000_0000_0000_0010, 0xffff_ffff_ffff_fff0),
+            (22, 0x0001_ffff_0010_fff0, 0x7fff_8000_0100_ff00),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 CDOT z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_dot_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") || !host_has_aarch64_feature("svei8mm") {
+        eprintln!("[skip] host does not advertise SVE2 + SVE I8MM");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4482_0020, // sdot  z0.s, z1.b, z2.b
+        0x44c5_0483, // udot  z3.d, z4.h, z5.h
+        0x4488_78e6, // usdot z6.s, z7.b, z8.b
+        0x44ba_0149, // sdot  z9.s, z10.b, z2.b[3]
+        0x44f5_05ac, // udot  z12.d, z13.h, z5.h[1]
+        0x44b4_1a0f, // usdot z15.s, z16.b, z4.b[2]
+        0x44af_1e72, // sudot z18.s, z19.b, z7.b[1]
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (2, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (3, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            (4, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (5, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (6, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (7, 0x807f_4030_2010_00f0, 0x7e81_c0d0_e0f0_1020),
+            (8, 0x0102_fe80_7f40_3020, 0xff00_807f_1122_3344),
+            (9, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (10, 0x1020_3040_5060_7080, 0x90a0_b0c0_d0e0_f001),
+            (12, 0x0000_0000_0000_0010, 0xffff_ffff_ffff_fff0),
+            (13, 0x4000_c000_7fff_8000, 0x1234_edcc_7000_9000),
+            (15, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (16, 0x0102_0304_0506_0708, 0x8081_7e7f_fefd_fcfa),
+            (18, 0x0000_0010_ffff_fff0, 0x7fff_0000_8000_0000),
+            (19, 0x7f01_8002_7f03_8004, 0x7f05_8006_7f07_8008),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE dot z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_widening_mla_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4442_4020, // smlalb    z0.h, z1.b, z2.b
+        0x4485_4483, // smlalt    z3.s, z4.h, z5.h
+        0x44c8_48e6, // umlalb    z6.d, z7.s, z8.s
+        0x444b_5d49, // umlslt    z9.h, z10.b, z11.b
+        0x448e_51ac, // smlslb    z12.s, z13.h, z14.h
+        0x44d1_4e0f, // umlalt    z15.d, z16.s, z17.s
+        0x4454_6272, // sqdmlalb  z18.h, z19.b, z20.b
+        0x4497_6ed5, // sqdmlslt  z21.s, z22.h, z23.h
+        0x445a_0b38, // sqdmlalbt z24.h, z25.b, z26.b
+        0x449d_0f9b, // sqdmlslbt z27.s, z28.h, z29.h
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x0001_ffff_7fff_8000, 0x1234_edcc_4000_c000),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (2, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (3, 0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+            (4, 0x4000_c000_7fff_8000, 0x1234_edcc_7000_9000),
+            (5, 0x4000_4000_8000_8000, 0x2000_e000_7000_9000),
+            (6, 0x0000_0000_0000_0010, 0xffff_ffff_ffff_fff0),
+            (7, 0x7fff_ffff_8000_0000, 0x0102_0304_fefd_fcfb),
+            (8, 0x0000_0001_0000_0002, 0xffff_ffff_0000_0004),
+            (9, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020),
+            (10, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (11, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (12, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (13, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (14, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (15, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            (16, 0xffff_ffff_0000_0000, 0x7fff_ffff_8000_0000),
+            (17, 0x0000_0001_ffff_ffff, 0x8000_0000_7fff_ffff),
+            (18, 0x7fff_7ffe_0001_8000, 0x0000_4000_c000_0002),
+            (19, 0x7f80_7f80_8080_0101, 0x0202_fefe_4040_c0c0),
+            (20, 0x8080_7f7f_8080_7f7f, 0x4040_c0c0_7f7f_8080),
+            (21, 0x7fff_ffff_0000_0001, 0x8000_0000_ffff_ffff),
+            (22, 0x7fff_8000_4000_c000, 0x0001_ffff_7000_9000),
+            (23, 0x4000_4000_8000_8000, 0x7fff_8000_2000_e000),
+            (24, 0x7fff_7ffe_0001_8000, 0x0000_4000_c000_0002),
+            (25, 0x7f01_8002_7f03_8004, 0x7f05_8006_7f07_8008),
+            (26, 0x017f_0280_037f_0480, 0x057f_0680_077f_0880),
+            (27, 0x7fff_ffff_0000_0001, 0x8000_0000_ffff_ffff),
+            (28, 0x7fff_8000_4000_c000, 0x0001_ffff_7000_9000),
+            (29, 0x4000_4000_8000_8000, 0x7fff_8000_2000_e000),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21, 24, 27] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 widening MLA z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_pairwise_accumulate_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2558_e060, // ptrue  p0.h, vl3
+        0x4444_a020, // sadalp z0.h, p0/m, z1.b
+        0x2598_e041, // ptrue  p1.s, vl2
+        0x4485_a483, // uadalp z3.s, p1/m, z4.h
+        0x25d8_e022, // ptrue  p2.d, vl1
+        0x44c4_a8e6, // sadalp z6.d, p2/m, z7.s
+        0x2558_e3e3, // ptrue  p3.h
+        0x4445_ad49, // uadalp z9.h, p3/m, z10.b
+        0x2598_e3e4, // ptrue  p4.s
+        0x4484_b1ac, // sadalp z12.s, p4/m, z13.h
+        0x25d8_e3e5, // ptrue  p5.d
+        0x44c5_b60f, // uadalp z15.d, p5/m, z16.s
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (1, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (3, 0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+            (4, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (6, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            (7, 0x7fff_ffff_8000_0000, 0x0102_0304_fefd_fcfb),
+            (9, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020),
+            (10, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (12, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (13, 0x8000_7fff_0100_ff00, 0x1234_edcc_4000_c000),
+            (15, 0x0000_0000_0000_0010, 0xffff_ffff_ffff_fff0),
+            (16, 0x0000_0001_0000_0002, 0xffff_ffff_0000_0004),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 pairwise accumulate z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_predicated_pairwise_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2518_e100, // ptrue p0.b, vl8
+        0x4411_a020, // addp  z0.b, p0/m, z0.b, z1.b
+        0x2558_e081, // ptrue p1.h, vl4
+        0x4454_a483, // smaxp z3.h, p1/m, z3.h, z4.h
+        0x2598_e042, // ptrue p2.s, vl2
+        0x4495_a8e6, // umaxp z6.s, p2/m, z6.s, z7.s
+        0x25d8_e023, // ptrue p3.d, vl1
+        0x44d6_ad49, // sminp z9.d, p3/m, z9.d, z10.d
+        0x2518_e3e4, // ptrue p4.b
+        0x4417_b1ac, // uminp z12.b, p4/m, z12.b, z13.b
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0x7f80_0110_ff20_3040, 0x5060_7080_90a0_b0c0),
+            (1, 0x0102_0304_0506_0708, 0x090a_0b0c_0d0e_0f10),
+            (3, 0x7fff_8000_0100_ff00, 0x1234_edcc_4000_c000),
+            (4, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (6, 0x0000_0001_ffff_fffe, 0x7fff_ffff_8000_0000),
+            (7, 0x0000_0002_ffff_fffd, 0x8000_0000_7fff_ffff),
+            (9, 0x7fff_ffff_ffff_ffff, 0x8000_0000_0000_0000),
+            (10, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_ffff),
+            (12, 0x807f_4030_2010_00f0, 0x7e81_c0d0_e0f0_1020),
+            (13, 0x0102_fe80_7f40_3020, 0xff00_807f_1122_3344),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 predicated pairwise z{reg} low-128 mismatch"
         );
     }
 }
@@ -3679,6 +4189,69 @@ fn raw_el0_sve2_histogram_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve2_carry_eor_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x4502_d020, // adclb z0.s, z1.s, z2.s
+        0x4505_d483, // adclt z3.s, z4.s, z5.s
+        0x45c8_d0e6, // sbclb z6.d, z7.d, z8.d
+        0x45cb_d549, // sbclt z9.d, z10.d, z11.d
+        0x450e_91ac, // eorbt z12.b, z13.b, z14.b
+        0x4511_960f, // eortb z15.b, z16.b, z17.b
+        0x4554_9272, // eorbt z18.h, z19.h, z20.h
+        0x4597_96d5, // eortb z21.s, z22.s, z23.s
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (0usize, 0xffff_ffff_0000_0001, 0x0000_0001_ffff_fffe),
+            (1, 0x0000_0002_7fff_ffff, 0xffff_ffff_8000_0000),
+            (2, 0x0000_0001_0000_0000, 0x0000_0000_0000_0000),
+            (3, 0x0000_0001_0000_0002, 0xffff_fffe_ffff_fffd),
+            (4, 0x7fff_ffff_0000_0002, 0x8000_0000_ffff_ffff),
+            (5, 0x0000_0000_0000_0000, 0x0000_0001_0000_0000),
+            (6, 0x0000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            (7, 0x7fff_ffff_ffff_ffff, 0x8000_0000_0000_0000),
+            (8, 0x0000_0000_0000_0000, 0x0000_0000_0000_0001),
+            (9, 0x0000_0000_0000_0003, 0xffff_ffff_ffff_fffc),
+            (10, 0x0000_0000_0000_0001, 0x7fff_ffff_ffff_ffff),
+            (11, 0x0000_0000_0000_0000, 0x0000_0000_0000_0001),
+            (12, 0xaaaa_aaaa_aaaa_aaaa, 0x5555_5555_5555_5555),
+            (13, 0x0807_0605_0403_0201, 0x100f_0e0d_0c0b_0a09),
+            (14, 0x1817_1615_1413_1211, 0x201f_1e1d_1c1b_1a19),
+            (15, 0xaaaa_aaaa_aaaa_aaaa, 0x5555_5555_5555_5555),
+            (16, 0x0807_0605_0403_0201, 0x100f_0e0d_0c0b_0a09),
+            (17, 0x1817_1615_1413_1211, 0x201f_1e1d_1c1b_1a19),
+            (18, 0xaaaa_bbbb_cccc_dddd, 0x1111_2222_3333_4444),
+            (19, 0x0004_0003_0002_0001, 0x0008_0007_0006_0005),
+            (20, 0x1004_1003_1002_1001, 0x1008_1007_1006_1005),
+            (21, 0xaaaa_bbbb_cccc_dddd, 0x1111_2222_3333_4444),
+            (22, 0x0000_0002_0000_0001, 0x0000_0004_0000_0003),
+            (23, 0x1000_0002_1000_0001, 0x1000_0004_1000_0003),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 carry/eor z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve2_pmull_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("svepmull") {
         eprintln!("[skip] host does not advertise SVE PMULL");
@@ -3768,6 +4341,7 @@ fn raw_el0_sve2_sha3_oracle_matches_interpreter() {
         0x0421_3840, // eor3 z0.d, z0.d, z1.d, z2.d
         0x0464_38a3, // bcax z3.d, z3.d, z4.d, z5.d
         0x04e0_34e6, // xar  z6.d, z6.d, z7.d, #32
+        0x452a_f528, // rax1 z8.d, z9.d, z10.d
     ];
     let setup = |g: &mut Aarch64GuestRegs| {
         g.v[0] = 0x0123_4567_89ab_cdef;
@@ -3786,11 +4360,17 @@ fn raw_el0_sve2_sha3_oracle_matches_interpreter() {
         g.v[13] = 0x99aa_bbcc_ddee_ff00;
         g.v[14] = 0xff00_ee11_dd22_cc33;
         g.v[15] = 0xbb44_aa55_9966_8877;
+        g.v[16] = 0x0102_0304_0506_0708;
+        g.v[17] = 0x1112_1314_1516_1718;
+        g.v[18] = 0x2122_2324_2526_2728;
+        g.v[19] = 0x3132_3334_3536_3738;
+        g.v[20] = 0x4142_4344_4546_4748;
+        g.v[21] = 0x5152_5354_5556_5758;
     };
 
     let hw = raw_native_run_fp(&insns, setup);
     let interp = raw_interp_run(&insns, setup);
-    for reg in [0usize, 3, 6] {
+    for reg in [0usize, 3, 6, 8] {
         let lo = 2 * reg;
         let hi = lo + 1;
         assert_eq!(
