@@ -35265,6 +35265,79 @@ fn diff_sve_fp_reduce() {
                 st.set_preg(0, mixed_active);
                 batch.push((format!("{name}_{pattern_name}_mixed"), insn, st));
             }
+            let special_patterns: Vec<(&str, Vec<u64>, Vec<u64>)> = match sz {
+                1 => vec![
+                    (
+                        "h_nan_inf",
+                        vec![0x3c00, 0xbc00, 0x7e00, 0x7c01, 0x0000, 0x8000, 0x7c00, 0xfc00],
+                        vec![0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x3c00, 0xbc00],
+                    ),
+                    (
+                        "h_signed_zero",
+                        vec![0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000],
+                        vec![0x8000, 0x0000, 0x8000, 0x0000, 0xbc00, 0x3c00, 0xc000, 0x4000],
+                    ),
+                ],
+                2 => vec![
+                    (
+                        "s_nan_inf",
+                        vec![
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            f32::INFINITY.to_bits() as u64,
+                            0x7f80_0001,
+                        ],
+                        vec![
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            f32::NEG_INFINITY.to_bits() as u64,
+                            0x7fc0_0000,
+                        ],
+                    ),
+                    (
+                        "s_signed_zero",
+                        vec![
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                        ],
+                        vec![
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                        ],
+                    ),
+                ],
+                _ => vec![
+                    (
+                        "d_nan_inf",
+                        vec![1.0f64.to_bits(), 0x7ff0_0000_0000_0001],
+                        vec![f64::INFINITY.to_bits(), f64::NEG_INFINITY.to_bits()],
+                    ),
+                    (
+                        "d_signed_zero",
+                        vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                        vec![(-0.0f64).to_bits(), 0.0f64.to_bits()],
+                    ),
+                ],
+            };
+            for (pattern_name, acc, zn) in &special_patterns {
+                for (mask_name, pg) in [
+                    ("all", all_active),
+                    ("mixed", mixed_active),
+                    ("inactive", 0x0000),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(esize, acc);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_lanes(esize, zn);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("{name}_{pattern_name}_{mask_name}"), insn, st));
+                }
+            }
         }
     }
     run_batch("sve_fp_reduce", batch);
@@ -35509,6 +35582,12 @@ fn diff_sve_plog() {
 /// Zm=z1, Pg=p0.
 fn enc_sve_fpp(sz: u32, opc5: u32) -> u32 {
     (0x65 << 24) | (sz << 22) | (opc5 << 16) | (0b100 << 13) | (RN << 5) | RD
+}
+
+/// SVE predicated FP binary immediate: `01100101 sz opc5 100 Pg imm Zdn`.
+/// Zdn=z0, Pg=p0.
+fn enc_sve_fpp_imm(sz: u32, opc5: u32, imm1: u32) -> u32 {
+    (0x65 << 24) | (sz << 22) | (opc5 << 16) | (0b100 << 13) | ((imm1 & 1) << 5) | RD
 }
 
 /// SVE unpredicated FADD/FSUB/FMUL: `01100101 size 0 Zm 0000 opc Zn Zd`.
@@ -36243,6 +36322,7 @@ fn diff_sve_fp_pred() {
         (0b00110, "fmax"),
         (0b00111, "fmin"),
         (0b01000, "fabd"),
+        (0b01010, "fmulx"),
         (0b01100, "fdivr"),
         (0b01101, "fdiv"),
     ];
@@ -36326,7 +36406,156 @@ fn diff_sve_fp_pred() {
             }
         }
     }
+    for &(sz, esize) in &[(1u32, 16u32), (2, 32), (3, 64)] {
+        let (mixed, patterns): (u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match sz {
+            1 => (
+                0x1111,
+                vec![
+                    (
+                        "h_nan_inf",
+                        vec![0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000],
+                        vec![0x3c00, 0xfc00, 0x7e00, 0x0000, 0xbc00, 0x7c00, 0xfc01, 0x8000],
+                    ),
+                    (
+                        "h_inactive_snan",
+                        vec![0x3c00, 0x7c01, 0xbc00, 0xfc01, 0x7c00, 0x0000, 0xfc00, 0x8000],
+                        vec![0x4000, 0x7e00, 0xc000, 0xfe00, 0xfc00, 0x8000, 0x7c00, 0x0000],
+                    ),
+                ],
+            ),
+            2 => (
+                0x0101,
+                vec![
+                    (
+                        "s_nan_inf",
+                        vec![0x7f80_0001, 0x7fc0_0000, 0x7f80_0000, 0x8000_0000],
+                        vec![1.0f32.to_bits() as u64, 0xff80_0000, 0x7fc0_0000, 0],
+                    ),
+                    (
+                        "s_inactive_snan",
+                        vec![3.0f32.to_bits() as u64, 0x7f80_0001, (-4.0f32).to_bits() as u64, 0xff80_0001],
+                        vec![0x4000_0000, 0x7fc0_0000, 0xc000_0000, 0xffc0_0000],
+                    ),
+                ],
+            ),
+            _ => (
+                0x0001,
+                vec![
+                    (
+                        "d_nan_inf",
+                        vec![0x7ff0_0000_0000_0001, 0x7ff8_0000_0000_0000],
+                        vec![1.0f64.to_bits(), 0xfff0_0000_0000_0000],
+                    ),
+                    (
+                        "d_inactive_snan",
+                        vec![(-4.0f64).to_bits(), 0x7ff0_0000_0000_0001],
+                        vec![0x4000_0000_0000_0000, 0x7ff8_0000_0000_0000],
+                    ),
+                ],
+            ),
+        };
+        for &(opc5, name) in ops {
+            let insn = enc_sve_fpp(sz, opc5);
+            for (pattern_name, zdn, zm) in &patterns {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(esize, zdn);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_lanes(esize, zm);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("{name}_{pattern_name}_{mask_name}"), insn, st));
+                }
+            }
+        }
+    }
     run_batch("sve_fp_pred", batch);
+}
+
+#[test]
+fn diff_sve_fp_pred_imm() {
+    const FPCR_AH: u64 = 1 << 1;
+
+    fn pack_lanes(esize: u32, values: &[u64]) -> (u64, u64) {
+        let mut packed = 0u128;
+        let mask = if esize == 64 {
+            u64::MAX
+        } else {
+            (1u64 << esize) - 1
+        };
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * esize as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let ops: &[(u32, &str)] = &[
+        (0b11000, "fadd"),
+        (0b11001, "fsub"),
+        (0b11010, "fmul"),
+        (0b11011, "fsubr"),
+        (0b11100, "fmaxnm"),
+        (0b11101, "fminnm"),
+        (0b11110, "fmax"),
+        (0b11111, "fmin"),
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(sz, esize) in &[(1u32, 16u32), (2, 32), (3, 64)] {
+        let (mixed, values): (u16, Vec<u64>) = match sz {
+            1 => (
+                0x1111,
+                vec![0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000],
+            ),
+            2 => (
+                0x0101,
+                vec![0x7f80_0001, 0x7fc0_0000, 0x7f80_0000, 0x8000_0000],
+            ),
+            _ => (
+                0x0001,
+                vec![0x7ff0_0000_0000_0001, 0x7ff8_0000_0000_0000],
+            ),
+        };
+        for &(opc5, name) in ops {
+            for imm1 in 0..=1 {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(esize, &values);
+                    st.set_vreg(RD as usize, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((
+                        format!("{name}_sz{sz}_imm{imm1}_{mask_name}"),
+                        enc_sve_fpp_imm(sz, opc5, imm1),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    for (label, sz, esize, values) in [
+        (
+            "h",
+            1u32,
+            16u32,
+            vec![0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000],
+        ),
+        ("s", 2, 32, vec![0x8000_0000, 0, 0x8000_0000, 0]),
+        ("d", 3, 64, vec![0x8000_0000_0000_0000, 0]),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        let (lo, hi) = pack_lanes(esize, &values);
+        st.set_vreg(RD as usize, lo, hi);
+        batch.push((
+            format!("fmin_{label}_ah_zero_sign"),
+            enc_sve_fpp_imm(sz, 0b11111, 0),
+            st,
+        ));
+    }
+
+    run_batch("sve_fp_pred_imm", batch);
 }
 
 #[test]
@@ -38369,6 +38598,53 @@ fn diff_sve_fp_indexed() {
         }
     }
 
+    fn indexed_special_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_nan_inf",
+                    vec![0x0000, 0x7c01, 0x7e00, 0xfc00, 0x7c00, 0x8000, 0x3c00, 0xbc00],
+                    vec![0x3c00, 0xbc00, 0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000],
+                    vec![0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00],
+                ),
+                (
+                    "h_signed_zero",
+                    vec![0x8000, 0x0000, 0x8000, 0x0000, 0x3c00, 0xbc00, 0x4000, 0xc000],
+                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x0001, 0x8001, 0x7c00, 0xfc00],
+                    vec![0x8000, 0x0000, 0x7e00, 0xfe00, 0x3c00, 0xbc00, 0x4000, 0xc000],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_nan_inf",
+                    vec![0, 0x7f80_0001, 0x7fc0_0000, 0xff80_0000],
+                    vec![1.0f32.to_bits() as u64, 0xbf80_0000, 0x7f80_0001, 0x7fc0_0000],
+                    vec![0x7f80_0001, 0x7fc0_0000, 0x7f80_0000, 0xff80_0000],
+                ),
+                (
+                    "s_signed_zero",
+                    vec![0x8000_0000, 0, 0x3f80_0000, 0xbf80_0000],
+                    vec![0, 0x8000_0000, 0x0000_0001, 0x8000_0001],
+                    vec![0x8000_0000, 0, 0x7fc0_0000, 0xffc0_0000],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_nan_inf",
+                    vec![0, 0x7ff0_0000_0000_0001],
+                    vec![1.0f64.to_bits(), 0x7ff8_0000_0000_0000],
+                    vec![0x7ff0_0000_0000_0001, 0xfff0_0000_0000_0000],
+                ),
+                (
+                    "d_signed_zero",
+                    vec![0x8000_0000_0000_0000, 0],
+                    vec![0, 0x8000_0000_0000_0000],
+                    vec![0x8000_0000_0000_0000, 0x7ff8_0000_0000_0000],
+                ),
+            ],
+        }
+    }
+
     // FMLA/FMLS/FMUL by indexed FP element, all sizes and indices, finite inputs.
     let mut rng = Rng::new(0x8_3001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -38392,6 +38668,16 @@ fn diff_sve_fp_indexed() {
                     batch.push((format!("{name}_idx s{size} i{index}"), insn, st));
                 }
                 for (pattern_name, zd, zn, zm) in indexed_patterns(size) {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_fp(size, &zd);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zm);
+                    st.set_vreg(2, lo, hi);
+                    batch.push((format!("{name}_idx_s{size}_i{index}_{pattern_name}"), insn, st));
+                }
+                for (pattern_name, zd, zn, zm) in indexed_special_patterns(size) {
                     let mut st = ArmState::zeroed();
                     let (lo, hi) = pack_fp(size, &zd);
                     st.set_vreg(0, lo, hi);
@@ -40448,6 +40734,24 @@ fn diff_sve_bfcvt() {
             [0x0080_0000, 0x8080_0000, 0x0100_0000, 0x8100_0000],
             [0xdead, 0xbeef, 0xcafe, 0xbabe, 0x5eed, 0x600d, 0xf00d, 0xface],
             0x1111,
+        ),
+        (
+            "nan_inf",
+            [0x7fa0_0001, 0x7fc0_1234, 0x7f80_0000, 0xff80_0000],
+            [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888],
+            0x1111,
+        ),
+        (
+            "nan_mixed_pred",
+            [0x7fa0_0001, 0x7fc0_1234, 0x3f80_0001, 0xff80_0000],
+            [0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210],
+            0x0101,
+        ),
+        (
+            "nan_inactive_merge",
+            [0x7fa0_0001, 0x7fc0_1234, 0x7f80_0000, 0xff80_0000],
+            [0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531],
+            0x0000,
         ),
     ];
     for (name, zn, zd, pg) in patterns {
