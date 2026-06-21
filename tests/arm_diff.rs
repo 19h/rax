@@ -25583,25 +25583,40 @@ fn enc_addsub_ext_plain(
 
 #[test]
 fn diff_addsub_ext_sp_source_dest() {
-    let cases: &[(&str, u32)] = &[
-        ("add_x_sp_uxtw", enc_addsub_ext_plain(1, 0, 0, 0b010, 0, 0, 31, 2)),
-        ("sub_x_sp_sxtx_lsl3", enc_addsub_ext_plain(1, 1, 0, 0b111, 3, 3, 31, 2)),
-        ("add_sp_sp_uxtx", enc_addsub_ext_plain(1, 0, 0, 0b011, 0, 31, 31, 2)),
-        ("sub_sp_x_sxtw_lsl2", enc_addsub_ext_plain(1, 1, 0, 0b110, 2, 31, 1, 2)),
-        ("adds_x_sp_uxtw_lsl1", enc_addsub_ext_plain(1, 0, 1, 0b010, 1, 4, 31, 2)),
-        ("cmp_sp_sxtx_lsl1", enc_addsub_ext_plain(1, 1, 1, 0b111, 1, 31, 31, 2)),
-        ("add_wsp_wsp_uxtw", enc_addsub_ext_plain(0, 0, 0, 0b010, 0, 31, 31, 2)),
-        ("subs_w_sp_uxtb_lsl1", enc_addsub_ext_plain(0, 1, 1, 0b000, 1, 5, 31, 2)),
-    ];
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = ArmState::zeroed();
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x3000 + ((i as u64) << 8);
-            st.x[1] = st.sp + 0x400;
-            st.x[2] = 0x20 + (i as u64 * 3);
-            st.pstate = ((i as u64) & 0xf) << 28;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for option in 0..=7 {
+                    for imm3 in 0..=7 {
+                        for (alias, rd, rn, rm) in [
+                            ("rn_sp", 0u32, 31u32, 2u32),
+                            ("rd31", 31, 1, 2),
+                            ("rn_rd31", 31, 31, 2),
+                        ] {
+                            for (case, x2) in [0u64, 1, 0x20, 0x7f].iter().copied().enumerate() {
+                                for nzcv in 0..16u64 {
+                                    let mut st = ArmState::zeroed();
+                                    st.sp = GUEST_STACK_ADDR
+                                        + (GUEST_STACK_SIZE / 2)
+                                        + 0x8000
+                                        + ((case as u64) << 8);
+                                    st.x[1] = st.sp + 0x400;
+                                    st.x[2] = x2;
+                                    st.pstate = nzcv << 28;
+                                    batch.push((
+                                        format!(
+                                            "addsub_ext_{alias}_sf{sf}_op{op}_s{s}_opt{option}_imm{imm3}_case{case}_nzcv{nzcv:x}"
+                                        ),
+                                        enc_addsub_ext_plain(sf, op, s, option, imm3, rd, rn, rm),
+                                        st,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     run_batch("addsub_ext_sp_source_dest", batch);
@@ -26148,24 +26163,30 @@ fn diff_bitfield_zero_registers() {
             | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32)] = &[
-        ("sbfm_x_xzr_source", enc_bitfield_plain(1, 0b00, 0, 7, 31, 0)),
-        ("ubfm_w_wzr_source", enc_bitfield_plain(0, 0b10, 4, 11, 31, 2)),
-        ("bfm_x_xzr_source", enc_bitfield_plain(1, 0b01, 56, 7, 31, 3)),
-        ("bfm_x_xzr_dest", enc_bitfield_plain(1, 0b01, 56, 7, 1, 31)),
-        ("sbfm_w_wzr_dest", enc_bitfield_plain(0, 0b00, 24, 7, 1, 31)),
-        ("ubfm_x_xzr_dest", enc_bitfield_plain(1, 0b10, 8, 23, 1, 31)),
-    ];
     let mut rng = Rng::new(0x1_006c);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x5000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = 0xaaaa_bbbb_cccc_dddd;
-            st.x[3] = 0x1122_3344_5566_7788;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        let limit = if sf == 0 { 32 } else { 64 };
+        for (opc, opname) in [(0b00u32, "sbfm"), (0b01, "bfm"), (0b10, "ubfm")] {
+            for immr in 0..limit {
+                for imms in 0..limit {
+                    for (alias, rn, rd) in [
+                        ("rn_xzr", 31u32, 0u32),
+                        ("rd_xzr", 1, 31),
+                        ("rn_rd_xzr", 31, 31),
+                    ] {
+                        let mut st = gen_input(&mut rng);
+                        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x5000;
+                        st.x[0] = rng.next();
+                        st.x[1] = rng.next();
+                        batch.push((
+                            format!("{opname}_{alias}_sf{sf}_immr{immr}_imms{imms}"),
+                            enc_bitfield_plain(sf, opc, immr, imms, rn, rd),
+                            st,
+                        ));
+                    }
+                }
+            }
         }
     }
     run_batch("bitfield_zero_registers", batch);
@@ -26183,23 +26204,39 @@ fn diff_extract_zero_registers() {
             | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32)] = &[
-        ("extr_x_xzr_high", enc_extract_plain(1, 31, 1, 13, 0)),
-        ("extr_x_xzr_low", enc_extract_plain(1, 1, 31, 17, 2)),
-        ("extr_x_xzr_both", enc_extract_plain(1, 31, 31, 9, 3)),
-        ("extr_x_xzr_dest", enc_extract_plain(1, 1, 2, 13, 31)),
-        ("extr_w_wzr_low", enc_extract_plain(0, 1, 31, 7, 4)),
-        ("extr_w_wzr_dest", enc_extract_plain(0, 1, 2, 11, 31)),
-    ];
     let mut rng = Rng::new(0x1_006d);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x6000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = rng.next();
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        let limit = if sf == 0 { 32 } else { 64 };
+        for lsb in 0..limit {
+            for (alias, rn, rm, rd) in [
+                ("rn_xzr", 31u32, 2u32, 0u32),
+                ("rm_xzr", 1, 31, 0),
+                ("rn_rm_xzr", 31, 31, 0),
+                ("rd_xzr", 1, 2, 31),
+                ("all_xzr", 31, 31, 31),
+            ] {
+                for (i, (x1, x2)) in [
+                    (0u64, 1u64),
+                    (u64::MAX, 0x8000_0000_0000_0000),
+                    (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+                    (rng.next(), rng.next()),
+                ]
+                .iter()
+                .copied()
+                .enumerate()
+                {
+                    let mut st = gen_input(&mut rng);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x6000 + ((i as u64) << 8);
+                    st.x[1] = x1;
+                    st.x[2] = x2;
+                    batch.push((
+                        format!("extr_{alias}_sf{sf}_lsb{lsb}_case{i}"),
+                        enc_extract_plain(sf, rn, rm, lsb, rd),
+                        st,
+                    ));
+                }
+            }
         }
     }
     run_batch("extract_zero_registers", batch);
@@ -26325,21 +26362,50 @@ fn diff_condcmp_zero_registers() {
             | (nzcv & 0xf)
     }
 
-    let cases: &[(&str, u32, u64)] = &[
-        ("ccmp_x_xzr_left", enc_condcmp_plain(1, 1, false, 1, 0, 0, 31), 0x4000_0000),
-        ("ccmp_x_xzr_right", enc_condcmp_plain(1, 1, false, 31, 0, 0, 1), 0x4000_0000),
-        ("ccmn_w_wzr_both", enc_condcmp_plain(0, 0, false, 31, 0, 0, 31), 0x4000_0000),
-        ("ccmp_w_wzr_imm", enc_condcmp_plain(0, 1, true, 5, 0, 0, 31), 0x4000_0000),
-        ("ccmn_x_xzr_fallback", enc_condcmp_plain(1, 0, false, 31, 0, 0b1010, 31), 0),
-    ];
     let mut rng = Rng::new(0x1_0070);
     let mut batch = Vec::new();
-    for (label, insn, pstate) in cases {
-        for _ in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.x[1] = rng.next();
-            st.pstate = *pstate;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for cond in 0..16 {
+                for fallback_nzcv in 0..16 {
+                    for live_nzcv in 0..16 {
+                        let pstate = (live_nzcv as u64) << 28;
+
+                        for (alias, rn, rm) in [
+                            ("rn_xzr", 31, 2),
+                            ("rm_xzr", 1, 31),
+                            ("rn_rm_xzr", 31, 31),
+                        ] {
+                            let insn = enc_condcmp_plain(sf, op, false, rm, cond, fallback_nzcv, rn);
+                            let mut st = gen_input(&mut rng);
+                            st.x[1] = 0x0123_4567_89ab_cdef;
+                            st.x[2] = 0xfedc_ba98_7654_3210;
+                            st.pstate = pstate;
+                            batch.push((
+                                format!(
+                                    "ccmp_reg_{alias}_sf{sf}_op{op}_cond{cond:x}_fallback{fallback_nzcv:x}_nzcv{live_nzcv:x}"
+                                ),
+                                insn,
+                                st,
+                            ));
+                        }
+
+                        for imm5 in [0, 5, 31] {
+                            let insn =
+                                enc_condcmp_plain(sf, op, true, imm5, cond, fallback_nzcv, 31);
+                            let mut st = gen_input(&mut rng);
+                            st.pstate = pstate;
+                            batch.push((
+                                format!(
+                                    "ccmp_imm_rn_xzr_imm{imm5}_sf{sf}_op{op}_cond{cond:x}_fallback{fallback_nzcv:x}_nzcv{live_nzcv:x}"
+                                ),
+                                insn,
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
     run_batch("condcmp_zero_registers", batch);
@@ -26351,22 +26417,47 @@ fn diff_dp1_zero_registers() {
         (sf << 31) | (0b1011010110 << 21) | ((opcode & 0x3f) << 10) | ((rn & 0x1f) << 5) | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32)] = &[
-        ("rbit_x_xzr_source", enc_dp1_plain(1, 0b000000, 31, 0)),
-        ("rev16_x_xzr_source", enc_dp1_plain(1, 0b000001, 31, 1)),
-        ("clz_x_xzr_source", enc_dp1_plain(1, 0b000100, 31, 2)),
-        ("cls_w_wzr_source", enc_dp1_plain(0, 0b000101, 31, 3)),
-        ("rbit_x_xzr_dest", enc_dp1_plain(1, 0b000000, 1, 31)),
-        ("rev_w_wzr_dest", enc_dp1_plain(0, 0b000010, 1, 31)),
-    ];
     let mut rng = Rng::new(0x1_0071);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x9000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            batch.push(((*label).to_string(), *insn, st));
+    for (sf, opcode, opname) in [
+        (0u32, 0b000000u32, "rbit_w"),
+        (1, 0b000000, "rbit_x"),
+        (0, 0b000001, "rev16_w"),
+        (1, 0b000001, "rev16_x"),
+        (0, 0b000010, "rev_w"),
+        (1, 0b000010, "rev32_x"),
+        (1, 0b000011, "rev_x"),
+        (0, 0b000100, "clz_w"),
+        (1, 0b000100, "clz_x"),
+        (0, 0b000101, "cls_w"),
+        (1, 0b000101, "cls_x"),
+    ] {
+        for (alias, rn, rd) in [
+            ("rn_xzr", 31u32, 0u32),
+            ("rd_xzr", 1, 31),
+            ("rn_rd_xzr", 31, 31),
+        ] {
+            for (i, x1) in [
+                0u64,
+                1,
+                0x7fff_ffff_ffff_ffff,
+                0x8000_0000_0000_0000,
+                0xffff_ffff_0000_0001,
+                rng.next(),
+            ]
+            .iter()
+            .copied()
+            .enumerate()
+            {
+                let mut st = gen_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x9000 + ((i as u64) << 8);
+                st.x[1] = x1;
+                batch.push((
+                    format!("{opname}_{alias}_case{i}"),
+                    enc_dp1_plain(sf, opcode, rn, rd),
+                    st,
+                ));
+            }
         }
     }
     run_batch("dp1_zero_registers", batch);
@@ -26374,24 +26465,41 @@ fn diff_dp1_zero_registers() {
 
 #[test]
 fn diff_dp2_zero_registers() {
-    let cases: &[(&str, u32)] = &[
-        ("udiv_x_xzr_left", enc_dp2_regs(1, 0b0010, 31, 1, 0)),
-        ("udiv_x_xzr_right", enc_dp2_regs(1, 0b0010, 1, 31, 2)),
-        ("sdiv_w_wzr_right", enc_dp2_regs(0, 0b0011, 1, 31, 3)),
-        ("lslv_x_xzr_source", enc_dp2_regs(1, 0b1000, 31, 2, 4)),
-        ("lsrv_w_wzr_count", enc_dp2_regs(0, 0b1001, 1, 31, 5)),
-        ("asrv_x_xzr_dest", enc_dp2_regs(1, 0b1010, 1, 2, 31)),
-        ("rorv_w_wzr_dest", enc_dp2_regs(0, 0b1011, 1, 2, 31)),
-    ];
     let mut rng = Rng::new(0x1_0072);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xa000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = 0x20 + ((i as u64) * 7);
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for (opcode, opname) in [
+            (0b0010u32, "udiv"),
+            (0b0011, "sdiv"),
+            (0b1000, "lslv"),
+            (0b1001, "lsrv"),
+            (0b1010, "asrv"),
+            (0b1011, "rorv"),
+        ] {
+            for (label, rn, rm, rd) in [
+                ("rn_xzr", 31u32, 2u32, 0u32),
+                ("rm_xzr", 1, 31, 0),
+                ("rn_rm_xzr", 31, 31, 0),
+                ("rd_xzr", 1, 2, 31),
+                ("all_xzr", 31, 31, 31),
+            ] {
+                for (x1, x2) in [
+                    (0u64, 1u64),
+                    (1, 0),
+                    (0x8000_0000_0000_0000, 0xffff_ffff_ffff_ffff),
+                    (rng.next(), rng.next()),
+                ] {
+                    let mut st = gen_input(&mut rng);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xa000;
+                    st.x[1] = x1;
+                    st.x[2] = x2;
+                    batch.push((
+                        format!("{opname}_{label} sf{sf}"),
+                        enc_dp2_regs(sf, opcode, rn, rm, rd),
+                        st,
+                    ));
+                }
+            }
         }
     }
     run_batch("dp2_zero_registers", batch);
@@ -26399,23 +26507,39 @@ fn diff_dp2_zero_registers() {
 
 #[test]
 fn diff_crc_zero_registers() {
-    let cases: &[(&str, u32)] = &[
-        ("crc32b_wzr_acc", enc_dp2_regs(0, 0b010000, 31, 1, 0)),
-        ("crc32h_wzr_data", enc_dp2_regs(0, 0b010001, 1, 31, 2)),
-        ("crc32w_wzr_dest", enc_dp2_regs(0, 0b010010, 1, 2, 31)),
-        ("crc32x_wzr_acc", enc_dp2_regs(1, 0b010011, 31, 2, 3)),
-        ("crc32x_xzr_data", enc_dp2_regs(1, 0b010011, 1, 31, 4)),
-        ("crc32cx_wzr_dest", enc_dp2_regs(1, 0b010111, 1, 2, 31)),
-    ];
     let mut rng = Rng::new(0x1_0074);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xc000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = rng.next();
-            batch.push(((*label).to_string(), *insn, st));
+    for (sf, opcode, opname) in [
+        (0u32, 0b010000u32, "crc32b"),
+        (0, 0b010001, "crc32h"),
+        (0, 0b010010, "crc32w"),
+        (1, 0b010011, "crc32x"),
+        (0, 0b010100, "crc32cb"),
+        (0, 0b010101, "crc32ch"),
+        (0, 0b010110, "crc32cw"),
+        (1, 0b010111, "crc32cx"),
+    ] {
+        for (label, rn, rm, rd) in [
+            ("acc_xzr", 31u32, 2u32, 0u32),
+            ("data_xzr", 1, 31, 0),
+            ("dest_xzr", 1, 2, 31),
+            ("all_xzr", 31, 31, 31),
+        ] {
+            for (x1, x2) in [
+                (0u64, 0u64),
+                (0xffff_ffff, 0x1234_5678_9abc_def0),
+                (rng.next(), rng.next()),
+            ] {
+                let mut st = gen_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xc000;
+                st.x[1] = x1;
+                st.x[2] = x2;
+                batch.push((
+                    format!("{opname}_{label}"),
+                    enc_dp2_regs(sf, opcode, rn, rm, rd),
+                    st,
+                ));
+            }
         }
     }
     run_batch("crc_zero_registers", batch);
@@ -26423,28 +26547,45 @@ fn diff_crc_zero_registers() {
 
 #[test]
 fn diff_dp3_zero_registers() {
-    let cases: &[(&str, u32)] = &[
-        ("madd_x_xzr_left", enc_dp3_ra_regs(1, 0b000, 0, 0, 31, 2, 3)),
-        ("madd_x_xzr_right", enc_dp3_ra_regs(1, 0b000, 0, 1, 2, 31, 3)),
-        ("msub_w_wzr_acc", enc_dp3_ra_regs(0, 0b000, 1, 4, 1, 2, 31)),
-        ("madd_x_xzr_dest", enc_dp3_ra_regs(1, 0b000, 0, 31, 1, 2, 3)),
-        ("smaddl_x_wzr_left", enc_dp3_ra_regs(1, 0b001, 0, 5, 31, 2, 3)),
-        ("smsubl_x_wzr_right", enc_dp3_ra_regs(1, 0b001, 1, 6, 1, 31, 3)),
-        ("umaddl_x_xzr_acc", enc_dp3_ra_regs(1, 0b101, 0, 7, 1, 2, 31)),
-        ("umsubl_x_xzr_dest", enc_dp3_ra_regs(1, 0b101, 1, 31, 1, 2, 3)),
-        ("smulh_x_xzr_left", enc_dp3_ra_regs(1, 0b010, 0, 8, 31, 2, 31)),
-        ("umulh_x_xzr_dest", enc_dp3_ra_regs(1, 0b110, 0, 31, 1, 2, 31)),
-    ];
     let mut rng = Rng::new(0x1_0073);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xb000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = rng.next();
-            st.x[3] = rng.next();
-            batch.push(((*label).to_string(), *insn, st));
+    for (sf, op31, o0, opname) in [
+        (0u32, 0b000u32, 0u32, "madd_w"),
+        (0, 0b000, 1, "msub_w"),
+        (1, 0b000, 0, "madd_x"),
+        (1, 0b000, 1, "msub_x"),
+        (1, 0b001, 0, "smaddl"),
+        (1, 0b001, 1, "smsubl"),
+        (1, 0b101, 0, "umaddl"),
+        (1, 0b101, 1, "umsubl"),
+        (1, 0b010, 0, "smulh"),
+        (1, 0b110, 0, "umulh"),
+    ] {
+        let high_mul = matches!(op31, 0b010 | 0b110);
+        for (label, rd, rn, rm, ra) in [
+            ("rn_xzr", 0u32, 31u32, 2u32, 3u32),
+            ("rm_xzr", 0, 1, 31, 3),
+            ("ra_xzr", 0, 1, 2, 31),
+            ("rd_xzr", 31, 1, 2, 3),
+            ("all_xzr", 31, 31, 31, 31),
+        ] {
+            let ra = if high_mul { 31 } else { ra };
+            for (x1, x2, x3) in [
+                (0u64, 1u64, 2u64),
+                (1, 0xffff_ffff_ffff_ffff, 0x8000_0000_0000_0000),
+                (rng.next(), rng.next(), rng.next()),
+            ] {
+                let mut st = gen_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xb000;
+                st.x[1] = x1;
+                st.x[2] = x2;
+                st.x[3] = x3;
+                batch.push((
+                    format!("{opname}_{label}"),
+                    enc_dp3_ra_regs(sf, op31, o0, rd, rn, rm, ra),
+                    st,
+                ));
+            }
         }
     }
     run_batch("dp3_zero_registers", batch);
@@ -38406,23 +38547,29 @@ fn diff_sve_cterm_zero_registers() {
             | (ne << 4)
     }
 
-    let cases: &[(&str, u32)] = &[
-        ("ctermeq_wzr_left", cterm_regs(0, 0, 31, RM)),
-        ("ctermne_wzr_right", cterm_regs(0, 1, RN, 31)),
-        ("ctermeq_xzr_both", cterm_regs(1, 0, 31, 31)),
-        ("ctermne_xzr_both", cterm_regs(1, 1, 31, 31)),
-    ];
     let mut rng = Rng::new(0x8_7002);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    for (label, insn) in cases {
-        for nzcv in 0..16u64 {
-            let mut st = ArmState::zeroed();
-            st.sp =
-                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x14000 + (nzcv << 4);
-            st.x[RN as usize] = rng.next();
-            st.x[RM as usize] = rng.next();
-            st.pstate = nzcv << 28;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for ne in 0..=1 {
+            for (alias, rn, rm) in [
+                ("rn_xzr", 31u32, RM),
+                ("rm_xzr", RN, 31),
+                ("rn_rm_xzr", 31, 31),
+            ] {
+                for nzcv in 0..16u64 {
+                    let mut st = ArmState::zeroed();
+                    st.sp =
+                        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x14000 + (nzcv << 4);
+                    st.x[RN as usize] = rng.next();
+                    st.x[RM as usize] = rng.next();
+                    st.pstate = nzcv << 28;
+                    batch.push((
+                        format!("cterm_{alias}_sf{sf}_ne{ne}_nzcv{nzcv:x}"),
+                        cterm_regs(sf, ne, rn, rm),
+                        st,
+                    ));
+                }
+            }
         }
     }
     run_batch("sve_cterm_zero_registers", batch);
@@ -47656,75 +47803,108 @@ fn diff_fp_scalar_gpr_conversion_zero_registers() {
     let mut rng = Rng::new(0xF031_2031);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    for &(label, sf, fp_type, opcode, rd) in &[
-        ("scvtf_s_wzr", 0, 0b00, 0b010, 0),
-        ("ucvtf_s_wzr", 0, 0b00, 0b011, 2),
-        ("scvtf_h_wzr", 0, 0b11, 0b010, 3),
-        ("scvtf_d_xzr", 1, 0b01, 0b010, 4),
-        ("ucvtf_d_xzr", 1, 0b01, 0b011, 5),
-    ] {
-        for rmode in 0..4u64 {
-            let mut st = gen_input(&mut rng);
-            st.fpcr = rmode << 22;
-            st.fpsr = 0;
-            batch.push((
-                format!("{label}_rmode{rmode}"),
-                enc_fp_gpr_to_fp_regs(sf, fp_type, opcode, 31, rd),
-                st,
-            ));
+    let fp_inputs: &[(u32, &str, &[(&str, u64)])] = &[
+        (
+            0b00,
+            "s",
+            &[
+                ("pos", (3.75f32).to_bits() as u64),
+                ("neg", (-2.5f32).to_bits() as u64),
+                ("tie", (2.5f32).to_bits() as u64),
+            ],
+        ),
+        (
+            0b01,
+            "d",
+            &[
+                ("pos", (42.5f64).to_bits()),
+                ("neg", (-7.5f64).to_bits()),
+                ("tie", (2.5f64).to_bits()),
+            ],
+        ),
+        (
+            0b11,
+            "h",
+            &[
+                ("pos", 0x3e00),
+                ("neg", 0xc100),
+                ("tie", 0x4100),
+            ],
+        ),
+    ];
+
+    for sf in 0..=1 {
+        let gpr_name = if sf == 0 { "wzr" } else { "xzr" };
+        for &(fp_type, fp_name, _) in fp_inputs {
+            for &(opcode, op_name) in &[(0b010u32, "scvtf"), (0b011, "ucvtf")] {
+                for rd in [0u32, 31] {
+                    for fpcr_rmode in 0..4u64 {
+                        let mut st = gen_input(&mut rng);
+                        st.fpcr = fpcr_rmode << 22;
+                        st.fpsr = 0;
+                        batch.push((
+                            format!("{op_name}_{fp_name}_{gpr_name}_vd{rd}_fpcr{fpcr_rmode}"),
+                            enc_fp_gpr_to_fp_regs(sf, fp_type, opcode, 31, rd),
+                            st,
+                        ));
+                    }
+                }
+            }
         }
     }
 
-    for &(label, sf, fp_type, rmode, opcode, src_bits) in &[
-        (
-            "fcvtzs_wzr_s",
-            0,
-            0b00,
-            0b11,
-            0b000,
-            (3.75f32).to_bits() as u64,
-        ),
-        (
-            "fcvtzu_xzr_d",
-            1,
-            0b01,
-            0b11,
-            0b001,
-            (42.5f64).to_bits(),
-        ),
-        (
-            "fcvtas_wzr_s",
-            0,
-            0b00,
-            0b00,
-            0b100,
-            (-2.5f32).to_bits() as u64,
-        ),
-        (
-            "fcvtau_xzr_d",
-            1,
-            0b01,
-            0b00,
-            0b101,
-            (2.5f64).to_bits(),
-        ),
-        ("fcvtzs_xzr_h", 1, 0b11, 0b11, 0b000, 0x3e00),
-        (
-            "fjcvtzs_wzr_d",
-            0,
-            0b01,
-            0b11,
-            0b110,
-            (42.0f64).to_bits(),
-        ),
-    ] {
-        for _ in 0..4 {
+    let rmode_names = [(0b00u32, "n"), (0b01, "p"), (0b10, "m"), (0b11, "z")];
+    for sf in 0..=1 {
+        let gpr_name = if sf == 0 { "wzr" } else { "xzr" };
+        for &(fp_type, fp_name, inputs) in fp_inputs {
+            for &(opcode, sign_name) in &[(0b000u32, "s"), (0b001, "u")] {
+                for &(rmode, rmode_name) in &rmode_names {
+                    for rn in [RN, 31] {
+                        for &(input_name, src_bits) in inputs {
+                            let mut st = gen_input(&mut rng);
+                            st.fpsr = 0;
+                            st.set_vreg(rn as usize, src_bits, rng.next());
+                            batch.push((
+                                format!(
+                                    "fcvt{rmode_name}{sign_name}_{gpr_name}_{fp_name}_vn{rn}_{input_name}"
+                                ),
+                                enc_fp_to_gpr_regs(sf, fp_type, rmode, opcode, rn, 31),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+
+            for &(opcode, op_name) in &[(0b100u32, "fcvtas"), (0b101, "fcvtau")] {
+                for rn in [RN, 31] {
+                    for &(input_name, src_bits) in inputs {
+                        let mut st = gen_input(&mut rng);
+                        st.fpsr = 0;
+                        st.set_vreg(rn as usize, src_bits, rng.next());
+                        batch.push((
+                            format!("{op_name}_{gpr_name}_{fp_name}_vn{rn}_{input_name}"),
+                            enc_fp_to_gpr_regs(sf, fp_type, 0b00, opcode, rn, 31),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    for rn in [RN, 31] {
+        for &(input_name, src_bits) in &[
+            ("pos", (42.0f64).to_bits()),
+            ("neg", (-42.0f64).to_bits()),
+            ("neg_zero", (-0.0f64).to_bits()),
+        ] {
             let mut st = gen_input(&mut rng);
             st.fpsr = 0;
-            st.set_vreg(RN as usize, src_bits, 0);
+            st.set_vreg(rn as usize, src_bits, rng.next());
             batch.push((
-                label.to_string(),
-                enc_fp_to_gpr_regs(sf, fp_type, rmode, opcode, RN, 31),
+                format!("fjcvtzs_wzr_d_vn{rn}_{input_name}"),
+                enc_fp_to_gpr_regs(0, 0b01, 0b11, 0b110, rn, 31),
                 st,
             ));
         }
@@ -47738,17 +47918,18 @@ fn diff_fp_scalar_fmov_general_zero_registers() {
     let mut rng = Rng::new(0xF031_F000);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    for &(label, sf, fp_type, rmode, rd) in &[
-        ("fmov_s_wzr", 0, 0b00, 0b00, 0),
-        ("fmov_d_xzr", 1, 0b01, 0b00, 1),
-        ("fmov_vd1_xzr", 1, 0b10, 0b01, 2),
-        ("fmov_h_wzr", 0, 0b11, 0b00, 3),
-        ("fmov_h_xzr", 1, 0b11, 0b00, 4),
+    for &(label, sf, fp_type, rmode) in &[
+        ("fmov_s_wzr", 0, 0b00, 0b00),
+        ("fmov_d_xzr", 1, 0b01, 0b00),
+        ("fmov_vd1_xzr", 1, 0b10, 0b01),
+        ("fmov_h_wzr", 0, 0b11, 0b00),
+        ("fmov_h_xzr", 1, 0b11, 0b00),
     ] {
-        for _ in 0..4 {
-            let st = gen_input(&mut rng);
+        for rd in [0u32, 5, 31] {
+            let mut st = gen_input(&mut rng);
+            st.set_vreg(rd as usize, rng.next(), rng.next());
             batch.push((
-                label.to_string(),
+                format!("{label}_vd{rd}"),
                 enc_fp_to_gpr_regs(sf, fp_type, rmode, 0b111, 31, rd),
                 st,
             ));
@@ -47768,18 +47949,25 @@ fn diff_fp_scalar_fmov_general_zero_registers() {
         ("fmov_wzr_h", 0, 0b11, 0b00, 0x3e00),
         ("fmov_xzr_h", 1, 0b11, 0b00, 0xbe00),
     ] {
-        for _ in 0..4 {
-            let mut st = gen_input(&mut rng);
-            if fp_type == 0b10 {
-                st.set_vreg(RN as usize, rng.next(), src_bits);
-            } else {
-                st.set_vreg(RN as usize, src_bits, rng.next());
+        for rn in [RN, 31] {
+            for (case, low, high) in [
+                (0u32, 0u64, src_bits),
+                (1, src_bits, 0),
+                (2, rng.next(), src_bits),
+                (3, src_bits, rng.next()),
+            ] {
+                let mut st = gen_input(&mut rng);
+                if fp_type == 0b10 {
+                    st.set_vreg(rn as usize, low, high);
+                } else {
+                    st.set_vreg(rn as usize, src_bits, high);
+                }
+                batch.push((
+                    format!("{label}_vn{rn}_case{case}"),
+                    enc_fp_to_gpr_regs(sf, fp_type, rmode, 0b110, rn, 31),
+                    st,
+                ));
             }
-            batch.push((
-                label.to_string(),
-                enc_fp_to_gpr_regs(sf, fp_type, rmode, 0b110, RN, 31),
-                st,
-            ));
         }
     }
 
@@ -48274,53 +48462,81 @@ fn diff_fp_scalar_fixed_gpr_conversion_zero_registers() {
     let mut rng = Rng::new(0xF031_F17E);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    for &(label, sf, fp_type, opcode, fbits, rd) in &[
-        ("scvtf_fixed_s_wzr_f1", 0, 0b00, 0b010, 1, 0),
-        ("ucvtf_fixed_h_wzr_f16", 0, 0b11, 0b011, 16, 2),
-        ("scvtf_fixed_d_xzr_f8", 1, 0b01, 0b010, 8, 3),
-        ("ucvtf_fixed_h_xzr_f25", 1, 0b11, 0b011, 25, 4),
-    ] {
-        for rmode in 0..4u64 {
-            let mut st = gen_input(&mut rng);
-            st.fpcr = rmode << 22;
-            st.fpsr = 0;
-            batch.push((
-                format!("{label}_rmode{rmode}"),
-                enc_fp_fixed_gpr_to_fp_regs(sf, fp_type, opcode, fbits, 31, rd),
-                st,
-            ));
-        }
-    }
-
-    for &(label, sf, fp_type, opcode, fbits, src_bits) in &[
+    let fp_inputs: &[(u32, &str, &[(&str, u64)])] = &[
         (
-            "fcvtzs_fixed_wzr_s_f2",
-            0,
             0b00,
-            0b000,
-            2,
-            (1.25f32).to_bits() as u64,
+            "s",
+            &[
+                ("pos", (1.25f32).to_bits() as u64),
+                ("neg", (-1.5f32).to_bits() as u64),
+                ("tie", (2.5f32).to_bits() as u64),
+            ],
         ),
         (
-            "fcvtzu_fixed_xzr_d_f3",
-            1,
             0b01,
-            0b001,
-            3,
-            (2.5f64).to_bits(),
+            "d",
+            &[
+                ("pos", (2.5f64).to_bits()),
+                ("neg", (-3.75f64).to_bits()),
+                ("tie", (1.5f64).to_bits()),
+            ],
         ),
-        ("fcvtzs_fixed_xzr_h_f1", 1, 0b11, 0b000, 1, 0x3e00),
-        ("fcvtzu_fixed_wzr_h_f4", 0, 0b11, 0b001, 4, 0x3c00),
-    ] {
-        for _ in 0..4 {
-            let mut st = gen_input(&mut rng);
-            st.fpsr = 0;
-            st.set_vreg(RN as usize, src_bits, 0);
-            batch.push((
-                label.to_string(),
-                enc_fp_fixed_fp_to_gpr_regs(sf, fp_type, opcode, fbits, RN, 31),
-                st,
-            ));
+        (
+            0b11,
+            "h",
+            &[
+                ("pos", 0x3c00),
+                ("neg", 0xbe00),
+                ("tie", 0x3e00),
+            ],
+        ),
+    ];
+
+    for sf in 0..=1 {
+        let gpr_name = if sf == 0 { "wzr" } else { "xzr" };
+        let max_fbits = if sf == 0 { 32 } else { 64 };
+        for &(fp_type, fp_name, inputs) in fp_inputs {
+            for &(opcode, op_name) in &[(0b010u32, "scvtf"), (0b011, "ucvtf")] {
+                for fbits in 1..=max_fbits {
+                    for rd in [0u32, 31] {
+                        for fpcr_rmode in 0..4u64 {
+                            let mut st = gen_input(&mut rng);
+                            st.fpcr = fpcr_rmode << 22;
+                            st.fpsr = 0;
+                            batch.push((
+                                format!(
+                                    "{op_name}_fixed_{fp_name}_{gpr_name}_f{fbits}_vd{rd}_fpcr{fpcr_rmode}"
+                                ),
+                                enc_fp_fixed_gpr_to_fp_regs(
+                                    sf, fp_type, opcode, fbits, 31, rd,
+                                ),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+
+            for &(opcode, op_name) in &[(0b000u32, "fcvtzs"), (0b001, "fcvtzu")] {
+                for fbits in 1..=max_fbits {
+                    for rn in [RN, 31] {
+                        for &(input_name, src_bits) in inputs {
+                            let mut st = gen_input(&mut rng);
+                            st.fpsr = 0;
+                            st.set_vreg(rn as usize, src_bits, rng.next());
+                            batch.push((
+                                format!(
+                                    "{op_name}_fixed_{gpr_name}_{fp_name}_f{fbits}_vn{rn}_{input_name}"
+                                ),
+                                enc_fp_fixed_fp_to_gpr_regs(
+                                    sf, fp_type, opcode, fbits, rn, 31,
+                                ),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -50136,41 +50352,49 @@ fn diff_simd_copy_zero_registers() {
     let mut rng = Rng::new(0x9002);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size in 0..4u32 {
-        let imm5 = copy_imm5(size, 0);
-        for q in 0..2u32 {
-            if q == 1 || size != 3 {
-                batch.push((
-                    format!("dupgen_xzr sz{size} q{q}"),
-                    enc_copy_regs(q, 0, imm5, 0b0001, 31, RD),
-                    gen_input(&mut rng),
-                ));
+        let lanes: u32 = 16u32 >> size;
+        for index in 0..lanes {
+            let imm5 = copy_imm5(size, index);
+            for q in 0..2u32 {
+                if q == 1 || size != 3 {
+                    let mut st = gen_input(&mut rng);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000;
+                    batch.push((
+                        format!("dupgen_xzr sz{size} i{index} q{q}"),
+                        enc_copy_regs(q, 0, imm5, 0b0001, 31, RD),
+                        st,
+                    ));
+                }
+                let smov_valid = size < 2 || (size == 2 && q == 1);
+                if smov_valid {
+                    let mut st = gen_input(&mut rng);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000;
+                    batch.push((
+                        format!("smov_xzr_dest sz{size} i{index} q{q}"),
+                        enc_copy_regs(q, 0, imm5, 0b0101, RN, 31),
+                        st,
+                    ));
+                }
+                let umov_valid = (size <= 2 && q == 0) || (size == 3 && q == 1);
+                if umov_valid {
+                    let mut st = gen_input(&mut rng);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000;
+                    batch.push((
+                        format!("umov_xzr_dest sz{size} i{index} q{q}"),
+                        enc_copy_regs(q, 0, imm5, 0b0111, RN, 31),
+                        st,
+                    ));
+                }
             }
-            let smov_valid = size < 2 || (size == 2 && q == 1);
-            if smov_valid {
-                batch.push((
-                    format!("smov_xzr_dest sz{size} q{q}"),
-                    enc_copy_regs(q, 0, imm5, 0b0101, RN, 31),
-                    gen_input(&mut rng),
-                ));
-            }
-            let umov_valid = (size <= 2 && q == 0) || (size == 3 && q == 1);
-            if umov_valid {
-                batch.push((
-                    format!("umov_xzr_dest sz{size} q{q}"),
-                    enc_copy_regs(q, 0, imm5, 0b0111, RN, 31),
-                    gen_input(&mut rng),
-                ));
-            }
-        }
 
-        let mut st = gen_input(&mut rng);
-        st.sp =
-            GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000 + ((size as u64) << 4);
-        batch.push((
-            format!("insgen_xzr sz{size}"),
-            enc_copy_regs(1, 0, imm5, 0b0011, 31, RD),
-            st,
-        ));
+            let mut st = gen_input(&mut rng);
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x17000;
+            batch.push((
+                format!("insgen_xzr sz{size} i{index}"),
+                enc_copy_regs(1, 0, imm5, 0b0011, 31, RD),
+                st,
+            ));
+        }
     }
     run_batch("simd_copy_zero_registers", batch);
 }
