@@ -51,6 +51,7 @@ typedef struct {
     uint64_t v[64];   /* V0..V31 as lo/hi u64 pairs       */
     uint64_t scratch[32]; /* contents of the shared scratch window (256 bytes) */
     uint64_t preds[4]; /* SVE P0..P15 packed: 16 x 16-bit (VL=128), 2 bytes each */
+    uint64_t ffr;     /* SVE FFR, low 16 bits at VL=128   */
 } ArmState;
 
 /* SVE signal-frame record. At VL=128 (vq=1) the Z registers alias V, and the
@@ -60,7 +61,9 @@ typedef struct {
 #define SVE_MAGIC 0x53564501u
 #endif
 #define SVE_PREGS_OFFSET 528
-#define SVE_RECORD_FULL  560
+#define SVE_FFR_OFFSET   560
+#define SVE_PREDS_FULL   SVE_FFR_OFFSET
+#define SVE_FFR_FULL     (SVE_FFR_OFFSET + 2)
 
 /* Shared scratch memory for load/store tests. The window is MAP_FIXED so the
  * same numeric address is valid in both qemu-user and the rax FlatMemory.
@@ -171,6 +174,10 @@ __asm__(
     "    ldr p12, [x1, #12, mul vl]\n"
     "    ldr p13, [x1, #13, mul vl]\n"
     "    ldr p14, [x1, #14, mul vl]\n"
+    "    ldr p15, [x1, #15, mul vl]\n"
+    "    add x2, x0, #1088\n"
+    "    ldr p15, [x2]\n"
+    "    .inst 0x252891e0\n" /* WRFFR p15 */
     "    ldr p15, [x1, #15, mul vl]\n"
     "    ldr w1, [x0, #280]\n"
     "    msr fpcr, x1\n"
@@ -305,8 +312,11 @@ static void capture_fpsimd(const mcontext_t *mc, ArmState *st) {
         } else if (h->magic == SVE_MAGIC) {
             /* Capture the 16 predicate registers if the record is full-size
              * (i.e. the SVE registers are live for this frame). */
-            if (h->size >= SVE_RECORD_FULL) {
+            if (h->size >= SVE_PREDS_FULL) {
                 memcpy(st->preds, p + SVE_PREGS_OFFSET, sizeof st->preds);
+            }
+            if (h->size >= SVE_FFR_FULL) {
+                st->ffr = *(const uint16_t *)(p + SVE_FFR_OFFSET);
             }
         } else if (h->magic == 0 && h->size == 0) {
             return;

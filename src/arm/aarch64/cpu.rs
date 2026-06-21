@@ -6353,6 +6353,16 @@ impl AArch64Cpu {
         self.sve_p[i] = v;
     }
 
+    /// Read the SVE first-fault register. Exposed for the differential harness.
+    pub fn sve_ffr(&self) -> u32 {
+        self.sve_ffr
+    }
+
+    /// Write the SVE first-fault register. Exposed for the differential harness.
+    pub fn set_sve_ffr(&mut self, v: u32) {
+        self.sve_ffr = v & 0xFFFF;
+    }
+
     fn exec_sve(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         // Check if SVE is enabled (CPACR_EL1.ZEN)
         let cpacr = self.sysregs.el1.cpacr;

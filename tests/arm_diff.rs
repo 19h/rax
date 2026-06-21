@@ -71,6 +71,7 @@ struct ArmState {
     v: [u64; 64],       // V0..V31 as lo/hi u64 pairs
     scratch: [u64; 32], // shared scratch window (256 bytes) for load/store tests
     preds: [u64; 4],    // SVE P0..P15 packed as 16 x 16-bit (VL=128), byte-granular
+    ffr: u64,           // SVE first-fault register, low 16 bits at VL=128
 }
 
 /// AArch64 NOP (used to fill the oracle's unused second instruction slot).
@@ -111,6 +112,7 @@ impl ArmState {
             v: [0; 64],
             scratch: [0; 32],
             preds: [0; 4],
+            ffr: 0,
         }
     }
     fn vreg(&self, r: usize) -> (u64, u64) {
@@ -128,6 +130,12 @@ impl ArmState {
     fn set_preg(&mut self, r: usize, v: u16) {
         let shift = 16 * (r % 4);
         self.preds[r / 4] = (self.preds[r / 4] & !(0xFFFFu64 << shift)) | ((v as u64) << shift);
+    }
+    fn ffr(&self) -> u16 {
+        self.ffr as u16
+    }
+    fn set_ffr(&mut self, v: u16) {
+        self.ffr = v as u64;
     }
 }
 
@@ -151,10 +159,10 @@ struct OutCase {
 
 const WIRE_MAGIC: u32 = 0x314d_5241; // 'A','R','M','1'
 
-// Compile-time guarantee the layout matches the C side (preds[4] adds 32 bytes).
-const _: () = assert!(core::mem::size_of::<ArmState>() == 1088);
-const _: () = assert!(core::mem::size_of::<InCase>() == 1104);
-const _: () = assert!(core::mem::size_of::<OutCase>() == 1096);
+// Compile-time guarantee the layout matches the C side (preds[4] + ffr).
+const _: () = assert!(core::mem::size_of::<ArmState>() == 1096);
+const _: () = assert!(core::mem::size_of::<InCase>() == 1112);
+const _: () = assert!(core::mem::size_of::<OutCase>() == 1104);
 
 // ---------------------------------------------------------------------------
 // Byte (de)serialisation helpers -- plain little-endian copies of the structs.
@@ -327,6 +335,15 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if mnemonic_base == "sb" {
         return !caps.has("sb");
     }
+    if mnemonic_base == "dgh" {
+        return !caps.has("dgh");
+    }
+    if matches!(mnemonic_base, "wfet" | "wfit") {
+        return !caps.has("wfxt");
+    }
+    if matches!(mnemonic_base, "ldapr" | "ldaprb" | "ldaprh") {
+        return !caps.has("lrcpc");
+    }
 
     let sve2p1 = [
         "addqv", "andqv", "eorqv", "orqv", "smaxqv", "sminqv", "umaxqv", "uminqv", "faddqv",
@@ -489,6 +506,7 @@ fn run_rax_sequence_at_el(insns: &[u32], input: &ArmState, initial_el: u8) -> Op
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
+    cpu.set_sve_ffr(input.ffr() as u32);
 
     // Install the scratch window at SCRATCH_ADDR.
     let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
@@ -540,6 +558,7 @@ fn run_rax_sequence_at_el(insns: &[u32], input: &ArmState, initial_el: u8) -> Op
     for r in 0..16usize {
         out.set_preg(r, cpu.sve_pred(r) as u16);
     }
+    out.set_ffr(cpu.sve_ffr() as u16);
     Some(out)
 }
 
@@ -569,6 +588,7 @@ fn run_rax_exit(insn: u32, input: &ArmState) -> Option<CpuExit> {
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
+    cpu.set_sve_ffr(input.ffr() as u32);
 
     cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
     cpu.set_pc(0);
@@ -602,6 +622,7 @@ fn run_rax_literal(insn: u32, word1: u32, word2: u32, input: &ArmState) -> Optio
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
+    cpu.set_sve_ffr(input.ffr() as u32);
     let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
     cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
 
@@ -652,6 +673,7 @@ fn run_rax_literal(insn: u32, word1: u32, word2: u32, input: &ArmState) -> Optio
     for r in 0..16usize {
         out.set_preg(r, cpu.sve_pred(r) as u16);
     }
+    out.set_ffr(cpu.sve_ffr() as u16);
     Some(out)
 }
 
@@ -791,6 +813,13 @@ fn compare_rax_outcome(
                 oracle.st.preg(r)
             ));
         }
+    }
+    if rax.ffr() != oracle.st.ffr() {
+        diffs.push(format!(
+            "ffr: rax={:#06x} hw={:#06x}",
+            rax.ffr(),
+            oracle.st.ffr()
+        ));
     }
 
     if !diffs.is_empty() {
@@ -3827,6 +3856,13 @@ fn run_batch_literal(name: &str, batch: Vec<(String, u32, u32, u32, ArmState)>) 
                     out.st.preg(r)
                 ));
             }
+        }
+        if rax.ffr() != out.st.ffr() {
+            diffs.push(format!(
+                "ffr: rax={:#06x} hw={:#06x}",
+                rax.ffr(),
+                out.st.ffr()
+            ));
         }
         for k in 0..32 {
             if rax.scratch[k] != out.st.scratch[k] {
@@ -24579,6 +24615,7 @@ fn run_rax_pair(insn: u32, insn2: u32, input: &ArmState) -> Option<ArmState> {
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
+    cpu.set_sve_ffr(input.ffr() as u32);
     let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
     cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
     cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
@@ -24625,6 +24662,7 @@ fn run_rax_pair(insn: u32, insn2: u32, input: &ArmState) -> Option<ArmState> {
     for r in 0..16usize {
         out.set_preg(r, cpu.sve_pred(r) as u16);
     }
+    out.set_ffr(cpu.sve_ffr() as u16);
     Some(out)
 }
 
@@ -24695,6 +24733,13 @@ fn run_batch_pair(name: &str, batch: Vec<(String, u32, u32, ArmState)>) {
                     out.st.preg(r)
                 ));
             }
+        }
+        if rax.ffr() != out.st.ffr() {
+            diffs.push(format!(
+                "ffr: rax={:#06x} hw={:#06x}",
+                rax.ffr(),
+                out.st.ffr()
+            ));
         }
         for k in 0..32 {
             if rax.scratch[k] != out.st.scratch[k] {
@@ -24767,6 +24812,7 @@ fn run_rax_branch_program(insn: u32, marker: u32, input: &ArmState) -> Option<Ar
     for r in 0..16usize {
         cpu.set_sve_pred(r, input.preg(r) as u32);
     }
+    cpu.set_sve_ffr(input.ffr() as u32);
     let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
     cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
     cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
@@ -24821,6 +24867,7 @@ fn run_rax_branch_program(insn: u32, marker: u32, input: &ArmState) -> Option<Ar
     for r in 0..16usize {
         out.set_preg(r, cpu.sve_pred(r) as u16);
     }
+    out.set_ffr(cpu.sve_ffr() as u16);
     Some(out)
 }
 
@@ -25770,6 +25817,7 @@ fn diff_branch_system_hints_barriers_el0() {
         ("yield", hint(0, 1)),
         ("sev", hint(0, 4)),
         ("sevl", hint(0, 5)),
+        ("dgh", hint(0, 6)),
         ("esb", hint(2, 0)),
         ("psb_csync", hint(2, 1)),
         ("tsb_csync", hint(2, 2)),
@@ -25790,6 +25838,23 @@ fn diff_branch_system_hints_barriers_el0() {
     // rax and can be controlled by the host kernel at EL0, so they are covered
     // by structured-exit tests rather than value-state comparison here.
     run_batch("branch_system_hints_barriers_el0", batch);
+}
+
+#[test]
+fn diff_branch_system_wfxt_el0() {
+    // WFET/WFIT are timed wait hints. Use an already-expired timeout value so
+    // native hardware returns immediately and the architectural state is stable.
+    let mut rng = Rng::new(0xa64_0f17);
+    let mut batch = Vec::new();
+    let mut wfet = gen_input(&mut rng);
+    wfet.x[0] = 0;
+    batch.push(("wfet x0".to_string(), 0xd503_1000, wfet));
+
+    let mut wfit = gen_input(&mut rng);
+    wfit.x[1] = 0;
+    batch.push(("wfit x1".to_string(), 0xd503_1021, wfit));
+
+    run_batch("branch_system_wfxt_el0", batch);
 }
 
 #[test]
@@ -32200,6 +32265,32 @@ fn diff_sve_ffr() {
 }
 
 #[test]
+fn diff_sve_ffr_direct_state() {
+    // Directly compare FFR as architectural state, rather than only through
+    // an RDFFR predicate readback. This covers both oracle FFR injection and
+    // signal-frame capture.
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &ffr in &[0x0000, 0x0001, 0x00ff, 0xaaaa, 0xffff] {
+        let mut st = ArmState::zeroed();
+        st.set_ffr(ffr);
+        st.set_preg(0, !ffr);
+        batch.push((format!("rdffr initial ffr={ffr:#06x}"), enc_rdffr(0), st));
+    }
+    for &initial in &[0x0000, 0x1234, 0xffff] {
+        let mut st = ArmState::zeroed();
+        st.set_ffr(initial);
+        batch.push((format!("setffr initial ffr={initial:#06x}"), enc_setffr(), st));
+    }
+    for &pred in &[0x0000, 0x0001, 0x5555, 0x8000, 0xffff] {
+        let mut st = ArmState::zeroed();
+        st.set_ffr(!pred);
+        st.set_preg(1, pred);
+        batch.push((format!("wrffr p1={pred:#06x}"), enc_wrffr(1), st));
+    }
+    run_batch("sve_ffr_direct_state", batch);
+}
+
+#[test]
 fn diff_sve_ld1rq() {
     // Load-replicate quadword (at VL=128 a packed contiguous quadword load).
     let mut rng = Rng::new(0x4_C001);
@@ -33817,6 +33908,19 @@ fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
         | RD
 }
 
+/// LDAPR/LDAPRB/LDAPRH: atomic-memory-op space with Rs==31, o3==1, opc==100.
+fn enc_ldapr(size: u32) -> u32 {
+    (size << 30)
+        | (0b111 << 27)
+        | (1 << 23)
+        | (1 << 21)
+        | (31 << 16)
+        | (1 << 15)
+        | (0b100 << 12)
+        | (RN << 5)
+        | RD
+}
+
 #[test]
 fn diff_mem_atomic() {
     let ops: &[(u32, u32, &str)] = &[
@@ -33849,6 +33953,24 @@ fn diff_mem_atomic() {
         }
     }
     run_batch("mem_atomic", batch);
+}
+
+#[test]
+fn diff_mem_ldapr_rcpc() {
+    let cases: &[(&str, u32)] = &[
+        ("ldaprb", enc_ldapr(0)),
+        ("ldaprh", enc_ldapr(1)),
+        ("ldapr w", enc_ldapr(2)),
+        ("ldapr x", enc_ldapr(3)),
+    ];
+    let mut rng = Rng::new(0x1_0052);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..8 {
+            batch.push(((*label).to_string(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ldapr_rcpc", batch);
 }
 
 #[test]
@@ -36250,7 +36372,7 @@ fn diff_sve2_comprehensive_sweep() {
                 continue;
             }
         };
-        // value compare (regs, nzcv, v, preds, scratch)
+        // value compare (regs, nzcv, v, predicates, FFR)
         let mut diffs = Vec::new();
         for r in 0..31 {
             if rax.x[r] != out.st.x[r] {
@@ -36282,6 +36404,9 @@ fn diff_sve2_comprehensive_sweep() {
                     out.st.preg(r)
                 ));
             }
+        }
+        if rax.ffr() != out.st.ffr() {
+            diffs.push(format!("ffr:rax={:#x} hw={:#x}", rax.ffr(), out.st.ffr()));
         }
         if !diffs.is_empty() {
             e[1] += 1;
