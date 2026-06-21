@@ -1869,7 +1869,7 @@ impl AArch64Cpu {
                 }
                 0b11 => {
                     let (n, m) = (self.v[rn as usize] as u16, self.v[rm as usize] as u16);
-                    let mut r = sve_fp16_binop(kind, n, m);
+                    let mut r = sve_fp16_binop_with_fpcr(kind, n, m, self.fpcr);
                     self.fpsr |= fp_status_binop_f16(kind, n, m, r);
                     if nmul {
                         r ^= 0x8000;
@@ -3177,7 +3177,12 @@ impl AArch64Cpu {
                 for e in 0..elements {
                     let n = lane(src1, e);
                     let m = lane(src2, e);
-                    let r = f(n, m);
+                    let r = match (u, a, opcode) {
+                        (0, 0, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Add, n, m, self.fpcr),
+                        (0, 1, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Sub, n, m, self.fpcr),
+                        (1, 0, 0b011) => sve_fp16_binop_with_fpcr(FpKind::Mul, n, m, self.fpcr),
+                        _ => f(n, m),
+                    };
                     self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << (e * 16);
                 }
@@ -3210,14 +3215,20 @@ impl AArch64Cpu {
                 for i in 0..pairs {
                     let n = lane(src1, 2 * i);
                     let m = lane(src1, 2 * i + 1);
-                    let r = f(n, m);
+                    let r = match (u, a, opcode) {
+                        (1, 0, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Add, n, m, self.fpcr),
+                        _ => f(n, m),
+                    };
                     self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << (i * 16);
                 }
                 for i in 0..pairs {
                     let n = lane(src2, 2 * i);
                     let m = lane(src2, 2 * i + 1);
-                    let r = f(n, m);
+                    let r = match (u, a, opcode) {
+                        (1, 0, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Add, n, m, self.fpcr),
+                        _ => f(n, m),
+                    };
                     self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
                     dst |= (r as u128) << ((pairs + i) * 16);
                 }
@@ -12115,7 +12126,7 @@ impl AArch64Cpu {
                 let a = read_elem(&n, off, esize);
                 let b = read_elem(&m, off, esize);
                 let r = match esize {
-                    2 => sve_fp16_binop(kind, a as u16, b as u16) as u64,
+                    2 => sve_fp16_binop_with_fpcr(kind, a as u16, b as u16, self.fpcr) as u64,
                     4 => fp_three_same_f32_with_fpcr(kind, a as u32, b as u32, 0, self.fpcr)
                         as u64,
                     8 => fp_three_same_f64_with_fpcr(kind, a, b, 0, self.fpcr),
@@ -12746,10 +12757,25 @@ impl AArch64Cpu {
             for e in 0..(16 / esz) {
                 let off = e * esz;
                 let (x, y) = (read_elem(&n, off, esz), read_elem(&m, off, esz));
-                let r = if rsqrt {
-                    sve_rsqrts(esz, x, y)
-                } else {
-                    sve_recps(esz, x, y)
+                let r = match (rsqrt, esz) {
+                    (true, 2) => fp16_rsqrts_with_fpcr(x as u16, y as u16, self.fpcr) as u64,
+                    (false, 2) => fp16_recps_with_fpcr(x as u16, y as u16, self.fpcr) as u64,
+                    (true, 4) => fp_three_same_f32_with_fpcr(
+                        FpKind::Rsqrts,
+                        x as u32,
+                        y as u32,
+                        0,
+                        self.fpcr,
+                    ) as u64,
+                    (false, 4) => fp_three_same_f32_with_fpcr(
+                        FpKind::Recps,
+                        x as u32,
+                        y as u32,
+                        0,
+                        self.fpcr,
+                    ) as u64,
+                    (true, _) => fp_three_same_f64_with_fpcr(FpKind::Rsqrts, x, y, 0, self.fpcr),
+                    (false, _) => fp_three_same_f64_with_fpcr(FpKind::Recps, x, y, 0, self.fpcr),
                 };
                 self.fpsr |= fp_status_recps_rsqrts(esz, rsqrt, x, y, r);
                 write_elem(&mut dst, off, esz, r);
@@ -13057,7 +13083,7 @@ impl AArch64Cpu {
             let b = scalar.unwrap_or_else(|| read_elem(&b_reg, off, esize));
             let (x, y) = if swap { (b, a) } else { (a, b) };
             let r = match esize {
-                2 => sve_fp16_binop(kind, x as u16, y as u16) as u64,
+                2 => sve_fp16_binop_with_fpcr(kind, x as u16, y as u16, self.fpcr) as u64,
                 4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, self.fpcr) as u64,
                 8 => fp_three_same_f64_with_fpcr(kind, x, y, 0, self.fpcr),
                 _ => return Ok(CpuExit::Undefined(insn)),
@@ -21647,7 +21673,9 @@ fn fp_three_same_f32(kind: FpKind, a: u32, b: u32, d: u32) -> u32 {
 
 fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) -> u32 {
     use FpKind::*;
-    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls) {
+    if (fpcr >> 22) & 0x3 == 0
+        || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls | Recps | Rsqrts)
+    {
         return fp_three_same_f32(kind, a, b, d);
     }
 
@@ -21660,6 +21688,18 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
         }
         let lhs = if matches!(kind, Mls) { -x } else { x };
         return f64_to_f32_bits_with_fpcr(lhs as f64 * y as f64 + acc as f64, fpcr);
+    }
+    if matches!(kind, Recps | Rsqrts) {
+        if !x.is_finite() || !y.is_finite() {
+            return fp_three_same_f32(kind, a, b, d);
+        }
+        let product = x as f64 * y as f64;
+        let exact = if matches!(kind, Recps) {
+            2.0 - product
+        } else {
+            (3.0 - product) * 0.5
+        };
+        return f64_to_f32_bits_with_fpcr(exact, fpcr);
     }
     if !x.is_finite() || !y.is_finite() {
         return fp_three_same_f32(kind, a, b, d);
@@ -21819,8 +21859,37 @@ fn fp64_adjust_nearest_with_fpcr(
 fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) -> u64 {
     use FpKind::*;
     let nearest = fp_three_same_f64(kind, a, b, d);
-    if (fpcr >> 22) & 0x3 == 0 || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls) {
+    if (fpcr >> 22) & 0x3 == 0
+        || !matches!(kind, Add | Addp | Sub | Mul | Mla | Mls | Recps | Rsqrts)
+    {
         return nearest;
+    }
+
+    if matches!(kind, Recps | Rsqrts) {
+        let Some((ma, ea)) = fp64_signed_mant_exp(a).or_else(|| fp64_is_zero(a).then_some((0, 0)))
+        else {
+            return nearest;
+        };
+        let Some((mb, eb)) = fp64_signed_mant_exp(b).or_else(|| fp64_is_zero(b).then_some((0, 0)))
+        else {
+            return nearest;
+        };
+        let Some(product) = ma.checked_mul(mb) else {
+            return nearest;
+        };
+        let constant = if matches!(kind, Recps) { 2.0f64 } else { 3.0f64 };
+        let Some((mc, ec)) = fp64_signed_mant_exp(constant.to_bits()) else {
+            return nearest;
+        };
+        let terms = if matches!(kind, Recps) {
+            [(mc, ec), (-product, ea + eb)]
+        } else {
+            [(mc, ec - 1), (-product, ea + eb - 1)]
+        };
+        let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&terms, nearest) else {
+            return nearest;
+        };
+        return fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr);
     }
 
     let Some((ma, ea)) = fp64_signed_mant_exp(a) else {
@@ -22176,7 +22245,7 @@ fn fp_add_bits(a: u64, b: u64, esize: u32) -> u64 {
 
 fn fp_add_bits_with_fpcr(a: u64, b: u64, esize: u32, fpcr: u32) -> u64 {
     match esize {
-        16 => fp_add_bits(a, b, esize),
+        16 => sve_fp16_binop_with_fpcr(FpKind::Add, a as u16, b as u16, fpcr) as u64,
         32 => fp_three_same_f32_with_fpcr(FpKind::Add, a as u32, b as u32, 0, fpcr) as u64,
         _ => fp_three_same_f64_with_fpcr(FpKind::Add, a, b, 0, fpcr),
     }
@@ -22370,7 +22439,7 @@ fn sve_fp_combine(kind: FpKind, esize: usize, x: u64, y: u64) -> u64 {
 
 fn sve_fp_combine_with_fpcr(kind: FpKind, esize: usize, x: u64, y: u64, fpcr: u32) -> u64 {
     match esize {
-        2 => sve_fp16_binop(kind, x as u16, y as u16) as u64,
+        2 => sve_fp16_binop_with_fpcr(kind, x as u16, y as u16, fpcr) as u64,
         4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, fpcr) as u64,
         _ => fp_three_same_f64_with_fpcr(kind, x, y, 0, fpcr),
     }
@@ -23782,6 +23851,23 @@ fn sve_fp16_binop(kind: FpKind, x: u16, y: u16) -> u16 {
     }
 }
 
+fn sve_fp16_binop_with_fpcr(kind: FpKind, x: u16, y: u16, fpcr: u32) -> u16 {
+    use FpKind::*;
+    if (fpcr >> 22) & 0x3 == 0 || fp16_is_nan(x) || fp16_is_nan(y) {
+        return sve_fp16_binop(kind, x, y);
+    }
+    let finite_pair = !fp16_is_inf(x) && !fp16_is_inf(y);
+    let exact = match kind {
+        Add if finite_pair => fp16_to_f64(x) + fp16_to_f64(y),
+        Sub if finite_pair => fp16_to_f64(x) - fp16_to_f64(y),
+        Mul if finite_pair => fp16_to_f64(x) * fp16_to_f64(y),
+        Div if finite_pair && !fp16_is_zero(y) => fp16_to_f64(x) / fp16_to_f64(y),
+        Abd if finite_pair => (fp16_to_f64(x) - fp16_to_f64(y)).abs(),
+        _ => return sve_fp16_binop(kind, x, y),
+    };
+    f64_to_fp16_bits_with_fpcr(exact, fpcr)
+}
+
 fn fp16_maxnm(a: u16, b: u16) -> u16 {
     fp16_maxnum_minnum(a, b, false)
 }
@@ -23805,6 +23891,18 @@ fn fp16_recps(a: u16, b: u16) -> u16 {
     fp16_round(2.0 - fp16_to_f64(a) * fp16_to_f64(b))
 }
 
+fn fp16_recps_with_fpcr(a: u16, b: u16, fpcr: u32) -> u16 {
+    if (fpcr >> 22) & 0x3 == 0
+        || fp16_is_nan(a)
+        || fp16_is_nan(b)
+        || fp16_is_inf(a)
+        || fp16_is_inf(b)
+    {
+        return fp16_recps(a, b);
+    }
+    f64_to_fp16_bits_with_fpcr(2.0 - fp16_to_f64(a) * fp16_to_f64(b), fpcr)
+}
+
 fn fp16_rsqrts(a: u16, b: u16) -> u16 {
     if let Some(n) = fp16_nan2(a ^ 0x8000, b) {
         return n;
@@ -23813,6 +23911,18 @@ fn fp16_rsqrts(a: u16, b: u16) -> u16 {
         return 0x3E00; // 1.5
     }
     fp16_round((3.0 - fp16_to_f64(a) * fp16_to_f64(b)) / 2.0)
+}
+
+fn fp16_rsqrts_with_fpcr(a: u16, b: u16, fpcr: u32) -> u16 {
+    if (fpcr >> 22) & 0x3 == 0
+        || fp16_is_nan(a)
+        || fp16_is_nan(b)
+        || fp16_is_inf(a)
+        || fp16_is_inf(b)
+    {
+        return fp16_rsqrts(a, b);
+    }
+    f64_to_fp16_bits_with_fpcr((3.0 - fp16_to_f64(a) * fp16_to_f64(b)) * 0.5, fpcr)
 }
 
 fn fp16_mla(acc: u16, a: u16, b: u16) -> u16 {
