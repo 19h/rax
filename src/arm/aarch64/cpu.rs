@@ -21279,49 +21279,28 @@ fn fp_min_f64(a: f64, b: f64) -> f64 {
 
 #[inline]
 fn fp16_ah_nan_number(a: u16, b: u16) -> Option<u16> {
-    match (fp16_is_nan(a), fp16_is_nan(b)) {
-        (true, false) => Some(b),
-        (false, true) => Some(a),
-        (true, true) => Some(if fp16_is_snan(a) {
-            a
-        } else if fp16_is_snan(b) {
-            b
-        } else {
-            a
-        }),
-        _ => None,
+    if fp16_is_nan(a) || fp16_is_nan(b) {
+        Some(b)
+    } else {
+        None
     }
 }
 
 #[inline]
 fn fp32_ah_nan_number(a: u32, b: u32) -> Option<u32> {
-    match (is_nan32(a), is_nan32(b)) {
-        (true, false) => Some(b),
-        (false, true) => Some(a),
-        (true, true) => Some(if is_snan32(a) {
-            a
-        } else if is_snan32(b) {
-            b
-        } else {
-            a
-        }),
-        _ => None,
+    if is_nan32(a) || is_nan32(b) {
+        Some(b)
+    } else {
+        None
     }
 }
 
 #[inline]
 fn fp64_ah_nan_number(a: u64, b: u64) -> Option<u64> {
-    match (is_nan64(a), is_nan64(b)) {
-        (true, false) => Some(b),
-        (false, true) => Some(a),
-        (true, true) => Some(if is_snan64(a) {
-            a
-        } else if is_snan64(b) {
-            b
-        } else {
-            a
-        }),
-        _ => None,
+    if is_nan64(a) || is_nan64(b) {
+        Some(b)
+    } else {
+        None
     }
 }
 
