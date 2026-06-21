@@ -27335,6 +27335,52 @@ fn diff_fmlsl_fpcr_ah_nan_sign() {
     );
 }
 
+#[test]
+fn diff_fmlal_fpcr_ah_alias_nan_widen() {
+    const FPCR_AH: u64 = 1 << 1;
+    let v0 = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(0, v0 as u64, (v0 >> 64) as u64);
+
+    run_batch(
+        "fmlal_fpcr_ah_alias_nan_widen",
+        vec![("fmlal_v0_alias_ah_nan_widen".to_string(), 0x0e20_ec00, st)],
+    );
+}
+
+#[test]
+fn diff_fpcr_ah_fmlal_nan_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let h_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
+    let s_pattern = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn) in &[
+        ("neon_fmlal_ah_nan_status", enc_three_same(1, 0, 0b00, 0b11101)),
+        ("neon_fmlsl_ah_nan_status", enc_three_same(1, 0, 0b10, 0b11101)),
+        ("neon_fmlal2_ah_nan_status", enc_three_same(1, 1, 0b00, 0b11001)),
+        ("neon_fmlsl2_ah_nan_status", enc_three_same(1, 1, 0b10, 0b11001)),
+        ("sve_fmlalb_ah_nan_status", enc_sve2_fmlal(0, 0)),
+        ("sve_fmlalt_ah_nan_status", enc_sve2_fmlal(0, 1)),
+        ("sve_fmlslb_ah_nan_status", enc_sve2_fmlal(1, 0)),
+        ("sve_fmlslt_ah_nan_status", enc_sve2_fmlal(1, 1)),
+        ("sve_fmlalb_idx_ah_nan_status", enc_sve2_fmlal_idx(0, 0, 3, RM)),
+        ("sve_fmlalt_idx_ah_nan_status", enc_sve2_fmlal_idx(0, 1, 3, RM)),
+        ("sve_fmlslb_idx_ah_nan_status", enc_sve2_fmlal_idx(1, 0, 3, RM)),
+        ("sve_fmlslt_idx_ah_nan_status", enc_sve2_fmlal_idx(1, 1, 3, RM)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, s_pattern as u64, (s_pattern >> 64) as u64);
+        st.set_vreg(RN as usize, h_pattern as u64, (h_pattern >> 64) as u64);
+        st.set_vreg(RM as usize, h_pattern as u64, (h_pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_fmlal_nan_status", batch);
+}
+
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
 fn enc_single_fields(
@@ -39343,6 +39389,59 @@ fn diff_fpcr_ah_bfmlal_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_ah_bfmlal_nan_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let status_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
+    let nan_pattern = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let inf_zero_pattern = 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128;
+    let mut batch = Vec::new();
+
+    for &(label, insn, pattern) in &[
+        ("neon_bfmlalb_ah_status", enc_bfmlal(0), status_pattern),
+        ("neon_bfmlalt_ah_status", enc_bfmlal(1), status_pattern),
+        ("sve_bfmlalb_ah_status", enc_sve_bfmlal(0, RM), status_pattern),
+        ("sve_bfmlalt_ah_status", enc_sve_bfmlal(1, RM), status_pattern),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    for &(label, insn) in &[
+        ("neon_bfmlalb_idx_ah_nan", enc_bfmlal_idx(0, 3)),
+        ("neon_bfmlalt_idx_ah_nan", enc_bfmlal_idx(1, 3)),
+        ("sve_bfmlalb_idx_ah_nan", enc_sve_bfmlal_idx(0, 3, RM)),
+        ("sve_bfmlalt_idx_ah_nan", enc_sve_bfmlal_idx(1, 3, RM)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, nan_pattern as u64, (nan_pattern >> 64) as u64);
+        st.set_vreg(RN as usize, nan_pattern as u64, (nan_pattern >> 64) as u64);
+        st.set_vreg(RM as usize, nan_pattern as u64, (nan_pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    for &(label, insn) in &[
+        ("neon_bfmlalb_idx_ah_inf_zero", enc_bfmlal_idx(0, 3)),
+        ("neon_bfmlalt_idx_ah_inf_zero", enc_bfmlal_idx(1, 3)),
+        ("sve_bfmlalb_idx_ah_inf_zero", enc_sve_bfmlal_idx(0, 3, RM)),
+        ("sve_bfmlalt_idx_ah_inf_zero", enc_sve_bfmlal_idx(1, 3, RM)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
+        st.set_vreg(RN as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
+        st.set_vreg(RM as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_ah_bfmlal_nan_status", batch);
+}
+
+#[test]
 fn diff_fpcr_ah_fnmul_qnan_sign() {
     const FPCR_AH: u64 = 1 << 1;
     let mut batch = Vec::new();
@@ -39379,6 +39478,94 @@ fn diff_fpcr_ah_fsqrt_subnormal_status() {
     }
 
     run_batch("fpcr_ah_fsqrt_subnormal_status", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_frintts_subnormal_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    for &(label, fp_type, subnormal) in &[
+        ("s", 0b00, 0x0000_2000u64),
+        ("d", 0b01, 0x0000_0000_0000_2000u64),
+    ] {
+        for &(opname, opcode) in &[
+            ("frint32z", 0b10000),
+            ("frint32x", 0b10001),
+            ("frint64z", 0b10010),
+            ("frint64x", 0b10011),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RN as usize, subnormal, 0);
+            batch.push((
+                format!("scalar_{opname}_{label}_ah_input_subnorm"),
+                enc_fp1(fp_type, opcode),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fpcr_ah_frintts_subnormal_status", batch);
+}
+
+#[test]
+fn diff_sve_fp_indexed_fpcr_ah_alias_nan_priority() {
+    const FPCR_AH: u64 = 1 << 1;
+    let v0 = 0x3c00_0001_7d01_7e01_3c00_0001_7d01_7e01u128;
+    let mut batch = Vec::new();
+
+    for &(name, insn) in &[
+        ("fmla", 0x6428_0000),
+        ("fmls", 0x6428_0400),
+        ("fmul", 0x6428_2000),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(0, v0 as u64, (v0 >> 64) as u64);
+        batch.push((format!("sve_idx_{name}_h_v0_alias_ah_nan"), insn, st));
+    }
+
+    run_batch("sve_fp_indexed_fpcr_ah_alias_nan_priority", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_sve_indexed_fma_subnormal_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut ones = 0u128;
+    let mut subnorms = 0u128;
+    for lane in 0..4 {
+        ones |= (0x3f80_0000u128) << (32 * lane);
+        subnorms |= (0x0000_2000u128) << (32 * lane);
+    }
+
+    let mut batch = Vec::new();
+    for &(name, op) in &[("fmla", 0b000000), ("fmls", 0b000001)] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, 0, 0);
+        st.set_vreg(RN as usize, ones as u64, (ones >> 64) as u64);
+        st.set_vreg(RM as usize, subnorms as u64, (subnorms >> 64) as u64);
+        batch.push((format!("sve_idx_{name}_s_ah_index_subnorm"), enc_sve_fp_idx(op, 2, 0, RM), st));
+    }
+
+    run_batch("fpcr_ah_sve_indexed_fma_subnormal_status", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_sve_indexed_fma_nan_suppresses_denorm_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let v0 = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128;
+    let mut batch = Vec::new();
+
+    for &(name, insn) in &[("fmla", 0x64a0_0000), ("fmls", 0x64a0_0400)] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(0, v0 as u64, (v0 >> 64) as u64);
+        batch.push((format!("sve_idx_{name}_s_ah_nan_with_subnorm"), insn, st));
+    }
+
+    run_batch("fpcr_ah_sve_indexed_fma_nan_suppresses_denorm_status", batch);
 }
 
 /// USDOT (vector): `0 Q 0 01110 10 0 Rm 100111 Rn Rd`. Rd=v0, Rn=v1, Rm=v2.
@@ -43305,6 +43492,136 @@ fn diff_fpcr_ah_maxmin_reductions_qnan_number() {
     ));
 
     run_batch("fpcr_ah_maxmin_reductions_qnan_number", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
+    const FPCR_AH: u64 = 1 << 1;
+    let pack_h = |values: &[u16]| -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |values: &[u32]| -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch = Vec::new();
+    let (h_lo, h_hi) = pack_h(&[0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001]);
+    let (s_lo, s_hi) = pack_s(&[0x7fc0_2000, 0x7fa0_0001, 0x3f80_0000, 0x0000_0001]);
+    let d_both_nan = (0x7ff8_0000_0000_2000, 0x7ff0_0000_0000_0001);
+    let d_nan_number = (0x7ff8_0000_0000_2000, 0x0000_0000_0000_0001);
+
+    for &(label, insn, lo, hi) in &[
+        ("simd_fmax_h", enc_fp16_3s(1, 0, 0, 0b110), h_lo, h_hi),
+        ("simd_fmin_h", enc_fp16_3s(1, 0, 1, 0b110), h_lo, h_hi),
+        ("simd_fmax_s", enc_three_same(1, 0, 0, 0b11110), s_lo, s_hi),
+        ("simd_fmin_s", enc_three_same(1, 0, 2, 0b11110), s_lo, s_hi),
+        ("simd_fmax_d", enc_three_same(1, 0, 1, 0b11110), d_both_nan.0, d_both_nan.1),
+        ("simd_fmin_d", enc_three_same(1, 0, 3, 0b11110), d_both_nan.0, d_both_nan.1),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((format!("{label}_ah_both_nan"), insn, st));
+    }
+
+    for &(label, insn, lo, hi) in &[
+        ("simd_fmaxp_h", enc_fp16_3s(1, 1, 0, 0b110), h_lo, h_hi),
+        ("simd_fminp_h", enc_fp16_3s(1, 1, 1, 0b110), h_lo, h_hi),
+        ("simd_fmaxp_s", enc_three_same(1, 1, 0, 0b11110), s_lo, s_hi),
+        ("simd_fminp_s", enc_three_same(1, 1, 2, 0b11110), s_lo, s_hi),
+        ("simd_fmaxp_d", enc_three_same(1, 1, 1, 0b11110), d_nan_number.0, d_nan_number.1),
+        ("simd_fminp_d", enc_three_same(1, 1, 3, 0b11110), d_nan_number.0, d_nan_number.1),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((format!("{label}_ah_nan_pair"), insn, st));
+    }
+
+    for &(label, insn, lo, hi) in &[
+        ("sve_fmaxp_h", enc_sve2_fpairwise(1, 0b110), h_lo, h_hi),
+        ("sve_fminp_h", enc_sve2_fpairwise(1, 0b111), h_lo, h_hi),
+        ("sve_fmaxp_s", enc_sve2_fpairwise(2, 0b110), s_lo, s_hi),
+        ("sve_fminp_s", enc_sve2_fpairwise(2, 0b111), s_lo, s_hi),
+        ("sve_fmaxp_d", enc_sve2_fpairwise(3, 0b110), d_nan_number.0, d_nan_number.1),
+        ("sve_fminp_d", enc_sve2_fpairwise(3, 0b111), d_nan_number.0, d_nan_number.1),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((format!("{label}_ah_nan_pair"), insn, st));
+    }
+
+    run_batch("fpcr_ah_maxmin_both_nan_pairwise", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_maxnm_pairwise_nan_priority() {
+    const FPCR_AH: u64 = 1 << 1;
+    let pack_h = |values: &[u16]| -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |values: &[u32]| -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch = Vec::new();
+    let (h_lo, h_hi) = pack_h(&[0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001]);
+    let (s_lo, s_hi) = pack_s(&[0x7fc0_2000, 0x7fa0_0001, 0x3f80_0000, 0x0000_0001]);
+    let d_nan_number = (0x7ff8_0000_0000_2000, 0x0000_0000_0000_0001);
+
+    for &(label, insn, lo, hi) in &[
+        ("simd_fmaxnmp_h", enc_fp16_3s(1, 1, 0, 0b000), h_lo, h_hi),
+        ("simd_fminnmp_h", enc_fp16_3s(1, 1, 1, 0b000), h_lo, h_hi),
+        ("simd_fmaxnmp_s", enc_three_same(1, 1, 0, 0b11000), s_lo, s_hi),
+        ("simd_fminnmp_s", enc_three_same(1, 1, 2, 0b11000), s_lo, s_hi),
+        ("simd_fmaxnmp_d", enc_three_same(1, 1, 1, 0b11000), d_nan_number.0, d_nan_number.1),
+        ("simd_fminnmp_d", enc_three_same(1, 1, 3, 0b11000), d_nan_number.0, d_nan_number.1),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((format!("{label}_ah_nan_pair"), insn, st));
+    }
+
+    for &(label, insn, lo, hi) in &[
+        ("sve_fmaxnmp_h", enc_sve2_fpairwise(1, 0b100), h_lo, h_hi),
+        ("sve_fminnmp_h", enc_sve2_fpairwise(1, 0b101), h_lo, h_hi),
+        ("sve_fmaxnmp_s", enc_sve2_fpairwise(2, 0b100), s_lo, s_hi),
+        ("sve_fminnmp_s", enc_sve2_fpairwise(2, 0b101), s_lo, s_hi),
+        ("sve_fmaxnmp_d", enc_sve2_fpairwise(3, 0b100), d_nan_number.0, d_nan_number.1),
+        ("sve_fminnmp_d", enc_sve2_fpairwise(3, 0b101), d_nan_number.0, d_nan_number.1),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((format!("{label}_ah_nan_pair"), insn, st));
+    }
+
+    run_batch("fpcr_ah_maxnm_pairwise_nan_priority", batch);
 }
 
 #[test]
