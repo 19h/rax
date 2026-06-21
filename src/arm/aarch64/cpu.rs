@@ -10613,6 +10613,7 @@ impl AArch64Cpu {
             }
         }
         if conditional && last < 0 {
+            self.set_x(rd, self.get_x(rd) & em);
             return Ok(CpuExit::Continue);
         }
         let idx = if before {
@@ -13227,22 +13228,30 @@ impl AArch64Cpu {
                 if (pred >> off) & 1 == 0 {
                     continue;
                 }
-                let mut a = read_elem(&ab, off, esz);
-                let mut n = read_elem(&nb, off, esz);
-                let mut m = read_elem(&mb, off, esz);
+                let a_raw = read_elem(&ab, off, esz);
+                let n_raw = read_elem(&nb, off, esz);
+                let m_raw = read_elem(&mb, off, esz);
+                let mut a = a_raw;
+                let mut n = n_raw;
+                let mut m = m_raw;
                 if matches!(op3, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7) {
                     n = fp_flush_input_bits_with_fpcr(n, ebits, self.fpcr);
                     m = fp_flush_input_bits_with_fpcr(m, ebits, self.fpcr);
                     a = fp_flush_input_bits_with_fpcr(a, ebits, self.fpcr);
                 }
+                let mut a_status = a_raw;
+                let mut n_status = n_raw;
                 if neg_prod {
                     n = fp_neg_bits_with_fpcr(n, ebits, self.fpcr);
+                    n_status = fp_neg_bits_with_fpcr(n_status, ebits, self.fpcr);
                 }
                 if neg_add {
                     a = fp_neg_bits_with_fpcr(a, ebits, self.fpcr);
+                    a_status = fp_neg_bits_with_fpcr(a_status, ebits, self.fpcr);
                 }
                 let r = fp_muladd_bits_with_fpcr(a, n, m, ebits, self.fpcr);
-                let status = fp_status_fma(esz, a, n, m, r);
+                let status =
+                    fp_status_fma_with_fpcr(esz, a_status, n_status, m_raw, r, self.fpcr);
                 self.fpsr |= fp_status_sve_underflow(esz, r, status);
                 write_elem(&mut dst, off, esz, r);
             }
@@ -13458,17 +13467,18 @@ impl AArch64Cpu {
             let mut dst = [0u8; 16];
             for e in 0..(16 / esz) {
                 let off = e * esz;
+                let raw_x = read_elem(&n, off, esz);
                 let x = fp_flush_input_bits_with_fpcr(
-                    read_elem(&n, off, esz),
+                    raw_x,
                     (esz * 8) as u32,
                     self.fpcr,
                 );
                 let sgn = read_elem(&m, off, esz) & 1;
                 let r = sve_ftsmul(esz, x, sgn, self.fpcr);
-                self.fpsr |= if esz == 8 {
-                    if fp_is_snan_bits(esz, x) {
-                        FPSR_IOC
-                    } else if fp_is_nan_bits(esz, x)
+                let status = if fp_is_snan_bits(esz, x) {
+                    FPSR_IOC
+                } else if esz == 8 {
+                    if fp_is_nan_bits(esz, x)
                         || fp_is_inf_bits(esz, x)
                         || fp_is_zero_bits(esz, x)
                     {
@@ -13487,6 +13497,7 @@ impl AArch64Cpu {
                     let signed_exact = if sgn != 0 { -exact } else { exact };
                     fp_status_from_exact_f64(esz, signed_exact, r)
                 };
+                self.fpsr |= status | fp_fz_input_status(esz, raw_x, self.fpcr);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -13685,11 +13696,20 @@ impl AArch64Cpu {
                 if (pred >> off) & 1 == 0 {
                     continue;
                 }
-                let x =
-                    fp_flush_input_bits_with_fpcr(read_elem(&a, off, esize), ibits, self.fpcr);
+                let raw_x = read_elem(&a, off, esize);
+                let x = fp_flush_input_bits_with_fpcr(raw_x, ibits, self.fpcr);
                 let n = sext_elem(read_elem(&b, off, esize), ibits) as i64;
                 let r = sve_fscale(esize, x, n, self.fpcr);
-                self.fpsr |= fp_status_fscale(esize, x, n, r);
+                let status = fp_status_fscale(esize, x, n, r);
+                let input_status = fp_fz_input_status(esize, raw_x, self.fpcr);
+                self.fpsr |= if self.fpcr & FPCR_AH != 0
+                    && input_status != 0
+                    && status == (FPSR_UFC | FPSR_IXC)
+                {
+                    input_status
+                } else {
+                    status | input_status
+                };
                 write_elem(&mut dst, off, esize, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -13750,12 +13770,20 @@ impl AArch64Cpu {
             let a = read_elem(&a_reg, off, esize);
             let b = scalar.unwrap_or_else(|| read_elem(&b_reg, off, esize));
             let (x, y) = if swap { (b, a) } else { (a, b) };
-            let r = match esize {
+            let mut r = match esize {
                 2 => sve_fp16_binop_with_fpcr(kind, x as u16, y as u16, self.fpcr) as u64,
                 4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, self.fpcr) as u64,
                 8 => fp_three_same_f64_with_fpcr(kind, x, y, 0, self.fpcr),
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
+            if self.fpcr & FPCR_AH != 0
+                && immediate_scalar
+                && kind == FpKind::Min
+                && scalar == Some(0)
+                && fp_is_zero_bits(esize, x)
+            {
+                r = 0;
+            }
             let status = fp_three_same_status_with_fpcr(esize, kind, x, y, 0, r, self.fpcr);
             self.fpsr |= if kind == FpKind::Mulx {
                 fp_status_sve_underflow(esize, r, status)
@@ -23073,7 +23101,13 @@ fn fp_status_unop_with_fpcr(
         return fp_status_unop(esize, kind, a, result) | fp_fz_input_status(esize, a, fpcr);
     }
     if fpcr & FPCR_AH != 0 && matches!(kind, Some(TwoRegFp::Fsqrt)) {
-        return fp_status_unop(esize, kind, a, result) | fp_fz_input_status(esize, a, fpcr);
+        let status = fp_status_unop(esize, kind, a, result);
+        let input_status = fp_fz_input_status(esize, a, fpcr);
+        return if status & FPSR_IOC != 0 {
+            status
+        } else {
+            status | input_status
+        };
     }
     if fp_input_flush_enabled(esize, fpcr)
         && matches!(
@@ -23436,7 +23470,7 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
         && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd | Recps | Rsqrts)
     {
         if let Some(n) = fp32_ah_nan2(a, b) {
-            return flush_output(if matches!(kind, Abd) { n & 0x7fff_ffff } else { n });
+            return flush_output(n);
         }
     }
     if fpcr & FPCR_AH != 0 && matches!(kind, Max | Min) {
@@ -23663,11 +23697,7 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
         && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd | Recps | Rsqrts)
     {
         if let Some(n) = fp64_ah_nan2(a, b) {
-            return flush_output(if matches!(kind, Abd) {
-                n & 0x7fff_ffff_ffff_ffff
-            } else {
-                n
-            });
+            return flush_output(n);
         }
     }
     if fpcr & FPCR_AH != 0 && matches!(kind, Max | Min) {
@@ -26044,7 +26074,7 @@ fn sve_fp16_binop_with_fpcr(kind: FpKind, x: u16, y: u16, fpcr: u32) -> u16 {
     }
     if fpcr & FPCR_AH != 0 && matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Abd) {
         if let Some(n) = fp16_ah_nan2(x, y) {
-            return if matches!(kind, Abd) { n & 0x7fff } else { n };
+            return n;
         }
     }
     let ah_invalid_default = |r| {
@@ -27502,7 +27532,8 @@ mod tests {
 
     #[test]
     fn sve_clast_no_active_preserves_gpr() {
-        // CLASTB X0, P0, Z1.B. Conditional LAST forms preserve Rdn when the
+        // CLASTB X0, P0, Z1.B. Conditional LAST forms preserve the low element
+        // of Rdn, zero-extended to the destination X register, when the
         // governing predicate has no active elements.
         let mut cpu = create_cpu_with_insn(0x0531_A020);
         cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
@@ -27513,7 +27544,7 @@ mod tests {
         cpu.set_sve_pred(0, 0);
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
-        assert_eq!(cpu.get_x(0), sentinel);
+        assert_eq!(cpu.get_x(0), sentinel & 0xff);
     }
 
     #[test]
