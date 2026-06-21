@@ -290,12 +290,14 @@ static void normalize_pcrel_output(const ArmState *in, ArmState *out,
         }
         return;
     }
+    uint64_t low = base - 4096;
+    uint64_t high = end + 4096;
     for (int i = 0; i < 31; i++) {
-        if (out->x[i] >= base && out->x[i] < end) {
+        if (out->x[i] >= low && out->x[i] < high) {
             out->x[i] -= base;
         }
     }
-    if (out->pc >= base && out->pc < end) {
+    if (out->pc >= low && out->pc < high) {
         out->pc -= base;
     }
 }

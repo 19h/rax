@@ -30418,6 +30418,14 @@ mod tests {
         0xD500_401F | ((op1 as u32) << 16) | ((imm as u32) << 8) | ((op2 as u32) << 5)
     }
 
+    fn ldtp_x0_x2_x1_0() -> u32 {
+        (0b11 << 30) | (0b101 << 27) | (0b10 << 23) | (1 << 22) | (2 << 10) | (1 << 5)
+    }
+
+    fn sttp_x0_x2_x1_0() -> u32 {
+        (0b11 << 30) | (0b101 << 27) | (0b10 << 23) | (2 << 10) | (1 << 5)
+    }
+
     fn is_permission_error<T>(result: Result<T, ArmError>) -> bool {
         matches!(
             result,
@@ -30477,6 +30485,39 @@ mod tests {
             CpuExit::Continue
         );
         assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
+    }
+
+    #[test]
+    fn issue_39_lrcpc3_pair_uses_unprivileged_permission_checks() {
+        let (mut cpu, data_va) = create_issue_39_cpu();
+        cpu.set_x(1, data_va);
+        cpu.mem_write_u64(data_va + 8, 0x1234_5678_9ABC_DEF0)
+            .unwrap();
+
+        assert!(is_permission_error(cpu.exec_ldst_pair(ldtp_x0_x2_x1_0())));
+
+        cpu.uao = true;
+        assert_eq!(
+            cpu.exec_ldst_pair(ldtp_x0_x2_x1_0()).unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.get_x(0), 0xCAFE_F00D_DEAD_BEEF);
+        assert_eq!(cpu.get_x(2), 0x1234_5678_9ABC_DEF0);
+
+        cpu.uao = false;
+        cpu.set_x(0, 0x1122_3344_5566_7788);
+        cpu.set_x(2, 0x8877_6655_4433_2211);
+        assert!(is_permission_error(cpu.exec_ldst_pair(sttp_x0_x2_x1_0())));
+        assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0xCAFE_F00D_DEAD_BEEF);
+        assert_eq!(cpu.mem_read_u64(data_va + 8).unwrap(), 0x1234_5678_9ABC_DEF0);
+
+        cpu.uao = true;
+        assert_eq!(
+            cpu.exec_ldst_pair(sttp_x0_x2_x1_0()).unwrap(),
+            CpuExit::Continue
+        );
+        assert_eq!(cpu.mem_read_u64(data_va).unwrap(), 0x1122_3344_5566_7788);
+        assert_eq!(cpu.mem_read_u64(data_va + 8).unwrap(), 0x8877_6655_4433_2211);
     }
 
     #[test]

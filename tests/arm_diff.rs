@@ -26017,7 +26017,7 @@ fn diff_pc_relative_scalar() {
     let mut rng = Rng::new(0x5157_1000);
     let mut batch = Vec::new();
     for rd in [0, 5, 30] {
-        for imm in [0, 1, 2, 3, 4, 8, 12] {
+        for imm in [-12, -8, -4, -3, -2, -1, 0, 1, 2, 3, 4, 8, 12] {
             let mut st = gen_input(&mut rng);
             st.pc = PCREL_MAGIC;
             st.x[rd as usize] = 0x7777_7777_7777_7777;
@@ -26089,7 +26089,7 @@ fn diff_load_literal_scalar() {
     let word2 = NOP;
     let mut batch = Vec::new();
 
-    for rt in [0, 5, 30] {
+    for rt in [0, 5, 30, 31] {
         for (label, insn) in [
             ("ldr_lit_w", ldr_literal(0, 0, rt, 4)),
             ("ldr_lit_x", ldr_literal(1, 0, rt, 4)),
@@ -26100,7 +26100,11 @@ fn diff_load_literal_scalar() {
             ("prfm_lit", ldr_literal(3, 0, rt, 4)),
         ] {
             let mut st = gen_input(&mut rng);
-            st.x[rt as usize] = 0x9999_9999_9999_9999;
+            if rt == 31 {
+                st.sp = 0x9999_9999_9999_9990;
+            } else {
+                st.x[rt as usize] = 0x9999_9999_9999_9999;
+            }
             batch.push((format!("{label}_x{rt}"), insn, word1, word2, st));
         }
     }
@@ -26353,6 +26357,29 @@ fn diff_branch_system_hints_barriers_el0() {
     // rax and can be controlled by the host kernel at EL0, so they are covered
     // by structured-exit tests rather than value-state comparison here.
     run_batch("branch_system_hints_barriers_el0", batch);
+}
+
+#[test]
+fn diff_branch_system_wait_hint_structured_exits() {
+    fn hint(crm: u32, op2: u32) -> u32 {
+        0xd503_201f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0xa64_0f16);
+    let st = gen_input(&mut rng);
+    assert_eq!(run_rax_exit(hint(0b0000, 0b010), &st), Some(CpuExit::Wfe));
+    assert_eq!(run_rax_exit(hint(0b0000, 0b011), &st), Some(CpuExit::Wfi));
+
+    let mut batch = Vec::new();
+    for (label, first) in [
+        ("sev_then_wfe", hint(0b0000, 0b100)),
+        ("sevl_then_wfe", hint(0b0000, 0b101)),
+    ] {
+        for _ in 0..4 {
+            batch.push((label.to_string(), first, hint(0b0000, 0b010), gen_input(&mut rng)));
+        }
+    }
+    run_batch_pair("branch_system_wait_hint_event_wfe", batch);
 }
 
 #[test]
@@ -41323,6 +41350,14 @@ fn diff_mem_ldp_stp() {
         (0b10, 1, false, "stp_q"),
         (0b01, 0, true, "ldpsw"), // load-only
     ];
+    let imm7_cases = [0u32, 1, 2, 0x7f]; // 0x7f encodes -1.
+    let imm7_label = |imm7: u32| -> i32 {
+        if imm7 >= 64 {
+            imm7 as i32 - 128
+        } else {
+            imm7 as i32
+        }
+    };
     let mut cases: Vec<(String, u32)> = Vec::new();
     for &(opc, v, load_only, name) in kinds {
         // modes: 10=signed offset, 01=post-index, 11=pre-index
@@ -41332,14 +41367,14 @@ fn diff_mem_ldp_stp() {
             } else {
                 &[0u32, 1][..]
             } {
-                for imm7 in 0..3u32 {
+                for &imm7 in &imm7_cases {
                     let nm = if l == 1 && !load_only {
                         name.replace("stp", "ldp")
                     } else {
                         name.to_string()
                     };
                     cases.push((
-                        format!("{nm} m{mode} #{imm7}"),
+                        format!("{nm} m{mode} #{}", imm7_label(imm7)),
                         enc_ldp(opc, v, mode, l, imm7),
                     ));
                 }
@@ -41353,13 +41388,16 @@ fn diff_mem_ldp_stp() {
         (0b10, 1, "ldnp_x"),
     ];
     for &(opc, l, name) in no_allocate_kinds {
-        for imm7 in 0..3u32 {
-            cases.push((format!("{name} #{imm7}"), enc_ldp(opc, 0, 0b00, l, imm7)));
+        for &imm7 in &imm7_cases {
+            cases.push((
+                format!("{name} #{}", imm7_label(imm7)),
+                enc_ldp(opc, 0, 0b00, l, imm7),
+            ));
         }
     }
-    for imm7 in 0..3u32 {
+    for &imm7 in &imm7_cases {
         cases.push((
-            format!("ldpsw_m0_undef #{imm7}"),
+            format!("ldpsw_m0_undef #{}", imm7_label(imm7)),
             enc_ldp(0b01, 0, 0b00, 1, imm7),
         ));
     }
