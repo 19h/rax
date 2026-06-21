@@ -1893,8 +1893,18 @@ impl AArch64Cpu {
                 let intsize = if opcode & 0b10 == 0 { 32 } else { 64 };
                 let z = opcode & 1 == 0;
                 self.v[rd as usize] = match fp_type {
-                    0b00 => frint_ts_f32(self.v[rn as usize] as u32, intsize, z) as u128,
-                    0b01 => frint_ts_f64(self.v[rn as usize] as u64, intsize, z) as u128,
+                    0b00 => {
+                        let a = self.v[rn as usize] as u32;
+                        let r = frint_ts_f32(a, intsize, z);
+                        self.fpsr |= fp_status_frint_ts_f32(a);
+                        r as u128
+                    }
+                    0b01 => {
+                        let a = self.v[rn as usize] as u64;
+                        let r = frint_ts_f64(a, intsize, z);
+                        self.fpsr |= fp_status_frint_ts_f64(a);
+                        r as u128
+                    }
                     _ => return Err(ArmError::UndefinedInstruction(insn)),
                 };
                 return Ok(CpuExit::Continue);
@@ -19020,6 +19030,30 @@ fn frint_ts_f64(bits: u64, intsize: u32, z: bool) -> u64 {
     overflow
 }
 
+fn fp_status_frint_ts_f32(bits: u32) -> u32 {
+    if is_snan32(bits) {
+        return FPSR_IOC;
+    }
+    let x = f32::from_bits(bits);
+    if x.is_finite() && x.fract() != 0.0 {
+        FPSR_IXC
+    } else {
+        0
+    }
+}
+
+fn fp_status_frint_ts_f64(bits: u64) -> u32 {
+    if is_snan64(bits) {
+        return FPSR_IOC;
+    }
+    let x = f64::from_bits(bits);
+    if x.is_finite() && x.fract() != 0.0 {
+        FPSR_IXC
+    } else {
+        0
+    }
+}
+
 fn fp_max_f32(a: f32, b: f32) -> f32 {
     if a.is_nan() || b.is_nan() {
         f32::NAN
@@ -19618,7 +19652,8 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
             if fp64_fma_exact(addend, op1, op2, result) {
                 return 0;
             } else {
-                return FPSR_IXC;
+                let underflow = fp64_is_tiny(result) || fp64_is_zero(result);
+                return FPSR_IXC | if underflow { FPSR_UFC } else { 0 };
             }
         }
         let exact = sve_fp_to_f64(esize, addend) + sve_fp_to_f64(esize, op1) * sve_fp_to_f64(esize, op2);

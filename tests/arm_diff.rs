@@ -1320,6 +1320,37 @@ fn generated_integer_dp_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_integer_address_pc_cases() -> Vec<(String, u32, u32)> {
+    let source = include_str!("arm/generated/a64/integer/address.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("integer/address", source) {
+        if !integer_address_pc_in_normalized_window(insn) {
+            continue;
+        }
+        let op = insn >> 31;
+        by_encoding.entry(insn).or_insert((label, op));
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, (label, op))| (label, insn, op))
+        .collect()
+}
+
+fn generated_integer_tag_addsub_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/integer/tags.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("integer/tags", source) {
+        if !integer_tag_addsub(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_branch_immediate_cases() -> Vec<(String, u32)> {
     let sources = [
         (
@@ -1339,6 +1370,50 @@ fn generated_branch_immediate_cases() -> Vec<(String, u32)> {
             }
             by_encoding.entry(insn).or_insert(label);
         }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_float_cases() -> Vec<(String, u32)> {
+    let sources = [
+        (
+            "float/arithmetic",
+            include_str!("arm/generated/a64/float/arithmetic.rs"),
+        ),
+        ("float/compare", include_str!("arm/generated/a64/float/compare.rs")),
+        ("float/convert", include_str!("arm/generated/a64/float/convert.rs")),
+        ("float/move", include_str!("arm/generated/a64/float/move_.rs")),
+    ];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn) in parse_generated_a64_encodings(family, source) {
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings(
+        "system/hints",
+        include_str!("arm/generated/a64/system/hints.rs"),
+    ) {
+        if matches!(insn, 0xd503_201f | 0xd503_203f | 0xd503_209f | 0xd503_20bf) {
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    for (label, insn) in parse_generated_a64_encodings(
+        "misc/udf",
+        include_str!("arm/generated/a64/misc/other.rs"),
+    ) {
+        by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
         .into_iter()
@@ -1534,6 +1609,33 @@ fn branch_immediate_in_tiny_program(fields: &std::collections::BTreeMap<String, 
     fields.get("imm26").or_else(|| fields.get("imm19")).or_else(|| fields.get("imm14")) == Some(&3)
 }
 
+fn integer_address_pc_in_normalized_window(insn: u32) -> bool {
+    if (insn >> 24) & 0x1f != 0b10000 {
+        return false;
+    }
+    let op = insn >> 31;
+    let immlo = (insn >> 29) & 0x3;
+    let immhi = (insn >> 5) & 0x7ffff;
+    let imm21 = ((immhi << 2) | immlo) as i32;
+    let signed = if imm21 & (1 << 20) != 0 {
+        imm21 - (1 << 21)
+    } else {
+        imm21
+    };
+    if op == 0 {
+        (0..=12).contains(&signed)
+    } else {
+        (-2..=2).contains(&signed)
+    }
+}
+
+fn integer_tag_addsub(insn: u32) -> bool {
+    (insn >> 31) == 1
+        && ((insn >> 29) & 1) == 0
+        && ((insn >> 23) & 0x3f) == 0b100011
+        && ((insn >> 22) & 1) == 0
+}
+
 fn gen_memory_input(rng: &mut Rng) -> ArmState {
     let mut st = gen_input(rng);
     for i in 0..31 {
@@ -1542,6 +1644,34 @@ fn gen_memory_input(rng: &mut Rng) -> ArmState {
     st.sp = SCRATCH_BASE + 64;
     for word in &mut st.scratch {
         *word = rng.next();
+    }
+    st
+}
+
+fn gen_tag_addsub_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    for i in 0..31 {
+        let tag = (rng.next() & 0xf) << 56;
+        let base = 0x1000 + ((i as u64) << 8) + (rng.next() & 0xf0);
+        st.x[i] = tag | base;
+    }
+    let tag = (rng.next() & 0xf) << 56;
+    let base = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + (rng.next() & 0xff0);
+    st.sp = tag | (base & !0xf);
+    st
+}
+
+fn gen_float_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    for i in 0..31 {
+        st.x[i] = (rng.next() & 0xffff) as u64;
+    }
+    st.sp = rng.interesting() & !0xf;
+    st.pstate = (rng.next() & 0xf) << 28;
+    st.fpcr = 0;
+    st.fpsr = 0;
+    for r in 0..32 {
+        st.set_vreg(r, 0x0000_0000_3f80_3c00, 0x0000_0000_3f80_3c00);
     }
     st
 }
@@ -23348,6 +23478,33 @@ fn diff_pc_relative_scalar() {
 }
 
 #[test]
+fn diff_generated_integer_address_pc_sweep() {
+    let mut rng = Rng::new(0xa64_add2);
+    let mut batch = Vec::new();
+    for (label, insn, op) in generated_integer_address_pc_cases() {
+        for _ in 0..4 {
+            let mut st = gen_input(&mut rng);
+            st.pc = if op == 0 { PCREL_MAGIC } else { PCREL_PAGE_MAGIC };
+            batch.push((label.clone(), insn, st));
+        }
+    }
+    run_batch("generated_integer_address_pc_sweep", batch);
+}
+
+#[test]
+fn diff_generated_integer_tag_addsub_sweep() {
+    let mut rng = Rng::new(0xa64_7a65);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_integer_tag_addsub_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_tag_addsub_input(&mut rng)));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated ADDG/SUBG tag cases");
+    run_batch("generated_integer_tag_addsub_sweep", batch);
+}
+
+#[test]
 fn diff_load_literal_scalar() {
     fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
         let imm19 = ((offset >> 2) as u32) & 0x7ffff;
@@ -23590,6 +23747,18 @@ fn diff_branch_system_hints_barriers_el0() {
     // rax and can be controlled by the host kernel at EL0, so they are covered
     // by structured-exit tests rather than value-state comparison here.
     run_batch("branch_system_hints_barriers_el0", batch);
+}
+
+#[test]
+fn diff_generated_system_hints_udf_sweep() {
+    let mut rng = Rng::new(0xa64_5157);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_hints_udf_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_input(&mut rng)));
+        }
+    }
+    run_batch("generated_system_hints_udf_sweep", batch);
 }
 
 #[test]
@@ -31539,6 +31708,18 @@ fn diff_fp_scalar() {
 }
 
 #[test]
+fn diff_generated_float_sweep() {
+    let mut rng = Rng::new(0xa64_f10a);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_float_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_float_input(&mut rng)));
+        }
+    }
+    run_batch("generated_float_sweep", batch);
+}
+
+#[test]
 fn diff_fp_scalar_sqrt() {
     let mut cases: Vec<(String, u32, bool)> = Vec::new();
     for &ft in &[0u32, 1] {
@@ -31635,6 +31816,38 @@ fn diff_fp_scalar_fpsr_sqrt_invalid() {
     }
 
     run_fpsr_batch("fp_scalar_fpsr_sqrt_invalid", batch);
+}
+
+#[test]
+fn diff_fp_scalar_frintts_fpsr_inexact() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &ft in &[0u32, 1] {
+        for opcode in 0b10000..=0b10011 {
+            let mut st = ArmState::zeroed();
+            if ft == 0 {
+                st.set_vreg(RN as usize, (1.5f32).to_bits() as u64, 0);
+            } else {
+                st.set_vreg(RN as usize, (1.5f64).to_bits(), 0);
+            }
+            batch.push((
+                format!("frintts_t{ft}_op{opcode:05b}_ixc"),
+                enc_fp1(ft, opcode),
+                st,
+            ));
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_frintts_fpsr_inexact", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fma_fpsr_underflow_inexact() {
+    let mut st = ArmState::zeroed();
+    st.set_vreg(0, 0x0000_0000_3f80_3c00, 0);
+    run_fpsr_batch(
+        "fp_scalar_fma_fpsr_underflow_inexact",
+        vec![("fmadd_d_subnormal_ufc_ixc".into(), 0x1f40_0000, st)],
+    );
 }
 
 #[test]
