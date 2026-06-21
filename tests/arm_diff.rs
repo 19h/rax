@@ -43087,6 +43087,29 @@ fn diff_sve_ld1() {
             }
         }
     }
+    fn deterministic_ld1_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+        }
+        st
+    }
+
+    for dtype in 0..16u32 {
+        for &imm in &[0i32, 1, -1] {
+            let insn = enc_sve_ld1(dtype, imm);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ld1_dt{dtype}_i{imm}_{mask_name}"),
+                    insn,
+                    deterministic_ld1_input(pg),
+                ));
+            }
+        }
+    }
     run_batch("sve_ld1", batch);
 }
 
@@ -43105,6 +43128,31 @@ fn diff_sve_st1() {
                     let mut st = mem_input(&mut rng);
                     st.set_preg(0, rng.next() as u16);
                     batch.push((format!("st1 m{msz} e{size} i{imm}"), insn, st));
+                }
+            }
+        }
+    }
+    fn deterministic_st1_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0xf0e1_d2c3_b4a5_9687u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for size in msz..4u32 {
+            for &imm in &[0i32, 1] {
+                let insn = enc_sve_st1(msz, size, imm);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("st1_m{msz}_e{size}_i{imm}_{mask_name}"),
+                        insn,
+                        deterministic_st1_input(pg),
+                    ));
                 }
             }
         }
@@ -43286,6 +43334,30 @@ fn diff_sve_ld1r() {
             }
         }
     }
+    fn deterministic_ld1r_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x80ff_7f00_55aa_0102u64 ^ ((idx as u64) * 0x0101_0101_0101_0101);
+        }
+        st
+    }
+
+    for dtype in 0..16u32 {
+        let (dh, dl) = (dtype >> 2, dtype & 3);
+        for &imm6 in &[0u32, 1, 2, 3] {
+            let insn = enc_ld1r(dh, dl, imm6);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ld1r_dt{dtype}_i{imm6}_{mask_name}"),
+                    insn,
+                    deterministic_ld1r_input(pg),
+                ));
+            }
+        }
+    }
     run_batch("sve_ld1r", batch);
 }
 
@@ -43308,6 +43380,28 @@ fn diff_sve_ldr_str() {
                 st.set_preg(0, rng.next() as u16); // Pt source (str_p)
                 batch.push((format!("{label} i{imm}"), insn, st));
             }
+        }
+    }
+    fn deterministic_ldstr_input() -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+        st.set_preg(0, 0xa55a);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word =
+                0x1020_3040_5060_7080u64 ^ (idx as u64).wrapping_mul(0x1111_1111_1111_1111);
+        }
+        st
+    }
+
+    for &imm in &[0i32, 1, -1, 2] {
+        for (label, insn) in [
+            ("ldr_z_edge", enc_ldstr_z(false, imm)),
+            ("str_z_edge", enc_ldstr_z(true, imm)),
+            ("ldr_p_edge", enc_ldstr_p(false, imm)),
+            ("str_p_edge", enc_ldstr_p(true, imm)),
+        ] {
+            batch.push((format!("{label}_i{imm}"), insn, deterministic_ldstr_input()));
         }
     }
     run_batch("sve_ldr_str", batch);
