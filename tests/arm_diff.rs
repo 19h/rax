@@ -41546,6 +41546,20 @@ fn diff_sve2_ternary() {
 
 #[test]
 fn diff_sve2_addl() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 integer add/subtract long (S?ADDL/S?SUBL bottom/top, signed/unsigned).
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 1..4u32 {
@@ -41567,10 +41581,142 @@ fn diff_sve2_addl() {
         }
     }
     run_family("sve2_addl", cases, 16, 0x5_1001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let s_esize = d_esize / 2;
+        let s_bits = s_esize * 8;
+        let d_bits = d_esize * 8;
+        let s_mask = (1u64 << s_bits) - 1;
+        let s_sign = 1u64 << (s_bits - 1);
+        let d_mask = if d_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << d_bits) - 1
+        };
+        let d_sign = 1u64 << (d_bits - 1);
+        let src_lanes = 16 / s_esize;
+        let dst_lanes = 16 / d_esize;
+        let narrow_patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..src_lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| [s_mask, 2, s_sign, s_sign - 1, 0][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alt_halves",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { 0 })
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_sign } else { s_sign - 1 })
+                    .collect(),
+            ),
+        ];
+        let wide_zn_patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "wide_small",
+                (0..dst_lanes).map(|lane| lane as u64 * 3).collect(),
+            ),
+            (
+                "wide_signed_edges",
+                (0..dst_lanes)
+                    .map(|lane| [0, 1, d_mask, d_sign, d_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "wide_alt",
+                (0..dst_lanes)
+                    .map(|lane| if lane & 1 == 0 { d_mask } else { d_sign })
+                    .collect(),
+            ),
+        ];
+
+        for (pattern_name, zn_values, zm_values) in &narrow_patterns {
+            let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+            for s in 0..2u32 {
+                for u in 0..2u32 {
+                    for t in 0..2u32 {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("addl_sz{size}_s{s}_u{u}_t{t}_{pattern_name}"),
+                            enc_sve2_addl(size, s, u, t),
+                            st,
+                        ));
+                    }
+                }
+            }
+
+            for u in 0..2u32 {
+                for t in 0..2u32 {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, 0x5555_aaaa_0000_ffff, 0xfedc_ba98_7654_3210);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    batch.push((
+                        format!("abdl_sz{size}_u{u}_t{t}_{pattern_name}"),
+                        enc_sve2_abdl(size, u, t),
+                        st,
+                    ));
+                }
+            }
+        }
+
+        for (wide_name, zn_wide_values) in &wide_zn_patterns {
+            let (zn_lo, zn_hi) = pack_lanes(d_esize, zn_wide_values);
+            for (pattern_name, _, zm_values) in &narrow_patterns {
+                let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+                for s in 0..2u32 {
+                    for u in 0..2u32 {
+                        for t in 0..2u32 {
+                            let mut st = ArmState::zeroed();
+                            st.set_vreg(0, 0xdead_beef_cafe_babe, 0x0bad_f00d_1234_5678);
+                            st.set_vreg(1, zn_lo, zn_hi);
+                            st.set_vreg(2, zm_lo, zm_hi);
+                            batch.push((
+                                format!("addw_sz{size}_s{s}_u{u}_t{t}_{wide_name}_{pattern_name}"),
+                                enc_sve2_addw(size, s, u, t),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_addl_edges", batch);
 }
 
 #[test]
 fn diff_sve2_mull() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 integer multiply long: SMULL/UMULL/SQDMULL (sizes H/S/D) and PMULL
     // (H form only).
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41588,10 +41734,114 @@ fn diff_sve2_mull() {
         cases.push((format!("pmull t{t}"), enc_sve2_mull(1, 0, 1, t)));
     }
     run_family("sve2_mull", cases, 16, 0x5_2001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let s_esize = d_esize / 2;
+        let s_bits = s_esize * 8;
+        let s_mask = (1u64 << s_bits) - 1;
+        let s_sign = 1u64 << (s_bits - 1);
+        let src_lanes = 16 / s_esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..src_lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| [1, s_mask, 2, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alt_halves",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { 2 })
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_sign } else { s_sign - 1 })
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, zn_values, zm_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+            for t in 0..2u32 {
+                for (op, u, name) in [(1, 0, "smull"), (1, 1, "umull"), (0, 0, "sqdmull")] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    batch.push((
+                        format!("{name}_sz{size}_t{t}_{pattern_name}"),
+                        enc_sve2_mull(size, op, u, t),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    let pmull_patterns: [(&str, [u8; 16], [u8; 16]); 4] = [
+        ("zero", [0; 16], [0; 16]),
+        ("ones", [0xff; 16], [0xff; 16]),
+        (
+            "ramp",
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+        ),
+        (
+            "poly_edges",
+            [
+                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44,
+                0x88, 0xf0, 0x0f,
+            ],
+            [
+                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22,
+                0x11, 0xaa, 0x55,
+            ],
+        ),
+    ];
+    for (pattern_name, zn_bytes, zm_bytes) in pmull_patterns {
+        let zn_values: Vec<u64> = zn_bytes.iter().map(|&b| b as u64).collect();
+        let zm_values: Vec<u64> = zm_bytes.iter().map(|&b| b as u64).collect();
+        let (zn_lo, zn_hi) = pack_lanes(1, &zn_values);
+        let (zm_lo, zm_hi) = pack_lanes(1, &zm_values);
+        for t in 0..2u32 {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, 0x5555_aaaa_0000_ffff, 0xfedc_ba98_7654_3210);
+            st.set_vreg(1, zn_lo, zn_hi);
+            st.set_vreg(2, zm_lo, zm_hi);
+            batch.push((
+                format!("pmull_t{t}_{pattern_name}"),
+                enc_sve2_mull(1, 0, 1, t),
+                st,
+            ));
+        }
+    }
+    run_batch("sve2_mull_edges", batch);
 }
 
 #[test]
 fn diff_sve2_mlal() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 multiply-add long (S?MLAL/S?MLSL) and saturating doubling MAC long
     // (SQDMLAL/SQDMLSL).
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41612,10 +41862,119 @@ fn diff_sve2_mlal() {
         }
     }
     run_family("sve2_mlal", cases, 16, 0x5_3001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let s_esize = d_esize / 2;
+        let s_bits = s_esize * 8;
+        let d_bits = d_esize * 8;
+        let s_mask = (1u64 << s_bits) - 1;
+        let s_sign = 1u64 << (s_bits - 1);
+        let d_mask = if d_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << d_bits) - 1
+        };
+        let d_sign = 1u64 << (d_bits - 1);
+        let src_lanes = 16 / s_esize;
+        let dst_lanes = 16 / d_esize;
+        let source_patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..src_lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| [1, s_mask, 2, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alt_halves",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { 2 })
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_sign } else { s_sign - 1 })
+                    .collect(),
+            ),
+        ];
+        let acc_patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "acc_small",
+                (0..dst_lanes).map(|lane| lane as u64 * 7).collect(),
+            ),
+            (
+                "acc_signed_edges",
+                (0..dst_lanes)
+                    .map(|lane| [0, 1, d_mask, d_sign, d_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "acc_alt",
+                (0..dst_lanes)
+                    .map(|lane| if lane & 1 == 0 { d_mask } else { d_sign })
+                    .collect(),
+            ),
+        ];
+
+        for (source_name, zn_values, zm_values) in &source_patterns {
+            let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+            for (acc_name, acc_values) in &acc_patterns {
+                let (acc_lo, acc_hi) = pack_lanes(d_esize, acc_values);
+                for t in 0..2u32 {
+                    for s in 0..2u32 {
+                        for u in 0..2u32 {
+                            let mut st = ArmState::zeroed();
+                            st.set_vreg(0, acc_lo, acc_hi);
+                            st.set_vreg(1, zn_lo, zn_hi);
+                            st.set_vreg(2, zm_lo, zm_hi);
+                            batch.push((
+                                format!("mlal_sz{size}_s{s}_u{u}_t{t}_{source_name}_{acc_name}"),
+                                enc_sve2_mlal(size, s, u, t),
+                                st,
+                            ));
+                        }
+
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, acc_lo, acc_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("sqdmlal_sz{size}_s{s}_t{t}_{source_name}_{acc_name}"),
+                            enc_sve2_sqdmlal(size, s, t),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_mlal_edges", batch);
 }
 
 #[test]
 fn diff_sve2_addhn() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 add/subtract high narrow (ADDHN/SUBHN/RADDHN/RSUBHN, bottom/top).
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 1..4u32 {
@@ -41631,10 +41990,84 @@ fn diff_sve2_addhn() {
         }
     }
     run_family("sve2_addhn", cases, 16, 0x5_4001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let d_bits = d_esize * 8;
+        let s_bits = d_bits / 2;
+        let low_mask = (1u64 << s_bits) - 1;
+        let d_mask = if d_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << d_bits) - 1
+        };
+        let d_sign = 1u64 << (d_bits - 1);
+        let lanes = 16 / d_esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "carry_edges",
+                (0..lanes)
+                    .map(|lane| [low_mask, low_mask + 1, d_mask, d_sign][lane % 4])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [1, low_mask, 1, d_sign - 1][lane % 4])
+                    .collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, d_mask, d_sign, d_sign - 1][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [d_mask, 2, 1, d_sign - 1, d_sign][lane % 5])
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, zn_values, zm_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(d_esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(d_esize, zm_values);
+            for s in 0..2u32 {
+                for r in 0..2u32 {
+                    for t in 0..2u32 {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("addhn_sz{size}_s{s}_r{r}_t{t}_{pattern_name}"),
+                            enc_sve2_addhn(size, s, r, t),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_addhn_edges", batch);
 }
 
 #[test]
 fn diff_sve2_xtn() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 saturating extract narrow: SQXTN/UQXTN/SQXTUN (bottom/top), dest B/H/S.
     let mut cases: Vec<(String, u32)> = Vec::new();
     for &tsz in &[0b001u32, 0b010, 0b100] {
@@ -41648,10 +42081,84 @@ fn diff_sve2_xtn() {
         }
     }
     run_family("sve2_xtn", cases, 16, 0x5_5001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &tsz in &[0b001u32, 0b010, 0b100] {
+        let dst_esize = 1usize << (31 - tsz.leading_zeros());
+        let src_esize = dst_esize * 2;
+        let dst_bits = dst_esize * 8;
+        let src_bits = src_esize * 8;
+        let dst_mask = (1u64 << dst_bits) - 1;
+        let src_mask = if src_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << src_bits) - 1
+        };
+        let signed_hi = (1u64 << (dst_bits - 1)) - 1;
+        let signed_lo_src = 0u64.wrapping_sub(1u64 << (dst_bits - 1)) & src_mask;
+        let src_sign = 1u64 << (src_bits - 1);
+        let src_lanes = 16 / src_esize;
+        let patterns: [(&str, Vec<u64>); 4] = [
+            (
+                "signed_bounds",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, signed_hi, signed_hi + 1, signed_lo_src][lane % 5])
+                    .collect(),
+            ),
+            (
+                "unsigned_bounds",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, dst_mask, dst_mask + 1, src_mask][lane % 5])
+                    .collect(),
+            ),
+            (
+                "negative_inputs",
+                (0..src_lanes)
+                    .map(|lane| [src_mask, src_mask - 1, src_sign, src_sign + 1][lane % 4])
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { dst_mask + 1 } else { signed_lo_src })
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(src_esize, values);
+            for variant in 0..3u32 {
+                for t in 0..2u32 {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    batch.push((
+                        format!("xtn_tsz{tsz}_v{variant}_t{t}_{pattern_name}"),
+                        enc_sve2_xtn(tsz, variant, t),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    run_batch("sve2_xtn_edges", batch);
 }
 
 #[test]
 fn diff_sve2_cadd() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 complex integer add (CADD / saturating SQCADD), 90/270 rotation.
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -41665,10 +42172,89 @@ fn diff_sve2_cadd() {
         }
     }
     run_family("sve2_cadd", cases, 16, 0x5_6001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let hi = sign - 1;
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 4] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 3).collect(),
+            ),
+            (
+                "positive_sat",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { hi })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { mask })
+                    .collect(),
+            ),
+            (
+                "negative_sat",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { sign } else { sign })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { hi })
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| [0, mask, hi, sign][lane % 4])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [mask, 1, sign, hi][lane % 4])
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, z0_values, zm_values) in &patterns {
+            let (z0_lo, z0_hi) = pack_lanes(esize, z0_values);
+            let (zm_lo, zm_hi) = pack_lanes(esize, zm_values);
+            for op in 0..2u32 {
+                for rot in 0..2u32 {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, z0_lo, z0_hi);
+                    st.set_vreg(1, zm_lo, zm_hi);
+                    batch.push((
+                        format!("cadd_sz{size}_op{op}_rot{rot}_{pattern_name}"),
+                        enc_sve2_cadd(size, op, rot),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    run_batch("sve2_cadd_edges", batch);
 }
 
 #[test]
 fn diff_sve2_cmla() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 complex integer multiply-add: CMLA and saturating SQRDCMLAH, all four
     // rotations.
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41683,10 +42269,93 @@ fn diff_sve2_cmla() {
         }
     }
     run_family("sve2_cmla", cases, 16, 0x5_7001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let hi = sign - 1;
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>, Vec<u64>); 4] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64).collect(),
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 3).collect(),
+            ),
+            (
+                "positive_sat",
+                vec![hi; lanes],
+                vec![hi; lanes],
+                vec![hi; lanes],
+            ),
+            (
+                "negative_mix",
+                vec![sign; lanes],
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { sign })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { sign } else { hi })
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| [0, mask, hi, sign][lane % 4])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [1, sign, mask, hi][lane % 4])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [mask, 1, sign, hi][lane % 4])
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, acc_values, zn_values, zm_values) in &patterns {
+            let (acc_lo, acc_hi) = pack_lanes(esize, acc_values);
+            let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(esize, zm_values);
+            for op in 0..2u32 {
+                for rot in 0..4u32 {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, acc_lo, acc_hi);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    batch.push((
+                        format!("cmla_sz{size}_op{op}_rot{rot}_{pattern_name}"),
+                        enc_sve2_cmla(size, op, rot),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    run_batch("sve2_cmla_edges", batch);
 }
 
 #[test]
 fn diff_sve2_shrn() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 shift right narrow: SHRN/RSHRN, SQSHRUN, SQSHRN, UQSHRN (bottom/top),
     // across destination sizes and shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41708,10 +42377,89 @@ fn diff_sve2_shrn() {
         }
     }
     run_family("sve2_shrn", cases, 6, 0x5_8001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for db in [8u32, 16, 32] {
+        let dst_esize = (db / 8) as usize;
+        let src_esize = dst_esize * 2;
+        let src_bits = db * 2;
+        let dst_mask = (1u64 << db) - 1;
+        let src_mask = if src_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << src_bits) - 1
+        };
+        let signed_hi = (1u64 << (db - 1)) - 1;
+        let signed_lo_src = 0u64.wrapping_sub(1u64 << (db - 1)) & src_mask;
+        let src_sign = 1u64 << (src_bits - 1);
+        let lanes = 16 / src_esize;
+        for amt in [1u32, db / 2, db] {
+            let (tsz, imm3) = shrn_tsz_imm(db, amt);
+            let round_bit = 1u64 << (amt - 1);
+            let patterns: [(&str, Vec<u64>); 4] = [
+                (
+                    "small",
+                    (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                ),
+                (
+                    "rounding",
+                    (0..lanes)
+                        .map(|lane| [round_bit - 1, round_bit, round_bit + 1, (round_bit << 1) - 1][lane % 4])
+                        .collect(),
+                ),
+                (
+                    "unsigned_sat",
+                    (0..lanes)
+                        .map(|lane| [0, dst_mask, dst_mask + 1, src_mask][lane % 4])
+                        .collect(),
+                ),
+                (
+                    "signed_sat",
+                    (0..lanes)
+                        .map(|lane| [signed_hi, signed_hi + 1, signed_lo_src, src_sign, src_mask][lane % 5])
+                        .collect(),
+                ),
+            ];
+            for (pattern_name, values) in &patterns {
+                let (zn_lo, zn_hi) = pack_lanes(src_esize, values);
+                for op in 0..2u32 {
+                    for u in 0..2u32 {
+                        for r in 0..2u32 {
+                            for t in 0..2u32 {
+                                let mut st = ArmState::zeroed();
+                                st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                                st.set_vreg(1, zn_lo, zn_hi);
+                                batch.push((
+                                    format!("shrn_d{db}_a{amt}_op{op}_u{u}_r{r}_t{t}_{pattern_name}"),
+                                    enc_sve2_shrn(tsz, imm3, op, u, r, t),
+                                    st,
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_shrn_edges", batch);
 }
 
 #[test]
 fn diff_sve2_sqdmulh() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 SQDMULH/SQRDMULH and SQRDMLAH/SQRDMLSH (saturating doubling).
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -41721,6 +42469,85 @@ fn diff_sve2_sqdmulh() {
         cases.push((format!("sqrdmlsh sz{size}"), enc_sve2_sqrdmlah(size, 1)));
     }
     run_family("sve2_sqdmulh", cases, 16, 0x5_9001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let hi = sign - 1;
+        let tie = 1u64 << (bits / 2 - 1);
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>, Vec<u64>); 4] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 2).collect(),
+                (0..lanes).map(|lane| lane as u64 * 3).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, mask, sign, hi][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [1, mask, 2, sign, hi][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [0, sign, hi, mask][lane % 4])
+                    .collect(),
+            ),
+            (
+                "min_min",
+                vec![sign; lanes],
+                vec![sign; lanes],
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { sign })
+                    .collect(),
+            ),
+            (
+                "rounding_tie",
+                vec![tie; lanes],
+                vec![tie; lanes],
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { 0 } else { mask })
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, zn_values, zm_values, acc_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(esize, zm_values);
+            let (acc_lo, acc_hi) = pack_lanes(esize, acc_values);
+            for r in 0..2u32 {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, acc_lo, acc_hi);
+                st.set_vreg(1, zn_lo, zn_hi);
+                st.set_vreg(2, zm_lo, zm_hi);
+                batch.push((
+                    format!("sqdmulh_sz{size}_r{r}_{pattern_name}"),
+                    enc_sve2_sqdmulh(size, r),
+                    st,
+                ));
+            }
+            for s in 0..2u32 {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, acc_lo, acc_hi);
+                st.set_vreg(1, zn_lo, zn_hi);
+                st.set_vreg(2, zm_lo, zm_hi);
+                batch.push((
+                    format!("sqrdmlah_sz{size}_s{s}_{pattern_name}"),
+                    enc_sve2_sqrdmlah(size, s),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("sve2_sqdmulh_edges", batch);
 }
 
 #[test]
@@ -41755,6 +42582,20 @@ fn shll_tsz_imm(src_bits: u32, amount: u32) -> (u32, u32) {
 
 #[test]
 fn diff_sve2_shll() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 shift left long (SSHLL/USHLL, bottom/top), across source sizes and
     // shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41772,10 +42613,69 @@ fn diff_sve2_shll() {
         }
     }
     run_family("sve2_shll", cases, 8, 0x5_A001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sb in [8u32, 16, 32] {
+        let src_esize = (sb / 8) as usize;
+        let s_mask = (1u64 << sb) - 1;
+        let s_sign = 1u64 << (sb - 1);
+        let lanes = 16 / src_esize;
+        let patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alt_halves",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { s_sign })
+                    .collect(),
+            ),
+        ];
+        for amt in [0u32, 1, sb / 2, sb - 1] {
+            let (tsz, imm3) = shll_tsz_imm(sb, amt);
+            for (pattern_name, values) in &patterns {
+                let (zn_lo, zn_hi) = pack_lanes(src_esize, values);
+                for u in 0..2u32 {
+                    for t in 0..2u32 {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        batch.push((
+                            format!("shll_s{sb}_a{amt}_u{u}_t{t}_{pattern_name}"),
+                            enc_sve2_shll(tsz, imm3, u, t),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_shll_edges", batch);
 }
 
 #[test]
 fn diff_sve2_bperm() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 bit permute: BEXT/BDEP/BGRP, all element sizes.
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -41787,10 +42687,94 @@ fn diff_sve2_bperm() {
         }
     }
     run_family("sve2_bperm", cases, 20, 0x5_B001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let alt_a = mask & 0xaaaa_aaaa_aaaa_aaaa;
+        let alt_5 = mask & 0x5555_5555_5555_5555;
+        let sparse = mask & 0x0101_0101_0101_0101;
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 4] = [
+            (
+                "zero_mask",
+                (0..lanes).map(|lane| lane as u64 * 0x11).collect(),
+                vec![0; lanes],
+            ),
+            (
+                "full_mask",
+                (0..lanes).map(|lane| mask ^ lane as u64).collect(),
+                vec![mask; lanes],
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { alt_a } else { alt_5 })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { alt_5 } else { alt_a })
+                    .collect(),
+            ),
+            (
+                "sparse",
+                (0..lanes)
+                    .map(|lane| [0, mask, alt_a, alt_5][lane % 4])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { sparse } else { !sparse & mask })
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, zn_values, zm_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(esize, zm_values);
+            for opc in 0..3u32 {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                st.set_vreg(1, zn_lo, zn_hi);
+                st.set_vreg(2, zm_lo, zm_hi);
+                batch.push((
+                    format!("bperm_sz{size}_opc{opc}_{pattern_name}"),
+                    enc_sve2_bperm(size, opc),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("sve2_bperm_edges", batch);
 }
 
 #[test]
 fn diff_sve2_pairwise() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pred_lanes(size: u32, lanes: &[usize]) -> u16 {
+        let esize = 1usize << size;
+        let mut pred = 0u16;
+        for &lane in lanes {
+            pred |= 1u16 << (lane * esize);
+        }
+        pred
+    }
+
     // SVE2 predicated integer pairwise: ADDP/SMAXP/UMAXP/SMINP/UMINP.
     let ops: &[(u32, u32, &str)] = &[
         (0b00, 1, "addp"),
@@ -41814,10 +42798,93 @@ fn diff_sve2_pairwise() {
         }
     }
     run_batch("sve2_pairwise", batch);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let hi = sign - 1;
+        let lanes = 16 / esize;
+        let full_pred = pred_lanes(size, &(0..lanes).collect::<Vec<_>>());
+        let alt_pred = pred_lanes(size, &(0..lanes).step_by(2).collect::<Vec<_>>());
+        let tail_pred = pred_lanes(size, &(1..lanes).collect::<Vec<_>>());
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, mask, sign, hi][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [mask, 2, sign, hi, 0][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { mask } else { sign })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { 0 })
+                    .collect(),
+            ),
+        ];
+        let preds = [
+            ("none", 0),
+            ("lane0", pred_lanes(size, &[0])),
+            ("tail", tail_pred),
+            ("alt", alt_pred),
+            ("full", full_pred),
+            ("all_bits", u16::MAX),
+        ];
+        for (pattern_name, zd_values, zn_values) in &patterns {
+            let (zd_lo, zd_hi) = pack_lanes(esize, zd_values);
+            let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+            for &(opc, u, name) in ops {
+                let insn = enc_sve2_pairwise(size, opc, u);
+                for &(pred_name, pred) in &preds {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, zd_lo, zd_hi);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("{name}_sz{size}_{pattern_name}_{pred_name}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+    run_batch("sve2_pairwise_edges", batch);
 }
 
 #[test]
 fn diff_sve2_abal() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 absolute-difference accumulate long (SABAL/UABAL, bottom/top).
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 1..4u32 {
@@ -41831,10 +42898,115 @@ fn diff_sve2_abal() {
         }
     }
     run_family("sve2_abal", cases, 16, 0x5_D001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let s_esize = d_esize / 2;
+        let s_bits = s_esize * 8;
+        let d_bits = d_esize * 8;
+        let s_mask = (1u64 << s_bits) - 1;
+        let s_sign = 1u64 << (s_bits - 1);
+        let d_mask = if d_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << d_bits) - 1
+        };
+        let d_sign = 1u64 << (d_bits - 1);
+        let src_lanes = 16 / s_esize;
+        let dst_lanes = 16 / d_esize;
+        let source_patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..src_lanes).map(|lane| lane as u64 + 3).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| [s_mask, 2, s_sign, s_sign - 1, 0][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alt_halves",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { 0 })
+                    .collect(),
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_sign } else { s_sign - 1 })
+                    .collect(),
+            ),
+        ];
+        let acc_patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "acc_small",
+                (0..dst_lanes).map(|lane| lane as u64 * 5).collect(),
+            ),
+            (
+                "acc_edges",
+                (0..dst_lanes)
+                    .map(|lane| [0, 1, d_mask, d_sign, d_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "acc_alt",
+                (0..dst_lanes)
+                    .map(|lane| if lane & 1 == 0 { d_mask } else { d_sign })
+                    .collect(),
+            ),
+        ];
+        for (source_name, zn_values, zm_values) in &source_patterns {
+            let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+            for (acc_name, acc_values) in &acc_patterns {
+                let (acc_lo, acc_hi) = pack_lanes(d_esize, acc_values);
+                for u in 0..2u32 {
+                    for t in 0..2u32 {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, acc_lo, acc_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("abal_sz{size}_u{u}_t{t}_{source_name}_{acc_name}"),
+                            enc_sve2_abal(size, u, t),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_abal_edges", batch);
 }
 
 #[test]
 fn diff_sve2_adalp() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pred_lanes(size: u32, lanes: &[usize]) -> u16 {
+        let esize = 1usize << size;
+        let mut pred = 0u16;
+        for &lane in lanes {
+            pred |= 1u16 << (lane * esize);
+        }
+        pred
+    }
+
     // SVE2 add long pairwise accumulate (SADALP/UADALP), predicated.
     let mut rng = Rng::new(0x5_E001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -41851,10 +43023,110 @@ fn diff_sve2_adalp() {
         }
     }
     run_batch("sve2_adalp", batch);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 1..4u32 {
+        let d_esize = 1usize << size;
+        let s_esize = d_esize / 2;
+        let s_bits = s_esize * 8;
+        let d_bits = d_esize * 8;
+        let s_mask = (1u64 << s_bits) - 1;
+        let s_sign = 1u64 << (s_bits - 1);
+        let d_mask = if d_bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << d_bits) - 1
+        };
+        let d_sign = 1u64 << (d_bits - 1);
+        let src_lanes = 16 / s_esize;
+        let dst_lanes = 16 / d_esize;
+        let full_pred = pred_lanes(size, &(0..dst_lanes).collect::<Vec<_>>());
+        let alt_pred = pred_lanes(size, &(0..dst_lanes).step_by(2).collect::<Vec<_>>());
+        let tail_pred = pred_lanes(size, &(1..dst_lanes).collect::<Vec<_>>());
+        let source_patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..src_lanes)
+                    .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..src_lanes)
+                    .map(|lane| if lane & 1 == 0 { s_mask } else { s_sign })
+                    .collect(),
+            ),
+        ];
+        let acc_patterns: [(&str, Vec<u64>); 3] = [
+            (
+                "acc_small",
+                (0..dst_lanes).map(|lane| lane as u64 * 7).collect(),
+            ),
+            (
+                "acc_edges",
+                (0..dst_lanes)
+                    .map(|lane| [0, 1, d_mask, d_sign, d_sign - 1][lane % 5])
+                    .collect(),
+            ),
+            (
+                "acc_alt",
+                (0..dst_lanes)
+                    .map(|lane| if lane & 1 == 0 { d_mask } else { d_sign })
+                    .collect(),
+            ),
+        ];
+        let preds = [
+            ("none", 0),
+            ("lane0", pred_lanes(size, &[0])),
+            ("tail", tail_pred),
+            ("alt", alt_pred),
+            ("full", full_pred),
+            ("all_bits", u16::MAX),
+        ];
+        for (source_name, zn_values) in &source_patterns {
+            let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+            for (acc_name, acc_values) in &acc_patterns {
+                let (acc_lo, acc_hi) = pack_lanes(d_esize, acc_values);
+                for u in 0..2u32 {
+                    let insn = enc_sve2_adalp(size, u);
+                    for &(pred_name, pred) in &preds {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, acc_lo, acc_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_preg(0, pred);
+                        batch.push((
+                            format!("adalp_sz{size}_u{u}_{source_name}_{acc_name}_{pred_name}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("sve2_adalp_edges", batch);
 }
 
 #[test]
 fn diff_sve2_ssra() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 shift-right-accumulate (SSRA/USRA/SRSRA/URSRA) and shift-insert
     // (SRI/SLI), across element sizes and shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
@@ -41877,6 +43149,87 @@ fn diff_sve2_ssra() {
         }
     }
     run_family("sve2_ssra", cases, 4, 0x5_F001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for eb in [8u32, 16, 32, 64] {
+        let esize = (eb / 8) as usize;
+        let mask = if eb >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << eb) - 1
+        };
+        let sign = 1u64 << (eb - 1);
+        let hi = sign - 1;
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 * 3).collect(),
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, mask, sign, hi][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [mask, 2, sign, hi, 0][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { mask } else { sign })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { 0 })
+                    .collect(),
+            ),
+        ];
+        for amt in [1u32, eb / 2, eb] {
+            let (tsz, imm3) = ssra_tsz_imm(eb, amt);
+            for (pattern_name, zd_values, zn_values) in &patterns {
+                let (zd_lo, zd_hi) = pack_lanes(esize, zd_values);
+                let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+                for r in 0..2u32 {
+                    for u in 0..2u32 {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, zd_lo, zd_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        batch.push((
+                            format!("ssra_e{eb}_a{amt}_r{r}_u{u}_{pattern_name}"),
+                            enc_sve2_ssra(tsz, imm3, r, u),
+                            st,
+                        ));
+                    }
+                }
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zd_lo, zd_hi);
+                st.set_vreg(1, zn_lo, zn_hi);
+                batch.push((
+                    format!("sri_e{eb}_a{amt}_{pattern_name}"),
+                    enc_sve2_sri(tsz, imm3, 0),
+                    st,
+                ));
+            }
+        }
+        for amt in [0u32, eb / 2, eb - 1] {
+            let (tsz, imm3) = sli_tsz_imm(eb, amt);
+            for (pattern_name, zd_values, zn_values) in &patterns {
+                let (zd_lo, zd_hi) = pack_lanes(esize, zd_values);
+                let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zd_lo, zd_hi);
+                st.set_vreg(1, zn_lo, zn_hi);
+                batch.push((
+                    format!("sli_e{eb}_a{amt}_{pattern_name}"),
+                    enc_sve2_sri(tsz, imm3, 1),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("sve2_ssra_edges", batch);
 }
 
 #[test]
