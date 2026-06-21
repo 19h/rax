@@ -787,6 +787,52 @@ fn raw_el0_scalar_fp_misc_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_scalar_fp_rounding_mode_oracle_matches_interpreter() {
+    let insns = [
+        0x1e67_c020, // frinti d0, d1
+        0x1e67_4062, // frintx d2, d3
+        0x1e27_c0a4, // frinti s4, s5
+        0x1e27_40e6, // frintx s6, s7
+    ];
+
+    for (label, fpcr) in [
+        ("nearest", 0u64),
+        ("plus_inf", 1u64 << 22),
+        ("minus_inf", 2u64 << 22),
+        ("zero", 3u64 << 22),
+    ] {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = fpcr;
+            g.v[2] = (1.5_f64).to_bits();
+            g.v[6] = (-1.5_f64).to_bits();
+            g.v[10] = (2.5_f32).to_bits() as u64;
+            g.v[14] = (-2.5_f32).to_bits() as u64;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        for reg in [0usize, 2] {
+            let lo = 2 * reg;
+            assert_eq!(
+                hw.v[lo], interp.v[lo],
+                "raw EL0 scalar FP rounding {label} d{reg} mismatch"
+            );
+        }
+        for reg in [4usize, 6] {
+            let lo = 2 * reg;
+            assert_eq!(
+                hw.v[lo] as u32, interp.v[lo] as u32,
+                "raw EL0 scalar FP rounding {label} s{reg} mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpcr as u32, interp.fpcr as u32,
+            "raw EL0 scalar FP rounding {label} FPCR mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_scalar_fp_convert_compare_oracle_matches_interpreter() {
     let insns = [
         0x9e67_0020, // fmov   d0, x1
@@ -1011,6 +1057,158 @@ fn raw_el0_system_state_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_flag_manipulation_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("flagm") {
+        eprintln!("[skip] host does not advertise flag manipulation");
+        return;
+    }
+
+    let insns = [
+        0xd51b_4200, // msr   nzcv, x0
+        0xd500_401f, // cfinv
+        0xd53b_4203, // mrs   x3, nzcv
+        0xba1e_042f, // rmif  x1, #60, #15
+        0xd53b_4204, // mrs   x4, nzcv
+        0x3a00_084d, // setf8 w2
+        0xd53b_4205, // mrs   x5, nzcv
+        0x3a00_48cd, // setf16 w6
+        0xd53b_4207, // mrs   x7, nzcv
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[0] = 0x2000_0000;
+        g.x[1] = 0xa000_0000_0000_0000;
+        g.x[2] = 0x80;
+        g.x[6] = 0x8000;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [3usize, 4, 5, 7] {
+        assert_eq!(
+            hw.x[reg] & 0xf000_0000,
+            interp.x[reg] & 0xf000_0000,
+            "raw EL0 flag manipulation x{reg} NZCV mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 flag manipulation final NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_alternative_flag_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("flagm2") {
+        eprintln!("[skip] host does not advertise alternative NZCV conversion");
+        return;
+    }
+
+    let insns = [
+        0xd51b_4200, // msr    nzcv, x0
+        0xd500_405f, // axflag
+        0xd53b_4201, // mrs    x1, nzcv
+        0xd500_403f, // xaflag
+        0xd53b_4202, // mrs    x2, nzcv
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[0] = 0xb000_0000;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [1usize, 2] {
+        assert_eq!(
+            hw.x[reg] & 0xf000_0000,
+            interp.x[reg] & 0xf000_0000,
+            "raw EL0 alternative flag x{reg} NZCV mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 alternative flag final NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_system_hint_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("bti")
+        || !host_has_aarch64_feature("dgh")
+        || !host_has_aarch64_feature("sb")
+    {
+        eprintln!("[skip] host does not advertise BTI/DGH/SB hints");
+        return;
+    }
+
+    let insns = [
+        0xd280_0020, // mov  x0, #1
+        0xd503_241f, // bti
+        0xd503_245f, // bti  c
+        0xd503_249f, // bti  j
+        0xd503_24df, // bti  jc
+        0xd503_20df, // dgh
+        0xd503_229f, // csdb
+        0xd503_30ff, // sb
+        0xd503_3fdf, // isb
+        0xd503_3fbf, // dmb  sy
+        0xd503_3f9f, // dsb  sy
+        0xd503_3f5f, // clrex
+        0x9100_0800, // add  x0, x0, #2
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[1] = 0x1122_3344_5566_7788;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 1] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 system hint x{reg} mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_pointer_auth_roundtrip_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("paca") {
+        eprintln!("[skip] host does not advertise pointer authentication");
+        return;
+    }
+
+    let insns = [
+        0xdac1_0020, // pacia x0, x1
+        0xdac1_1020, // autia x0, x1
+        0xdac1_0462, // pacib x2, x3
+        0xdac1_1462, // autib x2, x3
+        0xdac1_08a4, // pacda x4, x5
+        0xdac1_18a4, // autda x4, x5
+        0xdac1_0ce6, // pacdb x6, x7
+        0xdac1_1ce6, // autdb x6, x7
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[0] = 0x0000_1234_5678_9000;
+        g.x[1] = 0xaaaa_5555_1234_0001;
+        g.x[2] = 0x0000_2234_5678_a000;
+        g.x[3] = 0xbbbb_6666_1234_0002;
+        g.x[4] = 0x0000_3234_5678_b000;
+        g.x[5] = 0xcccc_7777_1234_0003;
+        g.x[6] = 0x0000_4234_5678_c000;
+        g.x[7] = 0xdddd_8888_1234_0004;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 pointer-auth roundtrip x{reg} mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_memory_oracle_matches_interpreter() {
     let insns = [
         0xf940_0020, // ldr   x0, [x1]
@@ -1057,6 +1255,82 @@ fn raw_el0_memory_oracle_matches_interpreter() {
     assert_eq!(u64::from(hw.x[5] as u8), interp.get_x(5), "raw EL0 ldrb w5");
     assert_eq!(native_out64, interp.mem_read_u64(OUT64).unwrap(), "raw EL0 str x0");
     assert_eq!(native_out8, interp.mem_read_u8(OUT8).unwrap(), "raw EL0 strb w5");
+}
+
+#[test]
+fn raw_el0_ordered_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("lrcpc") {
+        eprintln!("[skip] host does not advertise RCpc loads");
+        return;
+    }
+
+    let insns = [
+        0xc8df_fc20, // ldar   x0, [x1]
+        0x08df_fc62, // ldarb  w2, [x3]
+        0xc89f_fca4, // stlr   x4, [x5]
+        0x089f_fce6, // stlrb  w6, [x7]
+        0xf8bf_c128, // ldapr  x8, [x9]
+        0x38bf_c16a, // ldaprb w10, [x11]
+    ];
+
+    let native_ldar = 0x0123_4567_89ab_cdefu64;
+    let native_ldarb = 0xa5u8;
+    let mut native_stlr = 0u64;
+    let mut native_stlrb = 0u8;
+    let native_ldapr = 0xfedc_ba98_7654_3210u64;
+    let native_ldaprb = 0x5au8;
+    let hw = raw_native_run(&insns, |g| {
+        g.x[1] = &native_ldar as *const u64 as u64;
+        g.x[3] = &native_ldarb as *const u8 as u64;
+        g.x[4] = 0x1111_2222_3333_4444;
+        g.x[5] = &mut native_stlr as *mut u64 as u64;
+        g.x[6] = 0xee;
+        g.x[7] = &mut native_stlrb as *mut u8 as u64;
+        g.x[9] = &native_ldapr as *const u64 as u64;
+        g.x[11] = &native_ldaprb as *const u8 as u64;
+    });
+
+    const LDAR: u64 = 0x8100;
+    const LDARB: u64 = 0x8200;
+    const STLR: u64 = 0x8300;
+    const STLRB: u64 = 0x8400;
+    const LDAPR: u64 = 0x8500;
+    const LDAPRB: u64 = 0x8600;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp.write_memory(LDAR, &native_ldar.to_le_bytes()).unwrap();
+    interp.write_memory(LDARB, &[native_ldarb]).unwrap();
+    interp.write_memory(LDAPR, &native_ldapr.to_le_bytes()).unwrap();
+    interp.write_memory(LDAPRB, &[native_ldaprb]).unwrap();
+    interp.set_x(1, LDAR);
+    interp.set_x(3, LDARB);
+    interp.set_x(4, 0x1111_2222_3333_4444);
+    interp.set_x(5, STLR);
+    interp.set_x(6, 0xee);
+    interp.set_x(7, STLRB);
+    interp.set_x(9, LDAPR);
+    interp.set_x(11, LDAPRB);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 2, 8, 10] {
+        assert_eq!(
+            hw.x[reg as usize],
+            interp.get_x(reg),
+            "raw EL0 ordered memory x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        native_stlr,
+        interp.mem_read_u64(STLR).unwrap(),
+        "raw EL0 ordered memory stlr"
+    );
+    assert_eq!(
+        native_stlrb,
+        interp.mem_read_u8(STLRB).unwrap(),
+        "raw EL0 ordered memory stlrb"
+    );
 }
 
 #[test]
@@ -1246,6 +1520,85 @@ fn raw_el0_vector_memory_oracle_matches_interpreter() {
             native,
             interp.mem_read_u64(addr).unwrap(),
             "raw EL0 vector memory {label}"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e3e0, // ptrue p0.d
+        0xa5e0_a020, // ld1d  { z0.d }, p0/z, [x1]
+        0xe5e0_e040, // st1d  { z0.d }, p0, [x2]
+        0xa460_a083, // ld1b  { z3.d }, p0/z, [x4]
+        0xe460_e0a3, // st1b  { z3.d }, p0, [x5]
+    ];
+
+    let native_d_in = [0x0123_4567_89ab_cdefu64, 0xfedc_ba98_7654_3210];
+    let mut native_d_out = [0u64; 2];
+    let native_b_in = [0xa5u8, 0x5a];
+    let mut native_b_out = [0u8; 2];
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_d_in.as_ptr() as u64;
+        g.x[2] = native_d_out.as_mut_ptr() as u64;
+        g.x[4] = native_b_in.as_ptr() as u64;
+        g.x[5] = native_b_out.as_mut_ptr() as u64;
+    });
+
+    const D_IN: u64 = 0xf000;
+    const D_OUT: u64 = 0xf100;
+    const B_IN: u64 = 0xf200;
+    const B_OUT: u64 = 0xf300;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(D_IN, &native_d_in[0].to_le_bytes())
+        .unwrap();
+    interp
+        .write_memory(D_IN + 8, &native_d_in[1].to_le_bytes())
+        .unwrap();
+    interp.write_memory(B_IN, &native_b_in).unwrap();
+    interp.set_x(1, D_IN);
+    interp.set_x(2, D_OUT);
+    interp.set_x(4, B_IN);
+    interp.set_x(5, B_OUT);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 3] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE memory z{reg} low-128 mismatch"
+        );
+    }
+    for (label, native, addr) in [
+        ("st1d low", native_d_out[0], D_OUT),
+        ("st1d high", native_d_out[1], D_OUT + 8),
+    ] {
+        assert_eq!(
+            native,
+            interp.mem_read_u64(addr).unwrap(),
+            "raw EL0 SVE memory {label}"
+        );
+    }
+    for (label, native, addr) in [
+        ("st1b lane 0", native_b_out[0], B_OUT),
+        ("st1b lane 1", native_b_out[1], B_OUT + 1),
+    ] {
+        assert_eq!(
+            native,
+            interp.mem_read_u8(addr).unwrap(),
+            "raw EL0 SVE memory {label}"
         );
     }
 }
