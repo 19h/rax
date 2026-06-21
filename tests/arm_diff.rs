@@ -35957,6 +35957,75 @@ fn diff_sve_perm() {
         }
     }
     run_family("sve_perm", cases, 12, 0x1_0021);
+
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn lane_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let zn_edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let zm_edges = [mask, mask - 1, sign + 1, sign, sign - 1, 1, 0];
+        vec![
+            (
+                "identity",
+                (0..lanes).map(|lane| lane as u64).collect(),
+                (0..lanes)
+                    .map(|lane| 0x80u64.wrapping_add(lane as u64) & mask)
+                    .collect(),
+            ),
+            (
+                "edges",
+                (0..lanes)
+                    .map(|lane| zn_edges[lane % zn_edges.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| zm_edges[lane % zm_edges.len()])
+                    .collect(),
+            ),
+        ]
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        for (opc, name) in [
+            (0b000u32, "zip1"),
+            (0b001, "zip2"),
+            (0b010, "uzp1"),
+            (0b011, "uzp2"),
+            (0b100, "trn1"),
+            (0b101, "trn2"),
+        ] {
+            let insn = enc_sve_perm(sz, opc);
+            for (pattern_name, zn, zm) in lane_patterns(sz) {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                let (lo, hi) = pack_lanes(sz, &zn);
+                st.set_vreg(1, lo, hi);
+                let (lo, hi) = pack_lanes(sz, &zm);
+                st.set_vreg(2, lo, hi);
+                batch.push((format!("{name}_sz{sz}_{pattern_name}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_perm_edges", batch);
 }
 
 #[test]
@@ -35968,6 +36037,52 @@ fn diff_sve_ext() {
         cases.push((format!("sve_ext #{imm8}"), enc_sve_ext(imm8)));
     }
     run_family("sve_ext", cases, 16, 0x2_5001);
+
+    fn pack_bytes(values: &[u8; 16]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 8);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let patterns = [
+        (
+            "identity",
+            [
+                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
+                0x0d, 0x0e, 0x0f,
+            ],
+            [
+                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c,
+                0x8d, 0x8e, 0x8f,
+            ],
+        ),
+        (
+            "edges",
+            [
+                0x00, 0xff, 0x01, 0xfe, 0x7f, 0x80, 0x55, 0xaa, 0x10, 0xef, 0x20, 0xdf, 0x40,
+                0xbf, 0x08, 0xf7,
+            ],
+            [
+                0xf0, 0x0f, 0xe0, 0x1f, 0xc0, 0x3f, 0x80, 0x7f, 0xaa, 0x55, 0x99, 0x66, 0x33,
+                0xcc, 0x5a, 0xa5,
+            ],
+        ),
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for imm8 in 0..32u32 {
+        let insn = enc_sve_ext(imm8);
+        for (pattern_name, zdn, zm) in patterns {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_bytes(&zdn);
+            st.set_vreg(0, lo, hi);
+            let (lo, hi) = pack_bytes(&zm);
+            st.set_vreg(1, lo, hi);
+            batch.push((format!("ext_imm{imm8}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve_ext_edges", batch);
 }
 
 #[test]
@@ -37715,6 +37830,61 @@ fn diff_sve_fp_indexed_fmls_fpcr_ah_nan_sign() {
 
 #[test]
 fn diff_sve_recps() {
+    fn pack_fp(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn step_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_zero_inf",
+                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000],
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x0000, 0x8000, 0x7c00, 0xfc00],
+                ),
+                (
+                    "h_nan_mix",
+                    vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000],
+                    vec![0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_zero_inf",
+                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
+                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 0x7f80_0000, 0xff80_0000],
+                ),
+                (
+                    "s_nan_mix",
+                    vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001],
+                    vec![0xff80_0000, 0x7f80_0000, 1.0f32.to_bits() as u64, 0x7fc0_0001],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_zero_inf",
+                    vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                    vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                ),
+                (
+                    "d_nan_mix",
+                    vec![0x7ff0_0000_0000_0000, 0x7ff8_0000_0000_0001],
+                    vec![0xfff0_0000_0000_0000, 0x7ff0_0000_0000_0001],
+                ),
+            ],
+        }
+    }
+
     // FRECPS / FRSQRTS reciprocal steps, all sizes, finite inputs.
     let mut rng = Rng::new(0x8_4001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -37731,6 +37901,14 @@ fn diff_sve_recps() {
                     st.set_vreg(r, v as u64, (v >> 64) as u64);
                 }
                 batch.push((format!("recps s{size} r{rsqrt}"), insn, st));
+            }
+            for (pattern_name, zn, zm) in step_patterns(size) {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_fp(size, &zn);
+                st.set_vreg(1, lo, hi);
+                let (lo, hi) = pack_fp(size, &zm);
+                st.set_vreg(2, lo, hi);
+                batch.push((format!("recps_s{size}_r{rsqrt}_{pattern_name}"), insn, st));
             }
         }
     }
@@ -37750,17 +37928,50 @@ fn diff_sve_dot() {
         st.set_vreg(2, rng.next(), rng.next());
         st
     };
+    let setup_raw = |acc: u128, zn: u128, zm: u128| {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, acc as u64, (acc >> 64) as u64);
+        st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+        st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+        st
+    };
+    let patterns = [
+        ("zeros", 0u128, 0u128, 0u128),
+        ("all_ff", 0u128, u128::MAX, u128::MAX),
+        (
+            "signed_edges",
+            0x7fff_ffff_8000_0000_ffff_ffff_0000_0001u128,
+            0x807f_01ff_8001_7ffe_55aa_aa55_0f0f_f0f0u128,
+            0x7f80_ff01_7f01_8002_aa55_55aa_f0f0_0f0fu128,
+        ),
+        (
+            "byte_mix",
+            0x0123_4567_89ab_cdef_fedc_ba98_7654_3210u128,
+            0x0001_0203_7f80_81ff_1020_3040_5060_7080u128,
+            0xfffe_fdfc_807f_7e01_8877_6655_4433_2211u128,
+        ),
+    ];
     for sz in 0..2u32 {
         for u in 0..2u32 {
             let insn = enc_sve_dot_vec(sz, u);
             for _ in 0..10 {
                 batch.push((format!("dot_v sz{sz} u{u}"), insn, setup(&mut rng)));
             }
+            for (pattern_name, acc, zn, zm) in patterns {
+                batch.push((
+                    format!("dot_v_sz{sz}_u{u}_{pattern_name}"),
+                    insn,
+                    setup_raw(acc, zn, zm),
+                ));
+            }
         }
     }
     let insn = enc_sve_usdot_vec();
     for _ in 0..10 {
         batch.push(("usdot_v".to_string(), insn, setup(&mut rng)));
+    }
+    for (pattern_name, acc, zn, zm) in patterns {
+        batch.push((format!("usdot_v_{pattern_name}"), insn, setup_raw(acc, zn, zm)));
     }
     let idxops = [
         (0u32, 0b000000u32, "sdot"),
@@ -37777,6 +37988,13 @@ fn diff_sve_dot() {
             for _ in 0..4 {
                 batch.push((format!("{name}_idx i{index}"), insn, setup(&mut rng)));
             }
+            for (pattern_name, acc, zn, zm) in patterns {
+                batch.push((
+                    format!("{name}_idx_i{index}_{pattern_name}"),
+                    insn,
+                    setup_raw(acc, zn, zm),
+                ));
+            }
         }
     }
     run_batch("sve_dot", batch);
@@ -37784,6 +38002,67 @@ fn diff_sve_dot() {
 
 #[test]
 fn diff_sve_fp_fma() {
+    fn pack_fp(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn finite_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_basic",
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                ),
+                (
+                    "h_lane_mix",
+                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_basic",
+                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
+                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                ),
+                (
+                    "s_lane_mix",
+                    vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
+                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_basic",
+                    vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                    vec![1.5f64.to_bits(), (-2.5f64).to_bits()],
+                    vec![0.5f64.to_bits(), (-0.75f64).to_bits()],
+                ),
+                (
+                    "d_lane_mix",
+                    vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                    vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                    vec![4.0f64.to_bits(), (-8.0f64).to_bits()],
+                ),
+            ],
+        }
+    }
+
     // Predicated FP fused multiply-add, all 8 variants and sizes, finite inputs.
     let mut rng = Rng::new(0x8_0001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -37801,6 +38080,24 @@ fn diff_sve_fp_fma() {
                 }
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("fma s{size} op{op3}"), insn, st));
+            }
+            let mixed = match size {
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            for (pattern_name, acc, zn, zm) in finite_patterns(size) {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_fp(size, &acc);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zm);
+                    st.set_vreg(2, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("fma_s{size}_op{op3}_{pattern_name}_{mask_name}"), insn, st));
+                }
             }
         }
     }
@@ -39394,6 +39691,13 @@ fn diff_sve_pred_unary() {
 
 #[test]
 fn diff_sve_unpk() {
+    let patterns = [
+        ("zeros", 0x0000_0000_0000_0000u64, 0x0000_0000_0000_0000u64),
+        ("ones", 0xffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff),
+        ("sign_edges", 0x807f_00ff_8001_7ffe, 0x8000_7fff_ffff_0001),
+        ("alternating", 0x55aa_aa55_0f0f_f0f0, 0x33cc_cc33_ff00_00ff),
+    ];
+
     // SUNPKHI/LO, UUNPKHI/LO, all dest sizes.
     let mut rng = Rng::new(0x9_7001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -39405,6 +39709,11 @@ fn diff_sve_unpk() {
                     let mut st = ArmState::zeroed();
                     st.set_vreg(1, rng.next(), rng.next());
                     batch.push((format!("unpk s{size} u{u} h{h}"), insn, st));
+                }
+                for (pattern_name, lo, hi) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(1, lo, hi);
+                    batch.push((format!("unpk_s{size}_u{u}_h{h}_{pattern_name}"), insn, st));
                 }
             }
         }
@@ -39438,6 +39747,40 @@ fn diff_sve_dupm() {
 
 #[test]
 fn diff_sve_frecpe() {
+    fn pack_fp(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn estimate_patterns(size: u32) -> Vec<(&'static str, Vec<u64>)> {
+        match size {
+            1 => vec![
+                ("h_zero_inf", vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000]),
+                ("h_nan_mix", vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000]),
+            ],
+            2 => vec![
+                (
+                    "s_zero_inf",
+                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
+                ),
+                ("s_nan_mix", vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001]),
+            ],
+            _ => vec![
+                ("d_zero_inf", vec![0.0f64.to_bits(), (-0.0f64).to_bits()]),
+                ("d_nan_mix", vec![0x7ff0_0000_0000_0000, 0x7ff8_0000_0000_0001]),
+            ],
+        }
+    }
+
     // FRECPE/FRSQRTE estimate, all sizes, finite inputs.
     let mut rng = Rng::new(0x9_8001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -39452,6 +39795,12 @@ fn diff_sve_frecpe() {
                 let mut st = ArmState::zeroed();
                 st.set_vreg(1, zn as u64, (zn >> 64) as u64);
                 batch.push((format!("frecpe s{size} r{rsqrt}"), insn, st));
+            }
+            for (pattern_name, values) in estimate_patterns(size) {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_fp(size, &values);
+                st.set_vreg(1, lo, hi);
+                batch.push((format!("frecpe_s{size}_r{rsqrt}_{pattern_name}"), insn, st));
             }
         }
     }
