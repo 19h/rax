@@ -1885,6 +1885,21 @@ fn generated_branch_register_cases() -> Vec<(String, u32, u32)> {
         .collect()
 }
 
+fn generated_branch_register_unallocated_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/branch/unconditional.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn, fields) in parse_generated_a64_cases_with_fields("branch/register", source) {
+        if !branch_register_unallocated(insn, &fields) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_float_cases() -> Vec<(String, u32)> {
     let sources = [
         (
@@ -3139,6 +3154,10 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_branch_register_cases",
             generated_branch_register_cases().len(),
         ),
+        (
+            "generated_branch_register_unallocated_cases",
+            generated_branch_register_unallocated_cases().len(),
+        ),
         ("generated_float_cases", generated_float_cases().len()),
         (
             "generated_vector_dotprod_cases",
@@ -3373,6 +3392,7 @@ fn generated_a64_case_selectors_are_non_empty() {
         ("generated_integer_pac_strip_cases", 11),
         ("generated_branch_immediate_cases", 4),
         ("generated_branch_register_cases", 4),
+        ("generated_branch_register_unallocated_cases", 9),
         ("generated_float_cases", 294),
         ("generated_vector_dotprod_cases", 24),
         ("generated_vector_scalar_cmp_zero_cases", 30),
@@ -3849,6 +3869,27 @@ fn branch_register_in_tiny_program(fields: &std::collections::BTreeMap<String, i
     }
     matches!(fields.get("op").copied(), Some(0 | 1))
         && matches!(fields.get("Rn").copied(), Some(0..=30))
+}
+
+fn branch_register_unallocated(
+    insn: u32,
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
+    if !["Z", "op", "A", "M", "Rm", "Rn"]
+        .iter()
+        .all(|field| fields.contains_key(*field))
+    {
+        return false;
+    }
+    let z = fields.get("Z").copied().unwrap_or_else(|| ((insn >> 24) & 1) as i32);
+    let op = fields
+        .get("op")
+        .copied()
+        .unwrap_or_else(|| ((insn >> 21) & 0x3) as i32);
+    let a = fields.get("A").copied().unwrap_or_else(|| ((insn >> 11) & 1) as i32);
+    let m = fields.get("M").copied().unwrap_or_else(|| ((insn >> 10) & 1) as i32);
+    let rm = fields.get("Rm").copied().unwrap_or_else(|| (insn & 0x1f) as i32);
+    !(z == 0 && a == 0 && m == 0 && rm == 0 && matches!(op, 0 | 1 | 2))
 }
 
 fn integer_address_pc_in_normalized_window(insn: u32) -> bool {
@@ -26258,6 +26299,22 @@ fn diff_generated_branch_register_sweep() {
 }
 
 #[test]
+fn diff_generated_branch_register_unallocated_sweep() {
+    let mut rng = Rng::new(0xa64_ba13);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_branch_register_unallocated_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_input(&mut rng)));
+        }
+    }
+    assert!(
+        !batch.is_empty(),
+        "expected generated branch register unallocated cases"
+    );
+    run_batch_el0_trap("generated_branch_register_unallocated_sweep", batch);
+}
+
+#[test]
 fn diff_branch_system_hints_barriers_el0() {
     fn hint(crm: u32, op2: u32) -> u32 {
         0xd503_201f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
@@ -41000,6 +41057,25 @@ fn diff_excl_stxp() {
     run_batch_pair("excl_stxp", batch);
 }
 
+#[test]
+fn diff_excl_stxp_unarmed() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            cases.push((format!("stxp_unarmed sz64{sz64} o0{o0}"), enc_stxp(sz64, o0)));
+        }
+    }
+
+    let mut rng = Rng::new(0x1_0011);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, stxp) in &cases {
+        for _ in 0..10 {
+            batch.push((label.clone(), *stxp, mem_input(&mut rng)));
+        }
+    }
+    run_batch("excl_stxp_unarmed", batch);
+}
+
 /// CASP: `0 sz 001000 0 L 1 Rs o0 11111 Rn Rt`. Rs=x2:x3 (compare/old),
 /// Rt=x4:x5 (new), Rn=x1. sz selects 32-bit (0) or 64-bit (1) element pair.
 fn enc_casp(sz: u32, l: u32, o0: u32) -> u32 {
@@ -41337,6 +41413,10 @@ fn enc_ldst_reg(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
         | RD
 }
 
+fn enc_ldst_reg_simdfp(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
+    enc_ldst_reg(size, opc, rm, option, s) | (1 << 26)
+}
+
 /// PRFM register offset: `11 111000 0 0 1 Rm opc=10 option S 10 Rn Rt`.
 fn enc_prfm_reg(rt: u32, rm: u32, option: u32, s: u32) -> u32 {
     (0b11 << 30)
@@ -41533,6 +41613,128 @@ fn diff_mem_ldst_reg_offset() {
         }
     }
     run_batch("mem_ldst_reg_offset", batch);
+}
+
+fn ldst_reg_offset_operand(option: u32, s: u32, scale: u32) -> u64 {
+    match option {
+        0b010 | 0b011 => {
+            if s == 0 {
+                16
+            } else {
+                4 >> scale.min(2)
+            }
+        }
+        0b110 => (-4i32) as u64,
+        0b111 => (-4i64) as u64,
+        _ => unreachable!(),
+    }
+}
+
+#[test]
+fn diff_mem_ldst_reg_offset_matrix() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0, "strb"),
+        (0, 1, "ldrb"),
+        (0, 2, "ldrsb_x"),
+        (0, 3, "ldrsb_w"),
+        (1, 0, "strh"),
+        (1, 1, "ldrh"),
+        (1, 2, "ldrsh_x"),
+        (1, 3, "ldrsh_w"),
+        (2, 0, "str_w"),
+        (2, 1, "ldr_w"),
+        (2, 2, "ldrsw_x"),
+        (3, 0, "str_x"),
+        (3, 1, "ldr_x"),
+    ];
+    let options: &[(u32, &str)] = &[(0b010, "uxtw"), (0b011, "lsl"), (0b110, "sxtw"), (0b111, "sxtx")];
+
+    let mut cases: Vec<(String, u32, u64)> = Vec::new();
+    for &(size, opc, op_name) in ops {
+        for &(option, option_name) in options {
+            for s in 0..2 {
+                cases.push((
+                    format!("{op_name}_reg_{option_name}_s{s}"),
+                    enc_ldst_reg(size, opc, RM, option, s),
+                    ldst_reg_offset_operand(option, s, size),
+                ));
+            }
+        }
+    }
+
+    let mut rng = Rng::new(0x1_0052);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, rm_value) in &cases {
+        for _ in 0..3 {
+            let mut st = mem_input(&mut rng);
+            st.x[0] = 0x1122_3344_5566_7788;
+            st.x[2] = *rm_value;
+            st.scratch[4] = 0x0123_4567_89ab_cdef;
+            st.scratch[5] = 0xfedc_ba98_7654_3210;
+            st.scratch[6] = 0x0000_0000_8000_0080;
+            st.scratch[7] = 0xffff_ffff_7fff_ff7f;
+            st.scratch[8] = 0x1111_2222_3333_4444;
+            st.scratch[9] = 0x5555_6666_7777_8888;
+            st.scratch[10] = 0x9999_aaaa_bbbb_cccc;
+            st.scratch[11] = 0xdddd_eeee_ffff_0000;
+            st.scratch[12] = 0x1357_9bdf_2468_ace0;
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_reg_offset_matrix", batch);
+}
+
+#[test]
+fn diff_mem_ldst_simdfp_reg_offset_matrix() {
+    let ops: &[(u32, u32, u32, &str)] = &[
+        (0, 0, 0, "str_b"),
+        (0, 1, 0, "ldr_b"),
+        (1, 0, 1, "str_h"),
+        (1, 1, 1, "ldr_h"),
+        (2, 0, 2, "str_s"),
+        (2, 1, 2, "ldr_s"),
+        (3, 0, 3, "str_d"),
+        (3, 1, 3, "ldr_d"),
+        (0, 2, 4, "str_q"),
+        (0, 3, 4, "ldr_q"),
+    ];
+    let options: &[(u32, &str)] = &[(0b010, "uxtw"), (0b011, "lsl"), (0b110, "sxtw"), (0b111, "sxtx")];
+
+    let mut cases: Vec<(String, u32, u64)> = Vec::new();
+    for &(size, opc, scale, op_name) in ops {
+        for &(option, option_name) in options {
+            for s in 0..2 {
+                cases.push((
+                    format!("{op_name}_reg_{option_name}_s{s}"),
+                    enc_ldst_reg_simdfp(size, opc, RM, option, s),
+                    ldst_reg_offset_operand(option, s, scale),
+                ));
+            }
+        }
+    }
+
+    let mut rng = Rng::new(0x1_0053);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, rm_value) in &cases {
+        for _ in 0..3 {
+            let mut st = mem_input(&mut rng);
+            st.x[2] = *rm_value;
+            st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+            st.scratch[0] = 0x0102_0304_0506_0708;
+            st.scratch[1] = 0x1112_1314_1516_1718;
+            st.scratch[4] = 0x2122_2324_2526_2728;
+            st.scratch[5] = 0x3132_3334_3536_3738;
+            st.scratch[6] = 0x4142_4344_4546_4748;
+            st.scratch[7] = 0x5152_5354_5556_5758;
+            st.scratch[8] = 0x6162_6364_6566_6768;
+            st.scratch[9] = 0x7172_7374_7576_7778;
+            st.scratch[10] = 0x8182_8384_8586_8788;
+            st.scratch[11] = 0x9192_9394_9596_9798;
+            st.scratch[12] = 0xa1a2_a3a4_a5a6_a7a8;
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_simdfp_reg_offset_matrix", batch);
 }
 
 #[test]
