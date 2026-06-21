@@ -1619,36 +1619,17 @@ impl AArch64Cpu {
             };
             let off = (imm9 as i64).wrapping_mul(TG as i64);
 
-            // Bulk forms have imm9==0 and op2==00: STZGM (opc 00), LDG
-            // (opc 01 op2 00 is LDG with any imm), STGM (10), LDGM (11).
+            // op2==00 contains LDG. Bulk tag forms (STZGM/STGM/LDGM) are
+            // unimplemented feature-level encodings for this oracle profile.
             if op2 == 0b00 {
-                match opc {
-                    0b01 => {
-                        // LDG Xt, [Xn, #imm]: load the allocation tag for the
-                        // address into Xt's tag field. No tag memory: tag 0.
-                        let v = self.get_x(rt) & !(0xFu64 << 56);
-                        self.set_x(rt, v);
-                        return Ok(CpuExit::Continue);
-                    }
-                    0b00 => {
-                        // STZGM: zero the data of the naturally-aligned
-                        // region (DCZID block size).
-                        let block = 4u64 << (self.sysregs.dczid_el0 & 0xF);
-                        let addr = base & !(block - 1);
-                        for o in (0..block).step_by(8) {
-                            self.mem_write_u64(addr + o, 0)?;
-                        }
-                        return Ok(CpuExit::Continue);
-                    }
-                    _ => {
-                        // STGM (10): tag store only — no data effect.
-                        // LDGM (11): bulk tag load — no tags, Xt = 0.
-                        if opc == 0b11 {
-                            self.set_x(rt, 0);
-                        }
-                        return Ok(CpuExit::Continue);
-                    }
+                if opc != 0b01 {
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
+                // LDG Xt, [Xn, #imm]: load the allocation tag for the
+                // address into Xt's tag field. No tag memory: tag 0.
+                let v = self.get_x(rt) & !(0xFu64 << 56);
+                self.set_x(rt, v);
+                return Ok(CpuExit::Continue);
             }
 
             // Indexed forms: op2 01=post-index, 10=signed-offset, 11=pre-index.
@@ -16132,6 +16113,15 @@ impl AArch64Cpu {
 
         if l != 0 {
             // MRS
+            if self.current_el == 0
+                && rt != 0
+                && matches!(
+                    (encoding.op0, encoding.op1, encoding.crn, encoding.crm, encoding.op2),
+                    (2, 3, 0, 1, 0)
+                )
+            {
+                return Err(ArmError::InvalidExceptionLevel(0));
+            }
             let value = self.read_sysreg(encoding)?;
             self.set_x(rt, value);
             if matches!(

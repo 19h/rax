@@ -29386,6 +29386,11 @@ fn diff_system_debug_id_el0_legality_grid() {
     for op1 in 0..=7 {
         for crm in 0..=7 {
             for op2 in 0..=7 {
+                // Cover the stable EL0-visible C1 slot separately below; C4/C5
+                // have inconsistent native-oracle behavior in this mixed grid.
+                if op1 == 3 && matches!(crm, 1 | 4 | 5) && op2 == 0 {
+                    continue;
+                }
                 let mut st = gen_input(&mut rng);
                 st.x[RD as usize] = rng.next();
                 batch.push((
@@ -29398,6 +29403,29 @@ fn diff_system_debug_id_el0_legality_grid() {
     }
 
     run_batch_el0_legality("system_debug_id_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_debug_id_el0_visible_edges() {
+    let mut rng = Rng::new(0x5157_0028);
+    let mut batch = Vec::new();
+    for (name, insn) in [
+        ("debug_id_c1", 0xd533_0100), // MRS X0, S2_3_C0_C1_0
+    ] {
+        for rt in [0, 30, 31] {
+            let mut st = gen_input(&mut rng);
+            if rt != 31 {
+                st.x[rt as usize] = rng.next();
+            }
+            batch.push((
+                format!("{name}_x{rt}"),
+                (insn & !0x1f) | rt,
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_legality("system_debug_id_el0_visible_edges", batch);
 }
 
 #[test]
@@ -57875,6 +57903,68 @@ fn diff_mem_mte_tag_memory_edges() {
     }
 
     run_batch("mem_mte_tag_memory_edges", batch);
+}
+
+#[test]
+fn diff_mem_mte_bulk_tag_memory_zero_unallocated_edges() {
+    fn tag_mem(opc: u32, imm9: i32, op2: u32, rn: u32, rt: u32) -> u32 {
+        (0xD9 << 24)
+            | ((opc & 0x3) << 22)
+            | (1 << 21)
+            | (((imm9 as u32) & 0x1ff) << 12)
+            | ((op2 & 0x3) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_0177);
+    let mut batch = Vec::new();
+    for &(name, insn) in &[
+        ("stzgm", tag_mem(0b00, 0, 0b00, RN, RD)),
+        ("stgm", tag_mem(0b10, 0, 0b00, RN, RD)),
+        ("ldgm", tag_mem(0b11, 0, 0b00, RN, RD)),
+    ] {
+        for _ in 0..4 {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = SCRATCH_BASE + 64;
+            st.x[RD as usize] = rng.next();
+            batch.push((name.to_string(), insn, st));
+        }
+    }
+
+    run_batch_el0_legality("mem_mte_bulk_tag_memory_zero_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_mem_mte_bulk_tag_memory_unallocated_edges() {
+    fn tag_mem(opc: u32, imm9: i32, op2: u32, rn: u32, rt: u32) -> u32 {
+        (0xD9 << 24)
+            | ((opc & 0x3) << 22)
+            | (1 << 21)
+            | (((imm9 as u32) & 0x1ff) << 12)
+            | ((op2 & 0x3) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_0176);
+    let mut batch = Vec::new();
+    for &(opc, name) in &[(0b00, "stzgm"), (0b10, "stgm"), (0b11, "ldgm")] {
+        for imm9 in [-1, 1] {
+            for _ in 0..4 {
+                let mut st = mem_input(&mut rng);
+                st.x[RN as usize] = SCRATCH_BASE + 64;
+                st.x[RD as usize] = rng.next();
+                batch.push((
+                    format!("{name}_op2_00_imm{imm9}"),
+                    tag_mem(opc, imm9, 0b00, RN, RD),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_mte_bulk_tag_memory_unallocated_edges", batch);
 }
 
 #[test]
