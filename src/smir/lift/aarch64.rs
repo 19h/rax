@@ -2112,7 +2112,7 @@ impl Aarch64Lifter {
                 push_op!(OpKind::ClearExclusive);
             }
 
-            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB => {
+            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB | Mnemonic::SB => {
                 push_op!(OpKind::Fence {
                     kind: FenceKind::Full,
                 });

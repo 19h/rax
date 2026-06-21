@@ -837,6 +837,7 @@ impl Aarch64Decoder {
             0b100 => Mnemonic::DSB,
             0b101 => Mnemonic::DMB,
             0b110 => Mnemonic::ISB,
+            0b111 => Mnemonic::SB,
             _ => Mnemonic::UNKNOWN,
         };
 
@@ -3963,6 +3964,15 @@ mod tests {
     }
 
     #[test]
+    fn test_sb_decode() {
+        // SB: d50330ff.
+        let insn = decode_bytes(&[0xff, 0x30, 0x03, 0xd5]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::SB);
+        assert_eq!(insn.mnemonic.as_str(), "sb");
+        assert_eq!(insn.operands.len(), 1);
+    }
+
+    #[test]
     fn test_sub_imm() {
         // SUB X0, X1, #0x10: d1004020
         let insn = decode_bytes(&[0x20, 0x40, 0x00, 0xd1]).unwrap();
@@ -4561,7 +4571,7 @@ mod tests {
     }
 
     #[test]
-    fn test_dp_1_source_rejects_nonzero_opcode2() {
+    fn test_dp_1_source_rejects_reserved_opcode2_values() {
         for raw in [
             0xdac0_0020, // RBIT X0, X1
             0xdac0_0420, // REV16 X0, X1
@@ -4570,7 +4580,7 @@ mod tests {
             0xdac0_1020, // CLZ X0, X1
             0xdac0_1420, // CLS X0, X1
         ] {
-            for opcode2 in 1..=0x1F {
+            for opcode2 in 2..=0x1F {
                 let insn = Aarch64Decoder::decode(raw | (opcode2 << 16)).unwrap();
                 assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN);
             }

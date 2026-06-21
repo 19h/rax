@@ -1318,9 +1318,6 @@ impl AArch64Cpu {
     }
 
     fn sysreg_read_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
-        if encoding.op0 == 3 && encoding.crn == 0 {
-            return true;
-        }
         matches!(
             (
                 encoding.op0,
@@ -1329,8 +1326,22 @@ impl AArch64Cpu {
                 encoding.crm,
                 encoding.op2,
             ),
+            // Linux exposes these ID registers at EL0 when HWCAP_CPUID is set.
+            (3, 0, 0, 0, 0)  // MIDR_EL1
+                | (3, 0, 0, 0, 5)  // MPIDR_EL1
+                | (3, 0, 0, 0, 6)  // REVIDR_EL1
+                | (3, 0, 0, 4, 0)  // ID_AA64PFR0_EL1
+                | (3, 0, 0, 4, 1)  // ID_AA64PFR1_EL1
+                | (3, 0, 0, 5, 0)  // ID_AA64DFR0_EL1
+                | (3, 0, 0, 5, 1)  // ID_AA64DFR1_EL1
+                | (3, 0, 0, 6, 0)  // ID_AA64ISAR0_EL1
+                | (3, 0, 0, 6, 1)  // ID_AA64ISAR1_EL1
+                | (3, 0, 0, 6, 2)  // ID_AA64ISAR2_EL1
+                | (3, 0, 0, 7, 0)  // ID_AA64MMFR0_EL1
+                | (3, 0, 0, 7, 1)  // ID_AA64MMFR1_EL1
+                | (3, 0, 0, 7, 2)  // ID_AA64MMFR2_EL1
             // EL0-visible status/control registers.
-            (3, 3, 4, 2, 0)  // NZCV
+                | (3, 3, 4, 2, 0)  // NZCV
                 | (3, 3, 4, 2, 5)  // DIT
                 | (3, 3, 4, 4, 0)  // FPCR
                 | (3, 3, 4, 4, 1)  // FPSR
@@ -15831,7 +15842,12 @@ impl AArch64Cpu {
         let op2 = ((insn >> 5) & 0x7) as u8;
         let rt = (insn & 0x1F) as u8;
 
-        if self.current_el == 0 && (is_read || op1 != 3) {
+        let el0_sys_access = !is_read
+            && op1 == 3
+            && crn == 7
+            && op2 == 1
+            && matches!(crm, 4 | 5 | 10 | 11 | 12 | 13 | 14);
+        if self.current_el == 0 && !el0_sys_access {
             return Err(ArmError::UndefinedInstruction(insn));
         }
 
@@ -15903,7 +15919,8 @@ impl AArch64Cpu {
             // Kernels lean on DAIFSet/DAIFClr for interrupt masking, so these
             // must not fall through as hints.
             if self.current_el == 0
-                && !((op1 == 0 && op2 <= 0b010) || (op1 == 3 && op2 == 0b010))
+                && !((op1 == 0 && op2 <= 0b010)
+                    || (op1 == 3 && matches!(op2, 0b001 | 0b010 | 0b100)))
             {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
@@ -30389,6 +30406,122 @@ mod tests {
         let mut cpu = create_cpu_with_insn(insn);
         cpu.step().unwrap();
         assert_eq!(cpu.get_pc(), 4);
+    }
+
+    #[test]
+    fn test_el0_feature_hints_and_barriers_continue() {
+        for (name, insn, setup) in [
+            ("dgh", 0xD50320DF, None),
+            ("bti", 0xD503241F, None),
+            ("bti_c", 0xD503245F, None),
+            ("bti_j", 0xD503249F, None),
+            ("bti_jc", 0xD50324DF, None),
+            ("wfet_x0_zero_timeout", 0xD5031000, Some((0u8, 0u64))),
+            ("wfit_x1_zero_timeout", 0xD5031021, Some((1u8, 0u64))),
+            ("sb", 0xD50330FF, None),
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            if let Some((reg, value)) = setup {
+                cpu.set_x(reg, value);
+            }
+            let exit = cpu.step().unwrap();
+            assert_eq!(exit, CpuExit::Continue, "{name} should retire");
+            assert_eq!(cpu.get_pc(), 4, "{name} should advance PC");
+        }
+    }
+
+    #[test]
+    fn test_el0_privileged_op1_3_sys_traps() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        for (name, insn) in [
+            ("sys_op1_3_c0_c0_0", 0xD50B0000u32),
+            ("sys_op1_3_c1_c0_0", 0xD50B1000u32),
+            ("sys_op1_3_c7_c0_0", 0xD50B7000u32),
+            ("sys_op1_3_c7_c4_0", 0xD50B7400u32),
+            ("sys_op1_3_c7_c5_0", 0xD50B7500u32),
+            ("sys_op1_3_c7_c10_0", 0xD50B7A00u32),
+            ("sys_op1_3_c8_c7_0", 0xD50B8700u32),
+            ("sys_op1_3_c8_c7_1", 0xD50B8720u32),
+            ("sys_op1_3_c7_c8_0", 0xD50B7800u32),
+            ("sys_op1_3_c15_c15_7", 0xD50BFFE0u32),
+        ] {
+            let memory = FlatMemory::new(0, 0x1000_0000);
+            let mut cpu = AArch64Cpu::new(config.clone(), Box::new(memory));
+            cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+            assert!(
+                matches!(cpu.step(), Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "{name} should be undefined at EL0"
+            );
+        }
+    }
+
+    #[test]
+    fn test_el0_privileged_pstate_immediate_traps() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        for (name, insn) in [
+            ("msr_uao_0", 0xD500407Fu32),
+            ("msr_uao_1", 0xD500417Fu32),
+            ("msr_pan_0", 0xD500409Fu32),
+            ("msr_pan_1", 0xD500419Fu32),
+            ("msr_spsel_1", 0xD50041BFu32),
+            ("msr_daifset_f", 0xD5034FDFu32),
+            ("msr_daifclr_f", 0xD5034FFFu32),
+        ] {
+            let memory = FlatMemory::new(0, 0x1000_0000);
+            let mut cpu = AArch64Cpu::new(config.clone(), Box::new(memory));
+            cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+            assert!(
+                matches!(cpu.step(), Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "{name} should be undefined at EL0"
+            );
+        }
+    }
+
+    #[test]
+    fn test_el0_clidr_el1_read_traps() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        let insn = 0xD5390020u32; // MRS X0, CLIDR_EL1
+        let memory = FlatMemory::new(0, 0x1000_0000);
+        let mut cpu = AArch64Cpu::new(config, Box::new(memory));
+        cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+
+        assert!(
+            matches!(cpu.step(), Err(ArmError::InvalidExceptionLevel(0))),
+            "MRS CLIDR_EL1 should be privileged at EL0"
+        );
+    }
+
+    #[test]
+    fn test_el0_pstate_immediate_controls_continue() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        for (name, insn, expected_ssbs, expected_tco) in [
+            ("msr_ssbs_0", 0xD503403Fu32, false, true),
+            ("msr_ssbs_1", 0xD503413Fu32, true, true),
+            ("msr_tco_0", 0xD503409Fu32, true, false),
+            ("msr_tco_1", 0xD503419Fu32, true, true),
+        ] {
+            let memory = FlatMemory::new(0, 0x1000_0000);
+            let mut cpu = AArch64Cpu::new(config.clone(), Box::new(memory));
+            cpu.ssbs = true;
+            cpu.tco = true;
+            cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+
+            assert!(
+                matches!(cpu.step(), Ok(CpuExit::Continue)),
+                "{name} should execute at EL0"
+            );
+            assert_eq!(cpu.ssbs, expected_ssbs, "{name} should update PSTATE.SSBS");
+            assert_eq!(cpu.tco, expected_tco, "{name} should update PSTATE.TCO");
+            assert_eq!(cpu.get_pc(), 4, "{name} should advance PC");
+        }
     }
 
     // -------------------------------------------------------------------------

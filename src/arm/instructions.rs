@@ -368,7 +368,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::SEV
             | Mnemonic::SEVL
             | Mnemonic::DGH
-            | Mnemonic::BTI => {
+            | Mnemonic::BTI
+            | Mnemonic::WFET
+            | Mnemonic::WFIT => {
                 ExecResult::Continue
             }
             Mnemonic::WFI | Mnemonic::WFE => ExecResult::Halt,
@@ -380,7 +382,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::UDF => ExecResult::Exception(ExceptionType::UndefinedInstruction),
             Mnemonic::MRS => self.exec_mrs(insn),
             Mnemonic::MSR => self.exec_msr(insn),
-            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB => ExecResult::Continue, // Memory barriers
+            // Memory barriers
+            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB | Mnemonic::SB => {
+                ExecResult::Continue
+            },
             Mnemonic::IT => self.exec_it(insn),
 
             // Coprocessor
@@ -10578,6 +10583,25 @@ mod tests {
         for (mnemonic, raw) in [
             (Mnemonic::DGH, 0xd503_20df),
             (Mnemonic::BTI, 0xd503_241f),
+            (Mnemonic::WFET, 0xd503_1000),
+            (Mnemonic::WFIT, 0xd503_1021),
+        ] {
+            let insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
+            let result = Executor::new(&mut cpu, &mut mem).execute(&insn);
+            assert!(matches!(result, ExecResult::Continue));
+        }
+    }
+
+    #[test]
+    fn test_a64_barriers_continue() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        for (mnemonic, raw) in [
+            (Mnemonic::DSB, 0xd503_3f9f),
+            (Mnemonic::DMB, 0xd503_3fbf),
+            (Mnemonic::ISB, 0xd503_3fdf),
+            (Mnemonic::SB, 0xd503_30ff),
         ] {
             let insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
             let result = Executor::new(&mut cpu, &mut mem).execute(&insn);

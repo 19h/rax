@@ -13611,6 +13611,7 @@ fn smir_aarch64_x86_scalar_lowering_matches_qemu_oracle() {
         ("dsb_sy", enc_barrier(0b100)),
         ("dmb_sy", enc_barrier(0b101)),
         ("isb", enc_barrier(0b110)),
+        ("sb", enc_barrier(0b111)),
         ("clrex", enc_clrex()),
         ("yield", enc_hint(0b0000, 0b001)),
         ("wfe", enc_hint(0b0000, 0b010)),
@@ -22136,6 +22137,11 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     push_lifted_case("isb_lifted_preserves_arch_state", enc_barrier(0b110), st);
 
     let mut st = native_state();
+    st.x[0] = 0x5555_6666_7777_8888;
+    st.pstate = 0xc000_0000;
+    push_lifted_case("sb_lifted_preserves_arch_state", enc_barrier(0b111), st);
+
+    let mut st = native_state();
     st.x[0] = 0x1111_2222_3333_4444;
     st.pstate = 0x9000_0000;
     push_lifted_case("mrs_nzcv_lifted_reads_flags", enc_mrs_nzcv(RD), st);
@@ -28871,6 +28877,25 @@ fn diff_system_cpuid_xzr_el0() {
 }
 
 #[test]
+fn diff_system_clidr_el1_el0_trap() {
+    fn mrs_clidr_el1(rt: u32) -> u32 {
+        0xd500_0000 | (1 << 21) | (3 << 19) | (1 << 16) | (1 << 5) | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0019);
+    let mut batch = Vec::new();
+    for _ in 0..8 {
+        batch.push((
+            "mrs_clidr_el1".to_string(),
+            mrs_clidr_el1(RD),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_trap("system_clidr_el1_el0_trap", batch);
+}
+
+#[test]
 fn diff_system_dc_zva_el0() {
     fn dc_zva(rt: u32) -> u32 {
         0xd50b_7420 | (rt & 0x1f)
@@ -29070,6 +29095,84 @@ fn diff_system_at_el0_trap_sweep() {
     }
 
     run_batch_el0_trap("system_at_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_op1_3_privileged_sys_el0_trap() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("sys_op1_3_c0_c0_0", sys(3, 0, 0, 0, RN)),
+        ("sys_op1_3_c1_c0_0", sys(3, 1, 0, 0, RN)),
+        ("sys_op1_3_c7_c0_0", sys(3, 7, 0, 0, RN)),
+        ("sys_op1_3_c7_c4_0", sys(3, 7, 4, 0, RN)),
+        ("sys_op1_3_c7_c5_0", sys(3, 7, 5, 0, RN)),
+        ("sys_op1_3_c7_c10_0", sys(3, 7, 10, 0, RN)),
+        ("sys_op1_3_c8_c7_0", sys(3, 8, 7, 0, RN)),
+        ("sys_op1_3_c8_c7_1", sys(3, 8, 7, 1, RN)),
+        ("sys_op1_3_c7_c8_0", sys(3, 7, 8, 0, RN)),
+        ("sys_op1_3_c15_c15_7", sys(3, 15, 15, 7, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0016);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = SCRATCH_ADDR;
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch_el0_trap("system_op1_3_privileged_sys_el0_trap", batch);
+}
+
+#[test]
+fn diff_system_privileged_pstate_imm_el0_trap() {
+    let cases = [
+        ("msr_uao_0", 0xd500_407f),
+        ("msr_uao_1", 0xd500_417f),
+        ("msr_pan_0", 0xd500_409f),
+        ("msr_pan_1", 0xd500_419f),
+        ("msr_spsel_1", 0xd500_41bf),
+        ("msr_daifset_f", 0xd503_4fdf),
+        ("msr_daifclr_f", 0xd503_4fff),
+    ];
+
+    let mut rng = Rng::new(0x5157_0017);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        batch.push((label.to_string(), insn, gen_input(&mut rng)));
+    }
+
+    run_batch_el0_trap("system_privileged_pstate_imm_el0_trap", batch);
+}
+
+#[test]
+fn diff_system_pstate_imm_el0_controls() {
+    let cases = [
+        ("msr_ssbs_0", 0xd503_403f),
+        ("msr_ssbs_1", 0xd503_413f),
+        ("msr_tco_0", 0xd503_409f),
+        ("msr_tco_1", 0xd503_419f),
+    ];
+
+    let mut rng = Rng::new(0x5157_0018);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for nzcv in 0..16u64 {
+            let mut st = gen_input(&mut rng);
+            st.pstate = nzcv << 28;
+            batch.push((format!("{label}_nzcv={nzcv:x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_pstate_imm_el0_controls", batch);
 }
 
 #[test]
