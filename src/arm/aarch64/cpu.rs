@@ -23893,7 +23893,7 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
         }
     }
     if (fpcr >> 22) & 0x3 == 0
-        || !matches!(kind, Add | Addp | Sub | Mul | Mulx | Mla | Mls | Recps | Rsqrts)
+        || !matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Mla | Mls | Recps | Rsqrts)
     {
         return flush_output(fp32_ah_invalid_default_nan(fp_three_same_f32(kind, a, b, d), fpcr));
     }
@@ -23933,6 +23933,7 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
     let exact = match kind {
         Add | Addp => x as f64 + y as f64,
         Sub => x as f64 - y as f64,
+        Div => x as f64 / y as f64,
         Mul | Mulx => x as f64 * y as f64,
         _ => unreachable!(),
     };
@@ -24125,7 +24126,7 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
         nearest
     };
     if (fpcr >> 22) & 0x3 == 0
-        || !matches!(kind, Add | Addp | Sub | Mul | Mulx | Mla | Mls | Recps | Rsqrts)
+        || !matches!(kind, Add | Addp | Sub | Mul | Div | Mulx | Mla | Mls | Recps | Rsqrts)
     {
         return flush_output(nearest);
     }
@@ -24170,6 +24171,38 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
     };
     if matches!(kind, Sub) {
         mb = -mb;
+    }
+
+    if matches!(kind, Div) {
+        let exact_negative = (ma < 0) ^ (mb < 0);
+        let cmp = if fp64_is_inf(nearest) {
+            if (nearest >> 63) != 0 {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Less
+            }
+        } else if fp64_is_zero(nearest) {
+            if exact_negative {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Greater
+            }
+        } else {
+            let Some((mn, en)) = fp64_signed_mant_exp(nearest) else {
+                return flush_output(nearest);
+            };
+            let Some(nearest_scaled) = mn.checked_mul(mb) else {
+                return flush_output(nearest);
+            };
+            let cmp = scaled_i128_terms_sign(&[(ma, ea), (-nearest_scaled, en + eb)]);
+            if mb < 0 { cmp.reverse() } else { cmp }
+        };
+        return flush_output(fp64_adjust_nearest_with_fpcr(
+            nearest,
+            cmp,
+            exact_negative,
+            fpcr,
+        ));
     }
 
     let terms = if matches!(kind, Mla | Mls) {
