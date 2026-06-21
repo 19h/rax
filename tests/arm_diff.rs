@@ -27140,6 +27140,59 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+#[test]
+fn diff_fmlal_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &(label, insn, acc, n_half) in &[
+            (
+                "fmlal_pos",
+                enc_three_same(1, 0, 0b00, 0b11101),
+                16_777_216.0f32,
+                0x3c00u16,
+            ),
+            (
+                "fmlal_neg",
+                enc_three_same(1, 0, 0b00, 0b11101),
+                -16_777_216.0f32,
+                0xbc00u16,
+            ),
+            (
+                "fmlsl_pos",
+                enc_three_same(1, 0, 0b10, 0b11101),
+                16_777_216.0f32,
+                0xbc00u16,
+            ),
+            (
+                "fmlsl_neg",
+                enc_three_same(1, 0, 0b10, 0b11101),
+                -16_777_216.0f32,
+                0x3c00u16,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let mut d = 0u128;
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for lane in 0..4 {
+                d |= (acc.to_bits() as u128) << (32 * lane);
+            }
+            for lane in 0..8 {
+                n |= (n_half as u128) << (16 * lane);
+                m |= (0x3c00u128) << (16 * lane);
+            }
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((format!("{label}_rmode{rmode}"), insn, st));
+        }
+    }
+
+    run_batch("fmlal_fpcr_rounding", batch);
+}
+
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
 fn enc_single_fields(
@@ -28119,6 +28172,149 @@ fn diff_simd_complex() {
     run_batch("simd_complex", batch);
 }
 
+#[test]
+fn diff_simd_fcadd_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(name, a_re, a_im, b_re, b_im) in &[
+            (
+                "pos",
+                16_777_216.0f32,
+                16_777_216.0f32,
+                1.0f32,
+                -1.0f32,
+            ),
+            (
+                "neg",
+                -16_777_216.0f32,
+                -16_777_216.0f32,
+                -1.0f32,
+                1.0f32,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let n = (a_re.to_bits() as u128)
+                | ((a_im.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((a_im.to_bits() as u128) << 96);
+            let m = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f32_{name}_rmode{rmode}"),
+                enc_fcadd(1, 0b10, 0),
+                st,
+            ));
+        }
+
+        for &(name, a_re, a_im, b_re, b_im) in &[
+            (
+                "pos",
+                9_007_199_254_740_992.0f64,
+                9_007_199_254_740_992.0f64,
+                1.0f64,
+                -1.0f64,
+            ),
+            (
+                "neg",
+                -9_007_199_254_740_992.0f64,
+                -9_007_199_254_740_992.0f64,
+                -1.0f64,
+                1.0f64,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let n = (a_re.to_bits() as u128) | ((a_im.to_bits() as u128) << 64);
+            let m = (b_re.to_bits() as u128) | ((b_im.to_bits() as u128) << 64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f64_{name}_rmode{rmode}"),
+                enc_fcadd(1, 0b11, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_fcadd_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(name, acc, a_re, b_re, b_im) in &[
+            ("pos", 16_777_216.0f32, 1.0f32, 1.0f32, 1.0f32),
+            ("neg", -16_777_216.0f32, -1.0f32, 1.0f32, 1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let d = (acc.to_bits() as u128)
+                | ((acc.to_bits() as u128) << 32)
+                | ((acc.to_bits() as u128) << 64)
+                | ((acc.to_bits() as u128) << 96);
+            let n = (a_re.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let m = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f32_{name}_rmode{rmode}"),
+                enc_fcmla(1, 0b10, 0),
+                st,
+            ));
+        }
+
+        for &(name, acc, a_re, b_re, b_im) in &[
+            (
+                "pos",
+                9_007_199_254_740_992.0f64,
+                1.0f64,
+                1.0f64,
+                1.0f64,
+            ),
+            (
+                "neg",
+                -9_007_199_254_740_992.0f64,
+                -1.0f64,
+                1.0f64,
+                1.0f64,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let d = (acc.to_bits() as u128) | ((acc.to_bits() as u128) << 64);
+            let n = (a_re.to_bits() as u128) | ((0.0f64.to_bits() as u128) << 64);
+            let m = (b_re.to_bits() as u128) | ((b_im.to_bits() as u128) << 64);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f64_{name}_rmode{rmode}"),
+                enc_fcmla(1, 0b11, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_fcmla_fpcr_rounding", batch);
+}
+
 /// FCMLA by element: `0 Q 1 01111 size L M Rm 0 rot 1 H 0 Rn Rd`. Vm=M:Rm (=v2),
 /// Rd=v0, Rn=v1. rot=bits[14:13], index=H:L (f16) / H (f32).
 fn enc_fcmla_idx(q: u32, size: u32, rot: u32, index: u32) -> u32 {
@@ -28179,6 +28375,43 @@ fn diff_simd_complex_indexed() {
         }
     }
     run_batch("simd_complex_indexed", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_indexed_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &(name, acc, a_re, b_re, b_im) in &[
+            ("pos", 16_777_216.0f32, 1.0f32, 1.0f32, 1.0f32),
+            ("neg", -16_777_216.0f32, -1.0f32, 1.0f32, 1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let d = (acc.to_bits() as u128)
+                | ((acc.to_bits() as u128) << 32)
+                | ((acc.to_bits() as u128) << 64)
+                | ((acc.to_bits() as u128) << 96);
+            let n = (a_re.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let m = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("{name}_rmode{rmode}"),
+                enc_fcmla_idx(1, 0b10, 0, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_fcmla_indexed_fpcr_rounding", batch);
 }
 
 /// SDOT/UDOT by element: `0 Q U 01111 10 L M Rm 1110 H 0 Rn Rd`. Rm=v2, the
@@ -31321,6 +31554,65 @@ fn diff_sve2_fmlal() {
 }
 
 #[test]
+fn diff_sve2_fmlal_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("fmlalb_pos", enc_sve2_fmlal(0, 0), 16_777_216.0f32, 0x3c00u16),
+        (
+            "fmlalb_neg",
+            enc_sve2_fmlal(0, 0),
+            -16_777_216.0f32,
+            0xbc00u16,
+        ),
+        ("fmlalt_pos", enc_sve2_fmlal(0, 1), 16_777_216.0f32, 0x3c00u16),
+        (
+            "fmlalt_neg",
+            enc_sve2_fmlal(0, 1),
+            -16_777_216.0f32,
+            0xbc00u16,
+        ),
+        ("fmlslb_pos", enc_sve2_fmlal(1, 0), 16_777_216.0f32, 0xbc00u16),
+        (
+            "fmlslb_neg",
+            enc_sve2_fmlal(1, 0),
+            -16_777_216.0f32,
+            0x3c00u16,
+        ),
+        ("fmlslt_pos", enc_sve2_fmlal(1, 1), 16_777_216.0f32, 0xbc00u16),
+        (
+            "fmlslt_neg",
+            enc_sve2_fmlal(1, 1),
+            -16_777_216.0f32,
+            0x3c00u16,
+        ),
+    ];
+
+    for rmode in 0..4u64 {
+        for (name, insn, acc, n_half) in variants {
+            let mut zn = 0u128;
+            let mut zm = 0u128;
+            let mut zd = 0u128;
+            for h in 0..8 {
+                zn |= (n_half as u128) << (h * 16);
+                zm |= (0x3c00u128) << (h * 16);
+            }
+            for s in 0..4 {
+                zd |= (acc.to_bits() as u128) << (s * 32);
+            }
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+            st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+            batch.push((format!("{name}_rmode{rmode}"), insn, st));
+        }
+    }
+
+    run_batch("sve2_fmlal_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve_bfdot() {
     // BFDOT bf16 dot product, both the three-register and indexed forms.
     let mut rng = Rng::new(0x7_d001);
@@ -32284,6 +32576,43 @@ fn diff_sve_fcmla_indexed() {
 }
 
 #[test]
+fn diff_sve_fcmla_indexed_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &(name, acc, a_re, b_re, b_im) in &[
+            ("pos", 16_777_216.0f32, 1.0f32, 1.0f32, 1.0f32),
+            ("neg", -16_777_216.0f32, -1.0f32, 1.0f32, 1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let d = (acc.to_bits() as u128)
+                | ((acc.to_bits() as u128) << 32)
+                | ((acc.to_bits() as u128) << 64)
+                | ((acc.to_bits() as u128) << 96);
+            let n = (a_re.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let m = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("{name}_rmode{rmode}"),
+                enc_sve_fcmla_idx(3, 0, RM, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fcmla_indexed_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve2_cdot() {
     // CDOT complex integer dot product, .s and .d, all four rotations.
     let mut rng = Rng::new(0x7_9001);
@@ -32329,6 +32658,82 @@ fn diff_sve_fcadd() {
 }
 
 #[test]
+fn diff_sve_fcadd_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(name, a_re, a_im, b_re, b_im) in &[
+            (
+                "pos",
+                16_777_216.0f32,
+                16_777_216.0f32,
+                1.0f32,
+                -1.0f32,
+            ),
+            (
+                "neg",
+                -16_777_216.0f32,
+                -16_777_216.0f32,
+                -1.0f32,
+                1.0f32,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_preg(0, 0xffff);
+            let d = (a_re.to_bits() as u128)
+                | ((a_im.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((a_im.to_bits() as u128) << 96);
+            let n = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("f32_{name}_rmode{rmode}"),
+                enc_sve_fcadd(2, 0),
+                st,
+            ));
+        }
+
+        for &(name, a_re, a_im, b_re, b_im) in &[
+            (
+                "pos",
+                9_007_199_254_740_992.0f64,
+                9_007_199_254_740_992.0f64,
+                1.0f64,
+                -1.0f64,
+            ),
+            (
+                "neg",
+                -9_007_199_254_740_992.0f64,
+                -9_007_199_254_740_992.0f64,
+                -1.0f64,
+                1.0f64,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_preg(0, 0xffff);
+            let d = (a_re.to_bits() as u128) | ((a_im.to_bits() as u128) << 64);
+            let n = (b_re.to_bits() as u128) | ((b_im.to_bits() as u128) << 64);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("f64_{name}_rmode{rmode}"),
+                enc_sve_fcadd(3, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fcadd_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve_fcmla() {
     // FCMLA predicated FP complex multiply-add, all four rotations and sizes.
     let mut rng = Rng::new(0x7_8001);
@@ -32353,6 +32758,77 @@ fn diff_sve_fcmla() {
         }
     }
     run_batch("sve_fcmla", batch);
+}
+
+#[test]
+fn diff_sve_fcmla_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+
+        for &(name, acc, a_re, b_re, b_im) in &[
+            ("pos", 16_777_216.0f32, 1.0f32, 1.0f32, 1.0f32),
+            ("neg", -16_777_216.0f32, -1.0f32, 1.0f32, 1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_preg(0, 0xffff);
+            let d = (acc.to_bits() as u128)
+                | ((acc.to_bits() as u128) << 32)
+                | ((acc.to_bits() as u128) << 64)
+                | ((acc.to_bits() as u128) << 96);
+            let n = (a_re.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((a_re.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let m = (b_re.to_bits() as u128)
+                | ((b_im.to_bits() as u128) << 32)
+                | ((b_re.to_bits() as u128) << 64)
+                | ((b_im.to_bits() as u128) << 96);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f32_{name}_rmode{rmode}"),
+                enc_sve_fcmla(2, 0),
+                st,
+            ));
+        }
+
+        for &(name, acc, a_re, b_re, b_im) in &[
+            (
+                "pos",
+                9_007_199_254_740_992.0f64,
+                1.0f64,
+                1.0f64,
+                1.0f64,
+            ),
+            (
+                "neg",
+                -9_007_199_254_740_992.0f64,
+                -1.0f64,
+                1.0f64,
+                1.0f64,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_preg(0, 0xffff);
+            let d = (acc.to_bits() as u128) | ((acc.to_bits() as u128) << 64);
+            let n = (a_re.to_bits() as u128) | ((0.0f64.to_bits() as u128) << 64);
+            let m = (b_re.to_bits() as u128) | ((b_im.to_bits() as u128) << 64);
+            st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("f64_{name}_rmode{rmode}"),
+                enc_sve_fcmla(3, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fcmla_fpcr_rounding", batch);
 }
 
 #[test]

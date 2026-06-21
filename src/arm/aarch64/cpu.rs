@@ -3543,8 +3543,8 @@ impl AArch64Cpu {
                     ),
                     _ => (a_im, b_im, a_im, fp_neg_bits(b_re, esize)),
                 };
-                let r_re = fp_muladd_bits(d_re, xr, yr, esize);
-                let r_im = fp_muladd_bits(d_im, xi, yi, esize);
+                let r_re = fp_muladd_bits_with_fpcr(d_re, xr, yr, esize, self.fpcr);
+                let r_im = fp_muladd_bits_with_fpcr(d_im, xi, yi, esize, self.fpcr);
                 let es = (esize / 8) as usize;
                 self.fpsr |= fp_status_fma(es, d_re, xr, yr, r_re);
                 self.fpsr |= fp_status_fma(es, d_im, xi, yi, r_im);
@@ -3558,8 +3558,8 @@ impl AArch64Cpu {
                 } else {
                     (b_im, fp_neg_bits(b_re, esize))
                 };
-                let r_re = fp_add_bits(a_re, add_re, esize);
-                let r_im = fp_add_bits(a_im, add_im, esize);
+                let r_re = fp_add_bits_with_fpcr(a_re, add_re, esize, self.fpcr);
+                let r_im = fp_add_bits_with_fpcr(a_im, add_im, esize, self.fpcr);
                 let es = (esize / 8) as usize;
                 self.fpsr |= fp_status_binop(es, FpKind::Add, a_re, add_re, r_re);
                 self.fpsr |= fp_status_binop(es, FpKind::Add, a_im, add_im, r_im);
@@ -3626,8 +3626,8 @@ impl AArch64Cpu {
                 ),
                 _ => (a_im, m_im, a_im, fp_neg_bits(m_re, esize)),
             };
-            let r_re = fp_muladd_bits(d_re, xr, yr, esize);
-            let r_im = fp_muladd_bits(d_im, xi, yi, esize);
+            let r_re = fp_muladd_bits_with_fpcr(d_re, xr, yr, esize, self.fpcr);
+            let r_im = fp_muladd_bits_with_fpcr(d_im, xi, yi, esize, self.fpcr);
             self.fpsr |= fp_status_fma(es_bytes, d_re, xr, yr, r_re);
             self.fpsr |= fp_status_fma(es_bytes, d_im, xi, yi, r_im);
             result |= (r_re as u128 & mask) << (2 * e * es);
@@ -5594,7 +5594,8 @@ impl AArch64Cpu {
             let nn = Self::fp16_to_f32(h1).to_bits();
             let mm = Self::fp16_to_f32(h2).to_bits();
             let acc = (vd >> (32 * e)) as u32;
-            let r = fp_muladd_bits(acc as u64, nn as u64, mm as u64, 32) as u32;
+            let r =
+                fp_muladd_bits_with_fpcr(acc as u64, nn as u64, mm as u64, 32, self.fpcr) as u32;
             self.fpsr |=
                 fp_status_fma(4, acc as u64, nn as u64, mm as u64, r as u64);
             result |= (r as u128) << (32 * e);
@@ -12206,9 +12207,9 @@ impl AArch64Cpu {
         // the source format: 10=f16, 11=bf16 (the bf16 subtract form BFMLSL is
         // FEAT_SVE2p1). The narrow inputs are widened to f32 (bf16 by a 16-bit
         // left shift, f16 by the standard widening) and accumulated with a
-        // single ARM-correct fused multiply-add (`fp_muladd_bits` = float32_
-        // muladd, processing the addend NaN first); FMLSL/BFMLSL negate the Zn
-        // input (the FPCR.AH=0 form, matching the oracle).
+        // single ARM-correct fused multiply-add (processing the addend NaN
+        // first); FMLSL/BFMLSL negate the Zn input (the FPCR.AH=0 form,
+        // matching the oracle).
         if (insn >> 24) & 0xFF == 0b01100100
             && (insn >> 21) & 1 == 1
             && matches!((insn >> 22) & 0x3, 0b10 | 0b11)
@@ -12234,7 +12235,13 @@ impl AArch64Cpu {
                 let nn = widen(nbits);
                 let mm = widen(read_elem(&m, h_off, 2) as u16);
                 let aa = read_elem(&acc, j * 4, 4) as u32;
-                let r = fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32;
+                let r = if bf {
+                    fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32
+                } else {
+                    fp_muladd_bits_with_fpcr(
+                        aa as u64, nn as u64, mm as u64, 32, self.fpcr,
+                    ) as u32
+                };
                 self.fpsr |=
                     fp_status_fma(4, aa as u64, nn as u64, mm as u64, r as u64);
                 write_elem(&mut dst, j * 4, 4, r as u64);
@@ -12348,14 +12355,14 @@ impl AArch64Cpu {
                 };
                 if (pred >> (re * esz)) & 1 == 1 {
                     let lhs = elem(dn, re);
-                    let r = fp_add_bits(lhs, add_re, bits);
+                    let r = fp_add_bits_with_fpcr(lhs, add_re, bits, self.fpcr);
                     self.fpsr |= fp_status_binop(esz, FpKind::Add, lhs, add_re, r);
                     result = (result & !(mask << (re * bits as usize)))
                         | ((r as u128 & mask) << (re * bits as usize));
                 }
                 if (pred >> (im * esz)) & 1 == 1 {
                     let lhs = elem(dn, im);
-                    let r = fp_add_bits(lhs, add_im, bits);
+                    let r = fp_add_bits_with_fpcr(lhs, add_im, bits, self.fpcr);
                     self.fpsr |= fp_status_binop(esz, FpKind::Add, lhs, add_im, r);
                     result = (result & !(mask << (im * bits as usize)))
                         | ((r as u128 & mask) << (im * bits as usize));
@@ -12393,14 +12400,14 @@ impl AArch64Cpu {
                 };
                 if (pred >> (re * esz)) & 1 == 1 {
                     let aa = elem(acc, re);
-                    let r = fp_muladd_bits(aa, xr, yr, bits);
+                    let r = fp_muladd_bits_with_fpcr(aa, xr, yr, bits, self.fpcr);
                     self.fpsr |= fp_status_fma(esz, aa, xr, yr, r);
                     result = (result & !(mask << (re * bits as usize)))
                         | ((r as u128 & mask) << (re * bits as usize));
                 }
                 if (pred >> (im * esz)) & 1 == 1 {
                     let aa = elem(acc, im);
-                    let r = fp_muladd_bits(aa, xi, yi, bits);
+                    let r = fp_muladd_bits_with_fpcr(aa, xi, yi, bits, self.fpcr);
                     self.fpsr |= fp_status_fma(esz, aa, xi, yi, r);
                     result = (result & !(mask << (im * bits as usize)))
                         | ((r as u128 & mask) << (im * bits as usize));
@@ -12519,8 +12526,8 @@ impl AArch64Cpu {
                 let e2 = if flip == 1 { elem(n, im) } else { elem(n, re) };
                 let ar = elem(acc, re);
                 let ai = elem(acc, im);
-                let dr = fp_muladd_bits(ar, e2, e1, bits);
-                let di = fp_muladd_bits(ai, e2, e3, bits);
+                let dr = fp_muladd_bits_with_fpcr(ar, e2, e1, bits, self.fpcr);
+                let di = fp_muladd_bits_with_fpcr(ai, e2, e3, bits, self.fpcr);
                 self.fpsr |= fp_status_fma(esize, ar, e2, e1, dr);
                 self.fpsr |= fp_status_fma(esize, ai, e2, e3, di);
                 result = (result & !(mask << (re * bits as usize)))
@@ -22118,6 +22125,14 @@ fn fp_add_bits(a: u64, b: u64, esize: u32) -> u64 {
         16 => fp16_add(a as u16, b as u16) as u64,
         32 => fp_three_same_f32(FpKind::Add, a as u32, b as u32, 0) as u64,
         _ => fp_three_same_f64(FpKind::Add, a, b, 0),
+    }
+}
+
+fn fp_add_bits_with_fpcr(a: u64, b: u64, esize: u32, fpcr: u32) -> u64 {
+    match esize {
+        16 => fp_add_bits(a, b, esize),
+        32 => fp_three_same_f32_with_fpcr(FpKind::Add, a as u32, b as u32, 0, fpcr) as u64,
+        _ => fp_three_same_f64_with_fpcr(FpKind::Add, a, b, 0, fpcr),
     }
 }
 
