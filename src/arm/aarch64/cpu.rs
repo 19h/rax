@@ -11763,6 +11763,43 @@ impl AArch64Cpu {
             return r;
         }
 
+        // SVE unpredicated FADD/FSUB/FMUL (vectors): 0x65, bit21==0,
+        // bits[15:12]==0000, opc=bits[11:10]. Size 00 is BF16 and is handled
+        // above by the optional FEAT_SVE_B16B16 path.
+        if (insn >> 24) & 0xFF == 0b01100101
+            && (insn >> 21) & 1 == 0
+            && (insn >> 12) & 0xF == 0
+            && (insn >> 10) & 0x3 != 0b11
+        {
+            let kind = match (insn >> 10) & 0x3 {
+                0b00 => FpKind::Add,
+                0b01 => FpKind::Sub,
+                0b10 => FpKind::Mul,
+                _ => unreachable!(),
+            };
+            if esize < 2 {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let n = self.v[zn].to_le_bytes();
+            let m = self.v[zm].to_le_bytes();
+            let mut dst = [0u8; 16];
+            for e in 0..(16 / esize) {
+                let off = e * esize;
+                let a = read_elem(&n, off, esize);
+                let b = read_elem(&m, off, esize);
+                let r = match esize {
+                    2 => sve_fp16_binop(kind, a as u16, b as u16) as u64,
+                    4 => fp_three_same_f32(kind, a as u32, b as u32, 0) as u64,
+                    8 => fp_three_same_f64(kind, a, b, 0),
+                    _ => return Ok(CpuExit::Undefined(insn)),
+                };
+                self.fpsr |= fp_three_same_status(esize, kind, a, b, 0, r);
+                write_elem(&mut dst, off, esize, r);
+            }
+            self.v[zd] = u128::from_le_bytes(dst);
+            return Ok(CpuExit::Continue);
+        }
+
         // SVE BFDOT (bf16 dot product, round-to-odd): 0x64, bits[23:22]==01,
         // bit21==1, bits[15:10]==100000 (zzzz) or 010000 (zzxw indexed). Each
         // f32 lane sums two bf16 products; the indexed form broadcasts Zm's
@@ -12632,7 +12669,26 @@ impl AArch64Cpu {
             0b01010 => (FpKind::Mulx, false), // FMULX
             0b01100 => (FpKind::Div, true),   // FDIVR
             0b01101 => (FpKind::Div, false),
+            0b11000 => (FpKind::Add, false),  // FADD #0.5/#1.0
+            0b11001 => (FpKind::Sub, false),  // FSUB #0.5/#1.0
+            0b11010 => (FpKind::Mul, false),  // FMUL #0.5/#1.0
+            0b11011 => (FpKind::Sub, true),   // FSUBR #0.5/#1.0
             _ => return Ok(CpuExit::Undefined(insn)),
+        };
+        let immediate_scalar = opc5 >= 0b11000;
+        let scalar = if immediate_scalar {
+            let one = (insn >> 5) & 1 == 1;
+            Some(match (esize, one) {
+                (2, false) => 0x3800,
+                (2, true) => 0x3c00,
+                (4, false) => 0x3f00_0000,
+                (4, true) => 0x3f80_0000,
+                (8, false) => 0x3fe0_0000_0000_0000,
+                (8, true) => 0x3ff0_0000_0000_0000,
+                _ => return Ok(CpuExit::Undefined(insn)),
+            })
+        } else {
+            None
         };
         let pred = self.sve_p[pg];
         let elements = 16 / esize;
@@ -12645,7 +12701,7 @@ impl AArch64Cpu {
             }
             let off = e * esize;
             let a = read_elem(&a_reg, off, esize);
-            let b = read_elem(&b_reg, off, esize);
+            let b = scalar.unwrap_or_else(|| read_elem(&b_reg, off, esize));
             let (x, y) = if swap { (b, a) } else { (a, b) };
             let r = match esize {
                 2 => sve_fp16_binop(kind, x as u16, y as u16) as u64,
@@ -18758,6 +18814,15 @@ fn fp_to_int_rounded_status(input: f64, rounded: f64, signed: bool, bits: u32) -
 }
 
 fn fp_status_int_to_fp_scaled(abs_int: u128, dst_prec: usize, result: u64) -> u32 {
+    let overflow = match dst_prec {
+        2 => fp16_is_inf(result as u16),
+        4 => fp32_is_inf(result as u32),
+        _ => fp64_is_inf(result),
+    };
+    if overflow {
+        return FPSR_OFC | FPSR_IXC;
+    }
+
     let precision_bits = match dst_prec {
         2 => 11,
         4 => 24,
@@ -23602,6 +23667,51 @@ mod tests {
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.sve_pred(0), 0);
         assert_eq!(cpu.fpsr & FPSR_IOC, FPSR_IOC);
+    }
+
+    #[test]
+    fn sve_int_to_fp16_overflow_sets_ofc_ixc() {
+        // UCVTF Z0.H, P0/M, Z0.S
+        let mut cpu = create_cpu_with_insn(0x6555_a000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, u128::from(u32::MAX));
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_simd(0) & 0xffff, 0x7c00);
+        assert_eq!(cpu.fpsr & (FPSR_OFC | FPSR_IXC), FPSR_OFC | FPSR_IXC);
+    }
+
+    #[test]
+    fn sve_fp_unpredicated_vector_add_executes() {
+        // FADD Z0.S, Z0.S, Z0.S
+        let mut cpu = create_cpu_with_insn(0x6580_0000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        let one = 1.0f32.to_bits() as u128;
+        cpu.set_simd(0, one | (one << 32) | (one << 64) | (one << 96));
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        let two = 2.0f32.to_bits() as u128;
+        assert_eq!(cpu.get_simd(0), two | (two << 32) | (two << 64) | (two << 96));
+        assert_eq!(cpu.fpsr, 0);
+    }
+
+    #[test]
+    fn sve_fp_predicated_immediate_add_executes() {
+        // FADD Z0.S, P0/M, Z0.S, #0.5
+        let mut cpu = create_cpu_with_insn(0x6598_8000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        let one = 1.0f32.to_bits() as u128;
+        cpu.set_simd(0, one | (one << 32) | (one << 64) | (one << 96));
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        let one_and_half = 1.5f32.to_bits() as u128;
+        assert_eq!(
+            cpu.get_simd(0),
+            one_and_half | (one_and_half << 32) | (one_and_half << 64) | (one_and_half << 96)
+        );
+        assert_eq!(cpu.fpsr, 0);
     }
 
     #[test]
