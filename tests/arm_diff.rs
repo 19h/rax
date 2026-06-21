@@ -66421,6 +66421,21 @@ fn enc_copy(q: u32, op: u32, imm5: u32, imm4: u32) -> u32 {
         | RD
 }
 
+fn enc_copy_scalar(imm5: u32, imm4: u32) -> u32 {
+    enc_copy_scalar_op(0, imm5, imm4)
+}
+
+fn enc_copy_scalar_op(op: u32, imm5: u32, imm4: u32) -> u32 {
+    (1 << 30)
+        | (op << 29)
+        | (0b11110 << 24)
+        | (imm5 << 16)
+        | (imm4 << 11)
+        | (1 << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// imm5 for a given element size index (0=B,1=H,2=S,3=D) and lane index.
 fn copy_imm5(size: u32, index: u32) -> u32 {
     (index << (size + 1)) | (1 << size)
@@ -66466,6 +66481,23 @@ fn diff_simd_copy() {
         }
     }
     run_family("simd_copy", cases, 4, 0x9001);
+}
+
+#[test]
+fn diff_simd_copy_scalar_dup_element() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+
+    for size in 0..4u32 {
+        let lanes = 16u32 >> size;
+        for index in 0..lanes {
+            cases.push((
+                format!("scalar_dupelem sz{size} i{index}"),
+                enc_copy_scalar(copy_imm5(size, index), 0b0000),
+            ));
+        }
+    }
+
+    run_family("simd_copy_scalar_dup_element", cases, 8, 0x9004);
 }
 
 #[test]
@@ -66519,6 +66551,40 @@ fn diff_simd_copy_unallocated_edges() {
     }
 
     run_batch_el0_legality("simd_copy_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_simd_copy_scalar_unallocated_edges() {
+    let mut rng = Rng::new(0x9005);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &imm4 in &[
+        0b0001u32, 0b0011, 0b0101, 0b0111, 0b1000, 0b1010, 0b1100, 0b1111,
+    ] {
+        for size in 0..4u32 {
+            batch.push((
+                format!("scalar_copy_reserved_imm4_{imm4:04b}_sz{size}"),
+                enc_copy_scalar(copy_imm5(size, 0), imm4),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    batch.push((
+        "scalar_copy_imm5_zero".to_string(),
+        enc_copy_scalar(0, 0),
+        gen_input(&mut rng),
+    ));
+
+    for size in 0..4u32 {
+        batch.push((
+            format!("scalar_copy_reserved_op1_sz{size}"),
+            enc_copy_scalar_op(1, copy_imm5(size, 0), 0),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_copy_scalar_unallocated_edges", batch);
 }
 
 #[test]
@@ -67346,6 +67412,7 @@ fn enc_indexed_scalar(u: u32, size: u32, opcode: u32, vm: u32, index: u32) -> u3
     let (rm, mbit, lbit, hbit) = match size {
         0b01 => (vm & 0xF, index & 1, (index >> 1) & 1, (index >> 2) & 1),
         0b10 => (vm & 0xF, (vm >> 4) & 1, index & 1, (index >> 1) & 1),
+        0b11 => (vm & 0xF, (vm >> 4) & 1, 0, index & 1),
         _ => (0, 0, 0, 0),
     };
     (1 << 30)
@@ -67434,6 +67501,128 @@ fn diff_simd_indexed_scalar_integer_unallocated_edges() {
 }
 
 #[test]
+fn diff_simd_scalar_indexed_integer() {
+    let mut rng = Rng::new(0x5008);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b1100u32, "sqdmulh"),
+        (0, 0b1101, "sqrdmulh"),
+        (1, 0b1101, "sqrdmlah"),
+        (1, 0b1111, "sqrdmlsh"),
+        (0, 0b0011, "sqdmlal"),
+        (0, 0b0111, "sqdmlsl"),
+        (0, 0b1011, "sqdmull"),
+    ] {
+        for &size in &[0b01u32, 0b10] {
+            let max_index = if size == 0b01 { 8 } else { 4 };
+            for index in 0..max_index {
+                for _ in 0..6 {
+                    batch.push((
+                        format!("{name}_scalar_size{size}_idx{index}"),
+                        enc_indexed_scalar(u, size, opcode, RM, index),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("simd_scalar_indexed_integer", batch);
+}
+
+#[test]
+fn diff_simd_indexed_scalar_saturating_unallocated_edges() {
+    let mut rng = Rng::new(0x5009);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(opcode, name) in &[
+        (0b0011u32, "sqdmlal"),
+        (0b0111, "sqdmlsl"),
+        (0b1011, "sqdmull"),
+    ] {
+        for &size in &[0b01u32, 0b10] {
+            let max_index = if size == 0b01 { 8 } else { 4 };
+            for &index in &[0, max_index - 1] {
+                batch.push((
+                    format!("{name}_scalar_unsigned_size{size}_idx{index}"),
+                    enc_indexed_scalar(1, size, opcode, RM, index),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    for &(u, opcode, name) in &[
+        (1u32, 0b1100u32, "sqdmulh_unsigned"),
+        (0, 0b1111, "sqrdmlsh_signed"),
+    ] {
+        for &size in &[0b01u32, 0b10] {
+            let max_index = if size == 0b01 { 8 } else { 4 };
+            for &index in &[0, max_index - 1] {
+                batch.push((
+                    format!("{name}_scalar_size{size}_idx{index}"),
+                    enc_indexed_scalar(u, size, opcode, RM, index),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_indexed_scalar_saturating_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_simd_indexed_integer_unallocated_edges() {
+    let mut rng = Rng::new(0x5005);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b1000u32, "mul"),
+        (1, 0b0000, "mla"),
+        (1, 0b0100, "mls"),
+        (0, 0b0010, "smlal"),
+        (1, 0b0010, "umlal"),
+        (0, 0b1010, "smull"),
+        (1, 0b1010, "umull"),
+    ] {
+        for &size in &[0b00u32, 0b11] {
+            for q in 0..2u32 {
+                batch.push((
+                    format!("{name}_reserved_size{size}_q{q}"),
+                    enc_indexed(q, u, size, opcode, RM, 0),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    for &(opcode, name) in &[(0b0011u32, "sqdmlal"), (0b0111, "sqdmlsl"), (0b1011, "sqdmull")] {
+        for &size in &[0b01u32, 0b10] {
+            for q in 0..2u32 {
+                batch.push((
+                    format!("{name}_unsigned_size{size}_q{q}"),
+                    enc_indexed(q, 1, size, opcode, RM, 0),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    for &size in &[0b01u32, 0b10] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("indexed_int_opcode1110_size{size}_q{q}"),
+                enc_indexed(q, 1, size, 0b1110, RM, 0),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_indexed_integer_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_simd_indexed_fp() {
     let ops: &[(u32, u32, &str)] = &[
         (0, 0b1001, "fmul"),
@@ -67481,6 +67670,142 @@ fn diff_simd_indexed_fp() {
         }
     }
     run_batch("simd_indexed_fp", batch);
+}
+
+#[test]
+fn diff_simd_scalar_indexed_fp() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b1001, "fmul"),
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (1, 0b1001, "fmulx"),
+    ];
+    let mut rng = Rng::new(0x5006);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in ops {
+        for &(size, max_index, lanes) in &[(0b10u32, 4u32, 4usize), (0b11, 2, 2)] {
+            for index in 0..max_index {
+                let insn = enc_indexed_scalar(u, size, opcode, RM, index);
+                for _ in 0..12 {
+                    let mut st = ArmState::zeroed();
+                    let mut m = 0u128;
+                    if size == 0b10 {
+                        let d = (((rng.next() % 41) as i64 - 20) as f32 * 0.5).to_bits();
+                        let n = (((rng.next() % 41) as i64 - 20) as f32 * 0.5).to_bits();
+                        for lane in 0..lanes {
+                            let val = (((rng.next() % 41) as i64 - 20) as f32 * 0.5).to_bits();
+                            m |= (val as u128) << (32 * lane);
+                        }
+                        st.set_vreg(RD as usize, d as u64, 0);
+                        st.set_vreg(RN as usize, n as u64, 0);
+                    } else {
+                        let d = (((rng.next() % 41) as i64 - 20) as f64 * 0.5).to_bits();
+                        let n = (((rng.next() % 41) as i64 - 20) as f64 * 0.5).to_bits();
+                        for lane in 0..lanes {
+                            let val = (((rng.next() % 41) as i64 - 20) as f64 * 0.5).to_bits();
+                            m |= (val as u128) << (64 * lane);
+                        }
+                        st.set_vreg(RD as usize, d, 0);
+                        st.set_vreg(RN as usize, n, 0);
+                    }
+                    st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+                    batch.push((
+                        format!("{name}_scalar_size{size}_idx{index}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("simd_scalar_indexed_fp", batch);
+}
+
+#[test]
+fn diff_simd_scalar_indexed_fp_unallocated_edges() {
+    let mut rng = Rng::new(0x5007);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b1001u32, "fmul"),
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (1, 0b1001, "fmulx"),
+    ] {
+        for &index in &[0u32, 7] {
+            batch.push((
+                format!("{name}_scalar_reserved_size1_idx{index}"),
+                enc_indexed_scalar(u, 0b01, opcode, RM, index),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b1001u32, "fmul"),
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (1, 0b1001, "fmulx"),
+    ] {
+        for &index in &[0u32, 1] {
+            batch.push((
+                format!("{name}_scalar_d_reserved_l_idx{index}"),
+                enc_indexed_scalar(u, 0b11, opcode, RM, index) | (1 << 21),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(u, opcode, name) in &[(0u32, 0b0000u32, "opcode0"), (1, 0b1111, "opcode15")] {
+        for &size in &[0b10u32, 0b11] {
+            batch.push((
+                format!("scalar_{name}_size{size}"),
+                enc_indexed_scalar(u, size, opcode, RM, 0),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_scalar_indexed_fp_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_simd_indexed_fp_unallocated_edges() {
+    let mut rng = Rng::new(0x5004);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in &[
+        (0u32, 0b1001u32, "fmul"),
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (1, 0b1001, "fmulx"),
+    ] {
+        for q in 0..2u32 {
+            for &index in &[0u32, 7] {
+                batch.push((
+                    format!("{name}_reserved_size1_q{q}_idx{index}"),
+                    enc_indexed(q, u, 0b01, opcode, RM, index),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+        for &index in &[0u32, 1] {
+            batch.push((
+                format!("{name}_f64_q0_idx{index}"),
+                enc_indexed(0, u, 0b11, opcode, RM, index),
+                gen_input(&mut rng),
+            ));
+            batch.push((
+                format!("{name}_f64_reserved_l_idx{index}"),
+                enc_indexed(1, u, 0b11, opcode, RM, index) | (1 << 21),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("simd_indexed_fp_unallocated_edges", batch);
 }
 
 #[test]

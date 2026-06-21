@@ -5147,6 +5147,9 @@ impl AArch64Cpu {
                 // Half precision uses size==00; size==01 is unallocated for FP.
                 return Err(ArmError::UndefinedInstruction(insn));
             }
+            if bits == 64 && l == 1 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             if bits == 64 && q == 0 && !scalar {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
@@ -5499,6 +5502,10 @@ impl AArch64Cpu {
         let shift = esize as usize;
         let index = (imm5 >> (size + 1)) as usize;
         let emask = elem_mask_u128(esize);
+
+        if scalar && (op != 0 || imm4 != 0b0000) {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         if op == 1 {
             // INS (element): Vd[index] = Vn[src_index]. INS is a 128-bit-only
