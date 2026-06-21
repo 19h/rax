@@ -28807,7 +28807,7 @@ fn diff_mem_ldst_single() {
     for esz in 0..4u32 {
         let max_index = 16u32 >> esz; // B:16 H:8 S:4 D:2
         for selem in 1..=4u32 {
-            for &index in &[0u32, max_index - 1] {
+            for index in 0..max_index {
                 for l in 0..2 {
                     let op = if l == 1 { "ld" } else { "st" };
                     cases.push((
@@ -28832,7 +28832,7 @@ fn diff_mem_ldst_single() {
     let mut rng = Rng::new(0x1_0005);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for (label, insn) in &cases {
-        for _ in 0..6 {
+        for _ in 0..3 {
             batch.push((label.clone(), *insn, mem_input(&mut rng)));
         }
     }
@@ -41194,7 +41194,7 @@ fn diff_sve2_ssra() {
     // (SRI/SLI), across element sizes and shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
     for &eb in &[8u32, 16, 32, 64] {
-        for &amt in &[1u32, eb / 2, eb] {
+        for amt in 1..=eb {
             let (tsz, imm3) = ssra_tsz_imm(eb, amt);
             for r in 0..2u32 {
                 for u in 0..2u32 {
@@ -41206,12 +41206,12 @@ fn diff_sve2_ssra() {
             }
             cases.push((format!("sri e{eb} a{amt}"), enc_sve2_sri(tsz, imm3, 0)));
         }
-        for &amt in &[0u32, eb / 2, eb - 1] {
+        for amt in 0..eb {
             let (tsz, imm3) = sli_tsz_imm(eb, amt);
             cases.push((format!("sli e{eb} a{amt}"), enc_sve2_sri(tsz, imm3, 1)));
         }
     }
-    run_family("sve2_ssra", cases, 12, 0x5_F001);
+    run_family("sve2_ssra", cases, 4, 0x5_F001);
 }
 
 #[test]
@@ -50062,7 +50062,7 @@ fn diff_simd_copy() {
     // SMOV (0101), UMOV (0111); INS element (op1).
     for size in 0..4u32 {
         let lanes: u32 = 16u32 >> size; // lanes in 128 bits (16/8/4/2)
-        for &index in &[0u32, lanes - 1] {
+        for index in 0..lanes {
             for q in 0..2 {
                 cases.push((
                     format!("dupelem sz{size} i{index} q{q}"),
@@ -50094,7 +50094,7 @@ fn diff_simd_copy() {
             ));
         }
     }
-    run_family("simd_copy", cases, 8, 0x9001);
+    run_family("simd_copy", cases, 4, 0x9001);
 }
 
 #[test]
