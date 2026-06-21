@@ -1793,8 +1793,14 @@ impl AArch64Cpu {
                         ), // FNMADD
                         _ => (n, fp_neg_bits_with_fpcr(a, eb, self.fpcr)), // FNMSUB
                     };
+                    let (nn, m, aa) = (
+                        fp_flush_input_bits_with_fpcr(nn, eb, self.fpcr),
+                        fp_flush_input_bits_with_fpcr(m, eb, self.fpcr),
+                        fp_flush_input_bits_with_fpcr(aa, eb, self.fpcr),
+                    );
                     let r = fp_muladd_bits_with_fpcr(aa, nn, m, eb, self.fpcr);
-                    self.fpsr |= fp_status_fma((eb / 8) as usize, aa, nn, m, r);
+                    self.fpsr |=
+                        fp_status_fma_with_fpcr((eb / 8) as usize, aa, nn, m, r, self.fpcr);
                     self.v[rd] = (r & m_mask) as u128;
                 }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
@@ -1855,7 +1861,14 @@ impl AArch64Cpu {
                 0b00 => {
                     let (n, m) = (self.v[rn as usize] as u32, self.v[rm as usize] as u32);
                     let mut r = fp_three_same_f32_with_fpcr(kind, n, m, 0, self.fpcr);
-                    self.fpsr |= fp_status_binop_f32(kind, n, m, r);
+                    self.fpsr |= fp_status_binop_with_fpcr(
+                        4,
+                        kind,
+                        n as u64,
+                        m as u64,
+                        r as u64,
+                        self.fpcr,
+                    );
                     if nmul {
                         r ^= 0x8000_0000;
                     }
@@ -1864,7 +1877,7 @@ impl AArch64Cpu {
                 0b01 => {
                     let (n, m) = (self.v[rn as usize] as u64, self.v[rm as usize] as u64);
                     let mut r = fp_three_same_f64_with_fpcr(kind, n, m, 0, self.fpcr);
-                    self.fpsr |= fp_status_binop_f64(kind, n, m, r);
+                    self.fpsr |= fp_status_binop_with_fpcr(8, kind, n, m, r, self.fpcr);
                     if nmul {
                         r ^= 0x8000_0000_0000_0000;
                     }
@@ -5612,7 +5625,7 @@ impl AArch64Cpu {
             } else {
                 fp_three_same_f64_with_fpcr(kind, a, b, d, self.fpcr)
             };
-            self.fpsr |= fp_three_same_status(esize, kind, a, b, d, res);
+            self.fpsr |= fp_three_same_status_with_fpcr(esize, kind, a, b, d, res, self.fpcr);
             write_elem(&mut dst, off, esize, res);
         }
 
@@ -12196,7 +12209,7 @@ impl AArch64Cpu {
                     8 => fp_three_same_f64_with_fpcr(kind, a, b, 0, self.fpcr),
                     _ => return Ok(CpuExit::Undefined(insn)),
                 };
-                self.fpsr |= fp_three_same_status(esize, kind, a, b, 0, r);
+                self.fpsr |= fp_three_same_status_with_fpcr(esize, kind, a, b, 0, r, self.fpcr);
                 write_elem(&mut dst, off, esize, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12558,14 +12571,22 @@ impl AArch64Cpu {
                         ) as u64,
                         _ => fp_three_same_f64_with_fpcr(FpKind::Mul, ne, mm, 0, self.fpcr),
                     };
-                    (r, fp_status_binop(esz, FpKind::Mul, ne, mm, r))
+                    (
+                        r,
+                        fp_status_binop_with_fpcr(esz, FpKind::Mul, ne, mm, r, self.fpcr),
+                    )
                 } else {
+                    let aa = read_elem(&acc, off, esz);
+                    let (aa, ne, mm) = (
+                        fp_flush_input_bits_with_fpcr(aa, ebits, self.fpcr),
+                        fp_flush_input_bits_with_fpcr(ne, ebits, self.fpcr),
+                        fp_flush_input_bits_with_fpcr(mm, ebits, self.fpcr),
+                    );
                     let nn = if is_fmls {
                         fp_neg_bits_with_fpcr(ne, ebits, self.fpcr)
                     } else {
                         ne
                     };
-                    let aa = read_elem(&acc, off, esz);
                     let r = fp_muladd_bits_with_fpcr(aa, nn, mm, ebits, self.fpcr);
                     let status = fp_status_fma(esz, aa, nn, mm, r);
                     (r, fp_status_sve_underflow(esz, r, status))
@@ -12647,6 +12668,7 @@ impl AArch64Cpu {
             }
             let esz = 1usize << size;
             let ebits = (esz * 8) as u32;
+            let op3 = (insn >> 13) & 0x7;
             let neg_prod = ((insn >> 13) & 1) ^ ((insn >> 14) & 1) == 1;
             let neg_add = (insn >> 14) & 1 == 1;
             let rm = ((insn >> 16) & 0x1F) as usize;
@@ -12676,7 +12698,12 @@ impl AArch64Cpu {
                 if neg_add {
                     a = fp_neg_bits_with_fpcr(a, ebits, self.fpcr);
                 }
-                let m = read_elem(&mb, off, esz);
+                let mut m = read_elem(&mb, off, esz);
+                if op3 == 0 {
+                    n = fp_flush_input_bits_with_fpcr(n, ebits, self.fpcr);
+                    m = fp_flush_input_bits_with_fpcr(m, ebits, self.fpcr);
+                    a = fp_flush_input_bits_with_fpcr(a, ebits, self.fpcr);
+                }
                 let r = fp_muladd_bits_with_fpcr(a, n, m, ebits, self.fpcr);
                 let status = fp_status_fma(esz, a, n, m, r);
                 self.fpsr |= fp_status_sve_underflow(esz, r, status);
@@ -13174,7 +13201,7 @@ impl AArch64Cpu {
                 8 => fp_three_same_f64_with_fpcr(kind, x, y, 0, self.fpcr),
                 _ => return Ok(CpuExit::Undefined(insn)),
             };
-            let status = fp_three_same_status(esize, kind, x, y, 0, r);
+            let status = fp_three_same_status_with_fpcr(esize, kind, x, y, 0, r, self.fpcr);
             self.fpsr |= if kind == FpKind::Mulx {
                 fp_status_sve_underflow(esize, r, status)
             } else {
@@ -19967,6 +19994,7 @@ const FPSR_OFC: u32 = 1 << 2;
 const FPSR_UFC: u32 = 1 << 3;
 const FPSR_IXC: u32 = 1 << 4;
 const FPSR_QC: u32 = 1 << 27;
+const FPCR_FIZ: u32 = 1 << 0;
 const FPCR_AH: u32 = 1 << 1;
 
 /// Decode the FP three-same opcode from (U, size<1>, opcode) into an `FpKind`.
@@ -20427,6 +20455,33 @@ fn fp32_is_tiny(x: u32) -> bool {
 fn fp64_is_tiny(x: u64) -> bool {
     let a = fp64_abs(x);
     a != 0 && a < 0x0010_0000_0000_0000
+}
+
+#[inline]
+fn fp32_flush_input_with_fpcr(x: u32, fpcr: u32) -> u32 {
+    if fpcr & FPCR_FIZ != 0 && fp32_is_tiny(x) {
+        x & 0x8000_0000
+    } else {
+        x
+    }
+}
+
+#[inline]
+fn fp64_flush_input_with_fpcr(x: u64, fpcr: u32) -> u64 {
+    if fpcr & FPCR_FIZ != 0 && fp64_is_tiny(x) {
+        x & 0x8000_0000_0000_0000
+    } else {
+        x
+    }
+}
+
+#[inline]
+fn fp_flush_input_bits_with_fpcr(x: u64, esize: u32, fpcr: u32) -> u64 {
+    match esize {
+        32 => fp32_flush_input_with_fpcr(x as u32, fpcr) as u64,
+        64 => fp64_flush_input_with_fpcr(x, fpcr),
+        _ => x,
+    }
 }
 
 fn fp32_top_exp(x: u32) -> Option<i32> {
@@ -21014,6 +21069,47 @@ fn fp_three_same_status(esize: usize, kind: FpKind, a: u64, b: u64, d: u64, resu
     }
 }
 
+fn fp_three_same_status_with_fpcr(
+    esize: usize,
+    kind: FpKind,
+    a: u64,
+    b: u64,
+    d: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
+    use FpKind::*;
+    match kind {
+        Mla => fp_status_fma_with_fpcr(esize, d, a, b, result, fpcr),
+        Mls => fp_status_fma_with_fpcr(
+            esize,
+            d,
+            fp_neg_bits_with_fpcr(a, (esize * 8) as u32, fpcr),
+            b,
+            result,
+            fpcr,
+        ),
+        Mulx => fp_status_mulx(esize, a, b, result),
+        Recps => fp_status_recps_rsqrts(esize, false, a, b, result),
+        Rsqrts => fp_status_recps_rsqrts(esize, true, a, b, result),
+        CmEq | CmGe | CmGt => {
+            if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
+                FPSR_IOC
+            } else {
+                0
+            }
+        }
+        AcGe | AcGt => {
+            if fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b) {
+                FPSR_IOC
+            } else {
+                0
+            }
+        }
+        _ => fp_status_binop_with_fpcr(esize, kind, a, b, result, fpcr),
+    }
+}
+
 fn fp16_three_same_status(u: u32, a_bit: u32, opcode: u32, n: u16, m: u16, r: u16) -> u32 {
     use FpKind::*;
     let kind = match (u, a_bit, opcode) {
@@ -21410,6 +21506,77 @@ fn fp_status_binop(esize: usize, kind: FpKind, a: u64, b: u64, result: u64) -> u
     }
 }
 
+fn fp_status_binop_with_fpcr(
+    esize: usize,
+    kind: FpKind,
+    a: u64,
+    b: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
+    if fpcr & FPCR_FIZ != 0
+        && matches!(
+            kind,
+            FpKind::Add | FpKind::Addp | FpKind::Sub | FpKind::Mul | FpKind::Div
+        )
+    {
+        match esize {
+            4 => {
+                return fp_status_binop_f32(
+                    kind,
+                    fp32_flush_input_with_fpcr(a as u32, fpcr),
+                    fp32_flush_input_with_fpcr(b as u32, fpcr),
+                    result as u32,
+                );
+            }
+            8 => {
+                return fp_status_binop_f64(
+                    kind,
+                    fp64_flush_input_with_fpcr(a, fpcr),
+                    fp64_flush_input_with_fpcr(b, fpcr),
+                    result,
+                );
+            }
+            _ => {}
+        }
+    }
+    fp_status_binop(esize, kind, a, b, result)
+}
+
+fn fp_status_fma_with_fpcr(
+    esize: usize,
+    addend: u64,
+    op1: u64,
+    op2: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
+    if fpcr & FPCR_FIZ != 0 {
+        match esize {
+            4 => {
+                return fp_status_fma(
+                    esize,
+                    fp32_flush_input_with_fpcr(addend as u32, fpcr) as u64,
+                    fp32_flush_input_with_fpcr(op1 as u32, fpcr) as u64,
+                    fp32_flush_input_with_fpcr(op2 as u32, fpcr) as u64,
+                    result,
+                );
+            }
+            8 => {
+                return fp_status_fma(
+                    esize,
+                    fp64_flush_input_with_fpcr(addend, fpcr),
+                    fp64_flush_input_with_fpcr(op1, fpcr),
+                    fp64_flush_input_with_fpcr(op2, fpcr),
+                    result,
+                );
+            }
+            _ => {}
+        }
+    }
+    fp_status_fma(esize, addend, op1, op2, result)
+}
+
 fn fp_status_unop_f32(kind: Option<TwoRegFp>, a: u32, result: u32) -> u32 {
     match kind {
         Some(TwoRegFp::Fsqrt) => {
@@ -21768,6 +21935,23 @@ fn fp_three_same_f32(kind: FpKind, a: u32, b: u32, d: u32) -> u32 {
 
 fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) -> u32 {
     use FpKind::*;
+    let (a, b, d) = if fpcr & FPCR_FIZ != 0 {
+        match kind {
+            Add | Addp | Sub | Mul | Div => (
+                fp32_flush_input_with_fpcr(a, fpcr),
+                fp32_flush_input_with_fpcr(b, fpcr),
+                d,
+            ),
+            Mla | Mls => (
+                fp32_flush_input_with_fpcr(a, fpcr),
+                fp32_flush_input_with_fpcr(b, fpcr),
+                fp32_flush_input_with_fpcr(d, fpcr),
+            ),
+            _ => (a, b, d),
+        }
+    } else {
+        (a, b, d)
+    };
     if fpcr & FPCR_AH != 0 && matches!(kind, Mls) {
         if let Some(n) = fp32_nan3(d, a, b) {
             return n;
@@ -21958,6 +22142,23 @@ fn fp64_adjust_nearest_with_fpcr(
 
 fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) -> u64 {
     use FpKind::*;
+    let (a, b, d) = if fpcr & FPCR_FIZ != 0 {
+        match kind {
+            Add | Addp | Sub | Mul | Div => (
+                fp64_flush_input_with_fpcr(a, fpcr),
+                fp64_flush_input_with_fpcr(b, fpcr),
+                d,
+            ),
+            Mla | Mls => (
+                fp64_flush_input_with_fpcr(a, fpcr),
+                fp64_flush_input_with_fpcr(b, fpcr),
+                fp64_flush_input_with_fpcr(d, fpcr),
+            ),
+            _ => (a, b, d),
+        }
+    } else {
+        (a, b, d)
+    };
     let nearest = if fpcr & FPCR_AH != 0 && matches!(kind, Mls) {
         fp64_nan3(d, a, b).unwrap_or_else(|| fp_three_same_f64(kind, a, b, d))
     } else {
