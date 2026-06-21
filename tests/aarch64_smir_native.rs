@@ -4111,6 +4111,64 @@ fn raw_el0_fp_unary_ah_qnan_sign_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_scalar_fnmul_ah_qnan_sign_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") {
+        eprintln!("[skip] host does not advertise AFP/AH");
+        return;
+    }
+
+    #[derive(Copy, Clone)]
+    enum CompareKind {
+        Single,
+        Double,
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    let cases = [
+        ("s_pos", 0x1e22_8820, 0x7fc0_2000u64, CompareKind::Single),
+        ("s_neg", 0x1e22_8820, 0xffc0_2000, CompareKind::Single),
+        (
+            "d_pos",
+            0x1e62_8820,
+            0x7ff8_0000_0000_2000,
+            CompareKind::Double,
+        ),
+        (
+            "d_neg",
+            0x1e62_8820,
+            0xfff8_0000_0000_2000,
+            CompareKind::Double,
+        ),
+    ];
+
+    for (label, insn, nan, compare_kind) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[2] = nan;
+            g.v[4] = nan;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        match compare_kind {
+            CompareKind::Single => assert_eq!(
+                hw.v[0] as u32, interp.v[0] as u32,
+                "raw EL0 scalar AH fnmul {label} s0 mismatch"
+            ),
+            CompareKind::Double => assert_eq!(
+                hw.v[0], interp.v[0],
+                "raw EL0 scalar AH fnmul {label} d0 mismatch"
+            ),
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar AH fnmul {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_fp_sqrt_estimate_ah_invalid_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("afp") {
         eprintln!("[skip] host does not advertise AFP/AH");
@@ -4181,6 +4239,112 @@ fn raw_el0_fp_sqrt_estimate_ah_invalid_oracle_matches_interpreter() {
         hw.fpsr as u32, interp.fpsr as u32,
         "raw EL0 FP AH invalid sqrt/estimate FPSR mismatch"
     );
+}
+
+#[test]
+fn raw_el0_scalar_fsqrt_ah_subnormal_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") {
+        eprintln!("[skip] host does not advertise AFP/AH");
+        return;
+    }
+
+    #[derive(Copy, Clone)]
+    enum CompareKind {
+        Single,
+        Double,
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    let cases = [
+        ("s", 0x1e21_c020, 0x0000_2000u64, CompareKind::Single),
+        (
+            "d",
+            0x1e61_c020,
+            0x0000_0000_0000_2000,
+            CompareKind::Double,
+        ),
+    ];
+
+    for (label, insn, bits, compare_kind) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[2] = bits;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        match compare_kind {
+            CompareKind::Single => assert_eq!(
+                hw.v[0] as u32, interp.v[0] as u32,
+                "raw EL0 scalar AH fsqrt {label} subnormal s0 mismatch"
+            ),
+            CompareKind::Double => assert_eq!(
+                hw.v[0], interp.v[0],
+                "raw EL0 scalar AH fsqrt {label} subnormal d0 mismatch"
+            ),
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar AH fsqrt {label} subnormal FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_scalar_fsqrt_ah_negative_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise AFP and scalar FP16");
+        return;
+    }
+
+    #[derive(Copy, Clone)]
+    enum CompareKind {
+        Half,
+        Single,
+        Double,
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    let cases = [
+        ("h", 0x1ee1_c020, 0x8001u64, CompareKind::Half),
+        ("s", 0x1e21_c020, 0x8000_0001, CompareKind::Single),
+        (
+            "d",
+            0x1e61_c020,
+            0x8000_0000_0000_0001,
+            CompareKind::Double,
+        ),
+    ];
+
+    for (label, insn, bits, compare_kind) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[2] = bits;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        match compare_kind {
+            CompareKind::Half => assert_eq!(
+                hw.v[0] as u16, interp.v[0] as u16,
+                "raw EL0 scalar AH fsqrt negative subnormal h0 mismatch"
+            ),
+            CompareKind::Single => assert_eq!(
+                hw.v[0] as u32, interp.v[0] as u32,
+                "raw EL0 scalar AH fsqrt negative subnormal s0 mismatch"
+            ),
+            CompareKind::Double => assert_eq!(
+                hw.v[0], interp.v[0],
+                "raw EL0 scalar AH fsqrt negative subnormal d0 mismatch"
+            ),
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar AH fsqrt negative subnormal {label} FPSR mismatch"
+        );
+    }
 }
 
 #[test]
