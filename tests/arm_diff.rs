@@ -1277,11 +1277,18 @@ fn parse_generated_a64_encodings_with_asm(family: &str, source: &str) -> Vec<(St
         let label = if let Some(asm) = asm {
             format!("{asm} [{family} {insn:#010x}]")
         } else {
-            let mnemonic = provenance
-                .split('_')
-                .next()
-                .unwrap_or(family)
-                .to_ascii_lowercase();
+            let provenance_lower = provenance.to_ascii_lowercase();
+            let mnemonic = if let Some(rest) =
+                provenance_lower.strip_prefix("aarch64_vector_crypto_")
+            {
+                rest.split('_').next().unwrap_or(family).to_string()
+            } else {
+                provenance
+                    .split('_')
+                    .next()
+                    .unwrap_or(family)
+                    .to_ascii_lowercase()
+            };
             let suffix = size_field_suffix(&fields).unwrap_or("");
             format!("{mnemonic}{suffix} [{family} {insn:#010x}]")
         };
@@ -1713,6 +1720,18 @@ fn generated_vector_noncrypto_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_vector_crypto_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/crypto.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("vector/crypto", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_sve_integer_immediate_arithmetic_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/arithmetic.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -1841,6 +1860,18 @@ fn generated_sve_scalar_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/scalar.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings_with_asm("sve/scalar", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_other_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/other.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("sve/other", source) {
         by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
@@ -32641,6 +32672,16 @@ fn diff_generated_vector_noncrypto_sweep() {
 }
 
 #[test]
+fn diff_generated_vector_crypto_sweep() {
+    run_family(
+        "generated_vector_crypto_sweep",
+        generated_vector_crypto_cases(),
+        4,
+        0xa64_c470,
+    );
+}
+
+#[test]
 fn diff_generated_sve_integer_immediate_arithmetic_sweep() {
     let mut rng = Rng::new(0xa64_5e01);
     let mut batch = Vec::new();
@@ -32758,6 +32799,18 @@ fn diff_generated_sve_scalar_sweep() {
         }
     }
     run_batch("generated_sve_scalar_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_other_sweep() {
+    let mut rng = Rng::new(0xa64_07e0);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_other_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_other_sweep", batch);
 }
 
 #[test]

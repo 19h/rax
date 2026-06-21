@@ -13412,6 +13412,14 @@ impl AArch64Cpu {
                 false
             };
             if is_prf {
+                // Register-offset PRF[BHWD]_I.P.BR_S reserves Rm==31.
+                if b3125 == 0b1000010
+                    && b2221 == 0
+                    && b1513 == 0b110
+                    && (insn >> 16) & 0x1F == 31
+                {
+                    return Ok(CpuExit::Undefined(insn));
+                }
                 return Ok(CpuExit::Continue);
             }
         }
@@ -25234,6 +25242,18 @@ mod tests {
             assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
             assert_eq!(cpu.get_simd(0), expected);
         }
+    }
+
+    #[test]
+    fn sve_prefetch_register_offset_rejects_rm31() {
+        let invalid_rm31 = 0x841f_c000; // PRFB PLDL1KEEP, P0, [X0, XZR]
+        let mut cpu = create_cpu_with_insn(invalid_rm31);
+        cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(invalid_rm31));
+
+        let mut valid = create_cpu_with_insn(0x8400_c000); // PRFB PLDL1KEEP, P0, [X0, X0]
+        valid.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        assert_eq!(valid.step().unwrap(), CpuExit::Continue);
     }
 
     #[test]
