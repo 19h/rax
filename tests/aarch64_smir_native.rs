@@ -262,6 +262,57 @@ fn raw_el0_scalar_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_scalar_32bit_oracle_matches_interpreter() {
+    let insns = [
+        0x2b02_0020, // adds w0, w1, w2
+        0x3a05_0083, // adcs w3, w4, w5
+        0x5a08_00e6, // sbc  w6, w7, w8
+        0x6b0b_0149, // subs w9, w10, w11
+        0x0a0e_01ac, // and  w12, w13, w14
+        0x2a11_020f, // orr  w15, w16, w17
+        0x4a15_0293, // eor  w19, w20, w21
+        0x0a38_02f6, // bic  w22, w23, w24
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[1] = 0xaaaa_aaaa_ffff_ffff;
+        g.x[2] = 0xbbbb_bbbb_0000_0001;
+        g.x[4] = 0xcccc_cccc_0000_0001;
+        g.x[5] = 0xdddd_dddd_0000_0002;
+        g.x[7] = 0xeeee_eeee_0000_0010;
+        g.x[8] = 0xffff_ffff_0000_0003;
+        g.x[10] = 0x1111_1111_8000_0000;
+        g.x[11] = 0x2222_2222_0000_0001;
+        g.x[13] = 0x3333_3333_ff00_ff00;
+        g.x[14] = 0x4444_4444_0f0f_0f0f;
+        g.x[16] = 0x5555_5555_00ff_00ff;
+        g.x[17] = 0x6666_6666_f0f0_f0f0;
+        g.x[20] = 0x7777_7777_5555_aaaa;
+        g.x[21] = 0x8888_8888_ffff_0000;
+        g.x[23] = 0x9999_9999_ffff_00ff;
+        g.x[24] = 0xaaaa_aaaa_0f0f_f0f0;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 19, 22] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 32-bit scalar x{reg} mismatch"
+        );
+        assert_eq!(
+            hw.x[reg] >> 32,
+            0,
+            "raw EL0 32-bit scalar x{reg} was not zero-extended"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 32-bit scalar NZCV mismatch"
+    );
+}
+
+#[test]
 fn raw_el0_multiply_divide_oracle_matches_interpreter() {
     let insns = [
         0x9b02_0c20, // madd  x0, x1, x2, x3
@@ -304,6 +355,45 @@ fn raw_el0_multiply_divide_oracle_matches_interpreter() {
         assert_eq!(
             hw.x[reg], interp.x[reg],
             "raw EL0 multiply/divide oracle x{reg} mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_multiply_divide_32bit_oracle_matches_interpreter() {
+    let insns = [
+        0x1b02_0c20, // madd w0, w1, w2, w3
+        0x1b06_9ca4, // msub w4, w5, w6, w7
+        0x1b0a_7d28, // mul  w8, w9, w10
+        0x1acd_0d8b, // sdiv w11, w12, w13
+        0x1ad0_09ee, // udiv w14, w15, w16
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[1] = 0xaaaa_aaaa_ffff_fffe;
+        g.x[2] = 0xbbbb_bbbb_0000_0003;
+        g.x[3] = 0xcccc_cccc_0000_0005;
+        g.x[5] = 0xdddd_dddd_8000_0001;
+        g.x[6] = 0xeeee_eeee_0000_0002;
+        g.x[7] = 0xffff_ffff_0000_0010;
+        g.x[9] = 0x1111_1111_0001_0001;
+        g.x[10] = 0x2222_2222_0000_00ff;
+        g.x[12] = 0x3333_3333_8000_0000;
+        g.x[13] = 0x4444_4444_ffff_fff0;
+        g.x[15] = 0x5555_5555_ffff_ffff;
+        g.x[16] = 0x6666_6666_0000_1001;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 4, 8, 11, 14] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 32-bit multiply/divide x{reg} mismatch"
+        );
+        assert_eq!(
+            hw.x[reg] >> 32,
+            0,
+            "raw EL0 32-bit multiply/divide x{reg} was not zero-extended"
         );
     }
 }
@@ -520,6 +610,105 @@ fn raw_el0_vector_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 vector oracle v{reg} mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_integer_oracle_matches_interpreter() {
+    let insns = [
+        0x4e62_8420, // add   v0.8h, v1.8h, v2.8h
+        0x6ea5_8483, // sub   v3.4s, v4.4s, v5.4s
+        0x0e68_94e6, // mla   v6.4h, v7.4h, v8.4h
+        0x2e6b_c149, // umull v9.4s, v10.4h, v11.4h
+        0x0e6e_01ac, // saddl v12.4s, v13.4h, v14.4h
+        0x6e31_0e0f, // uqadd v15.16b, v16.16b, v17.16b
+        0x4e74_2e72, // sqsub v18.8h, v19.8h, v20.8h
+        0x4eb7_06d5, // shadd v21.4s, v22.4s, v23.4s
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (1usize, 0x0001_0002_7fff_8000, 0x1234_5678_9abc_def0),
+            (2, 0xffff_0001_0002_0003, 0x1111_2222_3333_4444),
+            (4, 0x0000_0010_ffff_fff0, 0x7fff_ffff_8000_0000),
+            (5, 0x0000_0001_0000_0020, 0x0000_0001_ffff_fffe),
+            (6, 0x0001_0002_0003_0004, 0xaaaa_bbbb_cccc_dddd),
+            (7, 0x0002_0003_0004_0005, 0x1111_2222_3333_4444),
+            (8, 0x0006_0007_0008_0009, 0x5555_6666_7777_8888),
+            (10, 0x0001_0002_0003_0004, 0x1000_2000_3000_4000),
+            (11, 0x0005_0006_0007_0008, 0x5000_6000_7000_8000),
+            (13, 0x7fff_8000_0001_ffff, 0x1111_2222_3333_4444),
+            (14, 0x0001_ffff_8000_7fff, 0x5555_6666_7777_8888),
+            (16, 0xfffe_fdfc_0102_0304, 0x8081_7f7e_1020_3040),
+            (17, 0x0102_0304_fffe_fdfc, 0x8080_8181_f0e0_d0c0),
+            (19, 0x8000_8001_7fff_0000, 0x0100_0200_0300_0400),
+            (20, 0x0001_0002_ffff_8000, 0x8000_7000_6000_5000),
+            (22, 0x0000_0010_ffff_fff0, 0x4000_0000_8000_0000),
+            (23, 0xffff_fff0_0000_0010, 0x4000_0000_7fff_ffff),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD integer v{reg} mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_permute_oracle_matches_interpreter() {
+    let insns = [
+        0x6e02_4020, // ext  v0.16b, v1.16b, v2.16b, #8
+        0x4e05_3883, // zip1 v3.16b, v4.16b, v5.16b
+        0x4e48_78e6, // zip2 v6.8h, v7.8h, v8.8h
+        0x4e8b_2949, // trn1 v9.4s, v10.4s, v11.4s
+        0x4ece_69ac, // trn2 v12.2d, v13.2d, v14.2d
+        0x4e11_1a0f, // uzp1 v15.16b, v16.16b, v17.16b
+        0x4e54_5a72, // uzp2 v18.8h, v19.8h, v20.8h
+        0x4e17_02d5, // tbl  v21.16b, { v22.16b }, v23.16b
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, lo, hi) in [
+            (1usize, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+            (2, 0x1716_1514_1312_1110, 0x1f1e_1d1c_1b1a_1918),
+            (4, 0x7766_5544_3322_1100, 0xffee_ddcc_bbaa_9988),
+            (5, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+            (7, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (8, 0x1001_1002_1003_1004, 0x1005_1006_1007_1008),
+            (10, 0x0000_0010_0000_0020, 0x0000_0030_0000_0040),
+            (11, 0xffff_fff0_ffff_ffe0, 0xffff_fff0_ffff_ffc0),
+            (13, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888),
+            (14, 0x9999_aaaa_bbbb_cccc, 0xdddd_eeee_ffff_0000),
+            (16, 0x0011_2233_4455_6677, 0x8899_aabb_ccdd_eeff),
+            (17, 0xffee_ddcc_bbaa_9988, 0x7766_5544_3322_1100),
+            (19, 0x0001_0002_0003_0004, 0x0005_0006_0007_0008),
+            (20, 0x1001_1002_1003_1004, 0x1005_1006_1007_1008),
+            (22, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+            (23, 0x0706_0504_0302_0100, 0x1f10_0f0e_0d0c_0b0a),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 15, 18, 21] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 AdvSIMD permute v{reg} mismatch"
         );
     }
 }
