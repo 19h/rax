@@ -1662,7 +1662,7 @@ impl Aarch64Lifter {
             // =================================================================
             // Load/Store
             // =================================================================
-            Mnemonic::LDR => {
+            Mnemonic::LDR | Mnemonic::LDAPUR => {
                 if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
                     self.lift_vector_mem(insn, true, pc, &mut ops, ctx)?;
                 } else {
@@ -1674,23 +1674,23 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::LDRB => {
+            Mnemonic::LDRB | Mnemonic::LDAPURB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRH => {
+            Mnemonic::LDRH | Mnemonic::LDAPURH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSB => {
+            Mnemonic::LDRSB | Mnemonic::LDAPURSB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSH => {
+            Mnemonic::LDRSH | Mnemonic::LDAPURSH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSW => {
+            Mnemonic::LDRSW | Mnemonic::LDAPURSW => {
                 self.lift_load(insn, MemWidth::B4, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
@@ -1726,7 +1726,7 @@ impl Aarch64Lifter {
                 self.lift_store_exclusive(insn, MemWidth::B2, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDAR => {
+            Mnemonic::LDAR | Mnemonic::LDAPR => {
                 let width = match insn.operands.first() {
                     Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
                     _ => MemWidth::B8,
@@ -1734,15 +1734,15 @@ impl Aarch64Lifter {
                 self.lift_load(insn, width, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDARB => {
+            Mnemonic::LDARB | Mnemonic::LDAPRB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDARH => {
+            Mnemonic::LDARH | Mnemonic::LDAPRH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STR => {
+            Mnemonic::STR | Mnemonic::STLUR => {
                 if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
                     self.lift_vector_mem(insn, false, pc, &mut ops, ctx)?;
                 } else {
@@ -1754,11 +1754,11 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::STRB => {
+            Mnemonic::STRB | Mnemonic::STLURB => {
                 self.lift_store(insn, MemWidth::B1, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STRH => {
+            Mnemonic::STRH | Mnemonic::STLURH => {
                 self.lift_store(insn, MemWidth::B2, pc, &mut ops, ctx)?;
             }
 
@@ -1807,7 +1807,7 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::LDP | Mnemonic::LDNP => {
+            Mnemonic::LDP | Mnemonic::LDNP | Mnemonic::LDTP | Mnemonic::LDTNP => {
                 self.lift_load_pair(insn, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
@@ -1815,7 +1815,7 @@ impl Aarch64Lifter {
                 self.lift_load_pair(insn, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STP | Mnemonic::STNP => {
+            Mnemonic::STP | Mnemonic::STNP | Mnemonic::STTP | Mnemonic::STTNP => {
                 self.lift_store_pair(insn, pc, &mut ops, ctx)?;
             }
 
@@ -5239,6 +5239,124 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_lift_lrcpc3_pair_forms() {
+        fn pair(mode: u32, l: u32) -> [u8; 4] {
+            ((0b11 << 30) | (0b101 << 27) | (mode << 23) | (l << 22) | (2 << 10) | (1 << 5))
+                .to_le_bytes()
+        }
+
+        let (ops, _) = lift_single(pair(0b10, 1));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::LoadPair {
+                    width: MemWidth::B8,
+                    ..
+                }
+            )),
+            "LDTP must lift as a 64-bit LoadPair"
+        );
+
+        let (ops, _) = lift_single(pair(0b10, 0));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::StorePair {
+                    width: MemWidth::B8,
+                    ..
+                }
+            )),
+            "STTP must lift as a 64-bit StorePair"
+        );
+    }
+
+    #[test]
+    fn test_lift_ordered_unscaled_forms() {
+        fn ordered(size: u32, opc: u32) -> [u8; 4] {
+            ((size << 30) | (0b011001 << 24) | (opc << 22) | (1 << 5)).to_le_bytes()
+        }
+
+        let (ops, _) = lift_single(ordered(0b11, 0b01));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                    ..
+                }
+            )),
+            "LDAPUR X must lift as a zero-extending 64-bit Load"
+        );
+
+        let (ops, _) = lift_single(ordered(0b10, 0b10));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B4,
+                    sign: SignExtend::Sign,
+                    ..
+                }
+            )),
+            "LDAPURSW must lift as a sign-extending 32-bit Load"
+        );
+
+        let (ops, _) = lift_single(ordered(0b00, 0b00));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Store {
+                    width: MemWidth::B1,
+                    ..
+                }
+            )),
+            "STLURB must lift as a byte Store"
+        );
+    }
+
+    #[test]
+    fn test_lift_ldapr_forms() {
+        fn ldapr(size: u32) -> [u8; 4] {
+            ((size << 30)
+                | (0b111 << 27)
+                | (1 << 23)
+                | (1 << 21)
+                | (31 << 16)
+                | (1 << 15)
+                | (0b100 << 12)
+                | (1 << 5))
+                .to_le_bytes()
+        }
+
+        let (ops, _) = lift_single(ldapr(0b00));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B1,
+                    sign: SignExtend::Zero,
+                    ..
+                }
+            )),
+            "LDAPRB must lift as a byte Load"
+        );
+
+        let (ops, _) = lift_single(ldapr(0b11));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                    ..
+                }
+            )),
+            "LDAPR X must lift as a 64-bit Load"
+        );
+    }
+
     // Regression for issue #28: an across-vector integer reduction with a reserved
     // arrangement (here SADDLV with Q=0, size=0b10 = 2S) must NOT lift to a native
     // across-lanes op — that would be an invalid host encoding and SIGILL if
@@ -5465,6 +5583,32 @@ mod tests {
     fn issue_44_rejects_tag_generation_lifts() {
         for mnemonic in [Mnemonic::SUBP, Mnemonic::SUBPS, Mnemonic::IRG, Mnemonic::GMI] {
             assert_mnemonic_unsupported(mnemonic);
+        }
+    }
+
+    #[test]
+    fn test_rejects_casp_pair_lifts() {
+        fn casp(l: u32, o0: u32) -> [u8; 4] {
+            ((0b001000 << 24)
+                | (l << 22)
+                | (1 << 21)
+                | (2 << 16)
+                | (o0 << 15)
+                | (0b11111 << 10)
+                | (1 << 5)
+                | 4)
+                .to_le_bytes()
+        }
+
+        for (l, o0) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+            let (ops, control) = lift_single(casp(l, o0));
+            assert!(ops.is_empty());
+            assert!(matches!(
+                control,
+                ControlFlow::Trap {
+                    kind: TrapKind::Undefined
+                }
+            ));
         }
     }
 

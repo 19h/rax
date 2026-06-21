@@ -332,7 +332,10 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if mnemonic_base == "fjcvtzs" {
         return !caps.has("jscvt");
     }
-    if matches!(mnemonic_base, "subp" | "subps" | "irg" | "gmi") {
+    if matches!(
+        mnemonic_base,
+        "subp" | "subps" | "irg" | "gmi" | "ldg" | "stg" | "stzg" | "st2g" | "stz2g" | "stgp"
+    ) {
         return !caps.has("mte");
     }
     if mnemonic_base.starts_with("fmmla") {
@@ -370,6 +373,9 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     }
     if matches!(mnemonic_base, "ldapr" | "ldaprb" | "ldaprh") {
         return !caps.has("lrcpc");
+    }
+    if matches!(mnemonic_base, "ldtp" | "sttp" | "ldtnp" | "sttnp") {
+        return !caps.has("lrcpc3");
     }
     if mnemonic_base.contains("cntpctss") || mnemonic_base.contains("cntvctss") {
         return !caps.has("ecv");
@@ -53523,11 +53529,23 @@ fn diff_mem_ldp_stp() {
             }
         }
     }
+    for &mode in &[0b10u32, 0b01, 0b11] {
+        for &(l, name) in &[(0u32, "sttp x"), (1, "ldtp x")] {
+            for &imm7 in &imm7_cases {
+                cases.push((
+                    format!("{name} m{mode} #{}", imm7_label(imm7)),
+                    enc_ldp(0b11, 0, mode, l, imm7),
+                ));
+            }
+        }
+    }
     let no_allocate_kinds: &[(u32, u32, &str)] = &[
         (0b00, 0, "stnp_w"),
         (0b10, 0, "stnp_x"),
         (0b00, 1, "ldnp_w"),
         (0b10, 1, "ldnp_x"),
+        (0b11, 0, "sttnp x"),
+        (0b11, 1, "ldtnp x"),
     ];
     for &(opc, l, name) in no_allocate_kinds {
         for &imm7 in &imm7_cases {
@@ -53551,6 +53569,53 @@ fn diff_mem_ldp_stp() {
         }
     }
     run_batch("mem_ldp_stp", batch);
+}
+
+#[test]
+fn diff_mem_mte_tag_memory_edges() {
+    fn tag_mem(opc: u32, imm9: i32, op2: u32, rn: u32, rt: u32) -> u32 {
+        (0xD9 << 24)
+            | ((opc & 0x3) << 22)
+            | (1 << 21)
+            | (((imm9 as u32) & 0x1ff) << 12)
+            | ((op2 & 0x3) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn state(base_reg: u32, use_sp: bool) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.scratch.fill(0xfeed_face_dead_beef);
+        for (i, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1111_0000_0000_0000 | i as u64;
+        }
+        let base = SCRATCH_BASE + 64;
+        if use_sp {
+            st.sp = base;
+        } else {
+            st.x[base_reg as usize] = base;
+        }
+        st.x[RD as usize] = 0x0a00_0000_1234_5678;
+        st.x[RM as usize] = 0x0b00_0000_8765_4321;
+        st
+    }
+
+    let mut batch = Vec::new();
+    for &(name, insn, use_sp) in &[
+        ("ldg signed_neg", tag_mem(0b01, -1, 0b00, RN, RD), false),
+        ("ldg sp_signed_pos", tag_mem(0b01, 1, 0b00, 31, RD), true),
+        ("stg post_neg", tag_mem(0b00, -1, 0b01, RN, RD), false),
+        ("stzg signed_zero", tag_mem(0b01, 0, 0b10, RN, RD), false),
+        ("st2g pre_pos", tag_mem(0b10, 1, 0b11, RN, RD), false),
+        ("stz2g sp_post_neg", tag_mem(0b11, -1, 0b01, 31, RD), true),
+        ("stgp signed_neg", enc_ldp_regs(0b01, 0, 0b10, 0, 0x7f, RD, RM, RN), false),
+        ("stgp sp_pre_pos", enc_ldp_regs(0b01, 0, 0b11, 0, 1, RD, RM, 31), true),
+        ("stgp noalloc_undef", enc_ldp_regs(0b01, 0, 0b00, 0, 0, RD, RM, RN), false),
+    ] {
+        batch.push((name.to_string(), insn, state(RN, use_sp)));
+    }
+
+    run_batch("mem_mte_tag_memory_edges", batch);
 }
 
 #[test]

@@ -25,6 +25,7 @@
  * the FPSIMD record all read back correctly) and restores the harness context.
  */
 #define _GNU_SOURCE
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -388,6 +389,16 @@ static int write_exact(int fd, const void *buf, size_t n) {
     return 0;
 }
 
+static void *map_data_window(uint64_t addr, size_t size) {
+    int prot = PROT_READ | PROT_WRITE;
+#ifdef PROT_MTE
+    void *p = mmap((void *)addr, size, prot | PROT_MTE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (p != MAP_FAILED || errno != EINVAL) return p;
+#endif
+    return mmap((void *)addr, size, prot, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+}
+
 int main(void) {
     /* Pin the SVE vector length to 128 bits (16 bytes) so that the Z registers
      * exactly alias the captured V registers and match rax's VL=128 model. This
@@ -425,11 +436,9 @@ int main(void) {
     g_done_pc = (uint64_t)(uintptr_t)(code + slot + 3);
 
     /* Shared scratch memory window at a fixed address. */
-    void *scratch = mmap((void *)SCRATCH_ADDR, SCRATCH_SIZE, PROT_READ | PROT_WRITE,
-                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    void *scratch = map_data_window(SCRATCH_ADDR, SCRATCH_SIZE);
     if (scratch == MAP_FAILED) { perror("mmap scratch"); return 8; }
-    void *guest_stack = mmap((void *)GUEST_STACK_ADDR, GUEST_STACK_SIZE, PROT_READ | PROT_WRITE,
-                             MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    void *guest_stack = map_data_window(GUEST_STACK_ADDR, GUEST_STACK_SIZE);
     if (guest_stack == MAP_FAILED) { perror("mmap guest stack"); return 9; }
 
     uint32_t magic = 0, count = 0;

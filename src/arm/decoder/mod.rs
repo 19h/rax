@@ -475,10 +475,19 @@ pub enum Mnemonic {
     LDRSB,
     LDRSH,
     LDRSW,
+    LDAPUR,
+    LDAPURB,
+    LDAPURH,
+    LDAPURSB,
+    LDAPURSH,
+    LDAPURSW,
     PRFM,
     STR,
     STRB,
     STRH,
+    STLUR,
+    STLURB,
+    STLURH,
 
     // =========================================================================
     // Load/Store - Pair
@@ -488,6 +497,10 @@ pub enum Mnemonic {
     STP,
     LDNP,
     STNP,
+    LDTP,
+    STTP,
+    LDTNP,
+    STTNP,
 
     // =========================================================================
     // Load/Store - Exclusive
@@ -511,6 +524,9 @@ pub enum Mnemonic {
     LDAR,
     LDARB,
     LDARH,
+    LDAPR,
+    LDAPRB,
+    LDAPRH,
     STLR,
     STLRB,
     STLRH,
@@ -554,6 +570,9 @@ pub enum Mnemonic {
     CASAL,
     CASL,
     CASP,
+    CASPA,
+    CASPAL,
+    CASPL,
 
     // =========================================================================
     // System Instructions
@@ -1288,10 +1307,19 @@ impl Mnemonic {
             Mnemonic::LDRSB => "ldrsb",
             Mnemonic::LDRSH => "ldrsh",
             Mnemonic::LDRSW => "ldrsw",
+            Mnemonic::LDAPUR => "ldapur",
+            Mnemonic::LDAPURB => "ldapurb",
+            Mnemonic::LDAPURH => "ldapurh",
+            Mnemonic::LDAPURSB => "ldapursb",
+            Mnemonic::LDAPURSH => "ldapursh",
+            Mnemonic::LDAPURSW => "ldapursw",
             Mnemonic::PRFM => "prfm",
             Mnemonic::STR => "str",
             Mnemonic::STRB => "strb",
             Mnemonic::STRH => "strh",
+            Mnemonic::STLUR => "stlur",
+            Mnemonic::STLURB => "stlurb",
+            Mnemonic::STLURH => "stlurh",
 
             // Load/Store pair
             Mnemonic::LDP => "ldp",
@@ -1299,6 +1327,10 @@ impl Mnemonic {
             Mnemonic::STP => "stp",
             Mnemonic::LDNP => "ldnp",
             Mnemonic::STNP => "stnp",
+            Mnemonic::LDTP => "ldtp",
+            Mnemonic::STTP => "sttp",
+            Mnemonic::LDTNP => "ldtnp",
+            Mnemonic::STTNP => "sttnp",
 
             // Load/Store exclusive
             Mnemonic::LDXR => "ldxr",
@@ -1320,6 +1352,9 @@ impl Mnemonic {
             Mnemonic::LDAR => "ldar",
             Mnemonic::LDARB => "ldarb",
             Mnemonic::LDARH => "ldarh",
+            Mnemonic::LDAPR => "ldapr",
+            Mnemonic::LDAPRB => "ldaprb",
+            Mnemonic::LDAPRH => "ldaprh",
             Mnemonic::STLR => "stlr",
             Mnemonic::STLRB => "stlrb",
             Mnemonic::STLRH => "stlrh",
@@ -1359,6 +1394,9 @@ impl Mnemonic {
             Mnemonic::CASAL => "casal",
             Mnemonic::CASL => "casl",
             Mnemonic::CASP => "casp",
+            Mnemonic::CASPA => "caspa",
+            Mnemonic::CASPAL => "caspal",
+            Mnemonic::CASPL => "caspl",
 
             // System
             Mnemonic::SVC => "svc",
