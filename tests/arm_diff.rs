@@ -33324,7 +33324,15 @@ fn diff_sve_sincdecp() {
 fn diff_sve_sincdecp_xzr_dest() {
     let mut rng = Rng::new(0x1_0077);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(esz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << esz))
+    }
+
     for esz in 0..4u32 {
+        let lanes = 16usize >> esz;
+        let last = predicate_bit(esz, lanes - 1);
+        let endpoints = predicate_bit(esz, 0) | last;
         for d in 0..2u32 {
             for u in 0..2u32 {
                 for sf64 in 0..2u32 {
@@ -33336,6 +33344,23 @@ fn diff_sve_sincdecp_xzr_dest() {
                         st.set_preg(1, pred);
                         batch.push((
                             format!("sincdecp_xzr e{esz} d{d} u{u} s{sf64}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                    for (case_name, pred, sp_delta) in [
+                        ("last", last, 0x80u64),
+                        ("endpoints", endpoints, 0x90),
+                    ] {
+                        let mut st = ArmState::zeroed();
+                        st.sp = GUEST_STACK_ADDR
+                            + (GUEST_STACK_SIZE / 2)
+                            + 0x11200
+                            + ((esz as u64) << 8)
+                            + sp_delta;
+                        st.set_preg(1, pred);
+                        batch.push((
+                            format!("sincdecp_xzr_e{esz}_d{d}_u{u}_s{sf64}_{case_name}"),
                             insn,
                             st,
                         ));
@@ -34050,6 +34075,22 @@ fn diff_sve_stack_alloc_sp() {
             }
         }
     }
+    for imm6 in [-32, -1, 0, 1, 31] {
+        let cases = [
+            ("addvl_x_sp", enc_sve_stack_alloc(0b001, 31, 0, imm6)),
+            ("addvl_sp_sp", enc_sve_stack_alloc(0b001, 31, 31, imm6)),
+            ("addpl_x_sp", enc_sve_stack_alloc(0b011, 31, 2, imm6)),
+            ("addpl_sp_x", enc_sve_stack_alloc(0b011, 1, 31, imm6)),
+        ];
+        for (case_name, base_delta) in [("aligned", 0x0u64), ("offset", 0x70)] {
+            for (label, insn) in cases {
+                let mut st = ArmState::zeroed();
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x2000 + base_delta;
+                st.x[1] = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x2800 + base_delta;
+                batch.push((format!("{label}_edge_i{imm6}_{case_name}"), insn, st));
+            }
+        }
+    }
     run_batch("sve_stack_alloc_sp", batch);
 }
 
@@ -34145,6 +34186,21 @@ fn enc_sve2_saba(esz: u32, u: u32) -> u32 {
 fn diff_sve2_saba() {
     // SABA/UABA: Zda += |Zn - Zm| per element. Seeds the abs-difference extremes
     // (INT_MIN vs INT_MAX, 0 vs UMAX) that exercise the widened subtraction.
+    fn pack_lanes(esz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << esz;
+        let lanes = 16usize >> esz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for lane in 0..lanes {
+            packed |= ((values[lane % values.len()] & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let pats: [u64; 6] = [
         0x0000_0000_0000_0000,
         0x8080_8080_8080_8080,
@@ -34174,6 +34230,33 @@ fn diff_sve2_saba() {
                 st.set_vreg(1, rng.next(), rng.next());
                 st.set_vreg(2, rng.next(), rng.next());
                 batch.push((format!("{nm} rnd"), insn, st));
+            }
+            let bits = 8u32 << esz;
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            let sign = 1u64 << (bits - 1);
+            for (case_name, zda, zn, zm) in [
+                (
+                    "signed_edges",
+                    pack_lanes(esz, &[0, 1, sign - 1, sign]),
+                    pack_lanes(esz, &[sign, sign - 1, mask, 0]),
+                    pack_lanes(esz, &[sign - 1, sign, 0, mask]),
+                ),
+                (
+                    "unsigned_edges",
+                    pack_lanes(esz, &[mask, mask - 1, 1, 0]),
+                    pack_lanes(esz, &[0, mask, 1, mask - 1]),
+                    pack_lanes(esz, &[mask, 0, mask - 1, 1]),
+                ),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zda.0, zda.1);
+                st.set_vreg(1, zn.0, zn.1);
+                st.set_vreg(2, zm.0, zm.1);
+                batch.push((format!("saba_e{esz}_u{u}_{case_name}"), insn, st));
             }
         }
     }
@@ -34378,6 +34461,53 @@ fn diff_sve_while_zero_registers() {
                             insn,
                             st,
                         ));
+                    }
+                    for (case_name, rn, rm) in [
+                        ("zero", 0u64, 0u64),
+                        ("small", 5, 2),
+                        ("limit", 2, 5),
+                        ("signed_min", 0x8000_0000_0000_0000, 1),
+                        ("minus_one", u64::MAX, 0),
+                    ] {
+                        for (label, insn) in [
+                            (
+                                "while_lt_xzr_start",
+                                while_lt_regs(sz, sf, unsigned, inclusive, 31, RM),
+                            ),
+                            (
+                                "while_lt_xzr_limit",
+                                while_lt_regs(sz, sf, unsigned, inclusive, RN, 31),
+                            ),
+                            (
+                                "while_lt_xzr_both",
+                                while_lt_regs(sz, sf, unsigned, inclusive, 31, 31),
+                            ),
+                            (
+                                "while_gt_xzr_start",
+                                while_gt_regs(sz, sf, unsigned, inclusive, 31, RM),
+                            ),
+                            (
+                                "while_gt_xzr_limit",
+                                while_gt_regs(sz, sf, unsigned, inclusive, RN, 31),
+                            ),
+                            (
+                                "while_gt_xzr_both",
+                                while_gt_regs(sz, sf, unsigned, inclusive, 31, 31),
+                            ),
+                        ] {
+                            let mut st = ArmState::zeroed();
+                            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x15800;
+                            st.x[RN as usize] = rn;
+                            st.x[RM as usize] = rm;
+                            batch.push((
+                                format!(
+                                    "{label}_sz{sz}_sf{sf}_u{}_i{}_{case_name}",
+                                    unsigned as u32, inclusive as u32
+                                ),
+                                insn,
+                                st,
+                            ));
+                        }
                     }
                 }
             }
@@ -34604,6 +34734,29 @@ fn diff_sve_dup_sp_source() {
             st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xe000 + ((i as u64) << 4);
             st.set_vreg(0, rng.next(), rng.next());
             batch.push((format!("dup_sp sz{sz}"), insn, st));
+        }
+        for (case_name, sp_delta, z0) in [
+            ("zeroish", 0x00u64, (0u64, 0u64)),
+            ("ones", 0x10, (u64::MAX, u64::MAX)),
+            (
+                "bytes",
+                0x20,
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+            ),
+            (
+                "sign",
+                0x30,
+                (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR
+                + (GUEST_STACK_SIZE / 2)
+                + 0xe800
+                + ((sz as u64) << 8)
+                + sp_delta;
+            st.set_vreg(0, z0.0, z0.1);
+            batch.push((format!("dup_sp_sz{sz}_{case_name}"), insn, st));
         }
     }
     run_batch("sve_dup_sp_source", batch);
@@ -41950,6 +42103,21 @@ fn diff_sve_mmla() {
 fn diff_sve2_xar() {
     // XAR rotates (Zdn ^ Zm) right by an immediate, per element. Test every
     // valid amount for every element size, including full-width identity.
+    fn pack_lanes(size_log: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size_log;
+        let lanes = 16usize >> size_log;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for lane in 0..lanes {
+            packed |= ((values[lane % values.len()] & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let mut rng = Rng::new(0x6_f001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size_log in 0..4u32 {
@@ -41961,6 +42129,36 @@ fn diff_sve2_xar() {
                 st.set_vreg(0, rng.next(), rng.next()); // Zdn
                 st.set_vreg(1, rng.next(), rng.next()); // Zm
                 batch.push((format!("xar sl{size_log} a{amount}"), insn, st));
+            }
+        }
+        for amount in [1u32, bits / 2, bits] {
+            let insn = enc_sve2_xar(size_log, amount);
+            for (case_name, zdn, zm) in [
+                (
+                    "zero",
+                    pack_lanes(size_log, &[0]),
+                    pack_lanes(size_log, &[0]),
+                ),
+                (
+                    "ones",
+                    pack_lanes(size_log, &[u64::MAX]),
+                    pack_lanes(size_log, &[0]),
+                ),
+                (
+                    "checker",
+                    pack_lanes(size_log, &[0x55, 0xaa, 0x33, 0xcc]),
+                    pack_lanes(size_log, &[0x0f, 0xf0, 0x5a, 0xa5]),
+                ),
+                (
+                    "edge_bits",
+                    pack_lanes(size_log, &[1, 0x80, 0x8000, 0x8000_0000]),
+                    pack_lanes(size_log, &[0, u64::MAX, 1, u64::MAX - 1]),
+                ),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zdn.0, zdn.1);
+                st.set_vreg(1, zm.0, zm.1);
+                batch.push((format!("xar_sl{size_log}_a{amount}_{case_name}"), insn, st));
             }
         }
     }
