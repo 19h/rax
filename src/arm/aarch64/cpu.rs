@@ -3114,7 +3114,11 @@ impl AArch64Cpu {
 
         // Advanced SIMD extract (EXT)
         // Encoding: 0_Q_10_1110_00_0_Rm_0_imm4_0_Rn_Rd
-        if op_bits == 0b01110 && (insn >> 29) & 1 == 1 && (insn >> 22) & 0x3 == 0b00 {
+        if op_bits == 0b01110
+            && (insn >> 29) & 1 == 1
+            && (insn >> 22) & 0x3 == 0b00
+            && (insn >> 15) & 1 == 0
+        {
             return self.exec_simd_extract(insn);
         }
 
@@ -4891,6 +4895,9 @@ impl AArch64Cpu {
 
     /// Execute SIMD shift by immediate.
     fn exec_simd_shift_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let immh = (insn >> 19) & 0xF;
@@ -5102,6 +5109,9 @@ impl AArch64Cpu {
     /// FMLS/FMULX. FMLAL and FCMLA indexed forms are dispatched before this
     /// generic handler because they overlap the indexed-element opcode space.
     fn exec_simd_indexed(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        if (insn >> 31) & 1 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;

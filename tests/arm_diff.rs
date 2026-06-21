@@ -64515,6 +64515,32 @@ fn diff_simd_shift_imm() {
 }
 
 #[test]
+fn diff_simd_shift_imm_bit31_unallocated_edges() {
+    let mut rng = Rng::new(0x4007);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for u in 0..2u32 {
+            batch.push((
+                format!("shift_imm_bit31_vector_q{q}_u{u}"),
+                enc_shift_imm(q, u, 0b00000, 63) | (1 << 31),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for u in 0..2u32 {
+        batch.push((
+            format!("shift_imm_bit31_scalar_u{u}"),
+            enc_scalar_shift_imm(u, 0b00000, 127) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+
+    run_batch_el0_legality("simd_shift_imm_bit31_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_simd_scalar_shift_imm_unallocated_edges() {
     let mut rng = Rng::new(0x4005);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -66387,6 +66413,16 @@ fn diff_simd_ext_unallocated_edges() {
         }
     }
 
+    for &(bit, name) in &[(21u32, "bit21"), (15, "bit15"), (10, "bit10")] {
+        for q in 0..2u32 {
+            batch.push((
+                format!("ext_reserved_{name}_q{q}"),
+                enc_ext(q, 0) | (1 << bit),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
     run_batch_el0_legality("simd_ext_unallocated_edges", batch);
 }
 
@@ -66407,6 +66443,43 @@ fn diff_simd_tbl() {
         }
     }
     run_family("simd_tbl", cases, 8, 0xB003);
+}
+
+#[test]
+fn diff_simd_tbl_bit15() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for op in 0..2 {
+        for len in 0..4 {
+            for q in 0..2 {
+                let name = if op == 0 { "tbl" } else { "tbx" };
+                cases.push((
+                    format!("{name}_bit15 len{len} q{q}"),
+                    enc_tbl(q, len, op) | (1 << 15),
+                ));
+            }
+        }
+    }
+    run_family("simd_tbl_bit15", cases, 8, 0xB004);
+}
+
+#[test]
+fn diff_simd_tbl_unallocated_edges() {
+    let mut rng = Rng::new(0xb_0031);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for op in 0..2u32 {
+        for len in 0..4u32 {
+            for q in 0..2u32 {
+                batch.push((
+                    format!("tbl_reserved_bit15_op{op}_len{len}_q{q}"),
+                    enc_tbl(q, len, op) | (1 << 15),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("simd_tbl_unallocated_edges", batch);
 }
 
 /// Advanced SIMD copy: `0 Q op 01110000 imm5 0 imm4 1 Rn Rd`.
@@ -67464,6 +67537,38 @@ fn diff_simd_indexed_int() {
         }
     }
     run_family("simd_indexed_int", cases, 4, 0x5001);
+}
+
+#[test]
+fn diff_simd_indexed_bit31_unallocated_edges() {
+    let mut rng = Rng::new(0x500a);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        batch.push((
+            format!("indexed_int_bit31_vector_q{q}"),
+            enc_indexed(q, 0, 0b01, 0b1000, RM, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+        batch.push((
+            format!("indexed_fp_bit31_vector_q{q}"),
+            enc_indexed(q, 0, 0b10, 0b1001, RM, 0) | (1 << 31),
+            gen_input(&mut rng),
+        ));
+    }
+
+    batch.push((
+        "indexed_int_bit31_scalar".to_string(),
+        enc_indexed_scalar(0, 0b01, 0b1100, RM, 0) | (1 << 31),
+        gen_input(&mut rng),
+    ));
+    batch.push((
+        "indexed_fp_bit31_scalar".to_string(),
+        enc_indexed_scalar(0, 0b10, 0b1001, RM, 0) | (1 << 31),
+        gen_input(&mut rng),
+    ));
+
+    run_batch_el0_legality("simd_indexed_bit31_unallocated_edges", batch);
 }
 
 #[test]
