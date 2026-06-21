@@ -805,12 +805,14 @@ impl Aarch64Lifter {
                 });
             }
 
-            Mnemonic::SBC | Mnemonic::SBCS => {
-                let (dst, src1, src2, width) =
-                    if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rm)), None) = (
+            Mnemonic::SBC | Mnemonic::SBCS | Mnemonic::NGC | Mnemonic::NGCS => {
+                let (dst, src1, src2, width) = if matches!(
+                    insn.mnemonic,
+                    Mnemonic::NGC | Mnemonic::NGCS
+                ) {
+                    if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rm))) = (
                         insn.operands.get(0),
                         insn.operands.get(1),
-                        insn.operands.get(2),
                     ) {
                         (
                             self.dst_reg(rd, ctx),
@@ -819,8 +821,11 @@ impl Aarch64Lifter {
                             self.reg_width(rd),
                         )
                     } else {
-                        self.parse_arith_operands(insn, ctx)?
-                    };
+                        return Err(LiftError::Internal("invalid ngc operands".to_string()));
+                    }
+                } else {
+                    self.parse_arith_operands(insn, ctx)?
+                };
                 let flags = if insn.sets_flags {
                     FlagUpdate::All
                 } else {
@@ -836,9 +841,7 @@ impl Aarch64Lifter {
             }
 
             Mnemonic::NEG | Mnemonic::NEGS => {
-                if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rm))) =
-                    (insn.operands.get(0), insn.operands.get(1))
-                {
+                if let Some(Operand::Reg(rd)) = insn.operands.get(0) {
                     let dst = self.dst_reg(rd, ctx);
                     let width = self.reg_width(rd);
                     let flags = if insn.sets_flags {
@@ -846,12 +849,27 @@ impl Aarch64Lifter {
                     } else {
                         FlagUpdate::None
                     };
-                    push_op!(OpKind::Neg {
-                        dst,
-                        src: self.arm_reg(rm),
-                        width,
-                        flags,
-                    });
+                    match insn.operands.get(1) {
+                        Some(Operand::Reg(rm)) => {
+                            push_op!(OpKind::Neg {
+                                dst,
+                                src: self.arm_reg(rm),
+                                width,
+                                flags,
+                            });
+                        }
+                        Some(op @ Operand::ShiftedReg(_)) => {
+                            let src2 = self.operand_to_src(op, ctx)?;
+                            push_op!(OpKind::Sub {
+                                dst,
+                                src1: VReg::Imm(0),
+                                src2,
+                                width,
+                                flags,
+                            });
+                        }
+                        _ => return Err(LiftError::Internal("invalid neg operands".to_string())),
+                    }
                 }
             }
 
@@ -921,17 +939,16 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::SMADDL | Mnemonic::SMSUBL | Mnemonic::UMADDL | Mnemonic::UMSUBL => {
-                if let (
-                    Some(Operand::Reg(rd)),
-                    Some(Operand::Reg(rn)),
-                    Some(Operand::Reg(rm)),
-                    Some(Operand::Reg(ra)),
-                ) = (
+            Mnemonic::SMADDL
+            | Mnemonic::SMSUBL
+            | Mnemonic::SMNEGL
+            | Mnemonic::UMADDL
+            | Mnemonic::UMSUBL
+            | Mnemonic::UMNEGL => {
+                if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rn)), Some(Operand::Reg(rm))) = (
                     insn.operands.get(0),
                     insn.operands.get(1),
                     insn.operands.get(2),
-                    insn.operands.get(3),
                 ) {
                     let dst = self.dst_reg(rd, ctx);
                     let src1 = self.widen_w_to_x(
@@ -939,17 +956,26 @@ impl Aarch64Lifter {
                         pc,
                         ctx,
                         rn,
-                        matches!(insn.mnemonic, Mnemonic::SMADDL | Mnemonic::SMSUBL),
+                        matches!(
+                            insn.mnemonic,
+                            Mnemonic::SMADDL | Mnemonic::SMSUBL | Mnemonic::SMNEGL
+                        ),
                     );
                     let src2 = self.widen_w_to_x(
                         &mut ops,
                         pc,
                         ctx,
                         rm,
-                        matches!(insn.mnemonic, Mnemonic::SMADDL | Mnemonic::SMSUBL),
+                        matches!(
+                            insn.mnemonic,
+                            Mnemonic::SMADDL | Mnemonic::SMSUBL | Mnemonic::SMNEGL
+                        ),
                     );
                     let product = ctx.alloc_vreg();
-                    let signed = matches!(insn.mnemonic, Mnemonic::SMADDL | Mnemonic::SMSUBL);
+                    let signed = matches!(
+                        insn.mnemonic,
+                        Mnemonic::SMADDL | Mnemonic::SMSUBL | Mnemonic::SMNEGL
+                    );
                     Self::push_mul_op(
                         &mut ops,
                         pc,
@@ -961,6 +987,11 @@ impl Aarch64Lifter {
                         signed,
                     );
                     if matches!(insn.mnemonic, Mnemonic::SMADDL | Mnemonic::UMADDL) {
+                        let Some(Operand::Reg(ra)) = insn.operands.get(3) else {
+                            return Err(LiftError::Internal(
+                                "missing multiply add accumulator".to_string(),
+                            ));
+                        };
                         push_op!(OpKind::Add {
                             dst,
                             src1: self.arm_reg(ra),
@@ -969,9 +1000,20 @@ impl Aarch64Lifter {
                             flags: FlagUpdate::None,
                         });
                     } else {
+                        let acc = if matches!(insn.mnemonic, Mnemonic::SMNEGL | Mnemonic::UMNEGL)
+                        {
+                            VReg::Imm(0)
+                        } else {
+                            let Some(Operand::Reg(ra)) = insn.operands.get(3) else {
+                                return Err(LiftError::Internal(
+                                    "missing multiply subtract accumulator".to_string(),
+                                ));
+                            };
+                            self.arm_reg(ra)
+                        };
                         push_op!(OpKind::Sub {
                             dst,
-                            src1: self.arm_reg(ra),
+                            src1: acc,
                             src2: SrcOperand::Reg(product),
                             width: OpWidth::W64,
                             flags: FlagUpdate::None,
@@ -1183,12 +1225,8 @@ impl Aarch64Lifter {
                 {
                     let dst = self.dst_reg(rd, ctx);
                     let width = self.reg_width(rd);
-
-                    let src = match src_op {
-                        Operand::Reg(rm) => self.arm_reg(rm),
-                        Operand::Imm(imm) => VReg::Imm(imm.effective_value()),
-                        _ => return Err(LiftError::Internal("invalid MVN operand".to_string())),
-                    };
+                    let src = self.operand_to_src(src_op, ctx)?;
+                    let src = self.materialize_src_operand(src, width, pc, &mut ops, ctx);
 
                     push_op!(OpKind::Not { dst, src, width });
                 }
@@ -4219,65 +4257,83 @@ impl Aarch64Lifter {
     ) -> Result<(), LiftError> {
         let invalid = || LiftError::Internal("invalid conditional select operands".to_string());
 
-        // Alias mnemonics keep the raw condition from the canonical CS* encoding.
-        let (rd, src_true, src_false_base, false_op, cond) = match insn.mnemonic {
-            Mnemonic::CSEL | Mnemonic::CSINC | Mnemonic::CSINV | Mnemonic::CSNEG => {
-                let (rd, rn, rm, cond) = match (
-                    insn.operands.get(0),
-                    insn.operands.get(1),
-                    insn.operands.get(2),
-                    insn.operands.get(3),
-                ) {
+        // Canonical CS* mnemonics transform the false operand. Alias mnemonics
+        // carry the user-visible inverted condition, so they transform on true.
+        let (rd, src_true_base, transform_base, transform_op, cond, transform_on_true) =
+            match insn.mnemonic {
+                Mnemonic::CSEL | Mnemonic::CSINC | Mnemonic::CSINV | Mnemonic::CSNEG => {
+                    let (rd, rn, rm, cond) = match (
+                        insn.operands.get(0),
+                        insn.operands.get(1),
+                        insn.operands.get(2),
+                        insn.operands.get(3),
+                    ) {
+                        (
+                            Some(Operand::Reg(rd)),
+                            Some(Operand::Reg(rn)),
+                            Some(Operand::Reg(rm)),
+                            Some(Operand::Cond(cond)),
+                        ) => (*rd, *rn, *rm, *cond),
+                        _ => return Err(invalid()),
+                    };
+                    let false_op = match insn.mnemonic {
+                        Mnemonic::CSEL => CondSelectFalseOp::Identity,
+                        Mnemonic::CSINC => CondSelectFalseOp::Increment,
+                        Mnemonic::CSINV => CondSelectFalseOp::Invert,
+                        Mnemonic::CSNEG => CondSelectFalseOp::Negate,
+                        _ => unreachable!(),
+                    };
                     (
-                        Some(Operand::Reg(rd)),
-                        Some(Operand::Reg(rn)),
-                        Some(Operand::Reg(rm)),
-                        Some(Operand::Cond(cond)),
-                    ) => (*rd, *rn, *rm, *cond),
-                    _ => return Err(invalid()),
-                };
-                let false_op = match insn.mnemonic {
-                    Mnemonic::CSEL => CondSelectFalseOp::Identity,
-                    Mnemonic::CSINC => CondSelectFalseOp::Increment,
-                    Mnemonic::CSINV => CondSelectFalseOp::Invert,
-                    Mnemonic::CSNEG => CondSelectFalseOp::Negate,
-                    _ => unreachable!(),
-                };
-                (rd, self.arm_reg(&rn), self.arm_reg(&rm), false_op, cond)
-            }
-            Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG => {
-                let (rd, rn, cond) = match (
-                    insn.operands.get(0),
-                    insn.operands.get(1),
-                    insn.operands.get(2),
-                ) {
-                    (Some(Operand::Reg(rd)), Some(Operand::Reg(rn)), Some(Operand::Cond(cond))) => {
-                        (*rd, *rn, *cond)
-                    }
-                    _ => return Err(invalid()),
-                };
-                let false_op = match insn.mnemonic {
-                    Mnemonic::CINC => CondSelectFalseOp::Increment,
-                    Mnemonic::CINV => CondSelectFalseOp::Invert,
-                    Mnemonic::CNEG => CondSelectFalseOp::Negate,
-                    _ => unreachable!(),
-                };
-                (rd, self.arm_reg(&rn), self.arm_reg(&rn), false_op, cond)
-            }
-            Mnemonic::CSET | Mnemonic::CSETM => {
-                let (rd, cond) = match (insn.operands.get(0), insn.operands.get(1)) {
-                    (Some(Operand::Reg(rd)), Some(Operand::Cond(cond))) => (*rd, *cond),
-                    _ => return Err(invalid()),
-                };
-                let false_op = if insn.mnemonic == Mnemonic::CSET {
-                    CondSelectFalseOp::Increment
-                } else {
-                    CondSelectFalseOp::Invert
-                };
-                (rd, VReg::Imm(0), VReg::Imm(0), false_op, cond)
-            }
-            _ => return Err(invalid()),
-        };
+                        rd,
+                        self.arm_reg(&rn),
+                        self.arm_reg(&rm),
+                        false_op,
+                        cond,
+                        false,
+                    )
+                }
+                Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG => {
+                    let (rd, rn, cond) = match (
+                        insn.operands.get(0),
+                        insn.operands.get(1),
+                        insn.operands.get(2),
+                    ) {
+                        (
+                            Some(Operand::Reg(rd)),
+                            Some(Operand::Reg(rn)),
+                            Some(Operand::Cond(cond)),
+                        ) => (*rd, *rn, *cond),
+                        _ => return Err(invalid()),
+                    };
+                    let false_op = match insn.mnemonic {
+                        Mnemonic::CINC => CondSelectFalseOp::Increment,
+                        Mnemonic::CINV => CondSelectFalseOp::Invert,
+                        Mnemonic::CNEG => CondSelectFalseOp::Negate,
+                        _ => unreachable!(),
+                    };
+                    (
+                        rd,
+                        self.arm_reg(&rn),
+                        self.arm_reg(&rn),
+                        false_op,
+                        cond,
+                        true,
+                    )
+                }
+                Mnemonic::CSET | Mnemonic::CSETM => {
+                    let (rd, cond) = match (insn.operands.get(0), insn.operands.get(1)) {
+                        (Some(Operand::Reg(rd)), Some(Operand::Cond(cond))) => (*rd, *cond),
+                        _ => return Err(invalid()),
+                    };
+                    let false_op = if insn.mnemonic == Mnemonic::CSET {
+                        CondSelectFalseOp::Increment
+                    } else {
+                        CondSelectFalseOp::Invert
+                    };
+                    (rd, VReg::Imm(0), VReg::Imm(0), false_op, cond, true)
+                }
+                _ => return Err(invalid()),
+            };
 
         let dst = self.dst_reg(&rd, ctx);
         let width = self.reg_width(&rd);
@@ -4292,8 +4348,8 @@ impl Aarch64Lifter {
             },
         );
 
-        let src_false = match false_op {
-            CondSelectFalseOp::Identity => src_false_base,
+        let transformed = match transform_op {
+            CondSelectFalseOp::Identity => transform_base,
             CondSelectFalseOp::Increment => {
                 let tmp = ctx.alloc_vreg();
                 Self::push_lifted_op(
@@ -4301,7 +4357,7 @@ impl Aarch64Lifter {
                     pc,
                     OpKind::Add {
                         dst: tmp,
-                        src1: src_false_base,
+                        src1: transform_base,
                         src2: SrcOperand::Imm(1),
                         width,
                         flags: FlagUpdate::None,
@@ -4316,7 +4372,7 @@ impl Aarch64Lifter {
                     pc,
                     OpKind::Not {
                         dst: tmp,
-                        src: src_false_base,
+                        src: transform_base,
                         width,
                     },
                 );
@@ -4329,13 +4385,18 @@ impl Aarch64Lifter {
                     pc,
                     OpKind::Neg {
                         dst: tmp,
-                        src: src_false_base,
+                        src: transform_base,
                         width,
                         flags: FlagUpdate::None,
                     },
                 );
                 tmp
             }
+        };
+        let (src_true, src_false) = if transform_on_true {
+            (transformed, src_true_base)
+        } else {
+            (src_true_base, transformed)
         };
 
         Self::push_lifted_op(
@@ -5240,6 +5301,111 @@ mod tests {
                 assert_eq!(*width, OpWidth::W64);
             }
             _ => panic!("Expected Add operation"),
+        }
+    }
+
+    #[test]
+    fn test_lift_long_multiply_negative_aliases() {
+        for bytes in [
+            0x9b22_fc20u32.to_le_bytes(), // SMNEGL X0, W1, W2
+            0x9ba2_fc20u32.to_le_bytes(), // UMNEGL X0, W1, W2
+        ] {
+            let (ops, _) = lift_single(bytes);
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Sub {
+                    src1: VReg::Imm(0),
+                    width: OpWidth::W64,
+                    ..
+                }
+            )));
+        }
+    }
+
+    #[test]
+    fn test_lift_ngc_aliases_subtract_from_zero() {
+        for bytes in [
+            0xda01_03e0u32.to_le_bytes(), // NGC X0, X1
+            0x7a01_03e0u32.to_le_bytes(), // NGCS W0, W1
+        ] {
+            let (ops, _) = lift_single(bytes);
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Sbb {
+                    src1: VReg::Imm(0),
+                    ..
+                }
+            )));
+        }
+    }
+
+    #[test]
+    fn test_lift_bfxil_xzr_source_extract_low_shape() {
+        let (ops, _) = lift_single(0xb341_07e0u32.to_le_bytes()); // BFXIL X0, XZR, #1, #1
+
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Bfx {
+                lsb: 1,
+                width_bits: 1,
+                sign_extend: false,
+                op_width: OpWidth::W64,
+                ..
+            }
+        )));
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Bfi {
+                lsb: 0,
+                width_bits: 1,
+                op_width: OpWidth::W64,
+                ..
+            }
+        )));
+    }
+
+    #[test]
+    fn test_lift_shifted_neg_aliases_as_sub_from_zero() {
+        for (bytes, flags) in [
+            (0xcb01_07e0u32.to_le_bytes(), FlagUpdate::None), // NEG X0, X1, LSL #1
+            (0xeb81_0fe0u32.to_le_bytes(), FlagUpdate::All),  // NEGS X0, X1, ASR #3
+        ] {
+            let (ops, _) = lift_single(bytes);
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Sub {
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Shifted { .. },
+                    width: OpWidth::W64,
+                    flags: actual_flags,
+                    ..
+                } if actual_flags == flags
+            )));
+        }
+    }
+
+    #[test]
+    fn test_lift_shifted_mvn_aliases_materialize_source() {
+        for (bytes, width) in [
+            (0xaa21_07e0u32.to_le_bytes(), OpWidth::W64), // MVN X0, X1, LSL #1
+            (0x2aa1_0fe0u32.to_le_bytes(), OpWidth::W32), // MVN W0, W1, ASR #3
+        ] {
+            let (ops, _) = lift_single(bytes);
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Mov {
+                    src: SrcOperand::Shifted { .. },
+                    width: actual_width,
+                    ..
+                } if actual_width == width
+            )));
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Not {
+                    width: actual_width,
+                    ..
+                } if actual_width == width
+            )));
         }
     }
 

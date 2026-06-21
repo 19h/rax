@@ -168,14 +168,16 @@ impl Aarch64Decoder {
         // CMN is ADDS with Rd = XZR/WZR
         // CMP is SUBS with Rd = XZR/WZR
         // MOV (to/from SP) is ADD with imm=0 and one operand is SP
-        let (mnemonic, skip_rd) = if s == 1 && rd == 31 {
+        let (mnemonic, skip_rd, skip_imm) = if s == 1 && rd == 31 {
             if op == 0 {
-                (Mnemonic::CMN, true)
+                (Mnemonic::CMN, true, false)
             } else {
-                (Mnemonic::CMP, true)
+                (Mnemonic::CMP, true, false)
             }
+        } else if op == 0 && s == 0 && sh == 0 && imm12 == 0 && (rd == 31 || rn == 31) {
+            (Mnemonic::MOV, false, true)
         } else {
-            (mnemonic, false)
+            (mnemonic, false, false)
         };
 
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
@@ -191,7 +193,9 @@ impl Aarch64Decoder {
 
         // Rn can be SP for ADD/SUB immediate
         insn = insn.with_operand(Operand::Reg(Register::with_sp(rn, is_64bit)));
-        insn = insn.with_operand(Operand::Imm(Immediate::shifted(imm12, shift)));
+        if !skip_imm {
+            insn = insn.with_operand(Operand::Imm(Immediate::shifted(imm12, shift)));
+        }
 
         Ok(insn)
     }
@@ -274,7 +278,7 @@ impl Aarch64Decoder {
         // MOV (bitmask immediate) is ORR with Rn = XZR/WZR
         let (mnemonic, skip_rd) = if opc == 0b11 && rd == 31 {
             (Mnemonic::TST, true)
-        } else if opc == 0b01 && rn == 31 {
+        } else if opc == 0b01 && rn == 31 && !Self::move_wide_preferred(imm, is_64bit) {
             (Mnemonic::MOV, false)
         } else {
             (mnemonic, false)
@@ -302,6 +306,25 @@ impl Aarch64Decoder {
         insn = insn.with_operand(Operand::Imm(Immediate::new(imm as i64)));
 
         Ok(insn)
+    }
+
+    fn move_wide_preferred(imm: u64, is_64bit: bool) -> bool {
+        let width = if is_64bit { 64 } else { 32 };
+        let mask = if is_64bit { u64::MAX } else { u32::MAX as u64 };
+        let value = imm & mask;
+        let inverted = (!value) & mask;
+
+        for shift in (0..width).step_by(16) {
+            let chunk_mask = 0xffffu64 << shift;
+            if value & !chunk_mask == 0 {
+                return true;
+            }
+            if inverted & !chunk_mask == 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn decode_bitmask_imm(n: u8, imms: u8, immr: u8, is_64bit: bool) -> Option<u64> {
@@ -464,10 +487,12 @@ impl Aarch64Decoder {
             }
             0b01 => {
                 // BFM aliases
-                if rn == 31 {
-                    Mnemonic::BFC // BFC when Rn == WZR/XZR
-                } else if imms < immr {
-                    Mnemonic::BFI
+                if imms < immr {
+                    if rn == 31 {
+                        Mnemonic::BFC // BFC when Rn == WZR/XZR
+                    } else {
+                        Mnemonic::BFI
+                    }
                 } else {
                     Mnemonic::BFXIL
                 }
@@ -482,8 +507,8 @@ impl Aarch64Decoder {
                     Mnemonic::UBFIZ
                 } else if immr == 0 {
                     match imms {
-                        7 => Mnemonic::UBFX,  // Could be UXTB
-                        15 => Mnemonic::UBFX, // Could be UXTH
+                        7 if !is_64bit => Mnemonic::UXTB,
+                        15 if !is_64bit => Mnemonic::UXTH,
                         _ => Mnemonic::UBFX,
                     }
                 } else {
@@ -492,6 +517,24 @@ impl Aarch64Decoder {
             }
             _ => base_mnemonic,
         };
+
+        if matches!(mnemonic, Mnemonic::SXTB | Mnemonic::SXTH) {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
+                .with_operand(Operand::Reg(Register::with_zr(rn, false))));
+        }
+
+        if matches!(mnemonic, Mnemonic::UXTB | Mnemonic::UXTH) {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(Operand::Reg(Register::with_zr(rd, false)))
+                .with_operand(Operand::Reg(Register::with_zr(rn, false))));
+        }
+
+        if mnemonic == Mnemonic::SXTW {
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(Operand::Reg(Register::with_zr(rd, true)))
+                .with_operand(Operand::Reg(Register::with_zr(rn, false))));
+        }
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
@@ -1682,7 +1725,12 @@ impl Aarch64Decoder {
         // MOV is ORR with Rn = XZR/WZR and shift = 0
         // MVN is ORN with Rn = XZR/WZR
         // TST is ANDS with Rd = XZR/WZR
-        let (mnemonic, skip_rn, skip_rd) = if opc == 0b01 && n == 0 && rn == 31 && imm6 == 0 {
+        let (mnemonic, skip_rn, skip_rd) = if opc == 0b01
+            && n == 0
+            && rn == 31
+            && shift == ShiftType::LSL
+            && imm6 == 0
+        {
             (Mnemonic::MOV, true, false)
         } else if opc == 0b01 && n == 1 && rn == 31 {
             (Mnemonic::MVN, true, false)
@@ -1764,17 +1812,17 @@ impl Aarch64Decoder {
         // NEGS is SUBS with Rn = XZR/WZR
         // CMP is SUBS with Rd = XZR/WZR
         // CMN is ADDS with Rd = XZR/WZR
-        let (mnemonic, skip_rn, skip_rd) = if op == 1 && rn == 31 {
-            if s == 0 {
-                (Mnemonic::NEG, true, false)
-            } else {
-                (Mnemonic::NEGS, true, false)
-            }
-        } else if s == 1 && rd == 31 {
+        let (mnemonic, skip_rn, skip_rd) = if s == 1 && rd == 31 {
             if op == 0 {
                 (Mnemonic::CMN, false, true)
             } else {
                 (Mnemonic::CMP, false, true)
+            }
+        } else if op == 1 && rn == 31 {
+            if s == 0 {
+                (Mnemonic::NEG, true, false)
+            } else {
+                (Mnemonic::NEGS, true, false)
             }
         } else {
             (mnemonic, false, false)
@@ -1889,6 +1937,16 @@ impl Aarch64Decoder {
             _ => unreachable!(),
         };
 
+        let (mnemonic, skip_rn) = if op == 1 && rn == 31 {
+            if s == 0 {
+                (Mnemonic::NGC, true)
+            } else {
+                (Mnemonic::NGCS, true)
+            }
+        } else {
+            (mnemonic, false)
+        };
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
 
         if s == 1 {
@@ -1897,7 +1955,9 @@ impl Aarch64Decoder {
 
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
 
-        insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
+        if !skip_rn {
+            insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
+        }
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
 
         Ok(insn)
@@ -2260,7 +2320,9 @@ impl Aarch64Decoder {
                 Mnemonic::MADD => (Mnemonic::MUL, true),
                 Mnemonic::MSUB => (Mnemonic::MNEG, true),
                 Mnemonic::SMADDL => (Mnemonic::SMULL, true),
+                Mnemonic::SMSUBL => (Mnemonic::SMNEGL, true),
                 Mnemonic::UMADDL => (Mnemonic::UMULL, true),
+                Mnemonic::UMSUBL => (Mnemonic::UMNEGL, true),
                 _ => (mnemonic, false),
             }
         } else {
@@ -2279,6 +2341,8 @@ impl Aarch64Decoder {
                 | Mnemonic::UMSUBL
                 | Mnemonic::SMULL
                 | Mnemonic::UMULL
+                | Mnemonic::SMNEGL
+                | Mnemonic::UMNEGL
         ) {
             false
         } else {
@@ -3546,6 +3610,31 @@ mod tests {
     }
 
     #[test]
+    fn test_add_imm_zero_sp_aliases_to_mov() {
+        for (bytes, dst, src) in [
+            ([0xe0, 0x03, 0x00, 0x91], Register::x(0), Register::sp(true)),
+            ([0x1f, 0x00, 0x00, 0x91], Register::sp(true), Register::x(0)),
+            ([0xff, 0x03, 0x00, 0x91], Register::sp(true), Register::sp(true)),
+            ([0xe0, 0x03, 0x00, 0x11], Register::w(0), Register::sp(false)),
+            ([0x1f, 0x00, 0x00, 0x11], Register::sp(false), Register::w(0)),
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::MOV);
+            assert_eq!(insn.operands.len(), 2);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
+            );
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src)
+            );
+        }
+
+        let add = decode_bytes(&[0x20, 0x00, 0x00, 0x91]).unwrap();
+        assert_eq!(add.mnemonic, Mnemonic::ADD);
+        assert_eq!(add.operands.len(), 3);
+    }
+
+    #[test]
     fn test_logical_imm_64bit_rotation_decode() {
         // AND X0, X1, #0x8000_0000_0000_0000. This uses N=1, so the
         // bitmask element size is 64 bits and the rotate path must not build
@@ -3561,6 +3650,35 @@ mod tests {
         let insn = Aarch64Decoder::decode(logical_imm_raw(1, 0b00, 1, 63, 0, 1, 0)).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::AND);
         assert_eq!(insn.operands[2], Operand::Imm(Immediate::new(2)));
+    }
+
+    #[test]
+    fn test_logical_imm_mov_alias_respects_move_wide_preference() {
+        for bytes in [
+            [0xe0, 0x03, 0x40, 0xb2], // ORR X0, XZR, #1; MOVZ is preferred.
+            [0xe0, 0x3f, 0x40, 0xb2], // ORR X0, XZR, #0xffff.
+            [0xff, 0x3f, 0x40, 0xb2], // ORR SP, XZR, #0xffff.
+            [0xe0, 0x3f, 0x00, 0x32], // ORR W0, WZR, #0xffff.
+            [0xff, 0x3f, 0x00, 0x32], // ORR WSP, WZR, #0xffff.
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::ORR);
+            assert_eq!(insn.operands.len(), 3);
+        }
+
+        for (bytes, dst) in [
+            ([0xe0, 0x9f, 0x00, 0xb2], Register::x(0)),
+            ([0xff, 0x9f, 0x00, 0xb2], Register::sp(true)),
+            ([0xe0, 0x9f, 0x00, 0x32], Register::w(0)),
+            ([0xff, 0x9f, 0x00, 0x32], Register::sp(false)),
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::MOV);
+            assert_eq!(insn.operands.len(), 2);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
+            );
+        }
     }
 
     #[test]
@@ -4184,6 +4302,64 @@ mod tests {
     }
 
     #[test]
+    fn test_bitfield_extend_aliases_use_two_register_operands() {
+        for (bytes, mnemonic, dst, src) in [
+            (
+                [0x20, 0x1c, 0x40, 0x93],
+                Mnemonic::SXTB,
+                Register::x(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x3c, 0x40, 0x93],
+                Mnemonic::SXTH,
+                Register::x(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x1c, 0x00, 0x13],
+                Mnemonic::SXTB,
+                Register::w(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x3c, 0x00, 0x13],
+                Mnemonic::SXTH,
+                Register::w(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x7c, 0x40, 0x93],
+                Mnemonic::SXTW,
+                Register::x(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x1c, 0x00, 0x53],
+                Mnemonic::UXTB,
+                Register::w(0),
+                Register::w(1),
+            ),
+            (
+                [0x20, 0x3c, 0x00, 0x53],
+                Mnemonic::UXTH,
+                Register::w(0),
+                Register::w(1),
+            ),
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.operands.len(), 2);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
+            );
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src)
+            );
+        }
+    }
+
+    #[test]
     fn test_b() {
         // B #0x100: 14000040
         let insn = decode_bytes(&[0x40, 0x00, 0x00, 0x14]).unwrap();
@@ -4461,6 +4637,43 @@ mod tests {
     }
 
     #[test]
+    fn test_logical_shifted_mov_alias_requires_lsl_zero() {
+        let mov = decode_bytes(&[0xe0, 0x03, 0x01, 0xaa]).unwrap();
+        assert_eq!(mov.mnemonic, Mnemonic::MOV);
+        assert_eq!(mov.operands.len(), 2);
+
+        for bytes in [
+            [0xe0, 0x03, 0x41, 0xaa], // ORR X0, XZR, X1, LSR #0
+            [0xe0, 0x03, 0x81, 0xaa], // ORR X0, XZR, X1, ASR #0
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::ORR);
+            assert_eq!(insn.operands.len(), 3);
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
+            );
+            assert!(
+                matches!(insn.operands.get(2), Some(Operand::ShiftedReg(shifted)) if shifted.amount == 0)
+            );
+        }
+    }
+
+    #[test]
+    fn test_bfm_xzr_extract_low_keeps_bfxil_alias() {
+        let insn = decode_bytes(&[0xe0, 0x07, 0x41, 0xb3]).unwrap();
+
+        assert_eq!(insn.mnemonic, Mnemonic::BFXIL);
+        assert!(
+            matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0))
+        );
+        assert!(
+            matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
+        );
+        assert!(matches!(insn.operands.get(2), Some(Operand::Imm(imm)) if imm.value == 1));
+        assert!(matches!(insn.operands.get(3), Some(Operand::Imm(imm)) if imm.value == 1));
+    }
+
+    #[test]
     fn test_madd() {
         // MADD X0, X1, X2, X3: 9b020c20
         let insn = decode_bytes(&[0x20, 0x0c, 0x02, 0x9b]).unwrap();
@@ -4472,6 +4685,27 @@ mod tests {
         // MUL X0, X1, X2 -> MADD X0, X1, X2, XZR: 9b027c20
         let insn = decode_bytes(&[0x20, 0x7c, 0x02, 0x9b]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::MUL);
+    }
+
+    #[test]
+    fn test_long_multiply_negative_aliases() {
+        for (bytes, mnemonic) in [
+            ([0x20, 0xfc, 0x22, 0x9b], Mnemonic::SMNEGL),
+            ([0x20, 0xfc, 0xa2, 0x9b], Mnemonic::UMNEGL),
+        ] {
+            let insn = decode_bytes(&bytes).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.operands.len(), 3);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0))
+            );
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::w(1))
+            );
+            assert!(
+                matches!(insn.operands.get(2), Some(Operand::Reg(reg)) if *reg == Register::w(2))
+            );
+        }
     }
 
     #[test]
@@ -4616,7 +4850,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sbc_xzr_source_keeps_rn_operand() {
+    fn test_sbc_xzr_source_decodes_ngc_aliases() {
         fn addsub_carry(sf: u32, op: u32, s: u32, rn: u32) -> u32 {
             (sf << 31)
                 | (op << 30)
@@ -4627,15 +4861,25 @@ mod tests {
         }
 
         let sbc = Aarch64Decoder::decode(addsub_carry(1, 1, 0, 31)).unwrap();
-        assert_eq!(sbc.mnemonic, Mnemonic::SBC);
-        assert_eq!(sbc.operands.len(), 3);
-        assert!(matches!(sbc.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+        assert_eq!(sbc.mnemonic, Mnemonic::NGC);
+        assert_eq!(sbc.operands.len(), 2);
+        assert!(
+            matches!(sbc.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0))
+        );
+        assert!(
+            matches!(sbc.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(2))
+        );
 
         let sbcs = Aarch64Decoder::decode(addsub_carry(0, 1, 1, 31)).unwrap();
-        assert_eq!(sbcs.mnemonic, Mnemonic::SBCS);
+        assert_eq!(sbcs.mnemonic, Mnemonic::NGCS);
         assert!(sbcs.sets_flags);
-        assert_eq!(sbcs.operands.len(), 3);
-        assert!(matches!(sbcs.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+        assert_eq!(sbcs.operands.len(), 2);
+        assert!(
+            matches!(sbcs.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::w(0))
+        );
+        assert!(
+            matches!(sbcs.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::w(2))
+        );
     }
 
     #[test]
@@ -4821,6 +5065,22 @@ mod tests {
         // NEG X0, X1 -> SUB X0, XZR, X1: cb0103e0
         let insn = decode_bytes(&[0xe0, 0x03, 0x01, 0xcb]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::NEG);
+    }
+
+    #[test]
+    fn test_shifted_subs_prefers_cmp_over_negs_when_rd_is_zr() {
+        // CMP XZR, X1 -> SUBS XZR, XZR, X1: eb0103ff. This encoding also
+        // has Rn == XZR, but CMP is the preferred alias because Rd == XZR.
+        let insn = decode_bytes(&[0xff, 0x03, 0x01, 0xeb]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::CMP);
+        assert!(insn.sets_flags);
+        assert_eq!(insn.operands.len(), 2);
+        assert!(
+            matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
+        );
+        assert!(
+            matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(1))
+        );
     }
 
     #[test]

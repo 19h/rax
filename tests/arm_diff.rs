@@ -50264,6 +50264,51 @@ fn diff_sve_ffr_direct_state() {
 }
 
 #[test]
+fn diff_sve_ffr_fixed_field_legality() {
+    let valid = [
+        ("setffr", enc_setffr()),
+        ("wrffr_p0", enc_wrffr(0)),
+        ("wrffr_p15", enc_wrffr(15)),
+        ("rdffr_p0", enc_rdffr(0)),
+        ("rdffr_p15", enc_rdffr(15)),
+        ("rdffr_pred_p0_p0", enc_rdffr_pred(0, 0)),
+        ("rdffr_pred_p15_p15", enc_rdffr_pred(15, 15)),
+        ("rdffrs_pred_p0_p0", enc_rdffrs_pred(0, 0)),
+        ("rdffrs_pred_p15_p15", enc_rdffrs_pred(15, 15)),
+    ];
+    let invalid = [
+        ("setffr_bit0", enc_setffr() | 1),
+        ("setffr_bit5", enc_setffr() | (1 << 5)),
+        ("setffr_bit9", enc_setffr() | (1 << 9)),
+        ("wrffr_bit0", enc_wrffr(1) | 1),
+        ("wrffr_bit9", enc_wrffr(1) | (1 << 9)),
+        ("wrffr_bit10", enc_wrffr(1) | (1 << 10)),
+        ("rdffr_bit4", enc_rdffr(0) | (1 << 4)),
+        ("rdffr_bit5", enc_rdffr(0) | (1 << 5)),
+        ("rdffr_bit9", enc_rdffr(0) | (1 << 9)),
+        ("rdffr_pred_bit4", enc_rdffr_pred(0, 2) | (1 << 4)),
+        ("rdffr_pred_bit9", enc_rdffr_pred(0, 2) | (1 << 9)),
+        ("rdffr_pred_bit10", enc_rdffr_pred(0, 2) | (1 << 10)),
+        ("rdffrs_pred_bit4", enc_rdffrs_pred(0, 2) | (1 << 4)),
+        ("rdffrs_pred_bit9", enc_rdffrs_pred(0, 2) | (1 << 9)),
+        ("rdffrs_pred_bit10", enc_rdffrs_pred(0, 2) | (1 << 10)),
+    ];
+
+    let mut batch = Vec::new();
+    for (label, insn) in valid.into_iter().chain(invalid) {
+        let mut st = ArmState::zeroed();
+        st.set_ffr(0x5a5a);
+        st.set_preg(0, 0x3333);
+        st.set_preg(1, 0x5555);
+        st.set_preg(2, 0xaaaa);
+        st.set_preg(15, 0xf0f0);
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch_el0_legality("sve_ffr_fixed_field_legality", batch);
+}
+
+#[test]
 fn diff_sve_ld1rq() {
     // Load-replicate quadword (at VL=128 a packed contiguous quadword load).
     let mut rng = Rng::new(0x4_C001);

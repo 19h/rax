@@ -151,6 +151,41 @@ fn flags_subs_then_cset() {
 }
 
 #[test]
+fn conditional_select_aliases_transform_on_true_condition() {
+    let insns = [
+        0xeb02_0020, // subs x0, x1, x2
+        0x5a9f_13ea, // csetm w10, eq
+        0x9a85_14a4, // cinc x4, x5, eq
+        0xda87_10e6, // cinv x6, x7, eq
+        0xda89_1528, // cneg x8, x9, eq
+    ];
+
+    let eq = run(&insns, |g| {
+        g.x[1] = 7;
+        g.x[2] = 7;
+        g.x[5] = 10;
+        g.x[7] = 0x55;
+        g.x[9] = 5;
+    });
+    assert_eq!(eq.x[10], 0xffff_ffff, "csetm w10, eq");
+    assert_eq!(eq.x[4], 11, "cinc x4, x5, eq");
+    assert_eq!(eq.x[6], !0x55u64, "cinv x6, x7, eq");
+    assert_eq!(eq.x[8], 0u64.wrapping_sub(5), "cneg x8, x9, eq");
+
+    let ne = run(&insns, |g| {
+        g.x[1] = 9;
+        g.x[2] = 7;
+        g.x[5] = 10;
+        g.x[7] = 0x55;
+        g.x[9] = 5;
+    });
+    assert_eq!(ne.x[10], 0, "csetm w10, eq false");
+    assert_eq!(ne.x[4], 10, "cinc x4, x5, eq false");
+    assert_eq!(ne.x[6], 0x55, "cinv x6, x7, eq false");
+    assert_eq!(ne.x[8], 5, "cneg x8, x9, eq false");
+}
+
+#[test]
 fn fpcr_sysreg_only_block_uses_fp_trampoline() {
     // d51b4401  msr fpcr, x1
     // d53b4400  mrs x0, fpcr
