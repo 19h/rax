@@ -31681,6 +31681,86 @@ fn diff_sve_bfmlal() {
 }
 
 #[test]
+fn diff_sve_bfmlal_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("pos", 16_777_216.0f32, 0x3f80u16),
+        ("neg", -16_777_216.0f32, 0xbf80u16),
+    ];
+
+    for rmode in 0..4u64 {
+        for top in 0..2u32 {
+            for (name, acc, n_bf16) in variants {
+                let mut zd = 0u128;
+                let mut zn = 0u128;
+                let mut zm = 0u128;
+                for s in 0..4 {
+                    zd |= (acc.to_bits() as u128) << (s * 32);
+                }
+                for h in 0..8 {
+                    zn |= (n_bf16 as u128) << (h * 16);
+                    zm |= (0x3f80u128) << (h * 16);
+                }
+
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                batch.push((
+                    format!("bfmlal_t{top}_{name}_rmode{rmode}"),
+                    enc_sve_bfmlal(top, RM),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_bfmlal_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_sve_bfmlal_indexed_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("pos", 16_777_216.0f32, 0x3f80u16),
+        ("neg", -16_777_216.0f32, 0xbf80u16),
+    ];
+
+    for rmode in 0..4u64 {
+        for top in 0..2u32 {
+            for index in 0..8u32 {
+                for (name, acc, n_bf16) in variants {
+                    let mut zd = 0u128;
+                    let mut zn = 0u128;
+                    let mut zm = 0u128;
+                    for s in 0..4 {
+                        zd |= (acc.to_bits() as u128) << (s * 32);
+                    }
+                    for h in 0..8 {
+                        zn |= (n_bf16 as u128) << (h * 16);
+                        zm |= (0x3f80u128) << (h * 16);
+                    }
+
+                    let mut st = ArmState::zeroed();
+                    st.fpcr = rmode << 22;
+                    st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+                    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                    batch.push((
+                        format!("bfmlal_idx_t{top}_i{index}_{name}_rmode{rmode}"),
+                        enc_sve_bfmlal_idx(top, index, RM),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("sve_bfmlal_indexed_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve2_fmlal_indexed() {
     // FMLALB/T and FMLSLB/T by indexed Zm.h[index] (broadcast), all indices.
     let mut rng = Rng::new(0x7_c001);
@@ -31708,6 +31788,51 @@ fn diff_sve2_fmlal_indexed() {
         }
     }
     run_batch("sve2_fmlal_indexed", batch);
+}
+
+#[test]
+fn diff_sve2_fmlal_indexed_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("fmlalb_pos", 0u32, 0u32, 16_777_216.0f32, 0x3c00u16),
+        ("fmlalb_neg", 0, 0, -16_777_216.0f32, 0xbc00u16),
+        ("fmlalt_pos", 0, 1, 16_777_216.0f32, 0x3c00u16),
+        ("fmlalt_neg", 0, 1, -16_777_216.0f32, 0xbc00u16),
+        ("fmlslb_pos", 1, 0, 16_777_216.0f32, 0xbc00u16),
+        ("fmlslb_neg", 1, 0, -16_777_216.0f32, 0x3c00u16),
+        ("fmlslt_pos", 1, 1, 16_777_216.0f32, 0xbc00u16),
+        ("fmlslt_neg", 1, 1, -16_777_216.0f32, 0x3c00u16),
+    ];
+
+    for rmode in 0..4u64 {
+        for index in 0..8u32 {
+            for (name, sub, top, acc, n_half) in variants {
+                let mut zn = 0u128;
+                let mut zm = 0u128;
+                let mut zd = 0u128;
+                for h in 0..8 {
+                    zn |= (n_half as u128) << (h * 16);
+                    zm |= (0x3c00u128) << (h * 16);
+                }
+                for s in 0..4 {
+                    zd |= (acc.to_bits() as u128) << (s * 32);
+                }
+
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+                batch.push((
+                    format!("{name}_i{index}_rmode{rmode}"),
+                    enc_sve2_fmlal_idx(sub, top, index, RM),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve2_fmlal_indexed_fpcr_rounding", batch);
 }
 
 #[test]
@@ -34911,6 +35036,86 @@ fn diff_simd_bf16() {
         }
     }
     run_batch("simd_bf16", batch);
+}
+
+#[test]
+fn diff_simd_bfmlal_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("pos", 16_777_216.0f32, 0x3f80u16),
+        ("neg", -16_777_216.0f32, 0xbf80u16),
+    ];
+
+    for rmode in 0..4u64 {
+        for q in 0..2u32 {
+            for (name, acc, n_bf16) in variants {
+                let mut zd = 0u128;
+                let mut zn = 0u128;
+                let mut zm = 0u128;
+                for s in 0..4 {
+                    zd |= (acc.to_bits() as u128) << (s * 32);
+                }
+                for h in 0..8 {
+                    zn |= (n_bf16 as u128) << (h * 16);
+                    zm |= (0x3f80u128) << (h * 16);
+                }
+
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                batch.push((
+                    format!("bfmlal_q{q}_{name}_rmode{rmode}"),
+                    enc_bfmlal(q),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("simd_bfmlal_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_bfmlal_indexed_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let variants = [
+        ("pos", 16_777_216.0f32, 0x3f80u16),
+        ("neg", -16_777_216.0f32, 0xbf80u16),
+    ];
+
+    for rmode in 0..4u64 {
+        for q in 0..2u32 {
+            for index in 0..8u32 {
+                for (name, acc, n_bf16) in variants {
+                    let mut zd = 0u128;
+                    let mut zn = 0u128;
+                    let mut zm = 0u128;
+                    for s in 0..4 {
+                        zd |= (acc.to_bits() as u128) << (s * 32);
+                    }
+                    for h in 0..8 {
+                        zn |= (n_bf16 as u128) << (h * 16);
+                        zm |= (0x3f80u128) << (h * 16);
+                    }
+
+                    let mut st = ArmState::zeroed();
+                    st.fpcr = rmode << 22;
+                    st.set_vreg(0, zd as u64, (zd >> 64) as u64);
+                    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                    batch.push((
+                        format!("bfmlal_idx_q{q}_i{index}_{name}_rmode{rmode}"),
+                        enc_bfmlal_idx(q, index),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("simd_bfmlal_indexed_fpcr_rounding", batch);
 }
 
 /// USDOT (vector): `0 Q 0 01110 10 0 Rm 100111 Rn Rd`. Rd=v0, Rn=v1, Rm=v2.

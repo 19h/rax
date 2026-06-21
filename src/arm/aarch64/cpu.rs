@@ -3838,11 +3838,12 @@ impl AArch64Cpu {
             let a = (op3 >> (e * 32)) as u32;
             // Single-rounded fused multiply-add (FPMulAdd) with ARM-correct NaN
             // selection (addend first); bf16 widens to f32 by a 16-bit shift.
-            let r = fp_muladd_bits(
+            let r = fp_muladd_bits_with_fpcr(
                 a as u64,
                 (b1 as u32 as u64) << 16,
                 (b2 as u32 as u64) << 16,
                 32,
+                self.fpcr,
             ) as u32;
             self.fpsr |= fp_status_fma(
                 4,
@@ -12235,13 +12236,9 @@ impl AArch64Cpu {
                 let nn = widen(nbits);
                 let mm = widen(read_elem(&m, h_off, 2) as u16);
                 let aa = read_elem(&acc, j * 4, 4) as u32;
-                let r = if bf {
-                    fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32
-                } else {
-                    fp_muladd_bits_with_fpcr(
-                        aa as u64, nn as u64, mm as u64, 32, self.fpcr,
-                    ) as u32
-                };
+                let r =
+                    fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
+                        as u32;
                 self.fpsr |=
                     fp_status_fma(4, aa as u64, nn as u64, mm as u64, r as u64);
                 write_elem(&mut dst, j * 4, 4, r as u64);
@@ -12284,7 +12281,9 @@ impl AArch64Cpu {
                 let nbits = read_elem(&n, h_off, 2) as u16 ^ if sub { 0x8000 } else { 0 };
                 let nn = widen(nbits);
                 let aa = read_elem(&acc, j * 4, 4) as u32;
-                let r = fp_muladd_bits(aa as u64, nn as u64, mm as u64, 32) as u32;
+                let r =
+                    fp_muladd_bits_with_fpcr(aa as u64, nn as u64, mm as u64, 32, self.fpcr)
+                        as u32;
                 self.fpsr |=
                     fp_status_fma(4, aa as u64, nn as u64, mm as u64, r as u64);
                 write_elem(&mut dst, j * 4, 4, r as u64);
