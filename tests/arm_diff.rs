@@ -32459,6 +32459,66 @@ fn diff_sve_index() {
         cases.push((format!("index_rr sz{sz}"), enc_index_rr(sz)));
     }
     run_family("sve_index", cases, 2, 0x1_0020);
+
+    let imm_edges = [0u32, 1, 15, 16, 31];
+    let reg_edges = [
+        ("zero", 0u64),
+        ("one", 1),
+        ("minus_one", u64::MAX),
+        ("sign", 0x8000_0000_0000_0000),
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        for &imm_base in &imm_edges {
+            for &imm_step in &imm_edges {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                batch.push((
+                    format!("index_ii_sz{sz}_b{imm_base}_s{imm_step}"),
+                    enc_index_ii(sz, imm_step, imm_base),
+                    st,
+                ));
+            }
+        }
+        for &(base_name, base) in &reg_edges {
+            for &imm_step in &imm_edges {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = base;
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                batch.push((
+                    format!("index_ri_sz{sz}_{base_name}_s{imm_step}"),
+                    enc_index_ri(sz, imm_step),
+                    st,
+                ));
+            }
+        }
+        for &imm_base in &imm_edges {
+            for &(step_name, step) in &reg_edges {
+                let mut st = ArmState::zeroed();
+                st.x[RM as usize] = step;
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                batch.push((
+                    format!("index_ir_sz{sz}_b{imm_base}_{step_name}"),
+                    enc_index_ir(sz, imm_base),
+                    st,
+                ));
+            }
+        }
+        for &(base_name, base) in &reg_edges {
+            for &(step_name, step) in &reg_edges {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = base;
+                st.x[RM as usize] = step;
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                batch.push((
+                    format!("index_rr_sz{sz}_{base_name}_{step_name}"),
+                    enc_index_rr(sz),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("sve_index_edges", batch);
 }
 
 #[test]
@@ -32511,6 +32571,55 @@ fn diff_sve_rev() {
         cases.push((format!("rev sz{sz}"), enc_sve_rev(sz)));
     }
     run_family("sve_rev", cases, 16, 0x1_0022);
+
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn rev_patterns(sz: u32) -> Vec<(&'static str, Vec<u64>)> {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        vec![
+            (
+                "identity",
+                (0..lanes).map(|lane| lane as u64).collect(),
+            ),
+            (
+                "edges",
+                (0..lanes).map(|lane| edges[lane % edges.len()]).collect(),
+            ),
+        ]
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let insn = enc_sve_rev(sz);
+        for (pattern_name, zn) in rev_patterns(sz) {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+            let (lo, hi) = pack_lanes(sz, &zn);
+            st.set_vreg(1, lo, hi);
+            batch.push((format!("rev_sz{sz}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve_rev_edges", batch);
 }
 
 /// PTRUE/PTRUES Pd.T, pattern: `00100101 sz 01100 S 111000 pattern 0 Pd`. Pd=p0.
@@ -43014,10 +43123,99 @@ fn diff_sve_adr() {
         }
     }
     run_family("sve_adr", cases, 16, 0x3_7001);
+
+    fn pack32(values: &[u32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack64(values: &[u64; 2]) -> (u64, u64) {
+        (values[0], values[1])
+    }
+
+    let patterns = [
+        (
+            "small",
+            pack64(&[0x0000_0000_0000_1000, 0x0000_0000_0000_2000]),
+            pack32(&[0, 1, 2, 3]),
+        ),
+        (
+            "signed",
+            pack64(&[0xffff_ffff_ffff_ff00, 0x0000_0000_0000_0100]),
+            pack32(&[0xffff_ffff, 0x8000_0000, 0x7fff_ffff, 2]),
+        ),
+        (
+            "carry",
+            pack64(&[0xffff_ffff_ffff_fff0, 0x8000_0000_0000_0000]),
+            pack32(&[0x0000_0010, 0xffff_fff0, 0x7fff_fff0, 0x8000_0010]),
+        ),
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for mode in 0..4u32 {
+        for msz in 0..4u32 {
+            let insn = enc_sve_adr(mode, msz);
+            for (pattern_name, zn, zm) in patterns {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                st.set_vreg(1, zn.0, zn.1);
+                st.set_vreg(2, zm.0, zm.1);
+                batch.push((format!("adr_m{mode}_s{msz}_{pattern_name}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_adr_edges", batch);
 }
 
 #[test]
 fn diff_sve_movprfx() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn lane_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let zd_edges = [mask, mask - 1, sign + 1, sign, sign - 1, 1, 0];
+        let zn_edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        vec![
+            (
+                "identity",
+                (0..lanes)
+                    .map(|lane| 0x80u64.wrapping_add(lane as u64) & mask)
+                    .collect(),
+                (0..lanes).map(|lane| lane as u64).collect(),
+            ),
+            (
+                "edges",
+                (0..lanes)
+                    .map(|lane| zd_edges[lane % zd_edges.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| zn_edges[lane % zn_edges.len()])
+                    .collect(),
+            ),
+        ]
+    }
+
     // MOVPRFX standalone is a move: unpredicated copies the whole register; the
     // predicated form copies active lanes and merges/zeros the inactive ones.
     let mut rng = Rng::new(0x3_6001);
@@ -43029,7 +43227,20 @@ fn diff_sve_movprfx() {
         st.set_vreg(1, rng.next(), rng.next());
         batch.push(("movprfx_z".to_string(), zi, st));
     }
+    for (pattern_name, _, zn) in lane_patterns(0) {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        let (lo, hi) = pack_lanes(0, &zn);
+        st.set_vreg(1, lo, hi);
+        batch.push((format!("movprfx_z_{pattern_name}"), zi, st));
+    }
     for size in 0..4u32 {
+        let mixed = match size {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
         for m in 0..2u32 {
             let insn = enc_movprfx_p(size, m);
             for _ in 0..8 {
@@ -43038,6 +43249,21 @@ fn diff_sve_movprfx() {
                 st.set_vreg(1, rng.next(), rng.next()); // Zn
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("movprfx_p e{size} m{m}"), insn, st));
+            }
+            for (pattern_name, zd, zn) in lane_patterns(size) {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(size, &zd);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_lanes(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((
+                        format!("movprfx_p_e{size}_m{m}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -43089,6 +43315,65 @@ fn diff_sve_ldr_str() {
 
 #[test]
 fn diff_sve_cvt() {
+    fn pack_src_containers(src_sz: usize, cont: usize, values: &[u64]) -> (u64, u64) {
+        let bits = src_sz * 8;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * cont * 8);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn cvt_source_patterns(
+        to_int: bool,
+        unsigned: bool,
+        fp_sz: usize,
+        int_sz: usize,
+        elements: usize,
+    ) -> Vec<(&'static str, usize, Vec<u64>)> {
+        let values = if to_int {
+            match fp_sz {
+                2 => vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x3e00, 0xbe00, 0x4200, 0xc200],
+                4 => vec![
+                    0.0f32.to_bits() as u64,
+                    (-0.0f32).to_bits() as u64,
+                    1.0f32.to_bits() as u64,
+                    (-1.0f32).to_bits() as u64,
+                    1.5f32.to_bits() as u64,
+                    (-1.5f32).to_bits() as u64,
+                    42.0f32.to_bits() as u64,
+                    (-42.0f32).to_bits() as u64,
+                ],
+                _ => vec![
+                    0.0f64.to_bits(),
+                    (-0.0f64).to_bits(),
+                    1.0f64.to_bits(),
+                    (-1.0f64).to_bits(),
+                    1.5f64.to_bits(),
+                    (-1.5f64).to_bits(),
+                    42.0f64.to_bits(),
+                    (-42.0f64).to_bits(),
+                ],
+            }
+        } else if unsigned {
+            vec![0, 1, 2, 42, 127, 255]
+        } else {
+            vec![0, 1, (-1i64) as u64, 42, (-42i64) as u64, 127, (-128i64) as u64]
+        };
+        vec![(
+            "basic",
+            if to_int { fp_sz } else { int_sz },
+            (0..elements)
+                .map(|lane| values[lane % values.len()])
+                .collect(),
+        )]
+    }
+
     // Predicated FCVTZS/FCVTZU (FP->int, trunc+saturate) and SCVTF/UCVTF
     // (int->FP, round-to-nearest). Each (opc,opc2) fixes the FP/int width pair;
     // ig1 picks the direction and int_U the signedness.
@@ -43137,6 +43422,23 @@ fn diff_sve_cvt() {
                     st.set_preg(0, rng.next() as u16);
                     batch.push((name.clone(), insn, st));
                 }
+                let mixed = match cont {
+                    2 => 0x1111,
+                    4 => 0x0101,
+                    _ => 0x0001,
+                };
+                for (pattern_name, src_sz, zn) in
+                    cvt_source_patterns(to_int, u == 1, fp_sz, int_sz, elements)
+                {
+                    for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                        let (lo, hi) = pack_src_containers(src_sz, cont, &zn);
+                        st.set_vreg(1, lo, hi);
+                        st.set_preg(0, pg);
+                        batch.push((format!("{name}_{pattern_name}_{mask_name}"), insn, st));
+                    }
+                }
             }
         }
     }
@@ -43162,6 +43464,68 @@ fn diff_sve_dup_idx() {
         }
     }
     run_family("sve_dup_idx", cases, 4, 0x2_E001);
+
+    fn pack_lanes(elog: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << elog;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn source_patterns(elog: u32) -> Vec<(&'static str, u64, u64)> {
+        if elog == 4 {
+            return vec![
+                ("identity", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                ("edges", 0x8000_0000_0000_0001, 0xffff_ffff_ffff_fffe),
+            ];
+        }
+        let bits = 8u32 << elog;
+        let lanes = 16usize >> elog;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let identity: Vec<u64> = (0..lanes)
+            .map(|lane| 0x10u64.wrapping_add(lane as u64) & mask)
+            .collect();
+        let edge_values: Vec<u64> = (0..lanes)
+            .map(|lane| edges[lane % edges.len()])
+            .collect();
+        let (identity_lo, identity_hi) = pack_lanes(elog, &identity);
+        let (edges_lo, edges_hi) = pack_lanes(elog, &edge_values);
+        vec![("identity", identity_lo, identity_hi), ("edges", edges_lo, edges_hi)]
+    }
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (elog, name) in [
+        (0u32, "b"),
+        (1, "h"),
+        (2, "s"),
+        (3, "d"),
+        (4, "q"),
+    ] {
+        let encoded_indexes = 1u32 << (6 - elog);
+        for index in 0..encoded_indexes {
+            let insn = enc_dup_idx(elog, index);
+            for (pattern_name, lo, hi) in source_patterns(elog) {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                st.set_vreg(1, lo, hi);
+                batch.push((format!("dup_idx_{name}{index}_{pattern_name}"), insn, st));
+            }
+        }
+    }
+    run_batch("sve_dup_idx_edges", batch);
 }
 
 #[test]
