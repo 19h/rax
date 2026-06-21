@@ -7762,6 +7762,74 @@ fn raw_el0_sve_memory_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_scalar_imm_memory_offset_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2558_e3e0, // ptrue p0.h
+        0xa421_a020, // ld1b  { z0.h }, p0/z, [x1, #1, mul vl]
+        0xe421_e062, // st1b  { z2.h }, p0, [x3, #1, mul vl]
+    ];
+    let pack_h = |xs: [u16; 8]| -> (u64, u64) {
+        let mut lo = 0u64;
+        let mut hi = 0u64;
+        for (i, &x) in xs.iter().enumerate() {
+            if i < 4 {
+                lo |= u64::from(x) << (16 * i);
+            } else {
+                hi |= u64::from(x) << (16 * (i - 4));
+            }
+        }
+        (lo, hi)
+    };
+
+    let mut native_load_in = [0u8; 32];
+    for (i, byte) in native_load_in.iter_mut().enumerate() {
+        *byte = 0x80 + i as u8;
+    }
+    native_load_in[8] = 0xaa;
+    native_load_in[16] = 0xbb;
+    let mut native_store_out = [0xccu8; 32];
+    let store_values = pack_h([0x0011, 0x0022, 0x0033, 0x0044, 0x0055, 0x0066, 0x0077, 0x0088]);
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_load_in.as_ptr() as u64;
+        g.x[3] = native_store_out.as_mut_ptr() as u64;
+        g.v[4] = store_values.0;
+        g.v[5] = store_values.1;
+    });
+
+    const LOAD_IN: u64 = 0xf400;
+    const STORE_OUT: u64 = 0xf500;
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp.write_memory(LOAD_IN, &native_load_in).unwrap();
+    interp.write_memory(STORE_OUT, &[0xccu8; 32]).unwrap();
+    interp.set_x(1, LOAD_IN);
+    interp.set_x(3, STORE_OUT);
+    interp.set_simd_reg(2, store_values.0, store_values.1).unwrap();
+    drive_to_done(&mut interp);
+
+    let hw_z0 = u128::from(hw.v[0]) | (u128::from(hw.v[1]) << 64);
+    assert_eq!(
+        hw_z0,
+        interp.get_simd(0),
+        "raw EL0 SVE scalar+imm memory offset z0 low-128 mismatch"
+    );
+    for (offset, native) in native_store_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u8(STORE_OUT + offset as u64).unwrap(),
+            "raw EL0 SVE scalar+imm memory offset store byte {offset}"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve_memory_extra_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("sve") {
         eprintln!("[skip] host does not advertise SVE");

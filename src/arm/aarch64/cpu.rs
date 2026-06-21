@@ -14522,10 +14522,11 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
-            // stored/element byte count, so widening/truncating forms address the
-            // correct location (e.g. LD1B Zt.H must use 16, not 8).
-            let addr0 = base.wrapping_add((imm4 * 16) as u64);
+            // Scalar+immediate offset scales by the contiguous memory footprint,
+            // not the architectural Z-register byte width. For example, LD1B
+            // Zt.H has 8 halfword lanes but reads 8 bytes, so #1 addresses
+            // base+8 at VL=128.
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             let mut dst = [0u8; 16];
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
@@ -14561,10 +14562,9 @@ impl AArch64Cpu {
             let esize = 1usize << size;
             let mbytes = 1usize << msz;
             let elements = 16 / esize;
-            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
-            // stored/element byte count, so widening/truncating forms address the
-            // correct location (e.g. LD1B Zt.H must use 16, not 8).
-            let addr0 = base.wrapping_add((imm4 * 16) as u64);
+            // Scalar+immediate offset scales by the contiguous memory footprint,
+            // not the architectural Z-register byte width.
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             let src = self.v[zt].to_le_bytes();
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 0 {
@@ -14637,10 +14637,9 @@ impl AArch64Cpu {
             let dtype = (insn >> 21) & 0xF;
             let (esize, mbytes, signed) = sve_ld1_dtype(dtype);
             let elements = 16 / esize;
-            // Scalar+immediate offset scales by VL (=16 bytes here), NOT by the
-            // stored/element byte count, so widening/truncating forms address the
-            // correct location (e.g. LD1B Zt.H must use 16, not 8).
-            let addr0 = base.wrapping_add((imm4 * 16) as u64);
+            // Scalar+immediate offset scales by the contiguous memory footprint,
+            // not the architectural Z-register byte width.
+            let addr0 = base.wrapping_add((imm4 * (elements * mbytes) as i64) as u64);
             return self.exec_sve_ff_load(addr0, mbytes, esize, signed, elements, pred, zt, true);
         }
 
@@ -27720,23 +27719,42 @@ mod tests {
     }
 
     #[test]
-    fn sve_ld1_immediate_offset_scales_by_vl_not_element_bytes() {
-        // #16: contiguous LD1 scalar+immediate scales the offset by VL (=16
-        // bytes here), NOT by the stored element count. For the widening
-        // LD1B Zt.H, imm4=1 must address base + 1*16, not base + 1*(16/2)*1.
+    fn sve_ld1_st1_immediate_offset_scales_by_memory_footprint() {
+        // Contiguous SVE scalar+immediate LD1/ST1 scale the immediate by the
+        // memory footprint of the vector access. For LD1B/ST1B Zt.H at VL=128
+        // that is 8 bytes, not the full 16-byte Z register width.
         let mut cpu = create_test_cpu();
         let base = 0x200u64;
         cpu.set_x(3, base); // Rn = X3
-        cpu.write_memory(base + 16, &[0xAA]).unwrap(); // VL-scaled (correct) target
-        cpu.write_memory(base + 8, &[0xBB]).unwrap(); // element-scaled (wrong) target
+        cpu.write_memory(base + 8, &[0xAA]).unwrap();
+        cpu.write_memory(base + 16, &[0xBB]).unwrap();
         cpu.set_sve_pred(0, 0xFFFF); // all lanes active
         // LD1B Zt.H: 1010010 dtype=0001 0 imm4=1 101 Pg=0 Rn=3 Zt=0.
-        let insn =
+        let ld1b_h =
             (0b1010010u32 << 25) | (0b0001 << 21) | (1 << 16) | (0b101 << 13) | (3 << 5);
-        assert_eq!(cpu.exec_sve_ldst(insn).unwrap(), CpuExit::Continue);
-        // Lane 0 (halfword) = zero-extended byte at base+16 = 0xAA.
+        assert_eq!(cpu.exec_sve_ldst(ld1b_h).unwrap(), CpuExit::Continue);
+        // Lane 0 (halfword) = zero-extended byte at base+8 = 0xAA.
         let (lo, _hi) = cpu.get_simd_reg(0).unwrap();
-        assert_eq!(lo & 0xFFFF, 0x00AA, "LD1 imm offset must scale by VL (got {lo:#x})");
+        assert_eq!(
+            lo & 0xFFFF,
+            0x00AA,
+            "LD1 imm offset must scale by memory footprint (got {lo:#x})"
+        );
+
+        cpu.write_memory(base + 8, &[0x11]).unwrap();
+        cpu.write_memory(base + 16, &[0x22]).unwrap();
+        cpu.set_simd_reg(0, 0x00dd_00cc_00bb_00aa, 0x0044_0033_0022_0011).unwrap();
+        cpu.set_sve_pred(0, 1); // only lane 0 active
+        // ST1B Zt.H: 1110010 msz=00 size=01 imm4=1 111 Pg=0 Rn=3 Zt=0.
+        let st1b_h =
+            (0b1110010u32 << 25) | (0b01 << 21) | (1 << 16) | (0b111 << 13) | (3 << 5);
+        assert_eq!(cpu.exec_sve_ldst(st1b_h).unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.mem_read_u8(base + 8).unwrap(), 0xAA);
+        assert_eq!(
+            cpu.mem_read_u8(base + 16).unwrap(),
+            0x22,
+            "ST1 imm offset must not use the full Z-register byte width"
+        );
     }
 
     #[test]
