@@ -274,6 +274,211 @@ fn oracle_path() -> Option<OracleRunner> {
     qemu_oracle_path().map(OracleRunner::Qemu)
 }
 
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_smoke_runs_on_aarch64_host() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let mut st = ArmState::zeroed();
+    st.x[1] = 40;
+    st.x[2] = 2;
+    let outs = run_oracle(&oracle, &[(0x8b02_0020, NOP, st)]).expect("native EL0 oracle run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on add");
+    assert_eq!(outs[0].st.x[0], 42, "native EL0 oracle add result");
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn oracle_path_prefers_native_el0_on_aarch64_host() {
+    if std::env::var_os("RAX_ARM_DIFF_FORCE_QEMU").is_some() {
+        eprintln!("[arm_diff] RAX_ARM_DIFF_FORCE_QEMU is set -> skipping native preference check");
+        return;
+    }
+
+    assert!(
+        matches!(oracle_path(), Some(OracleRunner::Native(_))),
+        "arm_diff must use the native EL0 hardware oracle by default on aarch64 hosts"
+    );
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_captures_sve_predicates_and_ffr() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let st = ArmState::zeroed();
+    let outs = run_oracle3(
+        &oracle,
+        &[(
+            0x2518_e3e0, // ptrue p0.b
+            0x252c_9000, // setffr
+            0x2519_f002, // rdffr p2.b
+            st,
+        )],
+    )
+    .expect("native EL0 oracle SVE predicate run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid SVE output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on SVE predicate capture");
+    assert_eq!(outs[0].st.preg(0), 0xffff, "native EL0 oracle captured P0");
+    assert_eq!(outs[0].st.preg(2), 0xffff, "native EL0 oracle captured RDFFR into P2");
+    assert_eq!(outs[0].st.ffr(), 0xffff, "native EL0 oracle captured FFR");
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_captures_instruction_faults() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let outs = run_oracle(&oracle, &[(0x0000_0000, NOP, ArmState::zeroed())])
+        .expect("native EL0 oracle UDF run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid UDF output");
+    assert_ne!(outs[0].trapped, 0, "native EL0 oracle did not report UDF trap");
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_pins_sve_vl_128() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let outs = run_oracle(&oracle, &[(0x0420_e3e0, NOP, ArmState::zeroed())])
+        .expect("native EL0 oracle CNTB run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid CNTB output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on CNTB");
+    assert_eq!(outs[0].st.x[0], 16, "native EL0 oracle did not pin SVE VL=128");
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_captures_scratch_memory_writes() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let mut st = ArmState::zeroed();
+    st.x[1] = 0x0123_4567_89ab_cdef;
+    st.x[2] = SCRATCH_BASE;
+    let outs = run_oracle(&oracle, &[(0xf900_0041, NOP, st)])
+        .expect("native EL0 oracle scratch store run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid store output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on scratch store");
+    assert_eq!(
+        outs[0].st.scratch[8],
+        0x0123_4567_89ab_cdef,
+        "native EL0 oracle did not capture scratch store"
+    );
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_captures_fpsimd_and_fp_status() {
+    if !native_host_caps().has("fp") {
+        eprintln!("[arm_diff] native EL0 oracle requires FP/SIMD support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let mut st = ArmState::zeroed();
+    st.set_vreg(1, (2.5_f64).to_bits(), 0);
+    st.set_vreg(2, (4.0_f64).to_bits(), 0);
+    st.fpcr = 0x00c0_0000;
+    st.fpsr = 0x0800_0000;
+    let outs = run_oracle3(
+        &oracle,
+        &[(
+            0x1e62_2820, // fadd d0, d1, d2
+            0xd53b_4403, // mrs  x3, fpcr
+            0xd53b_4424, // mrs  x4, fpsr
+            st,
+        )],
+    )
+    .expect("native EL0 oracle FP/SIMD run");
+    assert_eq!(outs.len(), 1);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid FP output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on FADD");
+    assert_eq!(
+        outs[0].st.vreg(0).0,
+        (6.5_f64).to_bits(),
+        "native EL0 oracle did not capture V0 after FADD"
+    );
+    assert_eq!(outs[0].st.x[3] as u32, 0x00c0_0000, "native EL0 oracle MRS FPCR");
+    assert_eq!(outs[0].st.x[4] as u32, 0x0800_0000, "native EL0 oracle MRS FPSR");
+    assert_eq!(outs[0].st.fpcr as u32, 0x00c0_0000, "native EL0 oracle captured FPCR");
+    assert_eq!(outs[0].st.fpsr as u32, 0x0800_0000, "native EL0 oracle captured FPSR");
+}
+
+#[cfg(target_arch = "aarch64")]
+#[test]
+fn native_el0_oracle_executes_control_flow_slots() {
+    if !native_host_caps().has("sve") {
+        eprintln!("[arm_diff] native EL0 oracle requires SVE signal-frame support -> skipping");
+        return;
+    }
+
+    let path = native_oracle_path().expect("native EL0 oracle must build on aarch64 hosts");
+    let oracle = OracleRunner::Native(path);
+    let mut eq = ArmState::zeroed();
+    eq.x[1] = 7;
+    eq.x[2] = 7;
+    let mut ne = ArmState::zeroed();
+    ne.x[1] = 9;
+    ne.x[2] = 7;
+    let outs = run_oracle3(
+        &oracle,
+        &[
+            (
+                0xeb02_003f, // cmp  x1, x2
+                0x5400_0040, // b.eq +8, to the oracle's capture brk
+                0xd280_0220, // mov  x0, #17
+                eq,
+            ),
+            (
+                0xeb02_003f, // cmp  x1, x2
+                0x5400_0040, // b.eq +8, to the oracle's capture brk
+                0xd280_0220, // mov  x0, #17
+                ne,
+            ),
+        ],
+    )
+    .expect("native EL0 oracle control-flow run");
+    assert_eq!(outs.len(), 2);
+    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid taken output");
+    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on taken branch");
+    assert_eq!(outs[0].st.x[0], 0, "native EL0 oracle failed to skip slot on taken branch");
+    assert_eq!(outs[1].valid, 1, "native EL0 oracle produced invalid fallthrough output");
+    assert_eq!(outs[1].trapped, 0, "native EL0 oracle trapped on fallthrough branch");
+    assert_eq!(outs[1].st.x[0], 17, "native EL0 oracle failed to execute fallthrough slot");
+}
+
 #[derive(Debug)]
 struct HostCaps {
     flags: std::collections::BTreeSet<String>,
