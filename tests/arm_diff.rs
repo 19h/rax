@@ -1446,6 +1446,138 @@ fn generated_vector_scalar_shift_imm_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_vector_scalar_fp16_pairwise_maxmin_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/reduce.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/reduce", source) {
+        if !vector_scalar_fp16_pairwise_maxmin(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_scalar_fp16_pairwise_add_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/reduce.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/reduce", source) {
+        if !vector_scalar_fp16_pairwise_add(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_float_narrow_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/arithmetic", source) {
+        if !vector_float_narrow(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_float_fused_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/mul.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/mul", source) {
+        if !vector_float_fused(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_float_frintts_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/arithmetic", source) {
+        if !vector_float_frintts(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_fmlal_three_same_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/mul.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/mul", source) {
+        if !vector_fmlal_three_same(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_recps_rsqrts_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/arithmetic", source) {
+        if !vector_recps_rsqrts(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_scalar_abs_neg_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/arithmetic", source) {
+        if !vector_scalar_abs_neg(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_vector_compare_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/compare.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/compare", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings(
@@ -1706,6 +1838,69 @@ fn vector_scalar_shift_imm_same_size(insn: u32) -> bool {
             opcode,
             0b00000 | 0b00010 | 0b00100 | 0b00110 | 0b01000 | 0b01010 | 0b01100 | 0b01110
         )
+}
+
+fn vector_scalar_fp16_pairwise_maxmin(insn: u32) -> bool {
+    let opcode = (insn >> 12) & 0x1f;
+    (insn >> 24) & 0x1f == 0b11110
+        && ((insn >> 29) & 1) == 0
+        && ((insn >> 17) & 0x1f) == 0b11000
+        && ((insn >> 10) & 0x3) == 0b10
+        && matches!(opcode, 0b01100 | 0b01111)
+}
+
+fn vector_scalar_fp16_pairwise_add(insn: u32) -> bool {
+    (insn >> 24) & 0x1f == 0b11110
+        && ((insn >> 29) & 1) == 0
+        && ((insn >> 17) & 0x1f) == 0b11000
+        && ((insn >> 12) & 0x1f) == 0b01101
+        && ((insn >> 10) & 0x3) == 0b10
+}
+
+fn vector_float_narrow(insn: u32) -> bool {
+    (insn >> 24) & 0x1f == 0b01110
+        && ((insn >> 17) & 0x1f) == 0b10000
+        && ((insn >> 12) & 0x1f) == 0b10110
+        && ((insn >> 10) & 0x3) == 0b10
+}
+
+fn vector_float_frintts(insn: u32) -> bool {
+    (insn >> 24) & 0x1f == 0b01110
+        && ((insn >> 23) & 1) == 0
+        && ((insn >> 17) & 0x1f) == 0b10000
+        && matches!((insn >> 12) & 0x1f, 0b11110 | 0b11111)
+        && ((insn >> 10) & 0x3) == 0b10
+}
+
+fn vector_float_fused(insn: u32) -> bool {
+    (insn >> 24) & 0x1f == 0b01110
+        && ((insn >> 29) & 1) == 0
+        && ((insn >> 21) & 1) == 1
+        && ((insn >> 11) & 0x1f) == 0b11001
+        && ((insn >> 10) & 1) == 1
+}
+
+fn vector_fmlal_three_same(insn: u32) -> bool {
+    let u = (insn >> 29) & 1;
+    let opcode = (insn >> 11) & 0x1f;
+    (insn >> 24) & 0x1f == 0b01110
+        && ((insn >> 21) & 1) == 1
+        && ((insn >> 10) & 0x3) == 0b11
+        && ((u == 0 && opcode == 0b11101) || (u == 1 && opcode == 0b11001))
+}
+
+fn vector_recps_rsqrts(insn: u32) -> bool {
+    (matches!((insn >> 24) & 0x1f, 0b01110 | 0b11110))
+        && ((insn >> 29) & 1) == 0
+        && ((insn >> 21) & 1) == 1
+        && ((insn >> 11) & 0x1f) == 0b11111
+        && ((insn >> 10) & 0x3) == 0b11
+}
+
+fn vector_scalar_abs_neg(insn: u32) -> bool {
+    (insn >> 24) & 0x1f == 0b11110
+        && ((insn >> 12) & 0x1f) == 0b01011
+        && ((insn >> 10) & 0x3) == 0b10
 }
 
 fn gen_memory_input(rng: &mut Rng) -> ArmState {
@@ -31822,6 +32017,96 @@ fn diff_generated_vector_scalar_shift_imm_legality_sweep() {
 }
 
 #[test]
+fn diff_generated_vector_scalar_fp16_pairwise_maxmin_legality_sweep() {
+    run_family(
+        "generated_vector_scalar_fp16_pairwise_maxmin_legality_sweep",
+        generated_vector_scalar_fp16_pairwise_maxmin_cases(),
+        4,
+        0xa64_ec73,
+    );
+}
+
+#[test]
+fn diff_generated_vector_scalar_fp16_pairwise_add_sweep() {
+    run_family(
+        "generated_vector_scalar_fp16_pairwise_add_sweep",
+        generated_vector_scalar_fp16_pairwise_add_cases(),
+        4,
+        0xa64_ec74,
+    );
+}
+
+#[test]
+fn diff_generated_vector_float_narrow_sweep() {
+    run_family(
+        "generated_vector_float_narrow_sweep",
+        generated_vector_float_narrow_cases(),
+        4,
+        0xa64_ec75,
+    );
+}
+
+#[test]
+fn diff_generated_vector_float_frintts_sweep() {
+    run_family(
+        "generated_vector_float_frintts_sweep",
+        generated_vector_float_frintts_cases(),
+        4,
+        0xa64_ec77,
+    );
+}
+
+#[test]
+fn diff_generated_vector_float_fused_sweep() {
+    run_family(
+        "generated_vector_float_fused_sweep",
+        generated_vector_float_fused_cases(),
+        4,
+        0xa64_ec76,
+    );
+}
+
+#[test]
+fn diff_generated_vector_fmlal_three_same_sweep() {
+    run_family(
+        "generated_vector_fmlal_three_same_sweep",
+        generated_vector_fmlal_three_same_cases(),
+        4,
+        0xa64_ec78,
+    );
+}
+
+#[test]
+fn diff_generated_vector_recps_rsqrts_sweep() {
+    run_family(
+        "generated_vector_recps_rsqrts_sweep",
+        generated_vector_recps_rsqrts_cases(),
+        4,
+        0xa64_ec79,
+    );
+}
+
+#[test]
+fn diff_generated_vector_scalar_abs_neg_sweep() {
+    run_family(
+        "generated_vector_scalar_abs_neg_sweep",
+        generated_vector_scalar_abs_neg_cases(),
+        4,
+        0xa64_ec7a,
+    );
+}
+
+#[test]
+fn diff_generated_vector_compare_sweep() {
+    run_family(
+        "generated_vector_compare_sweep",
+        generated_vector_compare_cases(),
+        4,
+        0xa64_ec7b,
+    );
+}
+
+#[test]
 fn diff_fp_scalar_sqrt() {
     let mut cases: Vec<(String, u32, bool)> = Vec::new();
     for &ft in &[0u32, 1] {
@@ -31936,6 +32221,41 @@ fn diff_fp_scalar_frintts_fpsr_inexact() {
                 enc_fp1(ft, opcode),
                 st,
             ));
+
+            for (name, bits) in [
+                (
+                    "qnan",
+                    if ft == 0 {
+                        0x7fc0_0001
+                    } else {
+                        0x7ff8_0000_0000_0001
+                    },
+                ),
+                (
+                    "inf",
+                    if ft == 0 {
+                        0x7f80_0000
+                    } else {
+                        0x7ff0_0000_0000_0000
+                    },
+                ),
+                (
+                    "large",
+                    if ft == 0 {
+                        0x5f00_0000
+                    } else {
+                        0x43e0_0000_0000_0000
+                    },
+                ),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(RN as usize, bits, 0);
+                batch.push((
+                    format!("frintts_t{ft}_op{opcode:05b}_{name}_ioc"),
+                    enc_fp1(ft, opcode),
+                    st,
+                ));
+            }
         }
     }
 
