@@ -1661,6 +1661,103 @@ fn parse_generated_a64_cases_with_fields_and_asm(
     out
 }
 
+const GENERATED_A64_DIFF_SOURCES: &[&str] = &[
+    "branch/conditional.rs",
+    "branch/unconditional.rs",
+    "float/arithmetic.rs",
+    "float/compare.rs",
+    "float/convert.rs",
+    "float/move_.rs",
+    "integer/add_sub.rs",
+    "integer/address.rs",
+    "integer/bitfield.rs",
+    "integer/conditional.rs",
+    "integer/flags.rs",
+    "integer/logical.rs",
+    "integer/mul_div.rs",
+    "integer/other.rs",
+    "integer/pac.rs",
+    "integer/shift.rs",
+    "integer/tags.rs",
+    "memory/atomic.rs",
+    "memory/exclusive.rs",
+    "memory/literal.rs",
+    "memory/ordered.rs",
+    "memory/pair.rs",
+    "memory/single.rs",
+    "memory/vector.rs",
+    "misc/other.rs",
+    "sve/arithmetic.rs",
+    "sve/compare.rs",
+    "sve/convert.rs",
+    "sve/float.rs",
+    "sve/load.rs",
+    "sve/logical.rs",
+    "sve/other.rs",
+    "sve/predicate.rs",
+    "sve/prefetch.rs",
+    "sve/scalar.rs",
+    "sve/store.rs",
+    "system/exceptions.rs",
+    "system/hints.rs",
+    "system/other.rs",
+    "system/register.rs",
+    "vector/add_sub.rs",
+    "vector/arithmetic.rs",
+    "vector/compare.rs",
+    "vector/crypto.rs",
+    "vector/mul.rs",
+    "vector/other.rs",
+    "vector/reduce.rs",
+    "vector/shift.rs",
+    "vector/transfer.rs",
+];
+
+#[test]
+fn generated_a64_corpus_inventory_covers_all_non_mod_sources() {
+    fn visit(
+        root: &Path,
+        dir: &Path,
+        out: &mut std::collections::BTreeSet<String>,
+    ) -> std::io::Result<()> {
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                visit(root, &path, out)?;
+                continue;
+            }
+            if path.extension().and_then(|ext| ext.to_str()) != Some("rs") {
+                continue;
+            }
+            if path.file_name().and_then(|name| name.to_str()) == Some("mod.rs") {
+                continue;
+            }
+            let rel = path
+                .strip_prefix(root)
+                .expect("generated file should be under generated A64 root")
+                .to_string_lossy()
+                .replace('\\', "/");
+            out.insert(rel);
+        }
+        Ok(())
+    }
+
+    let root = Path::new("tests/arm/generated/a64");
+    let mut generated = std::collections::BTreeSet::new();
+    visit(root, root, &mut generated).expect("walk generated A64 corpus");
+
+    let covered: std::collections::BTreeSet<String> = GENERATED_A64_DIFF_SOURCES
+        .iter()
+        .map(|path| (*path).to_string())
+        .collect();
+
+    assert_eq!(
+        covered, generated,
+        "every non-mod generated A64 source must be explicitly wired into arm_diff coverage"
+    );
+}
+
 fn generated_integer_dp_cases() -> Vec<(String, u32)> {
     let sources = [
         (
@@ -3016,6 +3113,338 @@ fn generated_memory_exclusive_store_cases() -> Vec<(String, u32)> {
         .into_iter()
         .map(|(insn, label)| (label, insn))
         .collect()
+}
+
+#[test]
+fn generated_a64_case_selectors_are_non_empty() {
+    let selectors = [
+        ("generated_integer_dp_cases", generated_integer_dp_cases().len()),
+        (
+            "generated_integer_address_pc_cases",
+            generated_integer_address_pc_cases().len(),
+        ),
+        (
+            "generated_integer_tag_addsub_cases",
+            generated_integer_tag_addsub_cases().len(),
+        ),
+        (
+            "generated_integer_pac_strip_cases",
+            generated_integer_pac_strip_cases().len(),
+        ),
+        (
+            "generated_branch_immediate_cases",
+            generated_branch_immediate_cases().len(),
+        ),
+        (
+            "generated_branch_register_cases",
+            generated_branch_register_cases().len(),
+        ),
+        ("generated_float_cases", generated_float_cases().len()),
+        (
+            "generated_vector_dotprod_cases",
+            generated_vector_dotprod_cases().len(),
+        ),
+        (
+            "generated_vector_scalar_cmp_zero_cases",
+            generated_vector_scalar_cmp_zero_cases().len(),
+        ),
+        (
+            "generated_vector_scalar_shift_imm_cases",
+            generated_vector_scalar_shift_imm_cases().len(),
+        ),
+        (
+            "generated_vector_scalar_fp16_pairwise_maxmin_cases",
+            generated_vector_scalar_fp16_pairwise_maxmin_cases().len(),
+        ),
+        (
+            "generated_vector_scalar_fp16_pairwise_add_cases",
+            generated_vector_scalar_fp16_pairwise_add_cases().len(),
+        ),
+        (
+            "generated_vector_float_narrow_cases",
+            generated_vector_float_narrow_cases().len(),
+        ),
+        (
+            "generated_vector_float_fused_cases",
+            generated_vector_float_fused_cases().len(),
+        ),
+        (
+            "generated_vector_float_frintts_cases",
+            generated_vector_float_frintts_cases().len(),
+        ),
+        (
+            "generated_vector_fmlal_three_same_cases",
+            generated_vector_fmlal_three_same_cases().len(),
+        ),
+        (
+            "generated_vector_recps_rsqrts_cases",
+            generated_vector_recps_rsqrts_cases().len(),
+        ),
+        (
+            "generated_vector_scalar_abs_neg_cases",
+            generated_vector_scalar_abs_neg_cases().len(),
+        ),
+        (
+            "generated_vector_compare_cases",
+            generated_vector_compare_cases().len(),
+        ),
+        ("generated_vector_mul_cases", generated_vector_mul_cases().len()),
+        (
+            "generated_vector_noncrypto_cases",
+            generated_vector_noncrypto_cases().len(),
+        ),
+        (
+            "generated_vector_crypto_cases",
+            generated_vector_crypto_cases().len(),
+        ),
+        (
+            "generated_sve_integer_immediate_arithmetic_cases",
+            generated_sve_integer_immediate_arithmetic_cases().len(),
+        ),
+        (
+            "generated_sve_integer_multiply_immediate_cases",
+            generated_sve_integer_multiply_immediate_cases().len(),
+        ),
+        (
+            "generated_sve_arithmetic_cases",
+            generated_sve_arithmetic_cases().len(),
+        ),
+        (
+            "generated_sve_logical_immediate_cases",
+            generated_sve_logical_immediate_cases().len(),
+        ),
+        ("generated_sve_logical_cases", generated_sve_logical_cases().len()),
+        (
+            "generated_sve_integer_compare_zw_cases",
+            generated_sve_integer_compare_zw_cases().len(),
+        ),
+        ("generated_sve_compare_cases", generated_sve_compare_cases().len()),
+        (
+            "generated_sve_predicate_cases",
+            generated_sve_predicate_cases().len(),
+        ),
+        ("generated_sve_scalar_cases", generated_sve_scalar_cases().len()),
+        ("generated_sve_other_cases", generated_sve_other_cases().len()),
+        ("generated_sve_prefetch_cases", generated_sve_prefetch_cases().len()),
+        (
+            "generated_sve_base_imm_memory_cases",
+            generated_sve_base_imm_memory_cases().len(),
+        ),
+        (
+            "generated_sve_contiguous_base_imm_memory_cases",
+            generated_sve_contiguous_base_imm_memory_cases().len(),
+        ),
+        (
+            "generated_sve_ldnf1_memory_cases",
+            generated_sve_ldnf1_memory_cases().len(),
+        ),
+        (
+            "generated_sve_replicate_memory_cases",
+            generated_sve_replicate_memory_cases().len(),
+        ),
+        (
+            "generated_sve_non_temporal_imm_memory_cases",
+            generated_sve_non_temporal_imm_memory_cases().len(),
+        ),
+        (
+            "generated_sve_non_temporal_reg_memory_cases",
+            generated_sve_non_temporal_reg_memory_cases().len(),
+        ),
+        (
+            "generated_sve_multi_reg_reg_memory_cases",
+            generated_sve_multi_reg_reg_memory_cases().len(),
+        ),
+        (
+            "generated_sve_ldst_reg_memory_cases",
+            generated_sve_ldst_reg_memory_cases().len(),
+        ),
+        (
+            "generated_sve_vector_offset_memory_cases",
+            generated_sve_vector_offset_memory_cases().len(),
+        ),
+        (
+            "generated_sve_vector_base_imm_memory_cases",
+            generated_sve_vector_base_imm_memory_cases().len(),
+        ),
+        (
+            "generated_sve_int_to_fp16_convert_cases",
+            generated_sve_int_to_fp16_convert_cases().len(),
+        ),
+        ("generated_sve_convert_cases", generated_sve_convert_cases().len()),
+        (
+            "generated_sve_fp_unpredicated_vector_arithmetic_cases",
+            generated_sve_fp_unpredicated_vector_arithmetic_cases().len(),
+        ),
+        (
+            "generated_sve_fp_immediate_arithmetic_cases",
+            generated_sve_fp_immediate_arithmetic_cases().len(),
+        ),
+        (
+            "generated_sve_fp_immediate_minmax_cases",
+            generated_sve_fp_immediate_minmax_cases().len(),
+        ),
+        (
+            "generated_sve_fp_abs_compare_cases",
+            generated_sve_fp_abs_compare_cases().len(),
+        ),
+        (
+            "generated_sve_fp_estimate_cases",
+            generated_sve_fp_estimate_cases().len(),
+        ),
+        ("generated_sve_fcvt_d2h_cases", generated_sve_fcvt_d2h_cases().len()),
+        ("generated_sve_fscale_cases", generated_sve_fscale_cases().len()),
+        ("generated_sve_ftsmul_cases", generated_sve_ftsmul_cases().len()),
+        ("generated_sve_ftmad_cases", generated_sve_ftmad_cases().len()),
+        ("generated_sve_float_cases", generated_sve_float_cases().len()),
+        (
+            "generated_sve_fp_compare_zero_cases",
+            generated_sve_fp_compare_zero_cases().len(),
+        ),
+        (
+            "generated_system_hints_udf_cases",
+            generated_system_hints_udf_cases().len(),
+        ),
+        (
+            "generated_system_exception_cases",
+            generated_system_exception_cases().len(),
+        ),
+        (
+            "generated_system_barrier_cases",
+            generated_system_barrier_cases().len(),
+        ),
+        (
+            "generated_system_monitor_cases",
+            generated_system_monitor_cases().len(),
+        ),
+        (
+            "generated_system_sysop_el0_trap_cases",
+            generated_system_sysop_el0_trap_cases().len(),
+        ),
+        (
+            "generated_system_debug_mrs_el0_trap_cases",
+            generated_system_debug_mrs_el0_trap_cases().len(),
+        ),
+        (
+            "generated_system_debug_msr_el0_trap_cases",
+            generated_system_debug_msr_el0_trap_cases().len(),
+        ),
+        (
+            "generated_system_privileged_msr_el0_trap_cases",
+            generated_system_privileged_msr_el0_trap_cases().len(),
+        ),
+        (
+            "generated_system_cpsr_el0_cases",
+            generated_system_cpsr_el0_cases().len(),
+        ),
+        (
+            "generated_memory_single_cases",
+            generated_memory_single_cases().len(),
+        ),
+        ("generated_memory_pair_cases", generated_memory_pair_cases().len()),
+        (
+            "generated_memory_atomic_cases",
+            generated_memory_atomic_cases().len(),
+        ),
+        (
+            "generated_memory_ordered_cases",
+            generated_memory_ordered_cases().len(),
+        ),
+        (
+            "generated_memory_vector_cases",
+            generated_memory_vector_cases().len(),
+        ),
+        (
+            "generated_memory_literal_cases",
+            generated_memory_literal_cases().len(),
+        ),
+        (
+            "generated_memory_exclusive_load_cases",
+            generated_memory_exclusive_load_cases().len(),
+        ),
+        (
+            "generated_memory_exclusive_store_cases",
+            generated_memory_exclusive_store_cases().len(),
+        ),
+    ];
+    let expected = [
+        ("generated_integer_dp_cases", 776),
+        ("generated_integer_address_pc_cases", 10),
+        ("generated_integer_tag_addsub_cases", 34),
+        ("generated_integer_pac_strip_cases", 11),
+        ("generated_branch_immediate_cases", 4),
+        ("generated_branch_register_cases", 4),
+        ("generated_float_cases", 294),
+        ("generated_vector_dotprod_cases", 24),
+        ("generated_vector_scalar_cmp_zero_cases", 30),
+        ("generated_vector_scalar_shift_imm_cases", 105),
+        ("generated_vector_scalar_fp16_pairwise_maxmin_cases", 26),
+        ("generated_vector_scalar_fp16_pairwise_add_cases", 12),
+        ("generated_vector_float_narrow_cases", 28),
+        ("generated_vector_float_fused_cases", 22),
+        ("generated_vector_float_frintts_cases", 16),
+        ("generated_vector_fmlal_three_same_cases", 46),
+        ("generated_vector_recps_rsqrts_cases", 80),
+        ("generated_vector_scalar_abs_neg_cases", 15),
+        ("generated_vector_compare_cases", 341),
+        ("generated_vector_mul_cases", 1078),
+        ("generated_vector_noncrypto_cases", 4001),
+        ("generated_vector_crypto_cases", 457),
+        ("generated_sve_integer_immediate_arithmetic_cases", 78),
+        ("generated_sve_integer_multiply_immediate_cases", 24),
+        ("generated_sve_arithmetic_cases", 242),
+        ("generated_sve_logical_immediate_cases", 84),
+        ("generated_sve_logical_cases", 305),
+        ("generated_sve_integer_compare_zw_cases", 130),
+        ("generated_sve_compare_cases", 659),
+        ("generated_sve_predicate_cases", 380),
+        ("generated_sve_scalar_cases", 980),
+        ("generated_sve_other_cases", 1643),
+        ("generated_sve_prefetch_cases", 444),
+        ("generated_sve_base_imm_memory_cases", 48),
+        ("generated_sve_contiguous_base_imm_memory_cases", 552),
+        ("generated_sve_ldnf1_memory_cases", 160),
+        ("generated_sve_replicate_memory_cases", 288),
+        ("generated_sve_non_temporal_imm_memory_cases", 80),
+        ("generated_sve_non_temporal_reg_memory_cases", 64),
+        ("generated_sve_multi_reg_reg_memory_cases", 192),
+        ("generated_sve_ldst_reg_memory_cases", 280),
+        ("generated_sve_vector_offset_memory_cases", 965),
+        ("generated_sve_vector_base_imm_memory_cases", 496),
+        ("generated_sve_int_to_fp16_convert_cases", 32),
+        ("generated_sve_convert_cases", 112),
+        ("generated_sve_fp_unpredicated_vector_arithmetic_cases", 9),
+        ("generated_sve_fp_immediate_arithmetic_cases", 12),
+        ("generated_sve_fp_immediate_minmax_cases", 12),
+        ("generated_sve_fp_abs_compare_cases", 3),
+        ("generated_sve_fp_estimate_cases", 6),
+        ("generated_sve_fcvt_d2h_cases", 9),
+        ("generated_sve_fscale_cases", 3),
+        ("generated_sve_ftsmul_cases", 3),
+        ("generated_sve_ftmad_cases", 6),
+        ("generated_sve_float_cases", 990),
+        ("generated_sve_fp_compare_zero_cases", 66),
+        ("generated_system_hints_udf_cases", 33),
+        ("generated_system_exception_cases", 126),
+        ("generated_system_barrier_cases", 7),
+        ("generated_system_monitor_cases", 4),
+        ("generated_system_sysop_el0_trap_cases", 15),
+        ("generated_system_debug_mrs_el0_trap_cases", 1),
+        ("generated_system_debug_msr_el0_trap_cases", 11),
+        ("generated_system_privileged_msr_el0_trap_cases", 3),
+        ("generated_system_cpsr_el0_cases", 6),
+        ("generated_memory_single_cases", 222),
+        ("generated_memory_pair_cases", 141),
+        ("generated_memory_atomic_cases", 12),
+        ("generated_memory_ordered_cases", 46),
+        ("generated_memory_vector_cases", 98),
+        ("generated_memory_literal_cases", 24),
+        ("generated_memory_exclusive_load_cases", 1),
+        ("generated_memory_exclusive_store_cases", 27),
+    ];
+    assert_eq!(
+        selectors, expected,
+        "review generated A64 selector coverage whenever selected encoding counts change"
+    );
 }
 
 fn memory_single_in_scratch_window(insn: u32, fields: &std::collections::BTreeMap<String, i32>) -> bool {
@@ -48419,6 +48848,20 @@ fn diff_sve2_comprehensive_sweep() {
 // encoding space (tests/neon_gen.rs). Asserts zero divergence vs the oracle.
 // ===========================================================================
 include!("neon_gen.rs");
+
+#[test]
+fn comprehensive_generated_sweeps_have_expected_size() {
+    assert_eq!(
+        SVE2_SWEEP.len(),
+        879,
+        "review SVE2 comprehensive sweep coverage whenever the generated table changes"
+    );
+    assert_eq!(
+        NEON_SWEEP.len(),
+        3939,
+        "review NEON/VFP/FP16 comprehensive sweep coverage whenever the generated table changes"
+    );
+}
 
 #[test]
 fn diff_neon_comprehensive_sweep() {
