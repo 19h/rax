@@ -3574,7 +3574,18 @@ impl AArch64Cpu {
             let (b_re, b_im) = (elem(op2, re), elem(op2, im));
             let (r_re, r_im) = if is_fcmla {
                 let rot = (insn >> 11) & 0x3;
-                let (d_re, d_im) = (elem(op3, re), elem(op3, im));
+                let (a_re, a_im) = (
+                    fp_flush_input_bits_with_fpcr(a_re, esize, self.fpcr),
+                    fp_flush_input_bits_with_fpcr(a_im, esize, self.fpcr),
+                );
+                let (b_re, b_im) = (
+                    fp_flush_input_bits_with_fpcr(b_re, esize, self.fpcr),
+                    fp_flush_input_bits_with_fpcr(b_im, esize, self.fpcr),
+                );
+                let (d_re, d_im) = (
+                    fp_flush_input_bits_with_fpcr(elem(op3, re), esize, self.fpcr),
+                    fp_flush_input_bits_with_fpcr(elem(op3, im), esize, self.fpcr),
+                );
                 // result_re += x_re * y_re; result_im += x_im * y_im.
                 let (xr, yr, xi, yi) = match rot {
                     0b00 => (a_re, b_re, a_re, b_im),
@@ -3605,8 +3616,10 @@ impl AArch64Cpu {
                 let r_re = fp_add_bits_with_fpcr(a_re, add_re, esize, self.fpcr);
                 let r_im = fp_add_bits_with_fpcr(a_im, add_im, esize, self.fpcr);
                 let es = (esize / 8) as usize;
-                self.fpsr |= fp_status_binop(es, FpKind::Add, a_re, add_re, r_re);
-                self.fpsr |= fp_status_binop(es, FpKind::Add, a_im, add_im, r_im);
+                self.fpsr |=
+                    fp_status_binop_with_fpcr(es, FpKind::Add, a_re, add_re, r_re, self.fpcr);
+                self.fpsr |=
+                    fp_status_binop_with_fpcr(es, FpKind::Add, a_im, add_im, r_im, self.fpcr);
                 (r_re, r_im)
             };
             result |= (r_re as u128 & mask) << (re * esize as usize);
@@ -12690,19 +12703,19 @@ impl AArch64Cpu {
                 if (pred >> off) & 1 == 0 {
                     continue;
                 }
-                let mut n = read_elem(&nb, off, esz);
-                if neg_prod {
-                    n = fp_neg_bits_with_fpcr(n, ebits, self.fpcr);
-                }
                 let mut a = read_elem(&ab, off, esz);
-                if neg_add {
-                    a = fp_neg_bits_with_fpcr(a, ebits, self.fpcr);
-                }
+                let mut n = read_elem(&nb, off, esz);
                 let mut m = read_elem(&mb, off, esz);
-                if op3 == 0 {
+                if matches!(op3, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7) {
                     n = fp_flush_input_bits_with_fpcr(n, ebits, self.fpcr);
                     m = fp_flush_input_bits_with_fpcr(m, ebits, self.fpcr);
                     a = fp_flush_input_bits_with_fpcr(a, ebits, self.fpcr);
+                }
+                if neg_prod {
+                    n = fp_neg_bits_with_fpcr(n, ebits, self.fpcr);
+                }
+                if neg_add {
+                    a = fp_neg_bits_with_fpcr(a, ebits, self.fpcr);
                 }
                 let r = fp_muladd_bits_with_fpcr(a, n, m, ebits, self.fpcr);
                 let status = fp_status_fma(esz, a, n, m, r);
