@@ -30136,6 +30136,46 @@ fn diff_crypto_aes() {
     run_family("crypto_aes", cases, 40, 0x1_0009);
 }
 
+#[test]
+fn diff_crypto_aes_edges() {
+    let ops: &[(u32, &str)] = &[
+        (0b00100, "aese"),
+        (0b00101, "aesd"),
+        (0b00110, "aesmc"),
+        (0b00111, "aesimc"),
+    ];
+    let patterns: &[(&str, (u64, u64), (u64, u64))] = &[
+        ("zero", (0, 0), (0, 0)),
+        (
+            "ones",
+            (u64::MAX, u64::MAX),
+            (u64::MAX, u64::MAX),
+        ),
+        (
+            "ascending",
+            (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+            (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+        ),
+        (
+            "high_bits",
+            (0x8040_2010_0804_0201, 0x0180_4020_1008_0402),
+            (0x7fbf_dfef_f7fb_fdfe, 0xfe7f_bfdf_eff7_fbfd),
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for &(opcode, name) in ops {
+        for &(pattern, rd, rn) in patterns {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RD as usize, rd.0, rd.1);
+            st.set_vreg(RN as usize, rn.0, rn.1);
+            batch.push((format!("{name}_{pattern}"), enc_aes(opcode), st));
+        }
+    }
+
+    run_batch("crypto_aes_edges", batch);
+}
+
 /// Three-register SHA: `0101 1110 000 Rm 0 opcode 00 Rn Rd`.
 fn enc_sha3(opcode: u32) -> u32 {
     0x5E00_0000 | (RM << 16) | (opcode << 12) | (RN << 5) | RD
@@ -30172,6 +30212,70 @@ fn diff_crypto_sha() {
     run_family("crypto_sha", cases, 40, 0x1_000D);
 }
 
+#[test]
+fn diff_crypto_sha_edges() {
+    let mut ops: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in &[
+        (0b000u32, "sha1c"),
+        (0b001, "sha1p"),
+        (0b010, "sha1m"),
+        (0b011, "sha1su0"),
+        (0b100, "sha256h"),
+        (0b101, "sha256h2"),
+        (0b110, "sha256su1"),
+    ] {
+        ops.push((name.to_string(), enc_sha3(opcode)));
+    }
+    for &(opcode, name) in &[
+        (0b00000u32, "sha1h"),
+        (0b00001, "sha1su1"),
+        (0b00010, "sha256su0"),
+    ] {
+        ops.push((name.to_string(), enc_sha2(opcode)));
+    }
+
+    let patterns: &[(&str, [(u64, u64); 3])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0)]),
+        (
+            "ones",
+            [
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ],
+        ),
+        (
+            "words",
+            [
+                (0x6745_2301_efcd_ab89, 0x98ba_dcfe_1032_5476),
+                (0x7654_3210_fedc_ba98, 0x89ab_cdef_0123_4567),
+                (0xf0f0_0f0f_55aa_aa55, 0x0f0f_f0f0_aa55_55aa),
+            ],
+        ),
+        (
+            "carry",
+            [
+                (0xffff_ffff_0000_0001, 0x8000_0000_7fff_ffff),
+                (0x0000_0001_ffff_ffff, 0x7fff_ffff_8000_0000),
+                (0x89ab_cdef_0123_4567, 0x7654_3210_fedc_ba98),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in ops {
+        for &(pattern, regs) in patterns {
+            let mut st = ArmState::zeroed();
+            for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+            }
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("crypto_sha_edges", batch);
+}
+
 fn enc_xar(imm6: u32) -> u32 {
     0xce82_0020 | ((imm6 & 0x3f) << 10)
 }
@@ -30191,6 +30295,66 @@ fn diff_crypto_sha512_sha3() {
         cases.push((format!("xar #{imm}"), enc_xar(imm)));
     }
     run_family("crypto_sha512_sha3", cases, 40, 0x1_0021);
+}
+
+#[test]
+fn diff_crypto_sha512_sha3_edges() {
+    let mut ops: Vec<(String, u32)> = vec![
+        ("sha512h".to_string(), 0xce62_8020),
+        ("sha512h2".to_string(), 0xce62_8420),
+        ("sha512su0".to_string(), 0xcec0_8020),
+        ("sha512su1".to_string(), 0xce62_8820),
+        ("sha3_rax1".to_string(), 0xce62_8c20),
+        ("eor3".to_string(), 0xce02_0c20),
+        ("bcax".to_string(), 0xce22_0c20),
+    ];
+    for imm in [0u32, 1, 31, 32, 63] {
+        ops.push((format!("xar #{imm}"), enc_xar(imm)));
+    }
+
+    let patterns: &[(&str, [(u64, u64); 4])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0), (0, 0)]),
+        (
+            "ones",
+            [
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ],
+        ),
+        (
+            "alternating",
+            [
+                (0x5555_5555_5555_5555, 0xaaaa_aaaa_aaaa_aaaa),
+                (0xaaaa_aaaa_aaaa_aaaa, 0x5555_5555_5555_5555),
+                (0x3333_3333_3333_3333, 0xcccc_cccc_cccc_cccc),
+                (0xcccc_cccc_cccc_cccc, 0x3333_3333_3333_3333),
+            ],
+        ),
+        (
+            "carry_rotate",
+            [
+                (0x8000_0000_0000_0000, 0x0000_0000_0000_0001),
+                (0x7fff_ffff_ffff_ffff, 0xffff_ffff_ffff_fffe),
+                (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+                (0x0f0f_f0f0_00ff_ff00, 0xf0f0_0f0f_ff00_00ff),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in ops {
+        for &(pattern, regs) in patterns {
+            let mut st = ArmState::zeroed();
+            for (idx, reg) in [RD, RN, RM, 3].iter().copied().enumerate() {
+                st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+            }
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("crypto_sha512_sha3_edges", batch);
 }
 
 /// SM4E Vd.4S, Vn.4S: `11001110 11000000 100001 Rn Rd`. Rd=v0, Rn=v1.
