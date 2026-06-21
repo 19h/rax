@@ -25515,6 +25515,56 @@ fn diff_addsub_shifted_rd31_preserves_sp() {
     run_batch("addsub_shifted_rd31_preserves_sp", batch);
 }
 
+#[test]
+fn diff_addsub_shifted_edge_patterns() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_zero", 0, 0),
+        ("zero_one", 0, 1),
+        ("ones_one", u64::MAX, 1),
+        ("sign_max_one", 0x7fff_ffff_ffff_ffff, 1),
+        ("sign_min_neg1", 0x8000_0000_0000_0000, u64::MAX),
+        ("alternating", 0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_7fff_ffff),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        let shifts: &[u32] = if sf == 0 {
+            &[0, 1, 15, 31]
+        } else {
+            &[0, 1, 31, 32, 63]
+        };
+        for op in 0..=1 {
+            for s in 0..=1 {
+                let opname = match (op, s) {
+                    (0, 0) => "add",
+                    (0, 1) => "adds",
+                    (1, 0) => "sub",
+                    _ => "subs",
+                };
+                for shift in 0..=2 {
+                    for &imm6 in shifts {
+                        for &(pattern, rn, rm) in patterns {
+                            let mut st = ArmState::zeroed();
+                            st.x[RN as usize] = rn;
+                            st.x[RM as usize] = rm;
+                            st.x[RD as usize] = 0xdead_beef_dead_beef;
+                            st.pstate = 0b0110u64 << 28;
+                            batch.push((
+                                format!("{opname}_sf{sf}_shift{shift}_imm{imm6}_{pattern}"),
+                                enc_addsub_shift(sf, op, s, shift, imm6),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("addsub_shifted_edge_patterns", batch);
+}
+
 fn enc_addsub_imm_plain(
     sf: u32,
     op: u32,
@@ -25634,6 +25684,55 @@ fn diff_addsub_ext_sp_source_dest() {
 #[test]
 fn diff_dp_logical_shifted() {
     run_family("dp_logical_shifted", logical_shift_cases(), 2, 0x1002);
+}
+
+#[test]
+fn diff_logical_shifted_edge_patterns() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_zero", 0, 0),
+        ("ones_zero", u64::MAX, 0),
+        ("zero_ones", 0, u64::MAX),
+        ("sign_bits", 0x8000_0000_0000_0001, 0x7fff_ffff_ffff_fffe),
+        ("alternating", 0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ("upper_noise", 0xffff_ffff_0000_0001, 0xffff_ffff_8000_0000),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        let shifts: &[u32] = if sf == 0 {
+            &[0, 1, 15, 31]
+        } else {
+            &[0, 1, 31, 32, 63]
+        };
+        for opc in 0..=3 {
+            let opname = match opc {
+                0 => "and",
+                1 => "orr",
+                2 => "eor",
+                _ => "ands",
+            };
+            for n in 0..=1 {
+                for shift in 0..=3 {
+                    for &imm6 in shifts {
+                        for &(pattern, rn, rm) in patterns {
+                            let mut st = ArmState::zeroed();
+                            st.x[RN as usize] = rn;
+                            st.x[RM as usize] = rm;
+                            st.x[RD as usize] = 0xdead_beef_dead_beef;
+                            st.pstate = 0b1010u64 << 28;
+                            batch.push((
+                                format!("{opname}_sf{sf}_n{n}_shift{shift}_imm{imm6}_{pattern}"),
+                                enc_logical_shift(sf, opc, shift, n, imm6),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("logical_shifted_edge_patterns", batch);
 }
 
 #[test]
@@ -26170,6 +26269,40 @@ fn diff_move_wide_rd31_preserves_sp() {
 }
 
 #[test]
+fn diff_move_wide_edge_patterns() {
+    let imm16s = [0x0000u32, 0x0001, 0x7fff, 0x8000, 0xffff];
+    let initial_values = [
+        ("zero", 0),
+        ("ones", u64::MAX),
+        ("byte_ramp", 0x0123_4567_89ab_cdef),
+        ("upper_noise", 0xffff_ffff_8000_0001),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        let hws: &[u32] = if sf == 0 { &[0, 1] } else { &[0, 1, 2, 3] };
+        for (opc, opname) in [(0b00u32, "movn"), (0b10, "movz"), (0b11, "movk")] {
+            for &hw in hws {
+                for &imm16 in &imm16s {
+                    for &(pattern, initial) in &initial_values {
+                        let mut st = ArmState::zeroed();
+                        st.x[RD as usize] = initial;
+                        st.pstate = 0b1010u64 << 28;
+                        batch.push((
+                            format!("{opname}_sf{sf}_hw{hw}_imm{imm16:x}_{pattern}"),
+                            enc_mov_wide_plain(sf, opc, hw, imm16, RD),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("move_wide_edge_patterns", batch);
+}
+
+#[test]
 fn diff_bitfield_zero_registers() {
     fn enc_bitfield_plain(sf: u32, opc: u32, immr: u32, imms: u32, rn: u32, rd: u32) -> u32 {
         (sf << 31)
@@ -26262,6 +26395,83 @@ fn diff_extract_zero_registers() {
 }
 
 #[test]
+fn diff_bitfield_extract_edge_patterns() {
+    fn enc_bitfield_plain(sf: u32, opc: u32, immr: u32, imms: u32, rn: u32, rd: u32) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100110 << 23)
+            | (sf << 22)
+            | ((immr & 0x3f) << 16)
+            | ((imms & 0x3f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    fn enc_extract_plain(sf: u32, rn: u32, rm: u32, lsb: u32, rd: u32) -> u32 {
+        (sf << 31)
+            | (0b100111 << 23)
+            | (sf << 22)
+            | ((rm & 0x1f) << 16)
+            | ((lsb & 0x3f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_zero", 0, 0),
+        ("ones_zero", u64::MAX, 0),
+        ("sign_bits", 0x8000_0000_0000_0001, 0x7fff_ffff_ffff_fffe),
+        ("alternating", 0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_7fff_ffff),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        let width = if sf == 0 { 32 } else { 64 };
+        let imm_pairs = [
+            (0, 0),
+            (0, width - 1),
+            (1, 0),
+            (width - 1, 0),
+            (width - 1, width - 1),
+            (width / 2, (width / 2) - 1),
+        ];
+        for (opc, opname) in [(0b00u32, "sbfm"), (0b01, "bfm"), (0b10, "ubfm")] {
+            for &(immr, imms) in &imm_pairs {
+                for &(pattern, rn, _rm) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = rn;
+                    st.x[RD as usize] = 0xdead_beef_dead_beef;
+                    st.pstate = 0b1010u64 << 28;
+                    batch.push((
+                        format!("{opname}_sf{sf}_immr{immr}_imms{imms}_{pattern}"),
+                        enc_bitfield_plain(sf, opc, immr, imms, RN, RD),
+                        st,
+                    ));
+                }
+            }
+        }
+
+        for lsb in [0, 1, (width / 2) - 1, width / 2, width - 1] {
+            for &(pattern, rn, rm) in patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = rn;
+                st.x[RM as usize] = rm;
+                st.x[RD as usize] = 0xdead_beef_dead_beef;
+                st.pstate = 0b0101u64 << 28;
+                batch.push((
+                    format!("extr_sf{sf}_lsb{lsb}_{pattern}"),
+                    enc_extract_plain(sf, RN, RM, lsb, RD),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("bitfield_extract_edge_patterns", batch);
+}
+
+#[test]
 fn diff_csel_zero_registers() {
     fn enc_csel_plain(
         sf: u32,
@@ -26318,6 +26528,65 @@ fn diff_csel_zero_registers() {
 }
 
 #[test]
+fn diff_csel_edge_patterns() {
+    fn enc_csel_plain(
+        sf: u32,
+        op: u32,
+        op2: u32,
+        rn: u32,
+        rm: u32,
+        cond: u32,
+        rd: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (0b11010100 << 21)
+            | ((rm & 0x1f) << 16)
+            | ((cond & 0xf) << 12)
+            | ((op2 & 0x3) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_one", 0, 1),
+        ("ones_zero", u64::MAX, 0),
+        ("sign_bits", 0x8000_0000_0000_0001, 0x7fff_ffff_ffff_fffe),
+        ("alternating", 0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+        ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_7fff_ffff),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for (op, op2, opname) in [
+            (0u32, 0u32, "csel"),
+            (0, 1, "csinc"),
+            (1, 0, "csinv"),
+            (1, 1, "csneg"),
+        ] {
+            for cond in 0..16u32 {
+                for nzcv in 0..16u64 {
+                    for &(pattern, rn, rm) in patterns {
+                        let mut st = ArmState::zeroed();
+                        st.x[RN as usize] = rn;
+                        st.x[RM as usize] = rm;
+                        st.x[RD as usize] = 0xdead_beef_dead_beef;
+                        st.pstate = nzcv << 28;
+                        batch.push((
+                            format!("{opname}_sf{sf}_cond{cond:x}_nzcv{nzcv:x}_{pattern}"),
+                            enc_csel_plain(sf, op, op2, RN, RM, cond, RD),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("csel_edge_patterns", batch);
+}
+
+#[test]
 fn diff_addsub_carry_zero_registers() {
     fn enc_addsub_carry_plain(sf: u32, op: u32, s: u32, rd: u32, rn: u32, rm: u32) -> u32 {
         (sf << 31)
@@ -26358,6 +26627,72 @@ fn diff_addsub_carry_zero_registers() {
         }
     }
     run_batch("addsub_carry_zero_registers", batch);
+}
+
+#[test]
+fn diff_addsub_carry_flag_edges() {
+    fn enc_addsub_carry_plain(sf: u32, op: u32, s: u32, rd: u32, rn: u32, rm: u32) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b11010000 << 21)
+            | ((rm & 0x1f) << 16)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+    for sf in 0..=1 {
+        let sign_bit = if sf == 0 {
+            0x8000_0000
+        } else {
+            0x8000_0000_0000_0000
+        };
+        let low_mask = if sf == 0 {
+            0xffff_ffff
+        } else {
+            u64::MAX
+        };
+        let patterns = [
+            ("zero_zero", 0, 0),
+            ("zero_one", 0, 1),
+            ("max_one", low_mask, 1),
+            ("sign_max_one", sign_bit - 1, 1),
+            ("sign_min_neg1", sign_bit, low_mask),
+            (
+                "upper_noise",
+                0xffff_ffff_8000_0001,
+                0xffff_ffff_7fff_ffff,
+            ),
+        ];
+
+        for op in 0..=1 {
+            for s in 0..=1 {
+                let opname = match (op, s) {
+                    (0, 0) => "adc",
+                    (0, 1) => "adcs",
+                    (1, 0) => "sbc",
+                    _ => "sbcs",
+                };
+                for nzcv in 0..16u64 {
+                    for &(pattern, rn, rm) in &patterns {
+                        let mut st = ArmState::zeroed();
+                        st.x[RN as usize] = rn;
+                        st.x[RM as usize] = rm;
+                        st.x[RD as usize] = 0xdead_beef_dead_beef;
+                        st.pstate = nzcv << 28;
+                        batch.push((
+                            format!("{opname}_sf{sf}_nzcv{nzcv:x}_{pattern}"),
+                            enc_addsub_carry_plain(sf, op, s, RD, RN, RM),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("addsub_carry_flag_edges", batch);
 }
 
 #[test]
@@ -26428,6 +26763,85 @@ fn diff_condcmp_zero_registers() {
         }
     }
     run_batch("condcmp_zero_registers", batch);
+}
+
+#[test]
+fn diff_condcmp_flag_edges() {
+    fn enc_condcmp_plain(
+        sf: u32,
+        op: u32,
+        imm: bool,
+        rm_imm5: u32,
+        cond: u32,
+        nzcv: u32,
+        rn: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (op << 30)
+            | (0b111010010 << 21)
+            | ((rm_imm5 & 0x1f) << 16)
+            | ((cond & 0xf) << 12)
+            | ((imm as u32) << 11)
+            | ((rn & 0x1f) << 5)
+            | (nzcv & 0xf)
+    }
+
+    let mut batch = Vec::new();
+    for sf in 0..=1 {
+        let sign_bit = if sf == 0 {
+            0x8000_0000
+        } else {
+            0x8000_0000_0000_0000
+        };
+        let low_mask = if sf == 0 {
+            0xffff_ffff
+        } else {
+            u64::MAX
+        };
+        let patterns = [
+            ("equal_zero", 0, 0, 0),
+            ("rn_less", 1, 2, 2),
+            ("rn_greater", 2, 1, 1),
+            ("sign_min_vs_neg1", sign_bit, low_mask, 31),
+        ];
+
+        for op in 0..=1 {
+            let opname = if op == 0 { "ccmn" } else { "ccmp" };
+            for imm in [false, true] {
+                for cond in 0..16u32 {
+                    for fallback_nzcv in [0u32, 0b0010, 0b0110, 0b1111] {
+                        for live_nzcv in [0u64, 0b0010, 0b0100, 0b1010, 0b1111] {
+                            for &(pattern, rn_value, rm_value, imm5) in &patterns {
+                                let mut st = ArmState::zeroed();
+                                st.x[RN as usize] = rn_value;
+                                st.x[RM as usize] = rm_value;
+                                st.pstate = live_nzcv << 28;
+                                let rm_imm5 = if imm { imm5 } else { RM };
+                                batch.push((
+                                    format!(
+                                        "{opname}_sf{sf}_imm{}_cond{cond:x}_fallback{fallback_nzcv:x}_live{live_nzcv:x}_{pattern}",
+                                        imm as u8
+                                    ),
+                                    enc_condcmp_plain(
+                                        sf,
+                                        op,
+                                        imm,
+                                        rm_imm5,
+                                        cond,
+                                        fallback_nzcv,
+                                        RN,
+                                    ),
+                                    st,
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("condcmp_flag_edges", batch);
 }
 
 #[test]
@@ -26525,6 +26939,66 @@ fn diff_dp2_zero_registers() {
 }
 
 #[test]
+fn diff_dp2_arithmetic_edges() {
+    let ops: &[(u32, &str)] = &[
+        (0b0010, "udiv"),
+        (0b0011, "sdiv"),
+        (0b1000, "lslv"),
+        (0b1001, "lsrv"),
+        (0b1010, "asrv"),
+        (0b1011, "rorv"),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        let width = if sf == 0 { 32 } else { 64 };
+        let sign_bit = if sf == 0 {
+            0x8000_0000
+        } else {
+            0x8000_0000_0000_0000
+        };
+        let low_mask = if sf == 0 {
+            0xffff_ffff
+        } else {
+            u64::MAX
+        };
+        let patterns = [
+            ("zero_zero", 0, 0),
+            ("one_zero", 1, 0),
+            ("one_one", 1, 1),
+            ("sign_min_neg1", sign_bit, low_mask),
+            ("sign_min_one", sign_bit, 1),
+            ("max_width_minus1", low_mask, width - 1),
+            ("max_width", low_mask, width),
+            ("max_width_plus1", low_mask, width + 1),
+            ("byte_ramp_large_shift", 0x0123_4567_89ab_cdef, 255),
+            (
+                "upper_noise",
+                0xffff_ffff_8000_0001,
+                0xffff_ffff_0000_001f,
+            ),
+        ];
+
+        for &(opcode, opname) in ops {
+            for &(pattern, rn, rm) in &patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = rn;
+                st.x[RM as usize] = rm;
+                st.x[RD as usize] = 0xdead_beef_dead_beef;
+                st.pstate = 0b1010u64 << 28;
+                batch.push((
+                    format!("{opname}_sf{sf}_{pattern}"),
+                    enc_dp2(sf, opcode),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("dp2_arithmetic_edges", batch);
+}
+
+#[test]
 fn diff_crc_zero_registers() {
     let mut rng = Rng::new(0x1_0074);
     let mut batch = Vec::new();
@@ -26608,6 +27082,65 @@ fn diff_dp3_zero_registers() {
         }
     }
     run_batch("dp3_zero_registers", batch);
+}
+
+#[test]
+fn diff_dp3_multiply_edges() {
+    let ops: &[(u32, u32, u32, u32, &str)] = &[
+        (0, 0b000, 0, RA, "madd_w"),
+        (0, 0b000, 1, RA, "msub_w"),
+        (1, 0b000, 0, RA, "madd_x"),
+        (1, 0b000, 1, RA, "msub_x"),
+        (1, 0b001, 0, RA, "smaddl"),
+        (1, 0b001, 1, RA, "smsubl"),
+        (1, 0b101, 0, RA, "umaddl"),
+        (1, 0b101, 1, RA, "umsubl"),
+        (1, 0b010, 0, 31, "smulh"),
+        (1, 0b110, 0, 31, "umulh"),
+    ];
+    let patterns: &[(&str, u64, u64, u64)] = &[
+        ("zero", 0, 0, 0),
+        ("one", 1, 1, 1),
+        ("w_all_ones", 0xffff_ffff, 0xffff_ffff, 0x0123_4567_89ab_cdef),
+        ("w_sign_min_neg1", 0x8000_0000, 0xffff_ffff, 0xfedc_ba98_7654_3210),
+        (
+            "x_sign_min_neg1",
+            0x8000_0000_0000_0000,
+            u64::MAX,
+            0x7fff_ffff_ffff_ffff,
+        ),
+        (
+            "x_high_bits",
+            0xffff_ffff_ffff_fffe,
+            0x8000_0000_0000_0001,
+            0x55aa_55aa_33cc_33cc,
+        ),
+        (
+            "byte_ramp",
+            0x0123_4567_89ab_cdef,
+            0xfedc_ba98_7654_3210,
+            0x0f0f_f0f0_55aa_aa55,
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for &(sf, op31, o0, ra, opname) in ops {
+        for &(pattern, rn, rm, acc) in patterns {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = rn;
+            st.x[RM as usize] = rm;
+            st.x[RA as usize] = acc;
+            st.x[RD as usize] = 0xdead_beef_dead_beef;
+            st.pstate = 0b0101u64 << 28;
+            batch.push((
+                format!("{opname}_{pattern}"),
+                enc_dp3_ra(sf, op31, o0, ra),
+                st,
+            ));
+        }
+    }
+
+    run_batch("dp3_multiply_edges", batch);
 }
 
 #[test]
