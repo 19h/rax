@@ -16026,8 +16026,7 @@ impl AArch64Cpu {
             }
             (0b0010, 0) => {
                 // RET
-                let lr = if rn == 31 { 30 } else { rn };
-                self.pc = self.get_x(lr);
+                self.pc = target;
             }
             (0b0100, 0) => {
                 // ERET
@@ -17692,7 +17691,6 @@ impl AArch64Cpu {
         // 0b001xxx are the "Z" forms (modifier 0, require Rn=11111), and
         // 0b0100xx are XPACI/XPACD (require Rn=11111).
         if sf == 1 && opcode2 == 0b00001 {
-            let strip = |v: u64| v & 0x007F_FFFF_FFFF_FFFF;
             match opcode {
                 // PACIA/IB/DA/DB, AUTIA/IB/DA/DB Xd, Xn|SP
                 0b000000..=0b000111 => {
@@ -17714,7 +17712,7 @@ impl AArch64Cpu {
                     if rn != 31 {
                         return Ok(CpuExit::Undefined(insn));
                     }
-                    let v = strip(self.get_x(rd));
+                    let v = strip_pac(self.get_x(rd), opcode & 1 != 0);
                     self.set_x(rd, v);
                     return Ok(CpuExit::Continue);
                 }
@@ -24291,6 +24289,24 @@ fn sve_pattern_count(pattern: u32, elements: usize) -> usize {
 /// [55:0]; the logical/physical tags above are ignored for SUBP/SUBPS).
 fn sign_extend_56(v: u64) -> u64 {
     ((v << 8) as i64 >> 8) as u64
+}
+
+/// Strip pointer authentication bits using the EL0 Linux layout exercised by
+/// the native oracle: 48-bit VA, top-byte-ignore for data pointers, and TBI for
+/// lower instruction addresses.
+fn strip_pac(v: u64, data: bool) -> u64 {
+    const LOW_MASK: u64 = 0x0000_FFFF_FFFF_FFFF;
+    const TOP_BYTE_MASK: u64 = 0xFF00_0000_0000_0000;
+    const PAC_BYTE_MASK: u64 = 0x00FF_0000_0000_0000;
+
+    let low = v & LOW_MASK;
+    let sign = if (v >> 55) & 1 != 0 { u64::MAX } else { 0 };
+    let tbi = data || (v >> 55) & 1 == 0;
+    if tbi {
+        (v & TOP_BYTE_MASK) | (sign & PAC_BYTE_MASK) | low
+    } else {
+        (sign & !LOW_MASK) | low
+    }
 }
 
 /// 64-bit subtract returning (result, N, Z, C, V).
