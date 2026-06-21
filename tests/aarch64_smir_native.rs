@@ -3752,6 +3752,345 @@ fn raw_el0_sve_count_index_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_predicate_count_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e060, // ptrue p0.s, vl3
+        0x2558_e081, // ptrue p1.h, vl4
+        0x25a0_8000, // cntp  x0, p0, p0.s
+        0x2560_8421, // cntp  x1, p1, p1.h
+        0x25ac_8802, // incp  x2, p0.s
+        0x256d_8823, // decp  x3, p1.h
+        0x25ac_8004, // incp  z4.s, p0.s
+        0x256d_8025, // decp  z5.h, p1.h
+        0x25a8_8c06, // sqincp x6, p0.s
+        0x256b_8827, // uqdecp w7, p1.h
+        0x25aa_8008, // sqdecp z8.s, p0.s
+        0x2569_8029, // uqincp z9.h, p1.h
+    ];
+    let pack_h = |xs: [u16; 8]| -> (u64, u64) {
+        let mut lo = 0u64;
+        let mut hi = 0u64;
+        for (i, &x) in xs.iter().enumerate() {
+            if i < 4 {
+                lo |= u64::from(x) << (16 * i);
+            } else {
+                hi |= u64::from(x) << (16 * (i - 4));
+            }
+        }
+        (lo, hi)
+    };
+    let pack_s = |a: u32, b: u32, c: u32, d: u32| -> (u64, u64) {
+        let lo = u64::from(a) | (u64::from(b) << 32);
+        let hi = u64::from(c) | (u64::from(d) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[2] = 100;
+        g.x[3] = 200;
+        g.x[6] = i64::MAX as u64 - 1;
+        g.x[7] = 2;
+        for (reg, (lo, hi)) in [
+            (4usize, pack_s(10, 20, 30, 40)),
+            (5, pack_h([100, 200, 300, 400, 500, 600, 700, 800])),
+            (8, pack_s(0x8000_0000, 1, 2, 3)),
+            (9, pack_h([0xfffe, 0xffff, 1, 2, 3, 4, 5, 6])),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in 0usize..=7 {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE predicate-count x{reg} mismatch"
+        );
+    }
+    for reg in [4usize, 5, 8, 9] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE predicate-count z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_predicate_logic_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2518_e3e0, // ptrue p0.b
+        0x2518_e101, // ptrue p1.b, vl8
+        0x2518_e082, // ptrue p2.b, vl4
+        0x2518_e043, // ptrue p3.b, vl2
+        0x2502_4024, // and   p4.b, p0/z, p1.b, p2.b
+        0x2583_4025, // orr   p5.b, p0/z, p1.b, p3.b
+        0x2503_4246, // eor   p6.b, p0/z, p2.b, p3.b
+        0x2503_4037, // bic   p7.b, p0/z, p1.b, p3.b
+        0x2582_4038, // orn   p8.b, p0/z, p1.b, p2.b
+        0x2583_4249, // nor   p9.b, p0/z, p2.b, p3.b
+        0x2582_423a, // nand  p10.b, p0/z, p1.b, p2.b
+        0x2542_402b, // ands  p11.b, p0/z, p1.b, p2.b
+        0x2503_465c, // sel   p12.b, p1, p2.b, p3.b
+        0x2520_8080, // cntp  x0, p0, p4.b
+        0x2520_80a1, // cntp  x1, p0, p5.b
+        0x2520_80c2, // cntp  x2, p0, p6.b
+        0x2520_80e3, // cntp  x3, p0, p7.b
+        0x2520_8104, // cntp  x4, p0, p8.b
+        0x2520_8125, // cntp  x5, p0, p9.b
+        0x2520_8146, // cntp  x6, p0, p10.b
+        0x2520_8167, // cntp  x7, p0, p11.b
+        0x2520_8188, // cntp  x8, p0, p12.b
+    ];
+
+    let hw = raw_native_run_fp(&insns, |_| {});
+    let interp = raw_interp_run(&insns, |_| {});
+    for reg in 0usize..=8 {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE predicate-logic x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE predicate-logic NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_sve_ffr_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2518_e0a0, // ptrue  p0.b, vl5
+        0x2518_e3e4, // ptrue  p4.b
+        0x2528_9000, // wrffr  p0.b
+        0x2519_f001, // rdffr  p1.b
+        0x2520_9020, // cntp   x0, p4, p1.b
+        0x252c_9000, // setffr
+        0x2519_f002, // rdffr  p2.b
+        0x2520_9041, // cntp   x1, p4, p2.b
+        0x2518_e103, // ptrue  p3.b, vl8
+        0x2518_f065, // rdffr  p5.b, p3/z
+        0x2520_90a2, // cntp   x2, p4, p5.b
+        0x2528_9000, // wrffr  p0.b
+        0x2558_f066, // rdffrs p6.b, p3/z
+        0x2520_90c3, // cntp   x3, p4, p6.b
+    ];
+
+    let hw = raw_native_run_fp(&insns, |_| {});
+    let interp = raw_interp_run(&insns, |_| {});
+    for reg in 0usize..=3 {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE FFR x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE FFR NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_sve_predicate_flag_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2518_e080, // ptrue  p0.b, vl4
+        0x2518_e041, // ptrue  p1.b, vl2
+        0x2550_c020, // ptest  p0, p1.b
+        0x9a9f_57e0, // cset   x0, mi
+        0x9a9f_17e1, // cset   x1, eq
+        0x9a9f_37e2, // cset   x2, hs
+        0x9a9f_77e3, // cset   x3, vs
+        0x2519_e062, // ptrues p2.b, vl3
+        0x9a9f_57e4, // cset   x4, mi
+        0x9a9f_17e5, // cset   x5, eq
+        0x9a9f_37e6, // cset   x6, hs
+        0x9a9f_77e7, // cset   x7, vs
+        0xeb0a_013f, // cmp    x9, x10
+        0x25ea_2120, // ctermeq x9, x10
+        0x9a9f_57e8, // cset   x8, mi
+        0x9a9f_17eb, // cset   x11, eq
+        0x9a9f_37ec, // cset   x12, hs
+        0x9a9f_77ed, // cset   x13, vs
+        0x25ea_2130, // ctermne x9, x10
+        0x9a9f_57ee, // cset   x14, mi
+        0x9a9f_17ef, // cset   x15, eq
+        0x9a9f_37f0, // cset   x16, hs
+        0x9a9f_77f1, // cset   x17, vs
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[9] = 5;
+        g.x[10] = 6;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [
+        0usize, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17,
+    ] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE predicate-flag x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE predicate-flag final NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_sve_predicate_break_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2518_e3e0, // ptrue  p0.b
+        0x2518_e0a1, // ptrue  p1.b, vl5
+        0x2518_e062, // ptrue  p2.b, vl3
+        0x2510_4023, // brka   p3.b, p0/z, p1.b
+        0x2590_4024, // brkb   p4.b, p0/z, p1.b
+        0x2550_4025, // brkas  p5.b, p0/z, p1.b
+        0x25d0_4026, // brkbs  p6.b, p0/z, p1.b
+        0x2582_4047, // orr    p7.b, p0/z, p2.b, p2.b
+        0x2518_4027, // brkn   p7.b, p0/z, p1.b, p7.b
+        0x2520_8060, // cntp   x0, p0, p3.b
+        0x2520_8081, // cntp   x1, p0, p4.b
+        0x2520_80a2, // cntp   x2, p0, p5.b
+        0x2520_80c3, // cntp   x3, p0, p6.b
+        0x2520_80e4, // cntp   x4, p0, p7.b
+        0x2582_4047, // orr    p7.b, p0/z, p2.b, p2.b
+        0x2558_4027, // brkns  p7.b, p0/z, p1.b, p7.b
+        0x2520_80e5, // cntp   x5, p0, p7.b
+        0x2502_c028, // brkpa  p8.b, p0/z, p1.b, p2.b
+        0x2502_c039, // brkpb  p9.b, p0/z, p1.b, p2.b
+        0x2520_8106, // cntp   x6, p0, p8.b
+        0x2520_8127, // cntp   x7, p0, p9.b
+        0x2518_e405, // pfalse p5.b
+        0x2558_c025, // pfirst p5.b, p1, p5.b
+        0x2519_c425, // pnext  p5.b, p1, p5.b
+        0x2520_80a8, // cntp   x8, p0, p5.b
+        0x2538_c00c, // mov    z12.b, #0
+        0x2538_c02d, // mov    z13.b, #1
+        0x0400_15ac, // add    z12.b, p5/m, z12.b, z13.b
+    ];
+
+    let hw = raw_native_run_fp(&insns, |_| {});
+    let interp = raw_interp_run(&insns, |_| {});
+    for reg in 0usize..=8 {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE predicate-break x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        (hw.v[24], hw.v[25]),
+        (interp.v[24], interp.v[25]),
+        "raw EL0 SVE predicate-break z12 low-128 mismatch"
+    );
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE predicate-break final NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_sve2_while_hazard_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2522_3030, // whilerw p0.b, x1, x2
+        0x9a9f_57ea, // cset    x10, mi
+        0x9a9f_17eb, // cset    x11, eq
+        0x9a9f_37ec, // cset    x12, hs
+        0x9a9f_77ed, // cset    x13, vs
+        0x2520_8000, // cntp    x0, p0, p0.b
+        0x2564_3061, // whilewr p1.h, x3, x4
+        0x9a9f_57ee, // cset    x14, mi
+        0x9a9f_17ef, // cset    x15, eq
+        0x9a9f_37f0, // cset    x16, hs
+        0x9a9f_77f1, // cset    x17, vs
+        0x2560_8425, // cntp    x5, p1, p1.h
+        0x25a7_30c2, // whilewr p2.s, x6, x7
+        0x9a9f_57f3, // cset    x19, mi
+        0x9a9f_17f4, // cset    x20, eq
+        0x9a9f_37f5, // cset    x21, hs
+        0x9a9f_77f6, // cset    x22, vs
+        0x25a0_8848, // cntp    x8, p2, p2.s
+        0x25f8_32f3, // whilerw p3.d, x23, x24
+        0x9a9f_57f7, // cset    x23, mi
+        0x9a9f_17f8, // cset    x24, eq
+        0x9a9f_37f9, // cset    x25, hs
+        0x9a9f_77fa, // cset    x26, vs
+        0x25e0_8c69, // cntp    x9, p3, p3.d
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[1] = 100;
+        g.x[2] = 104;
+        g.x[3] = 200;
+        g.x[4] = 206;
+        g.x[6] = 100;
+        g.x[7] = 50;
+        g.x[23] = 300;
+        g.x[24] = 300;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [
+        0usize, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23,
+        24, 25, 26,
+    ] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE2 WHILE hazard x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE2 WHILE hazard final NZCV mismatch"
+    );
+}
+
+#[test]
 fn raw_el0_sve_adr_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("sve") {
         eprintln!("[skip] host does not advertise SVE");
