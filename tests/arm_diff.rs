@@ -25905,7 +25905,7 @@ fn diff_dp1_dp2_dp3_encoding_sweep() {
 
     for sf in 0..=1 {
         for s in 0..=1 {
-            for opcode2 in [0, 1, 2, 31] {
+            for opcode2 in 0..32 {
                 if sf == 1 && s == 0 && opcode2 == 1 {
                     // PAuth values depend on EL1-managed keys; EL0 cannot make
                     // them a deterministic oracle. Reserved PAuth-space cases
@@ -26226,25 +26226,36 @@ fn diff_csel_zero_registers() {
             | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32, u64)] = &[
-        ("csel_x_xzr_true", enc_csel_plain(1, 0, 0, 31, 2, 0, 0), 0x4000_0000),
-        ("csel_x_xzr_false", enc_csel_plain(1, 0, 0, 1, 31, 0, 0), 0),
-        ("csinc_x_xzr_false", enc_csel_plain(1, 0, 1, 1, 31, 0, 0), 0),
-        ("csinv_w_wzr_false", enc_csel_plain(0, 1, 0, 1, 31, 0, 3), 0),
-        ("csneg_x_xzr_false", enc_csel_plain(1, 1, 1, 1, 31, 0, 4), 0),
-        ("csel_x_xzr_dest_true", enc_csel_plain(1, 0, 0, 1, 2, 0, 31), 0x4000_0000),
-        ("csinv_w_wzr_dest_false", enc_csel_plain(0, 1, 0, 1, 2, 0, 31), 0),
-    ];
     let mut rng = Rng::new(0x1_006e);
     let mut batch = Vec::new();
-    for (label, insn, pstate) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x7000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = rng.next();
-            st.pstate = *pstate;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for op2 in 0..=1 {
+                for cond in 0..16 {
+                    for nzcv in 0..16 {
+                        for (label, rn, rm, rd) in [
+                            ("rn_xzr", 31u32, 2u32, 0u32),
+                            ("rm_xzr", 1, 31, 0),
+                            ("rn_rm_xzr", 31, 31, 0),
+                            ("rd_xzr", 1, 2, 31),
+                            ("all_xzr", 31, 31, 31),
+                        ] {
+                            let mut st = gen_input(&mut rng);
+                            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x7000;
+                            st.x[1] = 0x0123_4567_89ab_cdef;
+                            st.x[2] = 0xfedc_ba98_7654_3210;
+                            st.pstate = (nzcv as u64) << 28;
+                            batch.push((
+                                format!(
+                                    "csel_{label} sf{sf} op{op} op2{op2} cond{cond:x} nzcv{nzcv:x}"
+                                ),
+                                enc_csel_plain(sf, op, op2, rn, rm, cond, rd),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
     run_batch("csel_zero_registers", batch);
@@ -26262,25 +26273,32 @@ fn diff_addsub_carry_zero_registers() {
             | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32, u64)] = &[
-        ("adc_x_xzr_left", enc_addsub_carry_plain(1, 0, 0, 0, 31, 1), 0x2000_0000),
-        ("adc_x_xzr_right", enc_addsub_carry_plain(1, 0, 0, 2, 1, 31), 0),
-        ("adcs_w_wzr_both", enc_addsub_carry_plain(0, 0, 1, 3, 31, 31), 0x2000_0000),
-        ("sbc_x_xzr_left", enc_addsub_carry_plain(1, 1, 0, 4, 31, 1), 0x2000_0000),
-        ("sbc_x_xzr_right", enc_addsub_carry_plain(1, 1, 0, 5, 1, 31), 0),
-        ("adc_x_xzr_dest", enc_addsub_carry_plain(1, 0, 0, 31, 1, 2), 0x2000_0000),
-        ("sbcs_w_wzr_dest", enc_addsub_carry_plain(0, 1, 1, 31, 31, 31), 0),
-    ];
     let mut rng = Rng::new(0x1_006f);
     let mut batch = Vec::new();
-    for (label, insn, pstate) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x8000 + ((i as u64) << 8);
-            st.x[1] = rng.next();
-            st.x[2] = rng.next();
-            st.pstate = *pstate;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for nzcv in 0..16 {
+                    for (label, rd, rn, rm) in [
+                        ("rn_xzr", 0u32, 31u32, 2u32),
+                        ("rm_xzr", 0, 1, 31),
+                        ("rn_rm_xzr", 0, 31, 31),
+                        ("rd_xzr", 31, 1, 2),
+                        ("all_xzr", 31, 31, 31),
+                    ] {
+                        let mut st = gen_input(&mut rng);
+                        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x8000;
+                        st.x[1] = 0x0123_4567_89ab_cdef;
+                        st.x[2] = 0xfedc_ba98_7654_3210;
+                        st.pstate = (nzcv as u64) << 28;
+                        batch.push((
+                            format!("addsub_carry_{label} sf{sf} op{op} s{s} nzcv{nzcv:x}"),
+                            enc_addsub_carry_plain(sf, op, s, rd, rn, rm),
+                            st,
+                        ));
+                    }
+                }
+            }
         }
     }
     run_batch("addsub_carry_zero_registers", batch);
