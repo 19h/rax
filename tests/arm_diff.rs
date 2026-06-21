@@ -57228,6 +57228,40 @@ fn diff_mem_ldst_struct() {
 }
 
 #[test]
+fn diff_mem_ldst_struct_no_offset_rm_unallocated_edges() {
+    // (opcode, name) -- LD1 x1/x2/x3/x4, LD2, LD3, LD4.
+    let ops: &[(u32, &str)] = &[
+        (0b0111, "ld1x1"),
+        (0b1010, "ld1x2"),
+        (0b0110, "ld1x3"),
+        (0b0010, "ld1x4"),
+        (0b1000, "ld2"),
+        (0b0100, "ld3"),
+        (0b0000, "ld4"),
+    ];
+    let mut rng = Rng::new(0x1_0007);
+    let mut batch = Vec::new();
+
+    for &(opcode, name) in ops {
+        for size in 0..4u32 {
+            for q in 0..2u32 {
+                for l in 0..2u32 {
+                    for _ in 0..4 {
+                        batch.push((
+                            format!("{name}_size{size}_q{q}_l{l}_noff_rm2"),
+                            enc_ldst_struct(q, 0, l, RM, opcode, size),
+                            mem_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldst_struct_no_offset_rm_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_mem_ldst_struct_ld1_edges() {
     let patterns: &[(&str, [u64; 2], (u64, u64))] = &[
         ("zero", [0, 0], (0, 0)),
@@ -59798,6 +59832,18 @@ fn enc_fccmp_reg(fp_type: u32, signal_all_nans: bool, cond: u32, nzcv: u32) -> u
         | nzcv
 }
 
+/// Scalar FCSEL <Fd>, <Fn>, <Fm>, <cond>.
+fn enc_fcsel(fp_type: u32, cond: u32) -> u32 {
+    (0b00011110 << 24)
+        | (fp_type << 22)
+        | (1 << 21)
+        | (RM << 16)
+        | (cond << 12)
+        | (0b11 << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// Scalar fixed-point GPR -> FP conversion:
 /// `sf 0011110 ptype 0 00 opcode scale Rn Rd`, where `fbits = 64 - scale`.
 fn enc_fp_fixed_gpr_to_fp(sf: u32, fp_type: u32, opcode: u32, fbits: u32) -> u32 {
@@ -59942,6 +59988,9 @@ fn diff_fp_scalar_unallocated_edges() {
             "fccmp_reserved_ptype".into(),
             enc_fccmp_reg(0b10, false, 0b1110, 0),
         ),
+        ("fcsel_reserved_ptype".into(), enc_fcsel(0b10, 0b1110)),
+        ("fcmp_reg_reserved_bit2".into(), enc_fcmp_reg(0b00) | (1 << 2)),
+        ("fcmp_zero_reserved_bit2".into(), enc_fcmp_zero(0b01) | (1 << 2)),
     ];
     let mut rng = Rng::new(0xF10A_00FF);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -63673,6 +63722,42 @@ fn diff_fp_scalar_gpr_conversion_zero_registers() {
 }
 
 #[test]
+fn diff_fp_scalar_gpr_conversion_unallocated_edges() {
+    let mut rng = Rng::new(0xF031_2032);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(sf, fp_type, opcode, rmode, name) in &[
+        (0u32, 0b00u32, 0b010u32, 0b01u32, "scvtf_w_s_reserved_rmode1"),
+        (1, 0b01, 0b011, 0b11, "ucvtf_x_d_reserved_rmode3"),
+        (0, 0b11, 0b010, 0b10, "scvtf_w_h_reserved_rmode2"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                name.to_string(),
+                enc_fp_gpr_to_fp(sf, fp_type, opcode) | (rmode << 19),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    for &(sf, fp_type, rmode, opcode, name) in &[
+        (0u32, 0b00u32, 0b01u32, 0b100u32, "fcvtas_s_w_reserved_rmode1"),
+        (1, 0b01, 0b10, 0b101, "fcvtau_d_x_reserved_rmode2"),
+        (0, 0b11, 0b11, 0b100, "fcvtas_h_w_reserved_rmode3"),
+    ] {
+        for _ in 0..4 {
+            batch.push((
+                name.to_string(),
+                enc_fp_to_gpr(sf, fp_type, rmode, opcode),
+                gen_input(&mut rng),
+            ));
+        }
+    }
+
+    run_batch_el0_legality("fp_scalar_gpr_conversion_unallocated_edges", batch);
+}
+
+#[test]
 fn diff_fp_scalar_fmov_general_zero_registers() {
     let mut rng = Rng::new(0xF031_F000);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -64300,6 +64385,45 @@ fn diff_fp_scalar_fixed_gpr_conversion_zero_registers() {
     }
 
     run_batch("fp_scalar_fixed_gpr_conversion_zero_registers", batch);
+}
+
+#[test]
+fn diff_fp_scalar_fixed_gpr_conversion_unallocated_edges() {
+    let mut rng = Rng::new(0xF031_F17F);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(insn, name) in &[
+        (
+            enc_fp_fixed_gpr_to_fp(0, 0b00, 0b010, 33),
+            "scvtf_fixed_w_s_reserved_fbits33",
+        ),
+        (
+            enc_fp_fixed_gpr_to_fp(1, 0b10, 0b010, 64),
+            "scvtf_fixed_x_reserved_ptype",
+        ),
+        (
+            enc_fp_fixed_gpr_to_fp(1, 0b01, 0b011, 64) | (1 << 19),
+            "ucvtf_fixed_x_d_reserved_rmode1",
+        ),
+        (
+            enc_fp_fixed_fp_to_gpr(0, 0b00, 0b000, 33),
+            "fcvtzs_fixed_s_w_reserved_fbits33",
+        ),
+        (
+            enc_fp_fixed_fp_to_gpr(1, 0b10, 0b000, 64),
+            "fcvtzs_fixed_reserved_ptype",
+        ),
+        (
+            enc_fp_fixed_fp_to_gpr(1, 0b01, 0b001, 64) & !(1 << 19),
+            "fcvtzu_fixed_d_x_reserved_rmode2",
+        ),
+    ] {
+        for _ in 0..4 {
+            batch.push((name.to_string(), insn, gen_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0_legality("fp_scalar_fixed_gpr_conversion_unallocated_edges", batch);
 }
 
 #[test]

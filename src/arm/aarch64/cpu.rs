@@ -2663,6 +2663,9 @@ impl AArch64Cpu {
                 return Err(ArmError::UndefinedInstruction(insn));
             }
             if opcode == 0b010 || opcode == 0b011 {
+                if rmode != 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 // SCVTF / UCVTF: integer (GPR) -> floating-point.
                 let signed = opcode == 0b010;
                 let iv = if sf == 1 {
@@ -2705,6 +2708,9 @@ impl AArch64Cpu {
                 self.fpsr |= status;
                 self.v[rd as usize] = r as u128;
                 return Ok(CpuExit::Continue);
+            }
+            if opcode >= 0b100 && rmode != 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
             }
             // FP -> integer. signed = even opcode; rounding from rmode (or
             // ties-away for FCVTA* opcode 100/101).
@@ -16977,6 +16983,11 @@ impl AArch64Cpu {
         let size = (insn >> 10) & 0x3;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as usize;
+
+        // No-offset form (post==0): bits[20:16] are reserved and must be 0.
+        if post == 0 && rm != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         // (rpt, selem): number of register groups and structure size.
         let (rpt, selem): (usize, usize) = match opcode {
