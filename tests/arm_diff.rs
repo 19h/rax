@@ -36085,6 +36085,63 @@ fn diff_sve_ext() {
     run_batch("sve_ext_edges", batch);
 }
 
+fn sve_table_lookup_edge_cases(size: u32) -> Vec<(&'static str, ArmState)> {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let bits = 8u32 << size;
+    let lanes = 16usize >> size;
+    let mask = if bits == 64 {
+        u64::MAX
+    } else {
+        (1u64 << bits) - 1
+    };
+    let table: Vec<u64> = (0..lanes)
+        .map(|lane| 0x10u64.wrapping_add(lane as u64) & mask)
+        .collect();
+    let in_range: Vec<u64> = (0..lanes).map(|lane| lane as u64).collect();
+    let reverse: Vec<u64> = (0..lanes).rev().map(|lane| lane as u64).collect();
+    let out_of_range: Vec<u64> = (0..lanes)
+        .map(|lane| match lane % 4 {
+            0 => lanes as u64,
+            1 => lanes as u64 + 1,
+            2 => mask,
+            _ => (lanes - 1) as u64,
+        })
+        .collect();
+    let dest: Vec<u64> = (0..lanes)
+        .map(|lane| 0xf0u64.wrapping_add(lane as u64) & mask)
+        .collect();
+
+    let mut cases = Vec::new();
+    for (name, indexes) in [
+        ("in_range", in_range),
+        ("reverse", reverse),
+        ("out_of_range", out_of_range),
+    ] {
+        let mut st = ArmState::zeroed();
+        let (lo, hi) = pack_lanes(size, &dest);
+        st.set_vreg(0, lo, hi);
+        let (lo, hi) = pack_lanes(size, &table);
+        st.set_vreg(1, lo, hi);
+        let (lo, hi) = pack_lanes(size, &indexes);
+        st.set_vreg(2, lo, hi);
+        cases.push((name, st));
+    }
+    cases
+}
+
 #[test]
 fn diff_sve_tbl() {
     // TBL gathers Zn[Zm[e]] per element; out-of-range indices yield 0. Random
@@ -36094,6 +36151,15 @@ fn diff_sve_tbl() {
         cases.push((format!("sve_tbl sz{sz}"), enc_sve_tbl(sz)));
     }
     run_family("sve_tbl", cases, 24, 0x2_6001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let insn = enc_sve_tbl(sz);
+        for (pattern_name, st) in sve_table_lookup_edge_cases(sz) {
+            batch.push((format!("tbl_sz{sz}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve_tbl_edges", batch);
 }
 
 #[test]
@@ -36104,10 +36170,83 @@ fn diff_sve_tbx() {
         cases.push((format!("sve_tbx sz{sz}"), enc_sve_tbx(sz)));
     }
     run_family("sve_tbx", cases, 24, 0x2_F001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let insn = enc_sve_tbx(sz);
+        for (pattern_name, st) in sve_table_lookup_edge_cases(sz) {
+            batch.push((format!("tbx_sz{sz}_{pattern_name}"), insn, st));
+        }
+    }
+    run_batch("sve_tbx_edges", batch);
 }
 
 #[test]
 fn diff_sve_fcvt() {
+    fn pack_src_containers(src_sz: usize, cont: usize, values: &[u64]) -> (u64, u64) {
+        let bits = src_sz * 8;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * cont * 8);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn fcvt_source_patterns(src_sz: usize, elements: usize) -> Vec<(&'static str, Vec<u64>)> {
+        let patterns: Vec<(&'static str, Vec<u64>)> = match src_sz {
+            2 => vec![
+                ("basic", vec![0x3c00, 0xbc00, 0x3800, 0xb800]),
+                ("lane_mix", vec![0x0000, 0x8000, 0x4000, 0xc000]),
+            ],
+            4 => vec![
+                (
+                    "basic",
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        0.5f32.to_bits() as u64,
+                        (-2.0f32).to_bits() as u64,
+                    ],
+                ),
+                (
+                    "lane_mix",
+                    vec![
+                        0.0f32.to_bits() as u64,
+                        (-0.0f32).to_bits() as u64,
+                        16.0f32.to_bits() as u64,
+                        (-16.0f32).to_bits() as u64,
+                    ],
+                ),
+            ],
+            _ => vec![
+                ("basic", vec![1.0f64.to_bits(), (-1.0f64).to_bits()]),
+                (
+                    "lane_mix",
+                    vec![
+                        0.5f64.to_bits(),
+                        (-16.0f64).to_bits(),
+                    ],
+                ),
+            ],
+        };
+        patterns
+            .into_iter()
+            .map(|(name, values)| {
+                (
+                    name,
+                    (0..elements)
+                        .map(|lane| values[lane % values.len()])
+                        .collect(),
+                )
+            })
+            .collect()
+    }
+
     // Predicated FP precision conversions. Source values are packed at the
     // (larger) container boundary; merging keeps the prior Zd in inactive lanes.
     let convs = [
@@ -36135,6 +36274,17 @@ fn diff_sve_fcvt() {
             st.set_vreg(0, rng.next(), rng.next()); // prior Zd (merge target)
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("fcvt_{name}"), insn, st));
+        }
+        let mixed = if cont == 4 { 0x0101 } else { 0x0001 };
+        for (pattern_name, zn) in fcvt_source_patterns(src_sz, elements) {
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                let (lo, hi) = pack_src_containers(src_sz, cont, &zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("fcvt_{name}_{pattern_name}_{mask_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_fcvt", batch);
@@ -37207,6 +37357,61 @@ fn diff_sve2_fmlsl_indexed_fpcr_ah_nan_sign() {
 
 #[test]
 fn diff_sve_fscale() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn fscale_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_basic",
+                    vec![0x3c00, 0xbc00, 0x3800, 0xb800, 0x4000, 0xc000, 0x4200, 0xc200],
+                    vec![0, 1, (-1i64) as u64, 2, (-2i64) as u64, 4, (-4i64) as u64, 8],
+                ),
+                (
+                    "h_lane_mix",
+                    vec![0x3555, 0xb555, 0x3e00, 0xbe00, 0x4100, 0xc100, 0x4480, 0xc480],
+                    vec![(-8i64) as u64, 6, (-6i64) as u64, 3, (-3i64) as u64, 0, 1, (-1i64) as u64],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_basic",
+                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
+                    vec![0, 1, (-1i64) as u64, 8],
+                ),
+                (
+                    "s_lane_mix",
+                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![(-8i64) as u64, 5, (-5i64) as u64, 0],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_basic",
+                    vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                    vec![0, 1],
+                ),
+                (
+                    "d_lane_mix",
+                    vec![1.5f64.to_bits(), (-2.5f64).to_bits()],
+                    vec![(-8i64) as u64, 8],
+                ),
+            ],
+        }
+    }
+
     // FSCALE multiplies each FP lane by 2^(signed Zm element). Use moderate
     // exponents (-40..40) so results stay in range and vary.
     let mut rng = Rng::new(0x8_5001);
@@ -37230,6 +37435,22 @@ fn diff_sve_fscale() {
             st.set_vreg(1, zm as u64, (zm >> 64) as u64);
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("fscale s{size}"), insn, st));
+        }
+        let mixed = match size {
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        for (pattern_name, zdn, zm) in fscale_patterns(size) {
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(size, &zdn);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(size, &zm);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("fscale_s{size}_{pattern_name}_{mask_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_fscale", batch);
@@ -37429,6 +37650,58 @@ fn diff_fpcr_ah_sve_scale_input_status() {
 fn diff_sve_fexpa() {
     // FEXPA table lookup; the source bits are arbitrary (low bits index, next
     // bits become the exponent).
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn source_patterns(size: u32) -> Vec<(&'static str, Vec<u64>)> {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let low_index_mask = match size {
+            1 => 0x1f,
+            2 => 0x3f,
+            _ => 0x7f,
+        };
+        let edge_values = [
+            0,
+            1,
+            low_index_mask,
+            low_index_mask + 1,
+            sign - 1,
+            sign,
+            sign + 1,
+            mask,
+        ];
+        vec![
+            (
+                "indexes",
+                (0..lanes).map(|lane| (lane as u64) & mask).collect(),
+            ),
+            (
+                "edges",
+                (0..lanes)
+                    .map(|lane| edge_values[lane % edge_values.len()])
+                    .collect(),
+            ),
+        ]
+    }
+
     let mut rng = Rng::new(0x8_6001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size in 1..4u32 {
@@ -37439,12 +37712,80 @@ fn diff_sve_fexpa() {
             st.set_vreg(0, rng.next(), rng.next()); // dest (overwritten)
             batch.push((format!("fexpa s{size}"), insn, st));
         }
+        for (pattern_name, zn) in source_patterns(size) {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+            let (lo, hi) = pack_lanes(size, &zn);
+            st.set_vreg(1, lo, hi);
+            batch.push((format!("fexpa_s{size}_{pattern_name}"), insn, st));
+        }
     }
     run_batch("sve_fexpa", batch);
 }
 
 #[test]
 fn diff_sve_fp_indexed() {
+    fn pack_fp(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn indexed_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_basic",
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                ),
+                (
+                    "h_lane_mix",
+                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                    vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_basic",
+                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
+                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                ),
+                (
+                    "s_lane_mix",
+                    vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
+                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_basic",
+                    vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                    vec![1.5f64.to_bits(), (-2.5f64).to_bits()],
+                    vec![0.5f64.to_bits(), (-0.75f64).to_bits()],
+                ),
+                (
+                    "d_lane_mix",
+                    vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                    vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                    vec![4.0f64.to_bits(), (-8.0f64).to_bits()],
+                ),
+            ],
+        }
+    }
+
     // FMLA/FMLS/FMUL by indexed FP element, all sizes and indices, finite inputs.
     let mut rng = Rng::new(0x8_3001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -37466,6 +37807,16 @@ fn diff_sve_fp_indexed() {
                         st.set_vreg(r, v as u64, (v >> 64) as u64);
                     }
                     batch.push((format!("{name}_idx s{size} i{index}"), insn, st));
+                }
+                for (pattern_name, zd, zn, zm) in indexed_patterns(size) {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_fp(size, &zd);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    let (lo, hi) = pack_fp(size, &zm);
+                    st.set_vreg(2, lo, hi);
+                    batch.push((format!("{name}_idx_s{size}_i{index}_{pattern_name}"), insn, st));
                 }
             }
         }
@@ -42828,6 +43179,78 @@ fn diff_sve_compact() {
             batch.push((format!("compact sz{sz}"), insn, st));
         }
     }
+
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 32u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (4usize << sz))
+    }
+
+    fn source_patterns(sz: u32) -> Vec<(&'static str, Vec<u64>)> {
+        let bits = 32u32 << sz;
+        let lanes = 4usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        vec![
+            (
+                "identity",
+                (0..lanes).map(|lane| 0x10u64 + lane as u64).collect(),
+            ),
+            (
+                "edges",
+                (0..lanes).map(|lane| edges[lane % edges.len()]).collect(),
+            ),
+        ]
+    }
+
+    for sz in 0..2u32 {
+        let lanes = 4usize >> sz;
+        let insn = enc_sve_compact(sz);
+        let first = predicate_bit(sz, 0);
+        let last = predicate_bit(sz, lanes - 1);
+        let alternating = (0..lanes)
+            .filter(|lane| lane % 2 == 0)
+            .fold(0u16, |pg, lane| pg | predicate_bit(sz, lane));
+        let middle = if lanes == 2 {
+            last
+        } else {
+            predicate_bit(sz, 1) | predicate_bit(sz, 2)
+        };
+        for (pattern_name, zn) in source_patterns(sz) {
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("inactive", 0x0000),
+                ("first", first),
+                ("last", last),
+                ("alternating", alternating),
+                ("middle", middle),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                let (lo, hi) = pack_lanes(sz, &zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("compact_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+            }
+        }
+    }
     run_batch("sve_compact", batch);
 }
 
@@ -42846,6 +43269,88 @@ fn diff_sve_splice() {
             st.set_vreg(1, rng.next(), rng.next()); // Zm
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("splice sz{sz}"), insn, st));
+        }
+    }
+
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << sz))
+    }
+
+    fn splice_patterns(sz: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let zdn_edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let zm_edges = [mask, mask - 1, sign + 1, sign, sign - 1, 1, 0];
+        vec![
+            (
+                "identity",
+                (0..lanes).map(|lane| 0x10u64 + lane as u64).collect(),
+                (0..lanes).map(|lane| 0x80u64.wrapping_add(lane as u64) & mask).collect(),
+            ),
+            (
+                "edges",
+                (0..lanes)
+                    .map(|lane| zdn_edges[lane % zdn_edges.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| zm_edges[lane % zm_edges.len()])
+                    .collect(),
+            ),
+        ]
+    }
+
+    for sz in 0..4u32 {
+        let lanes = 16usize >> sz;
+        let insn = enc_sve_splice(sz);
+        let first = predicate_bit(sz, 0);
+        let last = predicate_bit(sz, lanes - 1);
+        let endpoints = first | last;
+        let alternating = (0..lanes)
+            .filter(|lane| lane % 2 == 0)
+            .fold(0u16, |pg, lane| pg | predicate_bit(sz, lane));
+        let middle_span = if lanes <= 2 {
+            endpoints
+        } else {
+            predicate_bit(sz, 1) | predicate_bit(sz, lanes - 2)
+        };
+        for (pattern_name, zdn, zm) in splice_patterns(sz) {
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("inactive", 0x0000),
+                ("first", first),
+                ("last", last),
+                ("endpoints", endpoints),
+                ("alternating", alternating),
+                ("middle_span", middle_span),
+            ] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(sz, &zdn);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(sz, &zm);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("splice_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_splice", batch);
