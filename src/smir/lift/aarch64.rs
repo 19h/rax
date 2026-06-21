@@ -1662,7 +1662,7 @@ impl Aarch64Lifter {
             // =================================================================
             // Load/Store
             // =================================================================
-            Mnemonic::LDR | Mnemonic::LDAPUR => {
+            Mnemonic::LDR | Mnemonic::LDAPUR | Mnemonic::LDTR => {
                 if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
                     self.lift_vector_mem(insn, true, pc, &mut ops, ctx)?;
                 } else {
@@ -1674,23 +1674,23 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::LDRB | Mnemonic::LDAPURB => {
+            Mnemonic::LDRB | Mnemonic::LDAPURB | Mnemonic::LDTRB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRH | Mnemonic::LDAPURH => {
+            Mnemonic::LDRH | Mnemonic::LDAPURH | Mnemonic::LDTRH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSB | Mnemonic::LDAPURSB => {
+            Mnemonic::LDRSB | Mnemonic::LDAPURSB | Mnemonic::LDTRSB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSH | Mnemonic::LDAPURSH => {
+            Mnemonic::LDRSH | Mnemonic::LDAPURSH | Mnemonic::LDTRSH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDRSW | Mnemonic::LDAPURSW => {
+            Mnemonic::LDRSW | Mnemonic::LDAPURSW | Mnemonic::LDTRSW => {
                 self.lift_load(insn, MemWidth::B4, SignExtend::Sign, pc, &mut ops, ctx)?;
             }
 
@@ -1726,7 +1726,7 @@ impl Aarch64Lifter {
                 self.lift_store_exclusive(insn, MemWidth::B2, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDAR | Mnemonic::LDAPR => {
+            Mnemonic::LDAR | Mnemonic::LDAPR | Mnemonic::LDLAR => {
                 let width = match insn.operands.first() {
                     Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
                     _ => MemWidth::B8,
@@ -1734,15 +1734,15 @@ impl Aarch64Lifter {
                 self.lift_load(insn, width, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDARB | Mnemonic::LDAPRB => {
+            Mnemonic::LDARB | Mnemonic::LDAPRB | Mnemonic::LDLARB => {
                 self.lift_load(insn, MemWidth::B1, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::LDARH | Mnemonic::LDAPRH => {
+            Mnemonic::LDARH | Mnemonic::LDAPRH | Mnemonic::LDLARH => {
                 self.lift_load(insn, MemWidth::B2, SignExtend::Zero, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STR | Mnemonic::STLUR => {
+            Mnemonic::STR | Mnemonic::STLUR | Mnemonic::STTR => {
                 if matches!(insn.operands.first(), Some(Operand::FpReg(_))) {
                     self.lift_vector_mem(insn, false, pc, &mut ops, ctx)?;
                 } else {
@@ -1754,15 +1754,15 @@ impl Aarch64Lifter {
                 }
             }
 
-            Mnemonic::STRB | Mnemonic::STLURB => {
+            Mnemonic::STRB | Mnemonic::STLURB | Mnemonic::STTRB => {
                 self.lift_store(insn, MemWidth::B1, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STRH | Mnemonic::STLURH => {
+            Mnemonic::STRH | Mnemonic::STLURH | Mnemonic::STTRH => {
                 self.lift_store(insn, MemWidth::B2, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STLR => {
+            Mnemonic::STLR | Mnemonic::STLLR => {
                 let width = match insn.operands.first() {
                     Some(Operand::Reg(r)) if !r.is_64bit => MemWidth::B4,
                     _ => MemWidth::B8,
@@ -1770,11 +1770,11 @@ impl Aarch64Lifter {
                 self.lift_store(insn, width, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STLRB => {
+            Mnemonic::STLRB | Mnemonic::STLLRB => {
                 self.lift_store(insn, MemWidth::B1, pc, &mut ops, ctx)?;
             }
 
-            Mnemonic::STLRH => {
+            Mnemonic::STLRH | Mnemonic::STLLRH => {
                 self.lift_store(insn, MemWidth::B2, pc, &mut ops, ctx)?;
             }
 
@@ -2027,9 +2027,12 @@ impl Aarch64Lifter {
             // =================================================================
             Mnemonic::NOP
             | Mnemonic::BTI
+            | Mnemonic::DGH
             | Mnemonic::YIELD
             | Mnemonic::WFE
             | Mnemonic::WFI
+            | Mnemonic::WFET
+            | Mnemonic::WFIT
             | Mnemonic::SEV
             | Mnemonic::SEVL => {
                 push_op!(OpKind::Nop);
@@ -5317,6 +5320,52 @@ mod tests {
     }
 
     #[test]
+    fn test_lift_unprivileged_load_store_forms() {
+        fn unprivileged(size: u32, opc: u32) -> [u8; 4] {
+            ((size << 30) | (0b111 << 27) | (opc << 22) | (0b10 << 10) | (1 << 5))
+                .to_le_bytes()
+        }
+
+        let (ops, _) = lift_single(unprivileged(0b11, 0b01));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                    ..
+                }
+            )),
+            "LDTR X must lift as a zero-extending 64-bit Load"
+        );
+
+        let (ops, _) = lift_single(unprivileged(0b10, 0b10));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B4,
+                    sign: SignExtend::Sign,
+                    ..
+                }
+            )),
+            "LDTRSW must lift as a sign-extending 32-bit Load"
+        );
+
+        let (ops, _) = lift_single(unprivileged(0b00, 0b00));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Store {
+                    width: MemWidth::B1,
+                    ..
+                }
+            )),
+            "STTRB must lift as a byte Store"
+        );
+    }
+
+    #[test]
     fn test_lift_ldapr_forms() {
         fn ldapr(size: u32) -> [u8; 4] {
             ((size << 30)
@@ -5354,6 +5403,46 @@ mod tests {
                 }
             )),
             "LDAPR X must lift as a 64-bit Load"
+        );
+    }
+
+    #[test]
+    fn test_lift_loregion_ordered_forms() {
+        fn loregion(size: u32, load: bool) -> [u8; 4] {
+            let l = if load { 1 } else { 0 };
+            ((size << 30)
+                | (0b001000 << 24)
+                | (1 << 23)
+                | (l << 22)
+                | (31 << 16)
+                | (31 << 10)
+                | (1 << 5))
+                .to_le_bytes()
+        }
+
+        let (ops, _) = lift_single(loregion(0b00, true));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    width: MemWidth::B1,
+                    sign: SignExtend::Zero,
+                    ..
+                }
+            )),
+            "LDLARB must lift as a byte Load"
+        );
+
+        let (ops, _) = lift_single(loregion(0b11, false));
+        assert!(
+            ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Store {
+                    width: MemWidth::B8,
+                    ..
+                }
+            )),
+            "STLLR X must lift as a 64-bit Store"
         );
     }
 
@@ -5528,6 +5617,24 @@ mod tests {
     fn test_lift_context_aarch64() {
         let ctx = LiftContext::new(SourceArch::Aarch64);
         assert_eq!(ctx.endian, Endian::Little);
+    }
+
+    #[test]
+    fn test_lift_wfxt_as_nop() {
+        for bytes in [[0x00, 0x10, 0x03, 0xd5], [0x21, 0x10, 0x03, 0xd5]] {
+            let (ops, control) = lift_single(bytes);
+            assert_eq!(ops.len(), 1);
+            assert!(matches!(ops[0].kind, OpKind::Nop));
+            assert!(matches!(control, ControlFlow::Fallthrough));
+        }
+    }
+
+    #[test]
+    fn test_lift_dgh_as_nop() {
+        let (ops, control) = lift_single([0xdf, 0x20, 0x03, 0xd5]);
+        assert_eq!(ops.len(), 1);
+        assert!(matches!(ops[0].kind, OpKind::Nop));
+        assert!(matches!(control, ControlFlow::Fallthrough));
     }
 
     fn lift_single(bytes: [u8; 4]) -> (Vec<SmirOp>, ControlFlow) {

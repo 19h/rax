@@ -377,6 +377,12 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if matches!(mnemonic_base, "ldtp" | "sttp" | "ldtnp" | "sttnp") {
         return !caps.has("lrcpc3");
     }
+    if matches!(
+        mnemonic_base,
+        "ldlar" | "ldlarb" | "ldlarh" | "stllr" | "stllrb" | "stllrh"
+    ) {
+        return !caps.has("lor");
+    }
     if mnemonic_base.contains("cntpctss") || mnemonic_base.contains("cntvctss") {
         return !caps.has("ecv");
     }
@@ -2801,6 +2807,23 @@ fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     ) {
         by_encoding.entry(insn).or_insert(label);
     }
+    // The generated hints corpus only samples boundary CRm/op2 values. Keep
+    // non-blocking feature hints here so the native sweep exercises them too.
+    for (label, insn) in [
+        ("system/hints dgh", 0xd503_20df),
+        ("system/hints esb", 0xd503_221f),
+        ("system/hints psb_csync", 0xd503_223f),
+        ("system/hints tsb_csync", 0xd503_225f),
+        ("system/hints csdb", 0xd503_229f),
+        ("system/hints bti", 0xd503_241f),
+        ("system/hints bti_c", 0xd503_245f),
+        ("system/hints bti_j", 0xd503_249f),
+        ("system/hints bti_jc", 0xd503_24df),
+    ] {
+        by_encoding
+            .entry(insn)
+            .or_insert_with(|| label.to_string());
+    }
     by_encoding
         .into_iter()
         .map(|(insn, label)| (label, insn))
@@ -3464,7 +3487,7 @@ fn generated_a64_case_selectors_are_non_empty() {
         ("generated_sve_ftmad_cases", 6),
         ("generated_sve_float_cases", 990),
         ("generated_sve_fp_compare_zero_cases", 66),
-        ("generated_system_hints_udf_cases", 33),
+        ("generated_system_hints_udf_cases", 42),
         ("generated_system_exception_cases", 126),
         ("generated_system_barrier_cases", 7),
         ("generated_system_monitor_cases", 4),
@@ -28405,6 +28428,30 @@ fn diff_generated_system_barrier_sweep() {
 }
 
 #[test]
+fn diff_system_wfxt_zero_timeout() {
+    fn wfxt(op2: u32, rt: u32) -> u32 {
+        0xd500_0000 | (3 << 16) | (1 << 12) | ((op2 & 0x7) << 5) | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("wfet x0", wfxt(0, 0), Some(0usize)),
+        ("wfit x1", wfxt(1, 1), Some(1usize)),
+        ("wfet xzr", wfxt(0, 31), None),
+        ("wfit xzr", wfxt(1, 31), None),
+    ];
+    let mut batch = Vec::new();
+    for (label, insn, timeout_reg) in cases {
+        let mut st = ArmState::zeroed();
+        if let Some(reg) = timeout_reg {
+            st.x[reg] = 0;
+        }
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch("system_wfxt_zero_timeout", batch);
+}
+
+#[test]
 fn diff_generated_system_monitor_sweep() {
     let mut rng = Rng::new(0xa64_5c1e);
     let mut batch = Vec::new();
@@ -29261,6 +29308,8 @@ fn diff_system_el0_readonly_sysreg_write_trap_sweep() {
             | (rt & 0x1f)
     }
 
+    // RNDR/RNDRRS are intentionally excluded from value-state comparison:
+    // native hardware can legitimately report no value and change NZCV.
     let regs = [
         ("ctr_el0", (1, 3, 0, 0, 1)),
         ("dczid_el0", (1, 3, 0, 0, 7)),
@@ -29311,8 +29360,6 @@ fn diff_system_el0_opaque_sysreg_read_sweep() {
         ("cntpctss_el0", (1, 3, 14, 0, 5)),
         ("cntvctss_el0", (1, 3, 14, 0, 6)),
         ("tpidrro_el0", (1, 3, 13, 0, 3)),
-        ("rndr", (1, 3, 2, 4, 0)),
-        ("rndrrs", (1, 3, 2, 4, 1)),
     ];
 
     let mut rng = Rng::new(0x5157_0010);
@@ -30540,6 +30587,27 @@ fn enc_stlr_regs(size: u32, rt: u32, rn: u32) -> u32 {
 
 fn enc_stlr(size: u32) -> u32 {
     enc_stlr_regs(size, 3, RN)
+}
+
+fn enc_ordered_nonexclusive_with_fields(
+    size: u32,
+    load: bool,
+    o0: u32,
+    rs: u32,
+    rt2: u32,
+    rn: u32,
+    rt: u32,
+) -> u32 {
+    let l = if load { 1 } else { 0 };
+    (size << 30)
+        | (0b001000 << 24)
+        | (1 << 23)
+        | (l << 22)
+        | ((rs & 0x1F) << 16)
+        | ((o0 & 1) << 15)
+        | ((rt2 & 0x1F) << 10)
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
 }
 
 /// AES single-block op: `0100111000 10100 opcode 10 Rn Rd`. Rn=v1, Rd=v0.
@@ -54328,6 +54396,96 @@ fn diff_mem_ordered_edges() {
     }
 
     run_batch("mem_ordered_edges", batch);
+}
+
+#[test]
+fn diff_mem_ordered_ignores_rs_rt2_fields() {
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for &(label, load, rs, rt2) in &[
+            ("ldar_ignored_rs", true, 0, 31),
+            ("ldar_ignored_rt2", true, 31, 0),
+            ("stlr_ignored_rs", false, 0, 31),
+            ("stlr_ignored_rt2", false, 31, 0),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.x[3] = 0x1122_3344_5566_7788;
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[8] = 0x8877_6655_4433_2211;
+            batch.push((
+                format!("{label}_size{size}"),
+                enc_ordered_nonexclusive_with_fields(size, load, 1, rs, rt2, RN, 3),
+                st,
+            ));
+        }
+    }
+
+    run_batch("mem_ordered_ignores_rs_rt2_fields", batch);
+}
+
+fn enc_loregion_ordered_regs(size: u32, load: bool, rt: u32, rn: u32) -> u32 {
+    let l = if load { 1 } else { 0 };
+    (size << 30)
+        | (0b001000 << 24)
+        | (1 << 23)
+        | (l << 22)
+        | (31 << 16)
+        | (31 << 10)
+        | ((rn & 0x1f) << 5)
+        | (rt & 0x1f)
+}
+
+#[test]
+fn diff_mem_loregion_ordered_edges() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_8000_0080, 0x7fff_ffff_7fff_ff7f),
+        ("byte_ramp", 0x8877_6655_4433_2211, 0x1122_3344_5566_7788),
+    ];
+    let mut batch = Vec::new();
+
+    for (size, load_name, store_name) in [
+        (0u32, "ldlarb", "stllrb"),
+        (1, "ldlarh", "stllrh"),
+        (2, "ldlar", "stllr"),
+        (3, "ldlar", "stllr"),
+    ] {
+        for rt in [RD, 31] {
+            for &(pattern, mem, src) in patterns {
+                let mut load = ArmState::zeroed();
+                load.x[RN as usize] = SCRATCH_BASE;
+                if rt < 31 {
+                    load.x[rt as usize] = 0xdead_beef_dead_beef;
+                }
+                load.scratch.fill(0xfeed_face_dead_beef);
+                load.scratch[8] = mem;
+                batch.push((
+                    format!("{load_name} size{size} rt{rt}_{pattern}"),
+                    enc_loregion_ordered_regs(size, true, rt, RN),
+                    load,
+                ));
+
+                let mut store = ArmState::zeroed();
+                store.x[RN as usize] = SCRATCH_BASE;
+                if rt < 31 {
+                    store.x[rt as usize] = src;
+                }
+                store.scratch.fill(0xfeed_face_dead_beef);
+                store.scratch[8] = mem;
+                store.scratch[9] = !mem;
+                batch.push((
+                    format!("{store_name} size{size} rt{rt}_{pattern}"),
+                    enc_loregion_ordered_regs(size, false, rt, RN),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_loregion_ordered_edges", batch);
 }
 
 #[test]

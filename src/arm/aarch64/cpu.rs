@@ -16030,7 +16030,7 @@ impl AArch64Cpu {
                 (encoding.op0, encoding.op1, encoding.crn, encoding.crm, encoding.op2),
                 (3, 3, 2, 4, 0) | (3, 3, 2, 4, 1)
             ) {
-                self.set_nzcv(false, false, false, false);
+                self.set_nzcv(false, value == 0, false, false);
             }
         } else {
             // MSR
@@ -16252,9 +16252,10 @@ impl AArch64Cpu {
 
         // LDAR/STLR (and the LDARB/LDARH/STLRB/STLRH byte/halfword forms,
         // plus the LDLAR/STLLR LORegion variants): ordered but NOT exclusive
-        // — plain accesses with acquire/release semantics. They carry
-        // Rs=Rt2=11111 and must not consult the exclusive monitor: a
-        // spin-unlock's STLRB would otherwise be silently dropped.
+        // — plain accesses with acquire/release semantics. The Rs/Rt2 fields
+        // are ignored here and must not create a status/pair operand or consult
+        // the exclusive monitor: a spin-unlock's STLRB would otherwise be
+        // silently dropped.
         if o2 == 1 && o1 == 0 {
             let address = if rn == 31 {
                 self.current_sp()
@@ -27057,6 +27058,17 @@ mod tests {
             | rt as u32
     }
 
+    fn encode_mrs_rng(op2: u32, rt: u8) -> u32 {
+        debug_assert!(op2 <= 1);
+        0xd530_0000
+            | (1 << 19)
+            | (3 << 16)
+            | (2 << 12)
+            | (4 << 8)
+            | (op2 << 5)
+            | rt as u32
+    }
+
     fn encode_ld1_structure(q: u32, size: u32, rn: u8, rt: u8) -> u32 {
         debug_assert!(q <= 1);
         debug_assert!(size <= 3);
@@ -27288,6 +27300,31 @@ mod tests {
             cpu2.exec_sve_ldst(plain).is_err(),
             "a plain gather must propagate the lane fault"
         );
+    }
+
+    #[test]
+    fn rng_mrs_sets_z_when_value_unavailable() {
+        for (op2, value) in [
+            (0, 0),
+            (1, 0),
+            (0, 0x1122_3344_5566_7788),
+            (1, 0x8877_6655_4433_2211),
+        ] {
+            let mut cpu = create_cpu_with_insn(encode_mrs_rng(op2, 0));
+            if op2 == 0 {
+                cpu.sysregs.rndr = value;
+            } else {
+                cpu.sysregs.rndrrs = value;
+            }
+            cpu.set_nzcv(true, true, true, true);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+            assert_eq!(cpu.get_x(0), value);
+            assert!(!cpu.get_n());
+            assert_eq!(cpu.get_z(), value == 0);
+            assert!(!cpu.get_c());
+            assert!(!cpu.get_v());
+        }
     }
 
     #[test]

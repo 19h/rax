@@ -363,7 +363,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
             // System
             Mnemonic::SVC | Mnemonic::SWI => self.exec_svc(insn),
-            Mnemonic::NOP | Mnemonic::YIELD | Mnemonic::SEV | Mnemonic::SEVL => {
+            Mnemonic::NOP
+            | Mnemonic::YIELD
+            | Mnemonic::SEV
+            | Mnemonic::SEVL
+            | Mnemonic::DGH
+            | Mnemonic::BTI => {
                 ExecResult::Continue
             }
             Mnemonic::WFI | Mnemonic::WFE => ExecResult::Halt,
@@ -10562,6 +10567,21 @@ mod tests {
             assert_eq!(imm, 123);
         } else {
             panic!("Expected SupervisorCall exception");
+        }
+    }
+
+    #[test]
+    fn test_a64_noop_hints_continue() {
+        let mut cpu = make_cpu();
+        let mut mem = make_mem();
+
+        for (mnemonic, raw) in [
+            (Mnemonic::DGH, 0xd503_20df),
+            (Mnemonic::BTI, 0xd503_241f),
+        ] {
+            let insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
+            let result = Executor::new(&mut cpu, &mut mem).execute(&insn);
+            assert!(matches!(result, ExecResult::Continue));
         }
     }
 

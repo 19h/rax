@@ -482,8 +482,8 @@ impl SystemRegisters {
             amevtyper0: [0; 16],
             amevtyper1: [0; 16],
 
-            rndr: 0,
-            rndrrs: 0,
+            rndr: 0x9e37_79b9_7f4a_7c15,
+            rndrrs: 0xd1b5_4a32_d192_ed03,
 
             ssbs: false,
             dit: false,

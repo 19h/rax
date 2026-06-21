@@ -740,6 +740,17 @@ impl Aarch64Decoder {
             return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4));
         }
 
+        // FEAT_WFxT: WFET/WFIT use Rt as the timeout register.
+        if op0 == 0 && op1 == 3 && crn == 1 && crm == 0 && matches!(op2, 0b000 | 0b001) {
+            let mnemonic = if op2 == 0 {
+                Mnemonic::WFET
+            } else {
+                Mnemonic::WFIT
+            };
+            return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                .with_operand(Operand::Reg(Register::with_zr(rt, true))));
+        }
+
         // Hints: op0 = 0, op1 = 3, CRn = 2, Rt = 31
         if op0 == 0 && op1 == 3 && crn == 2 && rt == 31 {
             return Self::decode_hint_barrier(raw, op1, crm, op2, rt);
@@ -857,6 +868,7 @@ impl Aarch64Decoder {
             (0b0000, 0b011) => Mnemonic::WFI,
             (0b0000, 0b100) => Mnemonic::SEV,
             (0b0000, 0b101) => Mnemonic::SEVL,
+            (0b0000, 0b110) => Mnemonic::DGH,
             (0b0010, 0b000) => Mnemonic::NOP, // ESB
             (0b0010, 0b001) => Mnemonic::NOP, // PSB CSYNC
             (0b0010, 0b010) => Mnemonic::NOP, // TSB CSYNC
@@ -1053,17 +1065,6 @@ impl Aarch64Decoder {
         let is_ordered_non_exclusive = o2 == 1;
         let is_ordered_exclusive = o0 == 1;
 
-        if !is_pair && is_ordered_non_exclusive && is_ordered_exclusive {
-            if rs != 31 || rt2 != 31 {
-                return Ok(DecodedInsn::new(
-                    Mnemonic::UNDEFINED,
-                    ExecutionState::Aarch64,
-                    raw,
-                    4,
-                ));
-            }
-        }
-
         if o2 == 1 && o1 == 1 {
             let mnemonic = match (l, o0) {
                 (0, 0) => Mnemonic::CAS,
@@ -1114,6 +1115,10 @@ impl Aarch64Decoder {
             (1, false, true, true, 0b00) => Mnemonic::LDARB,
             (1, false, true, true, 0b01) => Mnemonic::LDARH,
             (1, false, true, true, _) => Mnemonic::LDAR,
+            // LORegion load-acquire
+            (1, false, true, false, 0b00) => Mnemonic::LDLARB,
+            (1, false, true, false, 0b01) => Mnemonic::LDLARH,
+            (1, false, true, false, _) => Mnemonic::LDLAR,
             // Load exclusive pair
             (1, true, false, false, _) => Mnemonic::LDXP,
             (1, true, false, true, _) => Mnemonic::LDAXP,
@@ -1129,6 +1134,10 @@ impl Aarch64Decoder {
             (0, false, true, true, 0b00) => Mnemonic::STLRB,
             (0, false, true, true, 0b01) => Mnemonic::STLRH,
             (0, false, true, true, _) => Mnemonic::STLR,
+            // LORegion store-release
+            (0, false, true, false, 0b00) => Mnemonic::STLLRB,
+            (0, false, true, false, 0b01) => Mnemonic::STLLRH,
+            (0, false, true, false, _) => Mnemonic::STLLR,
             // Store exclusive pair
             (0, true, false, false, _) => Mnemonic::STXP,
             (0, true, false, true, _) => Mnemonic::STLXP,
@@ -1251,6 +1260,10 @@ impl Aarch64Decoder {
         // Atomic memory operations (FEAT_LSE): size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt.
         if v == 0 && ((raw >> 24) & 1) == 0 && bit21 == 1 && op2 == 0b00 {
             return Self::decode_atomic_memory(raw);
+        }
+
+        if v == 0 && !is_unsigned_imm && bit21 == 0 && op2 == 0b10 {
+            return Self::decode_unprivileged_load_store(raw);
         }
 
         if v == 0 && size == 0b11 && opc == 0b10 {
@@ -1425,6 +1438,50 @@ impl Aarch64Decoder {
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(rt_operand)
             .with_operand(Operand::Mem(mem)))
+    }
+
+    fn decode_unprivileged_load_store(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 30) & 0x3;
+        let opc = (raw >> 22) & 0x3;
+        let imm9 = ((raw >> 12) & 0x1FF) as i64;
+        let imm9 = if imm9 & (1 << 8) != 0 {
+            imm9 | !0x1FF
+        } else {
+            imm9
+        };
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rt = (raw & 0x1F) as u8;
+
+        let (mnemonic, is_64bit) = match (size, opc) {
+            (0b00, 0b00) => (Mnemonic::STTRB, false),
+            (0b01, 0b00) => (Mnemonic::STTRH, false),
+            (0b10, 0b00) => (Mnemonic::STTR, false),
+            (0b11, 0b00) => (Mnemonic::STTR, true),
+            (0b00, 0b01) => (Mnemonic::LDTRB, false),
+            (0b01, 0b01) => (Mnemonic::LDTRH, false),
+            (0b10, 0b01) => (Mnemonic::LDTR, false),
+            (0b11, 0b01) => (Mnemonic::LDTR, true),
+            (0b00, 0b10) => (Mnemonic::LDTRSB, true),
+            (0b01, 0b10) => (Mnemonic::LDTRSH, true),
+            (0b10, 0b10) => (Mnemonic::LDTRSW, true),
+            (0b00, 0b11) => (Mnemonic::LDTRSB, false),
+            (0b01, 0b11) => (Mnemonic::LDTRSH, false),
+            _ => {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ));
+            }
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
+            .with_operand(Operand::Mem(MemOperand::imm_offset(
+                Register::with_sp(rn, true),
+                imm9,
+            ))))
     }
 
     fn decode_ordered_unscaled(raw: u32) -> Result<DecodedInsn, DecodeError> {
@@ -3824,21 +3881,76 @@ mod tests {
     }
 
     #[test]
-    fn test_ordered_ldst_decode_requires_rs_and_rt2_zr() {
+    fn test_ordered_ldst_decode_ignores_rs_and_rt2_fields() {
         let valid_ldar = Aarch64Decoder::decode(ordered_ldst_raw(0b11, true, 31, 31)).unwrap();
         assert_eq!(valid_ldar.mnemonic, Mnemonic::LDAR);
 
         let valid_stlr = Aarch64Decoder::decode(ordered_ldst_raw(0b11, false, 31, 31)).unwrap();
         assert_eq!(valid_stlr.mnemonic, Mnemonic::STLR);
 
-        for raw in [
-            ordered_ldst_raw(0b11, true, 0, 31),
-            ordered_ldst_raw(0b11, true, 31, 0),
-            ordered_ldst_raw(0b11, false, 0, 31),
-            ordered_ldst_raw(0b11, false, 31, 0),
+        for (raw, mnemonic) in [
+            (ordered_ldst_raw(0b00, true, 0, 31), Mnemonic::LDARB),
+            (ordered_ldst_raw(0b01, true, 31, 0), Mnemonic::LDARH),
+            (ordered_ldst_raw(0b11, true, 0, 0), Mnemonic::LDAR),
+            (ordered_ldst_raw(0b00, false, 0, 31), Mnemonic::STLRB),
+            (ordered_ldst_raw(0b01, false, 31, 0), Mnemonic::STLRH),
+            (ordered_ldst_raw(0b11, false, 0, 0), Mnemonic::STLR),
         ] {
             let insn = Aarch64Decoder::decode(raw).unwrap();
-            assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED);
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.operands.len(), 2);
+        }
+    }
+
+    #[test]
+    fn test_loregion_ordered_ldst_decode() {
+        fn loregion_raw(size: u32, load: bool, rs: u32, rt2: u32) -> u32 {
+            let l = if load { 1 } else { 0 };
+            (size << 30)
+                | (0b001000 << 24)
+                | (1 << 23)
+                | (l << 22)
+                | (rs << 16)
+                | (rt2 << 10)
+                | (1 << 5)
+                | 3
+        }
+
+        let cases = [
+            (0b00, true, Mnemonic::LDLARB, false),
+            (0b01, true, Mnemonic::LDLARH, false),
+            (0b10, true, Mnemonic::LDLAR, false),
+            (0b11, true, Mnemonic::LDLAR, true),
+            (0b00, false, Mnemonic::STLLRB, false),
+            (0b01, false, Mnemonic::STLLRH, false),
+            (0b10, false, Mnemonic::STLLR, false),
+            (0b11, false, Mnemonic::STLLR, true),
+        ];
+
+        for (size, load, mnemonic, is_64bit) in cases {
+            let insn = Aarch64Decoder::decode(loregion_raw(size, load, 31, 31)).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.operands.len(), 2);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 3 && reg.is_64bit == is_64bit)
+            );
+            assert!(matches!(
+                insn.operands.get(1),
+                Some(Operand::Mem(mem)) if mem.base.num == 1 && !mem.base.is_sp
+            ));
+        }
+
+        for (raw, mnemonic) in [
+            (loregion_raw(0b00, true, 0, 31), Mnemonic::LDLARB),
+            (loregion_raw(0b01, true, 31, 0), Mnemonic::LDLARH),
+            (loregion_raw(0b11, true, 0, 0), Mnemonic::LDLAR),
+            (loregion_raw(0b00, false, 0, 31), Mnemonic::STLLRB),
+            (loregion_raw(0b01, false, 31, 0), Mnemonic::STLLRH),
+            (loregion_raw(0b11, false, 0, 0), Mnemonic::STLLR),
+        ] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.operands.len(), 2);
         }
     }
 
@@ -4238,6 +4350,58 @@ mod tests {
     }
 
     #[test]
+    fn test_unprivileged_load_store_decode() {
+        fn unprivileged(size: u32, opc: u32, imm9: i32, rn: u32, rt: u32) -> u32 {
+            (size << 30)
+                | (0b111 << 27)
+                | (opc << 22)
+                | (((imm9 as u32) & 0x1ff) << 12)
+                | (0b10 << 10)
+                | ((rn & 0x1f) << 5)
+                | (rt & 0x1f)
+        }
+
+        let cases = [
+            (0b00, 0b00, Mnemonic::STTRB, false),
+            (0b01, 0b00, Mnemonic::STTRH, false),
+            (0b10, 0b00, Mnemonic::STTR, false),
+            (0b11, 0b00, Mnemonic::STTR, true),
+            (0b00, 0b01, Mnemonic::LDTRB, false),
+            (0b01, 0b01, Mnemonic::LDTRH, false),
+            (0b10, 0b01, Mnemonic::LDTR, false),
+            (0b11, 0b01, Mnemonic::LDTR, true),
+            (0b00, 0b10, Mnemonic::LDTRSB, true),
+            (0b01, 0b10, Mnemonic::LDTRSH, true),
+            (0b10, 0b10, Mnemonic::LDTRSW, true),
+            (0b00, 0b11, Mnemonic::LDTRSB, false),
+            (0b01, 0b11, Mnemonic::LDTRSH, false),
+        ];
+
+        for (size, opc, mnemonic, is_64bit) in cases {
+            let insn = Aarch64Decoder::decode(unprivileged(size, opc, -16, 31, 29)).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 29 && reg.is_64bit == is_64bit && !reg.is_sp)
+            );
+            assert!(matches!(
+                insn.operands.get(1),
+                Some(Operand::Mem(mem))
+                    if mem.base.num == 31
+                        && mem.base.is_sp
+                        && mem.mode == AddressingMode::Offset
+                        && mem.offset == MemOffset::Imm(-16)
+            ));
+        }
+
+        let invalid_signed_x =
+            Aarch64Decoder::decode(unprivileged(0b11, 0b10, 0, 1, 0)).unwrap();
+        assert_eq!(invalid_signed_x.mnemonic, Mnemonic::UNDEFINED);
+        let invalid_signed_w =
+            Aarch64Decoder::decode(unprivileged(0b10, 0b11, 0, 1, 0)).unwrap();
+        assert_eq!(invalid_signed_w.mnemonic, Mnemonic::UNDEFINED);
+    }
+
+    #[test]
     fn test_svc() {
         // SVC #0: d4000001
         let insn = decode_bytes(&[0x01, 0x00, 0x00, 0xd4]).unwrap();
@@ -4331,6 +4495,37 @@ mod tests {
             insn.operands.get(1),
             Some(Operand::Cond(Condition::NE))
         ));
+    }
+
+    #[test]
+    fn test_wfxt_decode() {
+        let wfet = decode_bytes(&[0x00, 0x10, 0x03, 0xd5]).unwrap();
+        assert_eq!(wfet.mnemonic, Mnemonic::WFET);
+        assert!(matches!(
+            wfet.operands.first(),
+            Some(Operand::Reg(reg)) if reg.num == 0 && reg.is_64bit
+        ));
+
+        let wfit = decode_bytes(&[0x21, 0x10, 0x03, 0xd5]).unwrap();
+        assert_eq!(wfit.mnemonic, Mnemonic::WFIT);
+        assert!(matches!(
+            wfit.operands.first(),
+            Some(Operand::Reg(reg)) if reg.num == 1 && reg.is_64bit
+        ));
+
+        let wfet_xzr = decode_bytes(&[0x1f, 0x10, 0x03, 0xd5]).unwrap();
+        assert_eq!(wfet_xzr.mnemonic, Mnemonic::WFET);
+        assert!(matches!(
+            wfet_xzr.operands.first(),
+            Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp
+        ));
+    }
+
+    #[test]
+    fn test_dgh_hint_decode() {
+        let insn = decode_bytes(&[0xdf, 0x20, 0x03, 0xd5]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::DGH);
+        assert!(insn.operands.is_empty());
     }
 
     #[test]
