@@ -15275,6 +15275,36 @@ impl AArch64Cpu {
         Ok(CpuExit::Undefined(insn))
     }
 
+    fn read_sve_mem_element(&self, ea: u64, mbytes: usize) -> Result<u64, ArmError> {
+        match self.translate_address(ea, false, false) {
+            Ok(pa) => match mbytes {
+                1 => self
+                    .memory
+                    .read_u8(pa)
+                    .map(|v| v as u64)
+                    .map_err(Into::into),
+                2 => self
+                    .memory
+                    .read_u16(pa)
+                    .map(|v| v as u64)
+                    .map_err(Into::into),
+                4 => self
+                    .memory
+                    .read_u32(pa)
+                    .map(|v| v as u64)
+                    .map_err(Into::into),
+                _ => self.memory.read_u64(pa).map_err(Into::into),
+            },
+            Err(err) => Err(err),
+        }
+    }
+
+    fn clear_sve_ffr_from_element(&mut self, e: usize, esize: usize) {
+        let bit = e * esize;
+        let keep = if bit == 0 { 0 } else { (1u32 << bit) - 1 };
+        self.sve_ffr &= keep;
+    }
+
     /// Shared body for the contiguous first-fault (LDFF1) and non-fault (LDNF1)
     /// loads. Loads each active element; on an access that cannot be performed
     /// the access is suppressed: for LDFF1 the very first active element still
@@ -15301,31 +15331,10 @@ impl AArch64Cpu {
                 continue; // inactive -> zero
             }
             if faulted {
-                self.sve_ffr &= !(1u32 << (e * esize));
                 continue;
             }
             let ea = addr0.wrapping_add((e * mbytes) as u64);
-            let read: Result<u64, ArmError> = match self.translate_address(ea, false, false) {
-                Ok(pa) => match mbytes {
-                    1 => self
-                        .memory
-                        .read_u8(pa)
-                        .map(|v| v as u64)
-                        .map_err(Into::into),
-                    2 => self
-                        .memory
-                        .read_u16(pa)
-                        .map(|v| v as u64)
-                        .map_err(Into::into),
-                    4 => self
-                        .memory
-                        .read_u32(pa)
-                        .map(|v| v as u64)
-                        .map_err(Into::into),
-                    _ => self.memory.read_u64(pa).map_err(Into::into),
-                },
-                Err(err) => Err(err),
-            };
+            let read = self.read_sve_mem_element(ea, mbytes);
             match read {
                 Ok(raw) => {
                     let val = if signed {
@@ -15340,8 +15349,8 @@ impl AArch64Cpu {
                     if first && !nonfault {
                         return Err(err); // LDFF1's first active element faults normally
                     }
+                    self.clear_sve_ffr_from_element(e, esize);
                     faulted = true;
-                    self.sve_ffr &= !(1u32 << (e * esize));
                 }
             }
         }
@@ -15353,8 +15362,8 @@ impl AArch64Cpu {
     /// the precomputed effective address for lane `e`. For a plain LD1 gather
     /// (`first_fault == false`) every active lane faults normally; for an LDFF1
     /// gather (`first_fault == true`) the first active lane faults normally while
-    /// any later faulting lane is suppressed (its result left zero) and the
-    /// corresponding FFR bit is cleared.
+    /// any later faulting lane is suppressed (its result left zero), FFR is
+    /// cleared from that element onward, and later lanes are still attempted.
     #[allow(clippy::too_many_arguments)]
     fn exec_sve_gather_load(
         &mut self,
@@ -15368,32 +15377,11 @@ impl AArch64Cpu {
     ) -> Result<CpuExit, ArmError> {
         let mut dst = [0u8; 16];
         let mut first = true;
-        let mut faulted = false;
         for (e, &ea) in addrs.iter().enumerate() {
             if (pred >> (e * esize)) & 1 != 1 {
                 continue; // inactive -> zero
             }
-            if faulted {
-                self.sve_ffr &= !(1u32 << (e * esize));
-                continue;
-            }
-            let read: Result<u64, ArmError> = match self.translate_address(ea, false, false) {
-                Ok(pa) => match mbytes {
-                    1 => self.memory.read_u8(pa).map(|v| v as u64).map_err(Into::into),
-                    2 => self
-                        .memory
-                        .read_u16(pa)
-                        .map(|v| v as u64)
-                        .map_err(Into::into),
-                    4 => self
-                        .memory
-                        .read_u32(pa)
-                        .map(|v| v as u64)
-                        .map_err(Into::into),
-                    _ => self.memory.read_u64(pa).map_err(Into::into),
-                },
-                Err(err) => Err(err),
-            };
+            let read = self.read_sve_mem_element(ea, mbytes);
             match read {
                 Ok(raw) => {
                     let val = if signed {
@@ -15411,8 +15399,7 @@ impl AArch64Cpu {
                     if !first_fault || first {
                         return Err(err);
                     }
-                    faulted = true;
-                    self.sve_ffr &= !(1u32 << (e * esize));
+                    self.clear_sve_ffr_from_element(e, esize);
                 }
             }
         }

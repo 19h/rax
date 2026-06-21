@@ -34876,18 +34876,30 @@ fn enc_scatter_d(msz: u32, scaled: bool) -> u32 {
 }
 
 /// SVE LDFF1 (first-fault, scalar+scalar): `1010010 dtype Rm 011 Pg Rn Zt`.
+fn enc_ldff1_regs(dtype: u32, rm: u32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (dtype << 21)
+        | ((rm & 0x1F) << 16)
+        | (0b011 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+
 fn enc_ldff1(dtype: u32) -> u32 {
-    (0b1010010 << 25) | (dtype << 21) | (RM << 16) | (0b011 << 13) | (RN << 5) | RD
+    enc_ldff1_regs(dtype, RM, RN)
 }
 /// SVE LDNF1 (non-fault, scalar+imm): `1010010 dtype 1 imm4 101 Pg Rn Zt`.
-fn enc_ldnf1(dtype: u32, imm4: i32) -> u32 {
+fn enc_ldnf1_regs(dtype: u32, imm4: i32, rn: u32) -> u32 {
     (0b1010010 << 25)
         | (dtype << 21)
         | (1 << 20)
         | (((imm4 as u32) & 0xF) << 16)
         | (0b101 << 13)
-        | (RN << 5)
+        | ((rn & 0x1F) << 5)
         | RD
+}
+fn enc_ldnf1(dtype: u32, imm4: i32) -> u32 {
+    enc_ldnf1_regs(dtype, imm4, RN)
 }
 
 /// SVE FFR-manipulation encodings (fully fixed apart from the predicate fields).
@@ -34909,11 +34921,26 @@ fn enc_rdffrs_pred(pd: u32, pg: u32) -> u32 {
 
 /// SVE LD1RQ (load-replicate quadword): `1010010 msz 00 0 imm4 001`(imm) /
 /// `1010010 msz 00 Rm 000`(scalar). Rn=x1, Rm=x2, Zt=z0.
+fn enc_ld1rq_i_regs(msz: u32, imm4: i32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (msz << 23)
+        | (((imm4 as u32) & 0xF) << 16)
+        | (0b001 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
 fn enc_ld1rq_i(msz: u32, imm4: i32) -> u32 {
-    (0b1010010 << 25) | (msz << 23) | (((imm4 as u32) & 0xF) << 16) | (0b001 << 13) | (RN << 5) | RD
+    enc_ld1rq_i_regs(msz, imm4, RN)
+}
+fn enc_ld1rq_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (msz << 23)
+        | ((rm & 0x1F) << 16)
+        | ((rn & 0x1F) << 5)
+        | RD
 }
 fn enc_ld1rq_r(msz: u32) -> u32 {
-    (0b1010010 << 25) | (msz << 23) | (RM << 16) | (RN << 5) | RD
+    enc_ld1rq_r_regs(msz, RM, RN)
 }
 
 /// SVE LDNT1/STNT1 (non-temporal contiguous): `1010010 msz 000 imm4 111`(LD) /
@@ -34931,6 +34958,24 @@ fn enc_stnt1(msz: u32, imm4: i32) -> u32 {
         | RD
 }
 
+/// SVE LDNT1/STNT1 (scalar+scalar): Rn, Rm explicit for SP/Rm edge tests.
+fn enc_ldnt1_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (msz << 23)
+        | ((rm & 0x1F) << 16)
+        | (0b110 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+fn enc_stnt1_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
+    (0b1110010 << 25)
+        | (msz << 23)
+        | ((rm & 0x1F) << 16)
+        | (0b011 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+
 /// SVE LD2/3/4 (de-interleaving): `1010010 msz opc 0 imm4 111 Pg Rn Zt`.
 /// opc=nreg-1. Rn=x1, Zt=z0.
 fn enc_ldn(msz: u32, nreg: u32, imm4: i32) -> u32 {
@@ -34940,6 +34985,26 @@ fn enc_ldn(msz: u32, nreg: u32, imm4: i32) -> u32 {
         | (((imm4 as u32) & 0xF) << 16)
         | (0b111 << 13)
         | (RN << 5)
+        | RD
+}
+
+/// SVE LD2/3/4 and ST2/3/4 (scalar+scalar): Rn, Rm explicit for edge tests.
+fn enc_ldn_r_regs(msz: u32, nreg: u32, rm: u32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (msz << 23)
+        | ((nreg - 1) << 21)
+        | ((rm & 0x1F) << 16)
+        | (0b110 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+fn enc_stn_r_regs(msz: u32, nreg: u32, rm: u32, rn: u32) -> u32 {
+    (0b1110010 << 25)
+        | (msz << 23)
+        | ((nreg - 1) << 21)
+        | ((rm & 0x1F) << 16)
+        | (0b011 << 13)
+        | ((rn & 0x1F) << 5)
         | RD
 }
 /// SVE ST2/3/4 (interleaving): `1110010 msz opc 1 imm4 111 Pg Rn Zt`.
@@ -47909,6 +47974,79 @@ fn diff_sve_ldff1() {
 }
 
 #[test]
+fn diff_sve_ldff1_scalar_rm31_edge() {
+    let mut rng = Rng::new(0x4_E011);
+    let mut batch = Vec::new();
+
+    for dtype in 0..16u32 {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_preg(0, 1);
+        batch.push((
+            format!("ldff1_dt{dtype}_rm31"),
+            enc_setffr(),
+            enc_ldff1_regs(dtype, 31, RN),
+            st,
+        ));
+    }
+
+    run_batch_pair("sve_ldff1_scalar_rm31_edge", batch);
+}
+
+#[test]
+fn diff_sve_ldnf1_invalid_base_edges() {
+    let mut rng = Rng::new(0x4_E012);
+    let mut batch = Vec::new();
+
+    for dtype in 0..16u32 {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = GUEST_STACK_ADDR - 0x1000;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RD as usize, rng.next(), rng.next());
+        batch.push((
+            format!("ldnf1_dt{dtype}_invalid_base"),
+            enc_setffr(),
+            enc_ldnf1(dtype, 0),
+            st,
+        ));
+    }
+
+    run_batch_pair("sve_ldnf1_invalid_base_edges", batch);
+}
+
+#[test]
+fn diff_sve_ldff1_ldnf1_sp_alignment_edges() {
+    let cases: Vec<(String, u32, u32, Option<u64>)> = vec![
+        ("ldff1b_sp".into(), enc_setffr(), enc_ldff1_regs(0, RM, 31), Some(0)),
+        (
+            "ldff1d_sp".into(),
+            enc_setffr(),
+            enc_ldff1_regs(7, RM, 31),
+            Some(0),
+        ),
+        ("ldnf1b_sp".into(), enc_setffr(), enc_ldnf1_regs(0, 0, 31), None),
+        ("ldnf1d_sp".into(), enc_setffr(), enc_ldnf1_regs(7, 0, 31), None),
+    ];
+    let mut rng = Rng::new(0x4_E013);
+    let mut batch = Vec::new();
+
+    for (label, pre, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(RD as usize, rng.next(), rng.next());
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((format!("{label}_off{offset}"), *pre, *insn, st));
+        }
+    }
+
+    run_batch_pair("sve_ldff1_ldnf1_sp_alignment_edges", batch);
+}
+
+#[test]
 fn diff_sve_ldff1_gather() {
     // First-fault gather (D-form, ff=bit13 set). As with contiguous LDFF1, only
     // element 0 is architecturally guaranteed, so it alone is activated with FFR
@@ -47971,6 +48109,136 @@ fn diff_sve_ldff1_gather() {
         }
     }
     run_batch_pair("sve_ldff1_gather", batch);
+}
+
+#[test]
+fn diff_sve_ldff1_gather_suppressed_fault_edges() {
+    let mut st = ArmState::zeroed();
+    st.x[RN as usize] = SCRATCH_BASE;
+    st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+    st.set_vreg(2, 0, (GUEST_STACK_ADDR - 0x1000).wrapping_sub(SCRATCH_BASE));
+    st.set_preg(0, 0xffff);
+    for (idx, word) in st.scratch.iter_mut().enumerate() {
+        *word = 0x80ff_7f00_55aa_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+    }
+
+    let insn = enc_gather_d(0, false, 1) | (1 << 13);
+    run_batch_pair(
+        "sve_ldff1_gather_suppressed_fault_edges",
+        vec![("ldff1g_d_second_lane_fault".into(), enc_setffr(), insn, st)],
+    );
+}
+
+#[test]
+fn diff_sve_ldff1_gather_remaining_suppressed_fault_edges() {
+    let invalid_addr = GUEST_STACK_ADDR - 0x1000;
+    let invalid_delta = invalid_addr.wrapping_sub(SCRATCH_BASE) as u32;
+
+    fn suppressed_fault_input(label: &str, invalid_addr: u64, invalid_delta: u32) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, 0xffff);
+        match label {
+            "x32" => st.set_vreg(2, 0, invalid_delta as u64),
+            "s_scalar_base" => st.set_vreg(2, (invalid_delta as u64) << 32, 0),
+            "d_vector_base" => st.set_vreg(1, SCRATCH_BASE, invalid_addr),
+            "s_vector_base" => st.set_vreg(1, SCRATCH_BASE | (invalid_addr << 32), 0),
+            _ => unreachable!(),
+        }
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x80ff_7f00_55aa_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+        }
+        st
+    }
+
+    let cases = vec![
+        (
+            "ldff1g_x32_second_lane_fault".into(),
+            enc_gather_x32(0, 0, false, 1) | (1 << 13),
+            suppressed_fault_input("x32", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_s_second_lane_fault".into(),
+            enc_gather_s(0, 0, false, 1) | (1 << 13),
+            suppressed_fault_input("s_scalar_base", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_d_vector_base_second_lane_fault".into(),
+            enc_gather_ai(0, 0, 1) | (1 << 13),
+            suppressed_fault_input("d_vector_base", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_s_vector_base_second_lane_fault".into(),
+            enc_gather_ai_s(0, 0, 1) | (1 << 13),
+            suppressed_fault_input("s_vector_base", invalid_addr, invalid_delta),
+        ),
+    ];
+    let batch = cases
+        .into_iter()
+        .map(|(label, insn, st)| (label, enc_setffr(), insn, st))
+        .collect();
+
+    run_batch_pair("sve_ldff1_gather_remaining_suppressed_fault_edges", batch);
+}
+
+#[test]
+fn diff_sve_ldff1_gather_first_active_fault_edges() {
+    let invalid_addr = GUEST_STACK_ADDR - 0x1000;
+    let invalid_delta = invalid_addr.wrapping_sub(SCRATCH_BASE) as u32;
+
+    fn first_fault_input(label: &str, invalid_addr: u64, invalid_delta: u32) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, 0xffff);
+        match label {
+            "d_scalar_base" => st.set_vreg(2, invalid_delta as u64, 0),
+            "x32" => st.set_vreg(2, invalid_delta as u64, 0),
+            "s_scalar_base" => st.set_vreg(2, invalid_delta as u64, 0),
+            "d_vector_base" => st.set_vreg(1, invalid_addr, SCRATCH_BASE),
+            "s_vector_base" => st.set_vreg(1, invalid_addr | (SCRATCH_BASE << 32), 0),
+            _ => unreachable!(),
+        }
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x80ff_7f00_55aa_0102u64 ^ (idx as u64).wrapping_mul(0x1020_4080_0102_0408);
+        }
+        st
+    }
+
+    let cases = vec![
+        (
+            "ldff1g_d_first_lane_fault".into(),
+            enc_gather_d(0, false, 1) | (1 << 13),
+            first_fault_input("d_scalar_base", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_x32_first_lane_fault".into(),
+            enc_gather_x32(0, 0, false, 1) | (1 << 13),
+            first_fault_input("x32", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_s_first_lane_fault".into(),
+            enc_gather_s(0, 0, false, 1) | (1 << 13),
+            first_fault_input("s_scalar_base", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_d_vector_base_first_lane_fault".into(),
+            enc_gather_ai(0, 0, 1) | (1 << 13),
+            first_fault_input("d_vector_base", invalid_addr, invalid_delta),
+        ),
+        (
+            "ldff1g_s_vector_base_first_lane_fault".into(),
+            enc_gather_ai_s(0, 0, 1) | (1 << 13),
+            first_fault_input("s_vector_base", invalid_addr, invalid_delta),
+        ),
+    ];
+    let batch = cases
+        .into_iter()
+        .map(|(label, insn, st)| (label, enc_setffr(), insn, st))
+        .collect();
+
+    run_batch_pair("sve_ldff1_gather_first_active_fault_edges", batch);
 }
 
 #[test]
@@ -48157,6 +48425,36 @@ fn diff_sve_ld1rq() {
         }
     }
     run_batch("sve_ld1rq", batch);
+}
+
+#[test]
+fn diff_sve_ld1rq_sp_rm31_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        ("ld1rqi_b_sp".into(), enc_ld1rq_i_regs(0, 0, 31), None),
+        ("ld1rqi_d_sp".into(), enc_ld1rq_i_regs(3, 0, 31), None),
+        ("ld1rqr_b_sp".into(), enc_ld1rq_r_regs(0, RM, 31), Some(0)),
+        ("ld1rqr_d_sp".into(), enc_ld1rq_r_regs(3, RM, 31), Some(0)),
+        ("ld1rqr_b_rm31".into(), enc_ld1rq_r_regs(0, 31, RN), None),
+        ("ld1rqr_d_rm31".into(), enc_ld1rq_r_regs(3, 31, RN), None),
+    ];
+    let mut rng = Rng::new(0x4_C011);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        let offsets: &[u64] = if label.contains("_sp") { &[1, 8] } else { &[0] };
+        for offset in offsets {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(0, rng.next(), rng.next());
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("sve_ld1rq_sp_rm31_edges", batch);
 }
 
 #[test]
@@ -49210,6 +49508,114 @@ fn diff_sve_ldst_sp_alignment_edges() {
     }
 
     run_batch("sve_ldst_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_sve_gather_scatter_sp_alignment_edges() {
+    fn set_rn(insn: u32, rn: u32) -> u32 {
+        (insn & !(0x1f << 5)) | ((rn & 0x1f) << 5)
+    }
+
+    let cases: Vec<(String, u32)> = vec![
+        ("ld1g_d_sp".into(), set_rn(enc_gather_d(1, false, 1), 31)),
+        (
+            "ldff1g_d_sp".into(),
+            set_rn(enc_gather_d(1, false, 1) | (1 << 13), 31),
+        ),
+        ("st1g_d_sp".into(), set_rn(enc_scatter_d(1, false), 31)),
+        (
+            "ld1g_x32_sp".into(),
+            set_rn(enc_gather_x32(1, 0, false, 1), 31),
+        ),
+        (
+            "st1g_x32_sp".into(),
+            set_rn(enc_scatter_x32(1, 0, false), 31),
+        ),
+        (
+            "ld1g_s_sp".into(),
+            set_rn(enc_gather_s(1, 0, false, 1), 31),
+        ),
+        (
+            "st1g_s_sp".into(),
+            set_rn(enc_scatter_s(1, 0, false), 31),
+        ),
+    ];
+    let mut rng = Rng::new(0x3_4012);
+    let mut batch = Vec::new();
+
+    for (label, insn) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(RM as usize, 0, 0);
+            st.set_vreg(RD as usize, rng.next(), rng.next());
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("sve_gather_scatter_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_sve_nt_multi_reg_sp_alignment_edges() {
+    let cases: Vec<(String, u32)> = vec![
+        ("ldnt1b_sp_reg".into(), enc_ldnt1_r_regs(0, RM, 31)),
+        ("stnt1b_sp_reg".into(), enc_stnt1_r_regs(0, RM, 31)),
+        ("ldnt1d_sp_reg".into(), enc_ldnt1_r_regs(3, RM, 31)),
+        ("stnt1d_sp_reg".into(), enc_stnt1_r_regs(3, RM, 31)),
+        ("ld2b_sp_reg".into(), enc_ldn_r_regs(0, 2, RM, 31)),
+        ("st2b_sp_reg".into(), enc_stn_r_regs(0, 2, RM, 31)),
+        ("ld4d_sp_reg".into(), enc_ldn_r_regs(3, 4, RM, 31)),
+        ("st4d_sp_reg".into(), enc_stn_r_regs(3, 4, RM, 31)),
+    ];
+    let mut rng = Rng::new(0x3_4013);
+    let mut batch = Vec::new();
+
+    for (label, insn) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.x[RM as usize] = 0;
+            st.set_preg(0, 0xffff);
+            for reg in 0..4 {
+                st.set_vreg(reg, rng.next(), rng.next());
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("sve_nt_multi_reg_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_sve_nt_multi_reg_rm31_edges() {
+    let mut cases: Vec<(String, u32)> = vec![
+        ("ldnt1b_rm31".into(), enc_ldnt1_r_regs(0, 31, RN)),
+        ("stnt1b_rm31".into(), enc_stnt1_r_regs(0, 31, RN)),
+        ("ldnt1d_rm31".into(), enc_ldnt1_r_regs(3, 31, RN)),
+        ("stnt1d_rm31".into(), enc_stnt1_r_regs(3, 31, RN)),
+    ];
+    for msz in [0u32, 3] {
+        for nreg in 2..=4u32 {
+            cases.push((format!("ld{nreg}_m{msz}_rm31"), enc_ldn_r_regs(msz, nreg, 31, RN)));
+            cases.push((format!("st{nreg}_m{msz}_rm31"), enc_stn_r_regs(msz, nreg, 31, RN)));
+        }
+    }
+
+    let mut rng = Rng::new(0x3_4014);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_preg(0, 0xffff);
+        for reg in 0..4 {
+            st.set_vreg(reg, rng.next(), rng.next());
+        }
+        batch.push((label, insn, st));
+    }
+
+    run_batch("sve_nt_multi_reg_rm31_edges", batch);
 }
 
 #[test]
