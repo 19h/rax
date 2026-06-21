@@ -4969,6 +4969,9 @@ impl AArch64Cpu {
             }
             // ---- Widening left shift: SSHLL / USHLL (SXTL/UXTL when shift==0) ----
             0b10100 => {
+                if scalar {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 if bits == 64 {
                     return Err(ArmError::UndefinedInstruction(insn));
                 }
@@ -4993,6 +4996,9 @@ impl AArch64Cpu {
             }
             // ---- Narrowing right shift ----
             0b10000 | 0b10001 | 0b10010 | 0b10011 => {
+                if scalar && u == 0 && matches!(opcode, 0b10000 | 0b10001) {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 if bits == 64 {
                     return Err(ArmError::UndefinedInstruction(insn));
                 }
@@ -5326,6 +5332,9 @@ impl AArch64Cpu {
             let sat_double = matches!(opcode, 0b0011 | 0b0111 | 0b1011);
             let accum = matches!(opcode, 0b0010 | 0b0110 | 0b0011 | 0b0111);
             let subtract = matches!(opcode, 0b0110 | 0b0111);
+            if scalar && !sat_double {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             // SQDMULL/SQDMLAL/SQDMLSL are signed-only.
             if sat_double && u == 1 {
                 return Err(ArmError::UndefinedInstruction(insn));
@@ -5379,6 +5388,14 @@ impl AArch64Cpu {
 
         // ---- Same-size: MUL/MLA/MLS and the saturating doubling-high family ----
         if bits == 64 && q == 0 && !scalar {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+        if scalar
+            && !matches!(
+                (u, opcode),
+                (0, 0b1100) | (0, 0b1101) | (1, 0b1101) | (1, 0b1111)
+            )
+        {
             return Err(ArmError::UndefinedInstruction(insn));
         }
         let datasize = if scalar {
@@ -6326,128 +6343,7 @@ impl AArch64Cpu {
             return r;
         }
 
-        let src = self.v[rn].to_le_bytes();
-        let mut dst = [0u8; 16];
-
-        for e in 0..elements {
-            let offset = e * esize;
-
-            match esize {
-                1 => {
-                    let a = src[offset];
-                    dst[offset] = match (u, opcode) {
-                        (1, 0b00101) => !a, // NOT
-                        (0, 0b01011) => {
-                            if (a as i8) < 0 {
-                                a.wrapping_neg()
-                            } else {
-                                a
-                            }
-                        } // ABS
-                        (1, 0b01011) => a.wrapping_neg(), // NEG
-                        _ => a,
-                    };
-                }
-                2 => {
-                    let a = i16::from_le_bytes([src[offset], src[offset + 1]]);
-                    let result = match (u, opcode) {
-                        (0, 0b01011) => a.abs() as u16,
-                        (1, 0b01011) => a.wrapping_neg() as u16,
-                        _ => a as u16,
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[offset..offset + 2].copy_from_slice(&bytes);
-                }
-                4 => {
-                    if opcode >= 0b01100 && opcode <= 0b11111 {
-                        // FP unary
-                        let a = f32::from_le_bytes([
-                            src[offset],
-                            src[offset + 1],
-                            src[offset + 2],
-                            src[offset + 3],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b01111) => a.abs(),   // FABS
-                            (1, 0b01111) => -a,        // FNEG
-                            (1, 0b10111) => a.sqrt(),  // FSQRT
-                            (0, 0b11000) => a.round(), // FRINTN
-                            (1, 0b11000) => a.ceil(),  // FRINTP
-                            (0, 0b11001) => a.floor(), // FRINTM
-                            (1, 0b11001) => a.trunc(), // FRINTZ
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 4].copy_from_slice(&bytes);
-                    } else {
-                        // Integer
-                        let a = i32::from_le_bytes([
-                            src[offset],
-                            src[offset + 1],
-                            src[offset + 2],
-                            src[offset + 3],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b01011) => a.abs() as u32,
-                            (1, 0b01011) => a.wrapping_neg() as u32,
-                            (1, 0b00101) => !(a as u32),
-                            _ => a as u32,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 4].copy_from_slice(&bytes);
-                    }
-                }
-                8 => {
-                    if opcode >= 0b01100 {
-                        // FP double
-                        let a = f64::from_le_bytes([
-                            src[offset],
-                            src[offset + 1],
-                            src[offset + 2],
-                            src[offset + 3],
-                            src[offset + 4],
-                            src[offset + 5],
-                            src[offset + 6],
-                            src[offset + 7],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b01111) => a.abs(),
-                            (1, 0b01111) => -a,
-                            (1, 0b10111) => a.sqrt(),
-                            (0, 0b11000) => a.round(),
-                            (1, 0b11000) => a.ceil(),
-                            (0, 0b11001) => a.floor(),
-                            (1, 0b11001) => a.trunc(),
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 8].copy_from_slice(&bytes);
-                    } else {
-                        let a = i64::from_le_bytes([
-                            src[offset],
-                            src[offset + 1],
-                            src[offset + 2],
-                            src[offset + 3],
-                            src[offset + 4],
-                            src[offset + 5],
-                            src[offset + 6],
-                            src[offset + 7],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b01011) => a.abs() as u64,
-                            (1, 0b01011) => a.wrapping_neg() as u64,
-                            _ => a as u64,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 8].copy_from_slice(&bytes);
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        self.v[rd] = u128::from_le_bytes(dst);
-        Ok(CpuExit::Continue)
+        Err(ArmError::UndefinedInstruction(insn))
     }
 
     /// Deterministic FP two-register-misc ops (FABS/FNEG/FSQRT, FRINT*, FCVT* to
