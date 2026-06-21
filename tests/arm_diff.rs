@@ -32582,6 +32582,46 @@ fn enc_sve_sel(sz: u32) -> u32 {
 
 #[test]
 fn diff_sve_sel() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn sel_values(sz: u32) -> (Vec<u64>, Vec<u64>) {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let zn = [
+            mask & 0x0123_4567_89ab_cdef,
+            mask & 0xfedc_ba98_7654_3210,
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+        ];
+        let zm = [
+            mask & 0x1111_2222_3333_4444,
+            mask & 0x5555_6666_7777_8888,
+            mask & 0x0f0f_0f0f_0f0f_0f0f,
+            mask & 0xf0f0_f0f0_f0f0_f0f0,
+        ];
+        (
+            (0..lanes).map(|lane| zn[lane % zn.len()]).collect(),
+            (0..lanes).map(|lane| zm[lane % zm.len()]).collect(),
+        )
+    }
+
     let mut rng = Rng::new(0x1_0025);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for sz in 0..4u32 {
@@ -32592,6 +32632,22 @@ fn diff_sve_sel() {
             st.set_vreg(2, rng.next(), rng.next());
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("sel sz{sz}"), insn, st));
+        }
+        let mixed = match sz {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        let (zn, zm) = sel_values(sz);
+        for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_lanes(sz, &zn);
+            st.set_vreg(1, lo, hi);
+            let (lo, hi) = pack_lanes(sz, &zm);
+            st.set_vreg(2, lo, hi);
+            st.set_preg(0, pg);
+            batch.push((format!("sel_sz{sz}_{mask_name}"), insn, st));
         }
     }
     run_batch("sve_sel", batch);
@@ -32605,6 +32661,57 @@ fn enc_sve_cmp(sz: u32, cmp_hi: u32, cmp_lo: u32) -> u32 {
 
 #[test]
 fn diff_sve_cmp() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn cmp_patterns(sz: u32) -> [(&'static str, Vec<u64>, Vec<u64>); 2] {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let zn_edges = [0, 1, 2, sign - 1, sign, sign + 1, mask - 1, mask];
+        let zm_edges = [0, 2, 1, sign - 1, sign + 1, sign, mask, mask - 1];
+        let zn_bits = [
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+            mask & 0x0f0f_0f0f_0f0f_0f0f,
+            mask & 0xf0f0_f0f0_f0f0_f0f0,
+        ];
+        let zm_bits = [
+            mask & 0x5555_5555_5555_5555,
+            mask & 0x3333_3333_3333_3333,
+            mask & 0xff00_ff00_ff00_ff00,
+            mask & 0x00ff_00ff_00ff_00ff,
+        ];
+        [
+            (
+                "edges",
+                (0..lanes).map(|lane| zn_edges[lane % zn_edges.len()]).collect(),
+                (0..lanes).map(|lane| zm_edges[lane % zm_edges.len()]).collect(),
+            ),
+            (
+                "bitmix",
+                (0..lanes).map(|lane| zn_bits[lane % zn_bits.len()]).collect(),
+                (0..lanes).map(|lane| zm_bits[lane % zm_bits.len()]).collect(),
+            ),
+        ]
+    }
+
     let ops: &[(u32, u32, &str)] = &[
         (0b000, 0, "hs"),
         (0b000, 1, "hi"),
@@ -32635,6 +32742,29 @@ fn diff_sve_cmp() {
             }
         }
     }
+    for sz in 0..4u32 {
+        let mixed = match sz {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        for &(hi, lo, name) in ops {
+            let insn = enc_sve_cmp(sz, hi, lo);
+            for (pattern_name, zn, zm) in cmp_patterns(sz) {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(0, 0xdead);
+                    let (lo, hi) = pack_lanes(sz, &zn);
+                    st.set_vreg(1, lo, hi);
+                    let (lo, hi) = pack_lanes(sz, &zm);
+                    st.set_vreg(2, lo, hi);
+                    st.set_preg(1, pg);
+                    batch.push((format!("cmp{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                }
+            }
+        }
+    }
     run_batch("sve_cmp", batch);
 }
 
@@ -32646,6 +32776,37 @@ fn enc_sve_shift(sz: u32, opc: u32) -> u32 {
 
 #[test]
 fn diff_sve_shift_pred() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn shift_patterns(sz: u32) -> (Vec<u64>, Vec<u64>) {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let values = [1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let shifts = [0, 1, bits as u64 - 1, bits as u64, bits as u64 + 1, 2 * bits as u64 - 1];
+        (
+            (0..lanes).map(|lane| values[lane % values.len()]).collect(),
+            (0..lanes).map(|lane| shifts[lane % shifts.len()]).collect(),
+        )
+    }
+
     let ops = [(0b000u32, "asr"), (0b001, "lsr"), (0b011, "lsl")];
     let mut rng = Rng::new(0x1_002A);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -32659,6 +32820,22 @@ fn diff_sve_shift_pred() {
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
             }
+            let mixed = match sz {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            let (values, shifts) = shift_patterns(sz);
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(sz, &values);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(sz, &shifts);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("{name}_sz{sz}_bounds_{mask_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_shift_pred", batch);
@@ -32666,6 +32843,37 @@ fn diff_sve_shift_pred() {
 
 #[test]
 fn diff_sve_pcount() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn lane_values(sz: u32) -> Vec<u64> {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let values = [
+            mask & 0x0123_4567_89ab_cdef,
+            mask & 0xfedc_ba98_7654_3210,
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+        ];
+        (0..lanes).map(|lane| values[lane % values.len()]).collect()
+    }
+
     let mut rng = Rng::new(0x1_002F);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for sz in 0..4u32 {
@@ -32704,6 +32912,40 @@ fn diff_sve_pcount() {
                 ("clastb", clastb),
             ] {
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+        }
+        let mixed = match sz {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        for (case_name, p0, p1, p2) in [
+            ("all", 0xffff, 0xffff, 0x3333),
+            ("mixed", mixed, mixed, 0xaaaa),
+            ("inactive", 0x0000, 0x0000, 0xffff),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[0] = 0x0123_4567_89ab_cdef;
+            st.set_vreg(0, 0xfedc_ba98_7654_3210, 0x89ab_cdef_0123_4567);
+            let values = lane_values(sz);
+            let (lo, hi) = pack_lanes(sz, &values);
+            st.set_vreg(1, lo, hi);
+            st.set_preg(0, p0);
+            st.set_preg(1, p1);
+            st.set_preg(2, p2);
+            for (name, insn) in [
+                ("cntp", cntp),
+                ("incpr", incp_r),
+                ("decpr", decp_r),
+                ("incpz", incp_z),
+                ("decpz", decp_z),
+                ("lasta", lasta),
+                ("lastb", lastb),
+                ("clasta", clasta),
+                ("clastb", clastb),
+            ] {
+                batch.push((format!("{name}_sz{sz}_{case_name}"), insn, st));
             }
         }
     }
@@ -34330,6 +34572,19 @@ fn diff_fpcr_fiz_sve_recps_rsqrts_subnormal_inputs() {
 
 #[test]
 fn diff_sve_fp_reduce() {
+    fn pack_lanes(esize: u32, values: &[u64]) -> (u64, u64) {
+        let mut packed = 0u128;
+        let mask = if esize == 64 {
+            u64::MAX
+        } else {
+            (1u64 << esize) - 1
+        };
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * esize as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let ops: &[(u32, &str)] = &[
         (0b000000, "faddv"),
         (0b000110, "fmaxv"),
@@ -34353,6 +34608,79 @@ fn diff_sve_fp_reduce() {
                 st.set_vreg(0, l0, h0);
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+        }
+    }
+
+    for &(sz, esize) in &[(1u32, 16u32), (2, 32), (3, 64)] {
+        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match sz {
+            1 => (
+                0xffff,
+                0x1111,
+                vec![
+                    (
+                        "h_zeros",
+                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                        vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                    ),
+                    (
+                        "h_lane_mix",
+                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200],
+                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    ),
+                ],
+            ),
+            2 => (
+                0xffff,
+                0x0101,
+                vec![
+                    (
+                        "s_zeros",
+                        vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
+                        vec![0x0000_0000, 0x8000_0000, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
+                    ),
+                    (
+                        "s_lane_mix",
+                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
+                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    ),
+                ],
+            ),
+            _ => (
+                0xffff,
+                0x0001,
+                vec![
+                    (
+                        "d_zeros",
+                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                        vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                    ),
+                    (
+                        "d_lane_mix",
+                        vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                        vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                    ),
+                ],
+            ),
+        };
+        for &(opc6, name) in ops {
+            let insn = (0x65 << 24) | (sz << 22) | (opc6 << 16) | (0b001 << 13) | (RN << 5) | RD;
+            for (pattern_name, acc, zn) in &patterns {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(esize, acc);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(esize, zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, all_active);
+                batch.push((format!("{name}_{pattern_name}_all"), insn, st));
+
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(esize, acc);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(esize, zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, mixed_active);
+                batch.push((format!("{name}_{pattern_name}_mixed"), insn, st));
             }
         }
     }
@@ -34457,6 +34785,43 @@ fn enc_sve_reduce(sz: u32, opc6: u32) -> u32 {
 
 #[test]
 fn diff_sve_reduce() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn edge_patterns(sz: u32) -> [(&'static str, Vec<u64>); 3] {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let signed = [0, 1, sign - 1, sign, mask];
+        let bitmix = [
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+            mask & 0x0f0f_0f0f_0f0f_0f0f,
+            mask & 0xf0f0_f0f0_f0f0_f0f0,
+        ];
+        [
+            ("zeros", vec![0; lanes]),
+            ("signed_extremes", (0..lanes).map(|lane| signed[lane % signed.len()]).collect()),
+            ("bitmix", (0..lanes).map(|lane| bitmix[lane % bitmix.len()]).collect()),
+        ]
+    }
+
     // (opc6, name, max_sz)
     let ops: &[(u32, &str, u32)] = &[
         (0b000000, "saddv", 2),
@@ -34479,6 +34844,26 @@ fn diff_sve_reduce() {
                 st.set_vreg(1, rng.next(), rng.next());
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+        }
+    }
+    for &(opc6, name, max_sz) in ops {
+        for sz in 0..=max_sz {
+            let insn = enc_sve_reduce(sz, opc6);
+            let mixed = match sz {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            for (pattern_name, values) in edge_patterns(sz) {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(sz, &values);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                }
             }
         }
     }
@@ -34519,6 +34904,19 @@ fn diff_sve_plog() {
             st.set_preg(2, rng.next() as u16);
             st.set_preg(3, rng.next() as u16);
             batch.push((format!("p{name}"), insn, st));
+        }
+        for (case_name, pg, pm, pn) in [
+            ("all_guard", 0xffff, 0x5555, 0x3333),
+            ("striped_guard", 0x0f0f, 0xaaaa, 0xcccc),
+            ("inactive_guard", 0x0000, 0xffff, 0x5555),
+            ("singletons", 0x8421, 0x1111, 0x8888),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.set_preg(0, 0xdead);
+            st.set_preg(1, pg);
+            st.set_preg(2, pm);
+            st.set_preg(3, pn);
+            batch.push((format!("p{name}_{case_name}"), insn, st));
         }
     }
     run_batch("sve_plog", batch);
@@ -35239,6 +35637,19 @@ fn diff_fpcr_ah_sve_fcvtz_status_merge() {
 
 #[test]
 fn diff_sve_fp_pred() {
+    fn pack_lanes(esize: u32, values: &[u64]) -> (u64, u64) {
+        let mut packed = 0u128;
+        let mask = if esize == 64 {
+            u64::MAX
+        } else {
+            (1u64 << esize) - 1
+        };
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * esize as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let ops: &[(u32, &str)] = &[
         (0b00000, "fadd"),
         (0b00001, "fsub"),
@@ -35266,6 +35677,69 @@ fn diff_sve_fp_pred() {
                 st.set_vreg(1, l1, h1);
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+        }
+    }
+    for &(sz, esize) in &[(1u32, 16u32), (2, 32), (3, 64)] {
+        let (mixed, patterns): (u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match sz {
+            1 => (
+                0x1111,
+                vec![
+                    (
+                        "h_basic",
+                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    ),
+                    (
+                        "h_lane_mix",
+                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    ),
+                ],
+            ),
+            2 => (
+                0x0101,
+                vec![
+                    (
+                        "s_basic",
+                        vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
+                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    ),
+                    (
+                        "s_lane_mix",
+                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
+                        vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    ),
+                ],
+            ),
+            _ => (
+                0x0001,
+                vec![
+                    (
+                        "d_basic",
+                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                        vec![1.5f64.to_bits(), (-2.5f64).to_bits()],
+                    ),
+                    (
+                        "d_lane_mix",
+                        vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                        vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                    ),
+                ],
+            ),
+        };
+        for &(opc5, name) in ops {
+            let insn = enc_sve_fpp(sz, opc5);
+            for (pattern_name, zdn, zm) in &patterns {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(esize, zdn);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_lanes(esize, zm);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("{name}_{pattern_name}_{mask_name}"), insn, st));
+                }
             }
         }
     }
@@ -35348,6 +35822,57 @@ fn diff_fpcr_ah_sve_fmin_zero_immediate_sign() {
 
 #[test]
 fn diff_sve_palu() {
+    fn pack_lanes(sz: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn palu_patterns(sz: u32) -> [(&'static str, Vec<u64>, Vec<u64>); 2] {
+        let bits = 8u32 << sz;
+        let lanes = 16usize >> sz;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let lhs_safe = [1, mask - 2, sign - 1, sign + 3, 7, mask - 7];
+        let rhs_safe = [3, mask - 1, 5, sign + 1, 9, mask - 3];
+        let lhs_bits = [
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+            mask & 0x0f0f_0f0f_0f0f_0f0f,
+            mask & 0xf0f0_f0f0_f0f0_f0f0,
+        ];
+        let rhs_bits = [
+            mask & 0x3333_3333_3333_3333,
+            mask & 0xcccc_cccc_cccc_cccc,
+            mask & 0x00ff_00ff_00ff_00ff,
+            mask & 0xff00_ff00_ff00_ff00,
+        ];
+        [
+            (
+                "signed_safe",
+                (0..lanes).map(|lane| lhs_safe[lane % lhs_safe.len()]).collect(),
+                (0..lanes).map(|lane| rhs_safe[lane % rhs_safe.len()]).collect(),
+            ),
+            (
+                "bitmix",
+                (0..lanes).map(|lane| lhs_bits[lane % lhs_bits.len()]).collect(),
+                (0..lanes).map(|lane| rhs_bits[lane % rhs_bits.len()]).collect(),
+            ),
+        ]
+    }
+
     // (group, opc, name, min_sz)
     let ops: &[(u32, u32, &str, u32)] = &[
         (0, 0, "add", 0),
@@ -35385,6 +35910,31 @@ fn diff_sve_palu() {
                 st.set_vreg(1, rng.next(), rng.next()); // Zm
                 st.set_preg(0, rng.next() as u16); // governing predicate
                 batch.push((format!("p{name} sz{sz}"), insn, st));
+            }
+        }
+    }
+    for sz in 0..4u32 {
+        let mixed = match sz {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        for &(group, opc, name, min_sz) in ops {
+            if sz < min_sz {
+                continue;
+            }
+            let insn = enc_sve_palu(sz, group, opc);
+            for (pattern_name, zdn, zm) in palu_patterns(sz) {
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_lanes(sz, &zdn);
+                    st.set_vreg(0, lo, hi);
+                    let (lo, hi) = pack_lanes(sz, &zm);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((format!("p{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                }
             }
         }
     }
@@ -37960,6 +38510,39 @@ fn diff_fpcr_fiz_sve_pred_fnmsb_subnormal_inputs() {
 
 #[test]
 fn diff_sve_int_mla() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn mla_vectors(size: u32) -> (Vec<u64>, Vec<u64>, Vec<u64>) {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let acc = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let lhs = [1, 2, sign - 1, sign, mask - 2, mask - 1, 7];
+        let rhs = [3, mask - 1, 5, sign + 1, 9, mask - 3, 11];
+        (
+            (0..lanes).map(|lane| acc[lane % acc.len()]).collect(),
+            (0..lanes).map(|lane| lhs[lane % lhs.len()]).collect(),
+            (0..lanes).map(|lane| rhs[lane % rhs.len()]).collect(),
+        )
+    }
+
     // Predicated integer MLA/MLS/MAD/MSB, all sizes, random operands.
     let mut rng = Rng::new(0x8_1001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -37974,6 +38557,24 @@ fn diff_sve_int_mla() {
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("mla s{size} op{op3:b}"), insn, st));
             }
+            let mixed = match size {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            let (acc, lhs, rhs) = mla_vectors(size);
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(size, &acc);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(size, &lhs);
+                st.set_vreg(1, lo, hi);
+                let (lo, hi) = pack_lanes(size, &rhs);
+                st.set_vreg(2, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("mla_s{size}_op{op3:b}_edges_{mask_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_int_mla", batch);
@@ -37981,6 +38582,38 @@ fn diff_sve_int_mla() {
 
 #[test]
 fn diff_sve2_pred_alu() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        let lanes = 128usize / bits as usize;
+        for (lane, value) in values.iter().take(lanes).enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn edge_vectors(size: u32) -> (Vec<u64>, Vec<u64>) {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let lhs = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
+        let rhs = [0, 1, bits as u64 - 1, bits as u64, bits as u64 + 1, sign - 1, mask];
+        (
+            (0..lanes).map(|lane| lhs[lane % lhs.len()]).collect(),
+            (0..lanes).map(|lane| rhs[lane % rhs.len()]).collect(),
+        )
+    }
+
     // SVE2 predicated shifts/halving/saturating add-sub and SQABS/SQNEG. Random
     // operands give full-range (large/negative) shift amounts and saturation
     // edges; the predicate is random (merging).
@@ -38026,6 +38659,22 @@ fn diff_sve2_pred_alu() {
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} s{size}"), insn, st));
             }
+            let mixed = match size {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            let (zdn, zm) = edge_vectors(size);
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(size, &zdn);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(size, &zm);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("{name}_s{size}_edges_{mask_name}"), insn, st));
+            }
         }
         for &(opc6, name) in &[(0b001000u32, "sqabs"), (0b001001, "sqneg")] {
             let insn = enc_sve2_pred_alu(size, opc6, 0b101);
@@ -38035,6 +38684,22 @@ fn diff_sve2_pred_alu() {
                 st.set_vreg(0, rng.next(), rng.next()); // merge target
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} s{size}"), insn, st));
+            }
+            let mixed = match size {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            let (merge, source) = edge_vectors(size);
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(size, &merge);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(size, &source);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("{name}_s{size}_edges_{mask_name}"), insn, st));
             }
         }
     }
@@ -38048,12 +38713,78 @@ fn diff_sve2_pred_alu() {
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("{name}"), insn, st));
         }
+        let source = vec![0, 1, 2, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff];
+        let merge = vec![0x0123_4567, 0x89ab_cdef, 0x5555_5555, 0xaaaa_aaaa];
+        for (mask_name, pg) in [("all", 0xffff), ("mixed", 0x0101), ("inactive", 0x0000)] {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_lanes(2, &merge);
+            st.set_vreg(0, lo, hi);
+            let (lo, hi) = pack_lanes(2, &source);
+            st.set_vreg(1, lo, hi);
+            st.set_preg(0, pg);
+            batch.push((format!("{name}_edges_{mask_name}"), insn, st));
+        }
     }
     run_batch("sve2_pred_alu", batch);
 }
 
 #[test]
 fn diff_sve_fp_cmp() {
+    fn pack_fp_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn fp_cmp_patterns(size: u32) -> Vec<(&'static str, Vec<u64>, Vec<u64>)> {
+        match size {
+            1 => vec![
+                (
+                    "h_zero_inf",
+                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000],
+                    vec![0x0000, 0x0000, 0xbc00, 0x3c00, 0xfc00, 0x7c00, 0x3c00, 0xbc00],
+                ),
+                (
+                    "h_nan_mix",
+                    vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000],
+                    vec![0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000],
+                ),
+            ],
+            2 => vec![
+                (
+                    "s_zero_inf",
+                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
+                    vec![0x0000_0000, 0x0000_0000, (-1.0f32).to_bits() as u64, 1.0f32.to_bits() as u64],
+                ),
+                (
+                    "s_nan_mix",
+                    vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001],
+                    vec![0xff80_0000, 0x7f80_0000, 1.0f32.to_bits() as u64, 0x7fc0_0001],
+                ),
+            ],
+            _ => vec![
+                (
+                    "d_zero_inf",
+                    vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                    vec![0.0f64.to_bits(), 0.0f64.to_bits()],
+                ),
+                (
+                    "d_nan_mix",
+                    vec![0x7ff0_0000_0000_0000, 0x7ff8_0000_0000_0001],
+                    vec![0xfff0_0000_0000_0000, 0x7ff0_0000_0000_0001],
+                ),
+            ],
+        }
+    }
+
     // FP compare (register) and compare-with-zero -> predicate, incl. NaN/inf
     // (random bit patterns), all sizes; checks predicate result AND NZCV.
     let mut rng = Rng::new(0x9_c001);
@@ -38093,6 +38824,37 @@ fn diff_sve_fp_cmp() {
                 st.set_vreg(1, rng.next(), rng.next());
                 st.set_preg(1, rng.next() as u16);
                 batch.push((format!("fcmp0 s{size} c{sub}{bit4}"), insn, st));
+            }
+        }
+        let mixed = match size {
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        for (pattern_name, zn, zm) in fp_cmp_patterns(size) {
+            for (cc13, bit4) in regconds {
+                let insn = enc_sve_fp_cmp(size, cc13, bit4);
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(0, 0xdead);
+                    let (lo, hi) = pack_fp_lanes(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    let (lo, hi) = pack_fp_lanes(size, &zm);
+                    st.set_vreg(2, lo, hi);
+                    st.set_preg(1, pg);
+                    batch.push((format!("fcmp_s{size}_c{cc13}{bit4}_{pattern_name}_{mask_name}"), insn, st));
+                }
+            }
+            for (sub, bit4) in zeroconds {
+                let insn = enc_sve_fp_cmp0(size, sub, bit4);
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(0, 0xdead);
+                    let (lo, hi) = pack_fp_lanes(size, &zn);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(1, pg);
+                    batch.push((format!("fcmp0_s{size}_c{sub}{bit4}_{pattern_name}_{mask_name}"), insn, st));
+                }
             }
         }
     }
@@ -38163,6 +38925,33 @@ fn diff_fpcr_fiz_sve_fp_cmp_subnormal_inputs() {
 
 #[test]
 fn diff_sve_cmp_imm() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn cmp_imm_values(size: u32) -> Vec<u64> {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let values = [0, 1, 15, 16, 31, sign - 1, sign, sign + 1, mask - 1, mask];
+        (0..lanes).map(|lane| values[lane % values.len()]).collect()
+    }
+
     // Integer compare with signed/unsigned immediate -> predicate + NZCV.
     let mut rng = Rng::new(0x9_d001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -38194,6 +38983,41 @@ fn diff_sve_cmp_imm() {
                     st.set_vreg(1, rng.next(), rng.next());
                     st.set_preg(1, rng.next() as u16);
                     batch.push((format!("cmpu s{size} {lo}{hi} i{imm7}"), insn, st));
+                }
+            }
+        }
+    }
+    for size in 0..4u32 {
+        let mixed = match size {
+            0 => 0x5555,
+            1 => 0x1111,
+            2 => 0x0101,
+            _ => 0x0001,
+        };
+        let values = cmp_imm_values(size);
+        for (cc13, bit4) in sconds {
+            for imm5 in [0u32, 1, 15, 16, 31] {
+                let insn = enc_sve_cmp_imm_s(size, cc13, bit4, imm5);
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(0, 0xdead);
+                    let (lo, hi) = pack_lanes(size, &values);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(1, pg);
+                    batch.push((format!("cmps_s{size}_c{cc13}{bit4}_i{imm5}_{mask_name}"), insn, st));
+                }
+            }
+        }
+        for (lo_bit, hi_bit) in [(0u32, 0u32), (0, 1), (1, 0), (1, 1)] {
+            for imm7 in [0u32, 1, 63, 64, 127] {
+                let insn = enc_sve_cmp_imm_u(size, lo_bit, hi_bit, imm7);
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(0, 0xdead);
+                    let (lo, hi) = pack_lanes(size, &values);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(1, pg);
+                    batch.push((format!("cmpu_s{size}_{lo_bit}{hi_bit}_i{imm7}_{mask_name}"), insn, st));
                 }
             }
         }
@@ -38434,6 +39258,14 @@ fn diff_fpcr_fiz_sve_bfcvt_subnormal_inputs() {
 
 #[test]
 fn diff_sve_pred_permute() {
+    let patterns = [
+        ("all", 0xffffu16, 0xffffu16),
+        ("alternating", 0x5555, 0xaaaa),
+        ("blocks", 0x00ff, 0xff00),
+        ("nibbles", 0x0f0f, 0xf0f0),
+        ("singletons", 0x8421, 0x1248),
+    ];
+
     // Predicate ZIP1/ZIP2/UZP1/UZP2/TRN1/TRN2 and REV, all element sizes.
     let mut rng = Rng::new(0x9_b001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -38447,6 +39279,13 @@ fn diff_sve_pred_permute() {
                 }
                 batch.push((format!("permp esz{esz} op{opc}"), insn, st));
             }
+            for (pattern_name, pn, pm) in patterns {
+                let mut st = ArmState::zeroed();
+                st.set_preg(0, 0xdead);
+                st.set_preg(1, pn);
+                st.set_preg(2, pm);
+                batch.push((format!("permp_esz{esz}_op{opc}_{pattern_name}"), insn, st));
+            }
         }
         let insn = enc_sve_rev_p(esz);
         for _ in 0..6 {
@@ -38454,12 +39293,55 @@ fn diff_sve_pred_permute() {
             st.set_preg(1, rng.next() as u16);
             batch.push((format!("revp esz{esz}"), insn, st));
         }
+        for (pattern_name, pn, _) in patterns {
+            let mut st = ArmState::zeroed();
+            st.set_preg(0, 0xdead);
+            st.set_preg(1, pn);
+            batch.push((format!("revp_esz{esz}_{pattern_name}"), insn, st));
+        }
     }
     run_batch("sve_pred_permute", batch);
 }
 
 #[test]
 fn diff_sve_pred_unary() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let bits = 8u32 << size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * bits as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn unary_values(size: u32) -> Vec<u64> {
+        let bits = 8u32 << size;
+        let lanes = 16usize >> size;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let values = [
+            0,
+            1,
+            sign - 1,
+            sign,
+            sign + 1,
+            mask - 1,
+            mask,
+            mask & 0x5555_5555_5555_5555,
+            mask & 0xaaaa_aaaa_aaaa_aaaa,
+        ];
+        (0..lanes).map(|lane| values[lane % values.len()]).collect()
+    }
+
     // SVE predicated integer/FP unary across all ops and their valid sizes.
     let ops: &[(u32, &str, &[u32])] = &[
         (0b010000, "sxtb", &[1, 2, 3]),
@@ -38489,6 +39371,21 @@ fn diff_sve_pred_unary() {
                 st.set_vreg(0, rng.next(), rng.next());
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} s{size}"), insn, st));
+            }
+            let mixed = match size {
+                0 => 0x5555,
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            let values = unary_values(size);
+            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+                let (lo, hi) = pack_lanes(size, &values);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, pg);
+                batch.push((format!("{name}_s{size}_edges_{mask_name}"), insn, st));
             }
         }
     }
