@@ -15822,9 +15822,8 @@ impl AArch64Cpu {
     }
 
     /// Execute SYS/SYSL (op0=01): DC/IC/TLBI/AT space. Maintenance operations
-    /// are no-ops for this memory model, with the exception of DC ZVA which
-    /// architecturally zeroes a block of memory and is relied on by kernels
-    /// for page clearing.
+    /// are mostly no-ops for this memory model, but VA-based operations still
+    /// perform their architecturally-visible memory fault checks.
     fn exec_sys_insn(&mut self, insn: u32, is_read: bool) -> Result<CpuExit, ArmError> {
         let op1 = ((insn >> 16) & 0x7) as u8;
         let crn = ((insn >> 12) & 0xF) as u8;
@@ -15878,6 +15877,13 @@ impl AArch64Cpu {
             };
             let enc = Aarch64SysRegEncoding::new(3, 0, 7, 4, 0); // PAR_EL1
             let _ = self.sysregs.write(enc, par, self.current_el);
+            return Ok(CpuExit::Continue);
+        }
+
+        // DC CVAC/CVAP/CVADP/CIVAC: cache contents are not modeled, but the
+        // VA operand can still fault before the maintenance operation retires.
+        if op1 == 3 && crn == 7 && op2 == 1 && matches!(crm, 10 | 12 | 13 | 14) {
+            let _ = self.mem_read_u8(self.get_x(rt))?;
             return Ok(CpuExit::Continue);
         }
 

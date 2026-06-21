@@ -28738,6 +28738,23 @@ fn diff_system_dc_zva_el0() {
 }
 
 #[test]
+fn diff_system_dc_zva_fault_edges() {
+    fn dc_zva(rt: u32) -> u32 {
+        0xd50b_7420 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0013);
+    let mut batch = Vec::new();
+    for addr in [0x8000_0000u64, 0xffff_ffff_ffff_f000] {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = addr;
+        batch.push((format!("dc_zva_fault_{addr:#x}"), dc_zva(RN), st));
+    }
+
+    run_batch_el0("system_dc_zva_fault_edges", batch);
+}
+
+#[test]
 fn diff_system_user_cache_maintenance_el0() {
     fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
         0xd508_0000
@@ -28771,6 +28788,67 @@ fn diff_system_user_cache_maintenance_el0() {
 }
 
 #[test]
+fn diff_system_user_cache_maintenance_xzr_edges() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("ic_ivau_xzr", sys(3, 7, 5, 1, 31)),
+        ("dc_cvau_xzr", sys(3, 7, 11, 1, 31)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0011);
+    let mut batch = Vec::new();
+    for sp in [0, 0x10, 0x1234_5678_9abc_def0, u64::MAX & !0xf] {
+        for (label, insn) in cases {
+            let mut st = mem_input(&mut rng);
+            st.sp = sp;
+            st.x[RN as usize] = SCRATCH_ADDR;
+            batch.push((format!("{label}_sp_{sp:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_xzr_edges", batch);
+}
+
+#[test]
+fn diff_system_user_cache_maintenance_fault_edges() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("dc_cvac_fault", sys(3, 7, 10, 1, RN)),
+        ("dc_cvap_fault", sys(3, 7, 12, 1, RN)),
+        ("dc_cvadp_fault", sys(3, 7, 13, 1, RN)),
+        ("dc_civac_fault", sys(3, 7, 14, 1, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0012);
+    let mut batch = Vec::new();
+    for addr in [0x8000_0000u64, 0xffff_ffff_ffff_f000] {
+        for (label, insn) in cases {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = addr;
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_fault_edges", batch);
+}
+
+#[test]
 fn diff_system_at_el0_trap_sweep() {
     fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
         0xd508_0000
@@ -28799,6 +28877,60 @@ fn diff_system_at_el0_trap_sweep() {
     }
 
     run_batch_el0_trap("system_at_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_system_el0_trap_xzr_edges() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    fn msr(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("at_s1e1r_xzr", sys(0, 7, 8, 0, 31)),
+        ("mrs_sctlr_el1_xzr", mrs(1, 0, 1, 0, 0, 31)),
+        ("msr_sctlr_el1_xzr", msr(1, 0, 1, 0, 0, 31)),
+        ("mrs_cntp_ctl_el0_xzr", mrs(1, 3, 14, 2, 1, 31)),
+        ("msr_cntp_ctl_el0_xzr", msr(1, 3, 14, 2, 1, 31)),
+        ("mrs_apiakeylo_el1_xzr", mrs(1, 0, 2, 1, 0, 31)),
+        ("msr_apiakeylo_el1_xzr", msr(1, 0, 2, 1, 0, 31)),
+        ("msr_dczid_el0_xzr", msr(1, 3, 0, 0, 7, 31)),
+        ("msr_rndr_xzr", msr(1, 3, 2, 4, 0, 31)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0014);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        let mut st = gen_input(&mut rng);
+        st.sp = 0x1234_5678_9abc_def0;
+        batch.push((label.to_string(), insn, st));
+    }
+
+    run_batch_el0_trap("system_el0_trap_xzr_edges", batch);
 }
 
 #[test]
@@ -32136,6 +32268,50 @@ fn diff_simd_fcmla_indexed_fpcr_ah_nan_sign() {
     }
 
     run_batch("simd_fcmla_indexed_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_indexed_f16_invalid_products() {
+    fn pack_f16(lanes: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in lanes.into_iter().enumerate() {
+            packed |= (value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let mut batch = Vec::new();
+    for q in 0..=1u32 {
+        let max_index = if q == 0 { 2 } else { 4 };
+        for index in 0..max_index {
+            for rot in 0..4u32 {
+                for (case_name, inf) in [("pos_inf", 0x7c00u16), ("neg_inf", 0xfc00)] {
+                    let mut rn = [0u16; 8];
+                    let mut rm = [0x3c00u16; 8];
+                    let rd = [0x3c00u16; 8];
+                    rn[0] = 0x0000;
+                    rn[1] = 0x8000;
+                    rm[(2 * index) as usize] = inf;
+                    rm[(2 * index + 1) as usize] = inf;
+
+                    let mut st = ArmState::zeroed();
+                    let (lo, hi) = pack_f16(rd);
+                    st.set_vreg(RD as usize, lo, hi);
+                    let (lo, hi) = pack_f16(rn);
+                    st.set_vreg(RN as usize, lo, hi);
+                    let (lo, hi) = pack_f16(rm);
+                    st.set_vreg(RM as usize, lo, hi);
+                    batch.push((
+                        format!("fcmla_idx_f16_invalid_q{q}_r{rot}_i{index}_{case_name}"),
+                        enc_fcmla_idx(q, 0b01, rot, index),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("simd_fcmla_indexed_f16_invalid_products", batch);
 }
 
 /// FCMLA by element: `0 Q 1 01111 size L M Rm 0 rot 1 H 0 Rn Rd`. Vm=M:Rm (=v2),
