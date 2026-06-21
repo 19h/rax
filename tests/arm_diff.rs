@@ -30389,6 +30389,56 @@ fn diff_simd_dot() {
     run_family("simd_dot", cases, 40, 0x1_0018);
 }
 
+#[test]
+fn diff_simd_dot_edges() {
+    let mut ops = Vec::new();
+    for q in 0..2u32 {
+        ops.push((format!("sdot q{q}"), enc_dot(q, 0)));
+        ops.push((format!("udot q{q}"), enc_dot(q, 1)));
+    }
+
+    let patterns: &[(&str, [(u64, u64); 3])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0)]),
+        (
+            "accumulator_bounds",
+            [
+                (0x7fff_ffff_8000_0000, 0xffff_ffff_0000_0001),
+                (0x0101_0101_0101_0101, 0xfefe_fefe_fefe_fefe),
+                (0x0202_0202_0202_0202, 0x8080_8080_7f7f_7f7f),
+            ],
+        ),
+        (
+            "signed_extremes",
+            [
+                (0x0000_0001_ffff_fffe, 0x8000_0000_7fff_ffff),
+                (0x8080_8080_7f7f_7f7f, 0x0101_ffff_0202_fefe),
+                (0x7f80_7f80_807f_807f, 0xffff_0001_fefe_0202),
+            ],
+        ),
+        (
+            "byte_ramps",
+            [
+                (0x0302_0100_0706_0504, 0x0b0a_0908_0f0e_0d0c),
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in ops {
+        for &(pattern, regs) in patterns {
+            let mut st = ArmState::zeroed();
+            for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+            }
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("simd_dot_edges", batch);
+}
+
 /// Fill a 128-bit vector with `lanes` finite FP values of width `esize` bits.
 fn fill_finite_fp(rng: &mut Rng, esize: u32, lanes: usize) -> (u64, u64) {
     let mut v: u128 = 0;
@@ -50263,6 +50313,57 @@ fn diff_simd_usdot() {
 }
 
 #[test]
+fn diff_simd_usdot_edges() {
+    let mut ops = Vec::new();
+    for q in 0..2u32 {
+        ops.push((format!("usdot q{q}"), enc_usdot(q)));
+        for index in 0..4u32 {
+            ops.push((
+                format!("usdot_idx q{q} i{index}"),
+                enc_usdot_idx(q, 1, index),
+            ));
+            ops.push((
+                format!("sudot_idx q{q} i{index}"),
+                enc_usdot_idx(q, 0, index),
+            ));
+        }
+    }
+
+    let patterns: &[(&str, [(u64, u64); 3])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0)]),
+        (
+            "accumulator_bounds",
+            [
+                (0x7fff_ffff_8000_0000, 0xffff_ffff_0000_0001),
+                (0x8080_8080_7f7f_7f7f, 0x0101_ffff_0202_fefe),
+                (0x0202_0202_0202_0202, 0x8080_8080_7f7f_7f7f),
+            ],
+        ),
+        (
+            "byte_ramps",
+            [
+                (0x0302_0100_0706_0504, 0x0b0a_0908_0f0e_0d0c),
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in ops {
+        for &(pattern, regs) in patterns {
+            let mut st = ArmState::zeroed();
+            for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+            }
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("simd_usdot_edges", batch);
+}
+
+#[test]
 fn diff_simd_dot_indexed() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for q in 0..2u32 {
@@ -50272,6 +50373,50 @@ fn diff_simd_dot_indexed() {
         }
     }
     run_family("simd_dot_indexed", cases, 24, 0x1_0019);
+}
+
+#[test]
+fn diff_simd_dot_indexed_edges() {
+    let mut ops = Vec::new();
+    for q in 0..2u32 {
+        for index in 0..4u32 {
+            ops.push((format!("sdot q{q} i{index}"), enc_dot_idx(q, 0, index)));
+            ops.push((format!("udot q{q} i{index}"), enc_dot_idx(q, 1, index)));
+        }
+    }
+
+    let patterns: &[(&str, [(u64, u64); 3])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0)]),
+        (
+            "accumulator_bounds",
+            [
+                (0x7fff_ffff_8000_0000, 0xffff_ffff_0000_0001),
+                (0x0101_0101_0101_0101, 0xfefe_fefe_fefe_fefe),
+                (0x0202_0202_0202_0202, 0x8080_8080_7f7f_7f7f),
+            ],
+        ),
+        (
+            "byte_ramps",
+            [
+                (0x0302_0100_0706_0504, 0x0b0a_0908_0f0e_0d0c),
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in ops {
+        for &(pattern, regs) in patterns {
+            let mut st = ArmState::zeroed();
+            for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+            }
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    run_batch("simd_dot_indexed_edges", batch);
 }
 
 #[test]
@@ -57036,6 +57181,84 @@ fn diff_simd_three_diff() {
     run_family("simd_three_diff", cases, 8, 0x8001);
 }
 
+#[test]
+fn diff_simd_three_diff_edges() {
+    let ops: &[(u32, &[u32], &str)] = &[
+        (0b0000, &[0, 1], "saddl_uaddl"),
+        (0b0001, &[0, 1], "saddw_uaddw"),
+        (0b0010, &[0, 1], "ssubl_usubl"),
+        (0b0011, &[0, 1], "ssubw_usubw"),
+        (0b0100, &[0, 1], "addhn_raddhn"),
+        (0b0101, &[0, 1], "sabal_uabal"),
+        (0b0110, &[0, 1], "subhn_rsubhn"),
+        (0b0111, &[0, 1], "sabdl_uabdl"),
+        (0b1000, &[0, 1], "smlal_umlal"),
+        (0b1001, &[0], "sqdmlal"),
+        (0b1010, &[0, 1], "smlsl_umlsl"),
+        (0b1011, &[0], "sqdmlsl"),
+        (0b1100, &[0, 1], "smull_umull"),
+        (0b1101, &[0], "sqdmull"),
+        (0b1110, &[0], "pmull"),
+    ];
+    let patterns: &[(&str, [(u64, u64); 3])] = &[
+        ("zero", [(0, 0), (0, 0), (0, 0)]),
+        (
+            "signed_bounds",
+            [
+                (0x7fff_ffff_8000_0000, 0xffff_ffff_0000_0001),
+                (0x807f_8000_7fff_00ff, 0xff00_0100_fe01_7f80),
+                (0x7f80_0080_ff00_01ff, 0x8001_feff_00ff_7f00),
+            ],
+        ),
+        (
+            "byte_ramps",
+            [
+                (0x0302_0100_0706_0504, 0x0b0a_0908_0f0e_0d0c),
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+            ],
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for &(opcode, us, name) in ops {
+        for &u in us {
+            for size in 0..3 {
+                for q in 0..2 {
+                    for &(pattern, regs) in patterns {
+                        let mut st = ArmState::zeroed();
+                        for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                            st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+                        }
+                        batch.push((
+                            format!("{name}_sz{size}_q{q}_{pattern}"),
+                            enc_3diff(q, u, size, opcode),
+                            st,
+                        ));
+                    }
+                }
+            }
+            if opcode == 0b1110 {
+                for q in 0..2 {
+                    for &(pattern, regs) in patterns {
+                        let mut st = ArmState::zeroed();
+                        for (idx, reg) in [RD, RN, RM].iter().copied().enumerate() {
+                            st.set_vreg(reg as usize, regs[idx].0, regs[idx].1);
+                        }
+                        batch.push((
+                            format!("{name}_sz3_q{q}_{pattern}"),
+                            enc_3diff(q, u, 3, opcode),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("simd_three_diff_edges", batch);
+}
+
 /// Advanced SIMD across-lanes reduction: `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
 fn enc_across(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
     (q << 30)
@@ -57072,6 +57295,50 @@ fn diff_simd_across_int() {
         }
     }
     run_family("simd_across_int", cases, 10, 0x7001);
+}
+
+#[test]
+fn diff_simd_across_int_edges() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b11011, "addv"),
+        (0, 0b00011, "saddlv"),
+        (1, 0b00011, "uaddlv"),
+        (0, 0b01010, "smaxv"),
+        (1, 0b01010, "umaxv"),
+        (0, 0b11010, "sminv"),
+        (1, 0b11010, "uminv"),
+    ];
+    let patterns: &[(&str, (u64, u64))] = &[
+        ("zero", (0, 0)),
+        (
+            "signed_bounds",
+            (0x807f_8000_7fff_00ff, 0xff00_0100_fe01_7f80),
+        ),
+        (
+            "alternating",
+            (0x55aa_aa55_33cc_cc33, 0x0ff0_f00f_9966_6699),
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for &(u, opcode, name) in ops {
+        for size in 0..4 {
+            for q in 0..2 {
+                for &(pattern, rn) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(RD as usize, 0xdead_beef_dead_beef, 0xface_cafe_face_cafe);
+                    st.set_vreg(RN as usize, rn.0, rn.1);
+                    batch.push((
+                        format!("{name}_sz{size}_q{q}_{pattern}"),
+                        enc_across(q, u, size, opcode),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("simd_across_int_edges", batch);
 }
 
 #[test]
