@@ -42757,6 +42757,40 @@ fn diff_sve_ld1rq() {
             }
         }
     }
+    fn deterministic_ld1rq_input(xm: u64, pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.x[RM as usize] = xm;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x1110_0908_0503_0201);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for &imm4 in &[0i32, 1, -1] {
+            let insn = enc_ld1rq_i(msz, imm4);
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ld1rqi_m{msz}_i{imm4}_{mask_name}"),
+                    insn,
+                    deterministic_ld1rq_input(0, pg),
+                ));
+            }
+        }
+        let insn = enc_ld1rq_r(msz);
+        for &xm in &[0u64, 2] {
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ld1rqr_m{msz}_x{xm}_{mask_name}"),
+                    insn,
+                    deterministic_ld1rq_input(xm, pg),
+                ));
+            }
+        }
+    }
     run_batch("sve_ld1rq", batch);
 }
 
@@ -42774,6 +42808,33 @@ fn diff_sve_ldnt1() {
                 let mut s2 = mem_input(&mut rng);
                 s2.set_preg(0, rng.next() as u16);
                 batch.push((format!("stnt1 m{msz} i{imm4}"), enc_stnt1(msz, imm4), s2));
+            }
+        }
+    }
+    fn deterministic_ldnt1_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x1020_4080_0102_0408u64 ^ (idx as u64).wrapping_mul(0x0f1e_2d3c_4b5a_6978);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for &imm4 in &[0i32, 1, -1] {
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ldnt1_m{msz}_i{imm4}_{mask_name}"),
+                    enc_ldnt1(msz, imm4),
+                    deterministic_ldnt1_input(pg),
+                ));
+                batch.push((
+                    format!("stnt1_m{msz}_i{imm4}_{mask_name}"),
+                    enc_stnt1(msz, imm4),
+                    deterministic_ldnt1_input(pg),
+                ));
             }
         }
     }
@@ -42798,6 +42859,43 @@ fn diff_sve_ldn_stn() {
                     let mut s2 = mem_input(&mut rng);
                     s2.set_preg(0, rng.next() as u16);
                     batch.push((format!("st{nreg} m{msz} i{imm4}"), st, s2));
+                }
+            }
+        }
+    }
+    fn deterministic_ldn_stn_input(nreg: u32, pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.set_preg(0, pg);
+        for reg in 0..nreg as usize {
+            st.set_vreg(
+                reg,
+                0x807f_00ff_aa55_0102u64 ^ (reg as u64).wrapping_mul(0x0101_0101_0101_0101),
+                0x7f80_ff00_55aa_fefdu64 ^ (reg as u64).wrapping_mul(0x1010_1010_1010_1010),
+            );
+        }
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x0011_2233_4455_6677u64 ^ (idx as u64).wrapping_mul(0x1020_3040_5060_7080);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for nreg in 2..=4u32 {
+            for &imm4 in &[0i32, 1] {
+                let ld = enc_ldn(msz, nreg, imm4);
+                let st = enc_stn(msz, nreg, imm4);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("ld{nreg}_m{msz}_i{imm4}_{mask_name}"),
+                        ld,
+                        deterministic_ldn_stn_input(nreg, pg),
+                    ));
+                    batch.push((
+                        format!("st{nreg}_m{msz}_i{imm4}_{mask_name}"),
+                        st,
+                        deterministic_ldn_stn_input(nreg, pg),
+                    ));
                 }
             }
         }
@@ -42828,6 +42926,44 @@ fn diff_sve_gather_ai_s() {
                     st.set_vreg(1, zn as u64, (zn >> 64) as u64);
                     st.set_preg(0, rng.next() as u16);
                     batch.push((name.clone(), insn, st));
+                }
+            }
+        }
+    }
+    fn deterministic_gather_ai_s_input(pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        let bases = [
+            SCRATCH_BASE as u32,
+            (SCRATCH_BASE + 8) as u32,
+            (SCRATCH_BASE + 16) as u32,
+            (SCRATCH_BASE + 24) as u32,
+        ];
+        let mut zn = 0u128;
+        for (lane, base) in bases.iter().enumerate() {
+            zn |= (*base as u128) << (lane * 32);
+        }
+        st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x807f_00ff_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x0102_0408_1020_4080);
+        }
+        st
+    }
+
+    for msz in 0..3u32 {
+        for &imm5 in &[0u32, 1, 2] {
+            for u in 0..2u32 {
+                if u == 0 && msz == 2 {
+                    continue;
+                }
+                let insn = enc_gather_ai_s(msz, imm5, u);
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("gais_m{msz}_i{imm5}_u{u}_{mask_name}"),
+                        insn,
+                        deterministic_gather_ai_s_input(pg),
+                    ));
                 }
             }
         }
@@ -43047,6 +43183,30 @@ fn diff_sve_ld1_ss() {
             }
         }
     }
+    fn deterministic_ld1ss_input(xm: u64, pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.x[RM as usize] = xm;
+        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x7f80_ff00_aa55_0102u64 ^ (idx as u64).wrapping_mul(0x0102_0408_1020_4080);
+        }
+        st
+    }
+
+    for dtype in 0..16u32 {
+        let insn = enc_sve_ld1_ss(dtype);
+        for &xm in &[0u64, 2] {
+            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                batch.push((
+                    format!("ld1ss_dt{dtype}_x{xm}_{mask_name}"),
+                    insn,
+                    deterministic_ld1ss_input(xm, pg),
+                ));
+            }
+        }
+    }
     run_batch("sve_ld1_ss", batch);
 }
 
@@ -43063,6 +43223,32 @@ fn diff_sve_st1_ss() {
                     st.x[2] = xm;
                     st.set_preg(0, rng.next() as u16);
                     batch.push((format!("st1ss m{msz} e{size} x{xm}"), insn, st));
+                }
+            }
+        }
+    }
+    fn deterministic_st1ss_input(xm: u64, pg: u16) -> ArmState {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.x[RM as usize] = xm;
+        st.set_vreg(0, 0x807f_00ff_aa55_0102, 0x7f80_ff00_55aa_fefd);
+        st.set_preg(0, pg);
+        for (idx, word) in st.scratch.iter_mut().enumerate() {
+            *word = 0x0f1e_2d3c_4b5a_6978u64 ^ (idx as u64).wrapping_mul(0x0101_0203_0508_0d15);
+        }
+        st
+    }
+
+    for msz in 0..4u32 {
+        for size in msz..4u32 {
+            let insn = enc_sve_st1_ss(msz, size);
+            for &xm in &[0u64, 2] {
+                for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    batch.push((
+                        format!("st1ss_m{msz}_e{size}_x{xm}_{mask_name}"),
+                        insn,
+                        deterministic_st1ss_input(xm, pg),
+                    ));
                 }
             }
         }
