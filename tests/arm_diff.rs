@@ -51934,6 +51934,117 @@ fn diff_mem_ordered_unscaled() {
 }
 
 #[test]
+fn diff_mem_ordered_unscaled_edges() {
+    fn ordered_unscaled(size: u32, opc: u32, imm9: i32, rn: u32, rt: u32) -> u32 {
+        let imm9 = (imm9 as u32) & 0x1ff;
+        (size << 30)
+            | (0b011001 << 24)
+            | (opc << 22)
+            | (imm9 << 12)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_8000_0080, 0x7fff_ffff_7fff_ff7f),
+        ("byte_ramp", 0x8877_6655_4433_2211, 0x1122_3344_5566_7788),
+    ];
+    let mut batch = Vec::new();
+
+    for (size, opc, opname, is_store) in [
+        (0u32, 0b00u32, "stlurb", true),
+        (1, 0b00, "stlurh", true),
+        (2, 0b00, "stlur_w", true),
+        (3, 0b00, "stlur_x", true),
+        (0, 0b01, "ldapurb", false),
+        (1, 0b01, "ldapurh", false),
+        (2, 0b01, "ldapur_w", false),
+        (3, 0b01, "ldapur_x", false),
+        (0, 0b10, "ldapursb_x", false),
+        (1, 0b10, "ldapursh_x", false),
+        (2, 0b10, "ldapursw_x", false),
+        (0, 0b11, "ldapursb_w", false),
+        (1, 0b11, "ldapursh_w", false),
+    ] {
+        for rn in [RN, 31] {
+            let mem_idx = if rn == 31 { 16 } else { 8 };
+            for rt in if is_store { [3u32, 31] } else { [RD, 31] } {
+                for &(pattern, mem, src) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.sp = SCRATCH_BASE + 64;
+                    if is_store {
+                        st.x[3] = src;
+                    } else if rt < 31 {
+                        st.x[rt as usize] = 0xdead_beef_dead_beef;
+                    }
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[mem_idx] = mem;
+                    st.scratch[mem_idx + 1] = !mem;
+                    batch.push((
+                        format!("{opname}_rn{rn}_rt{rt}_{pattern}"),
+                        ordered_unscaled(size, opc, 0, rn, rt),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_ordered_unscaled_edges", batch);
+}
+
+#[test]
+fn diff_mem_ordered_edges() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_8000_0080, 0x7fff_ffff_7fff_ff7f),
+        ("byte_ramp", 0x8877_6655_4433_2211, 0x1122_3344_5566_7788),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for rt in [RD, 31] {
+            for &(pattern, mem, _src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                if rt < 31 {
+                    st.x[rt as usize] = 0xdead_beef_dead_beef;
+                }
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = mem;
+                batch.push((
+                    format!("ldar_size{size}_rt{rt}_{pattern}"),
+                    enc_ldar_regs(size, rt, RN),
+                    st,
+                ));
+            }
+        }
+
+        for rt in [3u32, 31] {
+            for &(pattern, mem, src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                st.x[3] = src;
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = mem;
+                st.scratch[9] = !mem;
+                batch.push((
+                    format!("stlr_size{size}_rt{rt}_{pattern}"),
+                    enc_stlr_regs(size, rt, RN),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ordered_edges", batch);
+}
+
+#[test]
 fn diff_mem_ordered_sp_base() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -51951,6 +52062,54 @@ fn diff_mem_ordered_sp_base() {
         }
     }
     run_batch("mem_ordered_sp_base", batch);
+}
+
+#[test]
+fn diff_mem_ordered_sp_base_edges() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_8000_0080, 0x7fff_ffff_7fff_ff7f),
+        ("byte_ramp", 0x8877_6655_4433_2211, 0x1122_3344_5566_7788),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for rt in [RD, 31] {
+            for &(pattern, mem, _src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.sp = SCRATCH_BASE + 64;
+                if rt < 31 {
+                    st.x[rt as usize] = 0xdead_beef_dead_beef;
+                }
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[16] = mem;
+                batch.push((
+                    format!("ldar_sp_size{size}_rt{rt}_{pattern}"),
+                    enc_ldar_regs(size, rt, 31),
+                    st,
+                ));
+            }
+        }
+
+        for rt in [3u32, 31] {
+            for &(pattern, mem, src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.sp = SCRATCH_BASE + 64;
+                st.x[3] = src;
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[16] = mem;
+                st.scratch[17] = !mem;
+                batch.push((
+                    format!("stlr_sp_size{size}_rt{rt}_{pattern}"),
+                    enc_stlr_regs(size, rt, 31),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ordered_sp_base_edges", batch);
 }
 
 #[test]
