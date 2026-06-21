@@ -32548,6 +32548,22 @@ fn diff_sve_index_zero_registers() {
                 st.x[RM as usize] = rng.next();
                 batch.push((format!("{label} sz{sz}"), insn, st));
             }
+            for (case_name, rn, rm, sp_delta) in [
+                ("small", 5u64, 2u64, 0x00u64),
+                ("minus_one", u64::MAX, u64::MAX, 0x10),
+                ("sign", 0x8000_0000_0000_0000, 0x7fff_ffff_ffff_ffff, 0x20),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.sp = GUEST_STACK_ADDR
+                    + (GUEST_STACK_SIZE / 2)
+                    + 0xf800
+                    + ((sz as u64) << 8)
+                    + sp_delta;
+                st.x[RN as usize] = rn;
+                st.x[RM as usize] = rm;
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                batch.push((format!("{label}_sz{sz}_{case_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_index_zero_registers", batch);
@@ -32930,6 +32946,10 @@ fn diff_sve_shift_pred() {
         )
     }
 
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << sz))
+    }
+
     let ops = [(0b000u32, "asr"), (0b001, "lsr"), (0b011, "lsl")];
     let mut rng = Rng::new(0x1_002A);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -32949,8 +32969,18 @@ fn diff_sve_shift_pred() {
                 2 => 0x0101,
                 _ => 0x0001,
             };
+            let lanes = 16usize >> sz;
+            let first = predicate_bit(sz, 0);
+            let last = predicate_bit(sz, lanes - 1);
             let (values, shifts) = shift_patterns(sz);
-            for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("mixed", mixed),
+                ("first", first),
+                ("last", last),
+                ("endpoints", first | last),
+                ("inactive", 0x0000),
+            ] {
                 let mut st = ArmState::zeroed();
                 let (lo, hi) = pack_lanes(sz, &values);
                 st.set_vreg(0, lo, hi);
@@ -33162,6 +33192,11 @@ fn diff_sve_clast_gpr_no_active_zero_extends() {
 fn diff_sve_lastx_xzr_dest() {
     let mut rng = Rng::new(0x1_0079);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(size: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << size))
+    }
+
     for size in 0..4u32 {
         let lasta =
             (0x05 << 24) | (size << 22) | (0b100000 << 16) | (0b101 << 13) | (RN << 5) | 31;
@@ -33184,6 +33219,24 @@ fn diff_sve_lastx_xzr_dest() {
                 st.set_vreg(RN as usize, rng.next(), rng.next());
                 st.set_preg(0, pred);
                 batch.push((format!("{name} sz{size}"), insn, st));
+            }
+            let lanes = 16usize >> size;
+            let first = predicate_bit(size, 0);
+            let last = predicate_bit(size, lanes - 1);
+            for (case_name, pred, sp_delta) in [
+                ("first", first, 0x80u64),
+                ("last", last, 0x90),
+                ("endpoints", first | last, 0xa0),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.sp = GUEST_STACK_ADDR
+                    + (GUEST_STACK_SIZE / 2)
+                    + 0x14000
+                    + ((size as u64) << 8)
+                    + sp_delta;
+                st.set_vreg(RN as usize, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+                st.set_preg(0, pred);
+                batch.push((format!("{name}_sz{size}_{case_name}"), insn, st));
             }
         }
     }
@@ -33876,6 +33929,20 @@ fn diff_sve_pred_logical() {
                 }
                 batch.push((format!("p_{name} s{s}"), insn, st));
             }
+            for (case_name, p0, p1, p2, p3) in [
+                ("zero", 0x0000, 0x0000, 0x0000, 0x0000),
+                ("all", 0xffff, 0xffff, 0xffff, 0xffff),
+                ("checker", 0x00ff, 0xaaaa, 0x5555, 0x0f0f),
+                ("endpoints", 0xf00f, 0x8001, 0x0001, 0x8000),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.pstate = 0xa000_0000;
+                st.set_preg(0, p0);
+                st.set_preg(1, p1);
+                st.set_preg(2, p2);
+                st.set_preg(3, p3);
+                batch.push((format!("p_{name}_s{s}_{case_name}"), insn, st));
+            }
         }
     }
     // RDFFRS p0, p1/z (reads FFR, which the harness initialises consistently).
@@ -33885,6 +33952,19 @@ fn diff_sve_pred_logical() {
             st.set_preg(p, rng.next() as u16);
         }
         batch.push(("rdffrs".to_string(), 0x2558f020, st));
+    }
+    for (case_name, ffr, pg) in [
+        ("zero", 0x0000, 0xffff),
+        ("all", 0xffff, 0xffff),
+        ("masked_off", 0xffff, 0x0000),
+        ("checker", 0xaaaa, 0x5555),
+        ("endpoints", 0x8001, 0x8001),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.pstate = 0x5000_0000;
+        st.set_ffr(ffr);
+        st.set_preg(1, pg);
+        batch.push((format!("rdffrs_{case_name}"), 0x2558f020, st));
     }
     run_batch("sve_pred_logical", batch);
 }
@@ -34362,6 +34442,11 @@ fn enc_cpy_gpr(sz: u32, rn: u32) -> u32 {
 fn diff_sve_cpy() {
     let mut rng = Rng::new(0x1_002D);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << sz))
+    }
+
     for sz in 0..4u32 {
         // CPY immediate, merging and zeroing.
         for m in 0..2u32 {
@@ -34405,6 +34490,60 @@ fn diff_sve_cpy() {
             batch.push((format!("dup sz{sz}"), dup, ArmState::zeroed()));
             batch.push((format!("dup2 sz{sz}"), dup2, ArmState::zeroed()));
         }
+        let lanes = 16usize >> sz;
+        let first = predicate_bit(sz, 0);
+        let last = predicate_bit(sz, lanes - 1);
+        let masks = [
+            ("all", 0xffff),
+            ("first", first),
+            ("last", last),
+            ("inactive", 0x0000),
+        ];
+        for m in 0..2u32 {
+            for sh in 0..2u32 {
+                for imm8 in [0x00u32, 0x01, 0x7f, 0x80, 0xff] {
+                    let insn = enc_cpy_imm(sz, m, sh, imm8 as i32);
+                    for (mask_name, pg) in masks {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                        st.set_preg(0, pg);
+                        batch.push((
+                            format!("cpyi_sz{sz}_m{m}_sh{sh}_imm{imm8:02x}_{mask_name}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+        for (case_name, x1, v1) in [
+            ("zero", 0u64, (0u64, 0u64)),
+            ("ones", u64::MAX, (u64::MAX, u64::MAX)),
+            (
+                "sign",
+                0x8000_0000_0000_0001,
+                (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
+            ),
+            (
+                "bytes",
+                0x1122_3344_5566_7788,
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+            ),
+        ] {
+            for (mask_name, pg) in masks {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                st.x[RN as usize] = x1;
+                st.set_preg(0, pg);
+                batch.push((format!("cpyr_sz{sz}_{case_name}_{mask_name}"), cpyr, st));
+
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xfeed_face_feed_face, 0xdead_beef_dead_beef);
+                st.set_vreg(1, v1.0, v1.1);
+                st.set_preg(0, pg);
+                batch.push((format!("cpyv_sz{sz}_{case_name}_{mask_name}"), cpyv, st));
+            }
+        }
     }
     run_batch("sve_cpy", batch);
 }
@@ -34413,6 +34552,11 @@ fn diff_sve_cpy() {
 fn diff_sve_cpy_sp_source() {
     let mut rng = Rng::new(0x1_0069);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(sz: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << sz))
+    }
+
     for sz in 0..4u32 {
         let insn = enc_cpy_gpr(sz, 31);
         for i in 0..10 {
@@ -34421,6 +34565,25 @@ fn diff_sve_cpy_sp_source() {
             st.set_vreg(0, rng.next(), rng.next());
             st.set_preg(0, [0xffffu16, 0xaaaa, 0x5555, 0x1111][i % 4]);
             batch.push((format!("cpyr_sp sz{sz}"), insn, st));
+        }
+        let lanes = 16usize >> sz;
+        let first = predicate_bit(sz, 0);
+        let last = predicate_bit(sz, lanes - 1);
+        for (case_name, pg, sp_delta) in [
+            ("all", 0xffff, 0x00u64),
+            ("first", first, 0x10),
+            ("last", last, 0x20),
+            ("inactive", 0x0000, 0x30),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR
+                + (GUEST_STACK_SIZE / 2)
+                + 0x18000
+                + ((sz as u64) << 8)
+                + sp_delta;
+            st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+            st.set_preg(0, pg);
+            batch.push((format!("cpyr_sp_sz{sz}_{case_name}"), insn, st));
         }
     }
     run_batch("sve_cpy_sp_source", batch);
@@ -40441,6 +40604,43 @@ fn diff_sve_insr() {
             }
         }
     }
+    for size in 0..4u32 {
+        for f in 0..2u32 {
+            let insn = enc_sve_insr(size, f);
+            for (case_name, z0, z1, x1) in [
+                (
+                    "zero",
+                    (0u64, 0u64),
+                    (0u64, 0u64),
+                    0u64,
+                ),
+                (
+                    "ones",
+                    (u64::MAX, u64::MAX),
+                    (u64::MAX, u64::MAX),
+                    u64::MAX,
+                ),
+                (
+                    "sign",
+                    (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
+                    (0x7fff_ffff_8000_0000, 0x0001_0000_ffff_0000),
+                    0x8000_0000_0000_0001,
+                ),
+                (
+                    "bytes",
+                    (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                    (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+                    0x1122_3344_5566_7788,
+                ),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, z0.0, z0.1);
+                st.set_vreg(1, z1.0, z1.1);
+                st.x[RN as usize] = x1;
+                batch.push((format!("insr_s{size}_f{f}_{case_name}"), insn, st));
+            }
+        }
+    }
     run_batch("sve_insr", batch);
 }
 
@@ -40467,6 +40667,30 @@ fn diff_sve_insr_zero_register() {
             st.set_vreg(0, rng.next(), rng.next());
             batch.push((format!("insr_xzr s{size}"), insn, st));
         }
+        for (case_name, z0, sp_delta) in [
+            ("zero", (0u64, 0u64), 0x00u64),
+            ("ones", (u64::MAX, u64::MAX), 0x10),
+            (
+                "bytes",
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                0x20,
+            ),
+            (
+                "sign",
+                (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
+                0x30,
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR
+                + (GUEST_STACK_SIZE / 2)
+                + 0x16800
+                + ((size as u64) << 8)
+                + sp_delta;
+            st.set_vreg(0, z0.0, z0.1);
+            st.x[RN as usize] = 0x1122_3344_5566_7788;
+            batch.push((format!("insr_xzr_s{size}_{case_name}"), insn, st));
+        }
     }
     run_batch("sve_insr_zero_register", batch);
 }
@@ -40476,6 +40700,11 @@ fn diff_sve_clast_dst() {
     // CLASTA/CLASTB to vector and SIMD-scalar destinations.
     let mut rng = Rng::new(0x9_3001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(size: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << size))
+    }
+
     for size in 0..4u32 {
         for scalar in 0..2u32 {
             for before in 0..2u32 {
@@ -40486,6 +40715,21 @@ fn diff_sve_clast_dst() {
                     st.set_vreg(1, rng.next(), rng.next());
                     st.set_preg(0, rng.next() as u16);
                     batch.push((format!("clast s{size} sc{scalar} b{before}"), insn, st));
+                }
+                let lanes = 16usize >> size;
+                let first = predicate_bit(size, 0);
+                let last = predicate_bit(size, lanes - 1);
+                for (case_name, pg) in [
+                    ("first", first),
+                    ("last", last),
+                    ("endpoints", first | last),
+                    ("inactive", 0x0000),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                    st.set_vreg(1, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908);
+                    st.set_preg(0, pg);
+                    batch.push((format!("clast_s{size}_sc{scalar}_b{before}_{case_name}"), insn, st));
                 }
             }
         }
@@ -40498,6 +40742,11 @@ fn diff_sve_fcpy_fdup() {
     // FCPY (predicated FP immediate copy) and FDUP (FP immediate broadcast).
     let mut rng = Rng::new(0x9_4001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    fn predicate_bit(size: u32, lane: usize) -> u16 {
+        1u16 << (lane * (1usize << size))
+    }
+
     for size in 1..4u32 {
         for imm8 in 0..=0xFFu32 {
             let mut st = ArmState::zeroed();
@@ -40512,6 +40761,33 @@ fn diff_sve_fcpy_fdup() {
                 format!("fdup s{size} i{imm8:x}"),
                 enc_sve_fdup(size, imm8),
                 ArmState::zeroed(),
+            ));
+        }
+        let lanes = 16usize >> size;
+        let first = predicate_bit(size, 0);
+        let last = predicate_bit(size, lanes - 1);
+        for imm8 in [0x00u32, 0x01, 0x7f, 0x80, 0xff] {
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("first", first),
+                ("last", last),
+                ("inactive", 0x0000),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                st.set_preg(0, pg);
+                batch.push((
+                    format!("fcpy_s{size}_i{imm8:02x}_{mask_name}"),
+                    enc_sve_fcpy(size, imm8),
+                    st,
+                ));
+            }
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+            batch.push((
+                format!("fdup_s{size}_i{imm8:02x}_edge"),
+                enc_sve_fdup(size, imm8),
+                st,
             ));
         }
     }
@@ -40538,6 +40814,20 @@ fn diff_sve_cterm() {
                 };
                 st.pstate = (rng.next() & 0xF) << 28; // random input NZCV
                 batch.push((format!("cterm sf{sf} ne{ne}"), insn, st));
+            }
+            for (case_name, rn, rm) in [
+                ("equal_zero", 0u64, 0u64),
+                ("equal_sign", 0x8000_0000_8000_0000, 0x8000_0000_8000_0000),
+                ("high_diff_low_equal", 0xaaaa_0000_1234_5678, 0xbbbb_0000_1234_5678),
+                ("low_diff", 0x0000_0000_1234_5678, 0x0000_0000_1234_5679),
+            ] {
+                for nzcv in [0x0u64, 0x5, 0xa, 0xf] {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = rn;
+                    st.x[RM as usize] = rm;
+                    st.pstate = nzcv << 28;
+                    batch.push((format!("cterm_sf{sf}_ne{ne}_{case_name}_nzcv{nzcv:x}"), insn, st));
+                }
             }
         }
     }
