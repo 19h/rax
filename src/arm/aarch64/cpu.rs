@@ -1619,8 +1619,32 @@ impl AArch64Cpu {
             };
             let off = (imm9 as i64).wrapping_mul(TG as i64);
 
-            // op2==00 contains LDG. Bulk tag forms (STZGM/STGM/LDGM) are
-            // unimplemented feature-level encodings for this oracle profile.
+            // MCSETTAGARRAY/MCGETTAGARRAY use implementation-defined array
+            // chunking. In the flat tagless memory model, process one aligned
+            // tag granule: writes only advance the base, reads return zero tag
+            // data and advance the base unless writeback overlaps the target.
+            if op2 == 0b00 && imm9 == 0 && ((insn >> 10) & 0xfff) == 0x800 {
+                match opc {
+                    0b10 => {
+                        let addr = base & !(TG - 1);
+                        self.set_gpr_or_sp(rn, addr.wrapping_add(TG));
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b11 => {
+                        if rt != 31 {
+                            self.set_x(rt, 0);
+                        }
+                        if rn != rt {
+                            let addr = base & !(TG - 1);
+                            self.set_gpr_or_sp(rn, addr.wrapping_add(TG));
+                        }
+                        return Ok(CpuExit::Continue);
+                    }
+                    _ => {}
+                }
+            }
+
+            // op2==00 contains LDG and unallocated zeroing/bulk tag forms.
             if op2 == 0b00 {
                 if opc != 0b01 {
                     return Err(ArmError::UndefinedInstruction(insn));

@@ -3307,6 +3307,21 @@ fn generated_memory_atomic_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_memory_casp_pair_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/memory/atomic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("memory/atomic", source) {
+        if !memory_casp_pair(insn) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_memory_ordered_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/memory/ordered.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -3614,6 +3629,10 @@ fn generated_a64_case_selectors_are_non_empty() {
             generated_memory_atomic_cases().len(),
         ),
         (
+            "generated_memory_casp_pair_cases",
+            generated_memory_casp_pair_cases().len(),
+        ),
+        (
             "generated_memory_ordered_cases",
             generated_memory_ordered_cases().len(),
         ),
@@ -3704,6 +3723,7 @@ fn generated_a64_case_selectors_are_non_empty() {
         ("generated_memory_single_cases", 222),
         ("generated_memory_pair_cases", 141),
         ("generated_memory_atomic_cases", 12),
+        ("generated_memory_casp_pair_cases", 30),
         ("generated_memory_ordered_cases", 46),
         ("generated_memory_vector_cases", 98),
         ("generated_memory_literal_cases", 24),
@@ -3771,6 +3791,13 @@ fn memory_atomic_in_scratch_window(fields: &std::collections::BTreeMap<String, i
     let rs = fields.get("Rs").copied().unwrap_or(-2);
     let rt = fields.get("Rt").copied().unwrap_or(-3);
     rn != rs && rn != rt
+}
+
+fn memory_casp_pair(insn: u32) -> bool {
+    (insn >> 31) == 0
+        && ((insn >> 24) & 0x3f) == 0b001000
+        && ((insn >> 23) & 1) == 0
+        && ((insn >> 21) & 1) == 1
 }
 
 fn memory_ordered_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
@@ -58237,6 +58264,19 @@ fn diff_generated_memory_atomic_sweep() {
 }
 
 #[test]
+fn diff_generated_memory_casp_pair_legality_sweep() {
+    let mut rng = Rng::new(0xa64_ca5c);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_memory_casp_pair_cases() {
+        for _ in 0..3 {
+            batch.push((label.clone(), insn, gen_memory_input(&mut rng)));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated CASP pair cases");
+    run_batch_el0_legality("generated_memory_casp_pair_legality_sweep", batch);
+}
+
+#[test]
 fn diff_generated_memory_atomic_edges() {
     let patterns: &[(&str, u64, u64)] = &[
         ("zero", 0, 0),
@@ -59079,6 +59119,61 @@ fn diff_mem_mte_tag_memory_edges() {
 }
 
 #[test]
+fn diff_mem_mte_tag_array_flat_memory_edges() {
+    fn tag_array(load: bool, rn: u32, rt: u32) -> u32 {
+        (0xD9 << 24)
+            | ((if load { 0b11 } else { 0b10 }) << 22)
+            | (1 << 21)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut set = ArmState::zeroed();
+    set.x[RN as usize] = SCRATCH_BASE + 16;
+    set.x[RD as usize] = 0xfedc_ba98_7654_3210;
+    set.scratch.fill(0xaaaa_5555_dead_beef);
+    let out = run_rax(tag_array(false, RN, RD), &set).expect("MCSETTAGARRAY executes");
+    assert_eq!(
+        out.x[RN as usize],
+        SCRATCH_BASE + 32,
+        "MCSETTAGARRAY writes back one flat tag granule"
+    );
+    assert_eq!(
+        out.x[RD as usize],
+        set.x[RD as usize],
+        "MCSETTAGARRAY leaves the source data register unchanged"
+    );
+    assert_eq!(
+        out.scratch, set.scratch,
+        "MCSETTAGARRAY has no data-memory side effect without tag storage"
+    );
+
+    let mut get = ArmState::zeroed();
+    get.x[RN as usize] = SCRATCH_BASE + 32;
+    get.x[RD as usize] = 0x1234_5678_9abc_def0;
+    let out = run_rax(tag_array(true, RN, RD), &get).expect("MCGETTAGARRAY executes");
+    assert_eq!(
+        out.x[RD as usize],
+        0,
+        "MCGETTAGARRAY reads zero tag data from flat memory"
+    );
+    assert_eq!(
+        out.x[RN as usize],
+        SCRATCH_BASE + 48,
+        "MCGETTAGARRAY writes back one flat tag granule"
+    );
+
+    let mut overlap = ArmState::zeroed();
+    overlap.x[RN as usize] = SCRATCH_BASE + 48;
+    let out = run_rax(tag_array(true, RN, RN), &overlap).expect("overlap MCGETTAGARRAY executes");
+    assert_eq!(
+        out.x[RN as usize],
+        0,
+        "overlap MCGETTAGARRAY chooses writeback suppression"
+    );
+}
+
+#[test]
 fn diff_mte_runtime_supported_legality_edges() {
     fn addsub_tags(op: u32, rn: u32, rd: u32) -> u32 {
         (1 << 31) | (op << 30) | (0b100011 << 23) | (2 << 16) | (7 << 10) | (rn << 5) | rd
@@ -59173,11 +59268,7 @@ fn diff_mem_mte_bulk_tag_memory_zero_unallocated_edges() {
 
     let mut rng = Rng::new(0x1_0177);
     let mut batch = Vec::new();
-    for &(name, insn) in &[
-        ("stzgm", tag_mem(0b00, 0, 0b00, RN, RD)),
-        ("stgm", tag_mem(0b10, 0, 0b00, RN, RD)),
-        ("ldgm", tag_mem(0b11, 0, 0b00, RN, RD)),
-    ] {
+    for &(name, insn) in &[("stzgm", tag_mem(0b00, 0, 0b00, RN, RD))] {
         for _ in 0..4 {
             let mut st = mem_input(&mut rng);
             st.x[RN as usize] = SCRATCH_BASE + 64;
