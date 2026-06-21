@@ -28061,6 +28061,55 @@ fn diff_generated_branch_register_unallocated_sweep() {
 }
 
 #[test]
+fn diff_branch_register_fixed_field_legality_grid() {
+    fn branch_reg(z: u32, op: u32, a: u32, m: u32, rm: u32, rn: u32) -> u32 {
+        0xd61f_0000
+            | ((z & 1) << 24)
+            | ((op & 0x3) << 21)
+            | ((a & 1) << 11)
+            | ((m & 1) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rm & 0x1f)
+    }
+
+    let mut rng = Rng::new(0xa64_ba16);
+    let mut batch = Vec::new();
+
+    for op in 0..=2u32 {
+        let mut st = gen_input(&mut rng);
+        st.pc = PCREL_MAGIC;
+        st.x[RN as usize] = pcrel_marker(12);
+        if op == 2 {
+            st.x[30] = pcrel_marker(12);
+        }
+        batch.push((format!("branch_reg_valid_op{op}"), branch_reg(0, op, 0, 0, 0, RN), st));
+    }
+
+    for (label, z, op, a, m, rm) in [
+        ("z_set", 1, 0, 0, 0, 0),
+        ("op3", 0, 3, 0, 0, 0),
+        ("a_set", 0, 0, 1, 0, 0),
+        ("m_set", 0, 0, 0, 1, 0),
+        ("rm_set", 0, 0, 0, 0, RM),
+        ("op2_z_set", 1, 2, 0, 0, 0),
+        ("op2_a_set", 0, 2, 1, 0, 0),
+        ("op2_rm_set", 0, 2, 0, 0, RM),
+    ] {
+        let mut st = gen_input(&mut rng);
+        st.pc = PCREL_MAGIC;
+        st.x[RN as usize] = pcrel_marker(12);
+        st.x[30] = pcrel_marker(12);
+        batch.push((
+            format!("branch_reg_invalid_{label}"),
+            branch_reg(z, op, a, m, rm, RN),
+            st,
+        ));
+    }
+
+    run_batch_branch("branch_register_fixed_field_legality_grid", batch);
+}
+
+#[test]
 fn diff_branch_drps_el0_trap() {
     let mut rng = Rng::new(0xa64_ba14);
     let mut batch = Vec::new();
@@ -29874,6 +29923,31 @@ fn diff_system_pstate_imm_el0_controls() {
 }
 
 #[test]
+fn diff_system_pstate_imm_el0_legality_grid() {
+    fn msr_pstate_imm(op1: u32, imm: u32, op2: u32) -> u32 {
+        0xd500_401f | ((op1 & 0x7) << 16) | ((imm & 0xf) << 8) | ((op2 & 0x7) << 5)
+    }
+
+    let mut rng = Rng::new(0x5157_0028);
+    let mut batch = Vec::new();
+    for op1 in 0..=7u32 {
+        for op2 in 0..=7u32 {
+            for imm in [0u32, 1, 0xf] {
+                let mut st = gen_input(&mut rng);
+                st.pstate = ((rng.next() & 0xf) << 28) as u64;
+                batch.push((
+                    format!("pstate_imm_op1{op1}_op2{op2}_imm{imm:x}"),
+                    msr_pstate_imm(op1, imm, op2),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_pstate_imm_el0_legality_grid", batch);
+}
+
+#[test]
 fn diff_system_el0_trap_xzr_edges() {
     fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
         0xd508_0000
@@ -30617,6 +30691,32 @@ fn diff_system_dczid_el0_xzr_edges() {
     }
 
     run_batch_el0("system_dczid_el0_xzr_edges", batch);
+}
+
+#[test]
+fn diff_load_literal_encoding_legality_grid() {
+    fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        (opc << 30) | (0b011 << 27) | (v << 26) | (imm19 << 5) | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_017d);
+    let mut batch = Vec::new();
+    for v in 0..=1u32 {
+        for opc in 0..=3u32 {
+            for rt in [RD, 30, 31] {
+                for offset in [0, 4, 8] {
+                    batch.push((
+                        format!("load_literal_v{v}_opc{opc}_rt{rt}_off{offset}"),
+                        ldr_literal(opc, v, rt, offset),
+                        gen_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("load_literal_encoding_legality_grid", batch);
 }
 
 #[test]
@@ -31431,6 +31531,37 @@ fn diff_mem_ldst_single_no_offset_rm_unallocated_edges() {
     }
 
     run_batch_el0_legality("mem_ldst_single_no_offset_rm_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_single_encoding_legality_grid() {
+    let mut rng = Rng::new(0x1_0008);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for post in 0..2u32 {
+            let rm = if post == 0 { 0 } else { 31 };
+            for l in 0..2u32 {
+                for r in 0..2u32 {
+                    for opcode in 0..8u32 {
+                        for s in 0..2u32 {
+                            for size in 0..4u32 {
+                                batch.push((
+                                    format!(
+                                        "ldst_single_struct_q{q}_post{post}_l{l}_r{r}_op{opcode}_s{s}_size{size}"
+                                    ),
+                                    enc_single_fields_regs(q, post, l, r, rm, opcode, s, size, RD, RN),
+                                    mem_input(&mut rng),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldst_single_encoding_legality_grid", batch);
 }
 
 #[test]
@@ -57061,6 +57192,65 @@ fn diff_mem_atomic_order_and_xzr_edges() {
 }
 
 #[test]
+fn diff_mem_atomic_register_alias_edges() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b000, "ldadd"),
+        (0, 0b001, "ldclr"),
+        (0, 0b010, "ldeor"),
+        (0, 0b011, "ldset"),
+        (0, 0b100, "ldsmax"),
+        (0, 0b101, "ldsmin"),
+        (0, 0b110, "ldumax"),
+        (0, 0b111, "ldumin"),
+        (1, 0b000, "swp"),
+    ];
+    let aliases: &[(u32, u32, u32, &str)] = &[
+        (RN, RN, RD, "rs_is_rn"),
+        (2, RN, RN, "rt_is_rn"),
+        (RD, RN, RD, "rs_is_rt"),
+        (RN, RN, RN, "all_same"),
+    ];
+    let patterns: &[(&str, u64)] = &[
+        ("zero", 0),
+        ("ones", u64::MAX),
+        ("sign_bits", 0x8000_0000_0000_0001),
+        ("alternating", 0x55aa_55aa_33cc_33cc),
+    ];
+
+    let mut batch = Vec::new();
+    for &(o3, opc, name) in ops {
+        for size in 0..4u32 {
+            for &(a, r) in &[(0u32, 0u32), (1, 1)] {
+                for &(rs, rn, rt, alias) in aliases {
+                    for &(pattern, mem) in patterns {
+                        let mut st = ArmState::zeroed();
+                        st.x[RN as usize] = SCRATCH_BASE;
+                        st.x[2] = 0x1122_3344_5566_7788;
+                        st.x[RD as usize] = 0x8877_6655_4433_2211;
+                        if rs < 31 {
+                            st.x[rs as usize] = match alias {
+                                "rs_is_rn" | "all_same" => SCRATCH_BASE,
+                                _ => 0x1122_3344_5566_7788,
+                            };
+                        }
+                        st.scratch.fill(0xfeed_face_dead_beef);
+                        st.scratch[8] = mem;
+                        st.scratch[9] = !mem;
+                        batch.push((
+                            format!("{name}_alias_sz{size}_a{a}r{r}_{alias}_{pattern}"),
+                            enc_atomic_regs(size, a, r, o3, opc, rs, rn, rt),
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("mem_atomic_register_alias_edges", batch);
+}
+
+#[test]
 fn diff_mem_atomic_unaligned_uscat() {
     let cases = [
         ("uscat ldadd_w", 0xb822_0020),
@@ -57505,6 +57695,33 @@ fn diff_mem_ldst_struct_no_offset_rm_unallocated_edges() {
     }
 
     run_batch_el0_legality("mem_ldst_struct_no_offset_rm_unallocated_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_struct_encoding_legality_grid() {
+    let mut rng = Rng::new(0x1_0009);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for post in 0..2u32 {
+            let rm = if post == 0 { 0 } else { 31 };
+            for l in 0..2u32 {
+                for opcode in 0..16u32 {
+                    for size in 0..4u32 {
+                        batch.push((
+                            format!(
+                                "ldst_struct_q{q}_post{post}_l{l}_op{opcode}_size{size}"
+                            ),
+                            enc_ldst_struct_regs(q, post, l, rm, opcode, size, RD, RN),
+                            mem_input(&mut rng),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ldst_struct_encoding_legality_grid", batch);
 }
 
 #[test]
@@ -58175,6 +58392,87 @@ fn diff_mem_mte_tag_memory_edges() {
     }
 
     run_batch("mem_mte_tag_memory_edges", batch);
+}
+
+#[test]
+fn diff_mte_runtime_supported_legality_edges() {
+    fn addsub_tags(op: u32, rn: u32, rd: u32) -> u32 {
+        (1 << 31) | (op << 30) | (0b100011 << 23) | (2 << 16) | (7 << 10) | (rn << 5) | rd
+    }
+
+    fn dp2_mte(s: u32, opcode: u32) -> u32 {
+        (1 << 31)
+            | (s << 29)
+            | (0b0011010110 << 21)
+            | (RM << 16)
+            | (opcode << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    fn tag_mem(opc: u32, op2: u32) -> u32 {
+        (0xD9 << 24)
+            | ((opc & 0x3) << 22)
+            | (1 << 21)
+            | ((op2 & 0x3) << 10)
+            | (RN << 5)
+            | RD
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] mte_runtime_supported_legality_edges: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    let mut rng = Rng::new(0x1_017c);
+    let mut probe = gen_input(&mut rng);
+    probe.x[RN as usize] = 0x0500_0000_0000_1000;
+    let probe_cases = vec![(addsub_tags(0, RN, RD), NOP, probe)];
+    let probe_out = match run_oracle(&oracle, &probe_cases) {
+        Some(o) => o,
+        None => {
+            eprintln!("[arm_diff] mte_runtime_supported_legality_edges: oracle probe failed -> skipping");
+            return;
+        }
+    };
+    if probe_out[0].trapped != 0 {
+        eprintln!("[arm_diff] mte_runtime_supported_legality_edges: native MTE instructions trap -> skipping");
+        return;
+    }
+
+    let cases: &[(&str, u32)] = &[
+        ("mte_runtime_add_tag", addsub_tags(0, RN, RD)),
+        ("mte_runtime_sub_tag", addsub_tags(1, RN, RD)),
+        ("mte_runtime_subp", dp2_mte(0, 0b000000)),
+        ("mte_runtime_subps", dp2_mte(1, 0b000000)),
+        ("mte_runtime_irg", dp2_mte(0, 0b000100)),
+        ("mte_runtime_gmi", dp2_mte(0, 0b000101)),
+        ("mte_runtime_ldg", tag_mem(0b01, 0b00)),
+        ("mte_runtime_stg", tag_mem(0b00, 0b10)),
+        (
+            "mte_runtime_stgp",
+            enc_ldp_regs(0b01, 0, 0b10, 0, 0, RD, RM, RN),
+        ),
+        (
+            "mte_runtime_stgp_noalloc",
+            enc_ldp_regs(0b01, 0, 0b00, 0, 0, RD, RM, RN),
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..4 {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = SCRATCH_BASE + 64;
+            st.x[RM as usize] = rng.next();
+            st.x[RD as usize] = rng.next();
+            batch.push(((*label).to_string(), *insn, st));
+        }
+    }
+
+    run_batch_el0_legality("mte_runtime_supported_legality_edges", batch);
 }
 
 #[test]
@@ -59184,6 +59482,41 @@ fn diff_mem_ordered_unscaled() {
         }
     }
     run_batch("mem_ordered_unscaled", batch);
+}
+
+#[test]
+fn diff_mem_ordered_unscaled_encoding_legality_grid() {
+    fn ordered_unscaled(size: u32, opc: u32, imm9: i32, rn: u32, rt: u32) -> u32 {
+        let imm9 = (imm9 as u32) & 0x1ff;
+        (size << 30)
+            | (0b011001 << 24)
+            | (opc << 22)
+            | (imm9 << 12)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_0053);
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for opc in 0..4u32 {
+            for rn in [RN, 31] {
+                for rt in [RD, 31] {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + 64;
+                    st.sp = SCRATCH_BASE + 64;
+                    batch.push((
+                        format!("ordered_unscaled_size{size}_opc{opc}_rn{rn}_rt{rt}"),
+                        ordered_unscaled(size, opc, 0, rn, rt),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("mem_ordered_unscaled_encoding_legality_grid", batch);
 }
 
 #[test]
