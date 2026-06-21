@@ -2995,6 +2995,310 @@ fn raw_el0_sve_fp_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_fp_predicated_extra_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue  p0.s, vl2
+        0x6583_8020, // fsubr  z0.s, p0/m, z0.s, z1.s
+        0x6588_8062, // fabd   z2.s, p0/m, z2.s, z3.s
+        0x658a_80a4, // fmulx  z4.s, p0/m, z4.s, z5.s
+        0x658c_80e6, // fdivr  z6.s, p0/m, z6.s, z7.s
+        0x6589_8128, // fscale z8.s, p0/m, z8.s, z9.s
+        0x6598_800a, // fadd   z10.s, p0/m, z10.s, #0.5
+        0x659b_802b, // fsubr  z11.s, p0/m, z11.s, #1.0
+        0x659e_800c, // fmax   z12.s, p0/m, z12.s, #0.0
+        0x659d_802d, // fminnm z13.s, p0/m, z13.s, #1.0
+        0x25d8_e021, // ptrue  p1.d, vl1
+        0x65c9_85ee, // fscale z14.d, p1/m, z14.d, z15.d
+        0x65cc_8630, // fdivr  z16.d, p1/m, z16.d, z17.d
+        0x65ca_8672, // fmulx  z18.d, p1/m, z18.d, z19.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_s_bits = |xs: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(xs[0]) | (u64::from(xs[1]) << 32);
+        let hi = u64::from(xs[2]) | (u64::from(xs[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let pack_d_bits = |a: u64, b: u64| -> (u64, u64) { (a, b) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(8.0, -4.0, 30.0, -40.0)),
+            (1, pack_s(2.0, -10.0, 300.0, -400.0)),
+            (2, pack_s(5.0, -6.0, 31.0, -41.0)),
+            (3, pack_s(2.0, -10.0, 301.0, -401.0)),
+            (4, pack_s(1.5, -2.0, 32.0, -42.0)),
+            (5, pack_s(4.0, -0.5, 302.0, -402.0)),
+            (6, pack_s(8.0, -4.0, 33.0, -43.0)),
+            (7, pack_s(2.0, -20.0, 303.0, -403.0)),
+            (8, pack_s(1.5, -4.0, 34.0, -44.0)),
+            (9, pack_s_bits([1, u32::MAX, 2, u32::MAX - 1])),
+            (10, pack_s(1.0, -2.0, 35.0, -45.0)),
+            (11, pack_s(0.25, -3.0, 36.0, -46.0)),
+            (12, pack_s(-1.0, 2.0, 37.0, -47.0)),
+            (13, pack_s(0.25, 2.0, 38.0, -48.0)),
+            (14, pack_d(1.5, -4.0)),
+            (15, pack_d_bits(2, u64::MAX)),
+            (16, pack_d(8.0, -40.0)),
+            (17, pack_d(2.0, -20.0)),
+            (18, pack_d(1.5, -42.0)),
+            (19, pack_d(4.0, -0.5)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 11, 12, 13, 14, 16, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP predicated-extra z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_fp_unary_extra_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") || !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue p0.s, vl2
+        0x658c_a020, // frecpx z0.s, p0/m, z1.s
+        0x6580_a062, // frintn z2.s, p0/m, z3.s
+        0x6581_a0a4, // frintp z4.s, p0/m, z5.s
+        0x6582_a0e6, // frintm z6.s, p0/m, z7.s
+        0x6583_a128, // frintz z8.s, p0/m, z9.s
+        0x6584_a16a, // frinta z10.s, p0/m, z11.s
+        0x6586_a1ac, // frintx z12.s, p0/m, z13.s
+        0x6587_a1ee, // frinti z14.s, p0/m, z15.s
+        0x651c_a230, // flogb  z16.s, p0/m, z17.s
+        0x25d8_e021, // ptrue p1.d, vl1
+        0x65cc_a672, // frecpx z18.d, p1/m, z19.d
+        0x65c3_a6b4, // frintz z20.d, p1/m, z21.d
+        0x651e_a6f6, // flogb  z22.d, p1/m, z23.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(100.0, 200.0, 300.0, 400.0)),
+            (1, pack_s(2.0, -4.0, 30.0, -40.0)),
+            (2, pack_s(101.0, 201.0, 301.0, 401.0)),
+            (3, pack_s(1.25, -1.75, 31.0, -41.0)),
+            (4, pack_s(102.0, 202.0, 302.0, 402.0)),
+            (5, pack_s(1.25, -1.75, 32.0, -42.0)),
+            (6, pack_s(103.0, 203.0, 303.0, 403.0)),
+            (7, pack_s(1.25, -1.75, 33.0, -43.0)),
+            (8, pack_s(104.0, 204.0, 304.0, 404.0)),
+            (9, pack_s(1.25, -1.75, 34.0, -44.0)),
+            (10, pack_s(105.0, 205.0, 305.0, 405.0)),
+            (11, pack_s(1.25, -1.75, 35.0, -45.0)),
+            (12, pack_s(106.0, 206.0, 306.0, 406.0)),
+            (13, pack_s(1.25, -1.75, 36.0, -46.0)),
+            (14, pack_s(107.0, 207.0, 307.0, 407.0)),
+            (15, pack_s(1.25, -1.75, 37.0, -47.0)),
+            (16, pack_s(108.0, 208.0, 308.0, 408.0)),
+            (17, pack_s(1.0, 8.0, 38.0, -48.0)),
+            (18, pack_d(1000.0, 2000.0)),
+            (19, pack_d(2.0, -4.0)),
+            (20, pack_d(1001.0, 2001.0)),
+            (21, pack_d(1.25, -1.75)),
+            (22, pack_d(1002.0, 2002.0)),
+            (23, pack_d(1.0, 16.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 FP unary-extra z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_fp_precision_convert_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve")
+        || !host_has_aarch64_feature("sve2")
+        || !host_has_aarch64_feature("fphp")
+    {
+        eprintln!("[skip] host does not advertise SVE2 + FP16");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue p0.s, vl2
+        0x6589_a020, // fcvt   z0.s, p0/m, z1.h
+        0x6588_a062, // fcvt   z2.h, p0/m, z3.s
+        0x25d8_e021, // ptrue p1.d, vl1
+        0x65cb_a4a4, // fcvt   z4.d, p1/m, z5.s
+        0x65ca_a4e6, // fcvt   z6.s, p1/m, z7.d
+        0x650a_a528, // fcvtx  z8.s, p1/m, z9.d
+        0x65c8_a56a, // fcvt   z10.h, p1/m, z11.d
+        0x64ca_a5ee, // fcvtnt z14.s, p1/m, z15.d
+        0x64cb_a630, // fcvtlt z16.d, p1/m, z17.s
+    ];
+    let pack_h = |xs: [u16; 8]| -> (u64, u64) {
+        let mut lo = 0u64;
+        let mut hi = 0u64;
+        for (i, &x) in xs.iter().enumerate() {
+            if i < 4 {
+                lo |= u64::from(x) << (16 * i);
+            } else {
+                hi |= u64::from(x) << (16 * (i - 4));
+            }
+        }
+        (lo, hi)
+    };
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(100.0, 200.0, 300.0, 400.0)),
+            (1, pack_h([0x3c00, 0x7bff, 0xc000, 0x7bff, 0x4200, 0x4400, 0x4600, 0x4800])),
+            (2, pack_h([0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff])),
+            (3, pack_s(1.5, -2.5, 300.0, 400.0)),
+            (4, pack_d(1000.0, 2000.0)),
+            (5, pack_s(1.25, -2.25, 300.0, 400.0)),
+            (6, pack_s(101.0, 201.0, 301.0, 401.0)),
+            (7, pack_d(1.5, -2.5)),
+            (8, pack_s(102.0, 202.0, 302.0, 402.0)),
+            (9, pack_d(1.25, -2.25)),
+            (10, pack_h([0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff])),
+            (11, pack_d(1.0, -2.0)),
+            (14, (0xaaaa_aaaa_1111_1111, 0xbbbb_bbbb_2222_2222)),
+            (15, pack_d(1.5, -2.5)),
+            (16, pack_d(1003.0, 2003.0)),
+            (17, pack_s(100.0, 1.5, 200.0, 300.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 14, 16] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 FP precision-convert z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_fp_int_convert_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue p0.s, vl2
+        0x659c_a020, // fcvtzs z0.s, p0/m, z1.s
+        0x659d_a062, // fcvtzu z2.s, p0/m, z3.s
+        0x6594_a0a4, // scvtf  z4.s, p0/m, z5.s
+        0x6595_a0e6, // ucvtf  z6.s, p0/m, z7.s
+        0x25d8_e021, // ptrue p1.d, vl1
+        0x65de_a528, // fcvtzs z8.d, p1/m, z9.d
+        0x65df_a56a, // fcvtzu z10.d, p1/m, z11.d
+        0x65d6_a5ac, // scvtf  z12.d, p1/m, z13.d
+        0x65d7_a5ee, // ucvtf  z14.d, p1/m, z15.d
+        0x65dc_a630, // fcvtzs z16.d, p1/m, z17.s
+        0x65d4_a672, // scvtf  z18.s, p1/m, z19.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_s_bits = |xs: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(xs[0]) | (u64::from(xs[1]) << 32);
+        let hi = u64::from(xs[2]) | (u64::from(xs[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(100.0, 200.0, 300.0, 400.0)),
+            (1, pack_s(1.5, -2.75, 30.0, -40.0)),
+            (2, pack_s(101.0, 201.0, 301.0, 401.0)),
+            (3, pack_s(1.5, 2.75, 31.0, 41.0)),
+            (4, pack_s(102.0, 202.0, 302.0, 402.0)),
+            (5, pack_s_bits([(-3_i32) as u32, 5, 300, 400])),
+            (6, pack_s(103.0, 203.0, 303.0, 403.0)),
+            (7, pack_s_bits([3, 5, 300, 400])),
+            (8, (1000, 2000)),
+            (9, pack_d(3.75, -4.5)),
+            (10, (1001, 2001)),
+            (11, pack_d(3.75, 4.5)),
+            (12, pack_d(1002.0, 2002.0)),
+            (13, ((-7_i64) as u64, 8)),
+            (14, pack_d(1003.0, 2003.0)),
+            (15, (9, 10)),
+            (16, (1004, 2004)),
+            (17, pack_s(6.75, -7.25, 30.0, 40.0)),
+            (18, pack_s(104.0, 204.0, 304.0, 404.0)),
+            (19, ((-11_i64) as u64, 12)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12, 14, 16, 18] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP-int convert z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve_fp_fma_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("sve") {
         eprintln!("[skip] host does not advertise SVE");
@@ -3122,6 +3426,350 @@ fn raw_el0_sve_fp_estimate_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 SVE FP estimate z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_fp_reciprocal_step_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x6582_1820, // frecps  z0.s, z1.s, z2.s
+        0x6585_1c83, // frsqrts z3.s, z4.s, z5.s
+        0x65c8_18e6, // frecps  z6.d, z7.d, z8.d
+        0x65cb_1d49, // frsqrts z9.d, z10.d, z11.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s(0.5, 1.0, -2.0, 4.0)),
+            (2, pack_s(1.5, -0.25, 0.5, -0.125)),
+            (4, pack_s(0.25, 1.0, 4.0, 9.0)),
+            (5, pack_s(4.0, 1.0, 0.25, 0.125)),
+            (7, pack_d(0.5, -2.0)),
+            (8, pack_d(1.5, 0.25)),
+            (10, pack_d(0.25, 9.0)),
+            (11, pack_d(4.0, 0.125)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP reciprocal-step z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_fp_trig_helper_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x6582_0c20, // ftsmul z0.s, z1.s, z2.s
+        0x65c5_0c83, // ftsmul z3.d, z4.d, z5.d
+        0x6591_80e6, // ftmad  z6.s, z6.s, z7.s, #1
+        0x6594_8128, // ftmad  z8.s, z8.s, z9.s, #4
+        0x65d2_816a, // ftmad  z10.d, z10.d, z11.d, #2
+        0x65d6_81ac, // ftmad  z12.d, z12.d, z13.d, #6
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_s_bits = |xs: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(xs[0]) | (u64::from(xs[1]) << 32);
+        let hi = u64::from(xs[2]) | (u64::from(xs[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, pack_s(0.5, -1.25, 2.0, -3.5)),
+            (2, pack_s_bits([0, 1, 0, 1])),
+            (4, pack_d(0.75, -2.5)),
+            (5, (0, 1)),
+            (6, pack_s(1.0, -2.0, 0.5, -0.75)),
+            (7, pack_s(0.5, -0.25, -1.5, 2.0)),
+            (8, pack_s(0.25, -0.5, 1.25, -1.75)),
+            (9, pack_s(-0.75, 1.5, 0.5, -2.0)),
+            (10, pack_d(1.0, -2.0)),
+            (11, pack_d(0.5, -0.25)),
+            (12, pack_d(0.25, -0.75)),
+            (13, pack_d(-0.5, 1.25)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 8, 10, 12] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP trig-helper z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve2_fp_pairwise_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") || !host_has_aarch64_feature("sve2") {
+        eprintln!("[skip] host does not advertise SVE2");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e060, // ptrue  p0.s, vl3
+        0x6490_8020, // faddp  z0.s, p0/m, z0.s, z1.s
+        0x6494_8062, // fmaxnmp z2.s, p0/m, z2.s, z3.s
+        0x6495_80a4, // fminnmp z4.s, p0/m, z4.s, z5.s
+        0x6496_80e6, // fmaxp  z6.s, p0/m, z6.s, z7.s
+        0x6497_8128, // fminp  z8.s, p0/m, z8.s, z9.s
+        0x25d8_e021, // ptrue  p1.d, vl1
+        0x64d0_856a, // faddp  z10.d, p1/m, z10.d, z11.d
+        0x64d6_85ac, // fmaxp  z12.d, p1/m, z12.d, z13.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(1.0, 2.0, 3.0, 40.0)),
+            (1, pack_s(10.0, 20.0, 30.0, 400.0)),
+            (2, pack_s(1.0, -2.0, 3.0, 40.0)),
+            (3, pack_s(10.0, -20.0, 30.0, 400.0)),
+            (4, pack_s(1.0, -2.0, 3.0, 40.0)),
+            (5, pack_s(10.0, -20.0, 30.0, 400.0)),
+            (6, pack_s(1.0, -2.0, 3.0, 40.0)),
+            (7, pack_s(10.0, -20.0, 30.0, 400.0)),
+            (8, pack_s(1.0, -2.0, 3.0, 40.0)),
+            (9, pack_s(10.0, -20.0, 30.0, 400.0)),
+            (10, pack_d(1.0, 2.0)),
+            (11, pack_d(10.0, 20.0)),
+            (12, pack_d(1.0, -2.0)),
+            (13, pack_d(10.0, -20.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10, 12] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE2 FP pairwise z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_fp_compare_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let qnan = f32::from_bits(0x7fc0_0000);
+    let insns = [
+        0x2598_e3e0, // ptrue p0.s
+        0x6581_6001, // fcmeq p1.s, p0/z, z0.s, z1.s
+        0x6583_6052, // fcmne p2.s, p0/z, z2.s, z3.s
+        0x6585_4093, // fcmgt p3.s, p0/z, z4.s, z5.s
+        0x6587_40c4, // fcmge p4.s, p0/z, z6.s, z7.s
+        0x6589_c105, // fcmuo p5.s, p0/z, z8.s, z9.s
+        0x658b_e156, // facgt p6.s, p0/z, z10.s, z11.s
+        0x658d_c197, // facge p7.s, p0/z, z12.s, z13.s
+        0x0480_07f0, // add   z16.s, p1/m, z16.s, z31.s
+        0x0480_0bf1, // add   z17.s, p2/m, z17.s, z31.s
+        0x0480_0ff2, // add   z18.s, p3/m, z18.s, z31.s
+        0x0480_13f3, // add   z19.s, p4/m, z19.s, z31.s
+        0x0480_17f4, // add   z20.s, p5/m, z20.s, z31.s
+        0x0480_1bf5, // add   z21.s, p6/m, z21.s, z31.s
+        0x0480_1ff6, // add   z22.s, p7/m, z22.s, z31.s
+        0x25d8_e3e0, // ptrue p0.d
+        0x65db_6341, // fcmeq p1.d, p0/z, z26.d, z27.d
+        0x65dd_4392, // fcmgt p2.d, p0/z, z28.d, z29.d
+        0x65cf_c1d3, // facge p3.d, p0/z, z14.d, z15.d
+        0x04c0_07d7, // add   z23.d, p1/m, z23.d, z30.d
+        0x04c0_0bd8, // add   z24.d, p2/m, z24.d, z30.d
+        0x04c0_0fd9, // add   z25.d, p3/m, z25.d, z30.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(1.0, -2.0, 3.0, -4.0)),
+            (1, pack_s(1.0, 2.0, 3.0, -5.0)),
+            (2, pack_s(1.0, -2.0, 3.0, -4.0)),
+            (3, pack_s(0.0, -2.0, 4.0, -4.0)),
+            (4, pack_s(5.0, -1.0, 2.0, -4.0)),
+            (5, pack_s(4.0, -2.0, 2.0, -3.0)),
+            (6, pack_s(5.0, -1.0, 2.0, -4.0)),
+            (7, pack_s(5.0, -2.0, 3.0, -3.0)),
+            (8, pack_s(qnan, 1.0, qnan, -2.0)),
+            (9, pack_s(1.0, qnan, qnan, -2.0)),
+            (10, pack_s(-5.0, 2.0, -3.0, 4.0)),
+            (11, pack_s(4.0, -3.0, -3.0, 2.0)),
+            (12, pack_s(-5.0, 2.0, -3.0, 4.0)),
+            (13, pack_s(5.0, -3.0, -2.0, 4.0)),
+            (14, pack_d(-5.0, 2.0)),
+            (15, pack_d(5.0, -3.0)),
+            (16, pack_s(10.0, 20.0, 30.0, 40.0)),
+            (17, pack_s(11.0, 21.0, 31.0, 41.0)),
+            (18, pack_s(12.0, 22.0, 32.0, 42.0)),
+            (19, pack_s(13.0, 23.0, 33.0, 43.0)),
+            (20, pack_s(14.0, 24.0, 34.0, 44.0)),
+            (21, pack_s(15.0, 25.0, 35.0, 45.0)),
+            (22, pack_s(16.0, 26.0, 36.0, 46.0)),
+            (23, pack_d(100.0, 200.0)),
+            (24, pack_d(101.0, 201.0)),
+            (25, pack_d(102.0, 202.0)),
+            (26, pack_d(1.0, -2.0)),
+            (27, pack_d(1.0, 3.0)),
+            (28, pack_d(5.0, -1.0)),
+            (29, pack_d(4.0, -2.0)),
+            (30, pack_d(1000.0, 2000.0)),
+            (31, pack_s(100.0, 200.0, 300.0, 400.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in 16usize..=25 {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP compare z{reg} low-128 mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 SVE FP compare NZCV mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_sve_fp_compare_zero_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let qnan = f32::from_bits(0x7fc0_0000);
+    let insns = [
+        0x2598_e3e0, // ptrue p0.s
+        0x6590_2001, // fcmge p1.s, p0/z, z0.s, #0.0
+        0x6590_2032, // fcmgt p2.s, p0/z, z1.s, #0.0
+        0x6591_2043, // fcmlt p3.s, p0/z, z2.s, #0.0
+        0x6591_2074, // fcmle p4.s, p0/z, z3.s, #0.0
+        0x6592_2085, // fcmeq p5.s, p0/z, z4.s, #0.0
+        0x6593_20a6, // fcmne p6.s, p0/z, z5.s, #0.0
+        0x0480_07f0, // add   z16.s, p1/m, z16.s, z31.s
+        0x0480_0bf1, // add   z17.s, p2/m, z17.s, z31.s
+        0x0480_0ff2, // add   z18.s, p3/m, z18.s, z31.s
+        0x0480_13f3, // add   z19.s, p4/m, z19.s, z31.s
+        0x0480_17f4, // add   z20.s, p5/m, z20.s, z31.s
+        0x0480_1bf5, // add   z21.s, p6/m, z21.s, z31.s
+        0x25d8_e3e0, // ptrue p0.d
+        0x65d0_2341, // fcmge p1.d, p0/z, z26.d, #0.0
+        0x65d1_2362, // fcmlt p2.d, p0/z, z27.d, #0.0
+        0x65d3_2383, // fcmne p3.d, p0/z, z28.d, #0.0
+        0x04c0_07d6, // add   z22.d, p1/m, z22.d, z30.d
+        0x04c0_0bd7, // add   z23.d, p2/m, z23.d, z30.d
+        0x04c0_0fd8, // add   z24.d, p3/m, z24.d, z30.d
+    ];
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        let lo = u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32);
+        let hi = u64::from(c.to_bits()) | (u64::from(d.to_bits()) << 32);
+        (lo, hi)
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(1.0, 0.0, -0.0, -2.0)),
+            (1, pack_s(1.0, 0.0, -0.0, -2.0)),
+            (2, pack_s(1.0, 0.0, -0.0, -2.0)),
+            (3, pack_s(1.0, 0.0, -0.0, -2.0)),
+            (4, pack_s(1.0, 0.0, -0.0, -2.0)),
+            (5, pack_s(1.0, 0.0, qnan, -2.0)),
+            (16, pack_s(10.0, 20.0, 30.0, 40.0)),
+            (17, pack_s(11.0, 21.0, 31.0, 41.0)),
+            (18, pack_s(12.0, 22.0, 32.0, 42.0)),
+            (19, pack_s(13.0, 23.0, 33.0, 43.0)),
+            (20, pack_s(14.0, 24.0, 34.0, 44.0)),
+            (21, pack_s(15.0, 25.0, 35.0, 45.0)),
+            (22, pack_d(100.0, 200.0)),
+            (23, pack_d(101.0, 201.0)),
+            (24, pack_d(102.0, 202.0)),
+            (26, pack_d(1.0, -0.0)),
+            (27, pack_d(1.0, -2.0)),
+            (28, pack_d(0.0, -3.0)),
+            (30, pack_d(1000.0, 2000.0)),
+            (31, pack_s(100.0, 200.0, 300.0, 400.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in 16usize..=24 {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE FP compare-zero z{reg} low-128 mismatch"
         );
     }
 }
@@ -3261,6 +3909,93 @@ fn raw_el0_sve_reduction_oracle_matches_interpreter() {
         assert_eq!(
             hw.v[lo] as u32, interp.v[lo] as u32,
             "raw EL0 SVE FP reduction s{reg} mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_reduction_extra_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e020, // ptrue  p0.d, vl1
+        0x04c9_2020, // umaxv  d0, p0, z1.d
+        0x04c8_2062, // smaxv  d2, p0, z3.d
+        0x04ca_20a4, // sminv  d4, p0, z5.d
+        0x04cb_20e6, // uminv  d6, p0, z7.d
+        0x2598_e061, // ptrue  p1.s, vl3
+        0x0480_2528, // saddv  d8, p1, z9.s
+        0x0481_256a, // uaddv  d10, p1, z11.s
+        0x6580_25ac, // faddv  s12, p1, z13.s
+        0x6584_25ee, // fmaxnmv s14, p1, z15.s
+        0x6587_2630, // fminv  s16, p1, z17.s
+        0x25d8_e3e2, // ptrue  p2.d
+        0x65c0_2a72, // faddv  d18, p2, z19.d
+        0x65c7_2ab4, // fminv  d20, p2, z21.d
+        0x65c4_2af6, // fmaxnmv d22, p2, z23.d
+    ];
+    let pack_s_bits = |xs: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(xs[0]) | (u64::from(xs[1]) << 32);
+        let hi = u64::from(xs[2]) | (u64::from(xs[3]) << 32);
+        (lo, hi)
+    };
+    let pack_s = |a: f32, b: f32, c: f32, d: f32| -> (u64, u64) {
+        pack_s_bits([a.to_bits(), b.to_bits(), c.to_bits(), d.to_bits()])
+    };
+    let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, (lo, hi)) in [
+            (1usize, (5, 100)),
+            (3, ((-5_i64) as u64, 10)),
+            (5, ((-5_i64) as u64, (-100_i64) as u64)),
+            (7, (100, 3)),
+            (
+                9,
+                pack_s_bits([
+                    (-3_i32) as u32,
+                    5,
+                    (-7_i32) as u32,
+                    100,
+                ]),
+            ),
+            (11, pack_s_bits([1, 2, 3, 100])),
+            (13, pack_s(1.0, 2.0, 3.0, 100.0)),
+            (15, pack_s(1.0, -9.0, 5.0, 100.0)),
+            (17, pack_s(2.0, -10.0, 4.0, -100.0)),
+            (19, pack_d(1.5, 2.5)),
+            (21, pack_d(3.0, -2.0)),
+            (23, pack_d(1.0, 4.0)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 10] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo], interp.v[lo],
+            "raw EL0 SVE extra reduction d{reg} mismatch"
+        );
+    }
+    for reg in [12usize, 14, 16] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo] as u32, interp.v[lo] as u32,
+            "raw EL0 SVE extra FP reduction s{reg} mismatch"
+        );
+    }
+    for reg in [18usize, 20, 22] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo], interp.v[lo],
+            "raw EL0 SVE extra FP reduction d{reg} mismatch"
         );
     }
 }
