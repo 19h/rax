@@ -2019,7 +2019,7 @@ impl AArch64Cpu {
                         None => a, // FMOV
                         Some(TwoRegFp::Fabs) => a & 0x7FFF,
                         Some(TwoRegFp::Fneg) => a ^ 0x8000,
-                        Some(TwoRegFp::Fsqrt) => fp16_sqrt(a),
+                        Some(TwoRegFp::Fsqrt) => fp16_sqrt_with_fpcr(a, self.fpcr),
                         Some(TwoRegFp::RintN) => fp16_frint(a, 0),
                         Some(TwoRegFp::RintX) | Some(TwoRegFp::RintI) => {
                             fp16_frint_with_fpcr(a, self.fpcr)
@@ -3180,7 +3180,9 @@ impl AArch64Cpu {
                     let r = match (u, a, opcode) {
                         (0, 0, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Add, n, m, self.fpcr),
                         (0, 1, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Sub, n, m, self.fpcr),
+                        (1, 1, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Abd, n, m, self.fpcr),
                         (1, 0, 0b011) => sve_fp16_binop_with_fpcr(FpKind::Mul, n, m, self.fpcr),
+                        (1, 0, 0b111) => sve_fp16_binop_with_fpcr(FpKind::Div, n, m, self.fpcr),
                         (0, 0, 0b111) => fp16_recps_with_fpcr(n, m, self.fpcr),
                         (0, 1, 0b111) => fp16_rsqrts_with_fpcr(n, m, self.fpcr),
                         _ => f(n, m),
@@ -3304,7 +3306,7 @@ impl AArch64Cpu {
                 (0, 1, 0b01111) => s & 0x7FFF, // FABS
                 (1, 1, 0b01111) => s ^ 0x8000, // FNEG
                 // Square root and reciprocal-family estimates.
-                (1, 1, 0b11111) => fp16_sqrt(s),   // FSQRT
+                (1, 1, 0b11111) => fp16_sqrt_with_fpcr(s, self.fpcr), // FSQRT
                 (0, 1, 0b11111) => fp16_recpx(s),  // FRECPX (scalar form)
                 (0, 1, 0b11101) => fp16_recpe(s),  // FRECPE
                 (1, 1, 0b11101) => fp16_rsqrte(s), // FRSQRTE
@@ -12881,7 +12883,7 @@ impl AArch64Cpu {
                 let off = e * esz;
                 let nn = read_elem(&dn, off, esz);
                 let mm = read_elem(&m, off, esz);
-                let r = sve_ftmad(esz, nn, mm, imm);
+                let r = sve_ftmad(esz, nn, mm, imm, self.fpcr);
                 let neg = match esz {
                     2 => mm & 0x8000 != 0,
                     4 => mm & 0x8000_0000 != 0,
@@ -13050,7 +13052,7 @@ impl AArch64Cpu {
                 }
                 let x = read_elem(&a, off, esize);
                 let n = sext_elem(read_elem(&b, off, esize), ibits) as i64;
-                let r = sve_fscale(esize, x, n);
+                let r = sve_fscale(esize, x, n, self.fpcr);
                 self.fpsr |= fp_status_fscale(esize, x, n, r);
                 write_elem(&mut dst, off, esize, r);
             }
@@ -13325,7 +13327,7 @@ impl AArch64Cpu {
                 0b01101 => {
                     let kind = TwoRegFp::Fsqrt;
                     let r = match esize {
-                        2 => fp16_sqrt(lane as u16) as u64,
+                        2 => fp16_sqrt_with_fpcr(lane as u16, self.fpcr) as u64,
                         4 => fp_two_reg_f32_with_fpcr(kind, lane as u32, self.fpcr) as u64,
                         _ => fp_two_reg_f64_with_fpcr(kind, lane, self.fpcr),
                     };
@@ -21523,6 +21525,12 @@ fn fp_status_fscale(esize: usize, x: u64, n: i64, result: u64) -> u32 {
         return 0;
     }
     if esize == 8 {
+        if let Some((mant, exp)) = fp64_mant_exp(x) {
+            let top_bit = 63 - mant.leading_zeros() as i64;
+            if (exp as i64).saturating_add(n).saturating_add(top_bit) >= 1024 {
+                return FPSR_OFC | FPSR_IXC;
+            }
+        }
         if fp64_is_inf(result) {
             FPSR_OFC | FPSR_IXC
         } else if fp64_is_tiny(result) || fp64_is_zero(result) {
@@ -23035,31 +23043,123 @@ fn scalbn_f64(x: f64, mut n: i64) -> f64 {
     y * f64::from_bits(((0x3FF + n) as u64) << 52)
 }
 
-/// SVE FSCALE: multiply `x` by 2^(signed Zm element). fp16 via an exact f64
-/// intermediate; f32/f64 via the correctly-rounded scalbn.
-fn sve_fscale(esize: usize, x: u64, n: i64) -> u64 {
-    match esize {
-        2 => {
-            if let Some(n) = fp16_nan2(x as u16, x as u16) {
-                return n as u64;
+fn fp16_fscale_with_fpcr(x: u16, n: i64, fpcr: u32) -> u16 {
+    if let Some(nan) = fp16_nan2(x, x) {
+        return nan;
+    }
+    let xf = fp16_to_f64(x);
+    let scaled = xf * exp2_f64(n.clamp(-1023, 1023) as i32);
+    let nearest = fp16_round(scaled);
+    if (fpcr >> 22) & 0x3 == 0 || fp16_is_zero(x) || fp16_is_inf(x) {
+        return nearest;
+    }
+    if fp16_is_inf(nearest) {
+        let huge = if x & 0x8000 != 0 {
+            -f64::MAX
+        } else {
+            f64::MAX
+        };
+        return f64_to_fp16_bits_with_fpcr(huge, fpcr);
+    }
+    if fp16_is_zero(nearest) && !fp16_is_zero(x) {
+        return match (fpcr >> 22) & 0x3 {
+            1 if x & 0x8000 == 0 => 0x0001,
+            2 if x & 0x8000 != 0 => 0x8001,
+            _ => nearest,
+        };
+    }
+    f64_to_fp16_bits_with_fpcr(scaled, fpcr)
+}
+
+fn fp32_fscale_with_fpcr(x: u32, n: i64, fpcr: u32) -> u32 {
+    let nearest = scalbn_f32(
+        f32::from_bits(x),
+        n.clamp(i32::MIN as i64, i32::MAX as i64) as i32,
+    )
+    .to_bits();
+    if (fpcr >> 22) & 0x3 == 0 || !fp32_is_finite(x) || fp32_is_zero(x) {
+        return nearest;
+    }
+    if fp32_is_inf(nearest) {
+        let huge = if x >> 31 != 0 { -f64::MAX } else { f64::MAX };
+        return f64_to_f32_bits_with_fpcr(huge, fpcr);
+    }
+    if fp32_is_zero(nearest) {
+        return match (fpcr >> 22) & 0x3 {
+            1 if x >> 31 == 0 => 0x0000_0001,
+            2 if x >> 31 != 0 => 0x8000_0001,
+            _ => nearest,
+        };
+    }
+    let scaled = (f32::from_bits(x) as f64) * exp2_f64(n.clamp(-1023, 1023) as i32);
+    if scaled.is_infinite() {
+        let huge = if x >> 31 != 0 { -f64::MAX } else { f64::MAX };
+        f64_to_f32_bits_with_fpcr(huge, fpcr)
+    } else {
+        f64_to_f32_bits_with_fpcr(scaled, fpcr)
+    }
+}
+
+fn fp64_fscale_with_fpcr(x: u64, n: i64, fpcr: u32) -> u64 {
+    let nearest = scalbn_f64(f64::from_bits(x), n).to_bits();
+    if (fpcr >> 22) & 0x3 == 0 || !fp64_is_finite(x) || fp64_is_zero(x) {
+        return nearest;
+    }
+    if fp64_is_inf(nearest) {
+        let cmp = if x >> 63 != 0 {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Less
+        };
+        return fp64_adjust_nearest_with_fpcr(nearest, cmp, x >> 63 != 0, fpcr);
+    }
+    if fp64_is_zero(nearest) && n < -4096 {
+        return match (fpcr >> 22) & 0x3 {
+            1 if x >> 63 == 0 => 0x0000_0000_0000_0001,
+            2 if x >> 63 != 0 => 0x8000_0000_0000_0001,
+            _ => nearest,
+        };
+    }
+    let Some((mant, exp)) = fp64_signed_mant_exp(x) else {
+        return nearest;
+    };
+    let Some(exp) = (exp as i64).checked_add(n).and_then(|e| i32::try_from(e).ok()) else {
+        return if n < 0 {
+            match (fpcr >> 22) & 0x3 {
+                1 if x >> 63 == 0 => 0x0000_0000_0000_0001,
+                2 if x >> 63 != 0 => 0x8000_0000_0000_0001,
+                _ => nearest,
             }
-            fp16_round(fp16_to_f64(x as u16) * exp2_f64(n.clamp(-1023, 1023) as i32)) as u64
-        }
+        } else {
+            let cmp = if x >> 63 != 0 {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Less
+            };
+            fp64_adjust_nearest_with_fpcr(nearest, cmp, x >> 63 != 0, fpcr)
+        };
+    };
+    let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&[(mant, exp)], nearest) else {
+        return nearest;
+    };
+    fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr)
+}
+
+/// SVE FSCALE: multiply `x` by 2^(signed Zm element).
+fn sve_fscale(esize: usize, x: u64, n: i64, fpcr: u32) -> u64 {
+    match esize {
+        2 => fp16_fscale_with_fpcr(x as u16, n, fpcr) as u64,
         4 => {
             if let Some(n) = fp32_nan2(x as u32, x as u32) {
                 return n as u64;
             }
-            scalbn_f32(
-                f32::from_bits(x as u32),
-                n.clamp(i32::MIN as i64, i32::MAX as i64) as i32,
-            )
-            .to_bits() as u64
+            fp32_fscale_with_fpcr(x as u32, n, fpcr) as u64
         }
         _ => {
             if let Some(n) = fp64_nan2(x, x) {
                 return n;
             }
-            scalbn_f64(f64::from_bits(x), n).to_bits()
+            fp64_fscale_with_fpcr(x, n, fpcr)
         }
     }
 }
@@ -23256,37 +23356,25 @@ const FTMAD_COEFF_D: [u64; 16] = [
 /// SVE FTMAD: Zdn = fused(Zdn, |Zm|, coeff[imm + 8*(Zm<0)]). The product is
 /// against the absolute value of Zm; a negative Zm selects the upper coefficient
 /// block (FPCR.AH=0 default — no product negation).
-fn sve_ftmad(esize: usize, nn: u64, mm: u64, imm: usize) -> u64 {
+fn sve_ftmad(esize: usize, nn: u64, mm: u64, imm: usize, fpcr: u32) -> u64 {
     match esize {
         2 => {
             let neg = mm & 0x8000 != 0;
             let m = (mm & 0x7FFF) as u16;
             let coeff = FTMAD_COEFF_H[imm + if neg { 8 } else { 0 }];
-            if let Some(n) = fp16_nan3(coeff, nn as u16, m) {
-                return n as u64;
-            }
-            fp16_round(fp16_to_f64(nn as u16) * fp16_to_f64(m) + fp16_to_f64(coeff)) as u64
+            fp_muladd_bits_with_fpcr(coeff as u64, nn, m as u64, 16, fpcr)
         }
         4 => {
             let neg = mm & 0x8000_0000 != 0;
             let m = (mm & 0x7FFF_FFFF) as u32;
             let coeff = FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }];
-            if let Some(n) = fp32_nan3(coeff, nn as u32, m) {
-                return n as u64;
-            }
-            let coeff = f32::from_bits(coeff);
-            f32::from_bits(nn as u32)
-                .mul_add(f32::from_bits(m), coeff)
-                .to_bits() as u64
+            fp_muladd_bits_with_fpcr(coeff as u64, nn, m as u64, 32, fpcr)
         }
         _ => {
             let neg = mm & 0x8000_0000_0000_0000 != 0;
             let m = mm & 0x7FFF_FFFF_FFFF_FFFF;
             let coeff = FTMAD_COEFF_D[imm + if neg { 8 } else { 0 }];
-            if let Some(n) = fp64_nan3(coeff, nn, m) {
-                return n;
-            }
-            f64::from_bits(nn).mul_add(f64::from_bits(m), f64::from_bits(coeff)).to_bits()
+            fp_muladd_bits_with_fpcr(coeff, nn, m, 64, fpcr)
         }
     }
 }
@@ -24028,6 +24116,13 @@ fn fp16_sqrt(a: u16) -> u16 {
         return a | 0x0200;
     }
     fp16_round(fp16_to_f64(a).sqrt())
+}
+
+fn fp16_sqrt_with_fpcr(a: u16, fpcr: u32) -> u16 {
+    if (fpcr >> 22) & 0x3 == 0 || fp16_is_nan(a) || (a & 0x8000) != 0 {
+        return fp16_sqrt(a);
+    }
+    f64_to_fp16_bits_with_fpcr(fp16_to_f64(a).sqrt(), fpcr)
 }
 
 /// FP16 round-to-integral. `mode`: 0=TIEEVEN, 1=NEGINF, 2=POSINF, 3=ZERO,

@@ -27611,6 +27611,62 @@ fn diff_simd_fp16_recps_rsqrts_fpcr_rounding() {
 }
 
 #[test]
+fn diff_simd_fp16_div_fpcr_rounding() {
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let (lo, hi) = pack_h(0x3c00);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(0x4200);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("fdiv_rmode{rmode}"),
+            enc_fp16_3s(1, 1, 0, 0b111),
+            st,
+        ));
+    }
+
+    run_batch("simd_fp16_div_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fp16_abd_fpcr_rounding() {
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let (lo, hi) = pack_h(0x6800);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(0xbc00);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("fabd_rmode{rmode}"),
+            enc_fp16_3s(1, 1, 1, 0b010),
+            st,
+        ));
+    }
+
+    run_batch("simd_fp16_abd_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_fp16_fma_fpcr_rounding() {
     let pack_h = |value: u16| -> (u64, u64) {
         let mut packed = 0u128;
@@ -31086,6 +31142,16 @@ fn diff_sve_fsqrt_fpcr_rounding() {
         let mut st = ArmState::zeroed();
         st.fpcr = rmode << 22;
         st.set_preg(0, 0x0001);
+        st.set_vreg(RN as usize, 0x4000, 0);
+        batch.push((
+            format!("fsqrt_h_rmode{rmode}"),
+            (0x65 << 24) | (1 << 22) | (0b001101 << 16) | (0b101 << 13) | (RN << 5) | RD,
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        st.set_preg(0, 0x0001);
         st.set_vreg(RN as usize, 2.0f32.to_bits() as u64, 0);
         batch.push((
             format!("fsqrt_s_rmode{rmode}"),
@@ -32273,6 +32339,118 @@ fn diff_sve_fscale() {
         }
     }
     run_batch("sve_fscale", batch);
+}
+
+#[test]
+fn diff_sve_fscale_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        for &(name, h, s, d) in &[
+            ("pos", 0x7bffu16, f32::MAX.to_bits(), f64::MAX.to_bits()),
+            ("neg", 0xfbffu16, (-f32::MAX).to_bits(), (-f64::MAX).to_bits()),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let mut z = 0u128;
+            let mut n = 0u128;
+            for lane in 0..8 {
+                z |= (h as u128) << (16 * lane);
+                n |= 1u128 << (16 * lane);
+            }
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_h_{name}_rmode{rmode}"),
+                enc_sve_fscale(1),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let mut z = 0u128;
+            let mut n = 0u128;
+            for lane in 0..4 {
+                z |= (s as u128) << (32 * lane);
+                n |= 1u128 << (32 * lane);
+            }
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_s_{name}_rmode{rmode}"),
+                enc_sve_fscale(2),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let z = (d as u128) | ((d as u128) << 64);
+            let n = 1u128 | (1u128 << 64);
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_d_{name}_rmode{rmode}"),
+                enc_sve_fscale(3),
+                st,
+            ));
+        }
+
+        for &(name, h, s, d) in &[
+            ("tiny_pos", 0x0001u16, 0x0000_0001u32, 0x0000_0000_0000_0001u64),
+            ("tiny_neg", 0x8001u16, 0x8000_0001u32, 0x8000_0000_0000_0001u64),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let mut z = 0u128;
+            let mut n = 0u128;
+            for lane in 0..8 {
+                z |= (h as u128) << (16 * lane);
+                n |= (0xffffu128) << (16 * lane);
+            }
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_h_{name}_rmode{rmode}"),
+                enc_sve_fscale(1),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let mut z = 0u128;
+            let mut n = 0u128;
+            for lane in 0..4 {
+                z |= (s as u128) << (32 * lane);
+                n |= (0xffff_ffffu128) << (32 * lane);
+            }
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_s_{name}_rmode{rmode}"),
+                enc_sve_fscale(2),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            st.set_preg(0, 0xffff);
+            let z = (d as u128) | ((d as u128) << 64);
+            let n = 0xffff_ffff_ffff_ffffu128;
+            st.set_vreg(RD as usize, z as u64, (z >> 64) as u64);
+            st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            batch.push((
+                format!("fscale_d_{name}_rmode{rmode}"),
+                enc_sve_fscale(3),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_fscale_fpcr_rounding", batch);
 }
 
 #[test]
@@ -33513,6 +33691,47 @@ fn diff_sve_ftmad() {
 }
 
 #[test]
+fn diff_sve_ftmad_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let mut zdn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..8 {
+            zdn |= (0x3c01u128) << (16 * lane);
+            zm |= (0x3c01u128) << (16 * lane);
+        }
+        st.set_vreg(RD as usize, zdn as u64, (zdn >> 64) as u64);
+        st.set_vreg(RN as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((format!("ftmad_h_rmode{rmode}"), enc_sve_ftmad(1, 0), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let s = f32::from_bits(0x3f80_0001);
+        let mut zdn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..4 {
+            zdn |= (s.to_bits() as u128) << (32 * lane);
+            zm |= (s.to_bits() as u128) << (32 * lane);
+        }
+        st.set_vreg(RD as usize, zdn as u64, (zdn >> 64) as u64);
+        st.set_vreg(RN as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((format!("ftmad_s_rmode{rmode}"), enc_sve_ftmad(2, 0), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let d = f64::from_bits(0x3ff0_0000_0000_0001);
+        let zdn = (d.to_bits() as u128) | ((d.to_bits() as u128) << 64);
+        st.set_vreg(RD as usize, zdn as u64, (zdn >> 64) as u64);
+        st.set_vreg(RN as usize, zdn as u64, (zdn >> 64) as u64);
+        batch.push((format!("ftmad_d_rmode{rmode}"), enc_sve_ftmad(3, 0), st));
+    }
+
+    run_batch("sve_ftmad_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_sve_fmmla() {
     // FMMLA.s: 2x2 f32 matrix multiply-accumulate (plain mul/add). FMMLA.d acts
     // on 256-bit segments, so at VL=128 it must leave Zda unchanged.
@@ -33541,6 +33760,38 @@ fn diff_sve_fmmla() {
         batch.push(("fmmla_d".to_string(), insn_d, st));
     }
     run_batch("sve_fmmla", batch);
+}
+
+#[test]
+fn diff_sve_fmmla_fpcr_rounding() {
+    let insn = enc_sve_fmmla(0b10);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        for &(name, acc, nval) in &[
+            ("pos", 16_777_216.0f32, 1.0f32),
+            ("neg", -16_777_216.0f32, -1.0f32),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = rmode << 22;
+            let zn = (nval.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((nval.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let zm = (1.0f32.to_bits() as u128)
+                | ((0.0f32.to_bits() as u128) << 32)
+                | ((1.0f32.to_bits() as u128) << 64)
+                | ((0.0f32.to_bits() as u128) << 96);
+            let mut za = 0u128;
+            for lane in 0..4 {
+                za |= (acc.to_bits() as u128) << (lane * 32);
+            }
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+            batch.push((format!("fmmla_s_{name}_rmode{rmode}"), insn, st));
+        }
+    }
+    run_batch("sve_fmmla_fpcr_rounding", batch);
 }
 
 #[test]
@@ -38006,13 +38257,39 @@ fn diff_fp16_scalar_fsqrt_fpcr_rounding() {
             st.set_vreg(RN as usize, bits as u64, 0);
             batch.push((
                 format!("fsqrt_h_{name}_rmode{rmode}"),
-                enc_fp16_2r_scalar(1, 1, 0b11111),
+                enc_fp1(0b11, 0b000011),
                 st,
             ));
         }
     }
 
     run_batch("fp16_scalar_fsqrt_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_simd_fp16_fsqrt_fpcr_rounding() {
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for rmode in 0..4u64 {
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        let (lo, hi) = pack_h(0x4000);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("fsqrt_h_vector_rmode{rmode}"),
+            enc_fp16_2r(1, 1, 1, 0b11111),
+            st,
+        ));
+    }
+
+    run_batch("simd_fp16_fsqrt_fpcr_rounding", batch);
 }
 
 #[test]
