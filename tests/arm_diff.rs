@@ -27186,6 +27186,117 @@ fn diff_fpcr_fiz_fmlal_subnormal_accumulator() {
 }
 
 #[test]
+fn diff_fpcr_fz16_fmlal_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, insn, n_val, m_val) in &[
+        (
+            "fmlal_lhs_min_subnorm",
+            enc_three_same(1, 0, 0b00, 0b11101),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "fmlal_rhs_min_subnorm",
+            enc_three_same(1, 0, 0b00, 0b11101),
+            0x3c00u16,
+            0x0001u16,
+        ),
+        (
+            "fmlsl_lhs_min_subnorm",
+            enc_three_same(1, 0, 0b10, 0b11101),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "fmlsl_rhs_min_subnorm",
+            enc_three_same(1, 0, 0b10, 0b11101),
+            0x3c00u16,
+            0x0001u16,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        st.set_vreg(RD as usize, 0, 0);
+        let (lo, hi) = pack_h(n_val);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(m_val);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((name.to_string(), insn, st));
+    }
+
+    for &(name, insn, n_val, m_val) in &[
+        (
+            "sve2_fmlalb_lhs_min_subnorm",
+            enc_sve2_fmlal(0, 0),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "sve2_fmlalb_rhs_min_subnorm",
+            enc_sve2_fmlal(0, 0),
+            0x3c00u16,
+            0x0001u16,
+        ),
+        (
+            "sve2_fmlalb_idx_lhs_min_subnorm",
+            enc_sve2_fmlal_idx(0, 0, 0, RM),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "sve2_fmlalb_idx_rhs_min_subnorm",
+            enc_sve2_fmlal_idx(0, 0, 0, RM),
+            0x3c00u16,
+            0x0001u16,
+        ),
+        (
+            "sve2_fmlslb_lhs_min_subnorm",
+            enc_sve2_fmlal(1, 0),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "sve2_fmlslb_rhs_min_subnorm",
+            enc_sve2_fmlal(1, 0),
+            0x3c00u16,
+            0x0001u16,
+        ),
+        (
+            "sve2_fmlslb_idx_lhs_min_subnorm",
+            enc_sve2_fmlal_idx(1, 0, 0, RM),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "sve2_fmlslb_idx_rhs_min_subnorm",
+            enc_sve2_fmlal_idx(1, 0, 0, RM),
+            0x3c00u16,
+            0x0001u16,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        st.set_vreg(RD as usize, 0, 0);
+        let (lo, hi) = pack_h(n_val);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(m_val);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((name.to_string(), insn, st));
+    }
+
+    run_batch("fpcr_fz16_fmlal_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fmlsl_fpcr_ah_nan_sign() {
     const FPCR_AH: u64 = 1 << 1;
     let mut st = ArmState::zeroed();
@@ -32410,6 +32521,169 @@ fn diff_sve_fp16_binop_fpcr_rounding() {
     }
 
     run_batch("sve_fp16_binop_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_fz16_sve_fp16_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "sve_fadd_h_fz16_min_subnorm".to_string(),
+        enc_sve_fp_arith(1, 0b00),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RD as usize, lo, hi);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_pred_fadd_h_fz16_min_subnorm".to_string(),
+        enc_sve_fpp(1, 0b00000),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RD as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_pred_fmulx_h_fz16_min_subnorm".to_string(),
+        enc_sve_fpp(1, 0b01010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RD as usize, lo, hi);
+    let (lo, hi) = pack_h(0);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "sve_pred_fmla_h_acc_fz16_min_subnorm".to_string(),
+        enc_sve_fp_fma(1, 0b000),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "sve_idx_fmul_h_fz16_min_subnorm".to_string(),
+        enc_sve_fp_idx(0b001000, 1, 0, RM),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_fsqrt_h_fz16_min_subnorm".to_string(),
+        (0x65 << 24) | (1 << 22) | (0b001101 << 16) | (0b101 << 13) | (RN << 5) | RD,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_frintp_h_fz16_min_subnorm".to_string(),
+        (0x65 << 24) | (1 << 22) | (0b000001 << 16) | (0b101 << 13) | (RN << 5) | RD,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_frecpx_h_fz16_min_subnorm".to_string(),
+        (0x65 << 24) | (1 << 22) | (0b001100 << 16) | (0b101 << 13) | (RN << 5) | RD,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_fcvtzs_h_i16_fz16_min_subnorm".to_string(),
+        enc_sve_cvt(0b01, 0b011, 0b01, 0),
+        st,
+    ));
+
+    run_batch("fpcr_fz16_sve_fp16_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_sve_fcvtz_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let pack32 = |value: u32| -> (u64, u64) {
+        let packed = (value as u128)
+            | ((value as u128) << 32)
+            | ((value as u128) << 64)
+            | ((value as u128) << 96);
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack64 = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FIZ;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack32(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_fcvtzs_s_i32_fiz_min_subnorm".to_string(),
+        enc_sve_cvt(0b10, 0b011, 0b10, 0),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FIZ;
+    st.set_preg(0, 0xffff);
+    let (lo, hi) = pack64(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "sve_fcvtzs_d_i64_fiz_min_subnorm".to_string(),
+        enc_sve_cvt(0b11, 0b011, 0b11, 0),
+        st,
+    ));
+
+    run_batch("fpcr_fiz_sve_fcvtz_subnormal_inputs", batch);
 }
 
 #[test]
@@ -40598,6 +40872,221 @@ fn diff_fpcr_fiz_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz16_fp16_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
+    st.set_vreg(RM as usize, 0x0001, 0);
+    batch.push(("scalar_fadd_h_fz16_min_subnorm".to_string(), enc_fp2(0b11, 0b0010), st));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fadd_h_fz16_min_subnorm".to_string(),
+        enc_fp16_3s(1, 0, 0, 0b010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmul_h_fz16_min_subnorm".to_string(),
+        enc_fp16_3s(1, 1, 0, 0b011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_h_fz16_product_min_subnorm".to_string(),
+        enc_fp16_3s(1, 0, 0, 0b001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RD as usize, lo, hi);
+    st.set_vreg(RN as usize, 0, 0);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmla_h_fz16_acc_min_subnorm".to_string(),
+        enc_fp16_3s(1, 0, 0, 0b001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmax_h_fz16_min_subnorm".to_string(),
+        enc_fp16_3s(1, 0, 0, 0b110),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
+    batch.push(("scalar_fsqrt_h_fz16_min_subnorm".to_string(), enc_fp1(0b11, 0b000011), st));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
+    batch.push(("scalar_fcmp_zero_h_fz16_min_subnorm".to_string(), enc_fcmp_zero(0b11), st));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push(("scalar_fcmp_reg_h_fz16_min_subnorm".to_string(), enc_fcmp_reg(0b11), st));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    st.set_vreg(RN as usize, 0x0001, 0);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push((
+        "scalar_fccmp_h_fz16_min_subnorm".to_string(),
+        (0b00011110u32 << 24)
+            | (0b11 << 22)
+            | (1 << 21)
+            | (RM << 16)
+            | (0b1110 << 12)
+            | (0b01 << 10)
+            | (RN << 5),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcmgt0_h_fz16_min_subnorm".to_string(),
+        enc_fp16_2r(1, 0, 1, 0b01100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_frecpe_h_fz16_min_subnorm".to_string(),
+        enc_fp16_2r(1, 0, 1, 0b11101),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_frintx_h_fz16_min_subnorm".to_string(),
+        enc_fp16_2r(1, 1, 0, 0b11001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcvtzs_h_fz16_min_subnorm".to_string(),
+        enc_fp16_2r(1, 0, 1, 0b11011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_faddp_h_fz16_min_subnorm".to_string(),
+        enc_fp16_3s(1, 1, 0, 0b010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmaxp_h_fz16_min_subnorm".to_string(),
+        enc_fp16_3s(1, 1, 0, 0b110),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmul_h_idx_fz16_min_subnorm".to_string(),
+        enc_fp16_idx(1, 0, 0b1001, 0),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_h_idx_product_fz16_min_subnorm".to_string(),
+        enc_fp16_idx(1, 0, 0b0001, 0),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ16;
+    let (lo, hi) = pack_h(0x0001);
+    st.set_vreg(RD as usize, lo, hi);
+    st.set_vreg(RN as usize, 0, 0);
+    let (lo, hi) = pack_h(0x3c00);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmla_h_idx_acc_fz16_min_subnorm".to_string(),
+        enc_fp16_idx(1, 0, 0b0001, 0),
+        st,
+    ));
+
+    run_batch("fpcr_fz16_fp16_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fpcr_fiz_fsub_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -41042,6 +41531,118 @@ fn diff_fpcr_fiz_fp_pairwise_extrema_subnormal_inputs() {
     }
 
     run_batch("fpcr_fiz_fp_pairwise_extrema_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_simd_fp_ordered_compare_qnan_status() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, u, a, opcode) in &[
+        ("fcmge", 1, 0, 0b11100),
+        ("fcmgt", 1, 1, 0b11100),
+    ] {
+        let mut st = ArmState::zeroed();
+        let qnan = 0x7fc0_0001u32;
+        let one = 1.0f32.to_bits();
+        let n = (qnan as u128)
+            | ((qnan as u128) << 32)
+            | ((qnan as u128) << 64)
+            | ((qnan as u128) << 96);
+        let m = (one as u128)
+            | ((one as u128) << 32)
+            | ((one as u128) << 64)
+            | ((one as u128) << 96);
+        st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("{name}_v4s_qnan"),
+            enc_three_same(1, u, a << 1, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        let qnan = 0x7ff8_0000_0000_0001u64;
+        let one = 1.0f64.to_bits();
+        let n = (qnan as u128) | ((qnan as u128) << 64);
+        let m = (one as u128) | ((one as u128) << 64);
+        st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("{name}_v2d_qnan"),
+            enc_three_same(1, u, (a << 1) | 1, opcode),
+            st,
+        ));
+    }
+
+    run_batch("simd_fp_ordered_compare_qnan_status", batch);
+}
+
+#[test]
+fn diff_simd_fp_maxmin_snan_status() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, q, u, a, opcode) in &[
+        ("fmaxnmp_h", 1, 1, 0, 0b000),
+        ("fmaxp_h", 0, 1, 0, 0b110),
+        ("fminp_h", 1, 1, 1, 0b110),
+    ] {
+        let mut st = ArmState::zeroed();
+        let (nlo, nhi) = pack_h(0x7c01);
+        let (mlo, mhi) = pack_h(0x3c00);
+        st.set_vreg(RN as usize, nlo, nhi);
+        st.set_vreg(RM as usize, mlo, mhi);
+        batch.push((name.to_string(), enc_fp16_3s(q, u, a, opcode), st));
+    }
+
+    for &(name, q, u, a, opcode) in &[
+        ("fminnmp_s", 1, 1, 1, 0b11000),
+        ("fminp_s", 0, 1, 1, 0b11110),
+    ] {
+        let mut st = ArmState::zeroed();
+        let (nlo, nhi) = pack_s(0x7f80_0001);
+        let (mlo, mhi) = pack_s(1.0f32.to_bits());
+        st.set_vreg(RN as usize, nlo, nhi);
+        st.set_vreg(RM as usize, mlo, mhi);
+        batch.push((
+            name.to_string(),
+            enc_three_same(q, u, a << 1, opcode),
+            st,
+        ));
+    }
+
+    for &(name, q, u, size, opcode, bits) in &[
+        ("fmaxv_h", 1, 0, 0b00, 0b01111, 0x7c01u64),
+        ("fminv_h", 1, 0, 0b10, 0b01111, 0x7c01u64),
+        ("fminnmv_h", 1, 0, 0b10, 0b01100, 0x7c01u64),
+        ("fminv_s", 1, 1, 0b10, 0b01111, 0x7f80_0001u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        if u == 0 {
+            let (lo, hi) = pack_h(bits as u16);
+            st.set_vreg(RN as usize, lo, hi);
+        } else {
+            let (lo, hi) = pack_s(bits as u32);
+            st.set_vreg(RN as usize, lo, hi);
+        }
+        batch.push((name.to_string(), enc_across(q, u, size, opcode), st));
+    }
+
+    run_batch("simd_fp_maxmin_snan_status", batch);
 }
 
 #[test]
@@ -41575,6 +42176,34 @@ fn diff_fpcr_fiz_fp_scalar_fp_to_int_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz16_fp_scalar_fp16_to_int_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(label, sf, rmode, opcode, bits) in &[
+        ("fcvtps_h_w_pos", 0, 0b01, 0b000, 0x03ffu64),
+        ("fcvtms_h_w_neg", 0, 0b10, 0b000, 0x83ffu64),
+        ("fcvtzs_h_w_pos", 0, 0b11, 0b000, 0x03ffu64),
+        ("fcvtpu_h_w_pos", 0, 0b01, 0b001, 0x03ffu64),
+        ("fcvtps_h_x_pos", 1, 0b01, 0b000, 0x03ffu64),
+        ("fcvtms_h_x_neg", 1, 0b10, 0b000, 0x83ffu64),
+        ("fcvtzs_h_x_pos", 1, 0b11, 0b000, 0x03ffu64),
+        ("fcvtpu_h_x_pos", 1, 0b01, 0b001, 0x03ffu64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("{label}_fz16_max_subnorm"),
+            enc_fp_to_gpr(sf, 0b11, rmode, opcode),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fz16_fp_scalar_fp16_to_int_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fpcr_fiz_fjcvtzs_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -41743,6 +42372,33 @@ fn diff_fpcr_fiz_fp_scalar_fixed_fp_to_int_subnormal_inputs() {
     }
 
     run_fpsr_batch("fpcr_fiz_fp_scalar_fixed_fp_to_int_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fz16_fp_scalar_fixed_fp16_to_int_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let fbits = 32;
+    for &(label, sf, opcode, bits) in &[
+        ("fcvtzs_h_w_pos", 0, 0b000, 0x03ffu64),
+        ("fcvtzs_h_w_neg", 0, 0b000, 0x83ffu64),
+        ("fcvtzu_h_w_pos", 0, 0b001, 0x03ffu64),
+        ("fcvtzs_h_x_pos", 1, 0b000, 0x03ffu64),
+        ("fcvtzs_h_x_neg", 1, 0b000, 0x83ffu64),
+        ("fcvtzu_h_x_pos", 1, 0b001, 0x03ffu64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("{label}_f{fbits}_fz16_max_subnorm"),
+            enc_fp_fixed_fp_to_gpr(sf, 0b11, opcode, fbits),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fz16_fp_scalar_fixed_fp16_to_int_subnormal_inputs", batch);
 }
 
 #[test]
@@ -42156,6 +42812,92 @@ fn diff_simd_fixed_cvtf_fpcr_rounding() {
     }
 
     run_batch("simd_fixed_cvtf_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_fz16_simd_fixed_fp16_to_int_subnormal_inputs() {
+    const FPCR_FZ16: u64 = 1 << 19;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let fbits = 16;
+    let immhimmb = 2 * 16 - fbits;
+    for &(name, u, value) in &[
+        ("fcvtzs_h_pos_max_subnorm", 0, 0x03ffu16),
+        ("fcvtzs_h_neg_max_subnorm", 0, 0x83ffu16),
+        ("fcvtzu_h_pos_max_subnorm", 1, 0x03ffu16),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ16;
+        let (lo, hi) = pack_h(value);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("{name}_f{fbits}_fz16"),
+            enc_shift_imm(1, u, 0b11111, immhimmb),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fz16_simd_fixed_fp16_to_int_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_simd_fixed_fp_to_int_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, u, bits) in &[
+        ("fcvtzs_s_pos_min_subnorm", 0, 0x0000_0001u32),
+        ("fcvtzs_s_neg_min_subnorm", 0, 0x8000_0001u32),
+        ("fcvtzu_s_pos_min_subnorm", 1, 0x0000_0001u32),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FIZ;
+        let (lo, hi) = pack_s(bits);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("{name}_f32_fiz"),
+            enc_shift_imm(1, u, 0b11111, 2 * 32 - 32),
+            st,
+        ));
+    }
+
+    for &(name, u, bits) in &[
+        ("fcvtzs_d_pos_min_subnorm", 0, 0x0000_0000_0000_0001u64),
+        ("fcvtzs_d_neg_min_subnorm", 0, 0x8000_0000_0000_0001u64),
+        ("fcvtzu_d_pos_min_subnorm", 1, 0x0000_0000_0000_0001u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FIZ;
+        let (lo, hi) = pack_d(bits);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("{name}_f64_fiz"),
+            enc_shift_imm(1, u, 0b11111, 2 * 64 - 64),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fiz_simd_fixed_fp_to_int_subnormal_inputs", batch);
 }
 
 /// Advanced SIMD three-different (widening/narrowing): `0 Q U 01110 size 1 Rm opcode 00 Rn Rd`.
@@ -44161,42 +44903,7 @@ fn diff_sve2_comprehensive_sweep() {
                 continue;
             }
         };
-        // value compare (regs, nzcv, v, predicates, FFR)
-        let mut diffs = Vec::new();
-        for r in 0..31 {
-            if rax.x[r] != out.st.x[r] {
-                diffs.push(format!("x{r}:rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
-            }
-        }
-        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
-            diffs.push(format!(
-                "nzcv:rax={:#x} hw={:#x}",
-                (rax.pstate >> 28) & 0xF,
-                (out.st.pstate >> 28) & 0xF
-            ));
-        }
-        for r in 0..32 {
-            if rax.vreg(r) != out.st.vreg(r) {
-                let (rl, rh) = rax.vreg(r);
-                let (hl, hh) = out.st.vreg(r);
-                diffs.push(format!(
-                    "v{r}:rax={:#x}{:016x} hw={:#x}{:016x}",
-                    rh, rl, hh, hl
-                ));
-            }
-        }
-        for r in 0..16 {
-            if rax.preg(r) != out.st.preg(r) {
-                diffs.push(format!(
-                    "p{r}:rax={:#x} hw={:#x}",
-                    rax.preg(r),
-                    out.st.preg(r)
-                ));
-            }
-        }
-        if rax.ffr() != out.st.ffr() {
-            diffs.push(format!("ffr:rax={:#x} hw={:#x}", rax.ffr(), out.st.ffr()));
-        }
+        let diffs = compare_state_diffs(&rax, &out.st);
         if !diffs.is_empty() {
             e[1] += 1;
             sample
@@ -44330,29 +45037,7 @@ fn diff_neon_comprehensive_sweep() {
                 continue;
             }
         };
-        let mut diffs = Vec::new();
-        for r in 0..31 {
-            if rax.x[r] != out.st.x[r] {
-                diffs.push(format!("x{r}:rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
-            }
-        }
-        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
-            diffs.push(format!(
-                "nzcv:rax={:#x} hw={:#x}",
-                (rax.pstate >> 28) & 0xF,
-                (out.st.pstate >> 28) & 0xF
-            ));
-        }
-        for r in 0..32 {
-            if rax.vreg(r) != out.st.vreg(r) {
-                let (rl, rh) = rax.vreg(r);
-                let (hl, hh) = out.st.vreg(r);
-                diffs.push(format!(
-                    "v{r}:rax={:#x}{:016x} hw={:#x}{:016x}",
-                    rh, rl, hh, hl
-                ));
-            }
-        }
+        let diffs = compare_state_diffs(&rax, &out.st);
         if !diffs.is_empty() {
             e[1] += 1;
             sample
