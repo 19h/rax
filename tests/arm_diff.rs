@@ -1005,6 +1005,20 @@ fn enc_three_same(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
         | RD
 }
 
+/// Advanced SIMD scalar three-same FP: `0 1 U 11110 size 1 Rm opcode 1 Rn Rd`.
+fn enc_scalar_three_same(u: u32, size: u32, opcode: u32) -> u32 {
+    (1 << 30)
+        | (u << 29)
+        | (0b11110 << 24)
+        | (size << 22)
+        | (1 << 21)
+        | (RM << 16)
+        | (opcode << 11)
+        | (1 << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// Build the full list of three-same encodings to test (over-generates; illegal
 /// combos are filtered by oracle agreement).
 fn three_same_cases() -> Vec<(String, u32)> {
@@ -30934,6 +30948,174 @@ fn diff_fpcr_fiz_scalar_fp_cmp_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_fp_compare_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, ft, size, bits) in &[
+        ("s", 0u32, 0b10u32, 0x0000_0001u64),
+        ("d", 1u32, 0b11u32, 0x0000_0000_0000_0001u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((format!("fcmp_zero_{name}_min_subnorm"), enc_fcmp_zero(ft), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        st.set_vreg(RM as usize, 0, 0);
+        batch.push((format!("fcmp_reg_{name}_min_subnorm"), enc_fcmp_reg(ft), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        st.set_vreg(RM as usize, 0, 0);
+        batch.push((
+            format!("fccmpe_reg_{name}_min_subnorm"),
+            enc_fccmp_reg(ft, true, 0b1110, 0),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("scalar_fcmeq_zero_{name}_min_subnorm"),
+            enc_scalar_two_reg(0, size, 0b01101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("scalar_fcmgt_zero_{name}_min_subnorm"),
+            enc_scalar_two_reg(0, size, 0b01100),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        st.set_vreg(RM as usize, 0, 0);
+        batch.push((
+            format!("scalar_fcmeq_reg_{name}_min_subnorm"),
+            enc_scalar_three_same(0, size & 1, 0b11100),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        st.set_vreg(RM as usize, 0, 0);
+        batch.push((
+            format!("scalar_fcmgt_reg_{name}_min_subnorm"),
+            enc_scalar_three_same(1, size, 0b11100),
+            st,
+        ));
+    }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcmeq_zero_s_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b10, 0b01101),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcmgt_zero_s_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b10, 0b01100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push((
+        "simd_fcmeq_reg_s_min_subnorm".to_string(),
+        enc_three_same(1, 0, 0, 0b11100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push((
+        "simd_fcmgt_reg_s_min_subnorm".to_string(),
+        enc_three_same(1, 1, 0b10, 0b11100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcmeq_zero_d_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b11, 0b01101),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcmgt_zero_d_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b11, 0b01100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push((
+        "simd_fcmeq_reg_d_min_subnorm".to_string(),
+        enc_three_same(1, 0, 1, 0b11100),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, 0, 0);
+    batch.push((
+        "simd_fcmgt_reg_d_min_subnorm".to_string(),
+        enc_three_same(1, 1, 0b11, 0b11100),
+        st,
+    ));
+
+    run_batch("fpcr_fz_fp_compare_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_scalar_fp() {
     // Scalar FP data-processing (2-source FMUL/FDIV/FADD/FSUB/FMAX/FMIN/FMAXNM/
     // FMINNM/FNMUL, 3-source FMADD/FMSUB/FNMADD/FNMSUB, 1-source FSQRT/FABS/
@@ -33227,6 +33409,62 @@ fn diff_fpcr_fiz_sve2_fmlal_subnormal_accumulator() {
 }
 
 #[test]
+fn diff_fpcr_fz_sve2_fmlal_subnormal_accumulator() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, insn) in &[
+        ("fmlalb", enc_sve2_fmlal(0, 0)),
+        ("fmlalt", enc_sve2_fmlal(0, 1)),
+        ("fmlslb", enc_sve2_fmlal(1, 0)),
+        ("fmlslt", enc_sve2_fmlal(1, 1)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let mut zd = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..4 {
+            zd |= 0x0000_0001u128 << (32 * lane);
+        }
+        for lane in 0..8 {
+            zm |= (0x3c00u128) << (16 * lane);
+        }
+        st.set_vreg(RD as usize, zd as u64, (zd >> 64) as u64);
+        st.set_vreg(RN as usize, 0, 0);
+        st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((format!("{name}_acc_min_subnorm"), insn, st));
+    }
+
+    for &(name, sub, top) in &[
+        ("fmlalb", 0u32, 0u32),
+        ("fmlalt", 0, 1),
+        ("fmlslb", 1, 0),
+        ("fmlslt", 1, 1),
+    ] {
+        for index in 0..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_FZ;
+            let mut zd = 0u128;
+            let mut zm = 0u128;
+            for lane in 0..4 {
+                zd |= 0x0000_0001u128 << (32 * lane);
+                zm |= (0x3c00u128) << (16 * lane);
+            }
+            st.set_vreg(RD as usize, zd as u64, (zd >> 64) as u64);
+            st.set_vreg(RN as usize, 0, 0);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("{name}_idx{index}_acc_min_subnorm"),
+                enc_sve2_fmlal_idx(sub, top, index, RM),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fpcr_fz_sve2_fmlal_subnormal_accumulator", batch);
+}
+
+#[test]
 fn diff_sve2_fmlsl_fpcr_ah_nan_sign() {
     const FPCR_AH: u64 = 1 << 1;
     let mut st = ArmState::zeroed();
@@ -33483,6 +33721,83 @@ fn diff_fpcr_fiz_sve_bfmlal_indexed_subnormal_inputs() {
     }
 
     run_batch("fpcr_fiz_sve_bfmlal_indexed_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fz_sve_bfmlal_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for top in 0..2u32 {
+        let mut product = ArmState::zeroed();
+        product.fpcr = FPCR_FZ;
+        let mut zn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..8 {
+            zn |= 0x0001u128 << (16 * lane);
+            zm |= 0x3f80u128 << (16 * lane);
+        }
+        product.set_vreg(RD as usize, 0, 0);
+        product.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+        product.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((
+            format!("bfmlal_t{top}_product_min_subnorm"),
+            enc_sve_bfmlal(top, RM),
+            product,
+        ));
+
+        let mut acc_state = ArmState::zeroed();
+        acc_state.fpcr = FPCR_FZ;
+        let mut acc = 0u128;
+        for lane in 0..4 {
+            acc |= 0x0000_0001u128 << (32 * lane);
+        }
+        acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+        acc_state.set_vreg(RN as usize, 0, 0);
+        acc_state.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((
+            format!("bfmlal_t{top}_acc_min_subnorm"),
+            enc_sve_bfmlal(top, RM),
+            acc_state,
+        ));
+
+        for index in 0..8u32 {
+            let mut product = ArmState::zeroed();
+            product.fpcr = FPCR_FZ;
+            product.set_vreg(RD as usize, 0, 0);
+            product.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            product.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("bfmlal_idx_t{top}_i{index}_product_min_subnorm"),
+                enc_sve_bfmlal_idx(top, index, RM),
+                product,
+            ));
+
+            let mut acc_state = ArmState::zeroed();
+            acc_state.fpcr = FPCR_FZ;
+            acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+            acc_state.set_vreg(RN as usize, 0, 0);
+            acc_state.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("bfmlal_idx_t{top}_i{index}_acc_min_subnorm"),
+                enc_sve_bfmlal_idx(top, index, RM),
+                acc_state,
+            ));
+        }
+    }
+
+    let mut output_tiny = ArmState::zeroed();
+    output_tiny.fpcr = FPCR_FZ;
+    output_tiny.set_vreg(RD as usize, 0x0000_0000_8000_0000, 0);
+    output_tiny.set_vreg(RN as usize, 0x0000_0000_0d8d_3316, 0);
+    output_tiny.set_vreg(RM as usize, 0x63b9_e7a3_a89b_d681, 0x0000_0000_0000_00d9);
+    batch.push((
+        "bfmlalt_output_tiny_fz".to_string(),
+        enc_sve_bfmlal(1, RM),
+        output_tiny,
+    ));
+
+    run_batch("fpcr_fz_sve_bfmlal_subnormal_inputs", batch);
 }
 
 #[test]
@@ -36948,6 +37263,36 @@ fn diff_fpcr_fiz_sve2_flogb_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_sve2_flogb_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x007f_ffffu32, 0x807f_ffffu32];
+    let mut packed_s = 0u128;
+    for (lane, bits) in s_lanes.iter().enumerate() {
+        packed_s |= (*bits as u128) << (32 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_preg(0, 0xffff);
+    st.set_vreg(RN as usize, packed_s as u64, (packed_s >> 64) as u64);
+    batch.push(("flogb_s_fz_subnorm".to_string(), enc_sve_flogb(2), st));
+
+    let d_lanes = [0x0000_0000_0000_0001u64, 0x8000_0000_0000_0001u64];
+    let mut packed_d = 0u128;
+    for (lane, bits) in d_lanes.iter().enumerate() {
+        packed_d |= (*bits as u128) << (64 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_preg(0, 0xffff);
+    st.set_vreg(RN as usize, packed_d as u64, (packed_d >> 64) as u64);
+    batch.push(("flogb_d_fz_subnorm".to_string(), enc_sve_flogb(3), st));
+
+    run_batch("fpcr_fz_sve2_flogb_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_sve_gather_d() {
     // 64-bit gather load: each active D lane reads from Xn + (Zm[e] << scale).
     // Zm offsets are kept small so every gathered address stays in the window.
@@ -38499,6 +38844,113 @@ fn diff_fpcr_fiz_simd_bfcvt_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_widening_fma_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let bfcvtn = 0x0EA1_6800 | (RN << 5) | RD;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, insn, n_val, m_val) in &[
+        (
+            "fmlal_lhs_min_subnorm",
+            enc_three_same(1, 0, 0b00, 0b11101),
+            0x0001u16,
+            0x3c00u16,
+        ),
+        (
+            "fmlal_rhs_min_subnorm",
+            enc_three_same(1, 0, 0b00, 0b11101),
+            0x3c00u16,
+            0x0001u16,
+        ),
+        (
+            "fmlsl_lhs_min_subnorm",
+            enc_three_same(1, 0, 0b10, 0b11101),
+            0x0001u16,
+            0x3c00u16,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_h(n_val);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(m_val);
+        st.set_vreg(RM as usize, lo, hi);
+        st.set_vreg(RD as usize, 0, 0);
+        batch.push((name.to_string(), insn, st));
+    }
+
+    for &(name, insn) in &[
+        ("fmlal_acc_min_subnorm", enc_three_same(1, 0, 0b00, 0b11101)),
+        ("fmlsl_acc_min_subnorm", enc_three_same(1, 0, 0b10, 0b11101)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(0x0000_0001);
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, 0, 0);
+        let (lo, hi) = pack_h(0x3c00);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((name.to_string(), insn, st));
+    }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push(("bfcvtn_fz_min_subnorm".to_string(), bfcvtn, st));
+
+    for &(name, insn, n_val, m_val) in &[
+        ("bfmlalb_lhs_min_subnorm", enc_bfmlal(0), 0x0001u16, 0x3f80u16),
+        ("bfmlalb_rhs_min_subnorm", enc_bfmlal(0), 0x3f80u16, 0x0001u16),
+        (
+            "bfmlalb_idx_lhs_min_subnorm",
+            enc_bfmlal_idx(0, 0),
+            0x0001u16,
+            0x3f80u16,
+        ),
+        (
+            "bfmlalb_idx_rhs_min_subnorm",
+            enc_bfmlal_idx(0, 0),
+            0x3f80u16,
+            0x0001u16,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RD as usize, 0, 0);
+        let (lo, hi) = pack_h(n_val);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_h(m_val);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((name.to_string(), insn, st));
+    }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RD as usize, 0x0000_0000_8000_0000, 0);
+    st.set_vreg(RN as usize, 0x0000_0000_0d8d_3316, 0);
+    st.set_vreg(RM as usize, 0x63b9_e7a3_a89b_d681, 0x0000_0000_0000_00d9);
+    batch.push(("bfmlalt_output_tiny_fz".to_string(), enc_bfmlal(1), st));
+
+    run_batch("fpcr_fz_widening_fma_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_simd_bf16() {
     let mut rng = Rng::new(0x1_001D);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -39618,6 +40070,19 @@ fn enc_fcmp_zero(fp_type: u32) -> u32 {
 /// Scalar FCMP <Fn>, <Fm>.
 fn enc_fcmp_reg(fp_type: u32) -> u32 {
     (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (RM << 16) | (0b1000 << 10) | (RN << 5)
+}
+
+/// Scalar FCCMP/FCCMPE <Fn>, <Fm>, #nzcv, cond.
+fn enc_fccmp_reg(fp_type: u32, signal_all_nans: bool, cond: u32, nzcv: u32) -> u32 {
+    (0b00011110 << 24)
+        | (fp_type << 22)
+        | (1 << 21)
+        | (RM << 16)
+        | (cond << 12)
+        | (0b01 << 10)
+        | (RN << 5)
+        | ((signal_all_nans as u32) << 4)
+        | nzcv
 }
 
 /// Scalar fixed-point GPR -> FP conversion:
@@ -40872,6 +41337,111 @@ fn diff_fpcr_fiz_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_fp_arith_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0000_0001, 0);
+    st.set_vreg(RM as usize, 0x0000_0001, 0);
+    batch.push((
+        "scalar_fadd_s_min_subnorm".to_string(),
+        enc_fp2(0, 0b0010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+    st.set_vreg(RM as usize, 0x0000_0000_0000_0001, 0);
+    batch.push((
+        "scalar_fadd_d_min_subnorm".to_string(),
+        enc_fp2(1, 0b0010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fadd_s_min_subnorm".to_string(),
+        enc_three_same(1, 0, 0, 0b11010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fadd_d_min_subnorm".to_string(),
+        enc_three_same(1, 0, 1, 0b11010),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0080_0000, 0);
+    st.set_vreg(RM as usize, 0x3f00_0000, 0);
+    batch.push((
+        "scalar_fmul_s_subnorm_result".to_string(),
+        enc_fp2(0, 0b0000),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0010_0000_0000_0000, 0);
+    st.set_vreg(RM as usize, 0x3fe0_0000_0000_0000, 0);
+    batch.push((
+        "scalar_fmul_d_subnorm_result".to_string(),
+        enc_fp2(1, 0b0000),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0080_0000);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_s(0x3f00_0000);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmul_s_subnorm_result".to_string(),
+        enc_three_same(1, 1, 0, 0b11011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0010_0000_0000_0000);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_d(0x3fe0_0000_0000_0000);
+    st.set_vreg(RM as usize, lo, hi);
+    batch.push((
+        "simd_fmul_d_subnorm_result".to_string(),
+        enc_three_same(1, 1, 1, 0b11011),
+        st,
+    ));
+
+    run_batch("fpcr_fz_fp_arith_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     const FPCR_FZ16: u64 = 1 << 19;
     let pack_h = |value: u16| -> (u64, u64) {
@@ -41713,6 +42283,122 @@ fn diff_fpcr_fiz_simd_fmla_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_fma_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, fp_type, min_sub, min_norm, half) in &[
+        (
+            "s",
+            0,
+            0x0000_0001u64,
+            0x0080_0000u64,
+            0x3f00_0000u64,
+        ),
+        (
+            "d",
+            1,
+            0x0000_0000_0000_0001u64,
+            0x0010_0000_0000_0000u64,
+            0x3fe0_0000_0000_0000u64,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, min_sub, 0);
+        let one = if fp_type == 0 {
+            1.0f32.to_bits() as u64
+        } else {
+            1.0f64.to_bits()
+        };
+        st.set_vreg(RM as usize, one, 0);
+        st.set_vreg(RA as usize, 0, 0);
+        batch.push((
+            format!("scalar_fmadd_{name}_input_subnorm"),
+            enc_fp3(fp_type, 0, 0),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, min_norm, 0);
+        st.set_vreg(RM as usize, half, 0);
+        st.set_vreg(RA as usize, 0, 0);
+        batch.push((
+            format!("scalar_fmadd_{name}_subnorm_result"),
+            enc_fp3(fp_type, 0, 0),
+            st,
+        ));
+    }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_s(1.0f32.to_bits());
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_s_input_subnorm".to_string(),
+        enc_three_same(1, 0, 0, 0b11001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_d(1.0f64.to_bits());
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_d_input_subnorm".to_string(),
+        enc_three_same(1, 0, 1, 0b11001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0080_0000);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_s(0x3f00_0000);
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_s_subnorm_result".to_string(),
+        enc_three_same(1, 0, 0, 0b11001),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0010_0000_0000_0000);
+    st.set_vreg(RN as usize, lo, hi);
+    let (lo, hi) = pack_d(0x3fe0_0000_0000_0000);
+    st.set_vreg(RM as usize, lo, hi);
+    st.set_vreg(RD as usize, 0, 0);
+    batch.push((
+        "simd_fmla_d_subnorm_result".to_string(),
+        enc_three_same(1, 0, 1, 0b11001),
+        st,
+    ));
+
+    run_batch("fpcr_fz_fma_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fpcr_fiz_simd_fmls_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -42035,6 +42721,82 @@ fn diff_fpcr_fiz_fp_scalar_fcvt_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_fcvt_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+    batch.push((
+        "scalar_fcvt_s_d_input_subnorm".to_string(),
+        enc_fcvt_precision(0b01, 0b00),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let subnormal_result = ((f32::from_bits(0x0080_0000) as f64) * 0.5).to_bits();
+    st.set_vreg(RN as usize, subnormal_result, 0);
+    batch.push((
+        "scalar_fcvt_s_d_subnorm_result".to_string(),
+        enc_fcvt_precision(0b01, 0b00),
+        st,
+    ));
+
+    let mut packed = 0u128;
+    for lane in 0..2 {
+        packed |= (0x0000_0000_0000_0001u128) << (64 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+    batch.push((
+        "simd_fcvtn_d2s_input_subnorm".to_string(),
+        enc_two_reg(0, 0, 1, 0b10110),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.fpsr = 0x88;
+    st.set_vreg(RN as usize, 0x0000_0000_8000_0000, 0x00ca_6202_bc88_8d32);
+    batch.push((
+        "simd_fcvtxn_d2s_input_subnorm_preserves_fpsr".to_string(),
+        enc_two_reg(0, 1, 1, 0b10110),
+        st,
+    ));
+
+    let mut packed = 0u128;
+    for lane in 0..2 {
+        packed |= (subnormal_result as u128) << (64 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+    batch.push((
+        "simd_fcvtn_d2s_subnorm_result".to_string(),
+        enc_two_reg(0, 0, 1, 0b10110),
+        st,
+    ));
+
+    let mut packed = 0u128;
+    for lane in 0..2 {
+        packed |= (subnormal_result as u128) << (64 * lane);
+    }
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+    batch.push((
+        "simd_fcvtxn_d2s_subnorm_result".to_string(),
+        enc_two_reg(0, 1, 1, 0b10110),
+        st,
+    ));
+
+    run_batch("fpcr_fz_fcvt_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_fp_scalar_cvtf_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     let mut push = |label: &str, sf: u32, fp_type: u32, opcode: u32, raw: u64| {
@@ -42173,6 +42935,164 @@ fn diff_fpcr_fiz_fp_scalar_fp_to_int_subnormal_inputs() {
     }
 
     run_fpsr_batch("fpcr_fiz_fp_scalar_fp_to_int_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fz_fp_to_int_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(label, sf, fp_type, bits) in &[
+        ("scalar_fcvtzs_s_w", 0, 0b00, 0x0000_0001u64),
+        ("scalar_fcvtzs_d_x", 1, 0b01, 0x0000_0000_0000_0001u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("{label}_fz_min_subnorm"),
+            enc_fp_to_gpr(sf, fp_type, 0b11, 0b000),
+            st,
+        ));
+    }
+
+    for &(label, sf, fp_type, fbits, bits) in &[
+        ("scalar_fixed_fcvtzs_s_w", 0, 0b00, 32, 0x0000_0001u64),
+        (
+            "scalar_fixed_fcvtzs_d_x",
+            1,
+            0b01,
+            64,
+            0x0000_0000_0000_0001u64,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("{label}_fz_min_subnorm"),
+            enc_fp_fixed_fp_to_gpr(sf, fp_type, 0b000, fbits),
+            st,
+        ));
+    }
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(label, u, opcode, bits_s, bits_d) in &[
+        (
+            "fcvtps",
+            0,
+            0b11010,
+            0x0000_0001u64,
+            0x0000_0000_0000_0001u64,
+        ),
+        (
+            "fcvtpu",
+            1,
+            0b11010,
+            0x0000_0001u64,
+            0x0000_0000_0000_0001u64,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits_s, 0);
+        batch.push((
+            format!("scalar_{label}_s_fz_min_subnorm"),
+            enc_scalar_two_reg(u, 0b10, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits_d, 0);
+        batch.push((
+            format!("scalar_{label}_d_fz_min_subnorm"),
+            enc_scalar_two_reg(u, 0b11, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(bits_s as u32);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{label}_s_fz_min_subnorm"),
+            enc_two_reg(1, u, 0b10, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_d(bits_d);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{label}_d_fz_min_subnorm"),
+            enc_two_reg(1, u, 0b11, opcode),
+            st,
+        ));
+    }
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcvtzs_s_fz_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b10, 0b11011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fcvtzs_d_fz_min_subnorm".to_string(),
+        enc_two_reg(1, 0, 0b11, 0b11011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_s(0x0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fixed_fcvtzs_s_fz_min_subnorm".to_string(),
+        enc_shift_imm(1, 0, 0b11111, 2 * 32 - 32),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fixed_fcvtzs_d_fz_min_subnorm".to_string(),
+        enc_shift_imm(1, 0, 0b11111, 2 * 64 - 64),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_FZ;
+    st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+    batch.push((
+        "fjcvtzs_fz_min_subnorm".to_string(),
+        enc_fp_to_gpr(0, 0b01, 0b11, 0b110),
+        st,
+    ));
+
+    run_batch("fpcr_fz_fp_to_int_subnormal_inputs", batch);
 }
 
 #[test]
@@ -43188,6 +44108,130 @@ fn diff_fpcr_fiz_simd_recps_rsqrts_subnormal_inputs() {
 }
 
 #[test]
+fn diff_fpcr_fz_fp_estimate_step_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, u) in &[("frecpe", 0), ("frsqrte", 1)] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0001, 0);
+        batch.push((
+            format!("scalar_{name}_s_fz_min_subnorm"),
+            enc_scalar_two_reg(u, 0b10, 0b11101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+        batch.push((
+            format!("scalar_{name}_d_fz_min_subnorm"),
+            enc_scalar_two_reg(u, 0b11, 0b11101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(0x0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_s_fz_min_subnorm"),
+            enc_two_reg(1, u, 0b10, 0b11101),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_d_fz_min_subnorm"),
+            enc_two_reg(1, u, 0b11, 0b11101),
+            st,
+        ));
+    }
+
+    for &(name, size, bits) in &[
+        ("s", 0b10, 0x0000_0001u64),
+        ("d", 0b11, 0x0000_0000_0000_0001u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((
+            format!("scalar_frecpx_{name}_fz_min_subnorm"),
+            enc_scalar_two_reg(0, size, 0b11111),
+            st,
+        ));
+    }
+
+    for &(name, kind_u, kind_size, kind_opcode) in &[
+        ("fmulx", 0, 0, 0b11011),
+        ("frecps", 0, 0, 0b11111),
+        ("frsqrts", 0, 0b10, 0b11111),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0001, 0);
+        st.set_vreg(RM as usize, 1.0f32.to_bits() as u64, 0);
+        batch.push((
+            format!("scalar_{name}_s_fz_min_subnorm"),
+            enc_scalar_three_same(kind_u, kind_size, kind_opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+        st.set_vreg(RM as usize, 1.0f64.to_bits(), 0);
+        batch.push((
+            format!("scalar_{name}_d_fz_min_subnorm"),
+            enc_scalar_three_same(kind_u, kind_size | 1, kind_opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(0x0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_s(1.0f32.to_bits());
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_s_fz_min_subnorm"),
+            enc_three_same(1, kind_u, kind_size, kind_opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        let (lo, hi) = pack_d(1.0f64.to_bits());
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_d_fz_min_subnorm"),
+            enc_three_same(1, kind_u, kind_size | 1, kind_opcode),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fz_fp_estimate_step_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_simd_f32_arith_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
@@ -43867,6 +44911,20 @@ fn enc_two_reg(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
         | RD
 }
 
+/// Advanced SIMD scalar two-register FP misc:
+/// `0 1 U 11110 size 10000 opcode 10 Rn Rd`.
+fn enc_scalar_two_reg(u: u32, size: u32, opcode: u32) -> u32 {
+    (1 << 30)
+        | (u << 29)
+        | (0b11110 << 24)
+        | (size << 22)
+        | (0b10000 << 17)
+        | (opcode << 12)
+        | (0b10 << 10)
+        | (RN << 5)
+        | RD
+}
+
 #[test]
 fn diff_simd_two_reg_int() {
     // (U, opcode, name) for the integer same-size / REV / NOT-RBIT ops.
@@ -44366,6 +45424,102 @@ fn diff_fpcr_fiz_simd_fsqrt_subnormal_inputs() {
     ));
 
     run_batch("fpcr_fiz_simd_fsqrt_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_fz_fp_unary_subnormal_inputs() {
+    const FPCR_FZ: u64 = 1 << 24;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    for &(name, opcode) in &[("frintp", 0b01001), ("fsqrt", 0b00011)] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0001, 0);
+        batch.push((format!("fp_scalar_{name}_s_fz_min_subnorm"), enc_fp1(0, opcode), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+        batch.push((format!("fp_scalar_{name}_d_fz_min_subnorm"), enc_fp1(1, opcode), st));
+    }
+
+    for &(name, opcode) in &[("frint32z", 0b10000), ("frint32x", 0b10001)] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0001, 0);
+        batch.push((format!("fp_scalar_{name}_s_fz_min_subnorm"), enc_fp1(0, opcode), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
+        batch.push((format!("fp_scalar_{name}_d_fz_min_subnorm"), enc_fp1(1, opcode), st));
+    }
+
+    for &(name, u, size_hi, opcode) in &[
+        ("frintp", 0, 1, 0b11000),
+        ("fsqrt", 1, 1, 0b11111),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(0x0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_s_fz_min_subnorm"),
+            enc_two_reg(1, u, size_hi << 1, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_d_fz_min_subnorm"),
+            enc_two_reg(1, u, (size_hi << 1) | 1, opcode),
+            st,
+        ));
+    }
+
+    for &(name, u, opcode) in &[
+        ("frint32z", 0, 0b11110),
+        ("frint32x", 1, 0b11110),
+        ("frint64z", 0, 0b11111),
+        ("frint64x", 1, 0b11111),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_s(0x0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_s_fz_min_subnorm"),
+            enc_two_reg(1, u, 0, opcode),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FZ;
+        let (lo, hi) = pack_d(0x0000_0000_0000_0001);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((
+            format!("simd_{name}_d_fz_min_subnorm"),
+            enc_two_reg(1, u, 1, opcode),
+            st,
+        ));
+    }
+
+    run_batch("fpcr_fz_fp_unary_subnormal_inputs", batch);
 }
 
 #[test]
