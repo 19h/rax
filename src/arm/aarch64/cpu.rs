@@ -6877,6 +6877,17 @@ impl AArch64Cpu {
         // Early rejects for reserved field combinations that broader dispatch
         // arms below would otherwise accept.
         let top = (insn >> 24) & 0xFF;
+        // SVE2 PMUL is byte-only. For word/doubleword encodings the size bits
+        // alter op1 enough that the broad arithmetic fallback below can catch
+        // them unless they are rejected here.
+        if top == 0b0000_0100
+            && (insn >> 21) & 1 == 1
+            && (insn >> 12) & 0xF == 0b0110
+            && (insn >> 10) & 0x3 == 0b01
+            && (insn >> 22) & 0x3 != 0
+        {
+            return Ok(CpuExit::Undefined(insn));
+        }
         // 0x04, bit21==1, bits[15:13]==100, bit12==0: unpredicated shift by
         // wide elements (ASR/LSR/LSL Zd, Zn, Zm.D). The wide operand is .D, so
         // doubleword element size is unallocated.
