@@ -23937,6 +23937,12 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
         Mul | Mulx => x as f64 * y as f64,
         _ => unreachable!(),
     };
+    if exact == 0.0
+        && matches!(kind, Add | Addp | Sub)
+        && fp_addsub_cancelled_zero_rounds_negative(a as u64, b as u64, matches!(kind, Sub), 32, fpcr)
+    {
+        return flush_output(0x8000_0000);
+    }
     flush_output(f64_to_f32_bits_with_fpcr(exact, fpcr))
 }
 
@@ -24229,6 +24235,13 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
     let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&terms, nearest) else {
         return flush_output(nearest);
     };
+    if cmp == std::cmp::Ordering::Equal
+        && fp64_is_zero(nearest)
+        && matches!(kind, Add | Addp | Sub)
+        && fp_addsub_cancelled_zero_rounds_negative(a, b, matches!(kind, Sub), 64, fpcr)
+    {
+        return flush_output(0x8000_0000_0000_0000);
+    }
     flush_output(fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr))
 }
 
@@ -24597,6 +24610,34 @@ fn fp_muladd_bits(acc: u64, x: u64, y: u64, esize: u32) -> u64 {
     }
 }
 
+fn fp_fma_cancelled_zero_rounds_negative(acc: u64, x: u64, y: u64, esize: u32, fpcr: u32) -> bool {
+    if (fpcr >> 22) & 0x3 != 2 {
+        return false;
+    }
+    let bytes = (esize / 8) as usize;
+    if fp_is_zero_bits(bytes, acc) || fp_is_zero_bits(bytes, x) || fp_is_zero_bits(bytes, y) {
+        return false;
+    }
+    let sign_bit = 1u64 << (esize - 1);
+    let acc_negative = (acc & sign_bit) != 0;
+    let product_negative = ((x ^ y) & sign_bit) != 0;
+    acc_negative != product_negative
+}
+
+fn fp_addsub_cancelled_zero_rounds_negative(a: u64, b: u64, sub: bool, esize: u32, fpcr: u32) -> bool {
+    if (fpcr >> 22) & 0x3 != 2 {
+        return false;
+    }
+    let bytes = (esize / 8) as usize;
+    if fp_is_zero_bits(bytes, a) || fp_is_zero_bits(bytes, b) {
+        return false;
+    }
+    let sign_bit = 1u64 << (esize - 1);
+    let a_negative = (a & sign_bit) != 0;
+    let b_negative = ((b & sign_bit) != 0) ^ sub;
+    a_negative != b_negative
+}
+
 fn fp_muladd_f32_with_fpcr(acc: u32, x: u32, y: u32, fpcr: u32) -> u32 {
     let (acc, x, y) = if fpcr & (FPCR_FIZ | FPCR_FZ) != 0 {
         (
@@ -24630,7 +24671,12 @@ fn fp_muladd_f32_with_fpcr(acc: u32, x: u32, y: u32, fpcr: u32) -> u32 {
     if !xf.is_finite() || !yf.is_finite() || !af.is_finite() {
         return flush_output(nearest);
     }
-    flush_output(f64_to_f32_bits_with_fpcr(xf as f64 * yf as f64 + af as f64, fpcr))
+    let exact = xf as f64 * yf as f64 + af as f64;
+    if exact == 0.0 && fp_fma_cancelled_zero_rounds_negative(acc as u64, x as u64, y as u64, 32, fpcr)
+    {
+        return flush_output(0x8000_0000);
+    }
+    flush_output(f64_to_f32_bits_with_fpcr(exact, fpcr))
 }
 
 fn fp_muladd_f64_with_fpcr(acc: u64, x: u64, y: u64, fpcr: u32) -> u64 {
@@ -24674,6 +24720,12 @@ fn fp_muladd_f64_with_fpcr(acc: u64, x: u64, y: u64, fpcr: u32) -> u64 {
     let Some((cmp, exact_negative)) = fp64_exact_cmp_to_nearest(&terms, nearest) else {
         return flush_output(nearest);
     };
+    if cmp == std::cmp::Ordering::Equal
+        && fp64_is_zero(nearest)
+        && fp_fma_cancelled_zero_rounds_negative(acc, x, y, 64, fpcr)
+    {
+        return flush_output(0x8000_0000_0000_0000);
+    }
     flush_output(fp64_adjust_nearest_with_fpcr(nearest, cmp, exact_negative, fpcr))
 }
 
@@ -26587,13 +26639,19 @@ fn sve_fp16_binop_with_fpcr(kind: FpKind, x: u16, y: u16, fpcr: u32) -> u16 {
     }
     let finite_pair = !fp16_is_inf(x) && !fp16_is_inf(y);
     let exact = match kind {
-        Add if finite_pair => fp16_to_f64(x) + fp16_to_f64(y),
+        Add | Addp if finite_pair => fp16_to_f64(x) + fp16_to_f64(y),
         Sub if finite_pair => fp16_to_f64(x) - fp16_to_f64(y),
         Mul if finite_pair => fp16_to_f64(x) * fp16_to_f64(y),
         Div if finite_pair && !fp16_is_zero(y) => fp16_to_f64(x) / fp16_to_f64(y),
         Abd if finite_pair => (fp16_to_f64(x) - fp16_to_f64(y)).abs(),
         _ => return ah_invalid_default(sve_fp16_binop(kind, x, y)),
     };
+    if exact == 0.0
+        && matches!(kind, Add | Addp | Sub)
+        && fp_addsub_cancelled_zero_rounds_negative(x as u64, y as u64, matches!(kind, Sub), 16, fpcr)
+    {
+        return 0x8000;
+    }
     f64_to_fp16_bits_with_fpcr(exact, fpcr)
 }
 
@@ -26714,7 +26772,12 @@ fn fp16_mla_with_fpcr(acc: u16, a: u16, b: u16, fpcr: u32) -> u16 {
     {
         return ah_invalid_default(fp16_mla(acc, a, b));
     }
-    f64_to_fp16_bits_with_fpcr(fp16_to_f64(acc) + fp16_to_f64(a) * fp16_to_f64(b), fpcr)
+    let exact = fp16_to_f64(acc) + fp16_to_f64(a) * fp16_to_f64(b);
+    if exact == 0.0 && fp_fma_cancelled_zero_rounds_negative(acc as u64, a as u64, b as u64, 16, fpcr)
+    {
+        return 0x8000;
+    }
+    f64_to_fp16_bits_with_fpcr(exact, fpcr)
 }
 
 fn fp16_mls(acc: u16, a: u16, b: u16) -> u16 {
