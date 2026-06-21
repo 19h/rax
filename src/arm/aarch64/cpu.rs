@@ -24169,10 +24169,15 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
         ));
     }
 
-    let Some((ma, ea)) = fp64_signed_mant_exp(a) else {
+    let signed_or_add_zero = |bits| {
+        fp64_signed_mant_exp(bits).or_else(|| {
+            (matches!(kind, Add | Addp | Sub) && fp64_is_zero(bits)).then_some((0, 0))
+        })
+    };
+    let Some((ma, ea)) = signed_or_add_zero(a) else {
         return flush_output(nearest);
     };
-    let Some((mut mb, eb)) = fp64_signed_mant_exp(b) else {
+    let Some((mut mb, eb)) = signed_or_add_zero(b) else {
         return flush_output(nearest);
     };
     if matches!(kind, Sub) {
@@ -24624,12 +24629,14 @@ fn fp_fma_cancelled_zero_rounds_negative(acc: u64, x: u64, y: u64, esize: u32, f
     acc_negative != product_negative
 }
 
-fn fp_addsub_cancelled_zero_rounds_negative(a: u64, b: u64, sub: bool, esize: u32, fpcr: u32) -> bool {
+fn fp_addsub_cancelled_zero_rounds_negative(
+    a: u64,
+    b: u64,
+    sub: bool,
+    esize: u32,
+    fpcr: u32,
+) -> bool {
     if (fpcr >> 22) & 0x3 != 2 {
-        return false;
-    }
-    let bytes = (esize / 8) as usize;
-    if fp_is_zero_bits(bytes, a) || fp_is_zero_bits(bytes, b) {
         return false;
     }
     let sign_bit = 1u64 << (esize - 1);
