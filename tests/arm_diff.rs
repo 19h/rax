@@ -25789,6 +25789,49 @@ fn diff_addsub_ext_sp_source_dest() {
 }
 
 #[test]
+fn diff_addsub_ext_edge_patterns() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_zero", 0, 0),
+        ("ones_one", u64::MAX, 1),
+        ("low_sign_bits", 0x7fff_ffff_ffff_ffff, 0x0000_0000_8000_8080),
+        ("word_sign", 0x8000_0000_0000_0000, 0xffff_ffff_8000_0001),
+        ("byte_ramp", 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                let opname = match (op, s) {
+                    (0, 0) => "add",
+                    (0, 1) => "adds",
+                    (1, 0) => "sub",
+                    _ => "subs",
+                };
+                for option in 0..=7 {
+                    for imm3 in [0u32, 1, 4] {
+                        for &(pattern, rn, rm) in patterns {
+                            let mut st = ArmState::zeroed();
+                            st.x[RN as usize] = rn;
+                            st.x[RM as usize] = rm;
+                            st.x[RD as usize] = 0xdead_beef_dead_beef;
+                            st.pstate = 0b1010u64 << 28;
+                            batch.push((
+                                format!("{opname}_ext_sf{sf}_opt{option}_imm{imm3}_{pattern}"),
+                                enc_addsub_ext_plain(sf, op, s, option, imm3, RD, RN, RM),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("addsub_ext_edge_patterns", batch);
+}
+
+#[test]
 fn diff_dp_logical_shifted() {
     run_family("dp_logical_shifted", logical_shift_cases(), 2, 0x1002);
 }
@@ -27146,6 +27189,45 @@ fn diff_crc_zero_registers() {
 }
 
 #[test]
+fn diff_crc_edge_patterns() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b010000, "crc32b"),
+        (0, 0b010001, "crc32h"),
+        (0, 0b010010, "crc32w"),
+        (1, 0b010011, "crc32x"),
+        (0, 0b010100, "crc32cb"),
+        (0, 0b010101, "crc32ch"),
+        (0, 0b010110, "crc32cw"),
+        (1, 0b010111, "crc32cx"),
+    ];
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero_zero", 0, 0),
+        ("ones_ones", u64::MAX, u64::MAX),
+        ("acc_seed", 0xffff_ffff, 0x0123_4567_89ab_cdef),
+        ("byte_ramp", 0x1234_5678, 0xfedc_ba98_7654_3210),
+        ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_7fff_ff80),
+    ];
+    let mut batch = Vec::new();
+
+    for &(sf, opcode, opname) in ops {
+        for &(pattern, acc, data) in patterns {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = acc;
+            st.x[RM as usize] = data;
+            st.x[RD as usize] = 0xdead_beef_dead_beef;
+            st.pstate = 0b0110u64 << 28;
+            batch.push((
+                format!("{opname}_{pattern}"),
+                enc_dp2_regs(sf, opcode, RN, RM, RD),
+                st,
+            ));
+        }
+    }
+
+    run_batch("crc_edge_patterns", batch);
+}
+
+#[test]
 fn diff_dp3_zero_registers() {
     let mut rng = Rng::new(0x1_0073);
     let mut batch = Vec::new();
@@ -27288,6 +27370,35 @@ fn diff_pc_relative_scalar() {
     }
 
     run_batch("pc_relative_scalar", batch);
+}
+
+#[test]
+fn diff_pc_relative_xzr_dest() {
+    fn pc_rel(op: u32, rd: u32, imm: i32) -> u32 {
+        let imm = imm as u32;
+        let immlo = imm & 0x3;
+        let immhi = (imm >> 2) & 0x7ffff;
+        (op << 31) | (immlo << 29) | (0b10000 << 24) | (immhi << 5) | (rd & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+    for imm in [-12, -4, 0, 4, 12] {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.sp = 0x1234_5678_9abc_def0;
+        st.pstate = 0b1010u64 << 28;
+        batch.push((format!("adr_xzr_imm{imm}"), pc_rel(0, 31, imm), st));
+    }
+
+    for pages in [-2, -1, 0, 1, 2] {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_PAGE_MAGIC;
+        st.sp = 0x0fed_cba9_8765_4320;
+        st.pstate = 0b0101u64 << 28;
+        batch.push((format!("adrp_xzr_pages{pages}"), pc_rel(1, 31, pages), st));
+    }
+
+    run_batch("pc_relative_xzr_dest", batch);
 }
 
 #[test]
@@ -28372,6 +28483,55 @@ fn diff_system_fpcr_fpsr_el0() {
 }
 
 #[test]
+fn diff_system_fpcr_fpsr_xzr_edges() {
+    fn mrs_fpcr(rt: u32) -> u32 {
+        0xd53b_4400 | (rt & 0x1f)
+    }
+
+    fn mrs_fpsr(rt: u32) -> u32 {
+        0xd53b_4420 | (rt & 0x1f)
+    }
+
+    fn msr_fpcr(rt: u32) -> u32 {
+        0xd51b_4400 | (rt & 0x1f)
+    }
+
+    fn msr_fpsr(rt: u32) -> u32 {
+        0xd51b_4420 | (rt & 0x1f)
+    }
+
+    let fpcr_values = [0, 1 << 22, 3 << 22, 1 << 24, 1 << 26];
+    let fpsr_values = [0, 1, 0x1f, 1 << 27, (1 << 27) | 0x1f];
+    let mut batch = Vec::new();
+
+    for value in fpcr_values {
+        let mut st = ArmState::zeroed();
+        st.fpcr = value;
+        st.sp = 0x1234_5678_9abc_def0;
+        batch.push((format!("mrs_fpcr_xzr_{value:#x}"), mrs_fpcr(31), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = value;
+        st.sp = 0x0fed_cba9_8765_4320;
+        batch.push((format!("msr_fpcr_xzr_{value:#x}"), msr_fpcr(31), st));
+    }
+
+    for value in fpsr_values {
+        let mut st = ArmState::zeroed();
+        st.fpsr = value;
+        st.sp = 0x1111_2222_3333_4440;
+        batch.push((format!("mrs_fpsr_xzr_{value:#x}"), mrs_fpsr(31), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpsr = value;
+        st.sp = 0x5555_6666_7777_8880;
+        batch.push((format!("msr_fpsr_xzr_{value:#x}"), msr_fpsr(31), st));
+    }
+
+    run_batch_el0("system_fpcr_fpsr_xzr_edges", batch);
+}
+
+#[test]
 fn diff_system_flagm_el0() {
     fn flagm(op2: u32) -> u32 {
         0xd500_401f | ((op2 & 0x7) << 5)
@@ -28920,6 +29080,32 @@ fn diff_system_nzcv_el0() {
 }
 
 #[test]
+fn diff_system_nzcv_xzr_edges() {
+    fn mrs_nzcv(rt: u32) -> u32 {
+        0xd53b_4200 | (rt & 0x1f)
+    }
+
+    fn msr_nzcv(rt: u32) -> u32 {
+        0xd51b_4200 | (rt & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+    for nzcv in 0..16u64 {
+        let mut st = ArmState::zeroed();
+        st.pstate = nzcv << 28;
+        st.sp = 0x1234_5678_9abc_def0;
+        batch.push((format!("mrs_nzcv_xzr_{nzcv:x}"), mrs_nzcv(31), st));
+
+        let mut st = ArmState::zeroed();
+        st.pstate = nzcv << 28;
+        st.sp = 0x0fed_cba9_8765_4320;
+        batch.push((format!("msr_nzcv_xzr_{nzcv:x}"), msr_nzcv(31), st));
+    }
+
+    run_batch_el0("system_nzcv_xzr_edges", batch);
+}
+
+#[test]
 fn diff_system_pstate_mrs_el0_sweep() {
     fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
         0xd530_0000
@@ -28991,6 +29177,44 @@ fn diff_system_tpidr_el0_pair_sweep() {
 }
 
 #[test]
+fn diff_system_tpidr_el0_xzr_edges() {
+    fn mrs_tpidr_el0(rt: u32) -> u32 {
+        0xd53b_d040 | (rt & 0x1f)
+    }
+
+    fn msr_tpidr_el0(rt: u32) -> u32 {
+        0xd51b_d040 | (rt & 0x1f)
+    }
+
+    let values = [0, 1, 0x7fff_ffff_ffff, 0xdead_beef_dead_beef, u64::MAX];
+    let mut batch = Vec::new();
+
+    for value in values {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = value;
+        st.sp = 0x1234_5678_9abc_def0;
+        batch.push((
+            format!("msr_mrs_tpidr_el0_to_xzr_{value:#x}"),
+            msr_tpidr_el0(RN),
+            mrs_tpidr_el0(31),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.x[RD as usize] = 0xaaaa_5555_ffff_0000;
+        st.sp = 0x0fed_cba9_8765_4320;
+        batch.push((
+            format!("msr_xzr_mrs_tpidr_el0_after_{value:#x}"),
+            msr_tpidr_el0(31),
+            mrs_tpidr_el0(RD),
+            st,
+        ));
+    }
+
+    run_batch_el0_pair("system_tpidr_el0_xzr_edges", batch);
+}
+
+#[test]
 fn diff_system_dczid_el0() {
     fn mrs_dczid_el0(rt: u32) -> u32 {
         0xd53b_00e0 | (rt & 0x1f)
@@ -29005,6 +29229,25 @@ fn diff_system_dczid_el0() {
     }
 
     run_batch_el0("system_dczid_el0", batch);
+}
+
+#[test]
+fn diff_system_dczid_el0_xzr_edges() {
+    fn mrs_dczid_el0(rt: u32) -> u32 {
+        0xd53b_00e0 | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_000b);
+    let mut batch = Vec::new();
+    for sp in [0, 0x10, 0x1234_5678_9abc_def0, u64::MAX & !0xf] {
+        let mut st = gen_input(&mut rng);
+        st.sp = sp;
+        st.x[RD as usize] = 0xfeed_face_cafe_beef;
+        st.x[RN as usize] = 0x0123_4567_89ab_cdef;
+        batch.push((format!("mrs_dczid_el0_xzr_sp_{sp:#x}"), mrs_dczid_el0(31), st));
+    }
+
+    run_batch_el0("system_dczid_el0_xzr_edges", batch);
 }
 
 #[test]
