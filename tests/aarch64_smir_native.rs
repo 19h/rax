@@ -1447,6 +1447,271 @@ fn raw_el0_memory_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_signed_memory_oracle_matches_interpreter() {
+    let insns = [
+        0x39c0_0020, // ldrsb  w0, [x1]
+        0x3980_0062, // ldrsb  x2, [x3]
+        0x79c0_00a4, // ldrsh  w4, [x5]
+        0x7980_00e6, // ldrsh  x6, [x7]
+        0xb980_0128, // ldrsw  x8, [x9]
+        0x389f_f16a, // ldursb x10, [x11, #-1]
+        0x789f_e1ac, // ldursh x12, [x13, #-2]
+        0xb89f_c1ee, // ldursw x14, [x15, #-4]
+    ];
+
+    let native_byte_w = 0x80u8;
+    let native_byte_x = 0x81u8;
+    let native_half_w = 0x8001u16;
+    let native_half_x = 0x8002u16;
+    let native_word_x = 0x8000_0003u32;
+    let native_unscaled_byte = [0x82u8, 0x7f];
+    let native_unscaled_half = [0x8004u16, 0x0001];
+    let native_unscaled_word = [0x8000_0005u32, 0x0000_0001];
+    let hw = raw_native_run(&insns, |g| {
+        g.x[1] = &native_byte_w as *const u8 as u64;
+        g.x[3] = &native_byte_x as *const u8 as u64;
+        g.x[5] = &native_half_w as *const u16 as u64;
+        g.x[7] = &native_half_x as *const u16 as u64;
+        g.x[9] = &native_word_x as *const u32 as u64;
+        g.x[11] = unsafe { native_unscaled_byte.as_ptr().add(1) } as u64;
+        g.x[13] = unsafe { native_unscaled_half.as_ptr().add(1) } as u64;
+        g.x[15] = unsafe { native_unscaled_word.as_ptr().add(1) } as u64;
+    });
+
+    const BYTE_W: u64 = 0x1e_000;
+    const BYTE_X: u64 = 0x1f_000;
+    const HALF_W: u64 = 0x20_000;
+    const HALF_X: u64 = 0x21_000;
+    const WORD_X: u64 = 0x22_000;
+    const UNSCALED_BYTE: u64 = 0x23_000;
+    const UNSCALED_HALF: u64 = 0x24_000;
+    const UNSCALED_WORD: u64 = 0x25_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp.write_memory(BYTE_W, &[native_byte_w]).unwrap();
+    interp.write_memory(BYTE_X, &[native_byte_x]).unwrap();
+    interp.write_memory(HALF_W, &native_half_w.to_le_bytes()).unwrap();
+    interp.write_memory(HALF_X, &native_half_x.to_le_bytes()).unwrap();
+    interp.write_memory(WORD_X, &native_word_x.to_le_bytes()).unwrap();
+    interp.write_memory(UNSCALED_BYTE, &native_unscaled_byte).unwrap();
+    for (addr, value) in [
+        (UNSCALED_HALF, native_unscaled_half[0]),
+        (UNSCALED_HALF + 2, native_unscaled_half[1]),
+    ] {
+        interp.write_memory(addr, &value.to_le_bytes()).unwrap();
+    }
+    for (addr, value) in [
+        (UNSCALED_WORD, native_unscaled_word[0]),
+        (UNSCALED_WORD + 4, native_unscaled_word[1]),
+    ] {
+        interp.write_memory(addr, &value.to_le_bytes()).unwrap();
+    }
+    interp.set_x(1, BYTE_W);
+    interp.set_x(3, BYTE_X);
+    interp.set_x(5, HALF_W);
+    interp.set_x(7, HALF_X);
+    interp.set_x(9, WORD_X);
+    interp.set_x(11, UNSCALED_BYTE + 1);
+    interp.set_x(13, UNSCALED_HALF + 2);
+    interp.set_x(15, UNSCALED_WORD + 4);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 2, 4, 6, 8, 10, 12, 14] {
+        assert_eq!(
+            hw.x[reg as usize],
+            interp.get_x(reg),
+            "raw EL0 signed memory x{reg} mismatch"
+        );
+    }
+    for reg in [0usize, 4] {
+        assert_eq!(
+            hw.x[reg] >> 32,
+            0,
+            "raw EL0 signed memory W-destination x{reg} was not zero-extended"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_memory_addressing_oracle_matches_interpreter() {
+    let insns = [
+        0xf862_6820, // ldr  x0, [x1, x2]
+        0xb865_d883, // ldr  w3, [x4, w5, sxtw #2]
+        0x7868_58e6, // ldrh w6, [x7, w8, uxtw #1]
+        0x782b_6949, // strh w9, [x10, x11]
+        0xf940_0dac, // ldr  x12, [x13, #24]
+        0xb900_0dee, // str  w14, [x15, #12]
+    ];
+
+    let native_reg64_in = [0x0102_0304_0506_0708u64, 0x1112_1314_1516_1718];
+    let native_reg32_in = [0x8899_aabb_u32, 0x1122_3344];
+    let native_half_in = [0x0102u16, 0x0304, 0x0506];
+    let mut native_half_out = [0u16; 2];
+    let native_imm64_in = [
+        0xaaaa_bbbb_cccc_ddddu64,
+        0x1111_2222_3333_4444,
+        0x5555_6666_7777_8888,
+        0x9999_aaaa_bbbb_cccc,
+    ];
+    let mut native_word_out = [0u32; 4];
+    let hw = raw_native_run(&insns, |g| {
+        g.x[1] = native_reg64_in.as_ptr() as u64;
+        g.x[2] = 8;
+        g.x[4] = unsafe { native_reg32_in.as_ptr().add(1) } as u64;
+        g.x[5] = u32::MAX as u64;
+        g.x[7] = native_half_in.as_ptr() as u64;
+        g.x[8] = 2;
+        g.x[9] = 0xffff_ffff_0000_beef;
+        g.x[10] = native_half_out.as_mut_ptr() as u64;
+        g.x[11] = 2;
+        g.x[13] = native_imm64_in.as_ptr() as u64;
+        g.x[14] = 0xaaaa_bbbb_ccdd_eeff;
+        g.x[15] = native_word_out.as_mut_ptr() as u64;
+    });
+
+    const REG64: u64 = 0x12_000;
+    const REG32: u64 = 0x13_000;
+    const HALF_IN: u64 = 0x14_000;
+    const HALF_OUT: u64 = 0x15_000;
+    const IMM64: u64 = 0x16_000;
+    const WORD_OUT: u64 = 0x17_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (addr, value) in [
+        (REG64, native_reg64_in[0]),
+        (REG64 + 8, native_reg64_in[1]),
+        (IMM64, native_imm64_in[0]),
+        (IMM64 + 8, native_imm64_in[1]),
+        (IMM64 + 16, native_imm64_in[2]),
+        (IMM64 + 24, native_imm64_in[3]),
+    ] {
+        interp.write_memory(addr, &value.to_le_bytes()).unwrap();
+    }
+    for (addr, value) in [(REG32, native_reg32_in[0]), (REG32 + 4, native_reg32_in[1])] {
+        interp.write_memory(addr, &value.to_le_bytes()).unwrap();
+    }
+    for (addr, value) in [
+        (HALF_IN, native_half_in[0]),
+        (HALF_IN + 2, native_half_in[1]),
+        (HALF_IN + 4, native_half_in[2]),
+    ] {
+        interp.write_memory(addr, &value.to_le_bytes()).unwrap();
+    }
+    interp.set_x(1, REG64);
+    interp.set_x(2, 8);
+    interp.set_x(4, REG32 + 4);
+    interp.set_x(5, u32::MAX as u64);
+    interp.set_x(7, HALF_IN);
+    interp.set_x(8, 2);
+    interp.set_x(9, 0xffff_ffff_0000_beef);
+    interp.set_x(10, HALF_OUT);
+    interp.set_x(11, 2);
+    interp.set_x(13, IMM64);
+    interp.set_x(14, 0xaaaa_bbbb_ccdd_eeff);
+    interp.set_x(15, WORD_OUT);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 3, 6, 12] {
+        assert_eq!(
+            hw.x[reg as usize],
+            interp.get_x(reg),
+            "raw EL0 memory addressing x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        native_half_out[1],
+        interp.mem_read_u16(HALF_OUT + 2).unwrap(),
+        "raw EL0 memory addressing strh register offset"
+    );
+    assert_eq!(
+        native_word_out[3],
+        interp.mem_read_u32(WORD_OUT + 12).unwrap(),
+        "raw EL0 memory addressing str immediate"
+    );
+}
+
+#[test]
+fn raw_el0_unprivileged_memory_oracle_matches_interpreter() {
+    let insns = [
+        0xf840_0820, // ldtr  x0, [x1]
+        0x3840_0862, // ldtrb w2, [x3]
+        0x7840_08a4, // ldtrh w4, [x5]
+        0xf800_08e6, // sttr  x6, [x7]
+        0x3800_0928, // sttrb w8, [x9]
+        0x7800_096a, // sttrh w10, [x11]
+    ];
+
+    let native_in64 = 0x0123_4567_89ab_cdefu64;
+    let native_in8 = 0xa5u8;
+    let native_in16 = 0xbeefu16;
+    let mut native_out64 = 0u64;
+    let mut native_out8 = 0u8;
+    let mut native_out16 = 0u16;
+    let hw = raw_native_run(&insns, |g| {
+        g.x[1] = &native_in64 as *const u64 as u64;
+        g.x[3] = &native_in8 as *const u8 as u64;
+        g.x[5] = &native_in16 as *const u16 as u64;
+        g.x[6] = 0x1111_2222_3333_4444;
+        g.x[7] = &mut native_out64 as *mut u64 as u64;
+        g.x[8] = 0xffff_ffff_0000_00cc;
+        g.x[9] = &mut native_out8 as *mut u8 as u64;
+        g.x[10] = 0xffff_ffff_0000_ddaa;
+        g.x[11] = &mut native_out16 as *mut u16 as u64;
+    });
+
+    const IN64: u64 = 0x18_000;
+    const IN8: u64 = 0x19_000;
+    const IN16: u64 = 0x1a_000;
+    const OUT64: u64 = 0x1b_000;
+    const OUT8: u64 = 0x1c_000;
+    const OUT16: u64 = 0x1d_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp.write_memory(IN64, &native_in64.to_le_bytes()).unwrap();
+    interp.write_memory(IN8, &[native_in8]).unwrap();
+    interp.write_memory(IN16, &native_in16.to_le_bytes()).unwrap();
+    interp.set_x(1, IN64);
+    interp.set_x(3, IN8);
+    interp.set_x(5, IN16);
+    interp.set_x(6, 0x1111_2222_3333_4444);
+    interp.set_x(7, OUT64);
+    interp.set_x(8, 0xffff_ffff_0000_00cc);
+    interp.set_x(9, OUT8);
+    interp.set_x(10, 0xffff_ffff_0000_ddaa);
+    interp.set_x(11, OUT16);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 2, 4] {
+        assert_eq!(
+            hw.x[reg as usize],
+            interp.get_x(reg),
+            "raw EL0 unprivileged memory x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        native_out64,
+        interp.mem_read_u64(OUT64).unwrap(),
+        "raw EL0 unprivileged memory sttr"
+    );
+    assert_eq!(
+        native_out8,
+        interp.mem_read_u8(OUT8).unwrap(),
+        "raw EL0 unprivileged memory sttrb"
+    );
+    assert_eq!(
+        native_out16,
+        interp.mem_read_u16(OUT16).unwrap(),
+        "raw EL0 unprivileged memory sttrh"
+    );
+}
+
+#[test]
 fn raw_el0_ordered_memory_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("lrcpc") {
         eprintln!("[skip] host does not advertise RCpc loads");
@@ -1790,6 +2055,73 @@ fn raw_el0_sve_memory_oracle_matches_interpreter() {
             "raw EL0 SVE memory {label}"
         );
     }
+}
+
+#[test]
+fn raw_el0_exclusive_acquire_release_memory_oracle_matches_interpreter() {
+    let insns = [
+        0xc85f_fc20, // ldaxr  x0, [x1]
+        0xc802_fc23, // stlxr  w2, x3, [x1]
+        0x085f_fca4, // ldaxrb w4, [x5]
+        0x0806_fca7, // stlxrb w6, w7, [x5]
+        0x485f_fd28, // ldaxrh w8, [x9]
+        0x480a_fd2b, // stlxrh w10, w11, [x9]
+    ];
+
+    let mut native_x = 0x0102_0304_0506_0708u64;
+    let mut native_b = 0xa5u8;
+    let mut native_h = 0xbeefu16;
+    let hw = raw_native_run(&insns, |g| {
+        g.x[1] = &mut native_x as *mut u64 as u64;
+        g.x[3] = 0x8877_6655_4433_2211;
+        g.x[5] = &mut native_b as *mut u8 as u64;
+        g.x[7] = 0x5a;
+        g.x[9] = &mut native_h as *mut u16 as u64;
+        g.x[11] = 0x1234;
+    });
+
+    const EXCL_X: u64 = 0x26_000;
+    const EXCL_B: u64 = 0x27_000;
+    const EXCL_H: u64 = 0x28_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(EXCL_X, &0x0102_0304_0506_0708u64.to_le_bytes())
+        .unwrap();
+    interp.write_memory(EXCL_B, &[0xa5]).unwrap();
+    interp.write_memory(EXCL_H, &0xbeefu16.to_le_bytes()).unwrap();
+    interp.set_x(1, EXCL_X);
+    interp.set_x(3, 0x8877_6655_4433_2211);
+    interp.set_x(5, EXCL_B);
+    interp.set_x(7, 0x5a);
+    interp.set_x(9, EXCL_H);
+    interp.set_x(11, 0x1234);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 2, 4, 6, 8, 10] {
+        assert_eq!(
+            hw.x[reg as usize],
+            interp.get_x(reg),
+            "raw EL0 exclusive acquire/release x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        native_x,
+        interp.mem_read_u64(EXCL_X).unwrap(),
+        "raw EL0 exclusive acquire/release stlxr"
+    );
+    assert_eq!(
+        native_b,
+        interp.mem_read_u8(EXCL_B).unwrap(),
+        "raw EL0 exclusive acquire/release stlxrb"
+    );
+    assert_eq!(
+        native_h,
+        interp.mem_read_u16(EXCL_H).unwrap(),
+        "raw EL0 exclusive acquire/release stlxrh"
+    );
 }
 
 #[test]
