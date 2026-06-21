@@ -186,6 +186,179 @@ fn conditional_select_aliases_transform_on_true_condition() {
 }
 
 #[test]
+fn shifted_neg_and_mvn_aliases_execute_natively() {
+    let r = run(
+        &[
+            0xcb01_07e0, // neg  x0, x1, lsl #1
+            0x2aa3_0fe2, // mvn  w2, w3, asr #3
+            0xaa65_13e4, // mvn  x4, x5, lsr #4
+            0xeb07_07e6, // negs x6, x7, lsl #1
+            0xaa2d_098b, // orn  x11, x12, x13, lsl #2
+            0xca70_15ee, // eon  x14, x15, x16, lsr #5
+        ],
+        |g| {
+            g.x[1] = 21;
+            g.x[3] = 0xffff_fff0;
+            g.x[5] = 0xf000_0000_0000_0000;
+            g.x[7] = 0x4000_0000_0000_0000;
+            g.x[12] = 0x80;
+            g.x[13] = 0x10;
+            g.x[15] = 0x1234_5678_9abc_def0;
+            g.x[16] = 0xffff_0000_0000_0000;
+        },
+    );
+
+    assert_eq!(r.x[0], 0u64.wrapping_sub(42));
+    assert_eq!(r.x[2], 1, "32-bit mvn must zero-extend the W result");
+    assert_eq!(r.x[4], !(0xf000_0000_0000_0000u64 >> 4));
+    assert_eq!(r.x[6], 0x8000_0000_0000_0000);
+    assert_eq!(r.x[11], 0x80 | !(0x10u64 << 2));
+    assert_eq!(r.x[14], 0x1234_5678_9abc_def0u64 ^ !(0xffff_0000_0000_0000u64 >> 5));
+    assert_eq!(r.nzcv & 0xf000_0000, 0x9000_0000, "N and V set");
+}
+
+#[test]
+fn inverted_logic_register_sources_execute_natively() {
+    let r = run(
+        &[
+            0xaa22_0020, // orn x0, x1, x2
+            0xca25_0083, // eon x3, x4, x5
+            0x2a28_00e6, // orn w6, w7, w8
+            0x4a2b_0149, // eon w9, w10, w11
+        ],
+        |g| {
+            g.x[1] = 0x00ff_0000_0000_00ff;
+            g.x[2] = 0x0000_ffff_0000_ffff;
+            g.x[4] = 0x1234_5678_9abc_def0;
+            g.x[5] = 0x0f0f_0f0f_0f0f_0f0f;
+            g.x[7] = 0x0000_0000_f0f0_0000;
+            g.x[8] = 0xffff_ffff_00ff_00ff;
+            g.x[10] = 0xffff_ffff_1234_5678;
+            g.x[11] = 0xffff_ffff_f0f0_f0f0;
+            g.nzcv = 0x6000_0000;
+        },
+    );
+
+    assert_eq!(r.x[0], 0x00ff_0000_0000_00ff | !0x0000_ffff_0000_ffffu64);
+    assert_eq!(r.x[3], 0x1234_5678_9abc_def0 ^ !0x0f0f_0f0f_0f0f_0f0fu64);
+    assert_eq!(r.x[6], u64::from(0xf0f0_0000u32 | !0x00ff_00ffu32));
+    assert_eq!(r.x[9], u64::from(0x1234_5678u32 ^ !0xf0f0_f0f0u32));
+    assert_eq!(r.nzcv & 0xf000_0000, 0x6000_0000);
+}
+
+#[test]
+fn vector_bic_executes_natively() {
+    let r = fp_run(
+        &[
+            0x4e62_1c20, // bic v0.16b, v1.16b, v2.16b
+            0x0e65_1c83, // bic v3.8b,  v4.8b,  v5.8b
+        ],
+        |g| {
+            g.v[2] = 0x0123_4567_89ab_cdef;
+            g.v[3] = 0xfedc_ba98_7654_3210;
+            g.v[4] = 0x0f0f_f0f0_55aa_aa55;
+            g.v[5] = 0x3333_cccc_9696_6969;
+            g.v[8] = 0xffff_0000_ffff_0000;
+            g.v[9] = 0x0000_ffff_0000_ffff;
+            g.v[10] = 0x00ff_00ff_00ff_00ff;
+            g.v[11] = 0xff00_ff00_ff00_ff00;
+        },
+    );
+
+    assert_eq!(r.v[0], 0x0123_4567_89ab_cdefu64 & !0x0f0f_f0f0_55aa_aa55u64);
+    assert_eq!(r.v[1], 0xfedc_ba98_7654_3210u64 & !0x3333_cccc_9696_6969u64);
+    assert_eq!(r.v[6], 0xffff_0000_ffff_0000u64 & !0x00ff_00ff_00ff_00ffu64);
+    assert_eq!(r.v[7], 0, "8-byte vector bic must clear the high half");
+}
+
+#[test]
+fn vector_orn_executes_natively() {
+    let r = fp_run(
+        &[
+            0x4ee2_1c20, // orn v0.16b, v1.16b, v2.16b
+            0x0ee5_1c83, // orn v3.8b,  v4.8b,  v5.8b
+        ],
+        |g| {
+            g.v[2] = 0x0123_4567_89ab_cdef;
+            g.v[3] = 0xfedc_ba98_7654_3210;
+            g.v[4] = 0x0f0f_f0f0_55aa_aa55;
+            g.v[5] = 0x3333_cccc_9696_6969;
+            g.v[8] = 0xffff_0000_ffff_0000;
+            g.v[9] = 0x0000_ffff_0000_ffff;
+            g.v[10] = 0x00ff_00ff_00ff_00ff;
+            g.v[11] = 0xff00_ff00_ff00_ff00;
+        },
+    );
+
+    assert_eq!(r.v[0], 0x0123_4567_89ab_cdefu64 | !0x0f0f_f0f0_55aa_aa55u64);
+    assert_eq!(r.v[1], 0xfedc_ba98_7654_3210u64 | !0x3333_cccc_9696_6969u64);
+    assert_eq!(r.v[6], 0xffff_0000_ffff_0000u64 | !0x00ff_00ff_00ff_00ffu64);
+    assert_eq!(r.v[7], 0, "8-byte vector orn must clear the high half");
+}
+
+#[test]
+fn vector_bit_select_ops_execute_natively() {
+    let r = fp_run(
+        &[
+            0x6e62_1c20, // bsl v0.16b, v1.16b, v2.16b
+            0x6ea5_1c83, // bit v3.16b, v4.16b, v5.16b
+            0x6ee8_1ce6, // bif v6.16b, v7.16b, v8.16b
+            0x2e6b_1d49, // bsl v9.8b,  v10.8b, v11.8b
+        ],
+        |g| {
+            g.v[0] = 0x00ff_00ff_00ff_00ff;
+            g.v[1] = 0xff00_ff00_ff00_ff00;
+            g.v[2] = 0x1111_2222_3333_4444;
+            g.v[3] = 0x5555_6666_7777_8888;
+            g.v[4] = 0x9999_aaaa_bbbb_cccc;
+            g.v[5] = 0xdddd_eeee_ffff_0000;
+            g.v[6] = 0x0123_4567_89ab_cdef;
+            g.v[7] = 0xfedc_ba98_7654_3210;
+            g.v[8] = 0x0f0f_f0f0_3333_cccc;
+            g.v[9] = 0xffff_0000_cccc_3333;
+            g.v[10] = 0x1234_5678_9abc_def0;
+            g.v[11] = 0x0f0f_f0f0_55aa_aa55;
+            g.v[12] = 0x00ff_00ff_00ff_00ff;
+            g.v[13] = 0xff00_ff00_ff00_ff00;
+            g.v[14] = 0x1357_9bdf_2468_ace0;
+            g.v[15] = 0x0f0f_f0f0_3333_cccc;
+            g.v[16] = 0xaaaa_5555_ffff_0000;
+            g.v[17] = 0x3333_cccc_5555_aaaa;
+            g.v[18] = 0xffff_0000_ffff_0000;
+            g.v[19] = 0x1111_2222_3333_4444;
+            g.v[20] = 0x1234_5678_9abc_def0;
+            g.v[22] = 0x0f0f_f0f0_55aa_aa55;
+        },
+    );
+
+    let bsl_lo = (0x1111_2222_3333_4444u64 & 0x00ff_00ff_00ff_00ffu64)
+        | (0x9999_aaaa_bbbb_ccccu64 & !0x00ff_00ff_00ff_00ffu64);
+    let bsl_hi = (0x5555_6666_7777_8888u64 & 0xff00_ff00_ff00_ff00u64)
+        | (0xdddd_eeee_ffff_0000u64 & !0xff00_ff00_ff00_ff00u64);
+    assert_eq!(r.v[0], bsl_lo, "bsl low half");
+    assert_eq!(r.v[1], bsl_hi, "bsl high half");
+
+    let bit_lo = (0x0f0f_f0f0_3333_ccccu64 & 0x1234_5678_9abc_def0u64)
+        | (0x0123_4567_89ab_cdefu64 & !0x1234_5678_9abc_def0u64);
+    let bit_hi = (0xffff_0000_cccc_3333u64 & 0x0f0f_f0f0_55aa_aa55u64)
+        | (0xfedc_ba98_7654_3210u64 & !0x0f0f_f0f0_55aa_aa55u64);
+    assert_eq!(r.v[6], bit_lo, "bit low half");
+    assert_eq!(r.v[7], bit_hi, "bit high half");
+
+    let bif_lo = (0x00ff_00ff_00ff_00ffu64 & 0xaaaa_5555_ffff_0000u64)
+        | (0x1357_9bdf_2468_ace0u64 & !0xaaaa_5555_ffff_0000u64);
+    let bif_hi = (0xff00_ff00_ff00_ff00u64 & 0x3333_cccc_5555_aaaau64)
+        | (0x0f0f_f0f0_3333_ccccu64 & !0x3333_cccc_5555_aaaau64);
+    assert_eq!(r.v[12], bif_lo, "bif low half");
+    assert_eq!(r.v[13], bif_hi, "bif high half");
+
+    let bsl8 = (0x1234_5678_9abc_def0u64 & 0xffff_0000_ffff_0000u64)
+        | (0x0f0f_f0f0_55aa_aa55u64 & !0xffff_0000_ffff_0000u64);
+    assert_eq!(r.v[18], bsl8, "8-byte bsl low half");
+    assert_eq!(r.v[19], 0, "8-byte bsl must clear the high half");
+}
+
+#[test]
 fn fpcr_sysreg_only_block_uses_fp_trampoline() {
     // d51b4401  msr fpcr, x1
     // d53b4400  mrs x0, fpcr
@@ -890,6 +1063,32 @@ fn fp_run(insns: &[u32], setup: impl FnOnce(&mut Aarch64GuestRegs)) -> Aarch64Gu
     setup(&mut regs);
     jit_run(insns, &mut regs).expect("fp jit_run");
     regs
+}
+
+#[test]
+fn e2e_vector_halving_add_matches_interpreter() {
+    let prog: [u32; 2] = [
+        0x4e22_0420, // shadd v0.16b, v1.16b, v2.16b
+        0xd65f_03c0, // ret
+    ];
+    let v1 = u128::from_le_bytes([2; 16]);
+    let v2 = u128::from_le_bytes([4; 16]);
+    let expected = u128::from_le_bytes([3; 16]);
+
+    let run_one = |jit: bool| -> u128 {
+        let mut cpu = fresh_cpu();
+        cpu.set_jit_enabled(jit);
+        load_prog(&mut cpu, &prog);
+        cpu.set_simd(1, v1);
+        cpu.set_simd(2, v2);
+        drive_to_done(&mut cpu);
+        cpu.get_simd(0)
+    };
+
+    let interp = run_one(false);
+    let jit = run_one(true);
+    assert_eq!(interp, expected, "interpreter shadd");
+    assert_eq!(jit, interp, "JIT shadd path matches interpreter");
 }
 
 // Scalar FP through the JIT, now that the decoder's 2-source opcode table is

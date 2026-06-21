@@ -2940,7 +2940,14 @@ impl Aarch64Lifter {
             // =================================================================
             // NEON Logical Three-Same
             // =================================================================
-            Mnemonic::VAND | Mnemonic::VBIC | Mnemonic::VORR | Mnemonic::VEOR => {
+            Mnemonic::VAND
+            | Mnemonic::VBIC
+            | Mnemonic::VORR
+            | Mnemonic::VORN
+            | Mnemonic::VEOR
+            | Mnemonic::VBSL
+            | Mnemonic::VBIT
+            | Mnemonic::VBIF => {
                 let rd = match insn.operands.get(0) {
                     Some(Operand::FpReg(r)) => r,
                     _ => return Err(LiftError::Internal("missing vec rd".to_string())),
@@ -2996,6 +3003,48 @@ impl Aarch64Lifter {
                             dst: Self::fp_vreg(rd),
                             src1: Self::fp_vreg(rn),
                             src2: not_rm,
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VORN => {
+                        let not_rm = ctx.alloc_vreg();
+                        push_op!(OpKind::VXor {
+                            dst: not_rm,
+                            src1: Self::fp_vreg(rm),
+                            src2: VReg::Imm(-1),
+                            width: vec_width,
+                        });
+                        push_op!(OpKind::VOr {
+                            dst: Self::fp_vreg(rd),
+                            src1: Self::fp_vreg(rn),
+                            src2: not_rm,
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VBSL => {
+                        push_op!(OpKind::VBitSelect {
+                            dst: Self::fp_vreg(rd),
+                            mask: Self::fp_vreg(rd),
+                            src_true: Self::fp_vreg(rn),
+                            src_false: Self::fp_vreg(rm),
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VBIT => {
+                        push_op!(OpKind::VBitSelect {
+                            dst: Self::fp_vreg(rd),
+                            mask: Self::fp_vreg(rm),
+                            src_true: Self::fp_vreg(rn),
+                            src_false: Self::fp_vreg(rd),
+                            width: vec_width,
+                        });
+                    }
+                    Mnemonic::VBIF => {
+                        push_op!(OpKind::VBitSelect {
+                            dst: Self::fp_vreg(rd),
+                            mask: Self::fp_vreg(rm),
+                            src_true: Self::fp_vreg(rd),
+                            src_false: Self::fp_vreg(rn),
                             width: vec_width,
                         });
                     }

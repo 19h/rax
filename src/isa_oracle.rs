@@ -1875,6 +1875,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             width,
         } => op_json!("vxor", dst, src1, src2, width),
+        OpKind::VBitSelect {
+            dst,
+            mask,
+            src_true,
+            src_false,
+            width,
+        } => op_json!("vbitselect", dst, mask, src_true, src_false, width),
         OpKind::VLane {
             dst,
             src1,

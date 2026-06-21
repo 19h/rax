@@ -1144,6 +1144,15 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Vector bit select: dst = (src_true & mask) | (src_false & ~mask)
+    VBitSelect {
+        dst: VReg,
+        mask: VReg,
+        src_true: VReg,
+        src_false: VReg,
+        width: VecWidth,
+    },
+
     /// Width-general, architecture-register-aware elementwise lane operation.
     ///
     /// Operates on `lanes` elements of `elem` bits across the full vector
@@ -2834,6 +2843,7 @@ impl OpKind {
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }
             | OpKind::VXor { dst, .. }
+            | OpKind::VBitSelect { dst, .. }
             | OpKind::VShift { dst, .. }
             | OpKind::VCmp { dst, .. }
             | OpKind::VMov { dst, .. }

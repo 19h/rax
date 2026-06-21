@@ -173,6 +173,11 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         // LEA computes a full pointer; SETcc writes a single byte.
         OpKind::Lea { .. } => Some(OpWidth::W64),
         OpKind::SetCC { .. } => Some(OpWidth::W8),
+        OpKind::VBitSelect { width, .. } => match width {
+            VecWidth::V64 => Some(OpWidth::W64),
+            VecWidth::V128 => Some(OpWidth::W128),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -2326,6 +2331,17 @@ impl OpKind {
             | OpKind::VCmp { src1, src2, .. } => {
                 result.push(*src1);
                 result.push(*src2);
+            }
+
+            OpKind::VBitSelect {
+                mask,
+                src_true,
+                src_false,
+                ..
+            } => {
+                result.push(*mask);
+                result.push(*src_true);
+                result.push(*src_false);
             }
 
             OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {

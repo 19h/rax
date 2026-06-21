@@ -2498,40 +2498,40 @@ impl Aarch64Decoder {
 
         let mnemonic = match (u, opcode) {
             // Integer operations
-            (0, 0b00000) => Mnemonic::VADD, // SHADD actually, simplified
-            (0, 0b00001) => Mnemonic::VADD, // SQADD
-            (0, 0b00010) => Mnemonic::VSUB, // SRHADD
-            (0, 0b00100) => Mnemonic::VSUB, // SHSUB
+            (0, 0b00000) => Mnemonic::UNKNOWN, // SHADD
+            (0, 0b00001) => Mnemonic::UNKNOWN, // SQADD
+            (0, 0b00010) => Mnemonic::UNKNOWN, // SRHADD
+            (0, 0b00100) => Mnemonic::UNKNOWN, // SHSUB
             (0, 0b00110) => Mnemonic::VMAX, // SMAX
             (0, 0b00111) => Mnemonic::VMIN, // SMIN
             (0, 0b10000) => Mnemonic::VADD, // ADD
-            (0, 0b10001) => Mnemonic::VMLA, // CMTST
+            (0, 0b10001) => Mnemonic::UNKNOWN, // CMTST
             (0, 0b10011) => Mnemonic::VMUL, // MUL
-            (0, 0b10100) => Mnemonic::VMAX, // SMAXP
-            (0, 0b10101) => Mnemonic::VMIN, // SMINP
-            (0, 0b10111) => Mnemonic::VADD, // ADDP
+            (0, 0b10100) => Mnemonic::UNKNOWN, // SMAXP
+            (0, 0b10101) => Mnemonic::UNKNOWN, // SMINP
+            (0, 0b10111) => Mnemonic::UNKNOWN, // ADDP
 
-            (1, 0b00000) => Mnemonic::VADD, // UHADD
-            (1, 0b00001) => Mnemonic::VADD, // UQADD
-            (1, 0b00010) => Mnemonic::VSUB, // URHADD
-            (1, 0b00100) => Mnemonic::VSUB, // UHSUB
+            (1, 0b00000) => Mnemonic::UNKNOWN, // UHADD
+            (1, 0b00001) => Mnemonic::UNKNOWN, // UQADD
+            (1, 0b00010) => Mnemonic::UNKNOWN, // URHADD
+            (1, 0b00100) => Mnemonic::UNKNOWN, // UHSUB
             (1, 0b00110) => Mnemonic::VMAX, // UMAX
             (1, 0b00111) => Mnemonic::VMIN, // UMIN
             (1, 0b10000) => Mnemonic::VSUB, // SUB
             (1, 0b10001) => Mnemonic::VCMP, // CMEQ
-            (1, 0b10100) => Mnemonic::VMAX, // UMAXP
-            (1, 0b10101) => Mnemonic::VMIN, // UMINP
+            (1, 0b10100) => Mnemonic::UNKNOWN, // UMAXP
+            (1, 0b10101) => Mnemonic::UNKNOWN, // UMINP
 
             // Logical operations
             (0, 0b00011) if size == 0b00 => Mnemonic::VAND,
             (0, 0b00011) if size == 0b01 => Mnemonic::VBIC,
             (0, 0b00011) if size == 0b10 => Mnemonic::VORR,
-            (0, 0b00011) if size == 0b11 => Mnemonic::VEOR, // ORN actually
+            (0, 0b00011) if size == 0b11 => Mnemonic::VORN,
 
             (1, 0b00011) if size == 0b00 => Mnemonic::VEOR,
-            (1, 0b00011) if size == 0b01 => Mnemonic::VBIC, // BSL
-            (1, 0b00011) if size == 0b10 => Mnemonic::VORR, // BIT
-            (1, 0b00011) if size == 0b11 => Mnemonic::VORR, // BIF
+            (1, 0b00011) if size == 0b01 => Mnemonic::VBSL,
+            (1, 0b00011) if size == 0b10 => Mnemonic::VBIT,
+            (1, 0b00011) if size == 0b11 => Mnemonic::VBIF,
 
             // FP three-same (opcode 0b11xxx) handled by the (U, a, opcode)
             // branch above.
@@ -3720,6 +3720,30 @@ mod tests {
         for &(raw, expected) in cases {
             let insn = Aarch64Decoder::decode(raw).unwrap();
             assert_eq!(insn.mnemonic, expected, "raw={raw:#010x}");
+        }
+    }
+
+    #[test]
+    fn test_unmodeled_simd_three_same_integer_ops_decode_unknown() {
+        let cases: &[u32] = &[
+            0x4e22_0420, // shadd  v0.16b, v1.16b, v2.16b
+            0x4e22_0c20, // sqadd  v0.16b, v1.16b, v2.16b
+            0x4e22_1420, // srhadd v0.16b, v1.16b, v2.16b
+            0x4e22_2420, // shsub  v0.16b, v1.16b, v2.16b
+            0x4e22_8c20, // cmtst  v0.16b, v1.16b, v2.16b
+            0x4e22_a420, // smaxp  v0.16b, v1.16b, v2.16b
+            0x4e22_ac20, // sminp  v0.16b, v1.16b, v2.16b
+            0x4e22_bc20, // addp   v0.16b, v1.16b, v2.16b
+            0x6e22_0420, // uhadd  v0.16b, v1.16b, v2.16b
+            0x6e22_0c20, // uqadd  v0.16b, v1.16b, v2.16b
+            0x6e22_1420, // urhadd v0.16b, v1.16b, v2.16b
+            0x6e22_2420, // uhsub  v0.16b, v1.16b, v2.16b
+            0x6e22_a420, // umaxp  v0.16b, v1.16b, v2.16b
+            0x6e22_ac20, // uminp  v0.16b, v1.16b, v2.16b
+        ];
+        for &raw in cases {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNKNOWN, "raw={raw:#010x}");
         }
     }
 

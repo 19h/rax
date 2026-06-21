@@ -2825,6 +2825,45 @@ impl Aarch64Lowerer {
         self.emit_simd_logical(rd, rn, rm, width, op)
     }
 
+    fn lower_vbit_select(
+        &mut self,
+        dst: VReg,
+        mask: VReg,
+        src_true: VReg,
+        src_false: VReg,
+        width: VecWidth,
+    ) -> Result<(), LowerError> {
+        let rd = Self::fp_reg(dst)?;
+        let q = Self::simd_vec_q(width)?;
+
+        if mask == dst {
+            let rn = Self::fp_reg(src_true)?;
+            let rm = Self::fp_reg(src_false)?;
+            self.emit_simd_three_same(rd, rn, rm, q, 1, 0b01, 0b00011);
+            return Ok(());
+        }
+
+        if src_false == dst {
+            let rn = Self::fp_reg(src_true)?;
+            let rm = Self::fp_reg(mask)?;
+            self.emit_simd_three_same(rd, rn, rm, q, 1, 0b10, 0b00011);
+            return Ok(());
+        }
+
+        if src_true == dst {
+            let rn = Self::fp_reg(src_false)?;
+            let rm = Self::fp_reg(mask)?;
+            self.emit_simd_three_same(rd, rn, rm, q, 1, 0b11, 0b00011);
+            return Ok(());
+        }
+
+        Err(LowerError::UnsupportedOp {
+            op: format!(
+                "AArch64 native VBitSelect shape dst={dst:?} mask={mask:?} true={src_true:?} false={src_false:?}"
+            ),
+        })
+    }
+
     fn lower_vbroadcast(
         &mut self,
         dst: VReg,
@@ -14563,6 +14602,238 @@ impl Aarch64Lowerer {
         Ok(Some(2))
     }
 
+    fn try_lower_fused_inverted_shifted_logic(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
+        let [
+            SmirOp {
+                kind:
+                    OpKind::Mov {
+                        dst: shifted,
+                        src: shifted_src @ SrcOperand::Shifted { .. },
+                        width: mov_width,
+                    },
+                ..
+            },
+            SmirOp {
+                kind:
+                    OpKind::Not {
+                        dst: inverted,
+                        src: not_src,
+                        width: not_width,
+                    },
+                ..
+            },
+            ..
+        ] = ops
+        else {
+            return Ok(None);
+        };
+
+        if not_src != shifted
+            || !matches!(shifted, VReg::Virtual(_))
+            || mov_width != not_width
+            || !matches!(mov_width, OpWidth::W32 | OpWidth::W64)
+        {
+            return Ok(None);
+        }
+
+        let (rm, shift, amount) = Self::logical_src2(shifted_src, *mov_width)?;
+
+        if let Some(op) = ops.get(2) {
+            let Some((dst, src1, src2, width, flags, opc)) = (match &op.kind {
+                OpKind::Or {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                } => Some((dst, src1, src2, width, flags, 0b01)),
+                OpKind::Xor {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                } => Some((dst, src1, src2, width, flags, 0b10)),
+                _ => None,
+            }) else {
+                let dst = Self::dst_gpr_arm_or_x86(*inverted)?;
+                self.emit_logic_shifted(dst, 31, rm, 0b01, true, shift, amount, *mov_width)?;
+                return Ok(Some(2));
+            };
+
+            if !flags.updates_any()
+                && width == mov_width
+                && matches!(src2, SrcOperand::Reg(reg) if reg == inverted)
+            {
+                let dst = Self::dst_gpr_arm_or_x86(*dst)?;
+                let rn = Self::gpr_arm_or_x86(*src1)?;
+                self.emit_logic_shifted(dst, rn, rm, opc, true, shift, amount, *mov_width)?;
+                return Ok(Some(3));
+            }
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(*inverted)?;
+        self.emit_logic_shifted(dst, 31, rm, 0b01, true, shift, amount, *mov_width)?;
+        Ok(Some(2))
+    }
+
+    fn try_lower_fused_inverted_reg_logic(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
+        let [
+            SmirOp {
+                kind:
+                    OpKind::Not {
+                        dst: inverted,
+                        src,
+                        width: not_width,
+                    },
+                ..
+            },
+            next,
+            ..
+        ] = ops
+        else {
+            return Ok(None);
+        };
+
+        if !matches!(inverted, VReg::Virtual(_)) || !matches!(not_width, OpWidth::W32 | OpWidth::W64)
+        {
+            return Ok(None);
+        }
+
+        let Some((dst, src1, src2, width, flags, opc)) = (match &next.kind {
+            OpKind::Or {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            } => Some((dst, src1, src2, width, flags, 0b01)),
+            OpKind::Xor {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            } => Some((dst, src1, src2, width, flags, 0b10)),
+            _ => None,
+        }) else {
+            return Ok(None);
+        };
+
+        if flags.updates_any()
+            || width != not_width
+            || !matches!(src2, SrcOperand::Reg(reg) if reg == inverted)
+        {
+            return Ok(None);
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(*dst)?;
+        let rn = Self::gpr_arm_or_x86(*src1)?;
+        let rm = Self::gpr_arm_or_x86(*src)?;
+        self.emit_logic_shifted(dst, rn, rm, opc, true, 0, 0, *not_width)?;
+        Ok(Some(2))
+    }
+
+    fn try_lower_fused_vector_inverted_logic(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
+        let [
+            SmirOp {
+                kind:
+                    OpKind::VXor {
+                        dst: inverted,
+                        src1: xor_src1,
+                        src2: xor_src2,
+                        width: xor_width,
+                    },
+                ..
+            },
+            next,
+            ..,
+        ] = ops
+        else {
+            return Ok(None);
+        };
+
+        if !matches!(inverted, VReg::Virtual(_)) {
+            return Ok(None);
+        }
+
+        let inverted_src = if *xor_src1 == VReg::Imm(-1) {
+            *xor_src2
+        } else if *xor_src2 == VReg::Imm(-1) {
+            *xor_src1
+        } else {
+            return Ok(None);
+        };
+
+        let Some((dst, other_src, width, logic_op)) = (match &next.kind {
+            OpKind::VAnd {
+                dst,
+                src1,
+                src2,
+                width,
+            } => Self::vector_inverted_logic_sources(
+                *dst,
+                *src1,
+                *src2,
+                *width,
+                *inverted,
+                SimdLogicOp::AndNot,
+            ),
+            OpKind::VOr {
+                dst,
+                src1,
+                src2,
+                width,
+            } => Self::vector_inverted_logic_sources(
+                *dst,
+                *src1,
+                *src2,
+                *width,
+                *inverted,
+                SimdLogicOp::OrNot,
+            ),
+            _ => None,
+        }) else {
+            return Ok(None);
+        };
+
+        if width != *xor_width {
+            return Ok(None);
+        }
+
+        let rd = Self::fp_reg(dst)?;
+        let rn = Self::fp_reg(other_src)?;
+        let rm = Self::fp_reg(inverted_src)?;
+        self.emit_simd_logical(rd, rn, rm, width, logic_op)?;
+        Ok(Some(2))
+    }
+
+    fn vector_inverted_logic_sources(
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        inverted: VReg,
+        logic_op: SimdLogicOp,
+    ) -> Option<(VReg, VReg, VecWidth, SimdLogicOp)> {
+        if src2 == inverted {
+            Some((dst, src1, width, logic_op))
+        } else if src1 == inverted {
+            Some((dst, src2, width, logic_op))
+        } else {
+            None
+        }
+    }
+
     fn try_lower_fused_sysreg_access(
         &mut self,
         ops: &[SmirOp],
@@ -15471,6 +15742,13 @@ impl Aarch64Lowerer {
                 src2,
                 width,
             } => self.lower_vlogic(*dst, *src1, *src2, *width, SimdLogicOp::Xor),
+            OpKind::VBitSelect {
+                dst,
+                mask,
+                src_true,
+                src_false,
+                width,
+            } => self.lower_vbit_select(*dst, *mask, *src_true, *src_false, *width),
             OpKind::VLoad { dst, addr, width } => {
                 if self.mem_helpers {
                     self.emit_jit_vload_op(op.guest_pc, *dst, addr, *width)
@@ -16073,6 +16351,18 @@ impl Aarch64Lowerer {
                 continue;
             }
             if let Some(consumed) = self.try_lower_fused_select(ops)? {
+                idx += consumed;
+                continue;
+            }
+            if let Some(consumed) = self.try_lower_fused_vector_inverted_logic(ops)? {
+                idx += consumed;
+                continue;
+            }
+            if let Some(consumed) = self.try_lower_fused_inverted_reg_logic(ops)? {
+                idx += consumed;
+                continue;
+            }
+            if let Some(consumed) = self.try_lower_fused_inverted_shifted_logic(ops)? {
                 idx += consumed;
                 continue;
             }

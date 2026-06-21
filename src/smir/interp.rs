@@ -2907,6 +2907,24 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::VBitSelect {
+                dst,
+                mask,
+                src_true,
+                src_false,
+                width,
+            } => {
+                let m = Self::read_vec(ctx, *mask);
+                let t = Self::read_vec(ctx, *src_true);
+                let f = Self::read_vec(ctx, *src_false);
+                let mut result = [0u64; 16];
+                let word_count = (width.bytes() / 8) as usize;
+                for i in 0..word_count {
+                    result[i] = (t[i] & m[i]) | (f[i] & !m[i]);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VLane {
                 dst,
                 src1,
