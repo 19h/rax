@@ -4261,6 +4261,73 @@ fn run_batch_el0(name: &str, batch: Vec<(String, u32, ArmState)>) {
     run_batch_with_runner(name, batch, run_rax_el0);
 }
 
+fn run_batch_el0_legality(name: &str, batch: Vec<(String, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: native/qemu oracle unavailable -> skipping");
+            return;
+        }
+    };
+
+    let cases: Vec<(u32, u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] {name}: native oracle run failed");
+            }
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+    assert_eq!(outs.len(), cases.len());
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, _nop, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        if out.trapped != 0 && native_hardware_lacks_label(&oracle, &batch[i].0) {
+            continue;
+        }
+        let rax = run_rax_el0(*insn, st);
+        match (out.trapped == 0, rax.is_some()) {
+            (true, true) | (false, false) => {}
+            (true, false) => mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: "hardware executed but rax rejected at EL0".into(),
+            }),
+            (false, true) => mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: format!("hardware faulted with signal {} but rax executed", out.trapped),
+            }),
+        }
+    }
+
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!(
+            "\n==== {name}: {} legality mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "{name}: {} legality divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
 fn run_batch_with_runner(
     name: &str,
     batch: Vec<(String, u32, ArmState)>,
@@ -22167,6 +22234,15 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     push_lifted_case("msr_fpcr_lifted_masks_x1", enc_msr_fpcr(RN), st);
 
     let mut st = native_state();
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.fpcr = 0;
+    push_lifted_case(
+        "msr_fpcr_lifted_masks_reserved_bits_x1",
+        enc_msr_fpcr(RN),
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0x4444_5555_6666_7777;
     st.fpsr = 0x0800_009f;
     push_lifted_case("mrs_fpsr_lifted_reads_status", enc_mrs_fpsr(RD), st);
@@ -22175,6 +22251,15 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     st.x[1] = 0xffff_ffff_0800_009f;
     st.fpsr = 0;
     push_lifted_case("msr_fpsr_lifted_masks_x1", enc_msr_fpsr(RN), st);
+
+    let mut st = native_state();
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.fpsr = 0;
+    push_lifted_case(
+        "msr_fpsr_lifted_masks_reserved_bits_x1",
+        enc_msr_fpsr(RN),
+        st,
+    );
 
     let mut st = native_state();
     st.x[0] = 0x5555_6666_7777_8888;
@@ -28700,6 +28785,137 @@ fn diff_system_fpcr_fpsr_el0() {
 }
 
 #[test]
+fn diff_system_fpcr_fpsr_reserved_bit_masks() {
+    fn mrs_fpcr(rt: u32) -> u32 {
+        0xd53b_4400 | (rt & 0x1f)
+    }
+
+    fn mrs_fpsr(rt: u32) -> u32 {
+        0xd53b_4420 | (rt & 0x1f)
+    }
+
+    fn msr_fpcr(rt: u32) -> u32 {
+        0xd51b_4400 | (rt & 0x1f)
+    }
+
+    fn msr_fpsr(rt: u32) -> u32 {
+        0xd51b_4420 | (rt & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+
+    for &(label, value) in &[
+        ("all_ones_64", 0xffff_ffff_ffff_ffff),
+        ("all_ones_32", 0x0000_0000_ffff_ffff),
+        ("low_reserved", 0x0000_0000_0007_ffff),
+        ("top_reserved", 0x0000_0000_f800_0000),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = value;
+        st.x[RD as usize] = 0xaaaa_bbbb_cccc_dddd;
+        batch.push((
+            format!("msr_mrs_fpcr_reserved_{label}"),
+            msr_fpcr(RN),
+            mrs_fpcr(RD),
+            st,
+        ));
+    }
+
+    for &(label, value) in &[
+        ("all_ones_64", 0xffff_ffff_ffff_ffff),
+        ("all_ones_32", 0x0000_0000_ffff_ffff),
+        ("reserved_middle", 0x0000_0000_07ff_ff60),
+        ("top_reserved", 0x0000_0000_07ff_ff00),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = value;
+        st.x[RD as usize] = 0x1111_2222_3333_4444;
+        batch.push((
+            format!("msr_mrs_fpsr_reserved_{label}"),
+            msr_fpsr(RN),
+            mrs_fpsr(RD),
+            st,
+        ));
+    }
+
+    run_batch_pair("system_fpcr_fpsr_reserved_bit_masks", batch);
+}
+
+#[cfg(feature = "smir-jit")]
+#[test]
+fn smir_aarch64_fp_sysreg_lift_lower_uses_arch_masks() {
+    use rax::smir::ir::{FunctionBuilder, Terminator};
+    use rax::smir::lift::aarch64::Aarch64Lifter;
+    use rax::smir::lift::{LiftContext, SmirLifter};
+    use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::aarch64::Aarch64Lowerer;
+    use rax::smir::ops::{OpKind, SmirOp};
+    use rax::smir::types::{FunctionId, OpWidth, SourceArch, SrcOperand};
+
+    fn msr_fpcr(rt: u32) -> u32 {
+        0xd51b_4400 | (rt & 0x1f)
+    }
+
+    fn msr_fpsr(rt: u32) -> u32 {
+        0xd51b_4420 | (rt & 0x1f)
+    }
+
+    fn lift_ops(insn: u32) -> Vec<SmirOp> {
+        let mut lifter = Aarch64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch64);
+        lifter
+            .lift_insn(0, &insn.to_le_bytes(), &mut ctx)
+            .unwrap_or_else(|e| panic!("lift failed for {insn:#010x}: {e:?}"))
+            .ops
+    }
+
+    fn lowered_words(ops: Vec<SmirOp>) -> Vec<u32> {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        for op in ops {
+            builder.push_op(op.guest_pc, op.kind);
+        }
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer
+            .lower_function(&func)
+            .unwrap_or_else(|e| panic!("lower failed: {e:?}"));
+        let code = lowerer
+            .finalize()
+            .unwrap_or_else(|e| panic!("finalize failed: {e:?}"));
+        code.chunks_exact(4)
+            .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+            .collect()
+    }
+
+    for (label, insn, mask) in [
+        ("fpcr", msr_fpcr(RN), 0x07c8_0007),
+        ("fpsr", msr_fpsr(RN), 0xf800_009f_u32),
+    ] {
+        let ops = lift_ops(insn);
+        assert!(
+            matches!(
+                ops.first().map(|op| &op.kind),
+                Some(OpKind::And {
+                    src2: SrcOperand::Imm(actual),
+                    width: OpWidth::W64,
+                    ..
+                }) if *actual == i64::from(mask)
+            ),
+            "{label} MSR should lift through architectural mask {mask:#010x}: {ops:?}"
+        );
+
+        let words = lowered_words(ops);
+        assert_eq!(
+            words.first().copied(),
+            Some(insn),
+            "{label} masked MSR should fuse back to direct native sysreg write: {words:#010x?}"
+        );
+    }
+}
+
+#[test]
 fn diff_system_fpcr_fpsr_xzr_edges() {
     fn mrs_fpcr(rt: u32) -> u32 {
         0xd53b_4400 | (rt & 0x1f)
@@ -28921,6 +29137,39 @@ fn diff_system_cpuid_xzr_el0() {
     }
 
     run_batch_el0("system_cpuid_xzr_el0", batch);
+}
+
+#[test]
+fn diff_system_modern_cpuid_el0_legality() {
+    fn mrs_id(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("cpuid id_aa64pfr2", 0, 4, 2),
+        ("cpuid id_aa64zfr0", 0, 4, 4),
+        ("cpuid id_aa64dfr2", 0, 5, 2),
+        ("cpuid id_aa64isar3", 0, 6, 3),
+        ("cpuid id_aa64mmfr3", 0, 7, 3),
+    ];
+
+    let mut rng = Rng::new(0x5157_001b);
+    let mut batch = Vec::new();
+    for (label, op1, crm, op2) in regs {
+        for rt in [0, RN, 30] {
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((format!("{label}_x{rt}"), mrs_id(op1, crm, op2, rt), st));
+        }
+    }
+
+    run_batch_el0_legality("system_modern_cpuid_el0_legality", batch);
 }
 
 #[test]
@@ -29525,6 +29774,144 @@ fn diff_system_el0_opaque_sysreg_read_sweep() {
     }
 
     run_batch_el0("system_el0_opaque_sysreg_read_sweep", batch);
+}
+
+#[test]
+fn diff_system_el0_opaque_sysreg_read_legality_sweep() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("cpuid midr", (1, 0, 0, 0, 0)),
+        ("cpuid mpidr", (1, 0, 0, 0, 5)),
+        ("cpuid revidr", (1, 0, 0, 0, 6)),
+        ("cpuid id_aa64pfr0", (1, 0, 0, 4, 0)),
+        ("cpuid id_aa64pfr1", (1, 0, 0, 4, 1)),
+        ("cpuid id_aa64dfr0", (1, 0, 0, 5, 0)),
+        ("cpuid id_aa64dfr1", (1, 0, 0, 5, 1)),
+        ("cpuid id_aa64isar0", (1, 0, 0, 6, 0)),
+        ("cpuid id_aa64isar1", (1, 0, 0, 6, 1)),
+        ("cpuid id_aa64isar2", (1, 0, 0, 6, 2)),
+        ("cpuid id_aa64mmfr0", (1, 0, 0, 7, 0)),
+        ("cpuid id_aa64mmfr1", (1, 0, 0, 7, 1)),
+        ("cpuid id_aa64mmfr2", (1, 0, 0, 7, 2)),
+        ("ctr_el0", (1, 3, 0, 0, 1)),
+        ("dczid_el0", (1, 3, 0, 0, 7)),
+        ("cntfrq_el0", (1, 3, 14, 0, 0)),
+        ("cntpct_el0", (1, 3, 14, 0, 1)),
+        ("cntvct_el0", (1, 3, 14, 0, 2)),
+        ("cntpctss_el0", (1, 3, 14, 0, 5)),
+        ("cntvctss_el0", (1, 3, 14, 0, 6)),
+        ("tpidr_el0", (1, 3, 13, 0, 2)),
+        ("tpidrro_el0", (1, 3, 13, 0, 3)),
+    ];
+
+    let mut rng = Rng::new(0x5157_001a);
+    let mut batch = Vec::new();
+    for (name, (o0, op1, crn, crm, op2)) in regs {
+        for rt in [0, RN, 30] {
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((
+                format!("mrs_{name}_x{rt}"),
+                mrs(o0, op1, crn, crm, op2, rt),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_legality("system_el0_opaque_sysreg_read_legality_sweep", batch);
+}
+
+#[test]
+fn diff_system_rng_sysreg_el0_legality() {
+    fn mrs(o0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | ((o0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] system_rng_sysreg_el0_legality: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    if oracle.is_native() && !native_host_caps().has("rng") {
+        eprintln!("[arm_diff] system_rng_sysreg_el0_legality: host lacks RNG -> skipping");
+        return;
+    }
+
+    let mut rng = Rng::new(0x5157_0019);
+    let cases = [
+        ("rndr_x0", mrs(1, 3, 2, 4, 0, 0)),
+        ("rndr_xzr", mrs(1, 3, 2, 4, 0, 31)),
+        ("rndrrs_x0", mrs(1, 3, 2, 4, 1, 0)),
+        ("rndrrs_xzr", mrs(1, 3, 2, 4, 1, 31)),
+    ];
+    let batch: Vec<(String, u32, ArmState)> = cases
+        .into_iter()
+        .map(|(label, insn)| (label.to_string(), insn, gen_input(&mut rng)))
+        .collect();
+    let oracle_cases: Vec<(u32, u32, ArmState)> =
+        batch.iter().map(|(_, insn, st)| (*insn, NOP, *st)).collect();
+    let outs = match run_oracle(&oracle, &oracle_cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] system_rng_sysreg_el0_legality: native oracle run failed");
+            }
+            eprintln!("[arm_diff] system_rng_sysreg_el0_legality: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    let mut mismatches = Vec::new();
+    for (i, ((_, insn, st), out)) in batch.iter().zip(outs.iter()).enumerate() {
+        if !oracle.is_native() && out.trapped != 0 {
+            eprintln!(
+                "[arm_diff] system_rng_sysreg_el0_legality: fallback oracle trapped -> skipping"
+            );
+            return;
+        }
+        if out.trapped != 0 {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: format!("hardware faulted with signal {}", out.trapped),
+            });
+            continue;
+        }
+        if run_rax_el0(*insn, st).is_none() {
+            mismatches.push(Mismatch {
+                label: batch[i].0.clone(),
+                insn: *insn,
+                detail: "rax rejected RNDR/RNDRRS at EL0".into(),
+            });
+        }
+    }
+
+    if !mismatches.is_empty() {
+        for m in &mismatches {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "system_rng_sysreg_el0_legality: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
 }
 
 #[test]
@@ -33100,6 +33487,12 @@ fn enc_sve2_fmlal(sub: u32, top: u32) -> u32 {
 /// SVE BFDOT (zzzz): `01100100 01 1 Zm 100000 Zn Zda`. Zn=z1(RN), Zda=z0(RD).
 fn enc_sve_bfdot(zm: u32) -> u32 {
     (0x64 << 24) | (0b01 << 22) | (1 << 21) | (zm << 16) | (0b100000 << 10) | (RN << 5) | RD
+}
+
+/// SVE BFADD/BFSUB/BFMUL (unpredicated): `01100101 00 0 Zm 0000 opc Zn Zd`.
+/// opc: 0=BFADD, 1=BFSUB, 2=BFMUL. Zn=z1(RN), Zm=z2(RM), Zd=z0(RD).
+fn enc_sve_bf_binop(opc: u32, zm: u32) -> u32 {
+    (0x65 << 24) | (zm << 16) | (opc << 10) | (RN << 5) | RD
 }
 
 /// SVE BFDOT (indexed zzxw): `01100100 01 1 idx Zm[2:0] 010000 Zn Zda`.
@@ -39193,6 +39586,22 @@ fn diff_sve2_fcvtnt_fpcr_rounding() {
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
         st.set_preg(0, 0xffff);
+        let bf_lanes = [0x3f80_8000u32, 0x3f81_8000, 0xbf80_8000, 0xbf81_8000];
+        let mut packed = 0u128;
+        for (lane, bits) in bf_lanes.iter().enumerate() {
+            packed |= (*bits as u128) << (32 * lane);
+        }
+        st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+        st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+        batch.push((
+            format!("bfcvtnt_s2bf16_rmode{rmode}"),
+            enc_sve2_fcvtx(0b10, 0b10),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = fpcr;
+        st.set_preg(0, 0xffff);
         let d_lanes = [16_777_217.0f64, -16_777_217.0f64];
         let mut packed = 0u128;
         for (lane, value) in d_lanes.iter().enumerate() {
@@ -39777,6 +40186,39 @@ fn diff_sve_bfmlal_fpcr_rounding() {
     }
 
     run_batch("sve_bfmlal_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_sve_bfadd_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let tie_pairs = [
+        ("pos_even", 0x3f80u16, 0x3b80u16),
+        ("pos_odd", 0x3f81u16, 0x3b80u16),
+        ("neg_even", 0xbf80u16, 0xbb80u16),
+        ("neg_odd", 0xbf81u16, 0xbb80u16),
+    ];
+
+    for rmode in 0..4u64 {
+        let mut zn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..8 {
+            let (_, n, m) = tie_pairs[lane % tie_pairs.len()];
+            zn |= (n as u128) << (lane * 16);
+            zm |= (m as u128) << (lane * 16);
+        }
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+        st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((
+            format!("bfadd fpcr_rounding_rmode{rmode}"),
+            enc_sve_bf_binop(0, RM),
+            st,
+        ));
+    }
+
+    run_batch("sve_bfadd_fpcr_rounding", batch);
 }
 
 #[test]
@@ -42740,6 +43182,34 @@ fn diff_sve_bfcvt() {
         batch.push((format!("bfcvt_{name}"), insn, st));
     }
     run_batch("sve_bfcvt", batch);
+}
+
+#[test]
+fn diff_sve_bfcvt_fpcr_rmode() {
+    let tie_inputs = [
+        0x3f80_8000u32,
+        0x3f81_8000u32,
+        0xbf80_8000u32,
+        0xbf81_8000u32,
+    ];
+
+    let mut rng = Rng::new(0x9_e002);
+    let mut batch = Vec::new();
+    for rmode in 0..4u64 {
+        let mut packed = 0u128;
+        for (lane, bits) in tie_inputs.iter().enumerate() {
+            packed |= (*bits as u128) << (32 * lane);
+        }
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = rmode << 22;
+        st.set_preg(0, 0x1111);
+        st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+        st.set_vreg(RD as usize, rng.next(), rng.next());
+        batch.push((format!("sve_bfcvt_rmode{rmode}"), enc_sve_bfcvt(), st));
+    }
+
+    run_batch("sve_bfcvt_fpcr_rmode", batch);
 }
 
 #[test]
@@ -51115,6 +51585,19 @@ fn enc_bfmmla() -> u32 {
         | RD
 }
 
+/// SMMLA/UMMLA/USMMLA: `0 Q U 01110 10 0 Rm op Rn Rd`.
+/// `lo6` is 101001 for SMMLA/UMMLA and 101011 for USMMLA.
+fn enc_simd_i8mm_mmla(q: u32, u: u32, lo6: u32) -> u32 {
+    (q << 30)
+        | (u << 29)
+        | (0b01110 << 24)
+        | (0b10 << 22)
+        | (RM << 16)
+        | ((lo6 & 0x3f) << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// A varied f32 bit pattern for BFCVT testing: finite normals, tie cases,
 /// overflow, signed zero, and (occasionally) inf. NaN is excluded to keep
 /// payload-propagation out of the comparison.
@@ -51406,6 +51889,63 @@ fn diff_fpcr_fz_widening_fma_subnormal_inputs() {
     batch.push(("bfmlalt_output_tiny_fz".to_string(), enc_bfmlal(1), st));
 
     run_batch("fpcr_fz_widening_fma_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_simd_i8mm_mmla_edges() {
+    let variants = [
+        ("smmla", enc_simd_i8mm_mmla(1, 0, 0b101001)),
+        ("ummla", enc_simd_i8mm_mmla(1, 1, 0b101001)),
+        ("usmmla", enc_simd_i8mm_mmla(1, 0, 0b101011)),
+    ];
+    let patterns = [
+        ("zero", 0u128, 0u128, 0u128),
+        (
+            "all_ff",
+            u128::MAX,
+            u128::MAX,
+            0u128,
+        ),
+        (
+            "signed_min_max",
+            0x8080_8080_8080_8080_8080_8080_8080_8080u128,
+            0x7f7f_7f7f_7f7f_7f7f_7f7f_7f7f_7f7f_7f7fu128,
+            0u128,
+        ),
+        (
+            "mixed_acc",
+            0x00ff_807f_55aa_aa55_0102_0304_fefd_fcfbu128,
+            0xff00_7f80_aa55_55aa_0403_0201_0102_0304u128,
+            0x7fff_ffff_8000_0000_ffff_ffff_0000_0001u128,
+        ),
+        (
+            "wraparound",
+            0x7f7f_7f7f_7f7f_7f7f_0101_0101_0101_0101u128,
+            0x0202_0202_0202_0202_7f7f_7f7f_7f7f_7f7fu128,
+            0xffff_ff00_ffff_ff80_0000_0080_0000_00ffu128,
+        ),
+    ];
+
+    let mut batch = Vec::new();
+    for (name, insn) in variants {
+        for (pattern, zn, zm, za) in patterns {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(RD as usize, za as u64, (za >> 64) as u64);
+            st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((format!("{name}_{pattern}"), insn, st));
+        }
+    }
+
+    for (name, insn) in [
+        ("smmla_q0_unallocated", enc_simd_i8mm_mmla(0, 0, 0b101001)),
+        ("ummla_q0_unallocated", enc_simd_i8mm_mmla(0, 1, 0b101001)),
+        ("usmmla_q0_unallocated", enc_simd_i8mm_mmla(0, 0, 0b101011)),
+    ] {
+        batch.push((name.to_string(), insn, ArmState::zeroed()));
+    }
+
+    run_batch("simd_i8mm_mmla_edges", batch);
 }
 
 #[test]

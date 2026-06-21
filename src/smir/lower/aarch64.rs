@@ -23,6 +23,8 @@ const NZCV_Z: i64 = 1_i64 << 30;
 const NZCV_C: i64 = 1_i64 << 29;
 const NZCV_V: i64 = 1_i64 << 28;
 const NZCV_MASK: i64 = NZCV_N | NZCV_Z | NZCV_C | NZCV_V;
+const FPCR_SYSREG_MASK: i64 = 0x07c8_0007;
+const FPSR_SYSREG_MASK: i64 = 0xf800_009f;
 const SYSREG_NZCV: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (2 << 3);
 const SYSREG_FPCR: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3);
 const SYSREG_FPSR: u32 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3) | 1;
@@ -11457,7 +11459,7 @@ impl Aarch64Lowerer {
                 crn: 4,
                 crm: 4,
                 op2: 0,
-                mask: 0xffff_ffff,
+                mask: FPCR_SYSREG_MASK,
                 read_width: OpWidth::W64,
                 write_width: OpWidth::W64,
             }),
@@ -11466,7 +11468,7 @@ impl Aarch64Lowerer {
                 crn: 4,
                 crm: 4,
                 op2: 1,
-                mask: 0xffff_ffff,
+                mask: FPSR_SYSREG_MASK,
                 read_width: OpWidth::W64,
                 write_width: OpWidth::W64,
             }),

@@ -1069,11 +1069,11 @@ impl AArch64Cpu {
             }
             // FPCR
             (3, 3, 4, 4, 0) => {
-                return Ok(self.fpcr as u64);
+                return Ok(mask_fpcr(self.fpcr) as u64);
             }
             // FPSR
             (3, 3, 4, 4, 1) => {
-                return Ok(self.fpsr as u64);
+                return Ok(mask_fpsr(self.fpsr) as u64);
             }
             _ => {}
         }
@@ -1252,12 +1252,12 @@ impl AArch64Cpu {
             }
             // FPCR
             (3, 3, 4, 4, 0) => {
-                self.fpcr = value as u32;
+                self.fpcr = mask_fpcr(value as u32);
                 return Ok(());
             }
             // FPSR
             (3, 3, 4, 4, 1) => {
-                self.fpsr = value as u32;
+                self.fpsr = mask_fpsr(value as u32);
                 return Ok(());
             }
             // SCTLR_ELx - update MMU config
@@ -1332,14 +1332,19 @@ impl AArch64Cpu {
                 | (3, 0, 0, 0, 6)  // REVIDR_EL1
                 | (3, 0, 0, 4, 0)  // ID_AA64PFR0_EL1
                 | (3, 0, 0, 4, 1)  // ID_AA64PFR1_EL1
+                | (3, 0, 0, 4, 2)  // ID_AA64PFR2_EL1
+                | (3, 0, 0, 4, 4)  // ID_AA64ZFR0_EL1
                 | (3, 0, 0, 5, 0)  // ID_AA64DFR0_EL1
                 | (3, 0, 0, 5, 1)  // ID_AA64DFR1_EL1
+                | (3, 0, 0, 5, 2)  // ID_AA64DFR2_EL1
                 | (3, 0, 0, 6, 0)  // ID_AA64ISAR0_EL1
                 | (3, 0, 0, 6, 1)  // ID_AA64ISAR1_EL1
                 | (3, 0, 0, 6, 2)  // ID_AA64ISAR2_EL1
+                | (3, 0, 0, 6, 3)  // ID_AA64ISAR3_EL1
                 | (3, 0, 0, 7, 0)  // ID_AA64MMFR0_EL1
                 | (3, 0, 0, 7, 1)  // ID_AA64MMFR1_EL1
                 | (3, 0, 0, 7, 2)  // ID_AA64MMFR2_EL1
+                | (3, 0, 0, 7, 3)  // ID_AA64MMFR3_EL1
             // EL0-visible status/control registers.
                 | (3, 3, 4, 2, 0)  // NZCV
                 | (3, 3, 4, 2, 5)  // DIT
@@ -18723,8 +18728,8 @@ impl AArch64Cpu {
         gr.sp = self.current_sp();
         gr.pc = self.pc; // fallback resume PC; a native-exit stub overwrites it
         gr.nzcv = ((self.nzcv as u64) & 0xF) << 28; // u8 [N,Z,C,V] -> PSTATE 31:28
-        gr.fpcr = self.fpcr as u64;
-        gr.fpsr = self.fpsr as u64;
+        gr.fpcr = mask_fpcr(self.fpcr) as u64;
+        gr.fpsr = mask_fpsr(self.fpsr) as u64;
         for i in 0..NUM_SIMD_REGS {
             gr.v[2 * i] = self.v[i] as u64;
             gr.v[2 * i + 1] = (self.v[i] >> 64) as u64;
@@ -18739,8 +18744,8 @@ impl AArch64Cpu {
         }
         self.set_current_sp(gr.sp);
         self.nzcv = ((gr.nzcv >> 28) & 0xF) as u8;
-        self.fpcr = gr.fpcr as u32;
-        self.fpsr = gr.fpsr as u32;
+        self.fpcr = mask_fpcr(gr.fpcr as u32);
+        self.fpsr = mask_fpsr(gr.fpsr as u32);
         for i in 0..NUM_SIMD_REGS {
             self.v[i] = (gr.v[2 * i] as u128) | ((gr.v[2 * i + 1] as u128) << 64);
         }
@@ -19185,20 +19190,20 @@ impl ArmCpu for AArch64Cpu {
     }
 
     fn get_fpcr(&self) -> Option<u32> {
-        Some(self.fpcr)
+        Some(mask_fpcr(self.fpcr))
     }
 
     fn set_fpcr(&mut self, value: u32) -> Result<(), ArmError> {
-        self.fpcr = value;
+        self.fpcr = mask_fpcr(value);
         Ok(())
     }
 
     fn get_fpsr(&self) -> Option<u32> {
-        Some(self.fpsr)
+        Some(mask_fpsr(self.fpsr))
     }
 
     fn set_fpsr(&mut self, value: u32) -> Result<(), ArmError> {
-        self.fpsr = value;
+        self.fpsr = mask_fpsr(value);
         Ok(())
     }
 }
@@ -20710,10 +20715,22 @@ const FPSR_UFC: u32 = 1 << 3;
 const FPSR_IXC: u32 = 1 << 4;
 const FPSR_IDC: u32 = 1 << 7;
 const FPSR_QC: u32 = 1 << 27;
+const FPSR_ARCH_MASK: u32 = 0xf800_009f;
 const FPCR_FIZ: u32 = 1 << 0;
 const FPCR_AH: u32 = 1 << 1;
 const FPCR_FZ16: u32 = 1 << 19;
 const FPCR_FZ: u32 = 1 << 24;
+const FPCR_ARCH_MASK: u32 = 0x07c8_0007;
+
+#[inline]
+fn mask_fpcr(value: u32) -> u32 {
+    value & FPCR_ARCH_MASK
+}
+
+#[inline]
+fn mask_fpsr(value: u32) -> u32 {
+    value & FPSR_ARCH_MASK
+}
 
 /// Decode the FP three-same opcode from (U, size<1>, opcode) into an `FpKind`.
 fn fp_three_same_decode(u: u32, a: u32, opcode: u32) -> Option<FpKind> {

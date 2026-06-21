@@ -22,7 +22,8 @@ const NZCV_Z: i64 = 1_i64 << 30;
 const NZCV_C: i64 = 1_i64 << 29;
 const NZCV_V: i64 = 1_i64 << 28;
 const NZCV_MASK: i64 = NZCV_N | NZCV_Z | NZCV_C | NZCV_V;
-const FP_SYSREG_MASK: i64 = 0xffff_ffff;
+const FPCR_SYSREG_MASK: i64 = 0x07c8_0007;
+const FPSR_SYSREG_MASK: i64 = 0xf800_009f;
 const MTE_TAG_CLEAR_MASK: i64 = (!0x0f00_0000_0000_0000u64) as i64;
 const SYSREG_NZCV: u16 = (3 << 14) | (3 << 11) | (4 << 7) | (2 << 3);
 const SYSREG_FPCR: u16 = (3 << 14) | (3 << 11) | (4 << 7) | (4 << 3);
@@ -106,13 +107,13 @@ impl Aarch64Lifter {
             }),
             SYSREG_FPCR => Some(SysRegAccess {
                 reg: ArmReg::Fpcr,
-                mask: FP_SYSREG_MASK,
+                mask: FPCR_SYSREG_MASK,
                 read_width: OpWidth::W64,
                 write_width: OpWidth::W64,
             }),
             SYSREG_FPSR => Some(SysRegAccess {
                 reg: ArmReg::Fpsr,
-                mask: FP_SYSREG_MASK,
+                mask: FPSR_SYSREG_MASK,
                 read_width: OpWidth::W64,
                 write_width: OpWidth::W64,
             }),
