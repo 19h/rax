@@ -30001,7 +30001,7 @@ fn diff_crypto_sha512_sha3() {
         ("eor3".to_string(), 0xce02_0c20),
         ("bcax".to_string(), 0xce22_0c20),
     ];
-    for imm in [0, 1, 13, 63] {
+    for imm in 0..64u32 {
         cases.push((format!("xar #{imm}"), enc_xar(imm)));
     }
     run_family("crypto_sha512_sha3", cases, 40, 0x1_0021);
@@ -31274,6 +31274,27 @@ fn enc_sve_minmax_imm(size: u32, op6: u32, imm8: u32) -> u32 {
         | RD
 }
 
+/// SVE MUL immediate: `00100101 size 110000 110 imm8 Zdn`.
+fn enc_sve_mul_imm(size: u32, imm8: u32) -> u32 {
+    (0x25 << 24)
+        | (size << 22)
+        | (0b110000 << 16)
+        | (0b110 << 13)
+        | ((imm8 & 0xFF) << 5)
+        | RD
+}
+
+/// SVE DUP immediate: `00100101 size 111000 11 sh imm8 Zd`.
+fn enc_sve_dup_imm(size: u32, sh: u32, imm8: u32) -> u32 {
+    (0x25 << 24)
+        | (size << 22)
+        | (0b111000 << 16)
+        | (0b11 << 14)
+        | (sh << 13)
+        | ((imm8 & 0xFF) << 5)
+        | RD
+}
+
 /// SVE BFCVT (f32->bf16, predicated): `01100101 10 0010 10 101 Pg Zn Zd`. Pg=p0,
 /// Zn=z1(RN), Zd=z0(RD).
 fn enc_sve_bfcvt() -> u32 {
@@ -31302,6 +31323,17 @@ fn enc_sve_unpk(size: u32, u: u32, h: u32) -> u32 {
 /// SVE DUPM: `00000101 110000 N immr imms Zd`. Zd=z0(RD).
 fn enc_sve_dupm(n: u32, immr: u32, imms: u32) -> u32 {
     (0x05 << 24) | (0b110000 << 18) | (n << 17) | (immr << 11) | (imms << 5) | RD
+}
+
+/// SVE logical immediate: `00000101 opc 0000 N immr imms Zd`.
+/// opc: 0=ORR, 1=EOR, 2=AND.
+fn enc_sve_logical_imm(opc: u32, n: u32, immr: u32, imms: u32) -> u32 {
+    (0x05 << 24)
+        | (opc << 22)
+        | (n << 17)
+        | ((immr & 0x3F) << 11)
+        | ((imms & 0x3F) << 5)
+        | RD
 }
 
 /// SVE FRECPE/FRSQRTE: `01100101 size 00111 r 001100 Zn Zd`. r=bit16. Zn=z1(RN),
@@ -37925,6 +37957,48 @@ fn diff_sve_minmax_imm_exhaustive() {
 }
 
 #[test]
+fn diff_sve_mul_imm_exhaustive() {
+    let mut rng = Rng::new(0x9_d044);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for imm8 in 0..=0xFFu32 {
+            let mut st = gen_sve_input(&mut rng);
+            st.set_vreg(RD as usize, rng.next(), rng.next());
+            batch.push((
+                format!("sve_mul_imm s{size} i{imm8:#04x}"),
+                enc_sve_mul_imm(size, imm8),
+                st,
+            ));
+        }
+    }
+
+    run_batch("sve_mul_imm_exhaustive", batch);
+}
+
+#[test]
+fn diff_sve_dup_imm_exhaustive() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..4u32 {
+        for sh in 0..2u32 {
+            if size == 0 && sh == 1 {
+                continue;
+            }
+            for imm8 in 0..=0xFFu32 {
+                batch.push((
+                    format!("sve_dup_imm s{size} sh{sh} i{imm8:#04x}"),
+                    enc_sve_dup_imm(size, sh, imm8),
+                    ArmState::zeroed(),
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_dup_imm_exhaustive", batch);
+}
+
+#[test]
 fn diff_sve_bfcvt() {
     // BFCVT f32 -> bf16, predicated merging, finite inputs.
     let insn = enc_sve_bfcvt();
@@ -39301,15 +39375,15 @@ fn diff_sve_mmla() {
 
 #[test]
 fn diff_sve2_xar() {
-    // XAR rotates (Zdn ^ Zm) right by an immediate, per element. Test every size
-    // and a spread of rotate amounts including the full-width (identity) case.
+    // XAR rotates (Zdn ^ Zm) right by an immediate, per element. Test every
+    // valid amount for every element size, including full-width identity.
     let mut rng = Rng::new(0x6_f001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size_log in 0..4u32 {
         let bits = 8u32 << size_log;
-        for &amount in &[1, 2, bits / 2, bits - 1, bits] {
+        for amount in 1..=bits {
             let insn = enc_sve2_xar(size_log, amount);
-            for _ in 0..8 {
+            for _ in 0..4 {
                 let mut st = ArmState::zeroed();
                 st.set_vreg(0, rng.next(), rng.next()); // Zdn
                 st.set_vreg(1, rng.next(), rng.next()); // Zm
@@ -40507,20 +40581,22 @@ fn diff_sve_cvt() {
 #[test]
 fn diff_sve_dup_idx() {
     // DUP indexed broadcasts one element of Zn to all lanes; an index past the
-    // end broadcasts zero. Covers every element size and in/out-of-range index.
+    // end broadcasts zero. Cover every representable index for each element
+    // size so the full imm2:tsz encoding is checked.
     let mut cases: Vec<(String, u32)> = Vec::new();
-    for (elog, name, nelem) in [
-        (0u32, "b", 16u32),
-        (1, "h", 8),
-        (2, "s", 4),
-        (3, "d", 2),
-        (4, "q", 1),
+    for (elog, name) in [
+        (0u32, "b"),
+        (1, "h"),
+        (2, "s"),
+        (3, "d"),
+        (4, "q"),
     ] {
-        for index in [0u32, 1, nelem / 2, nelem - 1, nelem, nelem + 2] {
+        let encoded_indexes = 1u32 << (6 - elog);
+        for index in 0..encoded_indexes {
             cases.push((format!("dup_idx {name}[{index}]"), enc_dup_idx(elog, index)));
         }
     }
-    run_family("sve_dup_idx", cases, 8, 0x2_E001);
+    run_family("sve_dup_idx", cases, 4, 0x2_E001);
 }
 
 #[test]
@@ -40564,15 +40640,26 @@ fn diff_sve_splice() {
 #[test]
 fn diff_sve_pfirst() {
     // PFIRST sets the first Pg-active element active in Pdn and writes NZCV via
-    // PredTest. Random Pg/Pdn inputs cover the empty-mask and already-set paths.
+    // PredTest. Cover every Pg/Pdn register combination, including aliases.
     let mut rng = Rng::new(0x2_9001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    let insn = enc_pfirst(1, 0); // Pg=p1, Pdn=p0
-    for _ in 0..40 {
-        let mut st = ArmState::zeroed();
-        st.set_preg(0, rng.next() as u16); // Pdn (source + dest)
-        st.set_preg(1, rng.next() as u16); // Pg
-        batch.push(("pfirst".to_string(), insn, st));
+    for pg in 0..16u32 {
+        for pdn in 0..16u32 {
+            let insn = enc_pfirst(pg, pdn);
+            for (pdn_val, pg_val) in [
+                (0x0000u16, 0x0000u16),
+                (0xffff, 0xffff),
+                (0x8001, 0x00f0),
+                (rng.next() as u16, rng.next() as u16),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_preg(pdn as usize, pdn_val); // Pdn (source + dest)
+                if pg != pdn {
+                    st.set_preg(pg as usize, pg_val); // Pg
+                }
+                batch.push((format!("pfirst p{pg},p{pdn}"), insn, st));
+            }
+        }
     }
     run_batch("sve_pfirst", batch);
 }
@@ -40580,16 +40667,28 @@ fn diff_sve_pfirst() {
 #[test]
 fn diff_sve_pnext() {
     // PNEXT advances to the next Pg-active element after Pdn's last active one,
-    // for each element size, and writes NZCV via PredTest.
+    // for each element size, and writes NZCV via PredTest. Cover every Pg/Pdn
+    // register combination, including aliases.
     let mut rng = Rng::new(0x2_A001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for sz in 0..4u32 {
-        let insn = enc_pnext(sz, 1, 0);
-        for _ in 0..40 {
-            let mut st = ArmState::zeroed();
-            st.set_preg(0, rng.next() as u16); // Pdn (source + dest)
-            st.set_preg(1, rng.next() as u16); // Pg
-            batch.push((format!("pnext sz{sz}"), insn, st));
+        for pg in 0..16u32 {
+            for pdn in 0..16u32 {
+                let insn = enc_pnext(sz, pg, pdn);
+                for (pdn_val, pg_val) in [
+                    (0x0000u16, 0x0000u16),
+                    (0xffff, 0xffff),
+                    (0x8001, 0x00f0),
+                    (rng.next() as u16, rng.next() as u16),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(pdn as usize, pdn_val); // Pdn (source + dest)
+                    if pg != pdn {
+                        st.set_preg(pg as usize, pg_val); // Pg
+                    }
+                    batch.push((format!("pnext sz{sz} p{pg},p{pdn}"), insn, st));
+                }
+            }
         }
     }
     run_batch("sve_pnext", batch);
@@ -40598,7 +40697,8 @@ fn diff_sve_pnext() {
 #[test]
 fn diff_sve_brk() {
     // BRKA (break after) / BRKB (break before) the first Pn-true element, in
-    // both merging/zeroing and flag-setting forms. Random Pg/Pn/prior-Pd.
+    // both merging/zeroing and flag-setting forms. Cover random distinct
+    // operands plus predicate-register aliases.
     let mut rng = Rng::new(0x2_B001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for b in 0..2u32 {
@@ -40613,6 +40713,29 @@ fn diff_sve_brk() {
                     st.set_preg(2, rng.next() as u16); // Pn
                     batch.push((name.clone(), insn, st));
                 }
+                for (pd, pg, pn, regs) in [
+                    (0u32, 1u32, 2u32, "distinct"),
+                    (0, 0, 1, "pd_pg"),
+                    (0, 1, 0, "pd_pn"),
+                    (0, 1, 1, "pg_pn"),
+                    (0, 0, 0, "all"),
+                    (15, 14, 13, "high"),
+                ] {
+                    let insn = enc_brka(b, s, m, pg, pn, pd);
+                    let name = format!("brk{} {regs} s{s} m{m}", if b == 0 { "a" } else { "b" });
+                    for (pd_val, pg_val, pn_val) in [
+                        (0x0000u16, 0x0000u16, 0x0000u16),
+                        (0xffff, 0xffff, 0xffff),
+                        (0xaaaa, 0x0f0f, 0x00f0),
+                        (rng.next() as u16, rng.next() as u16, rng.next() as u16),
+                    ] {
+                        let mut st = ArmState::zeroed();
+                        st.set_preg(pd as usize, pd_val);
+                        st.set_preg(pg as usize, pg_val);
+                        st.set_preg(pn as usize, pn_val);
+                        batch.push((name.clone(), insn, st));
+                    }
+                }
             }
         }
     }
@@ -40622,6 +40745,7 @@ fn diff_sve_brk() {
 #[test]
 fn diff_sve_brkn() {
     // BRKN: result = Pdm if the last Pg-active element of Pn is set, else 0.
+    // Cover random distinct operands plus predicate-register aliases.
     let mut rng = Rng::new(0x2_C001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for s in 0..2u32 {
@@ -40633,6 +40757,28 @@ fn diff_sve_brkn() {
             st.set_preg(2, rng.next() as u16); // Pn
             batch.push((format!("brkn s{s}"), insn, st));
         }
+        for (pdm, pg, pn, regs) in [
+            (0u32, 1u32, 2u32, "distinct"),
+            (0, 0, 1, "pdm_pg"),
+            (0, 1, 0, "pdm_pn"),
+            (0, 1, 1, "pg_pn"),
+            (0, 0, 0, "all"),
+            (15, 14, 13, "high"),
+        ] {
+            let insn = enc_brkn(s, pg, pn, pdm);
+            for (pdm_val, pg_val, pn_val) in [
+                (0x0000u16, 0x0000u16, 0x0000u16),
+                (0xffff, 0xffff, 0xffff),
+                (0xaaaa, 0x0f0f, 0x00f0),
+                (rng.next() as u16, rng.next() as u16, rng.next() as u16),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_preg(pdm as usize, pdm_val);
+                st.set_preg(pg as usize, pg_val);
+                st.set_preg(pn as usize, pn_val);
+                batch.push((format!("brkn {regs} s{s}"), insn, st));
+            }
+        }
     }
     run_batch("sve_brkn", batch);
 }
@@ -40640,6 +40786,7 @@ fn diff_sve_brkn() {
 #[test]
 fn diff_sve_brkp() {
     // BRKPA / BRKPB propagating partition break (Pm break condition, Pn carry).
+    // Cover random distinct operands plus predicate-register aliases.
     let mut rng = Rng::new(0x2_D001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for b in 0..2u32 {
@@ -40652,6 +40799,38 @@ fn diff_sve_brkp() {
                 st.set_preg(2, rng.next() as u16); // Pn
                 st.set_preg(3, rng.next() as u16); // Pm
                 batch.push((name.clone(), insn, st));
+            }
+            for (pd, pm, pg, pn, regs) in [
+                (0u32, 3u32, 1u32, 2u32, "distinct"),
+                (0, 0, 1, 2, "pd_pm"),
+                (0, 3, 0, 2, "pd_pg"),
+                (0, 3, 1, 0, "pd_pn"),
+                (0, 1, 1, 2, "pm_pg"),
+                (0, 2, 1, 2, "pm_pn"),
+                (0, 3, 1, 1, "pg_pn"),
+                (0, 0, 0, 0, "all"),
+                (15, 12, 14, 13, "high"),
+            ] {
+                let insn = enc_brkp(b, s, pm, pg, pn, pd);
+                let name = format!("brkp{} {regs} s{s}", if b == 0 { "a" } else { "b" });
+                for (pd_val, pm_val, pg_val, pn_val) in [
+                    (0x0000u16, 0x0000u16, 0x0000u16, 0x0000u16),
+                    (0xffff, 0xffff, 0xffff, 0xffff),
+                    (0x5555, 0xaaaa, 0x0f0f, 0x00f0),
+                    (
+                        rng.next() as u16,
+                        rng.next() as u16,
+                        rng.next() as u16,
+                        rng.next() as u16,
+                    ),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_preg(pd as usize, pd_val);
+                    st.set_preg(pm as usize, pm_val);
+                    st.set_preg(pg as usize, pg_val);
+                    st.set_preg(pn as usize, pn_val);
+                    batch.push((name.clone(), insn, st));
+                }
             }
         }
     }
@@ -40846,32 +41025,24 @@ fn diff_sve2_shrn() {
     // SVE2 shift right narrow: SHRN/RSHRN, SQSHRUN, SQSHRN, UQSHRN (bottom/top),
     // across destination sizes and shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
-    for &(db, amt) in &[
-        (8u32, 1u32),
-        (8, 4),
-        (8, 8),
-        (16, 1),
-        (16, 8),
-        (16, 16),
-        (32, 1),
-        (32, 16),
-        (32, 32),
-    ] {
-        let (tsz, imm3) = shrn_tsz_imm(db, amt);
-        for op in 0..2u32 {
-            for u in 0..2u32 {
-                for r in 0..2u32 {
-                    for t in 0..2u32 {
-                        cases.push((
-                            format!("shrn d{db} a{amt} op{op} u{u} r{r} t{t}"),
-                            enc_sve2_shrn(tsz, imm3, op, u, r, t),
-                        ));
+    for db in [8u32, 16, 32] {
+        for amt in 1..=db {
+            let (tsz, imm3) = shrn_tsz_imm(db, amt);
+            for op in 0..2u32 {
+                for u in 0..2u32 {
+                    for r in 0..2u32 {
+                        for t in 0..2u32 {
+                            cases.push((
+                                format!("shrn d{db} a{amt} op{op} u{u} r{r} t{t}"),
+                                enc_sve2_shrn(tsz, imm3, op, u, r, t),
+                            ));
+                        }
                     }
                 }
             }
         }
     }
-    run_family("sve2_shrn", cases, 12, 0x5_8001);
+    run_family("sve2_shrn", cases, 6, 0x5_8001);
 }
 
 #[test]
@@ -40922,28 +41093,20 @@ fn diff_sve2_shll() {
     // SVE2 shift left long (SSHLL/USHLL, bottom/top), across source sizes and
     // shift amounts.
     let mut cases: Vec<(String, u32)> = Vec::new();
-    for &(sb, amt) in &[
-        (8u32, 0u32),
-        (8, 3),
-        (8, 7),
-        (16, 0),
-        (16, 8),
-        (16, 15),
-        (32, 0),
-        (32, 16),
-        (32, 31),
-    ] {
-        let (tsz, imm3) = shll_tsz_imm(sb, amt);
-        for u in 0..2u32 {
-            for t in 0..2u32 {
-                cases.push((
-                    format!("shll s{sb} a{amt} u{u} t{t}"),
-                    enc_sve2_shll(tsz, imm3, u, t),
-                ));
+    for sb in [8u32, 16, 32] {
+        for amt in 0..sb {
+            let (tsz, imm3) = shll_tsz_imm(sb, amt);
+            for u in 0..2u32 {
+                for t in 0..2u32 {
+                    cases.push((
+                        format!("shll s{sb} a{amt} u{u} t{t}"),
+                        enc_sve2_shll(tsz, imm3, u, t),
+                    ));
+                }
             }
         }
     }
-    run_family("sve2_shll", cases, 16, 0x5_A001);
+    run_family("sve2_shll", cases, 8, 0x5_A001);
 }
 
 #[test]
@@ -44089,6 +44252,49 @@ fn diff_generated_sve_logical_immediate_sweep() {
         }
     }
     run_batch("generated_sve_logical_immediate_sweep", batch);
+}
+
+#[test]
+fn diff_sve_logical_immediate_exhaustive() {
+    let mut rng = Rng::new(0xa64_10c3);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for (opc, name) in [(0u32, "orr"), (1, "eor"), (2, "and")] {
+        for n in 0..2u32 {
+            for immr in 0..64u32 {
+                for imms in 0..64u32 {
+                    let mut st = gen_sve_input(&mut rng);
+                    st.set_vreg(RD as usize, rng.next(), rng.next());
+                    batch.push((
+                        format!("sve_{name}_imm n{n} r{immr} s{imms}"),
+                        enc_sve_logical_imm(opc, n, immr, imms),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("sve_logical_immediate_exhaustive", batch);
+}
+
+#[test]
+fn diff_sve_dupm_exhaustive() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for n in 0..2u32 {
+        for immr in 0..64u32 {
+            for imms in 0..64u32 {
+                batch.push((
+                    format!("sve_dupm n{n} r{immr} s{imms}"),
+                    enc_sve_dupm(n, immr, imms),
+                    ArmState::zeroed(),
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_dupm_exhaustive", batch);
 }
 
 #[test]
