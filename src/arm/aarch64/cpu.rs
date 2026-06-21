@@ -1023,6 +1023,10 @@ impl AArch64Cpu {
 
     /// Read system register.
     fn read_sysreg(&self, encoding: Aarch64SysRegEncoding) -> Result<u64, ArmError> {
+        if self.current_el == 0 && !Self::sysreg_read_allowed_at_el0(encoding) {
+            return Err(ArmError::InvalidExceptionLevel(0));
+        }
+
         // Handle special cases first
         match (
             encoding.op0,
@@ -1195,6 +1199,10 @@ impl AArch64Cpu {
         encoding: Aarch64SysRegEncoding,
         value: u64,
     ) -> Result<(), ArmError> {
+        if self.current_el == 0 && !Self::sysreg_write_allowed_at_el0(encoding) {
+            return Err(ArmError::InvalidExceptionLevel(0));
+        }
+
         // Handle special cases first
         match (
             encoding.op0,
@@ -1298,6 +1306,49 @@ impl AArch64Cpu {
                 encoding
             )))
         }
+    }
+
+    fn sysreg_read_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
+        matches!(
+            (
+                encoding.op0,
+                encoding.op1,
+                encoding.crn,
+                encoding.crm,
+                encoding.op2,
+            ),
+            // EL0-visible status/control registers.
+            (3, 3, 4, 2, 0)  // NZCV
+                | (3, 3, 4, 4, 0)  // FPCR
+                | (3, 3, 4, 4, 1)  // FPSR
+                // EL0-visible cache/timer/thread state.
+                | (3, 3, 0, 0, 1)  // CTR_EL0
+                | (3, 3, 0, 0, 7)  // DCZID_EL0
+                | (3, 3, 13, 0, 2) // TPIDR_EL0
+                | (3, 3, 13, 0, 3) // TPIDRRO_EL0
+                | (3, 3, 14, 0, 0) // CNTFRQ_EL0
+                | (3, 3, 14, 0, 1) // CNTPCT_EL0
+                | (3, 3, 14, 0, 2) // CNTVCT_EL0
+                // Random-number registers are architecturally EL0-readable.
+                | (3, 3, 2, 4, 0)  // RNDR
+                | (3, 3, 2, 4, 1)  // RNDRRS
+        )
+    }
+
+    fn sysreg_write_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
+        matches!(
+            (
+                encoding.op0,
+                encoding.op1,
+                encoding.crn,
+                encoding.crm,
+                encoding.op2,
+            ),
+            (3, 3, 4, 2, 0)  // NZCV
+                | (3, 3, 4, 4, 0)  // FPCR
+                | (3, 3, 4, 4, 1)  // FPSR
+                | (3, 3, 13, 0, 2) // TPIDR_EL0
+        )
     }
 
     /// Export the backend-agnostic subset of modeled AArch64 system state.
