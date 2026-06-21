@@ -28241,6 +28241,36 @@ fn diff_pauth_dp1_roundtrip_el0() {
 }
 
 #[test]
+fn diff_pauth_pacga_xzr_el0() {
+    fn pacga(rd: u32, rn: u32, rm: u32) -> u32 {
+        (1 << 31)
+            | (0b0011010110 << 21)
+            | ((rm & 0x1f) << 16)
+            | (0b001100 << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let mut rng = Rng::new(0xa64_9a1b);
+    let mut batch = Vec::new();
+    for rn in [0, 2, 30] {
+        for rm in [1, 3, 31] {
+            for _ in 0..4 {
+                let mut st = gen_input(&mut rng);
+                st.x[rn as usize] = rng.next();
+                if rm != 31 {
+                    st.x[rm as usize] = rng.next();
+                }
+                st.sp = (GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2)) & !0xf;
+                batch.push((format!("pacga_xzr_x{rn}_x{rm}"), pacga(31, rn, rm), st));
+            }
+        }
+    }
+
+    run_batch("pauth_pacga_xzr_el0", batch);
+}
+
+#[test]
 fn diff_pauth_xpac_strip_el0() {
     fn xpac(opcode: u32, rd: u32) -> u32 {
         (1 << 31)
@@ -29173,6 +29203,350 @@ fn diff_system_modern_cpuid_el0_legality() {
 }
 
 #[test]
+fn diff_system_modern_cpuid_xzr_el0() {
+    fn mrs_id_xzr(op1: u32, crm: u32, op2: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | 31
+    }
+
+    let regs = [
+        ("cpuid id_aa64pfr2", 0, 4, 2),
+        ("cpuid id_aa64zfr0", 0, 4, 4),
+        ("cpuid id_aa64dfr2", 0, 5, 2),
+        ("cpuid id_aa64isar3", 0, 6, 3),
+        ("cpuid id_aa64mmfr3", 0, 7, 3),
+    ];
+
+    let mut rng = Rng::new(0x5157_001c);
+    let mut batch = Vec::new();
+    for (label, op1, crm, op2) in regs {
+        for _ in 0..4 {
+            batch.push((label.to_string(), mrs_id_xzr(op1, crm, op2), gen_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0("system_modern_cpuid_xzr_el0", batch);
+}
+
+#[test]
+fn diff_system_aarch32_cpuid_el0_legality() {
+    fn mrs_id(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let regs = [
+        ("cpuid id_pfr0", 0, 1, 0),
+        ("cpuid id_pfr1", 0, 1, 1),
+        ("cpuid id_dfr0", 0, 1, 2),
+        ("cpuid id_afr0", 0, 1, 3),
+        ("cpuid id_mmfr0", 0, 1, 4),
+        ("cpuid id_mmfr1", 0, 1, 5),
+        ("cpuid id_mmfr2", 0, 1, 6),
+        ("cpuid id_mmfr3", 0, 1, 7),
+        ("cpuid id_isar0", 0, 2, 0),
+        ("cpuid id_isar1", 0, 2, 1),
+        ("cpuid id_isar2", 0, 2, 2),
+        ("cpuid id_isar3", 0, 2, 3),
+        ("cpuid id_isar4", 0, 2, 4),
+        ("cpuid id_isar5", 0, 2, 5),
+        ("cpuid mvfr0", 0, 3, 0),
+        ("cpuid mvfr1", 0, 3, 1),
+        ("cpuid mvfr2", 0, 3, 2),
+    ];
+
+    let mut rng = Rng::new(0x5157_001d);
+    let mut batch = Vec::new();
+    for (label, op1, crm, op2) in regs {
+        for rt in [0, RN, 30] {
+            let mut st = gen_input(&mut rng);
+            st.x[rt as usize] = rng.next();
+            batch.push((format!("{label}_x{rt}"), mrs_id(op1, crm, op2, rt), st));
+        }
+    }
+
+    run_batch_el0_legality("system_aarch32_cpuid_el0_legality", batch);
+}
+
+#[test]
+fn diff_system_cpuid_id_block_el0_legality_grid() {
+    fn mrs_id(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_001e);
+    let mut batch = Vec::new();
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for rt in [0, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[rt as usize] = rng.next();
+                batch.push((
+                    format!("cpuid op1_0_crm{crm}_op2{op2}_x{rt}"),
+                    mrs_id(0, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_cpuid_id_block_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_cpuid_id_block_xzr_el0_grid() {
+    fn mrs_id_xzr(op1: u32, crm: u32, op2: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | 31
+    }
+
+    let mut rng = Rng::new(0x5157_001f);
+    let mut batch = Vec::new();
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for _ in 0..2 {
+                batch.push((
+                    format!("cpuid op1_0_crm{crm}_op2{op2}_xzr"),
+                    mrs_id_xzr(0, crm, op2),
+                    gen_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch_el0("system_cpuid_id_block_xzr_el0_grid", batch);
+}
+
+#[test]
+fn diff_system_op1_1_id_cache_el0_legality_grid() {
+    fn mrs(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0020);
+    let mut batch = Vec::new();
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for rt in [0, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[rt as usize] = rng.next();
+                batch.push((
+                    format!("sysid op1_1_crm{crm}_op2{op2}_x{rt}"),
+                    mrs(1, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_op1_1_id_cache_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_debug_id_el0_legality_grid() {
+    fn mrs(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (2 << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0021);
+    let mut batch = Vec::new();
+    for op1 in 0..=7 {
+        for crm in 0..=7 {
+            for op2 in 0..=7 {
+                let mut st = gen_input(&mut rng);
+                st.x[RD as usize] = rng.next();
+                batch.push((
+                    format!("debug_id op1{op1}_crm{crm}_op2{op2}"),
+                    mrs(op1, crm, op2, RD),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_debug_id_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_el0_thread_read_legality_grid() {
+    fn mrs(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd500_0000
+            | (1 << 21)
+            | (3 << 19)
+            | ((op1 & 0x7) << 16)
+            | (13 << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0022);
+    let mut batch = Vec::new();
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for rt in [0, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[rt as usize] = rng.next();
+                batch.push((
+                    format!("thread_el0 crm{crm}_op2{op2}_x{rt}"),
+                    mrs(3, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_el0_thread_read_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_id_debug_write_el0_legality_grid() {
+    fn msr(op0: u32, op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | ((op0 & 1) << 19)
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0023);
+    let mut batch = Vec::new();
+
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for rt in [0, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[rt as usize] = rng.next();
+                batch.push((
+                    format!("cpuid_write op1_0_crm{crm}_op2{op2}_x{rt}"),
+                    msr(1, 0, 0, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    for op1 in 0..=7 {
+        for crm in 0..=7 {
+            for op2 in 0..=7 {
+                let mut st = gen_input(&mut rng);
+                st.x[RD as usize] = rng.next();
+                batch.push((
+                    format!("debug_write op1{op1}_crm{crm}_op2{op2}"),
+                    msr(0, op1, 0, crm, op2, RD),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_id_debug_write_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_el0_control_write_legality_grid() {
+    fn msr(crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | (1 << 19)
+            | (3 << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0024);
+    let mut batch = Vec::new();
+    for crn in [4, 13] {
+        for crm in 0..=7 {
+            for op2 in 0..=7 {
+                for rt in [0, 30, 31] {
+                    let mut st = gen_input(&mut rng);
+                    if rt != 31 {
+                        st.x[rt as usize] = rng.next();
+                    }
+                    batch.push((
+                        format!("el0_control_write crn{crn}_crm{crm}_op2{op2}_x{rt}"),
+                        msr(crn, crm, op2, rt),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_el0_control_write_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_el0_cache_timer_rng_write_legality_grid() {
+    fn msr(crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd510_0000
+            | (1 << 19)
+            | (3 << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0025);
+    let mut batch = Vec::new();
+    for crn in [0, 2, 14] {
+        for crm in 0..=7 {
+            for op2 in 0..=7 {
+                for rt in [0, 30] {
+                    let mut st = gen_input(&mut rng);
+                    st.x[rt as usize] = rng.next();
+                    batch.push((
+                        format!("el0_cache_timer_rng_write crn{crn}_crm{crm}_op2{op2}_x{rt}"),
+                        msr(crn, crm, op2, rt),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_el0_cache_timer_rng_write_legality_grid", batch);
+}
+
+#[test]
 fn diff_system_clidr_el1_el0_trap() {
     fn mrs_clidr_el1(rt: u32) -> u32 {
         0xd500_0000 | (1 << 21) | (3 << 19) | (1 << 16) | (1 << 5) | (rt & 0x1f)
@@ -29998,6 +30372,111 @@ fn diff_system_pstate_mrs_el0_sweep() {
     }
 
     run_batch_el0("system_pstate_mrs_el0_sweep", batch);
+}
+
+#[test]
+fn diff_system_pstate_mrs_el0_legality_grid() {
+    fn mrs(op1: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd530_0000
+            | (1 << 19)
+            | ((op1 & 0x7) << 16)
+            | (4 << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_0026);
+    let mut batch = Vec::new();
+    for crm in 0..=7 {
+        for op2 in 0..=7 {
+            for rt in [0, 30, 31] {
+                let mut st = gen_input(&mut rng);
+                if rt != 31 {
+                    st.x[rt as usize] = rng.next();
+                }
+                batch.push((
+                    format!("pstate_mrs op1_3_crm{crm}_op2{op2}_x{rt}"),
+                    mrs(3, crm, op2, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_el0_legality("system_pstate_mrs_el0_legality_grid", batch);
+}
+
+#[test]
+fn diff_system_pstate_ssbs_tco_register_roundtrip() {
+    fn mrs_pstate(op2: u32, rt: u32) -> u32 {
+        0xd530_0000 | (1 << 19) | (3 << 16) | (4 << 12) | (2 << 8) | ((op2 & 0x7) << 5) | rt
+    }
+
+    fn msr_pstate(op2: u32, rt: u32) -> u32 {
+        0xd510_0000 | (1 << 19) | (3 << 16) | (4 << 12) | (2 << 8) | ((op2 & 0x7) << 5) | rt
+    }
+
+    let mut rng = Rng::new(0x5157_0027);
+    let mut batch = Vec::new();
+    for (name, op2) in [("ssbs", 6)] {
+        for value in [0, 1, 2, u64::MAX] {
+            for rd in [RD, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[RN as usize] = value;
+                st.x[rd as usize] = 0xaaaa_bbbb_cccc_dddd;
+                batch.push((
+                    format!("msr_mrs_{name}_{value:#x}_x{rd}"),
+                    msr_pstate(op2, RN),
+                    mrs_pstate(op2, rd),
+                    st,
+                ));
+            }
+        }
+
+        let mut st = gen_input(&mut rng);
+        st.x[RD as usize] = 0x1111_2222_3333_4444;
+        batch.push((
+            format!("msr_mrs_{name}_xzr"),
+            msr_pstate(op2, 31),
+            mrs_pstate(op2, RD),
+            st,
+        ));
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] system_pstate_ssbs_tco_register_roundtrip: oracle unavailable -> skipping");
+            return;
+        }
+    };
+    if !oracle.is_native() || native_host_caps().has("mte") {
+        for value in [0, 1 << 25, u64::MAX] {
+            for rd in [RD, 30] {
+                let mut st = gen_input(&mut rng);
+                st.x[RN as usize] = value;
+                st.x[rd as usize] = 0xaaaa_bbbb_cccc_dddd;
+                batch.push((
+                    format!("msr_mrs_tco_{value:#x}_x{rd}"),
+                    msr_pstate(7, RN),
+                    mrs_pstate(7, rd),
+                    st,
+                ));
+            }
+        }
+
+        let mut st = gen_input(&mut rng);
+        st.x[RD as usize] = 0x1111_2222_3333_4444;
+        batch.push((
+            "msr_mrs_tco_xzr".to_string(),
+            msr_pstate(7, 31),
+            mrs_pstate(7, RD),
+            st,
+        ));
+    }
+
+    run_batch_el0_pair("system_pstate_ssbs_tco_register_roundtrip", batch);
 }
 
 #[test]

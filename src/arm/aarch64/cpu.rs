@@ -1047,6 +1047,14 @@ impl AArch64Cpu {
             (3, 3, 4, 2, 5) => {
                 return Ok(if self.dit { 1 << 24 } else { 0 });
             }
+            // SSBS
+            (3, 3, 4, 2, 6) => {
+                return Ok(if self.ssbs { 1 << 12 } else { 0 });
+            }
+            // TCO
+            (3, 3, 4, 2, 7) => {
+                return Ok(if self.tco { 1 << 25 } else { 0 });
+            }
             // CurrentEL
             (3, 0, 4, 2, 2) => {
                 return Ok((self.current_el as u64) << 2);
@@ -1230,6 +1238,16 @@ impl AArch64Cpu {
                 self.dit = ((value >> 24) & 1) != 0;
                 return Ok(());
             }
+            // SSBS
+            (3, 3, 4, 2, 6) => {
+                self.ssbs = ((value >> 12) & 1) != 0;
+                return Ok(());
+            }
+            // TCO
+            (3, 3, 4, 2, 7) => {
+                self.tco = ((value >> 25) & 1) != 0;
+                return Ok(());
+            }
             // SPSel
             (3, 0, 4, 2, 0) => {
                 self.sp_sel = (value & 1) != 0;
@@ -1330,26 +1348,18 @@ impl AArch64Cpu {
             (3, 0, 0, 0, 0)  // MIDR_EL1
                 | (3, 0, 0, 0, 5)  // MPIDR_EL1
                 | (3, 0, 0, 0, 6)  // REVIDR_EL1
-                | (3, 0, 0, 4, 0)  // ID_AA64PFR0_EL1
-                | (3, 0, 0, 4, 1)  // ID_AA64PFR1_EL1
-                | (3, 0, 0, 4, 2)  // ID_AA64PFR2_EL1
-                | (3, 0, 0, 4, 4)  // ID_AA64ZFR0_EL1
-                | (3, 0, 0, 5, 0)  // ID_AA64DFR0_EL1
-                | (3, 0, 0, 5, 1)  // ID_AA64DFR1_EL1
-                | (3, 0, 0, 5, 2)  // ID_AA64DFR2_EL1
-                | (3, 0, 0, 6, 0)  // ID_AA64ISAR0_EL1
-                | (3, 0, 0, 6, 1)  // ID_AA64ISAR1_EL1
-                | (3, 0, 0, 6, 2)  // ID_AA64ISAR2_EL1
-                | (3, 0, 0, 6, 3)  // ID_AA64ISAR3_EL1
-                | (3, 0, 0, 7, 0)  // ID_AA64MMFR0_EL1
-                | (3, 0, 0, 7, 1)  // ID_AA64MMFR1_EL1
-                | (3, 0, 0, 7, 2)  // ID_AA64MMFR2_EL1
-                | (3, 0, 0, 7, 3)  // ID_AA64MMFR3_EL1
+                // ID_ISAR*, MVFR*, and ID_AA64* groups. Linux exposes future
+                // slots in this sub-block as ID values or RAZ.
+                | (3, 0, 0, 2..=7, 0..=7)
             // EL0-visible status/control registers.
                 | (3, 3, 4, 2, 0)  // NZCV
                 | (3, 3, 4, 2, 5)  // DIT
+                | (3, 3, 4, 2, 6)  // SSBS
+                | (3, 3, 4, 2, 7)  // TCO
                 | (3, 3, 4, 4, 0)  // FPCR
                 | (3, 3, 4, 4, 1)  // FPSR
+                // EL0-visible debug ID/status registers on Linux.
+                | (2, 3, 0, 1, 0)  // S2_3_C0_C1_0
                 // EL0-visible cache/timer/thread state.
                 | (3, 3, 0, 0, 1)  // CTR_EL0
                 | (3, 3, 0, 0, 7)  // DCZID_EL0
@@ -1375,8 +1385,11 @@ impl AArch64Cpu {
             ),
             (3, 3, 4, 2, 0)  // NZCV
                 | (3, 3, 4, 2, 5)  // DIT
+                | (3, 3, 4, 2, 6)  // SSBS
+                | (3, 3, 4, 2, 7)  // TCO
                 | (3, 3, 4, 4, 0)  // FPCR
                 | (3, 3, 4, 4, 1)  // FPSR
+                | (2, 3, 0, 4, 0)  // S2_3_C0_C4_0
                 | (3, 3, 13, 0, 2) // TPIDR_EL0
         )
     }
@@ -30562,6 +30575,40 @@ mod tests {
             let mut cpu = AArch64Cpu::new(config.clone(), Box::new(memory));
             cpu.ssbs = true;
             cpu.tco = true;
+            cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+
+            assert!(
+                matches!(cpu.step(), Ok(CpuExit::Continue)),
+                "{name} should execute at EL0"
+            );
+            assert_eq!(cpu.ssbs, expected_ssbs, "{name} should update PSTATE.SSBS");
+            assert_eq!(cpu.tco, expected_tco, "{name} should update PSTATE.TCO");
+            assert_eq!(cpu.get_pc(), 4, "{name} should advance PC");
+        }
+    }
+
+    #[test]
+    fn test_el0_pstate_register_controls_continue() {
+        fn msr(crm: u32, op2: u32, rt: u32) -> u32 {
+            0xd510_0000 | (1 << 19) | (3 << 16) | (4 << 12) | (crm << 8) | (op2 << 5) | rt
+        }
+
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        for (name, insn, value, expected_ssbs, expected_tco) in [
+            ("msr_ssbs_x0_clear", msr(2, 6, 0), 0, false, true),
+            ("msr_ssbs_x0_set", msr(2, 6, 0), 1 << 12, true, true),
+            ("msr_tco_x0_clear", msr(2, 7, 0), 0, true, false),
+            ("msr_tco_x0_set", msr(2, 7, 0), 1 << 25, true, true),
+            ("msr_ssbs_xzr_clear", msr(2, 6, 31), 1 << 12, false, true),
+            ("msr_tco_xzr_clear", msr(2, 7, 31), 1 << 25, true, false),
+        ] {
+            let memory = FlatMemory::new(0, 0x1000_0000);
+            let mut cpu = AArch64Cpu::new(config.clone(), Box::new(memory));
+            cpu.ssbs = true;
+            cpu.tco = true;
+            cpu.set_x(0, value);
             cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
 
             assert!(
