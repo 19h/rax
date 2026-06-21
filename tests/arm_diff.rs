@@ -29026,6 +29026,135 @@ fn diff_mem_ldst_single() {
 }
 
 #[test]
+fn diff_mem_ldst_single_lane_edges() {
+    let patterns: &[(&str, [u64; 4], [(u64, u64); 4])] = &[
+        (
+            "zero",
+            [0, 0, 0, 0],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ),
+        (
+            "ones",
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+            [
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ],
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+            ],
+            [
+                (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+                (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+                (0x1357_9bdf_2468_ace0, 0x0eca_8642_fdb9_7531),
+                (0xffff_0000_ffff_0000, 0x0000_ffff_0000_ffff),
+            ],
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for esz in 0..4u32 {
+        let max_index = 16u32 >> esz;
+        for &index in &[0, max_index - 1] {
+            for selem in 1..=4u32 {
+                for &(pattern, mem, src) in patterns {
+                    let mut load = ArmState::zeroed();
+                    load.x[RN as usize] = SCRATCH_BASE;
+                    for reg in 0..4 {
+                        load.set_vreg(
+                            reg,
+                            0x1111_1111_1111_1111 * (reg as u64 + 1),
+                            0x2222_2222_2222_2222 * (reg as u64 + 1),
+                        );
+                    }
+                    load.scratch.fill(0xfeed_face_dead_beef);
+                    for (offset, word) in mem.iter().enumerate() {
+                        load.scratch[8 + offset] = *word;
+                    }
+                    batch.push((
+                        format!("ld{selem}_single_e{esz}_i{index}_{pattern}"),
+                        enc_single(esz, selem, index, 1, 0),
+                        load,
+                    ));
+
+                    let mut store = ArmState::zeroed();
+                    store.x[RN as usize] = SCRATCH_BASE;
+                    for (reg, &(lo, hi)) in src.iter().enumerate() {
+                        store.set_vreg(reg, lo, hi);
+                    }
+                    store.scratch.fill(0xfeed_face_dead_beef);
+                    for (offset, word) in mem.iter().enumerate() {
+                        store.scratch[8 + offset] = *word;
+                    }
+                    batch.push((
+                        format!("st{selem}_single_e{esz}_i{index}_{pattern}"),
+                        enc_single(esz, selem, index, 0, 0),
+                        store,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_ldst_single_lane_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_single_replicate_edges() {
+    let patterns: &[(&str, [u64; 4])] = &[
+        ("zero", [0, 0, 0, 0]),
+        ("ones", [u64::MAX, u64::MAX, u64::MAX, u64::MAX]),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+            ],
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for esz in 0..4u32 {
+        for selem in 1..=4u32 {
+            for q in 0..2u32 {
+                for &(pattern, mem) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    for reg in 0..4 {
+                        st.set_vreg(
+                            reg,
+                            0x1111_1111_1111_1111 * (reg as u64 + 1),
+                            0x2222_2222_2222_2222 * (reg as u64 + 1),
+                        );
+                    }
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    for (offset, word) in mem.iter().enumerate() {
+                        st.scratch[8 + offset] = *word;
+                    }
+                    batch.push((
+                        format!("ld{selem}r_e{esz}_q{q}_{pattern}"),
+                        enc_single_rep(esz, selem, q, 0),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_ldst_single_replicate_edges", batch);
+}
+
+#[test]
 fn diff_mem_ldst_single_sp_base() {
     let cases: Vec<(String, u32, Option<u64>)> = vec![
         (
@@ -51524,6 +51653,293 @@ fn diff_mem_ldst_struct() {
 }
 
 #[test]
+fn diff_mem_ldst_struct_ld1_edges() {
+    let patterns: &[(&str, [u64; 2], (u64, u64))] = &[
+        ("zero", [0, 0], (0, 0)),
+        ("ones", [u64::MAX, u64::MAX], (u64::MAX, u64::MAX)),
+        (
+            "byte_ramp",
+            [0x8877_6655_4433_2211, 0x1122_3344_5566_7788],
+            (0xf0f0_0f0f_aa55_55aa, 0x0f0f_f0f0_55aa_aa55),
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for q in 0..2u32 {
+            for &(pattern, mem, src) in patterns {
+                let mut load = ArmState::zeroed();
+                load.x[RN as usize] = SCRATCH_BASE;
+                load.set_vreg(RD as usize, 0xdead_beef_dead_beef, 0xface_cafe_face_cafe);
+                load.scratch.fill(0xfeed_face_dead_beef);
+                load.scratch[8] = mem[0];
+                load.scratch[9] = mem[1];
+                batch.push((
+                    format!("ld1x1_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 1, 0, 0b0111, size),
+                    load,
+                ));
+
+                let mut store = ArmState::zeroed();
+                store.x[RN as usize] = SCRATCH_BASE;
+                store.set_vreg(RD as usize, src.0, src.1);
+                store.scratch.fill(0xfeed_face_dead_beef);
+                store.scratch[8] = mem[0];
+                store.scratch[9] = mem[1];
+                batch.push((
+                    format!("st1x1_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 0, 0, 0b0111, size),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldst_struct_ld1_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_struct_ld2_edges() {
+    let patterns: &[(&str, [u64; 4], [(u64, u64); 2])] = &[
+        ("zero", [0, 0, 0, 0], [(0, 0), (0, 0)]),
+        (
+            "ones",
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+            [(u64::MAX, u64::MAX), (u64::MAX, u64::MAX)],
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+            ],
+            [
+                (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+                (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+            ],
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for q in 0..2u32 {
+            for &(pattern, mem, src) in patterns {
+                let mut load = ArmState::zeroed();
+                load.x[RN as usize] = SCRATCH_BASE;
+                load.set_vreg(RD as usize, 0xdead_beef_dead_beef, 0xface_cafe_face_cafe);
+                load.set_vreg(RN as usize, 0x0123_0123_0123_0123, 0x4567_4567_4567_4567);
+                load.scratch.fill(0xfeed_face_dead_beef);
+                load.scratch[8] = mem[0];
+                load.scratch[9] = mem[1];
+                load.scratch[10] = mem[2];
+                load.scratch[11] = mem[3];
+                batch.push((
+                    format!("ld2_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 1, 0, 0b1000, size),
+                    load,
+                ));
+
+                let mut store = ArmState::zeroed();
+                store.x[RN as usize] = SCRATCH_BASE;
+                store.set_vreg(RD as usize, src[0].0, src[0].1);
+                store.set_vreg(RN as usize, src[1].0, src[1].1);
+                store.scratch.fill(0xfeed_face_dead_beef);
+                store.scratch[8] = mem[0];
+                store.scratch[9] = mem[1];
+                store.scratch[10] = mem[2];
+                store.scratch[11] = mem[3];
+                batch.push((
+                    format!("st2_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 0, 0, 0b1000, size),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldst_struct_ld2_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_struct_ld3_edges() {
+    let patterns: &[(&str, [u64; 6], [(u64, u64); 3])] = &[
+        ("zero", [0, 0, 0, 0, 0, 0], [(0, 0), (0, 0), (0, 0)]),
+        (
+            "ones",
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+            [
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ],
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+                0x0123_4567_89ab_cdef,
+                0xfedc_ba98_7654_3210,
+            ],
+            [
+                (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+                (0x1357_9bdf_2468_ace0, 0x0eca_8642_fdb9_7531),
+                (0xffff_0000_ffff_0000, 0x0000_ffff_0000_ffff),
+            ],
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for q in 0..2u32 {
+            for &(pattern, mem, src) in patterns {
+                let mut load = ArmState::zeroed();
+                load.x[RN as usize] = SCRATCH_BASE;
+                load.set_vreg(RD as usize, 0xdead_beef_dead_beef, 0xface_cafe_face_cafe);
+                load.set_vreg(RN as usize, 0x0123_0123_0123_0123, 0x4567_4567_4567_4567);
+                load.set_vreg(RM as usize, 0x89ab_89ab_89ab_89ab, 0xcdef_cdef_cdef_cdef);
+                load.scratch.fill(0xfeed_face_dead_beef);
+                load.scratch[8] = mem[0];
+                load.scratch[9] = mem[1];
+                load.scratch[10] = mem[2];
+                load.scratch[11] = mem[3];
+                load.scratch[12] = mem[4];
+                load.scratch[13] = mem[5];
+                batch.push((
+                    format!("ld3_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 1, 0, 0b0100, size),
+                    load,
+                ));
+
+                let mut store = ArmState::zeroed();
+                store.x[RN as usize] = SCRATCH_BASE;
+                store.set_vreg(RD as usize, src[0].0, src[0].1);
+                store.set_vreg(RN as usize, src[1].0, src[1].1);
+                store.set_vreg(RM as usize, src[2].0, src[2].1);
+                store.scratch.fill(0xfeed_face_dead_beef);
+                store.scratch[8] = mem[0];
+                store.scratch[9] = mem[1];
+                store.scratch[10] = mem[2];
+                store.scratch[11] = mem[3];
+                store.scratch[12] = mem[4];
+                store.scratch[13] = mem[5];
+                batch.push((
+                    format!("st3_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 0, 0, 0b0100, size),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldst_struct_ld3_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_struct_ld4_edges() {
+    let patterns: &[(&str, [u64; 8], [(u64, u64); 4])] = &[
+        (
+            "zero",
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ),
+        (
+            "ones",
+            [
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+            ],
+            [
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ],
+        ),
+        (
+            "byte_ramp",
+            [
+                0x8877_6655_4433_2211,
+                0x1122_3344_5566_7788,
+                0xf0f0_0f0f_aa55_55aa,
+                0x0f0f_f0f0_55aa_aa55,
+                0x0123_4567_89ab_cdef,
+                0xfedc_ba98_7654_3210,
+                0x1357_9bdf_2468_ace0,
+                0x0eca_8642_fdb9_7531,
+            ],
+            [
+                (0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+                (0xffff_0000_ffff_0000, 0x0000_ffff_0000_ffff),
+                (0xdead_beef_dead_beef, 0xface_cafe_face_cafe),
+                (0x0123_0123_0123_0123, 0x4567_4567_4567_4567),
+            ],
+        ),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for q in 0..2u32 {
+            for &(pattern, mem, src) in patterns {
+                let mut load = ArmState::zeroed();
+                load.x[RN as usize] = SCRATCH_BASE;
+                load.set_vreg(RD as usize, 0x1111_1111_1111_1111, 0x2222_2222_2222_2222);
+                load.set_vreg(RN as usize, 0x3333_3333_3333_3333, 0x4444_4444_4444_4444);
+                load.set_vreg(RM as usize, 0x5555_5555_5555_5555, 0x6666_6666_6666_6666);
+                load.set_vreg(3, 0x7777_7777_7777_7777, 0x8888_8888_8888_8888);
+                load.scratch.fill(0xfeed_face_dead_beef);
+                load.scratch[8] = mem[0];
+                load.scratch[9] = mem[1];
+                load.scratch[10] = mem[2];
+                load.scratch[11] = mem[3];
+                load.scratch[12] = mem[4];
+                load.scratch[13] = mem[5];
+                load.scratch[14] = mem[6];
+                load.scratch[15] = mem[7];
+                batch.push((
+                    format!("ld4_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 1, 0, 0b0000, size),
+                    load,
+                ));
+
+                let mut store = ArmState::zeroed();
+                store.x[RN as usize] = SCRATCH_BASE;
+                store.set_vreg(RD as usize, src[0].0, src[0].1);
+                store.set_vreg(RN as usize, src[1].0, src[1].1);
+                store.set_vreg(RM as usize, src[2].0, src[2].1);
+                store.set_vreg(3, src[3].0, src[3].1);
+                store.scratch.fill(0xfeed_face_dead_beef);
+                store.scratch[8] = mem[0];
+                store.scratch[9] = mem[1];
+                store.scratch[10] = mem[2];
+                store.scratch[11] = mem[3];
+                store.scratch[12] = mem[4];
+                store.scratch[13] = mem[5];
+                store.scratch[14] = mem[6];
+                store.scratch[15] = mem[7];
+                batch.push((
+                    format!("st4_sz{size}_q{q}_{pattern}"),
+                    enc_ldst_struct(q, 0, 0, 0, 0b0000, size),
+                    store,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldst_struct_ld4_edges", batch);
+}
+
+#[test]
 fn diff_mem_ldst_struct_sp_base() {
     let cases: Vec<(String, u32, Option<u64>)> = vec![
         (
@@ -52612,6 +53028,73 @@ fn diff_mem_ldst_unprivileged() {
         }
     }
     run_batch("mem_ldst_unprivileged", batch);
+}
+
+#[test]
+fn diff_mem_ldst_unprivileged_edges() {
+    let patterns: &[(&str, u64, u64)] = &[
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_8000_0080, 0x7fff_ffff_7fff_ff7f),
+        ("byte_ramp", 0x8877_6655_4433_2211, 0x1122_3344_5566_7788),
+    ];
+    let load_ops: &[(u32, u32, &str)] = &[
+        (0, 1, "ldtrb"),
+        (1, 1, "ldtrh"),
+        (2, 1, "ldtr_w"),
+        (3, 1, "ldtr_x"),
+        (0, 2, "ldtrsb_x"),
+        (1, 2, "ldtrsh_x"),
+        (2, 2, "ldtrsw_x"),
+        (0, 3, "ldtrsb_w"),
+        (1, 3, "ldtrsh_w"),
+    ];
+    let store_ops: &[(u32, &str)] = &[
+        (0, "sttrb"),
+        (1, "sttrh"),
+        (2, "sttr_w"),
+        (3, "sttr_x"),
+    ];
+    let mut batch = Vec::new();
+
+    for &(size, opc, name) in load_ops {
+        for rt in [RD, 31] {
+            for &(pattern, mem, _src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                if rt < 31 {
+                    st.x[rt as usize] = 0xdead_beef_dead_beef;
+                }
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = mem;
+                batch.push((
+                    format!("{name}_rt{rt}_{pattern}"),
+                    enc_ldst_simm_regs(size, 0, opc, 0b10, 0, rt, RN),
+                    st,
+                ));
+            }
+        }
+    }
+
+    for &(size, name) in store_ops {
+        for rt in [RD, 31] {
+            for &(pattern, mem, src) in patterns {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                st.x[RD as usize] = src;
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = mem;
+                st.scratch[9] = !mem;
+                batch.push((
+                    format!("{name}_rt{rt}_{pattern}"),
+                    enc_ldst_simm_regs(size, 0, 0, 0b10, 0, rt, RN),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldst_unprivileged_edges", batch);
 }
 
 #[test]
