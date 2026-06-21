@@ -34797,6 +34797,21 @@ fn diff_sve_dup_sp_source() {
 #[test]
 fn diff_sve_fp_unary() {
     // (top_byte, opc6, name). FABS/FNEG use 0x04; FSQRT/FRINT*/FRECPX use 0x65.
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let lanes = 16 / esize;
+        let mut packed = 0u128;
+        for lane in 0..lanes {
+            packed |= ((values[lane % values.len()] & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let ops: &[(u32, u32, &str)] = &[
         (0x04, 0b011100, "fabs"),
         (0x04, 0b011101, "fneg"),
@@ -34824,6 +34839,80 @@ fn diff_sve_fp_unary() {
                 st.set_vreg(1, l1, h1);
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
+            }
+            let patterns: Vec<(&str, Vec<u64>)> = match sz {
+                1 => vec![
+                    (
+                        "specials",
+                        vec![0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x0001, 0x8001],
+                    ),
+                    (
+                        "finite",
+                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200],
+                    ),
+                ],
+                2 => vec![
+                    (
+                        "specials",
+                        vec![
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            f32::INFINITY.to_bits() as u64,
+                            f32::NEG_INFINITY.to_bits() as u64,
+                        ],
+                    ),
+                    (
+                        "nan_subnorm",
+                        vec![0x7fc0_0000, 0x7f80_0001, 0x0000_0001, 0x8000_0001],
+                    ),
+                    (
+                        "finite",
+                        vec![
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            1.5f32.to_bits() as u64,
+                            (-1.5f32).to_bits() as u64,
+                        ],
+                    ),
+                ],
+                _ => vec![
+                    (
+                        "specials",
+                        vec![
+                            0.0f64.to_bits(),
+                            (-0.0f64).to_bits(),
+                            f64::INFINITY.to_bits(),
+                            f64::NEG_INFINITY.to_bits(),
+                        ],
+                    ),
+                    (
+                        "nan_subnorm",
+                        vec![0x7ff8_0000_0000_0000, 0x7ff0_0000_0000_0001, 1, (1u64 << 63) | 1],
+                    ),
+                    (
+                        "finite",
+                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                    ),
+                ],
+            };
+            let mixed = match sz {
+                1 => 0x1111,
+                2 => 0x0101,
+                _ => 0x0001,
+            };
+            for (pattern_name, values) in patterns {
+                let (lo, hi) = pack_lanes(esize as usize / 8, &values);
+                for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
+                    st.set_vreg(1, lo, hi);
+                    st.set_preg(0, pg);
+                    batch.push((
+                        format!("{name}_sz{sz}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -46150,6 +46239,33 @@ fn diff_sve_pnext() {
             }
         }
     }
+    for sz in 0..4u32 {
+        for (pg, pdn, regs) in [(1u32, 0u32, "distinct"), (0, 0, "alias"), (15, 14, "high")] {
+            let insn = enc_pnext(sz, pg, pdn);
+            for (pdn_val, pg_val, pred_case) in [
+                (0x0000u16, 0x0000u16, "none"),
+                (0xffff, 0xffff, "all"),
+                (0x0001, 0xffff, "advance_first"),
+                (0x8000, 0x8001, "last"),
+                (0x00f0, 0x0ff0, "middle"),
+                (0xaaaa, 0x5555, "alternating"),
+            ] {
+                for nzcv in 0..16u64 {
+                    let mut st = ArmState::zeroed();
+                    st.pstate = nzcv << 28;
+                    st.set_preg(pdn as usize, pdn_val);
+                    if pg != pdn {
+                        st.set_preg(pg as usize, pg_val);
+                    }
+                    batch.push((
+                        format!("pnext_sz{sz}_{regs}_{pred_case}_nzcv{nzcv:x}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
+        }
+    }
     run_batch("sve_pnext", batch);
 }
 
@@ -46198,6 +46314,39 @@ fn diff_sve_brk() {
             }
         }
     }
+    for b in 0..2u32 {
+        for m in 0..2u32 {
+            for (pd, pg, pn, regs) in [
+                (0u32, 1u32, 2u32, "distinct"),
+                (0, 0, 1, "pd_pg"),
+                (0, 1, 0, "pd_pn"),
+                (15, 14, 13, "high"),
+            ] {
+                let insn = enc_brka(b, 1, m, pg, pn, pd);
+                let op = if b == 0 { "brka" } else { "brkb" };
+                for (pd_val, pg_val, pn_val, pred_case) in [
+                    (0x0000u16, 0x0000u16, 0x0000u16, "none"),
+                    (0xffff, 0xffff, 0xffff, "all"),
+                    (0xaaaa, 0x0f0f, 0x00f0, "middle"),
+                    (0x5555, 0xffff, 0x8000, "last"),
+                    (0x8001, 0x00ff, 0x0001, "first"),
+                ] {
+                    for nzcv in 0..16u64 {
+                        let mut st = ArmState::zeroed();
+                        st.pstate = nzcv << 28;
+                        st.set_preg(pd as usize, pd_val);
+                        st.set_preg(pg as usize, pg_val);
+                        st.set_preg(pn as usize, pn_val);
+                        batch.push((
+                            format!("{op}_{regs}_m{m}_{pred_case}_nzcv{nzcv:x}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
     run_batch("sve_brk", batch);
 }
 
@@ -46236,6 +46385,34 @@ fn diff_sve_brkn() {
                 st.set_preg(pg as usize, pg_val);
                 st.set_preg(pn as usize, pn_val);
                 batch.push((format!("brkn {regs} s{s}"), insn, st));
+            }
+        }
+    }
+    for (pdm, pg, pn, regs) in [
+        (0u32, 1u32, 2u32, "distinct"),
+        (0, 0, 1, "pdm_pg"),
+        (0, 1, 0, "pdm_pn"),
+        (15, 14, 13, "high"),
+    ] {
+        let insn = enc_brkn(1, pg, pn, pdm);
+        for (pdm_val, pg_val, pn_val, pred_case) in [
+            (0x0000u16, 0x0000u16, 0x0000u16, "none"),
+            (0xffff, 0xffff, 0xffff, "all"),
+            (0xaaaa, 0x0f0f, 0x00f0, "middle"),
+            (0x5555, 0xffff, 0x8000, "last"),
+            (0x8001, 0x00ff, 0x0001, "first"),
+        ] {
+            for nzcv in 0..16u64 {
+                let mut st = ArmState::zeroed();
+                st.pstate = nzcv << 28;
+                st.set_preg(pdm as usize, pdm_val);
+                st.set_preg(pg as usize, pg_val);
+                st.set_preg(pn as usize, pn_val);
+                batch.push((
+                    format!("brkn_{regs}_{pred_case}_nzcv{nzcv:x}"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
@@ -46289,6 +46466,39 @@ fn diff_sve_brkp() {
                     st.set_preg(pg as usize, pg_val);
                     st.set_preg(pn as usize, pn_val);
                     batch.push((name.clone(), insn, st));
+                }
+            }
+        }
+    }
+    for b in 0..2u32 {
+        for (pd, pm, pg, pn, regs) in [
+            (0u32, 3u32, 1u32, 2u32, "distinct"),
+            (0, 0, 1, 2, "pd_pm"),
+            (0, 3, 0, 2, "pd_pg"),
+            (0, 3, 1, 0, "pd_pn"),
+            (15, 12, 14, 13, "high"),
+        ] {
+            let insn = enc_brkp(b, 1, pm, pg, pn, pd);
+            let op = if b == 0 { "brkpa" } else { "brkpb" };
+            for (pd_val, pm_val, pg_val, pn_val, pred_case) in [
+                (0x0000u16, 0x0000u16, 0x0000u16, 0x0000u16, "none"),
+                (0xffff, 0xffff, 0xffff, 0xffff, "all"),
+                (0x5555, 0xaaaa, 0x0f0f, 0x00f0, "middle"),
+                (0x8001, 0x0001, 0xffff, 0x8000, "last"),
+                (0x00ff, 0x0001, 0x00ff, 0x0001, "first"),
+            ] {
+                for nzcv in 0..16u64 {
+                    let mut st = ArmState::zeroed();
+                    st.pstate = nzcv << 28;
+                    st.set_preg(pd as usize, pd_val);
+                    st.set_preg(pm as usize, pm_val);
+                    st.set_preg(pg as usize, pg_val);
+                    st.set_preg(pn as usize, pn_val);
+                    batch.push((
+                        format!("{op}_{regs}_{pred_case}_nzcv{nzcv:x}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }

@@ -14031,7 +14031,18 @@ impl AArch64Cpu {
                         fp_status_unop_with_fpcr(esize, Some(kind), lane, r, self.fpcr),
                     )
                 }
-                0b01100 => (sve_fp_recpx(esize, lane), 0),
+                0b01100 => {
+                    let a = fp_flush_input_bits_with_fpcr(lane, (esize * 8) as u32, self.fpcr);
+                    let mut status = if fp_is_snan_bits(esize, a) {
+                        FPSR_IOC
+                    } else {
+                        0
+                    };
+                    if self.fpcr & FPCR_AH == 0 {
+                        status |= fp_fz_input_status(esize, lane, self.fpcr);
+                    }
+                    (sve_fp_recpx(esize, a), status)
+                }
                 m if m < 0b01000 => {
                     let Some((trk, fp16m)) = rint(m) else {
                         return Ok(CpuExit::Undefined(insn));
