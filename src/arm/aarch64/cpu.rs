@@ -12292,9 +12292,7 @@ impl AArch64Cpu {
                         }
                     }
                 };
-                if rsqrt && fp_sign_bit(esz, x) != 0 && !fp_is_zero_bits(esz, x) && !fp_is_nan_bits(esz, x) {
-                    self.fpsr |= FPSR_IOC;
-                }
+                self.fpsr |= fp_status_estimate(esz, rsqrt, x, r);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12334,7 +12332,9 @@ impl AArch64Cpu {
                     let b = read_elem(&m, off, esz);
                     if fp_is_snan_bits(esz, a)
                         || fp_is_snan_bits(esz, b)
-                        || (cc.0 == 0b010 && (fp_is_nan_bits(esz, a) || fp_is_nan_bits(esz, b)))
+                        || ((cc.0 == 0b010
+                            || (cc.1 == 1 && matches!(cc.0, 0b110 | 0b111)))
+                            && (fp_is_nan_bits(esz, a) || fp_is_nan_bits(esz, b)))
                     {
                         self.fpsr |= FPSR_IOC;
                     }
@@ -12440,10 +12440,21 @@ impl AArch64Cpu {
                 let sgn = read_elem(&m, off, esz) & 1;
                 let r = sve_ftsmul(esz, x, sgn);
                 self.fpsr |= if esz == 8 {
-                    if fp64_mul_exact(x, x) {
+                    if fp_is_snan_bits(esz, x) {
+                        FPSR_IOC
+                    } else if fp_is_nan_bits(esz, x)
+                        || fp_is_inf_bits(esz, x)
+                        || fp_is_zero_bits(esz, x)
+                    {
+                        0
+                    } else if fp64_is_inf(r) {
+                        FPSR_OFC | FPSR_IXC
+                    } else if fp64_is_tiny(r) || fp64_is_zero(r) {
+                        FPSR_UFC | FPSR_IXC
+                    } else if fp64_mul_exact(x, x) {
                         0
                     } else {
-                        fp_status_assume_inexact(esz, r)
+                        FPSR_IXC
                     }
                 } else {
                     let exact = sve_fp_to_f64(esz, x) * sve_fp_to_f64(esz, x);
@@ -12477,22 +12488,18 @@ impl AArch64Cpu {
                 let nn = read_elem(&dn, off, esz);
                 let mm = read_elem(&m, off, esz);
                 let r = sve_ftmad(esz, nn, mm, imm);
-                self.fpsr |= if esz == 8 {
-                    fp_status_assume_inexact(esz, r)
-                } else {
-                    let neg = match esz {
-                        2 => mm & 0x8000 != 0,
-                        _ => mm & 0x8000_0000 != 0,
-                    };
-                    let coeff = match esz {
-                        2 => fp16_to_f64(FTMAD_COEFF_H[imm + if neg { 8 } else { 0 }]),
-                        _ => f32::from_bits(FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }]) as f64,
-                    };
-                    let exact =
-                        sve_fp_to_f64(esz, nn) * sve_fp_to_f64(esz, mm & elem_mask((esz * 8 - 1) as u32))
-                            + coeff;
-                    fp_status_from_exact_f64(esz, exact, r)
+                let neg = match esz {
+                    2 => mm & 0x8000 != 0,
+                    4 => mm & 0x8000_0000 != 0,
+                    _ => mm & 0x8000_0000_0000_0000 != 0,
                 };
+                let m_abs = mm & elem_mask((esz * 8 - 1) as u32);
+                let coeff = match esz {
+                    2 => FTMAD_COEFF_H[imm + if neg { 8 } else { 0 }] as u64,
+                    4 => FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }] as u64,
+                    _ => FTMAD_COEFF_D[imm + if neg { 8 } else { 0 }],
+                };
+                self.fpsr |= fp_status_fma(esz, coeff, nn, m_abs, r);
                 write_elem(&mut dst, off, esz, r);
             }
             self.v[zd] = u128::from_le_bytes(dst);
@@ -12673,18 +12680,26 @@ impl AArch64Cpu {
             0b11001 => (FpKind::Sub, false),  // FSUB #0.5/#1.0
             0b11010 => (FpKind::Mul, false),  // FMUL #0.5/#1.0
             0b11011 => (FpKind::Sub, true),   // FSUBR #0.5/#1.0
+            0b11100 => (FpKind::MaxNm, false), // FMAXNM #0.0/#1.0
+            0b11101 => (FpKind::MinNm, false), // FMINNM #0.0/#1.0
+            0b11110 => (FpKind::Max, false),  // FMAX #0.0/#1.0
+            0b11111 => (FpKind::Min, false),  // FMIN #0.0/#1.0
             _ => return Ok(CpuExit::Undefined(insn)),
         };
         let immediate_scalar = opc5 >= 0b11000;
         let scalar = if immediate_scalar {
             let one = (insn >> 5) & 1 == 1;
-            Some(match (esize, one) {
-                (2, false) => 0x3800,
-                (2, true) => 0x3c00,
-                (4, false) => 0x3f00_0000,
-                (4, true) => 0x3f80_0000,
-                (8, false) => 0x3fe0_0000_0000_0000,
-                (8, true) => 0x3ff0_0000_0000_0000,
+            let zero = opc5 >= 0b11100 && !one;
+            Some(match (esize, zero, one) {
+                (2, true, _) => 0,
+                (2, false, false) => 0x3800,
+                (2, false, true) => 0x3c00,
+                (4, true, _) => 0,
+                (4, false, false) => 0x3f00_0000,
+                (4, false, true) => 0x3f80_0000,
+                (8, true, _) => 0,
+                (8, false, false) => 0x3fe0_0000_0000_0000,
+                (8, false, true) => 0x3ff0_0000_0000_0000,
                 _ => return Ok(CpuExit::Undefined(insn)),
             })
         } else {
@@ -12989,15 +13004,19 @@ impl AArch64Cpu {
                 continue;
             }
             let x = read_elem(&operand, off, src_sz);
-            let res = match (src_sz, dst_sz) {
-                (2, 4) => Self::fp16_to_f32(x as u16).to_bits() as u64,
-                (2, 8) => fp16_to_f64(x as u16).to_bits(),
-                (4, 2) if bf => f32_to_bf16(x as u32) as u64, // BFCVT
-                (4, 2) => Self::f32_to_fp16(f32::from_bits(x as u32)) as u64,
-                (4, 8) => (f32::from_bits(x as u32) as f64).to_bits(),
-                (8, 2) => fp16_round(f64::from_bits(x)) as u64,
-                _ if round_odd => round_odd_f64_to_f32(f64::from_bits(x)) as u64, // FCVTX
-                _ => (f64::from_bits(x) as f32).to_bits() as u64, // double -> single
+            let res = if !bf && fp_is_nan_bits(src_sz, x) {
+                fp_convert_nan(x, src_sz, dst_sz)
+            } else {
+                match (src_sz, dst_sz) {
+                    (2, 4) => Self::fp16_to_f32(x as u16).to_bits() as u64,
+                    (2, 8) => fp16_to_f64(x as u16).to_bits(),
+                    (4, 2) if bf => f32_to_bf16(x as u32) as u64, // BFCVT
+                    (4, 2) => Self::f32_to_fp16(f32::from_bits(x as u32)) as u64,
+                    (4, 8) => (f32::from_bits(x as u32) as f64).to_bits(),
+                    (8, 2) => fp16_round(f64::from_bits(x)) as u64,
+                    _ if round_odd => round_odd_f64_to_f32(f64::from_bits(x)) as u64, // FCVTX
+                    _ => (f64::from_bits(x) as f32).to_bits() as u64, // double -> single
+                }
             };
             self.fpsr |= if bf {
                 fp_status_bfcvt(x as u32, res as u16)
@@ -20676,6 +20695,12 @@ fn fp_status_fscale(esize: usize, x: u64, n: i64, result: u64) -> u32 {
         }
     } else {
         let exact = sve_fp_to_f64(esize, x) * exp2_f64(n.clamp(-1023, 1023) as i32);
+        if !exact.is_finite() {
+            return FPSR_OFC | FPSR_IXC;
+        }
+        if exact == 0.0 && fp_is_zero_bits(esize, result) {
+            return FPSR_UFC | FPSR_IXC;
+        }
         fp_status_from_exact_f64(esize, exact, result)
     }
 }
@@ -21862,13 +21887,28 @@ fn scalbn_f64(x: f64, mut n: i64) -> f64 {
 /// intermediate; f32/f64 via the correctly-rounded scalbn.
 fn sve_fscale(esize: usize, x: u64, n: i64) -> u64 {
     match esize {
-        2 => fp16_round(fp16_to_f64(x as u16) * exp2_f64(n.clamp(-1023, 1023) as i32)) as u64,
-        4 => scalbn_f32(
-            f32::from_bits(x as u32),
-            n.clamp(i32::MIN as i64, i32::MAX as i64) as i32,
-        )
-        .to_bits() as u64,
-        _ => scalbn_f64(f64::from_bits(x), n).to_bits(),
+        2 => {
+            if let Some(n) = fp16_nan2(x as u16, x as u16) {
+                return n as u64;
+            }
+            fp16_round(fp16_to_f64(x as u16) * exp2_f64(n.clamp(-1023, 1023) as i32)) as u64
+        }
+        4 => {
+            if let Some(n) = fp32_nan2(x as u32, x as u32) {
+                return n as u64;
+            }
+            scalbn_f32(
+                f32::from_bits(x as u32),
+                n.clamp(i32::MIN as i64, i32::MAX as i64) as i32,
+            )
+            .to_bits() as u64
+        }
+        _ => {
+            if let Some(n) = fp64_nan2(x, x) {
+                return n;
+            }
+            scalbn_f64(f64::from_bits(x), n).to_bits()
+        }
     }
 }
 
@@ -22068,25 +22108,33 @@ fn sve_ftmad(esize: usize, nn: u64, mm: u64, imm: usize) -> u64 {
     match esize {
         2 => {
             let neg = mm & 0x8000 != 0;
-            let m = if neg { mm & 0x7FFF } else { mm } as u16;
+            let m = (mm & 0x7FFF) as u16;
             let coeff = FTMAD_COEFF_H[imm + if neg { 8 } else { 0 }];
+            if let Some(n) = fp16_nan3(coeff, nn as u16, m) {
+                return n as u64;
+            }
             fp16_round(fp16_to_f64(nn as u16) * fp16_to_f64(m) + fp16_to_f64(coeff)) as u64
         }
         4 => {
             let neg = mm & 0x8000_0000 != 0;
-            let m = if neg { mm & 0x7FFF_FFFF } else { mm };
-            let coeff = f32::from_bits(FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }]);
+            let m = (mm & 0x7FFF_FFFF) as u32;
+            let coeff = FTMAD_COEFF_S[imm + if neg { 8 } else { 0 }];
+            if let Some(n) = fp32_nan3(coeff, nn as u32, m) {
+                return n as u64;
+            }
+            let coeff = f32::from_bits(coeff);
             f32::from_bits(nn as u32)
-                .mul_add(f32::from_bits(m as u32), coeff)
+                .mul_add(f32::from_bits(m), coeff)
                 .to_bits() as u64
         }
         _ => {
             let neg = mm & 0x8000_0000_0000_0000 != 0;
-            let m = if neg { mm & 0x7FFF_FFFF_FFFF_FFFF } else { mm };
-            let coeff = f64::from_bits(FTMAD_COEFF_D[imm + if neg { 8 } else { 0 }]);
-            f64::from_bits(nn)
-                .mul_add(f64::from_bits(m), coeff)
-                .to_bits()
+            let m = mm & 0x7FFF_FFFF_FFFF_FFFF;
+            let coeff = FTMAD_COEFF_D[imm + if neg { 8 } else { 0 }];
+            if let Some(n) = fp64_nan3(coeff, nn, m) {
+                return n;
+            }
+            f64::from_bits(nn).mul_add(f64::from_bits(m), f64::from_bits(coeff)).to_bits()
         }
     }
 }
@@ -23670,6 +23718,19 @@ mod tests {
     }
 
     #[test]
+    fn sve_fp_abs_compare_ordered_qnan_sets_ioc() {
+        // FACGE P0.S, P0/Z, Z0.S, Z0.S
+        let mut cpu = create_cpu_with_insn(0x6580_c010);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 0x7fc0_0000); // fp32 qNaN in lane 0
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.sve_pred(0), 0x1110);
+        assert_eq!(cpu.fpsr & FPSR_IOC, FPSR_IOC);
+    }
+
+    #[test]
     fn sve_int_to_fp16_overflow_sets_ofc_ixc() {
         // UCVTF Z0.H, P0/M, Z0.S
         let mut cpu = create_cpu_with_insn(0x6555_a000);
@@ -23712,6 +23773,113 @@ mod tests {
             one_and_half | (one_and_half << 32) | (one_and_half << 64) | (one_and_half << 96)
         );
         assert_eq!(cpu.fpsr, 0);
+    }
+
+    #[test]
+    fn sve_fp_predicated_immediate_maxnm_uses_zero() {
+        // FMAXNM Z0.S, P0/M, Z0.S, #0.0
+        let mut cpu = create_cpu_with_insn(0x659c_8000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        let lanes = [-2.0f32, -0.25, 0.75, 2.0];
+        let mut value = 0u128;
+        for (i, lane) in lanes.into_iter().enumerate() {
+            value |= (lane.to_bits() as u128) << (32 * i);
+        }
+        cpu.set_simd(0, value);
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        let expected = [0.0f32, 0.0, 0.75, 2.0]
+            .into_iter()
+            .enumerate()
+            .fold(0u128, |acc, (i, lane)| acc | ((lane.to_bits() as u128) << (32 * i)));
+        assert_eq!(cpu.get_simd(0), expected);
+        assert_eq!(cpu.fpsr, 0);
+    }
+
+    #[test]
+    fn sve_fp_estimate_updates_status() {
+        // FRECPE Z0.S, Z0.S: reciprocal estimate of zero raises DZC.
+        let mut cpu = create_cpu_with_insn(0x658e_3000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 0);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_DZC, FPSR_DZC);
+
+        // FRSQRTE Z0.S, Z0.S: reciprocal-square-root estimate of -1 raises IOC.
+        let mut cpu = create_cpu_with_insn(0x658f_3000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, (-1.0f32).to_bits() as u128);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_IOC, FPSR_IOC);
+    }
+
+    #[test]
+    fn sve_fcvt_d2h_preserves_nan_payload() {
+        // FCVT Z0.H, P0/M, Z0.D
+        let mut cpu = create_cpu_with_insn(0x65c8_a000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 0xffff_ffff_ffff_ffff);
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_simd(0) & 0xffff, 0xffff);
+        assert_eq!(cpu.fpsr, 0);
+    }
+
+    #[test]
+    fn sve_fscale_updates_status() {
+        // FSCALE Z0.S, P0/M, Z0.S, Z1.S
+        let mut cpu = create_cpu_with_insn(0x6589_8020);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 1.0f32.to_bits() as u128);
+        cpu.set_simd(1, 200u32 as u128);
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_OFC | FPSR_IXC), FPSR_OFC | FPSR_IXC);
+
+        let mut cpu = create_cpu_with_insn(0x6589_8020);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 1.0f32.to_bits() as u128);
+        cpu.set_simd(1, (-200i32 as u32) as u128);
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_UFC | FPSR_IXC), FPSR_UFC | FPSR_IXC);
+    }
+
+    #[test]
+    fn sve_fscale_preserves_half_nan_payloads() {
+        // FSCALE Z0.H, P0/M, Z0.H, Z0.H
+        let mut cpu = create_cpu_with_insn(0x6549_8000);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, u128::MAX);
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.get_simd(0), u128::MAX);
+        assert_eq!(cpu.fpsr, 0);
+    }
+
+    #[test]
+    fn sve_ftsmul_f64_updates_status() {
+        // FTSMUL Z0.D, Z0.D, Z0.D
+        let mut cpu = create_cpu_with_insn(0x65c0_0c00);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, (1e155f64).to_bits() as u128);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_OFC | FPSR_IXC), FPSR_OFC | FPSR_IXC);
+
+        let mut cpu = create_cpu_with_insn(0x65c0_0c00);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, (1e-200f64).to_bits() as u128);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_UFC | FPSR_IXC), FPSR_UFC | FPSR_IXC);
     }
 
     #[test]
@@ -26565,6 +26733,18 @@ mod tests {
             cpu.mem_read_u8(0).is_err(),
             "invalid high TCR sizes should fault, not panic"
         );
+    }
+
+    #[test]
+    fn sve_ftmad_preserves_half_nan_payloads() {
+        // FTMAD Z0.H, Z0.H, Z0.H, #0. The multiply uses abs(Zm), but NaN
+        // propagation follows FPMulAdd operand order and must not canonicalize.
+        let mut cpu = create_cpu_with_insn(0x6550_8000);
+        cpu.v[0] = u128::MAX;
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.v[0], u128::MAX);
+        assert_eq!(cpu.fpsr & FPSR_IOC, 0);
     }
 
     // Regression for issue #45: the JIT vector load/store helpers must translate and

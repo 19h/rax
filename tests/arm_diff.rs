@@ -1817,6 +1817,140 @@ fn generated_sve_fp_immediate_arithmetic_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_sve_fp_immediate_minmax_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        let opc5 = (insn >> 16) & 0x1F;
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 13) & 0x7 != 0b100
+            || (insn >> 22) & 0x3 == 0
+            || !matches!(opc5, 0b11100..=0b11111)
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_fp_abs_compare_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 21) & 1 != 0
+            || (insn >> 13) & 0x7 != 0b110
+            || (insn >> 22) & 0x3 == 0
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_fp_estimate_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || !matches!((insn >> 16) & 0x3F, 0b001110 | 0b001111)
+            || (insn >> 10) & 0x3F != 0b001100
+            || (insn >> 22) & 0x3 == 0
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_fcvt_d2h_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 18) & 0xF != 0b0010
+            || (insn >> 22) & 0x3 != 0b11
+            || (insn >> 16) & 0x3 != 0b00
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_fscale_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 13) & 0x7 != 0b100
+            || (insn >> 16) & 0x1F != 0b01001
+            || (insn >> 22) & 0x3 == 0
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_ftsmul_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 21) & 1 != 0
+            || (insn >> 10) & 0x3F != 0b000011
+            || (insn >> 22) & 0x3 == 0
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_ftmad_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/float", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 19) & 0x7 != 0b010
+            || (insn >> 10) & 0x3F != 0b100000
+            || (insn >> 22) & 0x3 == 0
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_sve_fp_compare_zero_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/compare.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -32533,6 +32667,90 @@ fn diff_generated_sve_fp_immediate_arithmetic_sweep() {
         }
     }
     run_batch("generated_sve_fp_immediate_arithmetic_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fp_immediate_minmax_sweep() {
+    let mut rng = Rng::new(0xa64_f103);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fp_immediate_minmax_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fp_immediate_minmax_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fp_abs_compare_sweep() {
+    let mut rng = Rng::new(0xa64_f104);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fp_abs_compare_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fp_abs_compare_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fp_estimate_sweep() {
+    let mut rng = Rng::new(0xa64_f105);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fp_estimate_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fp_estimate_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fcvt_d2h_sweep() {
+    let mut rng = Rng::new(0xa64_f106);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fcvt_d2h_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fcvt_d2h_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fscale_sweep() {
+    let mut rng = Rng::new(0xa64_f107);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fscale_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fscale_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_ftsmul_sweep() {
+    let mut rng = Rng::new(0xa64_f108);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_ftsmul_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_ftsmul_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_ftmad_sweep() {
+    let mut rng = Rng::new(0xa64_f109);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_ftmad_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_ftmad_sweep", batch);
 }
 
 #[test]
