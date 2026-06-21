@@ -27429,6 +27429,117 @@ fn diff_generated_integer_tag_addsub_sweep() {
 }
 
 #[test]
+fn diff_integer_tag_addsub_sp_edges() {
+    fn addsub_tags(op: u32, uimm6: u32, uimm4: u32, rn: u32, rd: u32) -> u32 {
+        (1 << 31)
+            | ((op & 1) << 30)
+            | (0b100011 << 23)
+            | ((uimm6 & 0x3f) << 16)
+            | ((uimm4 & 0xf) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let bases = [
+        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x20000,
+        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x24000,
+    ];
+    let mut batch = Vec::new();
+    for (i, base) in bases.into_iter().enumerate() {
+        for tag in [0u64, 1, 7, 0xf] {
+            let sp = (tag << 56) | (base + ((i as u64) << 8));
+            for (name, op, uimm6, uimm4, rn, rd) in [
+                ("addg_sp_to_x", 0, 0, 0, 31, RD),
+                ("addg_sp_to_sp", 0, 1, 9, 31, 31),
+                ("subg_sp_to_x", 1, 2, 4, 31, RD),
+                ("subg_x_to_sp", 1, 3, 15, RN, 31),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.sp = sp;
+                st.x[RN as usize] = sp.wrapping_add(0x100);
+                st.x[RD as usize] = 0xaaaa_bbbb_cccc_dddd;
+                batch.push((
+                    format!("{name}_tag{tag:x}_base{i}"),
+                    addsub_tags(op, uimm6, uimm4, rn, rd),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("integer_tag_addsub_sp_edges", batch);
+}
+
+#[test]
+fn diff_integer_mte_dp2_sp_tag_edges() {
+    fn mte_dp2(s: u32, opcode: u32, rn: u32, rm: u32, rd: u32) -> u32 {
+        (1 << 31)
+            | ((s & 1) << 29)
+            | (0b0011010110 << 21)
+            | ((rm & 0x1f) << 16)
+            | ((opcode & 0x3f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+    let bases = [
+        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x30000,
+        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x34000,
+    ];
+    let operands = [
+        0x0500_0000_0000_1020,
+        0x0a80_0000_0000_0100,
+        0x0f7f_ffff_ffff_fff0,
+    ];
+
+    for (i, base) in bases.into_iter().enumerate() {
+        for tag in [0u64, 1, 8, 0xf] {
+            let sp = (tag << 56) | (base + ((i as u64) << 8));
+            for (j, operand) in operands.into_iter().enumerate() {
+                let mut st = ArmState::zeroed();
+                st.sp = sp;
+                st.x[RN as usize] = operand;
+                st.x[RM as usize] = 0x0900_0000_0000_2000 + ((j as u64) << 4);
+                st.x[RD as usize] = 0xaaaa_bbbb_cccc_dddd;
+                st.pstate = 0b1010u64 << 28;
+                batch.push((
+                    format!("subp sp_xm_tag{tag:x}_case{j}_base{i}"),
+                    mte_dp2(0, 0b000000, 31, RM, RD),
+                    st,
+                ));
+
+                let mut st = ArmState::zeroed();
+                st.sp = sp;
+                st.x[RN as usize] = operand;
+                st.x[RM as usize] = 0x0600_0000_0000_0100 + ((j as u64) << 4);
+                st.x[RD as usize] = 0x1111_2222_3333_4444;
+                st.pstate = 0b0101u64 << 28;
+                batch.push((
+                    format!("subps xn_sp_tag{tag:x}_case{j}_base{i}"),
+                    mte_dp2(1, 0b000000, RN, 31, RD),
+                    st,
+                ));
+
+                let mut st = ArmState::zeroed();
+                st.sp = sp;
+                st.x[RN as usize] = operand;
+                st.x[RM as usize] = 1u64 << ((tag + 1) & 0xf);
+                st.x[RD as usize] = 0x5555_6666_7777_8888;
+                st.pstate = 0b0011u64 << 28;
+                batch.push((
+                    format!("gmi sp_mask_tag{tag:x}_case{j}_base{i}"),
+                    mte_dp2(0, 0b000101, 31, RM, RD),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("integer_mte_dp2_sp_tag_edges", batch);
+}
+
+#[test]
 fn diff_generated_integer_pac_strip_sweep() {
     let mut rng = Rng::new(0xa64_9ac5);
     let mut batch = Vec::new();
@@ -28846,6 +28957,35 @@ fn diff_system_user_cache_maintenance_fault_edges() {
     }
 
     run_batch_el0("system_user_cache_maintenance_fault_edges", batch);
+}
+
+#[test]
+fn diff_system_user_cache_maintenance_other_invalid_va_edges() {
+    fn sys(op1: u32, crn: u32, crm: u32, op2: u32, rt: u32) -> u32 {
+        0xd508_0000
+            | ((op1 & 0x7) << 16)
+            | ((crn & 0xf) << 12)
+            | ((crm & 0xf) << 8)
+            | ((op2 & 0x7) << 5)
+            | (rt & 0x1f)
+    }
+
+    let cases = [
+        ("ic_ivau_invalid", sys(3, 7, 5, 1, RN)),
+        ("dc_cvau_invalid", sys(3, 7, 11, 1, RN)),
+    ];
+
+    let mut rng = Rng::new(0x5157_0015);
+    let mut batch = Vec::new();
+    for addr in [0x8000_0000u64, 0xffff_ffff_ffff_f000] {
+        for (label, insn) in cases {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = addr;
+            batch.push((format!("{label}_{addr:#x}"), insn, st));
+        }
+    }
+
+    run_batch_el0("system_user_cache_maintenance_other_invalid_va_edges", batch);
 }
 
 #[test]
@@ -31887,6 +32027,43 @@ fn diff_simd_fcmla_fpcr_ah_nan_sign() {
     }
 
     run_batch("simd_fcmla_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_simd_fcmla_f16_invalid_products() {
+    fn pack_f16(lanes: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in lanes.into_iter().enumerate() {
+            packed |= (value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let mut batch = Vec::new();
+    for q in 0..=1u32 {
+        for rot in 0..4u32 {
+            for (case_name, inf) in [("pos_inf", 0x7c00u16), ("neg_inf", 0xfc00)] {
+                let rn = [0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000];
+                let rm = [inf; 8];
+                let rd = [0x3c00u16; 8];
+
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_f16(rd);
+                st.set_vreg(RD as usize, lo, hi);
+                let (lo, hi) = pack_f16(rn);
+                st.set_vreg(RN as usize, lo, hi);
+                let (lo, hi) = pack_f16(rm);
+                st.set_vreg(RM as usize, lo, hi);
+                batch.push((
+                    format!("fcmla_f16_invalid_q{q}_r{rot}_{case_name}"),
+                    enc_fcmla(q, 0b01, rot),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("simd_fcmla_f16_invalid_products", batch);
 }
 
 #[test]
@@ -43331,6 +43508,47 @@ fn diff_sve_fcmla_indexed_fpcr_ah_nan_sign() {
 }
 
 #[test]
+fn diff_sve_fcmla_indexed_f16_invalid_products() {
+    fn pack_f16(lanes: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in lanes.into_iter().enumerate() {
+            packed |= (value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let mut batch = Vec::new();
+    for index in 0..4u32 {
+        for rot in 0..4u32 {
+            for (case_name, inf) in [("pos_inf", 0x7c00u16), ("neg_inf", 0xfc00)] {
+                let mut rn = [0u16; 8];
+                let mut rm = [0x3c00u16; 8];
+                let rd = [0x3c00u16; 8];
+                rn[0] = 0x0000;
+                rn[1] = 0x8000;
+                rm[(2 * index) as usize] = inf;
+                rm[(2 * index + 1) as usize] = inf;
+
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_f16(rd);
+                st.set_vreg(RD as usize, lo, hi);
+                let (lo, hi) = pack_f16(rn);
+                st.set_vreg(RN as usize, lo, hi);
+                let (lo, hi) = pack_f16(rm);
+                st.set_vreg(RM as usize, lo, hi);
+                batch.push((
+                    format!("sve_fcmla_idx_f16_invalid_r{rot}_i{index}_{case_name}"),
+                    enc_sve_fcmla_idx(2, index, RM, rot),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_fcmla_indexed_f16_invalid_products", batch);
+}
+
+#[test]
 fn diff_fpcr_fiz_sve_fcmla_indexed_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -44207,6 +44425,43 @@ fn diff_sve_fcmla_fpcr_ah_nan_sign() {
     }
 
     run_batch("sve_fcmla_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_sve_fcmla_f16_invalid_products() {
+    fn pack_f16(lanes: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in lanes.into_iter().enumerate() {
+            packed |= (value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    let rn = [0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000];
+    let rd = [0x3c00u16; 8];
+    let mut batch = Vec::new();
+    for rot in 0..4u32 {
+        for (case_name, inf) in [("pos_inf", 0x7c00u16), ("neg_inf", 0xfc00)] {
+            let rm = [inf; 8];
+            for (pred_name, pred) in [("none", 0x0000u16), ("low", 0x00ff), ("all", 0xffff)] {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_f16(rd);
+                st.set_vreg(RD as usize, lo, hi);
+                let (lo, hi) = pack_f16(rn);
+                st.set_vreg(RN as usize, lo, hi);
+                let (lo, hi) = pack_f16(rm);
+                st.set_vreg(RM as usize, lo, hi);
+                st.set_preg(0, pred);
+                batch.push((
+                    format!("sve_fcmla_f16_invalid_r{rot}_{case_name}_{pred_name}"),
+                    enc_sve_fcmla(1, rot),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_fcmla_f16_invalid_products", batch);
 }
 
 #[test]

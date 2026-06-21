@@ -1905,6 +1905,8 @@ impl Aarch64Lifter {
             | Mnemonic::XPACI
             | Mnemonic::XPACD
             | Mnemonic::PACGA
+            | Mnemonic::SUBP
+            | Mnemonic::SUBPS
             | Mnemonic::IRG
             | Mnemonic::GMI => {
                 return Err(LiftError::Unsupported {
@@ -5461,7 +5463,7 @@ mod tests {
 
     #[test]
     fn issue_44_rejects_tag_generation_lifts() {
-        for mnemonic in [Mnemonic::IRG, Mnemonic::GMI] {
+        for mnemonic in [Mnemonic::SUBP, Mnemonic::SUBPS, Mnemonic::IRG, Mnemonic::GMI] {
             assert_mnemonic_unsupported(mnemonic);
         }
     }

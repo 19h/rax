@@ -936,6 +936,8 @@ pub enum Mnemonic {
     // =========================================================================
     // Memory Tagging Extension (ARMv8.5+)
     // =========================================================================
+    SUBP,
+    SUBPS,
     IRG,
     GMI,
     ADDG,
@@ -1713,6 +1715,8 @@ impl Mnemonic {
             Mnemonic::RETAB => "retab",
 
             // MTE
+            Mnemonic::SUBP => "subp",
+            Mnemonic::SUBPS => "subps",
             Mnemonic::IRG => "irg",
             Mnemonic::GMI => "gmi",
             Mnemonic::ADDG => "addg",
