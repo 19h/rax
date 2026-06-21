@@ -1286,7 +1286,8 @@ fn addsub_shift_cases() -> Vec<(String, u32)> {
             for s in 0..2 {
                 for shift in 0..3 {
                     // LSL/LSR/ASR
-                    for &imm6 in &[0u32, 1, 7, 31, if sf == 1 { 63 } else { 31 }] {
+                    let imm6s = if sf == 1 { 0..64 } else { 0..32 };
+                    for imm6 in imm6s {
                         v.push((
                             format!("addsub sf{sf} op{op} s{s} sh{shift} #{imm6}"),
                             enc_addsub_shift(sf, op, s, shift, imm6),
@@ -1433,7 +1434,8 @@ fn logical_shift_cases() -> Vec<(String, u32)> {
             // AND/ORR/EOR/ANDS
             for n in 0..2 {
                 for shift in 0..4 {
-                    for &imm6 in &[0u32, 1, 31, if sf == 1 { 63 } else { 31 }] {
+                    let imm6s = if sf == 1 { 0..64 } else { 0..32 };
+                    for imm6 in imm6s {
                         v.push((
                             format!("logical sf{sf} opc{opc} n{n} sh{shift} #{imm6}"),
                             enc_logical_shift(sf, opc, shift, n, imm6),
@@ -25483,7 +25485,7 @@ fn run_batch_branch(name: &str, batch: Vec<(String, u32, ArmState)>) {
 
 #[test]
 fn diff_dp_addsub_shifted() {
-    run_family("dp_addsub_shifted", addsub_shift_cases(), 12, 0x1001);
+    run_family("dp_addsub_shifted", addsub_shift_cases(), 4, 0x1001);
 }
 
 #[test]
@@ -25607,7 +25609,7 @@ fn diff_addsub_ext_sp_source_dest() {
 
 #[test]
 fn diff_dp_logical_shifted() {
-    run_family("dp_logical_shifted", logical_shift_cases(), 12, 0x1002);
+    run_family("dp_logical_shifted", logical_shift_cases(), 2, 0x1002);
 }
 
 #[test]
@@ -48684,7 +48686,7 @@ fn diff_simd_shift_fixedpoint() {
                     if bits == 64 && q == 0 {
                         continue;
                     }
-                    for &fbits in &[1u32, bits / 2, bits - 1] {
+                    for fbits in 1..=bits {
                         let immhimmb = 2 * bits - fbits;
                         cases.push((
                             format!("fxp op{opcode:05b} u{u} b{bits} q{q} f{fbits}"),
@@ -48702,7 +48704,7 @@ fn diff_simd_shift_fixedpoint() {
     for (label, insn) in &cases {
         let is_fcvt = label.contains("11111");
         let bits64 = label.contains("b64");
-        for _ in 0..16 {
+        for _ in 0..4 {
             let mut st = ArmState::zeroed();
             let mut packed: u128 = 0;
             for lane in 0..4 {
@@ -50864,7 +50866,7 @@ fn diff_simd_indexed_int() {
         for &size in &[0b01u32, 0b10] {
             let max_index = if size == 0b01 { 8 } else { 4 };
             for q in 0..2 {
-                for &index in &[0u32, max_index - 1] {
+                for index in 0..max_index {
                     cases.push((
                         format!("{name} sz{size} q{q} idx{index}"),
                         enc_indexed(q, u, size, opcode, 2, index),
@@ -50873,7 +50875,7 @@ fn diff_simd_indexed_int() {
             }
         }
     }
-    run_family("simd_indexed_int", cases, 8, 0x5001);
+    run_family("simd_indexed_int", cases, 4, 0x5001);
 }
 
 #[test]
