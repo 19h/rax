@@ -1590,6 +1590,69 @@ fn generated_vector_mul_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_vector_noncrypto_cases() -> Vec<(String, u32)> {
+    let sources = [
+        (
+            "vector/add_sub",
+            include_str!("arm/generated/a64/vector/add_sub.rs"),
+        ),
+        (
+            "vector/arithmetic",
+            include_str!("arm/generated/a64/vector/arithmetic.rs"),
+        ),
+        (
+            "vector/compare",
+            include_str!("arm/generated/a64/vector/compare.rs"),
+        ),
+        ("vector/mul", include_str!("arm/generated/a64/vector/mul.rs")),
+        (
+            "vector/other",
+            include_str!("arm/generated/a64/vector/other.rs"),
+        ),
+        (
+            "vector/reduce",
+            include_str!("arm/generated/a64/vector/reduce.rs"),
+        ),
+        (
+            "vector/shift",
+            include_str!("arm/generated/a64/vector/shift.rs"),
+        ),
+        (
+            "vector/transfer",
+            include_str!("arm/generated/a64/vector/transfer.rs"),
+        ),
+    ];
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (family, source) in sources {
+        for (label, insn) in parse_generated_a64_encodings(family, source) {
+            by_encoding.entry(insn).or_insert(label);
+        }
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_integer_immediate_arithmetic_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/arithmetic", source) {
+        if (insn >> 24) & 0xFF != 0x25
+            || (insn >> 18) & 0xF != 0b1000
+            || (insn >> 14) & 0x3 != 0b11
+            || (insn >> 16) & 0x3 == 0b10
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings(
@@ -1951,6 +2014,14 @@ fn gen_float_input(rng: &mut Rng) -> ArmState {
     st.fpsr = 0;
     for r in 0..32 {
         st.set_vreg(r, 0x0000_0000_3f80_3c00, 0x0000_0000_3f80_3c00);
+    }
+    st
+}
+
+fn gen_sve_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    for r in 0..16 {
+        st.set_preg(r, rng.next() as u16);
     }
     st
 }
@@ -32126,6 +32197,28 @@ fn diff_generated_vector_mul_sweep() {
         4,
         0xa64_ecff,
     );
+}
+
+#[test]
+fn diff_generated_vector_noncrypto_sweep() {
+    run_family(
+        "generated_vector_noncrypto_sweep",
+        generated_vector_noncrypto_cases(),
+        4,
+        0xa64_ecff,
+    );
+}
+
+#[test]
+fn diff_generated_sve_integer_immediate_arithmetic_sweep() {
+    let mut rng = Rng::new(0xa64_5e01);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_integer_immediate_arithmetic_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_integer_immediate_arithmetic_sweep", batch);
 }
 
 #[test]

@@ -10271,6 +10271,42 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // ADD/SUB/SUBR Zd.T, Zd.T, #imm{,LSL #8}: unpredicated destructive
+        // integer arithmetic with an unsigned 8-bit immediate. op=2 is
+        // reserved; byte elements cannot use the shifted form.
+        if (insn >> 24) & 0xFF == 0b00100101
+            && (insn >> 18) & 0xF == 0b1000
+            && (insn >> 14) & 0x3 == 0b11
+        {
+            let op = (insn >> 16) & 0x3;
+            if op == 0b10 || (esize == 1 && (insn >> 13) & 1 == 1) {
+                return Ok(CpuExit::Undefined(insn));
+            }
+            let zd = (insn & 0x1F) as usize;
+            let imm8 = ((insn >> 5) & 0xFF) as u64;
+            let imm = if (insn >> 13) & 1 == 1 {
+                imm8 << 8
+            } else {
+                imm8
+            };
+            let bits = (esize * 8) as u32;
+            let mask = elem_mask(bits);
+            let src = self.v[zd].to_le_bytes();
+            let mut dst = [0u8; 16];
+            for e in 0..elements {
+                let off = e * esize;
+                let a = read_elem(&src, off, esize) & mask;
+                let r = match op {
+                    0b00 => a.wrapping_add(imm),
+                    0b01 => a.wrapping_sub(imm),
+                    _ => imm.wrapping_sub(a),
+                } & mask;
+                write_elem(&mut dst, off, esize, r);
+            }
+            self.v[zd] = u128::from_le_bytes(dst);
+            return Ok(CpuExit::Continue);
+        }
+
         // DUP Zd.T, #imm{,LSL #8} (unpredicated immediate broadcast): bits[21:16]
         // ==111000, bits[15:14]==11. (Distinct from PTRUE by bit21==1.)
         if (insn >> 16) & 0x3F == 0b111000 && (insn >> 14) & 0x3 == 0b11 {
@@ -23363,6 +23399,54 @@ mod tests {
         }
         // Sanity: a valid opc (ZIP1, opc 000) still executes.
         assert_eq!(setup(0x0522_6020).step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn sve_integer_immediate_arithmetic_updates_destructive_vector() {
+        let initial = 0x0f0e_0d0c_0b0a_0908_0706_0504_0302_0100u128;
+        let cases = [
+            // ADD Z0.B, Z0.B, #1
+            (0x2520_c020, 0x100f_0e0d_0c0b_0a09_0807_0605_0403_0201u128),
+            // SUB Z0.B, Z0.B, #1
+            (0x2521_c020, 0x0e0d_0c0b_0a09_0807_0605_0403_0201_00ffu128),
+            // SUBR Z0.B, Z0.B, #1
+            (0x2523_c020, 0xf2f3_f4f5_f6f7_f8f9_fafb_fcfd_feff_0001u128),
+            // ADD Z0.H, Z0.H, #1, LSL #8
+            (0x2560_e020, 0x100e_0e0c_0c0a_0a08_0806_0604_0402_0200u128),
+        ];
+
+        for (insn, expected) in cases {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_simd(0, initial);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue, "{insn:#010x}");
+            assert_eq!(cpu.get_simd(0), expected, "{insn:#010x}");
+        }
+    }
+
+    #[test]
+    fn sve_integer_immediate_arithmetic_rejects_reserved_forms() {
+        let cases = [
+            0x2520_e020, // ADD Z0.B, Z0.B, #1, LSL #8
+            0x2522_c020, // reserved op slot in the ADD/SUB/SUBR immediate space
+        ];
+
+        for insn in cases {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_simd(0, 0xdead_beef_dead_beef_dead_beef_dead_beefu128);
+
+            assert_eq!(
+                cpu.step().unwrap(),
+                CpuExit::Undefined(insn),
+                "{insn:#010x}"
+            );
+            assert_eq!(
+                cpu.get_simd(0),
+                0xdead_beef_dead_beef_dead_beef_dead_beefu128
+            );
+        }
     }
 
     #[test]
