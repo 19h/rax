@@ -2618,6 +2618,63 @@ fn generated_system_debug_msr_el0_trap_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_system_privileged_msr_el0_trap_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/system/register.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (_label, insn, fields) in parse_generated_a64_cases_with_fields("system/register", source) {
+        if fields.get("L").copied() != Some(0)
+            || fields.get("o0").copied() != Some(0)
+            || fields.get("op1").copied() != Some(0)
+            || fields.get("CRm").copied() != Some(0)
+            || fields.get("op2").copied() != Some(0)
+            || fields.get("Rt").copied() != Some(0)
+        {
+            continue;
+        }
+        let crn = fields
+            .get("CRn")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 12) & 0xf) as i32);
+        if !matches!(crn, 1 | 7 | 15) {
+            continue;
+        }
+        let label = format!("privileged_msr crn={crn} [system/register {insn:#010x}]");
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_system_cpsr_el0_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/system/register.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (_label, insn, fields) in parse_generated_a64_cases_with_fields("system/register", source) {
+        if !(insn >> 16 == 0xd500 && insn & 0x1f == 0x1f) {
+            continue;
+        }
+        let op1 = fields
+            .get("op1")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 16) & 0x7) as i32);
+        let crm = fields
+            .get("CRm")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 8) & 0xf) as i32);
+        let op2 = fields
+            .get("op2")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 5) & 0x7) as i32);
+        let label = format!("pstate_imm op1={op1} crm={crm} op2={op2}");
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_memory_single_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/memory/single.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -25927,6 +25984,37 @@ fn diff_generated_system_debug_msr_el0_trap_sweep() {
         "expected generated debug MSR EL0 trap cases"
     );
     run_batch_el0_trap("generated_system_debug_msr_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_generated_system_privileged_msr_el0_trap_sweep() {
+    let mut rng = Rng::new(0xa64_5157);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_privileged_msr_el0_trap_cases() {
+        for _ in 0..2 {
+            batch.push((label.clone(), insn, gen_input(&mut rng)));
+        }
+    }
+    assert!(
+        !batch.is_empty(),
+        "expected generated privileged MSR EL0 trap cases"
+    );
+    run_batch_el0_trap("generated_system_privileged_msr_el0_trap_sweep", batch);
+}
+
+#[test]
+fn diff_generated_system_cpsr_el0_sweep() {
+    let mut rng = Rng::new(0xa64_5156);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_system_cpsr_el0_cases() {
+        for nzcv in 0..16u64 {
+            let mut st = gen_input(&mut rng);
+            st.pstate = nzcv << 28;
+            batch.push((format!("{label} nzcv={nzcv:x}"), insn, st));
+        }
+    }
+    assert!(!batch.is_empty(), "expected generated CPSR/PSTATE cases");
+    run_batch_el0("generated_system_cpsr_el0_sweep", batch);
 }
 
 #[test]

@@ -15117,6 +15117,9 @@ impl AArch64Cpu {
             // carries the immediate) plus the FEAT_FlagM flag-format ops.
             // Kernels lean on DAIFSet/DAIFClr for interrupt masking, so these
             // must not fall through as hints.
+            if self.current_el == 0 && !(op1 == 0 && op2 <= 0b010) {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let imm = ((insn >> 8) & 0xF) as u8;
             match (op1, op2) {
                 // CFINV
