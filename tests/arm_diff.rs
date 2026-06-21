@@ -38396,17 +38396,46 @@ fn diff_fpcr_fiz_sve_frecpe_frsqrte_subnormal_inputs() {
 #[test]
 fn diff_sve_shift_pred_v() {
     // Predicated shift by vector incl. the reversed ASRR/LSRR/LSLR forms.
-    let mut rng = Rng::new(0x9_9001);
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let esize = 1usize << size;
+        let bits = esize * 8;
+        let elements = 16 / esize;
+        let mask = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+        let mut packed = 0u128;
+        for lane in 0..elements {
+            let value = values[lane % values.len()] & mask;
+            packed |= (value as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let preds = [0x0000u16, 0x0001, 0x00ff, 0x5555, 0xaaaa, 0xffff];
     for size in 0..4u32 {
+        let bits = 8u64 << size;
+        let max = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+        let sign = 1u64 << (bits - 1);
+        let values = pack_lanes(size, &[0, 1, sign, max, max >> 1]);
+        let shifts = pack_lanes(size, &[0, 1, bits - 1, bits, bits + 1]);
+        let ones = pack_lanes(size, &[max]);
         for opc in [0b000u32, 0b001, 0b011, 0b100, 0b101, 0b111] {
             let insn = enc_sve_shift_pred_v(size, opc);
-            for _ in 0..6 {
-                let mut st = ArmState::zeroed();
-                st.set_vreg(0, rng.next(), rng.next());
-                st.set_vreg(1, rng.next(), rng.next());
-                st.set_preg(0, rng.next() as u16);
-                batch.push((format!("shl s{size} op{opc:b}"), insn, st));
+            for pred in preds {
+                for (case, zdn, zm) in [
+                    ("values_shifts", values, shifts),
+                    ("shifts_values", shifts, values),
+                    ("ones_shifts", ones, shifts),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, zdn.0, zdn.1);
+                    st.set_vreg(1, zm.0, zm.1);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("shift_pred s{size} op{opc:b} p{pred:04x} {case}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -39606,18 +39635,35 @@ fn diff_sve2_xar() {
 fn diff_sve_fcvtx() {
     // FCVTX narrows f64 lanes to f32 with round-to-odd, merging under Pg.
     let insn = enc_sve_fcvtx();
-    let mut rng = Rng::new(0x7_0001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    for _ in 0..40 {
-        let mut zn = 0u128;
-        for l in 0..2 {
-            zn |= (finite_fp_bits(&mut rng, 8) as u128) << (l * 64);
+    let inputs = [
+        ("zeroes", 0.0f64, -0.0f64),
+        ("exact", 1.0, -2.0),
+        ("half_ulp", 1.0 + 2.0f64.powi(-24), -1.0 - 2.0f64.powi(-24)),
+        ("quarter_ulp", 1.0 + 2.0f64.powi(-25), -1.0 - 2.0f64.powi(-25)),
+        (
+            "subnorm",
+            f64::from_bits(0x0000_0000_0000_0001),
+            f64::from_bits(0x8000_0000_0000_0001),
+        ),
+        ("large", 1.0e40, -1.0e40),
+    ];
+    let merges = [
+        ("zero", 0u64, 0u64),
+        ("ones", u64::MAX, u64::MAX),
+        ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+    ];
+    for (name, lo, hi) in inputs {
+        let zn = (lo.to_bits() as u128) | ((hi.to_bits() as u128) << 64);
+        for pred in [0x0000u16, 0x0001, 0x0100, 0x0101, 0xffff] {
+            for &(merge_name, merge_lo, merge_hi) in &merges {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(0, merge_lo, merge_hi);
+                st.set_preg(0, pred);
+                batch.push((format!("fcvtx_{name}_p{pred:04x}_{merge_name}"), insn, st));
+            }
         }
-        let mut st = ArmState::zeroed();
-        st.set_vreg(1, zn as u64, (zn >> 64) as u64);
-        st.set_vreg(0, rng.next(), rng.next()); // merge target
-        st.set_preg(0, rng.next() as u16);
-        batch.push(("fcvtx".to_string(), insn, st));
     }
     run_batch("sve_fcvtx", batch);
 }
@@ -39625,21 +39671,40 @@ fn diff_sve_fcvtx() {
 #[test]
 fn diff_sve2_adcl() {
     // ADCLB/ADCLT/SBCLB/SBCLT long add/subtract with carry. The carry-in comes
-    // from the high half of each Zm element, so random Zm exercises both carry
-    // states; .s and .d, both halves, add and subtract.
-    let mut rng = Rng::new(0x6_c001);
+    // from the high half of each Zm element; exercise both carry states and
+    // boundary accumulator/Zn values explicitly.
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let patterns = [
+        ("zero", 0u64, 0u64),
+        ("one", 1, 1),
+        ("max32", 0xffff_ffff, 0xffff_ffff),
+        ("sign32", 0x8000_0000, 0x8000_0000),
+        ("max64", u64::MAX, u64::MAX),
+        ("alt", 0xaaaa_aaaa_5555_5555, 0x3333_3333_cccc_cccc),
+    ];
     for inv in 0..2u32 {
         for d_form in 0..2u32 {
             for top in 0..2u32 {
                 let insn = enc_sve2_adcl(inv, d_form, top);
                 let nm = if inv == 1 { "sbcl" } else { "adcl" };
-                for _ in 0..20 {
-                    let mut st = ArmState::zeroed();
-                    st.set_vreg(1, rng.next(), rng.next());
-                    st.set_vreg(2, rng.next(), rng.next());
-                    st.set_vreg(0, rng.next(), rng.next());
-                    batch.push((format!("{nm} d{d_form} t{top}"), insn, st));
+                for &(acc_name, acc_lo, acc_hi) in &patterns {
+                    for &(zn_name, zn_lo, zn_hi) in &patterns {
+                        for &(carry_name, carry_lo, carry_hi) in
+                            &[("carry0", 0u64, 0), ("carry1", u64::MAX, u64::MAX)]
+                        {
+                            let mut st = ArmState::zeroed();
+                            st.set_vreg(0, acc_lo, acc_hi);
+                            st.set_vreg(1, zn_lo, zn_hi);
+                            st.set_vreg(2, carry_lo, carry_hi);
+                            batch.push((
+                                format!(
+                                    "{nm}_d{d_form}_t{top}_{acc_name}_{zn_name}_{carry_name}"
+                                ),
+                                insn,
+                                st,
+                            ));
+                        }
+                    }
                 }
             }
         }
@@ -39650,18 +39715,32 @@ fn diff_sve2_adcl() {
 #[test]
 fn diff_sve2_eorbt() {
     // EORBT/EORTB interleaving exclusive OR; the unwritten half of Zd must be
-    // preserved, so a random prior Zd is supplied.
-    let mut rng = Rng::new(0x6_e001);
+    // preserved, so prior Zd is varied explicitly.
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let patterns = [
+        ("zero", 0u64, 0u64),
+        ("ones", u64::MAX, u64::MAX),
+        ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+        ("alt", 0xaaaa_aaaa_5555_5555, 0x3333_3333_cccc_cccc),
+        ("high", 0x8000_0000_0000_0000, 0x0000_0000_8000_0000),
+    ];
     for size in 0..4u32 {
         for tb in 0..2u32 {
             let insn = enc_sve2_eorbt(size, tb);
-            for _ in 0..16 {
-                let mut st = ArmState::zeroed();
-                st.set_vreg(1, rng.next(), rng.next());
-                st.set_vreg(2, rng.next(), rng.next());
-                st.set_vreg(0, rng.next(), rng.next()); // prior Zd
-                batch.push((format!("eorbt s{size} tb{tb}"), insn, st));
+            for &(zd_name, zd_lo, zd_hi) in &patterns {
+                for &(zn_name, zn_lo, zn_hi) in &patterns {
+                    for &(zm_name, zm_lo, zm_hi) in &patterns {
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, zd_lo, zd_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("eorbt_s{size}_tb{tb}_{zd_name}_{zn_name}_{zm_name}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
             }
         }
     }
@@ -39671,18 +39750,34 @@ fn diff_sve2_eorbt() {
 #[test]
 fn diff_sve2_pmull() {
     // PMULLB/PMULLT carryless multiply long: .q (64->128, needs PMULL128), .h
-    // (8->16) and .d (32->64), both even (B) and odd (T) halves. Random inputs.
-    let mut rng = Rng::new(0x6_9001);
+    // (8->16) and .d (32->64), both even (B) and odd (T) halves.
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let patterns = [
+        ("zero", 0u64, 0u64),
+        ("one", 1, 1),
+        ("high", 0x8000_0000_0000_0000, 0x8000_0000),
+        ("alt", 0xaaaa_aaaa_5555_5555, 0x3333_3333_cccc_cccc),
+        ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+    ];
     for size in [0u32, 1, 3] {
         for top in 0..2u32 {
             let insn = enc_sve2_pmull(size, top);
-            for _ in 0..16 {
-                let mut st = ArmState::zeroed();
-                st.set_vreg(1, rng.next(), rng.next());
-                st.set_vreg(2, rng.next(), rng.next());
-                st.set_vreg(0, rng.next(), rng.next()); // dest (overwritten)
-                batch.push((format!("pmull sz{size} t{top}"), insn, st));
+            for (case, &(zn_name, zn_lo, zn_hi)) in patterns.iter().enumerate() {
+                for &(zm_name, zm_lo, zm_hi) in &patterns {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    st.set_vreg(
+                        0,
+                        !zn_lo ^ ((case as u64) << 40),
+                        !zm_hi ^ ((top as u64) << 48),
+                    );
+                    batch.push((
+                        format!("pmull_sz{size}_t{top}_{zn_name}_{zm_name}_case{case}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -39743,34 +39838,96 @@ fn diff_sve2_crypto() {
 
 #[test]
 fn diff_sve2_histcnt() {
-    // HISTCNT counts, for each active lane i, how many active lanes j<=i hold a
-    // Zm value equal to Zn[i]. Draw lane values from a tiny pool so collisions
-    // (and thus nonzero, varied counts) are common. Pg=p0 governs.
-    let mut rng = Rng::new(0x6_6001);
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let shift = (1usize << size) * 8;
+        let mask = if shift >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << shift) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * shift);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pred_lanes(size: u32, lanes: &[usize]) -> u16 {
+        let esize = 1usize << size;
+        let mut pred = 0u16;
+        for &lane in lanes {
+            pred |= 1u16 << (lane * esize);
+        }
+        pred
+    }
+
+    // HISTCNT counts active prefix matches between Zn and Zm. Use deterministic
+    // lane patterns so inactive predicates, repeated values and all/no-match
+    // cases are reproducible when a mismatch appears.
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for size in 2..4u32 {
+        let elements = 16 / (1usize << size);
+        let full_pred = pred_lanes(size, &(0..elements).collect::<Vec<_>>());
+        let alt_pred = pred_lanes(size, &(0..elements).step_by(2).collect::<Vec<_>>());
+        let tail_pred = pred_lanes(size, &(1..elements).collect::<Vec<_>>());
         let esize = 1usize << size;
-        let elements = 16 / esize;
         let shift = esize * 8;
-        let emask: u128 = if shift >= 128 {
-            u128::MAX
+        let max = if shift >= 64 {
+            u64::MAX
         } else {
-            (1u128 << shift) - 1
+            (1u64 << shift) - 1
         };
         let insn = enc_sve2_histcnt(size);
-        for _ in 0..40 {
-            let pool: Vec<u128> = (0..3).map(|_| (rng.next() as u128) & emask).collect();
-            let mut zn = 0u128;
-            let mut zm = 0u128;
-            for e in 0..elements {
-                zn |= pool[(rng.next() as usize) % pool.len()] << (e * shift);
-                zm |= pool[(rng.next() as usize) % pool.len()] << (e * shift);
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 5] = [
+            (
+                "all_equal",
+                vec![0x11; elements],
+                vec![0x11; elements],
+            ),
+            (
+                "no_match",
+                (0..elements).map(|lane| lane as u64 + 1).collect(),
+                (0..elements).map(|lane| lane as u64 + 0x20).collect(),
+            ),
+            (
+                "prefix_dups",
+                (0..elements).map(|lane| (lane & 1) as u64 + 3).collect(),
+                (0..elements).map(|lane| ((lane + 1) & 1) as u64 + 3).collect(),
+            ),
+            (
+                "edge_values",
+                (0..elements).map(|lane| if lane & 1 == 0 { 0 } else { max }).collect(),
+                (0..elements).map(|lane| if lane & 1 == 0 { max } else { 0 }).collect(),
+            ),
+            (
+                "mixed",
+                (0..elements).map(|lane| [7, 7, 8, 9][lane % 4]).collect(),
+                (0..elements).map(|lane| [7, 8, 7, 9][lane % 4]).collect(),
+            ),
+        ];
+        let preds = [
+            ("none", 0),
+            ("lane0", pred_lanes(size, &[0])),
+            ("tail", tail_pred),
+            ("alt", alt_pred),
+            ("full", full_pred),
+            ("all_bits", u16::MAX),
+        ];
+        for (pattern_name, zn_values, zm_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(size, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(size, zm_values);
+            for &(pred_name, pred) in &preds {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x1234_5678_9abc_def0);
+                st.set_vreg(1, zn_lo, zn_hi);
+                st.set_vreg(2, zm_lo, zm_hi);
+                st.set_preg(0, pred); // Pg = p0
+                batch.push((
+                    format!("histcnt_sz{size}_{pattern_name}_{pred_name}"),
+                    insn,
+                    st,
+                ));
             }
-            let mut st = ArmState::zeroed();
-            st.set_vreg(1, zn as u64, (zn >> 64) as u64);
-            st.set_vreg(2, zm as u64, (zm >> 64) as u64);
-            st.set_preg(0, rng.next() as u16); // Pg = p0
-            batch.push((format!("histcnt sz{size}"), insn, st));
         }
     }
     run_batch("sve2_histcnt", batch);
@@ -39778,16 +39935,79 @@ fn diff_sve2_histcnt() {
 
 #[test]
 fn diff_sve2_histseg() {
+    fn pack_bytes(bytes: [u8; 16]) -> (u64, u64) {
+        let mut lo = 0u64;
+        let mut hi = 0u64;
+        for i in 0..8 {
+            lo |= (bytes[i] as u64) << (i * 8);
+            hi |= (bytes[i + 8] as u64) << (i * 8);
+        }
+        (lo, hi)
+    }
+
     // HISTSEG: each result byte counts equal Zm bytes for the matching Zn byte.
     let insn = enc_sve2_histseg();
     let mut rng = Rng::new(0x6_7001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for _ in 0..60 {
         let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0xf0f0_0f0f_aaaa_5555, 0x1357_9bdf_2468_ace0);
         st.set_vreg(1, rng.next(), rng.next()); // Zn
         st.set_vreg(2, rng.next(), rng.next()); // Zm
         batch.push(("histseg".to_string(), insn, st));
     }
+
+    let patterns = [
+        (
+            "all_zero",
+            [0u8; 16],
+            [0u8; 16],
+        ),
+        (
+            "ramp",
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        ),
+        (
+            "reverse",
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+        ),
+        (
+            "no_match",
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            [
+                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c,
+                0x8d, 0x8e, 0x8f,
+            ],
+        ),
+        (
+            "repeated_pool",
+            [0, 1, 0, 2, 1, 2, 0, 1, 3, 3, 2, 0, 1, 2, 3, 0],
+            [0, 0, 1, 1, 2, 2, 3, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+        ),
+        (
+            "boundary_bytes",
+            [
+                0x00, 0xff, 0x7f, 0x80, 0x00, 0xff, 0x55, 0xaa, 0x10, 0xef, 0x7f, 0x80, 0x55,
+                0xaa, 0x00, 0xff,
+            ],
+            [
+                0xff, 0x00, 0x80, 0x7f, 0x55, 0xaa, 0x10, 0xef, 0xff, 0x00, 0x80, 0x7f, 0x55,
+                0xaa, 0x10, 0xef,
+            ],
+        ),
+    ];
+    for &(name, zn_bytes, zm_bytes) in &patterns {
+        let (zn_lo, zn_hi) = pack_bytes(zn_bytes);
+        let (zm_lo, zm_hi) = pack_bytes(zm_bytes);
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0x0f0f_f0f0_5555_aaaa, 0xfedc_ba98_7654_3210);
+        st.set_vreg(1, zn_lo, zn_hi);
+        st.set_vreg(2, zm_lo, zm_hi);
+        batch.push((format!("histseg_{name}"), insn, st));
+    }
+
     // Planted: Zm all one byte value, so counts are 0 or 16.
     for b in [0x00u128, 0x42, 0xFF] {
         let mut same = 0u128;
@@ -39795,6 +40015,7 @@ fn diff_sve2_histseg() {
             same |= b << (k * 8);
         }
         let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0x55aa_55aa_55aa_55aa, 0xaa55_aa55_aa55_aa55);
         st.set_vreg(1, rng.next(), rng.next());
         st.set_vreg(2, same as u64, (same >> 64) as u64);
         batch.push(("histseg_same".to_string(), insn, st));
@@ -39804,6 +40025,25 @@ fn diff_sve2_histseg() {
 
 #[test]
 fn diff_sve2_match() {
+    fn pack_lanes(size: u32, values: &[u64]) -> (u64, u64) {
+        let shift = (1usize << size) * 8;
+        let mask = (1u64 << shift) - 1;
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * shift);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pred_lanes(size: u32, lanes: &[usize]) -> u16 {
+        let esize = 1usize << size;
+        let mut pred = 0u16;
+        for &lane in lanes {
+            pred |= 1u16 << (lane * esize);
+        }
+        pred
+    }
+
     // MATCH/NMATCH set a predicate bit where a Zn element equals (or, for
     // NMATCH, differs from) every Zm element in the 128-bit segment. Zn lanes
     // are a mix of copied Zm values (guaranteed matches) and random values, so
@@ -39836,6 +40076,62 @@ fn diff_sve2_match() {
                 st.set_vreg(2, zm_lo, zm_hi);
                 st.set_preg(1, rng.next() as u16); // Pg = p1
                 batch.push((format!("match sz{size} n{nmatch}"), insn, st));
+            }
+
+            let max = (1u64 << shift) - 1;
+            let full_pred = pred_lanes(size, &(0..elements).collect::<Vec<_>>());
+            let alt_pred = pred_lanes(size, &(0..elements).step_by(2).collect::<Vec<_>>());
+            let tail_pred = pred_lanes(size, &(1..elements).collect::<Vec<_>>());
+            let patterns: [(&str, Vec<u64>, Vec<u64>); 5] = [
+                (
+                    "all_equal",
+                    vec![0x11; elements],
+                    vec![0x11; elements],
+                ),
+                (
+                    "no_match",
+                    (0..elements).map(|lane| lane as u64 + 1).collect(),
+                    (0..elements).map(|lane| lane as u64 + 0x40).collect(),
+                ),
+                (
+                    "duplicate_pool",
+                    (0..elements).map(|lane| [1, 2, 1, 3][lane % 4]).collect(),
+                    (0..elements).map(|lane| [3, 1, 2, 1][lane % 4]).collect(),
+                ),
+                (
+                    "edges",
+                    (0..elements).map(|lane| if lane & 1 == 0 { 0 } else { max }).collect(),
+                    (0..elements).map(|lane| if lane & 1 == 0 { max } else { 0 }).collect(),
+                ),
+                (
+                    "single_value_in_zm",
+                    (0..elements).map(|lane| lane as u64 & max).collect(),
+                    vec![3; elements],
+                ),
+            ];
+            let preds = [
+                ("none", 0),
+                ("lane0", pred_lanes(size, &[0])),
+                ("tail", tail_pred),
+                ("alt", alt_pred),
+                ("full", full_pred),
+                ("all_bits", u16::MAX),
+            ];
+            for (pattern_name, zn_values, zm_values) in &patterns {
+                let (zn_lo, zn_hi) = pack_lanes(size, zn_values);
+                let (zm_lo, zm_hi) = pack_lanes(size, zm_values);
+                for &(pred_name, pred) in &preds {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    st.set_preg(0, 0xaaaa);
+                    st.set_preg(1, pred); // Pg = p1
+                    batch.push((
+                        format!("match_sz{size}_n{nmatch}_{pattern_name}_{pred_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -39874,6 +40170,20 @@ fn diff_sve2_whilerw() {
 
 #[test]
 fn diff_sve2_mull_indexed() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // Indexed widening multiply-long: S/U MULL/MLAL/MLSL and the saturating
     // SQDMULL/SQDMLAL/SQDMLSL, across .s and .d, all indices and both halves.
     // Random operands plus a min*min saturation edge for the saturating forms.
@@ -39897,12 +40207,71 @@ fn diff_sve2_mull_indexed() {
             for index in 0..idxn {
                 for top in 0..2u32 {
                     let insn = enc_sve2_mull_idx(op, size, index, RM, top);
+                    let d_esize = 1usize << size;
+                    let s_bits = s_esize * 8;
+                    let d_bits = d_esize * 8;
+                    let s_mask = (1u64 << s_bits) - 1;
+                    let s_sign = 1u64 << (s_bits - 1);
+                    let d_mask = if d_bits >= 64 {
+                        u64::MAX
+                    } else {
+                        (1u64 << d_bits) - 1
+                    };
+                    let d_sign = 1u64 << (d_bits - 1);
+                    let src_lanes = 16 / s_esize;
+                    let dst_lanes = 16 / d_esize;
                     for _ in 0..4 {
                         let mut st = ArmState::zeroed();
                         st.set_vreg(1, rng.next(), rng.next());
                         st.set_vreg(2, rng.next(), rng.next());
                         st.set_vreg(0, rng.next(), rng.next());
                         batch.push((format!("{name}_s{size}_i{index}_t{top}"), insn, st));
+                    }
+                    let edge_cases: [(&str, Vec<u64>, Vec<u64>, Vec<u64>); 3] = [
+                        (
+                            "small",
+                            (0..src_lanes).map(|lane| lane as u64 + 1).collect(),
+                            (0..src_lanes).map(|lane| lane as u64 + 2).collect(),
+                            (0..dst_lanes).map(|lane| lane as u64 * 3).collect(),
+                        ),
+                        (
+                            "signed_edges",
+                            (0..src_lanes)
+                                .map(|lane| [0, 1, s_mask, s_sign, s_sign - 1][lane % 5])
+                                .collect(),
+                            (0..src_lanes)
+                                .map(|lane| [1, s_mask, 2, s_sign, s_sign - 1][lane % 5])
+                                .collect(),
+                            (0..dst_lanes)
+                                .map(|lane| [0, d_sign, d_sign - 1, d_mask][lane % 4])
+                                .collect(),
+                        ),
+                        (
+                            "alt_halves",
+                            (0..src_lanes)
+                                .map(|lane| if lane & 1 == 0 { s_mask } else { 2 })
+                                .collect(),
+                            (0..src_lanes)
+                                .map(|lane| [0, 1, s_sign, s_sign - 1][lane % 4])
+                                .collect(),
+                            (0..dst_lanes)
+                                .map(|lane| if lane & 1 == 0 { d_mask } else { d_sign })
+                                .collect(),
+                        ),
+                    ];
+                    for (case, zn_values, zm_values, acc_values) in &edge_cases {
+                        let (zn_lo, zn_hi) = pack_lanes(s_esize, zn_values);
+                        let (zm_lo, zm_hi) = pack_lanes(s_esize, zm_values);
+                        let (acc_lo, acc_hi) = pack_lanes(d_esize, acc_values);
+                        let mut st = ArmState::zeroed();
+                        st.set_vreg(0, acc_lo, acc_hi);
+                        st.set_vreg(1, zn_lo, zn_hi);
+                        st.set_vreg(2, zm_lo, zm_hi);
+                        batch.push((
+                            format!("{name}_s{size}_i{index}_t{top}_{case}"),
+                            insn,
+                            st,
+                        ));
                     }
                     if sat {
                         let m_elem = 1u128 << (s_esize * 8 - 1);
@@ -39925,6 +40294,20 @@ fn diff_sve2_mull_indexed() {
 
 #[test]
 fn diff_sve2_mul_indexed() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // MUL/MLA/MLS/SQDMULH/SQRDMULH and the saturating-rounding accumulate
     // SQRDMLAH/SQRDMLSH by an indexed Zm element, across all sizes and index
     // positions. Random operands plus a min*min saturation edge for the
@@ -39946,12 +40329,62 @@ fn diff_sve2_mul_indexed() {
         for (size, esz, idxn) in sizes {
             for index in 0..idxn {
                 let insn = enc_sve2_mul_idx(op6, size, index, RM); // Zm = z2
+                let bits = esz * 8;
+                let mask = if bits >= 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                let sign = 1u64 << (bits - 1);
+                let lanes = 16 / esz;
                 for _ in 0..6 {
                     let mut st = ArmState::zeroed();
                     st.set_vreg(1, rng.next(), rng.next()); // Zn
                     st.set_vreg(2, rng.next(), rng.next()); // Zm
                     st.set_vreg(0, rng.next(), rng.next()); // Zd (accumulator)
                     batch.push((format!("{opname}_sz{size}_i{index}"), insn, st));
+                }
+                let edge_cases: [(&str, Vec<u64>, Vec<u64>, Vec<u64>); 3] = [
+                    (
+                        "small",
+                        (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                        (0..lanes).map(|lane| lane as u64 + 2).collect(),
+                        (0..lanes).map(|lane| lane as u64 * 5).collect(),
+                    ),
+                    (
+                        "signed_edges",
+                        (0..lanes)
+                            .map(|lane| [0, 1, mask, sign, sign - 1][lane % 5])
+                            .collect(),
+                        (0..lanes)
+                            .map(|lane| [1, mask, 2, sign, sign - 1][lane % 5])
+                            .collect(),
+                        (0..lanes)
+                            .map(|lane| [0, sign, sign - 1, mask][lane % 4])
+                            .collect(),
+                    ),
+                    (
+                        "alt_lanes",
+                        (0..lanes)
+                            .map(|lane| if lane & 1 == 0 { mask } else { 2 })
+                            .collect(),
+                        (0..lanes)
+                            .map(|lane| [0, 1, sign, sign - 1][lane % 4])
+                            .collect(),
+                        (0..lanes)
+                            .map(|lane| if lane & 1 == 0 { mask } else { sign })
+                            .collect(),
+                    ),
+                ];
+                for (case, zn_values, zm_values, acc_values) in &edge_cases {
+                    let (zn_lo, zn_hi) = pack_lanes(esz, zn_values);
+                    let (zm_lo, zm_hi) = pack_lanes(esz, zm_values);
+                    let (acc_lo, acc_hi) = pack_lanes(esz, acc_values);
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, acc_lo, acc_hi);
+                    st.set_vreg(1, zn_lo, zn_hi);
+                    st.set_vreg(2, zm_lo, zm_hi);
+                    batch.push((format!("{opname}_sz{size}_i{index}_{case}"), insn, st));
                 }
                 if saturating {
                     // Force min*min in every lane to exercise the saturation clamp.
