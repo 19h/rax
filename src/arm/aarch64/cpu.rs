@@ -1655,7 +1655,24 @@ impl AArch64Cpu {
         let imm9 = (((insn >> 12) & 0x1FF) as i32) << 23 >> 23;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as u8;
-        let base = self.gpr_or_sp(rn);
+        let base = if rn == 31 {
+            let sp = self.current_sp();
+            if sp & 0xf != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: if opc == 0 {
+                        crate::arm::cpu_trait::AccessType::Write
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Read
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
+        } else {
+            self.get_x(rn)
+        };
         let address = (base as i64).wrapping_add(imm9 as i64) as u64;
 
         match opc {
@@ -16845,7 +16862,16 @@ impl AArch64Cpu {
         let m = elem_mask(bits);
 
         let addr = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xf != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: crate::arm::cpu_trait::AccessType::Read,
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };

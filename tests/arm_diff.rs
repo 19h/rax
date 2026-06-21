@@ -38416,7 +38416,6 @@ fn diff_sve_shift_pred_v() {
 #[test]
 fn diff_sve_rev_rbit() {
     // REVB/REVH/REVW/RBIT reverse byte/halfword/word/bit order within elements.
-    let mut rng = Rng::new(0x9_1001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     let cases: &[(u32, &[u32])] = &[
         (0b00, &[1, 2, 3]),
@@ -38424,15 +38423,29 @@ fn diff_sve_rev_rbit() {
         (0b10, &[3]),
         (0b11, &[0, 1, 2, 3]),
     ];
+    let preds = [0x0000u16, 0x0001, 0x00ff, 0x5555, 0xaaaa, 0xffff];
+    let patterns = [
+        ("zero", 0u64, 0u64),
+        ("ones", u64::MAX, u64::MAX),
+        ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+        ("sign", 0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
+        ("bits", 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
+    ];
     for &(op, sizes) in cases {
         for &size in sizes {
             let insn = enc_sve_rev_rbit(size, op);
-            for _ in 0..6 {
-                let mut st = ArmState::zeroed();
-                st.set_vreg(1, rng.next(), rng.next());
-                st.set_vreg(0, rng.next(), rng.next());
-                st.set_preg(0, rng.next() as u16);
-                batch.push((format!("rev op{op:b} s{size}"), insn, st));
+            for pred in preds {
+                for &(pattern, lo, hi) in &patterns {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(1, lo, hi);
+                    st.set_vreg(0, !lo, !hi);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("rev op{op:b} s{size} p{pred:04x} {pattern}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -39679,26 +39692,50 @@ fn diff_sve2_pmull() {
 #[test]
 fn diff_sve2_crypto() {
     // SVE2 AES/SM4/RAX1 at VL=128 operate on the single 128-bit segment.
-    // Random operands suffice (no special-value handling). The slice lists the
-    // registers each form reads (and, where destructive, also writes).
-    let mut rng = Rng::new(0x6_8001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    let cases: [(&str, u32, &[usize]); 7] = [
-        ("aesmc", enc_sve2_aesmc(0), &[0]),
-        ("aesimc", enc_sve2_aesmc(1), &[0]),
-        ("aese", enc_sve2_aes(0x22, 0), &[0, 1]),
-        ("aesd", enc_sve2_aes(0x22, 1), &[0, 1]),
-        ("sm4e", enc_sve2_aes(0x23, 0), &[0, 1]),
-        ("sm4ekey", enc_sve2_sm4ekey(0), &[1, 2]),
-        ("rax1", enc_sve2_sm4ekey(1), &[1, 2]),
+    let patterns = [
+        ("zero", 0u64, 0u64),
+        ("ones", u64::MAX, u64::MAX),
+        ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+        ("highbit", 0x8000_0000_0000_0000, 0x0000_0000_8000_0000),
+        ("alt", 0xaaaa_aaaa_5555_5555, 0x3333_3333_cccc_cccc),
     ];
-    for (name, insn, regs) in cases {
-        for _ in 0..20 {
+    for (name, insn, regs) in [
+        ("aesmc", enc_sve2_aesmc(0), &[0usize][..]),
+        ("aesimc", enc_sve2_aesmc(1), &[0usize][..]),
+        ("aese", enc_sve2_aes(0x22, 0), &[0usize, 1][..]),
+        ("aesd", enc_sve2_aes(0x22, 1), &[0usize, 1][..]),
+        ("sm4e", enc_sve2_aes(0x23, 0), &[0usize, 1][..]),
+        ("sm4ekey", enc_sve2_sm4ekey(0), &[0usize, 1, 2][..]),
+        ("rax1", enc_sve2_sm4ekey(1), &[0usize, 1, 2][..]),
+    ] {
+        for (case, &(dst_name, dst_lo, dst_hi)) in patterns.iter().enumerate() {
+            for &(src_name, src_lo, src_hi) in &patterns {
+                let mix = ((case as u64) << 32) | 0x1020_3040;
+                let mut st = ArmState::zeroed();
+                for &r in regs {
+                    st.set_vreg(r, dst_lo ^ mix ^ r as u64, dst_hi ^ !mix ^ r as u64);
+                }
+                if regs.contains(&1) {
+                    st.set_vreg(1, src_lo, src_hi);
+                }
+                if regs.contains(&2) {
+                    st.set_vreg(2, src_hi, src_lo);
+                }
+                batch.push((
+                    format!("{name}_dst{dst_name}_src{src_name}_case{case}"),
+                    insn,
+                    st,
+                ));
+            }
+        }
+
+        for &(dst_name, dst_lo, dst_hi) in &patterns {
             let mut st = ArmState::zeroed();
             for &r in regs {
-                st.set_vreg(r, rng.next(), rng.next());
+                st.set_vreg(r, dst_lo, dst_hi);
             }
-            batch.push((name.to_string(), insn, st));
+            batch.push((format!("{name}_broadcast_{dst_name}"), insn, st));
         }
     }
     run_batch("sve2_crypto", batch);
@@ -43110,17 +43147,22 @@ fn diff_mem_atomic_unaligned_uscat() {
 
 #[test]
 fn diff_mem_ldapr_rcpc() {
-    let cases: &[(&str, u32)] = &[
-        ("ldaprb", enc_ldapr(0)),
-        ("ldaprh", enc_ldapr(1)),
-        ("ldapr w", enc_ldapr(2)),
-        ("ldapr x", enc_ldapr(3)),
-    ];
     let mut rng = Rng::new(0x1_0052);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for _ in 0..8 {
-            batch.push(((*label).to_string(), *insn, mem_input(&mut rng)));
+    for size in 0..4u32 {
+        for rt in 0..=31u32 {
+            for i in 0..8 {
+                let mut st = mem_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + ((i as u64) << 8);
+                if rt < 31 {
+                    st.x[rt as usize] = rng.next();
+                }
+                batch.push((
+                    format!("ldapr_size{size}_rt{rt}_case{i}"),
+                    enc_ldapr_regs(size, rt, RN),
+                    st,
+                ));
+            }
         }
     }
     run_batch("mem_ldapr_rcpc", batch);
@@ -43128,19 +43170,23 @@ fn diff_mem_ldapr_rcpc() {
 
 #[test]
 fn diff_mem_ldapr_sp_base() {
-    let cases: &[(&str, u32)] = &[
-        ("ldaprb_sp", enc_ldapr_regs(0, RD, 31)),
-        ("ldaprh_sp", enc_ldapr_regs(1, RD, 31)),
-        ("ldapr_w_sp", enc_ldapr_regs(2, RD, 31)),
-        ("ldapr_x_sp", enc_ldapr_regs(3, RD, 31)),
-    ];
     let mut rng = Rng::new(0x1_0068);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for _ in 0..8 {
-            let mut st = mem_input(&mut rng);
-            st.sp = SCRATCH_BASE + 64;
-            batch.push(((*label).to_string(), *insn, st));
+    for size in 0..4u32 {
+        let align = 1u64 << size;
+        for rt in 0..=31u32 {
+            for offset in [0u64, align, 64, 128] {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + offset;
+                if rt < 31 {
+                    st.x[rt as usize] = rng.next();
+                }
+                batch.push((
+                    format!("ldapr_sp_size{size}_rt{rt}_off{offset}"),
+                    enc_ldapr_regs(size, rt, 31),
+                    st,
+                ));
+            }
         }
     }
     run_batch("mem_ldapr_sp_base", batch);
@@ -43588,26 +43634,53 @@ fn diff_mem_ldst_imm_sp_base() {
 
 #[test]
 fn diff_mem_ordered_unscaled() {
-    let cases: &[(&str, u32)] = &[
-        ("stlurb", 0x1900_1020),
-        ("stlurh", 0x5900_1020),
-        ("stlur_w", 0x9900_1020),
-        ("stlur_x", 0xd900_0020),
-        ("ldapurb", 0x1940_1020),
-        ("ldapurh", 0x5940_1020),
-        ("ldapur_w", 0x9940_1020),
-        ("ldapur_x", 0xd940_0020),
-        ("ldapursb_x", 0x1980_1020),
-        ("ldapursb_w", 0x19c0_1020),
-        ("ldapursh_x", 0x5980_1020),
-        ("ldapursh_w", 0x59c0_1020),
-        ("ldapursw_x", 0x9980_1020),
-    ];
+    fn ordered_unscaled(size: u32, opc: u32, imm9: i32, rn: u32, rt: u32) -> u32 {
+        let imm9 = (imm9 as u32) & 0x1ff;
+        (size << 30)
+            | (0b011001 << 24)
+            | (opc << 22)
+            | (imm9 << 12)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
     let mut rng = Rng::new(0x1_0051);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for _ in 0..4 {
-            batch.push(((*label).to_string(), *insn, mem_input(&mut rng)));
+    for (size, opc, opname) in [
+        (0u32, 0b00u32, "stlurb"),
+        (1, 0b00, "stlurh"),
+        (2, 0b00, "stlur_w"),
+        (3, 0b00, "stlur_x"),
+        (0, 0b01, "ldapurb"),
+        (1, 0b01, "ldapurh"),
+        (2, 0b01, "ldapur_w"),
+        (3, 0b01, "ldapur_x"),
+        (0, 0b10, "ldapursb_x"),
+        (1, 0b10, "ldapursh_x"),
+        (2, 0b10, "ldapursw_x"),
+        (0, 0b11, "ldapursb_w"),
+        (1, 0b11, "ldapursh_w"),
+    ] {
+        for rn in [RN, 31] {
+            for rt in [0u32, 2, 30, 31] {
+                for imm9 in [-16, 0, 1, 16] {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + 64;
+                    st.sp = if rn == 31 && imm9 == 1 {
+                        SCRATCH_BASE + 65
+                    } else {
+                        SCRATCH_BASE + 64
+                    };
+                    if rt < 31 {
+                        st.x[rt as usize] = rng.next();
+                    }
+                    batch.push((
+                        format!("{opname}_rn{rn}_rt{rt}_imm{imm9}"),
+                        ordered_unscaled(size, opc, imm9, rn, rt),
+                        st,
+                    ));
+                }
+            }
         }
     }
     run_batch("mem_ordered_unscaled", batch);
