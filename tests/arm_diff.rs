@@ -33856,6 +33856,38 @@ fn diff_sve2_cdot_indexed() {
             }
             batch.push((format!("cdoti{k}"), insn, st));
         }
+        for (case_name, zda, zn, zm) in [
+            (
+                "zero",
+                (0u64, 0u64),
+                (0u64, 0u64),
+                (0u64, 0u64),
+            ),
+            (
+                "ones",
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+                (u64::MAX, u64::MAX),
+            ),
+            (
+                "bytes",
+                (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                (0x1716_1514_1312_1110, 0x1f1e_1d1c_1b1a_1918),
+                (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+            ),
+            (
+                "signed_bytes",
+                (0x8080_7f7f_0101_ffff, 0x0000_8080_7f7f_0101),
+                (0x7f80_ff00_55aa_0102, 0x807f_00ff_aa55_fefd),
+                (0x0100_ff80_7f55_aa02, 0x8001_00ff_55aa_fefd),
+            ),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.set_vreg(0, zda.0, zda.1);
+            st.set_vreg(1, zn.0, zn.1);
+            st.set_vreg(2, zm.0, zm.1);
+            batch.push((format!("cdoti{k}_{case_name}"), insn, st));
+        }
     }
     run_batch("sve2_cdot_indexed", batch);
 }
@@ -41044,6 +41076,37 @@ fn diff_sve2_cmla_indexed() {
                     st.set_vreg(0, rng.next(), rng.next());
                     batch.push((format!("cmla_idx s{size} i{index} r{rot}"), insn, st));
                 }
+                for (case_name, zda, zn, zm) in [
+                    ("zero", (0u64, 0u64), (0u64, 0u64), (0u64, 0u64)),
+                    (
+                        "ones",
+                        (u64::MAX, u64::MAX),
+                        (u64::MAX, u64::MAX),
+                        (u64::MAX, u64::MAX),
+                    ),
+                    (
+                        "bytes",
+                        (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                        (0x1716_1514_1312_1110, 0x1f1e_1d1c_1b1a_1918),
+                        (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+                    ),
+                    (
+                        "signed_bytes",
+                        (0x8080_7f7f_0101_ffff, 0x0000_8080_7f7f_0101),
+                        (0x7f80_ff00_55aa_0102, 0x807f_00ff_aa55_fefd),
+                        (0x0100_ff80_7f55_aa02, 0x8001_00ff_55aa_fefd),
+                    ),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, zda.0, zda.1);
+                    st.set_vreg(1, zn.0, zn.1);
+                    st.set_vreg(2, zm.0, zm.1);
+                    batch.push((
+                        format!("cmla_idx_s{size}_i{index}_r{rot}_{case_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -41055,6 +41118,13 @@ fn diff_sve_fcmla_indexed() {
     // FCMLA by indexed element, finite FP, .h and .s, all indices/rotations.
     let mut rng = Rng::new(0x7_b001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz, idxn) in [(2u32, 2usize, 4u32), (3, 4, 2)] {
         for index in 0..idxn {
             for rot in 0..4u32 {
@@ -41071,6 +41141,146 @@ fn diff_sve_fcmla_indexed() {
                     st.set_vreg(1, zn as u64, (zn >> 64) as u64);
                     st.set_vreg(2, zm as u64, (zm >> 64) as u64);
                     batch.push((format!("fcmla_idx s{size} i{index} r{rot}"), insn, st));
+                }
+                let deterministic_cases = if esz == 2 {
+                    [
+                        ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
+                        (
+                            "signed_zero",
+                            [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
+                            [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
+                            [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        ),
+                        (
+                            "mixed",
+                            [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                            [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
+                            [0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        ),
+                        (
+                            "cancel",
+                            [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                            [0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00],
+                            [0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000],
+                        ),
+                    ]
+                } else {
+                    [
+                        ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
+                        (
+                            "signed_zero",
+                            [
+                                (-0.0f32).to_bits() as u64,
+                                0.0f32.to_bits() as u64,
+                                (-0.0f32).to_bits() as u64,
+                                0.0f32.to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                0.0f32.to_bits() as u64,
+                                (-0.0f32).to_bits() as u64,
+                                0.0f32.to_bits() as u64,
+                                (-0.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                        ),
+                        (
+                            "mixed",
+                            [
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                1.5f32.to_bits() as u64,
+                                (-1.5f32).to_bits() as u64,
+                                0.25f32.to_bits() as u64,
+                                (-0.25f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                1.0f32.to_bits() as u64,
+                                2.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                        ),
+                        (
+                            "cancel",
+                            [
+                                1.0f32.to_bits() as u64,
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                            [
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                1.0f32.to_bits() as u64,
+                                0,
+                                0,
+                                0,
+                                0,
+                            ],
+                        ),
+                    ]
+                };
+                for (case_name, za_lanes, zn_lanes, zm_lanes) in deterministic_cases {
+                    let za = pack_lanes(esz, za_lanes);
+                    let zn = pack_lanes(esz, zn_lanes);
+                    let zm = pack_lanes(esz, zm_lanes);
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, za as u64, (za >> 64) as u64);
+                    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                    batch.push((
+                        format!("fcmla_idx_s{size}_i{index}_r{rot}_{case_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -41211,6 +41421,38 @@ fn diff_sve2_cdot() {
                 st.set_vreg(0, rng.next(), rng.next());
                 batch.push((format!("cdot s{size} r{rot}"), insn, st));
             }
+            for (case_name, zda, zn, zm) in [
+                (
+                    "zero",
+                    (0u64, 0u64),
+                    (0u64, 0u64),
+                    (0u64, 0u64),
+                ),
+                (
+                    "ones",
+                    (u64::MAX, u64::MAX),
+                    (u64::MAX, u64::MAX),
+                    (u64::MAX, u64::MAX),
+                ),
+                (
+                    "bytes",
+                    (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+                    (0x1716_1514_1312_1110, 0x1f1e_1d1c_1b1a_1918),
+                    (0xf8f9_fafb_fcfd_feff, 0xf0f1_f2f3_f4f5_f6f7),
+                ),
+                (
+                    "signed_bytes",
+                    (0x8080_7f7f_0101_ffff, 0x0000_8080_7f7f_0101),
+                    (0x7f80_ff00_55aa_0102, 0x807f_00ff_aa55_fefd),
+                    (0x0100_ff80_7f55_aa02, 0x8001_00ff_55aa_fefd),
+                ),
+            ] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zda.0, zda.1);
+                st.set_vreg(1, zn.0, zn.1);
+                st.set_vreg(2, zm.0, zm.1);
+                batch.push((format!("cdot_s{size}_r{rot}_{case_name}"), insn, st));
+            }
         }
     }
     run_batch("sve2_cdot", batch);
@@ -41221,6 +41463,13 @@ fn diff_sve_fcadd() {
     // FCADD predicated FP complex add, both rotations, all sizes.
     let mut rng = Rng::new(0x7_7001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz) in [(1u32, 2usize), (2, 4), (3, 8)] {
         for rot in 0..2u32 {
             let insn = enc_sve_fcadd(size, rot);
@@ -41235,6 +41484,190 @@ fn diff_sve_fcadd() {
                 st.set_vreg(1, b as u64, (b >> 64) as u64); // Zm
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("fcadd s{size} r{rot}"), insn, st));
+            }
+            let deterministic_cases = match esz {
+                2 => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
+                        [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
+                    ),
+                    (
+                        "mixed",
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
+                    ),
+                    (
+                        "cancel",
+                        [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                        [0xbc00, 0xbc00, 0x3c00, 0x3c00, 0xc000, 0x4000, 0xb800, 0x3800],
+                    ),
+                ],
+                4 => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed",
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.5f32.to_bits() as u64,
+                            (-1.5f32).to_bits() as u64,
+                            0.25f32.to_bits() as u64,
+                            (-0.25f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "cancel",
+                        [
+                            1.0f32.to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            (-1.0f32).to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+                _ => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f64).to_bits(),
+                            0.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f64.to_bits(),
+                            (-0.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.5f64.to_bits(),
+                            (-1.5f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "cancel",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            (-1.0f64).to_bits(),
+                            1.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+            };
+            for (case_name, zdn_lanes, zm_lanes) in deterministic_cases {
+                let zdn = pack_lanes(esz, zdn_lanes);
+                let zm = pack_lanes(esz, zm_lanes);
+                for (pred_name, pred) in [
+                    ("none", 0x0000u16),
+                    ("low", 0x00ff),
+                    ("alt", 0x5555),
+                    ("all", 0xffff),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, zdn as u64, (zdn >> 64) as u64);
+                    st.set_vreg(1, zm as u64, (zm >> 64) as u64);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("fcadd_s{size}_r{rot}_{case_name}_{pred_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
@@ -41419,6 +41852,13 @@ fn diff_sve_fcmla() {
     // FCMLA predicated FP complex multiply-add, all four rotations and sizes.
     let mut rng = Rng::new(0x7_8001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz) in [(1u32, 2usize), (2, 4), (3, 8)] {
         for rot in 0..4u32 {
             let insn = enc_sve_fcmla(size, rot);
@@ -41435,6 +41875,255 @@ fn diff_sve_fcmla() {
                 st.set_vreg(2, zm as u64, (zm >> 64) as u64); // Zm
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("fcmla s{size} r{rot}"), insn, st));
+            }
+            let deterministic_cases = match esz {
+                2 => [
+                    ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
+                        [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    ),
+                    (
+                        "mixed",
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
+                        [0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    ),
+                    (
+                        "cancel",
+                        [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
+                        [0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00],
+                        [0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000],
+                    ),
+                ],
+                4 => [
+                    ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed",
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.5f32.to_bits() as u64,
+                            (-1.5f32).to_bits() as u64,
+                            0.25f32.to_bits() as u64,
+                            (-0.25f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f32.to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "cancel",
+                        [
+                            1.0f32.to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            1.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+                _ => [
+                    ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f64).to_bits(),
+                            0.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f64.to_bits(),
+                            (-0.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.5f64.to_bits(),
+                            (-1.5f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f64.to_bits(),
+                            2.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "cancel",
+                        [
+                            1.0f64.to_bits(),
+                            1.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            2.0f64.to_bits(),
+                            (-2.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+            };
+            for (case_name, zda_lanes, zn_lanes, zm_lanes) in deterministic_cases {
+                let zda = pack_lanes(esz, zda_lanes);
+                let zn = pack_lanes(esz, zn_lanes);
+                let zm = pack_lanes(esz, zm_lanes);
+                for (pred_name, pred) in [
+                    ("none", 0x0000u16),
+                    ("low", 0x00ff),
+                    ("alt", 0x5555),
+                    ("all", 0xffff),
+                ] {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(0, zda as u64, (zda >> 64) as u64);
+                    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                    st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("fcmla_s{size}_r{rot}_{case_name}_{pred_name}"),
+                        insn,
+                        st,
+                    ));
+                }
             }
         }
     }
