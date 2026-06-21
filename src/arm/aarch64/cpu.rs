@@ -3181,6 +3181,8 @@ impl AArch64Cpu {
                         (0, 0, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Add, n, m, self.fpcr),
                         (0, 1, 0b010) => sve_fp16_binop_with_fpcr(FpKind::Sub, n, m, self.fpcr),
                         (1, 0, 0b011) => sve_fp16_binop_with_fpcr(FpKind::Mul, n, m, self.fpcr),
+                        (0, 0, 0b111) => fp16_recps_with_fpcr(n, m, self.fpcr),
+                        (0, 1, 0b111) => fp16_rsqrts_with_fpcr(n, m, self.fpcr),
                         _ => f(n, m),
                     };
                     self.fpsr |= fp16_three_same_status(u, a, opcode, n, m, r);
@@ -3192,7 +3194,13 @@ impl AArch64Cpu {
                     let aa = lane(acc, e);
                     let n = lane(src1, e);
                     let m = lane(src2, e);
-                    let r = fp16_mla(aa, n, m);
+                    let r = fp_muladd_bits_with_fpcr(
+                        aa as u64,
+                        n as u64,
+                        m as u64,
+                        16,
+                        self.fpcr,
+                    ) as u16;
                     self.fpsr |= fp_status_fma(2, aa as u64, n as u64, m as u64, r as u64);
                     dst |= (r as u128) << (e * 16);
                 }
@@ -3202,7 +3210,14 @@ impl AArch64Cpu {
                     let aa = lane(acc, e);
                     let n = lane(src1, e);
                     let m = lane(src2, e);
-                    let r = fp16_mls(aa, n, m);
+                    let neg_n = fp_neg_bits(n as u64, 16);
+                    let r = fp_muladd_bits_with_fpcr(
+                        aa as u64,
+                        neg_n,
+                        m as u64,
+                        16,
+                        self.fpcr,
+                    ) as u16;
                     self.fpsr |=
                         fp_status_fma(2, aa as u64, fp_neg_bits(n as u64, 16), m as u64, r as u64);
                     dst |= (r as u128) << (e * 16);
@@ -4774,10 +4789,22 @@ impl AArch64Cpu {
                     let bn = vm_elem as u16;
                     let dn = d as u16;
                     let r = match kind {
-                        FpKind::Mul => fp16_mul(an, bn),
+                        FpKind::Mul => sve_fp16_binop_with_fpcr(FpKind::Mul, an, bn, self.fpcr),
                         FpKind::Mulx => fp16_mulx(an, bn),
-                        FpKind::Mla => fp16_mla(dn, an, bn),
-                        FpKind::Mls => fp16_mls(dn, an, bn),
+                        FpKind::Mla => fp_muladd_bits_with_fpcr(
+                            dn as u64,
+                            an as u64,
+                            bn as u64,
+                            16,
+                            self.fpcr,
+                        ) as u16,
+                        FpKind::Mls => fp_muladd_bits_with_fpcr(
+                            dn as u64,
+                            fp_neg_bits(an as u64, 16),
+                            bn as u64,
+                            16,
+                            self.fpcr,
+                        ) as u16,
                         _ => return Err(ArmError::UndefinedInstruction(insn)),
                     } as u64;
                     let status = match kind {
@@ -12466,7 +12493,10 @@ impl AArch64Cpu {
                 let ne = read_elem(&n, off, esz);
                 let (r, status) = if is_fmul {
                     let r = match esz {
-                        2 => fp16_mul(ne as u16, mm as u16) as u64,
+                        2 => {
+                            sve_fp16_binop_with_fpcr(FpKind::Mul, ne as u16, mm as u16, self.fpcr)
+                                as u64
+                        }
                         4 => fp_three_same_f32_with_fpcr(
                             FpKind::Mul,
                             ne as u32,
@@ -12802,7 +12832,7 @@ impl AArch64Cpu {
                 let off = e * esz;
                 let x = read_elem(&n, off, esz);
                 let sgn = read_elem(&m, off, esz) & 1;
-                let r = sve_ftsmul(esz, x, sgn);
+                let r = sve_ftsmul(esz, x, sgn, self.fpcr);
                 self.fpsr |= if esz == 8 {
                     if fp_is_snan_bits(esz, x) {
                         FPSR_IOC
@@ -22299,7 +22329,7 @@ fn fp_muladd_f64_with_fpcr(acc: u64, x: u64, y: u64, fpcr: u32) -> u64 {
 
 fn fp_muladd_bits_with_fpcr(acc: u64, x: u64, y: u64, esize: u32, fpcr: u32) -> u64 {
     match esize {
-        16 => fp_muladd_bits(acc, x, y, esize),
+        16 => fp16_mla_with_fpcr(acc as u16, x as u16, y as u16, fpcr) as u64,
         32 => fp_muladd_f32_with_fpcr(acc as u32, x as u32, y as u32, fpcr) as u64,
         _ => fp_muladd_f64_with_fpcr(acc, x, y, fpcr),
     }
@@ -23152,10 +23182,10 @@ fn sve_rsqrts(esize: usize, x: u64, y: u64) -> u64 {
 
 /// SVE FTSMUL: square `x` and set the result sign to `sgn` (bit0 of Zm),
 /// unless the squared value is NaN (then the sign is left as produced).
-fn sve_ftsmul(esize: usize, x: u64, sgn: u64) -> u64 {
+fn sve_ftsmul(esize: usize, x: u64, sgn: u64, fpcr: u32) -> u64 {
     match esize {
         2 => {
-            let s = fp16_mul(x as u16, x as u16);
+            let s = sve_fp16_binop_with_fpcr(FpKind::Mul, x as u16, x as u16, fpcr);
             if (s & 0x7C00) == 0x7C00 && (s & 0x03FF) != 0 {
                 s as u64 // NaN
             } else {
@@ -23163,19 +23193,19 @@ fn sve_ftsmul(esize: usize, x: u64, sgn: u64) -> u64 {
             }
         }
         4 => {
-            let r = f32::from_bits(x as u32) * f32::from_bits(x as u32);
-            if r.is_nan() {
-                r.to_bits() as u64
+            let r = fp_three_same_f32_with_fpcr(FpKind::Mul, x as u32, x as u32, 0, fpcr);
+            if is_nan32(r) {
+                r as u64
             } else {
-                ((r.to_bits() & 0x7FFF_FFFF) | ((sgn as u32) << 31)) as u64
+                ((r & 0x7FFF_FFFF) | ((sgn as u32) << 31)) as u64
             }
         }
         _ => {
-            let r = f64::from_bits(x) * f64::from_bits(x);
-            if r.is_nan() {
-                r.to_bits()
+            let r = fp_three_same_f64_with_fpcr(FpKind::Mul, x, x, 0, fpcr);
+            if is_nan64(r) {
+                r
             } else {
-                (r.to_bits() & 0x7FFF_FFFF_FFFF_FFFF) | (sgn << 63)
+                (r & 0x7FFF_FFFF_FFFF_FFFF) | (sgn << 63)
             }
         }
     }
@@ -23931,6 +23961,20 @@ fn fp16_mla(acc: u16, a: u16, b: u16) -> u16 {
         return n;
     }
     fp16_round(fp16_to_f64(acc) + fp16_to_f64(a) * fp16_to_f64(b))
+}
+
+fn fp16_mla_with_fpcr(acc: u16, a: u16, b: u16, fpcr: u32) -> u16 {
+    if (fpcr >> 22) & 0x3 == 0
+        || fp16_is_nan(acc)
+        || fp16_is_nan(a)
+        || fp16_is_nan(b)
+        || fp16_is_inf(acc)
+        || fp16_is_inf(a)
+        || fp16_is_inf(b)
+    {
+        return fp16_mla(acc, a, b);
+    }
+    f64_to_fp16_bits_with_fpcr(fp16_to_f64(acc) + fp16_to_f64(a) * fp16_to_f64(b), fpcr)
 }
 
 fn fp16_mls(acc: u16, a: u16, b: u16) -> u16 {
