@@ -4413,7 +4413,7 @@ impl AArch64Cpu {
         let mask = elem_mask((esize * 8) as u32);
         let e0 = vn as u64 & mask;
         let e1 = (vn >> (esize * 8)) as u64 & mask;
-        let r = sve_fp_combine(kind, esize, e0, e1);
+        let r = sve_fp_combine_with_fpcr(kind, esize, e0, e1, self.fpcr);
         self.fpsr |= fp_status_binop(esize, kind, e0, e1, r);
         self.v[rd] = (r & mask) as u128;
         Ok(CpuExit::Continue)
@@ -12950,8 +12950,8 @@ impl AArch64Cpu {
                 let dn1 = read_elem(&dn, odd_off, esize);
                 let m0 = read_elem(&m, even_off, esize);
                 let m1 = read_elem(&m, odd_off, esize);
-                let dnv = sve_fp_combine(kind, esize, dn0, dn1);
-                let mv = sve_fp_combine(kind, esize, m0, m1);
+                let dnv = sve_fp_combine_with_fpcr(kind, esize, dn0, dn1, self.fpcr);
+                let mv = sve_fp_combine_with_fpcr(kind, esize, m0, m1, self.fpcr);
                 if (pred >> even_off) & 1 == 1 {
                     self.fpsr |= fp_status_binop(esize, kind, dn0, dn1, dnv);
                 }
@@ -13095,12 +13095,7 @@ impl AArch64Cpu {
             for e in 0..elements {
                 if (pred >> (e * esize)) & 1 == 1 {
                     let x = read_elem(&m_reg, e * esize, esize);
-                    let r = sve_fp_combine(
-                        FpKind::Add,
-                        esize,
-                        acc,
-                        x,
-                    );
+                    let r = sve_fp_combine_with_fpcr(FpKind::Add, esize, acc, x, self.fpcr);
                     self.fpsr |= fp_status_binop(esize, FpKind::Add, acc, x, r);
                     acc = r;
                 }
@@ -13127,7 +13122,7 @@ impl AArch64Cpu {
                 }
             })
             .collect();
-        let (r, status) = sve_fp_tree_reduce_status(&buf, kind, esize);
+        let (r, status) = sve_fp_tree_reduce_status(&buf, kind, esize, self.fpcr);
         self.fpsr |= status;
         self.v[vd] = (r as u128) & mask;
         Ok(CpuExit::Continue)
@@ -13275,8 +13270,8 @@ impl AArch64Cpu {
                     let kind = TwoRegFp::Fsqrt;
                     let r = match esize {
                         2 => fp16_sqrt(lane as u16) as u64,
-                        4 => fp_two_reg_f32(kind, lane as u32) as u64,
-                        _ => fp_two_reg_f64(kind, lane),
+                        4 => fp_two_reg_f32_with_fpcr(kind, lane as u32, self.fpcr) as u64,
+                        _ => fp_two_reg_f64_with_fpcr(kind, lane, self.fpcr),
                     };
                     (r, fp_status_unop(esize, Some(kind), lane, r))
                 }
@@ -20120,6 +20115,7 @@ fn fp_two_reg_f32(kind: TwoRegFp, bits: u32) -> u32 {
 fn fp_two_reg_f32_with_fpcr(kind: TwoRegFp, bits: u32, fpcr: u32) -> u32 {
     use TwoRegFp::*;
     match kind {
+        Fsqrt => fp32_sqrt_with_fpcr(bits, fpcr),
         RintX | RintI => {
             let x = f32::from_bits(bits);
             match (fpcr >> 22) & 0x3 {
@@ -20131,6 +20127,27 @@ fn fp_two_reg_f32_with_fpcr(kind: TwoRegFp, bits: u32, fpcr: u32) -> u32 {
             .to_bits()
         }
         _ => fp_two_reg_f32(kind, bits),
+    }
+}
+
+fn fp32_sqrt_with_fpcr(bits: u32, fpcr: u32) -> u32 {
+    let nearest = fp_two_reg_f32(TwoRegFp::Fsqrt, bits);
+    if (fpcr >> 22) & 0x3 == 0 || fp32_abs(bits) == 0 || fp32_abs(bits) >= 0x7f80_0000 {
+        return nearest;
+    }
+    if (bits >> 31) != 0 || fp32_abs(nearest) >= 0x7f80_0000 {
+        return nearest;
+    }
+
+    let rounded_sq = {
+        let r = f32::from_bits(nearest) as f64;
+        r * r
+    };
+    let x = f32::from_bits(bits) as f64;
+    match (fpcr >> 22) & 0x3 {
+        1 if rounded_sq < x => fp32_next_up_bits(nearest),
+        2 | 3 if rounded_sq > x => fp32_next_down_bits(nearest),
+        _ => nearest,
     }
 }
 
@@ -20185,6 +20202,7 @@ fn fp_two_reg_f64(kind: TwoRegFp, bits: u64) -> u64 {
 fn fp_two_reg_f64_with_fpcr(kind: TwoRegFp, bits: u64, fpcr: u32) -> u64 {
     use TwoRegFp::*;
     match kind {
+        Fsqrt => fp64_sqrt_with_fpcr(bits, fpcr),
         RintX | RintI => {
             let x = f64::from_bits(bits);
             match (fpcr >> 22) & 0x3 {
@@ -20196,6 +20214,35 @@ fn fp_two_reg_f64_with_fpcr(kind: TwoRegFp, bits: u64, fpcr: u32) -> u64 {
             .to_bits()
         }
         _ => fp_two_reg_f64(kind, bits),
+    }
+}
+
+fn fp64_sqrt_with_fpcr(bits: u64, fpcr: u32) -> u64 {
+    let nearest = fp_two_reg_f64(TwoRegFp::Fsqrt, bits);
+    if (fpcr >> 22) & 0x3 == 0 || fp64_abs(bits) == 0 || fp64_abs(bits) >= 0x7ff0_0000_0000_0000 {
+        return nearest;
+    }
+    if (bits >> 63) != 0 || fp64_abs(nearest) >= 0x7ff0_0000_0000_0000 {
+        return nearest;
+    }
+
+    let Some((mx, ex)) = fp64_mant_exp(bits) else {
+        return nearest;
+    };
+    let Some((mr, er)) = fp64_mant_exp(nearest) else {
+        return nearest;
+    };
+    let square = (mr as u128) * (mr as u128);
+    let cmp_square_input = scaled_i128_terms_sign(&[
+        (square as i128, er * 2),
+        (-(mx as i128), ex),
+    ]);
+    match (fpcr >> 22) & 0x3 {
+        1 if cmp_square_input == std::cmp::Ordering::Less => fp64_next_up_bits(nearest),
+        2 | 3 if cmp_square_input == std::cmp::Ordering::Greater => {
+            fp64_next_down_bits(nearest)
+        }
+        _ => nearest,
     }
 }
 
@@ -22318,10 +22365,14 @@ fn last_active(mask: u32, operand: u32, elements: usize, esize: usize) -> bool {
 /// Combine two FP element bit-values with an `FpKind` op at the given esize,
 /// reusing the verified binary16/32/64 helpers (for SVE FP reductions/FADDA).
 fn sve_fp_combine(kind: FpKind, esize: usize, x: u64, y: u64) -> u64 {
+    sve_fp_combine_with_fpcr(kind, esize, x, y, 0)
+}
+
+fn sve_fp_combine_with_fpcr(kind: FpKind, esize: usize, x: u64, y: u64, fpcr: u32) -> u64 {
     match esize {
         2 => sve_fp16_binop(kind, x as u16, y as u16) as u64,
-        4 => fp_three_same_f32(kind, x as u32, y as u32, 0) as u64,
-        _ => fp_three_same_f64(kind, x, y, 0),
+        4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, fpcr) as u64,
+        _ => fp_three_same_f64_with_fpcr(kind, x, y, 0, fpcr),
     }
 }
 
@@ -22339,14 +22390,14 @@ fn sve_fp_tree_reduce(buf: &[u64], kind: FpKind, esize: usize) -> u64 {
     sve_fp_combine(kind, esize, lo, hi)
 }
 
-fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize) -> (u64, u32) {
+fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize, fpcr: u32) -> (u64, u32) {
     if buf.len() == 1 {
         return (buf[0], 0);
     }
     let h = buf.len() / 2;
-    let (lo, sl) = sve_fp_tree_reduce_status(&buf[..h], kind, esize);
-    let (hi, sh) = sve_fp_tree_reduce_status(&buf[h..], kind, esize);
-    let r = sve_fp_combine(kind, esize, lo, hi);
+    let (lo, sl) = sve_fp_tree_reduce_status(&buf[..h], kind, esize, fpcr);
+    let (hi, sh) = sve_fp_tree_reduce_status(&buf[h..], kind, esize, fpcr);
+    let r = sve_fp_combine_with_fpcr(kind, esize, lo, hi, fpcr);
     (r, sl | sh | fp_status_binop(esize, kind, lo, hi, r))
 }
 
