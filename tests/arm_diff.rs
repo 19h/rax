@@ -54576,6 +54576,118 @@ fn diff_mem_atomic_unaligned_uscat() {
 }
 
 #[test]
+fn diff_mem_atomic_unaligned_edges() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b000, "ldadd"),
+        (0, 0b001, "ldclr"),
+        (0, 0b010, "ldeor"),
+        (0, 0b011, "ldset"),
+        (0, 0b100, "ldsmax"),
+        (0, 0b101, "ldsmin"),
+        (0, 0b110, "ldumax"),
+        (0, 0b111, "ldumin"),
+        (1, 0b000, "swp"),
+    ];
+    let mut rng = Rng::new(0x1_016b);
+    let mut batch = Vec::new();
+
+    for &(o3, opc, name) in ops {
+        for size in 1..4u32 {
+            let offsets: &[u64] = match size {
+                1 => &[1],
+                2 => &[1, 2, 3],
+                _ => &[1, 2, 4, 7],
+            };
+            for &(a, r) in &[(0u32, 0u32), (1, 0), (0, 1), (1, 1)] {
+                for &offset in offsets {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[RD as usize] = rng.next();
+                    batch.push((
+                        format!("{name}_unaligned_sz{size}_a{a}r{r}_off{offset}"),
+                        enc_atomic(size, a, r, o3, opc),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_atomic_unaligned_edges", batch);
+}
+
+#[test]
+fn diff_mem_atomic_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_016c);
+    let mut batch = Vec::new();
+
+    for &(o3, opc, name) in &[(0u32, 0b000u32, "ldadd"), (1, 0b000, "swp")] {
+        for size in 0..4u32 {
+            for &(a, r) in &[(0u32, 0u32), (1, 1)] {
+                for offset in [1u64, 8] {
+                    let mut st = mem_input(&mut rng);
+                    st.sp = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[RD as usize] = rng.next();
+                    batch.push((
+                        format!("{name}_sp_unaligned_sz{size}_a{a}r{r}_off{offset}"),
+                        enc_atomic_regs(size, a, r, o3, opc, 2, 31, RD),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_atomic_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_mem_atomic_invalid_op_slots() {
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for &(a, r) in &[(0u32, 0u32), (1, 0), (0, 1), (1, 1)] {
+            for opc in [1u32, 2, 3, 5, 6, 7] {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                st.x[2] = 0x1122_3344_5566_7788;
+                st.x[RD as usize] = 0x8877_6655_4433_2211;
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = 0x99aa_bbcc_ddee_ff00;
+                batch.push((
+                    format!("atomic_o3_invalid_sz{size}_a{a}r{r}_opc{opc}"),
+                    enc_atomic_regs(size, a, r, 1, opc, 2, RN, RD),
+                    st,
+                ));
+            }
+        }
+
+        for &(a, r, rs, label) in &[
+            (0u32, 0u32, 31u32, "ldapr_wrong_ar_00"),
+            (0, 1, 31, "ldapr_wrong_ar_01"),
+            (1, 1, 31, "ldapr_wrong_ar_11"),
+            (1, 0, 2, "ldapr_wrong_rs"),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.x[2] = 0x1122_3344_5566_7788;
+            st.x[RD as usize] = 0x8877_6655_4433_2211;
+            st.scratch.fill(0xfeed_face_dead_beef);
+            st.scratch[8] = 0x99aa_bbcc_ddee_ff00;
+            batch.push((
+                format!("{label}_size{size}"),
+                enc_atomic_regs(size, a, r, 1, 0b100, rs, RN, RD),
+                st,
+            ));
+        }
+    }
+
+    run_batch("mem_atomic_invalid_op_slots", batch);
+}
+
+#[test]
 fn diff_mem_ldapr_rcpc() {
     let mut rng = Rng::new(0x1_0052);
     let mut batch = Vec::new();
@@ -54628,6 +54740,51 @@ fn diff_mem_ldapr_edges() {
     }
 
     run_batch("mem_ldapr_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldapr_alignment_edges() {
+    let mut rng = Rng::new(0x1_0167);
+    let mut batch = Vec::new();
+
+    for size in 1..4u32 {
+        let offsets: &[u64] = match size {
+            1 => &[1],
+            2 => &[1, 2, 3],
+            _ => &[1, 2, 4, 7],
+        };
+        for &offset in offsets {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldapr_unaligned_size{size}_off{offset}"),
+                enc_ldapr(size),
+                st,
+            ));
+        }
+    }
+
+    run_batch("mem_ldapr_alignment_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldapr_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_016d);
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldapr_sp_unaligned_size{size}_off{offset}"),
+                enc_ldapr_regs(size, RD, 31),
+                st,
+            ));
+        }
+    }
+
+    run_batch("mem_ldapr_sp_alignment_edges", batch);
 }
 
 #[test]
@@ -56115,6 +56272,69 @@ fn diff_mem_ordered_ignores_rs_rt2_fields() {
     run_batch("mem_ordered_ignores_rs_rt2_fields", batch);
 }
 
+#[test]
+fn diff_mem_ordered_alignment_edges() {
+    let mut rng = Rng::new(0x1_0168);
+    let mut batch = Vec::new();
+
+    for size in 1..4u32 {
+        let offsets: &[u64] = match size {
+            1 => &[1],
+            2 => &[1, 2, 3],
+            _ => &[1, 2, 4, 7],
+        };
+        for &offset in offsets {
+            let mut load = mem_input(&mut rng);
+            load.x[RN as usize] = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldar_unaligned_size{size}_off{offset}"),
+                enc_ldar(size),
+                load,
+            ));
+
+            let mut store = mem_input(&mut rng);
+            store.x[RN as usize] = SCRATCH_BASE + offset;
+            store.x[3] = rng.next();
+            batch.push((
+                format!("stlr_unaligned_size{size}_off{offset}"),
+                enc_stlr(size),
+                store,
+            ));
+        }
+    }
+
+    run_batch("mem_ordered_alignment_edges", batch);
+}
+
+#[test]
+fn diff_mem_ordered_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_0169);
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for offset in [1u64, 8] {
+            let mut load = mem_input(&mut rng);
+            load.sp = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldar_sp_unaligned_size{size}_off{offset}"),
+                enc_ldar_regs(size, RD, 31),
+                load,
+            ));
+
+            let mut store = mem_input(&mut rng);
+            store.sp = SCRATCH_BASE + offset;
+            store.x[3] = rng.next();
+            batch.push((
+                format!("stlr_sp_unaligned_size{size}_off{offset}"),
+                enc_stlr_regs(size, 3, 31),
+                store,
+            ));
+        }
+    }
+
+    run_batch("mem_ordered_sp_alignment_edges", batch);
+}
+
 fn enc_loregion_ordered_regs(size: u32, load: bool, rt: u32, rn: u32) -> u32 {
     let l = if load { 1 } else { 0 };
     (size << 30)
@@ -56176,6 +56396,85 @@ fn diff_mem_loregion_ordered_edges() {
     }
 
     run_batch("mem_loregion_ordered_edges", batch);
+}
+
+#[test]
+fn diff_mem_loregion_fixed_field_legality() {
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for &(load, mnemonic, rt) in &[(true, "ldlar", RD), (false, "stllr", 3)] {
+            for &(rs, rt2, field) in &[(0u32, 31u32, "rs0"), (31, 0, "rt2_0"), (7, 30, "rs7_rt2_30")] {
+                let mut st = ArmState::zeroed();
+                st.x[RN as usize] = SCRATCH_BASE;
+                st.x[3] = 0x1122_3344_5566_7788;
+                st.scratch.fill(0xfeed_face_dead_beef);
+                st.scratch[8] = 0x8877_6655_4433_2211;
+                batch.push((
+                    format!("{mnemonic}_bad_fixed_size{size}_{field}"),
+                    enc_ordered_nonexclusive_with_fields(size, load, 0, rs, rt2, RN, rt),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_loregion_fixed_field_legality", batch);
+}
+
+#[test]
+fn diff_mem_loregion_alignment_edges() {
+    let mut rng = Rng::new(0x1_016a);
+    let mut batch = Vec::new();
+
+    for size in 1..4u32 {
+        let offsets: &[u64] = match size {
+            1 => &[1],
+            2 => &[1, 2, 3],
+            _ => &[1, 2, 4, 7],
+        };
+        for &offset in offsets {
+            let mut load = mem_input(&mut rng);
+            load.x[RN as usize] = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldlar_unaligned_size{size}_off{offset}"),
+                enc_loregion_ordered_regs(size, true, RD, RN),
+                load,
+            ));
+
+            let mut store = mem_input(&mut rng);
+            store.x[RN as usize] = SCRATCH_BASE + offset;
+            store.x[3] = rng.next();
+            batch.push((
+                format!("stllr_unaligned_size{size}_off{offset}"),
+                enc_loregion_ordered_regs(size, false, 3, RN),
+                store,
+            ));
+        }
+    }
+
+    for size in 0..4u32 {
+        for offset in [1u64, 8] {
+            let mut load = mem_input(&mut rng);
+            load.sp = SCRATCH_BASE + offset;
+            batch.push((
+                format!("ldlar_sp_unaligned_size{size}_off{offset}"),
+                enc_loregion_ordered_regs(size, true, RD, 31),
+                load,
+            ));
+
+            let mut store = mem_input(&mut rng);
+            store.sp = SCRATCH_BASE + offset;
+            store.x[3] = rng.next();
+            batch.push((
+                format!("stllr_sp_unaligned_size{size}_off{offset}"),
+                enc_loregion_ordered_regs(size, false, 3, 31),
+                store,
+            ));
+        }
+    }
+
+    run_batch("mem_loregion_alignment_edges", batch);
 }
 
 #[test]

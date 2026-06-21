@@ -16319,24 +16319,23 @@ impl AArch64Cpu {
         // silently dropped.
         if o2 == 1 && o1 == 0 {
             let address = if rn == 31 {
-                self.current_sp()
+                let sp = self.current_sp();
+                if sp & 0xF != 0 {
+                    return Err(ArmError::MemoryError(MemoryFaultInfo {
+                        address: sp,
+                        access: if l == 1 {
+                            crate::arm::cpu_trait::AccessType::Read
+                        } else {
+                            crate::arm::cpu_trait::AccessType::Write
+                        },
+                        fault_type: MemoryFaultType::Alignment,
+                        stage2: false,
+                    }));
+                }
+                sp
             } else {
                 self.get_x(rn)
             };
-            // Ordered accesses are alignment-checked regardless of SCTLR.A.
-            let elsize = 1u64 << size;
-            if address & (elsize - 1) != 0 {
-                return Err(ArmError::MemoryError(MemoryFaultInfo {
-                    address,
-                    access: if l == 1 {
-                        crate::arm::cpu_trait::AccessType::Read
-                    } else {
-                        crate::arm::cpu_trait::AccessType::Write
-                    },
-                    fault_type: MemoryFaultType::Alignment,
-                    stage2: false,
-                }));
-            }
             let pa = self.translate_address(address, l == 0, false)?;
             if l == 1 {
                 match size {
