@@ -27156,6 +27156,36 @@ fn diff_fmlal_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fpcr_fiz_fmlal_subnormal_accumulator() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, insn) in &[
+        ("fmlal", enc_three_same(1, 0, 0b00, 0b11101)),
+        ("fmlsl", enc_three_same(1, 0, 0b10, 0b11101)),
+        ("fmlal2", enc_three_same(1, 1, 0b00, 0b11001)),
+        ("fmlsl2", enc_three_same(1, 1, 0b10, 0b11001)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FIZ;
+        let mut acc = 0u128;
+        let mut m = 0u128;
+        for lane in 0..4 {
+            acc |= 0x0000_0001u128 << (32 * lane);
+        }
+        for lane in 0..8 {
+            m |= (0x3c00u128) << (16 * lane);
+        }
+        st.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+        st.set_vreg(RN as usize, 0, 0);
+        st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((format!("{name}_acc_min_subnorm"), insn, st));
+    }
+
+    run_batch("fpcr_fiz_fmlal_subnormal_accumulator", batch);
+}
+
+#[test]
 fn diff_fmlsl_fpcr_ah_nan_sign() {
     const FPCR_AH: u64 = 1 << 1;
     let mut st = ArmState::zeroed();
@@ -28873,6 +28903,50 @@ fn diff_simd_complex_indexed() {
         }
     }
     run_batch("simd_complex_indexed", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_simd_fcmla_indexed_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for rot in 0..4u32 {
+        for index in 0..2u32 {
+            let mut product = ArmState::zeroed();
+            product.fpcr = FPCR_FIZ;
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for lane in 0..4 {
+                n |= 0x0000_0001u128 << (32 * lane);
+                m |= (1.0f32.to_bits() as u128) << (32 * lane);
+            }
+            product.set_vreg(RD as usize, 0, 0);
+            product.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            product.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("simd_fcmla_idx_s_product_min_subnorm_rot{rot}_idx{index}"),
+                enc_fcmla_idx(1, 0b10, rot, index),
+                product,
+            ));
+
+            let mut acc_state = ArmState::zeroed();
+            acc_state.fpcr = FPCR_FIZ;
+            let mut acc = 0u128;
+            for lane in 0..4 {
+                acc |= 0x0000_0001u128 << (32 * lane);
+            }
+            acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+            acc_state.set_vreg(RN as usize, 0, 0);
+            acc_state.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("simd_fcmla_idx_s_acc_min_subnorm_rot{rot}_idx{index}"),
+                enc_fcmla_idx(1, 0b10, rot, index),
+                acc_state,
+            ));
+        }
+    }
+
+    run_batch("fpcr_fiz_simd_fcmla_indexed_subnormal_inputs", batch);
 }
 
 #[test]
@@ -32408,6 +32482,36 @@ fn diff_sve2_fmlal_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fpcr_fiz_sve2_fmlal_subnormal_accumulator() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, insn) in &[
+        ("fmlalb", enc_sve2_fmlal(0, 0)),
+        ("fmlalt", enc_sve2_fmlal(0, 1)),
+        ("fmlslb", enc_sve2_fmlal(1, 0)),
+        ("fmlslt", enc_sve2_fmlal(1, 1)),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_FIZ;
+        let mut zd = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..4 {
+            zd |= 0x0000_0001u128 << (32 * lane);
+        }
+        for lane in 0..8 {
+            zm |= (0x3c00u128) << (16 * lane);
+        }
+        st.set_vreg(RD as usize, zd as u64, (zd >> 64) as u64);
+        st.set_vreg(RN as usize, 0, 0);
+        st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((format!("{name}_acc_min_subnorm"), insn, st));
+    }
+
+    run_batch("fpcr_fiz_sve2_fmlal_subnormal_accumulator", batch);
+}
+
+#[test]
 fn diff_sve2_fmlsl_fpcr_ah_nan_sign() {
     const FPCR_AH: u64 = 1 << 1;
     let mut st = ArmState::zeroed();
@@ -32540,6 +32644,48 @@ fn diff_sve_bfmlal_fpcr_rounding() {
 }
 
 #[test]
+fn diff_fpcr_fiz_sve_bfmlal_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for top in 0..2u32 {
+        let mut product = ArmState::zeroed();
+        product.fpcr = FPCR_FIZ;
+        let mut zn = 0u128;
+        let mut zm = 0u128;
+        for lane in 0..8 {
+            zn |= 0x0001u128 << (16 * lane);
+            zm |= 0x3f80u128 << (16 * lane);
+        }
+        product.set_vreg(RD as usize, 0, 0);
+        product.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+        product.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((
+            format!("bfmlal_t{top}_product_min_subnorm"),
+            enc_sve_bfmlal(top, RM),
+            product,
+        ));
+
+        let mut acc_state = ArmState::zeroed();
+        acc_state.fpcr = FPCR_FIZ;
+        let mut acc = 0u128;
+        for lane in 0..4 {
+            acc |= 0x0000_0001u128 << (32 * lane);
+        }
+        acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+        acc_state.set_vreg(RN as usize, 0, 0);
+        acc_state.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+        batch.push((
+            format!("bfmlal_t{top}_acc_min_subnorm"),
+            enc_sve_bfmlal(top, RM),
+            acc_state,
+        ));
+    }
+
+    run_batch("fpcr_fiz_sve_bfmlal_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_sve_bfmlal_indexed_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     let variants = [
@@ -32578,6 +32724,50 @@ fn diff_sve_bfmlal_indexed_fpcr_rounding() {
     }
 
     run_batch("sve_bfmlal_indexed_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_sve_bfmlal_indexed_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for top in 0..2u32 {
+        for index in 0..8u32 {
+            let mut product = ArmState::zeroed();
+            product.fpcr = FPCR_FIZ;
+            let mut zn = 0u128;
+            let mut zm = 0u128;
+            for lane in 0..8 {
+                zn |= 0x0001u128 << (16 * lane);
+                zm |= 0x3f80u128 << (16 * lane);
+            }
+            product.set_vreg(RD as usize, 0, 0);
+            product.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
+            product.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("bfmlal_idx_t{top}_i{index}_product_min_subnorm"),
+                enc_sve_bfmlal_idx(top, index, RM),
+                product,
+            ));
+
+            let mut acc_state = ArmState::zeroed();
+            acc_state.fpcr = FPCR_FIZ;
+            let mut acc = 0u128;
+            for lane in 0..4 {
+                acc |= 0x0000_0001u128 << (32 * lane);
+            }
+            acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+            acc_state.set_vreg(RN as usize, 0, 0);
+            acc_state.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("bfmlal_idx_t{top}_i{index}_acc_min_subnorm"),
+                enc_sve_bfmlal_idx(top, index, RM),
+                acc_state,
+            ));
+        }
+    }
+
+    run_batch("fpcr_fiz_sve_bfmlal_indexed_subnormal_inputs", batch);
 }
 
 #[test]
@@ -32653,6 +32843,40 @@ fn diff_sve2_fmlal_indexed_fpcr_rounding() {
     }
 
     run_batch("sve2_fmlal_indexed_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_sve2_fmlal_indexed_subnormal_accumulator() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(name, sub, top) in &[
+        ("fmlalb", 0u32, 0u32),
+        ("fmlalt", 0, 1),
+        ("fmlslb", 1, 0),
+        ("fmlslt", 1, 1),
+    ] {
+        for index in 0..4u32 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_FIZ;
+            let mut zd = 0u128;
+            let mut zm = 0u128;
+            for lane in 0..4 {
+                zd |= 0x0000_0001u128 << (32 * lane);
+                zm |= (0x3c00u128) << (16 * lane);
+            }
+            st.set_vreg(RD as usize, zd as u64, (zd >> 64) as u64);
+            st.set_vreg(RN as usize, 0, 0);
+            st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
+            batch.push((
+                format!("{name}_idx{index}_acc_min_subnorm"),
+                enc_sve2_fmlal_idx(sub, top, index, RM),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fpcr_fiz_sve2_fmlal_indexed_subnormal_accumulator", batch);
 }
 
 #[test]
@@ -34586,6 +34810,50 @@ fn diff_sve_fcmla_indexed_fpcr_ah_nan_sign() {
 }
 
 #[test]
+fn diff_fpcr_fiz_sve_fcmla_indexed_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for rot in 0..4u32 {
+        for index in 0..2u32 {
+            let mut product = ArmState::zeroed();
+            product.fpcr = FPCR_FIZ;
+            let mut n = 0u128;
+            let mut m = 0u128;
+            for lane in 0..4 {
+                n |= 0x0000_0001u128 << (32 * lane);
+                m |= (1.0f32.to_bits() as u128) << (32 * lane);
+            }
+            product.set_vreg(RD as usize, 0, 0);
+            product.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+            product.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("sve_fcmla_idx_s_product_min_subnorm_rot{rot}_idx{index}"),
+                enc_sve_fcmla_idx(3, index, RM, rot),
+                product,
+            ));
+
+            let mut acc_state = ArmState::zeroed();
+            acc_state.fpcr = FPCR_FIZ;
+            let mut acc = 0u128;
+            for lane in 0..4 {
+                acc |= 0x0000_0001u128 << (32 * lane);
+            }
+            acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+            acc_state.set_vreg(RN as usize, 0, 0);
+            acc_state.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+            batch.push((
+                format!("sve_fcmla_idx_s_acc_min_subnorm_rot{rot}_idx{index}"),
+                enc_sve_fcmla_idx(3, index, RM, rot),
+                acc_state,
+            ));
+        }
+    }
+
+    run_batch("fpcr_fiz_sve_fcmla_indexed_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_sve2_cdot() {
     // CDOT complex integer dot product, .s and .d, all four rotations.
     let mut rng = Rng::new(0x7_9001);
@@ -34744,6 +35012,66 @@ fn diff_sve_fcadd_fpcr_ah_nan_sign() {
 }
 
 #[test]
+fn diff_fpcr_fiz_sve_fcadd_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for rot in 0..2u32 {
+        let mut lhs_s = ArmState::zeroed();
+        lhs_s.fpcr = FPCR_FIZ;
+        lhs_s.set_preg(0, 0xffff);
+        let mut n = 0u128;
+        for lane in 0..4 {
+            n |= 0x0000_0001u128 << (32 * lane);
+        }
+        lhs_s.set_vreg(RD as usize, n as u64, (n >> 64) as u64);
+        lhs_s.set_vreg(RN as usize, 0, 0);
+        batch.push((
+            format!("sve_fcadd_s_lhs_min_subnorm_rot{rot}"),
+            enc_sve_fcadd(2, rot),
+            lhs_s,
+        ));
+
+        let mut rhs_s = ArmState::zeroed();
+        rhs_s.fpcr = FPCR_FIZ;
+        rhs_s.set_preg(0, 0xffff);
+        rhs_s.set_vreg(RD as usize, 0, 0);
+        rhs_s.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        batch.push((
+            format!("sve_fcadd_s_rhs_min_subnorm_rot{rot}"),
+            enc_sve_fcadd(2, rot),
+            rhs_s,
+        ));
+
+        let mut lhs_d = ArmState::zeroed();
+        lhs_d.fpcr = FPCR_FIZ;
+        lhs_d.set_preg(0, 0xffff);
+        let n = 0x0000_0000_0000_0001u128;
+        let n = n | (n << 64);
+        lhs_d.set_vreg(RD as usize, n as u64, (n >> 64) as u64);
+        lhs_d.set_vreg(RN as usize, 0, 0);
+        batch.push((
+            format!("sve_fcadd_d_lhs_min_subnorm_rot{rot}"),
+            enc_sve_fcadd(3, rot),
+            lhs_d,
+        ));
+
+        let mut rhs_d = ArmState::zeroed();
+        rhs_d.fpcr = FPCR_FIZ;
+        rhs_d.set_preg(0, 0xffff);
+        rhs_d.set_vreg(RD as usize, 0, 0);
+        rhs_d.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        batch.push((
+            format!("sve_fcadd_d_rhs_min_subnorm_rot{rot}"),
+            enc_sve_fcadd(3, rot),
+            rhs_d,
+        ));
+    }
+
+    run_batch("fpcr_fiz_sve_fcadd_subnormal_inputs", batch);
+}
+
+#[test]
 fn diff_sve_fcmla() {
     // FCMLA predicated FP complex multiply-add, all four rotations and sizes.
     let mut rng = Rng::new(0x7_8001);
@@ -34879,6 +35207,79 @@ fn diff_sve_fcmla_fpcr_ah_nan_sign() {
     }
 
     run_batch("sve_fcmla_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_fpcr_fiz_sve_fcmla_subnormal_inputs() {
+    const FPCR_FIZ: u64 = 1;
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for rot in 0..4u32 {
+        let mut product_s = ArmState::zeroed();
+        product_s.fpcr = FPCR_FIZ;
+        product_s.set_preg(0, 0xffff);
+        let mut n = 0u128;
+        let mut m = 0u128;
+        for lane in 0..4 {
+            n |= 0x0000_0001u128 << (32 * lane);
+            m |= (1.0f32.to_bits() as u128) << (32 * lane);
+        }
+        product_s.set_vreg(RD as usize, 0, 0);
+        product_s.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        product_s.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("sve_fcmla_s_product_min_subnorm_rot{rot}"),
+            enc_sve_fcmla(2, rot),
+            product_s,
+        ));
+
+        let mut acc_s = ArmState::zeroed();
+        acc_s.fpcr = FPCR_FIZ;
+        acc_s.set_preg(0, 0xffff);
+        let mut acc = 0u128;
+        for lane in 0..4 {
+            acc |= 0x0000_0001u128 << (32 * lane);
+        }
+        acc_s.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+        acc_s.set_vreg(RN as usize, 0, 0);
+        acc_s.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("sve_fcmla_s_acc_min_subnorm_rot{rot}"),
+            enc_sve_fcmla(2, rot),
+            acc_s,
+        ));
+
+        let mut product_d = ArmState::zeroed();
+        product_d.fpcr = FPCR_FIZ;
+        product_d.set_preg(0, 0xffff);
+        let n = 0x0000_0000_0000_0001u128;
+        let n = n | (n << 64);
+        let m = (1.0f64.to_bits() as u128) | ((1.0f64.to_bits() as u128) << 64);
+        product_d.set_vreg(RD as usize, 0, 0);
+        product_d.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
+        product_d.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("sve_fcmla_d_product_min_subnorm_rot{rot}"),
+            enc_sve_fcmla(3, rot),
+            product_d,
+        ));
+
+        let mut acc_d = ArmState::zeroed();
+        acc_d.fpcr = FPCR_FIZ;
+        acc_d.set_preg(0, 0xffff);
+        let acc = 0x0000_0000_0000_0001u128;
+        let acc = acc | (acc << 64);
+        acc_d.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+        acc_d.set_vreg(RN as usize, 0, 0);
+        acc_d.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
+        batch.push((
+            format!("sve_fcmla_d_acc_min_subnorm_rot{rot}"),
+            enc_sve_fcmla(3, rot),
+            acc_d,
+        ));
+    }
+
+    run_batch("fpcr_fiz_sve_fcmla_subnormal_inputs", batch);
 }
 
 #[test]
