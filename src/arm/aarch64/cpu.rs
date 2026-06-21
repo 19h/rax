@@ -1998,7 +1998,7 @@ impl AArch64Cpu {
                     let a = self.v[rn as usize] as u32;
                     let r = match kind {
                         None => a,
-                        Some(k) => fp_two_reg_f32(k, a),
+                        Some(k) => fp_two_reg_f32_with_fpcr(k, a, self.fpcr),
                     };
                     self.fpsr |= fp_status_unop_f32(kind, a, r);
                     self.v[rd as usize] = r as u128;
@@ -2007,7 +2007,7 @@ impl AArch64Cpu {
                     let a = self.v[rn as usize] as u64;
                     let r = match kind {
                         None => a,
-                        Some(k) => fp_two_reg_f64(k, a),
+                        Some(k) => fp_two_reg_f64_with_fpcr(k, a, self.fpcr),
                     };
                     self.fpsr |= fp_status_unop_f64(kind, a, r);
                     self.v[rd as usize] = r as u128;
@@ -2019,8 +2019,9 @@ impl AArch64Cpu {
                         Some(TwoRegFp::Fabs) => a & 0x7FFF,
                         Some(TwoRegFp::Fneg) => a ^ 0x8000,
                         Some(TwoRegFp::Fsqrt) => fp16_sqrt(a),
-                        Some(TwoRegFp::RintN) | Some(TwoRegFp::RintX) | Some(TwoRegFp::RintI) => {
-                            fp16_frint(a, 0)
+                        Some(TwoRegFp::RintN) => fp16_frint(a, 0),
+                        Some(TwoRegFp::RintX) | Some(TwoRegFp::RintI) => {
+                            fp16_frint_with_fpcr(a, self.fpcr)
                         }
                         Some(TwoRegFp::RintM) => fp16_frint(a, 1),
                         Some(TwoRegFp::RintP) => fp16_frint(a, 2),
@@ -3341,8 +3342,8 @@ impl AArch64Cpu {
                 (0, 1, 0b11000) => fp16_frint(s, 2), // FRINTP
                 (0, 1, 0b11001) => fp16_frint(s, 3), // FRINTZ
                 (1, 0, 0b11000) => fp16_frint(s, 4), // FRINTA
-                (1, 0, 0b11001) => fp16_frint(s, 0), // FRINTX (current mode = RNE)
-                (1, 1, 0b11001) => fp16_frint(s, 0), // FRINTI (current mode = RNE)
+                (1, 0, 0b11001) => fp16_frint_with_fpcr(s, self.fpcr), // FRINTX
+                (1, 1, 0b11001) => fp16_frint_with_fpcr(s, self.fpcr), // FRINTI
                 // Floating-point to integer (signed).
                 (0, 0, 0b11010) => fp16_to_int16(s, true, 0), // FCVTNS
                 (0, 0, 0b11011) => fp16_to_int16(s, true, 1), // FCVTMS
@@ -6225,9 +6226,9 @@ impl AArch64Cpu {
                     f.to_bits()
                 }
             } else if sz == 0 {
-                fp_two_reg_f32(kind.unwrap(), a as u32) as u64
+                fp_two_reg_f32_with_fpcr(kind.unwrap(), a as u32, self.fpcr) as u64
             } else {
-                fp_two_reg_f64(kind.unwrap(), a)
+                fp_two_reg_f64_with_fpcr(kind.unwrap(), a, self.fpcr)
             };
             if let Some(unsigned) = cvtf {
                 let raw_int = if unsigned {
@@ -13319,9 +13320,12 @@ impl AArch64Cpu {
                         return Ok(CpuExit::Undefined(insn));
                     };
                     let r = match esize {
+                        2 if matches!(trk, TwoRegFp::RintX | TwoRegFp::RintI) => {
+                            fp16_frint_with_fpcr(lane as u16, self.fpcr) as u64
+                        }
                         2 => fp16_frint(lane as u16, fp16m) as u64,
-                        4 => fp_two_reg_f32(trk, lane as u32) as u64,
-                        _ => fp_two_reg_f64(trk, lane),
+                        4 => fp_two_reg_f32_with_fpcr(trk, lane as u32, self.fpcr) as u64,
+                        _ => fp_two_reg_f64_with_fpcr(trk, lane, self.fpcr),
                     };
                     (r, fp_status_unop(esize, Some(trk), lane, r))
                 }
@@ -19972,6 +19976,23 @@ fn fp_two_reg_f32(kind: TwoRegFp, bits: u32) -> u32 {
     }
 }
 
+fn fp_two_reg_f32_with_fpcr(kind: TwoRegFp, bits: u32, fpcr: u32) -> u32 {
+    use TwoRegFp::*;
+    match kind {
+        RintX | RintI => {
+            let x = f32::from_bits(bits);
+            match (fpcr >> 22) & 0x3 {
+                0 => x.round_ties_even(),
+                1 => x.ceil(),
+                2 => x.floor(),
+                _ => x.trunc(),
+            }
+            .to_bits()
+        }
+        _ => fp_two_reg_f32(kind, bits),
+    }
+}
+
 /// Apply a two-reg-misc FP op to one f64 element (raw bits in/out).
 fn fp_two_reg_f64(kind: TwoRegFp, bits: u64) -> u64 {
     use TwoRegFp::*;
@@ -20017,6 +20038,23 @@ fn fp_two_reg_f64(kind: TwoRegFp, bits: u64) -> u64 {
             };
             r as u64
         }
+    }
+}
+
+fn fp_two_reg_f64_with_fpcr(kind: TwoRegFp, bits: u64, fpcr: u32) -> u64 {
+    use TwoRegFp::*;
+    match kind {
+        RintX | RintI => {
+            let x = f64::from_bits(bits);
+            match (fpcr >> 22) & 0x3 {
+                0 => x.round_ties_even(),
+                1 => x.ceil(),
+                2 => x.floor(),
+                _ => x.trunc(),
+            }
+            .to_bits()
+        }
+        _ => fp_two_reg_f64(kind, bits),
     }
 }
 
@@ -23249,6 +23287,16 @@ fn fp16_frint(a: u16, mode: u8) -> u16 {
         return (a & 0x8000) | 0;
     }
     fp16_round(r)
+}
+
+fn fp16_frint_with_fpcr(a: u16, fpcr: u32) -> u16 {
+    let mode = match (fpcr >> 22) & 0x3 {
+        0 => 0, // ties to even
+        1 => 2, // +inf
+        2 => 1, // -inf
+        _ => 3, // zero
+    };
+    fp16_frint(a, mode)
 }
 
 /// FPRecipEstimate for binary16 (FPCR default: RNE, FZ16=0). Ported from the

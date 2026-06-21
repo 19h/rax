@@ -27676,6 +27676,33 @@ fn diff_simd_fp16_2reg() {
 }
 
 #[test]
+fn diff_simd_fp16_frint_fpcr_rounding() {
+    let values = [0xbe00u16, 0xb800, 0x3800, 0x3e00]; // -1.5, -0.5, 0.5, 1.5
+    let mut batch = Vec::new();
+    for &(u, a, name) in &[(1, 0, "frintx"), (1, 1, "frinti")] {
+        for q in 0..2u32 {
+            for rmode in 0..4u64 {
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                let lanes = if q == 0 { 4 } else { 8 };
+                let mut packed = 0u128;
+                for lane in 0..lanes {
+                    packed |= (values[lane % values.len()] as u128) << (16 * lane);
+                }
+                st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+                batch.push((
+                    format!("{name}_fp16_q{q}_rmode{rmode}"),
+                    enc_fp16_2r(q, u, a, 0b11001),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("simd_fp16_frint_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_simd_fp16_3same() {
     // Full (U, a, opcode) table of the FP16 three-same group.
     let ops: &[(u32, u32, u32, &str)] = &[
@@ -30503,6 +30530,43 @@ fn diff_sve_fp_unary() {
         }
     }
     run_batch("sve_fp_unary", batch);
+}
+
+#[test]
+fn diff_sve_frint_fpcr_rounding() {
+    let mut batch = Vec::new();
+    for &(opc6, name) in &[(0b000110, "frintx"), (0b000111, "frinti")] {
+        for &(size, esize) in &[(1u32, 2usize), (2, 4), (3, 8)] {
+            for rmode in 0..4u64 {
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                st.set_preg(0, 0xffff);
+                let mut packed = 0u128;
+                if esize == 2 {
+                    let values = [0xbe00u16, 0xb800, 0x3800, 0x3e00];
+                    for lane in 0..8 {
+                        packed |= (values[lane % values.len()] as u128) << (16 * lane);
+                    }
+                } else if esize == 4 {
+                    for (lane, value) in [-1.5f32, -0.5, 0.5, 1.5].iter().enumerate() {
+                        packed |= ((*value).to_bits() as u128) << (32 * lane);
+                    }
+                } else {
+                    for (lane, value) in [-1.5f64, 1.5].iter().enumerate() {
+                        packed |= ((*value).to_bits() as u128) << (64 * lane);
+                    }
+                }
+                st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+                batch.push((
+                    format!("{name}_sve_size{size}_rmode{rmode}"),
+                    (0x65 << 24) | (size << 22) | (opc6 << 16) | (0b101 << 13) | (RN << 5) | RD,
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("sve_frint_fpcr_rounding", batch);
 }
 
 #[test]
@@ -35545,6 +35609,60 @@ fn diff_fp_scalar_frintts_fpsr_inexact() {
 }
 
 #[test]
+fn diff_fp_scalar_frint_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(opcode, name) in &[(0b01110, "frintx"), (0b01111, "frinti")] {
+        for &ft in &[0u32, 1] {
+            for rmode in 0..4u64 {
+                for value in [-2.5, -1.5, -0.5, 0.5, 1.5, 2.5] {
+                    let mut st = ArmState::zeroed();
+                    st.fpcr = rmode << 22;
+                    if ft == 0 {
+                        st.set_vreg(RN as usize, (value as f32).to_bits() as u64, 0);
+                    } else {
+                        st.set_vreg(RN as usize, (value as f64).to_bits(), 0);
+                    }
+                    batch.push((
+                        format!("{name}_t{ft}_rmode{rmode}_{value}"),
+                        enc_fp1(ft, opcode),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_fpsr_batch("fp_scalar_frint_fpcr_rounding", batch);
+}
+
+#[test]
+fn diff_fp16_scalar_frint_fpcr_rounding() {
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let values = [
+        ("neg1_5", 0xbe00u16),
+        ("neg0_5", 0xb800),
+        ("pos0_5", 0x3800),
+        ("pos1_5", 0x3e00),
+    ];
+    for &(opcode, name) in &[(0b01110, "frintx"), (0b01111, "frinti")] {
+        for rmode in 0..4u64 {
+            for &(value_name, bits) in &values {
+                let mut st = ArmState::zeroed();
+                st.fpcr = rmode << 22;
+                st.set_vreg(RN as usize, bits as u64, 0);
+                batch.push((
+                    format!("{name}_h_rmode{rmode}_{value_name}"),
+                    enc_fp1(0b11, opcode),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_fpsr_batch("fp16_scalar_frint_fpcr_rounding", batch);
+}
+
+#[test]
 fn diff_fp_scalar_fma_fpsr_underflow_inexact() {
     let mut st = ArmState::zeroed();
     st.set_vreg(0, 0x0000_0000_3f80_3c00, 0);
@@ -36357,6 +36475,47 @@ fn diff_simd_two_reg_fp() {
         (0, 1, 0b01110, "fcmlt0"),
     ];
     run_batch("simd_two_reg_fp", fp_two_reg_batch(ops, 0xA001, 12, false));
+}
+
+#[test]
+fn diff_simd_frint_fpcr_rounding() {
+    let mut batch = Vec::new();
+    for &(u, sz_hi, name) in &[(1, 0, "frintx"), (1, 1, "frinti")] {
+        for rmode in 0..4u64 {
+            let fpcr = rmode << 22;
+            for q in 0..2 {
+                let mut st = ArmState::zeroed();
+                st.fpcr = fpcr;
+                let lanes = [-1.5f32, -0.5, 0.5, 1.5];
+                let mut packed = 0u128;
+                for (lane, value) in lanes.iter().enumerate() {
+                    packed |= ((*value).to_bits() as u128) << (32 * lane);
+                }
+                st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+                batch.push((
+                    format!("{name}_f32_q{q}_rmode{rmode}"),
+                    enc_two_reg(q, u, sz_hi << 1, 0b11001),
+                    st,
+                ));
+            }
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let lanes = [-1.5f64, 1.5];
+            let mut packed = 0u128;
+            for (lane, value) in lanes.iter().enumerate() {
+                packed |= ((*value).to_bits() as u128) << (64 * lane);
+            }
+            st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
+            batch.push((
+                format!("{name}_f64_rmode{rmode}"),
+                enc_two_reg(1, u, (sz_hi << 1) | 1, 0b11001),
+                st,
+            ));
+        }
+    }
+
+    run_batch("simd_frint_fpcr_rounding", batch);
 }
 
 #[test]
