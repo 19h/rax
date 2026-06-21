@@ -25618,6 +25618,113 @@ fn diff_addsub_imm_sp_source_dest() {
     run_batch("addsub_imm_sp_source_dest", batch);
 }
 
+#[test]
+fn diff_addsub_imm_edge_patterns() {
+    let imm12s = [0u32, 1, 0x7ff, 0x800, 0xfff];
+    let patterns: &[(&str, u64)] = &[
+        ("zero", 0),
+        ("ones", u64::MAX),
+        ("sign_max", 0x7fff_ffff_ffff_ffff),
+        ("sign_min", 0x8000_0000_0000_0000),
+        ("upper_noise", 0xffff_ffff_8000_0001),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                let opname = match (op, s) {
+                    (0, 0) => "add",
+                    (0, 1) => "adds",
+                    (1, 0) => "sub",
+                    _ => "subs",
+                };
+                for shift in 0..=1 {
+                    for &imm12 in &imm12s {
+                        for &(pattern, rn) in patterns {
+                            let mut st = ArmState::zeroed();
+                            st.x[RN as usize] = rn;
+                            st.x[RD as usize] = 0xdead_beef_dead_beef;
+                            st.pstate = 0b0110u64 << 28;
+                            batch.push((
+                                format!("{opname}_imm_sf{sf}_sh{shift}_imm{imm12:x}_{pattern}"),
+                                enc_addsub_imm_plain(sf, op, s, shift, imm12, RD, RN),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("addsub_imm_edge_patterns", batch);
+}
+
+#[test]
+fn diff_logical_imm_edge_patterns() {
+    fn enc_logical_imm_plain(
+        sf: u32,
+        opc: u32,
+        n: u32,
+        immr: u32,
+        imms: u32,
+        rn: u32,
+        rd: u32,
+    ) -> u32 {
+        (sf << 31)
+            | (opc << 29)
+            | (0b100100 << 23)
+            | ((n & 1) << 22)
+            | ((immr & 0x3f) << 16)
+            | ((imms & 0x3f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let masks: &[(u32, u32, u32, &str)] = &[
+        (0, 0, 0, "single_bit"),
+        (0, 1, 0, "rot1_single_bit"),
+        (0, 0, 1, "two_bits"),
+        (0, 3, 3, "rot3_four_bits"),
+        (0, 0, 32, "wide_pattern"),
+    ];
+    let patterns: &[(&str, u64)] = &[
+        ("zero", 0),
+        ("ones", u64::MAX),
+        ("sign_bits", 0x8000_0000_0000_0001),
+        ("alternating", 0x55aa_55aa_33cc_33cc),
+        ("upper_noise", 0xffff_ffff_8000_0001),
+    ];
+    let mut batch = Vec::new();
+
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            let opname = match opc {
+                0 => "and",
+                1 => "orr",
+                2 => "eor",
+                _ => "ands",
+            };
+            for &(n, immr, imms, mask_name) in masks {
+                for &(pattern, rn) in patterns {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = rn;
+                    st.x[RD as usize] = 0xdead_beef_dead_beef;
+                    st.pstate = 0b1010u64 << 28;
+                    batch.push((
+                        format!("{opname}_imm_sf{sf}_{mask_name}_{pattern}"),
+                        enc_logical_imm_plain(sf, opc, n, immr, imms, RN, RD),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("logical_imm_edge_patterns", batch);
+}
+
 fn enc_addsub_ext_plain(
     sf: u32,
     op: u32,
