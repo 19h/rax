@@ -25513,6 +25513,50 @@ fn diff_addsub_shifted_rd31_preserves_sp() {
     run_batch("addsub_shifted_rd31_preserves_sp", batch);
 }
 
+fn enc_addsub_imm_plain(
+    sf: u32,
+    op: u32,
+    s: u32,
+    shift: u32,
+    imm12: u32,
+    rd: u32,
+    rn: u32,
+) -> u32 {
+    (sf << 31)
+        | (op << 30)
+        | (s << 29)
+        | (0b10001 << 24)
+        | ((shift & 1) << 22)
+        | ((imm12 & 0xFFF) << 10)
+        | ((rn & 0x1F) << 5)
+        | (rd & 0x1F)
+}
+
+#[test]
+fn diff_addsub_imm_sp_source_dest() {
+    let cases: &[(&str, u32)] = &[
+        ("add_x_sp_source", enc_addsub_imm_plain(1, 0, 0, 0, 0x30, 0, 31)),
+        ("sub_x_sp_source", enc_addsub_imm_plain(1, 1, 0, 0, 0x20, 2, 31)),
+        ("add_sp_sp_dest", enc_addsub_imm_plain(1, 0, 0, 0, 0x40, 31, 31)),
+        ("sub_sp_x_dest", enc_addsub_imm_plain(1, 1, 0, 0, 0x10, 31, 1)),
+        ("adds_x_sp_source", enc_addsub_imm_plain(1, 0, 1, 0, 0x7f, 3, 31)),
+        ("cmp_sp_preserves_sp", enc_addsub_imm_plain(1, 1, 1, 0, 0x80, 31, 31)),
+        ("add_wsp_wsp_dest", enc_addsub_imm_plain(0, 0, 0, 0, 0x24, 31, 31)),
+        ("subs_w_sp_source", enc_addsub_imm_plain(0, 1, 1, 0, 0x12, 4, 31)),
+    ];
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for i in 0..8 {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x2000 + ((i as u64) << 8);
+            st.x[1] = st.sp + 0x400;
+            st.pstate = ((i as u64) & 0xf) << 28;
+            batch.push(((*label).to_string(), *insn, st));
+        }
+    }
+    run_batch("addsub_imm_sp_source_dest", batch);
+}
+
 #[test]
 fn diff_dp_logical_shifted() {
     run_family("dp_logical_shifted", logical_shift_cases(), 12, 0x1002);
@@ -32579,6 +32623,36 @@ fn diff_sve_elem_count() {
     run_batch("sve_elem_count", batch);
 }
 
+fn enc_sve_stack_alloc(op: u32, rn: u32, rd: u32, imm6: i32) -> u32 {
+    (0x04 << 24)
+        | ((op & 0x7) << 21)
+        | ((rn & 0x1F) << 16)
+        | (0b01010 << 11)
+        | (((imm6 as u32) & 0x3F) << 5)
+        | (rd & 0x1F)
+}
+
+#[test]
+fn diff_sve_stack_alloc_sp() {
+    let cases: &[(&str, u32)] = &[
+        ("addvl_x_sp_pos", enc_sve_stack_alloc(0b001, 31, 0, 3)),
+        ("addvl_sp_sp_neg", enc_sve_stack_alloc(0b001, 31, 31, -2)),
+        ("addpl_x_sp_pos", enc_sve_stack_alloc(0b011, 31, 2, 5)),
+        ("addpl_sp_x_neg", enc_sve_stack_alloc(0b011, 1, 31, -3)),
+    ];
+    let mut rng = Rng::new(0x1_006a);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in cases {
+        for i in 0..8 {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x1000 + ((i as u64) << 8);
+            st.x[1] = st.sp + 0x400 + (rng.next() & 0xf0);
+            batch.push(((*label).to_string(), *insn, st));
+        }
+    }
+    run_batch("sve_stack_alloc_sp", batch);
+}
+
 /// WHILE gt-family: `00100101 esz 1 rm 000 sf u 0 rn eq rd`. eq=0 => GE/HS
 /// (inclusive), eq=1 => GT/HI (strict); u selects signed(0)/unsigned(1). Rn=x0,
 /// Rm=x1, Pd=p0.
@@ -32888,6 +32962,10 @@ fn enc_cpy_imm(sz: u32, m: u32, sh: u32, imm8: i32) -> u32 {
         | RD
 }
 
+fn enc_cpy_gpr(sz: u32, rn: u32) -> u32 {
+    (0x05 << 24) | (sz << 22) | (0b101000 << 16) | (0b101 << 13) | ((rn & 0x1F) << 5) | RD
+}
+
 #[test]
 fn diff_sve_cpy() {
     let mut rng = Rng::new(0x1_002D);
@@ -32933,6 +33011,23 @@ fn diff_sve_cpy() {
         }
     }
     run_batch("sve_cpy", batch);
+}
+
+#[test]
+fn diff_sve_cpy_sp_source() {
+    let mut rng = Rng::new(0x1_0069);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let insn = enc_cpy_gpr(sz, 31);
+        for i in 0..10 {
+            let mut st = ArmState::zeroed();
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + ((i as u64) << 4);
+            st.set_vreg(0, rng.next(), rng.next());
+            st.set_preg(0, [0xffffu16, 0xaaaa, 0x5555, 0x1111][i % 4]);
+            batch.push((format!("cpyr_sp sz{sz}"), insn, st));
+        }
+    }
+    run_batch("sve_cpy_sp_source", batch);
 }
 
 #[test]
@@ -41592,7 +41687,7 @@ fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
 }
 
 /// LDAPR/LDAPRB/LDAPRH: atomic-memory-op space with Rs==31, o3==1, opc==100.
-fn enc_ldapr(size: u32) -> u32 {
+fn enc_ldapr_regs(size: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (1 << 23)
@@ -41600,8 +41695,12 @@ fn enc_ldapr(size: u32) -> u32 {
         | (31 << 16)
         | (1 << 15)
         | (0b100 << 12)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldapr(size: u32) -> u32 {
+    enc_ldapr_regs(size, RD, RN)
 }
 
 #[test]
@@ -41712,6 +41811,26 @@ fn diff_mem_ldapr_rcpc() {
         }
     }
     run_batch("mem_ldapr_rcpc", batch);
+}
+
+#[test]
+fn diff_mem_ldapr_sp_base() {
+    let cases: &[(&str, u32)] = &[
+        ("ldaprb_sp", enc_ldapr_regs(0, RD, 31)),
+        ("ldaprh_sp", enc_ldapr_regs(1, RD, 31)),
+        ("ldapr_w_sp", enc_ldapr_regs(2, RD, 31)),
+        ("ldapr_x_sp", enc_ldapr_regs(3, RD, 31)),
+    ];
+    let mut rng = Rng::new(0x1_0068);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..8 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            batch.push(((*label).to_string(), *insn, st));
+        }
+    }
+    run_batch("mem_ldapr_sp_base", batch);
 }
 
 #[test]
