@@ -3325,6 +3325,104 @@ fn raw_el0_scalar_fp_rounding_mode_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_scalar_fp_frintts_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("frint") {
+        eprintln!("[skip] host does not advertise FRINT32/FRINT64");
+        return;
+    }
+
+    let qnan_s = u64::from(0x7fc0_0001u32);
+    let inf_s = u64::from(0x7f80_0000u32);
+    let large_s = u64::from(0x5f00_0000u32);
+    let qnan_d = 0x7ff8_0000_0000_0001u64;
+    let inf_d = 0x7ff0_0000_0000_0000u64;
+    let large_d = 0x43e0_0000_0000_0000u64;
+    let cases = [
+        ("frint32z_s_inexact", 0x1e28_4020u32, true, u64::from(1.5_f32.to_bits())),
+        ("frint32x_s_qnan", 0x1e28_c020, true, qnan_s),
+        ("frint64z_s_large", 0x1e29_4020, true, large_s),
+        ("frint64x_s_inf", 0x1e29_c020, true, inf_s),
+        ("frint32z_d_inexact", 0x1e68_4020, false, 1.5_f64.to_bits()),
+        ("frint32x_d_qnan", 0x1e68_c020, false, qnan_d),
+        ("frint64z_d_large", 0x1e69_4020, false, large_d),
+        ("frint64x_d_inf", 0x1e69_c020, false, inf_d),
+    ];
+
+    for (label, insn, is_single, bits) in cases {
+        let insns = [insn];
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.v[2] = bits;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        if is_single {
+            assert_eq!(
+                hw.v[0] as u32, interp.v[0] as u32,
+                "raw EL0 scalar FP FRINTTS {label} s0 mismatch"
+            );
+        } else {
+            assert_eq!(
+                hw.v[0], interp.v[0],
+                "raw EL0 scalar FP FRINTTS {label} d0 mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar FP FRINTTS {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_scalar_fp_frintts_fiz_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("frint") || !host_has_aarch64_feature("afp") {
+        eprintln!("[skip] host does not advertise FRINT32/FRINT64 plus AFP/FIZ");
+        return;
+    }
+
+    const FPCR_FIZ: u64 = 1;
+    let cases = [
+        ("frint32z_s_pos", 0x1e28_4020u32, true, 0x0000_0001u64),
+        ("frint32x_s_neg", 0x1e28_c020, true, 0x8000_0001),
+        ("frint64z_s_pos", 0x1e29_4020, true, 0x0000_0001),
+        ("frint64x_s_neg", 0x1e29_c020, true, 0x8000_0001),
+        ("frint32z_d_pos", 0x1e68_4020, false, 0x0000_0000_0000_0001),
+        ("frint32x_d_neg", 0x1e68_c020, false, 0x8000_0000_0000_0001),
+        ("frint64z_d_pos", 0x1e69_4020, false, 0x0000_0000_0000_0001),
+        ("frint64x_d_neg", 0x1e69_c020, false, 0x8000_0000_0000_0001),
+    ];
+
+    for (label, insn, is_single, bits) in cases {
+        let insns = [insn];
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_FIZ;
+            g.v[2] = bits;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        if is_single {
+            assert_eq!(
+                hw.v[0] as u32, interp.v[0] as u32,
+                "raw EL0 scalar FP FRINTTS FIZ {label} s0 mismatch"
+            );
+        } else {
+            assert_eq!(
+                hw.v[0], interp.v[0],
+                "raw EL0 scalar FP FRINTTS FIZ {label} d0 mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar FP FRINTTS FIZ {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_scalar_fp_convert_compare_oracle_matches_interpreter() {
     let insns = [
         0x9e67_0020, // fmov   d0, x1
@@ -3566,6 +3664,111 @@ fn raw_el0_scalar_fp_jscvt_oracle_matches_interpreter() {
         assert_eq!(
             hw.fpsr as u32, interp.fpsr as u32,
             "raw EL0 scalar FP JSCVT {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_frintts_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("frint") {
+        eprintln!("[skip] host does not advertise AdvSIMD FRINT32/FRINT64");
+        return;
+    }
+
+    let pack_s_bits = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d_bits = |lanes: [u64; 2]| -> (u64, u64) { (lanes[0], lanes[1]) };
+    let qnan_s = 0x7fc0_0001u32;
+    let inf_s = 0x7f80_0000u32;
+    let large_s = 0x5f00_0000u32;
+    let qnan_d = 0x7ff8_0000_0000_0001u64;
+    let inf_d = 0x7ff0_0000_0000_0000u64;
+    let large_d = 0x43e0_0000_0000_0000u64;
+    let s_src = pack_s_bits([1.5_f32.to_bits(), qnan_s, large_s, inf_s]);
+    let d_src = pack_d_bits([1.5_f64.to_bits(), qnan_d]);
+    let d_large_src = pack_d_bits([large_d, inf_d]);
+    let cases = [
+        ("frint32z_v4s", 0x4e21_e820u32, s_src),
+        ("frint32x_v4s", 0x6e21_e820, s_src),
+        ("frint64z_v4s", 0x4e21_f820, s_src),
+        ("frint64x_v4s", 0x6e21_f820, s_src),
+        ("frint32z_v2d", 0x4e61_e820, d_src),
+        ("frint32x_v2d", 0x6e61_e820, d_src),
+        ("frint64z_v2d", 0x4e61_f820, d_large_src),
+        ("frint64x_v2d", 0x6e61_f820, d_large_src),
+    ];
+
+    for (label, insn, src) in cases {
+        let insns = [insn];
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.v[2] = src.0;
+            g.v[3] = src.1;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 AdvSIMD FRINTTS {label} v0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD FRINTTS {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_frintts_fiz_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("frint") || !host_has_aarch64_feature("afp") {
+        eprintln!("[skip] host does not advertise AdvSIMD FRINT32/FRINT64 plus AFP/FIZ");
+        return;
+    }
+
+    const FPCR_FIZ: u64 = 1;
+    let pack_s_bits = |lanes: [u32; 4]| -> (u64, u64) {
+        let lo = u64::from(lanes[0]) | (u64::from(lanes[1]) << 32);
+        let hi = u64::from(lanes[2]) | (u64::from(lanes[3]) << 32);
+        (lo, hi)
+    };
+    let pack_d_bits = |lanes: [u64; 2]| -> (u64, u64) { (lanes[0], lanes[1]) };
+    let s_src = pack_s_bits([0x0000_0001, 0x8000_0001, 0x0000_0001, 0x8000_0001]);
+    let d_src = pack_d_bits([0x0000_0000_0000_0001, 0x8000_0000_0000_0001]);
+    let cases = [
+        ("frint32z_v4s", 0x4e21_e820u32, s_src),
+        ("frint32x_v4s", 0x6e21_e820, s_src),
+        ("frint64z_v4s", 0x4e21_f820, s_src),
+        ("frint64x_v4s", 0x6e21_f820, s_src),
+        ("frint32z_v2d", 0x4e61_e820, d_src),
+        ("frint32x_v2d", 0x6e61_e820, d_src),
+        ("frint64z_v2d", 0x4e61_f820, d_src),
+        ("frint64x_v2d", 0x6e61_f820, d_src),
+    ];
+
+    for (label, insn, src) in cases {
+        let insns = [insn];
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_FIZ;
+            g.v[2] = src.0;
+            g.v[3] = src.1;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 AdvSIMD FRINTTS FIZ {label} v0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD FRINTTS FIZ {label} FPSR mismatch"
         );
     }
 }
