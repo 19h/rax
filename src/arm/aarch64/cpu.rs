@@ -16011,6 +16011,11 @@ impl AArch64Cpu {
                     self.event_register = true;
                     Ok(CpuExit::Continue)
                 }
+                0b111 => {
+                    // XPACLRI: strip instruction-address PAC bits from LR.
+                    self.set_x(30, strip_pac(self.get_x(30), false));
+                    Ok(CpuExit::Continue)
+                }
                 _ => Ok(CpuExit::Continue),
             }
         } else if crn == 3 {
@@ -16089,11 +16094,18 @@ impl AArch64Cpu {
             }
             (0b0100, 0) => {
                 // ERET
+                if self.current_el == 0 {
+                    return Err(ArmError::InvalidExceptionLevel(0));
+                }
                 return self.exception_return();
             }
             (0b0101, 0) => {
                 // DRPS: debug restore process state. Outside real debug state
-                // this behaves as a NOP in our model.
+                // this behaves as a NOP in our privileged model, but EL0 must
+                // not execute it.
+                if self.current_el == 0 {
+                    return Err(ArmError::InvalidExceptionLevel(0));
+                }
                 return Ok(CpuExit::Continue);
             }
             _ => return Err(ArmError::UndefinedInstruction(insn)),
@@ -24675,13 +24687,34 @@ fn f32_to_bf16(x: u32) -> u16 {
     (rounded >> 16) as u16
 }
 
+fn f32_to_bf16_round(x: u32, rmode: u32) -> u16 {
+    if (x & 0x7F80_0000) == 0x7F80_0000 {
+        // Inf or NaN.
+        if (x & 0x007F_FFFF) != 0 {
+            return ((x >> 16) as u16) | 0x0040;
+        }
+        return (x >> 16) as u16;
+    }
+
+    let high = (x >> 16) as u16;
+    let low = x & 0xFFFF;
+    let sign = (x >> 31) & 1;
+    let increment = match rmode & 0x3 {
+        0 => low > 0x8000 || (low == 0x8000 && (high & 1) != 0), // nearest-even
+        1 => sign == 0 && low != 0,                              // +Inf
+        2 => sign != 0 && low != 0,                              // -Inf
+        _ => false,                                              // zero
+    };
+    high.wrapping_add(increment as u16)
+}
+
 fn f32_to_bf16_with_fpcr(x: u32, fpcr: u32) -> u16 {
     let x = if fpcr & FPCR_AH != 0 && fp32_is_tiny(x) {
         x & 0x8000_0000
     } else {
         fp32_flush_input_with_fpcr(x, fpcr)
     };
-    f32_to_bf16(x)
+    f32_to_bf16_round(x, (fpcr >> 22) & 0x3)
 }
 
 /// FEAT_SVE_B16B16 bf16 binary op (BFADD/BFSUB/BFMUL/BFMAX/BFMIN/BFMAXNM/
@@ -30522,6 +30555,78 @@ mod tests {
             assert_eq!(cpu.tco, expected_tco, "{name} should update PSTATE.TCO");
             assert_eq!(cpu.get_pc(), 4, "{name} should advance PC");
         }
+    }
+
+    #[test]
+    fn test_xpaclri_strips_lr_instruction_pac() {
+        for input in [
+            0xabcd_0000_1234_5670u64,
+            0x5a00_7fff_ffff_fff0u64,
+            0xffff_8000_0000_0010u64,
+        ] {
+            let mut cpu = create_cpu_with_insn(0xD50320FF); // XPACLRI
+            cpu.set_x(30, input);
+
+            assert!(matches!(cpu.step(), Ok(CpuExit::Continue)));
+            assert_eq!(
+                cpu.get_x(30),
+                strip_pac(input, false),
+                "XPACLRI should strip LR PAC bits"
+            );
+            assert_eq!(cpu.get_pc(), 4);
+        }
+    }
+
+    #[test]
+    fn test_f32_to_bf16_with_fpcr_rounding_modes() {
+        let positive_low_even_tie = 0x3f80_8000u32;
+        let positive_low_odd_tie = 0x3f81_8000u32;
+        let negative_low_even_tie = 0xbf80_8000u32;
+        let negative_low_odd_tie = 0xbf81_8000u32;
+
+        assert_eq!(f32_to_bf16_with_fpcr(positive_low_even_tie, 0 << 22), 0x3f80);
+        assert_eq!(f32_to_bf16_with_fpcr(positive_low_odd_tie, 0 << 22), 0x3f82);
+        assert_eq!(f32_to_bf16_with_fpcr(positive_low_even_tie, 1 << 22), 0x3f81);
+        assert_eq!(f32_to_bf16_with_fpcr(positive_low_odd_tie, 2 << 22), 0x3f81);
+        assert_eq!(f32_to_bf16_with_fpcr(positive_low_odd_tie, 3 << 22), 0x3f81);
+
+        assert_eq!(f32_to_bf16_with_fpcr(negative_low_even_tie, 0 << 22), 0xbf80);
+        assert_eq!(f32_to_bf16_with_fpcr(negative_low_odd_tie, 0 << 22), 0xbf82);
+        assert_eq!(f32_to_bf16_with_fpcr(negative_low_odd_tie, 1 << 22), 0xbf81);
+        assert_eq!(f32_to_bf16_with_fpcr(negative_low_even_tie, 2 << 22), 0xbf81);
+        assert_eq!(f32_to_bf16_with_fpcr(negative_low_odd_tie, 3 << 22), 0xbf81);
+    }
+
+    #[test]
+    fn test_el0_drps_traps() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        let insn = 0xD6BF03E0u32; // DRET/DRPS
+        let memory = FlatMemory::new(0, 0x1000_0000);
+        let mut cpu = AArch64Cpu::new(config, Box::new(memory));
+        cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+
+        assert!(
+            matches!(cpu.step(), Err(ArmError::InvalidExceptionLevel(0))),
+            "DRET/DRPS should be privileged at EL0"
+        );
+    }
+
+    #[test]
+    fn test_el0_eret_traps() {
+        let mut config = AArch64Config::default();
+        config.initial_el = 0;
+
+        let insn = 0xD69F03E0u32; // ERET
+        let memory = FlatMemory::new(0, 0x1000_0000);
+        let mut cpu = AArch64Cpu::new(config, Box::new(memory));
+        cpu.write_memory(0, &insn.to_le_bytes()).unwrap();
+
+        assert!(
+            matches!(cpu.step(), Err(ArmError::InvalidExceptionLevel(0))),
+            "ERET should be privileged at EL0"
+        );
     }
 
     // -------------------------------------------------------------------------

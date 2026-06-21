@@ -27976,6 +27976,28 @@ fn diff_generated_branch_register_unallocated_sweep() {
 }
 
 #[test]
+fn diff_branch_drps_el0_trap() {
+    let mut rng = Rng::new(0xa64_ba14);
+    let mut batch = Vec::new();
+    for _ in 0..8 {
+        batch.push(("dret_drps".to_string(), 0xd6bf_03e0, gen_input(&mut rng)));
+    }
+
+    run_batch_el0_trap("branch_drps_el0_trap", batch);
+}
+
+#[test]
+fn diff_branch_eret_el0_trap() {
+    let mut rng = Rng::new(0xa64_ba15);
+    let mut batch = Vec::new();
+    for _ in 0..8 {
+        batch.push(("eret".to_string(), 0xd69f_03e0, gen_input(&mut rng)));
+    }
+
+    run_batch_el0_trap("branch_eret_el0_trap", batch);
+}
+
+#[test]
 fn diff_branch_system_hints_barriers_el0() {
     fn hint(crm: u32, op2: u32) -> u32 {
         0xd503_201f | ((crm & 0xf) << 8) | ((op2 & 0x7) << 5)
@@ -28175,6 +28197,31 @@ fn diff_pauth_xpac_strip_el0() {
     }
 
     run_batch("pauth_xpac_strip_el0", batch);
+}
+
+#[test]
+fn diff_pauth_xpaclri_strip_el0() {
+    let mut rng = Rng::new(0xa64_9a1a);
+    let mut batch = Vec::new();
+    for (i, value) in [
+        0,
+        1,
+        0x0000_7fff_ffff_fff0,
+        0xabcd_0000_1234_5670,
+        0x5a00_7fff_ffff_fff0,
+        0xffff_8000_0000_0010,
+        u64::MAX,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut st = gen_input(&mut rng);
+        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xe000 + ((i as u64) << 8);
+        st.x[30] = value;
+        batch.push((format!("xpaclri_{value:#x}"), 0xd503_20ff, st));
+    }
+
+    run_batch("pauth_xpaclri_strip_el0", batch);
 }
 
 #[test]
@@ -51116,6 +51163,43 @@ fn diff_simd_bfcvt() {
         }
     }
     run_batch("simd_bfcvt", batch);
+}
+
+#[test]
+fn diff_simd_bfcvt_fpcr_rmode() {
+    let bfcvt = 0x1E63_4000 | (RN << 5) | RD;
+    let bfcvtn = 0x0EA1_6800 | (RN << 5) | RD;
+    let bfcvtn2 = 0x4EA1_6800 | (RN << 5) | RD;
+    let tie_inputs = [
+        0x3f80_8000u32, // exact half-way, bf16 LSB 0
+        0x3f81_8000u32, // exact half-way, bf16 LSB 1
+        0xbf80_8000u32,
+        0xbf81_8000u32,
+    ];
+
+    let mut rng = Rng::new(0x1_001f);
+    let mut batch = Vec::new();
+    for rmode in 0..4u64 {
+        let fpcr = rmode << 22;
+        for &value in &tie_inputs {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            st.set_vreg(RN as usize, value as u64, 0);
+            batch.push((format!("bfcvt_rmode{rmode}_{value:#x}"), bfcvt, st));
+        }
+
+        for &insn in &[bfcvtn, bfcvtn2] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = fpcr;
+            let lo = (tie_inputs[0] as u64) | ((tie_inputs[1] as u64) << 32);
+            let hi = (tie_inputs[2] as u64) | ((tie_inputs[3] as u64) << 32);
+            st.set_vreg(RN as usize, lo, hi);
+            st.set_vreg(RD as usize, rng.next(), rng.next());
+            batch.push((format!("bfcvtn_rmode{rmode}_{insn:#x}"), insn, st));
+        }
+    }
+
+    run_batch("simd_bfcvt_fpcr_rmode", batch);
 }
 
 #[test]
