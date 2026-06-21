@@ -338,7 +338,10 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     if mnemonic_base.starts_with("fmmla") {
         return !(caps.has("f32mm") || caps.has("svef32mm"));
     }
-    if matches!(mnemonic_base, "cfinv" | "xaflag" | "axflag") {
+    if matches!(
+        mnemonic_base,
+        "cfinv" | "xaflag" | "axflag" | "rmif" | "setf8" | "setf16"
+    ) {
         return !caps.has("flagm");
     }
     if mnemonic_base == "dit" {
@@ -352,6 +355,9 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
     }
     if mnemonic_base.starts_with("dc_cvadp") {
         return !caps.has("dcpodp");
+    }
+    if mnemonic_base == "uscat" {
+        return !caps.has("uscat");
     }
     if mnemonic_base == "sb" {
         return !caps.has("sb");
@@ -26385,6 +26391,57 @@ fn diff_system_flagm_el0() {
 }
 
 #[test]
+fn diff_integer_flagm_rmif_setf() {
+    fn rmif(rn: u32, imm6: u32, mask: u32) -> u32 {
+        0xba00_0400 | ((imm6 & 0x3f) << 15) | ((rn & 0x1f) << 5) | (mask & 0xf)
+    }
+
+    fn setf8(rn: u32) -> u32 {
+        0x3a00_080d | ((rn & 0x1f) << 5)
+    }
+
+    fn setf16(rn: u32) -> u32 {
+        0x3a00_480d | ((rn & 0x1f) << 5)
+    }
+
+    let mut rng = Rng::new(0x5157_000b);
+    let mut batch = Vec::new();
+
+    for imm6 in [0, 1, 7, 13, 31, 32, 63] {
+        for mask in [0, 1, 2, 4, 8, 0xf] {
+            for value in [0, 1, 0xf, 0x8000_0000_0000_0000, u64::MAX, rng.next()] {
+                let mut st = gen_input(&mut rng);
+                st.x[RN as usize] = value;
+                batch.push((format!("rmif imm{imm6} mask{mask:x}"), rmif(RN, imm6, mask), st));
+            }
+        }
+    }
+
+    for value in [
+        0,
+        1,
+        0x7f,
+        0x80,
+        0xff,
+        0x7fff,
+        0x8000,
+        0xffff,
+        0x1_0000,
+        rng.next() as u32,
+    ] {
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = value as u64;
+        batch.push((format!("setf8 {value:#x}"), setf8(RN), st));
+
+        let mut st = gen_input(&mut rng);
+        st.x[RN as usize] = value as u64;
+        batch.push((format!("setf16 {value:#x}"), setf16(RN), st));
+    }
+
+    run_batch_el0("integer_flagm_rmif_setf", batch);
+}
+
+#[test]
 fn diff_system_dit_el0() {
     fn msr_dit_imm(imm: u32) -> u32 {
         0xd503_405f | ((imm & 1) << 8)
@@ -34109,6 +34166,28 @@ fn diff_mem_atomic() {
         }
     }
     run_batch("mem_atomic", batch);
+}
+
+#[test]
+fn diff_mem_atomic_unaligned_uscat() {
+    let cases = [
+        ("uscat ldadd_w", 0xb822_0020),
+        ("uscat ldadd_x", 0xf822_0020),
+        ("uscat swp_w", 0xb822_8020),
+        ("uscat swp_x", 0xf822_8020),
+    ];
+
+    let mut rng = Rng::new(0x1_0053);
+    let mut batch = Vec::new();
+    for (label, insn) in cases {
+        for offset in [1, 2, 3, 5, 7] {
+            let mut st = mem_input(&mut rng);
+            st.x[RN as usize] = SCRATCH_BASE + offset;
+            st.x[2] = rng.next();
+            batch.push((format!("{label} off{offset}"), insn, st));
+        }
+    }
+    run_batch("mem_atomic_unaligned_uscat", batch);
 }
 
 #[test]
