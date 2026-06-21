@@ -25536,24 +25536,33 @@ fn enc_addsub_imm_plain(
 
 #[test]
 fn diff_addsub_imm_sp_source_dest() {
-    let cases: &[(&str, u32)] = &[
-        ("add_x_sp_source", enc_addsub_imm_plain(1, 0, 0, 0, 0x30, 0, 31)),
-        ("sub_x_sp_source", enc_addsub_imm_plain(1, 1, 0, 0, 0x20, 2, 31)),
-        ("add_sp_sp_dest", enc_addsub_imm_plain(1, 0, 0, 0, 0x40, 31, 31)),
-        ("sub_sp_x_dest", enc_addsub_imm_plain(1, 1, 0, 0, 0x10, 31, 1)),
-        ("adds_x_sp_source", enc_addsub_imm_plain(1, 0, 1, 0, 0x7f, 3, 31)),
-        ("cmp_sp_preserves_sp", enc_addsub_imm_plain(1, 1, 1, 0, 0x80, 31, 31)),
-        ("add_wsp_wsp_dest", enc_addsub_imm_plain(0, 0, 0, 0, 0x24, 31, 31)),
-        ("subs_w_sp_source", enc_addsub_imm_plain(0, 1, 1, 0, 0x12, 4, 31)),
-    ];
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = ArmState::zeroed();
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x2000 + ((i as u64) << 8);
-            st.x[1] = st.sp + 0x400;
-            st.pstate = ((i as u64) & 0xf) << 28;
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for op in 0..=1 {
+            for s in 0..=1 {
+                for shift in 0..=1 {
+                    for imm12 in 0..=0xfff {
+                        for (alias, rd, rn) in [
+                            ("rn_sp", 0u32, 31u32),
+                            ("rd31", 31, 1),
+                            ("rn_rd31", 31, 31),
+                        ] {
+                            let mut st = ArmState::zeroed();
+                            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+                            st.x[1] = st.sp;
+                            st.pstate =
+                                (((sf ^ op ^ s ^ shift ^ imm12 ^ rd ^ rn) & 0xf) as u64) << 28;
+                            batch.push((
+                                format!(
+                                    "addsub_imm_{alias}_sf{sf}_op{op}_s{s}_sh{shift}_imm{imm12:x}"
+                                ),
+                                enc_addsub_imm_plain(sf, op, s, shift, imm12, rd, rn),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
     run_batch("addsub_imm_sp_source_dest", batch);
@@ -26130,21 +26139,31 @@ fn enc_mov_wide_plain(sf: u32, opc: u32, hw: u32, imm16: u32, rd: u32) -> u32 {
 
 #[test]
 fn diff_move_wide_rd31_preserves_sp() {
-    let cases: &[(&str, u32)] = &[
-        ("movn_w_wzr", enc_mov_wide_plain(0, 0b00, 0, 0x00ff, 31)),
-        ("movz_w_wzr", enc_mov_wide_plain(0, 0b10, 1, 0xabcd, 31)),
-        ("movk_w_wzr", enc_mov_wide_plain(0, 0b11, 0, 0x1234, 31)),
-        ("movn_x_xzr", enc_mov_wide_plain(1, 0b00, 3, 0xffff, 31)),
-        ("movz_x_xzr", enc_mov_wide_plain(1, 0b10, 2, 0x8000, 31)),
-        ("movk_x_xzr", enc_mov_wide_plain(1, 0b11, 1, 0xbeef, 31)),
+    let imm16s = [
+        0x0000u32, 0x0001, 0x00ff, 0x0100, 0x7fff, 0x8000, 0xff00, 0xffff,
     ];
     let mut rng = Rng::new(0x1_006b);
     let mut batch = Vec::new();
-    for (label, insn) in cases {
-        for i in 0..8 {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x4000 + ((i as u64) << 8);
-            batch.push(((*label).to_string(), *insn, st));
+    for sf in 0..=1 {
+        for opc in 0..=3 {
+            for hw in 0..=3 {
+                for imm16 in imm16s {
+                    for nzcv in 0..16u64 {
+                        for offset in [0x4000u64, 0x4800] {
+                            let mut st = gen_input(&mut rng);
+                            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + offset;
+                            st.pstate = nzcv << 28;
+                            batch.push((
+                                format!(
+                                    "move_wide_rd31_sf{sf}_opc{opc}_hw{hw}_imm{imm16:x}_nzcv{nzcv:x}_off{offset:x}"
+                                ),
+                                enc_mov_wide_plain(sf, opc, hw, imm16, 31),
+                                st,
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
     run_batch("move_wide_rd31_preserves_sp", batch);
@@ -27228,27 +27247,33 @@ fn diff_pauth_xpac_strip_el0() {
             | (rd & 0x1f)
     }
 
-    let cases: &[(&str, u32, usize)] = &[
-        ("xpaci_x0_high_bits", xpac(0b010000, 0), 0),
-        ("xpacd_x1_high_bits", xpac(0b010001, 1), 1),
-        ("xpaci_xzr_dest", xpac(0b010000, 31), 0),
-        ("xpacd_xzr_dest", xpac(0b010001, 31), 1),
-    ];
     let mut rng = Rng::new(0xa64_9a19);
     let mut batch = Vec::new();
-    for (label, insn, reg) in cases {
-        for (i, value) in [
-            0xabcd_0000_1234_5670,
-            0x5a00_7fff_ffff_fff0,
-            0xffff_8000_0000_0010,
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            let mut st = gen_input(&mut rng);
-            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xd000 + ((i as u64) << 8);
-            st.x[*reg] = value;
-            batch.push((format!("{label}_{value:#x}"), *insn, st));
+    for (opcode, opname) in [(0b010000u32, "xpaci"), (0b010001, "xpacd")] {
+        for rd in 0..=31u32 {
+            for (i, value) in [
+                0,
+                1,
+                0x0000_7fff_ffff_fff0,
+                0xabcd_0000_1234_5670,
+                0x5a00_7fff_ffff_fff0,
+                0xffff_8000_0000_0010,
+                u64::MAX,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let mut st = gen_input(&mut rng);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xd000 + ((i as u64) << 8);
+                if rd < 31 {
+                    st.x[rd as usize] = value;
+                }
+                batch.push((
+                    format!("{opname}_x{rd}_{value:#x}"),
+                    xpac(opcode, rd),
+                    st,
+                ));
+            }
         }
     }
 
