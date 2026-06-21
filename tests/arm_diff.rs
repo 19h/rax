@@ -31506,6 +31506,60 @@ fn diff_mem_ldst_single_sp_base_edges() {
     run_batch("mem_ldst_single_sp_base_edges", batch);
 }
 
+#[test]
+fn diff_mem_ldst_single_sp_alignment_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "ld1_single_sp_noff".into(),
+            enc_single_regs(0, 1, 15, 1, 0, 0, 0, 31),
+            None,
+        ),
+        (
+            "st2_single_sp_post_imm".into(),
+            enc_single_regs(1, 2, 7, 0, 1, 31, 0, 31),
+            None,
+        ),
+        (
+            "ld3_single_sp_post_reg".into(),
+            enc_single_regs(2, 3, 2, 1, 1, RM, 4, 31),
+            Some(32),
+        ),
+        (
+            "st4_single_sp_noff".into(),
+            enc_single_regs(3, 4, 1, 0, 0, 0, 8, 31),
+            None,
+        ),
+        (
+            "ld1r_sp_noff".into(),
+            enc_single_rep_regs(3, 1, 1, 0, 0, 12, 31),
+            None,
+        ),
+        (
+            "ld4r_sp_post_reg".into(),
+            enc_single_rep_regs(0, 4, 1, 1, RM, 16, 31),
+            Some(7),
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0171);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            for reg in 0..20 {
+                st.set_vreg(reg, rng.next(), rng.next());
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("mem_ldst_single_sp_alignment_edges", batch);
+}
+
 /// LDXR/LDAXR <Rt>, [Rn]: `size 001000 0 1 0 11111 o0 11111 Rn Rt`. Rt=x0, Rn=x1.
 fn enc_ldxr_regs_fields(size: u32, o0: u32, rs: u32, rt2: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
@@ -35006,35 +35060,57 @@ fn enc_scatter_s(msz: u32, xs: u32, scaled: bool) -> u32 {
 }
 
 /// SVE LD1 (scalar+scalar): `1010010 dtype Rm 010 Pg Rn Zt`. Rn=x1, Rm=x2.
+fn enc_sve_ld1_ss_regs(dtype: u32, rn: u32) -> u32 {
+    (0b1010010 << 25) | (dtype << 21) | (RM << 16) | (0b010 << 13) | ((rn & 0x1F) << 5) | RD
+}
+
 fn enc_sve_ld1_ss(dtype: u32) -> u32 {
-    (0b1010010 << 25) | (dtype << 21) | (RM << 16) | (0b010 << 13) | (RN << 5) | RD
+    enc_sve_ld1_ss_regs(dtype, RN)
 }
 /// SVE ST1 (scalar+scalar): `1110010 msz size Rm 010 Pg Rn Zt`. Rn=x1, Rm=x2.
+fn enc_sve_st1_ss_regs(msz: u32, size: u32, rn: u32) -> u32 {
+    (0b1110010 << 25)
+        | (msz << 23)
+        | (size << 21)
+        | (RM << 16)
+        | (0b010 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+
 fn enc_sve_st1_ss(msz: u32, size: u32) -> u32 {
-    (0b1110010 << 25) | (msz << 23) | (size << 21) | (RM << 16) | (0b010 << 13) | (RN << 5) | RD
+    enc_sve_st1_ss_regs(msz, size, RN)
 }
 
 /// SVE contiguous LD1 (scalar+imm): `1010010 dtype 0 imm4 101 Pg Rn Zt`.
 /// Pg=p0, Rn=x1 (base), Zt=z0.
-fn enc_sve_ld1(dtype: u32, imm4: i32) -> u32 {
+fn enc_sve_ld1_regs(dtype: u32, imm4: i32, rn: u32) -> u32 {
     (0b1010010 << 25)
         | (dtype << 21)
         | (((imm4 as u32) & 0xF) << 16)
         | (0b101 << 13)
-        | (RN << 5)
+        | ((rn & 0x1F) << 5)
         | RD
+}
+
+fn enc_sve_ld1(dtype: u32, imm4: i32) -> u32 {
+    enc_sve_ld1_regs(dtype, imm4, RN)
 }
 
 /// SVE contiguous ST1 (scalar+imm): `1110010 msz size 0 imm4 111 Pg Rn Zt`.
 /// msz=memory width, size=element width (>= msz). Pg=p0, Rn=x1, Zt=z0.
-fn enc_sve_st1(msz: u32, size: u32, imm4: i32) -> u32 {
+fn enc_sve_st1_regs(msz: u32, size: u32, imm4: i32, rn: u32) -> u32 {
     (0b1110010 << 25)
         | (msz << 23)
         | (size << 21)
         | (((imm4 as u32) & 0xF) << 16)
         | (0b111 << 13)
-        | (RN << 5)
+        | ((rn & 0x1F) << 5)
         | RD
+}
+
+fn enc_sve_st1(msz: u32, size: u32, imm4: i32) -> u32 {
+    enc_sve_st1_regs(msz, size, imm4, RN)
 }
 
 /// SVE ADR: `00000100 mode 1 Zm 1010 msz Zn Zd`. Zd=z0, Zn=z1, Zm=z2.
@@ -35062,30 +35138,43 @@ fn enc_movprfx_p(size: u32, m: u32) -> u32 {
 
 /// SVE LD1R (load and replicate): `1000010 dtypeh 1 imm6 1 dtypel Pg Rn Zt`.
 /// Pg=p0, Rn=x1, Zt=z0.
-fn enc_ld1r(dtypeh: u32, dtypel: u32, imm6: u32) -> u32 {
+fn enc_ld1r_regs(dtypeh: u32, dtypel: u32, imm6: u32, rn: u32) -> u32 {
     (0b1000010 << 25)
         | (dtypeh << 23)
         | (1 << 22)
         | ((imm6 & 0x3F) << 16)
         | (1 << 15)
         | (dtypel << 13)
-        | (RN << 5)
+        | ((rn & 0x1F) << 5)
         | RD
+}
+
+fn enc_ld1r(dtypeh: u32, dtypel: u32, imm6: u32) -> u32 {
+    enc_ld1r_regs(dtypeh, dtypel, imm6, RN)
 }
 
 /// SVE LDR/STR whole-register fill/spill. `1000010110`(LDR)/`1110010110`(STR)
 /// imm9h `010`(Z)/`000`(P) imm9l Rn Zt/Pt. Rn=x1, Zt=z0, Pt=p0.
-fn enc_ldstr_z(store: bool, imm9: i32) -> u32 {
+fn enc_ldstr_z_regs(store: bool, imm9: i32, rn: u32) -> u32 {
     let top: u32 = if store { 0b1110010110 } else { 0b1000010110 };
     let h = ((imm9 >> 3) & 0x3F) as u32;
     let l = (imm9 & 0x7) as u32;
-    (top << 22) | (h << 16) | (0b010 << 13) | (l << 10) | (RN << 5) | RD
+    (top << 22) | (h << 16) | (0b010 << 13) | (l << 10) | ((rn & 0x1F) << 5) | RD
 }
-fn enc_ldstr_p(store: bool, imm9: i32) -> u32 {
+
+fn enc_ldstr_z(store: bool, imm9: i32) -> u32 {
+    enc_ldstr_z_regs(store, imm9, RN)
+}
+
+fn enc_ldstr_p_regs(store: bool, imm9: i32, rn: u32) -> u32 {
     let top: u32 = if store { 0b1110010110 } else { 0b1000010110 };
     let h = ((imm9 >> 3) & 0x3F) as u32;
     let l = (imm9 & 0x7) as u32;
-    (top << 22) | (h << 16) | (0b000 << 13) | (l << 10) | (RN << 5)
+    (top << 22) | (h << 16) | (0b000 << 13) | (l << 10) | ((rn & 0x1F) << 5)
+}
+
+fn enc_ldstr_p(store: bool, imm9: i32) -> u32 {
+    enc_ldstr_p_regs(store, imm9, RN)
 }
 
 /// SVE FP<->int convert: `01100101 opc ig1 opc2 int_U 101 Pg Zn Zd`. ig1: 011=
@@ -49092,6 +49181,38 @@ fn diff_sve_ldr_str() {
 }
 
 #[test]
+fn diff_sve_ldst_sp_alignment_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        ("ldr_z_sp".into(), enc_ldstr_z_regs(false, 0, 31), None),
+        ("str_z_sp".into(), enc_ldstr_z_regs(true, 0, 31), None),
+        ("ldr_p_sp".into(), enc_ldstr_p_regs(false, 0, 31), None),
+        ("str_p_sp".into(), enc_ldstr_p_regs(true, 0, 31), None),
+        ("ld1r_sp".into(), enc_ld1r_regs(0, 0, 0, 31), None),
+        ("ld1_sp_imm".into(), enc_sve_ld1_regs(0, 0, 31), None),
+        ("st1_sp_imm".into(), enc_sve_st1_regs(0, 0, 0, 31), None),
+        ("ld1_sp_reg".into(), enc_sve_ld1_ss_regs(0, 31), Some(0)),
+        ("st1_sp_reg".into(), enc_sve_st1_ss_regs(0, 0, 31), Some(0)),
+    ];
+    let mut rng = Rng::new(0x3_4011);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(0, rng.next(), rng.next());
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("sve_ldst_sp_alignment_edges", batch);
+}
+
+#[test]
 fn diff_sve_cvt() {
     fn pack_src_containers(src_sz: usize, cont: usize, values: &[u64]) -> (u64, u64) {
         let bits = src_sz * 8;
@@ -53698,6 +53819,32 @@ fn diff_mem_cas_sp_base_edges() {
 }
 
 #[test]
+fn diff_mem_cas_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_0173);
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for offset in [1u64, 8] {
+                    let mut st = mem_input(&mut rng);
+                    st.sp = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[RD as usize] = rng.next();
+                    batch.push((
+                        format!("cas_sp_unaligned_sz{size}_l{l}_o0{o0}_off{offset}"),
+                        enc_cas_regs(size, l, o0, 2, RD, 31),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_cas_sp_alignment_edges", batch);
+}
+
+#[test]
 fn diff_mem_cas_alignment_edges() {
     let mut rng = Rng::new(0x1_0163);
     let mut batch = Vec::new();
@@ -54253,6 +54400,34 @@ fn diff_mem_casp_sp_base_edges() {
     }
 
     run_batch("mem_casp_sp_base_edges", batch);
+}
+
+#[test]
+fn diff_mem_casp_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_0174);
+    let mut batch = Vec::new();
+
+    for sz in 0..2u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for offset in [1u64, 8] {
+                    let mut st = mem_input(&mut rng);
+                    st.sp = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[3] = rng.next();
+                    st.x[4] = rng.next();
+                    st.x[5] = rng.next();
+                    batch.push((
+                        format!("casp_sp_unaligned_sz{sz}_l{l}_o0{o0}_off{offset}"),
+                        enc_casp_regs(sz, l, o0, 2, 4, 31),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_casp_sp_alignment_edges", batch);
 }
 
 #[test]
@@ -55384,6 +55559,55 @@ fn diff_mem_ldst_struct_sp_base_edges() {
     run_batch("mem_ldst_struct_sp_base_edges", batch);
 }
 
+#[test]
+fn diff_mem_ldst_struct_sp_alignment_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "ld1x1_sp_noff".into(),
+            enc_ldst_struct_regs(1, 0, 1, 0, 0b0111, 3, 0, 31),
+            None,
+        ),
+        (
+            "st1x2_sp_post_imm".into(),
+            enc_ldst_struct_regs(1, 1, 0, 31, 0b1010, 2, 0, 31),
+            None,
+        ),
+        (
+            "ld2_sp_post_reg".into(),
+            enc_ldst_struct_regs(0, 1, 1, RM, 0b1000, 1, 4, 31),
+            Some(24),
+        ),
+        (
+            "st3_sp_noff".into(),
+            enc_ldst_struct_regs(1, 0, 0, 0, 0b0100, 0, 8, 31),
+            None,
+        ),
+        (
+            "ld4_sp_post_imm".into(),
+            enc_ldst_struct_regs(0, 1, 1, 31, 0b0000, 2, 12, 31),
+            None,
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0170);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            for reg in 0..16 {
+                st.set_vreg(reg, rng.next(), rng.next());
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("mem_ldst_struct_sp_alignment_edges", batch);
+}
+
 /// Load/store pair: `opc 101 V 0 mode L imm7 Rt2 Rn Rt`.
 fn enc_ldp_regs(opc: u32, v: u32, mode: u32, l: u32, imm7: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
     (opc << 30)
@@ -55531,6 +55755,39 @@ fn diff_mem_mte_tag_memory_edges() {
     }
 
     run_batch("mem_mte_tag_memory_edges", batch);
+}
+
+#[test]
+fn diff_mem_mte_tag_memory_sp_alignment_edges() {
+    fn tag_mem(opc: u32, imm9: i32, op2: u32, rn: u32, rt: u32) -> u32 {
+        (0xD9 << 24)
+            | ((opc & 0x3) << 22)
+            | (1 << 21)
+            | (((imm9 as u32) & 0x1ff) << 12)
+            | ((op2 & 0x3) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x1_0175);
+    let mut batch = Vec::new();
+
+    for &(name, insn) in &[
+        ("ldg_sp", tag_mem(0b01, 0, 0b00, 31, RD)),
+        ("stg_sp_post", tag_mem(0b00, 0, 0b01, 31, RD)),
+        ("stzg_sp_signed", tag_mem(0b01, 0, 0b10, 31, RD)),
+        ("st2g_sp_pre", tag_mem(0b10, 0, 0b11, 31, RD)),
+        ("stz2g_sp_post", tag_mem(0b11, 0, 0b01, 31, RD)),
+    ] {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.x[RD as usize] = rng.next();
+            batch.push((format!("{name}_off{offset}"), insn, st));
+        }
+    }
+
+    run_batch("mem_mte_tag_memory_sp_alignment_edges", batch);
 }
 
 #[test]
@@ -55715,6 +55972,86 @@ fn diff_mem_ldp_stp_gpr_sp_base_edges() {
 }
 
 #[test]
+fn diff_mem_ldp_stp_gpr_overlap_edges() {
+    let mut batch = Vec::new();
+
+    let mut push_case = |label: String, insn: u32, rn: u32| {
+        let mut st = ArmState::zeroed();
+        st.scratch.fill(0xfeed_face_dead_beef);
+        st.scratch[8] = 0x8877_6655_4433_2211;
+        st.scratch[9] = 0x1122_3344_5566_7788;
+        st.scratch[10] = 0xf0f0_0f0f_aa55_55aa;
+        st.scratch[11] = 0x0f0f_f0f0_55aa_aa55;
+        st.x[RD as usize] = 0x0102_0304_0506_0708;
+        st.x[RM as usize] = 0x8877_6655_4433_2211;
+        st.x[RN as usize] = SCRATCH_BASE;
+        if rn < 31 {
+            st.x[rn as usize] = SCRATCH_BASE;
+        } else {
+            st.sp = SCRATCH_BASE;
+        }
+        batch.push((label, insn, st));
+    };
+
+    for &(opc, name) in &[(0b00u32, "w"), (0b10, "x")] {
+        push_case(
+            format!("ldp_{name}_signed_same_rt_rt2"),
+            enc_ldp_regs(opc, 0, 0b10, 1, 0, RD, RD, RN),
+            RN,
+        );
+        for mode in [0b01u32, 0b11] {
+            for &(rn, rt, rt2, label) in &[
+                (RD, RD, RM, "rn_rt"),
+                (RM, RD, RM, "rn_rt2"),
+                (RN, RD, RD, "same_rt_rt2"),
+            ] {
+                push_case(
+                    format!("ldp_{name}_m{mode}_{label}"),
+                    enc_ldp_regs(opc, 0, mode, 1, 1, rt, rt2, rn),
+                    rn,
+                );
+                push_case(
+                    format!("stp_{name}_m{mode}_{label}"),
+                    enc_ldp_regs(opc, 0, mode, 0, 1, rt, rt2, rn),
+                    rn,
+                );
+            }
+        }
+    }
+
+    push_case(
+        "ldpsw_signed_same_rt_rt2".to_string(),
+        enc_ldp_regs(0b01, 0, 0b10, 1, 0, RD, RD, RN),
+        RN,
+    );
+    for mode in [0b01u32, 0b11] {
+        for &(rn, rt, rt2, label) in &[
+            (RD, RD, RM, "rn_rt"),
+            (RM, RD, RM, "rn_rt2"),
+            (RN, RD, RD, "same_rt_rt2"),
+        ] {
+            push_case(
+                format!("ldpsw_m{mode}_{label}"),
+                enc_ldp_regs(0b01, 0, mode, 1, 1, rt, rt2, rn),
+                rn,
+            );
+        }
+    }
+
+    for &(opc, name) in &[(0b00u32, "s"), (0b01, "d"), (0b10, "q")] {
+        for mode in [0b10u32, 0b01, 0b11] {
+            push_case(
+                format!("ldp_{name}_simd_m{mode}_same_rt_rt2"),
+                enc_ldp_regs(opc, 1, mode, 1, 1, RD, RD, RN),
+                RN,
+            );
+        }
+    }
+
+    run_batch("mem_ldp_stp_gpr_overlap_edges", batch);
+}
+
+#[test]
 fn diff_mem_ldp_stp_simd_sp_base_edges() {
     let patterns: &[(&str, [u64; 4], (u64, u64), (u64, u64))] = &[
         ("zero", [0, 0, 0, 0], (0, 0), (0, 0)),
@@ -55763,17 +56100,59 @@ fn diff_mem_ldp_stp_simd_sp_base_edges() {
     run_batch("mem_ldp_stp_simd_sp_base_edges", batch);
 }
 
+#[test]
+fn diff_mem_ldp_stp_sp_alignment_edges() {
+    let mut rng = Rng::new(0x1_016e);
+    let mut batch = Vec::new();
+
+    for &(opc, v, l, name) in &[
+        (0b00u32, 0u32, 1u32, "ldp_w"),
+        (0b10, 0, 1, "ldp_x"),
+        (0b01, 0, 1, "ldpsw"),
+        (0b00, 0, 0, "stp_w"),
+        (0b10, 0, 0, "stp_x"),
+        (0b00, 1, 1, "ldp_s"),
+        (0b01, 1, 1, "ldp_d"),
+        (0b10, 1, 1, "ldp_q"),
+        (0b00, 1, 0, "stp_s"),
+        (0b01, 1, 0, "stp_d"),
+        (0b10, 1, 0, "stp_q"),
+    ] {
+        for mode in [0b10u32, 0b01, 0b11] {
+            for offset in [1u64, 8] {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + offset;
+                st.x[RD as usize] = rng.next();
+                st.x[RM as usize] = rng.next();
+                st.set_vreg(RD as usize, rng.next(), rng.next());
+                st.set_vreg(RM as usize, rng.next(), rng.next());
+                batch.push((
+                    format!("{name}_sp_unaligned_m{mode}_off{offset}"),
+                    enc_ldp_regs(opc, v, mode, l, 0, RD, RM, 31),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch("mem_ldp_stp_sp_alignment_edges", batch);
+}
+
 /// Load/store register, unsigned immediate offset:
 /// `size 111 V 01 opc imm12 Rn Rt`. Rn=base (x1), Rt=Rd (x0/v0).
-fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
+fn enc_ldst_uimm_regs(size: u32, v: u32, opc: u32, imm12: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (v << 26)
         | (0b01 << 24)
         | (opc << 22)
         | (imm12 << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
+    enc_ldst_uimm_regs(size, v, opc, imm12, RD, RN)
 }
 
 /// Load/store register, signed immediate offset:
@@ -56078,6 +56457,152 @@ fn diff_mem_ldst_imm_sp_base() {
         }
     }
     run_batch("mem_ldst_imm_sp_base", batch);
+}
+
+#[test]
+fn diff_mem_ldst_sp_alignment_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "ldr_x_sp_uimm".into(),
+            enc_ldst_uimm_regs(3, 0, 1, 0, RD, 31),
+            None,
+        ),
+        (
+            "str_w_sp_uimm".into(),
+            enc_ldst_uimm_regs(2, 0, 0, 0, RD, 31),
+            None,
+        ),
+        (
+            "ldr_q_sp_uimm".into(),
+            enc_ldst_uimm_regs(0, 1, 3, 0, 0, 31),
+            None,
+        ),
+        (
+            "str_d_sp_uimm".into(),
+            enc_ldst_uimm_regs(3, 1, 0, 0, 0, 31),
+            None,
+        ),
+        (
+            "ldr_x_sp_unscaled".into(),
+            enc_ldst_simm_regs(3, 0, 1, 0b00, 0, RD, 31),
+            None,
+        ),
+        (
+            "str_x_sp_post".into(),
+            enc_ldst_simm_regs(3, 0, 0, 0b01, 0, RD, 31),
+            None,
+        ),
+        (
+            "ldrsb_w_sp_unpriv".into(),
+            enc_ldst_simm_regs(0, 0, 3, 0b10, 0, RD, 31),
+            None,
+        ),
+        (
+            "ldr_w_sp_pre".into(),
+            enc_ldst_simm_regs(2, 0, 1, 0b11, 0, RD, 31),
+            None,
+        ),
+        (
+            "str_q_sp_pre".into(),
+            enc_ldst_simm_regs(0, 1, 2, 0b11, 0, 0, 31),
+            None,
+        ),
+        (
+            "ldr_x_sp_reg_lsl".into(),
+            enc_ldst_reg_regs(3, 1, RM, 0b011, 0, RD, 31),
+            Some(0),
+        ),
+        (
+            "strb_sp_reg_uxtw".into(),
+            enc_ldst_reg_regs(0, 0, RM, 0b010, 0, RD, 31),
+            Some(0),
+        ),
+        (
+            "ldr_q_sp_reg_lsl".into(),
+            enc_ldst_reg_simdfp_regs(0, 3, RM, 0b011, 0, 0, 31),
+            Some(0),
+        ),
+        (
+            "str_s_sp_reg_uxtw".into(),
+            enc_ldst_reg_simdfp_regs(2, 0, RM, 0b010, 0, 0, 31),
+            Some(0),
+        ),
+    ];
+    let mut rng = Rng::new(0x1_016f);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            st.x[RD as usize] = rng.next();
+            st.set_vreg(0, rng.next(), rng.next());
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("mem_ldst_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_mem_ldst_gpr_overlap_edges() {
+    let cases: Vec<(String, u32)> = vec![
+        (
+            "ldr_x_post_rt_base".into(),
+            enc_ldst_simm_regs(3, 0, 1, 0b01, 8, RN, RN),
+        ),
+        (
+            "ldr_x_pre_rt_base".into(),
+            enc_ldst_simm_regs(3, 0, 1, 0b11, 8, RN, RN),
+        ),
+        (
+            "ldr_w_post_rt_base".into(),
+            enc_ldst_simm_regs(2, 0, 1, 0b01, 8, RN, RN),
+        ),
+        (
+            "ldrsb_w_pre_rt_base".into(),
+            enc_ldst_simm_regs(0, 0, 3, 0b11, 8, RN, RN),
+        ),
+        (
+            "ldrsh_x_post_rt_base".into(),
+            enc_ldst_simm_regs(1, 0, 2, 0b01, 8, RN, RN),
+        ),
+        (
+            "ldrsw_x_pre_rt_base".into(),
+            enc_ldst_simm_regs(2, 0, 2, 0b11, 8, RN, RN),
+        ),
+        (
+            "str_x_post_rt_base".into(),
+            enc_ldst_simm_regs(3, 0, 0, 0b01, 8, RN, RN),
+        ),
+        (
+            "str_w_pre_rt_base".into(),
+            enc_ldst_simm_regs(2, 0, 0, 0b11, 8, RN, RN),
+        ),
+        (
+            "strb_post_rt_base".into(),
+            enc_ldst_simm_regs(0, 0, 0, 0b01, 8, RN, RN),
+        ),
+        (
+            "strh_pre_rt_base".into(),
+            enc_ldst_simm_regs(1, 0, 0, 0b11, 8, RN, RN),
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0176);
+    let mut batch = Vec::new();
+
+    for (label, insn) in &cases {
+        let mut st = mem_input(&mut rng);
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.scratch[8] = 0x8877_6655_4433_2211;
+        st.scratch[9] = 0x0000_0000_8000_0080;
+        batch.push((label.clone(), *insn, st));
+    }
+
+    run_batch("mem_ldst_gpr_overlap_edges", batch);
 }
 
 #[test]
@@ -57028,6 +57553,42 @@ fn diff_mem_prfm() {
         }
     }
     run_batch("mem_prfm", batch);
+}
+
+#[test]
+fn diff_mem_prfm_sp_alignment_edges() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "prfm_sp_uimm".into(),
+            enc_ldst_uimm_regs(3, 0, 2, 0, 0, 31),
+            None,
+        ),
+        (
+            "prfum_sp_unscaled".into(),
+            enc_ldst_simm_regs(3, 0, 2, 0b00, 0, 0, 31),
+            None,
+        ),
+        (
+            "prfm_sp_reg_lsl".into(),
+            enc_ldst_reg_regs(3, 2, RM, 0b011, 0, 0, 31),
+            Some(0),
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0172);
+    let mut batch = Vec::new();
+
+    for (label, insn, rm_value) in &cases {
+        for offset in [1u64, 8] {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + offset;
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((format!("{label}_off{offset}"), *insn, st));
+        }
+    }
+
+    run_batch("mem_prfm_sp_alignment_edges", batch);
 }
 
 /// Scalar FP 3-source: `0001_1111 type o1 Rm o0 Ra Rn Rd`.

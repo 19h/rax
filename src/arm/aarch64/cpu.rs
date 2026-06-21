@@ -1599,7 +1599,24 @@ impl AArch64Cpu {
             let op2 = (insn >> 10) & 0x3;
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rt = (insn & 0x1F) as u8;
-            let base = self.gpr_or_sp(rn);
+            let base = if rn == 31 {
+                let sp = self.current_sp();
+                if sp & 0xF != 0 {
+                    return Err(ArmError::MemoryError(MemoryFaultInfo {
+                        address: sp,
+                        access: if op2 == 0b00 && (opc == 0b01 || opc == 0b11) {
+                            crate::arm::cpu_trait::AccessType::Read
+                        } else {
+                            crate::arm::cpu_trait::AccessType::Write
+                        },
+                        fault_type: MemoryFaultType::Alignment,
+                        stage2: false,
+                    }));
+                }
+                sp
+            } else {
+                self.get_x(rn)
+            };
             let off = (imm9 as i64).wrapping_mul(TG as i64);
 
             // Bulk forms have imm9==0 and op2==00: STZGM (opc 00), LDG
@@ -14283,12 +14300,25 @@ impl AArch64Cpu {
         let zt = (insn & 0x1F) as usize;
         let imm4 = ((((insn >> 16) & 0xF) as i32) << 28 >> 28) as i64; // signed 4-bit
         let pred = self.sve_p[pg];
+        let is_store = (insn >> 30) & 1 == 1;
         let base = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xF != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: if is_store {
+                        crate::arm::cpu_trait::AccessType::Write
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Read
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };
-        let is_store = (insn >> 30) & 1 == 1;
         let b15_13 = (insn >> 13) & 0x7;
         // imm9 = SInt(imm9h:imm9l) for the whole-register LDR/STR forms.
         let imm9 = (((((insn >> 16) & 0x3F) << 3) | ((insn >> 10) & 0x7)) as i32) << 23 >> 23;
@@ -16226,7 +16256,16 @@ impl AArch64Cpu {
             let bits = 8u32 << size;
             let m = elem_mask(bits);
             let addr = if rn == 31 {
-                self.current_sp()
+                let sp = self.current_sp();
+                if sp & 0xF != 0 {
+                    return Err(ArmError::MemoryError(MemoryFaultInfo {
+                        address: sp,
+                        access: crate::arm::cpu_trait::AccessType::Write,
+                        fault_type: MemoryFaultType::Alignment,
+                        stage2: false,
+                    }));
+                }
+                sp
             } else {
                 self.get_x(rn)
             };
@@ -16263,7 +16302,16 @@ impl AArch64Cpu {
             }
             let sz = (insn >> 30) & 1; // 0 = 32-bit pair, 1 = 64-bit pair
             let addr = if rn == 31 {
-                self.current_sp()
+                let sp = self.current_sp();
+                if sp & 0xF != 0 {
+                    return Err(ArmError::MemoryError(MemoryFaultInfo {
+                        address: sp,
+                        access: crate::arm::cpu_trait::AccessType::Write,
+                        fault_type: MemoryFaultType::Alignment,
+                        stage2: false,
+                    }));
+                }
+                sp
             } else {
                 self.get_x(rn)
             };
@@ -16627,7 +16675,16 @@ impl AArch64Cpu {
         if stgp {
             let off = (((imm7 << 25) >> 25) as i64) * 16;
             let base = if rn == 31 {
-                self.current_sp()
+                let sp = self.current_sp();
+                if sp & 0xF != 0 {
+                    return Err(ArmError::MemoryError(MemoryFaultInfo {
+                        address: sp,
+                        access: crate::arm::cpu_trait::AccessType::Write,
+                        fault_type: MemoryFaultType::Alignment,
+                        stage2: false,
+                    }));
+                }
+                sp
             } else {
                 self.get_x(rn)
             };
@@ -16651,13 +16708,29 @@ impl AArch64Cpu {
         if ldpsw && l == 0 {
             return Err(ArmError::UndefinedInstruction(insn));
         }
+        if l != 0 && rt == rt2 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         let offset = (((imm7 << 25) >> 25) as i64) * (bytes as i64);
         let wback = mode == 0b01 || mode == 0b11;
         let postindex = mode == 0b01;
 
         let base = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xF != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: if l != 0 {
+                        crate::arm::cpu_trait::AccessType::Read
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Write
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };
@@ -16720,7 +16793,8 @@ impl AArch64Cpu {
             self.mem_write_u64(addr2, self.get_x(rt2))?;
         }
 
-        if wback {
+        let suppress_load_wback = l != 0 && v == 0 && rn != 31 && (rn == rt || rn == rt2);
+        if wback && !suppress_load_wback {
             let new_base = (base as i64).wrapping_add(offset) as u64;
             if rn == 31 {
                 self.set_current_sp(new_base);
@@ -16791,7 +16865,20 @@ impl AArch64Cpu {
         let emask = elem_mask_u128(esize);
 
         let base = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xF != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: if l != 0 {
+                        crate::arm::cpu_trait::AccessType::Read
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Write
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };
@@ -16883,7 +16970,20 @@ impl AArch64Cpu {
         let nregs = rpt * selem;
 
         let base = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xF != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access: if l != 0 {
+                        crate::arm::cpu_trait::AccessType::Read
+                    } else {
+                        crate::arm::cpu_trait::AccessType::Write
+                    },
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };
@@ -17043,7 +17143,16 @@ impl AArch64Cpu {
             }
             let access = 1usize << scale;
             let is_load = (opc & 1) == 1;
-            let (address, wback, wback_value) = self.decode_address(insn, rn, scale)?;
+            let (address, wback, wback_value) = self.decode_address(
+                insn,
+                rn,
+                scale,
+                if is_load {
+                    crate::arm::cpu_trait::AccessType::Read
+                } else {
+                    crate::arm::cpu_trait::AccessType::Write
+                },
+            )?;
             if is_load {
                 let mut bytes = [0u8; 16];
                 for (i, b) in bytes.iter_mut().enumerate().take(access) {
@@ -17097,11 +17206,19 @@ impl AArch64Cpu {
         }
 
         // Determine addressing mode
-        let (address, wback, wback_value) = self.decode_address(insn, rn, size)?;
         let unprivileged = bit24 == 0 && bit21 == 0 && op2 == 0b10;
-
         let is_load = (opc & 1) != 0 || opc == 0b10;
         let is_signed = opc >= 0b10;
+        let (address, wback, wback_value) = self.decode_address(
+            insn,
+            rn,
+            size,
+            if is_load {
+                crate::arm::cpu_trait::AccessType::Read
+            } else {
+                crate::arm::cpu_trait::AccessType::Write
+            },
+        )?;
 
         if is_load {
             let value = match size {
@@ -17196,7 +17313,8 @@ impl AArch64Cpu {
         }
 
         // Writeback
-        if wback {
+        let suppress_load_wback = is_load && rn != 31 && rn == rt;
+        if wback && !suppress_load_wback {
             if rn == 31 {
                 self.set_current_sp(wback_value);
             } else {
@@ -17209,9 +17327,24 @@ impl AArch64Cpu {
 
     /// Decode addressing mode for load/store. `scale` is the log2 of the access
     /// size in bytes (used to scale the unsigned/register offsets).
-    fn decode_address(&self, insn: u32, rn: u8, scale: u32) -> Result<(u64, bool, u64), ArmError> {
+    fn decode_address(
+        &self,
+        insn: u32,
+        rn: u8,
+        scale: u32,
+        access: crate::arm::cpu_trait::AccessType,
+    ) -> Result<(u64, bool, u64), ArmError> {
         let base = if rn == 31 {
-            self.current_sp()
+            let sp = self.current_sp();
+            if sp & 0xF != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: sp,
+                    access,
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
+            sp
         } else {
             self.get_x(rn)
         };
