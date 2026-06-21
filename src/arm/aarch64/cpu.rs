@@ -6947,6 +6947,31 @@ impl AArch64Cpu {
                 Ok(CpuExit::Continue)
             }
 
+            // SVE ORR/EOR/AND with a logical immediate: bits[21:18]==0000,
+            // opc=bits[23:22]. The N:immr:imms field decodes a 64-bit mask
+            // broadcast to every doubleword lane.
+            0b000
+                if (insn >> 24) & 0xFF == 0b00000101
+                    && (insn >> 18) & 0xF == 0
+                    && (insn >> 22) & 0x3 != 0b11 =>
+            {
+                let n = (insn >> 17) & 1 == 1;
+                let immr = (insn >> 11) & 0x3F;
+                let imms = (insn >> 5) & 0x3F;
+                match decode_bitmask(n, imms, immr, true) {
+                    Ok(mask) => {
+                        let imm = (mask as u128) | ((mask as u128) << 64);
+                        self.v[zd] = match (insn >> 22) & 0x3 {
+                            0b00 => self.v[zd] | imm,
+                            0b01 => self.v[zd] ^ imm,
+                            _ => self.v[zd] & imm,
+                        };
+                        Ok(CpuExit::Continue)
+                    }
+                    Err(_) => Ok(CpuExit::Undefined(insn)),
+                }
+            }
+
             // SVE DUPM (broadcast logical-immediate mask): 0x05, bits[23:18]==
             // 110000. The N:immr:imms field decodes a 64-bit mask broadcast to
             // every doubleword lane.
@@ -10307,6 +10332,27 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // MUL Zd.T, Zd.T, #imm: unpredicated destructive integer multiply with
+        // a signed 8-bit immediate, sign-extended to the element width.
+        if (insn >> 24) & 0xFF == 0b00100101
+            && (insn >> 16) & 0x3F == 0b110000
+            && (insn >> 13) & 0x7 == 0b110
+        {
+            let zd = (insn & 0x1F) as usize;
+            let bits = (esize * 8) as u32;
+            let mask = elem_mask(bits);
+            let imm = (((insn >> 5) & 0xFF) as u8 as i8 as i64 as u64) & mask;
+            let src = self.v[zd].to_le_bytes();
+            let mut dst = [0u8; 16];
+            for e in 0..elements {
+                let off = e * esize;
+                let a = read_elem(&src, off, esize) & mask;
+                write_elem(&mut dst, off, esize, a.wrapping_mul(imm) & mask);
+            }
+            self.v[zd] = u128::from_le_bytes(dst);
+            return Ok(CpuExit::Continue);
+        }
+
         // DUP Zd.T, #imm{,LSL #8} (unpredicated immediate broadcast): bits[21:16]
         // ==111000, bits[15:14]==11. (Distinct from PTRUE by bit21==1.)
         if (insn >> 16) & 0x3F == 0b111000 && (insn >> 14) & 0x3 == 0b11 {
@@ -10459,6 +10505,10 @@ impl AArch64Cpu {
         if (insn >> 24) & 0xFF == 0b00100100 && (insn >> 21) & 1 == 0 {
             let cmp_hi = (insn >> 13) & 0x7;
             let cmp_lo = (insn >> 4) & 1;
+            let wide_rhs = matches!(cmp_hi, 0b001 | 0b010 | 0b011 | 0b110 | 0b111);
+            if wide_rhs && esize == 8 {
+                return Ok(CpuExit::Undefined(insn));
+            }
             let pg = ((insn >> 10) & 0x7) as usize;
             let zn = ((insn >> 5) & 0x1F) as usize;
             let zm = ((insn >> 16) & 0x1F) as usize;
@@ -10473,15 +10523,36 @@ impl AArch64Cpu {
                     continue; // inactive -> 0 (zeroing predicate)
                 }
                 let a = read_elem(&n_reg, b, esize);
-                let c = read_elem(&m_reg, b, esize);
-                let cond = match (cmp_hi, cmp_lo) {
-                    (0b000, 0) => uext_elem(a, bits) >= uext_elem(c, bits),
-                    (0b000, 1) => uext_elem(a, bits) > uext_elem(c, bits),
-                    (0b100, 0) => sext_elem(a, bits) >= sext_elem(c, bits),
-                    (0b100, 1) => sext_elem(a, bits) > sext_elem(c, bits),
-                    (0b101, 0) => a == c,
-                    (0b101, 1) => a != c,
-                    _ => return Ok(CpuExit::Undefined(insn)),
+                let cond = if wide_rhs {
+                    let c = read_elem(&m_reg, (b / 8) * 8, 8);
+                    let sa = sext_elem(a, bits);
+                    let sc = c as i64 as i128;
+                    let ua = uext_elem(a, bits);
+                    let uc = c as u128;
+                    match (cmp_hi, cmp_lo) {
+                        (0b001, 0) => sa == sc,
+                        (0b001, 1) => sa != sc,
+                        (0b010, 0) => sa >= sc,
+                        (0b010, 1) => sa > sc,
+                        (0b011, 0) => sa < sc,
+                        (0b011, 1) => sa <= sc,
+                        (0b110, 0) => ua >= uc,
+                        (0b110, 1) => ua > uc,
+                        (0b111, 0) => ua < uc,
+                        (0b111, 1) => ua <= uc,
+                        _ => return Ok(CpuExit::Undefined(insn)),
+                    }
+                } else {
+                    let c = read_elem(&m_reg, b, esize);
+                    match (cmp_hi, cmp_lo) {
+                        (0b000, 0) => uext_elem(a, bits) >= uext_elem(c, bits),
+                        (0b000, 1) => uext_elem(a, bits) > uext_elem(c, bits),
+                        (0b100, 0) => sext_elem(a, bits) >= sext_elem(c, bits),
+                        (0b100, 1) => sext_elem(a, bits) > sext_elem(c, bits),
+                        (0b101, 0) => a == c,
+                        (0b101, 1) => a != c,
+                        _ => return Ok(CpuExit::Undefined(insn)),
+                    }
                 };
                 if cond {
                     result |= 1 << b;
@@ -12266,7 +12337,9 @@ impl AArch64Cpu {
                 let off = e * esz;
                 if (pred >> off) & 1 == 1 {
                     let a = read_elem(&n, off, esz);
-                    if fp_is_snan_bits(esz, a) {
+                    if fp_is_snan_bits(esz, a)
+                        || (sub <= 0b01 && fp_is_nan_bits(esz, a))
+                    {
                         self.fpsr |= FPSR_IOC;
                     }
                     if sve_fp_compare_zero(esz, sub, bit4, a) {
@@ -23447,6 +23520,88 @@ mod tests {
                 0xdead_beef_dead_beef_dead_beef_dead_beefu128
             );
         }
+    }
+
+    #[test]
+    fn sve_multiply_immediate_uses_signed_imm8() {
+        let initial = 0x0f0e_0d0c_0b0a_0908_0706_0504_0302_0100u128;
+        let cases = [
+            // MUL Z0.B, Z0.B, #0
+            (0x2530_c000, 0),
+            // MUL Z0.B, Z0.B, #1
+            (0x2530_c020, initial),
+            // MUL Z0.B, Z0.B, #-1
+            (0x2530_dfe0, 0xf1f2_f3f4_f5f6_f7f8_f9fa_fbfc_fdfe_ff00u128),
+            // MUL Z0.H, Z0.H, #-1
+            (0x2570_dfe0, 0xf0f2_f2f4_f4f6_f6f8_f8fa_fafc_fcfe_ff00u128),
+        ];
+
+        for (insn, expected) in cases {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_simd(0, initial);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue, "{insn:#010x}");
+            assert_eq!(cpu.get_simd(0), expected, "{insn:#010x}");
+        }
+    }
+
+    #[test]
+    fn sve_logical_immediate_updates_destructive_vector() {
+        let initial = 0xffff_ffff_ffff_ffff_0000_0000_0000_0000u128;
+        let cases = [
+            // ORR Z0.S, Z0.S, #0x1
+            (0x0500_0000, 0xffff_ffff_ffff_ffff_0000_0001_0000_0001u128),
+            // EOR Z0.S, Z0.S, #0x1
+            (0x0540_0000, 0xffff_fffe_ffff_fffe_0000_0001_0000_0001u128),
+            // AND Z0.S, Z0.S, #0x1
+            (0x0580_0000, 0x0000_0001_0000_0001_0000_0000_0000_0000u128),
+        ];
+
+        for (insn, expected) in cases {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+            cpu.set_simd(0, initial);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue, "{insn:#010x}");
+            assert_eq!(cpu.get_simd(0), expected, "{insn:#010x}");
+        }
+    }
+
+    #[test]
+    fn sve_integer_compare_zw_updates_predicate_and_flags() {
+        // CMPEQ P1.B, P0/Z, Z0.B, Z1.D
+        let mut cpu = create_cpu_with_insn(0x2401_2001);
+        cpu.sysregs.el1.cpacr |= 0b11 << 16; // ZEN
+        cpu.set_simd(
+            0,
+            u128::from_le_bytes([0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0]),
+        );
+        cpu.set_simd(
+            1,
+            u128::from_le_bytes([3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+        );
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.sve_pred(1), 0xff08);
+        assert!(!cpu.get_n());
+        assert!(!cpu.get_z());
+        assert!(!cpu.get_c());
+        assert!(!cpu.get_v());
+    }
+
+    #[test]
+    fn sve_fp_compare_zero_ordered_qnan_sets_ioc() {
+        // FCMGT P0.H, P0/Z, Z0.H, #0.0
+        let mut cpu = create_cpu_with_insn(0x6550_2010);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_simd(0, 0x7e00); // fp16 qNaN in lane 0
+        cpu.set_sve_pred(0, 0xffff);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.sve_pred(0), 0);
+        assert_eq!(cpu.fpsr & FPSR_IOC, FPSR_IOC);
     }
 
     #[test]

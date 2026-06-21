@@ -1653,6 +1653,105 @@ fn generated_sve_integer_immediate_arithmetic_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_sve_integer_multiply_immediate_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/arithmetic", source) {
+        if (insn >> 24) & 0xFF != 0x25
+            || (insn >> 16) & 0x3F != 0b110000
+            || (insn >> 13) & 0x7 != 0b110
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_arithmetic_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/arithmetic.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/arithmetic", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_logical_immediate_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/logical.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/logical", source) {
+        if (insn >> 24) & 0xFF != 0x05
+            || (insn >> 18) & 0xF != 0
+            || (insn >> 22) & 0x3 == 0b11
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_logical_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/logical.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/logical", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_integer_compare_zw_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/compare.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/compare", source) {
+        if (insn >> 24) & 0xFF != 0x24 || (insn >> 21) & 1 != 0 {
+            continue;
+        }
+        if (insn >> 22) & 0x3 == 0b11 {
+            continue;
+        }
+        if !matches!((insn >> 13) & 0x7, 0b001 | 0b010 | 0b011 | 0b110 | 0b111) {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_fp_compare_zero_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/compare.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("sve/compare", source) {
+        if (insn >> 24) & 0xFF != 0x65
+            || (insn >> 18) & 0xF != 0b0100
+            || (insn >> 13) & 0x7 != 0b001
+        {
+            continue;
+        }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings(
@@ -32219,6 +32318,78 @@ fn diff_generated_sve_integer_immediate_arithmetic_sweep() {
         }
     }
     run_batch("generated_sve_integer_immediate_arithmetic_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_integer_multiply_immediate_sweep() {
+    let mut rng = Rng::new(0xa64_5e02);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_integer_multiply_immediate_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_integer_multiply_immediate_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_arithmetic_sweep() {
+    let mut rng = Rng::new(0xa64_5e01);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_arithmetic_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_arithmetic_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_logical_immediate_sweep() {
+    let mut rng = Rng::new(0xa64_10c2);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_logical_immediate_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_logical_immediate_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_logical_sweep() {
+    let mut rng = Rng::new(0xa64_10c1);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_logical_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_logical_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_integer_compare_zw_sweep() {
+    let mut rng = Rng::new(0xa64_c012);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_integer_compare_zw_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_integer_compare_zw_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_fp_compare_zero_sweep() {
+    let mut rng = Rng::new(0xa64_c013);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_fp_compare_zero_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_fp_compare_zero_sweep", batch);
 }
 
 #[test]
