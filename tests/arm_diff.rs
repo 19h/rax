@@ -718,6 +718,148 @@ struct Mismatch {
     detail: String,
 }
 
+#[test]
+fn pair_state_diff_reports_sp_and_fp_status() {
+    let mut rax = ArmState::zeroed();
+    let mut hw = ArmState::zeroed();
+    rax.sp = 0x1000;
+    hw.sp = 0x2000;
+    rax.fpcr = 0x0100_0000;
+    hw.fpcr = 0x0200_0000;
+    rax.fpsr = 0;
+    hw.fpsr = 0x11;
+
+    let diffs = compare_state_diffs(&rax, &hw);
+    assert!(diffs.iter().any(|d| d.starts_with("sp:")), "{diffs:?}");
+    assert!(diffs.iter().any(|d| d.starts_with("fpcr:")), "{diffs:?}");
+    assert!(diffs.iter().any(|d| d.starts_with("fpsr:")), "{diffs:?}");
+}
+
+#[test]
+fn full_state_mismatch_pushes_pair_detail() {
+    let mut rax = ArmState::zeroed();
+    let mut hw = ArmState::zeroed();
+    rax.sp = 0x1000;
+    hw.sp = 0x2000;
+    rax.fpcr = 0x0100_0000;
+    hw.fpcr = 0x0200_0000;
+    rax.fpsr = 0;
+    hw.fpsr = 0x11;
+
+    let mut mismatches = Vec::new();
+    push_state_mismatch("pair", NOP, &rax, &hw, &mut mismatches);
+    assert_eq!(mismatches.len(), 1);
+    let detail = &mismatches[0].detail;
+    assert!(detail.contains("sp:"), "{detail}");
+    assert!(detail.contains("fpcr:"), "{detail}");
+    assert!(detail.contains("fpsr:"), "{detail}");
+}
+
+#[test]
+fn branch_state_diff_reports_pc_and_fp_status() {
+    let mut rax = ArmState::zeroed();
+    let mut hw = ArmState::zeroed();
+    rax.pc = 4;
+    hw.pc = 12;
+    rax.fpcr = 0x0100_0000;
+    hw.fpcr = 0x0200_0000;
+    rax.fpsr = 0;
+    hw.fpsr = 0x11;
+
+    let diffs = compare_state_diffs_with_pc(&rax, &hw);
+    assert!(diffs.iter().any(|d| d.starts_with("pc:")), "{diffs:?}");
+    assert!(diffs.iter().any(|d| d.starts_with("fpcr:")), "{diffs:?}");
+    assert!(diffs.iter().any(|d| d.starts_with("fpsr:")), "{diffs:?}");
+}
+
+fn compare_state_diffs(rax: &ArmState, hw: &ArmState) -> Vec<String> {
+    let mut diffs = Vec::new();
+    for i in 0..31 {
+        if rax.x[i] != hw.x[i] {
+            diffs.push(format!(
+                "x{i}: rax={:#018x} hw={:#018x}",
+                rax.x[i], hw.x[i]
+            ));
+        }
+    }
+    if rax.sp != hw.sp {
+        diffs.push(format!("sp: rax={:#018x} hw={:#018x}", rax.sp, hw.sp));
+    }
+    let rax_nzcv = (rax.pstate >> 28) & 0xF;
+    let hw_nzcv = (hw.pstate >> 28) & 0xF;
+    if rax_nzcv != hw_nzcv {
+        diffs.push(format!("nzcv: rax={:#x} hw={:#x}", rax_nzcv, hw_nzcv));
+    }
+    if rax.fpcr != hw.fpcr {
+        diffs.push(format!(
+            "fpcr: rax={:#010x} hw={:#010x}",
+            rax.fpcr, hw.fpcr
+        ));
+    }
+    if rax.fpsr != hw.fpsr {
+        diffs.push(format!(
+            "fpsr: rax={:#010x} hw={:#010x}",
+            rax.fpsr, hw.fpsr
+        ));
+    }
+    for r in 0..32 {
+        let (rlo, rhi) = rax.vreg(r);
+        let (hlo, hhi) = hw.vreg(r);
+        if (rlo, rhi) != (hlo, hhi) {
+            diffs.push(format!(
+                "v{r}: rax={:#018x}{:016x} hw={:#018x}{:016x}",
+                rhi, rlo, hhi, hlo
+            ));
+        }
+    }
+    for i in 0..32 {
+        if rax.scratch[i] != hw.scratch[i] {
+            diffs.push(format!(
+                "scratch[{i}]: rax={:#018x} hw={:#018x}",
+                rax.scratch[i], hw.scratch[i]
+            ));
+        }
+    }
+    for r in 0..16 {
+        if rax.preg(r) != hw.preg(r) {
+            diffs.push(format!(
+                "p{r}: rax={:#06x} hw={:#06x}",
+                rax.preg(r),
+                hw.preg(r)
+            ));
+        }
+    }
+    if rax.ffr() != hw.ffr() {
+        diffs.push(format!("ffr: rax={:#06x} hw={:#06x}", rax.ffr(), hw.ffr()));
+    }
+    diffs
+}
+
+fn compare_state_diffs_with_pc(rax: &ArmState, hw: &ArmState) -> Vec<String> {
+    let mut diffs = compare_state_diffs(rax, hw);
+    if rax.pc != hw.pc {
+        diffs.push(format!("pc: rax={:#x} hw={:#x}", rax.pc, hw.pc));
+    }
+    diffs
+}
+
+fn push_state_mismatch(
+    label: &str,
+    insn: u32,
+    rax: &ArmState,
+    hw: &ArmState,
+    mismatches: &mut Vec<Mismatch>,
+) {
+    let diffs = compare_state_diffs(rax, hw);
+    if !diffs.is_empty() {
+        mismatches.push(Mismatch {
+            label: label.into(),
+            insn,
+            detail: diffs.join("  |  "),
+        });
+    }
+}
+
 /// Compare one case against the complete EL0 architectural state captured by
 /// the oracle.
 fn compare_case(
@@ -785,80 +927,7 @@ fn compare_rax_outcome(
         }
     };
 
-    let mut diffs = Vec::new();
-    for i in 0..31 {
-        if rax.x[i] != oracle.st.x[i] {
-            diffs.push(format!(
-                "x{i}: rax={:#018x} hw={:#018x}",
-                rax.x[i], oracle.st.x[i]
-            ));
-        }
-    }
-    if rax.sp != oracle.st.sp {
-        diffs.push(format!(
-            "sp: rax={:#018x} hw={:#018x}",
-            rax.sp, oracle.st.sp
-        ));
-    }
-    let rax_nzcv = (rax.pstate >> 28) & 0xF;
-    let hw_nzcv = (oracle.st.pstate >> 28) & 0xF;
-    if rax_nzcv != hw_nzcv {
-        diffs.push(format!("nzcv: rax={:#x} hw={:#x}", rax_nzcv, hw_nzcv));
-    }
-    if rax.fpcr != oracle.st.fpcr {
-        diffs.push(format!(
-            "fpcr: rax={:#010x} hw={:#010x}",
-            rax.fpcr, oracle.st.fpcr
-        ));
-    }
-    if rax.fpsr != oracle.st.fpsr {
-        diffs.push(format!(
-            "fpsr: rax={:#010x} hw={:#010x}",
-            rax.fpsr, oracle.st.fpsr
-        ));
-    }
-    for r in 0..32 {
-        let (rlo, rhi) = rax.vreg(r);
-        let (hlo, hhi) = oracle.st.vreg(r);
-        if (rlo, rhi) != (hlo, hhi) {
-            diffs.push(format!(
-                "v{r}: rax={:#018x}{:016x} hw={:#018x}{:016x}",
-                rhi, rlo, hhi, hlo
-            ));
-        }
-    }
-    for i in 0..32 {
-        if rax.scratch[i] != oracle.st.scratch[i] {
-            diffs.push(format!(
-                "scratch[{i}]: rax={:#018x} hw={:#018x}",
-                rax.scratch[i], oracle.st.scratch[i]
-            ));
-        }
-    }
-    for r in 0..16 {
-        if rax.preg(r) != oracle.st.preg(r) {
-            diffs.push(format!(
-                "p{r}: rax={:#06x} hw={:#06x}",
-                rax.preg(r),
-                oracle.st.preg(r)
-            ));
-        }
-    }
-    if rax.ffr() != oracle.st.ffr() {
-        diffs.push(format!(
-            "ffr: rax={:#06x} hw={:#06x}",
-            rax.ffr(),
-            oracle.st.ffr()
-        ));
-    }
-
-    if !diffs.is_empty() {
-        mismatches.push(Mismatch {
-            label: label.into(),
-            insn,
-            detail: diffs.join("  |  "),
-        });
-    }
+    push_state_mismatch(label, insn, &rax, &oracle.st, mismatches);
 }
 
 // ---------------------------------------------------------------------------
@@ -3860,48 +3929,7 @@ fn run_batch_literal(name: &str, batch: Vec<(String, u32, u32, u32, ArmState)>) 
                 continue;
             }
         };
-        let mut diffs = Vec::new();
-        for r in 0..31 {
-            if rax.x[r] != out.st.x[r] {
-                diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
-            }
-        }
-        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
-            diffs.push(format!(
-                "nzcv: rax={:#x} hw={:#x}",
-                (rax.pstate >> 28) & 0xF,
-                (out.st.pstate >> 28) & 0xF
-            ));
-        }
-        for r in 0..32 {
-            if rax.vreg(r) != out.st.vreg(r) {
-                diffs.push(format!("v{r} differs"));
-            }
-        }
-        for r in 0..16 {
-            if rax.preg(r) != out.st.preg(r) {
-                diffs.push(format!(
-                    "p{r}: rax={:#06x} hw={:#06x}",
-                    rax.preg(r),
-                    out.st.preg(r)
-                ));
-            }
-        }
-        if rax.ffr() != out.st.ffr() {
-            diffs.push(format!(
-                "ffr: rax={:#06x} hw={:#06x}",
-                rax.ffr(),
-                out.st.ffr()
-            ));
-        }
-        for k in 0..32 {
-            if rax.scratch[k] != out.st.scratch[k] {
-                diffs.push(format!(
-                    "scratch[{k}]: rax={:#x} hw={:#x}",
-                    rax.scratch[k], out.st.scratch[k]
-                ));
-            }
-        }
+        let diffs = compare_state_diffs(&rax, &out.st);
         if !diffs.is_empty() {
             mismatches.push(Mismatch {
                 label: batch[i].0.clone(),
@@ -24737,55 +24765,7 @@ fn run_batch_pair(name: &str, batch: Vec<(String, u32, u32, ArmState)>) {
                 continue;
             }
         };
-        let mut diffs = Vec::new();
-        for r in 0..31 {
-            if rax.x[r] != out.st.x[r] {
-                diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
-            }
-        }
-        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
-            diffs.push(format!(
-                "nzcv: rax={:#x} hw={:#x}",
-                (rax.pstate >> 28) & 0xF,
-                (out.st.pstate >> 28) & 0xF
-            ));
-        }
-        for r in 0..32 {
-            if rax.vreg(r) != out.st.vreg(r) {
-                diffs.push(format!("v{r} differs"));
-            }
-        }
-        for r in 0..16 {
-            if rax.preg(r) != out.st.preg(r) {
-                diffs.push(format!(
-                    "p{r}: rax={:#06x} hw={:#06x}",
-                    rax.preg(r),
-                    out.st.preg(r)
-                ));
-            }
-        }
-        if rax.ffr() != out.st.ffr() {
-            diffs.push(format!(
-                "ffr: rax={:#06x} hw={:#06x}",
-                rax.ffr(),
-                out.st.ffr()
-            ));
-        }
-        for k in 0..32 {
-            if rax.scratch[k] != out.st.scratch[k] {
-                diffs.push(format!(
-                    "scratch[{k}]: rax={:#x} hw={:#x}",
-                    rax.scratch[k], out.st.scratch[k]
-                ));
-            }
-        }
-        if !diffs.is_empty() {
-            mismatches.push(Mismatch {
-                label: batch[i].0.clone(),
-                insn: *insn,
-                detail: diffs.join("  |  "),
-            });
-        }
+        push_state_mismatch(&batch[i].0, *insn, &rax, &out.st, &mut mismatches);
     }
     if !mismatches.is_empty() {
         use std::collections::BTreeMap;
@@ -24948,25 +24928,7 @@ fn run_batch_branch(name: &str, batch: Vec<(String, u32, ArmState)>) {
                 continue;
             }
         };
-        let mut diffs = Vec::new();
-        for r in 0..31 {
-            if rax.x[r] != out.st.x[r] {
-                diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r]));
-            }
-        }
-        if rax.sp != out.st.sp {
-            diffs.push(format!("sp: rax={:#x} hw={:#x}", rax.sp, out.st.sp));
-        }
-        if rax.pc != out.st.pc {
-            diffs.push(format!("pc: rax={:#x} hw={:#x}", rax.pc, out.st.pc));
-        }
-        if (rax.pstate >> 28) & 0xF != (out.st.pstate >> 28) & 0xF {
-            diffs.push(format!(
-                "nzcv: rax={:#x} hw={:#x}",
-                (rax.pstate >> 28) & 0xF,
-                (out.st.pstate >> 28) & 0xF
-            ));
-        }
+        let diffs = compare_state_diffs_with_pc(&rax, &out.st);
         if !diffs.is_empty() {
             mismatches.push(Mismatch {
                 label: batch[i].0.clone(),
