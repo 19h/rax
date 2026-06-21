@@ -1005,6 +1005,29 @@ fn enc_three_same(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
         | RD
 }
 
+/// Advanced SIMD three-same-extra: SQRDMLAH/SQRDMLSH.
+fn enc_three_same_extra(q: u32, size: u32, lo6: u32) -> u32 {
+    (q << 30)
+        | (1 << 29)
+        | (0b01110 << 24)
+        | (size << 22)
+        | (RM << 16)
+        | (lo6 << 10)
+        | (RN << 5)
+        | RD
+}
+
+fn enc_scalar_three_same_extra(size: u32, lo6: u32) -> u32 {
+    (0b01 << 30)
+        | (1 << 29)
+        | (0b11110 << 24)
+        | (size << 22)
+        | (RM << 16)
+        | (lo6 << 10)
+        | (RN << 5)
+        | RD
+}
+
 /// Advanced SIMD scalar three-same FP: `0 1 U 11110 size 1 Rm opcode 1 Rn Rd`.
 fn enc_scalar_three_same(u: u32, size: u32, opcode: u32) -> u32 {
     (1 << 30)
@@ -27044,6 +27067,46 @@ fn diff_simd_three_same() {
     run_family("simd_three_same", three_same_cases(), 8, 0x2001);
 }
 
+#[test]
+fn diff_simd_sqrdmlsh_tie() {
+    let mut lanes = 0u128;
+    for lane in 0..8 {
+        lanes |= 0x0080u128 << (lane * 16);
+    }
+    let mut batch = Vec::new();
+    for q in 0..=1 {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(RD as usize, 0x1234_5678_9abc_def0, 0x0fed_cba9_8765_4321);
+        st.set_vreg(RN as usize, lanes as u64, (lanes >> 64) as u64);
+        st.set_vreg(RM as usize, lanes as u64, (lanes >> 64) as u64);
+        batch.push((
+            format!("simd_sqrdmlsh_tie_q{q}"),
+            enc_three_same_extra(q, 0b01, 0b100011),
+            st,
+        ));
+    }
+    let mut st = ArmState::zeroed();
+    st.set_vreg(RD as usize, 0xdef0, 0);
+    st.set_vreg(RN as usize, 0x0080, 0);
+    st.set_vreg(RM as usize, 0x0080, 0);
+    batch.push((
+        "scalar_sqrdmlsh_tie_h".to_string(),
+        enc_scalar_three_same_extra(0b01, 0b100011),
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.set_vreg(RD as usize, 0x1234_5678_9abc_def0, 0x0fed_cba9_8765_4321);
+    st.set_vreg(RN as usize, lanes as u64, (lanes >> 64) as u64);
+    st.set_vreg(RM as usize, lanes as u64, (lanes >> 64) as u64);
+    batch.push((
+        "indexed_sqrdmlsh_tie_8h".to_string(),
+        enc_indexed(1, 1, 0b01, 0b1111, RM, 0),
+        st,
+    ));
+    run_batch("simd_sqrdmlsh_tie", batch);
+}
+
 // A few finite FP16 bit patterns; products stay exactly representable in FP32,
 // so the result can be compared bit-exactly (no NaN/inf payload ambiguity).
 const F16_VALUES: [u16; 10] = [
@@ -28895,6 +28958,138 @@ fn diff_simd_fcmla_fpcr_ah_nan_sign() {
     }
 
     run_batch("simd_fcmla_fpcr_ah_nan_sign", batch);
+}
+
+#[test]
+fn diff_fcmla_fpcr_ah_nan_priority_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let pack_pair = |re: u64, im: u64, esz: usize| -> (u64, u64) {
+        let mut packed = 0u128;
+        for pair in 0..(16 / (2 * esz)) {
+            packed |= (re as u128) << ((2 * pair) * esz * 8);
+            packed |= (im as u128) << ((2 * pair + 1) * esz * 8);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+
+    let mut batch = Vec::new();
+
+    for &(label, simd_size, sve_size, esz, qnan, snan) in &[
+        ("h", 0b01, 1, 2, 0x7e00u64, 0x7d01u64),
+        ("s", 0b10, 2, 4, 0x7fc0_2000u64, 0x7fa0_0001u64),
+        (
+            "d",
+            0b11,
+            3,
+            8,
+            0x7ff8_0000_0000_2000u64,
+            0x7ff0_0000_0000_0001u64,
+        ),
+    ] {
+        let (lo, hi) = pack_pair(qnan, snan, esz);
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((format!("simd_fcmla_{label}_ah_nan_priority"), enc_fcmla(1, simd_size, 0), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((format!("sve_fcmla_{label}_ah_nan_priority"), enc_sve_fcmla(sve_size, 0), st));
+    }
+
+    for &(label, simd_size, sve_size, esz, qnan, snan) in &[
+        ("h", 0b01, 2, 2, 0x7e00u64, 0x7d01u64),
+        ("s", 0b10, 3, 4, 0x7fc0_2000u64, 0x7fa0_0001u64),
+    ] {
+        let (lo, hi) = pack_pair(qnan, snan, esz);
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("simd_fcmla_idx_{label}_ah_nan_priority"),
+            enc_fcmla_idx(1, simd_size, 0, 0),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, lo, hi);
+        st.set_vreg(RN as usize, lo, hi);
+        st.set_vreg(RM as usize, lo, hi);
+        batch.push((
+            format!("sve_fcmla_idx_{label}_ah_nan_priority"),
+            enc_sve_fcmla_idx(sve_size, 0, RM, 0),
+            st,
+        ));
+    }
+
+    for &(label, simd_size, sve_size, esz, pattern) in &[
+        (
+            "s",
+            0b10,
+            2,
+            4,
+            0x3f80_0000_0000_0000_7f80_0000_0000_0001u128,
+        ),
+        (
+            "d",
+            0b11,
+            3,
+            8,
+            0x3ff0_0000_0000_0000_7ff0_0000_0000_0000u128,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((format!("simd_fcmla_{label}_ah_subnormal_status"), enc_fcmla(1, simd_size, 0), st));
+
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+        st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+        batch.push((format!("sve_fcmla_{label}_ah_subnormal_status"), enc_sve_fcmla(sve_size, 0), st));
+
+        if esz == 4 {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+            batch.push((
+                "simd_fcmla_idx_s_ah_subnormal_status".to_string(),
+                enc_fcmla_idx(1, simd_size, 0, 0),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+            batch.push((
+                "sve_fcmla_idx_s_ah_subnormal_status".to_string(),
+                enc_sve_fcmla_idx(sve_size + 1, 0, RM, 0),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fcmla_fpcr_ah_nan_priority_status", batch);
 }
 
 #[test]
@@ -33094,6 +33289,75 @@ fn diff_fpcr_fiz_sve_fcvtz_subnormal_inputs() {
     ));
 
     run_batch("fpcr_fiz_sve_fcvtz_subnormal_inputs", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_sve_fp_compare_status() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    for &(label, size, pattern) in &[
+        (
+            "s",
+            2,
+            0x3f80_0000_0000_0000_7f80_0000_0000_0001u128,
+        ),
+        (
+            "d",
+            3,
+            0x0000_0000_0000_0001_7ff8_0000_0000_2000u128,
+        ),
+    ] {
+        for &(name, insn) in &[
+            ("fcmge", enc_sve_fp_cmp(size, 0b010, 0)),
+            ("fcmeq", enc_sve_fp_cmp(size, 0b011, 0)),
+            ("fcmgt0", enc_sve_fp_cmp0(size, 0b00, 1)),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_preg(1, 0xffff);
+            st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+            st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
+            batch.push((format!("sve_{name}_{label}_ah_compare_status"), insn, st));
+        }
+    }
+
+    run_batch("fpcr_ah_sve_fp_compare_status", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_sve_fcvtz_status_merge() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut batch = Vec::new();
+
+    for &(label, opc, opc2, pattern) in &[
+        (
+            "s_i32",
+            0b10,
+            0b10,
+            0x3f80_0000_0000_0000_7f80_0000_0000_0001u128,
+        ),
+        (
+            "d_i64",
+            0b11,
+            0b11,
+            0x0000_0000_0000_0001_7ff8_0000_0000_2000u128,
+        ),
+    ] {
+        for &(name, u) in &[("fcvtzs", 0), ("fcvtzu", 1)] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
+            batch.push((
+                format!("sve_{name}_{label}_ah_status_merge"),
+                enc_sve_cvt(opc, 0b011, opc2, u),
+                st,
+            ));
+        }
+    }
+
+    run_batch("fpcr_ah_sve_fcvtz_status_merge", batch);
 }
 
 #[test]
@@ -39583,6 +39847,104 @@ fn diff_fpcr_ah_fsqrt_subnormal_status() {
 }
 
 #[test]
+fn diff_fpcr_ah_fsqrt_frsqrte_invalid_nan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) {
+        let packed = (value as u128) | ((value as u128) << 64);
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let enc_sve_fsqrt = |size: u32| -> u32 {
+        (0x65 << 24) | (size << 22) | (0b001101 << 16) | (0b101 << 13) | (RN << 5) | RD
+    };
+
+    let mut batch = Vec::new();
+
+    for &(label, fp_type, bits) in &[
+        ("h", 0b11, 0xbc00u64),
+        ("s", 0b00, 0xbf80_0000u64),
+        ("d", 0b01, 0xbff0_0000_0000_0000u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((format!("scalar_fsqrt_{label}_ah_invalid_nan_sign"), enc_fp1(fp_type, 0b00011), st));
+    }
+
+    for &(label, insn, bits) in &[
+        ("h", enc_fp16_2r_scalar(1, 1, 0b11101), 0xbc00u64),
+        ("s", enc_scalar_two_reg(1, 0b10, 0b11101), 0xbf80_0000u64),
+        ("d", enc_scalar_two_reg(1, 0b11, 0b11101), 0xbff0_0000_0000_0000u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, bits, 0);
+        batch.push((format!("scalar_frsqrte_{label}_ah_invalid_nan_sign"), insn, st));
+    }
+
+    for &(label, fsqrt, frsqrte, lo, hi) in &[
+        {
+            let (lo, hi) = pack_h(0xbc00);
+            ("h", enc_fp16_2r(1, 1, 1, 0b11111), enc_fp16_2r(1, 1, 1, 0b11101), lo, hi)
+        },
+        {
+            let (lo, hi) = pack_s(0xbf80_0000);
+            ("s", enc_two_reg(1, 1, 0b10, 0b11111), enc_two_reg(1, 1, 0b10, 0b11101), lo, hi)
+        },
+        {
+            let (lo, hi) = pack_d(0xbff0_0000_0000_0000);
+            ("d", enc_two_reg(1, 1, 0b11, 0b11111), enc_two_reg(1, 1, 0b11, 0b11101), lo, hi)
+        },
+    ] {
+        for &(opname, insn) in &[("fsqrt", fsqrt), ("frsqrte", frsqrte)] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_vreg(RN as usize, lo, hi);
+            batch.push((format!("simd_{opname}_{label}_ah_invalid_nan_sign"), insn, st));
+        }
+    }
+
+    for &(label, size, lo, hi) in &[
+        {
+            let (lo, hi) = pack_h(0xbc00);
+            ("h", 1, lo, hi)
+        },
+        {
+            let (lo, hi) = pack_s(0xbf80_0000);
+            ("s", 2, lo, hi)
+        },
+        {
+            let (lo, hi) = pack_d(0xbff0_0000_0000_0000);
+            ("d", 3, lo, hi)
+        },
+    ] {
+        for &(opname, insn) in &[("fsqrt", enc_sve_fsqrt(size)), ("frsqrte", enc_sve_frecpe(size, 1))] {
+            let mut st = ArmState::zeroed();
+            st.fpcr = FPCR_AH;
+            st.set_preg(0, 0xffff);
+            st.set_vreg(RN as usize, lo, hi);
+            batch.push((format!("sve_{opname}_{label}_ah_invalid_nan_sign"), insn, st));
+        }
+    }
+
+    run_batch("fpcr_ah_fsqrt_frsqrte_invalid_nan_sign", batch);
+}
+
+#[test]
 fn diff_fpcr_ah_frintts_subnormal_status() {
     const FPCR_AH: u64 = 1 << 1;
     let mut batch = Vec::new();
@@ -43270,6 +43632,23 @@ fn diff_fp_scalar_fma_fpcr_ah_nan_sign() {
         }
     }
 
+    for &(label, fp_type, inf) in &[
+        ("h", 0b11, 0x7c00u64),
+        ("s", 0b00, 0x7f80_0000u64),
+        ("d", 0b01, 0x7ff0_0000_0000_0000u64),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RA as usize, inf, 0);
+        st.set_vreg(RN as usize, inf, 0);
+        st.set_vreg(RM as usize, inf, 0);
+        batch.push((
+            format!("fmsub_{label}_ah_invalid_default_nan"),
+            enc_fp3(fp_type, 0, 1),
+            st,
+        ));
+    }
+
     run_batch("fp_scalar_fma_fpcr_ah_nan_sign", batch);
 }
 
@@ -43611,6 +43990,27 @@ fn diff_fpcr_ah_maxmin_reductions_qnan_number() {
 }
 
 #[test]
+fn diff_fpcr_ah_fmaxv_h_nan_zero_tie() {
+    const FPCR_AH: u64 = 1 << 1;
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(
+        RN as usize,
+        0xff80_0000_7f80_0000,
+        0x8000_0000_0000_0000,
+    );
+
+    run_batch(
+        "fpcr_ah_fmaxv_h_nan_zero_tie",
+        vec![(
+            "simd_fmaxv_h_ah_nan_zero_tie".to_string(),
+            enc_across(1, 0, 0b00, 0b01111),
+            st,
+        )],
+    );
+}
+
+#[test]
 fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
     const FPCR_AH: u64 = 1 << 1;
     let pack_h = |values: &[u16]| -> (u64, u64) {
@@ -43802,6 +44202,87 @@ fn diff_fpcr_ah_fneg_qnan_sign() {
     ));
 
     run_batch("fpcr_ah_fneg_qnan_sign", batch);
+}
+
+#[test]
+fn diff_fpcr_ah_fabs_qnan_sign() {
+    const FPCR_AH: u64 = 1 << 1;
+    let pack_h = |value: u16| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..8 {
+            packed |= (value as u128) << (16 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_s = |value: u32| -> (u64, u64) {
+        let mut packed = 0u128;
+        for lane in 0..4 {
+            packed |= (value as u128) << (32 * lane);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    };
+    let pack_d = |value: u64| -> (u64, u64) { (value, value) };
+
+    let mut batch = Vec::new();
+    for &(label, fp_type, nan) in &[
+        ("scalar_fabs_h", 0b11, 0xfe01u64),
+        ("scalar_fabs_s", 0b00, 0xffc0_2000),
+        ("scalar_fabs_d", 0b01, 0xfff8_0000_0000_2000),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_vreg(RN as usize, nan, 0);
+        batch.push((format!("{label}_ah_negative_qnan"), enc_fp1(fp_type, 0b000001), st));
+    }
+
+    let (lo, hi) = pack_h(0xfe01);
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fabs_h_ah_negative_qnan".to_string(),
+        enc_fp16_2r(1, 0, 1, 0b01111),
+        st,
+    ));
+
+    let (lo, hi) = pack_s(0xffc0_2000);
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fabs_s_ah_negative_qnan".to_string(),
+        enc_two_reg(1, 0, 2, 0b01111),
+        st,
+    ));
+
+    let (lo, hi) = pack_d(0xfff8_0000_0000_2000);
+    let mut st = ArmState::zeroed();
+    st.fpcr = FPCR_AH;
+    st.set_vreg(RN as usize, lo, hi);
+    batch.push((
+        "simd_fabs_d_ah_negative_qnan".to_string(),
+        enc_two_reg(1, 0, 3, 0b01111),
+        st,
+    ));
+
+    for &(label, insn, lo, hi) in &[
+        ("sve_fabs_h", enc_sve_pred_unary(1, 0b011100), pack_h(0xfe01).0, pack_h(0xfe01).1),
+        ("sve_fabs_s", enc_sve_pred_unary(2, 0b011100), pack_s(0xffc0_2000).0, pack_s(0xffc0_2000).1),
+        (
+            "sve_fabs_d",
+            enc_sve_pred_unary(3, 0b011100),
+            pack_d(0xfff8_0000_0000_2000).0,
+            pack_d(0xfff8_0000_0000_2000).1,
+        ),
+    ] {
+        let mut st = ArmState::zeroed();
+        st.fpcr = FPCR_AH;
+        st.set_preg(0, 0xffff);
+        st.set_vreg(RN as usize, lo, hi);
+        batch.push((format!("{label}_ah_negative_qnan"), insn, st));
+    }
+
+    run_batch("fpcr_ah_fabs_qnan_sign", batch);
 }
 
 #[test]
@@ -45527,14 +46008,20 @@ fn diff_fpcr_ah_invalid_default_nan_sign() {
     let h_pattern = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128;
     let s_inf_zero_pattern = 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128;
     let d_pattern = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
+    let h_inf_pattern = 0x7c00_7c00_7c00_7c00_7c00_7c00_7c00_7c00u128;
+    let d_inf_pattern = 0x7ff0_0000_0000_0000_7ff0_0000_0000_0000u128;
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
+        ("scalar_fdiv_h_ah_invalid_nan", enc_fp2(0b11, 0b0001), h_inf_pattern),
+        ("scalar_fdiv_d_ah_invalid_nan", enc_fp2(0b01, 0b0001), d_inf_pattern),
         ("simd_fsub_s_ah_invalid_nan", enc_three_same(1, 0, 2, 0b11010), s_inf_zero_pattern),
         ("simd_fabd_s_ah_invalid_nan", enc_three_same(1, 1, 2, 0b11010), s_inf_zero_pattern),
         ("simd_fdiv_h_ah_invalid_nan", enc_fp16_3s(1, 1, 0, 0b111), h_pattern),
+        ("simd_fdiv_h_ah_inf_inf", enc_fp16_3s(1, 1, 0, 0b111), h_inf_pattern),
         ("simd_fdiv_s_ah_invalid_nan", enc_three_same(1, 1, 0, 0b11111), s_inf_zero_pattern),
         ("simd_fdiv_d_ah_invalid_nan", enc_three_same(1, 1, 1, 0b11111), d_pattern),
+        ("simd_fdiv_d_ah_inf_inf", enc_three_same(1, 1, 1, 0b11111), d_inf_pattern),
         ("simd_fmul_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b1001, RM, 2), s_inf_zero_pattern),
         ("simd_fmla_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0001, RM, 2), s_inf_zero_pattern),
         ("simd_fmls_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0101, RM, 2), s_inf_zero_pattern),
