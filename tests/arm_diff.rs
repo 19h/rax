@@ -26129,6 +26129,47 @@ fn diff_load_literal_scalar() {
 }
 
 #[test]
+fn diff_load_literal_negative_offset() {
+    fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        (opc << 30) | (0b011 << 27) | (v << 26) | (imm19 << 5) | (rt & 0x1f)
+    }
+
+    let mut rng = Rng::new(0x5157_1003);
+    let mut batch = Vec::new();
+
+    for rt in [0, 5, 31] {
+        for (label, insn) in [
+            ("ldr_lit_w_neg4", ldr_literal(0, 0, rt, -4)),
+            ("ldr_lit_x_neg4", ldr_literal(1, 0, rt, -4)),
+            ("ldrsw_lit_x_neg4", ldr_literal(2, 0, rt, -4)),
+            ("prfm_lit_neg4", ldr_literal(3, 0, rt, -4)),
+        ] {
+            let mut st = gen_input(&mut rng);
+            if rt == 31 {
+                st.sp = 0x9999_9999_9999_9990;
+            } else {
+                st.x[rt as usize] = 0x9999_9999_9999_9999;
+            }
+            batch.push((format!("{label}_x{rt}"), NOP, insn, st));
+        }
+    }
+
+    for rt in [0, 7] {
+        for (label, insn) in [
+            ("ldr_lit_s_neg4", ldr_literal(0, 1, rt, -4)),
+            ("ldr_lit_d_neg4", ldr_literal(1, 1, rt, -4)),
+        ] {
+            let mut st = gen_input(&mut rng);
+            st.set_vreg(rt as usize, 0xaaaa_aaaa_aaaa_aaaa, 0xbbbb_bbbb_bbbb_bbbb);
+            batch.push((format!("{label}_v{rt}"), NOP, insn, st));
+        }
+    }
+
+    run_batch_el0_pair("load_literal_negative_offset", batch);
+}
+
+#[test]
 fn diff_generated_memory_literal_sweep() {
     let mut rng = Rng::new(0xa64_117e);
     let mut batch = Vec::new();
@@ -27042,6 +27083,7 @@ fn diff_system_dc_zva_el0() {
         SCRATCH_BASE + 63,
         SCRATCH_BASE + 64,
         SCRATCH_ADDR + 191,
+        SCRATCH_ADDR + 255,
     ] {
         let mut st = mem_input(&mut rng);
         st.x[RN as usize] = addr;
