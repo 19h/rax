@@ -616,6 +616,41 @@ fn raw_el0_conditional_select_compare_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_conditional_compare_fallback_oracle_matches_interpreter() {
+    let insns = [
+        0xd51b_4200, // msr  nzcv, x0
+        0xfa42_102a, // ccmp x1, x2, #10, ne
+        0xd53b_4203, // mrs  x3, nzcv
+        0xd51b_4204, // msr  nzcv, x4
+        0xba46_00a5, // ccmn x5, x6, #5, eq
+        0xd53b_4207, // mrs  x7, nzcv
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[0] = 0x4000_0000; // Z=1, so NE is false.
+        g.x[1] = 0x10;
+        g.x[2] = 0x10;
+        g.x[4] = 0; // Z=0, so EQ is false.
+        g.x[5] = 0x20;
+        g.x[6] = 0x20;
+    };
+
+    let hw = raw_native_run(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [3usize, 7] {
+        assert_eq!(
+            hw.x[reg] & 0xf000_0000,
+            interp.x[reg] & 0xf000_0000,
+            "raw EL0 conditional compare fallback x{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 conditional compare fallback final NZCV mismatch"
+    );
+}
+
+#[test]
 fn raw_el0_vector_oracle_matches_interpreter() {
     let insns = [
         0x4ee2_1c20, // orn v0.16b, v1.16b, v2.16b
@@ -1255,6 +1290,272 @@ fn raw_el0_scalar_fp_misc_oracle_matches_interpreter() {
     for reg in [0usize, 3, 6, 8, 10, 12, 15, 18, 21] {
         let lo = 2 * reg;
         assert_eq!(hw.v[lo], interp.v[lo], "raw EL0 scalar FP misc d{reg}");
+    }
+}
+
+#[test]
+fn raw_el0_scalar_fp16_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise scalar FP16");
+        return;
+    }
+
+    let insns = [
+        0x1ee2_2820, // fadd  h0, h1, h2
+        0x1ee5_3883, // fsub  h3, h4, h5
+        0x1ee8_08e6, // fmul  h6, h7, h8
+        0x1eeb_1949, // fdiv  h9, h10, h11
+        0x1ee1_c1ac, // fsqrt h12, h13
+        0x1ee0_c1ee, // fabs  h14, h15
+        0x1ee1_4230, // fneg  h16, h17
+        0x1ee2_4272, // fcvt  s18, h19
+        0x1e23_c2b4, // fcvt  h20, s21
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        for (reg, bits) in [
+            (1usize, 0x3c00u16),
+            (2, 0x4000),
+            (4, 0x4200),
+            (5, 0x3c00),
+            (7, 0x4000),
+            (8, 0xc000),
+            (10, 0x4400),
+            (11, 0x4000),
+            (13, 0x4400),
+            (15, 0xc200),
+            (17, 0x3e00),
+            (19, 0x3c00),
+        ] {
+            g.v[2 * reg] = u64::from(bits);
+        }
+        g.v[42] = u64::from(1.5_f32.to_bits());
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 3, 6, 9, 12, 14, 16, 20] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo] as u16, interp.v[lo] as u16,
+            "raw EL0 scalar FP16 h{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.v[36] as u32, interp.v[36] as u32,
+        "raw EL0 scalar FP16 s18 mismatch"
+    );
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 scalar FP16 FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_scalar_fp16_fpcr_rounding_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise scalar FP16");
+        return;
+    }
+
+    let insns = [
+        0x1ee2_2820, // fadd  h0, h1, h2
+        0x1ee5_3883, // fsub  h3, h4, h5
+        0x1ee8_08e6, // fmul  h6, h7, h8
+        0x1eeb_1949, // fdiv  h9, h10, h11
+        0x1ee1_c1ac, // fsqrt h12, h13
+        0x1e23_c1ee, // fcvt  h14, s15
+    ];
+
+    for rmode in 0..4u64 {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = rmode << 22;
+            for (reg, bits) in [
+                (1usize, 0x3555u16),
+                (2, 0x2e66),
+                (4, 0x3c01),
+                (5, 0x3555),
+                (7, 0x3555),
+                (8, 0x2e66),
+                (10, 0x3c00),
+                (11, 0x2e66),
+                (13, 0x4001),
+            ] {
+                g.v[2 * reg] = u64::from(bits);
+            }
+            g.v[30] = u64::from(0.10000001_f32.to_bits());
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        for reg in [0usize, 3, 6, 9, 12, 14] {
+            let lo = 2 * reg;
+            assert_eq!(
+                hw.v[lo] as u16, interp.v[lo] as u16,
+                "raw EL0 scalar FP16 FPCR rmode {rmode} h{reg} mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar FP16 FPCR rmode {rmode} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_scalar_fp16_convert_compare_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise scalar FP16");
+        return;
+    }
+
+    let insns = [
+        0x1ee1_2000, // fcmp   h0, h1
+        0xd53b_420b, // mrs    x11, nzcv
+        0x1ee0_2048, // fcmp   h2, #0.0
+        0xd53b_420c, // mrs    x12, nzcv
+        0x9ef8_0083, // fcvtzs x3, h4
+        0x9ef9_00c5, // fcvtzu x5, h6
+        0x9ee2_0107, // scvtf  h7, x8
+        0x9ee3_0149, // ucvtf  h9, x10
+    ];
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.v[0] = 0x3c00;
+        g.v[2] = 0x4000;
+        g.v[4] = 0x8000;
+        g.v[8] = 0xc380;
+        g.v[12] = 0x4380;
+        g.x[8] = (-5i64) as u64;
+        g.x[10] = 7;
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [3usize, 5, 11, 12] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 scalar FP16 convert/compare x{reg} mismatch"
+        );
+    }
+    for reg in [7usize, 9] {
+        let lo = 2 * reg;
+        assert_eq!(
+            hw.v[lo] as u16, interp.v[lo] as u16,
+            "raw EL0 scalar FP16 convert/compare h{reg} mismatch"
+        );
+    }
+    assert_eq!(
+        hw.nzcv & 0xf000_0000,
+        interp.nzcv & 0xf000_0000,
+        "raw EL0 scalar FP16 convert/compare final NZCV mismatch"
+    );
+    assert_eq!(
+        hw.fpsr as u32, interp.fpsr as u32,
+        "raw EL0 scalar FP16 convert/compare FPSR mismatch"
+    );
+}
+
+#[test]
+fn raw_el0_scalar_fp16_rounding_mode_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise scalar FP16");
+        return;
+    }
+
+    let insns = [
+        0x1ee7_c020, // frinti h0, h1
+        0x1ee7_4062, // frintx h2, h3
+        0x1ee4_40a4, // frintn h4, h5
+        0x1ee4_c0e6, // frintp h6, h7
+        0x1ee5_4128, // frintm h8, h9
+        0x1ee5_c16a, // frintz h10, h11
+        0x1ee6_41ac, // frinta h12, h13
+    ];
+
+    for (label, fpcr) in [
+        ("nearest", 0u64),
+        ("plus_inf", 1u64 << 22),
+        ("minus_inf", 2u64 << 22),
+        ("zero", 3u64 << 22),
+    ] {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = fpcr;
+            for (reg, bits) in [
+                (1usize, 0x3e00u16),
+                (3, 0xbe00),
+                (5, 0x4100),
+                (7, 0xbe66),
+                (9, 0x3e66),
+                (11, 0xc100),
+                (13, 0x3e66),
+            ] {
+                g.v[2 * reg] = u64::from(bits);
+            }
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        for reg in [0usize, 2, 4, 6, 8, 10, 12] {
+            let lo = 2 * reg;
+            assert_eq!(
+                hw.v[lo] as u16, interp.v[lo] as u16,
+                "raw EL0 scalar FP16 rounding {label} h{reg} mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar FP16 rounding {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_scalar_fp16_fused_fpcr_rounding_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("fphp") {
+        eprintln!("[skip] host does not advertise scalar FP16");
+        return;
+    }
+
+    let insns = [
+        0x1fc2_0c20, // fmadd  h0, h1, h2, h3
+        0x1fc6_9ca4, // fmsub  h4, h5, h6, h7
+        0x1fea_2d28, // fnmadd h8, h9, h10, h11
+        0x1fee_bdac, // fnmsub h12, h13, h14, h15
+    ];
+
+    for rmode in 0..4u64 {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = rmode << 22;
+            for (reg, bits) in [
+                (1usize, 0x3555u16),
+                (2, 0x2e66),
+                (3, 0x3c01),
+                (5, 0xb555),
+                (6, 0x3001),
+                (7, 0xbc01),
+                (9, 0x3c01),
+                (10, 0xb555),
+                (11, 0x3001),
+                (13, 0xbc01),
+                (14, 0x3555),
+                (15, 0xb001),
+            ] {
+                g.v[2 * reg] = u64::from(bits);
+            }
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        for reg in [0usize, 4, 8, 12] {
+            let lo = 2 * reg;
+            assert_eq!(
+                hw.v[lo] as u16, interp.v[lo] as u16,
+                "raw EL0 scalar FP16 fused FPCR rmode {rmode} h{reg} mismatch"
+            );
+        }
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 scalar FP16 fused FPCR rmode {rmode} FPSR mismatch"
+        );
     }
 }
 
@@ -2180,6 +2481,9 @@ fn raw_el0_system_hint_oracle_matches_interpreter() {
         0xd503_245f, // bti  c
         0xd503_249f, // bti  j
         0xd503_24df, // bti  jc
+        0xd503_203f, // yield
+        0xd503_209f, // sev
+        0xd503_20bf, // sevl
         0xd503_20df, // dgh
         0xd503_229f, // csdb
         0xd503_30ff, // sb
@@ -2219,6 +2523,18 @@ fn raw_el0_pointer_auth_roundtrip_oracle_matches_interpreter() {
         0xdac1_18a4, // autda x4, x5
         0xdac1_0ce6, // pacdb x6, x7
         0xdac1_1ce6, // autdb x6, x7
+        0xdac1_23e8, // paciza x8
+        0xdac1_33e8, // autiza x8
+        0xdac1_27e9, // pacizb x9
+        0xdac1_37e9, // autizb x9
+        0xdac1_2bea, // pacdza x10
+        0xdac1_3bea, // autdza x10
+        0xdac1_2feb, // pacdzb x11
+        0xdac1_3feb, // autdzb x11
+        0xdac1_01cc, // pacia  x12, x14
+        0xdac1_43ec, // xpaci  x12
+        0xdac1_09ed, // pacda  x13, x15
+        0xdac1_47ed, // xpacd  x13
     ];
     let setup = |g: &mut Aarch64GuestRegs| {
         g.x[0] = 0x0000_1234_5678_9000;
@@ -2229,11 +2545,19 @@ fn raw_el0_pointer_auth_roundtrip_oracle_matches_interpreter() {
         g.x[5] = 0xcccc_7777_1234_0003;
         g.x[6] = 0x0000_4234_5678_c000;
         g.x[7] = 0xdddd_8888_1234_0004;
+        g.x[8] = 0x0000_5234_5678_d000;
+        g.x[9] = 0x0000_6234_5678_e000;
+        g.x[10] = 0x0000_7234_5678_f000;
+        g.x[11] = 0x0000_8234_5678_1000;
+        g.x[12] = 0x0000_9234_5678_2000;
+        g.x[13] = 0x0000_a234_5678_3000;
+        g.x[14] = 0xeeee_9999_1234_0005;
+        g.x[15] = 0xffff_aaaa_1234_0006;
     };
 
     let hw = raw_native_run(&insns, setup);
     let interp = raw_interp_run(&insns, setup);
-    for reg in [0usize, 2, 4, 6] {
+    for reg in [0usize, 2, 4, 6, 8, 9, 10, 11, 12, 13] {
         assert_eq!(
             hw.x[reg], interp.x[reg],
             "raw EL0 pointer-auth roundtrip x{reg} mismatch"
