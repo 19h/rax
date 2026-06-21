@@ -7347,6 +7347,18 @@ impl AArch64Cpu {
                 self.exec_sve_shift_pred(insn, zd, zn, pg, esize)
             }
 
+            // Predicated shift by wide elements (ASR/LSR/LSL Zdn, Pg/M, Zdn,
+            // Zm.D): byte/half/word lanes use the 64-bit Zm element that covers
+            // the lane as the shift amount; doubleword lanes are unallocated.
+            0b000
+                if top == 0b0000_0100
+                    && (insn >> 13) & 0x7 == 0b100
+                    && (insn >> 19) & 0x7 == 0b011
+                    && matches!((insn >> 16) & 0x7, 0b000 | 0b001 | 0b011) =>
+            {
+                self.exec_sve_shift_wide_pred(insn, zd, zn, pg, esize)
+            }
+
             // Predicated shift by immediate: bits[15:13]==100, bits[21:20]==00
             // (bits[21:19] 000 => ASR/LSR/LSL/ASRD/SQSHL/UQSHL, 001 => SRSHR/
             // URSHR/SQSHLU).
@@ -9890,6 +9902,63 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
+    /// Execute SVE predicated shift by wide elements. Element sizes B/H/S use
+    /// the 64-bit Zm lane that covers the destination element as the shift
+    /// amount; D elements are unallocated.
+    fn exec_sve_shift_wide_pred(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        pg: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
+        if esize == 8 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+
+        let opc = (insn >> 16) & 0x7;
+        let pred = self.sve_p[pg];
+        let elements = 16 / esize;
+        let bits = (esize * 8) as u32;
+        let mask = elem_mask(bits);
+        let a_reg = self.v[zd].to_le_bytes(); // Zdn
+        let b_reg = self.v[zn].to_le_bytes(); // Zm.D shift amounts
+        let mut dst = a_reg;
+        for e in 0..elements {
+            let off = e * esize;
+            if (pred >> off) & 1 == 0 {
+                continue;
+            }
+            let a = read_elem(&a_reg, off, esize);
+            let sh = read_elem(&b_reg, (off / 8) * 8, 8);
+            let r = match opc {
+                0b000 => {
+                    let s = sh.min((bits - 1) as u64);
+                    (sext_elem(a, bits) >> s) as u64 & mask
+                }
+                0b001 => {
+                    if sh >= bits as u64 {
+                        0
+                    } else {
+                        (a >> sh) & mask
+                    }
+                }
+                0b011 => {
+                    if sh >= bits as u64 {
+                        0
+                    } else {
+                        (a << sh) & mask
+                    }
+                }
+                _ => return Ok(CpuExit::Undefined(insn)),
+            };
+            write_elem(&mut dst, off, esize, r);
+        }
+        self.v[zd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
     /// Execute SVE LASTA/LASTB/CLASTA/CLASTB to a GPR. `B` (bit16) takes the
     /// last active element; `A` takes the element after it (wrapping). The
     /// conditional (C) forms keep Rdn when no element is active.
@@ -10668,50 +10737,38 @@ impl AArch64Cpu {
         // bit4: 0=strict (<), 1=inclusive (<=). The result is a contiguous run
         // of active elements from element 0, and NZCV is set from the result.
         if (insn >> 21) & 1 == 1 && (insn >> 13) & 0x7 == 0 && (insn >> 10) & 1 == 1 {
-            let sf = (insn >> 12) & 1;
+            let sf = (insn >> 12) & 1 == 1;
             let unsigned = (insn >> 10) & 0x3 == 0b11;
             let inclusive = (insn >> 4) & 1 == 1;
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rm = ((insn >> 16) & 0x1F) as u8;
+            let bits = if sf { 64 } else { 32 };
+            let mask = elem_mask(bits);
+            let mut op1 = if sf {
+                self.get_x(rn)
+            } else {
+                self.get_w(rn) as u64
+            } & mask;
+            let op2 = if sf {
+                self.get_x(rm)
+            } else {
+                self.get_w(rm) as u64
+            } & mask;
             let mut pred = 0u32;
+            let mut last = true;
             for e in 0..elements {
-                let active = if unsigned {
-                    let a = if sf == 1 {
-                        self.get_x(rn)
-                    } else {
-                        self.get_w(rn) as u64
-                    };
-                    let b = if sf == 1 {
-                        self.get_x(rm)
-                    } else {
-                        self.get_w(rm) as u64
-                    };
-                    let idx = a.wrapping_add(e as u64);
-                    // Once the running index wraps below the start it stays inactive.
-                    if idx < a {
-                        false
-                    } else if inclusive {
-                        idx <= b
-                    } else {
-                        idx < b
-                    }
+                let cond = if unsigned {
+                    if inclusive { op1 <= op2 } else { op1 < op2 }
                 } else {
-                    let a = if sf == 1 {
-                        self.get_x(rn) as i64
-                    } else {
-                        self.get_w(rn) as i32 as i64
-                    };
-                    let b = if sf == 1 {
-                        self.get_x(rm) as i64
-                    } else {
-                        self.get_w(rm) as i32 as i64
-                    };
-                    let idx = a.wrapping_add(e as i64);
-                    if inclusive { idx <= b } else { idx < b }
+                    let a = sext_elem(op1, bits);
+                    let b = sext_elem(op2, bits);
+                    if inclusive { a <= b } else { a < b }
                 };
-                if active {
+                last &= cond;
+                if last {
                     pred |= 1 << (e * esize);
                 }
+                op1 = op1.wrapping_add(1) & mask;
             }
             self.sve_p[pd] = pred;
             let (n, z, c, v) = pred_test_flags(pred, elements, esize);
@@ -24664,6 +24721,23 @@ mod tests {
     }
 
     #[test]
+    fn sve_whilels_wraparound_keeps_full_prefix() {
+        // WHILELS P0.B, W0, W0. Per ASL, the running operand is a 32-bit value
+        // for the W form; incrementing UINT32_MAX wraps to zero and the prefix
+        // remains active for every byte lane.
+        let mut cpu = create_cpu_with_insn(0x2520_0c10);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_w(0, u32::MAX);
+
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.sve_pred(0), 0xffff);
+        assert!(cpu.get_n());
+        assert!(!cpu.get_z());
+        assert!(!cpu.get_c());
+        assert!(!cpu.get_v());
+    }
+
+    #[test]
     fn sve_fp_pairwise_rejects_reserved_encodings() {
         // FP pairwise (FADDP/.../FMINP) is defined only for H/S/D elements and
         // opc in {000,100,101,110,111}. Reserved size==00 and reserved opc
@@ -24745,6 +24819,32 @@ mod tests {
 
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
         assert_eq!(cpu.get_simd_reg(0), Some((src_lo, src_hi)));
+    }
+
+    #[test]
+    fn sve_predicated_wide_shift_uses_covered_dword_amounts() {
+        let value = 0x0404_0404_0404_0404_0404_0404_0404_0404u128;
+        let amounts = (2u128 << 64) | 1u128;
+        for (insn, expected) in [
+            (0x0418_8020, 0x0101_0101_0101_0101_0202_0202_0202_0202), // ASR
+            (0x0419_8020, 0x0101_0101_0101_0101_0202_0202_0202_0202), // LSR
+            (0x041b_8020, 0x1010_1010_1010_1010_0808_0808_0808_0808), // LSL
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+            cpu.set_sve_pred(0, 0xffff);
+            cpu.set_simd(0, value);
+            cpu.set_simd(1, amounts);
+
+            assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+            assert_eq!(cpu.get_simd(0), expected);
+        }
+
+        let invalid_d_size = 0x04d8_8020; // ASR Z0.D, P0/M, Z0.D, Z1.D
+        let mut cpu = create_cpu_with_insn(invalid_d_size);
+        cpu.sysregs.el1.cpacr |= (0b11 << 20) | (0b11 << 16); // FPEN + ZEN
+        cpu.set_sve_pred(0, 0xffff);
+        assert_eq!(cpu.step().unwrap(), CpuExit::Undefined(invalid_d_size));
     }
 
     #[test]

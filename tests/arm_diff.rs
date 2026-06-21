@@ -307,20 +307,21 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
         .next()
         .unwrap_or(label)
         .to_ascii_lowercase();
+    let mnemonic_base = mnemonic.split('.').next().unwrap_or(&mnemonic);
 
-    if mnemonic.starts_with("sm3") {
+    if mnemonic_base.starts_with("sm3") {
         return !caps.has("sm3");
     }
-    if mnemonic.starts_with("sm4") {
+    if mnemonic_base.starts_with("sm4") {
         return !caps.has("sm4");
     }
-    if matches!(mnemonic.as_str(), "subp" | "subps" | "irg" | "gmi") {
+    if matches!(mnemonic_base, "subp" | "subps" | "irg" | "gmi") {
         return !caps.has("mte");
     }
-    if mnemonic.starts_with("fmmla") {
+    if mnemonic_base.starts_with("fmmla") {
         return !(caps.has("f32mm") || caps.has("svef32mm"));
     }
-    if matches!(mnemonic.as_str(), "cfinv" | "xaflag" | "axflag") {
+    if matches!(mnemonic_base, "cfinv" | "xaflag" | "axflag") {
         return !caps.has("flagm");
     }
 
@@ -329,7 +330,7 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
         "fmaxqv", "fminqv", "fmaxnmqv", "fminnmqv", "dupq", "extq", "revd", "tblq", "tbxq",
         "uzpq1", "uzpq2", "zipq1", "zipq2", "pext", "pmov", "psel", "sqcvtn", "sqcvtun", "uqcvtn",
     ];
-    if sve2p1.iter().any(|m| mnemonic == *m) {
+    if sve2p1.iter().any(|m| mnemonic_base == *m) {
         return !caps.has("sve2p1");
     }
 
@@ -337,15 +338,15 @@ fn native_hardware_lacks_label(oracle: &OracleRunner, label: &str) -> bool {
         "bfadd", "bfclamp", "bfmax", "bfmaxnm", "bfmin", "bfminnm", "bfmla", "bfmls", "bfmlslb",
         "bfmlslt", "bfmul", "bfsub", "fdot",
     ];
-    if b16b16.iter().any(|m| mnemonic == *m) {
+    if b16b16.iter().any(|m| mnemonic_base == *m) {
         return !caps.has("sveb16b16");
     }
-    if matches!(mnemonic.as_str(), "sdot" | "udot") && label.contains(".h") {
+    if matches!(mnemonic_base, "sdot" | "udot") && label.contains(".h") {
         return !caps.has("sveb16b16");
     }
 
     let faminmax_or_sve2p1 = ["fclamp", "sclamp", "uclamp"];
-    if faminmax_or_sve2p1.iter().any(|m| mnemonic == *m) {
+    if faminmax_or_sve2p1.iter().any(|m| mnemonic_base == *m) {
         return !(caps.has("faminmax") || caps.has("sve2p1"));
     }
 
@@ -1248,6 +1249,84 @@ fn parse_generated_a64_encodings(family: &str, source: &str) -> Vec<(String, u32
         .collect()
 }
 
+fn size_field_suffix(fields: &std::collections::BTreeMap<String, i32>) -> Option<&'static str> {
+    match fields.get("size").copied()? {
+        0 => Some(".b"),
+        1 => Some(".h"),
+        2 => Some(".s"),
+        3 => Some(".d"),
+        _ => None,
+    }
+}
+
+fn parse_generated_a64_encodings_with_asm(family: &str, source: &str) -> Vec<(String, u32)> {
+    let mut provenance = String::new();
+    let mut fields = std::collections::BTreeMap::new();
+    let mut pending: Option<(String, std::collections::BTreeMap<String, i32>, u32)> = None;
+    let mut out = Vec::new();
+
+    fn push_pending(
+        out: &mut Vec<(String, u32)>,
+        family: &str,
+        pending: &mut Option<(String, std::collections::BTreeMap<String, i32>, u32)>,
+        asm: Option<&str>,
+    ) {
+        let Some((provenance, fields, insn)) = pending.take() else {
+            return;
+        };
+        let label = if let Some(asm) = asm {
+            format!("{asm} [{family} {insn:#010x}]")
+        } else {
+            let mnemonic = provenance
+                .split('_')
+                .next()
+                .unwrap_or(family)
+                .to_ascii_lowercase();
+            let suffix = size_field_suffix(&fields).unwrap_or("");
+            format!("{mnemonic}{suffix} [{family} {insn:#010x}]")
+        };
+        out.push((label, insn));
+    }
+
+    for line in source.lines() {
+        let line = line.trim();
+        if let Some(rest) = line.strip_prefix("/// Provenance: ") {
+            push_pending(&mut out, family, &mut pending, None);
+            provenance.clear();
+            provenance.push_str(rest);
+            fields.clear();
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("// Fields: ") {
+            fields.clear();
+            for part in rest.split(',') {
+                let Some((name, value)) = part.trim().split_once('=') else {
+                    continue;
+                };
+                if let Ok(value) = value.parse::<i32>() {
+                    fields.insert(name.to_string(), value);
+                }
+            }
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("let encoding: u32 = ") {
+            push_pending(&mut out, family, &mut pending, None);
+            let Some(hex) = rest.strip_suffix(';').and_then(|s| s.strip_prefix("0x")) else {
+                continue;
+            };
+            if let Ok(insn) = u32::from_str_radix(hex, 16) {
+                pending = Some((provenance.clone(), fields.clone(), insn));
+            }
+            continue;
+        }
+        if let Some(asm) = line.strip_prefix("// llvm-mc: ") {
+            push_pending(&mut out, family, &mut pending, Some(asm.trim()));
+        }
+    }
+    push_pending(&mut out, family, &mut pending, None);
+    out
+}
+
 fn parse_generated_a64_cases_with_fields(
     family: &str,
     source: &str,
@@ -1746,6 +1825,30 @@ fn generated_sve_compare_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_sve_predicate_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/predicate.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("sve/predicate", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_scalar_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/scalar.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("sve/scalar", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_sve_int_to_fp16_convert_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/convert.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -1943,6 +2046,18 @@ fn generated_sve_ftmad_cases() -> Vec<(String, u32)> {
         {
             continue;
         }
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
+fn generated_sve_float_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/sve/float.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings_with_asm("sve/float", source) {
         by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
@@ -32622,6 +32737,30 @@ fn diff_generated_sve_compare_sweep() {
 }
 
 #[test]
+fn diff_generated_sve_predicate_sweep() {
+    let mut rng = Rng::new(0xa64_9100);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_predicate_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_predicate_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_scalar_sweep() {
+    let mut rng = Rng::new(0xa64_5ca1);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_scalar_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_scalar_sweep", batch);
+}
+
+#[test]
 fn diff_generated_sve_int_to_fp16_convert_sweep() {
     let mut rng = Rng::new(0xa64_c021);
     let mut batch = Vec::new();
@@ -32751,6 +32890,18 @@ fn diff_generated_sve_ftmad_sweep() {
         }
     }
     run_batch("generated_sve_ftmad_sweep", batch);
+}
+
+#[test]
+fn diff_generated_sve_float_sweep() {
+    let mut rng = Rng::new(0xa64_f100);
+    let mut batch = Vec::new();
+    for (label, insn) in generated_sve_float_cases() {
+        for _ in 0..4 {
+            batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
+        }
+    }
+    run_batch("generated_sve_float_sweep", batch);
 }
 
 #[test]
