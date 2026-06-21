@@ -35955,6 +35955,22 @@ fn diff_sve2_fmlsl_fpcr_ah_nan_sign() {
 
 #[test]
 fn diff_sve_bfdot() {
+    fn pack_bf16(values: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack_f32(values: [f32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // BFDOT bf16 dot product, both the three-register and indexed forms.
     let mut rng = Rng::new(0x7_d001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -35983,11 +35999,79 @@ fn diff_sve_bfdot() {
             batch.push((format!("bfdot_idx i{index}"), insn, mk(&mut rng)));
         }
     }
+
+    let patterns = [
+        (
+            "zeros",
+            [0.0, -0.0, 0.0, -0.0],
+            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [0x3f80; 8],
+        ),
+        (
+            "ones",
+            [1.0, -1.0, 2.0, -2.0],
+            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
+            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+        ),
+        (
+            "lane_mix",
+            [16.0, -16.0, 0.5, -0.5],
+            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
+            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+        ),
+        (
+            "small_normals",
+            [0.0, 1.0, -1.0, 8.0],
+            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
+            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+    ];
+    for (pattern_name, acc, zn, zm) in patterns {
+        let mut st = ArmState::zeroed();
+        let (lo, hi) = pack_f32(acc);
+        st.set_vreg(0, lo, hi);
+        let (lo, hi) = pack_bf16(zn);
+        st.set_vreg(1, lo, hi);
+        let (lo, hi) = pack_bf16(zm);
+        st.set_vreg(2, lo, hi);
+        batch.push((format!("bfdot_{pattern_name}"), enc_sve_bfdot(RM), st));
+
+        for index in 0..4u32 {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_f32(acc);
+            st.set_vreg(0, lo, hi);
+            let (lo, hi) = pack_bf16(zn);
+            st.set_vreg(1, lo, hi);
+            let (lo, hi) = pack_bf16(zm);
+            st.set_vreg(2, lo, hi);
+            batch.push((
+                format!("bfdot_idx_i{index}_{pattern_name}"),
+                enc_sve_bfdot_idx(index, RM),
+                st,
+            ));
+        }
+    }
     run_batch("sve_bfdot", batch);
 }
 
 #[test]
 fn diff_sve_bfmlal() {
+    fn pack_bf16(values: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack_f32(values: [f32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // BFMLALB/T bf16 widening fused multiply-add, three-register and indexed.
     let mut rng = Rng::new(0x7_e001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -36015,6 +36099,64 @@ fn diff_sve_bfmlal() {
             let insn = enc_sve_bfmlal_idx(top, index, RM);
             for _ in 0..3 {
                 batch.push((format!("bfmlal_idx t{top} i{index}"), insn, mk(&mut rng)));
+            }
+        }
+    }
+
+    let patterns = [
+        (
+            "zeros",
+            [0.0, -0.0, 0.0, -0.0],
+            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [0x3f80; 8],
+        ),
+        (
+            "ones",
+            [1.0, -1.0, 2.0, -2.0],
+            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
+            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+        ),
+        (
+            "lane_mix",
+            [16.0, -16.0, 0.5, -0.5],
+            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
+            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+        ),
+        (
+            "small_normals",
+            [0.0, 1.0, -1.0, 8.0],
+            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
+            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+    ];
+    for (pattern_name, acc, zn, zm) in patterns {
+        for top in 0..2u32 {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_f32(acc);
+            st.set_vreg(0, lo, hi);
+            let (lo, hi) = pack_bf16(zn);
+            st.set_vreg(1, lo, hi);
+            let (lo, hi) = pack_bf16(zm);
+            st.set_vreg(2, lo, hi);
+            batch.push((
+                format!("bfmlal_t{top}_{pattern_name}"),
+                enc_sve_bfmlal(top, RM),
+                st,
+            ));
+
+            for index in 0..8u32 {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_f32(acc);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_bf16(zn);
+                st.set_vreg(1, lo, hi);
+                let (lo, hi) = pack_bf16(zm);
+                st.set_vreg(2, lo, hi);
+                batch.push((
+                    format!("bfmlal_idx_t{top}_i{index}_{pattern_name}"),
+                    enc_sve_bfmlal_idx(top, index, RM),
+                    st,
+                ));
             }
         }
     }
@@ -38189,6 +38331,22 @@ fn diff_sve_dup_imm_exhaustive() {
 
 #[test]
 fn diff_sve_bfcvt() {
+    fn pack_u16(values: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack_u32(values: [u32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // BFCVT f32 -> bf16, predicated merging, finite inputs.
     let insn = enc_sve_bfcvt();
     let mut rng = Rng::new(0x9_e001);
@@ -38203,6 +38361,48 @@ fn diff_sve_bfcvt() {
         st.set_vreg(0, rng.next(), rng.next());
         st.set_preg(0, rng.next() as u16);
         batch.push(("bfcvt".to_string(), insn, st));
+    }
+
+    let patterns = [
+        (
+            "zeros",
+            [0x0000_0000, 0x8000_0000, 0x0000_0000, 0x8000_0000],
+            [0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555],
+            0x1111,
+        ),
+        (
+            "round_edges",
+            [0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000],
+            [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888],
+            0x1111,
+        ),
+        (
+            "mixed_pred",
+            [0x3fc0_0000, 0xc020_0000, 0x3f00_0000, 0xbe80_0000],
+            [0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210],
+            0x0101,
+        ),
+        (
+            "inactive_merge",
+            [0x40a0_0000, 0xc0a0_0000, 0x4120_0000, 0xc120_0000],
+            [0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531],
+            0x0000,
+        ),
+        (
+            "small_normals",
+            [0x0080_0000, 0x8080_0000, 0x0100_0000, 0x8100_0000],
+            [0xdead, 0xbeef, 0xcafe, 0xbabe, 0x5eed, 0x600d, 0xf00d, 0xface],
+            0x1111,
+        ),
+    ];
+    for (name, zn, zd, pg) in patterns {
+        let mut st = ArmState::zeroed();
+        let (lo, hi) = pack_u32(zn);
+        st.set_vreg(1, lo, hi);
+        let (lo, hi) = pack_u16(zd);
+        st.set_vreg(0, lo, hi);
+        st.set_preg(0, pg);
+        batch.push((format!("bfcvt_{name}"), insn, st));
     }
     run_batch("sve_bfcvt", batch);
 }
@@ -39485,6 +39685,14 @@ fn diff_fpcr_fiz_sve_ftmad_subnormal_inputs() {
 
 #[test]
 fn diff_sve_fmmla() {
+    fn pack_f32(values: [f32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // FMMLA.s: 2x2 f32 matrix multiply-accumulate (plain mul/add). FMMLA.d acts
     // on 256-bit segments, so at VL=128 it must leave Zda unchanged.
     let mut rng = Rng::new(0x7_2001);
@@ -39503,6 +39711,43 @@ fn diff_sve_fmmla() {
         st.set_vreg(0, za as u64, (za >> 64) as u64);
         batch.push(("fmmla_s".to_string(), insn_s, st));
     }
+    let patterns = [
+        (
+            "zeros",
+            [0.0, -0.0, 0.0, -0.0],
+            [0.0, -0.0, 0.0, -0.0],
+            [1.0, 1.0, -1.0, -1.0],
+        ),
+        (
+            "ones",
+            [1.0, -1.0, 2.0, -2.0],
+            [1.0, -1.0, 2.0, -2.0],
+            [1.0, 1.0, -1.0, -1.0],
+        ),
+        (
+            "lane_mix",
+            [16.0, -16.0, 0.5, -0.5],
+            [1.5, -2.5, 3.5, -4.5],
+            [0.25, -0.75, 2.0, -3.0],
+        ),
+        (
+            "small_normals",
+            [0.0, 1.0, -1.0, 8.0],
+            [f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000), 1.0, -1.0],
+            [1.0, -1.0, f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000)],
+        ),
+    ];
+    for (pattern_name, za, zn, zm) in patterns {
+        let mut st = ArmState::zeroed();
+        let (lo, hi) = pack_f32(zn);
+        st.set_vreg(1, lo, hi);
+        let (lo, hi) = pack_f32(zm);
+        st.set_vreg(2, lo, hi);
+        let (lo, hi) = pack_f32(za);
+        st.set_vreg(0, lo, hi);
+        batch.push((format!("fmmla_s_{pattern_name}"), insn_s, st));
+    }
+
     let insn_d = enc_sve_fmmla(0b11);
     for _ in 0..6 {
         let mut st = ArmState::zeroed();
@@ -39511,6 +39756,11 @@ fn diff_sve_fmmla() {
         st.set_vreg(0, rng.next(), rng.next());
         batch.push(("fmmla_d".to_string(), insn_d, st));
     }
+    let mut st = ArmState::zeroed();
+    st.set_vreg(1, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+    st.set_vreg(2, 0x1111_2222_3333_4444, 0x5555_6666_7777_8888);
+    st.set_vreg(0, 0x1357_9bdf_2468_ace0, 0xfdb9_7531_8642_0ace);
+    batch.push(("fmmla_d_vl128_unchanged".to_string(), insn_d, st));
     run_batch("sve_fmmla", batch);
 }
 
@@ -39548,6 +39798,22 @@ fn diff_sve_fmmla_fpcr_rounding() {
 
 #[test]
 fn diff_sve_bfmmla() {
+    fn pack_bf16(values: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack_f32(values: [f32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // BFMMLA: bf16 2x2 matrix multiply accumulating into f32, round-to-odd.
     let insn = enc_sve_fmmla(0b01);
     let mut rng = Rng::new(0x7_3001);
@@ -39566,6 +39832,43 @@ fn diff_sve_bfmmla() {
         st.set_vreg(2, zm as u64, (zm >> 64) as u64);
         st.set_vreg(0, za as u64, (za >> 64) as u64);
         batch.push(("bfmmla".to_string(), insn, st));
+    }
+
+    let patterns = [
+        (
+            "zeros",
+            [0.0, -0.0, 0.0, -0.0],
+            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [0x3f80; 8],
+        ),
+        (
+            "ones",
+            [1.0, -1.0, 2.0, -2.0],
+            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
+            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+        ),
+        (
+            "lane_mix",
+            [16.0, -16.0, 0.5, -0.5],
+            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
+            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+        ),
+        (
+            "small_normals",
+            [0.0, 1.0, -1.0, 8.0],
+            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
+            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+    ];
+    for (pattern_name, acc, zn, zm) in patterns {
+        let mut st = ArmState::zeroed();
+        let (lo, hi) = pack_f32(acc);
+        st.set_vreg(0, lo, hi);
+        let (lo, hi) = pack_bf16(zn);
+        st.set_vreg(1, lo, hi);
+        let (lo, hi) = pack_bf16(zm);
+        st.set_vreg(2, lo, hi);
+        batch.push((format!("bfmmla_{pattern_name}"), insn, st));
     }
     run_batch("sve_bfmmla", batch);
 }
@@ -43234,6 +43537,19 @@ fn diff_sve2_ssra() {
 
 #[test]
 fn diff_sve2_fpairwise() {
+    fn pack_lanes(esize: u32, values: &[u64]) -> (u64, u64) {
+        let mut packed = 0u128;
+        let mask = if esize == 64 {
+            u64::MAX
+        } else {
+            (1u64 << esize) - 1
+        };
+        for (lane, value) in values.iter().enumerate() {
+            packed |= ((*value & mask) as u128) << (lane * esize as usize);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 FP pairwise: FADDP/FMAXNMP/FMINNMP/FMAXP/FMINP (predicated, merging).
     let ops: &[(u32, &str)] = &[
         (0b000, "faddp"),
@@ -43257,6 +43573,80 @@ fn diff_sve2_fpairwise() {
                 st.set_vreg(1, l1, h1);
                 st.set_preg(0, rng.next() as u16);
                 batch.push((format!("{name} sz{size}"), insn, st));
+            }
+        }
+    }
+
+    for size in 1..4u32 {
+        let eb = 8 << size;
+        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match size {
+            1 => (
+                0xffff,
+                0x1111,
+                vec![
+                    (
+                        "h_zeros",
+                        vec![0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000],
+                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    ),
+                    (
+                        "h_lane_mix",
+                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    ),
+                ],
+            ),
+            2 => (
+                0xffff,
+                0x0101,
+                vec![
+                    (
+                        "s_zeros",
+                        vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
+                        vec![2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
+                    ),
+                    (
+                        "s_lane_mix",
+                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
+                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    ),
+                ],
+            ),
+            _ => (
+                0xffff,
+                0x0001,
+                vec![
+                    (
+                        "d_zeros",
+                        vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                    ),
+                    (
+                        "d_lane_mix",
+                        vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                        vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                    ),
+                ],
+            ),
+        };
+        for &(opc, name) in ops {
+            let insn = enc_sve2_fpairwise(size, opc);
+            for (pattern_name, zd, zn) in &patterns {
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(eb, zd);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(eb, zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, all_active);
+                batch.push((format!("{name}_{pattern_name}_all"), insn, st));
+
+                let mut st = ArmState::zeroed();
+                let (lo, hi) = pack_lanes(eb, zd);
+                st.set_vreg(0, lo, hi);
+                let (lo, hi) = pack_lanes(eb, zn);
+                st.set_vreg(1, lo, hi);
+                st.set_preg(0, mixed_active);
+                batch.push((format!("{name}_{pattern_name}_mixed"), insn, st));
             }
         }
     }
@@ -43313,6 +43703,20 @@ fn diff_fpcr_fiz_sve2_faddp_subnormal_inputs() {
 
 #[test]
 fn diff_sve_mul() {
+    fn pack_lanes(esize: usize, values: &[u64]) -> (u64, u64) {
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let mut packed = 0u128;
+        for (lane, &value) in values.iter().enumerate() {
+            packed |= ((value & mask) as u128) << (lane * bits);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     // SVE2 unpredicated MUL/SMULH/UMULH. SMULH/UMULH return the high half of
     // the double-width product; MUL returns the low half. Element-wise, so the
     // low 128 bits match at any VL (oracle pins VL=128).
@@ -43325,6 +43729,94 @@ fn diff_sve_mul() {
     // PMUL (SVE2 carry-less polynomial multiply) is byte-elements only.
     cases.push(("sve_pmul".to_string(), enc_sve_mul(0, 0b01)));
     run_family("sve_mul", cases, 16, 0x2_4001);
+
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for sz in 0..4u32 {
+        let esize = 1usize << sz;
+        let bits = esize * 8;
+        let mask = if bits >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
+        let sign = 1u64 << (bits - 1);
+        let hi = sign - 1;
+        let lanes = 16 / esize;
+        let patterns: [(&str, Vec<u64>, Vec<u64>); 3] = [
+            (
+                "small",
+                (0..lanes).map(|lane| lane as u64 + 1).collect(),
+                (0..lanes).map(|lane| lane as u64 + 2).collect(),
+            ),
+            (
+                "signed_edges",
+                (0..lanes)
+                    .map(|lane| [0, 1, mask, sign, hi][lane % 5])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| [1, mask, 2, sign, hi][lane % 5])
+                    .collect(),
+            ),
+            (
+                "alternating",
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { mask } else { sign })
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| if lane & 1 == 0 { hi } else { 2 })
+                    .collect(),
+            ),
+        ];
+        for (pattern_name, zn_values, zm_values) in &patterns {
+            let (zn_lo, zn_hi) = pack_lanes(esize, zn_values);
+            let (zm_lo, zm_hi) = pack_lanes(esize, zm_values);
+            for (opc, name) in [(0b00, "mul"), (0b10, "smulh"), (0b11, "umulh")] {
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
+                st.set_vreg(1, zn_lo, zn_hi);
+                st.set_vreg(2, zm_lo, zm_hi);
+                batch.push((
+                    format!("{name}_sz{sz}_{pattern_name}"),
+                    enc_sve_mul(sz, opc),
+                    st,
+                ));
+            }
+        }
+    }
+    let pmul_patterns: [(&str, Vec<u64>, Vec<u64>); 4] = [
+        ("zero", vec![0; 16], vec![0; 16]),
+        ("ones", vec![0xff; 16], vec![0xff; 16]),
+        (
+            "ramp",
+            (0..16).map(|lane| lane as u64).collect(),
+            (0..16).map(|lane| 15 - lane as u64).collect(),
+        ),
+        (
+            "poly_edges",
+            vec![
+                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44,
+                0x88, 0xf0, 0x0f,
+            ],
+            vec![
+                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22,
+                0x11, 0xaa, 0x55,
+            ],
+        ),
+    ];
+    for (pattern_name, zn_values, zm_values) in &pmul_patterns {
+        let (zn_lo, zn_hi) = pack_lanes(1, zn_values);
+        let (zm_lo, zm_hi) = pack_lanes(1, zm_values);
+        let mut st = ArmState::zeroed();
+        st.set_vreg(0, 0x5555_aaaa_0000_ffff, 0xfedc_ba98_7654_3210);
+        st.set_vreg(1, zn_lo, zn_hi);
+        st.set_vreg(2, zm_lo, zm_hi);
+        batch.push((
+            format!("pmul_{pattern_name}"),
+            enc_sve_mul(0, 0b01),
+            st,
+        ));
+    }
+    run_batch("sve_mul_edges", batch);
 }
 
 /// A finite bf16 value with a moderate exponent (so f64 dot-product sums stay
@@ -43681,6 +44173,22 @@ fn diff_fpcr_fz_widening_fma_subnormal_inputs() {
 
 #[test]
 fn diff_simd_bf16() {
+    fn pack_bf16(values: [u16; 8]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (*value as u128) << (lane * 16);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
+    fn pack_f32(values: [f32; 4]) -> (u64, u64) {
+        let mut packed = 0u128;
+        for (lane, value) in values.iter().enumerate() {
+            packed |= (value.to_bits() as u128) << (lane * 32);
+        }
+        (packed as u64, (packed >> 64) as u64)
+    }
+
     let mut rng = Rng::new(0x1_001D);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     // (label, insn, vector?) — all read v0 (f32 acc), v1/v2 (bf16).
@@ -43709,6 +44217,45 @@ fn diff_simd_bf16() {
             st.set_vreg(1, a1, b1);
             st.set_vreg(2, a2, b2);
             batch.push((label.clone(), *insn, st));
+        }
+    }
+
+    let patterns = [
+        (
+            "zeros",
+            [0.0, -0.0, 0.0, -0.0],
+            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [0x3f80; 8],
+        ),
+        (
+            "ones",
+            [1.0, -1.0, 2.0, -2.0],
+            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
+            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+        ),
+        (
+            "lane_mix",
+            [16.0, -16.0, 0.5, -0.5],
+            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
+            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+        ),
+        (
+            "small_normals",
+            [0.0, 1.0, -1.0, 8.0],
+            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
+            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+        ),
+    ];
+    for (label, insn) in &cases {
+        for (pattern_name, acc, zn, zm) in patterns {
+            let mut st = ArmState::zeroed();
+            let (lo, hi) = pack_f32(acc);
+            st.set_vreg(0, lo, hi);
+            let (lo, hi) = pack_bf16(zn);
+            st.set_vreg(1, lo, hi);
+            let (lo, hi) = pack_bf16(zm);
+            st.set_vreg(2, lo, hi);
+            batch.push((format!("{label}_{pattern_name}"), *insn, st));
         }
     }
     run_batch("simd_bf16", batch);
