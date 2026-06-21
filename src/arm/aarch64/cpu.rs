@@ -16220,6 +16220,9 @@ impl AArch64Cpu {
         // CAS/CASA/CASL/CASAL (FEAT_LSE): o2==1 (bit23) and o1==1 (bit21).
         // A single compare-and-swap RMW (no exclusive monitor needed).
         if o2 == 1 && o1 == 1 {
+            if rt2 != 31 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let bits = 8u32 << size;
             let m = elem_mask(bits);
             let addr = if rn == 31 {
@@ -16255,12 +16258,23 @@ impl AArch64Cpu {
         // Encoding: 0 sz 001000 0 L 1 Rs o0 11111 Rn Rt (bit31==0, o2==0, o1==1).
         // sz==0 -> 32-bit pair, sz==1 -> 64-bit pair. Rs/Rt must be even.
         if o2 == 0 && o1 == 1 && (insn >> 31) & 1 == 0 {
+            if rt2 != 31 || rs == 31 || rt == 31 || (rs & 1) != 0 || (rt & 1) != 0 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let sz = (insn >> 30) & 1; // 0 = 32-bit pair, 1 = 64-bit pair
             let addr = if rn == 31 {
                 self.current_sp()
             } else {
                 self.get_x(rn)
             };
+            if sz == 1 && (addr & 0xF) != 0 {
+                return Err(ArmError::MemoryError(MemoryFaultInfo {
+                    address: addr,
+                    access: crate::arm::cpu_trait::AccessType::Write,
+                    fault_type: MemoryFaultType::Alignment,
+                    stage2: false,
+                }));
+            }
             let s = rs as usize;
             let t = rt as usize;
             if sz == 0 {
@@ -16394,6 +16408,9 @@ impl AArch64Cpu {
 
             if is_pair {
                 // Load pair (LDXP, LDAXP)
+                if rt == rt2 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
                 if elsize == 4 {
                     // 32-bit pair - atomic 64-bit load
                     let data = self.memory.read_u64(pa)?;
@@ -27273,7 +27290,7 @@ mod tests {
     }
 
     #[test]
-    fn casp64_effective_addresses_wrap() {
+    fn casp64_unaligned_wrap_address_faults() {
         let mut cpu = create_wrapping_memory_cpu();
         let base = u64::MAX - 7;
         let lo = cpu.mem_read_u64(base).unwrap();
@@ -27287,14 +27304,17 @@ mod tests {
         cpu.set_x(6, new_lo);
         cpu.set_x(7, new_hi);
 
-        assert_eq!(
-            cpu.exec_ldst_exclusive(encode_casp(1, 10, 4, 6)).unwrap(),
-            CpuExit::Continue
-        );
+        match cpu.exec_ldst_exclusive(encode_casp(1, 10, 4, 6)) {
+            Err(ArmError::MemoryError(info)) => {
+                assert_eq!(info.address, base);
+                assert_eq!(info.fault_type, MemoryFaultType::Alignment);
+            }
+            other => panic!("expected CASP64 alignment fault, got {other:?}"),
+        }
         assert_eq!(cpu.get_x(4), lo);
         assert_eq!(cpu.get_x(5), hi);
-        assert_eq!(cpu.mem_read_u64(base).unwrap(), new_lo);
-        assert_eq!(cpu.mem_read_u64(base.wrapping_add(8)).unwrap(), new_hi);
+        assert_eq!(cpu.mem_read_u64(base).unwrap(), lo);
+        assert_eq!(cpu.mem_read_u64(base.wrapping_add(8)).unwrap(), hi);
     }
 
     #[test]

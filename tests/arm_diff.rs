@@ -31507,15 +31507,19 @@ fn diff_mem_ldst_single_sp_base_edges() {
 }
 
 /// LDXR/LDAXR <Rt>, [Rn]: `size 001000 0 1 0 11111 o0 11111 Rn Rt`. Rt=x0, Rn=x1.
-fn enc_ldxr_regs(size: u32, o0: u32, rt: u32, rn: u32) -> u32 {
+fn enc_ldxr_regs_fields(size: u32, o0: u32, rs: u32, rt2: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 22)
-        | (0b11111 << 16)
+        | ((rs & 0x1F) << 16)
         | (o0 << 15)
-        | (0b11111 << 10)
+        | ((rt2 & 0x1F) << 10)
         | ((rn & 0x1F) << 5)
         | (rt & 0x1F)
+}
+
+fn enc_ldxr_regs(size: u32, o0: u32, rt: u32, rn: u32) -> u32 {
+    enc_ldxr_regs_fields(size, o0, 31, 31, rt, rn)
 }
 
 fn enc_ldxr(size: u32, o0: u32) -> u32 {
@@ -31558,14 +31562,18 @@ fn enc_atomic_smir(
 }
 
 /// STXR/STLXR <Ws>, <Rt>, [Rn]: `size 001000 0 0 0 Rs o0 11111 Rn Rt`. Ws=x2, Rt=x3, Rn=x1.
-fn enc_stxr_regs(size: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+fn enc_stxr_regs_rt2(size: u32, o0: u32, rs: u32, rt2: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | ((rs & 0x1F) << 16)
         | (o0 << 15)
-        | (0b11111 << 10)
+        | ((rt2 & 0x1F) << 10)
         | ((rn & 0x1F) << 5)
         | (rt & 0x1F)
+}
+
+fn enc_stxr_regs(size: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+    enc_stxr_regs_rt2(size, o0, rs, 31, rt, rn)
 }
 
 fn enc_stxr(size: u32, o0: u32) -> u32 {
@@ -53333,6 +53341,77 @@ fn diff_excl_pair() {
 }
 
 #[test]
+fn diff_excl_single_fixed_field_legality() {
+    let mut batch = Vec::new();
+    let mut rng = Rng::new(0x1_0160);
+
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            for &(label, rs, rt2) in &[
+                ("ldxr_rs0", 0, 31),
+                ("ldxr_rt2_0", 31, 0),
+                ("ldxr_rt2_7", 31, 7),
+            ] {
+                batch.push((
+                    format!("{label}_size{size}_o0{o0}"),
+                    enc_ldxr_regs_fields(size, o0, rs, rt2, RD, RN),
+                    mem_input(&mut rng),
+                ));
+            }
+
+            for rt2 in [0u32, 7, 30] {
+                batch.push((
+                    format!("stxr_size{size}_o0{o0}_rt2{rt2}"),
+                    enc_stxr_regs_rt2(size, o0, 2, rt2, 3, RN),
+                    mem_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch("excl_single_fixed_field_legality", batch);
+}
+
+#[test]
+fn diff_excl_single_alignment_edges() {
+    let mut rng = Rng::new(0x1_0165);
+    let mut load_batch = Vec::new();
+    let mut pair_batch = Vec::new();
+
+    for size in 1..4u32 {
+        let offsets: &[u64] = match size {
+            1 => &[1],
+            2 => &[1, 2, 3],
+            _ => &[1, 2, 4, 7],
+        };
+        for o0 in 0..2 {
+            for &offset in offsets {
+                let mut load = mem_input(&mut rng);
+                load.x[RN as usize] = SCRATCH_BASE + offset;
+                load_batch.push((
+                    format!("ldxr_unaligned_sz{size}_o0{o0}_off{offset}"),
+                    enc_ldxr(size, o0),
+                    load,
+                ));
+
+                let mut pair = mem_input(&mut rng);
+                pair.x[RN as usize] = SCRATCH_BASE + offset;
+                pair.x[3] = rng.next();
+                pair_batch.push((
+                    format!("ldxr_stxr_unaligned_sz{size}_o0{o0}_off{offset}"),
+                    enc_ldxr(size, o0),
+                    enc_stxr(size, o0),
+                    pair,
+                ));
+            }
+        }
+    }
+
+    run_batch("excl_single_alignment_load", load_batch);
+    run_batch_pair("excl_single_alignment_pair", pair_batch);
+}
+
+#[test]
 fn diff_excl_single_sp_base() {
     let mut rng = Rng::new(0x1_0062);
 
@@ -53387,7 +53466,7 @@ fn diff_excl_single_sp_base() {
 }
 
 /// CAS: `size 0010001 L 1 Rs o0 11111 Rn Rt`. Rs=x2 (compare/old), Rn=x1, Rt=x0 (new).
-fn enc_cas_regs(size: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+fn enc_cas_regs_rt2(size: u32, l: u32, o0: u32, rs: u32, rt2: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 23)
@@ -53395,9 +53474,13 @@ fn enc_cas_regs(size: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
         | (1 << 21)
         | ((rs & 0x1F) << 16)
         | (o0 << 15)
-        | (0b11111 << 10)
+        | ((rt2 & 0x1F) << 10)
         | ((rn & 0x1F) << 5)
         | (rt & 0x1F)
+}
+
+fn enc_cas_regs(size: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+    enc_cas_regs_rt2(size, l, o0, rs, 31, rt, rn)
 }
 
 fn enc_cas(size: u32, l: u32, o0: u32) -> u32 {
@@ -53475,6 +53558,74 @@ fn diff_mem_cas_edges() {
 }
 
 #[test]
+fn diff_mem_cas_xzr_operands() {
+    let cases: &[(u32, u32, u64, u64, &str)] = &[
+        (31, RD, 0, 0x1122_3344_5566_7788, "rs_xzr_success"),
+        (31, RD, 1, 0x8877_6655_4433_2211, "rs_xzr_failure"),
+        (2, 31, 0x55aa_55aa_33cc_33cc, 0, "rt_xzr_success"),
+        (31, 31, 0, 0, "rs_rt_xzr_success"),
+    ];
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        let mask = match size {
+            0 => 0xff,
+            1 => 0xffff,
+            2 => 0xffff_ffff,
+            _ => u64::MAX,
+        };
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for &(rs, rt, mem, new_value, label) in cases {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.x[2] = mem & mask;
+                    st.x[RD as usize] = new_value;
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[8] = mem;
+                    st.scratch[9] = !mem;
+                    batch.push((
+                        format!("cas_sz{size}_l{l}_o0{o0}_{label}"),
+                        enc_cas_regs(size, l, o0, rs, rt, RN),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_cas_xzr_operands", batch);
+}
+
+#[test]
+fn diff_mem_cas_fixed_field_legality() {
+    let mut batch = Vec::new();
+
+    for size in 0..4u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for rt2 in [0u32, 7, 30] {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.x[2] = 0x1122_3344_5566_7788;
+                    st.x[RD as usize] = 0x8877_6655_4433_2211;
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[8] = st.x[2];
+                    st.scratch[9] = !st.x[2];
+                    batch.push((
+                        format!("cas_sz{size}_l{l}_o0{o0}_rt2{rt2}"),
+                        enc_cas_regs_rt2(size, l, o0, 2, rt2, RD, RN),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_cas_fixed_field_legality", batch);
+}
+
+#[test]
 fn diff_mem_cas_sp_base() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
@@ -53546,19 +53697,54 @@ fn diff_mem_cas_sp_base_edges() {
     run_batch("mem_cas_sp_base_edges", batch);
 }
 
+#[test]
+fn diff_mem_cas_alignment_edges() {
+    let mut rng = Rng::new(0x1_0163);
+    let mut batch = Vec::new();
+
+    for size in 1..4u32 {
+        let offsets: &[u64] = match size {
+            1 => &[1],
+            2 => &[1, 2, 3],
+            _ => &[1, 2, 4, 7],
+        };
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for &offset in offsets {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[RD as usize] = rng.next();
+                    batch.push((
+                        format!("cas_unaligned_sz{size}_l{l}_o0{o0}_off{offset}"),
+                        enc_cas(size, l, o0),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_cas_alignment_edges", batch);
+}
+
 /// LDXP: `1 sz 001000 0 1 1 11111 o0 Rt2 Rn Rt`. Rt=x4, Rt2=x5, Rn=x1.
 /// sz64 selects 64-bit (size=11) vs 32-bit (size=10) element pair.
-fn enc_ldxp_regs(sz64: bool, o0: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
+fn enc_ldxp_regs_rs(sz64: bool, o0: u32, rs: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
     let size = if sz64 { 3 } else { 2 };
     (size << 30)
         | (0b001000 << 24)
         | (1 << 22)
         | (1 << 21)
-        | (0b11111 << 16)
+        | ((rs & 0x1F) << 16)
         | (o0 << 15)
         | ((rt2 & 0x1F) << 10)
         | ((rn & 0x1F) << 5)
         | (rt & 0x1F)
+}
+
+fn enc_ldxp_regs(sz64: bool, o0: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
+    enc_ldxp_regs_rs(sz64, o0, 31, rt, rt2, rn)
 }
 
 fn enc_ldxp(sz64: bool, o0: u32) -> u32 {
@@ -53734,18 +53920,132 @@ fn diff_excl_pair_sp_base() {
     run_batch_pair("excl_pair_sp_pair", pair_batch);
 }
 
+#[test]
+fn diff_excl_pair_register_edges() {
+    let mut rng = Rng::new(0x1_0161);
+    let mut load_batch = Vec::new();
+    let mut store_batch = Vec::new();
+
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            for &(rs, rt, rt2, label) in &[
+                (0, 4, 5, "ldxp_rs0"),
+                (31, 4, 4, "ldxp_same_rt_rt2"),
+                (31, 31, 5, "ldxp_rt_xzr"),
+                (31, 4, 31, "ldxp_rt2_xzr"),
+            ] {
+                load_batch.push((
+                    format!("{label}_sz64{sz64}_o0{o0}"),
+                    enc_ldxp_regs_rs(sz64, o0, rs, rt, rt2, RN),
+                    mem_input(&mut rng),
+                ));
+            }
+
+            for &(rs, rt, rt2, label) in &[
+                (31, 4, 5, "stxp_status_xzr"),
+                (4, 4, 5, "stxp_status_rt_overlap"),
+                (5, 4, 5, "stxp_status_rt2_overlap"),
+                (6, 4, 4, "stxp_same_rt_rt2"),
+                (6, 31, 5, "stxp_rt_xzr"),
+                (6, 4, 31, "stxp_rt2_xzr"),
+            ] {
+                store_batch.push((
+                    format!("{label}_sz64{sz64}_o0{o0}"),
+                    enc_stxp_regs(sz64, o0, rs, rt, rt2, RN),
+                    mem_input(&mut rng),
+                ));
+            }
+        }
+    }
+
+    run_batch("excl_pair_load_register_edges", load_batch);
+    run_batch("excl_pair_store_register_edges", store_batch);
+}
+
+#[test]
+fn diff_excl_pair_store_success_register_edges() {
+    let mut rng = Rng::new(0x1_0162);
+    let mut batch = Vec::new();
+
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            for &(rs, rt, rt2, label) in &[
+                (31, 4, 5, "status_xzr"),
+                (4, 4, 5, "status_rt_overlap"),
+                (5, 4, 5, "status_rt2_overlap"),
+                (6, 4, 4, "same_rt_rt2"),
+                (6, 31, 5, "rt_xzr"),
+                (6, 4, 31, "rt2_xzr"),
+            ] {
+                let mut st = mem_input(&mut rng);
+                st.x[4] = 0x1122_3344_5566_7788;
+                st.x[5] = 0x99aa_bbcc_ddee_ff00;
+                st.x[6] = 0xdead_beef_dead_beef;
+                batch.push((
+                    format!("stxp_success_{label}_sz64{sz64}_o0{o0}"),
+                    enc_ldxp_regs(sz64, o0, 10, 11, RN),
+                    enc_stxp_regs(sz64, o0, rs, rt, rt2, RN),
+                    st,
+                ));
+            }
+        }
+    }
+
+    run_batch_pair("excl_pair_store_success_register_edges", batch);
+}
+
+#[test]
+fn diff_excl_pair_alignment_edges() {
+    let mut rng = Rng::new(0x1_0166);
+    let mut load_batch = Vec::new();
+    let mut pair_batch = Vec::new();
+
+    for &sz64 in &[false, true] {
+        let offsets: &[u64] = if sz64 { &[1, 4, 8] } else { &[1, 2, 4] };
+        for o0 in 0..2 {
+            for &offset in offsets {
+                let mut load = mem_input(&mut rng);
+                load.x[RN as usize] = SCRATCH_BASE + offset;
+                load_batch.push((
+                    format!("ldxp_unaligned_sz64{sz64}_o0{o0}_off{offset}"),
+                    enc_ldxp(sz64, o0),
+                    load,
+                ));
+
+                let mut pair = mem_input(&mut rng);
+                pair.x[RN as usize] = SCRATCH_BASE + offset;
+                pair.x[4] = rng.next();
+                pair.x[5] = rng.next();
+                pair_batch.push((
+                    format!("ldxp_stxp_unaligned_sz64{sz64}_o0{o0}_off{offset}"),
+                    enc_ldxp(sz64, o0),
+                    enc_stxp(sz64, o0),
+                    pair,
+                ));
+            }
+        }
+    }
+
+    run_batch("excl_pair_alignment_load", load_batch);
+    run_batch_pair("excl_pair_alignment_pair", pair_batch);
+}
+
 /// CASP: `0 sz 001000 0 L 1 Rs o0 11111 Rn Rt`. Rs=x2:x3 (compare/old),
 /// Rt=x4:x5 (new), Rn=x1. sz selects 32-bit (0) or 64-bit (1) element pair.
-fn enc_casp_regs(sz: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+fn enc_casp_regs_rt2(sz: u32, l: u32, o0: u32, rs: u32, rt2: u32, rt: u32, rn: u32) -> u32 {
     (sz << 30)
         | (0b001000 << 24)
         | (l << 22)
         | (1 << 21)
         | ((rs & 0x1F) << 16)
         | (o0 << 15)
-        | (0b11111 << 10)
+        | ((rt2 & 0x1F) << 10)
         | ((rn & 0x1F) << 5)
         | (rt & 0x1F)
+}
+
+fn enc_casp_regs(sz: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+    enc_casp_regs_rt2(sz, l, o0, rs, 31, rt, rn)
 }
 
 fn enc_casp(sz: u32, l: u32, o0: u32) -> u32 {
@@ -53955,6 +54255,120 @@ fn diff_mem_casp_sp_base_edges() {
     run_batch("mem_casp_sp_base_edges", batch);
 }
 
+#[test]
+fn diff_mem_casp_register_edges() {
+    let cases: &[(u32, u32, &str)] = &[
+        (2, 4, "even_rs_even_rt"),
+        (3, 6, "odd_rs"),
+        (2, 5, "odd_rt"),
+        (31, 4, "xzr_rs"),
+        (2, 31, "xzr_rt"),
+        (31, 31, "xzr_rs_rt"),
+    ];
+    let mut batch = Vec::new();
+
+    for sz in 0..2u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for &(rs, rt, label) in cases {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[8] = 0x1122_3344_5566_7788;
+                    st.scratch[9] = 0x99aa_bbcc_ddee_ff00;
+
+                    let (compare_lo, compare_hi) = if sz == 0 {
+                        (st.scratch[8] & 0xffff_ffff, st.scratch[8] >> 32)
+                    } else {
+                        (st.scratch[8], st.scratch[9])
+                    };
+                    let new_lo = 0x0102_0304_0506_0708;
+                    let new_hi = 0x8877_6655_4433_2211;
+                    if rs < 31 {
+                        st.x[rs as usize] = compare_lo;
+                    }
+                    if rs + 1 < 31 {
+                        st.x[(rs + 1) as usize] = compare_hi;
+                    }
+                    if rt < 31 {
+                        st.x[rt as usize] = new_lo;
+                    }
+                    if rt + 1 < 31 {
+                        st.x[(rt + 1) as usize] = new_hi;
+                    }
+
+                    batch.push((
+                        format!("casp_sz{sz}_l{l}_o0{o0}_{label}"),
+                        enc_casp_regs(sz, l, o0, rs, rt, RN),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_casp_register_edges", batch);
+}
+
+#[test]
+fn diff_mem_casp_fixed_field_legality() {
+    let mut batch = Vec::new();
+
+    for sz in 0..2u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for rt2 in [0u32, 7, 30] {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.x[2] = 0x1122_3344_5566_7788;
+                    st.x[3] = 0x99aa_bbcc_ddee_ff00;
+                    st.x[4] = 0x0102_0304_0506_0708;
+                    st.x[5] = 0x8877_6655_4433_2211;
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[8] = st.x[2];
+                    st.scratch[9] = st.x[3];
+                    batch.push((
+                        format!("casp_sz{sz}_l{l}_o0{o0}_rt2{rt2}"),
+                        enc_casp_regs_rt2(sz, l, o0, 2, rt2, 4, RN),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_casp_fixed_field_legality", batch);
+}
+
+#[test]
+fn diff_mem_casp_alignment_edges() {
+    let mut rng = Rng::new(0x1_0164);
+    let mut batch = Vec::new();
+
+    for sz in 0..2u32 {
+        let offsets: &[u64] = if sz == 0 { &[1, 2, 4] } else { &[1, 4, 8] };
+        for l in 0..2 {
+            for o0 in 0..2 {
+                for &offset in offsets {
+                    let mut st = mem_input(&mut rng);
+                    st.x[RN as usize] = SCRATCH_BASE + offset;
+                    st.x[2] = rng.next();
+                    st.x[3] = rng.next();
+                    st.x[4] = rng.next();
+                    st.x[5] = rng.next();
+                    batch.push((
+                        format!("casp_unaligned_sz{sz}_l{l}_o0{o0}_off{offset}"),
+                        enc_casp(sz, l, o0),
+                        st,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_casp_alignment_edges", batch);
+}
+
 /// Atomic memory op: `size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt`. Rs=x2, Rn=x1, Rt=x0.
 fn enc_atomic_regs(
     size: u32,
@@ -54067,6 +54481,76 @@ fn diff_mem_atomic_sp_base() {
         }
     }
     run_batch("mem_atomic_sp_base", batch);
+}
+
+#[test]
+fn diff_mem_atomic_order_and_xzr_edges() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b000, "ldadd"),
+        (0, 0b001, "ldclr"),
+        (0, 0b010, "ldeor"),
+        (0, 0b011, "ldset"),
+        (0, 0b100, "ldsmax"),
+        (0, 0b101, "ldsmin"),
+        (0, 0b110, "ldumax"),
+        (0, 0b111, "ldumin"),
+        (1, 0b000, "swp"),
+    ];
+    let patterns = [
+        ("zero", 0, 0),
+        ("ones", u64::MAX, u64::MAX),
+        ("sign_bits", 0x8000_0000_0000_0001, 0x7fff_ffff_ffff_fffe),
+        ("alternating", 0x55aa_55aa_33cc_33cc, 0xaa55_aa55_cc33_cc33),
+    ];
+
+    let mut batch = Vec::new();
+    for &(o3, opc, name) in ops {
+        for size in 0..4u32 {
+            for &(a, r) in &[(1u32, 0u32), (0, 1)] {
+                for &(pattern, src, mem) in &patterns {
+                    let mut st = ArmState::zeroed();
+                    st.x[RN as usize] = SCRATCH_BASE;
+                    st.x[2] = src;
+                    st.x[RD as usize] = 0xdead_beef_dead_beef;
+                    st.scratch.fill(0xfeed_face_dead_beef);
+                    st.scratch[8] = mem;
+                    st.scratch[9] = !mem;
+                    batch.push((
+                        format!("{name}_order_sz{size}_a{a}r{r}_{pattern}"),
+                        enc_atomic(size, a, r, o3, opc),
+                        st,
+                    ));
+
+                    let mut discard = ArmState::zeroed();
+                    discard.x[RN as usize] = SCRATCH_BASE;
+                    discard.x[2] = src;
+                    discard.sp = 0x1234_5678_9abc_def0;
+                    discard.scratch.fill(0xfeed_face_dead_beef);
+                    discard.scratch[8] = mem;
+                    discard.scratch[9] = !mem;
+                    batch.push((
+                        format!("{name}_discard_sz{size}_a{a}r{r}_{pattern}"),
+                        enc_atomic_regs(size, a, r, o3, opc, 2, RN, 31),
+                        discard,
+                    ));
+
+                    let mut zero_src = ArmState::zeroed();
+                    zero_src.x[RN as usize] = SCRATCH_BASE;
+                    zero_src.x[RD as usize] = 0x1111_2222_3333_4444;
+                    zero_src.scratch.fill(0xfeed_face_dead_beef);
+                    zero_src.scratch[8] = mem;
+                    zero_src.scratch[9] = !mem;
+                    batch.push((
+                        format!("{name}_xzr_src_sz{size}_a{a}r{r}_{pattern}"),
+                        enc_atomic_regs(size, a, r, o3, opc, 31, RN, RD),
+                        zero_src,
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch("mem_atomic_order_and_xzr_edges", batch);
 }
 
 #[test]
