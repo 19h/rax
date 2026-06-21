@@ -198,10 +198,12 @@ impl Aarch64Decoder {
 
     fn decode_add_sub_imm_tags(raw: u32) -> Result<DecodedInsn, DecodeError> {
         // MTE instructions: ADDG, SUBG
+        let sf = (raw >> 31) & 1;
         let op = (raw >> 30) & 1;
         let s = (raw >> 29) & 1;
+        let o2 = (raw >> 22) & 1;
 
-        if s == 1 {
+        if sf == 0 || s == 1 || o2 == 1 {
             return Ok(DecodedInsn::new(
                 Mnemonic::UNDEFINED,
                 ExecutionState::Aarch64,
@@ -1887,18 +1889,6 @@ impl Aarch64Decoder {
             _ => unreachable!(),
         };
 
-        // NGC is SBC with Rn = XZR
-        // NGCS is SBCS with Rn = XZR
-        let (mnemonic, skip_rn) = if op == 1 && rn == 31 {
-            if s == 0 {
-                (Mnemonic::SBC, true) // Could be NGC alias
-            } else {
-                (Mnemonic::SBCS, true) // Could be NGCS alias
-            }
-        } else {
-            (mnemonic, false)
-        };
-
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
 
         if s == 1 {
@@ -1907,10 +1897,7 @@ impl Aarch64Decoder {
 
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
 
-        if !skip_rn {
-            insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
-        }
-
+        insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
 
         Ok(insn)
@@ -2031,7 +2018,16 @@ impl Aarch64Decoder {
             }
         }
 
-        insn = insn.with_operand(Operand::Cond(Condition::from_bits(cond)));
+        let condition = Condition::from_bits(cond);
+        let condition = if matches!(
+            mnemonic,
+            Mnemonic::CSET | Mnemonic::CSETM | Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG
+        ) {
+            condition.invert()
+        } else {
+            condition
+        };
+        insn = insn.with_operand(Operand::Cond(condition));
 
         Ok(insn)
     }
@@ -2257,7 +2253,9 @@ impl Aarch64Decoder {
         // Check for MUL/MNEG aliases
         // MUL is MADD with Ra = XZR
         // MNEG is MSUB with Ra = XZR
-        let (mnemonic, skip_ra) = if ra == 31 {
+        let (mnemonic, skip_ra) = if matches!(mnemonic, Mnemonic::SMULH | Mnemonic::UMULH) {
+            (mnemonic, true)
+        } else if ra == 31 {
             match mnemonic {
                 Mnemonic::MADD => (Mnemonic::MUL, true),
                 Mnemonic::MSUB => (Mnemonic::MNEG, true),
@@ -3981,6 +3979,10 @@ mod tests {
 
     #[test]
     fn test_add_sub_imm_tags() {
+        fn addsub_tags_raw(sf: u32, op: u32, s: u32, o2: u32) -> u32 {
+            (sf << 31) | (op << 30) | (s << 29) | (0b100011 << 23) | (o2 << 22) | 0x0001_0020
+        }
+
         // ADDG X0, X1, #0x10, #0: 91810020
         let insn = decode_bytes(&[0x20, 0x00, 0x81, 0x91]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADDG);
@@ -3994,6 +3996,18 @@ mod tests {
         // SUBG X0, X1, #0x10, #0: d1810020
         let insn = decode_bytes(&[0x20, 0x00, 0x81, 0xd1]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::SUBG);
+
+        for raw in [
+            addsub_tags_raw(0, 0, 0, 0),
+            addsub_tags_raw(1, 0, 1, 0),
+            addsub_tags_raw(1, 0, 0, 1),
+            addsub_tags_raw(0, 1, 0, 0),
+            addsub_tags_raw(1, 1, 1, 0),
+            addsub_tags_raw(1, 1, 0, 1),
+        ] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, Mnemonic::UNDEFINED, "raw={raw:#010x}");
+        }
     }
 
     #[test]
@@ -4461,6 +4475,27 @@ mod tests {
     }
 
     #[test]
+    fn test_high_multiply_omits_ra_operand() {
+        fn dp3(sf: u32, op31: u32, o0: u32, ra: u32) -> u32 {
+            (sf << 31)
+                | (0b11011 << 24)
+                | (op31 << 21)
+                | (2 << 16)
+                | (o0 << 15)
+                | ((ra & 0x1f) << 10)
+                | (1 << 5)
+        }
+
+        for (mnemonic, op31, o0) in [(Mnemonic::SMULH, 0b010, 0), (Mnemonic::UMULH, 0b110, 0)] {
+            for ra in [3, 31] {
+                let insn = Aarch64Decoder::decode(dp3(1, op31, o0, ra)).unwrap();
+                assert_eq!(insn.mnemonic, mnemonic);
+                assert_eq!(insn.operands.len(), 3, "ra={ra}");
+            }
+        }
+    }
+
+    #[test]
     fn test_udiv() {
         // UDIV X0, X1, X2: 9ac20820
         let insn = decode_bytes(&[0x20, 0x08, 0xc2, 0x9a]).unwrap();
@@ -4503,6 +4538,41 @@ mod tests {
         assert_eq!(insn.operands.len(), 2);
         assert!(matches!(
             insn.operands.get(1),
+            Some(Operand::Cond(Condition::EQ))
+        ));
+    }
+
+    #[test]
+    fn test_cond_select_aliases_invert_condition_operand() {
+        fn csel(sf: u32, op: u32, op2: u32, rn: u32, rm: u32, cond: u32) -> u32 {
+            (sf << 31)
+                | (op << 30)
+                | (0b11010100 << 21)
+                | ((rm & 0x1f) << 16)
+                | ((cond & 0xf) << 12)
+                | ((op2 & 0x3) << 10)
+                | ((rn & 0x1f) << 5)
+        }
+
+        for (mnemonic, raw, cond_idx) in [
+            (Mnemonic::CSET, csel(1, 0, 0b01, 31, 31, 1), 1),
+            (Mnemonic::CSETM, csel(1, 1, 0b00, 31, 31, 1), 1),
+            (Mnemonic::CINC, csel(1, 0, 0b01, 1, 1, 1), 2),
+            (Mnemonic::CINV, csel(1, 1, 0b00, 1, 1, 1), 2),
+            (Mnemonic::CNEG, csel(1, 1, 0b01, 1, 1, 1), 2),
+        ] {
+            let insn = Aarch64Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert!(matches!(
+                insn.operands.get(cond_idx),
+                Some(Operand::Cond(Condition::EQ))
+            ));
+        }
+
+        let insn = Aarch64Decoder::decode(csel(1, 0, 0b00, 1, 2, 1)).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::CSEL);
+        assert!(matches!(
+            insn.operands.get(3),
             Some(Operand::Cond(Condition::NE))
         ));
     }
@@ -4543,6 +4613,29 @@ mod tests {
         // ADC X0, X1, X2: 9a020020
         let insn = decode_bytes(&[0x20, 0x00, 0x02, 0x9a]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADC);
+    }
+
+    #[test]
+    fn test_sbc_xzr_source_keeps_rn_operand() {
+        fn addsub_carry(sf: u32, op: u32, s: u32, rn: u32) -> u32 {
+            (sf << 31)
+                | (op << 30)
+                | (s << 29)
+                | (0b11010000 << 21)
+                | (2 << 16)
+                | ((rn & 0x1f) << 5)
+        }
+
+        let sbc = Aarch64Decoder::decode(addsub_carry(1, 1, 0, 31)).unwrap();
+        assert_eq!(sbc.mnemonic, Mnemonic::SBC);
+        assert_eq!(sbc.operands.len(), 3);
+        assert!(matches!(sbc.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+
+        let sbcs = Aarch64Decoder::decode(addsub_carry(0, 1, 1, 31)).unwrap();
+        assert_eq!(sbcs.mnemonic, Mnemonic::SBCS);
+        assert!(sbcs.sets_flags);
+        assert_eq!(sbcs.operands.len(), 3);
+        assert!(matches!(sbcs.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
     }
 
     #[test]

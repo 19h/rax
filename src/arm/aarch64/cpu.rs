@@ -15631,11 +15631,18 @@ impl AArch64Cpu {
     /// 9:5   Xn (source register)
     /// 4:0   Xd (destination register)
     fn exec_add_sub_imm_tags(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let sf = (insn >> 31) & 1;
         let op = (insn >> 30) & 1; // 0=ADDG, 1=SUBG
+        let s = (insn >> 29) & 1;
+        let o2 = (insn >> 22) & 1;
         let uimm6 = ((insn >> 16) & 0x3F) as u64;
         let uimm4 = ((insn >> 10) & 0xF) as u8;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
+
+        if sf == 0 || s != 0 || o2 != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         // TAG_GRANULE is 16 bytes (LOG2_TAG_GRANULE = 4)
         const TAG_GRANULE: u64 = 16;

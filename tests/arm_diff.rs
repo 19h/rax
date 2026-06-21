@@ -27549,6 +27549,66 @@ fn diff_generated_integer_tag_addsub_sweep() {
 }
 
 #[test]
+fn diff_integer_tag_addsub_fixed_field_legality() {
+    fn addsub_tags_raw(
+        sf: u32,
+        op: u32,
+        s: u32,
+        o2: u32,
+        uimm6: u32,
+        op3: u32,
+        uimm4: u32,
+        rn: u32,
+        rd: u32,
+    ) -> u32 {
+        (sf << 31)
+            | ((op & 1) << 30)
+            | ((s & 1) << 29)
+            | (0b100011 << 23)
+            | ((o2 & 1) << 22)
+            | ((uimm6 & 0x3f) << 16)
+            | ((op3 & 0x3) << 14)
+            | ((uimm4 & 0xf) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
+    }
+
+    let mut batch = Vec::new();
+    for op in 0..=1 {
+        for op3 in 0..=3 {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = 0x0800_0000_0000_1200;
+            st.x[RD as usize] = 0xaaaa_bbbb_cccc_dddd;
+            st.sp = 0x0900_0000_0000_4000;
+            batch.push((
+                format!("valid_op{op}_op3{op3}"),
+                addsub_tags_raw(1, op, 0, 0, 2, op3, 5, RN, RD),
+                st,
+            ));
+        }
+
+        for (label, sf, s, o2) in [
+            ("sf0", 0, 0, 0),
+            ("s1", 1, 1, 0),
+            ("o2_1", 1, 0, 1),
+            ("sf0_s1_o2_1", 0, 1, 1),
+        ] {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = 0x0200_0000_0000_1000;
+            st.x[RD as usize] = 0x1111_2222_3333_4444;
+            st.sp = 0x0300_0000_0000_5000;
+            batch.push((
+                format!("{label}_op{op}"),
+                addsub_tags_raw(sf, op, s, o2, 1, 0, 7, RN, RD),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_legality("integer_tag_addsub_fixed_field_legality", batch);
+}
+
+#[test]
 fn diff_integer_tag_addsub_sp_edges() {
     fn addsub_tags(op: u32, uimm6: u32, uimm4: u32, rn: u32, rd: u32) -> u32 {
         (1 << 31)
@@ -29764,6 +29824,13 @@ fn diff_system_id_debug_write_el0_legality_grid() {
     for op1 in 0..=7 {
         for crm in 0..=7 {
             for op2 in 0..=7 {
+                // S2_3_C0_C5_0 is unstable under the Linux EL0 native oracle on
+                // this host: separate runs have observed both execution and
+                // SIGILL, so it cannot be used as deterministic legality ground
+                // truth in the mixed grid.
+                if op1 == 3 && crm == 5 && op2 == 0 {
+                    continue;
+                }
                 let mut st = gen_input(&mut rng);
                 st.x[RD as usize] = rng.next();
                 batch.push((
@@ -36172,22 +36239,35 @@ fn enc_scatter_s(msz: u32, xs: u32, scaled: bool) -> u32 {
 }
 
 /// SVE LD1 (scalar+scalar): `1010010 dtype Rm 010 Pg Rn Zt`. Rn=x1, Rm=x2.
+fn enc_sve_ld1_ss_base_offset_regs(dtype: u32, rm: u32, rn: u32) -> u32 {
+    (0b1010010 << 25)
+        | (dtype << 21)
+        | ((rm & 0x1F) << 16)
+        | (0b010 << 13)
+        | ((rn & 0x1F) << 5)
+        | RD
+}
+
 fn enc_sve_ld1_ss_regs(dtype: u32, rn: u32) -> u32 {
-    (0b1010010 << 25) | (dtype << 21) | (RM << 16) | (0b010 << 13) | ((rn & 0x1F) << 5) | RD
+    enc_sve_ld1_ss_base_offset_regs(dtype, RM, rn)
 }
 
 fn enc_sve_ld1_ss(dtype: u32) -> u32 {
     enc_sve_ld1_ss_regs(dtype, RN)
 }
 /// SVE ST1 (scalar+scalar): `1110010 msz size Rm 010 Pg Rn Zt`. Rn=x1, Rm=x2.
-fn enc_sve_st1_ss_regs(msz: u32, size: u32, rn: u32) -> u32 {
+fn enc_sve_st1_ss_base_offset_regs(msz: u32, size: u32, rm: u32, rn: u32) -> u32 {
     (0b1110010 << 25)
         | (msz << 23)
         | (size << 21)
-        | (RM << 16)
+        | ((rm & 0x1F) << 16)
         | (0b010 << 13)
         | ((rn & 0x1F) << 5)
         | RD
+}
+
+fn enc_sve_st1_ss_regs(msz: u32, size: u32, rn: u32) -> u32 {
+    enc_sve_st1_ss_base_offset_regs(msz, size, RM, rn)
 }
 
 fn enc_sve_st1_ss(msz: u32, size: u32) -> u32 {
@@ -51325,6 +51405,60 @@ fn diff_sve_ldst_sp_alignment_edges() {
     }
 
     run_batch("sve_ldst_sp_alignment_edges", batch);
+}
+
+#[test]
+fn diff_sve_ldst_scalar_scalar_rm31_legality() {
+    let mut batch = Vec::new();
+    for dtype in 0..=0xf {
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.x[RM as usize] = 0;
+        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+        st.set_preg(0, 0);
+        batch.push((
+            format!("ld1_ss_valid_dtype{dtype:x}"),
+            enc_sve_ld1_ss_base_offset_regs(dtype, RM, RN),
+            st,
+        ));
+
+        let mut st = ArmState::zeroed();
+        st.x[RN as usize] = SCRATCH_BASE;
+        st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+        st.set_preg(0, 0);
+        batch.push((
+            format!("ld1_ss_rm31_dtype{dtype:x}"),
+            enc_sve_ld1_ss_base_offset_regs(dtype, 31, RN),
+            st,
+        ));
+    }
+
+    for msz in 0..=3 {
+        for size in msz..=3 {
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.x[RM as usize] = 0;
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+            st.set_preg(0, 0);
+            batch.push((
+                format!("st1_ss_valid_m{msz}_s{size}"),
+                enc_sve_st1_ss_base_offset_regs(msz, size, RM, RN),
+                st,
+            ));
+
+            let mut st = ArmState::zeroed();
+            st.x[RN as usize] = SCRATCH_BASE;
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
+            st.set_preg(0, 0);
+            batch.push((
+                format!("st1_ss_rm31_m{msz}_s{size}"),
+                enc_sve_st1_ss_base_offset_regs(msz, size, 31, RN),
+                st,
+            ));
+        }
+    }
+
+    run_batch_el0_legality("sve_ldst_scalar_scalar_rm31_legality", batch);
 }
 
 #[test]
