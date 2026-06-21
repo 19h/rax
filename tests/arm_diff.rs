@@ -1578,6 +1578,18 @@ fn generated_vector_compare_cases() -> Vec<(String, u32)> {
         .collect()
 }
 
+fn generated_vector_mul_cases() -> Vec<(String, u32)> {
+    let source = include_str!("arm/generated/a64/vector/mul.rs");
+    let mut by_encoding = std::collections::BTreeMap::new();
+    for (label, insn) in parse_generated_a64_encodings("vector/mul", source) {
+        by_encoding.entry(insn).or_insert(label);
+    }
+    by_encoding
+        .into_iter()
+        .map(|(insn, label)| (label, insn))
+        .collect()
+}
+
 fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings(
@@ -32103,6 +32115,16 @@ fn diff_generated_vector_compare_sweep() {
         generated_vector_compare_cases(),
         4,
         0xa64_ec7b,
+    );
+}
+
+#[test]
+fn diff_generated_vector_mul_sweep() {
+    run_family(
+        "generated_vector_mul_sweep",
+        generated_vector_mul_cases(),
+        4,
+        0xa64_ecff,
     );
 }
 

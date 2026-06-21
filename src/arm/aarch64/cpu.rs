@@ -2683,15 +2683,19 @@ impl AArch64Cpu {
             let mv = sext_elem(self.v[rm] as u64 & elem_mask(bits), bits);
             let dmin = -(1i128 << (dbits - 1));
             let dmax = (1i128 << (dbits - 1)) - 1;
-            let prod = (2 * nv * mv).clamp(dmin, dmax);
-            let r: u128 = if accum {
+            let raw_prod = 2 * nv * mv;
+            let prod_saturated = raw_prod < dmin || raw_prod > dmax;
+            let prod = raw_prod.clamp(dmin, dmax);
+            let (r, acc_saturated) = if accum {
                 let d = sext_elem(self.v[rd] as u64 & elem_mask(dbits), dbits);
-                (sat_signed(d + if subtract { -prod } else { prod }, dbits) as u128)
-                    & elem_mask_u128(dbits)
+                sat_signed_q(d + if subtract { -prod } else { prod }, dbits)
             } else {
-                (prod as u128) & elem_mask_u128(dbits)
+                (prod as u64 & elem_mask(dbits), false)
             };
-            self.v[rd] = r;
+            if prod_saturated || acc_saturated {
+                self.fpsr |= FPSR_QC;
+            }
+            self.v[rd] = (r as u128) & elem_mask_u128(dbits);
             return Ok(CpuExit::Continue);
         }
 
@@ -2833,6 +2837,9 @@ impl AArch64Cpu {
             && (insn >> 12) & 0xF == 0b0000
             && (insn >> 10) & 1 == 0
         {
+            if self.config.version < ArmVersion::V9_4A {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
             let top = (insn >> 30) & 1 == 1;
             let rm = ((insn >> 16) & 0xF) as usize;
             let rn = ((insn >> 5) & 0x1F) as usize;
@@ -3723,7 +3730,10 @@ impl AArch64Cpu {
                 * sext_elem(read_elem(&m, off, esize), bits);
             let rounded = (prod * 2 + (1i128 << (bits - 1))) >> bits;
             let acc = sext_elem(read_elem(&a, off, esize), bits);
-            let r = sat_signed(if sub { acc - rounded } else { acc + rounded }, bits);
+            let (r, saturated) = sat_signed_q(if sub { acc - rounded } else { acc + rounded }, bits);
+            if saturated {
+                self.fpsr |= FPSR_QC;
+            }
             write_elem(&mut dst, off, esize, r);
         }
         self.v[rd] = u128::from_le_bytes(dst);
@@ -19648,6 +19658,22 @@ fn fp_status_assume_inexact(esize: usize, result: u64) -> u32 {
     }
 }
 
+fn fp_value_eq_bits(esize: usize, a: u64, b: u64) -> bool {
+    match esize {
+        2 => fp16_to_f64(a as u16) == fp16_to_f64(b as u16),
+        4 => f32::from_bits(a as u32) == f32::from_bits(b as u32),
+        _ => f64::from_bits(a) == f64::from_bits(b),
+    }
+}
+
+fn fp_mul_bits_for_status(esize: usize, op1: u64, op2: u64) -> u64 {
+    match esize {
+        2 => fp16_mul(op1 as u16, op2 as u16) as u64,
+        4 => fp_three_same_f32(FpKind::Mul, op1 as u32, op2 as u32, 0) as u64,
+        _ => fp_three_same_f64(FpKind::Mul, op1, op2, 0),
+    }
+}
+
 fn fp_is_snan_bits(esize: usize, x: u64) -> bool {
     match esize {
         2 => fp16_is_snan(x as u16),
@@ -19721,6 +19747,13 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
             if fp64_is_inf(result) {
                 return FPSR_OFC | FPSR_IXC;
             }
+            if fp64_is_zero(addend) {
+                if fp64_mul_exact_result(op1, op2, result) {
+                    return 0;
+                }
+                let underflow = fp64_is_tiny(result) || fp64_is_zero(result);
+                return FPSR_IXC | if underflow { FPSR_UFC } else { 0 };
+            }
             if fp64_fma_exact(addend, op1, op2, result) {
                 return 0;
             } else {
@@ -19731,19 +19764,18 @@ fn fp_status_fma(esize: usize, addend: u64, op1: u64, op2: u64, result: u64) -> 
         let exact = sve_fp_to_f64(esize, addend) + sve_fp_to_f64(esize, op1) * sve_fp_to_f64(esize, op2);
         let status = fp_status_from_exact_f64(esize, exact, result);
         if status == 0
-            && esize == 4
-            && !fp32_is_zero(op1 as u32)
-            && !fp32_is_zero(op2 as u32)
-            && f32::from_bits(result as u32) == f32::from_bits(addend as u32)
+            && matches!(esize, 2 | 4)
+            && !fp_is_zero_bits(esize, op1)
+            && !fp_is_zero_bits(esize, op2)
+            && fp_value_eq_bits(esize, result, addend)
         {
             fp_status_assume_inexact(esize, result)
         } else if status == 0
-            && esize == 4
-            && !fp32_is_zero(addend as u32)
-            && !fp32_is_zero(op1 as u32)
-            && !fp32_is_zero(op2 as u32)
-            && f32::from_bits(result as u32)
-                == f32::from_bits(fp_three_same_f32(FpKind::Mul, op1 as u32, op2 as u32, 0))
+            && matches!(esize, 2 | 4)
+            && !fp_is_zero_bits(esize, addend)
+            && !fp_is_zero_bits(esize, op1)
+            && !fp_is_zero_bits(esize, op2)
+            && fp_value_eq_bits(esize, result, fp_mul_bits_for_status(esize, op1, op2))
         {
             fp_status_assume_inexact(esize, result)
         } else {
@@ -19768,7 +19800,7 @@ fn fp_status_mulx(esize: usize, a: u64, b: u64, result: u64) -> u32 {
         if fp64_mul_exact_result(a, b, result) {
             0
         } else {
-            FPSR_IXC
+            FPSR_IXC | if fp64_is_tiny(result) || fp64_is_zero(result) { FPSR_UFC } else { 0 }
         }
     } else {
         let exact = sve_fp_to_f64(esize, a) * sve_fp_to_f64(esize, b);
@@ -23850,6 +23882,127 @@ mod tests {
         let mut cpu = create_cpu_with_insn(0x0ea0_ec00); // FMLSL V0.2S, V0.2H, V0.2H
         cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
         assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+    }
+
+    #[test]
+    fn simd_fp8fma_by_element_requires_v9_4_profile() {
+        for insn in [
+            0x0fc0_0000, // FMLALB by element, FP8 source
+            0x0fc0_001f, // FP8 source, Rd=31
+            0x0fc0_03e0, // FP8 source, Rn=31
+            0x4fc0_0000, // FMLALT by element, FP8 source
+        ] {
+            let mut cpu = create_cpu_with_insn(insn);
+            cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+            let exit = cpu.step();
+            assert!(
+                matches!(exit, Ok(CpuExit::Undefined(got)) if got == insn)
+                    || matches!(exit, Err(ArmError::UndefinedInstruction(got)) if got == insn),
+                "expected {insn:#010x} to be undefined, got {exit:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn simd_sqrdmlah_sqrdmlsh_set_qc_on_saturation() {
+        let mut cpu = create_cpu_with_insn(0x2e40_8400); // SQRDMLAH V0.4H, V0.4H, V0.4H
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = 0x7fff_7fff_7fff_7fff;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+
+        let mut cpu = create_cpu_with_insn(0x2e42_8c20); // SQRDMLSH V0.4H, V1.4H, V2.4H
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = 0x8000_8000_8000_8000; // accumulator
+        cpu.v[1] = 0x7fff_7fff_7fff_7fff;
+        cpu.v[2] = 0x7fff_7fff_7fff_7fff;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+
+        let mut cpu = create_cpu_with_insn(0x7e40_8400); // SQRDMLAH H0, H0, H0
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = 0x7fff;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+    }
+
+    #[test]
+    fn simd_scalar_sqdmlal_sets_qc_on_saturation() {
+        let mut cpu = create_cpu_with_insn(0x5ea0_d000); // SQDMULL D0, S0, S0
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = 0x8000_0000; // i32::MIN
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+
+        let mut cpu = create_cpu_with_insn(0x5ea2_9020); // SQDMLAL D0, S1, S2
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = i64::MAX as u64 as u128;
+        cpu.v[1] = 0x7fff_ffff;
+        cpu.v[2] = 0x7fff_ffff;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+
+        let mut cpu = create_cpu_with_insn(0x5ea2_b020); // SQDMLSL D0, S1, S2
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = i64::MIN as u64 as u128;
+        cpu.v[1] = 0x7fff_ffff;
+        cpu.v[2] = 0x7fff_ffff;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_QC, FPSR_QC);
+    }
+
+    #[test]
+    fn simd_fp16_fma_lost_product_sets_inexact() {
+        let acc = 0x5f11_5f11_5f11_5f11u128;
+        let tiny = 0x0001_0001_0001_0001u128;
+
+        let mut cpu = create_cpu_with_insn(0x0e41_0c20); // FMLA V0.4H, V1.4H, V1.4H
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = acc;
+        cpu.v[1] = tiny;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_IXC, FPSR_IXC);
+
+        let mut cpu = create_cpu_with_insn(0x0f01_1020); // FMLA V0.4H, V1.4H, V1.H[0]
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = acc;
+        cpu.v[1] = tiny;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_IXC, FPSR_IXC);
+
+        let mut cpu = create_cpu_with_insn(0x5f01_1020); // FMLA H0, H1, V1.H[0]
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = acc;
+        cpu.v[1] = tiny;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & FPSR_IXC, FPSR_IXC);
+    }
+
+    #[test]
+    fn simd_fmulx_sets_underflow_for_tiny_f64_result() {
+        let tiny = 0x0000_0000_0000_0001u128;
+
+        let mut cpu = create_cpu_with_insn(0x4e60_dc00); // FMULX V0.2D, V0.2D, V0.2D
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = tiny | (tiny << 64);
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_UFC | FPSR_IXC), FPSR_UFC | FPSR_IXC);
+
+        let mut cpu = create_cpu_with_insn(0x5e60_dc00); // FMULX D0, D0, D0
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = tiny;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_UFC | FPSR_IXC), FPSR_UFC | FPSR_IXC);
+    }
+
+    #[test]
+    fn simd_f64_fma_zero_addend_sets_underflow_for_tiny_product() {
+        let mut cpu = create_cpu_with_insn(0x5fc0_101f); // FMLA D31, D0, V0.D[0]
+        cpu.sysregs.el1.cpacr |= 0b11 << 20; // FPEN
+        cpu.v[0] = 0x0000_0000_0000_0001; // smallest positive f64 subnormal
+        cpu.v[31] = 0;
+        assert_eq!(cpu.step().unwrap(), CpuExit::Continue);
+        assert_eq!(cpu.fpsr & (FPSR_UFC | FPSR_IXC), FPSR_UFC | FPSR_IXC);
     }
 
     #[test]
