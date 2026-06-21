@@ -510,6 +510,15 @@ fn run_rax_at_el(insn: u32, input: &ArmState, initial_el: u8) -> Option<ArmState
 }
 
 fn run_rax_sequence_at_el(insns: &[u32], input: &ArmState, initial_el: u8) -> Option<ArmState> {
+    run_rax_sequence_with_trailing_at_el(insns, &[], input, initial_el)
+}
+
+fn run_rax_sequence_with_trailing_at_el(
+    insns: &[u32],
+    trailing: &[u32],
+    input: &ArmState,
+    initial_el: u8,
+) -> Option<ArmState> {
     // Memory must cover both the instruction (at 0) and the scratch window.
     let mem = FlatMemory::new(0, 0x30_0000);
     let mut config = AArch64Config::default();
@@ -544,6 +553,10 @@ fn run_rax_sequence_at_el(insns: &[u32], input: &ArmState, initial_el: u8) -> Op
 
     for (i, insn) in insns.iter().enumerate() {
         cpu.write_memory((i as u64) * 4, &insn.to_le_bytes()).ok()?;
+    }
+    for (i, insn) in trailing.iter().enumerate() {
+        let slot = insns.len() + i;
+        cpu.write_memory((slot as u64) * 4, &insn.to_le_bytes()).ok()?;
     }
     cpu.set_pc(0);
 
@@ -26170,6 +26183,74 @@ fn diff_load_literal_negative_offset() {
 }
 
 #[test]
+fn diff_load_literal_negative_q_offset() {
+    fn ldr_literal(opc: u32, v: u32, rt: u32, offset: i32) -> u32 {
+        let imm19 = ((offset >> 2) as u32) & 0x7ffff;
+        (opc << 30) | (0b011 << 27) | (v << 26) | (imm19 << 5) | (rt & 0x1f)
+    }
+
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] load_literal_negative_q_offset: native/qemu oracle unavailable -> skipping");
+            return;
+        }
+    };
+
+    const BRK_0: u32 = 0xd420_0000;
+    let mut rng = Rng::new(0x5157_1004);
+    let mut batch = Vec::new();
+    for rt in [0, 7, 31] {
+        let mut st = gen_input(&mut rng);
+        st.set_vreg(rt as usize, 0xaaaa_aaaa_aaaa_aaaa, 0xbbbb_bbbb_bbbb_bbbb);
+        batch.push((
+            format!("ldr_lit_q_neg8_v{rt}"),
+            NOP,
+            NOP,
+            ldr_literal(2, 1, rt, -8),
+            st,
+        ));
+    }
+
+    let cases: Vec<(u32, u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn1, insn2, insn3, st)| (*insn1, *insn2, *insn3, *st))
+        .collect();
+    let outs = match run_oracle3(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            if oracle.is_native() {
+                panic!("[arm_diff] load_literal_negative_q_offset: native oracle run failed");
+            }
+            eprintln!("[arm_diff] load_literal_negative_q_offset: oracle run failed -> skipping");
+            return;
+        }
+    };
+    assert_eq!(outs.len(), cases.len());
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn1, insn2, insn3, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        let rax = run_rax_sequence_with_trailing_at_el(&[*insn1, *insn2, *insn3], &[BRK_0], st, 0);
+        compare_rax_outcome(&batch[i].0, *insn3, rax, out, &mut mismatches);
+    }
+
+    if !mismatches.is_empty() {
+        eprintln!(
+            "\n==== load_literal_negative_q_offset: {} mismatches across {} cases ====",
+            mismatches.len(),
+            cases.len()
+        );
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!(
+            "load_literal_negative_q_offset: {} divergences vs hardware oracle",
+            mismatches.len()
+        );
+    }
+}
+
+#[test]
 fn diff_generated_memory_literal_sweep() {
     let mut rng = Rng::new(0xa64_117e);
     let mut batch = Vec::new();
@@ -28072,7 +28153,7 @@ fn diff_fpcr_ah_fmlal_indexed_nan_status() {
 
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
-fn enc_single_fields(
+fn enc_single_fields_regs(
     q: u32,
     post: u32,
     l: u32,
@@ -28081,6 +28162,8 @@ fn enc_single_fields(
     opcode: u32,
     s: u32,
     size: u32,
+    rt: u32,
+    rn: u32,
 ) -> u32 {
     (q << 30)
         | (0b001101 << 24)
@@ -28091,13 +28174,22 @@ fn enc_single_fields(
         | (opcode << 13)
         | (s << 12)
         | (size << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
 }
 
 /// Single-element form for element-log2-size `esz` (0=B,1=H,2=S,3=D), structure
 /// size `selem` (1-4), lane `index`, load `l`, and `post` index.
-fn enc_single(esz: u32, selem: u32, index: u32, l: u32, post: u32) -> u32 {
+fn enc_single_regs(
+    esz: u32,
+    selem: u32,
+    index: u32,
+    l: u32,
+    post: u32,
+    rm: u32,
+    rt: u32,
+    rn: u32,
+) -> u32 {
     let scale = if esz == 3 { 0b10 } else { esz };
     let lsb = ((selem - 1) >> 1) & 1;
     let r = (selem - 1) & 1;
@@ -28108,17 +28200,33 @@ fn enc_single(esz: u32, selem: u32, index: u32, l: u32, post: u32) -> u32 {
         2 => ((index >> 1) & 1, index & 1, 0),
         _ => (index & 1, 0, 1),
     };
+    enc_single_fields_regs(q, post, l, r, rm, opcode, s, size, rt, rn)
+}
+
+fn enc_single(esz: u32, selem: u32, index: u32, l: u32, post: u32) -> u32 {
     let rm = if post == 1 { 31 } else { 0 };
-    enc_single_fields(q, post, l, r, rm, opcode, s, size)
+    enc_single_regs(esz, selem, index, l, post, rm, RD, RN)
 }
 
 /// Replicating load LD1R-LD4R for element-log2-size `esz`, structure `selem`, Q.
-fn enc_single_rep(esz: u32, selem: u32, q: u32, post: u32) -> u32 {
+fn enc_single_rep_regs(
+    esz: u32,
+    selem: u32,
+    q: u32,
+    post: u32,
+    rm: u32,
+    rt: u32,
+    rn: u32,
+) -> u32 {
     let lsb = ((selem - 1) >> 1) & 1;
     let r = (selem - 1) & 1;
     let opcode = (0b11 << 1) | lsb;
+    enc_single_fields_regs(q, post, 1, r, rm, opcode, 0, esz, rt, rn)
+}
+
+fn enc_single_rep(esz: u32, selem: u32, q: u32, post: u32) -> u32 {
     let rm = if post == 1 { 31 } else { 0 };
-    enc_single_fields(q, post, 1, r, rm, opcode, 0, esz)
+    enc_single_rep_regs(esz, selem, q, post, rm, RD, RN)
 }
 
 #[test]
@@ -28159,16 +28267,69 @@ fn diff_mem_ldst_single() {
     run_batch("mem_ldst_single", batch);
 }
 
+#[test]
+fn diff_mem_ldst_single_sp_base() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "ld1_single_sp_noff".into(),
+            enc_single_regs(0, 1, 15, 1, 0, 0, 0, 31),
+            None,
+        ),
+        (
+            "st2_single_sp_post_imm".into(),
+            enc_single_regs(1, 2, 7, 0, 1, 31, 0, 31),
+            None,
+        ),
+        (
+            "ld3_single_sp_post_reg".into(),
+            enc_single_regs(2, 3, 2, 1, 1, RM, 4, 31),
+            Some(32),
+        ),
+        (
+            "st4_single_sp_noff".into(),
+            enc_single_regs(3, 4, 1, 0, 0, 0, 8, 31),
+            None,
+        ),
+        (
+            "ld1r_sp_noff".into(),
+            enc_single_rep_regs(3, 1, 1, 0, 0, 12, 31),
+            None,
+        ),
+        (
+            "ld4r_sp_post_reg".into(),
+            enc_single_rep_regs(0, 4, 1, 1, RM, 16, 31),
+            Some(7),
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0061);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, rm_value) in &cases {
+        for _ in 0..8 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_single_sp_base", batch);
+}
+
 /// LDXR/LDAXR <Rt>, [Rn]: `size 001000 0 1 0 11111 o0 11111 Rn Rt`. Rt=x0, Rn=x1.
-fn enc_ldxr(size: u32, o0: u32) -> u32 {
+fn enc_ldxr_regs(size: u32, o0: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 22)
         | (0b11111 << 16)
         | (o0 << 15)
         | (0b11111 << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldxr(size: u32, o0: u32) -> u32 {
+    enc_ldxr_regs(size, o0, RD, RN)
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -28207,12 +28368,22 @@ fn enc_atomic_smir(
 }
 
 /// STXR/STLXR <Ws>, <Rt>, [Rn]: `size 001000 0 0 0 Rs o0 11111 Rn Rt`. Ws=x2, Rt=x3, Rn=x1.
+fn enc_stxr_regs(size: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
+    (size << 30)
+        | (0b001000 << 24)
+        | ((rs & 0x1F) << 16)
+        | (o0 << 15)
+        | (0b11111 << 10)
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
 fn enc_stxr(size: u32, o0: u32) -> u32 {
-    (size << 30) | (0b001000 << 24) | (2 << 16) | (o0 << 15) | (0b11111 << 10) | (RN << 5) | 3
+    enc_stxr_regs(size, o0, 2, 3, RN)
 }
 
 /// LDAR/LDARB/LDARH <Rt>, [Rn]: `size 001000 1 1 0 11111 1 11111 Rn Rt`.
-fn enc_ldar(size: u32) -> u32 {
+fn enc_ldar_regs(size: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 23)
@@ -28220,20 +28391,28 @@ fn enc_ldar(size: u32) -> u32 {
         | (0b11111 << 16)
         | (1 << 15)
         | (0b11111 << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldar(size: u32) -> u32 {
+    enc_ldar_regs(size, RD, RN)
 }
 
 /// STLR/STLRB/STLRH <Rt>, [Rn]: `size 001000 1 0 0 11111 1 11111 Rn Rt`. Rt=x3.
-fn enc_stlr(size: u32) -> u32 {
+fn enc_stlr_regs(size: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 23)
         | (0b11111 << 16)
         | (1 << 15)
         | (0b11111 << 10)
-        | (RN << 5)
-        | 3
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_stlr(size: u32) -> u32 {
+    enc_stlr_regs(size, 3, RN)
 }
 
 /// AES single-block op: `0100111000 10100 opcode 10 Rn Rd`. Rn=v1, Rd=v0.
@@ -41024,18 +41203,76 @@ fn diff_excl_pair() {
     run_batch_pair("excl_pair", batch);
 }
 
+#[test]
+fn diff_excl_single_sp_base() {
+    let mut rng = Rng::new(0x1_0062);
+
+    let mut load_batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            for _ in 0..6 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                load_batch.push((
+                    format!("ldxr_sp sz{size} o0{o0}"),
+                    enc_ldxr_regs(size, o0, RD, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("excl_single_sp_load", load_batch);
+
+    let mut unarmed_store_batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            for _ in 0..6 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                unarmed_store_batch.push((
+                    format!("stxr_sp_unarmed sz{size} o0{o0}"),
+                    enc_stxr_regs(size, o0, 2, 3, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("excl_single_sp_unarmed_store", unarmed_store_batch);
+
+    let mut pair_batch: Vec<(String, u32, u32, ArmState)> = Vec::new();
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            for _ in 0..6 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                pair_batch.push((
+                    format!("ldxr_stxr_sp sz{size} o0{o0}"),
+                    enc_ldxr_regs(size, o0, RD, 31),
+                    enc_stxr_regs(size, o0, 2, 3, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch_pair("excl_single_sp_pair", pair_batch);
+}
+
 /// CAS: `size 0010001 L 1 Rs o0 11111 Rn Rt`. Rs=x2 (compare/old), Rn=x1, Rt=x0 (new).
-fn enc_cas(size: u32, l: u32, o0: u32) -> u32 {
+fn enc_cas_regs(size: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b001000 << 24)
         | (1 << 23)
         | (l << 22)
         | (1 << 21)
-        | (2 << 16)
+        | ((rs & 0x1F) << 16)
         | (o0 << 15)
         | (0b11111 << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_cas(size: u32, l: u32, o0: u32) -> u32 {
+    enc_cas_regs(size, l, o0, 2, RD, RN)
 }
 
 #[test]
@@ -41064,9 +41301,37 @@ fn diff_mem_cas() {
     run_batch("mem_cas", batch);
 }
 
+#[test]
+fn diff_mem_cas_sp_base() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for size in 0..4u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                cases.push((
+                    format!("cas_sp sz{size} l{l} o0{o0}"),
+                    enc_cas_regs(size, l, o0, 2, RD, 31),
+                ));
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0065);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for k in 0..12 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            if k % 2 == 0 {
+                st.x[2] = st.scratch[16];
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_cas_sp_base", batch);
+}
+
 /// LDXP: `1 sz 001000 0 1 1 11111 o0 Rt2 Rn Rt`. Rt=x4, Rt2=x5, Rn=x1.
 /// sz64 selects 64-bit (size=11) vs 32-bit (size=10) element pair.
-fn enc_ldxp(sz64: bool, o0: u32) -> u32 {
+fn enc_ldxp_regs(sz64: bool, o0: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
     let size = if sz64 { 3 } else { 2 };
     (size << 30)
         | (0b001000 << 24)
@@ -41074,15 +41339,30 @@ fn enc_ldxp(sz64: bool, o0: u32) -> u32 {
         | (1 << 21)
         | (0b11111 << 16)
         | (o0 << 15)
-        | (5 << 10)
-        | (RN << 5)
-        | 4
+        | ((rt2 & 0x1F) << 10)
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldxp(sz64: bool, o0: u32) -> u32 {
+    enc_ldxp_regs(sz64, o0, 4, 5, RN)
 }
 
 /// STXP: `1 sz 001000 0 0 1 Rs o0 Rt2 Rn Rt`. Rs=x6 (status), Rt=x4, Rt2=x5, Rn=x1.
-fn enc_stxp(sz64: bool, o0: u32) -> u32 {
+fn enc_stxp_regs(sz64: bool, o0: u32, rs: u32, rt: u32, rt2: u32, rn: u32) -> u32 {
     let size = if sz64 { 3 } else { 2 };
-    (size << 30) | (0b001000 << 24) | (1 << 21) | (6 << 16) | (o0 << 15) | (5 << 10) | (RN << 5) | 4
+    (size << 30)
+        | (0b001000 << 24)
+        | (1 << 21)
+        | ((rs & 0x1F) << 16)
+        | (o0 << 15)
+        | ((rt2 & 0x1F) << 10)
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_stxp(sz64: bool, o0: u32) -> u32 {
+    enc_stxp_regs(sz64, o0, 6, 4, 5, RN)
 }
 
 #[test]
@@ -41145,18 +41425,76 @@ fn diff_excl_stxp_unarmed() {
     run_batch("excl_stxp_unarmed", batch);
 }
 
+#[test]
+fn diff_excl_pair_sp_base() {
+    let mut rng = Rng::new(0x1_0063);
+
+    let mut load_batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            for _ in 0..8 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                load_batch.push((
+                    format!("ldxp_sp sz64{sz64} o0{o0}"),
+                    enc_ldxp_regs(sz64, o0, 4, 5, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("excl_pair_sp_load", load_batch);
+
+    let mut unarmed_store_batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            for _ in 0..8 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                unarmed_store_batch.push((
+                    format!("stxp_sp_unarmed sz64{sz64} o0{o0}"),
+                    enc_stxp_regs(sz64, o0, 6, 4, 5, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch("excl_pair_sp_unarmed_store", unarmed_store_batch);
+
+    let mut pair_batch: Vec<(String, u32, u32, ArmState)> = Vec::new();
+    for &sz64 in &[false, true] {
+        for o0 in 0..2 {
+            for _ in 0..8 {
+                let mut st = mem_input(&mut rng);
+                st.sp = SCRATCH_BASE + 64;
+                pair_batch.push((
+                    format!("ldxp_stxp_sp sz64{sz64} o0{o0}"),
+                    enc_ldxp_regs(sz64, o0, 4, 5, 31),
+                    enc_stxp_regs(sz64, o0, 6, 4, 5, 31),
+                    st,
+                ));
+            }
+        }
+    }
+    run_batch_pair("excl_pair_sp_pair", pair_batch);
+}
+
 /// CASP: `0 sz 001000 0 L 1 Rs o0 11111 Rn Rt`. Rs=x2:x3 (compare/old),
 /// Rt=x4:x5 (new), Rn=x1. sz selects 32-bit (0) or 64-bit (1) element pair.
-fn enc_casp(sz: u32, l: u32, o0: u32) -> u32 {
+fn enc_casp_regs(sz: u32, l: u32, o0: u32, rs: u32, rt: u32, rn: u32) -> u32 {
     (sz << 30)
         | (0b001000 << 24)
         | (l << 22)
         | (1 << 21)
-        | (2 << 16)
+        | ((rs & 0x1F) << 16)
         | (o0 << 15)
         | (0b11111 << 10)
-        | (RN << 5)
-        | 4
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_casp(sz: u32, l: u32, o0: u32) -> u32 {
+    enc_casp_regs(sz, l, o0, 2, 4, RN)
 }
 
 #[test]
@@ -41191,18 +41529,66 @@ fn diff_mem_casp() {
     run_batch("mem_casp", batch);
 }
 
+#[test]
+fn diff_mem_casp_sp_base() {
+    let mut cases: Vec<(String, u32, u32)> = Vec::new();
+    for sz in 0..2u32 {
+        for l in 0..2 {
+            for o0 in 0..2 {
+                cases.push((
+                    format!("casp_sp sz{sz} l{l} o0{o0}"),
+                    enc_casp_regs(sz, l, o0, 2, 4, 31),
+                    sz,
+                ));
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0066);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, sz) in &cases {
+        for k in 0..12 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            if k % 2 == 0 {
+                if *sz == 0 {
+                    st.x[2] = st.scratch[16] & 0xFFFF_FFFF;
+                    st.x[3] = st.scratch[16] >> 32;
+                } else {
+                    st.x[2] = st.scratch[16];
+                    st.x[3] = st.scratch[17];
+                }
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_casp_sp_base", batch);
+}
+
 /// Atomic memory op: `size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt`. Rs=x2, Rn=x1, Rt=x0.
-fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
+fn enc_atomic_regs(
+    size: u32,
+    a: u32,
+    r: u32,
+    o3: u32,
+    opc: u32,
+    rs: u32,
+    rn: u32,
+    rt: u32,
+) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (a << 23)
         | (r << 22)
         | (1 << 21)
-        | (2 << 16)
+        | ((rs & 0x1F) << 16)
         | (o3 << 15)
         | (opc << 12)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
+    enc_atomic_regs(size, a, r, o3, opc, 2, RN, RD)
 }
 
 /// LDAPR/LDAPRB/LDAPRH: atomic-memory-op space with Rs==31, o3==1, opc==100.
@@ -41250,6 +41636,42 @@ fn diff_mem_atomic() {
         }
     }
     run_batch("mem_atomic", batch);
+}
+
+#[test]
+fn diff_mem_atomic_sp_base() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b000, "ldadd"),
+        (0, 0b001, "ldclr"),
+        (0, 0b010, "ldeor"),
+        (0, 0b011, "ldset"),
+        (0, 0b100, "ldsmax"),
+        (0, 0b101, "ldsmin"),
+        (0, 0b110, "ldumax"),
+        (0, 0b111, "ldumin"),
+        (1, 0b000, "swp"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(o3, opc, name) in ops {
+        for size in 0..4u32 {
+            for &(a, r) in &[(0u32, 0u32), (1, 1)] {
+                cases.push((
+                    format!("{name}_sp sz{size} a{a}r{r}"),
+                    enc_atomic_regs(size, a, r, o3, opc, 2, 31, RD),
+                ));
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0067);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..6 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_atomic_sp_base", batch);
 }
 
 #[test]
@@ -41305,7 +41727,16 @@ fn diff_generated_memory_atomic_sweep() {
 }
 
 /// AdvSIMD load/store multiple structures: `0 Q 0011 0 0 post L rm opcode size Rn Rt`.
-fn enc_ldst_struct(q: u32, post: u32, l: u32, rm: u32, opcode: u32, size: u32) -> u32 {
+fn enc_ldst_struct_regs(
+    q: u32,
+    post: u32,
+    l: u32,
+    rm: u32,
+    opcode: u32,
+    size: u32,
+    rt: u32,
+    rn: u32,
+) -> u32 {
     (q << 30)
         | (0b001100 << 24)
         | (post << 23)
@@ -41313,8 +41744,12 @@ fn enc_ldst_struct(q: u32, post: u32, l: u32, rm: u32, opcode: u32, size: u32) -
         | (rm << 16)
         | (opcode << 12)
         | (size << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldst_struct(q: u32, post: u32, l: u32, rm: u32, opcode: u32, size: u32) -> u32 {
+    enc_ldst_struct_regs(q, post, l, rm, opcode, size, RD, RN)
 }
 
 #[test]
@@ -41361,6 +41796,50 @@ fn diff_mem_ldst_struct() {
         }
     }
     run_batch("mem_ldst_struct", batch);
+}
+
+#[test]
+fn diff_mem_ldst_struct_sp_base() {
+    let cases: Vec<(String, u32, Option<u64>)> = vec![
+        (
+            "ld1x1_sp_noff".into(),
+            enc_ldst_struct_regs(1, 0, 1, 0, 0b0111, 3, 0, 31),
+            None,
+        ),
+        (
+            "st1x2_sp_post_imm".into(),
+            enc_ldst_struct_regs(1, 1, 0, 31, 0b1010, 2, 0, 31),
+            None,
+        ),
+        (
+            "ld2_sp_post_reg".into(),
+            enc_ldst_struct_regs(0, 1, 1, RM, 0b1000, 1, 4, 31),
+            Some(24),
+        ),
+        (
+            "st3_sp_noff".into(),
+            enc_ldst_struct_regs(1, 0, 0, 0, 0b0100, 0, 8, 31),
+            None,
+        ),
+        (
+            "ld4_sp_post_imm".into(),
+            enc_ldst_struct_regs(0, 1, 1, 31, 0b0000, 2, 12, 31),
+            None,
+        ),
+    ];
+    let mut rng = Rng::new(0x1_0060);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, rm_value) in &cases {
+        for _ in 0..8 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            if let Some(value) = rm_value {
+                st.x[RM as usize] = *value;
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_struct_sp_base", batch);
 }
 
 /// Load/store pair: `opc 101 V 0 mode L imm7 Rt2 Rn Rt`.
@@ -41453,6 +41932,50 @@ fn diff_mem_ldp_stp() {
     run_batch("mem_ldp_stp", batch);
 }
 
+#[test]
+fn diff_mem_ldp_stp_sp_base() {
+    let cases: Vec<(String, u32)> = vec![
+        (
+            "ldp_x_sp_signed".into(),
+            enc_ldp_regs(0b10, 0, 0b10, 1, 0, RD, RM, 31),
+        ),
+        (
+            "stp_x_sp_signed_neg16".into(),
+            enc_ldp_regs(0b10, 0, 0b10, 0, 0x7e, RD, RM, 31),
+        ),
+        (
+            "ldp_x_sp_post".into(),
+            enc_ldp_regs(0b10, 0, 0b01, 1, 1, RD, RM, 31),
+        ),
+        (
+            "stp_x_sp_pre".into(),
+            enc_ldp_regs(0b10, 0, 0b11, 0, 1, RD, RM, 31),
+        ),
+        (
+            "ldp_q_sp_signed".into(),
+            enc_ldp_regs(0b10, 1, 0b10, 1, 0, 0, 1, 31),
+        ),
+        (
+            "stp_q_sp_pre".into(),
+            enc_ldp_regs(0b10, 1, 0b11, 0, 1, 0, 1, 31),
+        ),
+    ];
+
+    let mut rng = Rng::new(0x1_0004);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            let mut st = gen_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            for w in st.scratch.iter_mut() {
+                *w = rng.interesting();
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldp_stp_sp_base", batch);
+}
+
 /// Load/store register, unsigned immediate offset:
 /// `size 111 V 01 opc imm12 Rn Rt`. Rn=base (x1), Rt=Rd (x0/v0).
 fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
@@ -41468,19 +41991,23 @@ fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
 
 /// Load/store register, signed immediate offset:
 /// `size 111 V 00 opc 0 imm9 mode Rn Rt`. Rn=base (x1), Rt=Rd (x0/v0).
-fn enc_ldst_simm(size: u32, v: u32, opc: u32, mode: u32, imm9: i32) -> u32 {
+fn enc_ldst_simm_regs(size: u32, v: u32, opc: u32, mode: u32, imm9: i32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (v << 26)
         | (opc << 22)
         | (((imm9 as u32) & 0x1FF) << 12)
         | (mode << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldst_simm(size: u32, v: u32, opc: u32, mode: u32, imm9: i32) -> u32 {
+    enc_ldst_simm_regs(size, v, opc, mode, imm9, RD, RN)
 }
 
 /// Load/store register offset: `size 111000 opc 1 Rm option S 10 Rn Rt`.
-fn enc_ldst_reg(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
+fn enc_ldst_reg_regs(size: u32, opc: u32, rm: u32, option: u32, s: u32, rt: u32, rn: u32) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (opc << 22)
@@ -41489,12 +42016,28 @@ fn enc_ldst_reg(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
         | (option << 13)
         | (s << 12)
         | (0b10 << 10)
-        | (RN << 5)
-        | RD
+        | ((rn & 0x1F) << 5)
+        | (rt & 0x1F)
+}
+
+fn enc_ldst_reg(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
+    enc_ldst_reg_regs(size, opc, rm, option, s, RD, RN)
 }
 
 fn enc_ldst_reg_simdfp(size: u32, opc: u32, rm: u32, option: u32, s: u32) -> u32 {
     enc_ldst_reg(size, opc, rm, option, s) | (1 << 26)
+}
+
+fn enc_ldst_reg_simdfp_regs(
+    size: u32,
+    opc: u32,
+    rm: u32,
+    option: u32,
+    s: u32,
+    rt: u32,
+    rn: u32,
+) -> u32 {
+    enc_ldst_reg_regs(size, opc, rm, option, s, rt, rn) | (1 << 26)
 }
 
 /// PRFM register offset: `11 111000 0 0 1 Rm opc=10 option S 10 Rn Rt`.
@@ -41568,6 +42111,50 @@ fn diff_mem_ldst_imm() {
 }
 
 #[test]
+fn diff_mem_ldst_imm_sp_base() {
+    let cases: Vec<(String, u32)> = vec![
+        (
+            "ldr_x_sp_unscaled".into(),
+            enc_ldst_simm_regs(3, 0, 1, 0b00, 16, RD, 31),
+        ),
+        (
+            "str_x_sp_post".into(),
+            enc_ldst_simm_regs(3, 0, 0, 0b01, 16, RD, 31),
+        ),
+        (
+            "ldr_w_sp_pre".into(),
+            enc_ldst_simm_regs(2, 0, 1, 0b11, 16, RD, 31),
+        ),
+        (
+            "str_w_sp_unscaled_neg4".into(),
+            enc_ldst_simm_regs(2, 0, 0, 0b00, -4, RD, 31),
+        ),
+        (
+            "ldr_q_sp_unscaled".into(),
+            enc_ldst_simm_regs(0, 1, 3, 0b00, 16, 0, 31),
+        ),
+        (
+            "str_q_sp_pre".into(),
+            enc_ldst_simm_regs(0, 1, 2, 0b11, 16, 0, 31),
+        ),
+    ];
+
+    let mut rng = Rng::new(0x1_0005);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            let mut st = gen_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            for w in st.scratch.iter_mut() {
+                *w = rng.interesting();
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_imm_sp_base", batch);
+}
+
+#[test]
 fn diff_mem_ordered_unscaled() {
     let cases: &[(&str, u32)] = &[
         ("stlurb", 0x1900_1020),
@@ -41592,6 +42179,26 @@ fn diff_mem_ordered_unscaled() {
         }
     }
     run_batch("mem_ordered_unscaled", batch);
+}
+
+#[test]
+fn diff_mem_ordered_sp_base() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for size in 0..4u32 {
+        cases.push((format!("ldar_sp sz{size}"), enc_ldar_regs(size, RD, 31)));
+        cases.push((format!("stlr_sp sz{size}"), enc_stlr_regs(size, 3, 31)));
+    }
+
+    let mut rng = Rng::new(0x1_0064);
+    let mut batch = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            let mut st = mem_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ordered_sp_base", batch);
 }
 
 #[test]
@@ -41815,6 +42422,64 @@ fn diff_mem_ldst_simdfp_reg_offset_matrix() {
         }
     }
     run_batch("mem_ldst_simdfp_reg_offset_matrix", batch);
+}
+
+#[test]
+fn diff_mem_ldst_reg_offset_sp_base() {
+    let cases: Vec<(String, u32, u64)> = vec![
+        (
+            "ldr_x_sp_reg_lsl".into(),
+            enc_ldst_reg_regs(3, 1, RM, 0b011, 0, RD, 31),
+            16,
+        ),
+        (
+            "str_x_sp_reg_sxtx_neg8".into(),
+            enc_ldst_reg_regs(3, 0, RM, 0b111, 0, RD, 31),
+            (-8i64) as u64,
+        ),
+        (
+            "ldr_w_sp_reg_uxtw".into(),
+            enc_ldst_reg_regs(2, 1, RM, 0b010, 0, RD, 31),
+            12,
+        ),
+        (
+            "ldrsb_w_sp_reg_sxtw_neg8".into(),
+            enc_ldst_reg_regs(0, 3, RM, 0b110, 0, RD, 31),
+            (-8i32) as u64,
+        ),
+        (
+            "ldr_q_sp_reg_lsl".into(),
+            enc_ldst_reg_simdfp_regs(0, 3, RM, 0b011, 0, 0, 31),
+            16,
+        ),
+        (
+            "str_d_sp_reg_uxtw_lsl3".into(),
+            enc_ldst_reg_simdfp_regs(3, 0, RM, 0b010, 1, 0, 31),
+            2,
+        ),
+    ];
+
+    let mut rng = Rng::new(0x1_0054);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, rm_value) in &cases {
+        for _ in 0..6 {
+            let mut st = gen_input(&mut rng);
+            st.sp = SCRATCH_BASE + 64;
+            st.x[0] = 0x1122_3344_5566_7788;
+            st.x[2] = *rm_value;
+            st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
+            for word in &mut st.scratch {
+                *word = rng.interesting();
+            }
+            st.scratch[6] = 0x0000_0000_0000_0080;
+            st.scratch[7] = 0xffff_ffff_7fff_ff7f;
+            st.scratch[8] = 0x1111_2222_3333_4444;
+            st.scratch[9] = 0x5555_6666_7777_8888;
+            st.scratch[10] = 0x9999_aaaa_bbbb_cccc;
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("mem_ldst_reg_offset_sp_base", batch);
 }
 
 #[test]
