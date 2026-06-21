@@ -2021,7 +2021,9 @@ impl AArch64Cpu {
                     let r: u16 = match kind {
                         None => a, // FMOV
                         Some(TwoRegFp::Fabs) => a & 0x7FFF,
-                        Some(TwoRegFp::Fneg) => a ^ 0x8000,
+                        Some(TwoRegFp::Fneg) => {
+                            fp_neg_bits_with_fpcr(a as u64, 16, self.fpcr) as u16
+                        }
                         Some(TwoRegFp::Fsqrt) => fp16_sqrt_with_fpcr(a, self.fpcr),
                         Some(TwoRegFp::RintN) => fp16_frint_fixed_with_fpcr(a, 0, self.fpcr),
                         Some(TwoRegFp::RintX) | Some(TwoRegFp::RintI) => {
@@ -3417,7 +3419,7 @@ impl AArch64Cpu {
             let r: u16 = match (u, a, opcode) {
                 // Sign manipulation.
                 (0, 1, 0b01111) => s & 0x7FFF, // FABS
-                (1, 1, 0b01111) => s ^ 0x8000, // FNEG
+                (1, 1, 0b01111) => fp_neg_bits_with_fpcr(s as u64, 16, self.fpcr) as u16, // FNEG
                 // Square root and reciprocal-family estimates.
                 (1, 1, 0b11111) => fp16_sqrt_with_fpcr(s, self.fpcr), // FSQRT
                 (0, 1, 0b11111) => fp16_recpx(fp16_flush_input_with_fpcr(s, self.fpcr)), // FRECPX
@@ -4588,8 +4590,8 @@ impl AArch64Cpu {
         let mask = elem_mask((esize * 8) as u32);
         let e0 = vn as u64 & mask;
         let e1 = (vn >> (esize * 8)) as u64 & mask;
-        let r = sve_fp_combine_with_fpcr(kind, esize, e0, e1, self.fpcr);
-        self.fpsr |= fp_status_binop_with_fpcr(esize, kind, e0, e1, r, self.fpcr);
+        let r = sve_fp_pairwise_reduce_combine_with_fpcr(kind, esize, e0, e1, self.fpcr);
+        self.fpsr |= fp_pairwise_reduce_status_with_fpcr(esize, kind, e0, e1, r, self.fpcr);
         self.v[rd] = (r & mask) as u128;
         Ok(CpuExit::Continue)
     }
@@ -7763,7 +7765,7 @@ impl AArch64Cpu {
                         0b011010 => (v & mask).count_ones() as u64,             // CNT
                         0b011011 => u64::from(v & mask == 0),                   // CNOT
                         0b011100 if esize >= 2 => v & !signbit,                 // FABS
-                        0b011101 if esize >= 2 => v ^ signbit,                  // FNEG
+                        0b011101 if esize >= 2 => fp_neg_bits_with_fpcr(v, bits, self.fpcr), // FNEG
                         0b011110 => !v & mask,                                  // NOT
                         _ => return Ok(CpuExit::Undefined(insn)),
                     };
@@ -13331,14 +13333,17 @@ impl AArch64Cpu {
                 let dn1 = read_elem(&dn, odd_off, esize);
                 let m0 = read_elem(&m, even_off, esize);
                 let m1 = read_elem(&m, odd_off, esize);
-                let dnv = sve_fp_combine_with_fpcr(kind, esize, dn0, dn1, self.fpcr);
-                let mv = sve_fp_combine_with_fpcr(kind, esize, m0, m1, self.fpcr);
+                let dnv =
+                    sve_fp_pairwise_reduce_combine_with_fpcr(kind, esize, dn0, dn1, self.fpcr);
+                let mv =
+                    sve_fp_pairwise_reduce_combine_with_fpcr(kind, esize, m0, m1, self.fpcr);
                 if (pred >> even_off) & 1 == 1 {
                     self.fpsr |=
-                        fp_status_binop_with_fpcr(esize, kind, dn0, dn1, dnv, self.fpcr);
+                        fp_pairwise_reduce_status_with_fpcr(esize, kind, dn0, dn1, dnv, self.fpcr);
                 }
                 if (pred >> odd_off) & 1 == 1 {
-                    self.fpsr |= fp_status_binop_with_fpcr(esize, kind, m0, m1, mv, self.fpcr);
+                    self.fpsr |=
+                        fp_pairwise_reduce_status_with_fpcr(esize, kind, m0, m1, mv, self.fpcr);
                 }
                 write_elem(&mut res, even_off, esize, dnv);
                 write_elem(&mut res, odd_off, esize, mv);
@@ -20501,6 +20506,33 @@ fn fp_min_f64(a: f64, b: f64) -> f64 {
     }
 }
 
+#[inline]
+fn fp16_ah_nan_number(a: u16, b: u16) -> Option<u16> {
+    match (fp16_is_nan(a), fp16_is_nan(b)) {
+        (true, false) => Some(b),
+        (false, true) => Some(a),
+        _ => None,
+    }
+}
+
+#[inline]
+fn fp32_ah_nan_number(a: u32, b: u32) -> Option<u32> {
+    match (is_nan32(a), is_nan32(b)) {
+        (true, false) => Some(b),
+        (false, true) => Some(a),
+        _ => None,
+    }
+}
+
+#[inline]
+fn fp64_ah_nan_number(a: u64, b: u64) -> Option<u64> {
+    match (is_nan64(a), is_nan64(b)) {
+        (true, false) => Some(b),
+        (false, true) => Some(a),
+        _ => None,
+    }
+}
+
 /// Deterministic two-register-misc floating-point unary operation kind.
 #[derive(Clone, Copy, PartialEq)]
 enum TwoRegFp {
@@ -20642,6 +20674,7 @@ fn fp_two_reg_f32_with_fpcr(kind: TwoRegFp, bits: u32, fpcr: u32) -> u32 {
     };
     match kind {
         Fsqrt => fp32_sqrt_with_fpcr(bits, fpcr),
+        Fneg => fp_neg_bits_with_fpcr(bits as u64, 32, fpcr) as u32,
         RintX | RintI => {
             let x = f32::from_bits(bits);
             match (fpcr >> 22) & 0x3 {
@@ -20789,6 +20822,7 @@ fn fp_two_reg_f64_with_fpcr(kind: TwoRegFp, bits: u64, fpcr: u32) -> u64 {
     };
     match kind {
         Fsqrt => fp64_sqrt_with_fpcr(bits, fpcr),
+        Fneg => fp_neg_bits_with_fpcr(bits, 64, fpcr),
         RintX | RintI => {
             let x = f64::from_bits(bits);
             match (fpcr >> 22) & 0x3 {
@@ -21012,7 +21046,7 @@ fn fp_input_flush_enabled(esize: usize, fpcr: u32) -> bool {
 
 #[inline]
 fn fp_fz_input_status(esize: usize, x: u64, fpcr: u32) -> u32 {
-    if fpcr & FPCR_FZ == 0 {
+    if fpcr & (FPCR_FZ | FPCR_AH) == 0 {
         return 0;
     }
     match esize {
@@ -21718,7 +21752,13 @@ fn fp_three_same_status_with_fpcr(
         Recps => fp_status_recps_rsqrts_with_fpcr(esize, false, a, b, result, fpcr),
         Rsqrts => fp_status_recps_rsqrts_with_fpcr(esize, true, a, b, result, fpcr),
         CmEq => {
-            let status = fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr);
+            let status = if fpcr & FPCR_AH != 0
+                && (fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b))
+            {
+                0
+            } else {
+                fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr)
+            };
             if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
                 status | FPSR_IOC
             } else {
@@ -21726,7 +21766,13 @@ fn fp_three_same_status_with_fpcr(
             }
         }
         CmGe | CmGt | AcGe | AcGt => {
-            let status = fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr);
+            let status = if fpcr & FPCR_AH != 0
+                && (fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b))
+            {
+                0
+            } else {
+                fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr)
+            };
             if fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b) {
                 status | FPSR_IOC
             } else {
@@ -21796,6 +21842,15 @@ fn fp16_three_same_status_with_fpcr(
     r: u16,
     fpcr: u32,
 ) -> u32 {
+    if fpcr & FPCR_AH != 0
+        && matches!(
+            (u, a_bit, opcode),
+            (0, 0, 0b110) | (0, 1, 0b110) | (1, 0, 0b110) | (1, 1, 0b110)
+        )
+        && (fp16_is_nan(n) || fp16_is_nan(m))
+    {
+        return FPSR_IOC;
+    }
     if fpcr & FPCR_FZ16 == 0 {
         return fp16_three_same_status(u, a_bit, opcode, n, m, r);
     }
@@ -22333,6 +22388,14 @@ fn fp_status_binop_with_fpcr(
     result: u64,
     fpcr: u32,
 ) -> u32 {
+    if fpcr & FPCR_AH != 0
+        && (fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b))
+    {
+        if matches!(kind, FpKind::Max | FpKind::Maxp | FpKind::Min | FpKind::Minp) {
+            return FPSR_IOC;
+        }
+        return fp_status_binop(esize, kind, a, b, result);
+    }
     if fp_input_flush_enabled(esize, fpcr)
         && matches!(
             kind,
@@ -22389,6 +22452,8 @@ fn fp_status_binop_with_fpcr(
         }
     }
     fp_status_binop(esize, kind, a, b, result)
+        | fp_fz_input_status(esize, a, fpcr)
+        | fp_fz_input_status(esize, b, fpcr)
 }
 
 fn fp_status_fma_with_fpcr(
@@ -22437,6 +22502,9 @@ fn fp_status_fma_with_fpcr(
         }
     }
     fp_status_fma(esize, addend, op1, op2, result)
+        | fp_fz_input_status(esize, addend, fpcr)
+        | fp_fz_input_status(esize, op1, fpcr)
+        | fp_fz_input_status(esize, op2, fpcr)
 }
 
 fn fp_status_unop_f32(kind: Option<TwoRegFp>, a: u32, result: u32) -> u32 {
@@ -22896,6 +22964,11 @@ fn fp_three_same_f32_with_fpcr(kind: FpKind, a: u32, b: u32, d: u32, fpcr: u32) 
             return flush_output(n);
         }
     }
+    if fpcr & FPCR_AH != 0 && matches!(kind, Max | Min) {
+        if let Some(n) = fp32_ah_nan_number(a, b) {
+            return flush_output(n);
+        }
+    }
     if (fpcr >> 22) & 0x3 == 0
         || !matches!(kind, Add | Addp | Sub | Mul | Mulx | Mla | Mls | Recps | Rsqrts)
     {
@@ -23108,6 +23181,11 @@ fn fp_three_same_f64_with_fpcr(kind: FpKind, a: u64, b: u64, d: u64, fpcr: u32) 
     } else {
         fp_three_same_f64(kind, a, b, d)
     };
+    if fpcr & FPCR_AH != 0 && matches!(kind, Max | Min) {
+        if let Some(n) = fp64_ah_nan_number(a, b) {
+            return flush_output(n);
+        }
+    }
     if (fpcr >> 22) & 0x3 == 0
         || !matches!(kind, Add | Addp | Sub | Mul | Mulx | Mla | Mls | Recps | Rsqrts)
     {
@@ -23727,6 +23805,40 @@ fn sve_fp_combine_with_fpcr(kind: FpKind, esize: usize, x: u64, y: u64, fpcr: u3
     }
 }
 
+fn sve_fp_pairwise_reduce_combine_with_fpcr(
+    kind: FpKind,
+    esize: usize,
+    x: u64,
+    y: u64,
+    fpcr: u32,
+) -> u64 {
+    let fpcr = if fpcr & FPCR_AH != 0
+        && matches!(kind, FpKind::Max | FpKind::Maxp | FpKind::Min | FpKind::Minp)
+    {
+        fpcr & !FPCR_AH
+    } else {
+        fpcr
+    };
+    sve_fp_combine_with_fpcr(kind, esize, x, y, fpcr)
+}
+
+fn fp_pairwise_reduce_status_with_fpcr(
+    esize: usize,
+    kind: FpKind,
+    a: u64,
+    b: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
+    if fpcr & FPCR_AH != 0
+        && matches!(kind, FpKind::Max | FpKind::Maxp | FpKind::Min | FpKind::Minp)
+        && (fp_is_nan_bits(esize, a) || fp_is_nan_bits(esize, b))
+    {
+        return FPSR_IOC;
+    }
+    fp_status_binop_with_fpcr(esize, kind, a, b, result, fpcr)
+}
+
 /// Recursive split-in-half binary-tree reduction (the SVE "fast" reduction
 /// order): combine(reduce(low half), reduce(high half)). The low-index half is
 /// ALWAYS the first operand — this exact order is required for FP bit-exactness
@@ -23748,8 +23860,15 @@ fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize, fpcr: u32)
     let h = buf.len() / 2;
     let (lo, sl) = sve_fp_tree_reduce_status(&buf[..h], kind, esize, fpcr);
     let (hi, sh) = sve_fp_tree_reduce_status(&buf[h..], kind, esize, fpcr);
-    let r = sve_fp_combine_with_fpcr(kind, esize, lo, hi, fpcr);
-    (r, sl | sh | fp_status_binop_with_fpcr(esize, kind, lo, hi, r, fpcr))
+    let r = if buf.len() == 2 {
+        sve_fp_pairwise_reduce_combine_with_fpcr(kind, esize, lo, hi, fpcr)
+    } else {
+        sve_fp_combine_with_fpcr(kind, esize, lo, hi, fpcr)
+    };
+    (
+        r,
+        sl | sh | fp_pairwise_reduce_status_with_fpcr(esize, kind, lo, hi, r, fpcr),
+    )
 }
 
 /// Identity element used to pad inactive lanes in an SVE FP reduction.
@@ -25224,6 +25343,11 @@ fn sve_fp16_binop_with_fpcr(kind: FpKind, x: u16, y: u16, fpcr: u32) -> u16 {
     } else {
         (x, y)
     };
+    if fpcr & FPCR_AH != 0 && matches!(kind, Max | Min) {
+        if let Some(r) = fp16_ah_nan_number(x, y) {
+            return r;
+        }
+    }
     if (fpcr >> 22) & 0x3 == 0 || fp16_is_nan(x) || fp16_is_nan(y) {
         return sve_fp16_binop(kind, x, y);
     }
