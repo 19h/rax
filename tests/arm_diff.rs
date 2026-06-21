@@ -42319,6 +42319,13 @@ fn diff_sve_ftsmul() {
     // FTSMUL squares each lane and takes the sign from Zm bit0.
     let mut rng = Rng::new(0x7_4001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz) in [(1u32, 2usize), (2, 4), (3, 8)] {
         let insn = enc_sve_ftsmul(size);
         for _ in 0..20 {
@@ -42330,6 +42337,85 @@ fn diff_sve_ftsmul() {
             st.set_vreg(1, zn as u64, (zn >> 64) as u64);
             st.set_vreg(2, rng.next(), rng.next()); // Zm sign source
             batch.push((format!("ftsmul s{size}"), insn, st));
+        }
+        let zn_cases = match esz {
+            2 => [
+                ("zero", [0u64; 8]),
+                ("signed_zero", [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0]),
+                ("mixed", [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200]),
+            ],
+            4 => [
+                ("zero", [0u64; 8]),
+                (
+                    "signed_zero",
+                    [
+                        (-0.0f32).to_bits() as u64,
+                        0.0f32.to_bits() as u64,
+                        (-0.0f32).to_bits() as u64,
+                        0.0f32.to_bits() as u64,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+                (
+                    "mixed",
+                    [
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        2.0f32.to_bits() as u64,
+                        (-2.0f32).to_bits() as u64,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+            ],
+            _ => [
+                ("zero", [0u64; 8]),
+                (
+                    "signed_zero",
+                    [
+                        (-0.0f64).to_bits(),
+                        0.0f64.to_bits(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+                (
+                    "mixed",
+                    [
+                        1.0f64.to_bits(),
+                        (-1.0f64).to_bits(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+            ],
+        };
+        for (zn_name, zn_lanes) in zn_cases {
+            let zn = pack_lanes(esz, zn_lanes);
+            for (zm_name, zm_lanes) in [
+                ("sign0", [0u64; 8]),
+                ("sign1", [1u64; 8]),
+                ("alternating", [0u64, 1, 0, 1, 0, 1, 0, 1]),
+            ] {
+                let zm = pack_lanes(esz, zm_lanes);
+                let mut st = ArmState::zeroed();
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                batch.push((format!("ftsmul_s{size}_{zn_name}_{zm_name}"), insn, st));
+            }
         }
     }
     run_batch("sve_ftsmul", batch);
@@ -42434,6 +42520,13 @@ fn diff_sve_ftssel() {
     // FTSSEL selects 1.0 or Zn per Zm bit0, then conditionally negates per bit1.
     let mut rng = Rng::new(0x7_5001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz) in [(1u32, 2usize), (2, 4), (3, 8)] {
         let insn = enc_sve_ftssel(size);
         for _ in 0..20 {
@@ -42446,6 +42539,88 @@ fn diff_sve_ftssel() {
             st.set_vreg(2, rng.next(), rng.next()); // Zm select bits
             batch.push((format!("ftssel s{size}"), insn, st));
         }
+        let zn_cases = match esz {
+            2 => [
+                ("zero", [0u64; 8]),
+                ("signed_zero", [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0]),
+                ("mixed", [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200]),
+            ],
+            4 => [
+                ("zero", [0u64; 8]),
+                (
+                    "signed_zero",
+                    [
+                        (-0.0f32).to_bits() as u64,
+                        0.0f32.to_bits() as u64,
+                        (-0.0f32).to_bits() as u64,
+                        0.0f32.to_bits() as u64,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+                (
+                    "mixed",
+                    [
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        2.0f32.to_bits() as u64,
+                        (-2.0f32).to_bits() as u64,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+            ],
+            _ => [
+                ("zero", [0u64; 8]),
+                (
+                    "signed_zero",
+                    [
+                        (-0.0f64).to_bits(),
+                        0.0f64.to_bits(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+                (
+                    "mixed",
+                    [
+                        1.0f64.to_bits(),
+                        (-1.0f64).to_bits(),
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                ),
+            ],
+        };
+        let zm_cases = [
+            ("bits00", [0u64; 8]),
+            ("bits01", [1u64; 8]),
+            ("bits10", [2u64; 8]),
+            ("bits11", [3u64; 8]),
+            ("alternating", [0u64, 1, 2, 3, 0, 1, 2, 3]),
+        ];
+        for (zn_name, zn_lanes) in zn_cases {
+            let zn = pack_lanes(esz, zn_lanes);
+            for (zm_name, zm_lanes) in zm_cases {
+                let zm = pack_lanes(esz, zm_lanes);
+                let mut st = ArmState::zeroed();
+                st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                st.set_vreg(2, zm as u64, (zm >> 64) as u64);
+                batch.push((format!("ftssel_s{size}_{zn_name}_{zm_name}"), insn, st));
+            }
+        }
     }
     run_batch("sve_ftssel", batch);
 }
@@ -42456,6 +42631,13 @@ fn diff_sve_ftmad() {
     // immediate and the sign of Zm. Finite inputs; Zm sign varies.
     let mut rng = Rng::new(0x7_6001);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    let pack_lanes = |esz: usize, lanes: [u64; 8]| -> u128 {
+        let mut out = 0u128;
+        for lane in 0..(16 / esz) {
+            out |= (lanes[lane] as u128) << (lane * esz * 8);
+        }
+        out
+    };
     for (size, esz) in [(1u32, 2usize), (2, 4), (3, 8)] {
         for imm in 0..8u32 {
             let insn = enc_sve_ftmad(size, imm);
@@ -42469,6 +42651,229 @@ fn diff_sve_ftmad() {
                 st.set_vreg(0, zdn as u64, (zdn >> 64) as u64); // Zdn
                 st.set_vreg(1, zm as u64, (zm >> 64) as u64); // Zm
                 batch.push((format!("ftmad s{size} i{imm}"), insn, st));
+            }
+            let deterministic_cases = match esz {
+                2 => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
+                        [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
+                    ),
+                    (
+                        "mixed_pos",
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [0x3c00, 0x4000, 0x3800, 0x4200, 0x3e00, 0x4400, 0x3a00, 0x4100],
+                    ),
+                    (
+                        "mixed_neg",
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [0xbc00, 0xc000, 0xb800, 0xc200, 0xbe00, 0xc400, 0xba00, 0xc100],
+                    ),
+                    (
+                        "mixed_alt",
+                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [0x3c00, 0xc000, 0x3800, 0xc200, 0x3e00, 0xc400, 0x3a00, 0xc100],
+                    ),
+                ],
+                4 => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0.0f32.to_bits() as u64,
+                            (-0.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_pos",
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f32.to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            0.5f32.to_bits() as u64,
+                            3.0f32.to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_neg",
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            (-1.0f32).to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            (-0.5f32).to_bits() as u64,
+                            (-3.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_alt",
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                            0.5f32.to_bits() as u64,
+                            (-3.0f32).to_bits() as u64,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+                _ => [
+                    ("zero", [0u64; 8], [0u64; 8]),
+                    (
+                        "signed_zero",
+                        [
+                            (-0.0f64).to_bits(),
+                            0.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            0.0f64.to_bits(),
+                            (-0.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_pos",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f64.to_bits(),
+                            2.0f64.to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_neg",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            (-1.0f64).to_bits(),
+                            (-2.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    (
+                        "mixed_alt",
+                        [
+                            1.0f64.to_bits(),
+                            (-1.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                        [
+                            1.0f64.to_bits(),
+                            (-2.0f64).to_bits(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                ],
+            };
+            for (case_name, zdn_lanes, zm_lanes) in deterministic_cases {
+                let zdn = pack_lanes(esz, zdn_lanes);
+                let zm = pack_lanes(esz, zm_lanes);
+                let mut st = ArmState::zeroed();
+                st.set_vreg(0, zdn as u64, (zdn >> 64) as u64);
+                st.set_vreg(1, zm as u64, (zm >> 64) as u64);
+                batch.push((format!("ftmad_s{size}_i{imm}_{case_name}"), insn, st));
             }
         }
     }
@@ -43679,6 +44084,91 @@ fn diff_sve2_flogb() {
             st.set_vreg(0, rng.next(), rng.next()); // merge target (inactive lanes)
             st.set_preg(0, rng.next() as u16);
             batch.push((format!("flogb_{name}"), insn, st));
+        }
+        let pack_lanes = |values: &[u64]| -> u128 {
+            let mut out = 0u128;
+            for lane in 0..lanes {
+                out |= ((values[lane % values.len()] & mask) as u128) << (lane * esz * 8);
+            }
+            out
+        };
+        let pred_lanes = |active: &[usize]| -> u16 {
+            let mut pred = 0u16;
+            for &lane in active {
+                pred |= 1u16 << (lane * esz);
+            }
+            pred
+        };
+        let deterministic_cases: Vec<(&str, Vec<u64>)> = match esz {
+            2 => vec![
+                ("specials", specials.clone()),
+                (
+                    "finite_exponents",
+                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4400, 0xc400],
+                ),
+                (
+                    "normal_subnormal_edges",
+                    vec![0x0001, 0x8001, 0x03ff, 0x83ff, 0x0400, 0x8400, 0x7bff, 0xfbff],
+                ),
+            ],
+            4 => vec![
+                ("specials", specials.clone()),
+                (
+                    "finite_exponents",
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        2.0f32.to_bits() as u64,
+                        0.25f32.to_bits() as u64,
+                    ],
+                ),
+                (
+                    "normal_subnormal_edges",
+                    vec![0x0000_0001, 0x8000_0001, 0x007f_ffff, 0x0080_0000],
+                ),
+            ],
+            _ => vec![
+                ("specials", specials.clone()),
+                (
+                    "finite_exponents",
+                    vec![1.0f64.to_bits(), 0.25f64.to_bits()],
+                ),
+                (
+                    "normal_subnormal_edges",
+                    vec![0x0000_0000_0000_0001, 0x0010_0000_0000_0000],
+                ),
+            ],
+        };
+        let all_lanes: Vec<usize> = (0..lanes).collect();
+        let low_lanes: Vec<usize> = (0..(lanes / 2).max(1)).collect();
+        let alt_lanes: Vec<usize> = (0..lanes).step_by(2).collect();
+        let preds = [
+            ("none", 0u16),
+            ("low", pred_lanes(&low_lanes)),
+            ("alt", pred_lanes(&alt_lanes)),
+            ("all", pred_lanes(&all_lanes)),
+            ("all_bits", u16::MAX),
+        ];
+        let merges = [
+            ("zero", 0u64, 0u64),
+            ("ones", u64::MAX, u64::MAX),
+            ("bytes", 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
+        ];
+        for (case_name, values) in deterministic_cases {
+            let zn = pack_lanes(&values);
+            for &(merge_name, merge_lo, merge_hi) in &merges {
+                for &(pred_name, pred) in &preds {
+                    let mut st = ArmState::zeroed();
+                    st.set_vreg(1, zn as u64, (zn >> 64) as u64);
+                    st.set_vreg(0, merge_lo, merge_hi);
+                    st.set_preg(0, pred);
+                    batch.push((
+                        format!("flogb_{name}_{case_name}_{merge_name}_{pred_name}"),
+                        insn,
+                        st,
+                    ));
+                }
+            }
         }
     }
     run_batch("sve2_flogb", batch);
@@ -45603,6 +46093,30 @@ fn diff_sve_pfirst() {
                     st.set_preg(pg as usize, pg_val); // Pg
                 }
                 batch.push((format!("pfirst p{pg},p{pdn}"), insn, st));
+            }
+        }
+    }
+    for (pg, pdn, regs) in [(1u32, 0u32, "distinct"), (0, 0, "alias"), (15, 14, "high")] {
+        let insn = enc_pfirst(pg, pdn);
+        for (pdn_val, pg_val, pred_case) in [
+            (0x0000u16, 0x0000u16, "none"),
+            (0xffff, 0xffff, "all"),
+            (0x0000, 0x0001, "first"),
+            (0xffff, 0x8000, "last"),
+            (0xaaaa, 0x5555, "alternating"),
+        ] {
+            for nzcv in 0..16u64 {
+                let mut st = ArmState::zeroed();
+                st.pstate = nzcv << 28;
+                st.set_preg(pdn as usize, pdn_val);
+                if pg != pdn {
+                    st.set_preg(pg as usize, pg_val);
+                }
+                batch.push((
+                    format!("pfirst_{regs}_{pred_case}_nzcv{nzcv:x}"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
