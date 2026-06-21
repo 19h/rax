@@ -2783,6 +2783,166 @@ fn raw_el0_advsimd_bfcvt_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_advsimd_bfcvt_ah_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("bf16") {
+        eprintln!("[skip] host does not advertise AFP and AdvSIMD BF16");
+        return;
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    let lanes = [
+        0x7fa0_0001u32,
+        0x007f_ffffu32,
+        0x3f80_0001u32,
+        0x7f7f_ffffu32,
+    ];
+    for (label, bits) in [
+        ("snan", lanes[0]),
+        ("subnorm", lanes[1]),
+        ("inexact", lanes[2]),
+        ("overflow", lanes[3]),
+    ] {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[2] = u64::from(bits);
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[0x1e63_4020], setup); // bfcvt h0, s1
+        let interp = raw_interp_run(&[0x1e63_4020], setup);
+        assert_eq!(
+            hw.v[0] & 0xffff,
+            interp.v[0] & 0xffff,
+            "raw EL0 AdvSIMD AH bfcvt {label} h0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD AH bfcvt {label} FPSR mismatch"
+        );
+    }
+
+    let packed = u128::from(lanes[0])
+        | (u128::from(lanes[1]) << 32)
+        | (u128::from(lanes[2]) << 64)
+        | (u128::from(lanes[3]) << 96);
+    for (label, insn) in [
+        ("bfcvtn", 0x0ea1_6820),  // bfcvtn  v0.4h, v1.4s
+        ("bfcvtn2", 0x4ea1_6820), // bfcvtn2 v0.8h, v1.4s
+    ] {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[0] = 0xaaaa_aaaa_aaaa_aaaa;
+            g.v[1] = 0xbbbb_bbbb_bbbb_bbbb;
+            g.v[2] = packed as u64;
+            g.v[3] = (packed >> 64) as u64;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 AdvSIMD AH {label} v0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD AH {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_bfmlal_ah_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("bf16") {
+        eprintln!("[skip] host does not advertise AFP and AdvSIMD BF16");
+        return;
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    const ZN: u128 = 0x0001_0001_0001_0001_0001_0001_0001_0001;
+    const ZM: u128 = 0x3f80_3f80_3f80_3f80_3f80_3f80_3f80_3f80;
+    const ACC: u128 = 0x0000_0001_0000_0001_0000_0001_0000_0001;
+    let cases = [
+        ("bfmlalb_product", 0x2ec2_fc20, 0u128, ZN),
+        ("bfmlalb_acc", 0x2ec2_fc20, ACC, 0),
+        ("bfmlalb_idx_product", 0x0fc2_f020, 0, ZN),
+        ("bfmlalt_product", 0x6ec2_fc20, 0, ZN),
+        ("bfmlalt_acc", 0x6ec2_fc20, ACC, 0),
+        ("bfmlalt_idx_product", 0x4fc2_f020, 0, ZN),
+    ];
+
+    for (label, insn, rd, rn) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[0] = rd as u64;
+            g.v[1] = (rd >> 64) as u64;
+            g.v[2] = rn as u64;
+            g.v[3] = (rn >> 64) as u64;
+            g.v[4] = ZM as u64;
+            g.v[5] = (ZM >> 64) as u64;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 AdvSIMD AH {label} v0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD AH {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_advsimd_bfmlal_ah_nan_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("bf16") {
+        eprintln!("[skip] host does not advertise AFP and AdvSIMD BF16");
+        return;
+    }
+
+    const FPCR_AH: u64 = 1 << 1;
+    const STATUS_PATTERN: u128 = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00;
+    const NAN_PATTERN: u128 = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000;
+    const INF_ZERO_PATTERN: u128 = 0x3f80_0000_0000_0000_7f80_0000_0000_0001;
+    let cases = [
+        ("bfmlalb_status", 0x2ec2_fc20, STATUS_PATTERN),
+        ("bfmlalt_status", 0x6ec2_fc20, STATUS_PATTERN),
+        ("bfmlalb_idx_nan", 0x0ff2_f020, NAN_PATTERN),
+        ("bfmlalt_idx_nan", 0x4ff2_f020, NAN_PATTERN),
+        ("bfmlalb_idx_inf_zero", 0x0ff2_f020, INF_ZERO_PATTERN),
+        ("bfmlalt_idx_inf_zero", 0x4ff2_f020, INF_ZERO_PATTERN),
+    ];
+
+    for (label, insn, pattern) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            for reg in [0usize, 1, 2] {
+                g.v[2 * reg] = pattern as u64;
+                g.v[2 * reg + 1] = (pattern >> 64) as u64;
+            }
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 AdvSIMD AH {label} v0 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 AdvSIMD AH {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_advsimd_bf16_fmlal_fpcr_rounding_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("bf16") {
         eprintln!("[skip] host does not advertise AdvSIMD BF16");
@@ -14575,6 +14735,51 @@ fn raw_el0_sve_bfcvt_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_bfcvt_ah_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp")
+        || !host_has_aarch64_feature("sve")
+        || !host_has_aarch64_feature("sve2")
+        || !host_has_aarch64_feature("svebf16")
+    {
+        eprintln!("[skip] host does not advertise AFP and SVE2 + SVE BF16");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    const FPCR_AH: u64 = 1 << 1;
+    let packed = u128::from(0x7fa0_0001u32)
+        | (u128::from(0x007f_ffffu32) << 32)
+        | (u128::from(0x3f80_0001u32) << 64)
+        | (u128::from(0x7f7f_ffffu32) << 96);
+
+    for (label, insns) in [
+        ("bfcvt", [0x2598_e3e0, 0x658a_a020]),   // ptrue p0.s; bfcvt   z0.h, p0/m, z1.s
+        ("bfcvtnt", [0x2598_e3e0, 0x648a_a020]), // ptrue p0.s; bfcvtnt z0.h, p0/m, z1.s
+    ] {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[0] = 0xaaaa_aaaa_aaaa_aaaa;
+            g.v[1] = 0xbbbb_bbbb_bbbb_bbbb;
+            g.v[2] = packed as u64;
+            g.v[3] = (packed >> 64) as u64;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&insns, setup);
+        let interp = raw_interp_run(&insns, setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 SVE AH {label} z0 low-128 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 SVE AH {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_sve_bfcvt_fpcr_rounding_oracle_matches_interpreter() {
     if !host_has_aarch64_feature("sve")
         || !host_has_aarch64_feature("sve2")
@@ -14704,6 +14909,96 @@ fn raw_el0_sve_bf16_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 SVE BF16 z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_bfmlal_ah_subnormal_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("svebf16") {
+        eprintln!("[skip] host does not advertise AFP and SVE BF16");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    const FPCR_AH: u64 = 1 << 1;
+    const ZN: u128 = 0x0001_0001_0001_0001_0001_0001_0001_0001;
+    const ZM: u128 = 0x3f80_3f80_3f80_3f80_3f80_3f80_3f80_3f80;
+    const ACC: u128 = 0x0000_0001_0000_0001_0000_0001_0000_0001;
+    let cases = [
+        ("bfmlalb_product", 0x64e2_8020, 0u128, ZN),
+        ("bfmlalb_acc", 0x64e2_8020, ACC, 0),
+        ("bfmlalt_product", 0x64e2_8420, 0, ZN),
+        ("bfmlalt_acc", 0x64e2_8420, ACC, 0),
+    ];
+
+    for (label, insn, rd, rn) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            g.v[0] = rd as u64;
+            g.v[1] = (rd >> 64) as u64;
+            g.v[2] = rn as u64;
+            g.v[3] = (rn >> 64) as u64;
+            g.v[4] = ZM as u64;
+            g.v[5] = (ZM >> 64) as u64;
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 SVE AH {label} z0 low-128 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 SVE AH {label} FPSR mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_bfmlal_ah_nan_status_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("afp") || !host_has_aarch64_feature("svebf16") {
+        eprintln!("[skip] host does not advertise AFP and SVE BF16");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    const FPCR_AH: u64 = 1 << 1;
+    const STATUS_PATTERN: u128 = 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00;
+    const NAN_PATTERN: u128 = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000;
+    const INF_ZERO_PATTERN: u128 = 0x3f80_0000_0000_0000_7f80_0000_0000_0001;
+    let cases = [
+        ("bfmlalb_status", 0x64e2_8020, STATUS_PATTERN),
+        ("bfmlalt_status", 0x64e2_8420, STATUS_PATTERN),
+        ("bfmlalb_idx_nan", 0x64ea_4820, NAN_PATTERN),
+        ("bfmlalt_idx_nan", 0x64ea_4c20, NAN_PATTERN),
+        ("bfmlalb_idx_inf_zero", 0x64ea_4820, INF_ZERO_PATTERN),
+        ("bfmlalt_idx_inf_zero", 0x64ea_4c20, INF_ZERO_PATTERN),
+    ];
+
+    for (label, insn, pattern) in cases {
+        let setup = |g: &mut Aarch64GuestRegs| {
+            g.fpcr = FPCR_AH;
+            for reg in [0usize, 1, 2] {
+                g.v[2 * reg] = pattern as u64;
+                g.v[2 * reg + 1] = (pattern >> 64) as u64;
+            }
+            g.fpsr = 0;
+        };
+
+        let hw = raw_native_run_fp(&[insn], setup);
+        let interp = raw_interp_run(&[insn], setup);
+        assert_eq!(
+            (hw.v[0], hw.v[1]),
+            (interp.v[0], interp.v[1]),
+            "raw EL0 SVE AH {label} z0 low-128 mismatch"
+        );
+        assert_eq!(
+            hw.fpsr as u32, interp.fpsr as u32,
+            "raw EL0 SVE AH {label} FPSR mismatch"
         );
     }
 }
