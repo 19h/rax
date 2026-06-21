@@ -31133,6 +31133,54 @@ fn diff_fpcr_ah_fmlal_indexed_nan_status() {
     run_batch("fpcr_ah_fmlal_indexed_nan_status", batch);
 }
 
+#[test]
+fn diff_fmlal_indexed() {
+    let half_values: &[u16] = &[
+        0x0000, 0x8000, 0x0001, 0x03ff, 0x8001, 0x83ff, 0x3c00, 0xbc00, 0x4000, 0xc000,
+        0x3800, 0xb800, 0x4400, 0xc400,
+    ];
+    let mut rng = Rng::new(0x1_0026);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for q in 0..2u32 {
+        for top in 0..2u32 {
+            for sub in 0..2u32 {
+                for index in 0..8u32 {
+                    let insn = enc_fmlal_idx(q, top, sub, index);
+                    for _ in 0..8 {
+                        let mut st = ArmState::zeroed();
+                        for r in [RN as usize, RM as usize] {
+                            let mut packed = 0u128;
+                            for lane in 0..8 {
+                                let h = half_values[(rng.next() as usize) % half_values.len()];
+                                packed |= (h as u128) << (16 * lane);
+                            }
+                            st.set_vreg(r, packed as u64, (packed >> 64) as u64);
+                        }
+
+                        let mut acc = 0u128;
+                        for lane in 0..4 {
+                            let val = ((rng.next() % 33) as i64 - 16) as f32 * 0.5;
+                            acc |= (val.to_bits() as u128) << (32 * lane);
+                        }
+                        st.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
+
+                        let op = if sub == 0 { "fmlal" } else { "fmlsl" };
+                        let suffix = if top == 0 { "" } else { "2" };
+                        batch.push((
+                            format!("{op}{suffix}_idx_q{q}_i{index}"),
+                            insn,
+                            st,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    run_batch("fmlal_indexed", batch);
+}
+
 /// AdvSIMD load/store single structure:
 /// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
 fn enc_single_fields_regs(
@@ -31753,6 +31801,22 @@ fn enc_fp16_idx(q: u32, u: u32, opcode: u32, index: u32) -> u32 {
         | RD
 }
 
+fn enc_fp16_idx_scalar(u: u32, opcode: u32, index: u32) -> u32 {
+    let h = (index >> 2) & 1;
+    let l = (index >> 1) & 1;
+    let m = index & 1;
+    (1 << 30)
+        | (u << 29)
+        | (0b11111 << 24)
+        | (l << 21)
+        | (m << 20)
+        | (RM << 16)
+        | (opcode << 12)
+        | (h << 11)
+        | (RN << 5)
+        | RD
+}
+
 /// Scalar three-same FP16: `01 U 11110 a 10 Rm 00 opcode 1 Rn Rd`.
 fn enc_fp16_3s_scalar(u: u32, a: u32, opcode: u32) -> u32 {
     (1 << 30)
@@ -32264,6 +32328,36 @@ fn diff_simd_fp16_indexed() {
         }
     }
     run_batch("simd_fp16_indexed", batch);
+}
+
+#[test]
+fn diff_simd_scalar_fp16_indexed() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (0, 0b1001, "fmul"),
+        (1, 0b1001, "fmulx"),
+    ];
+    let mut rng = Rng::new(0x1_001d);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for &(u, opcode, name) in ops {
+        for index in 0..8u32 {
+            let insn = enc_fp16_idx_scalar(u, opcode, index);
+            for _ in 0..6 {
+                let mut st = ArmState::zeroed();
+                let (d_lo, _) = fp16_vec(&mut rng);
+                let (n_lo, _) = fp16_vec(&mut rng);
+                let (m_lo, m_hi) = fp16_vec(&mut rng);
+                st.set_vreg(RD as usize, d_lo, 0);
+                st.set_vreg(RN as usize, n_lo, 0);
+                st.set_vreg(RM as usize, m_lo, m_hi);
+                batch.push((format!("{name} scalar i{index}"), insn, st));
+            }
+        }
+    }
+
+    run_batch("simd_scalar_fp16_indexed", batch);
 }
 
 /// Advanced SIMD two-register miscellaneous (FP16):
@@ -32795,6 +32889,15 @@ fn enc_xar(imm6: u32) -> u32 {
     0xce82_0020 | ((imm6 & 0x3f) << 10)
 }
 
+fn enc_crypto_ce(grp: u32, rm: u32, o: u32) -> u32 {
+    0xCE00_0000
+        | ((grp & 0x7) << 21)
+        | ((rm & 0x1F) << 16)
+        | ((o & 0x3F) << 10)
+        | (RN << 5)
+        | RD
+}
+
 #[test]
 fn diff_crypto_sha512_sha3() {
     let mut cases: Vec<(String, u32)> = vec![
@@ -32870,6 +32973,36 @@ fn diff_crypto_sha512_sha3_edges() {
     }
 
     run_batch("crypto_sha512_sha3_edges", batch);
+}
+
+#[test]
+fn diff_crypto_unallocated_edges() {
+    let mut rng = Rng::new(0x1_0025);
+    let cases: &[(String, u32)] = &[
+        ("reserved_aes_opcode0".to_string(), enc_aes(0b00000)),
+        ("reserved_aes_opcode3".to_string(), enc_aes(0b00011)),
+        ("reserved_aes_opcode8".to_string(), enc_aes(0b01000)),
+        ("reserved_aes_opcode31".to_string(), enc_aes(0b11111)),
+        ("reserved_sha2_opcode3".to_string(), enc_sha2(0b00011)),
+        ("reserved_sha2_opcode7".to_string(), enc_sha2(0b00111)),
+        ("reserved_sha2_opcode31".to_string(), enc_sha2(0b11111)),
+        ("reserved_sha3_opcode7".to_string(), enc_sha3(0b111)),
+        ("reserved_ce_grp0_o32".to_string(), enc_crypto_ce(0b000, RM, 0b100000)),
+        ("reserved_ce_grp1_o32".to_string(), enc_crypto_ce(0b001, RM, 0b100000)),
+        ("reserved_ce_grp2_o48".to_string(), enc_crypto_ce(0b010, RM, 0b110000)),
+        ("reserved_ce_grp3_o36".to_string(), enc_crypto_ce(0b011, RM, 0b100100)),
+        ("reserved_ce_grp3_o51".to_string(), enc_crypto_ce(0b011, RM, 0b110011)),
+        ("reserved_ce_grp5".to_string(), enc_crypto_ce(0b101, RM, 0)),
+        ("reserved_ce_grp6_o34".to_string(), enc_crypto_ce(0b110, 0, 0b100010)),
+    ];
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *insn, gen_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0_legality("crypto_unallocated_edges", batch);
 }
 
 /// SM4E Vd.4S, Vn.4S: `11001110 11000000 100001 Rn Rd`. Rd=v0, Rn=v1.
@@ -33645,6 +33778,20 @@ fn diff_simd_fcmla_indexed_f16_invalid_products() {
 
 /// FCMLA by element: `0 Q 1 01111 size L M Rm 0 rot 1 H 0 Rn Rd`. Vm=M:Rm (=v2),
 /// Rd=v0, Rn=v1. rot=bits[14:13], index=H:L (f16) / H (f32).
+fn enc_fcmla_idx_raw(q: u32, size: u32, rot: u32, h: u32, l: u32) -> u32 {
+    (q << 30)
+        | (1 << 29)
+        | (0b01111 << 24)
+        | (size << 22)
+        | ((l & 1) << 21)
+        | (RM << 16)
+        | (rot << 13)
+        | (1 << 12)
+        | ((h & 1) << 11)
+        | (RN << 5)
+        | RD
+}
+
 fn enc_fcmla_idx(q: u32, size: u32, rot: u32, index: u32) -> u32 {
     // For f16 index=H:L (2 bits); for f32 index=H (1 bit, L must be 0).
     let (h, l) = if size == 0b01 {
@@ -33652,17 +33799,7 @@ fn enc_fcmla_idx(q: u32, size: u32, rot: u32, index: u32) -> u32 {
     } else {
         (index & 1, 0)
     };
-    (q << 30)
-        | (1 << 29)
-        | (0b01111 << 24)
-        | (size << 22)
-        | (l << 21)
-        | (RM << 16)
-        | (rot << 13)
-        | (1 << 12)
-        | (h << 11)
-        | (RN << 5)
-        | RD
+    enc_fcmla_idx_raw(q, size, rot, h, l)
 }
 
 #[test]
@@ -33703,6 +33840,30 @@ fn diff_simd_complex_indexed() {
         }
     }
     run_batch("simd_complex_indexed", batch);
+}
+
+#[test]
+fn diff_simd_complex_indexed_unallocated_edges() {
+    let cases = vec![
+        ("fcmla_idx_size0".into(), enc_fcmla_idx_raw(1, 0b00, 0, 0, 0)),
+        ("fcmla_idx_size3".into(), enc_fcmla_idx_raw(1, 0b11, 0, 0, 0)),
+        ("fcmla_idx_f16_q0_h1_l0".into(), enc_fcmla_idx_raw(0, 0b01, 0, 1, 0)),
+        ("fcmla_idx_f16_q0_h1_l1".into(), enc_fcmla_idx_raw(0, 0b01, 0, 1, 1)),
+        ("fcmla_idx_f32_q0".into(), enc_fcmla_idx_raw(0, 0b10, 0, 0, 0)),
+        ("fcmla_idx_f32_l1".into(), enc_fcmla_idx_raw(1, 0b10, 0, 0, 1)),
+    ];
+    let mut rng = Rng::new(0x1_001e);
+    let mut batch = Vec::new();
+
+    for (label, insn) in cases {
+        let mut st = ArmState::zeroed();
+        st.set_vreg(RD as usize, rng.next(), rng.next());
+        st.set_vreg(RN as usize, rng.next(), rng.next());
+        st.set_vreg(RM as usize, rng.next(), rng.next());
+        batch.push((label, insn, st));
+    }
+
+    run_batch("simd_complex_indexed_unallocated_edges", batch);
 }
 
 #[test]
@@ -34414,10 +34575,10 @@ fn enc_sve2_pred_alu(size: u32, opc6: u32, op3: u32) -> u32 {
     (0x44 << 24) | (size << 22) | (opc6 << 16) | (op3 << 13) | (RN << 5) | RD
 }
 
-/// SVE2 CMLA by indexed element: `0100 0100 size 1 <idx:Zm> 0110 rot Zn Zda`.
-/// size 2=.h,3=.s; .h: index=bits[20:19] Zm=bits[18:16]; .s: index=bit20
-/// Zm=bits[19:16]. rot=bits[11:10]. Zn=z1(RN), Zda=z0(RD).
-fn enc_sve2_cmla_idx(size: u32, index: u32, zm: u32, rot: u32) -> u32 {
+/// SVE2 CMLA/SQRDCMLAH by indexed element: `0100 0100 size 1 <idx:Zm> 011 sat
+/// rot Zn Zda`. size 2=.h,3=.s; .h: index=bits[20:19] Zm=bits[18:16]; .s:
+/// index=bit20 Zm=bits[19:16]. rot=bits[11:10]. Zn=z1(RN), Zda=z0(RD).
+fn enc_sve2_cmla_idx_raw(size: u32, sat: u32, index: u32, zm: u32, rot: u32) -> u32 {
     let field = if size == 2 {
         ((index & 0x3) << 3) | (zm & 0x7)
     } else {
@@ -34428,9 +34589,14 @@ fn enc_sve2_cmla_idx(size: u32, index: u32, zm: u32, rot: u32) -> u32 {
         | (1 << 21)
         | (field << 16)
         | (0b0110 << 12)
+        | ((sat & 1) << 12)
         | (rot << 10)
         | (RN << 5)
         | RD
+}
+
+fn enc_sve2_cmla_idx(size: u32, index: u32, zm: u32, rot: u32) -> u32 {
+    enc_sve2_cmla_idx_raw(size, 0, index, zm, rot)
 }
 
 /// SVE FCMLA by indexed element: like enc_sve2_cmla_idx but 0x64 / opcode 0001.
@@ -44591,6 +44757,30 @@ fn diff_sve2_cmla_indexed() {
         }
     }
     run_batch("sve2_cmla_indexed", batch);
+}
+
+#[test]
+fn diff_sve2_cmla_indexed_unallocated_edges() {
+    let mut rng = Rng::new(0x7_a005);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+
+    for size in 0..2u32 {
+        for sat in 0..2u32 {
+            for rot in 0..4u32 {
+                let label = if sat == 0 { "cmla" } else { "sqrdcmlah" };
+                let insn = enc_sve2_cmla_idx_raw(size, sat, 0, RM, rot);
+                for _ in 0..6 {
+                    batch.push((
+                        format!("{label}_idx_unallocated_size{size}_rot{rot}"),
+                        insn,
+                        gen_sve_input(&mut rng),
+                    ));
+                }
+            }
+        }
+    }
+
+    run_batch_el0_legality("sve2_cmla_indexed_unallocated_edges", batch);
 }
 
 #[test]
@@ -58238,6 +58428,40 @@ fn diff_fp_scalar() {
         }
     }
     run_batch("fp_scalar", batch);
+}
+
+#[test]
+fn diff_fp_scalar_unallocated_edges() {
+    let cases: &[(String, u32)] = &[
+        ("fp3_reserved_ptype".into(), enc_fp3(0b10, 0, 0)),
+        ("fp2_reserved_ptype".into(), enc_fp2(0b10, 0b0010)),
+        ("fp2_f32_reserved_opcode9".into(), enc_fp2(0b00, 0b1001)),
+        ("fp2_f64_reserved_opcode15".into(), enc_fp2(0b01, 0b1111)),
+        ("fp2_f16_reserved_opcode9".into(), enc_fp2(0b11, 0b1001)),
+        ("fp1_reserved_ptype".into(), enc_fp1(0b10, 0b000000)),
+        ("fp1_f32_reserved_opcode13".into(), enc_fp1(0b00, 0b01101)),
+        ("fp1_f64_reserved_opcode20".into(), enc_fp1(0b01, 0b10100)),
+        ("fp1_f16_frint32z".into(), enc_fp1(0b11, 0b10000)),
+        ("fp1_f16_frint64x".into(), enc_fp1(0b11, 0b10011)),
+        ("fp1_f32_bfcvt_opcode".into(), enc_fp1(0b00, 0b00110)),
+        ("fp1_f16_bfcvt_opcode".into(), enc_fp1(0b11, 0b00110)),
+        ("fp_imm_reserved_ptype".into(), enc_fp_imm(0b10, 0x70, RD)),
+        ("fcmp_reg_reserved_ptype".into(), enc_fcmp_reg(0b10)),
+        ("fcmp_zero_reserved_ptype".into(), enc_fcmp_zero(0b10)),
+        (
+            "fccmp_reserved_ptype".into(),
+            enc_fccmp_reg(0b10, false, 0b1110, 0),
+        ),
+    ];
+    let mut rng = Rng::new(0xF10A_00FF);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in cases {
+        for _ in 0..6 {
+            batch.push((label.clone(), *insn, gen_input(&mut rng)));
+        }
+    }
+
+    run_batch_el0_legality("fp_scalar_unallocated_edges", batch);
 }
 
 #[test]

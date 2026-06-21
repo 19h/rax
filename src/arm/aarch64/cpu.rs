@@ -5089,7 +5089,8 @@ impl AArch64Cpu {
     /// Execute Advanced SIMD "vector x indexed element" instructions: the second
     /// multiplicand is a single broadcast lane of Vm. Covers integer MUL/MLA/MLS,
     /// the saturating doubling family, the widening L-forms, and FP FMUL/FMLA/
-    /// FMLS/FMULX. (FP16-indexed, FMLAL-indexed and FCMLA are not yet handled.)
+    /// FMLS/FMULX. FMLAL and FCMLA indexed forms are dispatched before this
+    /// generic handler because they overlap the indexed-element opcode space.
     fn exec_simd_indexed(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
@@ -9531,8 +9532,8 @@ impl AArch64Cpu {
             // The second factor is a single element Zm[index] broadcast to every
             // lane; the (index, Zm) packing depends on the element size.
             // bits[15:10] selects MUL/SQDMULH/SQRDMULH (1111xx), MLA/MLS
-            // (00001x) or SQRDMLAH/SQRDMLSH (00010x). Other op fields (SMLALB,
-            // CMLA, ...) fall through to the unimplemented arm.
+            // (00001x) or SQRDMLAH/SQRDMLSH (00010x). Widening and complex
+            // indexed forms have their own dispatch arms below.
             0b010
                 if (insn >> 24) & 0xFF == 0b01000100
                     && (insn >> 21) & 1 == 1
