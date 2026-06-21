@@ -2521,6 +2521,714 @@ fn raw_el0_sve_memory_oracle_matches_interpreter() {
 }
 
 #[test]
+fn raw_el0_sve_memory_extra_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e020, // ptrue p0.d, vl1
+        0xa480_a020, // ld1sw { z0.d }, p0/z, [x1]
+        0xe560_e040, // st1w  { z0.d }, p0, [x2]
+        0x2598_e041, // ptrue p1.s, vl2
+        0xa520_a483, // ld1sh { z3.s }, p1/z, [x4]
+        0xe4c0_e4a3, // st1h  { z3.s }, p1, [x5]
+        0x8540_c4e6, // ld1rw { z6.s }, p1/z, [x7]
+        0x8580_4128, // ldr   z8, [x9]
+        0xe580_4148, // str   z8, [x10]
+        0x8580_0162, // ldr   p2, [x11]
+        0xe580_0182, // str   p2, [x12]
+    ];
+
+    let native_w_in = [0xffff_ff80u32, 0x0000_007fu32];
+    let mut native_w_out = [0xcccc_ccccu32; 2];
+    let native_h_in = [0xff80u16, 0x007fu16, 0x1234u16, 0x5678u16];
+    let mut native_h_out = [0xccccu16; 4];
+    let native_repl_in = [0x1122_3344u32];
+    let native_z_in: [u8; 16] = std::array::from_fn(|i| 0xa0 + i as u8);
+    let mut native_z_out = [0xccu8; 16];
+    let native_p_in = [0xa5u8, 0x03];
+    let mut native_p_out = [0xccu8; 2];
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_w_in.as_ptr() as u64;
+        g.x[2] = native_w_out.as_mut_ptr() as u64;
+        g.x[4] = native_h_in.as_ptr() as u64;
+        g.x[5] = native_h_out.as_mut_ptr() as u64;
+        g.x[7] = native_repl_in.as_ptr() as u64;
+        g.x[9] = native_z_in.as_ptr() as u64;
+        g.x[10] = native_z_out.as_mut_ptr() as u64;
+        g.x[11] = native_p_in.as_ptr() as u64;
+        g.x[12] = native_p_out.as_mut_ptr() as u64;
+    });
+
+    const W_IN: u64 = 0x30_000;
+    const W_OUT: u64 = 0x31_000;
+    const H_IN: u64 = 0x32_000;
+    const H_OUT: u64 = 0x33_000;
+    const REPL_IN: u64 = 0x34_000;
+    const Z_IN: u64 = 0x35_000;
+    const Z_OUT: u64 = 0x36_000;
+    const P_IN: u64 = 0x37_000;
+    const P_OUT: u64 = 0x38_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_w_in.iter().copied().enumerate() {
+        interp
+            .write_memory(W_IN + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_w_out.iter().copied().enumerate() {
+        interp
+            .write_memory(W_OUT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_h_in.iter().copied().enumerate() {
+        interp
+            .write_memory(H_IN + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_h_out.iter().copied().enumerate() {
+        interp
+            .write_memory(H_OUT + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    interp
+        .write_memory(REPL_IN, &native_repl_in[0].to_le_bytes())
+        .unwrap();
+    interp.write_memory(Z_IN, &native_z_in).unwrap();
+    interp.write_memory(Z_OUT, &[0xccu8; 16]).unwrap();
+    interp.write_memory(P_IN, &native_p_in).unwrap();
+    interp.write_memory(P_OUT, &[0xccu8; 2]).unwrap();
+    interp.set_x(1, W_IN);
+    interp.set_x(2, W_OUT);
+    interp.set_x(4, H_IN);
+    interp.set_x(5, H_OUT);
+    interp.set_x(7, REPL_IN);
+    interp.set_x(9, Z_IN);
+    interp.set_x(10, Z_OUT);
+    interp.set_x(11, P_IN);
+    interp.set_x(12, P_OUT);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 3, 6, 8] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE extra memory z{reg} low-128 mismatch"
+        );
+    }
+    for (label, native, addr) in [
+        ("st1w lane 0", native_w_out[0], W_OUT),
+        ("st1w inactive lane", native_w_out[1], W_OUT + 4),
+    ] {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(addr).unwrap(),
+            "raw EL0 SVE extra memory {label}"
+        );
+    }
+    for (label, native, addr) in [
+        ("st1h lane 0", native_h_out[0], H_OUT),
+        ("st1h lane 1", native_h_out[1], H_OUT + 2),
+        ("st1h inactive lane 2", native_h_out[2], H_OUT + 4),
+        ("st1h inactive lane 3", native_h_out[3], H_OUT + 6),
+    ] {
+        assert_eq!(
+            native,
+            interp.mem_read_u16(addr).unwrap(),
+            "raw EL0 SVE extra memory {label}"
+        );
+    }
+    for (offset, byte) in native_z_out.iter().copied().enumerate() {
+        assert_eq!(
+            byte,
+            interp.mem_read_u8(Z_OUT + offset as u64).unwrap(),
+            "raw EL0 SVE extra memory str z8 byte {offset}"
+        );
+    }
+    for (offset, byte) in native_p_out.iter().copied().enumerate() {
+        assert_eq!(
+            byte,
+            interp.mem_read_u8(P_OUT + offset as u64).unwrap(),
+            "raw EL0 SVE extra memory str p2 byte {offset}"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_indexed_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e3e0, // ptrue p0.d
+        0xa5e2_4020, // ld1d  { z0.d }, p0/z, [x1, x2, lsl #3]
+        0xe5e4_4060, // st1d  { z0.d }, p0, [x3, x4, lsl #3]
+        0xc567_c0c5, // ld1w  { z5.d }, p0/z, [x6, z7.d, lsl #2]
+        0xe52a_a128, // st1w  { z8.d }, p0, [x9, z10.d, lsl #2]
+        0x2598_e061, // ptrue p1.s, vl3
+        0x84ad_458b, // ld1h  { z11.s }, p1/z, [x12, z13.s, uxtw #1]
+        0xe4f0_85ee, // st1h  { z14.s }, p1, [x15, z16.s, uxtw #1]
+    ];
+    let pack_d = |a: u64, b: u64| -> (u64, u64) { (a, b) };
+    let pack_s = |a: u32, b: u32, c: u32, d: u32| -> (u64, u64) {
+        let lo = u64::from(a) | (u64::from(b) << 32);
+        let hi = u64::from(c) | (u64::from(d) << 32);
+        (lo, hi)
+    };
+
+    let native_ld1d_in = [
+        0x0101_0101_0101_0101u64,
+        0x1111_2222_3333_4444,
+        0x5555_6666_7777_8888,
+        0x9999_aaaa_bbbb_cccc,
+    ];
+    let mut native_st1d_out = [0xcccc_cccc_cccc_ccccu64; 5];
+    let native_gather_w_in = [0x1122_3344u32, 0xcccc_cccc, 0x8877_6655, 0xdddd_dddd];
+    let mut native_scatter_w_out = [0xcccc_ccccu32; 5];
+    let native_gather_h_in = [0x1111u16, 0xcccc, 0x2222, 0xdddd, 0x3333, 0xeeee];
+    let mut native_scatter_h_out = [0xccccu16; 7];
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_ld1d_in.as_ptr() as u64;
+        g.x[2] = 1;
+        g.x[3] = native_st1d_out.as_mut_ptr() as u64;
+        g.x[4] = 2;
+        g.x[6] = native_gather_w_in.as_ptr() as u64;
+        g.x[9] = native_scatter_w_out.as_mut_ptr() as u64;
+        g.x[12] = native_gather_h_in.as_ptr() as u64;
+        g.x[15] = native_scatter_h_out.as_mut_ptr() as u64;
+        let (lo, hi) = pack_d(0, 2);
+        g.v[14] = lo; // z7.d offsets
+        g.v[15] = hi;
+        let (lo, hi) = pack_d(0xaabb_ccdd, 0x5566_7788);
+        g.v[16] = lo; // z8.d scatter values
+        g.v[17] = hi;
+        let (lo, hi) = pack_d(1, 3);
+        g.v[20] = lo; // z10.d offsets
+        g.v[21] = hi;
+        let (lo, hi) = pack_s(0, 2, 4, 6);
+        g.v[26] = lo; // z13.s offsets
+        g.v[27] = hi;
+        let (lo, hi) = pack_s(0xabcd, 0x5678, 0x2468, 0x1357);
+        g.v[28] = lo; // z14.s scatter values
+        g.v[29] = hi;
+        let (lo, hi) = pack_s(1, 3, 5, 7);
+        g.v[32] = lo; // z16.s offsets
+        g.v[33] = hi;
+    });
+
+    const LD1D_IN: u64 = 0x39_000;
+    const ST1D_OUT: u64 = 0x3a_000;
+    const GATHER_W_IN: u64 = 0x3b_000;
+    const SCATTER_W_OUT: u64 = 0x3c_000;
+    const GATHER_H_IN: u64 = 0x3d_000;
+    const SCATTER_H_OUT: u64 = 0x3e_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_ld1d_in.iter().copied().enumerate() {
+        interp
+            .write_memory(LD1D_IN + (i * 8) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_st1d_out.iter().copied().enumerate() {
+        interp
+            .write_memory(ST1D_OUT + (i * 8) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_gather_w_in.iter().copied().enumerate() {
+        interp
+            .write_memory(GATHER_W_IN + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_scatter_w_out.iter().copied().enumerate() {
+        interp
+            .write_memory(SCATTER_W_OUT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_gather_h_in.iter().copied().enumerate() {
+        interp
+            .write_memory(GATHER_H_IN + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_scatter_h_out.iter().copied().enumerate() {
+        interp
+            .write_memory(SCATTER_H_OUT + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    interp.set_x(1, LD1D_IN);
+    interp.set_x(2, 1);
+    interp.set_x(3, ST1D_OUT);
+    interp.set_x(4, 2);
+    interp.set_x(6, GATHER_W_IN);
+    interp.set_x(9, SCATTER_W_OUT);
+    interp.set_x(12, GATHER_H_IN);
+    interp.set_x(15, SCATTER_H_OUT);
+    for (reg, (lo, hi)) in [
+        (7u8, pack_d(0, 2)),
+        (8, pack_d(0xaabb_ccdd, 0x5566_7788)),
+        (10, pack_d(1, 3)),
+        (13, pack_s(0, 2, 4, 6)),
+        (14, pack_s(0xabcd, 0x5678, 0x2468, 0x1357)),
+        (16, pack_s(1, 3, 5, 7)),
+    ] {
+        interp.set_simd_reg(reg, lo, hi).unwrap();
+    }
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 5, 11] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE indexed memory z{reg} low-128 mismatch"
+        );
+    }
+    for (i, native) in native_st1d_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u64(ST1D_OUT + (i * 8) as u64).unwrap(),
+            "raw EL0 SVE indexed memory st1d slot {i}"
+        );
+    }
+    for (i, native) in native_scatter_w_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(SCATTER_W_OUT + (i * 4) as u64).unwrap(),
+            "raw EL0 SVE indexed memory scatter-w slot {i}"
+        );
+    }
+    for (i, native) in native_scatter_h_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u16(SCATTER_H_OUT + (i * 2) as u64).unwrap(),
+            "raw EL0 SVE indexed memory scatter-h slot {i}"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_vector_base_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e3e0, // ptrue p0.d
+        0xc520_c020, // ld1w { z0.d }, p0/z, [z1.d]
+        0xe540_a062, // st1w { z2.d }, p0, [z3.d]
+        0xc521_c0a4, // ld1w { z4.d }, p0/z, [z5.d, #4]
+        0xe541_a0e6, // st1w { z6.d }, p0, [z7.d, #4]
+    ];
+    let pack_d = |a: u64, b: u64| -> (u64, u64) { (a, b) };
+
+    let native_load_direct = [0x1111_2222u32, 0x3333_4444];
+    let native_load_imm = [0xaaaa_0000u32, 0x5555_6666, 0xbbbb_0000, 0x7777_8888];
+    let mut native_store_direct = [0xcccc_ccccu32; 4];
+    let mut native_store_imm = [0xdddd_ddddu32; 4];
+    let hw = raw_native_run_fp(&insns, |g| {
+        let (lo, hi) = pack_d(
+            native_load_direct[0..1].as_ptr() as u64,
+            native_load_direct[1..2].as_ptr() as u64,
+        );
+        g.v[2] = lo; // z1.d bases
+        g.v[3] = hi;
+        let (lo, hi) = pack_d(0x1234_5678, 0x9abc_def0);
+        g.v[4] = lo; // z2.d direct store values
+        g.v[5] = hi;
+        let (lo, hi) = pack_d(
+            native_store_direct[1..2].as_mut_ptr() as u64,
+            native_store_direct[3..4].as_mut_ptr() as u64,
+        );
+        g.v[6] = lo; // z3.d direct store bases
+        g.v[7] = hi;
+        let (lo, hi) = pack_d(
+            native_load_imm[0..1].as_ptr() as u64,
+            native_load_imm[2..3].as_ptr() as u64,
+        );
+        g.v[10] = lo; // z5.d bases, instruction adds #4
+        g.v[11] = hi;
+        let (lo, hi) = pack_d(0x2468_ace0, 0x1357_bdf0);
+        g.v[12] = lo; // z6.d immediate store values
+        g.v[13] = hi;
+        let (lo, hi) = pack_d(
+            native_store_imm[0..1].as_mut_ptr() as u64,
+            native_store_imm[2..3].as_mut_ptr() as u64,
+        );
+        g.v[14] = lo; // z7.d bases, instruction adds #4
+        g.v[15] = hi;
+    });
+
+    const LOAD_DIRECT: u64 = 0x4c_000;
+    const LOAD_IMM: u64 = 0x4d_000;
+    const STORE_DIRECT: u64 = 0x4e_000;
+    const STORE_IMM: u64 = 0x4f_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_load_direct.iter().copied().enumerate() {
+        interp
+            .write_memory(LOAD_DIRECT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_load_imm.iter().copied().enumerate() {
+        interp
+            .write_memory(LOAD_IMM + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_store_direct.iter().copied().enumerate() {
+        interp
+            .write_memory(STORE_DIRECT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_store_imm.iter().copied().enumerate() {
+        interp
+            .write_memory(STORE_IMM + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (reg, (lo, hi)) in [
+        (1u8, pack_d(LOAD_DIRECT, LOAD_DIRECT + 4)),
+        (2, pack_d(0x1234_5678, 0x9abc_def0)),
+        (3, pack_d(STORE_DIRECT + 4, STORE_DIRECT + 12)),
+        (5, pack_d(LOAD_IMM, LOAD_IMM + 8)),
+        (6, pack_d(0x2468_ace0, 0x1357_bdf0)),
+        (7, pack_d(STORE_IMM, STORE_IMM + 8)),
+    ] {
+        interp.set_simd_reg(reg, lo, hi).unwrap();
+    }
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 4] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE vector-base memory z{reg} low-128 mismatch"
+        );
+    }
+    for (i, native) in native_store_direct.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(STORE_DIRECT + (i * 4) as u64).unwrap(),
+            "raw EL0 SVE vector-base memory direct store slot {i}"
+        );
+    }
+    for (i, native) in native_store_imm.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(STORE_IMM + (i * 4) as u64).unwrap(),
+            "raw EL0 SVE vector-base memory immediate store slot {i}"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_first_fault_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x25d8_e3e0, // ptrue  p0.d
+        0xa562_6020, // ldff1w { z0.d }, p0/z, [x1, x2, lsl #2]
+        0xa570_a083, // ldnf1w { z3.d }, p0/z, [x4]
+        0x2598_e061, // ptrue  p1.s, vl3
+        0xa4c7_64c5, // ldff1h { z5.s }, p1/z, [x6, x7, lsl #1]
+        0xa4d0_a528, // ldnf1h { z8.s }, p1/z, [x9]
+    ];
+
+    let native_ff_w = [0xaaaa_0000u32, 0x1111_2222, 0x3333_4444, 0xbbbb_0000];
+    let native_nf_w = [0xffff_ff80u32, 0x0000_007f, 0xcccc_cccc, 0xdddd_dddd];
+    let native_ff_h = [0xaaaa_u16, 0xff80, 0x007f, 0x1234, 0xbbbb];
+    let native_nf_h = [0xff00_u16, 0x0100, 0x0200, 0xcccc];
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_ff_w.as_ptr() as u64;
+        g.x[2] = 1;
+        g.x[4] = native_nf_w.as_ptr() as u64;
+        g.x[6] = native_ff_h.as_ptr() as u64;
+        g.x[7] = 1;
+        g.x[9] = native_nf_h.as_ptr() as u64;
+    });
+
+    const FF_W: u64 = 0x50_000;
+    const NF_W: u64 = 0x51_000;
+    const FF_H: u64 = 0x52_000;
+    const NF_H: u64 = 0x53_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_ff_w.iter().copied().enumerate() {
+        interp
+            .write_memory(FF_W + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_nf_w.iter().copied().enumerate() {
+        interp
+            .write_memory(NF_W + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_ff_h.iter().copied().enumerate() {
+        interp
+            .write_memory(FF_H + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_nf_h.iter().copied().enumerate() {
+        interp
+            .write_memory(NF_H + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    interp.set_x(1, FF_W);
+    interp.set_x(2, 1);
+    interp.set_x(4, NF_W);
+    interp.set_x(6, FF_H);
+    interp.set_x(7, 1);
+    interp.set_x(9, NF_H);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 3, 5, 8] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE first-fault memory z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_structure_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue p0.s, vl2
+        0xa520_e020, // ld2w  { z0.s, z1.s }, p0/z, [x1]
+        0xe530_e040, // st2w  { z0.s, z1.s }, p0, [x2]
+        0x2558_e061, // ptrue p1.h, vl3
+        0xa4c0_e4c3, // ld3h  { z3.h, z4.h, z5.h }, p1/z, [x6]
+        0xe4d0_e4e3, // st3h  { z3.h, z4.h, z5.h }, p1, [x7]
+        0x2518_e082, // ptrue p2.b, vl4
+        0xa460_e988, // ld4b  { z8.b, z9.b, z10.b, z11.b }, p2/z, [x12]
+        0xe470_e9a8, // st4b  { z8.b, z9.b, z10.b, z11.b }, p2, [x13]
+    ];
+
+    let native_ld2w_in: [u32; 8] = std::array::from_fn(|i| 0x1000_0000 + i as u32);
+    let mut native_st2w_out = [0xcccc_ccccu32; 8];
+    let native_ld3h_in: [u16; 24] = std::array::from_fn(|i| 0x2000 + i as u16);
+    let mut native_st3h_out = [0xccccu16; 24];
+    let native_ld4b_in: [u8; 64] = std::array::from_fn(|i| 0x40 + i as u8);
+    let mut native_st4b_out = [0xccu8; 64];
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_ld2w_in.as_ptr() as u64;
+        g.x[2] = native_st2w_out.as_mut_ptr() as u64;
+        g.x[6] = native_ld3h_in.as_ptr() as u64;
+        g.x[7] = native_st3h_out.as_mut_ptr() as u64;
+        g.x[12] = native_ld4b_in.as_ptr() as u64;
+        g.x[13] = native_st4b_out.as_mut_ptr() as u64;
+    });
+
+    const LD2W_IN: u64 = 0x40_000;
+    const ST2W_OUT: u64 = 0x41_000;
+    const LD3H_IN: u64 = 0x42_000;
+    const ST3H_OUT: u64 = 0x43_000;
+    const LD4B_IN: u64 = 0x44_000;
+    const ST4B_OUT: u64 = 0x45_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_ld2w_in.iter().copied().enumerate() {
+        interp
+            .write_memory(LD2W_IN + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_st2w_out.iter().copied().enumerate() {
+        interp
+            .write_memory(ST2W_OUT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_ld3h_in.iter().copied().enumerate() {
+        interp
+            .write_memory(LD3H_IN + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_st3h_out.iter().copied().enumerate() {
+        interp
+            .write_memory(ST3H_OUT + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    interp.write_memory(LD4B_IN, &native_ld4b_in).unwrap();
+    interp.write_memory(ST4B_OUT, &native_st4b_out).unwrap();
+    interp.set_x(1, LD2W_IN);
+    interp.set_x(2, ST2W_OUT);
+    interp.set_x(6, LD3H_IN);
+    interp.set_x(7, ST3H_OUT);
+    interp.set_x(12, LD4B_IN);
+    interp.set_x(13, ST4B_OUT);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 1, 3, 4, 5, 8, 9, 10, 11] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE structure memory z{reg} low-128 mismatch"
+        );
+    }
+    for (i, native) in native_st2w_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(ST2W_OUT + (i * 4) as u64).unwrap(),
+            "raw EL0 SVE structure memory st2w slot {i}"
+        );
+    }
+    for (i, native) in native_st3h_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u16(ST3H_OUT + (i * 2) as u64).unwrap(),
+            "raw EL0 SVE structure memory st3h slot {i}"
+        );
+    }
+    for (i, native) in native_st4b_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u8(ST4B_OUT + i as u64).unwrap(),
+            "raw EL0 SVE structure memory st4b slot {i}"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_nontemporal_memory_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e040, // ptrue  p0.s, vl2
+        0xa500_e020, // ldnt1w { z0.s }, p0/z, [x1]
+        0xe510_e040, // stnt1w { z0.s }, p0, [x2]
+        0xa500_2083, // ld1rqw { z3.s }, p0/z, [x4]
+        0x2558_e061, // ptrue  p1.h, vl3
+        0xa480_e4c5, // ldnt1h { z5.h }, p1/z, [x6]
+        0xe490_e4e5, // stnt1h { z5.h }, p1, [x7]
+        0xa480_2528, // ld1rqh { z8.h }, p1/z, [x9]
+    ];
+
+    let native_nt_w_in = [0x1010_0000u32, 0x2020_0001, 0x3030_0002, 0x4040_0003];
+    let mut native_nt_w_out = [0xcccc_ccccu32; 4];
+    let native_rq_w_in = [0x1111_0000u32, 0x2222_0001, 0x3333_0002, 0x4444_0003];
+    let native_nt_h_in: [u16; 8] = std::array::from_fn(|i| 0x5000 + i as u16);
+    let mut native_nt_h_out = [0xccccu16; 8];
+    let native_rq_h_in: [u16; 8] = std::array::from_fn(|i| 0x6000 + i as u16);
+    let hw = raw_native_run_fp(&insns, |g| {
+        g.x[1] = native_nt_w_in.as_ptr() as u64;
+        g.x[2] = native_nt_w_out.as_mut_ptr() as u64;
+        g.x[4] = native_rq_w_in.as_ptr() as u64;
+        g.x[6] = native_nt_h_in.as_ptr() as u64;
+        g.x[7] = native_nt_h_out.as_mut_ptr() as u64;
+        g.x[9] = native_rq_h_in.as_ptr() as u64;
+    });
+
+    const NT_W_IN: u64 = 0x46_000;
+    const NT_W_OUT: u64 = 0x47_000;
+    const RQ_W_IN: u64 = 0x48_000;
+    const NT_H_IN: u64 = 0x49_000;
+    const NT_H_OUT: u64 = 0x4a_000;
+    const RQ_H_IN: u64 = 0x4b_000;
+
+    let mut interp = fresh_cpu();
+    interp.set_jit_enabled(false);
+    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    for (i, v) in native_nt_w_in.iter().copied().enumerate() {
+        interp
+            .write_memory(NT_W_IN + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_nt_w_out.iter().copied().enumerate() {
+        interp
+            .write_memory(NT_W_OUT + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_rq_w_in.iter().copied().enumerate() {
+        interp
+            .write_memory(RQ_W_IN + (i * 4) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_nt_h_in.iter().copied().enumerate() {
+        interp
+            .write_memory(NT_H_IN + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_nt_h_out.iter().copied().enumerate() {
+        interp
+            .write_memory(NT_H_OUT + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    for (i, v) in native_rq_h_in.iter().copied().enumerate() {
+        interp
+            .write_memory(RQ_H_IN + (i * 2) as u64, &v.to_le_bytes())
+            .unwrap();
+    }
+    interp.set_x(1, NT_W_IN);
+    interp.set_x(2, NT_W_OUT);
+    interp.set_x(4, RQ_W_IN);
+    interp.set_x(6, NT_H_IN);
+    interp.set_x(7, NT_H_OUT);
+    interp.set_x(9, RQ_H_IN);
+    drive_to_done(&mut interp);
+
+    for reg in [0u8, 3, 5, 8] {
+        let hw_value = u128::from(hw.v[(2 * reg) as usize])
+            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        assert_eq!(
+            hw_value,
+            interp.get_simd(reg),
+            "raw EL0 SVE non-temporal memory z{reg} low-128 mismatch"
+        );
+    }
+    for (i, native) in native_nt_w_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u32(NT_W_OUT + (i * 4) as u64).unwrap(),
+            "raw EL0 SVE non-temporal memory stnt1w slot {i}"
+        );
+    }
+    for (i, native) in native_nt_h_out.iter().copied().enumerate() {
+        assert_eq!(
+            native,
+            interp.mem_read_u16(NT_H_OUT + (i * 2) as u64).unwrap(),
+            "raw EL0 SVE non-temporal memory stnt1h slot {i}"
+        );
+    }
+}
+
+#[test]
 fn raw_el0_exclusive_acquire_release_memory_oracle_matches_interpreter() {
     let insns = [
         0xc85f_fc20, // ldaxr  x0, [x1]
@@ -2860,6 +3568,73 @@ fn raw_el0_sve_predicated_oracle_matches_interpreter() {
             (hw.v[lo], hw.v[hi]),
             (interp.v[lo], interp.v[hi]),
             "raw EL0 SVE predicated z{reg} low-128 mismatch"
+        );
+    }
+}
+
+#[test]
+fn raw_el0_sve_data_movement_oracle_matches_interpreter() {
+    if !host_has_aarch64_feature("sve") {
+        eprintln!("[skip] host does not advertise SVE");
+        return;
+    }
+    assert_eq!(pin_sve_vl_128(), Some(16), "failed to pin SVE VL=128");
+
+    let insns = [
+        0x2598_e060, // ptrue   p0.s, vl3
+        0x05a1_8020, // compact z0.s, p0, z1.s
+        0x05ac_8062, // splice  z2.s, p0, z2.s, z3.s
+        0x05a8_a0a4, // mov     z4.s, p0/m, w5
+        0x05a0_80e6, // mov     z6.s, p0/m, s7
+        0x0590_0548, // mov     z8.s, p0/z, #42
+        0x05a0_a149, // lasta   w9, p0, z10.s
+        0x05a1_a18b, // lastb   w11, p0, z12.s
+        0x05a2_81cd, // lasta   s13, p0, z14.s
+        0x05a3_820f, // lastb   s15, p0, z16.s
+    ];
+    let pack_s = |a: u32, b: u32, c: u32, d: u32| -> (u64, u64) {
+        let lo = u64::from(a) | (u64::from(b) << 32);
+        let hi = u64::from(c) | (u64::from(d) << 32);
+        (lo, hi)
+    };
+    let setup = |g: &mut Aarch64GuestRegs| {
+        g.x[5] = 0x1234_5678;
+        for (reg, (lo, hi)) in [
+            (0usize, pack_s(0xaaaa_0000, 0xaaaa_0001, 0xaaaa_0002, 0xaaaa_0003)),
+            (1, pack_s(0x1111_0000, 0x1111_0001, 0x1111_0002, 0x1111_0003)),
+            (2, pack_s(0x2222_0000, 0x2222_0001, 0x2222_0002, 0x2222_0003)),
+            (3, pack_s(0x3333_0000, 0x3333_0001, 0x3333_0002, 0x3333_0003)),
+            (4, pack_s(0x4444_0000, 0x4444_0001, 0x4444_0002, 0x4444_0003)),
+            (6, pack_s(0x6666_0000, 0x6666_0001, 0x6666_0002, 0x6666_0003)),
+            (7, pack_s(0x7777_1234, 0, 0, 0)),
+            (8, pack_s(0x8888_0000, 0x8888_0001, 0x8888_0002, 0x8888_0003)),
+            (10, pack_s(0x1010_0000, 0x1010_0001, 0x1010_0002, 0x1010_0003)),
+            (12, pack_s(0x1212_0000, 0x1212_0001, 0x1212_0002, 0x1212_0003)),
+            (13, pack_s(0xdddd_0000, 0, 0, 0)),
+            (14, pack_s(0x1414_0000, 0x1414_0001, 0x1414_0002, 0x1414_0003)),
+            (15, pack_s(0xffff_0000, 0, 0, 0)),
+            (16, pack_s(0x1616_0000, 0x1616_0001, 0x1616_0002, 0x1616_0003)),
+        ] {
+            g.v[2 * reg] = lo;
+            g.v[2 * reg + 1] = hi;
+        }
+    };
+
+    let hw = raw_native_run_fp(&insns, setup);
+    let interp = raw_interp_run(&insns, setup);
+    for reg in [0usize, 2, 4, 6, 8, 13, 15] {
+        let lo = 2 * reg;
+        let hi = lo + 1;
+        assert_eq!(
+            (hw.v[lo], hw.v[hi]),
+            (interp.v[lo], interp.v[hi]),
+            "raw EL0 SVE data movement z{reg} low-128 mismatch"
+        );
+    }
+    for reg in [9usize, 11] {
+        assert_eq!(
+            hw.x[reg], interp.x[reg],
+            "raw EL0 SVE data movement x{reg} mismatch"
         );
     }
 }
