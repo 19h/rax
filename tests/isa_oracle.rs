@@ -155,7 +155,7 @@ fn decodes_arm_aarch64_ldst_register_offset_forms() {
         (0xb822_c820u32, "str", "extend_type: SXTW", "shift: 0"),
         (0x38a2_e820u32, "ldrsb", "extend_type: SXTX", "shift: 0"),
         (0x78e2_5820u32, "ldrsh", "extend_type: UXTW", "shift: 1"),
-        (0xf840_8820u32, "ldr", "offset: Imm(8)", "mode: Offset"),
+        (0xf840_8820u32, "ldtr", "offset: Imm(8)", "mode: Offset"),
     ];
 
     for (raw, mnemonic, mem_fragment, shift_fragment) in cases {
