@@ -972,7 +972,7 @@ fn generate_helper_files(
 use rax::arm::{AArch64Config, AArch64Cpu, FlatMemory};
 
 // Re-export types so tests can use them directly
-pub use rax::arm::{ArmCpu, CpuExit};
+pub use rax::arm::{ArmCpu, ArmError, CpuExit};
 
 /// Create a test CPU with default configuration
 pub fn create_test_cpu() -> AArch64Cpu {

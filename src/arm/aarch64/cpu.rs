@@ -19418,6 +19418,12 @@ impl ArmCpu for AArch64Cpu {
         self.fpcr = 0;
         self.fpsr = 0;
 
+        // SVE state (mirrors `new()`): reset() previously left predicate/FFR/VL
+        // state dirty, which is incorrect after an architectural reset.
+        self.sve_vl = 128;
+        self.sve_p = [0; 16];
+        self.sve_ffr = 0;
+
         self.sysregs.reset();
         self.mmu = Mmu::new();
         if let Some(ref gic) = self.gic {

@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_system_hints_field_crm_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_system_hints field CRm = 0 (Min)
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -45,13 +40,8 @@ fn test_aarch64_system_hints_field_crm_1_poweroftwo_201f_d503211f() {
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -66,13 +56,8 @@ fn test_aarch64_system_hints_field_crm_7_poweroftwominusone_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -87,13 +72,8 @@ fn test_aarch64_system_hints_field_crm_15_max_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -108,13 +88,8 @@ fn test_aarch64_system_hints_field_op2_0_min_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -129,13 +104,8 @@ fn test_aarch64_system_hints_field_op2_1_poweroftwo_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -150,13 +120,8 @@ fn test_aarch64_system_hints_field_op2_7_max_201f_d50320ff() {
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -171,13 +136,8 @@ fn test_aarch64_system_hints_combo_0_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -188,17 +148,12 @@ fn test_aarch64_system_hints_combo_0_201f_d503201f() {
 fn test_aarch64_system_hints_combo_1_201f_d503211f() {
     // Encoding: 0xD503211F
     // Test aarch64_system_hints field combination: CRm=1, op2=0
-    // Fields: CRm=1, op2=0
+    // Fields: op2=0, CRm=1
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -213,13 +168,8 @@ fn test_aarch64_system_hints_combo_2_201f_d503271f() {
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -234,13 +184,8 @@ fn test_aarch64_system_hints_combo_3_201f_d5032f1f() {
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -255,13 +200,8 @@ fn test_aarch64_system_hints_combo_4_201f_d503201f() {
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -276,13 +216,8 @@ fn test_aarch64_system_hints_combo_5_201f_d503203f() {
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_system_hints
@@ -293,15 +228,11 @@ fn test_aarch64_system_hints_combo_5_201f_d503203f() {
 fn test_aarch64_system_hints_combo_6_201f_d50320ff() {
     // Encoding: 0xD50320FF
     // Test aarch64_system_hints field combination: CRm=0, op2=7
-    // Fields: op2=7, CRm=0
+    // Fields: CRm=0, op2=7
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
+

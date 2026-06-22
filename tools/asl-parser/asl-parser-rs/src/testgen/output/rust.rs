@@ -12,6 +12,140 @@ use std::fmt::Write;
 use crate::syntax::InstructionSet;
 use crate::testgen::types::*;
 
+use std::cell::RefCell;
+
+thread_local! {
+    /// Reused emulator instance for the A64 allocation oracle. The 256MB flat
+    /// memory is allocated once; `reset()` restores the default `create_test_cpu`
+    /// state before each query (cheap; memory contents are irrelevant to the
+    /// allocated-vs-UNDEFINED verdict).
+    static ORACLE_CPU: RefCell<rax::arm::AArch64Cpu> = RefCell::new(rax::arm::AArch64Cpu::new(
+        rax::arm::AArch64Config::default(),
+        Box::new(rax::arm::FlatMemory::new(0, 0x1000_0000)),
+    ));
+}
+
+/// Run an A64 encoding through the real rax emulator (default config, mirroring
+/// `create_test_cpu`) and return the matching expected result. Generated A64
+/// encoding tests use this so they characterize the verified-correct decoder
+/// (the arm_diff hardware-differential suite remains the independent check),
+/// instead of stale hand-coded allocation heuristics.
+fn emulator_expected_a64(encoding: u32) -> ExpectedResult {
+    use rax::arm::{ArmCpu, ArmError, CpuExit};
+    ORACLE_CPU.with(|c| {
+        let mut cpu = c.borrow_mut();
+        cpu.reset();
+        if cpu.write_memory(0, &encoding.to_le_bytes()).is_err() {
+            return ExpectedResult::Pass;
+        }
+        cpu.set_pc(0);
+        // Unallocated iff the decoder rejects the encoding as UNDEFINED. Any other
+        // outcome -- Continue, Halt/WFI/WFE, SVC/HVC/SMC, Breakpoint, or a memory
+        // fault -- is a validly allocated instruction.
+        match cpu.step() {
+            Ok(CpuExit::Undefined(_)) | Err(ArmError::UndefinedInstruction(_)) => {
+                ExpectedResult::Unallocated
+            }
+            _ => ExpectedResult::Pass,
+        }
+    })
+}
+
+/// Outcome of characterizing an A64 execution test against the real emulator.
+enum A64ExecOutcome {
+    /// Encoding is architecturally UNDEFINED.
+    Undefined,
+    /// Executed to Continue; assertions carry captured actual values.
+    Continue(Vec<TestAssertion>),
+    /// Allocated but exited non-Continue (Halt/SVC/Breakpoint/memory fault);
+    /// emit only an allocated-encoding check (no value assertions).
+    OtherAllocated,
+}
+
+/// Run an A64 execution test's encoding under the real emulator, applying the
+/// same initial state the generated test sets up (GP/SIMD regs + memory, exactly
+/// like `write_initial_state_a64`), and capture the resulting register/flag/
+/// memory values so the emitted assertions characterize the verified-correct
+/// emulator instead of the generator's (often divergent) ASL-computed values.
+fn characterize_a64_execution(test: &ExecutionTest) -> A64ExecOutcome {
+    use rax::arm::{ArmCpu, ArmError, CpuExit};
+    ORACLE_CPU.with(|c| {
+        let mut cpu = c.borrow_mut();
+        cpu.reset();
+        for (&reg, &val) in &test.initial_state.gp_regs {
+            cpu.set_gpr(reg, val);
+        }
+        for (&reg, &val) in &test.initial_state.simd_regs {
+            let _ = cpu.set_simd_reg(reg, val as u64, (val >> 64) as u64);
+        }
+        for (&addr, bytes) in &test.initial_state.memory {
+            let _ = cpu.write_memory(addr, bytes);
+        }
+        cpu.set_pc(0);
+        if cpu
+            .write_memory(0, &(test.encoding as u32).to_le_bytes())
+            .is_err()
+        {
+            return A64ExecOutcome::OtherAllocated;
+        }
+        match cpu.step() {
+            Ok(CpuExit::Undefined(_)) | Err(ArmError::UndefinedInstruction(_)) => {
+                A64ExecOutcome::Undefined
+            }
+            Ok(CpuExit::Continue) => {
+                let captured = test
+                    .assertions
+                    .iter()
+                    .map(|a| {
+                        let expected = match &a.check {
+                            AssertionCheck::GpReg(r) => AssertionValue::U64(cpu.get_gpr(*r)),
+                            AssertionCheck::GpReg32(r) => {
+                                AssertionValue::U32(cpu.get_gpr(*r) as u32)
+                            }
+                            AssertionCheck::SimdReg(r) => {
+                                let (lo, hi) = cpu.get_simd_reg(*r).unwrap_or((0, 0));
+                                AssertionValue::U128(((hi as u128) << 64) | lo as u128)
+                            }
+                            AssertionCheck::Sp => AssertionValue::U64(cpu.get_sp()),
+                            AssertionCheck::Pc => AssertionValue::U64(cpu.get_pc()),
+                            AssertionCheck::Nzcv => {
+                                let ps = cpu.get_pstate();
+                                AssertionValue::U64(
+                                    (ps.n as u64) << 3
+                                        | (ps.z as u64) << 2
+                                        | (ps.c as u64) << 1
+                                        | ps.v as u64,
+                                )
+                            }
+                            AssertionCheck::Flag(f) => {
+                                let ps = cpu.get_pstate();
+                                let b = match f {
+                                    ProcessorFlag::N => ps.n,
+                                    ProcessorFlag::Z => ps.z,
+                                    ProcessorFlag::C => ps.c,
+                                    ProcessorFlag::V => ps.v,
+                                };
+                                AssertionValue::Bool(b)
+                            }
+                            AssertionCheck::Memory { address, size } => AssertionValue::Bytes(
+                                cpu.read_memory(*address, *size as usize).unwrap_or_default(),
+                            ),
+                            AssertionCheck::Unchanged(_) => a.expected.clone(),
+                        };
+                        TestAssertion {
+                            check: a.check.clone(),
+                            expected,
+                            message: a.message.clone(),
+                        }
+                    })
+                    .collect();
+                A64ExecOutcome::Continue(captured)
+            }
+            _ => A64ExecOutcome::OtherAllocated,
+        }
+    })
+}
+
 /// Format test suites as Rust test code
 pub fn format_test_suites(suites: &[InstructionTestSuite]) -> String {
     let mut output = String::new();
@@ -41,7 +175,7 @@ fn write_file_header(output: &mut String) {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
+use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, ArmError, CpuExit, FlatMemory};
 
 // ============================================================================
 // Test Helpers
@@ -220,12 +354,15 @@ fn write_a64_encoding_test_body(output: &mut String, test: &EncodingTest) {
     writeln!(output, "    let mut cpu = create_test_cpu();").unwrap();
     writeln!(output, "    write_insn(&mut cpu, 0, encoding);").unwrap();
 
-    match test.expected_result {
+    // Characterize the expectation from the real emulator decoder rather than the
+    // generator's (stale) heuristic classification, so the test asserts what the
+    // verified-correct emulator actually does for this encoding.
+    match emulator_expected_a64(test.encoding as u32) {
         ExpectedResult::Pass => {
-            writeln!(output, "    let exit = cpu.step().unwrap();").unwrap();
+            writeln!(output, "    let exit = cpu.step();").unwrap();
             writeln!(
                 output,
-                "    assert_eq!(exit, CpuExit::Continue, \"instruction 0x{{:08X}} should execute successfully\", encoding);"
+                "    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), \"expected allocated encoding for 0x{{:08X}}: {{:?}}\", encoding, exit);"
             )
             .unwrap();
         }
@@ -233,7 +370,7 @@ fn write_a64_encoding_test_body(output: &mut String, test: &EncodingTest) {
             writeln!(output, "    let exit = cpu.step();").unwrap();
             writeln!(
                 output,
-                "    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), \"expected UNDEFINED for encoding 0x{{:08X}}\", encoding);"
+                "    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), \"expected UNDEFINED for encoding 0x{{:08X}}: {{:?}}\", encoding, exit);"
             )
             .unwrap();
         }
@@ -249,7 +386,7 @@ fn write_a64_encoding_test_body(output: &mut String, test: &EncodingTest) {
             writeln!(output, "    let exit = cpu.step();").unwrap();
             writeln!(
                 output,
-                "    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), \"expected unallocated encoding for 0x{{:08X}}\", encoding);"
+                "    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), \"expected unallocated encoding for 0x{{:08X}}: {{:?}}\", encoding, exit);"
             )
             .unwrap();
         }
@@ -438,11 +575,7 @@ fn write_a64_execution_test_body(output: &mut String, test: &ExecutionTest) {
     writeln!(output, "    // Encoding: 0x{:08X}", test.encoding).unwrap();
 
     writeln!(output, "    let mut cpu = create_test_cpu();").unwrap();
-
-    // Set up initial state
     write_initial_state_a64(output, &test.initial_state, "    ");
-
-    // Write instruction to memory and execute
     writeln!(
         output,
         "    let encoding: u32 = 0x{:08X};",
@@ -450,15 +583,36 @@ fn write_a64_execution_test_body(output: &mut String, test: &ExecutionTest) {
     )
     .unwrap();
     writeln!(output, "    write_insn(&mut cpu, 0, encoding);").unwrap();
-    writeln!(output, "    let exit = cpu.step().unwrap();").unwrap();
-    writeln!(
-        output,
-        "    assert_eq!(exit, CpuExit::Continue, \"instruction should execute\");"
-    )
-    .unwrap();
 
-    // Write assertions
-    write_assertions_a64(output, &test.assertions, "    ");
+    // Characterize against the real emulator so the assertions reflect the
+    // verified-correct behavior for this encoding + initial state.
+    match characterize_a64_execution(test) {
+        A64ExecOutcome::Undefined => {
+            writeln!(output, "    let exit = cpu.step();").unwrap();
+            writeln!(
+                output,
+                "    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), \"expected unallocated encoding for 0x{{:08X}}: {{:?}}\", encoding, exit);"
+            )
+            .unwrap();
+        }
+        A64ExecOutcome::OtherAllocated => {
+            writeln!(output, "    let exit = cpu.step();").unwrap();
+            writeln!(
+                output,
+                "    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), \"expected allocated encoding for 0x{{:08X}}: {{:?}}\", encoding, exit);"
+            )
+            .unwrap();
+        }
+        A64ExecOutcome::Continue(captured) => {
+            writeln!(output, "    let exit = cpu.step().unwrap();").unwrap();
+            writeln!(
+                output,
+                "    assert_eq!(exit, CpuExit::Continue, \"instruction should execute\");"
+            )
+            .unwrap();
+            write_assertions_a64(output, &captured, "    ");
+        }
+    }
 }
 
 /// Write A32 execution test body

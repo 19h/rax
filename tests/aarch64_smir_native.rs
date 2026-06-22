@@ -10,7 +10,7 @@
 //! Gated to aarch64 hosts with the `smir-jit` feature (the executor only exists
 //! there). Register-only blocks for now (the clobber-safe core); memory/FP/
 //! native-exit modes land with the lowerer ABI work.
-#![cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+#![cfg(all(feature = "smir-jit", target_arch = "aarch64", target_os = "linux"))]
 
 use std::collections::HashMap;
 

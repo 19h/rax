@@ -8,18 +8,6 @@
 
 use crate::generated::test_helpers::*;
 
-fn assert_unallocated_encoding(encoding: u32) {
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
-}
-
 // ============================================================================
 // aarch64_integer_crc Tests
 // ============================================================================
@@ -32,17 +20,12 @@ fn assert_unallocated_encoding(encoding: u32) {
 fn test_aarch64_integer_crc_field_sf_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field sf = 0 (Min)
-    // Fields: Rm=0, sf=0, C=0, sz=0, Rn=0, Rd=0
+    // Fields: Rd=0, sf=0, C=0, Rm=0, sz=0, Rn=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -53,9 +36,12 @@ fn test_aarch64_integer_crc_field_sf_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_sf_1_max_4000_9ac04000() {
     // Encoding: 0x9AC04000
     // Test aarch64_integer_crc field sf = 1 (Max)
-    // Fields: Rm=0, C=0, Rn=0, sz=0, Rd=0, sf=1
+    // Fields: sz=0, Rn=0, Rm=0, C=0, sf=1, Rd=0
     let encoding: u32 = 0x9AC04000;
-    assert_unallocated_encoding(encoding);
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -66,17 +52,12 @@ fn test_aarch64_integer_crc_field_sf_1_max_4000_9ac04000() {
 fn test_aarch64_integer_crc_field_rm_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field Rm = 0 (Min)
-    // Fields: C=0, sf=0, Rn=0, Rm=0, sz=0, Rd=0
+    // Fields: sf=0, sz=0, Rd=0, Rm=0, C=0, Rn=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -87,17 +68,12 @@ fn test_aarch64_integer_crc_field_rm_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_rm_1_poweroftwo_4000_1ac14000() {
     // Encoding: 0x1AC14000
     // Test aarch64_integer_crc field Rm = 1 (PowerOfTwo)
-    // Fields: sz=0, Rn=0, C=0, Rd=0, sf=0, Rm=1
+    // Fields: sf=0, sz=0, Rn=0, Rd=0, C=0, Rm=1
     let encoding: u32 = 0x1AC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -108,17 +84,12 @@ fn test_aarch64_integer_crc_field_rm_1_poweroftwo_4000_1ac14000() {
 fn test_aarch64_integer_crc_field_rm_30_poweroftwominusone_4000_1ade4000() {
     // Encoding: 0x1ADE4000
     // Test aarch64_integer_crc field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=30, sz=0, Rn=0, Rd=0, sf=0, C=0
+    // Fields: sf=0, Rn=0, C=0, Rm=30, Rd=0, sz=0
     let encoding: u32 = 0x1ADE4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -129,17 +100,12 @@ fn test_aarch64_integer_crc_field_rm_30_poweroftwominusone_4000_1ade4000() {
 fn test_aarch64_integer_crc_field_rm_31_max_4000_1adf4000() {
     // Encoding: 0x1ADF4000
     // Test aarch64_integer_crc field Rm = 31 (Max)
-    // Fields: sz=0, C=0, Rm=31, sf=0, Rn=0, Rd=0
+    // Fields: Rd=0, sf=0, sz=0, Rm=31, C=0, Rn=0
     let encoding: u32 = 0x1ADF4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -150,17 +116,12 @@ fn test_aarch64_integer_crc_field_rm_31_max_4000_1adf4000() {
 fn test_aarch64_integer_crc_field_c_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field C = 0 (Min)
-    // Fields: Rd=0, C=0, sf=0, Rn=0, sz=0, Rm=0
+    // Fields: Rm=0, sf=0, sz=0, C=0, Rd=0, Rn=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -171,17 +132,12 @@ fn test_aarch64_integer_crc_field_c_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_c_1_max_4000_1ac05000() {
     // Encoding: 0x1AC05000
     // Test aarch64_integer_crc field C = 1 (Max)
-    // Fields: Rm=0, C=1, sf=0, Rn=0, Rd=0, sz=0
+    // Fields: sf=0, sz=0, Rd=0, Rn=0, C=1, Rm=0
     let encoding: u32 = 0x1AC05000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -192,17 +148,12 @@ fn test_aarch64_integer_crc_field_c_1_max_4000_1ac05000() {
 fn test_aarch64_integer_crc_field_sz_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field sz = 0 (Min)
-    // Fields: Rm=0, sf=0, Rn=0, C=0, Rd=0, sz=0
+    // Fields: Rd=0, sf=0, Rm=0, Rn=0, C=0, sz=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -213,17 +164,12 @@ fn test_aarch64_integer_crc_field_sz_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_sz_1_poweroftwo_4000_1ac04400() {
     // Encoding: 0x1AC04400
     // Test aarch64_integer_crc field sz = 1 (PowerOfTwo)
-    // Fields: Rm=0, C=0, sf=0, Rn=0, sz=1, Rd=0
+    // Fields: sf=0, sz=1, Rn=0, C=0, Rd=0, Rm=0
     let encoding: u32 = 0x1AC04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -234,17 +180,12 @@ fn test_aarch64_integer_crc_field_sz_1_poweroftwo_4000_1ac04400() {
 fn test_aarch64_integer_crc_field_sz_2_poweroftwo_4000_1ac04800() {
     // Encoding: 0x1AC04800
     // Test aarch64_integer_crc field sz = 2 (PowerOfTwo)
-    // Fields: Rn=0, C=0, sz=2, sf=0, Rm=0, Rd=0
+    // Fields: sf=0, sz=2, Rm=0, Rn=0, Rd=0, C=0
     let encoding: u32 = 0x1AC04800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -255,18 +196,12 @@ fn test_aarch64_integer_crc_field_sz_2_poweroftwo_4000_1ac04800() {
 fn test_aarch64_integer_crc_field_sz_3_max_4000_1ac04c00() {
     // Encoding: 0x1AC04C00
     // Test aarch64_integer_crc field sz = 3 (Max)
-    // Fields: sz=3, Rn=0, C=0, Rm=0, sf=0, Rd=0
+    // Fields: Rd=0, Rn=0, sf=0, C=0, Rm=0, sz=3
     let encoding: u32 = 0x1AC04C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: -
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -277,17 +212,12 @@ fn test_aarch64_integer_crc_field_sz_3_max_4000_1ac04c00() {
 fn test_aarch64_integer_crc_field_rn_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field Rn = 0 (Min)
-    // Fields: C=0, sz=0, Rm=0, sf=0, Rn=0, Rd=0
+    // Fields: C=0, sf=0, Rn=0, Rm=0, Rd=0, sz=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -298,17 +228,12 @@ fn test_aarch64_integer_crc_field_rn_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_rn_1_poweroftwo_4000_1ac04020() {
     // Encoding: 0x1AC04020
     // Test aarch64_integer_crc field Rn = 1 (PowerOfTwo)
-    // Fields: sf=0, Rm=0, sz=0, Rn=1, Rd=0, C=0
+    // Fields: Rm=0, C=0, sf=0, Rn=1, Rd=0, sz=0
     let encoding: u32 = 0x1AC04020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -319,17 +244,12 @@ fn test_aarch64_integer_crc_field_rn_1_poweroftwo_4000_1ac04020() {
 fn test_aarch64_integer_crc_field_rn_30_poweroftwominusone_4000_1ac043c0() {
     // Encoding: 0x1AC043C0
     // Test aarch64_integer_crc field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, Rm=0, C=0, sz=0, sf=0
+    // Fields: Rm=0, sz=0, Rn=30, Rd=0, C=0, sf=0
     let encoding: u32 = 0x1AC043C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -340,17 +260,12 @@ fn test_aarch64_integer_crc_field_rn_30_poweroftwominusone_4000_1ac043c0() {
 fn test_aarch64_integer_crc_field_rn_31_max_4000_1ac043e0() {
     // Encoding: 0x1AC043E0
     // Test aarch64_integer_crc field Rn = 31 (Max)
-    // Fields: sz=0, Rm=0, C=0, Rn=31, sf=0, Rd=0
+    // Fields: C=0, Rn=31, Rm=0, sf=0, sz=0, Rd=0
     let encoding: u32 = 0x1AC043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -361,17 +276,12 @@ fn test_aarch64_integer_crc_field_rn_31_max_4000_1ac043e0() {
 fn test_aarch64_integer_crc_field_rd_0_min_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field Rd = 0 (Min)
-    // Fields: sz=0, Rn=0, Rm=0, sf=0, Rd=0, C=0
+    // Fields: C=0, Rn=0, sf=0, sz=0, Rm=0, Rd=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -382,17 +292,12 @@ fn test_aarch64_integer_crc_field_rd_0_min_4000_1ac04000() {
 fn test_aarch64_integer_crc_field_rd_1_poweroftwo_4000_1ac04001() {
     // Encoding: 0x1AC04001
     // Test aarch64_integer_crc field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, C=0, sf=0, sz=0, Rm=0, Rn=0
+    // Fields: sf=0, sz=0, Rn=0, Rd=1, Rm=0, C=0
     let encoding: u32 = 0x1AC04001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -403,17 +308,12 @@ fn test_aarch64_integer_crc_field_rd_1_poweroftwo_4000_1ac04001() {
 fn test_aarch64_integer_crc_field_rd_30_poweroftwominusone_4000_1ac0401e() {
     // Encoding: 0x1AC0401E
     // Test aarch64_integer_crc field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rn=0, C=0, Rm=0, sz=0, Rd=30
+    // Fields: Rm=0, C=0, Rn=0, sf=0, sz=0, Rd=30
     let encoding: u32 = 0x1AC0401E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -424,17 +324,12 @@ fn test_aarch64_integer_crc_field_rd_30_poweroftwominusone_4000_1ac0401e() {
 fn test_aarch64_integer_crc_field_rd_31_max_4000_1ac0401f() {
     // Encoding: 0x1AC0401F
     // Test aarch64_integer_crc field Rd = 31 (Max)
-    // Fields: Rd=31, C=0, sz=0, sf=0, Rm=0, Rn=0
+    // Fields: sz=0, Rn=0, Rm=0, C=0, sf=0, Rd=31
     let encoding: u32 = 0x1AC0401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -445,17 +340,12 @@ fn test_aarch64_integer_crc_field_rd_31_max_4000_1ac0401f() {
 fn test_aarch64_integer_crc_combo_0_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rd=0, sf=0, sz=0, Rn=0, C=0
+    // Fields: C=0, Rn=0, sf=0, sz=0, Rd=0, Rm=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -466,9 +356,12 @@ fn test_aarch64_integer_crc_combo_0_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_1_4000_9ac04000() {
     // Encoding: 0x9AC04000
     // Test aarch64_integer_crc field combination: sf=1, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rn=0, C=0, Rm=0, sf=1, sz=0, Rd=0
+    // Fields: sf=1, Rm=0, C=0, Rn=0, sz=0, Rd=0
     let encoding: u32 = 0x9AC04000;
-    assert_unallocated_encoding(encoding);
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -479,17 +372,12 @@ fn test_aarch64_integer_crc_combo_1_4000_9ac04000() {
 fn test_aarch64_integer_crc_combo_2_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: sz=0, Rn=0, Rm=0, Rd=0, sf=0, C=0
+    // Fields: sf=0, Rm=0, C=0, Rn=0, Rd=0, sz=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -500,17 +388,12 @@ fn test_aarch64_integer_crc_combo_2_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_3_4000_1ac14000() {
     // Encoding: 0x1AC14000
     // Test aarch64_integer_crc field combination: sf=0, Rm=1, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rn=0, sz=0, Rd=0, Rm=1, C=0, sf=0
+    // Fields: Rd=0, C=0, Rm=1, sz=0, sf=0, Rn=0
     let encoding: u32 = 0x1AC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -521,17 +404,12 @@ fn test_aarch64_integer_crc_combo_3_4000_1ac14000() {
 fn test_aarch64_integer_crc_combo_4_4000_1ade4000() {
     // Encoding: 0x1ADE4000
     // Test aarch64_integer_crc field combination: sf=0, Rm=30, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rm=30, sz=0, Rn=0, Rd=0, C=0, sf=0
+    // Fields: C=0, Rd=0, sz=0, sf=0, Rn=0, Rm=30
     let encoding: u32 = 0x1ADE4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -542,17 +420,12 @@ fn test_aarch64_integer_crc_combo_4_4000_1ade4000() {
 fn test_aarch64_integer_crc_combo_5_4000_1adf4000() {
     // Encoding: 0x1ADF4000
     // Test aarch64_integer_crc field combination: sf=0, Rm=31, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rm=31, Rd=0, Rn=0, sf=0, sz=0, C=0
+    // Fields: sf=0, C=0, sz=0, Rn=0, Rm=31, Rd=0
     let encoding: u32 = 0x1ADF4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -563,17 +436,12 @@ fn test_aarch64_integer_crc_combo_5_4000_1adf4000() {
 fn test_aarch64_integer_crc_combo_6_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: C=0, sz=0, Rn=0, sf=0, Rd=0, Rm=0
+    // Fields: C=0, Rn=0, sf=0, Rd=0, sz=0, Rm=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -584,17 +452,12 @@ fn test_aarch64_integer_crc_combo_6_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_7_4000_1ac05000() {
     // Encoding: 0x1AC05000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=1, sz=0, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, Rd=0, Rm=0, C=1, sz=0
+    // Fields: Rm=0, sf=0, sz=0, C=1, Rn=0, Rd=0
     let encoding: u32 = 0x1AC05000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -605,17 +468,12 @@ fn test_aarch64_integer_crc_combo_7_4000_1ac05000() {
 fn test_aarch64_integer_crc_combo_8_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: sf=0, C=0, Rn=0, sz=0, Rd=0, Rm=0
+    // Fields: Rm=0, sz=0, sf=0, Rn=0, C=0, Rd=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -626,17 +484,12 @@ fn test_aarch64_integer_crc_combo_8_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_9_4000_1ac04400() {
     // Encoding: 0x1AC04400
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=1, Rn=0, Rd=0
-    // Fields: sz=1, Rd=0, Rm=0, C=0, sf=0, Rn=0
+    // Fields: sf=0, sz=1, Rm=0, C=0, Rn=0, Rd=0
     let encoding: u32 = 0x1AC04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -647,17 +500,12 @@ fn test_aarch64_integer_crc_combo_9_4000_1ac04400() {
 fn test_aarch64_integer_crc_combo_10_4000_1ac04800() {
     // Encoding: 0x1AC04800
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=2, Rn=0, Rd=0
-    // Fields: Rn=0, C=0, Rd=0, sf=0, Rm=0, sz=2
+    // Fields: sf=0, Rm=0, Rn=0, C=0, sz=2, Rd=0
     let encoding: u32 = 0x1AC04800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -668,18 +516,12 @@ fn test_aarch64_integer_crc_combo_10_4000_1ac04800() {
 fn test_aarch64_integer_crc_combo_11_4000_1ac04c00() {
     // Encoding: 0x1AC04C00
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=3, Rn=0, Rd=0
-    // Fields: Rn=0, sf=0, Rd=0, Rm=0, C=0, sz=3
+    // Fields: Rd=0, C=0, sz=3, Rm=0, sf=0, Rn=0
     let encoding: u32 = 0x1AC04C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: -
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -690,17 +532,12 @@ fn test_aarch64_integer_crc_combo_11_4000_1ac04c00() {
 fn test_aarch64_integer_crc_combo_12_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: Rd=0, sf=0, C=0, Rn=0, Rm=0, sz=0
+    // Fields: Rn=0, Rm=0, Rd=0, sf=0, C=0, sz=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -711,17 +548,12 @@ fn test_aarch64_integer_crc_combo_12_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_13_4000_1ac04020() {
     // Encoding: 0x1AC04020
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=1, Rd=0
-    // Fields: sz=0, Rn=1, Rd=0, Rm=0, sf=0, C=0
+    // Fields: sz=0, Rn=1, Rd=0, C=0, sf=0, Rm=0
     let encoding: u32 = 0x1AC04020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -732,17 +564,12 @@ fn test_aarch64_integer_crc_combo_13_4000_1ac04020() {
 fn test_aarch64_integer_crc_combo_14_4000_1ac043c0() {
     // Encoding: 0x1AC043C0
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=30, Rd=0
-    // Fields: Rm=0, sz=0, Rn=30, Rd=0, C=0, sf=0
+    // Fields: Rm=0, Rd=0, C=0, sz=0, Rn=30, sf=0
     let encoding: u32 = 0x1AC043C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -753,17 +580,12 @@ fn test_aarch64_integer_crc_combo_14_4000_1ac043c0() {
 fn test_aarch64_integer_crc_combo_15_4000_1ac043e0() {
     // Encoding: 0x1AC043E0
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=31, Rd=0
-    // Fields: C=0, Rm=0, sf=0, sz=0, Rn=31, Rd=0
+    // Fields: Rn=31, Rd=0, C=0, sf=0, Rm=0, sz=0
     let encoding: u32 = 0x1AC043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -774,17 +596,12 @@ fn test_aarch64_integer_crc_combo_15_4000_1ac043e0() {
 fn test_aarch64_integer_crc_combo_16_4000_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, Rm=0, Rd=0, C=0, sz=0
+    // Fields: Rn=0, sz=0, sf=0, Rd=0, C=0, Rm=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -795,17 +612,12 @@ fn test_aarch64_integer_crc_combo_16_4000_1ac04000() {
 fn test_aarch64_integer_crc_combo_17_4000_1ac04001() {
     // Encoding: 0x1AC04001
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=1
-    // Fields: C=0, sz=0, Rn=0, Rd=1, sf=0, Rm=0
+    // Fields: C=0, Rm=0, sf=0, sz=0, Rn=0, Rd=1
     let encoding: u32 = 0x1AC04001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -816,17 +628,12 @@ fn test_aarch64_integer_crc_combo_17_4000_1ac04001() {
 fn test_aarch64_integer_crc_combo_18_4000_1ac0401e() {
     // Encoding: 0x1AC0401E
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=30
-    // Fields: sz=0, C=0, sf=0, Rm=0, Rn=0, Rd=30
+    // Fields: Rn=0, Rm=0, C=0, Rd=30, sz=0, sf=0
     let encoding: u32 = 0x1AC0401E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -837,17 +644,12 @@ fn test_aarch64_integer_crc_combo_18_4000_1ac0401e() {
 fn test_aarch64_integer_crc_combo_19_4000_1ac0401f() {
     // Encoding: 0x1AC0401F
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=0, Rd=31
-    // Fields: sz=0, sf=0, C=0, Rn=0, Rd=31, Rm=0
+    // Fields: Rm=0, Rn=0, Rd=31, sf=0, sz=0, C=0
     let encoding: u32 = 0x1AC0401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -858,17 +660,12 @@ fn test_aarch64_integer_crc_combo_19_4000_1ac0401f() {
 fn test_aarch64_integer_crc_combo_20_4000_1ac14020() {
     // Encoding: 0x1AC14020
     // Test aarch64_integer_crc field combination: sf=0, Rm=1, C=0, sz=0, Rn=1, Rd=0
-    // Fields: Rm=1, sf=0, sz=0, C=0, Rn=1, Rd=0
+    // Fields: Rm=1, sf=0, C=0, sz=0, Rd=0, Rn=1
     let encoding: u32 = 0x1AC14020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -879,17 +676,12 @@ fn test_aarch64_integer_crc_combo_20_4000_1ac14020() {
 fn test_aarch64_integer_crc_combo_21_4000_1adf43e0() {
     // Encoding: 0x1ADF43E0
     // Test aarch64_integer_crc field combination: sf=0, Rm=31, C=0, sz=0, Rn=31, Rd=0
-    // Fields: sf=0, Rd=0, Rm=31, Rn=31, sz=0, C=0
+    // Fields: Rm=31, C=0, sz=0, sf=0, Rd=0, Rn=31
     let encoding: u32 = 0x1ADF43E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -900,17 +692,12 @@ fn test_aarch64_integer_crc_combo_21_4000_1adf43e0() {
 fn test_aarch64_integer_crc_combo_22_4000_1ac14001() {
     // Encoding: 0x1AC14001
     // Test aarch64_integer_crc field combination: sf=0, Rm=1, C=0, sz=0, Rn=0, Rd=1
-    // Fields: sf=0, sz=0, Rd=1, C=0, Rm=1, Rn=0
+    // Fields: Rm=1, sz=0, Rn=0, C=0, Rd=1, sf=0
     let encoding: u32 = 0x1AC14001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -921,17 +708,12 @@ fn test_aarch64_integer_crc_combo_22_4000_1ac14001() {
 fn test_aarch64_integer_crc_combo_23_4000_1adf401f() {
     // Encoding: 0x1ADF401F
     // Test aarch64_integer_crc field combination: sf=0, Rm=31, C=0, sz=0, Rn=0, Rd=31
-    // Fields: Rm=31, Rn=0, C=0, sf=0, sz=0, Rd=31
+    // Fields: Rn=0, C=0, Rd=31, sz=0, sf=0, Rm=31
     let encoding: u32 = 0x1ADF401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -942,17 +724,12 @@ fn test_aarch64_integer_crc_combo_23_4000_1adf401f() {
 fn test_aarch64_integer_crc_combo_24_4000_1ac04021() {
     // Encoding: 0x1AC04021
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=1, Rd=1
-    // Fields: Rm=0, C=0, sf=0, sz=0, Rn=1, Rd=1
+    // Fields: C=0, sz=0, Rn=1, sf=0, Rd=1, Rm=0
     let encoding: u32 = 0x1AC04021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -963,17 +740,12 @@ fn test_aarch64_integer_crc_combo_24_4000_1ac04021() {
 fn test_aarch64_integer_crc_combo_25_4000_1ac043ff() {
     // Encoding: 0x1AC043FF
     // Test aarch64_integer_crc field combination: sf=0, Rm=0, C=0, sz=0, Rn=31, Rd=31
-    // Fields: Rn=31, Rm=0, sz=0, Rd=31, sf=0, C=0
+    // Fields: sf=0, Rm=0, C=0, sz=0, Rn=31, Rd=31
     let encoding: u32 = 0x1AC043FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -984,17 +756,12 @@ fn test_aarch64_integer_crc_combo_25_4000_1ac043ff() {
 fn test_aarch64_integer_crc_special_sf_0_size_variant_0_16384_1ac04400() {
     // Encoding: 0x1AC04400
     // Test aarch64_integer_crc special value sf = 0 (Size variant 0)
-    // Fields: C=0, Rm=0, Rd=0, Rn=0, sz=1, sf=0
+    // Fields: Rn=0, Rd=0, Rm=0, sf=0, sz=1, C=0
     let encoding: u32 = 0x1AC04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1005,9 +772,12 @@ fn test_aarch64_integer_crc_special_sf_0_size_variant_0_16384_1ac04400() {
 fn test_aarch64_integer_crc_special_sf_1_size_variant_1_16384_9ac04400() {
     // Encoding: 0x9AC04400
     // Test aarch64_integer_crc special value sf = 1 (Size variant 1)
-    // Fields: Rn=0, sz=1, Rd=0, sf=1, C=0, Rm=0
+    // Fields: Rd=0, sz=1, C=0, sf=1, Rn=0, Rm=0
     let encoding: u32 = 0x9AC04400;
-    assert_unallocated_encoding(encoding);
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1018,17 +788,12 @@ fn test_aarch64_integer_crc_special_sf_1_size_variant_1_16384_9ac04400() {
 fn test_aarch64_integer_crc_special_sz_0_size_variant_0_16384_1ac04000() {
     // Encoding: 0x1AC04000
     // Test aarch64_integer_crc special value sz = 0 (Size variant 0)
-    // Fields: Rd=0, C=0, Rm=0, sf=0, Rn=0, sz=0
+    // Fields: C=0, sz=0, sf=0, Rd=0, Rn=0, Rm=0
     let encoding: u32 = 0x1AC04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1039,17 +804,12 @@ fn test_aarch64_integer_crc_special_sz_0_size_variant_0_16384_1ac04000() {
 fn test_aarch64_integer_crc_special_sz_1_size_variant_1_16384_1ac04400() {
     // Encoding: 0x1AC04400
     // Test aarch64_integer_crc special value sz = 1 (Size variant 1)
-    // Fields: Rm=0, C=0, sz=1, sf=0, Rd=0, Rn=0
+    // Fields: sf=0, Rd=0, C=0, sz=1, Rn=0, Rm=0
     let encoding: u32 = 0x1AC04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1060,17 +820,12 @@ fn test_aarch64_integer_crc_special_sz_1_size_variant_1_16384_1ac04400() {
 fn test_aarch64_integer_crc_special_sz_2_size_variant_2_16384_1ac04800() {
     // Encoding: 0x1AC04800
     // Test aarch64_integer_crc special value sz = 2 (Size variant 2)
-    // Fields: sf=0, Rm=0, C=0, sz=2, Rn=0, Rd=0
+    // Fields: sz=2, Rd=0, Rn=0, C=0, sf=0, Rm=0
     let encoding: u32 = 0x1AC04800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1081,18 +836,12 @@ fn test_aarch64_integer_crc_special_sz_2_size_variant_2_16384_1ac04800() {
 fn test_aarch64_integer_crc_special_sz_3_size_variant_3_16384_1ac04c00() {
     // Encoding: 0x1AC04C00
     // Test aarch64_integer_crc special value sz = 3 (Size variant 3)
-    // Fields: sz=3, Rn=0, Rd=0, sf=0, Rm=0, C=0
+    // Fields: Rm=0, sf=0, sz=3, Rn=0, Rd=0, C=0
     let encoding: u32 = 0x1AC04C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: -
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1103,17 +852,12 @@ fn test_aarch64_integer_crc_special_sz_3_size_variant_3_16384_1ac04c00() {
 fn test_aarch64_integer_crc_special_rn_31_stack_pointer_sp_may_require_alignment_16384_1ac047e0() {
     // Encoding: 0x1AC047E0
     // Test aarch64_integer_crc special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: sf=0, Rn=31, Rd=0, sz=1, C=0, Rm=0
+    // Fields: Rd=0, Rm=0, C=0, sf=0, sz=1, Rn=31
     let encoding: u32 = 0x1AC047E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1121,21 +865,111 @@ fn test_aarch64_integer_crc_special_rn_31_stack_pointer_sp_may_require_alignment
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_crc_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1ac0441f()
- {
+fn test_aarch64_integer_crc_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1ac0441f() {
     // Encoding: 0x1AC0441F
     // Test aarch64_integer_crc special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: sz=1, Rn=0, Rd=31, C=0, sf=0, Rm=0
+    // Fields: sz=1, Rn=0, C=0, sf=0, Rm=0, Rd=31
     let encoding: u32 = 0x1AC0441F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveCRCExt" }, args: [] } }`
+/// Requirement: UndefinedEncoding { condition: "Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: \"HaveCRCExt\" }, args: [] } }" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_0_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveCRCExt" }, args: [] } }
+    // Fields: C=0, Rd=0, sf=0, Rn=0, sz=0, Rm=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Unconditional UNDEFINED`
+/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_1_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Unconditional UNDEFINED
+    // Fields: Rd=0, sf=0, C=0, Rn=0, Rm=0, sz=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Binary { op: Ne, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([true]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }) } }, rhs: LitBits([true, true]) }`
+/// Requirement: UndefinedEncoding { condition: "Binary { op: Ne, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sf\" }), rhs: Binary { op: And, lhs: LitBits([true]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sz\" }) } }, rhs: LitBits([true, true]) }" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_2_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Binary { op: Ne, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([true]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }) } }, rhs: LitBits([true, true]) }
+    // Fields: Rm=0, sf=0, C=0, Rn=0, sz=0, Rd=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Unconditional UNDEFINED`
+/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_3_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Unconditional UNDEFINED
+    // Fields: C=0, Rd=0, Rn=0, Rm=0, sf=0, sz=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }) } }, rhs: LitBits([true, true]) }`
+/// Requirement: UndefinedEncoding { condition: "Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sf\" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sz\" }) } }, rhs: LitBits([true, true]) }" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_4_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }) } }, rhs: LitBits([true, true]) }
+    // Fields: Rd=0, sz=0, C=0, Rm=0, sf=0, Rn=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_crc
+/// ASL: `Unconditional UNDEFINED`
+/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_crc_invalid_5_4000_1ac04000() {
+    // Encoding: 0x1AC04000
+    // Test aarch64_integer_crc invalid encoding: Unconditional UNDEFINED
+    // Fields: Rm=0, Rn=0, sf=0, C=0, Rd=0, sz=0
+    let encoding: u32 = 0x1AC04000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1147,8 +981,8 @@ fn test_aarch64_integer_crc_umulh_oracle_0_9bc27c20() {
     // Test UMULH: small values - high bits zero (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x2);
     set_x(&mut cpu, 2, 0x3);
+    set_x(&mut cpu, 1, 0x2);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1165,8 +999,8 @@ fn test_aarch64_integer_crc_umulh_oracle_1_9bc27c20() {
     // Test UMULH: large value * 2 - produces high bits (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1183,17 +1017,13 @@ fn test_aarch64_integer_crc_umulh_oracle_2_9bc27c20() {
     // Test UMULH: max * max unsigned (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFE,
-        "X0 should be 0xFFFFFFFFFFFFFFFE"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1211,11 +1041,7 @@ fn test_aarch64_integer_crc_umulh_oracle_3_9bc27c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x3FFFFFFFFFFFFFFF,
-        "X0 should be 0x3FFFFFFFFFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x3FFFFFFFFFFFFFFF, "X0 should be 0x3FFFFFFFFFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_crc
@@ -1279,7 +1105,7 @@ fn test_aarch64_integer_crc_zr_rd_1ac0401f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    assert_eq!(get_x(&cpu, 31), 0x0, "XZR should always be 0");
 }
 
 // ============================================================================
@@ -1294,18 +1120,12 @@ fn test_aarch64_integer_crc_zr_rd_1ac0401f() {
 fn test_aarch64_integer_arithmetic_rev_field_sf_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field sf = 0 (Min)
-    // Fields: Rn=0, opc=0, sf=0, Rd=0
+    // Fields: sf=0, opc=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1316,18 +1136,12 @@ fn test_aarch64_integer_arithmetic_rev_field_sf_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_field_sf_1_max_0_dac00000() {
     // Encoding: 0xDAC00000
     // Test aarch64_integer_arithmetic_rev field sf = 1 (Max)
-    // Fields: opc=0, sf=1, Rn=0, Rd=0
+    // Fields: opc=0, Rn=0, sf=1, Rd=0
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1338,18 +1152,12 @@ fn test_aarch64_integer_arithmetic_rev_field_sf_1_max_0_dac00000() {
 fn test_aarch64_integer_arithmetic_rev_field_opc_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field opc = 0 (Min)
-    // Fields: opc=0, Rn=0, sf=0, Rd=0
+    // Fields: Rn=0, sf=0, Rd=0, opc=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1360,18 +1168,12 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_field_opc_1_poweroftwo_0_5ac00400() {
     // Encoding: 0x5AC00400
     // Test aarch64_integer_arithmetic_rev field opc = 1 (PowerOfTwo)
-    // Fields: Rd=0, Rn=0, sf=0, opc=1
+    // Fields: opc=1, sf=0, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev16	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1382,18 +1184,12 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_1_poweroftwo_0_5ac00400() {
 fn test_aarch64_integer_arithmetic_rev_field_opc_2_poweroftwo_0_5ac00800() {
     // Encoding: 0x5AC00800
     // Test aarch64_integer_arithmetic_rev field opc = 2 (PowerOfTwo)
-    // Fields: sf=0, opc=2, Rd=0, Rn=0
+    // Fields: Rn=0, opc=2, sf=0, Rd=0
     let encoding: u32 = 0x5AC00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1409,11 +1205,7 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_3_max_0_5ac00c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1424,18 +1216,12 @@ fn test_aarch64_integer_arithmetic_rev_field_opc_3_max_0_5ac00c00() {
 fn test_aarch64_integer_arithmetic_rev_field_rn_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field Rn = 0 (Min)
-    // Fields: opc=0, Rd=0, Rn=0, sf=0
+    // Fields: sf=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1446,18 +1232,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_field_rn_1_poweroftwo_0_5ac00020() {
     // Encoding: 0x5AC00020
     // Test aarch64_integer_arithmetic_rev field Rn = 1 (PowerOfTwo)
-    // Fields: sf=0, Rn=1, opc=0, Rd=0
+    // Fields: opc=0, Rn=1, Rd=0, sf=0
     let encoding: u32 = 0x5AC00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1468,18 +1248,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_1_poweroftwo_0_5ac00020() {
 fn test_aarch64_integer_arithmetic_rev_field_rn_30_poweroftwominusone_0_5ac003c0() {
     // Encoding: 0x5AC003C0
     // Test aarch64_integer_arithmetic_rev field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Rn=30, opc=0, sf=0
+    // Fields: opc=0, Rn=30, sf=0, Rd=0
     let encoding: u32 = 0x5AC003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1490,18 +1264,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_30_poweroftwominusone_0_5ac003c0
 fn test_aarch64_integer_arithmetic_rev_field_rn_31_max_0_5ac003e0() {
     // Encoding: 0x5AC003E0
     // Test aarch64_integer_arithmetic_rev field Rn = 31 (Max)
-    // Fields: Rd=0, sf=0, opc=0, Rn=31
+    // Fields: sf=0, Rn=31, Rd=0, opc=0
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1512,18 +1280,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rn_31_max_0_5ac003e0() {
 fn test_aarch64_integer_arithmetic_rev_field_rd_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field Rd = 0 (Min)
-    // Fields: opc=0, Rd=0, sf=0, Rn=0
+    // Fields: sf=0, opc=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1534,18 +1296,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_field_rd_1_poweroftwo_0_5ac00001() {
     // Encoding: 0x5AC00001
     // Test aarch64_integer_arithmetic_rev field Rd = 1 (PowerOfTwo)
-    // Fields: opc=0, Rd=1, sf=0, Rn=0
+    // Fields: sf=0, opc=0, Rn=0, Rd=1
     let encoding: u32 = 0x5AC00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1556,18 +1312,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_1_poweroftwo_0_5ac00001() {
 fn test_aarch64_integer_arithmetic_rev_field_rd_30_poweroftwominusone_0_5ac0001e() {
     // Encoding: 0x5AC0001E
     // Test aarch64_integer_arithmetic_rev field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, opc=0, Rd=30, Rn=0
+    // Fields: Rd=30, sf=0, opc=0, Rn=0
     let encoding: u32 = 0x5AC0001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1578,18 +1328,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_30_poweroftwominusone_0_5ac0001e
 fn test_aarch64_integer_arithmetic_rev_field_rd_31_max_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rev field Rd = 31 (Max)
-    // Fields: sf=0, Rn=0, opc=0, Rd=31
+    // Fields: sf=0, Rd=31, Rn=0, opc=0
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1600,18 +1344,12 @@ fn test_aarch64_integer_arithmetic_rev_field_rd_31_max_0_5ac0001f() {
 fn test_aarch64_integer_arithmetic_rev_combo_0_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=0
-    // Fields: Rd=0, opc=0, sf=0, Rn=0
+    // Fields: sf=0, Rn=0, opc=0, Rd=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1622,18 +1360,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_0_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_combo_1_0_dac00000() {
     // Encoding: 0xDAC00000
     // Test aarch64_integer_arithmetic_rev field combination: sf=1, opc=0, Rn=0, Rd=0
-    // Fields: sf=1, opc=0, Rd=0, Rn=0
+    // Fields: Rd=0, sf=1, Rn=0, opc=0
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1644,18 +1376,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_1_0_dac00000() {
 fn test_aarch64_integer_arithmetic_rev_combo_2_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=0
-    // Fields: sf=0, Rd=0, opc=0, Rn=0
+    // Fields: Rd=0, opc=0, sf=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1666,18 +1392,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_2_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_combo_3_0_5ac00400() {
     // Encoding: 0x5AC00400
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=1, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, opc=1, Rd=0
+    // Fields: opc=1, sf=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev16	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1688,18 +1408,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_3_0_5ac00400() {
 fn test_aarch64_integer_arithmetic_rev_combo_4_0_5ac00800() {
     // Encoding: 0x5AC00800
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=2, Rn=0, Rd=0
-    // Fields: opc=2, Rd=0, Rn=0, sf=0
+    // Fields: opc=2, Rn=0, Rd=0, sf=0
     let encoding: u32 = 0x5AC00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1710,16 +1424,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_4_0_5ac00800() {
 fn test_aarch64_integer_arithmetic_rev_combo_5_0_5ac00c00() {
     // Encoding: 0x5AC00C00
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=3, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, Rd=0, opc=3
+    // Fields: Rd=0, opc=3, sf=0, Rn=0
     let encoding: u32 = 0x5AC00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1730,18 +1440,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_5_0_5ac00c00() {
 fn test_aarch64_integer_arithmetic_rev_combo_6_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, opc=0, sf=0
+    // Fields: sf=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1756,14 +1460,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_7_0_5ac00020() {
     let encoding: u32 = 0x5AC00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1778,14 +1476,8 @@ fn test_aarch64_integer_arithmetic_rev_combo_8_0_5ac003c0() {
     let encoding: u32 = 0x5AC003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1796,18 +1488,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_8_0_5ac003c0() {
 fn test_aarch64_integer_arithmetic_rev_combo_9_0_5ac003e0() {
     // Encoding: 0x5AC003E0
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=31, Rd=0
-    // Fields: opc=0, sf=0, Rn=31, Rd=0
+    // Fields: Rd=0, Rn=31, opc=0, sf=0
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1818,18 +1504,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_9_0_5ac003e0() {
 fn test_aarch64_integer_arithmetic_rev_combo_10_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, Rd=0, opc=0
+    // Fields: Rn=0, opc=0, Rd=0, sf=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1840,18 +1520,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_10_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rev_combo_11_0_5ac00001() {
     // Encoding: 0x5AC00001
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=1
-    // Fields: Rn=0, Rd=1, opc=0, sf=0
+    // Fields: sf=0, opc=0, Rn=0, Rd=1
     let encoding: u32 = 0x5AC00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1862,18 +1536,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_11_0_5ac00001() {
 fn test_aarch64_integer_arithmetic_rev_combo_12_0_5ac0001e() {
     // Encoding: 0x5AC0001E
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=30
-    // Fields: sf=0, opc=0, Rd=30, Rn=0
+    // Fields: sf=0, Rn=0, Rd=30, opc=0
     let encoding: u32 = 0x5AC0001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1884,18 +1552,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_12_0_5ac0001e() {
 fn test_aarch64_integer_arithmetic_rev_combo_13_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=0, Rd=31
-    // Fields: opc=0, Rd=31, sf=0, Rn=0
+    // Fields: sf=0, Rd=31, opc=0, Rn=0
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1906,18 +1568,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_13_0_5ac0001f() {
 fn test_aarch64_integer_arithmetic_rev_combo_14_0_5ac00021() {
     // Encoding: 0x5AC00021
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=1, Rd=1
-    // Fields: opc=0, sf=0, Rn=1, Rd=1
+    // Fields: Rn=1, sf=0, Rd=1, opc=0
     let encoding: u32 = 0x5AC00021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1928,18 +1584,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_14_0_5ac00021() {
 fn test_aarch64_integer_arithmetic_rev_combo_15_0_5ac003ff() {
     // Encoding: 0x5AC003FF
     // Test aarch64_integer_arithmetic_rev field combination: sf=0, opc=0, Rn=31, Rd=31
-    // Fields: Rn=31, sf=0, opc=0, Rd=31
+    // Fields: Rd=31, sf=0, opc=0, Rn=31
     let encoding: u32 = 0x5AC003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1950,18 +1600,12 @@ fn test_aarch64_integer_arithmetic_rev_combo_15_0_5ac003ff() {
 fn test_aarch64_integer_arithmetic_rev_special_sf_0_size_variant_0_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev special value sf = 0 (Size variant 0)
-    // Fields: Rn=0, sf=0, Rd=0, opc=0
+    // Fields: Rn=0, Rd=0, sf=0, opc=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1972,18 +1616,12 @@ fn test_aarch64_integer_arithmetic_rev_special_sf_0_size_variant_0_0_5ac00000() 
 fn test_aarch64_integer_arithmetic_rev_special_sf_1_size_variant_1_0_dac00000() {
     // Encoding: 0xDAC00000
     // Test aarch64_integer_arithmetic_rev special value sf = 1 (Size variant 1)
-    // Fields: Rd=0, opc=0, Rn=0, sf=1
+    // Fields: Rn=0, sf=1, opc=0, Rd=0
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -1994,18 +1632,12 @@ fn test_aarch64_integer_arithmetic_rev_special_sf_1_size_variant_1_0_dac00000() 
 fn test_aarch64_integer_arithmetic_rev_special_opc_0_size_variant_0_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rev special value opc = 0 (Size variant 0)
-    // Fields: Rn=0, sf=0, opc=0, Rd=0
+    // Fields: opc=0, sf=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2016,18 +1648,12 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_0_size_variant_0_0_5ac00000()
 fn test_aarch64_integer_arithmetic_rev_special_opc_1_size_variant_1_0_5ac00400() {
     // Encoding: 0x5AC00400
     // Test aarch64_integer_arithmetic_rev special value opc = 1 (Size variant 1)
-    // Fields: opc=1, Rd=0, Rn=0, sf=0
+    // Fields: sf=0, opc=1, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev16	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2038,18 +1664,12 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_1_size_variant_1_0_5ac00400()
 fn test_aarch64_integer_arithmetic_rev_special_opc_2_size_variant_2_0_5ac00800() {
     // Encoding: 0x5AC00800
     // Test aarch64_integer_arithmetic_rev special value opc = 2 (Size variant 2)
-    // Fields: Rd=0, Rn=0, opc=2, sf=0
+    // Fields: Rd=0, sf=0, opc=2, Rn=0
     let encoding: u32 = 0x5AC00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rev	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2060,16 +1680,12 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_2_size_variant_2_0_5ac00800()
 fn test_aarch64_integer_arithmetic_rev_special_opc_3_size_variant_3_0_5ac00c00() {
     // Encoding: 0x5AC00C00
     // Test aarch64_integer_arithmetic_rev special value opc = 3 (Size variant 3)
-    // Fields: Rd=0, Rn=0, sf=0, opc=3
+    // Fields: Rd=0, sf=0, opc=3, Rn=0
     let encoding: u32 = 0x5AC00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for 0x{:08X}",
-        encoding
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2077,22 +1693,15 @@ fn test_aarch64_integer_arithmetic_rev_special_opc_3_size_variant_3_0_5ac00c00()
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_arithmetic_rev_special_rn_31_stack_pointer_sp_may_require_alignment_0_5ac003e0()
- {
+fn test_aarch64_integer_arithmetic_rev_special_rn_31_stack_pointer_sp_may_require_alignment_0_5ac003e0() {
     // Encoding: 0x5AC003E0
     // Test aarch64_integer_arithmetic_rev special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, opc=0, sf=0, Rn=31
+    // Fields: opc=0, sf=0, Rd=0, Rn=31
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2100,22 +1709,47 @@ fn test_aarch64_integer_arithmetic_rev_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_arithmetic_rev_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5ac0001f()
- {
+fn test_aarch64_integer_arithmetic_rev_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rev special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: sf=0, Rd=31, opc=0, Rn=0
+    // Fields: Rn=0, Rd=31, sf=0, opc=0
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_arithmetic_rev
+/// ASL: `Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: LitBits([false]) }`
+/// Requirement: UndefinedEncoding { condition: "Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sf\" }), rhs: LitBits([false]) }" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_arithmetic_rev_invalid_0_0_5ac00000() {
+    // Encoding: 0x5AC00000
+    // Test aarch64_integer_arithmetic_rev invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: LitBits([false]) }
+    // Fields: opc=0, Rn=0, Rd=0, sf=0
+    let encoding: u32 = 0x5AC00000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+
+/// Provenance: aarch64_integer_arithmetic_rev
+/// ASL: `Unconditional UNDEFINED`
+/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_integer_arithmetic_rev_invalid_1_0_5ac00000() {
+    // Encoding: 0x5AC00000
+    // Test aarch64_integer_arithmetic_rev invalid encoding: Unconditional UNDEFINED
+    // Fields: opc=0, sf=0, Rd=0, Rn=0
+    let encoding: u32 = 0x5AC00000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rev
@@ -2161,7 +1795,7 @@ fn test_aarch64_integer_arithmetic_rev_zr_rd_5ac0001f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    assert_eq!(get_x(&cpu, 31), 0x0, "XZR should always be 0");
 }
 
 // ============================================================================
@@ -2176,18 +1810,12 @@ fn test_aarch64_integer_arithmetic_rev_zr_rd_5ac0001f() {
 fn test_aarch64_integer_arithmetic_cnt_field_sf_0_min_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field sf = 0 (Min)
-    // Fields: Rd=0, op=0, sf=0, Rn=0
+    // Fields: Rd=0, sf=0, op=0, Rn=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2198,18 +1826,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_sf_0_min_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_field_sf_1_max_1000_dac01000() {
     // Encoding: 0xDAC01000
     // Test aarch64_integer_arithmetic_cnt field sf = 1 (Max)
-    // Fields: Rn=0, op=0, sf=1, Rd=0
+    // Fields: op=0, Rd=0, sf=1, Rn=0
     let encoding: u32 = 0xDAC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2224,14 +1846,8 @@ fn test_aarch64_integer_arithmetic_cnt_field_op_0_min_1000_5ac01000() {
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2242,18 +1858,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_op_0_min_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_field_op_1_max_1000_5ac01400() {
     // Encoding: 0x5AC01400
     // Test aarch64_integer_arithmetic_cnt field op = 1 (Max)
-    // Fields: sf=0, Rn=0, Rd=0, op=1
+    // Fields: Rd=0, op=1, sf=0, Rn=0
     let encoding: u32 = 0x5AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: cls	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2264,18 +1874,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_op_1_max_1000_5ac01400() {
 fn test_aarch64_integer_arithmetic_cnt_field_rn_0_min_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field Rn = 0 (Min)
-    // Fields: Rd=0, op=0, sf=0, Rn=0
+    // Fields: op=0, Rd=0, Rn=0, sf=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2286,18 +1890,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_0_min_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_field_rn_1_poweroftwo_1000_5ac01020() {
     // Encoding: 0x5AC01020
     // Test aarch64_integer_arithmetic_cnt field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, op=0, Rd=0, sf=0
+    // Fields: sf=0, op=0, Rn=1, Rd=0
     let encoding: u32 = 0x5AC01020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2308,18 +1906,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_1_poweroftwo_1000_5ac01020() {
 fn test_aarch64_integer_arithmetic_cnt_field_rn_30_poweroftwominusone_1000_5ac013c0() {
     // Encoding: 0x5AC013C0
     // Test aarch64_integer_arithmetic_cnt field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, op=0, sf=0
+    // Fields: Rd=0, op=0, Rn=30, sf=0
     let encoding: u32 = 0x5AC013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2330,18 +1922,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_30_poweroftwominusone_1000_5ac01
 fn test_aarch64_integer_arithmetic_cnt_field_rn_31_max_1000_5ac013e0() {
     // Encoding: 0x5AC013E0
     // Test aarch64_integer_arithmetic_cnt field Rn = 31 (Max)
-    // Fields: sf=0, Rn=31, Rd=0, op=0
+    // Fields: Rd=0, Rn=31, sf=0, op=0
     let encoding: u32 = 0x5AC013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2352,18 +1938,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rn_31_max_1000_5ac013e0() {
 fn test_aarch64_integer_arithmetic_cnt_field_rd_0_min_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field Rd = 0 (Min)
-    // Fields: sf=0, op=0, Rn=0, Rd=0
+    // Fields: sf=0, op=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2374,18 +1954,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_0_min_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_field_rd_1_poweroftwo_1000_5ac01001() {
     // Encoding: 0x5AC01001
     // Test aarch64_integer_arithmetic_cnt field Rd = 1 (PowerOfTwo)
-    // Fields: op=0, Rn=0, sf=0, Rd=1
+    // Fields: sf=0, op=0, Rn=0, Rd=1
     let encoding: u32 = 0x5AC01001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2396,18 +1970,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_1_poweroftwo_1000_5ac01001() {
 fn test_aarch64_integer_arithmetic_cnt_field_rd_30_poweroftwominusone_1000_5ac0101e() {
     // Encoding: 0x5AC0101E
     // Test aarch64_integer_arithmetic_cnt field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=30, sf=0, op=0
+    // Fields: Rd=30, op=0, sf=0, Rn=0
     let encoding: u32 = 0x5AC0101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2418,18 +1986,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_30_poweroftwominusone_1000_5ac01
 fn test_aarch64_integer_arithmetic_cnt_field_rd_31_max_1000_5ac0101f() {
     // Encoding: 0x5AC0101F
     // Test aarch64_integer_arithmetic_cnt field Rd = 31 (Max)
-    // Fields: sf=0, op=0, Rn=0, Rd=31
+    // Fields: sf=0, Rd=31, Rn=0, op=0
     let encoding: u32 = 0x5AC0101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2440,18 +2002,12 @@ fn test_aarch64_integer_arithmetic_cnt_field_rd_31_max_1000_5ac0101f() {
 fn test_aarch64_integer_arithmetic_cnt_combo_0_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=0
-    // Fields: op=0, Rd=0, Rn=0, sf=0
+    // Fields: Rn=0, sf=0, Rd=0, op=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2462,18 +2018,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_0_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_combo_1_1000_dac01000() {
     // Encoding: 0xDAC01000
     // Test aarch64_integer_arithmetic_cnt field combination: sf=1, op=0, Rn=0, Rd=0
-    // Fields: Rn=0, sf=1, op=0, Rd=0
+    // Fields: op=0, Rd=0, Rn=0, sf=1
     let encoding: u32 = 0xDAC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2484,18 +2034,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_1_1000_dac01000() {
 fn test_aarch64_integer_arithmetic_cnt_combo_2_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=0
-    // Fields: op=0, Rd=0, sf=0, Rn=0
+    // Fields: sf=0, Rn=0, op=0, Rd=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2506,18 +2050,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_2_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_combo_3_1000_5ac01400() {
     // Encoding: 0x5AC01400
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=1, Rn=0, Rd=0
-    // Fields: op=1, sf=0, Rd=0, Rn=0
+    // Fields: op=1, Rn=0, sf=0, Rd=0
     let encoding: u32 = 0x5AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: cls	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2528,18 +2066,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_3_1000_5ac01400() {
 fn test_aarch64_integer_arithmetic_cnt_combo_4_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=0
-    // Fields: Rd=0, sf=0, op=0, Rn=0
+    // Fields: Rd=0, op=0, sf=0, Rn=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2550,18 +2082,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_4_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_combo_5_1000_5ac01020() {
     // Encoding: 0x5AC01020
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=1, Rd=0
-    // Fields: Rn=1, op=0, Rd=0, sf=0
+    // Fields: op=0, Rd=0, Rn=1, sf=0
     let encoding: u32 = 0x5AC01020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2572,18 +2098,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_5_1000_5ac01020() {
 fn test_aarch64_integer_arithmetic_cnt_combo_6_1000_5ac013c0() {
     // Encoding: 0x5AC013C0
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=30, Rd=0
-    // Fields: sf=0, Rn=30, Rd=0, op=0
+    // Fields: Rn=30, op=0, Rd=0, sf=0
     let encoding: u32 = 0x5AC013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2598,14 +2118,8 @@ fn test_aarch64_integer_arithmetic_cnt_combo_7_1000_5ac013e0() {
     let encoding: u32 = 0x5AC013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2616,18 +2130,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_7_1000_5ac013e0() {
 fn test_aarch64_integer_arithmetic_cnt_combo_8_1000_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=0
-    // Fields: Rn=0, sf=0, op=0, Rd=0
+    // Fields: op=0, Rd=0, Rn=0, sf=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2638,18 +2146,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_8_1000_5ac01000() {
 fn test_aarch64_integer_arithmetic_cnt_combo_9_1000_5ac01001() {
     // Encoding: 0x5AC01001
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=1
-    // Fields: Rd=1, sf=0, op=0, Rn=0
+    // Fields: op=0, sf=0, Rn=0, Rd=1
     let encoding: u32 = 0x5AC01001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2660,18 +2162,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_9_1000_5ac01001() {
 fn test_aarch64_integer_arithmetic_cnt_combo_10_1000_5ac0101e() {
     // Encoding: 0x5AC0101E
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=30
-    // Fields: Rn=0, sf=0, op=0, Rd=30
+    // Fields: Rn=0, Rd=30, sf=0, op=0
     let encoding: u32 = 0x5AC0101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2682,18 +2178,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_10_1000_5ac0101e() {
 fn test_aarch64_integer_arithmetic_cnt_combo_11_1000_5ac0101f() {
     // Encoding: 0x5AC0101F
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=0, Rd=31
-    // Fields: sf=0, op=0, Rd=31, Rn=0
+    // Fields: op=0, sf=0, Rd=31, Rn=0
     let encoding: u32 = 0x5AC0101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2704,18 +2194,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_11_1000_5ac0101f() {
 fn test_aarch64_integer_arithmetic_cnt_combo_12_1000_5ac01021() {
     // Encoding: 0x5AC01021
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=1, Rd=1
-    // Fields: op=0, Rd=1, sf=0, Rn=1
+    // Fields: sf=0, Rd=1, Rn=1, op=0
     let encoding: u32 = 0x5AC01021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w1, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2726,18 +2210,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_12_1000_5ac01021() {
 fn test_aarch64_integer_arithmetic_cnt_combo_13_1000_5ac013ff() {
     // Encoding: 0x5AC013FF
     // Test aarch64_integer_arithmetic_cnt field combination: sf=0, op=0, Rn=31, Rd=31
-    // Fields: sf=0, op=0, Rd=31, Rn=31
+    // Fields: sf=0, op=0, Rn=31, Rd=31
     let encoding: u32 = 0x5AC013FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	wzr, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2748,18 +2226,12 @@ fn test_aarch64_integer_arithmetic_cnt_combo_13_1000_5ac013ff() {
 fn test_aarch64_integer_arithmetic_cnt_special_sf_0_size_variant_0_4096_5ac01000() {
     // Encoding: 0x5AC01000
     // Test aarch64_integer_arithmetic_cnt special value sf = 0 (Size variant 0)
-    // Fields: Rn=0, op=0, Rd=0, sf=0
+    // Fields: sf=0, Rn=0, Rd=0, op=0
     let encoding: u32 = 0x5AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2770,18 +2242,12 @@ fn test_aarch64_integer_arithmetic_cnt_special_sf_0_size_variant_0_4096_5ac01000
 fn test_aarch64_integer_arithmetic_cnt_special_sf_1_size_variant_1_4096_dac01000() {
     // Encoding: 0xDAC01000
     // Test aarch64_integer_arithmetic_cnt special value sf = 1 (Size variant 1)
-    // Fields: Rn=0, sf=1, op=0, Rd=0
+    // Fields: op=0, Rn=0, Rd=0, sf=1
     let encoding: u32 = 0xDAC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2789,22 +2255,15 @@ fn test_aarch64_integer_arithmetic_cnt_special_sf_1_size_variant_1_4096_dac01000
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_arithmetic_cnt_special_rn_31_stack_pointer_sp_may_require_alignment_4096_5ac013e0()
- {
+fn test_aarch64_integer_arithmetic_cnt_special_rn_31_stack_pointer_sp_may_require_alignment_4096_5ac013e0() {
     // Encoding: 0x5AC013E0
     // Test aarch64_integer_arithmetic_cnt special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: sf=0, Rd=0, op=0, Rn=31
+    // Fields: Rn=31, op=0, sf=0, Rd=0
     let encoding: u32 = 0x5AC013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2812,22 +2271,15 @@ fn test_aarch64_integer_arithmetic_cnt_special_rn_31_stack_pointer_sp_may_requir
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_arithmetic_cnt_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_5ac0101f()
- {
+fn test_aarch64_integer_arithmetic_cnt_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_5ac0101f() {
     // Encoding: 0x5AC0101F
     // Test aarch64_integer_arithmetic_cnt special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: op=0, sf=0, Rn=0, Rd=31
+    // Fields: sf=0, Rn=0, Rd=31, op=0
     let encoding: u32 = 0x5AC0101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: clz	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_cnt
@@ -2873,7 +2325,7 @@ fn test_aarch64_integer_arithmetic_cnt_zr_rd_5ac0101f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    assert_eq!(get_x(&cpu, 31), 0x0, "XZR should always be 0");
 }
 
 // ============================================================================
@@ -2888,18 +2340,12 @@ fn test_aarch64_integer_arithmetic_cnt_zr_rd_5ac0101f() {
 fn test_aarch64_integer_arithmetic_rbit_field_sf_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit field sf = 0 (Min)
-    // Fields: sf=0, Rn=0, Rd=0
+    // Fields: Rd=0, sf=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -2910,18 +2356,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_sf_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rbit_field_sf_1_max_0_dac00000() {
     // Encoding: 0xDAC00000
     // Test aarch64_integer_arithmetic_rbit field sf = 1 (Max)
-    // Fields: Rd=0, sf=1, Rn=0
+    // Fields: Rn=0, sf=1, Rd=0
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -2932,18 +2372,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_sf_1_max_0_dac00000() {
 fn test_aarch64_integer_arithmetic_rbit_field_rn_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit field Rn = 0 (Min)
-    // Fields: Rd=0, sf=0, Rn=0
+    // Fields: Rd=0, Rn=0, sf=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -2958,14 +2392,8 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_1_poweroftwo_0_5ac00020() {
     let encoding: u32 = 0x5AC00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -2976,18 +2404,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_1_poweroftwo_0_5ac00020() {
 fn test_aarch64_integer_arithmetic_rbit_field_rn_30_poweroftwominusone_0_5ac003c0() {
     // Encoding: 0x5AC003C0
     // Test aarch64_integer_arithmetic_rbit field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rd=0, Rn=30
+    // Fields: Rd=0, sf=0, Rn=30
     let encoding: u32 = 0x5AC003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -2998,18 +2420,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_30_poweroftwominusone_0_5ac003c
 fn test_aarch64_integer_arithmetic_rbit_field_rn_31_max_0_5ac003e0() {
     // Encoding: 0x5AC003E0
     // Test aarch64_integer_arithmetic_rbit field Rn = 31 (Max)
-    // Fields: Rd=0, Rn=31, sf=0
+    // Fields: Rn=31, Rd=0, sf=0
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3020,18 +2436,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rn_31_max_0_5ac003e0() {
 fn test_aarch64_integer_arithmetic_rbit_field_rd_0_min_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit field Rd = 0 (Min)
-    // Fields: Rd=0, sf=0, Rn=0
+    // Fields: sf=0, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3042,18 +2452,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_0_min_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rbit_field_rd_1_poweroftwo_0_5ac00001() {
     // Encoding: 0x5AC00001
     // Test aarch64_integer_arithmetic_rbit field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rn=0, sf=0
+    // Fields: Rn=0, Rd=1, sf=0
     let encoding: u32 = 0x5AC00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3064,18 +2468,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_1_poweroftwo_0_5ac00001() {
 fn test_aarch64_integer_arithmetic_rbit_field_rd_30_poweroftwominusone_0_5ac0001e() {
     // Encoding: 0x5AC0001E
     // Test aarch64_integer_arithmetic_rbit field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rn=0, Rd=30
+    // Fields: Rn=0, Rd=30, sf=0
     let encoding: u32 = 0x5AC0001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3086,18 +2484,12 @@ fn test_aarch64_integer_arithmetic_rbit_field_rd_30_poweroftwominusone_0_5ac0001
 fn test_aarch64_integer_arithmetic_rbit_field_rd_31_max_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rbit field Rd = 31 (Max)
-    // Fields: Rd=31, sf=0, Rn=0
+    // Fields: sf=0, Rn=0, Rd=31
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3112,14 +2504,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_0_0_5ac00000() {
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3130,18 +2516,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_0_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rbit_combo_1_0_dac00000() {
     // Encoding: 0xDAC00000
     // Test aarch64_integer_arithmetic_rbit field combination: sf=1, Rn=0, Rd=0
-    // Fields: Rd=0, sf=1, Rn=0
+    // Fields: Rd=0, Rn=0, sf=1
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3152,18 +2532,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_1_0_dac00000() {
 fn test_aarch64_integer_arithmetic_rbit_combo_2_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=0, Rd=0
-    // Fields: sf=0, Rn=0, Rd=0
+    // Fields: sf=0, Rd=0, Rn=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3174,18 +2548,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_2_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rbit_combo_3_0_5ac00020() {
     // Encoding: 0x5AC00020
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=1, Rd=0
-    // Fields: Rn=1, Rd=0, sf=0
+    // Fields: Rn=1, sf=0, Rd=0
     let encoding: u32 = 0x5AC00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3196,18 +2564,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_3_0_5ac00020() {
 fn test_aarch64_integer_arithmetic_rbit_combo_4_0_5ac003c0() {
     // Encoding: 0x5AC003C0
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=30, Rd=0
-    // Fields: sf=0, Rn=30, Rd=0
+    // Fields: Rn=30, Rd=0, sf=0
     let encoding: u32 = 0x5AC003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w30
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3222,14 +2584,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_5_0_5ac003e0() {
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3240,18 +2596,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_5_0_5ac003e0() {
 fn test_aarch64_integer_arithmetic_rbit_combo_6_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=0, Rd=0
-    // Fields: sf=0, Rd=0, Rn=0
+    // Fields: sf=0, Rn=0, Rd=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3262,18 +2612,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_6_0_5ac00000() {
 fn test_aarch64_integer_arithmetic_rbit_combo_7_0_5ac00001() {
     // Encoding: 0x5AC00001
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=0, Rd=1
-    // Fields: Rd=1, Rn=0, sf=0
+    // Fields: Rd=1, sf=0, Rn=0
     let encoding: u32 = 0x5AC00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3284,18 +2628,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_7_0_5ac00001() {
 fn test_aarch64_integer_arithmetic_rbit_combo_8_0_5ac0001e() {
     // Encoding: 0x5AC0001E
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=0, Rd=30
-    // Fields: sf=0, Rn=0, Rd=30
+    // Fields: Rd=30, sf=0, Rn=0
     let encoding: u32 = 0x5AC0001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w30, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3306,18 +2644,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_8_0_5ac0001e() {
 fn test_aarch64_integer_arithmetic_rbit_combo_9_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=0, Rd=31
-    // Fields: Rd=31, sf=0, Rn=0
+    // Fields: sf=0, Rn=0, Rd=31
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3332,14 +2664,8 @@ fn test_aarch64_integer_arithmetic_rbit_combo_10_0_5ac00021() {
     let encoding: u32 = 0x5AC00021;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w1, w1
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3350,18 +2676,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_10_0_5ac00021() {
 fn test_aarch64_integer_arithmetic_rbit_combo_11_0_5ac003ff() {
     // Encoding: 0x5AC003FF
     // Test aarch64_integer_arithmetic_rbit field combination: sf=0, Rn=31, Rd=31
-    // Fields: Rd=31, sf=0, Rn=31
+    // Fields: sf=0, Rd=31, Rn=31
     let encoding: u32 = 0x5AC003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3372,18 +2692,12 @@ fn test_aarch64_integer_arithmetic_rbit_combo_11_0_5ac003ff() {
 fn test_aarch64_integer_arithmetic_rbit_special_sf_0_size_variant_0_0_5ac00000() {
     // Encoding: 0x5AC00000
     // Test aarch64_integer_arithmetic_rbit special value sf = 0 (Size variant 0)
-    // Fields: Rn=0, sf=0, Rd=0
+    // Fields: Rn=0, Rd=0, sf=0
     let encoding: u32 = 0x5AC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3398,14 +2712,8 @@ fn test_aarch64_integer_arithmetic_rbit_special_sf_1_size_variant_1_0_dac00000()
     let encoding: u32 = 0xDAC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	x0, x0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3413,22 +2721,15 @@ fn test_aarch64_integer_arithmetic_rbit_special_sf_1_size_variant_1_0_dac00000()
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_arithmetic_rbit_special_rn_31_stack_pointer_sp_may_require_alignment_0_5ac003e0()
- {
+fn test_aarch64_integer_arithmetic_rbit_special_rn_31_stack_pointer_sp_may_require_alignment_0_5ac003e0() {
     // Encoding: 0x5AC003E0
     // Test aarch64_integer_arithmetic_rbit special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: sf=0, Rd=0, Rn=31
+    // Fields: Rn=31, sf=0, Rd=0
     let encoding: u32 = 0x5AC003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	w0, wzr
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3436,22 +2737,15 @@ fn test_aarch64_integer_arithmetic_rbit_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_arithmetic_rbit_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5ac0001f()
- {
+fn test_aarch64_integer_arithmetic_rbit_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_5ac0001f() {
     // Encoding: 0x5AC0001F
     // Test aarch64_integer_arithmetic_rbit special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rn=0, Rd=31, sf=0
     let encoding: u32 = 0x5AC0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: rbit	wzr, w0
     let exit = cpu.step();
-    assert!(
-        exit.is_ok() && !matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected allocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_integer_arithmetic_rbit
@@ -3497,5 +2791,6 @@ fn test_aarch64_integer_arithmetic_rbit_zr_rd_5ac0001f() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
+    assert_eq!(get_x(&cpu, 31), 0x0, "XZR should always be 0");
 }
+

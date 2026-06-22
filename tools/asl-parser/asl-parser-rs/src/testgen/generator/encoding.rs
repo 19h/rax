@@ -623,114 +623,30 @@ pub fn validate_a64_encoding(encoding: u64, instr_name: &str) -> ExpectedResult 
         return validate_branch_unconditional_register(encoding);
     }
 
-    // PAC instructions - emulator doesn't implement
-    if instr_name.contains("_pac_") {
-        return ExpectedResult::Unallocated;
+    // NOTE: The previous implementation hard-marked whole instruction families
+    // (PAC, RBIT/REV/CLZ/CLS/CNT, all `_Z_`/LDn/STn SVE, float convert/round/
+    // mul-add/unary, vector/simdfp memory, ...) as Unallocated on the rationale
+    // that "the emulator doesn't implement them". That status is stale -- the
+    // emulator now implements these -- and those families are NOT architecturally
+    // UNDEFINED, so the marks produced ~17.5k bogus "expected unallocated" tests.
+    // We now default to Pass (allocated) and only mark encodings that ARM truly
+    // defines as UNDEFINED via the structural predicates below.
+    if let Some(res) = validate_a64_reserved(encoding, instr_name) {
+        return res;
     }
 
-    // Data-processing 1-source (RBIT, REV, CLZ, CLS, CNT) - emulator doesn't implement
-    if instr_name.contains("arithmetic_rbit")
-        || instr_name.contains("arithmetic_rev")
-        || instr_name.contains("arithmetic_cnt")
-        || instr_name.contains("arithmetic_clz")
-        || instr_name.contains("arithmetic_cls")
-    {
-        return ExpectedResult::Unallocated;
-    }
-
-    // NOTE: Many SIMD/FP/vector instructions are "implemented" in the emulator
-    // but with incorrect behavior (they silently execute as NOPs or copy operations).
-    // Rather than marking them as Unallocated (which would require the emulator to
-    // return Undefined), we mark them as Pass so the tests pass. The emulator
-    // should be fixed to properly return Undefined for unimplemented opcodes.
-    //
-    // For now, only mark truly unimplemented instructions that return Err:
-
-    // SVE instructions - these actually return Err(Unimplemented)
-    if instr_name.to_uppercase().starts_with("LD1")
-        || instr_name.to_uppercase().starts_with("LD2")
-        || instr_name.to_uppercase().starts_with("LD3")
-        || instr_name.to_uppercase().starts_with("LD4")
-        || instr_name.to_uppercase().starts_with("ST1")
-        || instr_name.to_uppercase().starts_with("ST2")
-        || instr_name.to_uppercase().starts_with("ST3")
-        || instr_name.to_uppercase().starts_with("ST4")
-        || instr_name.contains("_Z.")
-        || instr_name.contains("_Z_")
-    {
-        return ExpectedResult::Unallocated;
-    }
-
-    // SVE scalar instructions - these return Err
-    // Use case-insensitive matching
-    let name_upper = instr_name.to_uppercase();
-    if name_upper.starts_with("ADDVL")
-        || name_upper.starts_with("ADDPL")
-        || name_upper.starts_with("CNT")
-        || name_upper.starts_with("LAST")
-        || name_upper.starts_with("INDEX")
-        || name_upper.starts_with("CPY")
-        || name_upper.starts_with("LSL_Z")
-        || name_upper.starts_with("UQDECP")
-        || name_upper.starts_with("STNT")
-        || name_upper.starts_with("FMUL_Z")
-    {
-        return ExpectedResult::Unallocated;
-    }
-
-    // PAC instructions - the emulator silently executes these (doesn't return Undefined)
-    // So mark them as Pass for now
-    // if instr_name.contains("_pac_") {
-    //     return ExpectedResult::Unallocated;
-    // }
-
-    // Scalar FP instructions that return Err(Unimplemented):
-    if instr_name.contains("float_arithmetic_round")
-        || instr_name.contains("float_convert")
-        || instr_name.contains("float_arithmetic_mul_add")
-        || instr_name.contains("float_arithmetic_unary")
-        || instr_name.contains("float_move_fp_imm")
-        || instr_name.contains("float_move_fp_select")
-    {
-        return ExpectedResult::Unallocated;
-    }
-
-    // NOTE: Many SIMD/FP instructions are decoded by the emulator's SIMD handler
-    // and silently "execute" via the _ => a pattern (copy operand 1 to dest).
-    // They don't return Undefined, so we mark them as Pass (the default).
-    // This includes:
-    // - FP16 SIMD instructions
-    // - SISD (scalar single) instructions
-    // - Complex FP instructions
-    // - Disparate (widening/narrowing) instructions
-    // - Saturating arithmetic
-    // - Dot product
-    // - Reciprocal/sqrt estimate
-    // - Crypto instructions
-    // The emulator should ideally return Undefined for these, but it doesn't.
-
-    // SIMD/FP memory operations - return Err
-    if instr_name.contains("memory") && instr_name.contains("simdfp") {
-        return ExpectedResult::Unallocated;
-    }
-
-    // Vector memory operations - return Err
-    if instr_name.contains("memory") && instr_name.contains("vector") {
-        return ExpectedResult::Unallocated;
-    }
-
-    // Memory literal simdfp
-    if instr_name.contains("memory_literal") && instr_name.contains("simdfp") {
-        return ExpectedResult::Unallocated;
-    }
-
-    // Memory pair simdfp
-    if instr_name.contains("memory_pair") && instr_name.contains("simdfp") {
-        return ExpectedResult::Unallocated;
-    }
-
-    // Default: assume valid
+    // Default: assume valid (allocated)
     ExpectedResult::Pass
+}
+
+/// Genuine ARM-defined UNDEFINED predicates (structural reserved-encoding checks).
+/// Returns Some(Unallocated) for encodings ARM defines as UNDEFINED, else None.
+/// Expanded iteratively to match the architecture's reserved-encoding rules.
+fn validate_a64_reserved(encoding: u64, _instr_name: &str) -> Option<ExpectedResult> {
+    if let Some(r) = validate_simd_shift_immediate(encoding) {
+        return Some(r);
+    }
+    None
 }
 
 /// Validate SIMD shift by immediate encodings

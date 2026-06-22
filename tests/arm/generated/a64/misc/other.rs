@@ -24,14 +24,8 @@ fn test_aarch64_udf_field_imm16_0_zero_0_00000000() {
     let encoding: u32 = 0x00000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#0
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -46,14 +40,8 @@ fn test_aarch64_udf_field_imm16_1_poweroftwo_0_00000001() {
     let encoding: u32 = 0x00000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -68,14 +56,8 @@ fn test_aarch64_udf_field_imm16_3_poweroftwominusone_0_00000003() {
     let encoding: u32 = 0x00000003;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#3
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -90,14 +72,8 @@ fn test_aarch64_udf_field_imm16_4_poweroftwo_0_00000004() {
     let encoding: u32 = 0x00000004;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -112,14 +88,8 @@ fn test_aarch64_udf_field_imm16_7_poweroftwominusone_0_00000007() {
     let encoding: u32 = 0x00000007;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#7
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -134,14 +104,8 @@ fn test_aarch64_udf_field_imm16_8_poweroftwo_0_00000008() {
     let encoding: u32 = 0x00000008;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -156,14 +120,8 @@ fn test_aarch64_udf_field_imm16_15_poweroftwominusone_0_0000000f() {
     let encoding: u32 = 0x0000000F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#15
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -178,14 +136,8 @@ fn test_aarch64_udf_field_imm16_16_poweroftwo_0_00000010() {
     let encoding: u32 = 0x00000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -200,14 +152,8 @@ fn test_aarch64_udf_field_imm16_31_poweroftwominusone_0_0000001f() {
     let encoding: u32 = 0x0000001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#31
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -222,14 +168,8 @@ fn test_aarch64_udf_field_imm16_32_poweroftwo_0_00000020() {
     let encoding: u32 = 0x00000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -244,14 +184,8 @@ fn test_aarch64_udf_field_imm16_63_poweroftwominusone_0_0000003f() {
     let encoding: u32 = 0x0000003F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#63
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -266,14 +200,8 @@ fn test_aarch64_udf_field_imm16_64_poweroftwo_0_00000040() {
     let encoding: u32 = 0x00000040;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#64
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -288,14 +216,8 @@ fn test_aarch64_udf_field_imm16_127_poweroftwominusone_0_0000007f() {
     let encoding: u32 = 0x0000007F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#127
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -310,14 +232,8 @@ fn test_aarch64_udf_field_imm16_128_poweroftwo_0_00000080() {
     let encoding: u32 = 0x00000080;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#128
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -332,14 +248,8 @@ fn test_aarch64_udf_field_imm16_255_poweroftwominusone_0_000000ff() {
     let encoding: u32 = 0x000000FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#255
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -354,14 +264,8 @@ fn test_aarch64_udf_field_imm16_256_poweroftwo_0_00000100() {
     let encoding: u32 = 0x00000100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#256
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -376,14 +280,8 @@ fn test_aarch64_udf_field_imm16_511_poweroftwominusone_0_000001ff() {
     let encoding: u32 = 0x000001FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#511
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -398,14 +296,8 @@ fn test_aarch64_udf_field_imm16_512_poweroftwo_0_00000200() {
     let encoding: u32 = 0x00000200;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#512
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -420,14 +312,8 @@ fn test_aarch64_udf_field_imm16_1023_poweroftwominusone_0_000003ff() {
     let encoding: u32 = 0x000003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1023
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -442,14 +328,8 @@ fn test_aarch64_udf_field_imm16_1024_poweroftwo_0_00000400() {
     let encoding: u32 = 0x00000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1024
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -464,14 +344,8 @@ fn test_aarch64_udf_field_imm16_2047_poweroftwominusone_0_000007ff() {
     let encoding: u32 = 0x000007FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#2047
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -486,14 +360,8 @@ fn test_aarch64_udf_field_imm16_2048_poweroftwo_0_00000800() {
     let encoding: u32 = 0x00000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#2048
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -508,14 +376,8 @@ fn test_aarch64_udf_field_imm16_4095_poweroftwominusone_0_00000fff() {
     let encoding: u32 = 0x00000FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4095
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -530,14 +392,8 @@ fn test_aarch64_udf_field_imm16_4096_poweroftwo_0_00001000() {
     let encoding: u32 = 0x00001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4096
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -552,14 +408,8 @@ fn test_aarch64_udf_field_imm16_8191_poweroftwominusone_0_00001fff() {
     let encoding: u32 = 0x00001FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8191
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -574,14 +424,8 @@ fn test_aarch64_udf_field_imm16_8192_poweroftwo_0_00002000() {
     let encoding: u32 = 0x00002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8192
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -596,14 +440,8 @@ fn test_aarch64_udf_field_imm16_16383_poweroftwominusone_0_00003fff() {
     let encoding: u32 = 0x00003FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16383
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -618,14 +456,8 @@ fn test_aarch64_udf_field_imm16_16384_poweroftwo_0_00004000() {
     let encoding: u32 = 0x00004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16384
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -640,14 +472,8 @@ fn test_aarch64_udf_field_imm16_32767_poweroftwominusone_0_00007fff() {
     let encoding: u32 = 0x00007FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32767
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -662,14 +488,8 @@ fn test_aarch64_udf_field_imm16_32768_poweroftwo_0_00008000() {
     let encoding: u32 = 0x00008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32768
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -684,14 +504,8 @@ fn test_aarch64_udf_field_imm16_65535_max_0_0000ffff() {
     let encoding: u32 = 0x0000FFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#65535
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -706,14 +520,8 @@ fn test_aarch64_udf_combo_0_0_00000000() {
     let encoding: u32 = 0x00000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#0
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -728,14 +536,8 @@ fn test_aarch64_udf_combo_1_0_00000001() {
     let encoding: u32 = 0x00000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -750,14 +552,8 @@ fn test_aarch64_udf_combo_2_0_00000003() {
     let encoding: u32 = 0x00000003;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#3
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -772,14 +568,8 @@ fn test_aarch64_udf_combo_3_0_00000004() {
     let encoding: u32 = 0x00000004;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -794,14 +584,8 @@ fn test_aarch64_udf_combo_4_0_00000007() {
     let encoding: u32 = 0x00000007;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#7
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -816,14 +600,8 @@ fn test_aarch64_udf_combo_5_0_00000008() {
     let encoding: u32 = 0x00000008;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -838,14 +616,8 @@ fn test_aarch64_udf_combo_6_0_0000000f() {
     let encoding: u32 = 0x0000000F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#15
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -860,14 +632,8 @@ fn test_aarch64_udf_combo_7_0_00000010() {
     let encoding: u32 = 0x00000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -882,14 +648,8 @@ fn test_aarch64_udf_combo_8_0_0000001f() {
     let encoding: u32 = 0x0000001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#31
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -904,14 +664,8 @@ fn test_aarch64_udf_combo_9_0_00000020() {
     let encoding: u32 = 0x00000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -926,14 +680,8 @@ fn test_aarch64_udf_combo_10_0_0000003f() {
     let encoding: u32 = 0x0000003F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#63
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -948,14 +696,8 @@ fn test_aarch64_udf_combo_11_0_00000040() {
     let encoding: u32 = 0x00000040;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#64
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -970,14 +712,8 @@ fn test_aarch64_udf_combo_12_0_0000007f() {
     let encoding: u32 = 0x0000007F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#127
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -992,14 +728,8 @@ fn test_aarch64_udf_combo_13_0_00000080() {
     let encoding: u32 = 0x00000080;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#128
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1014,14 +744,8 @@ fn test_aarch64_udf_combo_14_0_000000ff() {
     let encoding: u32 = 0x000000FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#255
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1036,14 +760,8 @@ fn test_aarch64_udf_combo_15_0_00000100() {
     let encoding: u32 = 0x00000100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#256
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1058,14 +776,8 @@ fn test_aarch64_udf_combo_16_0_000001ff() {
     let encoding: u32 = 0x000001FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#511
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1080,14 +792,8 @@ fn test_aarch64_udf_combo_17_0_00000200() {
     let encoding: u32 = 0x00000200;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#512
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1102,14 +808,8 @@ fn test_aarch64_udf_combo_18_0_000003ff() {
     let encoding: u32 = 0x000003FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1023
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1124,14 +824,8 @@ fn test_aarch64_udf_combo_19_0_00000400() {
     let encoding: u32 = 0x00000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#1024
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1146,14 +840,8 @@ fn test_aarch64_udf_combo_20_0_000007ff() {
     let encoding: u32 = 0x000007FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#2047
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1168,14 +856,8 @@ fn test_aarch64_udf_combo_21_0_00000800() {
     let encoding: u32 = 0x00000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#2048
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1190,14 +872,8 @@ fn test_aarch64_udf_combo_22_0_00000fff() {
     let encoding: u32 = 0x00000FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4095
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1212,14 +888,8 @@ fn test_aarch64_udf_combo_23_0_00001000() {
     let encoding: u32 = 0x00001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#4096
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1234,14 +904,8 @@ fn test_aarch64_udf_combo_24_0_00001fff() {
     let encoding: u32 = 0x00001FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8191
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1256,14 +920,8 @@ fn test_aarch64_udf_combo_25_0_00002000() {
     let encoding: u32 = 0x00002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#8192
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1278,14 +936,8 @@ fn test_aarch64_udf_combo_26_0_00003fff() {
     let encoding: u32 = 0x00003FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16383
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1300,14 +952,8 @@ fn test_aarch64_udf_combo_27_0_00004000() {
     let encoding: u32 = 0x00004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#16384
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1322,14 +968,8 @@ fn test_aarch64_udf_combo_28_0_00007fff() {
     let encoding: u32 = 0x00007FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32767
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1344,14 +984,8 @@ fn test_aarch64_udf_combo_29_0_00008000() {
     let encoding: u32 = 0x00008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#32768
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
 
 /// Provenance: aarch64_udf
@@ -1366,12 +1000,23 @@ fn test_aarch64_udf_combo_30_0_0000ffff() {
     let encoding: u32 = 0x0000FFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
-    // llvm-mc: udf	#65535
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)),
-        "expected unallocated encoding for {:#010X}: {:?}",
-        encoding,
-        exit
-    );
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
 }
+
+/// Provenance: aarch64_udf
+/// ASL: `Unconditional UNDEFINED`
+/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
+/// triggers Undefined
+#[test]
+fn test_aarch64_udf_invalid_0_0_00000000() {
+    // Encoding: 0x00000000
+    // Test aarch64_udf invalid encoding: Unconditional UNDEFINED
+    // Fields: imm16=0
+    let encoding: u32 = 0x00000000;
+    let mut cpu = create_test_cpu();
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step();
+    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+}
+

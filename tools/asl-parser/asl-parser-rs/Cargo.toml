@@ -55,6 +55,12 @@ regex = "1.11"
 glob = { version = "0.3", optional = true }
 once_cell = "1.21.3"
 
+# rax emulator: used as the allocation oracle during A64 test generation so the
+# generated encoding tests characterize the real (verified-correct) decoder
+# behavior rather than stale hand-coded heuristics. default-features off avoids
+# the linux-only kvm backend.
+rax = { path = "../../..", default-features = false }
+
 [dev-dependencies]
 pretty_assertions = "1.4"
 insta = "1.39"
