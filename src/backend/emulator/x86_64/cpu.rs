@@ -1296,6 +1296,21 @@ impl X86_64Vcpu {
         // Mark this page as containing code for self-modifying code detection
         self.mmu.mark_code_page(rip);
 
+        // Suppress per-access recording for the fetch-window read; the fetch is
+        // reported once below (one Exec record per instruction, not Reads of the
+        // 15-byte window). Zero cost when recording is off.
+        self.mmu.set_fetch_active(true);
+        let result = self.fetch_window(rip);
+        self.mmu.set_fetch_active(false);
+        if let Ok((_, len, _)) = &result {
+            self.mmu.record_fetch(rip, (*len).min(MAX_INSN_LEN) as u8);
+        }
+        result
+    }
+
+    /// Reads the up-to-15-byte instruction window at linear address `rip`,
+    /// retrying shorter lengths near a page/canonical boundary.
+    fn fetch_window(&mut self, rip: u64) -> Result<([u8; MAX_INSN_LEN], usize, bool)> {
         let mut buf = [0u8; MAX_INSN_LEN];
         let mut last_err = None;
         match self.mmu.read(rip, &mut buf, &self.sregs) {
@@ -3029,6 +3044,18 @@ impl VCpu for X86_64Vcpu {
 
     fn current_pc(&self) -> u64 {
         self.regs.rip
+    }
+
+    fn supports_mem_hooks(&self) -> bool {
+        true
+    }
+
+    fn set_mem_recording(&mut self, on: bool) {
+        self.mmu.set_mem_recording(on);
+    }
+
+    fn drain_mem_records(&mut self, out: &mut Vec<crate::cpu::MemRecord>) {
+        self.mmu.drain_mem_records(out);
     }
 
     fn set_pci_bridge(

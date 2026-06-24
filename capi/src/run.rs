@@ -9,13 +9,34 @@
 use std::os::raw::c_int;
 use std::time::Instant;
 
-use rax_engine::cpu::VcpuExit;
+use rax_engine::cpu::{MemAccess, MemRecord, VcpuExit};
 
 use crate::engine::{Engine, engine_mut};
 use crate::guard;
-use crate::hook::SimpleHook;
+use crate::hook::{
+    MemHook, SimpleHook, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, RAX_MEM_FETCH,
+    RAX_MEM_READ, RAX_MEM_WRITE,
+};
 use crate::reg;
 use crate::status::RaxStatus;
+
+/// Dispatches buffered memory-access records to matching memory hooks. Called
+/// from the run loop between steps, so no Rust borrow of the engine is held and
+/// callbacks may freely re-enter the API.
+fn fire_mem_hooks(eptr: *mut Engine, mem_hooks: &[MemHook], records: &[MemRecord]) {
+    for rec in records {
+        let (kind, bit) = match rec.access {
+            MemAccess::Read => (RAX_MEM_READ, RAX_HOOK_MEM_READ),
+            MemAccess::Write => (RAX_MEM_WRITE, RAX_HOOK_MEM_WRITE),
+            MemAccess::Exec => (RAX_MEM_FETCH, RAX_HOOK_MEM_FETCH),
+        };
+        for h in mem_hooks {
+            if (h.types & bit) != 0 && h.matches(rec.addr) {
+                (h.cb)(eptr, kind, rec.addr, rec.size as u32, rec.value, h.user);
+            }
+        }
+    }
+}
 
 // Stop reasons. Mirror `RAX_STOP_*` in `rax.h`.
 pub const RAX_STOP_NONE: i32 = 0;
@@ -237,6 +258,7 @@ fn run_emulation(
     let mmio_r_hooks;
     let mmio_w_hooks;
     let invalid_hooks;
+    let mem_hooks;
     {
         let e = unsafe { &mut *eptr };
         e.clear_err();
@@ -266,6 +288,9 @@ fn run_emulation(
         mmio_r_hooks = e.hooks.mmio_read.clone();
         mmio_w_hooks = e.hooks.mmio_write.clone();
         invalid_hooks = e.hooks.invalid.clone();
+        mem_hooks = e.hooks.mem.clone();
+        // Arm per-access recording only while memory hooks are present.
+        e.vcpu.set_mem_recording(!mem_hooks.is_empty());
     }
 
     let want_step = supports
@@ -273,7 +298,9 @@ fn run_emulation(
             || has_until
             || timeout_us != 0
             || !code_hooks.is_empty()
-            || !block_hooks.is_empty());
+            || !block_hooks.is_empty()
+            || !mem_hooks.is_empty());
+    let mut mem_records: Vec<MemRecord> = Vec::new();
 
     let start = Instant::now();
     let mut executed: u64 = 0;
@@ -341,6 +368,17 @@ fn run_emulation(
 
             let res = unsafe { (*eptr).vcpu.step_insn() };
             executed += 1;
+
+            // Surface the memory accesses this instruction made (re-entrancy is
+            // safe: we hold no Rust borrow of the engine here).
+            if !mem_hooks.is_empty() {
+                mem_records.clear();
+                unsafe {
+                    (*eptr).vcpu.drain_mem_records(&mut mem_records);
+                }
+                fire_mem_hooks(eptr, &mem_hooks, &mem_records);
+            }
+
             match res {
                 Ok(None) => {}
                 Ok(Some(exit)) => {
@@ -452,6 +490,9 @@ fn run_emulation(
         let e = unsafe { &mut *eptr };
         e.running = false;
         e.last_exit = exit_info;
+        if !mem_hooks.is_empty() {
+            e.vcpu.set_mem_recording(false);
+        }
         if let Some(out) = executed_out {
             *out = executed;
         }

@@ -439,6 +439,18 @@ pub struct Mmu {
     /// every aperture test is trivially false and the hot path is unaffected.
     pci_ap_lo: u64,
     pci_ap_hi: u64,
+    /// Per-access memory recording for embedder memory hooks. `false` (the
+    /// default) makes every record helper a single predicted-not-taken branch,
+    /// so normal execution (and Linux boot) is unaffected. When `true`, each
+    /// data load/store and instruction fetch is appended to `mem_rec`.
+    mem_rec_on: bool,
+    /// True while servicing an instruction fetch: data-access recording is
+    /// suppressed so the fetch is reported once (as a single `Exec` record with
+    /// the decoded length) instead of as one or more `Read`s of the fetch
+    /// window.
+    fetch_active: bool,
+    /// Buffer of recorded accesses, drained at each instruction boundary.
+    mem_rec: Vec<crate::cpu::MemRecord>,
 }
 
 impl Mmu {
@@ -475,7 +487,74 @@ impl Mmu {
             pci: None,
             pci_ap_lo: u64::MAX,
             pci_ap_hi: 0,
+            mem_rec_on: false,
+            fetch_active: false,
+            mem_rec: Vec::new(),
         }
+    }
+
+    /// Enable/disable per-access memory recording (see [`Mmu::mem_rec`]).
+    #[inline]
+    pub fn set_mem_recording(&mut self, on: bool) {
+        self.mem_rec_on = on;
+        if !on {
+            self.mem_rec.clear();
+            self.mem_rec.shrink_to_fit();
+        }
+    }
+
+    /// Move all buffered access records into `out`.
+    pub fn drain_mem_records(&mut self, out: &mut Vec<crate::cpu::MemRecord>) {
+        out.append(&mut self.mem_rec);
+    }
+
+    /// True while servicing an instruction fetch (sets the suppress window).
+    #[inline]
+    pub(super) fn set_fetch_active(&mut self, on: bool) {
+        self.fetch_active = on;
+    }
+
+    /// Records a data read/write. Gated on `mem_rec_on`; suppressed during a
+    /// fetch (the fetch is recorded separately via [`Mmu::record_fetch`]).
+    #[inline]
+    fn record(&mut self, access: crate::cpu::MemAccess, addr: u64, size: u8, value: u64) {
+        if self.mem_rec_on && !self.fetch_active {
+            self.mem_rec.push(crate::cpu::MemRecord {
+                access,
+                addr,
+                size,
+                value,
+            });
+        }
+    }
+
+    /// Records an instruction fetch of `size` bytes at `addr`. Called once per
+    /// instruction by the fetch path, regardless of `fetch_active`.
+    #[inline]
+    pub(super) fn record_fetch(&mut self, addr: u64, size: u8) {
+        if self.mem_rec_on {
+            self.mem_rec.push(crate::cpu::MemRecord {
+                access: crate::cpu::MemAccess::Exec,
+                addr,
+                size,
+                value: 0,
+            });
+        }
+    }
+
+    /// Returns true when access recording is active (hot-path guard helper).
+    #[inline]
+    pub(super) fn mem_rec_on(&self) -> bool {
+        self.mem_rec_on
+    }
+
+    /// Little-endian value of up to the low 8 bytes of `buf`.
+    #[inline]
+    fn le_value(buf: &[u8]) -> u64 {
+        let mut t = [0u8; 8];
+        let n = buf.len().min(8);
+        t[..n].copy_from_slice(&buf[..n]);
+        u64::from_le_bytes(t)
     }
 
     /// Attach the PCI host bridge and divert the physical aperture
@@ -1173,11 +1252,23 @@ impl Mmu {
         let page_offset = (vaddr & 0xFFF) as usize;
         if page_offset + len <= 0x1000 {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
-            return self.read_phys(paddr, buf);
+            self.read_phys(paddr, buf)?;
+        } else {
+            // Slow path: handle page boundary crossing
+            self.read_crossing(vaddr, buf, sregs)?;
         }
-
-        // Slow path: handle page boundary crossing
-        self.read_crossing(vaddr, buf, sregs)
+        // Record the access (suppressed during instruction fetch, which is
+        // reported once via record_fetch). Zero cost when recording is off.
+        if self.mem_rec_on && !self.fetch_active {
+            let value = Self::le_value(buf);
+            self.mem_rec.push(crate::cpu::MemRecord {
+                access: crate::cpu::MemAccess::Read,
+                addr: vaddr,
+                size: len.min(255) as u8,
+                value,
+            });
+        }
+        Ok(())
     }
 
     /// Read bytes from guest memory with supervisor privilege.
@@ -1264,11 +1355,21 @@ impl Mmu {
         let page_offset = (vaddr & 0xFFF) as usize;
         if page_offset + len <= 0x1000 {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
-            return self.write_phys(paddr, buf);
+            self.write_phys(paddr, buf)?;
+        } else {
+            // Slow path: handle page boundary crossing
+            self.write_crossing(vaddr, buf, sregs)?;
         }
-
-        // Slow path: handle page boundary crossing
-        self.write_crossing(vaddr, buf, sregs)
+        if self.mem_rec_on && !self.fetch_active {
+            let value = Self::le_value(buf);
+            self.mem_rec.push(crate::cpu::MemRecord {
+                access: crate::cpu::MemAccess::Write,
+                addr: vaddr,
+                size: len.min(255) as u8,
+                value,
+            });
+        }
+        Ok(())
     }
 
     /// Slow path for writes that cross page boundaries
@@ -1300,14 +1401,17 @@ impl Mmu {
         profiling::memory::record_read(1);
 
         let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
-        if let Some(p) = self.ram_ptr::<1>(paddr) {
+        let v = if let Some(p) = self.ram_ptr::<1>(paddr) {
             // SAFETY: ram_ptr verified [paddr, paddr+1) is in the RAM region and
             // not in MMIO; p is the corresponding host address.
-            return Ok(unsafe { (p as *const u8).read() });
-        }
-        let mut buf = [0u8; 1];
-        self.read_phys(paddr, &mut buf)?;
-        Ok(buf[0])
+            unsafe { (p as *const u8).read() }
+        } else {
+            let mut buf = [0u8; 1];
+            self.read_phys(paddr, &mut buf)?;
+            buf[0]
+        };
+        self.record(crate::cpu::MemAccess::Read, vaddr, 1, v as u64);
+        Ok(v)
     }
 
     /// Read a u16 from virtual address.
@@ -1319,13 +1423,16 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFE {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
-            if let Some(p) = self.ram_ptr::<2>(paddr) {
+            let v = if let Some(p) = self.ram_ptr::<2>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+2) is in-RAM, non-MMIO.
-                return Ok(u16::from_le(unsafe { (p as *const u16).read_unaligned() }));
-            }
-            let mut buf = [0u8; 2];
-            self.read_phys(paddr, &mut buf)?;
-            Ok(u16::from_le_bytes(buf))
+                u16::from_le(unsafe { (p as *const u16).read_unaligned() })
+            } else {
+                let mut buf = [0u8; 2];
+                self.read_phys(paddr, &mut buf)?;
+                u16::from_le_bytes(buf)
+            };
+            self.record(crate::cpu::MemAccess::Read, vaddr, 2, v as u64);
+            Ok(v)
         } else {
             let mut buf = [0u8; 2];
             self.read(vaddr, &mut buf, sregs)?;
@@ -1342,13 +1449,16 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFC {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
-            if let Some(p) = self.ram_ptr::<4>(paddr) {
+            let v = if let Some(p) = self.ram_ptr::<4>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+4) is in-RAM, non-MMIO.
-                return Ok(u32::from_le(unsafe { (p as *const u32).read_unaligned() }));
-            }
-            let mut buf = [0u8; 4];
-            self.read_phys(paddr, &mut buf)?;
-            Ok(u32::from_le_bytes(buf))
+                u32::from_le(unsafe { (p as *const u32).read_unaligned() })
+            } else {
+                let mut buf = [0u8; 4];
+                self.read_phys(paddr, &mut buf)?;
+                u32::from_le_bytes(buf)
+            };
+            self.record(crate::cpu::MemAccess::Read, vaddr, 4, v as u64);
+            Ok(v)
         } else {
             let mut buf = [0u8; 4];
             self.read(vaddr, &mut buf, sregs)?;
@@ -1365,13 +1475,16 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFF8 {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
-            if let Some(p) = self.ram_ptr::<8>(paddr) {
+            let v = if let Some(p) = self.ram_ptr::<8>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+8) is in-RAM, non-MMIO.
-                return Ok(u64::from_le(unsafe { (p as *const u64).read_unaligned() }));
-            }
-            let mut buf = [0u8; 8];
-            self.read_phys(paddr, &mut buf)?;
-            Ok(u64::from_le_bytes(buf))
+                u64::from_le(unsafe { (p as *const u64).read_unaligned() })
+            } else {
+                let mut buf = [0u8; 8];
+                self.read_phys(paddr, &mut buf)?;
+                u64::from_le_bytes(buf)
+            };
+            self.record(crate::cpu::MemAccess::Read, vaddr, 8, v);
+            Ok(v)
         } else {
             let mut buf = [0u8; 8];
             self.read(vaddr, &mut buf, sregs)?;
@@ -1390,9 +1503,11 @@ impl Mmu {
         if let Some(p) = self.ram_ptr::<1>(paddr) {
             // SAFETY: ram_ptr verified [paddr, paddr+1) is in-RAM, non-MMIO.
             unsafe { (p as *mut u8).write(value) };
-            return Ok(());
+        } else {
+            self.write_phys(paddr, &[value])?;
         }
-        self.write_phys(paddr, &[value])
+        self.record(crate::cpu::MemAccess::Write, vaddr, 1, value as u64);
+        Ok(())
     }
 
     /// Write a u16 to virtual address.
@@ -1407,9 +1522,11 @@ impl Mmu {
             if let Some(p) = self.ram_ptr::<2>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+2) is in-RAM, non-MMIO.
                 unsafe { (p as *mut u16).write_unaligned(value.to_le()) };
-                return Ok(());
+            } else {
+                self.write_phys(paddr, &value.to_le_bytes())?;
             }
-            self.write_phys(paddr, &value.to_le_bytes())
+            self.record(crate::cpu::MemAccess::Write, vaddr, 2, value as u64);
+            Ok(())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }
@@ -1427,9 +1544,11 @@ impl Mmu {
             if let Some(p) = self.ram_ptr::<4>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+4) is in-RAM, non-MMIO.
                 unsafe { (p as *mut u32).write_unaligned(value.to_le()) };
-                return Ok(());
+            } else {
+                self.write_phys(paddr, &value.to_le_bytes())?;
             }
-            self.write_phys(paddr, &value.to_le_bytes())
+            self.record(crate::cpu::MemAccess::Write, vaddr, 4, value as u64);
+            Ok(())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }
@@ -1447,9 +1566,11 @@ impl Mmu {
             if let Some(p) = self.ram_ptr::<8>(paddr) {
                 // SAFETY: ram_ptr verified [paddr, paddr+8) is in-RAM, non-MMIO.
                 unsafe { (p as *mut u64).write_unaligned(value.to_le()) };
-                return Ok(());
+            } else {
+                self.write_phys(paddr, &value.to_le_bytes())?;
             }
-            self.write_phys(paddr, &value.to_le_bytes())
+            self.record(crate::cpu::MemAccess::Write, vaddr, 8, value);
+            Ok(())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }

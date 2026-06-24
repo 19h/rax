@@ -373,6 +373,87 @@ fn arm64_step_advances_pc() {
     }
 }
 
+#[repr(C)]
+#[derive(Default)]
+struct MemObs {
+    reads: u64,
+    writes: u64,
+    fetches: u64,
+    last_write_addr: u64,
+    last_write_val: u64,
+    last_read_addr: u64,
+    last_read_val: u64,
+}
+
+extern "C" fn mem_cb(_e: *mut Engine, kind: i32, addr: u64, _size: u32, value: u64, user: *mut c_void) {
+    let o = unsafe { &mut *(user as *mut MemObs) };
+    match kind {
+        0 => {
+            o.reads += 1;
+            o.last_read_addr = addr;
+            o.last_read_val = value;
+        }
+        1 => {
+            o.writes += 1;
+            o.last_write_addr = addr;
+            o.last_write_val = value;
+        }
+        2 => o.fetches += 1,
+        _ => {}
+    }
+}
+
+#[test]
+fn mem_hook_observes_load_store_fetch() {
+    use crate::hook::{
+        rax_hook_add_mem, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE,
+    };
+    unsafe {
+        let e = open_x86();
+        // mov rax,0x11223344 ; mov [0x2000],rax ; mov rbx,[0x2000] ; hlt
+        let prog = &[
+            0x48, 0xC7, 0xC0, 0x44, 0x33, 0x22, 0x11, // mov rax, 0x11223344
+            0x48, 0x89, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // mov [0x2000], rax
+            0x48, 0x8B, 0x1C, 0x25, 0x00, 0x20, 0x00, 0x00, // mov rbx, [0x2000]
+            0xF4, // hlt
+        ];
+        write(e, 0x1000, prog);
+
+        let mut obs = MemObs::default();
+        let mut id = 0u32;
+        assert_eq!(
+            rax_hook_add_mem(
+                e,
+                RAX_HOOK_MEM_READ | RAX_HOOK_MEM_WRITE | RAX_HOOK_MEM_FETCH,
+                1,
+                0, // begin>end => all addresses
+                Some(mem_cb),
+                &mut obs as *mut _ as *mut c_void,
+                &mut id,
+            ),
+            RaxStatus::Ok
+        );
+        assert!(id > 0);
+
+        set_rip(e, 0x1000);
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 0), RaxStatus::Ok);
+
+        // Observed exactly one 8-byte store and one 8-byte load at 0x2000.
+        assert_eq!(obs.writes, 1, "expected one store");
+        assert_eq!(obs.last_write_addr, 0x2000);
+        assert_eq!(obs.last_write_val, 0x1122_3344);
+        assert_eq!(obs.reads, 1, "expected one load");
+        assert_eq!(obs.last_read_addr, 0x2000);
+        assert_eq!(obs.last_read_val, 0x1122_3344);
+        // One fetch per executed instruction (4: two movs, one mov, hlt).
+        assert_eq!(obs.fetches, 4);
+        // RBX received the loaded value.
+        assert_eq!(rd_u64(e, 0x0103), 0x1122_3344);
+
+        rax_engine_close(e);
+    }
+}
+
 #[test]
 fn riscv_step_advances_pc() {
     unsafe {

@@ -107,6 +107,7 @@ struct Hook {
     std::function<uint64_t(Engine&, uint64_t, uint32_t)> mmioRead;
     std::function<void(Engine&, uint64_t, uint32_t, uint64_t)> mmioWrite;
     std::function<bool(Engine&, uint64_t)> invalid;
+    std::function<void(Engine&, int, uint64_t, uint32_t, uint64_t)> mem;
 };
 
 } // namespace detail
@@ -122,6 +123,7 @@ public:
     using MmioReadFn = std::function<uint64_t(Engine&, uint64_t /*addr*/, uint32_t /*size*/)>;
     using MmioWriteFn = std::function<void(Engine&, uint64_t /*addr*/, uint32_t /*size*/, uint64_t /*value*/)>;
     using InvalidFn = std::function<bool(Engine&, uint64_t /*addr*/)>;
+    using MemFn = std::function<void(Engine&, int /*kind*/, uint64_t /*addr*/, uint32_t /*size*/, uint64_t /*value*/)>;
 
     // -- lifecycle --
     Engine(Arch arch, uint32_t mode) {
@@ -341,6 +343,17 @@ public:
         hk->id = id;
         return id;
     }
+    /// Per-access memory hook. `types` is a mask of RAX_HOOK_MEM_READ/WRITE/FETCH;
+    /// `[begin, end]` filters by address (begin > end ⇒ all addresses).
+    uint32_t hookMem(uint32_t types, uint64_t begin, uint64_t end, MemFn fn) {
+        auto* hk = newHook();
+        hk->mem = std::move(fn);
+        uint32_t id = 0;
+        check(rax_hook_add_mem(h_, types, begin, end, &Engine::memTramp, hk, &id), "hook_add_mem");
+        hk->id = id;
+        return id;
+    }
+    uint32_t hookMem(uint32_t types, MemFn fn) { return hookMem(types, 1, 0, std::move(fn)); }
     void hookDel(uint32_t id) {
         check(rax_hook_del(h_, id), "hook_del");
         for (auto it = hooks_.begin(); it != hooks_.end(); ++it) {
@@ -409,6 +422,10 @@ private:
     static int invalidTramp(rax_engine*, uint64_t a, void* u) {
         auto& h = hk(u);
         return (h.invalid && h.invalid(*h.owner, a)) ? 1 : 0;
+    }
+    static void memTramp(rax_engine*, int kind, uint64_t a, uint32_t s, uint64_t val, void* u) {
+        auto& h = hk(u);
+        if (h.mem) h.mem(*h.owner, kind, a, s, val);
     }
 };
 

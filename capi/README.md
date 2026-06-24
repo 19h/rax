@@ -131,7 +131,7 @@ cargo build -p rax-capi --release --features jit
 | Registers | `rax_reg_size`, `rax_reg_read`/`write`, `rax_reg_read_u64`/`write_u64` |
 | Execution | `rax_emu_start`, `rax_emu_step`, `rax_emu_stop`, `rax_emu_last_exit`, `rax_emu_icount` |
 | Interrupts | `rax_interrupt`, `rax_nmi`, `rax_can_interrupt` |
-| Hooks | `rax_hook_add_code`/`block`/`intr`/`io_in`/`io_out`/`mmio_read`/`mmio_write`/`invalid`, `rax_hook_del` |
+| Hooks | `rax_hook_add_code`/`block`/`intr`/`io_in`/`io_out`/`mmio_read`/`mmio_write`/`invalid`/`mem`, `rax_hook_del` |
 | Context | `rax_context_save`, `rax_context_restore` |
 
 ### Memory model
@@ -166,8 +166,15 @@ unrecoverable fault.
 Code and block hooks fire per instruction / per basic‑block entry and require a
 stepping‑capable backend. Interrupt, port‑I/O, MMIO, and invalid‑instruction
 hooks service the corresponding exits and let execution continue (e.g. an
-`io_in` hook supplies the value the guest reads). Callbacks receive the engine
-handle and may freely re‑enter the API, including `rax_emu_stop`.
+`io_in` hook supplies the value the guest reads). **Per‑access memory hooks**
+(`rax_hook_add_mem`, filtered by `RAX_HOOK_MEM_READ`/`WRITE`/`FETCH` and an
+address range) fire once for every data load, store, and instruction fetch the
+guest makes, reporting the address, size, and value — ideal for watchpoints and
+memory tracing. All callbacks receive the engine handle and may freely re‑enter
+the API, including `rax_emu_stop`: memory accesses are recorded during execution
+and dispatched at instruction boundaries, so no callback ever runs while the
+engine is internally borrowed. Memory hooks require a recording‑capable backend
+(x86‑64 today; query via the `RAX_ERR_UNSUPPORTED` result of `rax_hook_add_mem`).
 
 ## Architecture capability matrix
 
@@ -204,6 +211,7 @@ See `examples/`:
 - `x86_64_hooks.c` — code + block hooks and stopping from a hook.
 - `x86_64_step.c` — single‑stepping instruction by instruction.
 - `x86_64_io.c` — servicing guest port I/O with hooks.
+- `x86_64_memhook.c` — per-access memory read/write watchpoints.
 - `mem_and_context.c` — sparse mapping, region enumeration, snapshots.
 - `cpp_engine.cpp` — the C++ wrapper with a lambda hook and a context round‑trip.
 

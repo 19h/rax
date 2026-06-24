@@ -16,7 +16,8 @@ pub use state::{
 use crate::error::{Error, Result};
 
 /// Intent of a guest memory access, used by [`VCpu::translate_addr`] to select
-/// the correct permission check when walking translation structures.
+/// the correct permission check when walking translation structures, and to tag
+/// recorded accesses ([`MemRecord`]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemAccess {
     /// Data read.
@@ -25,6 +26,23 @@ pub enum MemAccess {
     Write,
     /// Instruction fetch.
     Exec,
+}
+
+/// A single recorded guest memory access, surfaced to embedders via per-access
+/// memory hooks. Produced by backends that implement [`VCpu::set_mem_recording`]
+/// and collected through [`VCpu::drain_mem_records`].
+#[derive(Clone, Copy, Debug)]
+pub struct MemRecord {
+    /// Kind of access: [`MemAccess::Read`], [`MemAccess::Write`], or
+    /// [`MemAccess::Exec`] (instruction fetch).
+    pub access: MemAccess,
+    /// Guest virtual/linear address of the access.
+    pub addr: u64,
+    /// Access width in bytes.
+    pub size: u8,
+    /// The value read or written, little-endian, truncated to 64 bits (the low
+    /// 8 bytes for wider vector accesses; 0 for fetches).
+    pub value: u64,
 }
 
 /// Abstract vCPU interface.
@@ -84,6 +102,25 @@ pub trait VCpu: Send {
     fn current_pc(&self) -> u64 {
         self.get_state().map(|s| s.pc()).unwrap_or(0)
     }
+
+    /// Whether this backend records per-access memory events (load/store/fetch)
+    /// for memory hooks.
+    fn supports_mem_hooks(&self) -> bool {
+        false
+    }
+
+    /// Enable or disable recording of individual guest memory accesses. While
+    /// enabled, every data load/store and instruction fetch is appended to an
+    /// internal buffer drained by [`VCpu::drain_mem_records`]. Recording is off
+    /// by default and has near-zero cost when disabled. Backends without support
+    /// treat this as a no-op.
+    fn set_mem_recording(&mut self, _on: bool) {
+        let _ = _on;
+    }
+
+    /// Append all buffered memory-access records to `out` and clear the buffer.
+    /// No-op on backends that do not record.
+    fn drain_mem_records(&mut self, _out: &mut Vec<MemRecord>) {}
 
     /// Get general-purpose registers (x86_64 only).
     fn get_regs(&self) -> Result<Registers> {

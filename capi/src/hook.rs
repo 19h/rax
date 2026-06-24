@@ -20,6 +20,14 @@ pub const RAX_HOOK_IO_OUT: u32 = 1 << 4;
 pub const RAX_HOOK_MMIO_READ: u32 = 1 << 5;
 pub const RAX_HOOK_MMIO_WRITE: u32 = 1 << 6;
 pub const RAX_HOOK_INVALID: u32 = 1 << 7;
+pub const RAX_HOOK_MEM_READ: u32 = 1 << 8;
+pub const RAX_HOOK_MEM_WRITE: u32 = 1 << 9;
+pub const RAX_HOOK_MEM_FETCH: u32 = 1 << 10;
+
+// `kind` argument passed to a memory hook callback.
+pub const RAX_MEM_READ: i32 = 0;
+pub const RAX_MEM_WRITE: i32 = 1;
+pub const RAX_MEM_FETCH: i32 = 2;
 
 /// Per-instruction / per-block callback: `(engine, address, size, user)`.
 /// `size` is 0 when the instruction length has not been decoded.
@@ -38,6 +46,30 @@ pub type MmioWriteCb = extern "C" fn(*mut Engine, u64, u32, u64, *mut c_void);
 /// Returning non-zero tells the engine the situation was handled and execution
 /// may continue; zero stops the run.
 pub type InvalidCb = extern "C" fn(*mut Engine, u64, *mut c_void) -> c_int;
+/// Per-access memory callback: `(engine, kind, addr, size, value, user)` where
+/// `kind` is `RAX_MEM_READ`/`WRITE`/`FETCH`. Fires once per access, after the
+/// instruction that made it retires (so the callback may freely re-enter the
+/// API).
+pub type MemCb = extern "C" fn(*mut Engine, c_int, u64, u32, u64, *mut c_void);
+
+/// A memory hook: a range filter plus a type-mask (`RAX_HOOK_MEM_*`).
+#[derive(Clone, Copy)]
+pub struct MemHook {
+    pub id: u32,
+    pub begin: u64,
+    pub end: u64,
+    pub types: u32,
+    pub cb: MemCb,
+    pub user: *mut c_void,
+}
+
+impl MemHook {
+    /// Whether `addr` is in range (`begin > end` ⇒ any address).
+    #[inline]
+    pub fn matches(&self, addr: u64) -> bool {
+        self.begin > self.end || (addr >= self.begin && addr <= self.end)
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct RangeHook<C: Copy> {
@@ -74,6 +106,7 @@ pub struct HookTable {
     pub mmio_read: Vec<SimpleHook<MmioReadCb>>,
     pub mmio_write: Vec<SimpleHook<MmioWriteCb>>,
     pub invalid: Vec<SimpleHook<InvalidCb>>,
+    pub mem: Vec<MemHook>,
 }
 
 impl HookTable {
@@ -88,6 +121,7 @@ impl HookTable {
             mmio_read: Vec::new(),
             mmio_write: Vec::new(),
             invalid: Vec::new(),
+            mem: Vec::new(),
         }
     }
 
@@ -113,6 +147,7 @@ impl HookTable {
             || drop_from!(self.mmio_read)
             || drop_from!(self.mmio_write)
             || drop_from!(self.invalid)
+            || drop_from!(self.mem)
     }
 }
 
@@ -305,6 +340,50 @@ pub extern "C" fn rax_hook_add_invalid(
         };
         let id = e.hooks.alloc_id();
         e.hooks.invalid.push(SimpleHook { id, cb, user });
+        finish_id(out_id, id)
+    })
+}
+
+/// Adds a per-access memory hook for accesses in `[begin, end]` (`begin > end`
+/// ⇒ all addresses), filtered to the access kinds in `types` (any combination
+/// of `RAX_HOOK_MEM_READ`/`WRITE`/`FETCH`). Requires a backend that reports
+/// `rax_engine_supports_*` memory hooks (x86-64 today). The callback fires once
+/// per matching access, after the instruction that made it retires.
+#[unsafe(no_mangle)]
+pub extern "C" fn rax_hook_add_mem(
+    engine: *mut Engine,
+    types: u32,
+    begin: u64,
+    end: u64,
+    cb: Option<MemCb>,
+    user: *mut c_void,
+    out_id: *mut u32,
+) -> RaxStatus {
+    guard(|| {
+        let e = check_handle!(engine);
+        let cb = match cb {
+            Some(c) => c,
+            None => return e.fail(RaxStatus::Arg, "null callback"),
+        };
+        if !e.vcpu.supports_mem_hooks() {
+            return e.fail(
+                RaxStatus::Unsupported,
+                "per-access memory hooks are not supported by this backend",
+            );
+        }
+        let mask = types & (RAX_HOOK_MEM_READ | RAX_HOOK_MEM_WRITE | RAX_HOOK_MEM_FETCH);
+        if mask == 0 {
+            return e.fail(RaxStatus::Arg, "no memory access types selected");
+        }
+        let id = e.hooks.alloc_id();
+        e.hooks.mem.push(MemHook {
+            id,
+            begin,
+            end,
+            types: mask,
+            cb,
+            user,
+        });
         finish_id(out_id, id)
     })
 }

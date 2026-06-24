@@ -125,6 +125,14 @@ typedef enum rax_arch {
 #define RAX_HOOK_MMIO_READ  (1u << 5)
 #define RAX_HOOK_MMIO_WRITE (1u << 6)
 #define RAX_HOOK_INVALID    (1u << 7)
+#define RAX_HOOK_MEM_READ   (1u << 8)  /* per-access data read  */
+#define RAX_HOOK_MEM_WRITE  (1u << 9)  /* per-access data write */
+#define RAX_HOOK_MEM_FETCH  (1u << 10) /* per-access instruction fetch */
+
+/* `kind` value passed to a memory hook callback (rax_mem_cb). */
+#define RAX_MEM_READ  0
+#define RAX_MEM_WRITE 1
+#define RAX_MEM_FETCH 2
 
 /* Stop reasons reported in rax_exit.reason. */
 #define RAX_STOP_NONE        0
@@ -201,6 +209,10 @@ typedef uint64_t (*rax_mmio_read_cb)(rax_engine *e, uint64_t addr, uint32_t size
 typedef void     (*rax_mmio_write_cb)(rax_engine *e, uint64_t addr, uint32_t size, uint64_t value, void *user);
 /* Return non-zero if handled (continue), zero to stop. */
 typedef int      (*rax_invalid_cb)(rax_engine *e, uint64_t address, void *user);
+/* Per-access memory hook: `kind` is RAX_MEM_READ/WRITE/FETCH; `value` is the
+ * data read/written (low 8 bytes, little-endian; 0 for fetch). Fires once per
+ * access, after the instruction retires — callbacks may re-enter the API. */
+typedef void     (*rax_mem_cb)(rax_engine *e, int kind, uint64_t addr, uint32_t size, uint64_t value, void *user);
 
 /* ===========================================================================
  * Library globals
@@ -322,6 +334,11 @@ RAX_API rax_status rax_hook_add_io_out(rax_engine *engine, rax_io_out_cb cb, voi
 RAX_API rax_status rax_hook_add_mmio_read(rax_engine *engine, rax_mmio_read_cb cb, void *user, uint32_t *out_id);
 RAX_API rax_status rax_hook_add_mmio_write(rax_engine *engine, rax_mmio_write_cb cb, void *user, uint32_t *out_id);
 RAX_API rax_status rax_hook_add_invalid(rax_engine *engine, rax_invalid_cb cb, void *user, uint32_t *out_id);
+/* Per-access memory hook. `types` is a mask of RAX_HOOK_MEM_READ/WRITE/FETCH;
+ * `[begin, end]` filters by address (begin > end ⇒ all). Requires a backend
+ * that records memory accesses (x86-64 today). */
+RAX_API rax_status rax_hook_add_mem(rax_engine *engine, uint32_t types, uint64_t begin, uint64_t end,
+                                    rax_mem_cb cb, void *user, uint32_t *out_id);
 RAX_API rax_status rax_hook_del(rax_engine *engine, uint32_t hook_id);
 
 /* ===========================================================================
