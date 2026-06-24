@@ -888,6 +888,18 @@ pub enum CpuState {
 }
 
 impl CpuState {
+    /// The architecture-appropriate program counter / instruction pointer.
+    pub fn pc(&self) -> u64 {
+        match self {
+            CpuState::X86_64(s) => s.regs.rip,
+            CpuState::Hexagon(s) => s.regs.pc() as u64,
+            CpuState::Aarch64(s) => s.regs.pc,
+            CpuState::Aarch32(s) => s.regs.pc as u64,
+            CpuState::CortexM(s) => s.regs.pc as u64,
+            CpuState::RiscV(s) => s.regs.pc,
+        }
+    }
+
     pub fn x86_64(regs: Registers, sregs: SystemRegisters) -> Self {
         CpuState::X86_64(X86_64CpuState { regs, sregs })
     }

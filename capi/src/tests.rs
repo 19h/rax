@@ -1,0 +1,391 @@
+//! In-crate ABI tests. These exercise the `extern "C"` entry points directly
+//! (with the same raw-pointer discipline a C caller uses), validating the
+//! whole surface without requiring a C toolchain.
+
+#![allow(clippy::missing_safety_doc)]
+
+use std::os::raw::c_void;
+use std::ptr;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use crate::arch::{RaxArch, RAX_MODE_64};
+use crate::engine::{rax_engine_close, rax_engine_open, rax_engine_reset, Engine};
+use crate::hook::rax_hook_add_code;
+use crate::mem::{
+    rax_mem_map, rax_mem_protect, rax_mem_read, rax_mem_regions, rax_mem_unmap, rax_mem_write,
+    RaxMemRegion, RAX_PROT_ALL, RAX_PROT_READ,
+};
+use crate::reg::{
+    rax_reg_read, rax_reg_read_u64, rax_reg_size, rax_reg_write, rax_reg_write_u64,
+};
+use crate::run::{
+    rax_can_interrupt, rax_emu_icount, rax_emu_last_exit, rax_emu_start, rax_emu_step,
+    rax_interrupt, ExitInfo, RAX_NO_ADDR, RAX_STOP_COUNT, RAX_STOP_HLT, RAX_STOP_UNTIL,
+};
+use crate::status::RaxStatus;
+
+// x86 register ids (mirror rax.h).
+const RIP: i32 = 0x0010;
+const RAX: i32 = 0x0100;
+const RCX: i32 = 0x0101;
+const EAX: i32 = 0x0200;
+const AH: i32 = 0x0500;
+const XMM0: i32 = 0x0B00;
+
+fn open_x86() -> *mut Engine {
+    let mut e: *mut Engine = ptr::null_mut();
+    let st = rax_engine_open(RaxArch::X86 as i32, RAX_MODE_64, &mut e);
+    assert_eq!(st, RaxStatus::Ok);
+    assert!(!e.is_null());
+    e
+}
+
+/// mov rax,0x1337 ; mov rcx,1 ; add rax,rcx ; hlt
+const HLT_PROG: &[u8] = &[
+    0x48, 0xC7, 0xC0, 0x37, 0x13, 0x00, 0x00, // mov rax, 0x1337
+    0x48, 0xC7, 0xC1, 0x01, 0x00, 0x00, 0x00, // mov rcx, 1
+    0x48, 0x01, 0xC8, // add rax, rcx
+    0xF4, // hlt
+];
+
+unsafe fn write(e: *mut Engine, addr: u64, bytes: &[u8]) {
+    let st = rax_mem_write(e, addr, bytes.as_ptr(), bytes.len());
+    assert_eq!(st, RaxStatus::Ok);
+}
+
+unsafe fn set_rip(e: *mut Engine, v: u64) {
+    assert_eq!(rax_reg_write_u64(e, RIP, v), RaxStatus::Ok);
+}
+
+unsafe fn rd_u64(e: *mut Engine, id: i32) -> u64 {
+    let mut v = 0u64;
+    assert_eq!(rax_reg_read_u64(e, id, &mut v), RaxStatus::Ok);
+    v
+}
+
+#[test]
+fn version_and_strerror() {
+    let (mut a, mut b, mut c) = (0u32, 0u32, 0u32);
+    let v = crate::rax_version(&mut a, &mut b, &mut c);
+    assert_eq!(v, (a << 16) | (b << 8) | c);
+    let s = crate::rax_strerror(0);
+    assert!(!s.is_null());
+}
+
+#[test]
+fn open_query_close() {
+    unsafe {
+        let e = open_x86();
+        assert_eq!(crate::engine::rax_engine_arch(e), RaxArch::X86 as i32);
+        assert_eq!(crate::engine::rax_engine_mode(e), RAX_MODE_64);
+        assert_eq!(crate::engine::rax_engine_supports_stepping(e), 1);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn null_handle_rejected() {
+    unsafe {
+        assert_eq!(
+            rax_mem_write(ptr::null_mut(), 0, [0u8].as_ptr(), 1),
+            RaxStatus::Handle
+        );
+        assert_eq!(rax_reg_write_u64(ptr::null_mut(), RAX, 0), RaxStatus::Handle);
+    }
+}
+
+#[test]
+fn mem_roundtrip_and_unmapped() {
+    unsafe {
+        let e = open_x86();
+        let data = [1u8, 2, 3, 4, 5, 6, 7, 8];
+        write(e, 0x2000, &data);
+        let mut back = [0u8; 8];
+        assert_eq!(rax_mem_read(e, 0x2000, back.as_mut_ptr(), 8), RaxStatus::Ok);
+        assert_eq!(back, data);
+
+        // Above the 256 MiB default region → unmapped.
+        let st = rax_mem_read(e, 0x4000_0000_0000, back.as_mut_ptr(), 8);
+        assert_eq!(st, RaxStatus::Map);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn sparse_map_unmap_protect_regions() {
+    unsafe {
+        let e = open_x86();
+        // Map a high region and use it.
+        assert_eq!(rax_mem_map(e, 0x4000_0000, 0x2000, RAX_PROT_ALL), RaxStatus::Ok);
+        let payload = [0xDEu8, 0xAD, 0xBE, 0xEF];
+        write(e, 0x4000_0000, &payload);
+        let mut back = [0u8; 4];
+        assert_eq!(rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4), RaxStatus::Ok);
+        assert_eq!(back, payload);
+
+        // Region count is now 2 (default + new).
+        let mut n: usize = 0;
+        assert_eq!(rax_mem_regions(e, ptr::null_mut(), &mut n), RaxStatus::Ok);
+        assert_eq!(n, 2);
+        let mut regs = [RaxMemRegion { base: 0, size: 0, perms: 0, _reserved: 0 }; 8];
+        let mut cap = regs.len();
+        assert_eq!(rax_mem_regions(e, regs.as_mut_ptr(), &mut cap), RaxStatus::Ok);
+        assert_eq!(cap, 2);
+
+        // Protect the first page of the high region read-only (splits it → 3 regions).
+        assert_eq!(rax_mem_protect(e, 0x4000_0000, 0x1000, RAX_PROT_READ), RaxStatus::Ok);
+        let mut n2: usize = 0;
+        rax_mem_regions(e, ptr::null_mut(), &mut n2);
+        assert_eq!(n2, 3);
+        // Contents preserved across the split.
+        assert_eq!(rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4), RaxStatus::Ok);
+        assert_eq!(back, payload);
+
+        // Unmap the high region entirely.
+        assert_eq!(rax_mem_unmap(e, 0x4000_0000, 0x2000), RaxStatus::Ok);
+        let mut n3: usize = 0;
+        rax_mem_regions(e, ptr::null_mut(), &mut n3);
+        assert_eq!(n3, 1);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn cannot_unmap_last_region() {
+    unsafe {
+        let e = open_x86();
+        // Default region is [0, 256MiB); unmapping all of it must be refused.
+        let st = rax_mem_unmap(e, 0, 256 * 1024 * 1024);
+        assert_eq!(st, RaxStatus::Map);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn register_widths_and_subregisters() {
+    unsafe {
+        let e = open_x86();
+        assert_eq!(rax_reg_size(RaxArch::X86 as i32, RAX), 8);
+        assert_eq!(rax_reg_size(RaxArch::X86 as i32, EAX), 4);
+        assert_eq!(rax_reg_size(RaxArch::X86 as i32, XMM0), 16);
+        assert_eq!(rax_reg_size(RaxArch::X86 as i32, 0x7FFF), 0); // invalid
+
+        // EAX write zero-extends RAX.
+        assert_eq!(rax_reg_write_u64(e, RAX, 0xAAAA_BBBB_CCCC_DDDD), RaxStatus::Ok);
+        let eax: u32 = 0x1122_3344;
+        assert_eq!(rax_reg_write(e, EAX, &eax as *const u32 as *const u8), RaxStatus::Ok);
+        assert_eq!(rd_u64(e, RAX), 0x1122_3344);
+
+        // AH writes bits 15:8.
+        assert_eq!(rax_reg_write_u64(e, RAX, 0), RaxStatus::Ok);
+        let ah: u8 = 0x77;
+        assert_eq!(rax_reg_write(e, AH, &ah as *const u8), RaxStatus::Ok);
+        assert_eq!(rd_u64(e, RAX), 0x7700);
+
+        // XMM0 16-byte roundtrip.
+        let xin = [0x11u8; 16];
+        assert_eq!(rax_reg_write(e, XMM0, xin.as_ptr()), RaxStatus::Ok);
+        let mut xout = [0u8; 16];
+        let mut sz: usize = 0;
+        assert_eq!(rax_reg_read(e, XMM0, xout.as_mut_ptr(), &mut sz), RaxStatus::Ok);
+        assert_eq!(sz, 16);
+        assert_eq!(xout, xin);
+
+        // Invalid register id.
+        let mut v = 0u64;
+        assert_eq!(rax_reg_read_u64(e, 0x7FFF, &mut v), RaxStatus::Reg);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn run_to_hlt() {
+    unsafe {
+        let e = open_x86();
+        write(e, 0x1000, HLT_PROG);
+        set_rip(e, 0x1000);
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 0), RaxStatus::Ok);
+        let mut ex = ExitInfo::none();
+        rax_emu_last_exit(e, &mut ex);
+        assert_eq!(ex.reason, RAX_STOP_HLT);
+        assert_eq!(rd_u64(e, RAX), 0x1338);
+        assert_eq!(rd_u64(e, RCX), 1);
+        assert_eq!(rax_emu_icount(e), 4);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn step_one_instruction() {
+    unsafe {
+        let e = open_x86();
+        // nop ; nop ; hlt
+        write(e, 0x1000, &[0x90, 0x90, 0xF4]);
+        set_rip(e, 0x1000);
+        let mut executed = 0u64;
+        assert_eq!(rax_emu_step(e, 1, &mut executed), RaxStatus::Ok);
+        assert_eq!(executed, 1);
+        assert_eq!(rd_u64(e, RIP), 0x1001);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn count_and_until_stops() {
+    unsafe {
+        let e = open_x86();
+        write(e, 0x1000, &[0x90, 0x90, 0x90, 0xF4]); // nop;nop;nop;hlt
+        // count = 2
+        set_rip(e, 0x1000);
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 2), RaxStatus::Ok);
+        let mut ex = ExitInfo::none();
+        rax_emu_last_exit(e, &mut ex);
+        assert_eq!(ex.reason, RAX_STOP_COUNT);
+        assert_eq!(rd_u64(e, RIP), 0x1002);
+
+        // until = 0x1003
+        set_rip(e, 0x1000);
+        assert_eq!(rax_emu_start(e, 0x1000, 0x1003, 0, 0), RaxStatus::Ok);
+        rax_emu_last_exit(e, &mut ex);
+        assert_eq!(ex.reason, RAX_STOP_UNTIL);
+        assert_eq!(ex.address, 0x1003);
+        rax_engine_close(e);
+    }
+}
+
+extern "C" fn count_cb(_e: *mut Engine, _addr: u64, _size: u32, user: *mut c_void) {
+    let c = unsafe { &*(user as *const AtomicU64) };
+    c.fetch_add(1, Ordering::Relaxed);
+}
+
+#[test]
+fn code_hook_counts_instructions() {
+    unsafe {
+        let e = open_x86();
+        write(e, 0x1000, HLT_PROG);
+        let counter = AtomicU64::new(0);
+        let mut id = 0u32;
+        // begin > end => match all addresses.
+        assert_eq!(
+            rax_hook_add_code(e, 1, 0, Some(count_cb), &counter as *const _ as *mut c_void, &mut id),
+            RaxStatus::Ok
+        );
+        assert!(id > 0);
+        set_rip(e, 0x1000);
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 0), RaxStatus::Ok);
+        // 3 instructions + the HLT all hit the code hook.
+        assert_eq!(counter.load(Ordering::Relaxed), 4);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn interrupt_masked_by_default() {
+    unsafe {
+        let e = open_x86();
+        // Default rflags has IF clear → cannot inject.
+        assert_eq!(rax_can_interrupt(e), 0);
+        assert_eq!(rax_interrupt(e, 0x20), RaxStatus::State);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn context_save_restore_roundtrip() {
+    unsafe {
+        let e = open_x86();
+        write(e, 0x1000, HLT_PROG);
+        assert_eq!(rax_reg_write_u64(e, RAX, 0xCAFE_F00D), RaxStatus::Ok);
+
+        let mut need: usize = 0;
+        assert_eq!(
+            crate::context::rax_context_save(e, ptr::null_mut(), 0, &mut need),
+            RaxStatus::Ok
+        );
+        assert!(need > 0);
+        let mut blob = vec![0u8; need];
+        let mut got: usize = 0;
+        assert_eq!(
+            crate::context::rax_context_save(e, blob.as_mut_ptr(), blob.len(), &mut got),
+            RaxStatus::Ok
+        );
+
+        // Mutate, then restore.
+        assert_eq!(rax_reg_write_u64(e, RAX, 0), RaxStatus::Ok);
+        write(e, 0x1000, &[0; 4]); // clobber memory too
+        assert_eq!(
+            crate::context::rax_context_restore(e, blob.as_ptr(), blob.len()),
+            RaxStatus::Ok
+        );
+        assert_eq!(rd_u64(e, RAX), 0xCAFE_F00D);
+        // Memory was restored.
+        let mut mb = [0u8; 4];
+        rax_mem_read(e, 0x1000, mb.as_mut_ptr(), 4);
+        assert_eq!(&mb, &HLT_PROG[..4]);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn reset_restores_default_state() {
+    unsafe {
+        let e = open_x86();
+        assert_eq!(rax_reg_write_u64(e, RAX, 0x1234), RaxStatus::Ok);
+        assert_eq!(rax_engine_reset(e), RaxStatus::Ok);
+        assert_eq!(rd_u64(e, RAX), 0);
+        // Flat 64-bit default leaves CS.l set; just ensure mode preserved.
+        assert_eq!(crate::engine::rax_engine_mode(e), RAX_MODE_64);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn arm64_registers() {
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e), RaxStatus::Ok);
+        // X0 id = 0x0100, PC = 0x0011.
+        assert_eq!(rax_reg_write_u64(e, 0x0100, 0xABCD), RaxStatus::Ok);
+        assert_eq!(rd_u64(e, 0x0100), 0xABCD);
+        assert_eq!(rax_reg_write_u64(e, 0x0011, 0x8000), RaxStatus::Ok);
+        assert_eq!(rd_u64(e, 0x0011), 0x8000);
+        // V0 is 16 bytes.
+        assert_eq!(rax_reg_size(RaxArch::Arm64 as i32, 0x0200), 16);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn arm64_step_advances_pc() {
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e), RaxStatus::Ok);
+        assert_eq!(crate::engine::rax_engine_supports_stepping(e), 1);
+        // Two AArch64 NOPs (0xD503201F, little-endian).
+        write(e, 0x1000, &[0x1F, 0x20, 0x03, 0xD5, 0x1F, 0x20, 0x03, 0xD5]);
+        assert_eq!(rax_reg_write_u64(e, 0x0011, 0x1000), RaxStatus::Ok); // PC
+        let mut executed = 0u64;
+        assert_eq!(rax_emu_step(e, 1, &mut executed), RaxStatus::Ok);
+        assert_eq!(executed, 1);
+        assert_eq!(rd_u64(e, 0x0011), 0x1004);
+        assert!(rax_emu_icount(e) >= 1);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn riscv_step_advances_pc() {
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(rax_engine_open(RaxArch::Riscv64 as i32, 0, &mut e), RaxStatus::Ok);
+        assert_eq!(crate::engine::rax_engine_supports_stepping(e), 1);
+        // Two RISC-V NOPs (addi x0,x0,0 = 0x00000013, little-endian).
+        write(e, 0x1000, &[0x13, 0x00, 0x00, 0x00, 0x13, 0x00, 0x00, 0x00]);
+        assert_eq!(rax_reg_write_u64(e, 0x0011, 0x1000), RaxStatus::Ok); // PC
+        let mut executed = 0u64;
+        assert_eq!(rax_emu_step(e, 1, &mut executed), RaxStatus::Ok);
+        assert_eq!(executed, 1);
+        assert_eq!(rd_u64(e, 0x0011), 0x1004);
+        rax_engine_close(e);
+    }
+}

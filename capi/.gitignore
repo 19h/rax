@@ -1,0 +1,8 @@
+# Built example binaries (sources are *.c / *.cpp)
+/examples/*
+!/examples/*.c
+!/examples/*.cpp
+*.dSYM/
+.DS_Store
+# Local CMake build trees
+/build/

@@ -225,4 +225,56 @@ impl VCpu for RiscVVcpu {
     fn instruction_count(&self) -> u64 {
         self.cpu.instret()
     }
+
+    fn supports_stepping(&self) -> bool {
+        true
+    }
+
+    fn current_pc(&self) -> u64 {
+        self.cpu.pc()
+    }
+
+    fn step_insn(&mut self) -> Result<Option<VcpuExit>> {
+        if self.halted {
+            return Ok(Some(VcpuExit::Hlt));
+        }
+        // One iteration of the run() loop body.
+        let exit = self.cpu.step();
+        if let Some(exit) = self.pending_exit.lock().unwrap().take() {
+            self.halted = matches!(exit, VcpuExit::Shutdown);
+            return Ok(Some(exit));
+        }
+        if let Some((addr, data)) = self.pending.lock().unwrap().take() {
+            return Ok(Some(VcpuExit::MmioWrite { addr, data }));
+        }
+        match exit {
+            RiscVExit::Continue => Ok(None),
+            RiscVExit::Ecall => {
+                let syscall = self.cpu.x(17);
+                let code = self.cpu.x(10);
+                self.halted = true;
+                if syscall == 93 && code != 0 {
+                    Ok(Some(VcpuExit::Unknown(format!(
+                        "riscv ecall failure: code={code:#x}"
+                    ))))
+                } else {
+                    Ok(Some(VcpuExit::Shutdown))
+                }
+            }
+            RiscVExit::Ebreak => {
+                self.halted = true;
+                Ok(Some(VcpuExit::Debug))
+            }
+            RiscVExit::Wfi => Ok(None),
+            RiscVExit::Trap(t) => {
+                self.halted = true;
+                Ok(Some(VcpuExit::Unknown(format!(
+                    "riscv trap: cause={} tval={:#x} pc={:#x}",
+                    t.cause,
+                    t.tval,
+                    self.cpu.pc()
+                ))))
+            }
+        }
+    }
 }

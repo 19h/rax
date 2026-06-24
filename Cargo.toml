@@ -1,3 +1,13 @@
+[workspace]
+members = ["capi"]
+# Standalone in-tree packages that build independently (own targets / build
+# scripts) and must NOT be pulled into this workspace.
+exclude = [
+    "microkernel",
+    "tools/asl-parser/asl-parser-rs",
+    "_ref",
+]
+
 [package]
 name = "rax"
 version = "0.1.0"

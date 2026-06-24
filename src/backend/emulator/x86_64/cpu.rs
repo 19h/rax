@@ -2742,6 +2742,80 @@ fn maybe_spawn_mips_reporter() {
     });
 }
 
+impl X86_64Vcpu {
+    /// Execute exactly one guest instruction with the same fault-delivery
+    /// semantics as [`run`](Self::run): self-modifying-code caches are drained
+    /// first, the instruction is decoded and executed, and any page fault or
+    /// #GP it raises is delivered to the guest (returning `Ok(None)` so the
+    /// next call resumes in the handler) precisely as the free-running loop
+    /// would. The JIT and periodic LAPIC/yield housekeeping are intentionally
+    /// bypassed so each call retires exactly one architectural instruction —
+    /// this is the precise primitive the embedding/debugger API steps with.
+    pub fn step_with_faults(&mut self) -> Result<Option<VcpuExit>> {
+        if self.halted {
+            return Ok(Some(VcpuExit::Hlt));
+        }
+
+        // Re-decode any code page modified since the previous instruction.
+        self.drain_smc();
+
+        match self.step() {
+            Ok(exit) => Ok(exit),
+            Err(Error::PageFault { vaddr, error_code }) => {
+                // Deliver #PF; RIP still points at the faulting instruction so
+                // the pushed frame restarts it once the handler returns.
+                match self.inject_page_fault(vaddr, error_code) {
+                    Ok(()) => Ok(None),
+                    Err(Error::PageFault { .. }) => {
+                        // Fault during #PF delivery: escalate to #DF (vector 8).
+                        self.inject_exception(8, Some(0)).map_err(|e| {
+                            Error::Emulator(format!(
+                                "double fault delivery failed at RIP={:#x}: {e}",
+                                self.regs.rip
+                            ))
+                        })?;
+                        Ok(None)
+                    }
+                    Err(e) => Err(Error::Emulator(format!(
+                        "#PF delivery failed at vaddr={vaddr:#x} (error_code={error_code:#x}): {e}"
+                    ))),
+                }
+            }
+            Err(Error::GeneralProtection { error_code }) => {
+                self.inject_exception(13, Some(error_code))?;
+                Ok(None)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Reset architectural CPU state to power-on defaults, preserving the
+    /// attached guest memory. Mirrors the field initialisation in [`new`] for
+    /// every architectural and cache field touched by execution.
+    pub fn reset_state(&mut self) {
+        self.insn_count = 0;
+        self.regs = Registers::default();
+        self.sregs = SystemRegisters::default();
+        self.fpu = FpuState::default();
+        self.lazy_flags = LazyFlags::default();
+        self.halted = false;
+        self.io_pending = None;
+        self.kernel_gs_base = 0;
+        self.pkru = 0;
+        self.xcr0 = 1;
+        self.decode_cache.iter_mut().for_each(|e| {
+            e.rip = 0;
+            e.bytes_len = 0;
+        });
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        {
+            self.jit_cache.clear();
+            self.jit_hot.clear();
+            self.jit_ineligible.clear();
+        }
+    }
+}
+
 impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -2931,6 +3005,32 @@ impl VCpu for X86_64Vcpu {
         Ok(())
     }
 
+    fn step_insn(&mut self) -> Result<Option<VcpuExit>> {
+        self.step_with_faults()
+    }
+
+    fn supports_stepping(&self) -> bool {
+        true
+    }
+
+    fn translate_addr(&mut self, vaddr: u64, access: crate::cpu::MemAccess) -> Result<u64> {
+        let at = match access {
+            crate::cpu::MemAccess::Read => super::mmu::AccessType::Read,
+            crate::cpu::MemAccess::Write => super::mmu::AccessType::Write,
+            crate::cpu::MemAccess::Exec => super::mmu::AccessType::Execute,
+        };
+        self.mmu.translate(vaddr, at, &self.sregs)
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.reset_state();
+        Ok(())
+    }
+
+    fn current_pc(&self) -> u64 {
+        self.regs.rip
+    }
+
     fn set_pci_bridge(
         &mut self,
         bridge: std::sync::Arc<std::sync::Mutex<crate::devices::pci::PciStub>>,
@@ -3070,12 +3170,11 @@ impl VCpu for X86_64Vcpu {
     }
 
     fn instruction_count(&self) -> u64 {
-        // Access the global instruction counter
-        static TOTAL_INSN_READER: std::sync::atomic::AtomicU64 =
-            std::sync::atomic::AtomicU64::new(0);
-        // Note: This reads from a separate static; we need to use the same one as run()
-        // For now, we'll get the count from run()'s TOTAL_INSN via a global accessor
-        get_total_instruction_count()
+        // The accurate per-vCPU retired-instruction counter. (The process-global
+        // counter, exposed via `get_total_instruction_count`, is only published
+        // at run() yield boundaries and aggregates across vCPUs, so it is not a
+        // faithful per-engine count for embedders or for single stepping.)
+        self.insn_count
     }
 
     fn get_emulator_state(&self) -> Option<crate::snapshot::EmulatorState> {

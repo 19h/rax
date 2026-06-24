@@ -1,0 +1,40 @@
+[package]
+name = "rax-capi"
+version = "0.1.0"
+edition = "2024"
+description = "Stable, embeddable C and C++ API/ABI for the RAX emulation engine"
+license = "MIT"
+repository = "https://github.com/HexRaysSA/rax"
+readme = "README.md"
+
+# The produced native library is `librax` (librax.a / librax.so / librax.dylib),
+# so embedders link with `-lrax`. The engine crate is pulled in under the alias
+# `rax_engine` (see [dependencies]) to avoid colliding with this crate's own
+# library name.
+[lib]
+name = "rax"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+rax_engine = { path = "..", package = "rax", default-features = false }
+# Same major version the engine uses; (de)serializes the engine's CpuState /
+# EmulatorState for context save/restore.
+bincode = "1.3"
+
+[features]
+default = []
+# Forward optional engine capabilities so embedders can opt in without editing
+# the engine manifest. The pure-interpreter emulator is always available.
+jit = ["rax_engine/smir-jit"]
+kvm = ["rax_engine/kvm"]
+hvf = ["rax_engine/hvf"]
+trace = ["rax_engine/trace"]
+
+[dev-dependencies]
+# C/C++ conformance tests are compiled and linked against the staticlib by the
+# integration harness in tests/, which shells out to the system C/C++ toolchain.
+
+[package.metadata.capi]
+# Header and pkg-config metadata consumed by the bundled CMake/pkg-config
+# packaging. The canonical, hand-authored header lives at include/rax.h.
+header = "include/rax.h"

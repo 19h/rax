@@ -15,12 +15,75 @@ pub use state::{
 
 use crate::error::{Error, Result};
 
+/// Intent of a guest memory access, used by [`VCpu::translate_addr`] to select
+/// the correct permission check when walking translation structures.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MemAccess {
+    /// Data read.
+    Read,
+    /// Data write.
+    Write,
+    /// Instruction fetch.
+    Exec,
+}
+
 /// Abstract vCPU interface.
 ///
 /// This trait is implemented by both KVM and emulator backends.
 pub trait VCpu: Send {
     /// Run the vCPU until an exit condition.
     fn run(&mut self) -> Result<VcpuExit>;
+
+    /// Execute exactly one guest instruction.
+    ///
+    /// Returns `Ok(Some(exit))` when the instruction produced a synchronous
+    /// exit condition (HLT, port/MMIO I/O, software interrupt, ...), or
+    /// `Ok(None)` to indicate the vCPU should continue at the next instruction.
+    ///
+    /// Faults the backend can deliver to the guest (page faults, #GP) are
+    /// handled internally exactly as they are by [`VCpu::run`], so single
+    /// stepping observes identical architectural behaviour to free-running
+    /// execution. Backends that cannot single-step return
+    /// [`Error::InvalidConfig`]; callers should consult
+    /// [`VCpu::supports_stepping`] first.
+    fn step_insn(&mut self) -> Result<Option<VcpuExit>> {
+        Err(Error::InvalidConfig(
+            "single-instruction stepping is not supported by this backend".to_string(),
+        ))
+    }
+
+    /// Whether [`VCpu::step_insn`] is implemented by this backend.
+    fn supports_stepping(&self) -> bool {
+        false
+    }
+
+    /// Translate a guest virtual/linear address to a guest-physical address
+    /// using the backend's current paging/translation state.
+    ///
+    /// Backends with no active translation stage (paging disabled, or a flat
+    /// address space) return the input unchanged. This is intended for
+    /// tooling/debugger-style access: it never sets accessed/dirty bits and
+    /// never injects a fault — a translation failure is reported as `Err`.
+    fn translate_addr(&mut self, vaddr: u64, _access: MemAccess) -> Result<u64> {
+        Ok(vaddr)
+    }
+
+    /// Reset architectural state to this backend's power-on defaults, clearing
+    /// the run state (halt/wait) and resetting registers. Attached guest memory
+    /// is left untouched. The default reports that reset is unsupported so the
+    /// caller can fall back to an explicit state load.
+    fn reset(&mut self) -> Result<()> {
+        Err(Error::InvalidConfig(
+            "architectural reset is not supported by this backend".to_string(),
+        ))
+    }
+
+    /// The current program counter / instruction pointer. Cheap fast path used
+    /// by stepping and hook dispatch; the default reads it from a full state
+    /// snapshot, which backends may override for efficiency.
+    fn current_pc(&self) -> u64 {
+        self.get_state().map(|s| s.pc()).unwrap_or(0)
+    }
 
     /// Get general-purpose registers (x86_64 only).
     fn get_regs(&self) -> Result<Registers> {

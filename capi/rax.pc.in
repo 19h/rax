@@ -1,0 +1,12 @@
+prefix=@PKG_PREFIX@
+exec_prefix=${prefix}
+libdir=@PKG_LIBDIR@
+includedir=@PKG_INCLUDEDIR@
+
+Name: rax
+Description: Stable C/C++ API for the RAX emulation engine
+URL: https://github.com/HexRaysSA/rax
+Version: 1.0.0
+Cflags: -I${includedir}
+Libs: -L${libdir} -lrax
+Libs.private: @PKG_PRIVATE_LIBS@

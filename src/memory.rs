@@ -9,6 +9,17 @@ use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemory
 #[cfg(not(all(feature = "kvm", target_os = "linux", target_arch = "x86_64")))]
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
+/// Re-exports of the `vm_memory` types that appear in RAX's public backend API
+/// (vCPU construction, physical memory access). External crates such as the C
+/// API can name these without taking a direct, version-coupled dependency on
+/// `vm_memory`, guaranteeing they use the exact same types as the engine.
+pub mod vm {
+    pub use vm_memory::{
+        Address, Bytes, GuestAddress, GuestMemory, GuestMemoryError, GuestMemoryMmap,
+        GuestMemoryRegion, GuestRegionMmap, MmapRegion,
+    };
+}
+
 pub const PAGE_SIZE: u64 = 4096;
 pub const GUEST_MEMORY_PADDING: u64 = 4 * 1024 * 1024 * 1024u64;
 pub const MAX_GUEST_MEMORY_BYTES: u64 = 64 * 1024 * 1024 * 1024u64;

@@ -515,6 +515,50 @@ impl VCpu for Aarch64Vcpu {
     fn instruction_count(&self) -> u64 {
         self.insn_count.load(Ordering::Relaxed)
     }
+
+    fn supports_stepping(&self) -> bool {
+        true
+    }
+
+    fn current_pc(&self) -> u64 {
+        self.cpu.get_pc()
+    }
+
+    fn step_insn(&mut self) -> Result<Option<VcpuExit>> {
+        if self.shutdown {
+            return Ok(Some(VcpuExit::Shutdown));
+        }
+        // Pick up console input the VMM queued (mirrors one run() iteration).
+        self.sync_uart_irq();
+        let r = match self.cpu.step_system() {
+            Ok(CpuExit::Continue) => Ok(None),
+            Ok(CpuExit::Wfi) | Ok(CpuExit::Wfe) => Ok(Some(VcpuExit::Hlt)),
+            Ok(CpuExit::Hvc(_)) | Ok(CpuExit::Smc(_)) => {
+                if let Some(exit) = self.handle_psci() {
+                    self.shutdown = true;
+                    Ok(Some(exit))
+                } else {
+                    Ok(None)
+                }
+            }
+            Ok(CpuExit::Halt) | Ok(CpuExit::Shutdown) => {
+                self.shutdown = true;
+                Ok(Some(VcpuExit::Shutdown))
+            }
+            Ok(other) => Ok(Some(VcpuExit::Unknown(format!(
+                "aarch64 exit {:?} at pc={:#x}",
+                other,
+                self.cpu.get_pc()
+            )))),
+            Err(e) => Ok(Some(VcpuExit::Unknown(format!(
+                "aarch64 emulation error at pc={:#x}: {e}",
+                self.cpu.get_pc()
+            )))),
+        };
+        self.insn_count
+            .store(self.cpu.instruction_count(), Ordering::Relaxed);
+        r
+    }
 }
 
 #[cfg(test)]
