@@ -206,15 +206,20 @@ impl X86_64Arch {
 
         if is_bzimage {
             info!("detected bzImage kernel format");
-            // Use linux-loader's BzImage loader which properly parses the setup header
-            let mut kernel_file = File::open(&kernel.kernel)?;
+            // Use linux-loader's BzImage loader which properly parses the setup header.
+            // `KernelLoader::load` wants `F: Read + ReadVolatile + Seek`. We already
+            // have the whole image in `kernel_data`, so wrap it in a Cursor: that
+            // satisfies all three bounds on every target. (A bare `File` would force
+            // vm-memory's `rawfd`-only `ReadVolatile for File` impl, which does not
+            // exist on Windows — and reusing the buffer avoids a redundant re-read.)
+            let mut kernel_image = std::io::Cursor::new(kernel_data.as_slice());
             // BzImage::load(mem, kernel_offset, kernel_image, highmem_start_address)
             // - kernel_offset: where to load the kernel (None = use code32_start from header)
             // - highmem_start_address: start of high memory (should be 0 for full access)
             let result = BzImage::load(
                 mem,
                 Some(GuestAddress(KERNEL_LOAD_ADDR)), // kernel_offset
-                &mut kernel_file,
+                &mut kernel_image,
                 Some(GuestAddress(0)), // highmem_start_address
             )
             .map_err(|e| Error::KernelLoad(format!("failed to load bzImage: {}", e)))?;

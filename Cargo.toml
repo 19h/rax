@@ -41,7 +41,25 @@ toml = "0.9.10"
 bitflags = "2.6"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-vm-memory = { version = "0.17.1", features = ["backend-mmap"] }
+# `default-features = false` drops vm-memory's `rawfd` default feature, which
+# pulls in libc-only file-descriptor I/O helpers and hard-errors on Windows
+# (`compile_error!` in its lib.rs). RAX uses none of those helpers — only the
+# `backend-mmap` backend, which is fully cross-platform (vm-memory ships a
+# winapi Windows mmap implementation).
+#
+# NOTE: this alone does not get RAX onto Windows. `linux-loader` depends on
+# vm-memory with default features ON (every published version does), so `rawfd`
+# is still force-enabled transitively. Cargo cannot subtract a feature a
+# transitive crate requests, so a Windows build additionally needs the
+# `[patch.crates-io]` below that stops linux-loader from pulling vm-memory's
+# defaults.
+#
+# The version is pinned EXACTLY (`=0.17.1`): linux-loader 0.13.2 caps vm-memory
+# at `<=0.17.1`, and 0.17.1 is yanked, so a caret `^0.17.1` lets this crate
+# drift to 0.17.2 (a facade for the renamed `vm-memory-new`) while linux-loader
+# falls back to 0.16.2 — splitting the graph across three incompatible
+# vm-memory versions that fail to build. Exact-pinning keeps a single 0.17.1.
+vm-memory = { version = "=0.17.1", default-features = false, features = ["backend-mmap"] }
 goblin = "0.8.2"
 
 # Profiling JSON export (optional)
@@ -71,3 +89,14 @@ opt-level = 3
 
 [dev-dependencies]
 libc = "0.2"
+
+# linux-loader (every published version) depends on vm-memory with default
+# features ON, which force-enables the `rawfd` feature for the whole graph;
+# `rawfd` `compile_error!`s on Windows and cannot be unselected transitively.
+# This patch points linux-loader at a one-line fork that sets
+# `default-features = false` on its vm-memory dependency (the library only uses
+# vm-memory's backend-agnostic core traits), so nothing pulls `rawfd` and the
+# tree builds on Windows. Pinned to a commit for reproducibility; drop this once
+# the change is released upstream (rust-vmm/linux-loader).
+[patch.crates-io]
+linux-loader = { git = "https://github.com/19h/linux-loader", rev = "f745b555942c4e840a784bca61e6f3976d101960" }
