@@ -487,6 +487,14 @@ impl Op {
             Vmvr => "vmvr.v",
             Vfrsqrt7 => "vfrsqrt7.v",
             Vfrec7 => "vfrec7.v",
+            Grev => "grev",
+            Grevi => "grevi",
+            Bitc => "bitc",
+            Bitci => "bitci",
+            Bits => "bits",
+            Bitsi => "bitsi",
+            Fls => "fls",
+            Pcnt => "pcnt",
             Illegal => "illegal",
         }
     }
@@ -505,7 +513,7 @@ impl Op {
             Fsw | Fsd | Fsh => Class::FStore,
             Addi | Slti | Sltiu | Xori | Ori | Andi | Addiw => Class::IArith,
             Slli | Srli | Srai | Slliw | Srliw | Sraiw | SlliUw | Rori | Roriw | Bclri | Bexti
-            | Binvi | Bseti => Class::Shift,
+            | Binvi | Bseti | Grevi | Bitci | Bitsi => Class::Shift,
             Fence | CboZero => Class::Bare,
             FenceI | Ecall | Ebreak | Mret | Sret | Wfi => Class::Bare,
             Csrrw | Csrrs | Csrrc => Class::Csr,
@@ -516,7 +524,7 @@ impl Op {
             | AmomaxD | AmominuD | AmomaxuD => Class::Amo,
             Clz | Ctz | Cpop | SextB | SextH | ZextH | Clzw | Ctzw | Cpopw | Brev8 | Sha256Sig0
             | Sha256Sig1 | Sha256Sum0 | Sha256Sum1 | Sha512Sig0 | Sha512Sig1 | Sha512Sum0
-            | Sha512Sum1 | Sm3p0 | Sm3p1 | Aes64im | Aes64ks1i => Class::Unary,
+            | Sha512Sum1 | Sm3p0 | Sm3p1 | Aes64im | Aes64ks1i | Fls | Pcnt => Class::Unary,
             FsqrtS | FsqrtD | FroundS | FroundnxS | FroundD | FroundnxD | FsqrtH | FroundH
             | FroundnxH => Class::FUnary,
             FaddS | FsubS | FmulS | FdivS | FsgnjS | FsgnjnS | FsgnjxS | FminS | FmaxS | FaddD

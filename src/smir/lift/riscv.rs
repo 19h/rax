@@ -209,6 +209,9 @@ impl RiscVLifter {
             zknd: self.extensions.zknd,
             zcb: self.extensions.zcb,
             v: self.extensions.v,
+            // The SMIR lifter is the differential-oracle path; it does not lift
+            // the Xsoteria vendor extension.
+            xsoteria: false,
         }
     }
 

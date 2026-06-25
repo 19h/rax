@@ -124,6 +124,10 @@ pub struct Isa {
     /// V: vector extension (RVV 1.0 — full data path: arithmetic, fixed-point,
     /// FP, reductions, permutes, conversions, and all load/store modes).
     pub v: bool,
+    /// Xsoteria: Google Soteria/GSC (Ti50/Dauntless) vendor bit-manipulation
+    /// extension. Two custom opcodes (CUSTOM-0 = 0x0b, CUSTOM-1 = 0x2b), RV32
+    /// only. See [`crate::backend::emulator::gsc`].
+    pub xsoteria: bool,
 }
 
 impl Isa {
@@ -154,6 +158,7 @@ impl Isa {
             zknd: true,
             zcb: true,
             v: true,
+            xsoteria: false,
         }
     }
 
@@ -184,6 +189,7 @@ impl Isa {
             zknd: false,
             zcb: false,
             v: false,
+            xsoteria: false,
         }
     }
 
@@ -195,6 +201,24 @@ impl Isa {
             c: true,
             zicsr: true,
             zifencei: true,
+            ..Isa::rv_i()
+        }
+    }
+
+    /// Google Ti50/Dauntless GSC profile: RV32 IMC + Zicsr/Zifencei plus the
+    /// Zbb bit-manipulation primitives the Xsoteria ops reuse (`clz`), and the
+    /// Xsoteria vendor extension itself.
+    pub const fn ti50() -> Self {
+        Isa {
+            m: true,
+            a: true,
+            c: true,
+            zicsr: true,
+            zifencei: true,
+            zba: true,
+            zbb: true,
+            zbs: true,
+            xsoteria: true,
             ..Isa::rv_i()
         }
     }

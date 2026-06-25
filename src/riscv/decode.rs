@@ -541,6 +541,23 @@ pub enum Op {
     // ---- V (reciprocal / rsqrt estimates) ----
     Vfrsqrt7,
     Vfrec7,
+    // ---- Xsoteria (Google Soteria/GSC vendor extension, RV32) ----
+    /// Generalized bit-reverse, register control (CUSTOM-1).
+    Grev,
+    /// Generalized bit-reverse, immediate control (CUSTOM-0).
+    Grevi,
+    /// Clear bit `rs2`, register form (CUSTOM-1).
+    Bitc,
+    /// Clear bit `imm5`, immediate form (CUSTOM-0).
+    Bitci,
+    /// Set bit `rs2`, register form (CUSTOM-1).
+    Bits,
+    /// Set bit `imm5`, immediate form (CUSTOM-0).
+    Bitsi,
+    /// Find last (most-significant) set bit (CUSTOM-0).
+    Fls,
+    /// Population count (CUSTOM-0).
+    Pcnt,
     // ---- sentinel ----
     Illegal,
 }
@@ -864,6 +881,43 @@ pub fn decode(w: u32, xlen: Xlen, isa: &Isa) -> Insn {
         0x4b if isa.f => decode_fma(Op::FnmsubS, Op::FnmsubD, Op::FnmsubH, w, isa),
         0x4f if isa.f => decode_fma(Op::FnmaddS, Op::FnmaddD, Op::FnmaddH, w, isa),
         0x57 if isa.v => decode_vector(w),
+        0x0b if isa.xsoteria && !rv64 => decode_xsoteria_custom0(w),
+        0x2b if isa.xsoteria && !rv64 => decode_xsoteria_custom1(w),
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+/// Xsoteria CUSTOM-0 (opcode 0x0b): immediate and unary bit-manipulation.
+///
+/// Field layout matches the standard R/I positions: `funct7 = w[31:25]`,
+/// `imm5 = w[24:20]`, `rs1 = w[19:15]`, `funct3 = w[14:12]`, `rd = w[11:7]`.
+/// Mirrors the IDA `ana_soteria_custom0` decoder. RV32 only (enforced by the
+/// caller).
+fn decode_xsoteria_custom0(w: u32) -> Insn {
+    let f3 = funct3(w);
+    let f7 = funct7(w);
+    let imm5 = ((w >> 20) & 0x1f) as i64;
+    match f3 {
+        0b000 if f7 == 0x00 => with_imm(Op::Grevi, w, imm5),
+        0b001 if f7 == 0x00 => with_imm(Op::Bitci, w, imm5),
+        0b001 if f7 == 0x20 => with_imm(Op::Bitsi, w, imm5),
+        // fls / clz / pcnt are unary: the rs2 field (w[24:20]) must be zero.
+        0b010 if f7 == 0x00 && imm5 == 0 => base(Op::Fls, w),
+        0b010 if f7 == 0x20 && imm5 == 0 => base(Op::Clz, w),
+        0b011 if f7 == 0x00 && imm5 == 0 => base(Op::Pcnt, w),
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+/// Xsoteria CUSTOM-1 (opcode 0x2b): register-register bit-manipulation.
+/// Mirrors the IDA `ana_soteria_custom1` decoder. RV32 only.
+fn decode_xsoteria_custom1(w: u32) -> Insn {
+    let f3 = funct3(w);
+    let f7 = funct7(w);
+    match f3 {
+        0b000 if f7 == 0x00 => base(Op::Grev, w),
+        0b001 if f7 == 0x00 => base(Op::Bitc, w),
+        0b001 if f7 == 0x20 => base(Op::Bits, w),
         _ => Insn::illegal(w, 4),
     }
 }
@@ -1928,5 +1982,42 @@ mod tests {
         let reserved_high_funct12 = cbo_zero | (1 << 31);
         assert_eq!((reserved_high_funct12 >> 20) & 0x1f, 4);
         assert!(decode(reserved_high_funct12, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+    }
+
+    // ---- Xsoteria decode edge cases ----
+
+    fn enc(funct7: u32, f5: u32, rs1: u32, funct3: u32, rd: u32, opcode: u32) -> u32 {
+        (funct7 << 25) | (f5 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode
+    }
+
+    #[test]
+    fn xsoteria_rejects_bad_funct() {
+        let isa = Isa::ti50();
+        // CUSTOM-0 funct3=0 requires funct7==0; funct7=0x20 is illegal.
+        assert!(decode(enc(0x20, 0, 1, 0b000, 2, 0x0b), Xlen::Rv32, &isa).is_illegal());
+        // CUSTOM-0 funct3=0b111 is undefined.
+        assert!(decode(enc(0x00, 0, 1, 0b111, 2, 0x0b), Xlen::Rv32, &isa).is_illegal());
+        // CUSTOM-1 funct3=0b010 is undefined (no register grev variant there).
+        assert!(decode(enc(0x00, 3, 1, 0b010, 2, 0x2b), Xlen::Rv32, &isa).is_illegal());
+    }
+
+    #[test]
+    fn xsoteria_unary_requires_zero_rs2_field() {
+        let isa = Isa::ti50();
+        // pcnt/clz/fls are unary: a non-zero rs2 field [24:20] must be rejected.
+        assert!(decode(enc(0x00, 0, 1, 0b011, 2, 0x0b), Xlen::Rv32, &isa).op == Op::Pcnt);
+        assert!(decode(enc(0x00, 5, 1, 0b011, 2, 0x0b), Xlen::Rv32, &isa).is_illegal());
+        assert!(decode(enc(0x00, 0, 1, 0b010, 2, 0x0b), Xlen::Rv32, &isa).op == Op::Fls);
+        assert!(decode(enc(0x20, 7, 1, 0b010, 2, 0x0b), Xlen::Rv32, &isa).is_illegal());
+    }
+
+    #[test]
+    fn xsoteria_immediate_field_decodes_to_imm() {
+        // grevi rd=x3, rs1=x1, imm5=24 -> rev8 control.
+        let insn = decode(enc(0x00, 24, 1, 0b000, 3, 0x0b), Xlen::Rv32, &Isa::ti50());
+        assert_eq!(insn.op, Op::Grevi);
+        assert_eq!(insn.rd, 3);
+        assert_eq!(insn.rs1, 1);
+        assert_eq!(insn.imm, 24);
     }
 }

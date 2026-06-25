@@ -6,6 +6,8 @@
 //! control left the instruction (normal retire, environment call, breakpoint,
 //! wait-for-interrupt, or a synchronous trap).
 
+use std::collections::HashMap;
+
 use super::crypto;
 use super::csr::Csr;
 use super::decode::{DecodeError, Insn, Op, decode_at};
@@ -173,6 +175,12 @@ pub struct RiscVCpu {
     /// and element strides index naturally.
     v: [u8; 32 * VLENB as usize],
 
+    /// Permissive store-only scratch for vendor / not-yet-modeled CSRs
+    /// (Xsoteria `mgpscratch0..15`/`mnmivec`, PMP `pmpcfg`/`pmpaddr`,
+    /// `mcountinhibit`, …). Only consulted when `isa.xsoteria` is set, so the
+    /// strict RV64GC differential-oracle path is unaffected.
+    ext_csr: HashMap<u16, u64>,
+
     /// Guest memory.
     mem: Box<dyn Memory>,
 }
@@ -224,8 +232,41 @@ impl RiscVCpu {
             vxrm: 0,
             vxsat: 0,
             v: [0; 32 * VLENB as usize],
+            ext_csr: HashMap::new(),
             mem,
         }
+    }
+
+    /// Warm-reset architectural state to power-on values and jump to `entry`,
+    /// keeping the configuration and guest memory (and thus MMIO-backed device
+    /// state) intact. Models a self-triggered SoC reset for embedded firmware
+    /// that reboots itself as part of its boot sequence. Counters are preserved
+    /// for diagnostics.
+    pub fn reset(&mut self, entry: u64) {
+        self.x = [0; 32];
+        self.f = [0; 32];
+        self.pc = entry;
+        self.fcsr = 0;
+        self.priv_ = Priv::Machine;
+        self.reservation = None;
+        self.mstatus = 0;
+        self.mtvec = 0;
+        self.mepc = 0;
+        self.mcause = 0;
+        self.mtval = 0;
+        self.mscratch = 0;
+        self.mie = 0;
+        self.mip = 0;
+        self.medeleg = 0;
+        self.mideleg = 0;
+        self.mcounteren = 0;
+        self.vl = 0;
+        self.vtype = 0;
+        self.vstart = 0;
+        self.vxrm = 0;
+        self.vxsat = 0;
+        self.v = [0; 32 * VLENB as usize];
+        self.ext_csr.clear();
     }
 
     /// Read the raw 16-byte contents of vector register `i`.
@@ -307,6 +348,15 @@ impl RiscVCpu {
     #[inline]
     pub fn set_pc(&mut self, pc: u64) {
         self.pc = pc;
+    }
+
+    /// Render the instruction at the current PC as assembly, for tracing.
+    /// Returns a marker string if the fetch faults.
+    pub fn disasm_pc(&self) -> String {
+        match decode_at(self.mem.as_ref(), self.pc, self.cfg.xlen, &self.cfg.isa) {
+            Ok(insn) => format!("{insn}"),
+            Err(_) => "<fetch fault>".to_string(),
+        }
     }
 
     /// Read the `fcsr` register.
@@ -709,6 +759,19 @@ impl RiscVCpu {
             Op::Binvi => self.set_x(rd, a ^ (1u64 << (imm & (self.xbits() as u64 - 1)))),
             Op::Bset => self.set_x(rd, a | (1u64 << (b & (self.xbits() as u64 - 1)))),
             Op::Bseti => self.set_x(rd, a | (1u64 << (imm & (self.xbits() as u64 - 1)))),
+
+            // ---- Xsoteria (Google Soteria/GSC vendor extension, RV32) ----
+            // `a` is held zero-extended to 32 bits on RV32; results are masked
+            // back to XLEN by `set_x`. Shift amounts and grev control take the
+            // low 5 bits (XLEN=32 => log2(32)=5), matching the bitmanip GREV.
+            Op::Grev => self.set_x(rd, grev32(a as u32, (b & 31) as u32) as u64),
+            Op::Grevi => self.set_x(rd, grev32(a as u32, (imm & 31) as u32) as u64),
+            Op::Bitc => self.set_x(rd, a & !(1u64 << (b & 31))),
+            Op::Bitci => self.set_x(rd, a & !(1u64 << (imm & 31))),
+            Op::Bits => self.set_x(rd, a | (1u64 << (b & 31))),
+            Op::Bitsi => self.set_x(rd, a | (1u64 << (imm & 31))),
+            Op::Pcnt => self.set_x(rd, (a as u32).count_ones() as u64),
+            Op::Fls => self.set_x(rd, fls32(a as u32)),
 
             // ---- Zicond ----
             Op::CzeroEqz => self.set_x(rd, if b == 0 { 0 } else { a }),
@@ -1324,7 +1387,14 @@ impl RiscVCpu {
     pub fn csr_read(&self, addr: u16) -> Result<u64, Trap> {
         let csr = match Csr::from_addr(addr) {
             Some(c) => c,
-            None => return Err(Trap::illegal(0)),
+            None => {
+                // Permissive vendor / not-yet-modeled CSR scratch (only on
+                // Xsoteria machines): read back what was written, else 0.
+                if self.cfg.isa.xsoteria {
+                    return Ok(self.ext_csr.get(&addr).copied().unwrap_or(0) & self.xmask());
+                }
+                return Err(Trap::illegal(0));
+            }
         };
         let v = match csr {
             Csr::Fflags => (self.fcsr & 0x1f) as u64,
@@ -1368,7 +1438,15 @@ impl RiscVCpu {
     pub fn csr_write(&mut self, addr: u16, value: u64) -> Result<(), Trap> {
         let csr = match Csr::from_addr(addr) {
             Some(c) => c,
-            None => return Err(Trap::illegal(0)),
+            None => {
+                // Permissive vendor / not-yet-modeled CSR scratch (only on
+                // Xsoteria machines): store and succeed instead of trapping.
+                if self.cfg.isa.xsoteria {
+                    self.ext_csr.insert(addr, value & self.xmask());
+                    return Ok(());
+                }
+                return Err(Trap::illegal(0));
+            }
         };
         match csr {
             Csr::Fflags => self.fcsr = (self.fcsr & !0x1f) | (value as u32 & 0x1f),
@@ -4187,6 +4265,37 @@ fn orc_b(a: u64, xmask: u64) -> u64 {
     out & xmask
 }
 
+/// Xsoteria `grev`/`grevi`: 32-bit generalized bit-reverse (standard RISC-V
+/// bitmanip GREV). The control takes the low 5 bits; each stage conditionally
+/// swaps bit groups of width 1, 2, 4, 8, 16. `grev32(x, 31)` is a full bit
+/// reverse; `grev32(x, 24)` is `rev8` (whole-word byte swap).
+fn grev32(rs1: u32, ctrl: u32) -> u32 {
+    let mut x = rs1;
+    let s = ctrl & 31;
+    if s & 1 != 0 {
+        x = ((x & 0x5555_5555) << 1) | ((x & 0xAAAA_AAAA) >> 1);
+    }
+    if s & 2 != 0 {
+        x = ((x & 0x3333_3333) << 2) | ((x & 0xCCCC_CCCC) >> 2);
+    }
+    if s & 4 != 0 {
+        x = ((x & 0x0F0F_0F0F) << 4) | ((x & 0xF0F0_F0F0) >> 4);
+    }
+    if s & 8 != 0 {
+        x = ((x & 0x00FF_00FF) << 8) | ((x & 0xFF00_FF00) >> 8);
+    }
+    if s & 16 != 0 {
+        x = (x << 16) | (x >> 16);
+    }
+    x
+}
+
+/// Xsoteria `fls`: find last (most-significant) set bit, 1-based; `fls(0) == 0`,
+/// `fls(1) == 1`, `fls(0x8000_0000) == 32`. Equivalent to `32 - clz`.
+fn fls32(rs1: u32) -> u64 {
+    (32 - rs1.leading_zeros()) as u64
+}
+
 /// Zbb `rev8`: reverse byte order across the whole register.
 fn rev8(a: u64, rv32: bool) -> u64 {
     if rv32 {
@@ -5160,5 +5269,156 @@ mod tests {
             (0b0110000u32 << 25) | (2 << 20) | (1 << 15) | (1 << 12) | (3 << 7) | 0x13,
         );
         assert_eq!(c.x(3), 8);
+    }
+
+    // ------------------------------------------------------------------
+    // Xsoteria (Google Soteria/GSC) vendor extension.
+    //
+    // Encodings and semantics are validated against the ti50-sdk LLVM-15
+    // "soteria" backend patch (byte-exact `# encoding:` strings) and the
+    // bitmanip GREV definition.
+    // ------------------------------------------------------------------
+
+    fn rv32_ti50() -> RiscVCpu {
+        let cfg = RiscVConfig {
+            xlen: Xlen::Rv32,
+            isa: Isa::ti50(),
+        };
+        RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)))
+    }
+
+    // CUSTOM-1 (0x2b) register form: r_type(funct7, rs2, rs1, funct3, rd, 0x2b).
+    // CUSTOM-0 (0x0b) immediate form: r_type(funct7, imm5, rs1, funct3, rd, 0x0b).
+
+    #[test]
+    fn xsoteria_decode_golden_bytes() {
+        // Byte-exact encodings lifted from the ti50-sdk LLVM soteria patch.
+        let cases: &[(u32, Op)] = &[
+            (0x00b5_052b, Op::Grev),  // 2b 05 b5 00
+            (0x0105_050b, Op::Grevi), // 0b 05 05 01 (imm=16)
+            (0x00b5_152b, Op::Bitc),  // 2b 15 b5 00
+            (0x0125_150b, Op::Bitci), // 0b 15 25 01 (imm=18)
+            (0x40b5_152b, Op::Bits),  // 2b 15 b5 40
+            (0x41f5_150b, Op::Bitsi), // 0b 15 f5 41 (imm=31)
+            (0x0005_350b, Op::Pcnt),  // 0b 35 05 00
+            (0x4005_250b, Op::Clz),   // 0b 25 05 40
+            (0x0005_250b, Op::Fls),   // 0b 25 05 00
+        ];
+        for &(w, op) in cases {
+            let insn = crate::riscv::decode::decode(w, Xlen::Rv32, &Isa::ti50());
+            assert_eq!(insn.op, op, "encoding {w:#010x} should decode to {op:?}");
+        }
+    }
+
+    #[test]
+    fn xsoteria_decode_gated_rv32_and_flag() {
+        let grev = 0x00b5_052bu32;
+        // Off without the flag.
+        let no_ext = Isa {
+            xsoteria: false,
+            ..Isa::ti50()
+        };
+        assert!(crate::riscv::decode::decode(grev, Xlen::Rv32, &no_ext).is_illegal());
+        // RV32-only: illegal under RV64 even with the flag set.
+        let rv64_ext = Isa {
+            xsoteria: true,
+            ..Isa::rv64gc()
+        };
+        assert!(crate::riscv::decode::decode(grev, Xlen::Rv64, &rv64_ext).is_illegal());
+        // Enabled under RV32.
+        assert_eq!(
+            crate::riscv::decode::decode(grev, Xlen::Rv32, &Isa::ti50()).op,
+            Op::Grev
+        );
+    }
+
+    #[test]
+    fn xsoteria_grev_full_reverse_and_rev8() {
+        let mut c = rv32_ti50();
+        // grev x3, x1, x2 with ctrl=31 -> full bit reverse.
+        c.set_x(1, 0x0000_0001);
+        c.set_x(2, 31);
+        run_one(&mut c, r_type(0x00, 2, 1, 0b000, 3, 0x2b));
+        assert_eq!(c.x(3), 0x8000_0000);
+        // grevi x4, x1, 24 -> rev8 (whole-word byte swap).
+        c.set_x(1, 0x1122_3344);
+        run_one(&mut c, r_type(0x00, 24, 1, 0b000, 4, 0x0b));
+        assert_eq!(c.x(4), 0x4433_2211);
+        // Control masks to 5 bits: ctrl 24+32 == 24 -> still rev8.
+        c.set_x(2, 24 + 32);
+        run_one(&mut c, r_type(0x00, 2, 1, 0b000, 5, 0x2b));
+        assert_eq!(c.x(5), 0x4433_2211);
+    }
+
+    #[test]
+    fn xsoteria_bit_set_clear() {
+        let mut c = rv32_ti50();
+        // bitci x3, x1, 4 -> clear bit 4.
+        c.set_x(1, 0xffff_ffff);
+        run_one(&mut c, r_type(0x00, 4, 1, 0b001, 3, 0x0b));
+        assert_eq!(c.x(3), 0xffff_ffef);
+        // bitsi x4, x0, 31 -> set bit 31.
+        run_one(&mut c, r_type(0x20, 31, 0, 0b001, 4, 0x0b));
+        assert_eq!(c.x(4), 0x8000_0000);
+        // bitc x5, x1, x2 (rs2=36 -> 36&31=4) -> clear bit 4.
+        c.set_x(1, 0xffff_ffff);
+        c.set_x(2, 36);
+        run_one(&mut c, r_type(0x00, 2, 1, 0b001, 5, 0x2b));
+        assert_eq!(c.x(5), 0xffff_ffef);
+        // bits x6, x0, x2 (rs2=36 -> bit 4) -> 0x10.
+        run_one(&mut c, r_type(0x20, 2, 0, 0b001, 6, 0x2b));
+        assert_eq!(c.x(6), 0x0000_0010);
+    }
+
+    #[test]
+    fn xsoteria_pcnt_clz_fls() {
+        let mut c = rv32_ti50();
+        // pcnt x3, x1
+        c.set_x(1, 0xf0f0_f0f0);
+        run_one(&mut c, r_type(0x00, 0, 1, 0b011, 3, 0x0b));
+        assert_eq!(c.x(3), 16);
+        // clz x4, x1 (0x00010000 -> 15); clz(0) -> 32.
+        c.set_x(1, 0x0001_0000);
+        run_one(&mut c, r_type(0x20, 0, 1, 0b010, 4, 0x0b));
+        assert_eq!(c.x(4), 15);
+        c.set_x(1, 0);
+        run_one(&mut c, r_type(0x20, 0, 1, 0b010, 5, 0x0b));
+        assert_eq!(c.x(5), 32);
+        // fls (1-based MSB index): fls(0)=0, fls(1)=1, fls(0x80000000)=32,
+        // fls(0x00010000)=17.
+        for (input, expect) in [(0u64, 0u64), (1, 1), (0x8000_0000, 32), (0x0001_0000, 17)] {
+            c.set_x(1, input);
+            run_one(&mut c, r_type(0x00, 0, 1, 0b010, 6, 0x0b));
+            assert_eq!(c.x(6), expect, "fls({input:#x})");
+        }
+    }
+
+    #[test]
+    fn xsoteria_csr_scratch_permissive_only_when_enabled() {
+        // On a ti50 hart, unmodeled/vendor CSRs are store-only scratch.
+        let mut c = rv32_ti50();
+        for addr in [0x7c0u16, 0x7c1, 0x7d0, 0x3a0 /* pmpcfg0 */, 0x3b0 /* pmpaddr0 */] {
+            c.csr_write(addr, 0xdead_beef).unwrap();
+            assert_eq!(c.csr_read(addr).unwrap(), 0xdead_beef);
+        }
+        // Never-written vendor CSR reads back 0.
+        assert_eq!(c.csr_read(0x7cf).unwrap(), 0);
+        // On a strict RV64GC hart, the same CSR is illegal.
+        let mut g = cpu();
+        assert!(g.csr_write(0x7c0, 1).is_err());
+        assert!(g.csr_read(0x7c0).is_err());
+    }
+
+    #[test]
+    fn warm_reset_clears_arch_state_keeps_nothing() {
+        let mut c = rv32_ti50();
+        c.set_x(5, 0x1234);
+        c.set_pc(0x9999);
+        c.csr_write(0x7c0, 0xabcd).unwrap();
+        c.reset(0x956b2);
+        assert_eq!(c.pc(), 0x956b2);
+        assert_eq!(c.x(5), 0);
+        // Vendor scratch CSRs are cleared by reset.
+        assert_eq!(c.csr_read(0x7c0).unwrap(), 0);
     }
 }
