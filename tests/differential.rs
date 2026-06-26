@@ -9124,6 +9124,33 @@ fn sse_movmskpd() {
     check_sse("movmskpd", &prog, sse_scratch(a, b));
 }
 
+#[test]
+fn sse_movmsk_extended_register_forms_zero_extend() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([-1.0, 2.0, -3.0, -4.0]));
+    s[16..32].copy_from_slice(&f64x2([1.5, -2.5]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+    code.extend_from_slice(&[0x45, 0x0F, 0x50, 0xC0]); // movmskps r8d, xmm8
+    code.extend_from_slice(&[0x66, 0x45, 0x0F, 0x50, 0xC9]); // movmskpd r9d, xmm9
+    code.extend_from_slice(&[0x4C, 0x89, 0x47, 0x20]); // mov [rdi+32], r8
+    code.extend_from_slice(&[0x4C, 0x89, 0x4F, 0x28]); // mov [rdi+40], r9
+    code.push(HLT);
+
+    let mut r = regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x1111_2222_3333_4444;
+    check_mem(
+        "sse_movmsk_extended_register_forms_zero_extend",
+        &code,
+        r,
+        s,
+        0,
+    );
+}
+
 // ---- UNPCK low/high for packed singles/doubles ----
 
 #[test]
@@ -10843,6 +10870,31 @@ fn sse_pmovmskb() {
     prog.extend_from_slice(&[0x89, 0x47, 0x20]); // mov [rdi+0x20], eax
     prog.push(HLT);
     check_sse("pmovmskb", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse_pmovmskb_extended_register_form_zero_extend() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x00, 0x80, 0x7F, 0x81, 0x10, 0xFF, 0x20, 0x90, 0x40, 0xC0, 0x50, 0xA0, 0x60, 0xE0,
+        0x70, 0xF0,
+    ]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0x66, 0x45, 0x0F, 0xD7, 0xC0]); // pmovmskb r8d, xmm8
+    code.extend_from_slice(&[0x4C, 0x89, 0x47, 0x20]); // mov [rdi+32], r8
+    code.push(HLT);
+
+    let mut r = regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    check_mem(
+        "sse_pmovmskb_extended_register_form_zero_extend",
+        &code,
+        r,
+        s,
+        0,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -35716,6 +35768,51 @@ fn avx_vpmovmskb_xmm_ymm_forms() {
     code.extend_from_slice(&[0x89, 0x47, 0x04]); // mov [rdi+4], eax
     code.push(HLT);
     check_avx_mem("avx_vpmovmskb_xmm_ymm_forms", &code, s);
+}
+
+#[test]
+fn avx_mask_extract_extended_register_forms_zero_extend() {
+    let mut s = [0u8; 64];
+    let ymm_words = [
+        0x8000_0001u32,
+        0x7F00_0000,
+        0x8000_0002,
+        0x8000_0003,
+        0x0000_0004,
+        0x8000_0005,
+        0x0000_0006,
+        0x8000_0007,
+    ];
+    for (i, word) in ymm_words.iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&word.to_le_bytes());
+    }
+    for i in 0..32 {
+        let bit_set = matches!(i, 2 | 4 | 9 | 12 | 17 | 23 | 26 | 30);
+        s[32 + i] = if bit_set { 0x80 | i as u8 } else { i as u8 };
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0x7E, 0x6F, 0x07]); // vmovdqu ymm8, [rdi]
+    code.extend_from_slice(&[0xC5, 0x7E, 0x6F, 0x4F, 0x20]); // vmovdqu ymm9, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0x41, 0x7C, 0x50, 0xC0]); // vmovmskps r8d, ymm8
+    code.extend_from_slice(&[0xC4, 0x41, 0x7D, 0x50, 0xC8]); // vmovmskpd r9d, ymm8
+    code.extend_from_slice(&[0xC4, 0x41, 0x7D, 0xD7, 0xD1]); // vpmovmskb r10d, ymm9
+    code.extend_from_slice(&[0x4C, 0x89, 0x07]); // mov [rdi], r8
+    code.extend_from_slice(&[0x4C, 0x89, 0x4F, 0x08]); // mov [rdi+8], r9
+    code.extend_from_slice(&[0x4C, 0x89, 0x57, 0x10]); // mov [rdi+16], r10
+    code.push(HLT);
+
+    let mut r = regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x1111_2222_3333_4444;
+    r.r10 = 0x5555_6666_7777_8888;
+    check_mem(
+        "avx_mask_extract_extended_register_forms_zero_extend",
+        &code,
+        r,
+        s,
+        0,
+    );
 }
 
 // ===========================================================================
