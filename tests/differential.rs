@@ -9664,6 +9664,51 @@ fn bcd_adjust_compat32_forms() {
     );
 }
 
+#[test]
+fn bcd_adjust_compat32_aam_aad_non_decimal_bases() {
+    let sregs = compat32_sregs();
+
+    let mut r = regs();
+    r.rax = 0x5F;
+    check_flags_masked_with_sregs(
+        "aam_compat32_base16",
+        &with_hlt(vec![0xD4, 0x10]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x35;
+    check_flags_masked_with_sregs(
+        "aam_compat32_base7",
+        &with_hlt(vec![0xD4, 0x07]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x050F;
+    check_flags_masked_with_sregs(
+        "aad_compat32_base16",
+        &with_hlt(vec![0xD5, 0x10]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x0704;
+    check_flags_masked_with_sregs(
+        "aad_compat32_base7",
+        &with_hlt(vec![0xD5, 0x07]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Conditional branch (Jcc) across the flag matrix. Each program does
 //   cmp rax, rbx        ; set flags
