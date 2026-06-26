@@ -15011,6 +15011,90 @@ fn stack_push_pop_extended_regs() {
 }
 
 #[test]
+fn stack_push_pop_extended_register_opcode_forms() {
+    let mut r = regs();
+    r.r8 = 0x8888_0000_0000_1111;
+    r.r9 = 0x9999_0000_0000_2222;
+    r.r10 = 0xAAAA_0000_0000_3333;
+    r.r11 = 0xBBBB_0000_0000_4444;
+    r.r12 = 0xCCCC_0000_0000_5555;
+    r.r13 = 0xDDDD_0000_0000_6666;
+    r.r14 = 0xEEEE_0000_0000_7777;
+    r.r15 = 0xFFFF_0000_0000_8888;
+    check(
+        "push_pop_extended_register_opcode_forms",
+        &with_hlt(vec![
+            0x41, 0x50, // push r8
+            0x41, 0x51, // push r9
+            0x41, 0x52, // push r10
+            0x41, 0x53, // push r11
+            0x41, 0x54, // push r12
+            0x41, 0x55, // push r13
+            0x41, 0x56, // push r14
+            0x41, 0x57, // push r15
+            0x41, 0x5F, // pop r15
+            0x41, 0x5E, // pop r14
+            0x41, 0x5D, // pop r13
+            0x41, 0x5C, // pop r12
+            0x41, 0x5B, // pop r11
+            0x41, 0x5A, // pop r10
+            0x41, 0x59, // pop r9
+            0x41, 0x58, // pop r8
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn stack_push_pop_low_register_opcode_forms() {
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.rbx = 0x2222_3333_4444_5555;
+    r.rcx = 0x3333_4444_5555_6666;
+    r.rdx = 0x4444_5555_6666_7777;
+    r.rbp = 0x5555_6666_7777_8888;
+    r.rsi = 0x6666_7777_8888_9999;
+    r.rdi = 0x7777_8888_9999_AAAA;
+    check(
+        "push_pop_low_register_opcode_forms",
+        &with_hlt(vec![
+            0x50, // push rax
+            0x51, // push rcx
+            0x52, // push rdx
+            0x53, // push rbx
+            0x55, // push rbp
+            0x56, // push rsi
+            0x57, // push rdi
+            0x58, // pop rax
+            0x59, // pop rcx
+            0x5A, // pop rdx
+            0x5B, // pop rbx
+            0x5D, // pop rbp
+            0x5E, // pop rsi
+            0x5F, // pop rdi
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn stack_push_pop_rsp_special_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r11 = STACK_ADDR - 0x180;
+    check(
+        "push_pop_rsp_special_forms",
+        &with_hlt(vec![
+            0x54, // push rsp
+            0x58, // pop rax
+            0x41, 0x53, // push r11
+            0x5C, // pop rsp
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn stack_group5_push_rm_widths() {
     let mut scratch = zero_scratch();
     scratch[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
@@ -15071,6 +15155,73 @@ fn stack_push16_pop16_preserves_upper() {
     r.rax = 0xAAAA_BBBB_CCCC_1234;
     r.rbx = 0x1111_2222_3333_4444;
     check("push16_pop16", &with_hlt(vec![0x66, 0x50, 0x66, 0x5B]), r);
+}
+
+#[test]
+fn stack_push_pop_16bit_register_opcode_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_0000_0000_1111;
+    r.rbx = 0xBBBB_0000_0000_2222;
+    r.rcx = 0xCCCC_0000_0000_3333;
+    r.rdx = 0xDDDD_0000_0000_4444;
+    r.rbp = 0xEEEE_0000_0000_5555;
+    r.rsi = 0xFFFF_0000_0000_6666;
+    r.rdi = 0x9999_0000_0000_7777;
+    check(
+        "push_pop_16bit_register_opcode_forms",
+        &with_hlt(vec![
+            0x66, 0x50, // push ax
+            0x66, 0x51, // push cx
+            0x66, 0x52, // push dx
+            0x66, 0x53, // push bx
+            0x66, 0x55, // push bp
+            0x66, 0x56, // push si
+            0x66, 0x57, // push di
+            0x66, 0x58, // pop ax
+            0x66, 0x59, // pop cx
+            0x66, 0x5A, // pop dx
+            0x66, 0x5B, // pop bx
+            0x66, 0x5D, // pop bp
+            0x66, 0x5E, // pop si
+            0x66, 0x5F, // pop di
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn stack_push_pop_16bit_extended_register_opcode_forms() {
+    let mut r = regs();
+    r.r8 = 0x8888_0000_0000_1111;
+    r.r9 = 0x9999_0000_0000_2222;
+    r.r10 = 0xAAAA_0000_0000_3333;
+    r.r11 = 0xBBBB_0000_0000_4444;
+    r.r12 = 0xCCCC_0000_0000_5555;
+    r.r13 = 0xDDDD_0000_0000_6666;
+    r.r14 = 0xEEEE_0000_0000_7777;
+    r.r15 = 0xFFFF_0000_0000_8888;
+    check(
+        "push_pop_16bit_extended_register_opcode_forms",
+        &with_hlt(vec![
+            0x66, 0x41, 0x50, // push r8w
+            0x66, 0x41, 0x51, // push r9w
+            0x66, 0x41, 0x52, // push r10w
+            0x66, 0x41, 0x53, // push r11w
+            0x66, 0x41, 0x54, // push r12w
+            0x66, 0x41, 0x55, // push r13w
+            0x66, 0x41, 0x56, // push r14w
+            0x66, 0x41, 0x57, // push r15w
+            0x66, 0x41, 0x58, // pop r8w
+            0x66, 0x41, 0x59, // pop r9w
+            0x66, 0x41, 0x5A, // pop r10w
+            0x66, 0x41, 0x5B, // pop r11w
+            0x66, 0x41, 0x5C, // pop r12w
+            0x66, 0x41, 0x5D, // pop r13w
+            0x66, 0x41, 0x5E, // pop r14w
+            0x66, 0x41, 0x5F, // pop r15w
+        ]),
+        r,
+    );
 }
 
 #[test]
