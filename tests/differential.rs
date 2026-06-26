@@ -9064,6 +9064,36 @@ fn sse_cmpps_all_predicates() {
     cmpps_case("cmpps_ord", 7, a, b);
 }
 
+#[test]
+fn sse_scalar_cmp_register_forms_preserve_upper_lanes() {
+    let mut scratch = [0u8; 64];
+    scratch[0..16].copy_from_slice(&f32x4([1.0, 10.0, 20.0, 30.0]));
+    scratch[16..32].copy_from_slice(&f32x4([2.0, 0.0, 0.0, 0.0]));
+    scratch[32..48].copy_from_slice(&f64x2([4.0, 99.0]));
+    scratch[48..64].copy_from_slice(&f64x2([3.0, 0.0]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x57, 0x20]); // movdqu xmm2, [rdi+0x20]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x5F, 0x30]); // movdqu xmm3, [rdi+0x30]
+
+    code.extend_from_slice(&[0xF3, 0x0F, 0xC2, 0xC1, 0x01]); // cmpss xmm0, xmm1, lt
+    code.extend_from_slice(&[0xF2, 0x0F, 0xC2, 0xD3, 0x0E]); // cmpsd xmm2, xmm3, gt
+
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x10]); // movdqu [rdi+0x10], xmm2
+    code.push(HLT);
+
+    check_mem(
+        "sse_scalar_cmp_register_forms_preserve_upper_lanes",
+        &code,
+        regs(),
+        scratch,
+        0,
+    );
+}
+
 // ---- MOVMSKPS: extract the 4 sign bits of the packed singles into a GPR. ----
 
 #[test]
@@ -11420,6 +11450,46 @@ fn cvt_cvttss2si_overflow_indefinite() {
         ..CompareOpts::default()
     };
     assert_match("cvttss2si_of", &prog, &interp, &kvm, opts);
+}
+
+#[test]
+fn cvt_cvtss2si_cvttss2si_register_width_forms() {
+    let mut scratch = [0u8; 64];
+    scratch[0..16].copy_from_slice(&f32x4([2.5, 0.0, 0.0, 0.0]));
+    scratch[16..32].copy_from_slice(&f32x4([-2.5, 0.0, 0.0, 0.0]));
+    scratch[32..48].copy_from_slice(&f32x4([3.9, 0.0, 0.0, 0.0]));
+    scratch[48..64].copy_from_slice(&f32x4([-3.9, 0.0, 0.0, 0.0]));
+
+    let mut r = regs();
+    r.rax = 0xFFFF_FFFF_0000_0000;
+    r.rbx = 0x1111_2222_3333_4444;
+    r.rcx = 0xAAAA_BBBB_0000_0000;
+    r.rdx = 0x5555_6666_7777_8888;
+
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x57, 0x10]); // movdqu xmm2, [rdi+0x10]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x5F, 0x20]); // movdqu xmm3, [rdi+0x20]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x67, 0x30]); // movdqu xmm4, [rdi+0x30]
+
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x2D, 0xC1]); // cvtss2si eax, xmm1
+    prog.extend_from_slice(&[0xF3, 0x48, 0x0F, 0x2D, 0xDA]); // cvtss2si rbx, xmm2
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x2C, 0xCB]); // cvttss2si ecx, xmm3
+    prog.extend_from_slice(&[0xF3, 0x48, 0x0F, 0x2C, 0xD4]); // cvttss2si rdx, xmm4
+
+    prog.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    prog.extend_from_slice(&[0x48, 0x89, 0x5F, 0x08]); // mov [rdi+8], rbx
+    prog.extend_from_slice(&[0x48, 0x89, 0x4F, 0x10]); // mov [rdi+0x10], rcx
+    prog.extend_from_slice(&[0x48, 0x89, 0x57, 0x18]); // mov [rdi+0x18], rdx
+    prog.push(HLT);
+
+    check_mem(
+        "cvtss2si_cvttss2si_register_width_forms",
+        &prog,
+        r,
+        scratch,
+        0,
+    );
 }
 
 #[test]
@@ -16647,6 +16717,31 @@ fn ssse3_phsubw() {
 }
 
 #[test]
+fn ssse3_phsubd_phsubsw_register_forms() {
+    // PHSUBD xmm0, xmm1 = 66 0F 38 06 C1. Pairwise subtract signed dwords.
+    let a = u32x4([0x0000_000A, 0x0000_0003, 0x0000_0000, 0x0000_0001]);
+    let b = u32x4([0x0000_0020, 0x0000_0010, 0x0000_0001, 0x0000_0002]);
+    check_sse(
+        "phsubd",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x06, 0xC1]),
+        sse_scratch(a, b),
+    );
+
+    // PHSUBSW xmm0, xmm1 = 66 0F 38 07 C1. Pairwise subtract signed words with saturation.
+    let a = u16x8([
+        0x7FFF, 0xFFFF, 0x8000, 0x0001, 0x0005, 0x0008, 0x4000, 0xC000,
+    ]);
+    let b = u16x8([
+        0x0000, 0xFFFF, 0x8000, 0x7FFF, 0x0100, 0x0050, 0x0001, 0x0002,
+    ]);
+    check_sse(
+        "phsubsw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x07, 0xC1]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
 fn ssse3_pmulhrsw() {
     // PMULHRSW xmm0, xmm1 = 66 0F 38 0B C1. Signed 16-bit mul, round, take bits [16:30].
     let a = [
@@ -17935,6 +18030,42 @@ fn mmx_sse_conversion_memory_forms() {
     prog.push(HLT);
 
     check_mem("mmx_sse_conversion_memory_forms", &prog, modern_flags_regs(), s, FLAG_MASK);
+}
+
+#[test]
+fn mmx_sse_conversion_register_forms() {
+    let mut s = [0u8; 64];
+    let packed_i32 = ((23i32 as u32 as u64) << 32) | (-17i32 as u32 as u64);
+    s[0..8].copy_from_slice(&packed_i32.to_le_bytes());
+    s[8..12].copy_from_slice(&1.5f32.to_le_bytes());
+    s[12..16].copy_from_slice(&(-2.75f32).to_le_bytes());
+    s[24..32].copy_from_slice(&2.5f64.to_le_bytes());
+    s[32..40].copy_from_slice(&(-3.75f64).to_le_bytes());
+    s[40..48].copy_from_slice(&0x8877_6655_4433_2211u64.to_le_bytes());
+    s[48..56].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x47, 0x28]); // movdqu xmm0, [rdi+0x28]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x57, 0x08]); // movdqu xmm2, [rdi+8]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x5F, 0x18]); // movdqu xmm3, [rdi+0x18]
+
+    prog.extend_from_slice(&[0x0F, 0x2A, 0xC0]); // cvtpi2ps xmm0, mm0
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2A, 0xC8]); // cvtpi2pd xmm1, mm0
+    prog.extend_from_slice(&[0x0F, 0x2D, 0xD2]); // cvtps2pi mm2, xmm2
+    prog.extend_from_slice(&[0x0F, 0x2C, 0xDA]); // cvttps2pi mm3, xmm2
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2D, 0xE3]); // cvtpd2pi mm4, xmm3
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2C, 0xEB]); // cvttpd2pi mm5, xmm3
+
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+0x10], xmm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x57, 0x20]); // movq [rdi+0x20], mm2
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x5F, 0x28]); // movq [rdi+0x28], mm3
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x67, 0x30]); // movq [rdi+0x30], mm4
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x6F, 0x38]); // movq [rdi+0x38], mm5
+    prog.push(HLT);
+
+    check_mem("mmx_sse_conversion_register_forms", &prog, modern_flags_regs(), s, FLAG_MASK);
 }
 
 #[test]
@@ -21316,6 +21447,36 @@ fn sse_comiss_ucomisd_flags() {
         &sse_program(&[0x66, 0x0F, 0x2E, 0xC1]),
         flags_seeded_regs(),
         sse_scratch(a, b),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_ucomiss_comisd_register_flags() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([5.0, 0.0, 0.0, 0.0]));
+    s[16..32].copy_from_slice(&f32x4([5.0, 0.0, 0.0, 0.0]));
+    s[32..48].copy_from_slice(&f64x2([2.0, 0.0]));
+    s[48..64].copy_from_slice(&f64x2([7.0, 0.0]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x57, 0x20]); // movdqu xmm2, [rdi+32]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x5F, 0x30]); // movdqu xmm3, [rdi+48]
+    code.extend_from_slice(&[0x0F, 0x2E, 0xC1]); // ucomiss xmm0, xmm1
+    code.extend_from_slice(&[0x9C, 0x41, 0x58]); // pushfq; pop r8
+    code.extend_from_slice(&[0x66, 0x0F, 0x2F, 0xD3]); // comisd xmm2, xmm3
+    code.extend_from_slice(&[0x9C, 0x41, 0x59]); // pushfq; pop r9
+    code.extend_from_slice(&[0x4C, 0x89, 0x47, 0x00]); // mov [rdi], r8
+    code.extend_from_slice(&[0x4C, 0x89, 0x4F, 0x08]); // mov [rdi+8], r9
+    code.push(HLT);
+
+    check_mem(
+        "sse_ucomiss_comisd_register_flags",
+        &code,
+        flags_seeded_regs(),
+        s,
         FLAG_MASK,
     );
 }
