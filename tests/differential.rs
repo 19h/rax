@@ -1368,6 +1368,48 @@ fn sse_pand() {
     );
 }
 
+#[test]
+fn sse2_integer_arith_logical_extended_register_forms() {
+    let a = [
+        0x00FF_7F80_FF00_1020u64.to_le_bytes(),
+        0x8000_0000_FFFF_FFFFu64.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let b = [
+        0xFF01_8080_0100_F0F0u64.to_le_bytes(),
+        0x8000_0001_0000_0002u64.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let scratch = sse_scratch(a, b);
+
+    for (label, opcode) in [
+        ("sse2_paddb_extended_register_form", 0xFC),
+        ("sse2_paddw_extended_register_form", 0xFD),
+        ("sse2_paddd_extended_register_form", 0xFE),
+        ("sse2_paddq_extended_register_form", 0xD4),
+        ("sse2_psubb_extended_register_form", 0xF8),
+        ("sse2_psubw_extended_register_form", 0xF9),
+        ("sse2_psubd_extended_register_form", 0xFA),
+        ("sse2_psubq_extended_register_form", 0xFB),
+        ("sse2_pand_extended_register_form", 0xDB),
+        ("sse2_pandn_extended_register_form", 0xDF),
+        ("sse2_por_extended_register_form", 0xEB),
+        ("sse2_pxor_extended_register_form", 0xEF),
+    ] {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE
 // ===========================================================================
@@ -10124,6 +10166,36 @@ fn sse2_saturating_add_sub_memory_sources() {
     }
 }
 
+#[test]
+fn sse2_saturating_add_sub_extended_register_forms() {
+    let a = u16x8([
+        0x00FF, 0x7FFF, 0x8000, 0xFFFF, 0x0001, 0x4000, 0xC000, 0x7FFE,
+    ]);
+    let b = u16x8([
+        0x0001, 0x0002, 0x8000, 0x0001, 0xFFFF, 0x4000, 0xC000, 0x0003,
+    ]);
+    let scratch = sse_scratch(a, b);
+
+    for (label, opcode) in [
+        ("sse2_paddusb_extended_register_form", 0xDC),
+        ("sse2_paddusw_extended_register_form", 0xDD),
+        ("sse2_paddsb_extended_register_form", 0xEC),
+        ("sse2_paddsw_extended_register_form", 0xED),
+        ("sse2_psubusb_extended_register_form", 0xD8),
+        ("sse2_psubusw_extended_register_form", 0xD9),
+        ("sse2_psubsb_extended_register_form", 0xE8),
+        ("sse2_psubsw_extended_register_form", 0xE9),
+    ] {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // saturating op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // SSE2 integer: packed equality / greater-than compares (produce all-1s/0s).
 // ---------------------------------------------------------------------------
@@ -10249,6 +10321,36 @@ fn sse2_compare_logical_memory_sources() {
     }
 }
 
+#[test]
+fn sse2_compare_extended_register_forms() {
+    let a = [
+        0x7F, 0x80, 0x00, 0xFF, 0x01, 0x10, 0xC0, 0x40, 0x05, 0x06, 0x80, 0x7F, 0x00, 0x01,
+        0xFE, 0x02,
+    ];
+    let b = [
+        0x7E, 0x7F, 0x00, 0x00, 0xFF, 0x10, 0x40, 0xC0, 0x06, 0x05, 0x7F, 0x80, 0x01, 0x00,
+        0xFF, 0x03,
+    ];
+    let scratch = sse_scratch(a, b);
+
+    for (label, opcode) in [
+        ("sse2_pcmpeqb_extended_register_form", 0x74),
+        ("sse2_pcmpeqw_extended_register_form", 0x75),
+        ("sse2_pcmpeqd_extended_register_form", 0x76),
+        ("sse2_pcmpgtb_extended_register_form", 0x64),
+        ("sse2_pcmpgtw_extended_register_form", 0x65),
+        ("sse2_pcmpgtd_extended_register_form", 0x66),
+    ] {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // compare xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // SSE2 integer: multiplies (PMULHW/PMULHUW/PMULUDQ).  PMULHW is already covered.
 // ---------------------------------------------------------------------------
@@ -10310,6 +10412,40 @@ fn sse2_multiply_minmax_average_memory_sources() {
             &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
             sse_scratch(a, b),
         );
+    }
+}
+
+#[test]
+fn sse2_multiply_minmax_average_extended_register_forms() {
+    let a = u16x8([
+        0xFFFF, 0x8000, 0x4000, 0x0100, 0x00FF, 0x1234, 0xABCD, 0x0001,
+    ]);
+    let b = u16x8([
+        0xFFFF, 0x0002, 0x0004, 0x0100, 0x00FF, 0x1000, 0x0010, 0x7FFF,
+    ]);
+    let scratch = sse_scratch(a, b);
+
+    for (label, opcode) in [
+        ("sse2_pmullw_extended_register_form", 0xD5),
+        ("sse2_pmulhw_extended_register_form", 0xE5),
+        ("sse2_pmulhuw_extended_register_form", 0xE4),
+        ("sse2_pmuludq_extended_register_form", 0xF4),
+        ("sse2_pmaddwd_extended_register_form", 0xF5),
+        ("sse2_psadbw_extended_register_form", 0xF6),
+        ("sse2_pavgb_extended_register_form", 0xE0),
+        ("sse2_pavgw_extended_register_form", 0xE3),
+        ("sse2_pminub_extended_register_form", 0xDA),
+        ("sse2_pmaxub_extended_register_form", 0xDE),
+        ("sse2_pminsw_extended_register_form", 0xEA),
+        ("sse2_pmaxsw_extended_register_form", 0xEE),
+    ] {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
     }
 }
 
@@ -21858,6 +21994,45 @@ fn sse2_xmm_count_shifts() {
         &sse_program(&[0x66, 0x0F, 0xE2, 0xC1]),
         sse_scratch(a, count),
     );
+}
+
+#[test]
+fn sse2_xmm_count_shift_extended_register_forms() {
+    let a = [
+        0x80, 0x01, 0x7F, 0xFE, 0x34, 0x12, 0xCC, 0xDD, 0x01, 0x80, 0xEF, 0x7E, 0x89, 0xAB,
+        0x67, 0x45,
+    ];
+
+    for (label, opcode, count) in [
+        ("psrlw_extended_xmm_count", 0xD1, 4u64),
+        ("psrld_extended_xmm_count", 0xD2, 12),
+        ("psrlq_extended_xmm_count", 0xD3, 17),
+        ("psraw_extended_xmm_count", 0xE1, 5),
+        ("psrad_extended_xmm_count", 0xE2, 9),
+        ("psllw_extended_xmm_count", 0xF1, 3),
+        ("pslld_extended_xmm_count", 0xF2, 13),
+        ("psllq_extended_xmm_count", 0xF3, 29),
+        ("psrlw_extended_xmm_count_edge", 0xD1, 16),
+        ("psrld_extended_xmm_count_edge", 0xD2, 32),
+        ("psrlq_extended_xmm_count_edge", 0xD3, 64),
+        ("psraw_extended_xmm_count_edge", 0xE1, 19),
+        ("psrad_extended_xmm_count_edge", 0xE2, 35),
+        ("psllw_extended_xmm_count_edge", 0xF1, 16),
+        ("pslld_extended_xmm_count_edge", 0xF2, 32),
+        ("psllq_extended_xmm_count_edge", 0xF3, 64),
+    ] {
+        let mut count_bytes = [0u8; 16];
+        count_bytes[0..8].copy_from_slice(&count.to_le_bytes());
+        let scratch = sse_scratch(a, count_bytes);
+
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // <shift> xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
 }
 
 #[test]
