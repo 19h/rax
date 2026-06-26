@@ -2631,6 +2631,50 @@ fn x87_fild_fadd_fistp() {
 }
 
 #[test]
+fn x87_integer_memory_arithmetic_forms() {
+    let int_op_program = |escape, modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+        c.extend_from_slice(&[escape, modrm, 0x08]); // fi<op> [rdi+8]
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.push(HLT);
+        c
+    };
+    let scratch_i16 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..10].copy_from_slice(&4i16.to_le_bytes());
+        s
+    };
+    let scratch_i32 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..12].copy_from_slice(&4i32.to_le_bytes());
+        s
+    };
+
+    for (label, modrm) in [
+        ("x87_fiadd_m16", 0x47),
+        ("x87_fimul_m16", 0x4F),
+        ("x87_fisub_m16", 0x67),
+        ("x87_fisubr_m16", 0x6F),
+        ("x87_fidiv_m16", 0x77),
+        ("x87_fidivr_m16", 0x7F),
+    ] {
+        check_mem(label, &int_op_program(0xDE, modrm), regs(), scratch_i16(), 0);
+    }
+
+    for (label, modrm) in [
+        ("x87_fiadd_m32", 0x47),
+        ("x87_fimul_m32", 0x4F),
+        ("x87_fisub_m32", 0x67),
+        ("x87_fisubr_m32", 0x6F),
+        ("x87_fidiv_m32", 0x77),
+        ("x87_fidivr_m32", 0x7F),
+    ] {
+        check_mem(label, &int_op_program(0xDA, modrm), regs(), scratch_i32(), 0);
+    }
+}
+
+#[test]
 fn x87_fist_m64() {
     // FILD m32 then FISTP m64 (DF /7) round-trip of a 64-bit integer store.
     let mut s = [0u8; 64];
@@ -2752,6 +2796,276 @@ fn x87_fucomi_equal() {
         regs(),
         scratch_f64(&[7.5, 7.5]),
         FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_fcmovcc_condition_forms() {
+    let fcmov_program = |flag_setup: &[u8], escape, modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=source
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=dest, ST1=source
+        c.extend_from_slice(flag_setup);
+        c.extend_from_slice(&[escape, modrm]); // fcmovcc st0, st1
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.push(HLT);
+        c
+    };
+    let scratch = || scratch_f64(&[2.0, 7.0]);
+
+    for (label, setup, escape, modrm) in [
+        ("x87_fcmovb_true", &[0xF9][..], 0xDA, 0xC1), // stc: CF=1
+        ("x87_fcmovb_false", &[0xF8][..], 0xDA, 0xC1), // clc: CF=0
+        ("x87_fcmove_true", &[0x31, 0xC0][..], 0xDA, 0xC9), // xor eax,eax: ZF=1
+        ("x87_fcmove_false", &[0x83, 0xC8, 0x01][..], 0xDA, 0xC9), // or eax,1: ZF=0
+        ("x87_fcmovbe_true", &[0xF9][..], 0xDA, 0xD1), // CF=1
+        ("x87_fcmovbe_false", &[0xF8][..], 0xDA, 0xD1), // CF=0,ZF=0
+        ("x87_fcmovu_true", &[0x31, 0xC0][..], 0xDA, 0xD9), // PF=1
+        ("x87_fcmovu_false", &[0x83, 0xC8, 0x01][..], 0xDA, 0xD9), // PF=0
+        ("x87_fcmovnb_true", &[0xF8][..], 0xDB, 0xC1), // CF=0
+        ("x87_fcmovnb_false", &[0xF9][..], 0xDB, 0xC1), // CF=1
+        ("x87_fcmovne_true", &[0x83, 0xC8, 0x01][..], 0xDB, 0xC9), // ZF=0
+        ("x87_fcmovne_false", &[0x31, 0xC0][..], 0xDB, 0xC9), // ZF=1
+        ("x87_fcmovnbe_true", &[0x83, 0xC8, 0x01][..], 0xDB, 0xD1), // CF=0,ZF=0
+        ("x87_fcmovnbe_false", &[0xF9][..], 0xDB, 0xD1), // CF=1
+        ("x87_fcmovnu_true", &[0x83, 0xC8, 0x01][..], 0xDB, 0xD9), // PF=0
+        ("x87_fcmovnu_false", &[0x31, 0xC0][..], 0xDB, 0xD9), // PF=1
+    ] {
+        check_mem(
+            label,
+            &fcmov_program(setup, escape, modrm),
+            regs(),
+            scratch(),
+            0,
+        );
+    }
+}
+
+#[test]
+fn x87_compare_pop_and_integer_forms() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+0x10] -> sentinel
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+    c.extend_from_slice(&[0xDE, 0xD9]); // fcompp: compare a vs b, pop twice
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = sentinel
+    c.push(HLT);
+    check_mem(
+        "x87_fcompp_pops_twice",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0, 9.0]),
+        FCOMI_FLAGS,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+    c.extend_from_slice(&[0xDD, 0xE9]); // fucomp st1: compare a vs b, pop once
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = b
+    c.push(HLT);
+    check_mem(
+        "x87_fucomp_pops_once",
+        &c,
+        regs(),
+        scratch_f64(&[4.0, 6.0]),
+        FCOMI_FLAGS,
+    );
+
+    for (label, op) in [
+        ("x87_fcomip_pops_once", [0xDF, 0xF1]),
+        ("x87_fucomip_pops_once", [0xDF, 0xE9]),
+    ] {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+        c.extend_from_slice(&op); // f/ucomip st0, st1; pop once
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = b
+        c.push(HLT);
+        check_mem(label, &c, regs(), scratch_f64(&[4.0, 6.0]), FCOMI_FLAGS);
+    }
+
+    let mut s = scratch_f64(&[4.0]);
+    s[8..10].copy_from_slice(&6i16.to_le_bytes());
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDE, 0x57, 0x08]); // ficom word [rdi+8]
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = original ST0
+    c.push(HLT);
+    check_mem("x87_ficom_m16", &c, regs(), s, FCOMI_FLAGS);
+
+    let mut s = scratch_f64(&[2.0, 0.0, 0.0, 9.0]);
+    s[12..16].copy_from_slice(&3i32.to_le_bytes());
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x18]); // fld qword [rdi+0x18] -> sentinel
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDA, 0x5F, 0x0C]); // ficomp dword [rdi+0x0c]
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x20]); // fstp qword [rdi+0x20] = sentinel
+    c.push(HLT);
+    check_mem("x87_ficomp_m32", &c, regs(), s, FCOMI_FLAGS);
+}
+
+#[test]
+fn x87_ftst_fxam_status_forms() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=-4.0
+    c.extend_from_slice(&[0xD9, 0xE5]); // fxam
+    c.extend_from_slice(&[0xDD, 0x7F, 0x10]); // fnstsw word [rdi+0x10]
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18]
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=0.0
+    c.extend_from_slice(&[0xD9, 0xE4]); // ftst
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf maps C0/C2/C3 to CF/PF/ZF
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.push(HLT);
+
+    check_mem(
+        "x87_ftst_fxam_status",
+        &c,
+        regs(),
+        scratch_f64(&[-4.0, 0.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_control_word_rounding_forms() {
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate, exceptions masked
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xD9, 0x7F, 0x20]); // fnstcw word [rdi+0x20]
+    c.extend_from_slice(&[0xD9, 0x6F, 0x08]); // fldcw word [rdi+0x08]
+    c.extend_from_slice(&[0xD9, 0x7F, 0x22]); // fnstcw word [rdi+0x22]
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD9, 0xFC]); // frndint using truncation RC
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+
+    check_mem("x87_control_word_rounding", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_register_stack_transfer_forms() {
+    let scratch_two = || scratch_f64(&[3.0, 7.0]);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=7
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=3, ST1=7
+    c.extend_from_slice(&[0xD9, 0xC1]); // fld st1 -> duplicate 7
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 7
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 3
+    c.extend_from_slice(&[0xDD, 0x5F, 0x20]); // fstp qword [rdi+0x20] = 7
+    c.push(HLT);
+    check_mem("x87_fld_sti", &c, regs(), scratch_two(), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=3
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=7, ST1=3
+    c.extend_from_slice(&[0xDD, 0xD1]); // fst st1 -> ST1=7
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 7
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 7
+    c.push(HLT);
+    check_mem("x87_fst_sti", &c, regs(), scratch_two(), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=3
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=7, ST1=3
+    c.extend_from_slice(&[0xDD, 0xD9]); // fstp st1 -> store 7 into ST1, then pop
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 7
+    c.push(HLT);
+    check_mem("x87_fstp_sti", &c, regs(), scratch_two(), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=3
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=7, ST1=3
+    c.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+0x10] -> ST0=11
+    c.extend_from_slice(&[0xD9, 0xF7]); // fincstp -> ST0=7
+    c.extend_from_slice(&[0xDD, 0x57, 0x18]); // fst qword [rdi+0x18] = 7
+    c.extend_from_slice(&[0xD9, 0xF6]); // fdecstp -> ST0=11
+    c.extend_from_slice(&[0xDD, 0x5F, 0x20]); // fstp qword [rdi+0x20] = 11
+    c.push(HLT);
+    check_mem(
+        "x87_fincstp_fdecstp",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 7.0, 11.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_environment_save_restore_forms() {
+    const FPU_SAVE_OFF: u32 = 0x100;
+    const FPU_ENV_OFF: u32 = 0x180;
+
+    let append_disp32 = |c: &mut Vec<u8>, op: &[u8], disp: u32| {
+        c.extend_from_slice(op);
+        c.extend_from_slice(&disp.to_le_bytes());
+    };
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=13
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=29, ST1=13
+    append_disp32(&mut c, &[0xDD, 0xB7], FPU_SAVE_OFF); // fnsave [rdi+0x100]
+    c.extend_from_slice(&[0xD9, 0xE8]); // fld1 to contaminate the reset FPU state
+    append_disp32(&mut c, &[0xDD, 0xA7], FPU_SAVE_OFF); // frstor [rdi+0x100]
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 29
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 13
+    c.push(HLT);
+    check_mem(
+        "x87_fnsave_frstor_roundtrip",
+        &c,
+        regs(),
+        scratch_f64(&[13.0, 29.0]),
+        0,
+    );
+
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xD9, 0x6F, 0x08]); // fldcw word [rdi+8]
+    append_disp32(&mut c, &[0xD9, 0xB7], FPU_ENV_OFF); // fnstenv [rdi+0x180]
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit resets to round-to-nearest
+    append_disp32(&mut c, &[0xD9, 0xA7], FPU_ENV_OFF); // fldenv [rdi+0x180]
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD9, 0xFC]); // frndint using restored truncation RC
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fnstenv_fldenv_rounding", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_ffree_reuses_full_stack_slot() {
+    let mut c = load_rdi_data();
+    for _ in 0..8 {
+        c.extend_from_slice(&[0xD9, 0xE8]); // fld1
+    }
+    c.extend_from_slice(&[0xDD, 0xC7]); // ffree st7; frees the next physical push slot
+    c.extend_from_slice(&[0xD9, 0xEE]); // fldz should not raise a masked stack overflow
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 0
+    c.extend_from_slice(&[0xDD, 0x7F, 0x20]); // fnstsw word [rdi+0x20]
+    c.push(HLT);
+
+    check_mem(
+        "x87_ffree_reuses_full_stack_slot",
+        &c,
+        regs(),
+        [0u8; 64],
+        0,
     );
 }
 
@@ -8860,6 +9174,106 @@ fn x87_fprem() {
         &with_hlt(c),
         regs(),
         scratch_f64(&[17.0, 5.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_transcendental_exact_results() {
+    let unary_store = |op: &[u8]| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+        c.extend_from_slice(op);
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.push(HLT);
+        c
+    };
+
+    check_mem(
+        "x87_fsin_zero",
+        &unary_store(&[0xD9, 0xFE]),
+        regs(),
+        scratch_f64(&[0.0]),
+        0,
+    );
+    check_mem(
+        "x87_fcos_zero",
+        &unary_store(&[0xD9, 0xFF]),
+        regs(),
+        scratch_f64(&[0.0]),
+        0,
+    );
+    check_mem(
+        "x87_f2xm1_one",
+        &unary_store(&[0xD9, 0xF0]),
+        regs(),
+        scratch_f64(&[1.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld 0.0
+    c.extend_from_slice(&[0xD9, 0xFB]); // fsincos -> ST0=cos(0), ST1=sin(0)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // cos result
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // sin result
+    c.push(HLT);
+    check_mem("x87_fsincos_zero", &c, regs(), scratch_f64(&[0.0]), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld 0.0
+    c.extend_from_slice(&[0xD9, 0xF2]); // fptan -> ST0=1.0, ST1=tan(0)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // pushed 1.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // tan result
+    c.push(HLT);
+    check_mem("x87_fptan_zero", &c, regs(), scratch_f64(&[0.0]), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld y=3.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld x=8.0
+    c.extend_from_slice(&[0xD9, 0xF1]); // fyl2x -> 3.0 * log2(8.0)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fyl2x_power_of_two",
+        &c,
+        regs(),
+        scratch_f64(&[8.0, 3.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld y=5.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld x=3.0
+    c.extend_from_slice(&[0xD9, 0xF9]); // fyl2xp1 -> 5.0 * log2(1.0 + 3.0)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fyl2xp1_power_of_two",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld 12.0
+    c.extend_from_slice(&[0xD9, 0xF4]); // fxtract -> ST0=significand, ST1=exponent
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // significand 1.5
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // exponent 3.0
+    c.push(HLT);
+    check_mem("x87_fxtract", &c, regs(), scratch_f64(&[12.0]), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld divisor=5.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld dividend=18.0
+    c.extend_from_slice(&[0xD9, 0xF5]); // fprem1 uses nearest quotient: 18 - 4*5 = -2
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fprem1_nearest",
+        &c,
+        regs(),
+        scratch_f64(&[18.0, 5.0]),
         0,
     );
 }
