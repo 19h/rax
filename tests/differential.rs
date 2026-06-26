@@ -39236,6 +39236,82 @@ fn avx_fma_scalar_add_memory_order_forms() {
     check_avx_mem("avx_fma_scalar_vfmadd213_231sd_memory", &code, s);
 }
 
+fn avx_scalar_fma_memory_program(vex_pp_w: u8, opcode: u8) -> Vec<u8> {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x17]); // vmovups xmm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x47, 0x10]); // vmovups xmm0, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0xE2, vex_pp_w, opcode, 0x57, 0x20]); // scalar FMA xmm2,xmm0,[rdi+32]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x57, 0x30]); // vmovups [rdi+48], xmm2
+    code.push(HLT);
+    code
+}
+
+fn avx_scalar_fma_ss_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for (i, value) in [2.5f32, 91.0, -92.0, 93.0].iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [-3.0f32, -11.0, 12.0, -13.0].iter().enumerate() {
+        s[16 + i * 4..20 + i * 4].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..36].copy_from_slice(&4.0f32.to_le_bytes());
+    s
+}
+
+fn avx_scalar_fma_sd_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for (i, value) in [2.25f64, 777.5].iter().enumerate() {
+        s[i * 8..i * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [-3.5f64, -888.5].iter().enumerate() {
+        s[16 + i * 8..24 + i * 8].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..40].copy_from_slice(&4.0f64.to_le_bytes());
+    s
+}
+
+#[test]
+fn avx_fma_scalar_non_add_ss_memory_order_forms() {
+    for (label, opcode) in [
+        ("avx_fma_scalar_vfmsub132ss_memory", 0x9B),
+        ("avx_fma_scalar_vfmsub213ss_memory", 0xAB),
+        ("avx_fma_scalar_vfmsub231ss_memory", 0xBB),
+        ("avx_fma_scalar_vfnmadd132ss_memory", 0x9D),
+        ("avx_fma_scalar_vfnmadd213ss_memory", 0xAD),
+        ("avx_fma_scalar_vfnmadd231ss_memory", 0xBD),
+        ("avx_fma_scalar_vfnmsub132ss_memory", 0x9F),
+        ("avx_fma_scalar_vfnmsub213ss_memory", 0xAF),
+        ("avx_fma_scalar_vfnmsub231ss_memory", 0xBF),
+    ] {
+        check_avx_mem(
+            label,
+            &avx_scalar_fma_memory_program(0x79, opcode),
+            avx_scalar_fma_ss_scratch(),
+        );
+    }
+}
+
+#[test]
+fn avx_fma_scalar_non_add_sd_memory_order_forms() {
+    for (label, opcode) in [
+        ("avx_fma_scalar_vfmsub132sd_memory", 0x9B),
+        ("avx_fma_scalar_vfmsub213sd_memory", 0xAB),
+        ("avx_fma_scalar_vfmsub231sd_memory", 0xBB),
+        ("avx_fma_scalar_vfnmadd132sd_memory", 0x9D),
+        ("avx_fma_scalar_vfnmadd213sd_memory", 0xAD),
+        ("avx_fma_scalar_vfnmadd231sd_memory", 0xBD),
+        ("avx_fma_scalar_vfnmsub132sd_memory", 0x9F),
+        ("avx_fma_scalar_vfnmsub213sd_memory", 0xAF),
+        ("avx_fma_scalar_vfnmsub231sd_memory", 0xBF),
+    ] {
+        check_avx_mem(
+            label,
+            &avx_scalar_fma_memory_program(0xF9, opcode),
+            avx_scalar_fma_sd_scratch(),
+        );
+    }
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 26: VEX add-sub and horizontal FP forms.
 // ===========================================================================
