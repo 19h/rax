@@ -1559,6 +1559,30 @@ fn tzcnt_zero_source() {
     );
 }
 
+#[test]
+fn lzcnt_tzcnt_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[8..12].copy_from_slice(&0x0000_1000u32.to_le_bytes());
+    s[16..24].copy_from_slice(&0x0000_0000_0000_0001u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x66, 0xF3, 0x0F, 0xBD, 0x07, // lzcnt ax, [rdi]
+        0x66, 0x89, 0x47, 0x20, // mov [rdi+32], ax
+        0xF3, 0x0F, 0xBC, 0x4F, 0x08, // tzcnt ecx, [rdi+8]
+        0x89, 0x4F, 0x24, // mov [rdi+36], ecx
+        0xF3, 0x48, 0x0F, 0xBD, 0x57, 0x10, // lzcnt rdx, [rdi+16]
+        0x48, 0x89, 0x57, 0x28, // mov [rdi+40], rdx
+        0xF3, 0x48, 0x0F, 0xBC, 0x5F, 0x18, // tzcnt rbx, [rdi+24]
+        0x48, 0x89, 0x5F, 0x30, // mov [rdi+48], rbx
+    ]);
+    check_mem("lzcnt_tzcnt_memory_forms", &code, r, s, CNT_DEFINED);
+}
+
 // ---- XCHG / XADD / CMPXCHG (register operands) ----
 
 #[test]
@@ -3277,6 +3301,44 @@ fn bmi_bextr_memory_forms() {
     check_mem("bextr_memory_forms", &code, r, s, BMI_BEXTR_DEFINED);
 }
 
+#[test]
+fn bmi_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_00B0u32.to_le_bytes());
+    s[8..12].copy_from_slice(&0x0000_AAAAu32.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rbx = 0x0000_00FF;
+
+    let code = with_hlt(vec![
+        0xC4, 0xE2, 0x60, 0xF2, 0x47, 0x08, // andn eax, ebx, [rdi+8]
+        0xC4, 0xE2, 0x70, 0xF3, 0x1F, // blsi ecx, [rdi]
+        0xC4, 0xE2, 0x68, 0xF3, 0x0F, // blsr edx, [rdi]
+        0xC4, 0xE2, 0x60, 0xF3, 0x17, // blsmsk ebx, [rdi]
+    ]);
+    check_mem("bmi_memory_source_forms", &code, r, s, BMI_DEFINED);
+}
+
+#[test]
+fn bmi_64_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0000_0000_0000_00B0u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0xAAAA_AAAA_AAAA_AAAAu64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rbx = 0x0000_0000_0000_00FF;
+
+    let code = with_hlt(vec![
+        0xC4, 0xE2, 0xE0, 0xF2, 0x47, 0x08, // andn rax, rbx, [rdi+8]
+        0xC4, 0xE2, 0xF0, 0xF3, 0x1F, // blsi rcx, [rdi]
+        0xC4, 0xE2, 0xE8, 0xF3, 0x0F, // blsr rdx, [rdi]
+        0xC4, 0xE2, 0xE0, 0xF3, 0x17, // blsmsk rbx, [rdi]
+    ]);
+    check_mem("bmi_64_memory_source_forms", &code, r, s, BMI_DEFINED);
+}
+
 // ---- BMI2: PEXT / PDEP / MULX / RORX / SARX / SHRX / SHLX ----
 //
 // BMI2 bit-manipulation ops do NOT affect flags at all, so compare GPRs only.
@@ -4870,6 +4932,108 @@ fn sse_shufps() {
 
 // BZHI defines ZF, CF, SF; clears OF; AF/PF undefined.
 const BZHI_DEFINED: u64 = flags::bits::ZF | flags::bits::CF | flags::bits::SF | flags::bits::OF;
+
+#[test]
+fn bmi2_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x8421_1248u32.to_le_bytes());
+    s[8..12].copy_from_slice(&0x0F0F_0F0Fu32.to_le_bytes());
+    s[16..20].copy_from_slice(&0x0001_0000u32.to_le_bytes());
+    s[20..24].copy_from_slice(&0x1234_5678u32.to_le_bytes());
+    s[24..28].copy_from_slice(&0xFFFF_8000u32.to_le_bytes());
+    s[28..32].copy_from_slice(&0xF000_0000u32.to_le_bytes());
+    s[32..36].copy_from_slice(&0x0000_00FFu32.to_le_bytes());
+    s[36..40].copy_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rbx = 0xFEDC_BA98;
+    r.rdx = 0x0001_0000;
+
+    let mut code = vec![
+        0xC4, 0xE2, 0x62, 0xF5, 0x47, 0x08, // pext eax, ebx, [rdi+8]
+        0x89, 0x47, 0x28, // mov [rdi+40], eax
+        0xC4, 0xE2, 0x63, 0xF5, 0x0F, // pdep ecx, ebx, [rdi]
+        0x89, 0x4F, 0x2C, // mov [rdi+44], ecx
+        0xC4, 0xE2, 0x63, 0xF6, 0x47, 0x10, // mulx eax, ebx, [rdi+16]
+        0x89, 0x47, 0x30, // mov [rdi+48], eax
+        0x89, 0x5F, 0x34, // mov [rdi+52], ebx
+        0xC4, 0xE3, 0x7B, 0xF0, 0x4F, 0x14, 0x08, // rorx ecx, [rdi+20], 8
+        0x89, 0x4F, 0x38, // mov [rdi+56], ecx
+        0xBB,
+    ];
+    code.extend_from_slice(&4u32.to_le_bytes()); // mov ebx, 4
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0x62, 0xF7, 0x57, 0x18, // sarx edx, [rdi+24], ebx
+        0x89, 0x57, 0x3C, // mov [rdi+60], edx
+        0xBB,
+    ]);
+    code.extend_from_slice(&8u32.to_le_bytes()); // mov ebx, 8
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0x63, 0xF7, 0x4F, 0x1C, // shrx ecx, [rdi+28], ebx
+        0xBB,
+    ]);
+    code.extend_from_slice(&12u32.to_le_bytes()); // mov ebx, 12
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0x61, 0xF7, 0x47, 0x20, // shlx eax, [rdi+32], ebx
+        0xC4, 0xE2, 0x60, 0xF5, 0x57, 0x24, // bzhi edx, [rdi+36], ebx
+        HLT,
+    ]);
+
+    check_mem("bmi2_memory_source_forms", &code, r, s, BZHI_DEFINED);
+}
+
+#[test]
+fn bmi2_64_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0xF0F0_F0F0_F0F0_F0F0u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x8421_1248_8421_1248u64.to_le_bytes());
+    s[16..24].copy_from_slice(&0x0000_0001_0000_0000u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[32..40].copy_from_slice(&0xFFFF_FFFF_FFFF_8000u64.to_le_bytes());
+    s[40..48].copy_from_slice(&0xF000_0000_0000_0000u64.to_le_bytes());
+    s[48..56].copy_from_slice(&0x0000_0000_0000_00FFu64.to_le_bytes());
+    s[56..64].copy_from_slice(&0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rdx = 0x0000_0001_0000_0000;
+
+    let mut code = vec![
+        0xC4, 0xE2, 0xE3, 0xF5, 0x0F, // pdep rcx, rbx, [rdi]
+        0x48, 0x89, 0x0F, // mov [rdi], rcx
+        0xC4, 0xE2, 0xE2, 0xF5, 0x47, 0x08, // pext rax, rbx, [rdi+8]
+        0x48, 0x89, 0x47, 0x08, // mov [rdi+8], rax
+        0xC4, 0xE3, 0xFB, 0xF0, 0x4F, 0x18, 0x14, // rorx rcx, [rdi+24], 20
+        0x48, 0x89, 0x4F, 0x18, // mov [rdi+24], rcx
+        0xC4, 0xE2, 0xE3, 0xF6, 0x47, 0x10, // mulx rax, rbx, [rdi+16]
+        0x48, 0x89, 0x47, 0x10, // mov [rdi+16], rax
+        0xB9,
+    ];
+    code.extend_from_slice(&4u32.to_le_bytes()); // mov ecx, 4
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0xF2, 0xF7, 0x57, 0x20, // sarx rdx, [rdi+32], rcx
+        0x48, 0x89, 0x57, 0x20, // mov [rdi+32], rdx
+        0xB9,
+    ]);
+    code.extend_from_slice(&8u32.to_le_bytes()); // mov ecx, 8
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0xF3, 0xF7, 0x57, 0x28, // shrx rdx, [rdi+40], rcx
+        0x48, 0x89, 0x57, 0x28, // mov [rdi+40], rdx
+        0xB9,
+    ]);
+    code.extend_from_slice(&12u32.to_le_bytes()); // mov ecx, 12
+    code.extend_from_slice(&[
+        0xC4, 0xE2, 0xF1, 0xF7, 0x57, 0x30, // shlx rdx, [rdi+48], rcx
+        0x48, 0x89, 0x57, 0x30, // mov [rdi+48], rdx
+        0xC4, 0xE2, 0xF0, 0xF5, 0x57, 0x38, // bzhi rdx, [rdi+56], rcx
+        0x48, 0x89, 0x57, 0x38, // mov [rdi+56], rdx
+        HLT,
+    ]);
+
+    check_mem("bmi2_64_memory_source_forms", &code, r, s, BZHI_DEFINED);
+}
 
 #[test]
 fn bmi2_bzhi() {
