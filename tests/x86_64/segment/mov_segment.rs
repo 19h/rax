@@ -788,9 +788,11 @@ fn test_ds_override_no_base_64bit() {
     );
 }
 
-// LAR with a non-null selector: ZF set, dest loaded with the emulated access
-// rights (0x00CF9300). Selector 0x08 in AX, with ZF initially clear so the
-// assertion proves LAR *sets* ZF (not merely that it was already set).
+// LAR with a non-null selector: ZF set, dest loaded with the access-rights
+// dword read from the actual GDT descriptor at selector 0x08. The test harness
+// installs a 64-bit code segment there (access byte 0x9A, flags byte 0x20), so
+// LAR returns ((second_dword) & 0x00FFFF00) = 0x00209A00. ZF is cleared
+// initially so the assertion proves LAR *sets* ZF (not merely that it was set).
 #[test]
 fn test_lar_valid_selector() {
     let code = [
@@ -804,7 +806,7 @@ fn test_lar_valid_selector() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rbx & 0xFFFF_FFFF,
-        0x00CF9300,
+        0x00209A00,
         "LAR loads access-rights dword"
     );
     assert!(
@@ -833,8 +835,10 @@ fn test_lar_null_selector_clears_zf() {
     assert!(!zf_set(regs.rflags), "LAR clears ZF for the null selector");
 }
 
-// LSL with a non-null selector: ZF set, dest loaded with the emulated limit
-// (0xFFFFFFFF). ZF initially clear so the assertion proves LSL *sets* ZF.
+// LSL with a non-null selector: ZF set, dest loaded with the segment limit read
+// from the actual GDT descriptor at selector 0x08. The harness installs a
+// 64-bit code segment whose limit field is 0 with the granularity bit clear, so
+// LSL returns 0. ZF initially clear so the assertion proves LSL *sets* ZF.
 #[test]
 fn test_lsl_valid_selector() {
     let code = [
@@ -848,7 +852,7 @@ fn test_lsl_valid_selector() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rbx & 0xFFFF_FFFF,
-        0xFFFF_FFFF,
+        0,
         "LSL loads segment limit"
     );
     assert!(
