@@ -11309,3 +11309,484 @@ fn x87_fisttp_widths_truncate_toward_zero() {
     code.push(HLT);
     check_mem("x87_fisttp_widths", &code, regs(), s, 0);
 }
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 23: AVX2 VEX integer compare, min/max, multiply,
+// absolute-value, and extension families.
+// ===========================================================================
+
+fn avx2_ymm_pair_start() -> Vec<u8> {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code
+}
+
+fn avx2_store_ymm23_and_hlt(code: &mut Vec<u8>) {
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+}
+
+#[test]
+fn avx2_ymm_compare_byte_word_dword_qword() {
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x74, 0xD1]); // vpcmpeqb ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0x65, 0xD9]); // vpcmpgtw ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_compare_byte_word", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x66, 0xD1]); // vpcmpgtd ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x29, 0xD9]); // vpcmpeqq ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_compare_dword_qword_eq", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x37, 0xD9]); // vpcmpgtq ymm3, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0x76, 0xD0]); // vpcmpeqd ymm2, ymm0, ymm0
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_compare_qword_gt_and_self_eq", &code, s);
+}
+
+#[test]
+fn avx2_ymm_minmax_signed_variants() {
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x38, 0xD1]); // vpminsb ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3C, 0xD9]); // vpmaxsb ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_minmax_signed_bytes", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x39, 0xD1]); // vpminsd ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3D, 0xD9]); // vpmaxsd ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_minmax_signed_dwords", &code, s);
+}
+
+#[test]
+fn avx2_ymm_minmax_unsigned_variants() {
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3A, 0xD1]); // vpminuw ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3E, 0xD9]); // vpmaxuw ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_minmax_unsigned_words", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3B, 0xD1]); // vpminud ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x3F, 0xD9]); // vpmaxud ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_minmax_unsigned_dwords", &code, s);
+}
+
+#[test]
+fn avx2_ymm_multiply_word_and_dword_variants() {
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0xD5, 0xD1]); // vpmullw ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0xE5, 0xD9]); // vpmulhw ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_mul_word_low_high_signed", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0xE4, 0xD1]); // vpmulhuw ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0xF5, 0xD9]); // vpmaddwd ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_mul_unsigned_high_maddwd", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x28, 0xD1]); // vpmuldq ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0xF4, 0xD9]); // vpmuludq ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_mul_signed_unsigned_dq", &code, s);
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x40, 0xD1]); // vpmulld ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0xF6, 0xD9]); // vpsadbw ymm3, ymm0, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_mulld_and_sadbw", &code, s);
+}
+
+#[test]
+fn avx2_ymm_abs_and_extend_memory_forms() {
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x1C, 0xD0]); // vpabsb ymm2, ymm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x1E, 0xD9]); // vpabsd ymm3, ymm1
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_abs_byte_dword", &code, s);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x20, 0x17]); // vpmovsxbw ymm2, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x31, 0x5F, 0x20]); // vpmovzxbd ymm3, [rdi+32]
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_avx_mem("avx2_ymm_sign_zero_extend_memory", &code, s);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 24: VEX masked memory and broadcast forms.
+// ===========================================================================
+
+fn avx_broadcast_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x11u8.wrapping_add((i as u8).wrapping_mul(13));
+    }
+    s
+}
+
+fn avx_maskmov_dword_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = 0x63u8.wrapping_add((i as u8).wrapping_mul(19));
+    }
+
+    let masks = [
+        0x8000_0000u32,
+        0x0000_0000,
+        0xFFFF_FFFF,
+        0x7FFF_FFFF,
+        0x8000_0001,
+        0x0000_0001,
+        0x8000_0010,
+        0x4000_0000,
+    ];
+    for (i, mask) in masks.iter().enumerate() {
+        s[32 + i * 4..36 + i * 4].copy_from_slice(&mask.to_le_bytes());
+    }
+    s
+}
+
+fn avx_maskmov_qword_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = 0xB7u8.wrapping_sub((i as u8).wrapping_mul(11));
+    }
+
+    let masks = [
+        0x8000_0000_0000_0000u64,
+        0x0000_0000_0000_0000,
+        0xFFFF_FFFF_FFFF_FFFF,
+        0x7FFF_FFFF_FFFF_FFFF,
+    ];
+    for (i, mask) in masks.iter().enumerate() {
+        s[32 + i * 8..40 + i * 8].copy_from_slice(&mask.to_le_bytes());
+    }
+    s
+}
+
+#[test]
+fn avx_ymm_broadcast_scalar_128_and_integer_forms() {
+    let s = avx_broadcast_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x18, 0x17]); // vbroadcastss ymm2, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x19, 0x5F, 0x08]); // vbroadcastsd ymm3, [rdi+8]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_ymm_vbroadcastss_sd_memory", &code, s);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x1A, 0x67, 0x10]); // vbroadcastf128 ymm4, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x58, 0x7F, 0x04]); // vpbroadcastd ymm7, [rdi+4]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x27]); // vmovdqu [rdi], ymm4
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x7F, 0x20]); // vmovdqu [rdi+32], ymm7
+    code.push(HLT);
+    check_avx_mem("avx_ymm_vbroadcastf128_and_vpbroadcastd", &code, s);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x78, 0x6F, 0x01]); // vpbroadcastb ymm5, [rdi+1]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x79, 0x77, 0x02]); // vpbroadcastw ymm6, [rdi+2]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x2F]); // vmovdqu [rdi], ymm5
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x77, 0x20]); // vmovdqu [rdi+32], ymm6
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpbroadcast_byte_word_memory", &code, s);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x78, 0xD0]); // vpbroadcastb ymm2, xmm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x79, 0xD8]); // vpbroadcastw ymm3, xmm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpbroadcast_byte_word_register", &code, s);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x58, 0xD0]); // vpbroadcastd ymm2, xmm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x59, 0xD8]); // vpbroadcastq ymm3, xmm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpbroadcast_dword_qword_register", &code, s);
+}
+
+#[test]
+fn avx_ymm_vmaskmovps_pd_load_store() {
+    let s = avx_maskmov_dword_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x2C, 0x17]); // vmaskmovps ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x2E, 0x47, 0x20]); // vmaskmovps [rdi+32], ymm1, ymm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_ymm_vmaskmovps_load_store", &code, s);
+
+    let s = avx_maskmov_qword_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x2D, 0x17]); // vmaskmovpd ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x2F, 0x47, 0x20]); // vmaskmovpd [rdi+32], ymm1, ymm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_ymm_vmaskmovpd_load_store", &code, s);
+}
+
+#[test]
+fn avx2_ymm_vpmaskmovd_q_load_store() {
+    let s = avx_maskmov_dword_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x8C, 0x17]); // vpmaskmovd ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x8E, 0x47, 0x20]); // vpmaskmovd [rdi+32], ymm1, ymm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpmaskmovd_load_store", &code, s);
+
+    let s = avx_maskmov_qword_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF5, 0x8C, 0x17]); // vpmaskmovq ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF5, 0x8E, 0x47, 0x20]); // vpmaskmovq [rdi+32], ymm1, ymm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpmaskmovq_load_store", &code, s);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 25: additional VEX FMA order and sign variants.
+// ===========================================================================
+
+#[test]
+fn avx_fma_ymm_addsub_and_negative_ps_forms() {
+    let s = avx_f32_pair_scratch(
+        [1.25, -2.5, 3.75, -4.5, 5.25, -6.75, 7.5, -8.25],
+        [0.5, 1.5, -2.0, 2.25, -3.5, 4.0, -4.5, 5.5],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x4F, 0x20]); // vmovups ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x17]); // vmovups ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x5F, 0x20]); // vmovups ymm3, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x96, 0x57, 0x20]); // vfmaddsub132ps ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0xBC, 0xD9]); // vfnmadd231ps ymm3, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x5F, 0x20]); // vmovups [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_addsub_negative_ps", &code, s);
+}
+
+#[test]
+fn avx_fma_ymm_subadd_and_negative_pd_forms() {
+    let s = avx_f64_pair_scratch(
+        [1.5, -2.25, 3.125, -4.75],
+        [0.25, 1.75, -2.5, 3.5],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x07]); // vmovupd ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x4F, 0x20]); // vmovupd ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x17]); // vmovupd ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x5F, 0x20]); // vmovupd ymm3, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xFD, 0xA7, 0x57, 0x20]); // vfmsubadd213pd ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xFD, 0xAE, 0xD9]); // vfnmsub213pd ymm3, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x17]); // vmovupd [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x5F, 0x20]); // vmovupd [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_subadd_negative_pd", &code, s);
+}
+
+#[test]
+fn avx_fma_scalar_ss_sd_memory_preserves_upper() {
+    let mut s = [0u8; 64];
+    for (i, value) in [2.5f32, 99.0, -7.25, 0.5].iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [4.0f32, -12.0, 8.0, -0.25].iter().enumerate() {
+        s[16 + i * 4..20 + i * 4].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..36].copy_from_slice(&3.25f32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x17]); // vmovups xmm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x47, 0x10]); // vmovups xmm0, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x79, 0x99, 0x57, 0x20]); // vfmadd132ss xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x57, 0x30]); // vmovups [rdi+48], xmm2
+    code.push(HLT);
+    check_avx_mem("avx_fma_scalar_vfmadd132ss_memory", &code, s);
+
+    let mut s = [0u8; 64];
+    for (i, value) in [3.0f64, -99.5].iter().enumerate() {
+        s[i * 8..i * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    s[16..24].copy_from_slice(&2.25f64.to_le_bytes());
+    s[24..32].copy_from_slice(&5.5f64.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x1F]); // vmovupd xmm3, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFB, 0x10, 0x4F, 0x10]); // vmovsd xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF1, 0xBF, 0x5F, 0x18]); // vfnmsub231sd xmm3, xmm1, [rdi+24]
+    code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x5F, 0x20]); // vmovupd [rdi+32], xmm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_scalar_vfnmsub231sd_memory", &code, s);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 26: VEX add-sub and horizontal FP forms.
+// ===========================================================================
+
+#[test]
+fn avx_ymm_addsub_and_hadd_ps_memory_forms() {
+    let s = avx_f32_pair_scratch(
+        [1.0, -2.0, 3.5, -4.5, 5.25, -6.75, 7.0, -8.0],
+        [0.5, 1.25, -2.5, 3.75, -4.25, 5.5, -6.5, 7.75],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFF, 0xD0, 0x57, 0x20]); // vaddsubps ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFF, 0x7C, 0x5F, 0x20]); // vhaddps ymm3, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x5F, 0x20]); // vmovups [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_ymm_addsub_hadd_ps_memory", &code, s);
+}
+
+#[test]
+fn avx_ymm_hsub_ps_memory_form() {
+    let s = avx_f32_pair_scratch(
+        [8.0, 1.0, -3.0, 4.5, 16.0, -2.0, 9.25, -7.75],
+        [2.0, -5.0, 6.5, -1.5, -8.5, 3.25, 4.75, -6.0],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFF, 0x7D, 0x57, 0x20]); // vhsubps ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_ymm_hsub_ps_memory", &code, s);
+}
+
+#[test]
+fn avx_ymm_addsub_hadd_hsub_pd_memory_forms() {
+    let s = avx_f64_pair_scratch(
+        [1.5, -2.25, 3.75, -4.5],
+        [0.25, 1.75, -2.5, 3.125],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x07]); // vmovupd ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0xD0, 0x57, 0x20]); // vaddsubpd ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x7C, 0x5F, 0x20]); // vhaddpd ymm3, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x17]); // vmovupd [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x5F, 0x20]); // vmovupd [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_ymm_addsub_hadd_pd_memory", &code, s);
+
+    let s = avx_f64_pair_scratch(
+        [8.0, 1.5, -3.25, 4.75],
+        [2.0, -5.5, 6.25, -1.75],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x07]); // vmovupd ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x7D, 0x57, 0x20]); // vhsubpd ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x17]); // vmovupd [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_ymm_hsub_pd_memory", &code, s);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 27: VEX mask extraction forms.
+// ===========================================================================
+
+#[test]
+fn avx_movmskps_pd_xmm_ymm_forms() {
+    let mut s = [0u8; 64];
+    let ymm_words = [
+        0x8000_0001u32,
+        0x7F00_0000,
+        0x8000_0002,
+        0x8000_0003,
+        0x0000_0004,
+        0x8000_0005,
+        0x0000_0006,
+        0x8000_0007,
+    ];
+    for (i, word) in ymm_words.iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&word.to_le_bytes());
+    }
+    let xmm_words = [0x0000_0001u32, 0x8000_0002, 0x8000_0003, 0x0000_0004];
+    for (i, word) in xmm_words.iter().enumerate() {
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&word.to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x20]); // vmovdqu xmm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x50, 0xC0]); // vmovmskps eax, ymm0
+    code.extend_from_slice(&[0x89, 0x07]); // mov [rdi], eax
+    code.extend_from_slice(&[0xC5, 0xFD, 0x50, 0xC0]); // vmovmskpd eax, ymm0
+    code.extend_from_slice(&[0x89, 0x47, 0x04]); // mov [rdi+4], eax
+    code.extend_from_slice(&[0xC5, 0xF8, 0x50, 0xC1]); // vmovmskps eax, xmm1
+    code.extend_from_slice(&[0x89, 0x47, 0x08]); // mov [rdi+8], eax
+    code.extend_from_slice(&[0xC5, 0xF9, 0x50, 0xC1]); // vmovmskpd eax, xmm1
+    code.extend_from_slice(&[0x89, 0x47, 0x0C]); // mov [rdi+12], eax
+    code.push(HLT);
+    check_avx_mem("avx_movmskps_pd_xmm_ymm_forms", &code, s);
+}
+
+#[test]
+fn avx_vpmovmskb_xmm_ymm_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        let bit_set = matches!(i, 0 | 3 | 5 | 8 | 13 | 21 | 24 | 31);
+        s[i] = if bit_set { 0x80 | i as u8 } else { i as u8 };
+    }
+    for i in 0..16 {
+        let bit_set = matches!(i, 1 | 2 | 7 | 11 | 15);
+        s[32 + i] = if bit_set {
+            0xF0u8.wrapping_sub(i as u8)
+        } else {
+            0x10u8.wrapping_add(i as u8)
+        };
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x20]); // vmovdqu xmm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0xD7, 0xC0]); // vpmovmskb eax, ymm0
+    code.extend_from_slice(&[0x89, 0x07]); // mov [rdi], eax
+    code.extend_from_slice(&[0xC5, 0xF9, 0xD7, 0xC1]); // vpmovmskb eax, xmm1
+    code.extend_from_slice(&[0x89, 0x47, 0x04]); // mov [rdi+4], eax
+    code.push(HLT);
+    check_avx_mem("avx_vpmovmskb_xmm_ymm_forms", &code, s);
+}
