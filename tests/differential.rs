@@ -6105,6 +6105,40 @@ fn x87_ffree_reuses_full_stack_slot() {
     );
 }
 
+#[test]
+fn x87_ffreep_frees_and_pops_stack() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDF, 0xC0]); // ffreep st0
+    c.extend_from_slice(&[0xDD, 0x7F, 0x20]); // fnstsw word [rdi+0x20]
+    c.push(HLT);
+    check_mem(
+        "x87_ffreep_st0_status",
+        &c,
+        regs(),
+        scratch_f64(&[3.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+0x10] -> sentinel
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDF, 0xC1]); // ffreep st1: free ST1 and pop old ST0
+    c.extend_from_slice(&[0xD9, 0xEE]); // fldz; old ST0 slot should be empty
+    c.extend_from_slice(&[0xDD, 0x7F, 0x20]); // fnstsw word [rdi+0x20]
+    c.push(HLT);
+    check_mem(
+        "x87_ffreep_st1_frees_old_top_for_next_push",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 7.0, 11.0]),
+        0,
+    );
+}
+
 // ---- String ops: MOVS / STOS / LODS / SCAS / CMPS (with and without REP, DF) ----
 //
 // Scratch layout convention:
