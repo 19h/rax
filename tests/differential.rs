@@ -1722,6 +1722,81 @@ fn xchg_memory_width_forms() {
 }
 
 #[test]
+fn xchg_register_operand_width_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_CCCC_00F0;
+    r.rcx = 0x1111_2222_3333_0010;
+    r.rdx = 0xFFFF_FFFF_8000_0000;
+    r.rbx = 0xAAAA_BBBB_1234_5678;
+
+    check_flags_masked(
+        "xchg_register_operand_width_forms",
+        &with_hlt(vec![
+            0x66, 0x87, 0xC8, // xchg ax, cx
+            0x87, 0xDA, // xchg edx, ebx
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn xchg_memory_byte_high_and_rex_register_sources() {
+    let mut s = [0u8; 64];
+    s[0] = 0x11;
+    s[1] = 0x22;
+    s[2] = 0x33;
+    s[3] = 0x44;
+
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_AA01;
+    r.rcx = 0x5555_6666_7777_BB02;
+    r.rbp = 0xAAAA_BBBB_CCCC_DDCC;
+    r.rsi = 0x1111_2222_3333_44DD;
+    r.r10 = DATA_ADDR + 2;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x86, 0x27]); // xchg byte [rdi], ah
+    code.extend_from_slice(&[0x86, 0x6F, 0x01]); // xchg byte [rdi+1], ch
+    code.extend_from_slice(&[0x41, 0x86, 0x2A]); // xchg byte [r10], bpl
+    code.extend_from_slice(&[0x41, 0x86, 0x72, 0x01]); // xchg byte [r10+1], sil
+    code.push(HLT);
+
+    check_mem(
+        "xchg_memory_byte_high_and_rex_register_sources",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn xchg_high_byte_and_rex_low_byte_registers() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_4401;
+    r.rcx = 0x5555_6666_7777_8802;
+    r.rdx = 0x9999_AAAA_BBBB_CC03;
+    r.rbx = 0xDDDD_EEEE_FFFF_1104;
+    r.rsp = STACK_ADDR;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD55;
+    r.rsi = 0x1111_2222_3333_4466;
+    r.rdi = 0x7777_8888_9999_AA77;
+
+    check_flags_masked(
+        "xchg_high_byte_and_rex_low_byte_registers",
+        &with_hlt(vec![
+            0x86, 0xEC, // xchg ah, ch
+            0x86, 0xFE, // xchg dh, bh
+            0x40, 0x86, 0xF5, // xchg bpl, sil
+            0x40, 0x86, 0xFC, // xchg spl, dil
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn xadd_reg_reg() {
     let mut r = regs();
     r.rax = 0x100; // dest
@@ -1736,6 +1811,50 @@ fn xadd_carry() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
     r.rbx = 0x1; // sum wraps -> CF, ZF, AF
     check("xadd_carry", &with_hlt(vec![0x48, 0x0F, 0xC1, 0xD8]), r);
+}
+
+#[test]
+fn xadd_register_operand_width_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_CCCC_00F0;
+    r.rcx = 0x1111_2222_3333_0010;
+    r.rdx = 0xFFFF_FFFF_8000_0000;
+    r.rbx = 0xAAAA_BBBB_8000_0000;
+
+    check_flags_masked(
+        "xadd_register_operand_width_forms",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xC1, 0xC8, // xadd ax, cx
+            0x0F, 0xC1, 0xDA, // xadd edx, ebx
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn xadd_high_byte_and_rex_low_byte_registers() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_4401;
+    r.rcx = 0x5555_6666_7777_8802;
+    r.rdx = 0x9999_AAAA_BBBB_CC03;
+    r.rbx = 0xDDDD_EEEE_FFFF_1104;
+    r.rsp = STACK_ADDR + 0xF0;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD55;
+    r.rsi = 0x1111_2222_3333_4466;
+    r.rdi = 0x7777_8888_9999_AA10;
+
+    check_flags_masked(
+        "xadd_high_byte_and_rex_low_byte_registers",
+        &with_hlt(vec![
+            0x0F, 0xC0, 0xEC, // xadd ah, ch
+            0x0F, 0xC0, 0xFE, // xadd dh, bh
+            0x40, 0x0F, 0xC0, 0xF5, // xadd bpl, sil
+            0x40, 0x0F, 0xC0, 0xFC, // xadd spl, dil
+        ]),
+        r,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -1760,6 +1879,25 @@ fn cmpxchg_fail() {
 }
 
 #[test]
+fn cmpxchg_register_operand_width_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_1111_00F0;
+    r.rbx = 0x2222_3333_4444_00F0;
+    r.rcx = 0x5555_6666_7777_1234;
+    r.rdx = 0x9999_AAAA_8000_0000;
+
+    check_flags_masked(
+        "cmpxchg_register_operand_width_forms",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xB1, 0xCB, // cmpxchg bx, cx
+            0x0F, 0xB1, 0xDA, // cmpxchg edx, ebx
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cmpxchg8_success() {
     let mut r = regs();
     r.rbx = 0x55;
@@ -1767,6 +1905,45 @@ fn cmpxchg8_success() {
     r.rcx = 0xAA;
     // 0F B0 CB  cmpxchg bl, cl
     check("cmpxchg8_ok", &with_hlt(vec![0x0F, 0xB0, 0xCB]), r);
+}
+
+#[test]
+fn cmpxchg8_high_byte_register_success_and_failure() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.rcx = 0x5555_6666_7777_8802;
+    r.rdx = 0x9999_AAAA_BBBB_CC03;
+    r.rbx = 0xDDDD_EEEE_FFFF_1104;
+
+    check_flags_masked(
+        "cmpxchg8_high_byte_register_success_and_failure",
+        &with_hlt(vec![
+            0x0F, 0xB0, 0xEC, // cmpxchg ah, ch
+            0x0F, 0xB0, 0xFE, // cmpxchg dh, bh
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg8_rex_low_byte_register_success_and_failure() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_4455;
+    r.rsp = STACK_ADDR + 0xF0;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD55;
+    r.rsi = 0x1111_2222_3333_4466;
+    r.rdi = 0x7777_8888_9999_AA10;
+
+    check_flags_masked(
+        "cmpxchg8_rex_low_byte_register_success_and_failure",
+        &with_hlt(vec![
+            0x40, 0x0F, 0xB0, 0xF5, // cmpxchg bpl, sil
+            0x40, 0x0F, 0xB0, 0xFC, // cmpxchg spl, dil
+        ]),
+        r,
+        FLAG_MASK,
+    );
 }
 
 // ---- Shifts / rotates by CL and imm, double-shift SHLD/SHRD ----
@@ -9813,6 +9990,61 @@ fn xadd_mem_carry() {
 }
 
 #[test]
+fn xadd_memory_byte_high_and_rex_register_sources() {
+    let mut s = [0u8; 64];
+    s[0] = 0x10;
+    s[1] = 0xF0;
+    s[2] = 0x7F;
+    s[3] = 0xF0;
+
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_2001;
+    r.rcx = 0x5555_6666_7777_1002;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD01;
+    r.rsi = 0x1111_2222_3333_4410;
+    r.r10 = DATA_ADDR + 2;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0xC0, 0x27]); // xadd byte [rdi], ah
+    code.extend_from_slice(&[0x0F, 0xC0, 0x6F, 0x01]); // xadd byte [rdi+1], ch
+    code.extend_from_slice(&[0x41, 0x0F, 0xC0, 0x2A]); // xadd byte [r10], bpl
+    code.extend_from_slice(&[0x41, 0x0F, 0xC0, 0x72, 0x01]); // xadd byte [r10+1], sil
+    code.push(HLT);
+
+    check_mem(
+        "xadd_memory_byte_high_and_rex_register_sources",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn xadd_memory_operand_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rcx = 0x5555_6666_7777_1234;
+    r.rbx = 0x2222_3333_8000_0000;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x66, 0x0F, 0xC1, 0x0F]); // xadd word [rdi], cx
+    code.extend_from_slice(&[0x0F, 0xC1, 0x5F, 0x04]); // xadd dword [rdi+4], ebx
+    code.push(HLT);
+
+    check_mem(
+        "xadd_memory_operand_width_forms",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cmpxchg_mem_success() {
     // CMPXCHG [rdi], rcx = 48 0F B1 0F : if RAX==[rdi] then ZF=1, [rdi]=rcx;
     // else ZF=0, RAX=[rdi]. Success path: [rdi]==RAX.
@@ -9844,6 +10076,63 @@ fn cmpxchg_mem_fail() {
     check_mem(
         "cmpxchg_mem_fail",
         &with_hlt(vec![0x48, 0x0F, 0xB1, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg_memory_operand_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_1111_00F0;
+    r.rcx = 0x5555_6666_7777_1234;
+    r.rbx = 0x2222_3333_CAFE_BABE;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x66, 0x0F, 0xB1, 0x0F]); // cmpxchg word [rdi], cx
+    code.extend_from_slice(&[0x0F, 0xB1, 0x5F, 0x04]); // cmpxchg dword [rdi+4], ebx
+    code.push(HLT);
+
+    check_mem(
+        "cmpxchg_memory_operand_width_forms",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg_memory_byte_high_and_rex_register_sources() {
+    let mut s = [0u8; 64];
+    s[0] = 0x44;
+    s[1] = 0xCC;
+    s[2] = 0x55;
+    s[3] = 0xF0;
+
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_8844;
+    r.rcx = 0x5555_6666_7777_1102;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD66;
+    r.rsi = 0x1111_2222_3333_4410;
+    r.r10 = DATA_ADDR + 2;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0xB0, 0x27]); // cmpxchg byte [rdi], ah
+    code.extend_from_slice(&[0x0F, 0xB0, 0x6F, 0x01]); // cmpxchg byte [rdi+1], ch
+    code.extend_from_slice(&[0xB0, 0x55]); // mov al, 0x55
+    code.extend_from_slice(&[0x41, 0x0F, 0xB0, 0x2A]); // cmpxchg byte [r10], bpl
+    code.extend_from_slice(&[0x41, 0x0F, 0xB0, 0x72, 0x01]); // cmpxchg byte [r10+1], sil
+    code.push(HLT);
+
+    check_mem(
+        "cmpxchg_memory_byte_high_and_rex_register_sources",
+        &code,
         r,
         s,
         FLAG_MASK,
