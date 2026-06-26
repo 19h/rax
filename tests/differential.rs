@@ -39413,6 +39413,135 @@ fn avx_fma_packed_addr32_memory_source_forms() {
     );
 }
 
+fn avx_fma_packed_indexed_memory_program(vex_mov: u8, insn: &[u8], addr32: bool) -> Vec<u8> {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, vex_mov, 0x10, 0x17]); // vmovup{s,d} ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, vex_mov, 0x10, 0x4F, 0x20]); // vmovup{s,d} ymm1, [rdi+32]
+    if addr32 {
+        code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+        code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    }
+    code.extend_from_slice(insn);
+    if addr32 {
+        code.extend_from_slice(&load_rdi_data());
+    }
+    code.extend_from_slice(&[0xC5, vex_mov, 0x11, 0x17]); // vmovup{s,d} [rdi], ymm2
+    code.push(HLT);
+    code
+}
+
+fn avx_packed_fma_ps_scratch() -> [u8; 64] {
+    avx_f32_pair_scratch(
+        [1.25, -2.5, 3.75, -4.5, 5.25, -6.75, 7.5, -8.25],
+        [0.5, 1.5, -2.0, 2.25, -3.5, 4.0, -4.5, 5.5],
+    )
+}
+
+fn avx_packed_fma_pd_scratch() -> [u8; 64] {
+    avx_f64_pair_scratch(
+        [1.5, -2.25, 3.125, -4.75],
+        [0.25, 1.75, -2.5, 3.5],
+    )
+}
+
+#[test]
+fn avx_fma_packed_addsub_extended_memory_order_forms() {
+    for (label, insn) in [
+        (
+            "avx_fma_packed_vfmaddsub132ps_extended_memory",
+            [0xC4, 0x82, 0x75, 0x96, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmaddsub213ps_extended_memory",
+            [0xC4, 0x82, 0x75, 0xA6, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmaddsub231ps_extended_memory",
+            [0xC4, 0x82, 0x75, 0xB6, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_mem(
+            label,
+            &avx_fma_packed_indexed_memory_program(0xFC, &insn, false),
+            avx_fma_extended_regs(),
+            avx_packed_fma_ps_scratch(),
+            0,
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_fma_packed_vfmsubadd132pd_extended_memory",
+            [0xC4, 0x82, 0xF5, 0x97, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmsubadd213pd_extended_memory",
+            [0xC4, 0x82, 0xF5, 0xA7, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmsubadd231pd_extended_memory",
+            [0xC4, 0x82, 0xF5, 0xB7, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_mem(
+            label,
+            &avx_fma_packed_indexed_memory_program(0xFD, &insn, false),
+            avx_fma_extended_regs(),
+            avx_packed_fma_pd_scratch(),
+            0,
+        );
+    }
+}
+
+#[test]
+fn avx_fma_packed_addsub_addr32_memory_order_forms() {
+    for (label, insn) in [
+        (
+            "avx_fma_packed_vfmaddsub132ps_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0x75, 0x96, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmaddsub213ps_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0x75, 0xA6, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmaddsub231ps_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0x75, 0xB6, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_mem(
+            label,
+            &avx_fma_packed_indexed_memory_program(0xFC, &insn, true),
+            avx_fma_addr32_regs(),
+            avx_packed_fma_ps_scratch(),
+            0,
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_fma_packed_vfmsubadd132pd_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0xF5, 0x97, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmsubadd213pd_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0xF5, 0xA7, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_fma_packed_vfmsubadd231pd_addr32_memory",
+            [0x67, 0xC4, 0xE2, 0xF5, 0xB7, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_mem(
+            label,
+            &avx_fma_packed_indexed_memory_program(0xFD, &insn, true),
+            avx_fma_addr32_regs(),
+            avx_packed_fma_pd_scratch(),
+            0,
+        );
+    }
+}
+
 #[test]
 fn avx_fma_scalar_extended_memory_source_forms() {
     let mut code = avx_start();
