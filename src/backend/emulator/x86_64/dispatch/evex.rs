@@ -2797,7 +2797,17 @@ impl X86_64Vcpu {
 
         // Load source2
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let elem = self.read_mem(addr, 4)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_dwords {
+                    let base = lane * 4;
+                    data[base..base + 4].copy_from_slice(&elem[..4]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -2805,10 +2815,17 @@ impl X86_64Vcpu {
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
         let mut dst = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_dwords);
 
         // Process each dword
         for i in 0..num_dwords {
             let base = i * 4;
+            if (mask >> i) & 1 == 0 {
+                if evex.z {
+                    dst[base..base + 4].fill(0);
+                }
+                continue;
+            }
             // Each dword contains 4 bytes
             let mut sum =
                 i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
@@ -2867,7 +2884,17 @@ impl X86_64Vcpu {
         let num_dwords = vl / 4;
 
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let elem = self.read_mem(addr, 4)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_dwords {
+                    let base = lane * 4;
+                    data[base..base + 4].copy_from_slice(&elem[..4]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -2875,9 +2902,16 @@ impl X86_64Vcpu {
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
         let mut dst = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_dwords);
 
         for i in 0..num_dwords {
             let base = i * 4;
+            if (mask >> i) & 1 == 0 {
+                if evex.z {
+                    dst[base..base + 4].fill(0);
+                }
+                continue;
+            }
             let mut sum =
                 i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
 
@@ -2937,7 +2971,17 @@ impl X86_64Vcpu {
         let num_qwords = vl / 8;
 
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let elem = self.read_mem(addr, 8)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_qwords {
+                    let base = lane * 8;
+                    data[base..base + 8].copy_from_slice(&elem[..8]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -2945,9 +2989,16 @@ impl X86_64Vcpu {
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
         let mut dst = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_qwords);
 
         for i in 0..num_qwords {
             let base = i * 8;
+            if (mask >> i) & 1 == 0 {
+                if evex.z {
+                    dst[base..base + 8].fill(0);
+                }
+                continue;
+            }
             let a = u64::from_le_bytes([
                 src1[base],
                 src1[base + 1],
@@ -3038,11 +3089,17 @@ impl X86_64Vcpu {
         };
 
         let idx = self.get_zmm_data(zmm_idx, vl);
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, vl);
         let mut dst = [0u8; 64];
 
         for i in 0..vl {
-            let index = (idx[i] as usize) % vl;
-            dst[i] = src[index];
+            if (mask >> i) & 1 != 0 {
+                let index = (idx[i] as usize) % vl;
+                dst[i] = src[index];
+            } else if !evex.z {
+                dst[i] = dest_old[i];
+            }
         }
 
         self.set_zmm_data(zmm_dst, &dst[..vl], vl);
@@ -3135,7 +3192,17 @@ impl X86_64Vcpu {
         let num_floats = vl / 4;
 
         let src2 = if is_memory {
-            self.load_zmm_data(addr, vl)?
+            if evex.broadcast {
+                let elem = self.read_mem(addr, 4)?.to_le_bytes();
+                let mut data = [0u8; 64];
+                for lane in 0..num_floats {
+                    let base = lane * 4;
+                    data[base..base + 4].copy_from_slice(&elem[..4]);
+                }
+                data
+            } else {
+                self.load_zmm_data(addr, vl)?
+            }
         } else {
             let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
@@ -3143,9 +3210,16 @@ impl X86_64Vcpu {
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
         let mut dst = self.get_zmm_data(zmm_dst, vl);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_floats);
 
         for i in 0..num_floats {
             let base = i * 4;
+            if (mask >> i) & 1 == 0 {
+                if evex.z {
+                    dst[base..base + 4].fill(0);
+                }
+                continue;
+            }
             // Read accumulator as f32
             let acc = f32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]);
 
@@ -3196,11 +3270,19 @@ impl X86_64Vcpu {
             self.get_zmm_data(zmm_src, vl)
         };
 
-        let num_floats = vl / 4;
         let dst_vl = vl / 2; // Output is half the size
-        let mut dst = [0u8; 64];
+        let num_floats = vl / 4;
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_floats);
+        let mut dst = if evex.z {
+            [0u8; 64]
+        } else {
+            self.get_zmm_data(zmm_dst, dst_vl)
+        };
 
         for i in 0..num_floats {
+            if (mask >> i) & 1 == 0 {
+                continue;
+            }
             let src_base = i * 4;
             let f = f32::from_le_bytes([
                 src[src_base],
@@ -3256,10 +3338,19 @@ impl X86_64Vcpu {
         let src1 = self.get_zmm_data(zmm_src1, vl);
 
         let num_floats = vl / 4;
-        let mut dst = [0u8; 64];
+        let out_elems = vl / 2;
+        let mask = Self::evex_kmask(&evex, &self.regs.k, out_elems);
+        let mut dst = if evex.z {
+            [0u8; 64]
+        } else {
+            self.get_zmm_data(zmm_dst, vl)
+        };
 
         // First half from src2
         for i in 0..num_floats {
+            if (mask >> i) & 1 == 0 {
+                continue;
+            }
             let src_base = i * 4;
             let f = f32::from_le_bytes([
                 src2[src_base],
@@ -3275,6 +3366,10 @@ impl X86_64Vcpu {
 
         // Second half from src1
         for i in 0..num_floats {
+            let out_lane = num_floats + i;
+            if (mask >> out_lane) & 1 == 0 {
+                continue;
+            }
             let src_base = i * 4;
             let f = f32::from_le_bytes([
                 src1[src_base],

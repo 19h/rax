@@ -1167,7 +1167,7 @@ pub fn evex_vaes(
 
     let states = read_reg_bytes(vcpu, src1, vl_bytes);
     let keys = if is_memory {
-        load_mem_bytes(vcpu, addr, 16, lanes)?
+        load_mem_bytes(vcpu, addr, 8, lanes * 2)?
     } else {
         read_reg_bytes(vcpu, src2_reg, vl_bytes)
     };

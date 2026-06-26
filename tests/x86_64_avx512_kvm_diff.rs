@@ -8,8 +8,9 @@
 //!
 //! Why this is the strong oracle: the `x86_64_evex_qemu_diff.rs` harness already
 //! checks rax against qemu-x86_64, but qemu is itself an emulator. Now that the
-//! build host has native AVX-512 (F/BW/CD/DQ/VL), the *chip* can be the
-//! reference, and silicon is the final word on x86 semantics.
+//! build host has native AVX-512 (F/BW/CD/DQ/VL plus newer Xeon extensions),
+//! the *chip* can be the reference, and silicon is the final word on x86
+//! semantics.
 //!
 //! How state crosses the KVM boundary: rax models ZMM/opmask in its `Registers`
 //! struct, so the interpreter side injects/extracts them directly. The KVM side
@@ -31,6 +32,7 @@
 #![cfg(all(feature = "kvm", target_os = "linux"))]
 #![allow(dead_code)]
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
@@ -38,7 +40,7 @@ use std::sync::OnceLock;
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
+use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
 
 // ---------------------------------------------------------------------------
 // Wire model (mirrors x86_64_evex_qemu_diff.rs so the two corpora are directly
@@ -87,7 +89,7 @@ struct OutCase {
 // implements; everything else would #UD, so the corpus is gated on this.
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Feat {
     /// AVX-512 Foundation (always required as a baseline for EVEX).
     F,
@@ -101,6 +103,68 @@ enum Feat {
     Vl,
     /// FMA / base AVX (always present alongside AVX-512F).
     Base,
+    /// AVX-512 Integer FMA (VPMADD52*).
+    Ifma,
+    /// AVX-512 VNNI dot-product instructions.
+    Vnni,
+    /// AVX-512 VBMI byte permutes / multishift.
+    Vbmi,
+    /// AVX-512 VBMI2 byte/word compress/expand and funnel shifts.
+    Vbmi2,
+    /// AVX-512 BITALG byte/word popcount and bit-shuffle-to-mask.
+    Bitalg,
+    /// AVX-512 VPOPCNTDQ dword/qword popcount.
+    Vpopcntdq,
+    /// AVX-512 BF16 dot-product and conversions.
+    Bf16,
+    /// AVX-512 FP16 packed/scalar half-precision operations.
+    Fp16,
+    /// GFNI EVEX vector forms.
+    Gfni,
+    /// VAES EVEX vector AES rounds.
+    Vaes,
+    /// VPCLMULQDQ EVEX carry-less multiplication.
+    Vpclmulqdq,
+}
+
+impl Feat {
+    fn name(self) -> &'static str {
+        match self {
+            Feat::F => "avx512f",
+            Feat::Bw => "avx512bw",
+            Feat::Dq => "avx512dq",
+            Feat::Cd => "avx512cd",
+            Feat::Vl => "avx512vl",
+            Feat::Base => "base",
+            Feat::Ifma => "avx512ifma",
+            Feat::Vnni => "avx512_vnni",
+            Feat::Vbmi => "avx512vbmi",
+            Feat::Vbmi2 => "avx512_vbmi2",
+            Feat::Bitalg => "avx512_bitalg",
+            Feat::Vpopcntdq => "avx512_vpopcntdq",
+            Feat::Bf16 => "avx512_bf16",
+            Feat::Fp16 => "avx512_fp16",
+            Feat::Gfni => "gfni",
+            Feat::Vaes => "vaes",
+            Feat::Vpclmulqdq => "vpclmulqdq",
+        }
+    }
+
+    fn expanded_xeon() -> &'static [Feat] {
+        &[
+            Feat::Ifma,
+            Feat::Vnni,
+            Feat::Vbmi,
+            Feat::Vbmi2,
+            Feat::Bitalg,
+            Feat::Vpopcntdq,
+            Feat::Bf16,
+            Feat::Fp16,
+            Feat::Gfni,
+            Feat::Vaes,
+            Feat::Vpclmulqdq,
+        ]
+    }
 }
 
 struct HostFeatures {
@@ -109,6 +173,17 @@ struct HostFeatures {
     dq: bool,
     cd: bool,
     vl: bool,
+    ifma: bool,
+    vnni: bool,
+    vbmi: bool,
+    vbmi2: bool,
+    bitalg: bool,
+    vpopcntdq: bool,
+    bf16: bool,
+    fp16: bool,
+    gfni: bool,
+    vaes: bool,
+    vpclmulqdq: bool,
 }
 
 impl HostFeatures {
@@ -119,6 +194,17 @@ impl HostFeatures {
             dq: is_x86_feature_detected!("avx512dq"),
             cd: is_x86_feature_detected!("avx512cd"),
             vl: is_x86_feature_detected!("avx512vl"),
+            ifma: host_cpu_flag("avx512ifma"),
+            vnni: host_cpu_flag("avx512_vnni"),
+            vbmi: host_cpu_flag("avx512vbmi"),
+            vbmi2: host_cpu_flag("avx512_vbmi2"),
+            bitalg: host_cpu_flag("avx512_bitalg"),
+            vpopcntdq: host_cpu_flag("avx512_vpopcntdq"),
+            bf16: host_cpu_flag("avx512_bf16"),
+            fp16: host_cpu_flag("avx512_fp16"),
+            gfni: host_cpu_flag("gfni"),
+            vaes: host_cpu_flag("vaes"),
+            vpclmulqdq: host_cpu_flag("vpclmulqdq"),
         }
     }
 
@@ -129,8 +215,34 @@ impl HostFeatures {
             Feat::Dq => self.dq,
             Feat::Cd => self.cd,
             Feat::Vl => self.vl,
+            Feat::Ifma => self.ifma,
+            Feat::Vnni => self.vnni,
+            Feat::Vbmi => self.vbmi,
+            Feat::Vbmi2 => self.vbmi2,
+            Feat::Bitalg => self.bitalg,
+            Feat::Vpopcntdq => self.vpopcntdq,
+            Feat::Bf16 => self.bf16,
+            Feat::Fp16 => self.fp16,
+            Feat::Gfni => self.gfni,
+            Feat::Vaes => self.vaes,
+            Feat::Vpclmulqdq => self.vpclmulqdq,
         }
     }
+}
+
+fn host_cpu_flag(flag: &str) -> bool {
+    static FLAGS: OnceLock<String> = OnceLock::new();
+    let flags = FLAGS.get_or_init(|| {
+        std::fs::read_to_string("/proc/cpuinfo")
+            .ok()
+            .and_then(|text| {
+                text.lines()
+                    .find(|line| line.starts_with("flags"))
+                    .map(str::to_string)
+            })
+            .unwrap_or_default()
+    });
+    flags.split_whitespace().any(|word| word == flag)
 }
 
 // ---------------------------------------------------------------------------
@@ -364,7 +476,10 @@ impl KvmOracle {
     fn run(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
         use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
 
-        let vm = self.kvm.create_vm().map_err(|e| format!("create_vm: {e:?}"))?;
+        let vm = self
+            .kvm
+            .create_vm()
+            .map_err(|e| format!("create_vm: {e:?}"))?;
         let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
 
         install_page_tables(&mem);
@@ -380,7 +495,9 @@ impl KvmOracle {
         };
         unsafe { vm.set_user_memory_region(region) }.map_err(|e| format!("set_memory: {e:?}"))?;
 
-        let mut vcpu = vm.create_vcpu(0).map_err(|e| format!("create_vcpu: {e:?}"))?;
+        let mut vcpu = vm
+            .create_vcpu(0)
+            .map_err(|e| format!("create_vcpu: {e:?}"))?;
 
         // Guest CPUID first: XCR0 validation and EVEX legality depend on it.
         vcpu.set_cpuid2(&self.supported_cpuid)
@@ -418,14 +535,16 @@ impl KvmOracle {
         sregs.fs = flat_data;
         sregs.gs = flat_data;
         sregs.ss = flat_data;
-        vcpu.set_sregs(&sregs).map_err(|e| format!("set_sregs: {e:?}"))?;
+        vcpu.set_sregs(&sregs)
+            .map_err(|e| format!("set_sregs: {e:?}"))?;
 
         // --- XCR0: enable the AVX-512 state components ---
         let mut xcrs = kvm_bindings::kvm_xcrs::default();
         xcrs.nr_xcrs = 1;
         xcrs.xcrs[0].xcr = 0;
         xcrs.xcrs[0].value = XCR0_AVX512;
-        vcpu.set_xcrs(&xcrs).map_err(|e| format!("set_xcrs: {e:?}"))?;
+        vcpu.set_xcrs(&xcrs)
+            .map_err(|e| format!("set_xcrs: {e:?}"))?;
 
         // --- ZMM + opmask: inject via the XSAVE area ---
         // Start from a live, valid area (correct MXCSR, xcomp_bv, ...) and patch.
@@ -443,7 +562,8 @@ impl KvmOracle {
         kregs.rsp = STACK_ADDR;
         kregs.r8 = input.r8;
         kregs.rflags = input.rflags | 0x2;
-        vcpu.set_regs(&kregs).map_err(|e| format!("set_regs: {e:?}"))?;
+        vcpu.set_regs(&kregs)
+            .map_err(|e| format!("set_regs: {e:?}"))?;
 
         // --- run, bounded, to the trailing HLT ---
         let mut iters = 0u64;
@@ -465,8 +585,12 @@ impl KvmOracle {
         }
 
         // --- extract final state ---
-        let final_regs = vcpu.get_regs().map_err(|e| format!("get_regs(final): {e:?}"))?;
-        let final_xsave = vcpu.get_xsave().map_err(|e| format!("get_xsave(final): {e:?}"))?;
+        let final_regs = vcpu
+            .get_regs()
+            .map_err(|e| format!("get_regs(final): {e:?}"))?;
+        let final_xsave = vcpu
+            .get_xsave()
+            .map_err(|e| format!("get_xsave(final): {e:?}"))?;
         let (zmm, k) = self.layout.load_state(xsave_bytes(&final_xsave));
 
         let mut scratch = [0u8; SCRATCH_BYTES];
@@ -624,6 +748,7 @@ enum InputProfile {
     Int,
     F32,
     F64,
+    F16,
     /// f32 lanes drawn from a pool of edge values (NaN/Inf/denormal/zeros/signs/
     /// powers of two), so rounding and special-value handling is stressed.
     F32Edge,
@@ -664,6 +789,13 @@ const F64_EDGES: [u64; 8] = [
     0x0000_0000_0000_0001,
 ];
 
+/// Finite, non-zero half-precision values. Keeping the FP16 corpus away from
+/// NaN/Inf/zero denominators makes bit-exact silicon comparison meaningful.
+const F16_VALUES: [u16; 16] = [
+    0x3c00, 0x4000, 0x4200, 0x4400, 0x3800, 0x3e00, 0xbc00, 0xc000, 0x3555, 0x3a00, 0x4100, 0x4480,
+    0x4600, 0x4800, 0x4900, 0x4a00,
+];
+
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
     for (i, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -698,6 +830,15 @@ fn f64_zmm(reg: usize) -> [u8; 64] {
     bytes
 }
 
+fn f16_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..32 {
+        let value = F16_VALUES[(reg * 7 + lane) % F16_VALUES.len()];
+        bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
 fn f32_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for lane in 0..16 {
@@ -721,6 +862,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::Int => int_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
+        InputProfile::F16 => f16_zmm(reg),
         InputProfile::F32Edge => f32_edge_zmm(reg),
         InputProfile::F64Edge => f64_edge_zmm(reg),
     }
@@ -778,7 +920,12 @@ fn starter_cases() -> Vec<Case> {
         profile,
     };
     vec![
-        c("vpaddd_zmm", "vpaddd %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c(
+            "vpaddd_zmm",
+            "vpaddd %zmm2, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::Int,
+        ),
         c(
             "vpaddd_zmm_merge",
             "vpaddd %zmm2, %zmm3, %zmm1 {%k2}",
@@ -809,17 +956,42 @@ fn starter_cases() -> Vec<Case> {
             Feat::F,
             InputProfile::Int,
         ),
-        c("vaddps_zmm", "vaddps %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F32),
-        c("vaddpd_zmm", "vaddpd %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F64),
-        c("vmulps_zmm", "vmulps %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F32),
-        c("vpsrld_imm", "vpsrld $3, %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c(
+            "vaddps_zmm",
+            "vaddps %zmm2, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::F32,
+        ),
+        c(
+            "vaddpd_zmm",
+            "vaddpd %zmm2, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::F64,
+        ),
+        c(
+            "vmulps_zmm",
+            "vmulps %zmm2, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::F32,
+        ),
+        c(
+            "vpsrld_imm",
+            "vpsrld $3, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::Int,
+        ),
         c(
             "vpcmpd_eq",
             "vpcmpd $0, %zmm2, %zmm3, %k1",
             Feat::F,
             InputProfile::Int,
         ),
-        c("vcvtdq2ps_zmm", "vcvtdq2ps %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c(
+            "vcvtdq2ps_zmm",
+            "vcvtdq2ps %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::Int,
+        ),
         c("kandw_k", "kandw %k2, %k3, %k1", Feat::F, InputProfile::Int),
         c(
             "vfmadd213ps_zmm",
@@ -893,10 +1065,7 @@ enum Form {
 impl Form {
     /// Does this form take a write-mask {k}/{k}{z}?
     fn maskable(self) -> bool {
-        matches!(
-            self,
-            Form::Vvv | Form::Vv | Form::VvI(_) | Form::VvvI(_)
-        )
+        matches!(self, Form::Vvv | Form::Vv | Form::VvI(_) | Form::VvvI(_))
     }
     /// Is the r/m operand a vector (so register/memory/broadcast applies)?
     fn vector_rm(self) -> bool {
@@ -923,14 +1092,24 @@ impl Form {
 fn rm_is_xmm(mnem: &str) -> bool {
     matches!(
         mnem,
-        "vpslld" | "vpsrld" | "vpsrad" | "vpsllq" | "vpsrlq" | "vpsraq"
-            | "vpsllw" | "vpsrlw" | "vpsraw"
+        "vpslld"
+            | "vpsrld"
+            | "vpsrad"
+            | "vpsllq"
+            | "vpsrlq"
+            | "vpsraq"
+            | "vpsllw"
+            | "vpsrlw"
+            | "vpsraw"
     )
 }
 
 /// Mnemonics that do not accept a write-mask in the forms we generate.
 fn is_nomask(mnem: &str) -> bool {
-    matches!(mnem, "vpsadbw")
+    matches!(
+        mnem,
+        "vpsadbw" | "vaesenc" | "vaesenclast" | "vaesdec" | "vaesdeclast" | "vpclmulqdq"
+    )
 }
 
 struct Base {
@@ -1023,7 +1202,11 @@ fn emit_asm(base: &Base, width: u16, mask: Mask, rm: Rm, high: bool) -> Option<S
     }
     let evex = if width == 512 { "" } else { "{evex} " };
     // Register roles. High variant shifts vector regs into zmm16+.
-    let (d, s1, s2) = if high { (17u8, 18u8, 16u8) } else { (1u8, 2u8, 3u8) };
+    let (d, s1, s2) = if high {
+        (17u8, 18u8, 16u8)
+    } else {
+        (1u8, 2u8, 3u8)
+    };
     let kd = if high { 6u8 } else { 5u8 };
     let m = mask_str(mask, 1);
     // Only the *variable* shift form (Vvv: shift whole vector by an xmm count)
@@ -1036,9 +1219,25 @@ fn emit_asm(base: &Base, width: u16, mask: Mask, rm: Rm, high: bool) -> Option<S
     let rmop = |idx: u8| rm_text(rm_width, width, base.elem, rm, idx);
 
     let asm = match base.form {
-        Form::Vvv => format!("{evex}{} {}, {}, {}{m}", base.mnem, rmop(s2), vec_name(width, s1), vec_name(width, d)),
-        Form::Vv => format!("{evex}{} {}, {}{m}", base.mnem, rmop(s2), vec_name(width, d)),
-        Form::VvI(i) => format!("{evex}{} ${i}, {}, {}{m}", base.mnem, rmop(s2), vec_name(width, d)),
+        Form::Vvv => format!(
+            "{evex}{} {}, {}, {}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, s1),
+            vec_name(width, d)
+        ),
+        Form::Vv => format!(
+            "{evex}{} {}, {}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, d)
+        ),
+        Form::VvI(i) => format!(
+            "{evex}{} ${i}, {}, {}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, d)
+        ),
         Form::VvvI(i) => format!(
             "{evex}{} ${i}, {}, {}, {}{m}",
             base.mnem,
@@ -1046,7 +1245,12 @@ fn emit_asm(base: &Base, width: u16, mask: Mask, rm: Rm, high: bool) -> Option<S
             vec_name(width, s1),
             vec_name(width, d)
         ),
-        Form::Kvv => format!("{evex}{} {}, {}, %k{kd}{m}", base.mnem, rmop(s2), vec_name(width, s1)),
+        Form::Kvv => format!(
+            "{evex}{} {}, {}, %k{kd}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, s1)
+        ),
         Form::KvvI(i) => format!(
             "{evex}{} ${i}, {}, {}, %k{kd}{m}",
             base.mnem,
@@ -1214,6 +1418,31 @@ fn base_table() -> Vec<Base> {
         b("vpxorq", F, Vvv, Int, 8, f, f),
         b("vpternlogd", F, VvvI(0xca), Int, 4, t, f),
         b("vpternlogq", F, VvvI(0xca), Int, 8, f, f),
+        // ---- newer Xeon integer / crypto / media extensions ----
+        b("vpdpbusd", Vnni, Vvv, Int, 4, t, f),
+        b("vpdpbusds", Vnni, Vvv, Int, 4, t, f),
+        b("vpdpwssd", Vnni, Vvv, Int, 4, t, f),
+        b("vpdpwssds", Vnni, Vvv, Int, 4, t, f),
+        b("vpmadd52luq", Ifma, Vvv, Int, 8, t, f),
+        b("vpmadd52huq", Ifma, Vvv, Int, 8, t, f),
+        b("vpermb", Vbmi, Vvv, Int, 0, t, f),
+        b("vpermi2b", Vbmi, Vvv, Int, 0, t, f),
+        b("vpermt2b", Vbmi, Vvv, Int, 0, t, f),
+        b("vpmultishiftqb", Vbmi, Vvv, Int, 8, t, f),
+        b("vpopcntb", Bitalg, Vv, Int, 0, t, f),
+        b("vpopcntw", Bitalg, Vv, Int, 0, t, f),
+        b("vpshufbitqmb", Bitalg, Kvv, Int, 0, t, f),
+        b("vpopcntd", Vpopcntdq, Vv, Int, 4, t, f),
+        b("vpopcntq", Vpopcntdq, Vv, Int, 8, t, f),
+        b("vdpbf16ps", Bf16, Vvv, F32, 4, t, f),
+        b("vgf2p8mulb", Gfni, Vvv, Int, 0, t, f),
+        b("vgf2p8affineqb", Gfni, VvvI(0x63), Int, 8, t, f),
+        b("vgf2p8affineinvqb", Gfni, VvvI(0x63), Int, 8, t, f),
+        b("vaesenc", Vaes, Vvv, Int, 0, t, f),
+        b("vaesenclast", Vaes, Vvv, Int, 0, t, f),
+        b("vaesdec", Vaes, Vvv, Int, 0, t, f),
+        b("vaesdeclast", Vaes, Vvv, Int, 0, t, f),
+        b("vpclmulqdq", Vpclmulqdq, VvvI(0x11), Int, 0, t, f),
         // ---- shifts (F: d/q variable+imm, BW: w) ----
         b("vpslld", F, Vvv, Int, 0, f, f),
         b("vpsrld", F, Vvv, Int, 0, f, f),
@@ -1243,6 +1472,19 @@ fn base_table() -> Vec<Base> {
         b("vprord", F, VvI(7), Int, 4, f, f),
         b("vprolvd", F, Vvv, Int, 4, f, f),
         b("vprorvd", F, Vvv, Int, 4, f, f),
+        // ---- VBMI2 funnel shifts ----
+        b("vpshldw", Vbmi2, VvvI(5), Int, 0, t, f),
+        b("vpshldd", Vbmi2, VvvI(5), Int, 4, t, f),
+        b("vpshldq", Vbmi2, VvvI(5), Int, 8, t, f),
+        b("vpshrdw", Vbmi2, VvvI(5), Int, 0, t, f),
+        b("vpshrdd", Vbmi2, VvvI(5), Int, 4, t, f),
+        b("vpshrdq", Vbmi2, VvvI(5), Int, 8, t, f),
+        b("vpshldvw", Vbmi2, Vvv, Int, 0, t, f),
+        b("vpshldvd", Vbmi2, Vvv, Int, 4, t, f),
+        b("vpshldvq", Vbmi2, Vvv, Int, 8, t, f),
+        b("vpshrdvw", Vbmi2, Vvv, Int, 0, t, f),
+        b("vpshrdvd", Vbmi2, Vvv, Int, 4, t, f),
+        b("vpshrdvq", Vbmi2, Vvv, Int, 8, t, f),
         // ---- compares into mask (F: d/q, BW: b/w) ----
         b("vpcmpeqd", F, Kvv, Int, 4, f, f),
         b("vpcmpgtd", F, Kvv, Int, 4, f, f),
@@ -1334,6 +1576,43 @@ fn base_table() -> Vec<Base> {
         b("vmaxpd", F, Vvv, F64, 8, f, t),
         b("vsqrtps", F, Vv, F32, 4, f, t),
         b("vsqrtpd", F, Vv, F64, 8, f, t),
+        b("vaddph", Fp16, Vvv, F16, 2, t, f),
+        b("vsubph", Fp16, Vvv, F16, 2, t, f),
+        b("vmulph", Fp16, Vvv, F16, 2, t, f),
+        b("vdivph", Fp16, Vvv, F16, 2, t, f),
+        b("vminph", Fp16, Vvv, F16, 2, t, f),
+        b("vmaxph", Fp16, Vvv, F16, 2, t, f),
+        b("vsqrtph", Fp16, Vv, F16, 2, t, f),
+        b("vcmpph", Fp16, KvvI(4), F16, 2, t, f),
+        b("vgetexpph", Fp16, Vv, F16, 2, t, f),
+        b("vgetmantph", Fp16, VvI(0), F16, 2, t, f),
+        b("vrndscaleph", Fp16, VvI(0), F16, 2, t, f),
+        b("vreduceph", Fp16, VvI(0), F16, 2, t, f),
+        b("vscalefph", Fp16, Vvv, F16, 2, t, f),
+        b("vrcpph", Fp16, Vv, F16, 2, t, f),
+        b("vrsqrtph", Fp16, Vv, F16, 2, t, f),
+        b("vfmadd132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmadd213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmadd231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsub132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsub213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsub231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmadd132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmadd213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmadd231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmsub132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmsub213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfnmsub231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmaddsub132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmaddsub213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmaddsub231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsubadd132ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsubadd213ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmsubadd231ph", Fp16, Vvv, F16, 2, t, f),
+        b("vfmulcph", Fp16, Vvv, F16, 4, t, f),
+        b("vfcmulcph", Fp16, Vvv, F16, 4, t, f),
+        b("vfmaddcph", Fp16, Vvv, F16, 4, t, f),
+        b("vfcmaddcph", Fp16, Vvv, F16, 4, t, f),
         b("vandps", F, Vvv, F32, 4, f, f),
         b("vandpd", F, Vvv, F64, 8, f, f),
         b("vxorps", F, Vvv, F32, 4, f, f),
@@ -1438,12 +1717,48 @@ fn irregular_cases() -> Vec<Case> {
         ("vpbroadcastw", "vpbroadcastw %xmm3, %zmm1", Bw, Int, true),
         ("vbroadcastss", "vbroadcastss %xmm3, %zmm1", F, F32, true),
         ("vbroadcastsd", "vbroadcastsd %xmm3, %zmm1", F, F64, true),
-        ("vbroadcasti32x4", "vbroadcasti32x4 (%rax), %zmm1", F, Int, true),
-        ("vbroadcastf32x4", "vbroadcastf32x4 (%rax), %zmm1", F, F32, true),
-        ("vbroadcasti64x4", "vbroadcasti64x4 (%rax), %zmm1", F, Int, true),
-        ("vbroadcastf64x4", "vbroadcastf64x4 (%rax), %zmm1", F, F64, true),
-        ("vbroadcasti32x8", "vbroadcasti32x8 (%rax), %zmm1", Dq, Int, true),
-        ("vbroadcastf64x2", "vbroadcastf64x2 (%rax), %zmm1", Dq, F64, true),
+        (
+            "vbroadcasti32x4",
+            "vbroadcasti32x4 (%rax), %zmm1",
+            F,
+            Int,
+            true,
+        ),
+        (
+            "vbroadcastf32x4",
+            "vbroadcastf32x4 (%rax), %zmm1",
+            F,
+            F32,
+            true,
+        ),
+        (
+            "vbroadcasti64x4",
+            "vbroadcasti64x4 (%rax), %zmm1",
+            F,
+            Int,
+            true,
+        ),
+        (
+            "vbroadcastf64x4",
+            "vbroadcastf64x4 (%rax), %zmm1",
+            F,
+            F64,
+            true,
+        ),
+        (
+            "vbroadcasti32x8",
+            "vbroadcasti32x8 (%rax), %zmm1",
+            Dq,
+            Int,
+            true,
+        ),
+        (
+            "vbroadcastf64x2",
+            "vbroadcastf64x2 (%rax), %zmm1",
+            Dq,
+            F64,
+            true,
+        ),
         // compress / expand (mask selects packed elements)
         ("vpcompressd", "vpcompressd %zmm2, %zmm1", F, Int, true),
         ("vpcompressq", "vpcompressq %zmm2, %zmm1", F, Int, true),
@@ -1453,6 +1768,208 @@ fn irregular_cases() -> Vec<Case> {
         ("vexpandps", "vexpandps %zmm2, %zmm1", F, F32, true),
         ("vcompresspd", "vcompresspd %zmm2, %zmm1", F, F64, true),
         ("vexpandpd", "vexpandpd %zmm2, %zmm1", F, F64, true),
+        // byte/word compress-expand (VBMI2)
+        ("vpcompressb", "vpcompressb %zmm2, %zmm1", Vbmi2, Int, true),
+        ("vpcompressw", "vpcompressw %zmm2, %zmm1", Vbmi2, Int, true),
+        ("vpexpandb", "vpexpandb %zmm2, %zmm1", Vbmi2, Int, true),
+        ("vpexpandw", "vpexpandw %zmm2, %zmm1", Vbmi2, Int, true),
+        // BF16 narrowing conversions.
+        (
+            "vcvtneps2bf16",
+            "vcvtneps2bf16 %zmm3, %ymm1",
+            Bf16,
+            F32,
+            true,
+        ),
+        (
+            "vcvtne2ps2bf16",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1",
+            Bf16,
+            F32,
+            true,
+        ),
+        // FP16 scalar comparisons update status flags.
+        ("vcomish", "vcomish %xmm2, %xmm1", Fp16, F16, false),
+        ("vucomish", "vucomish %xmm2, %xmm1", Fp16, F16, false),
+        ("vcmpsh", "vcmpsh $4, %xmm2, %xmm3, %k5", Fp16, F16, false),
+        ("vfpclassph", "vfpclassph $3, %zmm3, %k5", Fp16, F16, false),
+        ("vfpclasssh", "vfpclasssh $3, %xmm2, %k5", Fp16, F16, false),
+        // FP16 scalar arithmetic/min/max/sqrt.
+        ("vaddsh", "vaddsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vsubsh", "vsubsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vmulsh", "vmulsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vdivsh", "vdivsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vminsh", "vminsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vmaxsh", "vmaxsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vsqrtsh", "vsqrtsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        (
+            "vscalefsh",
+            "vscalefsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vgetexpsh",
+            "vgetexpsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vgetmantsh",
+            "vgetmantsh $0, %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vrndscalesh",
+            "vrndscalesh $0, %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vreducesh",
+            "vreducesh $0, %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        ("vrcpsh", "vrcpsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vrsqrtsh", "vrsqrtsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        // FP16 scalar FMA and complex arithmetic.
+        (
+            "vfmadd132sh",
+            "vfmadd132sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmadd213sh",
+            "vfmadd213sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmadd231sh",
+            "vfmadd231sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmsub132sh",
+            "vfmsub132sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmsub213sh",
+            "vfmsub213sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmsub231sh",
+            "vfmsub231sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmadd132sh",
+            "vfnmadd132sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmadd213sh",
+            "vfnmadd213sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmadd231sh",
+            "vfnmadd231sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmsub132sh",
+            "vfnmsub132sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmsub213sh",
+            "vfnmsub213sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfnmsub231sh",
+            "vfnmsub231sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        ("vfmulcsh", "vfmulcsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        (
+            "vfcmulcsh",
+            "vfcmulcsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfmaddcsh",
+            "vfmaddcsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vfcmaddcsh",
+            "vfcmaddcsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        // FP16 packed conversions that change vector width.
+        ("vcvtph2ps", "vcvtph2ps %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2psx", "vcvtph2psx %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2pd", "vcvtph2pd %xmm3, %zmm1", Fp16, F16, true),
+        ("vcvtps2phx", "vcvtps2phx %zmm3, %ymm1", Fp16, F32, true),
+        ("vcvtpd2ph", "vcvtpd2ph %zmm3, %xmm1", Fp16, F64, true),
+        ("vcvtph2dq", "vcvtph2dq %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2dq", "vcvttph2dq %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2udq", "vcvtph2udq %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2udq", "vcvttph2udq %ymm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2qq", "vcvtph2qq %xmm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2qq", "vcvttph2qq %xmm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2uqq", "vcvtph2uqq %xmm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2uqq", "vcvttph2uqq %xmm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2w", "vcvtph2w %zmm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2w", "vcvttph2w %zmm3, %zmm1", Fp16, F16, true),
+        ("vcvtph2uw", "vcvtph2uw %zmm3, %zmm1", Fp16, F16, true),
+        ("vcvttph2uw", "vcvttph2uw %zmm3, %zmm1", Fp16, F16, true),
+        ("vcvtdq2ph", "vcvtdq2ph %zmm3, %ymm1", Fp16, Int, true),
+        ("vcvtqq2ph", "vcvtqq2ph %zmm3, %xmm1", Fp16, Int, true),
+        ("vcvtudq2ph", "vcvtudq2ph %zmm3, %ymm1", Fp16, Int, true),
+        ("vcvtuqq2ph", "vcvtuqq2ph %zmm3, %xmm1", Fp16, Int, true),
+        ("vcvtw2ph", "vcvtw2ph %zmm3, %zmm1", Fp16, Int, true),
+        ("vcvtuw2ph", "vcvtuw2ph %zmm3, %zmm1", Fp16, Int, true),
     ];
 
     for &(label, asm, feat, profile, maskable) in table {
@@ -1485,7 +2002,12 @@ fn irregular_cases() -> Vec<Case> {
         ("vpmovzxbd_high", "vpmovzxbd %xmm16, %zmm17", F, Int),
         ("vpmovdb_high", "vpmovdb %zmm16, %xmm17", F, Int),
         ("vpbroadcastd_high", "vpbroadcastd %xmm16, %zmm17", F, Int),
-        ("vpcompressd_high", "vpcompressd %zmm16, %zmm17 {%k1}", F, Int),
+        (
+            "vpcompressd_high",
+            "vpcompressd %zmm16, %zmm17 {%k1}",
+            F,
+            Int,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -1556,6 +2078,10 @@ fn case_status(case: &Case) -> Status {
             | "vrcp28pd"
             | "vrsqrt28ps"
             | "vrsqrt28pd"
+            | "vrcpph"
+            | "vrcpsh"
+            | "vrsqrtph"
+            | "vrsqrtsh"
             | "vexp2ps"
             | "vexp2pd"
     ) {
@@ -1579,7 +2105,12 @@ fn case_status(case: &Case) -> Status {
 // Assembler bridge (llvm-mc), mirroring the EVEX qemu harness.
 // ---------------------------------------------------------------------------
 
-const LLVM_MATTR: &str = "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+fma";
+const LLVM_MATTR: &str = concat!(
+    "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+fma,",
+    "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
+    "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
+    "+gfni,+vaes,+vpclmulqdq"
+);
 
 fn which(prog: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
@@ -1653,6 +2184,34 @@ struct Tally {
     skipped_feature: usize,
     skipped_asm: usize,
     interp_err: usize,
+    ran_by_feature: BTreeMap<Feat, usize>,
+    ran_by_mnemonic: BTreeMap<String, usize>,
+}
+
+impl Tally {
+    fn record_run(&mut self, case: &Case) {
+        *self.ran_by_feature.entry(case.feat).or_default() += 1;
+        *self
+            .ran_by_mnemonic
+            .entry(asm_mnemonic(&case.asm).to_string())
+            .or_default() += 1;
+    }
+
+    fn ran_for(&self, feat: Feat) -> usize {
+        self.ran_by_feature.get(&feat).copied().unwrap_or(0)
+    }
+
+    fn ran_mnemonic(&self, mnemonic: &str) -> usize {
+        self.ran_by_mnemonic.get(mnemonic).copied().unwrap_or(0)
+    }
+
+    fn feature_summary(&self) -> String {
+        self.ran_by_feature
+            .iter()
+            .map(|(feat, count)| format!("{}={count}", feat.name()))
+            .collect::<Vec<_>>()
+            .join(",")
+    }
 }
 
 /// Run a corpus, asserting interp == silicon on every comparable case. Returns
@@ -1702,7 +2261,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             Ok(KvmOutcome::Ran(out)) => out,
             Ok(KvmOutcome::Faulted) => {
                 tally.faulted += 1;
-                eprintln!("[fault] silicon #UD/fault on {} = `{}`", case.label, case.asm);
+                eprintln!(
+                    "[fault] silicon #UD/fault on {} = `{}`",
+                    case.label, case.asm
+                );
                 continue;
             }
             Err(e) => panic!("{}: KVM backend failure: {e}", case.label),
@@ -1717,6 +2279,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 continue;
             }
         };
+        tally.record_run(case);
 
         // Approximate instructions are exercised but not bit-compared.
         if status == Status::Approx {
@@ -1739,13 +2302,14 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
 
     eprintln!(
         "[avx512-kvm-diff] compared={} approx={} faulted={} interp_err={} \
-         skip(feat)={} skip(asm)={}",
+         skip(feat)={} skip(asm)={} features=[{}]",
         tally.compared,
         tally.approx,
         tally.faulted,
         tally.interp_err,
         tally.skipped_feature,
         tally.skipped_asm,
+        tally.feature_summary(),
     );
 
     assert!(
@@ -1777,6 +2341,7 @@ fn avx512_kvm_state_roundtrip() {
         InputProfile::Int,
         InputProfile::F32,
         InputProfile::F64,
+        InputProfile::F16,
         InputProfile::F32Edge,
         InputProfile::F64Edge,
     ] {
@@ -1800,7 +2365,7 @@ fn avx512_kvm_starter_corpus() {
     run_corpus(&starter_cases());
 }
 
-/// The exhaustive corpus: every host-supported (F/BW/CD/DQ/VL) mnemonic rax
+/// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
 /// implements, expanded across masking / width / memory / broadcast / high
 /// registers, diffed bit-exactly against the silicon.
 #[test]
@@ -1808,7 +2373,7 @@ fn avx512_kvm_generated_corpus() {
     let cases = generated_cases();
     // Guard against the table silently collapsing to nothing.
     assert!(
-        cases.len() > 400,
+        cases.len() > 700,
         "generated corpus unexpectedly small: {} cases",
         cases.len()
     );
@@ -1818,12 +2383,43 @@ fn avx512_kvm_generated_corpus() {
     // Everything we fed the silicon was feature-gated, so nothing should fault,
     // and rax should at least decode every comparable instruction.
     assert_eq!(tally.faulted, 0, "silicon faulted on feature-gated cases");
-    assert_eq!(tally.interp_err, 0, "rax failed to execute a comparable case");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a comparable case"
+    );
     assert!(
         tally.compared > 800,
         "too few comparable cases actually ran: {}",
         tally.compared
     );
+    let host = HostFeatures::detect();
+    for &feat in Feat::expanded_xeon() {
+        if host.supports(feat) {
+            assert!(
+                tally.ran_for(feat) > 0,
+                "host supports {}, but no KVM corpus case ran for it",
+                feat.name()
+            );
+        }
+    }
+    let mut expected_mnemonics: BTreeMap<Feat, BTreeSet<String>> = BTreeMap::new();
+    for case in &cases {
+        if host.supports(case.feat) && Feat::expanded_xeon().contains(&case.feat) {
+            expected_mnemonics
+                .entry(case.feat)
+                .or_default()
+                .insert(asm_mnemonic(&case.asm).to_string());
+        }
+    }
+    for (feat, mnemonics) in expected_mnemonics {
+        for mnemonic in mnemonics {
+            assert!(
+                tally.ran_mnemonic(&mnemonic) > 0,
+                "host supports {}, but no KVM corpus case ran for mnemonic {mnemonic}",
+                feat.name()
+            );
+        }
+    }
 }
 
 /// On an AVX-512 host every VEX-encoded SIMD write zeros the destination ZMM
