@@ -3525,10 +3525,10 @@ fn fp_getmant_bits(bits: u64, elem_size: usize, imm: u8) -> u64 {
         one_bits | sign_mask
     };
     if sign != 0 {
-        if zero {
+        if zero || infinity {
             return signed_one;
         }
-        if infinity || sign_control & 0x02 != 0 {
+        if sign_control & 0x02 != 0 {
             return fp_qnan_indefinite(elem_size);
         }
     }
