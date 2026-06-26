@@ -38034,6 +38034,28 @@ fn check_evex_scalar_fp_ternary_extended_memory(
     check_mem(label, &code, r, scratch, 0);
 }
 
+fn check_evex_scalar_fp_ternary_addr32_memory(
+    label: &str,
+    scratch: [u8; 64],
+    source: [u64; 8],
+    insn: &[u8],
+) {
+    let mut code = opmask_start();
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm16, [rdi]
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x6F, 0x17]); // vmovdqu64 zmm18, [rdi]
+    append_seed_rdi_plus_64_qwords(&mut code, &source);
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(insn);
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x7F, 0x17]); // vmovdqu64 [rdi], zmm18
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000u64 | 4;
+    check_mem(label, &code, r, scratch, 0);
+}
+
 #[test]
 fn evex_xmm_range_scalef_vl_forms() {
     let s = evex_qword_scratch(|i| {
@@ -38489,6 +38511,54 @@ fn evex_scalar_fp_ternary_extended_memory_forms() {
 }
 
 #[test]
+fn evex_scalar_fp_ternary_addr32_memory_forms() {
+    let mut s = zero_scratch();
+    s[..4].copy_from_slice(&1.5f32.to_le_bytes());
+    check_evex_scalar_fp_ternary_addr32_memory(
+        "evex_scalar_vscalefss_addr32_memory_form",
+        s,
+        [2.0f32.to_bits() as u64, 0, 0, 0, 0, 0, 0, 0],
+        &[0x67, 0x62, 0xE2, 0x7D, 0x00, 0x2D, 0x54, 0x77, 0x10],
+    );
+
+    let mut s = zero_scratch();
+    s[..8].copy_from_slice(&1.5f64.to_le_bytes());
+    check_evex_scalar_fp_ternary_addr32_memory(
+        "evex_scalar_vscalefsd_addr32_memory_form",
+        s,
+        [2.0f64.to_bits(), 0, 0, 0, 0, 0, 0, 0],
+        &[0x67, 0x62, 0xE2, 0xFD, 0x00, 0x2D, 0x54, 0x77, 0x08],
+    );
+
+    let mut s = zero_scratch();
+    s[..2].copy_from_slice(&0x3e00u16.to_le_bytes()); // 1.5h
+    check_evex_scalar_fp_ternary_addr32_memory(
+        "evex_scalar_vscalefsh_addr32_memory_form",
+        s,
+        [0x4000u64, 0, 0, 0, 0, 0, 0, 0], // 2.0h
+        &[0x67, 0x62, 0xE6, 0x7D, 0x00, 0x2D, 0x54, 0x77, 0x20],
+    );
+
+    let mut s = zero_scratch();
+    s[..4].copy_from_slice(&1.5f32.to_le_bytes());
+    check_evex_scalar_fp_ternary_addr32_memory(
+        "evex_scalar_vrangess_addr32_memory_form",
+        s,
+        [2.0f32.to_bits() as u64, 0, 0, 0, 0, 0, 0, 0],
+        &[0x67, 0x62, 0xE3, 0x7D, 0x00, 0x51, 0x54, 0x77, 0x10, 0x01],
+    );
+
+    let mut s = zero_scratch();
+    s[..8].copy_from_slice(&1.5f64.to_le_bytes());
+    check_evex_scalar_fp_ternary_addr32_memory(
+        "evex_scalar_vrangesd_addr32_memory_form",
+        s,
+        [2.0f64.to_bits(), 0, 0, 0, 0, 0, 0, 0],
+        &[0x67, 0x62, 0xE3, 0xFD, 0x00, 0x51, 0x54, 0x77, 0x08, 0x02],
+    );
+}
+
+#[test]
 fn evex_scalar_vrangess_memory_disp8_form() {
     let mut s = zero_scratch();
     s[..4].copy_from_slice(&1.5f32.to_le_bytes());
@@ -38587,6 +38657,28 @@ fn check_evex_scalar_fp_unary_extended_memory(
     let mut r = regs();
     r.r14 = DATA_ADDR - 8;
     r.r15 = 4;
+    check_mem(label, &code, r, scratch, 0);
+}
+
+fn check_evex_scalar_fp_unary_addr32_memory(
+    label: &str,
+    scratch: [u8; 64],
+    source: [u64; 8],
+    insn: &[u8],
+) {
+    let mut code = opmask_start();
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm16, [rdi]
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x6F, 0x17]); // vmovdqu64 zmm18, [rdi]
+    append_seed_rdi_plus_64_qwords(&mut code, &source);
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(insn);
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xE1, 0xFE, 0x48, 0x7F, 0x17]); // vmovdqu64 [rdi], zmm18
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000u64 | 4;
     check_mem(label, &code, r, scratch, 0);
 }
 
@@ -39469,6 +39561,90 @@ fn evex_scalar_fp_unary_extended_memory_forms() {
             [source, 0, 0, 0, 0, 0, 0, 0],
             insn,
         );
+    }
+}
+
+#[test]
+fn evex_scalar_fp_unary_addr32_memory_forms() {
+    let mut ss = zero_scratch();
+    ss[..4].copy_from_slice(&1.5f32.to_le_bytes());
+    for (label, source, insn) in [
+        (
+            "evex_scalar_vgetexpss_addr32_memory_form",
+            8.0f32.to_bits() as u64,
+            &[0x67, 0x62, 0xE2, 0x7D, 0x00, 0x43, 0x54, 0x77, 0x10][..],
+        ),
+        (
+            "evex_scalar_vgetmantss_addr32_memory_form",
+            1.25f32.to_bits() as u64,
+            &[0x67, 0x62, 0xE3, 0x7D, 0x00, 0x27, 0x54, 0x77, 0x10, 0x01][..],
+        ),
+        (
+            "evex_scalar_vrndscaless_addr32_memory_form",
+            1.25f32.to_bits() as u64,
+            &[0x67, 0x62, 0xE3, 0x7D, 0x00, 0x0A, 0x54, 0x77, 0x10, 0x01][..],
+        ),
+        (
+            "evex_scalar_vreducess_addr32_memory_form",
+            1.25f32.to_bits() as u64,
+            &[0x67, 0x62, 0xE3, 0x7D, 0x00, 0x57, 0x54, 0x77, 0x10, 0x01][..],
+        ),
+    ] {
+        check_evex_scalar_fp_unary_addr32_memory(label, ss, [source, 0, 0, 0, 0, 0, 0, 0], insn);
+    }
+
+    let mut sd = zero_scratch();
+    sd[..8].copy_from_slice(&1.5f64.to_le_bytes());
+    for (label, source, insn) in [
+        (
+            "evex_scalar_vgetexpsd_addr32_memory_form",
+            16.0f64.to_bits(),
+            &[0x67, 0x62, 0xE2, 0xFD, 0x00, 0x43, 0x54, 0x77, 0x08][..],
+        ),
+        (
+            "evex_scalar_vgetmantsd_addr32_memory_form",
+            1.25f64.to_bits(),
+            &[0x67, 0x62, 0xE3, 0xFD, 0x00, 0x27, 0x54, 0x77, 0x08, 0x02][..],
+        ),
+        (
+            "evex_scalar_vrndscalesd_addr32_memory_form",
+            1.25f64.to_bits(),
+            &[0x67, 0x62, 0xE3, 0xFD, 0x00, 0x0B, 0x54, 0x77, 0x08, 0x02][..],
+        ),
+        (
+            "evex_scalar_vreducesd_addr32_memory_form",
+            1.25f64.to_bits(),
+            &[0x67, 0x62, 0xE3, 0xFD, 0x00, 0x57, 0x54, 0x77, 0x08, 0x02][..],
+        ),
+    ] {
+        check_evex_scalar_fp_unary_addr32_memory(label, sd, [source, 0, 0, 0, 0, 0, 0, 0], insn);
+    }
+
+    let mut sh = zero_scratch();
+    sh[..2].copy_from_slice(&0x3e00u16.to_le_bytes()); // 1.5h
+    for (label, source, insn) in [
+        (
+            "evex_scalar_vgetexpsh_addr32_memory_form",
+            0x4800u64, // 8.0h
+            &[0x67, 0x62, 0xE6, 0x7D, 0x00, 0x43, 0x54, 0x77, 0x20][..],
+        ),
+        (
+            "evex_scalar_vgetmantsh_addr32_memory_form",
+            0x3d00u64, // 1.25h
+            &[0x67, 0x62, 0xE3, 0x7C, 0x00, 0x27, 0x54, 0x77, 0x20, 0x03][..],
+        ),
+        (
+            "evex_scalar_vrndscalesh_addr32_memory_form",
+            0x3d00u64, // 1.25h
+            &[0x67, 0x62, 0xE3, 0x7C, 0x00, 0x0A, 0x54, 0x77, 0x20, 0x03][..],
+        ),
+        (
+            "evex_scalar_vreducesh_addr32_memory_form",
+            0x3d00u64, // 1.25h
+            &[0x67, 0x62, 0xE3, 0x7C, 0x00, 0x57, 0x54, 0x77, 0x20, 0x03][..],
+        ),
+    ] {
+        check_evex_scalar_fp_unary_addr32_memory(label, sh, [source, 0, 0, 0, 0, 0, 0, 0], insn);
     }
 }
 
