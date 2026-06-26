@@ -4299,6 +4299,175 @@ fn group1_memory_immediate_forms() {
     check_mem("group1_memory_immediate_forms", &code, regs(), scratch, FLAG_MASK);
 }
 
+#[test]
+fn add_adc_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x70;
+    scratch[1] = 0x21;
+    scratch[2] = 0xFE;
+    scratch[4..6].copy_from_slice(&0x7000u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0102u16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x7000_0000u32.to_le_bytes());
+    scratch[12..16].copy_from_slice(&0x0102_0304u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x7000_0000_0000_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x0102_0304_0506_0708u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4410;
+    r.rbx = 0x2222_3333_4444_0011;
+    r.rcx = 0x3333_4444_5555_1001;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.rbp = 0x6666_7777_8888_9999;
+    r.r8 = 0x0102_0304_0506_0708;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = u64::MAX;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x00, 0x1F, // add byte [rdi], bl
+        0x66, 0x01, 0x4F, 0x04, // add word [rdi+4], cx
+        0x01, 0x57, 0x08, // add dword [rdi+8], edx
+        0x4C, 0x01, 0x47, 0x10, // add qword [rdi+0x10], r8
+        0x02, 0x47, 0x01, // add al, byte [rdi+1]
+        0x66, 0x03, 0x77, 0x06, // add si, word [rdi+6]
+        0x03, 0x6F, 0x0C, // add ebp, dword [rdi+0xc]
+        0x4C, 0x03, 0x4F, 0x18, // add r9, qword [rdi+0x18]
+        0xF9, // stc
+        0x10, 0x5F, 0x02, // adc byte [rdi+2], bl
+        0xF9, // stc
+        0x4C, 0x13, 0x57, 0x20, // adc r10, qword [rdi+0x20]
+        HLT,
+    ]);
+
+    check_mem("add_adc_register_memory_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn sub_sbb_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x80;
+    scratch[1] = 0x21;
+    scratch[2] = 0x00;
+    scratch[4..6].copy_from_slice(&0x8000u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0102u16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+    scratch[12..16].copy_from_slice(&0x0102_0304u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x8000_0000_0000_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x0102_0304_0506_0708u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4440;
+    r.rbx = 0x2222_3333_4444_0011;
+    r.rcx = 0x3333_4444_5555_1001;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.rbp = 0x6666_7777_8888_9999;
+    r.r8 = 0x0102_0304_0506_0708;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = 0;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x28, 0x1F, // sub byte [rdi], bl
+        0x66, 0x29, 0x4F, 0x04, // sub word [rdi+4], cx
+        0x29, 0x57, 0x08, // sub dword [rdi+8], edx
+        0x4C, 0x29, 0x47, 0x10, // sub qword [rdi+0x10], r8
+        0x2A, 0x47, 0x01, // sub al, byte [rdi+1]
+        0x66, 0x2B, 0x77, 0x06, // sub si, word [rdi+6]
+        0x2B, 0x6F, 0x0C, // sub ebp, dword [rdi+0xc]
+        0x4C, 0x2B, 0x4F, 0x18, // sub r9, qword [rdi+0x18]
+        0xF9, // stc
+        0x18, 0x5F, 0x02, // sbb byte [rdi+2], bl
+        0xF9, // stc
+        0x4C, 0x1B, 0x57, 0x20, // sbb r10, qword [rdi+0x20]
+        HLT,
+    ]);
+
+    check_mem("sub_sbb_register_memory_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn logic_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0xF0;
+    scratch[1] = 0x0F;
+    scratch[2] = 0x10;
+    scratch[3] = 0x40;
+    scratch[4..6].copy_from_slice(&0xFF00u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0F0Fu16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x00FF_0000u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0F0F_0000_F0F0_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0xFFFF_0000_FFFF_0000u64.to_le_bytes());
+    scratch[32] = 0xAA;
+    scratch[33] = 0x55;
+    scratch[40..48].copy_from_slice(&0x1234_5678_9ABC_DEF0u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_33CC;
+    r.rbx = 0x2222_3333_4444_330F;
+    r.rcx = 0x3333_4444_5555_00F0;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_F0F0;
+    r.r8 = 0x00FF_00FF_00FF_00FF;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = 0xFEDC_BA98_7654_3210;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x20, 0x1F, // and byte [rdi], bl
+        0x66, 0x21, 0x4F, 0x04, // and word [rdi+4], cx
+        0x22, 0x47, 0x01, // and al, byte [rdi+1]
+        0x66, 0x23, 0x77, 0x06, // and si, word [rdi+6]
+        0x08, 0x57, 0x02, // or byte [rdi+2], dl
+        0x09, 0x57, 0x08, // or dword [rdi+8], edx
+        0x0A, 0x5F, 0x03, // or bl, byte [rdi+3]
+        0x4C, 0x0B, 0x4F, 0x10, // or r9, qword [rdi+0x10]
+        0x30, 0x4F, 0x20, // xor byte [rdi+0x20], cl
+        0x4C, 0x31, 0x47, 0x18, // xor qword [rdi+0x18], r8
+        0x32, 0x47, 0x21, // xor al, byte [rdi+0x21]
+        0x4C, 0x33, 0x57, 0x28, // xor r10, qword [rdi+0x28]
+        HLT,
+    ]);
+
+    check_mem("logic_register_memory_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn cmp_test_memory_operand_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0xF0;
+    scratch[1] = 0x80;
+    scratch[8..16].copy_from_slice(&0x00FF_0000_0000_00FFu64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x1111_2222_3333_4444u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rbx = 0x11;
+    r.rcx = 0x2222_3333_4444_5555;
+    r.rdx = 0x0F0F_0000_0000_000Fu64;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x84, 0x1F, // test byte [rdi], bl
+        0x9C, 0x58, // pushfq; pop rax
+        0x48, 0x89, 0x47, 0x20, // mov [rdi+0x20], rax
+        0x48, 0x85, 0x57, 0x08, // test qword [rdi+8], rdx
+        0x9C, 0x58, // pushfq; pop rax
+        0x48, 0x89, 0x47, 0x28, // mov [rdi+0x28], rax
+        0x38, 0x5F, 0x01, // cmp byte [rdi+1], bl
+        0x9C, 0x58, // pushfq; pop rax
+        0x48, 0x89, 0x47, 0x30, // mov [rdi+0x30], rax
+        0x48, 0x3B, 0x4F, 0x10, // cmp rcx, qword [rdi+0x10]
+        0x9C, 0x58, // pushfq; pop rax
+        0x48, 0x89, 0x47, 0x38, // mov [rdi+0x38], rax
+        HLT,
+    ]);
+
+    check_mem("cmp_test_memory_operand_forms", &code, r, scratch, FLAG_MASK);
+}
+
 // ---------------------------------------------------------------------------
 // ADC / SBB carry-in chains: model multi-word add/sub with carry propagation.
 // ---------------------------------------------------------------------------
