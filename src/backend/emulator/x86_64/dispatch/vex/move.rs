@@ -201,6 +201,49 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_movlp_hp_store(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_pp: u8,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 {
+            return Err(Error::Emulator(
+                "VMOVLPS/VMOVHPS/VMOVLPD/VMOVHPD stores require VEX.L=0".to_string(),
+            ));
+        }
+        if vvvv != 0 {
+            return Err(Error::Emulator(
+                "VMOVLPS/VMOVHPS/VMOVLPD/VMOVHPD stores require VEX.vvvv=1111b".to_string(),
+            ));
+        }
+        if vex_pp != 0 && vex_pp != 1 {
+            return Err(Error::Emulator(
+                "VMOVLPS/VMOVHPS/VMOVLPD/VMOVHPD stores require NP/66 prefix".to_string(),
+            ));
+        }
+
+        let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator(
+                "VMOVLPS/VMOVHPS/VMOVLPD/VMOVHPD stores require memory operand".to_string(),
+            ));
+        }
+
+        let xmm_src = reg as usize;
+        let qword = match opcode {
+            0x13 => self.regs.xmm[xmm_src][0],
+            0x17 => self.regs.xmm[xmm_src][1],
+            _ => unreachable!(),
+        };
+        self.write_mem(addr, qword, 8)?;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vex_movsldup(
         &mut self,
         ctx: &mut InsnContext,

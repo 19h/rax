@@ -645,6 +645,10 @@ impl X86_64Vcpu {
                 (1, 0x12) | (1, 0x16) => {
                     return self.execute_vex_movlpd_hpd(ctx, vex_l, vvvv, opcode);
                 }
+                // VMOVLPS/VMOVHPS/VMOVLPD/VMOVHPD stores (0x13/0x17 with NP/66)
+                (0, 0x13) | (0, 0x17) | (1, 0x13) | (1, 0x17) => {
+                    return self.execute_vex_movlp_hp_store(ctx, vex_pp, vex_l, vvvv, opcode);
+                }
 
                 // VEX packed integer shift by immediate (Group 12/13/14)
                 // VPSLLW/VPSRAW/VPSRLW (0x71), VPSLLD/VPSRAD/VPSRLD (0x72), VPSLLQ/VPSRLQ/VPSLLDQ/VPSRLDQ (0x73)

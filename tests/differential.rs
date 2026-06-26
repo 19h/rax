@@ -37761,6 +37761,94 @@ fn avx_xmm_vmovlpd_vmovhpd_memory_merge() {
     check_avx_mem("avx_xmm_vmovlpd_vmovhpd_memory_merge", &code, s);
 }
 
+#[test]
+fn avx_xmm_partial_move_indexed_memory_forms() {
+    fn store_xmm2_to5_and_hlt(code: &mut Vec<u8>) {
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], xmm4
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x6F, 0x30]); // vmovdqu [rdi+48], xmm5
+        code.push(HLT);
+    }
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x12, 0x54, 0x77, 0x20]); // vmovlps xmm2, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x16, 0x5C, 0x77, 0x28]); // vmovhps xmm3, xmm0, [edi+esi*2+40]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF1, 0x12, 0x64, 0x77, 0x20]); // vmovlpd xmm4, xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF1, 0x16, 0x6C, 0x77, 0x28]); // vmovhpd xmm5, xmm1, [edi+esi*2+40]
+    code.extend_from_slice(&load_rdi_data());
+    store_xmm2_to5_and_hlt(&mut code);
+    check_mem(
+        "avx_xmm_partial_move_addr32_indexed_loads",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x13, 0x44, 0x77, 0x20]); // vmovlps [edi+esi*2+32], xmm0
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x17, 0x44, 0x77, 0x28]); // vmovhps [edi+esi*2+40], xmm0
+    code.extend_from_slice(&[0x67, 0xC5, 0xF9, 0x13, 0x4C, 0x77, 0x30]); // vmovlpd [edi+esi*2+48], xmm1
+    code.extend_from_slice(&[0x67, 0xC5, 0xF9, 0x17, 0x4C, 0x77, 0x38]); // vmovhpd [edi+esi*2+56], xmm1
+    code.push(HLT);
+    check_mem(
+        "avx_xmm_partial_move_addr32_indexed_stores",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0x81, 0x78, 0x12, 0x54, 0x5A, 0x20]); // vmovlps xmm2, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x81, 0x78, 0x16, 0x5C, 0x5A, 0x28]); // vmovhps xmm3, xmm0, [r10+r11*2+40]
+    code.extend_from_slice(&[0xC4, 0x81, 0x71, 0x12, 0x64, 0x5A, 0x20]); // vmovlpd xmm4, xmm1, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x81, 0x71, 0x16, 0x6C, 0x5A, 0x28]); // vmovhpd xmm5, xmm1, [r10+r11*2+40]
+    store_xmm2_to5_and_hlt(&mut code);
+    check_mem(
+        "avx_xmm_partial_move_extended_indexed_loads",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0x81, 0x78, 0x13, 0x44, 0x5A, 0x20]); // vmovlps [r10+r11*2+32], xmm0
+    code.extend_from_slice(&[0xC4, 0x81, 0x78, 0x17, 0x44, 0x5A, 0x28]); // vmovhps [r10+r11*2+40], xmm0
+    code.extend_from_slice(&[0xC4, 0x81, 0x79, 0x13, 0x4C, 0x5A, 0x30]); // vmovlpd [r10+r11*2+48], xmm1
+    code.extend_from_slice(&[0xC4, 0x81, 0x79, 0x17, 0x4C, 0x5A, 0x38]); // vmovhpd [r10+r11*2+56], xmm1
+    code.push(HLT);
+    check_mem(
+        "avx_xmm_partial_move_extended_indexed_stores",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 21: VEX conversion width, merge, rounding, and
 // truncation forms.
