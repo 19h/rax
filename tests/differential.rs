@@ -7835,6 +7835,82 @@ fn cache_invd_wbinvd_preserve_observable_state() {
     );
 }
 
+#[test]
+fn debug_register_move_roundtrip_dr0_dr1() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&DATA_ADDR.to_le_bytes());
+    scratch[8..16].copy_from_slice(&(DATA_ADDR + 8).to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xC0]); // mov dr0, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xC3]); // mov rbx, dr0
+    code.extend_from_slice(&[0x48, 0x89, 0x1F]); // mov [rdi], rbx
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&(DATA_ADDR + 8).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xC8]); // mov dr1, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xCB]); // mov rbx, dr1
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x08]); // mov [rdi+8], rbx
+    code.push(HLT);
+
+    check_mem("debug_register_move_roundtrip", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn debug_register_move_roundtrip_dr2_dr3_dr6_dr7() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&(DATA_ADDR + 0x10).to_le_bytes());
+    scratch[8..16].copy_from_slice(&(DATA_ADDR + 0x18).to_le_bytes());
+    scratch[16..24].copy_from_slice(&0xFFFF_0FF0u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x400u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&(DATA_ADDR + 0x10).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xD0]); // mov dr2, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xD3]); // mov rbx, dr2
+    code.extend_from_slice(&[0x48, 0x89, 0x1F]); // mov [rdi], rbx
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&(DATA_ADDR + 0x18).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xD8]); // mov dr3, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xDB]); // mov rbx, dr3
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x08]); // mov [rdi+8], rbx
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&0xFFFF_0FF0u64.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xF0]); // mov dr6, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xF3]); // mov rbx, dr6
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x10]); // mov [rdi+0x10], rbx
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&0x400u64.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xF8]); // mov dr7, rax
+    code.extend_from_slice(&[0x0F, 0x21, 0xFB]); // mov rbx, dr7
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x18]); // mov [rdi+0x18], rbx
+    code.push(HLT);
+
+    check_mem(
+        "debug_register_move_roundtrip_extended",
+        &code,
+        regs(),
+        scratch,
+        0,
+    );
+}
+
+#[test]
+fn descriptor_register_store_forms() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x00, 0x07]); // sldt [rdi]
+    code.extend_from_slice(&[0x0F, 0x00, 0x4F, 0x08]); // str [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x00, 0xC0]); // sldt eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x10]); // mov [rdi+0x10], rax
+    code.extend_from_slice(&[0x0F, 0x00, 0xC8]); // str eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x18]); // mov [rdi+0x18], rax
+    code.push(HLT);
+
+    check_mem("descriptor_register_store_forms", &code, regs(), zero_scratch(), 0);
+}
+
 // ---------------------------------------------------------------------------
 // BT/BTS/BTR/BTC with a MEMORY operand and a bit index that can exceed the
 // operand size. For a memory bit-string the index is NOT taken modulo the
