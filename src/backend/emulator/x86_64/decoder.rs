@@ -180,6 +180,7 @@ impl Decoder {
 
 #[cfg(test)]
 mod tests {
+    use super::super::cpu::EvexPrefix;
     use super::*;
 
     #[test]
@@ -322,6 +323,44 @@ mod tests {
         addr
     }
 
+    fn ea_evex(vcpu: &X86_64Vcpu, evex: EvexPrefix, modrm: &[u8]) -> u64 {
+        use super::super::cpu::MAX_INSN_LEN;
+        let mut bytes = [0u8; MAX_INSN_LEN];
+        bytes[0] = 0x8B; // dummy opcode (MOV r32, r/m32)
+        let modrm_offset = 1;
+        for (i, &b) in modrm.iter().enumerate() {
+            bytes[modrm_offset + i] = b;
+        }
+        let mut ctx =
+            Decoder::decode_prefixes(bytes, modrm_offset + modrm.len(), false, true).unwrap();
+        ctx.evex = Some(evex);
+        let (addr, _extra) = vcpu.decode_modrm_addr(&ctx, modrm_offset).unwrap();
+        addr
+    }
+
+    fn vector_evex_addr_prefix(b: bool, x: bool) -> EvexPrefix {
+        EvexPrefix {
+            r: true,
+            x,
+            b,
+            r_prime: true,
+            mm: 2,
+            w: false,
+            vvvv: 0x0f,
+            pp: 2,
+            z: false,
+            ll: 2,
+            broadcast: false,
+            v_prime: true,
+            aaa: 0,
+            b4: false,
+            x4: false,
+            nd: false,
+            nf: false,
+            apx_mode: false,
+        }
+    }
+
     // A fetch truncated at the canonical-address boundary must surface as #GP,
     // not a fatal emulator error or a silent decode of zero padding.
     #[test]
@@ -400,6 +439,24 @@ mod tests {
         //   disp8 = 0x20
         let got = ea(&vcpu, &[], &[0x44, 0xD0, 0x20]);
         assert_eq!(got, 0x1234_5678_9000u64 + 0x10 * 8 + 0x20);
+    }
+
+    #[test]
+    fn test_evex_sib_base_index_extensions() {
+        let mut vcpu = make_vcpu_64();
+        vcpu.regs.rdx = 0x1000;
+        vcpu.regs.rbx = 0x20;
+        vcpu.regs.r10 = 0x4000;
+        vcpu.regs.r11 = 0x30;
+
+        let evex = vector_evex_addr_prefix(false, false);
+
+        // ModRM rm=100 selects SIB. SIB scale=01, index=011, base=010 is
+        // [rdx + rbx*2] without EVEX, but [r10 + r11*2] with inverted EVEX.B/X.
+        assert_eq!(ea_evex(&vcpu, evex, &[0x14, 0x5A]), 0x4000 + 0x30 * 2);
+
+        // Non-SIB ModRM r/m also uses EVEX.B for the base register.
+        assert_eq!(ea_evex(&vcpu, evex, &[0x02]), 0x4000);
     }
 
     #[test]
@@ -662,12 +719,18 @@ impl X86_64Vcpu {
         let modrm = bytes[0];
         let mod_bits = modrm >> 6;
         let rm_field = modrm & 0x07; // Raw r/m field without REX.B
-        let rm_ext = if ctx.is_apx() {
-            ctx.evex_rm_reg()
+        let rm_ext = if let Some(evex) = ctx.evex {
+            if evex.apx_mode {
+                ctx.evex_rm_reg()
+            } else if evex.b {
+                0
+            } else {
+                8
+            }
         } else {
             ctx.any_rex_b()
         };
-        let rm = rm_field | rm_ext; // r/m with REX/REX2 or APX EVEX.B/B4 applied
+        let rm = rm_field | rm_ext; // r/m with REX/REX2 or EVEX.B/B4 applied
         let mut extra = 0;
 
         // mod == 3 means register direct, shouldn't call this function
@@ -748,8 +811,14 @@ impl X86_64Vcpu {
             let sib = bytes[1];
             extra += 1;
             let scale = 1u64 << (sib >> 6);
-            let index_ext = if ctx.is_apx() {
-                ctx.evex_index_reg()
+            let index_ext = if let Some(evex) = ctx.evex {
+                if evex.apx_mode {
+                    ctx.evex_index_reg()
+                } else if evex.x {
+                    0
+                } else {
+                    8
+                }
             } else if ctx.rex2.is_some() {
                 ctx.rex2_x()
             } else {
