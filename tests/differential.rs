@@ -9934,6 +9934,21 @@ fn monitor_preserves_visible_state() {
 }
 
 #[test]
+fn monitor_addr32_preserves_visible_state() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0;
+    r.rdx = 0;
+    check_flags_masked(
+        "monitor_addr32_preserve",
+        &with_hlt(vec![0x67, 0x0F, 0x01, 0xC8]), // monitor with addr32
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn waitpkg_umonitor_preserves_visible_state() {
     let mut r = modern_flags_regs();
     r.rax = DATA_ADDR;
@@ -9941,6 +9956,23 @@ fn waitpkg_umonitor_preserves_visible_state() {
     check_flags_masked(
         "waitpkg_umonitor",
         &with_hlt(vec![0xF3, 0x0F, 0xAE, 0xF0]), // umonitor rax
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn waitpkg_umonitor_extended_register_forms_preserve_state() {
+    let mut r = modern_flags_regs();
+    r.r8 = DATA_ADDR;
+    r.r15 = DATA_ADDR + 32;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    check_flags_masked(
+        "waitpkg_umonitor_extended_register_forms",
+        &with_hlt(vec![
+            0xF3, 0x41, 0x0F, 0xAE, 0xF0, // umonitor r8
+            0xF3, 0x49, 0x0F, 0xAE, 0xF7, // umonitor r15
+        ]),
         r,
         FLAG_MASK,
     );
@@ -9960,6 +9992,23 @@ fn waitpkg_umwait_zero_deadline_clears_status_flags() {
 }
 
 #[test]
+fn waitpkg_umwait_extended_register_forms_zero_deadline() {
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rdx = 0;
+    r.r8 = 0;
+    r.r15 = 0;
+    check(
+        "waitpkg_umwait_extended_register_forms_zero_deadline",
+        &with_hlt(vec![
+            0xF2, 0x41, 0x0F, 0xAE, 0xF0, // umwait r8d
+            0xF2, 0x41, 0x0F, 0xAE, 0xF7, // umwait r15d
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn waitpkg_tpause_zero_deadline_clears_status_flags() {
     let mut r = modern_flags_regs();
     r.rax = 0;
@@ -9968,6 +10017,23 @@ fn waitpkg_tpause_zero_deadline_clears_status_flags() {
     check(
         "waitpkg_tpause_zero_deadline",
         &with_hlt(vec![0x66, 0x0F, 0xAE, 0xF1]), // tpause ecx
+        r,
+    );
+}
+
+#[test]
+fn waitpkg_tpause_extended_register_forms_zero_deadline() {
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rdx = 0;
+    r.r8 = 0;
+    r.r15 = 0;
+    check(
+        "waitpkg_tpause_extended_register_forms_zero_deadline",
+        &with_hlt(vec![
+            0x66, 0x41, 0x0F, 0xAE, 0xF0, // tpause r8d
+            0x66, 0x41, 0x0F, 0xAE, 0xF7, // tpause r15d
+        ]),
         r,
     );
 }
