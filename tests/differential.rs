@@ -42,6 +42,10 @@ const DATA_ADDR: u64 = 0x3_0000;
 const GDT_ADDR: u64 = 0x4_000;
 /// Minimal IDT base used to make SIDT deterministic in differential tests.
 const IDT_ADDR: u64 = 0x5_000;
+/// Shared IDT handler used by software-interrupt differential tests.
+const INT_HANDLER_ADDR: u64 = 0x6_000;
+/// Minimal 64-bit TSS used by LTR coverage.
+const TSS_ADDR: u64 = 0x8_000;
 /// Page-table addresses (mirrors src/arch/x86_64 layout).
 const PML4_ADDR: u64 = 0x9000;
 const PDPTE_ADDR: u64 = 0xA000;
@@ -99,7 +103,7 @@ fn base_sregs() -> SystemRegisters {
     sregs.cr4 = CR4_VAL;
     sregs.efer = EFER_VAL;
     sregs.gdt.base = GDT_ADDR;
-    sregs.gdt.limit = 0x17;
+    sregs.gdt.limit = 0x27;
     sregs.idt.base = IDT_ADDR;
     sregs.idt.limit = 0x0FFF;
 
@@ -153,15 +157,52 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
         0xCF, // limit 16:19, DB=1, G=1
         0x00, // base 24:31
     ];
+    let tss_base = TSS_ADDR;
+    let tss64_descriptor = [
+        0x67, 0x00, // limit 0:15 (104-byte 64-bit TSS)
+        (tss_base & 0xFF) as u8, // base 0:7
+        ((tss_base >> 8) & 0xFF) as u8, // base 8:15
+        ((tss_base >> 16) & 0xFF) as u8, // base 16:23
+        0x89, // present ring-0 available 64-bit TSS
+        0x00, // limit 16:19, byte granularity
+        ((tss_base >> 24) & 0xFF) as u8, // base 24:31
+        ((tss_base >> 32) & 0xFF) as u8,
+        ((tss_base >> 40) & 0xFF) as u8,
+        ((tss_base >> 48) & 0xFF) as u8,
+        ((tss_base >> 56) & 0xFF) as u8, // base 32:63
+        0x00, 0x00, 0x00, 0x00, // reserved
+    ];
     write(GDT_ADDR, &null_descriptor);
     write(GDT_ADDR + 8, &code64_descriptor);
     write(GDT_ADDR + 16, &data_descriptor);
+    write(GDT_ADDR + 24, &tss64_descriptor);
 
-    // PML4[0] -> PDPTE (present + writable)
-    write(PML4_ADDR, &(PDPTE_ADDR | 0x3).to_le_bytes());
-    // PDPTE[i] identity 1GiB huge pages (present + writable + PS), 4 entries (4GiB).
+    let mut write_idt_gate = |vector: u8, handler: u64| {
+        let mut gate = [0u8; 16];
+        gate[0..2].copy_from_slice(&(handler as u16).to_le_bytes());
+        gate[2..4].copy_from_slice(&0x08u16.to_le_bytes());
+        gate[4] = 0;
+        gate[5] = 0x8E; // present ring-0 64-bit interrupt gate
+        gate[6..8].copy_from_slice(&((handler >> 16) as u16).to_le_bytes());
+        gate[8..12].copy_from_slice(&((handler >> 32) as u32).to_le_bytes());
+        write(IDT_ADDR + (vector as u64) * 16, &gate);
+    };
+    write_idt_gate(3, INT_HANDLER_ADDR);
+    write_idt_gate(0x80, INT_HANDLER_ADDR);
+    write(
+        INT_HANDLER_ADDR,
+        &[
+            0x48, 0xFF, 0xC0, // inc rax
+            0x48, 0xCF, // iretq
+        ],
+    );
+
+    // PML4[0] -> PDPTE (present + writable + user). The user bit lets
+    // SYSRET/SYSEXIT differential cases execute their CPL3 return stubs.
+    write(PML4_ADDR, &(PDPTE_ADDR | 0x7).to_le_bytes());
+    // PDPTE[i] identity 1GiB huge pages (present + writable + user + PS), 4 entries (4GiB).
     for i in 0u64..4 {
-        let entry: u64 = (i << 30) | 0x83;
+        let entry: u64 = (i << 30) | 0x87;
         write(PDPTE_ADDR + i * 8, &entry.to_le_bytes());
     }
 }
@@ -7318,6 +7359,43 @@ fn modern_flags_regs() -> Registers {
 }
 
 #[test]
+fn cpuid_vendor_and_selected_feature_bits() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x89, 0x1F, // mov [rdi], ebx      ("Genu")
+        0x89, 0x57, 0x04, // mov [rdi+4], edx  ("ineI")
+        0x89, 0x4F, 0x08, // mov [rdi+8], ecx  ("ntel")
+        0xB8, 0x07, 0x00, 0x00, 0x00, // mov eax, 7
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x81, 0xE3, 0x20, 0x00, 0x00, 0x00, // and ebx, AVX2
+        0x81, 0xE1, 0x00, 0x01, 0x00, 0x00, // and ecx, GFNI
+        0x81, 0xE2, 0x00, 0x40, 0x00, 0x00, // and edx, SERIALIZE
+        0x89, 0x5F, 0x10, // mov [rdi+0x10], ebx
+        0x89, 0x4F, 0x14, // mov [rdi+0x14], ecx
+        0x89, 0x57, 0x18, // mov [rdi+0x18], edx
+        0x31, 0xC0, // xor eax, eax
+        0x31, 0xDB, // xor ebx, ebx
+        0x31, 0xC9, // xor ecx, ecx
+        0x31, 0xD2, // xor edx, edx
+    ]);
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "cpuid_vendor_and_selected_features",
+        &code,
+        r,
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
 fn movdiri_m64_r64() {
     // MOVDIRI m64, r64 = 48 0F 38 F9 /r. Store RAX directly to [RDI].
     let mut r = modern_flags_regs();
@@ -7742,6 +7820,21 @@ fn rdmsr_to_edx_eax(code: &mut Vec<u8>, msr: u32) {
     code.extend_from_slice(&[0x0F, 0x32]); // rdmsr
 }
 
+fn mov_rcx_imm64(code: &mut Vec<u8>, value: u64) {
+    code.extend_from_slice(&[0x48, 0xB9]); // mov rcx, imm64
+    code.extend_from_slice(&value.to_le_bytes());
+}
+
+fn mov_rdx_imm64(code: &mut Vec<u8>, value: u64) {
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, imm64
+    code.extend_from_slice(&value.to_le_bytes());
+}
+
+fn mov_r11_imm64(code: &mut Vec<u8>, value: u64) {
+    code.extend_from_slice(&[0x49, 0xBB]); // mov r11, imm64
+    code.extend_from_slice(&value.to_le_bytes());
+}
+
 #[test]
 fn wrmsr_rdmsr_base_msr_roundtrips() {
     let fs_base = 0x0000_1234_5678_9000u64;
@@ -7825,6 +7918,106 @@ fn sysenter_entry_loads_target_and_clears_if() {
     r.rdi = DATA_ADDR;
     r.rflags = flags::bits::IF | flags::bits::CF;
     check_mem("sysenter_entry_state", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn sysretq_returns_to_user_and_syscall_reenters_kernel() {
+    const IA32_STAR: u32 = 0xC000_0081;
+    const IA32_LSTAR: u32 = 0xC000_0082;
+    const IA32_FMASK: u32 = 0xC000_0084;
+
+    let user_block: &[u8] = &[
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x07, // mov [rdi], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x02, // mov [rdi+2], ax
+        0x9C, // pushfq
+        0x58, // pop rax
+        0x48, 0x89, 0x47, 0x08, // mov [rdi+8], rax
+        0x0F, 0x05, // syscall
+    ];
+    let kernel_block: &[u8] = &[
+        0x48, 0x89, 0x4F, 0x10, // mov [rdi+16], rcx
+        0x4C, 0x89, 0x5F, 0x18, // mov [rdi+24], r11
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x47, 0x20, // mov [rdi+32], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x22, // mov [rdi+34], ax
+        HLT,
+    ];
+
+    let user_offset = WRMSR_IMM64_LEN * 3 + 10 + 10 + 3;
+    let user_rip = CODE_ADDR + user_offset as u64;
+    let kernel_rip = CODE_ADDR + (user_offset + user_block.len()) as u64;
+    let star = (0x20u64 << 48) | (0x08u64 << 32);
+
+    let mut code = Vec::new();
+    wrmsr_imm64(&mut code, IA32_STAR, star);
+    wrmsr_imm64(&mut code, IA32_LSTAR, kernel_rip);
+    wrmsr_imm64(&mut code, IA32_FMASK, 0);
+    mov_rcx_imm64(&mut code, user_rip);
+    mov_r11_imm64(
+        &mut code,
+        flags::bits::CF | flags::bits::PF | flags::bits::ZF | flags::bits::DF,
+    );
+    code.extend_from_slice(&[0x48, 0x0F, 0x07]); // sysretq
+    code.extend_from_slice(user_block);
+    code.extend_from_slice(kernel_block);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem("sysretq_user_syscall_roundtrip", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn sysexitq_returns_to_user_and_sysenter_reenters_kernel() {
+    const IA32_SYSENTER_CS: u32 = 0x174;
+    const IA32_SYSENTER_ESP: u32 = 0x175;
+    const IA32_SYSENTER_EIP: u32 = 0x176;
+
+    let user_block: &[u8] = &[
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x07, // mov [rdi], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x02, // mov [rdi+2], ax
+        0x48, 0x89, 0x67, 0x08, // mov [rdi+8], rsp
+        0x9C, // pushfq
+        0x58, // pop rax
+        0x48, 0x89, 0x47, 0x10, // mov [rdi+16], rax
+        0x0F, 0x34, // sysenter
+    ];
+    let kernel_block: &[u8] = &[
+        0x48, 0x89, 0x67, 0x18, // mov [rdi+24], rsp
+        0x9C, // pushfq
+        0x58, // pop rax
+        0x48, 0x89, 0x47, 0x28, // mov [rdi+40], rax
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x47, 0x20, // mov [rdi+32], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x22, // mov [rdi+34], ax
+        HLT,
+    ];
+
+    let user_offset = WRMSR_IMM64_LEN * 3 + 10 + 10 + 3;
+    let user_rip = CODE_ADDR + user_offset as u64;
+    let kernel_rip = CODE_ADDR + (user_offset + user_block.len()) as u64;
+    let user_rsp = STACK_ADDR - 0x80;
+    let kernel_rsp = STACK_ADDR - 0x180;
+
+    let mut code = Vec::new();
+    wrmsr_imm64(&mut code, IA32_SYSENTER_CS, 0x08);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_ESP, kernel_rsp);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_EIP, kernel_rip);
+    mov_rcx_imm64(&mut code, user_rsp);
+    mov_rdx_imm64(&mut code, user_rip);
+    code.extend_from_slice(&[0x48, 0x0F, 0x35]); // sysexitq
+    code.extend_from_slice(user_block);
+    code.extend_from_slice(kernel_block);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::CF | flags::bits::PF | flags::bits::IF;
+    check_mem("sysexitq_user_sysenter_roundtrip", &code, r, zero_scratch(), 0);
 }
 
 #[test]
@@ -8235,6 +8428,45 @@ fn descriptor_register_store_forms() {
     code.push(HLT);
 
     check_mem("descriptor_register_store_forms", &code, regs(), zero_scratch(), 0);
+}
+
+#[test]
+fn descriptor_register_load_ldt_null_forms() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x00, 0x17]); // lldt [rdi]
+    code.extend_from_slice(&[0x0F, 0x00, 0x47, 0x08]); // sldt [rdi+8]
+    code.extend_from_slice(&[0x66, 0x31, 0xC0]); // xor ax, ax
+    code.extend_from_slice(&[0x0F, 0x00, 0xD0]); // lldt ax
+    code.extend_from_slice(&[0x0F, 0x00, 0xC0]); // sldt eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x10]); // mov [rdi+0x10], rax
+    code.push(HLT);
+
+    check_mem(
+        "descriptor_register_load_ldt_null_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
+fn descriptor_register_load_task_register_form() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x66, 0xB8, 0x18, 0x00]); // mov ax, 0x18 (TSS selector)
+    code.extend_from_slice(&[0x0F, 0x00, 0xD8]); // ltr ax
+    code.extend_from_slice(&[0x0F, 0x00, 0x4F, 0x08]); // str [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x00, 0xC8]); // str eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x10]); // mov [rdi+0x10], rax
+    code.push(HLT);
+
+    check_mem(
+        "descriptor_register_load_task_register_form",
+        &code,
+        regs(),
+        zero_scratch(),
+        0,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -10584,6 +10816,58 @@ fn control_iretq_same_cpl_restores_frame() {
     ]);
 
     check("iretq_same_cpl", &code, regs());
+}
+
+#[test]
+fn control_software_interrupts_return_through_idt() {
+    let mut r = regs();
+    r.rax = 0x40;
+    r.rflags = flags::bits::CF | flags::bits::ZF;
+    check(
+        "software_interrupt_idt_return",
+        &with_hlt(vec![
+            0xCC, // int3
+            0xCD, 0x80, // int 0x80
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn control_far_jmp_mem64_same_code_segment() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 3) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x48, 0xFF, 0x2F]); // ljmpq *[rdi]
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0x1234_5678_9ABC_DEF0u64.to_le_bytes());
+    code.push(HLT);
+
+    check_mem("control_far_jmp_mem64_same_cs", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_call_mem64_lretq_roundtrip() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 3 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x48, 0xFF, 0x1F]); // lcallq *[rdi]
+    code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, imm64
+    code.extend_from_slice(&0x2222_3333_4444_5555u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0xAAAA_BBBB_CCCC_DDDDu64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xCB]); // lretq
+
+    check_mem("control_far_call_mem64_lretq", &code, regs(), scratch, 0);
 }
 
 #[test]
