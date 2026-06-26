@@ -11282,6 +11282,110 @@ fn bt_btr_btc_mem_negative_indices() {
 }
 
 #[test]
+fn bit_test_addr32_memory_index_forms() {
+    let mut s = [0u8; 64];
+    s[0] = 0b0010_0000;
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdx = 5;
+    check_mem(
+        "bt_addr32_mem5",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xA3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[12] = 0b0001_0000;
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdx = 100;
+    check_mem(
+        "bt_addr32_mem100",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xA3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdx = 70;
+    check_mem(
+        "bts_addr32_mem70",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xAB, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[16] = 0b0000_0100;
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdx = 130;
+    check_mem(
+        "btr_addr32_mem130",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xB3, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdx = 200;
+    check_mem(
+        "btc_addr32_mem200",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xBB, 0x17]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "bt_addr32_mem_neg",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xA3, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btr_addr32_mem_neg",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xB3, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btc_addr32_mem_neg",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xBB, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+}
+
+#[test]
 fn bt_mem_imm_index() {
     // BT m64, imm8 (0F BA /4 ib): immediate bit index IS taken modulo operand size
     // (64) for the imm form. imm=63 selects bit 63 of the qword.
@@ -11928,6 +12032,22 @@ fn lock_xadd_mem() {
 }
 
 #[test]
+fn lock_xadd_addr32_mem() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0000_0000_0000_0042u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rbx = 0x0000_0000_0000_0008;
+    check_mem(
+        "lock_xadd_addr32_mem",
+        &with_hlt(vec![0x67, 0xF0, 0x48, 0x0F, 0xC1, 0x1F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn lock_memory_rmw_group_forms() {
     let mut s = [0u8; 64];
     s[0..8].copy_from_slice(&0x10u64.to_le_bytes());
@@ -11964,6 +12084,44 @@ fn lock_memory_rmw_group_forms() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
     check_mem("lock_memory_rmw_group_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn lock_addr32_memory_rmw_group_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x10u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0xFF00u64.to_le_bytes());
+    s[16..24].copy_from_slice(&0x20u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0x02u64.to_le_bytes());
+    s[40..48].copy_from_slice(&0x55u64.to_le_bytes());
+
+    let mut code = vec![
+        0x67, 0xF0, 0x48, 0x83, 0x07, 0x05, // lock add qword [edi], 5
+        0x67, 0xF0, 0x48, 0xFF, 0x07, // lock inc qword [edi]
+        0x48, 0xB8, // mov rax, 0x0f0f
+    ];
+    code.extend_from_slice(&0x0F0Fu64.to_le_bytes());
+    code.extend_from_slice(&[
+        0x67, 0xF0, 0x48, 0x31, 0x47, 0x08, // lock xor [edi+8], rax
+        0x67, 0xF0, 0x48, 0xF7, 0x5F, 0x10, // lock neg qword [edi+0x10]
+        0x48, 0xBB, // mov rbx, 0xa5
+    ]);
+    code.extend_from_slice(&0xA5u64.to_le_bytes());
+    code.extend_from_slice(&[
+        0x67, 0xF0, 0x48, 0x87, 0x5F, 0x18, // lock xchg [edi+0x18], rbx
+        0x48, 0xB8, // mov rax, 0x55
+    ]);
+    code.extend_from_slice(&0x55u64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xB9]); // mov rcx, 0xaa
+    code.extend_from_slice(&0xAAu64.to_le_bytes());
+    code.extend_from_slice(&[
+        0x67, 0xF0, 0x48, 0x0F, 0xB1, 0x4F, 0x28, // lock cmpxchg [edi+0x28], rcx
+        HLT,
+    ]);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem("lock_addr32_memory_rmw_group_forms", &code, r, s, FLAG_MASK);
 }
 
 #[test]
@@ -12046,6 +12204,75 @@ fn cmpxchg16_mem_failure_loads_observed_value() {
     check_mem(
         "cmpxchg16b_fail",
         &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg8b_cmpxchg16b_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = 0x5566_7788;
+    r.rdx = 0x1122_3344;
+    r.rbx = 0xDEAD_BEEF;
+    r.rcx = 0xCAFE_F00D;
+    check_mem(
+        "cmpxchg8b_addr32_success",
+        &with_hlt(vec![0x67, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = 0x1111_2222;
+    r.rdx = 0x3333_4444;
+    r.rbx = 0xDEAD_BEEF;
+    r.rcx = 0xCAFE_F00D;
+    check_mem(
+        "cmpxchg8b_addr32_fail",
+        &with_hlt(vec![0x67, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x99AA_BBCC_DDEE_FF00u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdx = 0x99AA_BBCC_DDEE_FF00;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0xFEDC_BA98_7654_3210;
+    check_mem(
+        "cmpxchg16b_addr32_success",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x99AA_BBCC_DDEE_FF00u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = 0x0102_0304_0506_0708;
+    r.rdx = 0x1112_1314_1516_1718;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0xFEDC_BA98_7654_3210;
+    check_mem(
+        "cmpxchg16b_addr32_fail",
+        &with_hlt(vec![0x67, 0x48, 0x0F, 0xC7, 0x0F]),
         r,
         s,
         FLAG_MASK,
