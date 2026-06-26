@@ -14572,7 +14572,7 @@ fn cpuid_vendor_and_selected_feature_bits() {
         0xB8, 0x07, 0x00, 0x00, 0x00, // mov eax, 7
         0x31, 0xC9, // xor ecx, ecx
         0x0F, 0xA2, // cpuid
-        0x81, 0xE3, 0x20, 0x00, 0x10, 0x00, // and ebx, AVX2|SMAP
+        0x81, 0xE3, 0x20, 0x04, 0x10, 0x00, // and ebx, AVX2|INVPCID|SMAP
         0x81, 0xE1, 0x00, 0x01, 0x00, 0x00, // and ecx, GFNI
         0x81, 0xE2, 0x00, 0x40, 0x00, 0x00, // and edx, SERIALIZE
         0x89, 0x5F, 0x10, // mov [rdi+0x10], ebx
@@ -16384,6 +16384,97 @@ fn invlpg_extended_memory_form_preserves_observable_state() {
         "invlpg_extended_memory_form",
         &with_hlt(vec![0x43, 0x0F, 0x01, 0x7C, 0x5A, 0x10]), // invlpg [r10+r11*2+0x10]
         r,
+    );
+}
+
+fn write_invpcid_descriptor(scratch: &mut [u8; 64], offset: usize, linear: u64) {
+    scratch[offset..offset + 8].copy_from_slice(&0u64.to_le_bytes());
+    scratch[offset + 8..offset + 16].copy_from_slice(&linear.to_le_bytes());
+}
+
+#[test]
+fn invpcid_all_types_preserve_observable_state() {
+    let mut s = [0xA5; 64];
+    write_invpcid_descriptor(&mut s, 0, DATA_ADDR);
+    write_invpcid_descriptor(&mut s, 16, DATA_ADDR + 0x10);
+    write_invpcid_descriptor(&mut s, 32, DATA_ADDR + 0x20);
+    write_invpcid_descriptor(&mut s, 48, DATA_ADDR + 0x30);
+
+    let code = with_hlt(vec![
+        0x66, 0x0F, 0x38, 0x82, 0x07, // invpcid rax, [rdi]
+        0x66, 0x0F, 0x38, 0x82, 0x4F, 0x10, // invpcid rcx, [rdi+0x10]
+        0x66, 0x0F, 0x38, 0x82, 0x57, 0x20, // invpcid rdx, [rdi+0x20]
+        0x66, 0x0F, 0x38, 0x82, 0x5F, 0x30, // invpcid rbx, [rdi+0x30]
+    ]);
+
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rcx = 1;
+    r.rdx = 2;
+    r.rbx = 3;
+    r.rdi = DATA_ADDR;
+    check_mem("invpcid_all_types_preserve_observable_state", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn invpcid_extended_indexed_memory_form_preserves_state() {
+    let mut s = [0xA5; 64];
+    write_invpcid_descriptor(&mut s, 16, DATA_ADDR + 0x20);
+
+    let code = with_hlt(vec![
+        0x66, 0x47, 0x0F, 0x38, 0x82, 0x44, 0x5A, 0x10, // invpcid r8, [r10+r11*2+0x10]
+    ]);
+
+    let mut r = modern_flags_regs();
+    r.r8 = 2;
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "invpcid_extended_indexed_memory_form_preserves_state",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn invpcid_addr32_memory_form_preserves_state() {
+    let mut s = [0xA5; 64];
+    write_invpcid_descriptor(&mut s, 0, DATA_ADDR);
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0x0F, 0x38, 0x82, 0x0F, // invpcid rcx, [edi]
+    ]);
+
+    let mut r = modern_flags_regs();
+    r.rcx = 3;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "invpcid_addr32_memory_form_preserves_state",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn invpcid_rip_relative_memory_form_preserves_state() {
+    let mut code = vec![
+        0x66, 0x44, 0x0F, 0x38, 0x82, 0x0D, 0x01, 0x00, 0x00, 0x00, // invpcid r9, [rip+1]
+        HLT,
+    ];
+    code.extend_from_slice(&0u64.to_le_bytes());
+    code.extend_from_slice(&(DATA_ADDR + 0x40).to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.r9 = 0;
+    check_flags_masked(
+        "invpcid_rip_relative_memory_form_preserves_state",
+        &code,
+        r,
+        FLAG_MASK,
     );
 }
 

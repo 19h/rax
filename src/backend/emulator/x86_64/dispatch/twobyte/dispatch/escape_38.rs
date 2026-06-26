@@ -93,6 +93,40 @@ impl X86_64Vcpu {
             0x40 => insn::simd::pmulld(self, ctx),
             0x41 => insn::simd::phminposuw(self, ctx),
 
+            // INVPCID r64, m128 (66 0F 38 82 /r in 64-bit mode).
+            0x82 => {
+                if !ctx.operand_size_override {
+                    return Err(Error::Emulator("INVPCID requires 66 prefix".to_string()));
+                }
+
+                let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                if !is_memory {
+                    return Err(Error::Emulator(
+                        "INVPCID requires memory descriptor operand".to_string(),
+                    ));
+                }
+
+                let invpcid_type = self.get_reg(reg, if self.sregs.cs.l { 8 } else { 4 });
+                let descriptor_low = self.read_mem(addr, 8)?;
+                let descriptor_linear = self.read_mem(addr + 8, 8)?;
+                let descriptor_pcid = descriptor_low & 0x0FFF;
+                let descriptor_reserved = descriptor_low & !0x0FFF;
+                let cr4_pcide = self.sregs.cr4 & (1 << 17) != 0;
+
+                let invalid = invpcid_type > 3
+                    || descriptor_reserved != 0
+                    || (!cr4_pcide && invpcid_type <= 1 && descriptor_pcid != 0)
+                    || (invpcid_type == 0 && !is_canonical_48(descriptor_linear));
+                if invalid {
+                    self.inject_exception(13, Some(0))?;
+                    return Ok(None);
+                }
+
+                // No TLB model is observable through the current emulator state.
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
             // GFNI: GF2P8MULB xmm1, xmm2/m128 (66 0F 38 CF)
             0xCF => insn::simd::gf2p8mulb(self, ctx),
 
@@ -443,6 +477,10 @@ impl X86_64Vcpu {
             ))),
         }
     }
+}
+
+fn is_canonical_48(addr: u64) -> bool {
+    ((addr as i64) << 16 >> 16) as u64 == addr
 }
 
 // CRC-32C polynomial (Castagnoli) in reflected form

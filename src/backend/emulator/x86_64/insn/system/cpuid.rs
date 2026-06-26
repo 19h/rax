@@ -144,6 +144,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             if subleaf == 0 {
                 // AVX2 IS advertised now that XSAVE/XCR0 are implemented.
                 let ebx = (1u32 << 20) // SMAP
+                        | (1u32 << 10) // INVPCID
                         | (1u32 << 5); // AVX2
                 let ecx = 1u32 << 8; // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
                 // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
