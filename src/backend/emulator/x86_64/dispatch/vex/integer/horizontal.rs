@@ -658,7 +658,7 @@ impl X86_64Vcpu {
                 src2_hi2,
                 src2_hi3,
                 imm8 & 0x07,
-                (imm8 >> 3) & 0x03,
+                imm8 & 0x03,
             );
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
