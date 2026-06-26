@@ -17646,6 +17646,150 @@ fn flag_pushfw_popw_low_image() {
 }
 
 #[test]
+fn flag_pushfd_compat32_stores_eflags_image() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::DF
+        | flags::bits::OF
+        | flags::bits::AC
+        | flags::bits::ID;
+
+    let mut expected = zero_scratch();
+    let pushed = (r.rflags | 0x2) as u32;
+    expected[0..4].copy_from_slice(&pushed.to_le_bytes());
+
+    check_scratch_expected_with_sregs(
+        "pushfd_compat32_flag_image",
+        &with_hlt(vec![
+            0x9C, // pushfd
+            0x58, // pop eax
+            0x89, 0x07, // mov [edi], eax
+        ]),
+        r,
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn flag_pushfw_compat32_16bit_override_stores_low_image() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_0000;
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::DF
+        | flags::bits::OF
+        | flags::bits::AC
+        | flags::bits::ID;
+
+    let mut expected = zero_scratch();
+    let pushed = ((r.rflags | 0x2) as u16).to_le_bytes();
+    expected[0..2].copy_from_slice(&pushed);
+
+    check_scratch_expected_with_sregs(
+        "pushfw_compat32_low_flag_image",
+        &with_hlt(vec![
+            0x66, 0x9C, // pushfw
+            0x66, 0x58, // pop ax
+            0x66, 0x89, 0x07, // mov [edi], ax
+        ]),
+        r,
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn flag_popfd_compat32_restores_wide_flag_image() {
+    let sregs = compat32_sregs();
+    let flag_image = flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::DF
+        | flags::bits::OF
+        | flags::bits::AC
+        | flags::bits::ID
+        | 0x2;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+
+    let mut expected = zero_scratch();
+    expected[0..4].copy_from_slice(&(flag_image as u32).to_le_bytes());
+
+    let mut code = vec![0xB8]; // mov eax, imm32
+    code.extend_from_slice(&(flag_image as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x50, // push eax
+        0x9D, // popfd
+        0x9C, // pushfd
+        0x58, // pop eax
+        0x89, 0x07, // mov [edi], eax
+        HLT,
+    ]);
+
+    check_scratch_expected_with_sregs(
+        "popfd_compat32_flag_image",
+        &code,
+        r,
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn flag_popfw_compat32_16bit_override_updates_low_flags_only() {
+    let sregs = compat32_sregs();
+    let low_flags =
+        (flags::bits::CF | flags::bits::AF | flags::bits::DF | flags::bits::OF | 0x2) as u16;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::AC | flags::bits::ID;
+
+    let mut expected = zero_scratch();
+    let restored = flags::bits::AC | flags::bits::ID | low_flags as u64;
+    expected[0..4].copy_from_slice(&(restored as u32).to_le_bytes());
+
+    let mut code = vec![0x66, 0x68]; // push imm16
+    code.extend_from_slice(&low_flags.to_le_bytes());
+    code.extend_from_slice(&[
+        0x66, 0x9D, // popfw
+        0x9C, // pushfd
+        0x58, // pop eax
+        0x89, 0x07, // mov [edi], eax
+        HLT,
+    ]);
+
+    check_scratch_expected_with_sregs(
+        "popfw_compat32_low_flags_only",
+        &code,
+        r,
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
 fn flag_cli_sti_updates_interrupt_flag() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
