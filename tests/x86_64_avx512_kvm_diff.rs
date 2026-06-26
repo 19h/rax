@@ -1469,9 +1469,13 @@ fn base_table() -> Vec<Base> {
         b("vpsrlvw", Bw, Vvv, Int, 0, f, f),
         b("vpsravw", Bw, Vvv, Int, 0, f, f),
         b("vprold", F, VvI(7), Int, 4, f, f),
+        b("vprolq", F, VvI(7), Int, 8, f, f),
         b("vprord", F, VvI(7), Int, 4, f, f),
+        b("vprorq", F, VvI(7), Int, 8, f, f),
         b("vprolvd", F, Vvv, Int, 4, f, f),
+        b("vprolvq", F, Vvv, Int, 8, f, f),
         b("vprorvd", F, Vvv, Int, 4, f, f),
+        b("vprorvq", F, Vvv, Int, 8, f, f),
         // ---- VBMI2 funnel shifts ----
         b("vpshldw", Vbmi2, VvvI(5), Int, 0, t, f),
         b("vpshldd", Vbmi2, VvvI(5), Int, 4, t, f),
