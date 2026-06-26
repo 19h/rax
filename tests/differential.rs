@@ -4252,6 +4252,52 @@ fn x87_m80_load_store_roundtrip() {
 }
 
 #[test]
+fn x87_m80_addr32_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&2.5f64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_m80_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xDD, 0x24, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xDB, 0x7C, 0x77, 0x20, // fstp tbyte [edi+esi*2+0x20]
+            0x67, 0xDB, 0x6C, 0x77, 0x20, // fld tbyte [edi+esi*2+0x20]
+            0x67, 0xDD, 0x5C, 0x77, 0x30, // fstp qword [edi+esi*2+0x30]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_m80_extended_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&2.5f64.to_le_bytes());
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_m80_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xDD, 0x24, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xDB, 0x7C, 0x5A, 0x20, // fstp tbyte [r10+r11*2+0x20]
+            0x43, 0xDB, 0x6C, 0x5A, 0x20, // fld tbyte [r10+r11*2+0x20]
+            0x43, 0xDD, 0x5C, 0x5A, 0x30, // fstp qword [r10+r11*2+0x30]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
 fn x87_constant_load_forms() {
     let mut c = load_rdi_data();
     for (op, off) in [
@@ -4445,6 +4491,128 @@ fn x87_integer_memory_arithmetic_forms() {
 }
 
 #[test]
+fn x87_integer_memory_arithmetic_addr32_indexed_forms() {
+    let int_op_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, escape, modrm, 0x77, 0x08, // fi<op> [edi+esi*2+8]
+            0x67, 0xDD, 0x5C, 0x77, 0x10, // fstp qword [edi+esi*2+0x10]
+        ])
+    };
+    let addr32_regs = || {
+        let mut r = regs();
+        r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+        r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+        r
+    };
+    let scratch_i16 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..10].copy_from_slice(&4i16.to_le_bytes());
+        s
+    };
+    let scratch_i32 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..12].copy_from_slice(&4i32.to_le_bytes());
+        s
+    };
+
+    for (label, modrm) in [
+        ("x87_fiadd_m16_addr32_indexed", 0x44),
+        ("x87_fimul_m16_addr32_indexed", 0x4C),
+        ("x87_fisub_m16_addr32_indexed", 0x64),
+        ("x87_fisubr_m16_addr32_indexed", 0x6C),
+        ("x87_fidiv_m16_addr32_indexed", 0x74),
+        ("x87_fidivr_m16_addr32_indexed", 0x7C),
+    ] {
+        check_mem(
+            label,
+            &int_op_program(0xDE, modrm),
+            addr32_regs(),
+            scratch_i16(),
+            0,
+        );
+    }
+
+    for (label, modrm) in [
+        ("x87_fiadd_m32_addr32_indexed", 0x44),
+        ("x87_fimul_m32_addr32_indexed", 0x4C),
+        ("x87_fisub_m32_addr32_indexed", 0x64),
+        ("x87_fisubr_m32_addr32_indexed", 0x6C),
+        ("x87_fidiv_m32_addr32_indexed", 0x74),
+        ("x87_fidivr_m32_addr32_indexed", 0x7C),
+    ] {
+        check_mem(
+            label,
+            &int_op_program(0xDA, modrm),
+            addr32_regs(),
+            scratch_i32(),
+            0,
+        );
+    }
+}
+
+#[test]
+fn x87_integer_memory_arithmetic_extended_indexed_forms() {
+    let int_op_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, escape, modrm, 0x5A, 0x08, // fi<op> [r10+r11*2+8]
+            0x43, 0xDD, 0x5C, 0x5A, 0x10, // fstp qword [r10+r11*2+0x10]
+        ])
+    };
+    let extended_regs = || {
+        let mut r = regs();
+        r.r10 = DATA_ADDR - 0x20;
+        r.r11 = 0x10;
+        r
+    };
+    let scratch_i16 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..10].copy_from_slice(&4i16.to_le_bytes());
+        s
+    };
+    let scratch_i32 = || {
+        let mut s = scratch_f64(&[8.0]);
+        s[8..12].copy_from_slice(&4i32.to_le_bytes());
+        s
+    };
+
+    for (label, modrm) in [
+        ("x87_fiadd_m16_extended_indexed", 0x44),
+        ("x87_fimul_m16_extended_indexed", 0x4C),
+        ("x87_fisub_m16_extended_indexed", 0x64),
+        ("x87_fisubr_m16_extended_indexed", 0x6C),
+        ("x87_fidiv_m16_extended_indexed", 0x74),
+        ("x87_fidivr_m16_extended_indexed", 0x7C),
+    ] {
+        check_mem(
+            label,
+            &int_op_program(0xDE, modrm),
+            extended_regs(),
+            scratch_i16(),
+            0,
+        );
+    }
+
+    for (label, modrm) in [
+        ("x87_fiadd_m32_extended_indexed", 0x44),
+        ("x87_fimul_m32_extended_indexed", 0x4C),
+        ("x87_fisub_m32_extended_indexed", 0x64),
+        ("x87_fisubr_m32_extended_indexed", 0x6C),
+        ("x87_fidiv_m32_extended_indexed", 0x74),
+        ("x87_fidivr_m32_extended_indexed", 0x7C),
+    ] {
+        check_mem(
+            label,
+            &int_op_program(0xDA, modrm),
+            extended_regs(),
+            scratch_i32(),
+            0,
+        );
+    }
+}
+
+#[test]
 fn x87_fist_m64() {
     // FILD m32 then FISTP m64 (DF /7) round-trip of a 64-bit integer store.
     let mut s = [0u8; 64];
@@ -4475,6 +4643,64 @@ fn x87_integer_load_store_width_forms() {
     c.push(HLT);
 
     check_mem("x87_integer_load_store_width_forms", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_integer_load_store_addr32_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&(-1234i16).to_le_bytes());
+    s[8..16].copy_from_slice(&1_234_567_890_123i64.to_le_bytes());
+    s[16..24].copy_from_slice(&(-42.0f64).to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_integer_load_store_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xDF, 0x04, 0x77, // fild word [edi+esi*2]
+            0x67, 0xDF, 0x5C, 0x77, 0x20, // fistp word [edi+esi*2+0x20]
+            0x67, 0xDF, 0x6C, 0x77, 0x08, // fild qword [edi+esi*2+8]
+            0x67, 0xDF, 0x7C, 0x77, 0x28, // fistp qword [edi+esi*2+0x28]
+            0x67, 0xDD, 0x44, 0x77, 0x10, // fld qword [edi+esi*2+0x10]
+            0x67, 0xDF, 0x54, 0x77, 0x30, // fist word [edi+esi*2+0x30]
+            0x67, 0xDB, 0x54, 0x77, 0x34, // fist dword [edi+esi*2+0x34]
+            0x67, 0xDD, 0x5C, 0x77, 0x38, // fstp qword [edi+esi*2+0x38]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_integer_load_store_extended_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&(-1234i16).to_le_bytes());
+    s[8..16].copy_from_slice(&1_234_567_890_123i64.to_le_bytes());
+    s[16..24].copy_from_slice(&(-42.0f64).to_le_bytes());
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_integer_load_store_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xDF, 0x04, 0x5A, // fild word [r10+r11*2]
+            0x43, 0xDF, 0x5C, 0x5A, 0x20, // fistp word [r10+r11*2+0x20]
+            0x43, 0xDF, 0x6C, 0x5A, 0x08, // fild qword [r10+r11*2+8]
+            0x43, 0xDF, 0x7C, 0x5A, 0x28, // fistp qword [r10+r11*2+0x28]
+            0x43, 0xDD, 0x44, 0x5A, 0x10, // fld qword [r10+r11*2+0x10]
+            0x43, 0xDF, 0x54, 0x5A, 0x30, // fist word [r10+r11*2+0x30]
+            0x43, 0xDB, 0x54, 0x5A, 0x34, // fist dword [r10+r11*2+0x34]
+            0x43, 0xDD, 0x5C, 0x5A, 0x38, // fstp qword [r10+r11*2+0x38]
+        ]),
+        r,
+        s,
+        0,
+    );
 }
 
 #[test]
@@ -5025,6 +5251,96 @@ fn x87_environment_save_restore_forms() {
     c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
     c.push(HLT);
     check_mem("x87_fnstenv_fldenv_rounding", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_environment_addr32_indexed_forms() {
+    const FPU_SAVE_OFF: u32 = 0x100;
+    const FPU_ENV_OFF: u32 = 0x180;
+
+    let append_disp32 = |c: &mut Vec<u8>, op: &[u8], disp: u32| {
+        c.extend_from_slice(op);
+        c.extend_from_slice(&disp.to_le_bytes());
+    };
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    let mut c = Vec::new();
+    c.extend_from_slice(&[0x67, 0xDD, 0x04, 0x77]); // fld qword [edi+esi*2]
+    c.extend_from_slice(&[0x67, 0xDD, 0x44, 0x77, 0x08]); // fld qword [edi+esi*2+8]
+    append_disp32(&mut c, &[0x67, 0xDD, 0xB4, 0x77], FPU_SAVE_OFF); // fnsave [edi+esi*2+0x100]
+    c.extend_from_slice(&[0xD9, 0xE8]); // fld1 to contaminate the reset FPU state
+    append_disp32(&mut c, &[0x67, 0xDD, 0xA4, 0x77], FPU_SAVE_OFF); // frstor [edi+esi*2+0x100]
+    c.extend_from_slice(&[0x67, 0xDD, 0x5C, 0x77, 0x10]); // fstp qword [edi+esi*2+0x10]
+    c.extend_from_slice(&[0x67, 0xDD, 0x5C, 0x77, 0x18]); // fstp qword [edi+esi*2+0x18]
+    c.push(HLT);
+    check_mem(
+        "x87_fnsave_frstor_addr32_indexed",
+        &c,
+        r.clone(),
+        scratch_f64(&[13.0, 29.0]),
+        0,
+    );
+
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate
+    let mut c = Vec::new();
+    c.extend_from_slice(&[0x67, 0xD9, 0x6C, 0x77, 0x08]); // fldcw word [edi+esi*2+8]
+    append_disp32(&mut c, &[0x67, 0xD9, 0xB4, 0x77], FPU_ENV_OFF); // fnstenv [edi+esi*2+0x180]
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit resets to round-to-nearest
+    append_disp32(&mut c, &[0x67, 0xD9, 0xA4, 0x77], FPU_ENV_OFF); // fldenv [edi+esi*2+0x180]
+    c.extend_from_slice(&[0x67, 0xDD, 0x04, 0x77]); // fld qword [edi+esi*2]
+    c.extend_from_slice(&[0xD9, 0xFC]); // frndint using restored truncation RC
+    c.extend_from_slice(&[0x67, 0xDD, 0x5C, 0x77, 0x10]); // fstp qword [edi+esi*2+0x10]
+    c.push(HLT);
+    check_mem("x87_fnstenv_fldenv_addr32_indexed", &c, r, s, 0);
+}
+
+#[test]
+fn x87_environment_extended_indexed_forms() {
+    const FPU_SAVE_OFF: u32 = 0x100;
+    const FPU_ENV_OFF: u32 = 0x180;
+
+    let append_disp32 = |c: &mut Vec<u8>, op: &[u8], disp: u32| {
+        c.extend_from_slice(op);
+        c.extend_from_slice(&disp.to_le_bytes());
+    };
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    let mut c = Vec::new();
+    c.extend_from_slice(&[0x43, 0xDD, 0x04, 0x5A]); // fld qword [r10+r11*2]
+    c.extend_from_slice(&[0x43, 0xDD, 0x44, 0x5A, 0x08]); // fld qword [r10+r11*2+8]
+    append_disp32(&mut c, &[0x43, 0xDD, 0xB4, 0x5A], FPU_SAVE_OFF); // fnsave [r10+r11*2+0x100]
+    c.extend_from_slice(&[0xD9, 0xE8]); // fld1 to contaminate the reset FPU state
+    append_disp32(&mut c, &[0x43, 0xDD, 0xA4, 0x5A], FPU_SAVE_OFF); // frstor [r10+r11*2+0x100]
+    c.extend_from_slice(&[0x43, 0xDD, 0x5C, 0x5A, 0x10]); // fstp qword [r10+r11*2+0x10]
+    c.extend_from_slice(&[0x43, 0xDD, 0x5C, 0x5A, 0x18]); // fstp qword [r10+r11*2+0x18]
+    c.push(HLT);
+    check_mem(
+        "x87_fnsave_frstor_extended_indexed",
+        &c,
+        r.clone(),
+        scratch_f64(&[13.0, 29.0]),
+        0,
+    );
+
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate
+    let mut c = Vec::new();
+    c.extend_from_slice(&[0x43, 0xD9, 0x6C, 0x5A, 0x08]); // fldcw word [r10+r11*2+8]
+    append_disp32(&mut c, &[0x43, 0xD9, 0xB4, 0x5A], FPU_ENV_OFF); // fnstenv [r10+r11*2+0x180]
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit resets to round-to-nearest
+    append_disp32(&mut c, &[0x43, 0xD9, 0xA4, 0x5A], FPU_ENV_OFF); // fldenv [r10+r11*2+0x180]
+    c.extend_from_slice(&[0x43, 0xDD, 0x04, 0x5A]); // fld qword [r10+r11*2]
+    c.extend_from_slice(&[0xD9, 0xFC]); // frndint using restored truncation RC
+    c.extend_from_slice(&[0x43, 0xDD, 0x5C, 0x5A, 0x10]); // fstp qword [r10+r11*2+0x10]
+    c.push(HLT);
+    check_mem("x87_fnstenv_fldenv_extended_indexed", &c, r, s, 0);
 }
 
 #[test]
@@ -34574,6 +34890,54 @@ fn x87_fbld_fbstp_positive_and_negative_bcd() {
     code.extend_from_slice(&[0xDF, 0x77, 0x30]); // fbstp tbyte [rdi+48]
     code.push(HLT);
     check_mem("x87_fbld_fbstp_bcd", &code, regs(), s, 0);
+}
+
+#[test]
+fn x87_bcd_addr32_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..10].copy_from_slice(&[0x90, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 0]);
+    s[16..26].copy_from_slice(&[0x10, 0x32, 0x54, 0x76, 0x98, 0, 0, 0, 0, 0x80]);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_bcd_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xDF, 0x24, 0x77, // fbld tbyte [edi+esi*2]
+            0x67, 0xDF, 0x74, 0x77, 0x20, // fbstp tbyte [edi+esi*2+0x20]
+            0x67, 0xDF, 0x64, 0x77, 0x10, // fbld tbyte [edi+esi*2+0x10]
+            0x67, 0xDF, 0x74, 0x77, 0x30, // fbstp tbyte [edi+esi*2+0x30]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_bcd_extended_indexed_forms() {
+    let mut s = [0u8; 64];
+    s[0..10].copy_from_slice(&[0x90, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 0]);
+    s[16..26].copy_from_slice(&[0x10, 0x32, 0x54, 0x76, 0x98, 0, 0, 0, 0, 0x80]);
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_bcd_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xDF, 0x24, 0x5A, // fbld tbyte [r10+r11*2]
+            0x43, 0xDF, 0x74, 0x5A, 0x20, // fbstp tbyte [r10+r11*2+0x20]
+            0x43, 0xDF, 0x64, 0x5A, 0x10, // fbld tbyte [r10+r11*2+0x10]
+            0x43, 0xDF, 0x74, 0x5A, 0x30, // fbstp tbyte [r10+r11*2+0x30]
+        ]),
+        r,
+        s,
+        0,
+    );
 }
 
 #[test]
