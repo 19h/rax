@@ -1681,6 +1681,47 @@ fn xchg_reg_reg() {
 }
 
 #[test]
+fn xchg_rax_opcode_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_1111_2222;
+    r.rcx = 0xAAAA_BBBB_3333_4444;
+    r.r9 = 0x9999_8888_7777_6666;
+    check_flags_masked(
+        "xchg_rax_opcode_forms",
+        &with_hlt(vec![
+            0x91, // xchg eax, ecx
+            0x49, 0x91, // xchg rax, r9
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn xchg_memory_width_forms() {
+    let mut s = [0u8; 64];
+    s[0] = 0x11;
+    s[2..4].copy_from_slice(&0x2233u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x4455_6677u32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x8899_AABB_CCDD_EEFFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rbx = 0x1111_2222_3333_44AA;
+    r.rcx = 0x5555_6666_7777_BBBB;
+    r.rdx = 0x9999_AAAA_CCCC_CCCC;
+    r.r8 = 0xDDDD_EEEE_FFFF_0000;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x86, 0x1F]); // xchg byte [rdi], bl
+    code.extend_from_slice(&[0x66, 0x87, 0x4F, 0x02]); // xchg word [rdi+2], cx
+    code.extend_from_slice(&[0x87, 0x57, 0x04]); // xchg dword [rdi+4], edx
+    code.extend_from_slice(&[0x4C, 0x87, 0x47, 0x08]); // xchg qword [rdi+8], r8
+    code.push(HLT);
+
+    check_mem("xchg_memory_width_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
 fn xadd_reg_reg() {
     let mut r = regs();
     r.rax = 0x100; // dest
