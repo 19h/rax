@@ -15062,6 +15062,98 @@ fn fxsave_fxrstor_roundtrips_mxcsr() {
 }
 
 #[test]
+fn fxsave_fxrstor_roundtrips_xmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s[0..16].iter_mut().enumerate() {
+        *byte = 0x23u8.wrapping_add((i as u8).wrapping_mul(11));
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x03]); // fxsave [rbx]
+    code.extend_from_slice(&[0x66, 0x0F, 0xEF, 0xC0]); // pxor xmm0, xmm0
+    code.extend_from_slice(&[0x0F, 0xAE, 0x0B]); // fxrstor [rbx]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    code.push(HLT);
+
+    check_mem("fxsave_fxrstor_xmm", &code, regs(), s, 0);
+}
+
+#[test]
+fn fxsave_fxrstor_roundtrips_x87_stack() {
+    let s = scratch_f64(&[3.0, 7.0, 0.0, 0.0]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=7
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=3, ST1=7
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x03]); // fxsave [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0x0F, 0xAE, 0x0B]); // fxrstor [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 3
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 7
+    code.push(HLT);
+
+    check_mem("fxsave_fxrstor_x87_stack", &code, regs(), s, 0);
+}
+
+#[test]
+fn fxsave64_fxrstor64_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_5F80u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_1F80u32.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x03]); // fxsave64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x0B]); // fxrstor64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_mem("fxsave64_fxrstor64_mxcsr", &code, regs(), s, 0);
+}
+
+#[test]
+fn fxsave64_fxrstor64_roundtrips_xmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s[0..16].iter_mut().enumerate() {
+        *byte = 0x4Bu8.wrapping_add((i as u8).wrapping_mul(9));
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x03]); // fxsave64 [rbx]
+    code.extend_from_slice(&[0x66, 0x0F, 0xEF, 0xC0]); // pxor xmm0, xmm0
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x0B]); // fxrstor64 [rbx]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    code.push(HLT);
+
+    check_mem("fxsave64_fxrstor64_xmm", &code, regs(), s, 0);
+}
+
+#[test]
+fn fxsave64_fxrstor64_roundtrips_x87_stack() {
+    let s = scratch_f64(&[5.0, 11.0, 0.0, 0.0]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=11
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=5, ST1=11
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x03]); // fxsave64 [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x0B]); // fxrstor64 [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 5
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 11
+    code.push(HLT);
+
+    check_mem("fxsave64_fxrstor64_x87_stack", &code, regs(), s, 0);
+}
+
+#[test]
 fn xsave_xrstor_roundtrips_mxcsr() {
     let mut s = [0u8; 64];
     s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
@@ -15084,6 +15176,95 @@ fn xsave_xrstor_roundtrips_mxcsr() {
 }
 
 #[test]
+fn xsave64_xrstor64_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_5FC0u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_1F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x23]); // xsave64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_avx_mem("xsave64_xrstor64_mxcsr", &code, s);
+}
+
+#[test]
+fn xsave_xrstor_roundtrips_x87_stack() {
+    let s = scratch_f64(&[13.0, 29.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=29
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=13, ST1=29
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x23]); // xsave [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 13
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 29
+    code.push(HLT);
+
+    check_avx_mem("xsave_xrstor_x87_stack", &code, s);
+}
+
+#[test]
+fn xsave64_xrstor64_roundtrips_x87_stack() {
+    let s = scratch_f64(&[17.0, 31.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=31
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=17, ST1=31
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x23]); // xsave64 [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 17
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 31
+    code.push(HLT);
+
+    check_avx_mem("xsave64_xrstor64_x87_stack", &code, s);
+}
+
+#[test]
+fn xsave64_xrstor64_roundtrips_ymm() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x73u8).wrapping_add((i as u8).wrapping_mul(9));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x23]); // xsave64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+
+    check_avx_mem("xsave64_xrstor64_ymm", &code, s);
+}
+
+#[test]
 fn xsaveopt_xrstor_roundtrips_mxcsr() {
     let mut s = [0u8; 64];
     s[0..4].copy_from_slice(&0x0000_5F80u32.to_le_bytes());
@@ -15103,6 +15284,118 @@ fn xsaveopt_xrstor_roundtrips_mxcsr() {
     code.push(HLT);
 
     check_avx_mem("xsaveopt_xrstor_mxcsr", &code, s);
+}
+
+#[test]
+fn xsaveopt64_xrstor64_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_3FC0u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_1F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x33]); // xsaveopt64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt64_xrstor64_mxcsr", &code, s);
+}
+
+#[test]
+fn xsaveopt_xrstor_roundtrips_x87_stack() {
+    let s = scratch_f64(&[19.0, 37.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=37
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=19, ST1=37
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x33]); // xsaveopt [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 19
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 37
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt_xrstor_x87_stack", &code, s);
+}
+
+#[test]
+fn xsaveopt64_xrstor64_roundtrips_x87_stack() {
+    let s = scratch_f64(&[23.0, 41.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=41
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=23, ST1=41
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x33]); // xsaveopt64 [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 23
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 41
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt64_xrstor64_x87_stack", &code, s);
+}
+
+#[test]
+fn xsaveopt_xrstor_roundtrips_ymm() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x27u8).wrapping_add((i as u8).wrapping_mul(13));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x33]); // xsaveopt [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt_xrstor_ymm", &code, s);
+}
+
+#[test]
+fn xsaveopt64_xrstor64_roundtrips_ymm() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x91u8).wrapping_add((i as u8).wrapping_mul(7));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x33]); // xsaveopt64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt64_xrstor64_ymm", &code, s);
 }
 
 #[test]
@@ -15258,6 +15551,72 @@ fn xsavec_xrstors_roundtrips_mxcsr() {
 }
 
 #[test]
+fn xsavec64_xrstors64_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_1F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0xB8, 0x02, 0x00, 0x00, 0x00]); // mov eax, 2
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x23]); // xsavec64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0xB8, 0x02, 0x00, 0x00, 0x00]); // mov eax, 2
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_avx_mem("xsavec64_xrstors64_mxcsr", &code, s);
+}
+
+#[test]
+fn xsavec_xrstors_roundtrips_x87_stack() {
+    let s = scratch_f64(&[29.0, 47.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=47
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=29, ST1=47
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x23]); // xsavec [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 29
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 47
+    code.push(HLT);
+
+    check_avx_mem("xsavec_xrstors_x87_stack", &code, s);
+}
+
+#[test]
+fn xsavec64_xrstors64_roundtrips_x87_stack() {
+    let s = scratch_f64(&[31.0, 53.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=53
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=31, ST1=53
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x23]); // xsavec64 [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 31
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 53
+    code.push(HLT);
+
+    check_avx_mem("xsavec64_xrstors64_x87_stack", &code, s);
+}
+
+#[test]
 fn xsavec_xrstors_roundtrips_ymm() {
     let mut s = [0u8; 64];
     for i in 0..32 {
@@ -15278,6 +15637,29 @@ fn xsavec_xrstors_roundtrips_ymm() {
     code.push(HLT);
 
     check_avx_mem("xsavec_xrstors_ymm", &code, s);
+}
+
+#[test]
+fn xsavec64_xrstors64_roundtrips_ymm() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0xB1u8).wrapping_add((i as u8).wrapping_mul(3));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x23]); // xsavec64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+
+    check_avx_mem("xsavec64_xrstors64_ymm", &code, s);
 }
 
 #[test]
@@ -15436,6 +15818,72 @@ fn xsaves_xrstors_roundtrips_mxcsr() {
 }
 
 #[test]
+fn xsaves64_xrstors64_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_5F80u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_1F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0xB8, 0x02, 0x00, 0x00, 0x00]); // mov eax, 2
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x2B]); // xsaves64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0xB8, 0x02, 0x00, 0x00, 0x00]); // mov eax, 2
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_avx_mem("xsaves64_xrstors64_mxcsr", &code, s);
+}
+
+#[test]
+fn xsaves_xrstors_roundtrips_x87_stack() {
+    let s = scratch_f64(&[43.0, 59.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=59
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=43, ST1=59
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x2B]); // xsaves [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 43
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 59
+    code.push(HLT);
+
+    check_avx_mem("xsaves_xrstors_x87_stack", &code, s);
+}
+
+#[test]
+fn xsaves64_xrstors64_roundtrips_x87_stack() {
+    let s = scratch_f64(&[61.0, 67.0, 0.0, 0.0]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=67
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=61, ST1=67
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x2B]); // xsaves64 [rbx]
+    code.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    code.extend_from_slice(&[0xB8, 0x01, 0x00, 0x00, 0x00]); // mov eax, x87 state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = 61
+    code.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = 67
+    code.push(HLT);
+
+    check_avx_mem("xsaves64_xrstors64_x87_stack", &code, s);
+}
+
+#[test]
 fn xsaves_xrstors_roundtrips_ymm() {
     let mut s = [0u8; 64];
     for i in 0..32 {
@@ -15456,6 +15904,29 @@ fn xsaves_xrstors_roundtrips_ymm() {
     code.push(HLT);
 
     check_avx_mem("xsaves_xrstors_ymm", &code, s);
+}
+
+#[test]
+fn xsaves64_xrstors64_roundtrips_ymm() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x5Fu8).wrapping_add((i as u8).wrapping_mul(21));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x2B]); // xsaves64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+
+    check_avx_mem("xsaves64_xrstors64_ymm", &code, s);
 }
 
 #[test]
