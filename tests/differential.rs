@@ -29227,6 +29227,145 @@ fn avx_vmovdqa_vmovdqu_register_forms() {
 }
 
 #[test]
+fn avx_vmovdqa_vmovdqu_indexed_memory_forms() {
+    fn store_xmm23_and_hlt(code: &mut Vec<u8>) {
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+        code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+        code.push(HLT);
+    }
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xF9, 0x6F, 0x54, 0x77, 0x10]); // vmovdqa xmm2, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xC5, 0xFA, 0x6F, 0x5C, 0x77, 0x20]); // vmovdqu xmm3, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    store_xmm23_and_hlt(&mut code);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_xmm_addr32_indexed_loads",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xF9, 0x7F, 0x44, 0x77, 0x10]); // vmovdqa [edi+esi*2+16], xmm0
+    code.extend_from_slice(&[0x67, 0xC5, 0xFA, 0x7F, 0x4C, 0x77, 0x20]); // vmovdqu [edi+esi*2+32], xmm1
+    code.push(HLT);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_xmm_addr32_indexed_stores",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0x81, 0x79, 0x6F, 0x54, 0x5A, 0x10]); // vmovdqa xmm2, [r10+r11*2+16]
+    code.extend_from_slice(&[0xC4, 0x81, 0x7A, 0x6F, 0x5C, 0x5A, 0x20]); // vmovdqu xmm3, [r10+r11*2+32]
+    store_xmm23_and_hlt(&mut code);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_xmm_extended_indexed_loads",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0x81, 0x79, 0x7F, 0x44, 0x5A, 0x10]); // vmovdqa [r10+r11*2+16], xmm0
+    code.extend_from_slice(&[0xC4, 0x81, 0x7A, 0x7F, 0x4C, 0x5A, 0x20]); // vmovdqu [r10+r11*2+32], xmm1
+    code.push(HLT);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_xmm_extended_indexed_stores",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xFD, 0x6F, 0x54, 0x77, 0x20]); // vmovdqa ymm2, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC5, 0xFE, 0x6F, 0x1C, 0x77]); // vmovdqu ymm3, [edi+esi*2]
+    code.extend_from_slice(&load_rdi_data());
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_ymm_addr32_indexed_loads",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xFD, 0x7F, 0x44, 0x77, 0x20]); // vmovdqa [edi+esi*2+32], ymm0
+    code.extend_from_slice(&[0x67, 0xC5, 0xFE, 0x7F, 0x0C, 0x77]); // vmovdqu [edi+esi*2], ymm1
+    code.push(HLT);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_ymm_addr32_indexed_stores",
+        &code,
+        avx_indexed_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC4, 0x81, 0x7D, 0x6F, 0x54, 0x5A, 0x20]); // vmovdqa ymm2, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x81, 0x7E, 0x6F, 0x1C, 0x5A]); // vmovdqu ymm3, [r10+r11*2]
+    avx2_store_ymm23_and_hlt(&mut code);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_ymm_extended_indexed_loads",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_byte_pair_scratch();
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0x81, 0x7D, 0x7F, 0x44, 0x5A, 0x20]); // vmovdqa [r10+r11*2+32], ymm0
+    code.extend_from_slice(&[0xC4, 0x81, 0x7E, 0x7F, 0x0C, 0x5A]); // vmovdqu [r10+r11*2], ymm1
+    code.push(HLT);
+    check_mem(
+        "avx_vmovdqa_vmovdqu_ymm_extended_indexed_stores",
+        &code,
+        avx_indexed_extended_regs(),
+        s,
+        0,
+    );
+}
+
+#[test]
 fn avx_xmm_vmovhlps_vmovlhps_register_forms() {
     let mut s = [0u8; 64];
     for (idx, byte) in s.iter_mut().enumerate() {
