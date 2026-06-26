@@ -1840,6 +1840,31 @@ fn xchg_memory_width_forms() {
 }
 
 #[test]
+fn xchg_addr32_memory_width_forms() {
+    let mut s = [0u8; 64];
+    s[0] = 0x11;
+    s[2..4].copy_from_slice(&0x2233u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x4455_6677u32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x8899_AABB_CCDD_EEFFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rbx = 0x1111_2222_3333_44AA;
+    r.rcx = 0x5555_6666_7777_BBBB;
+    r.rdx = 0x9999_AAAA_CCCC_CCCC;
+    r.r8 = 0xDDDD_EEEE_FFFF_0000;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x86, 0x1F, // xchg byte [edi], bl
+        0x67, 0x66, 0x87, 0x4F, 0x02, // xchg word [edi+2], cx
+        0x67, 0x87, 0x57, 0x04, // xchg dword [edi+4], edx
+        0x67, 0x4C, 0x87, 0x47, 0x08, // xchg qword [edi+8], r8
+    ]);
+
+    check_mem("xchg_addr32_memory_width_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
 fn xchg_register_operand_width_forms() {
     let mut r = modern_flags_regs();
     r.rax = 0xAAAA_BBBB_CCCC_00F0;
@@ -10851,6 +10876,33 @@ fn adcx_adox_memory_width_forms() {
     check_mem("adcx_adox_memory_width_forms", &code, r, s, FLAG_MASK);
 }
 
+#[test]
+fn adcx_adox_addr32_memory_width_forms() {
+    let mut s = [0u8; 64];
+    s[8..16].copy_from_slice(&1u64.to_le_bytes());
+    s[16..24].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_FFFF_FFFF;
+    r.rbx = 0xCCCC_DDDD_FFFF_FFFF;
+    r.rcx = 0xFFFF_FFFF_FFFF_FFFE;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFE;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rflags = flags::bits::CF | flags::bits::OF | flags::bits::SF | flags::bits::PF;
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0x0F, 0x38, 0xF6, 0x07, // adcx eax, dword [edi]
+        0x67, 0x89, 0x47, 0x20, // mov [edi+32], eax
+        0x67, 0xF3, 0x0F, 0x38, 0xF6, 0x5F, 0x04, // adox ebx, dword [edi+4]
+        0x67, 0x89, 0x5F, 0x24, // mov [edi+36], ebx
+        0x67, 0x66, 0x48, 0x0F, 0x38, 0xF6, 0x4F, 0x08, // adcx rcx, qword [edi+8]
+        0x67, 0x48, 0x89, 0x4F, 0x28, // mov [edi+40], rcx
+        0x67, 0xF3, 0x48, 0x0F, 0x38, 0xF6, 0x57, 0x10, // adox rdx, qword [edi+16]
+        0x67, 0x48, 0x89, 0x57, 0x30, // mov [edi+48], rdx
+    ]);
+    check_mem("adcx_adox_addr32_memory_width_forms", &code, r, s, FLAG_MASK);
+}
+
 // ---------------------------------------------------------------------------
 // Misc flag manipulation: CMC / STC / CLC / CLD / STD, plus a string op honoring
 // DF, and BSWAP r16 (undefined result, but we still compare against KVM).
@@ -11130,6 +11182,34 @@ fn xadd_memory_operand_width_forms() {
 }
 
 #[test]
+fn xadd_addr32_memory_operand_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0000_0000_0000_0100u64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rcx = 0x5555_6666_7777_1234;
+    r.rbx = 0x2222_3333_8000_0000;
+    r.rdx = 0x0000_0000_0000_00FF;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0x0F, 0xC1, 0x0F, // xadd word [edi], cx
+        0x67, 0x0F, 0xC1, 0x5F, 0x04, // xadd dword [edi+4], ebx
+        0x67, 0x48, 0x0F, 0xC1, 0x57, 0x08, // xadd qword [edi+8], rdx
+    ]);
+
+    check_mem(
+        "xadd_addr32_memory_operand_width_forms",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cmpxchg_mem_success() {
     // CMPXCHG [rdi], rcx = 48 0F B1 0F : if RAX==[rdi] then ZF=1, [rdi]=rcx;
     // else ZF=0, RAX=[rdi]. Success path: [rdi]==RAX.
@@ -11185,6 +11265,40 @@ fn cmpxchg_memory_operand_width_forms() {
 
     check_mem(
         "cmpxchg_memory_operand_width_forms",
+        &code,
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg_addr32_memory_operand_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_1111_00F0;
+    r.rcx = 0x5555_6666_7777_1234;
+    r.rbx = 0x2222_3333_CAFE_BABE;
+    r.rdx = 0xCAFE_BABE_DEAD_BEEF;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let mut code = vec![
+        0x67, 0x66, 0x0F, 0xB1, 0x0F, // cmpxchg word [edi], cx
+        0x67, 0x0F, 0xB1, 0x5F, 0x04, // cmpxchg dword [edi+4], ebx
+        0x48, 0xB8,
+    ];
+    code.extend_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes()); // mov rax, qword source
+    code.extend_from_slice(&[
+        0x67, 0x48, 0x0F, 0xB1, 0x57, 0x08, // cmpxchg qword [edi+8], rdx
+        HLT,
+    ]);
+
+    check_mem(
+        "cmpxchg_addr32_memory_operand_width_forms",
         &code,
         r,
         s,
