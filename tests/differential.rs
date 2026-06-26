@@ -40,6 +40,8 @@ const STACK_ADDR: u64 = 0x2_0000;
 const DATA_ADDR: u64 = 0x3_0000;
 /// Minimal GDT used by far control-flow and descriptor-sensitive tests.
 const GDT_ADDR: u64 = 0x4_000;
+const GDT_LIMIT: u16 = 0x2F;
+const CODE32_SELECTOR: u16 = 0x28;
 /// Minimal IDT base used to make SIDT deterministic in differential tests.
 const IDT_ADDR: u64 = 0x5_000;
 /// Shared IDT handler used by software-interrupt differential tests.
@@ -105,7 +107,7 @@ fn base_sregs() -> SystemRegisters {
     sregs.cr4 = CR4_VAL;
     sregs.efer = EFER_VAL;
     sregs.gdt.base = GDT_ADDR;
-    sregs.gdt.limit = 0x27;
+    sregs.gdt.limit = GDT_LIMIT;
     sregs.idt.base = IDT_ADDR;
     sregs.idt.limit = 0x0FFF;
 
@@ -142,6 +144,7 @@ fn base_sregs() -> SystemRegisters {
 
 fn compat32_sregs() -> SystemRegisters {
     let mut sregs = base_sregs();
+    sregs.cs.selector = CODE32_SELECTOR;
     sregs.cs.l = false;
     sregs.cs.db = true;
     sregs
@@ -181,10 +184,19 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
         ((tss_base >> 56) & 0xFF) as u8, // base 32:63
         0x00, 0x00, 0x00, 0x00, // reserved
     ];
+    let code32_descriptor = [
+        0xFF, 0xFF, // limit 0:15
+        0x00, 0x00, // base 0:15
+        0x00, // base 16:23
+        0x9B, // present ring-0 executable/readable accessed code
+        0xCF, // limit 16:19, D/B=1, G=1
+        0x00, // base 24:31
+    ];
     write(GDT_ADDR, &null_descriptor);
     write(GDT_ADDR + 8, &code64_descriptor);
     write(GDT_ADDR + 16, &data_descriptor);
     write(GDT_ADDR + 24, &tss64_descriptor);
+    write(GDT_ADDR + CODE32_SELECTOR as u64, &code32_descriptor);
 
     let mut write_idt_gate = |vector: u8, handler: u64| {
         let mut gate = [0u8; 16];
@@ -16074,7 +16086,7 @@ fn descriptor_table_store_forms() {
 #[test]
 fn descriptor_table_load_then_store_forms() {
     let mut scratch = zero_scratch();
-    scratch[0..2].copy_from_slice(&0x27u16.to_le_bytes());
+    scratch[0..2].copy_from_slice(&GDT_LIMIT.to_le_bytes());
     scratch[2..10].copy_from_slice(&0x6_000u64.to_le_bytes());
     scratch[0x10..0x12].copy_from_slice(&0x37u16.to_le_bytes());
     scratch[0x12..0x1A].copy_from_slice(&0x7_000u64.to_le_bytes());
@@ -16105,7 +16117,7 @@ fn descriptor_table_addr32_memory_forms() {
     );
 
     let mut scratch = zero_scratch();
-    scratch[0..2].copy_from_slice(&0x27u16.to_le_bytes());
+    scratch[0..2].copy_from_slice(&GDT_LIMIT.to_le_bytes());
     scratch[2..10].copy_from_slice(&0x6_000u64.to_le_bytes());
     scratch[0x10..0x12].copy_from_slice(&0x37u16.to_le_bytes());
     scratch[0x12..0x1A].copy_from_slice(&0x7_000u64.to_le_bytes());
@@ -16129,7 +16141,7 @@ fn descriptor_table_addr32_memory_forms() {
 #[test]
 fn descriptor_table_extended_memory_forms() {
     let mut scratch = zero_scratch();
-    scratch[0x18..0x1A].copy_from_slice(&0x27u16.to_le_bytes());
+    scratch[0x18..0x1A].copy_from_slice(&GDT_LIMIT.to_le_bytes());
     scratch[0x1A..0x22].copy_from_slice(&0x6_000u64.to_le_bytes());
     scratch[0x28..0x2A].copy_from_slice(&0x37u16.to_le_bytes());
     scratch[0x2A..0x32].copy_from_slice(&0x7_000u64.to_le_bytes());
@@ -21714,7 +21726,10 @@ fn stack_push_pop_fs_gs_16bit_selectors() {
 fn stack_push_legacy_segments_compat32_forms() {
     let sregs = compat32_sregs();
     let mut expected = zero_scratch();
-    for (i, selector) in [0x10u32, 0x08, 0x10, 0x10].iter().enumerate() {
+    for (i, selector) in [0x10u32, CODE32_SELECTOR as u32, 0x10, 0x10]
+        .iter()
+        .enumerate()
+    {
         expected[i * 4..i * 4 + 4].copy_from_slice(&selector.to_le_bytes());
     }
 
@@ -21751,7 +21766,7 @@ fn stack_push_legacy_segments_compat32_forms() {
 fn stack_push_legacy_segments_compat32_16bit_override_forms() {
     let sregs = compat32_sregs();
     let mut expected = zero_scratch();
-    for (i, selector) in [0x10u16, 0x08, 0x10, 0x10].iter().enumerate() {
+    for (i, selector) in [0x10u16, CODE32_SELECTOR, 0x10, 0x10].iter().enumerate() {
         expected[i * 2..i * 2 + 2].copy_from_slice(&selector.to_le_bytes());
     }
 
@@ -22613,6 +22628,99 @@ fn control_into_compat32_no_overflow_falls_through() {
         r,
         &sregs,
     );
+}
+
+#[test]
+fn control_near_call_ret_compat32_forms() {
+    let sregs = compat32_sregs();
+    check_with_sregs(
+        "near_call_ret_compat32",
+        &with_hlt(vec![
+            0xE8, 0x03, 0x00, 0x00, 0x00, // call function
+            0x89, 0xC3, // mov ebx, eax
+            HLT, // returned here
+            0xB8, 0x78, 0x56, 0x34, 0x12, // function: mov eax, 0x12345678
+            0xC3, // ret
+        ]),
+        regs(),
+        &sregs,
+    );
+}
+
+#[test]
+fn control_ret_imm16_compat32_cleans_arguments() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rsp = STACK_ADDR + 0x100;
+    check_with_sregs(
+        "ret_imm16_compat32_cleans_arguments",
+        &with_hlt(vec![
+            0x68, 0x44, 0x33, 0x22, 0x11, // push 0x11223344
+            0xE8, 0x03, 0x00, 0x00, 0x00, // call function
+            0x89, 0xE3, // mov ebx, esp
+            HLT, // returned here
+            0xB8, 0x5A, 0x00, 0x00, 0x00, // function: mov eax, 0x5a
+            0xC2, 0x04, 0x00, // ret 4
+        ]),
+        r,
+        &sregs,
+    );
+}
+
+#[test]
+fn control_far_jmp_ptr_compat32_same_code_segment() {
+    let sregs = compat32_sregs();
+    let target = CODE_ADDR + 13;
+    let mut code = vec![0xEA]; // ljmp ptr16:32
+    code.extend_from_slice(&(target as u32).to_le_bytes());
+    code.extend_from_slice(&CODE32_SELECTOR.to_le_bytes());
+    code.extend_from_slice(&[
+        0xB8, 0xEF, 0xBE, 0xAD, 0xDE, // fallback: mov eax, 0xdeadbeef
+        HLT,
+        0xB8, 0xCE, 0xFA, 0xED, 0xFE, // target: mov eax, 0xfeedface
+        HLT,
+    ]);
+
+    check_with_sregs("far_jmp_ptr_compat32_same_code_segment", &code, regs(), &sregs);
+}
+
+#[test]
+fn control_far_call_ptr_retf_compat32_roundtrip() {
+    let sregs = compat32_sregs();
+    let target = CODE_ADDR + 10;
+    let mut code = vec![0x9A]; // lcall ptr16:32
+    code.extend_from_slice(&(target as u32).to_le_bytes());
+    code.extend_from_slice(&CODE32_SELECTOR.to_le_bytes());
+    code.extend_from_slice(&[
+        0x89, 0xC3, // returned: mov ebx, eax
+        HLT,
+        0xB8, 0x0D, 0xD0, 0x0D, 0xD0, // target: mov eax, 0xd00dd00d
+        0xCB, // retf
+    ]);
+
+    check_with_sregs("far_call_ptr_retf_compat32_roundtrip", &code, regs(), &sregs);
+}
+
+#[test]
+fn control_iretd_compat32_same_cpl_restores_frame() {
+    let sregs = compat32_sregs();
+    let target = CODE_ADDR + 22;
+    let mut code = vec![
+        0x68, 0x47, 0x02, 0x00, 0x00, // push restored EFLAGS
+        0x68, // push CODE32_SELECTOR
+    ];
+    code.extend_from_slice(&(CODE32_SELECTOR as u32).to_le_bytes());
+    code.push(0x68); // push target EIP
+    code.extend_from_slice(&(target as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0xCF, // iretd
+        0xB8, 0xEF, 0xBE, 0xAD, 0xDE, // fallback: mov eax, 0xdeadbeef
+        HLT,
+        0xB8, 0xA5, 0x00, 0x00, 0x00, // target: mov eax, 0xa5
+        HLT,
+    ]);
+
+    check_with_sregs("iretd_compat32_same_cpl", &code, regs(), &sregs);
 }
 
 #[test]
