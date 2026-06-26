@@ -7,6 +7,109 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
 
 impl X86_64Vcpu {
+    /// VEX.256/128.66.0F38.W0 13 /r: VCVTPH2PS.
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_vcvtph2ps(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator(
+                "VCVTPH2PS requires VEX.vvvv=1111b".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let lanes = if vex_l == 0 { 4 } else { 8 };
+        let mut out = [0u32; 8];
+
+        for lane in 0..lanes {
+            let half = if is_memory {
+                self.read_mem(addr + (lane as u64 * 2), 2)? as u16
+            } else {
+                read_half_from_xmm(self.regs.xmm[rm as usize], lane)
+            };
+            out[lane] = f16_to_f32_bits(half);
+        }
+
+        self.regs.xmm[xmm_dst][0] = out[0] as u64 | ((out[1] as u64) << 32);
+        self.regs.xmm[xmm_dst][1] = out[2] as u64 | ((out[3] as u64) << 32);
+        if vex_l == 0 {
+            self.regs.ymm_high[xmm_dst] = [0; 2];
+        } else {
+            self.regs.ymm_high[xmm_dst][0] = out[4] as u64 | ((out[5] as u64) << 32);
+            self.regs.ymm_high[xmm_dst][1] = out[6] as u64 | ((out[7] as u64) << 32);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX.256/128.66.0F3A.W0 1D /r ib: VCVTPS2PH.
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_vcvtps2ph(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator(
+                "VCVTPS2PH requires VEX.vvvv=1111b".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let _imm = ctx.consume_u8()?;
+        let xmm_src = reg as usize;
+        let lanes = if vex_l == 0 { 4 } else { 8 };
+        let mut halves = [0u16; 8];
+
+        for lane in 0..lanes {
+            let bits = if lane < 4 {
+                let qword = self.regs.xmm[xmm_src][lane / 2];
+                if lane & 1 == 0 {
+                    qword as u32
+                } else {
+                    (qword >> 32) as u32
+                }
+            } else {
+                let qword = self.regs.ymm_high[xmm_src][(lane - 4) / 2];
+                if lane & 1 == 0 {
+                    qword as u32
+                } else {
+                    (qword >> 32) as u32
+                }
+            };
+            halves[lane] = f32_to_f16_bits(f32::from_bits(bits));
+        }
+
+        if is_memory {
+            for (lane, half) in halves.iter().copied().enumerate().take(lanes) {
+                self.write_mem(addr + (lane as u64 * 2), half as u64, 2)?;
+            }
+        } else {
+            let xmm_dst = rm as usize;
+            self.regs.xmm[xmm_dst][0] = halves[0] as u64
+                | ((halves[1] as u64) << 16)
+                | ((halves[2] as u64) << 32)
+                | ((halves[3] as u64) << 48);
+            self.regs.xmm[xmm_dst][1] = if vex_l == 0 {
+                0
+            } else {
+                halves[4] as u64
+                    | ((halves[5] as u64) << 16)
+                    | ((halves[6] as u64) << 32)
+                    | ((halves[7] as u64) << 48)
+            };
+            self.regs.ymm_high[xmm_dst] = [0; 2];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vex_cvt_fp(
         &mut self,
         ctx: &mut InsnContext,
@@ -681,5 +784,75 @@ impl X86_64Vcpu {
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
+    }
+}
+
+fn read_half_from_xmm(xmm: [u64; 2], lane: usize) -> u16 {
+    let qword = xmm[lane / 4];
+    ((qword >> ((lane % 4) * 16)) & 0xFFFF) as u16
+}
+
+fn f16_to_f32_bits(bits: u16) -> u32 {
+    let sign = ((bits & 0x8000) as u32) << 16;
+    let exp = (bits >> 10) & 0x1f;
+    let frac = (bits & 0x03ff) as u32;
+
+    match exp {
+        0 => {
+            if frac == 0 {
+                sign
+            } else {
+                let mut mant = frac;
+                let mut unbiased_exp = -14i32;
+                while (mant & 0x0400) == 0 {
+                    mant <<= 1;
+                    unbiased_exp -= 1;
+                }
+                mant &= 0x03ff;
+                sign | (((unbiased_exp + 127) as u32) << 23) | (mant << 13)
+            }
+        }
+        0x1f => sign | 0x7f80_0000 | (frac << 13),
+        _ => sign | ((((exp as i32) - 15 + 127) as u32) << 23) | (frac << 13),
+    }
+}
+
+fn f32_to_f16_bits(value: f32) -> u16 {
+    let bits = value.to_bits();
+    let sign = (bits >> 16) & 0x8000;
+    let abs = bits & 0x7fff_ffff;
+    let exp = (abs >> 23) as i32;
+    let mant = abs & 0x007f_ffff;
+
+    if exp == 0xff {
+        if mant == 0 {
+            return (sign | 0x7c00) as u16;
+        }
+        let payload = (mant >> 13).max(1);
+        return (sign | 0x7c00 | payload) as u16;
+    }
+
+    if abs < 0x3300_0000 {
+        return sign as u16;
+    }
+
+    if abs < 0x3880_0000 {
+        let mant24 = mant | 0x0080_0000;
+        let shift = (126 - exp) as u32;
+        let round = 1u32 << (shift - 1);
+        let half_mant = (mant24 + round - 1 + ((mant24 >> shift) & 1)) >> shift;
+        return (sign | half_mant) as u16;
+    }
+
+    let mut half = (abs - 0x3800_0000) >> 13;
+    let remainder = abs & 0x1fff;
+    if remainder > 0x1000 || (remainder == 0x1000 && (half & 1) != 0) {
+        half += 1;
+    }
+
+    if half >= 0x7c00 {
+        (sign | 0x7c00) as u16
+    } else {
+        (sign | half) as u16
     }
 }

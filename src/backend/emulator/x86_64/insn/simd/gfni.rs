@@ -46,7 +46,7 @@ pub(crate) fn gf_inv(b: u8) -> u8 {
 /// GFNI affine transform of one byte: each output bit i is the GF(2) parity of
 /// (matrix.byte[7-i] AND input) XOR imm8.bit[i]. `matrix` is one qword (8 rows).
 #[inline]
-fn affine_byte(matrix: &[u8], input: u8, imm8: u8) -> u8 {
+pub(crate) fn affine_byte(matrix: &[u8], input: u8, imm8: u8) -> u8 {
     let mut out: u8 = 0;
     for i in 0..8 {
         let parity = (matrix[7 - i] & input).count_ones() as u8 & 1;

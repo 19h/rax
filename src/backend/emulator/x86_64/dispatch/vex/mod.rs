@@ -717,6 +717,10 @@ impl X86_64Vcpu {
                 0x18 => {
                     return self.execute_vinsertf128(ctx, vex_l, vvvv);
                 }
+                // VCVTPS2PH: convert packed single-precision to packed half-precision.
+                0x1D if vex_w == 0 => {
+                    return self.execute_vex_vcvtps2ph(ctx, vex_l, vvvv);
+                }
                 // VEXTRACTF128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 19 /r ib)
                 0x19 => {
                     return self.execute_vextractf128(ctx, vex_l);
@@ -752,6 +756,14 @@ impl X86_64Vcpu {
                 // VMPSADBW ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
                 0x42 => {
                     return self.execute_vex_mpsadbw(ctx, vex_l, vvvv);
+                }
+                // VPCLMULQDQ ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8.
+                0x44 if vex_w == 0 => {
+                    return self.execute_vex_pclmulqdq(ctx, vex_l, vvvv);
+                }
+                // VGF2P8AFFINEQB/VGF2P8AFFINEINVQB ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8.
+                0xCE | 0xCF if vex_w == 1 => {
+                    return self.execute_vex_gf2p8affine(ctx, vex_l, vvvv, opcode == 0xCF);
                 }
                 // VPBLENDVB ymm1/xmm1, ymm2/xmm2, ymm3/m, xmm4
                 0x4C => {
@@ -856,6 +868,10 @@ impl X86_64Vcpu {
                 0x0E | 0x0F => {
                     return self.execute_vex_vtest(ctx, vex_l, vvvv, opcode);
                 }
+                // VCVTPH2PS: convert packed half-precision to packed single-precision.
+                0x13 if vex_w == 0 => {
+                    return self.execute_vex_vcvtph2ps(ctx, vex_l, vvvv);
+                }
                 // VMOVNTDQA
                 0x2A => {
                     return self.execute_vex_movntdqa(ctx, vex_l, vvvv);
@@ -936,6 +952,10 @@ impl X86_64Vcpu {
                 0x40 => {
                     return self.execute_vex_pmulld(ctx, vex_l, vvvv);
                 }
+                // VGF2P8MULB ymm1/xmm1, ymm2/xmm2, ymm3/m.
+                0xCF if vex_w == 0 => {
+                    return self.execute_vex_gf2p8mulb(ctx, vex_l, vvvv);
+                }
                 // VPCMPGTQ: compare packed qwords for greater than
                 0x37 => {
                     return self.execute_vex_pcmpgtq(ctx, vex_l, vvvv);
@@ -964,6 +984,10 @@ impl X86_64Vcpu {
                 | 0xA7 | 0xA8 | 0xA9 | 0xAA | 0xAB | 0xAC | 0xAD | 0xAE | 0xAF | 0xB6 | 0xB7
                 | 0xB8 | 0xB9 | 0xBA | 0xBB | 0xBC | 0xBD | 0xBE | 0xBF => {
                     return self.execute_vex_fma(ctx, vex_l, vex_w, vvvv, opcode);
+                }
+                // VAESENC/VAESENCLAST/VAESDEC/VAESDECLAST.
+                0xDC | 0xDD | 0xDE | 0xDF if vex_w == 0 => {
+                    return self.execute_vex_vaes(ctx, vex_l, vvvv, opcode);
                 }
                 _ => {}
             }
@@ -996,6 +1020,7 @@ impl X86_64Vcpu {
 mod arith;
 mod compare;
 mod convert;
+mod crypto;
 mod fma;
 mod gather;
 mod integer;
