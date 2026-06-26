@@ -16029,6 +16029,124 @@ fn str_scas_cmps_addr32_rep_forms() {
     );
 }
 
+#[test]
+fn str_addr32_rep_zero_count_forms() {
+    fn zero_count_regs() -> Registers {
+        let mut r = regs();
+        r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF;
+        r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF;
+        r.rcx = 0xFFFF_0000_0000_0000;
+        r.rflags = FLAG_MASK;
+        r
+    }
+
+    let s = string_scratch(&[0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6, 0x07, 0x18]);
+    check_mem(
+        "rep_movsb_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xA4]),
+        zero_count_regs(),
+        s,
+        FLAG_MASK,
+    );
+
+    let s = string_scratch(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
+    check_mem(
+        "rep_movsd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xA5]),
+        zero_count_regs(),
+        s,
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0x0102_0304_0506_0708;
+    check_mem(
+        "rep_stosb_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xAA]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0x8877_6655_4433_2211;
+    check_mem(
+        "rep_stosd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xAB]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0xDEAD_BEEF_DEAD_BEEF;
+    let s = string_scratch(&[0x5A, 0x6B, 0x7C, 0x8D]);
+    check_mem(
+        "rep_lodsb_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xAC]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0xCAFE_BABE_CAFE_BABE;
+    let s = string_scratch(&[0x21, 0x43, 0x65, 0x87]);
+    check_mem(
+        "rep_lodsd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xAD]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0x10;
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize] = 0x20;
+    check_mem(
+        "repe_scasb_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xAE]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut r = zero_count_regs();
+    r.rax = 0x1122_3344;
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize..DST_OFF as usize + 4].copy_from_slice(&0x5566_7788u32.to_le_bytes());
+    check_mem(
+        "repne_scasd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF2, 0xAF]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize] = 0x31;
+    s[DST_OFF as usize] = 0x41;
+    check_mem(
+        "repe_cmpsb_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0xA6]),
+        zero_count_regs(),
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 4].copy_from_slice(&0x0123_4567u32.to_le_bytes());
+    s[DST_OFF as usize..DST_OFF as usize + 4].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    check_mem(
+        "repne_cmpsd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF2, 0xA7]),
+        zero_count_regs(),
+        s,
+        FLAG_MASK,
+    );
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 6: remaining exact SIMD/memory forms.
 //
@@ -17063,6 +17181,62 @@ fn io_string_addr32_rep_forms() {
     r.rdx = 0x1234;
     check_mem(
         "rep_outsd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_string_addr32_df_rep_forms() {
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 20;
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rdx = 0x1234;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "rep_insw_addr32_df",
+        &with_hlt(vec![0x67, 0xF3, 0x66, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 24;
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rdx = 0x1234;
+    r.rflags = flags::bits::DF;
+    check_io_mem(
+        "rep_outsd_addr32_df",
+        &with_hlt(vec![0x67, 0xF3, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_string_addr32_rep_zero_count_skips_io() {
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 12;
+    r.rcx = 0xFFFF_0000_0000_0000;
+    r.rdx = 0x1234;
+    check_mem(
+        "rep_insd_addr32_zero_count",
+        &with_hlt(vec![0x67, 0xF3, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 20;
+    r.rcx = 0xFFFF_0000_0000_0000;
+    r.rdx = 0x1234;
+    check_io_mem(
+        "rep_outsd_addr32_zero_count",
         &with_hlt(vec![0x67, 0xF3, 0x6F]),
         r,
         io_scratch(),

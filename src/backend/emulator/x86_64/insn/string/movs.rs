@@ -113,6 +113,11 @@ fn movs_common(
     } else {
         1
     };
+    if is_rep && count == 0 {
+        vcpu.regs.rsi = index(vcpu.regs.rsi, addr32);
+        vcpu.regs.rdi = index(vcpu.regs.rdi, addr32);
+        vcpu.regs.rcx = rep_count(vcpu.regs.rcx, addr32);
+    }
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;

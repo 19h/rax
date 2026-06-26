@@ -18,6 +18,9 @@ pub fn scasb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     } else {
         1
     };
+    if is_rep && count == 0 {
+        vcpu.regs.rcx = rep_count(vcpu.regs.rcx, addr32);
+    }
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;
@@ -58,6 +61,9 @@ pub fn scas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     } else {
         1
     };
+    if is_rep && count == 0 {
+        vcpu.regs.rcx = rep_count(vcpu.regs.rcx, addr32);
+    }
     for _ in 0..count {
         if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
             break;

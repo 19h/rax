@@ -24,6 +24,7 @@ fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<
     let addr_size = addr_size_bytes(vcpu, ctx);
 
     if rep && rep_count(vcpu, addr_size) == 0 {
+        normalize_zero_rep_count(vcpu, addr_size);
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }
@@ -130,6 +131,12 @@ fn dec_rep_count(vcpu: &mut X86_64Vcpu, addr_size: u8) -> u64 {
     }
 }
 
+fn normalize_zero_rep_count(vcpu: &mut X86_64Vcpu, addr_size: u8) {
+    if addr_size == 4 {
+        vcpu.regs.rcx = (vcpu.regs.rcx as u32) as u64;
+    }
+}
+
 /// OUTSB (0x6E) - Output byte from DS:[RSI] to port DX
 pub fn outsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     outs_common(vcpu, ctx, 1)
@@ -143,6 +150,7 @@ fn outs_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result
 
     // Check REP count - if zero, skip the operation
     if rep && rep_count(vcpu, addr_size) == 0 {
+        normalize_zero_rep_count(vcpu, addr_size);
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }
