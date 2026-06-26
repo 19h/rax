@@ -3474,6 +3474,38 @@ fn str_movsb_single() {
 }
 
 #[test]
+fn str_movsw_movsd_movsq_single_and_addr32_forms() {
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 2].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem("movsw_single", &with_hlt(vec![0x66, 0xA5]), r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 4].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem("movsd_single", &with_hlt(vec![0xA5]), r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 8]
+        .copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem("movsq_single", &with_hlt(vec![0x48, 0xA5]), r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 4].copy_from_slice(&0x7654_3210u32.to_le_bytes());
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF;
+    check_mem("movsd_addr32_single", &with_hlt(vec![0x67, 0xA5]), r, s, 0);
+}
+
+#[test]
 fn str_rep_movsb_df_reverse() {
     // DF=1 reverse copy. Point RSI/RDI at the LAST element so the run walks down.
     // 3 bytes at offsets 0,1,2 copied to dst 16,17,18 in reverse address order.
@@ -3520,6 +3552,31 @@ fn str_rep_stosd() {
 }
 
 #[test]
+fn str_stosw_stosq_single_and_addr32_rep_forms() {
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0xBEEF;
+    check_mem("stosw_single", &with_hlt(vec![0x66, 0xAB]), r, string_scratch(&[]), 0);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0x0123_4567_89AB_CDEF;
+    check_mem("stosq_single", &with_hlt(vec![0x48, 0xAB]), r, string_scratch(&[]), 0);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF;
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rax = 0x7654_3210;
+    check_mem(
+        "rep_stosd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0xAB]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
+}
+
+#[test]
 fn str_lodsb() {
     // LODSB: AL <- [RSI], RSI advances. AC. Single, no REP.
     let mut r = regs();
@@ -3532,6 +3589,36 @@ fn str_lodsb() {
         string_scratch(&[0x99, 0x88]),
         0,
     );
+}
+
+#[test]
+fn str_lods_rep_and_addr32_forms() {
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rcx = 4;
+    r.rax = 0xAAAA_BBBB_CCCC_DD00;
+    check_mem(
+        "rep_lodsb",
+        &with_hlt(vec![0xF3, 0xAC]),
+        r,
+        string_scratch(&[0x11, 0x22, 0x33, 0x44]),
+        0,
+    );
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 16]
+        .copy_from_slice(&[1, 0, 0, 0, 0, 0, 0, 0, 0xFE, 0xCA, 0xEF, 0xBE, 0, 0, 0, 0]);
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rcx = 2;
+    check_mem("rep_lodsq", &with_hlt(vec![0xF3, 0x48, 0xAD]), r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 4].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF;
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check_mem("lodsd_addr32", &with_hlt(vec![0x67, 0xAD]), r, s, 0);
 }
 
 #[test]
@@ -11982,6 +12069,117 @@ fn str_scasd_and_scasq() {
     r.rdi = DATA_ADDR + DST_OFF;
     r.rax = 0x1111_1111_1111_1111;
     check_mem("scasq_ne", &with_hlt(vec![0x48, 0xAF]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_scasw_repe_scasd_repne_scasq_width_forms() {
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize..DST_OFF as usize + 2].copy_from_slice(&0x8001u16.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0x7FFF;
+    check_mem("scasw_single", &with_hlt(vec![0x66, 0xAF]), r, s, FLAG_MASK);
+
+    let mut s = [0u8; 64];
+    for (i, val) in [0x1234_5678u32, 0x1234_5678, 0x9ABC_DEF0, 0x1234_5678]
+        .iter()
+        .enumerate()
+    {
+        let off = DST_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 4;
+    r.rax = 0x1234_5678;
+    check_mem("repe_scasd_ne", &with_hlt(vec![0xF3, 0xAF]), r, s, FLAG_MASK);
+
+    let mut s = [0u8; 64];
+    for (i, val) in [1u64, 2, 0x4444, 3].iter().enumerate() {
+        let off = DST_OFF as usize + i * 8;
+        s[off..off + 8].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 4;
+    r.rax = 0x4444;
+    check_mem("repne_scasq_eq", &with_hlt(vec![0xF2, 0x48, 0xAF]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_cmpsw_cmpsd_cmpsq_width_forms() {
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 2].copy_from_slice(&0x00FFu16.to_le_bytes());
+    s[DST_OFF as usize..DST_OFF as usize + 2].copy_from_slice(&0x0100u16.to_le_bytes());
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem("cmpsw_single", &with_hlt(vec![0x66, 0xA7]), r, s, FLAG_MASK);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 12].copy_from_slice(&[
+        1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0,
+    ]);
+    s[DST_OFF as usize..DST_OFF as usize + 12].copy_from_slice(&[
+        1, 0, 0, 0, 7, 0, 0, 0, 3, 0, 0, 0,
+    ]);
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 3;
+    check_mem("repe_cmpsd_ne", &with_hlt(vec![0xF3, 0xA7]), r, s, FLAG_MASK);
+
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 8].copy_from_slice(&5u64.to_le_bytes());
+    s[SRC_OFF as usize + 8..SRC_OFF as usize + 16].copy_from_slice(&8u64.to_le_bytes());
+    s[DST_OFF as usize..DST_OFF as usize + 8].copy_from_slice(&4u64.to_le_bytes());
+    s[DST_OFF as usize + 8..DST_OFF as usize + 16].copy_from_slice(&8u64.to_le_bytes());
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 2;
+    check_mem("repne_cmpsq_eq", &with_hlt(vec![0xF2, 0x48, 0xA7]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_scas_cmps_addr32_rep_forms() {
+    let mut s = [0u8; 64];
+    for (i, val) in [0x10u32, 0x20, 0x30].iter().enumerate() {
+        let off = DST_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rax = 0x20;
+    check_mem(
+        "repne_scasd_addr32",
+        &with_hlt(vec![0x67, 0xF2, 0xAF]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    for (i, val) in [1u32, 2, 3].iter().enumerate() {
+        let off = SRC_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    for (i, val) in [1u32, 7, 3].iter().enumerate() {
+        let off = DST_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    check_mem(
+        "repe_cmpsd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0xA7]),
+        r,
+        s,
+        FLAG_MASK,
+    );
 }
 
 // ===========================================================================
