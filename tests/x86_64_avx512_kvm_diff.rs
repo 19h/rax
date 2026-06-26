@@ -1568,8 +1568,12 @@ fn base_table() -> Vec<Base> {
         b("vpunpcklqdq", F, Vvv, Int, 8, f, f),
         b("vpunpckhqdq", F, Vvv, Int, 8, f, f),
         b("vpunpcklbw", Bw, Vvv, Int, 0, f, f),
+        b("vpunpckhbw", Bw, Vvv, Int, 0, f, f),
+        b("vpunpcklwd", Bw, Vvv, Int, 0, f, f),
         b("vpunpckhwd", Bw, Vvv, Int, 0, f, f),
         b("vunpcklps", F, Vvv, F32, 4, f, f),
+        b("vunpckhps", F, Vvv, F32, 4, f, f),
+        b("vunpcklpd", F, Vvv, F64, 8, f, f),
         b("vunpckhpd", F, Vvv, F64, 8, f, f),
         // ---- same-width converts (dword<->single, qword<->double) ----
         // (width-changing converts, pmov extend/truncate, and broadcasts have
