@@ -5422,6 +5422,35 @@ fn sse_psubsw() {
     );
 }
 
+#[test]
+fn sse2_saturating_add_sub_memory_sources() {
+    let a = [
+        0x00, 0x10, 0x7F, 0x80, 0xFE, 0xFF, 0x40, 0xC0, 0x01, 0x02, 0x7E, 0x81, 0xAA, 0x55,
+        0x33, 0xCC,
+    ];
+    let b = [
+        0x01, 0xF0, 0x01, 0x80, 0x02, 0x01, 0x40, 0xC0, 0xFF, 0x02, 0x02, 0xFF, 0x55, 0xAA,
+        0xCC, 0x33,
+    ];
+
+    for (label, opcode) in [
+        ("paddusb_mem", 0xDC),
+        ("paddusw_mem", 0xDD),
+        ("paddsb_mem", 0xEC),
+        ("paddsw_mem", 0xED),
+        ("psubusb_mem", 0xD8),
+        ("psubusw_mem", 0xD9),
+        ("psubsb_mem", 0xE8),
+        ("psubsw_mem", 0xE9),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+}
+
 // ---------------------------------------------------------------------------
 // SSE2 integer: packed equality / greater-than compares (produce all-1s/0s).
 // ---------------------------------------------------------------------------
@@ -5516,6 +5545,37 @@ fn sse_pcmpgtd() {
     );
 }
 
+#[test]
+fn sse2_compare_logical_memory_sources() {
+    let a = [
+        0x7F, 0x80, 0x00, 0xFF, 0x01, 0x10, 0xC0, 0x40, 0x05, 0x06, 0x80, 0x7F, 0x00, 0x01,
+        0xFE, 0x02,
+    ];
+    let b = [
+        0x7E, 0x7F, 0x00, 0x00, 0xFF, 0x10, 0x40, 0xC0, 0x06, 0x05, 0x7F, 0x80, 0x01, 0x00,
+        0xFF, 0x03,
+    ];
+
+    for (label, opcode) in [
+        ("pand_mem", 0xDB),
+        ("pandn_mem", 0xDF),
+        ("por_mem", 0xEB),
+        ("pxor_mem", 0xEF),
+        ("pcmpeqb_mem", 0x74),
+        ("pcmpeqw_mem", 0x75),
+        ("pcmpeqd_mem", 0x76),
+        ("pcmpgtb_mem", 0x64),
+        ("pcmpgtw_mem", 0x65),
+        ("pcmpgtd_mem", 0x66),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+}
+
 // ---------------------------------------------------------------------------
 // SSE2 integer: multiplies (PMULHW/PMULHUW/PMULUDQ).  PMULHW is already covered.
 // ---------------------------------------------------------------------------
@@ -5545,6 +5605,85 @@ fn sse_pmuludq() {
     check_sse(
         "pmuludq",
         &sse_program(&[0x66, 0x0F, 0xF4, 0xC1]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
+fn sse2_multiply_minmax_average_memory_sources() {
+    let a = u16x8([
+        0xFFFF, 0x8000, 0x4000, 0x0100, 0x00FF, 0x1234, 0xABCD, 0x0001,
+    ]);
+    let b = u16x8([
+        0xFFFF, 0x0002, 0x0004, 0x0100, 0x00FF, 0x1000, 0x0010, 0x7FFF,
+    ]);
+
+    for (label, opcode) in [
+        ("pmullw_mem", 0xD5),
+        ("pmulhw_mem", 0xE5),
+        ("pmulhuw_mem", 0xE4),
+        ("pmuludq_mem", 0xF4),
+        ("pmaddwd_mem", 0xF5),
+        ("psadbw_mem", 0xF6),
+        ("pavgb_mem", 0xE0),
+        ("pavgw_mem", 0xE3),
+        ("pminub_mem", 0xDA),
+        ("pmaxub_mem", 0xDE),
+        ("pminsw_mem", 0xEA),
+        ("pmaxsw_mem", 0xEE),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+}
+
+#[test]
+fn sse2_pack_unpack_shuffle_memory_sources() {
+    let a = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+        0xEE, 0xFF,
+    ];
+    let b = [
+        0x7F, 0x80, 0x01, 0xFE, 0x10, 0xEF, 0x20, 0xDF, 0x30, 0xCF, 0x40, 0xBF, 0x50, 0xAF,
+        0x60, 0x9F,
+    ];
+
+    for (label, opcode) in [
+        ("packsswb_mem", 0x63),
+        ("packssdw_mem", 0x6B),
+        ("packuswb_mem", 0x67),
+        ("punpcklbw_mem", 0x60),
+        ("punpcklwd_mem", 0x61),
+        ("punpckldq_mem", 0x62),
+        ("punpcklqdq_mem", 0x6C),
+        ("punpckhbw_mem", 0x68),
+        ("punpckhwd_mem", 0x69),
+        ("punpckhdq_mem", 0x6A),
+        ("punpckhqdq_mem", 0x6D),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+
+    check_sse(
+        "pshufd_mem",
+        &sse_program(&[0x66, 0x0F, 0x70, 0x47, 0x10, 0x1B]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pshuflw_mem",
+        &sse_program(&[0xF2, 0x0F, 0x70, 0x47, 0x10, 0x1B]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pshufhw_mem",
+        &sse_program(&[0xF3, 0x0F, 0x70, 0x47, 0x10, 0x1B]),
         sse_scratch(a, b),
     );
 }
@@ -9079,6 +9218,41 @@ fn sse2_xmm_count_shifts() {
 }
 
 #[test]
+fn sse2_memory_count_shift_forms() {
+    let a = [
+        0x80, 0x01, 0x7F, 0xFE, 0x34, 0x12, 0xCC, 0xDD, 0x01, 0x80, 0xEF, 0x7E, 0x89, 0xAB,
+        0x67, 0x45,
+    ];
+
+    for (label, opcode, count) in [
+        ("psrlw_mem_count", 0xD1, 4u64),
+        ("psrld_mem_count", 0xD2, 12),
+        ("psrlq_mem_count", 0xD3, 17),
+        ("psraw_mem_count", 0xE1, 5),
+        ("psrad_mem_count", 0xE2, 9),
+        ("psllw_mem_count", 0xF1, 3),
+        ("pslld_mem_count", 0xF2, 13),
+        ("psllq_mem_count", 0xF3, 29),
+        ("psrlw_mem_count_edge", 0xD1, 16),
+        ("psrld_mem_count_edge", 0xD2, 32),
+        ("psrlq_mem_count_edge", 0xD3, 64),
+        ("psraw_mem_count_edge", 0xE1, 19),
+        ("psrad_mem_count_edge", 0xE2, 35),
+        ("psllw_mem_count_edge", 0xF1, 16),
+        ("pslld_mem_count_edge", 0xF2, 32),
+        ("psllq_mem_count_edge", 0xF3, 64),
+    ] {
+        let mut count_bytes = [0u8; 16];
+        count_bytes[0..8].copy_from_slice(&count.to_le_bytes());
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
+            sse_scratch(a, count_bytes),
+        );
+    }
+}
+
+#[test]
 fn sse_movlps_movhps_load_store() {
     let mut s = [0u8; 64];
     s[0..16].copy_from_slice(&[
@@ -9614,6 +9788,52 @@ fn sse4_insertps_reg_source() {
         &sse_program(&[0x66, 0x0F, 0x3A, 0x21, 0xC1, 0x98]),
         sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
     );
+}
+
+#[test]
+fn sse4_insert_extract_memory_operands() {
+    let a = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+        0xEE, 0xFF,
+    ];
+    let b = [
+        0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB,
+        0xCD, 0xEF,
+    ];
+
+    check_sse(
+        "pinsrw_mem",
+        &sse_program(&[0x66, 0x0F, 0xC4, 0x47, 0x10, 0x05]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pinsrb_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x20, 0x47, 0x13, 0x0E]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pinsrd_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x22, 0x47, 0x14, 0x02]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pinsrq_mem",
+        &sse_program(&[0x66, 0x48, 0x0F, 0x3A, 0x22, 0x47, 0x18, 0x01]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "insertps_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x21, 0x47, 0x10, 0x20]),
+        sse_scratch(a, b),
+    );
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x15, 0x4F, 0x20, 0x06]); // pextrw [rdi+0x20], xmm1, 6
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x16, 0x4F, 0x24, 0x02]); // pextrd [rdi+0x24], xmm1, 2
+    code.extend_from_slice(&[0x66, 0x48, 0x0F, 0x3A, 0x16, 0x4F, 0x28, 0x01]); // pextrq [rdi+0x28], xmm1, 1
+    code.push(HLT);
+    check_sse("pextr_mem", &code, sse_scratch(a, b));
 }
 
 #[test]
