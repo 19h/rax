@@ -11117,6 +11117,104 @@ fn mov_segment_register_memory_forms() {
 }
 
 #[test]
+fn mov_immediate_memory_width_forms() {
+    let mut scratch = zero_scratch();
+    for (idx, byte) in scratch.iter_mut().enumerate() {
+        *byte = (idx as u8).wrapping_mul(7).wrapping_add(0x31);
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xC6, 0x07, 0xA5, // mov byte [rdi], 0xa5
+        0x66, 0xC7, 0x47, 0x02, // mov word [rdi+2], 0xbeef
+    ]);
+    code.extend_from_slice(&0xBEEFu16.to_le_bytes());
+    code.extend_from_slice(&[
+        0xC7, 0x47, 0x04, // mov dword [rdi+4], 0x89abcdef
+    ]);
+    code.extend_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    code.extend_from_slice(&[
+        0x48, 0xC7, 0x47, 0x08, // mov qword [rdi+8], sign_extend(0xfedcba98)
+    ]);
+    code.extend_from_slice(&0xFEDC_BA98u32.to_le_bytes());
+    code.push(HLT);
+
+    check_mem("mov_immediate_memory_width_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn mov_register_memory_width_forms() {
+    let mut scratch = zero_scratch();
+    for (idx, byte) in scratch.iter_mut().enumerate() {
+        *byte = (idx as u8).wrapping_mul(11).wrapping_add(0x19);
+    }
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_44A5;
+    r.rbx = 0x2222_3333_4444_BEEF;
+    r.rcx = 0x3333_4444_89AB_CDEF;
+    r.rdx = 0x4444_5555_6666_7777;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.r8 = 0xFEDC_BA98_7654_3210;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x88, 0x07, // mov byte [rdi], al
+        0x66, 0x89, 0x5F, 0x02, // mov word [rdi+2], bx
+        0x89, 0x4F, 0x04, // mov dword [rdi+4], ecx
+        0x4C, 0x89, 0x47, 0x08, // mov qword [rdi+8], r8
+        0x8A, 0x57, 0x10, // mov dl, byte [rdi+0x10]
+        0x66, 0x8B, 0x77, 0x12, // mov si, word [rdi+0x12]
+        0x8B, 0x5F, 0x14, // mov ebx, dword [rdi+0x14]
+        0x4C, 0x8B, 0x4F, 0x18, // mov r9, qword [rdi+0x18]
+        HLT,
+    ]);
+
+    check_mem("mov_register_memory_width_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn mov_byte_high_and_rex_register_forms() {
+    let mut scratch = zero_scratch();
+    for (idx, byte) in scratch.iter_mut().enumerate() {
+        *byte = (idx as u8).wrapping_mul(13).wrapping_add(0x07);
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x49, 0x89, 0xFA, // mov r10, rdi
+        0xB4, 0x12, // mov ah, 0x12
+        0xB5, 0x34, // mov ch, 0x34
+        0xB6, 0x56, // mov dh, 0x56
+        0xB7, 0x78, // mov bh, 0x78
+        0x88, 0x67, 0x00, // mov byte [rdi], ah
+        0x88, 0x6F, 0x01, // mov byte [rdi+1], ch
+        0x88, 0x77, 0x02, // mov byte [rdi+2], dh
+        0x88, 0x7F, 0x03, // mov byte [rdi+3], bh
+        0x8A, 0x67, 0x08, // mov ah, byte [rdi+8]
+        0x8A, 0x6F, 0x09, // mov ch, byte [rdi+9]
+        0x8A, 0x77, 0x0A, // mov dh, byte [rdi+10]
+        0x8A, 0x7F, 0x0B, // mov bh, byte [rdi+11]
+        0x40, 0xB4, 0x9A, // mov spl, 0x9a
+        0x40, 0xB5, 0xBC, // mov bpl, 0xbc
+        0x40, 0xB6, 0xDE, // mov sil, 0xde
+        0x40, 0xB7, 0xF0, // mov dil, 0xf0
+        0x41, 0x88, 0x62, 0x04, // mov byte [r10+4], spl
+        0x41, 0x88, 0x6A, 0x05, // mov byte [r10+5], bpl
+        0x41, 0x88, 0x72, 0x06, // mov byte [r10+6], sil
+        0x41, 0x88, 0x7A, 0x07, // mov byte [r10+7], dil
+        0x41, 0x8A, 0x62, 0x0C, // mov spl, byte [r10+12]
+        0x41, 0x8A, 0x6A, 0x0D, // mov bpl, byte [r10+13]
+        0x41, 0x8A, 0x72, 0x0E, // mov sil, byte [r10+14]
+        0x41, 0x8A, 0x7A, 0x0F, // mov dil, byte [r10+15]
+        HLT,
+    ]);
+
+    check_mem("mov_byte_high_and_rex_register_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
 fn control_call_rel32_ret_balanced() {
     // call func; add rax,2; hlt; func: add rax,5; ret. Final RAX=7, stack balanced.
     let mut r = regs();
