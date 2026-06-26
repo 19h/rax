@@ -6174,6 +6174,11 @@ fn aes_aesenc() {
         &sse_program(&[0x66, 0x0F, 0x38, 0xDC, 0xC1]),
         sse_scratch(state, rkey),
     );
+    check_sse(
+        "aesenc_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDC, 0x47, 0x10]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
@@ -6190,6 +6195,11 @@ fn aes_aesenclast() {
     check_sse(
         "aesenclast",
         &sse_program(&[0x66, 0x0F, 0x38, 0xDD, 0xC1]),
+        sse_scratch(state, rkey),
+    );
+    check_sse(
+        "aesenclast_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDD, 0x47, 0x10]),
         sse_scratch(state, rkey),
     );
 }
@@ -6210,6 +6220,11 @@ fn aes_aesdec() {
         &sse_program(&[0x66, 0x0F, 0x38, 0xDE, 0xC1]),
         sse_scratch(state, rkey),
     );
+    check_sse(
+        "aesdec_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDE, 0x47, 0x10]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
@@ -6228,6 +6243,11 @@ fn aes_aesdeclast() {
         &sse_program(&[0x66, 0x0F, 0x38, 0xDF, 0xC1]),
         sse_scratch(state, rkey),
     );
+    check_sse(
+        "aesdeclast_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDF, 0x47, 0x10]),
+        sse_scratch(state, rkey),
+    );
 }
 
 #[test]
@@ -6241,6 +6261,11 @@ fn aes_aesimc() {
     check_sse(
         "aesimc",
         &sse_program(&[0x66, 0x0F, 0x38, 0xDB, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "aesimc_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xDB, 0x47, 0x10]),
         sse_scratch(a, b),
     );
 }
@@ -6257,6 +6282,11 @@ fn aes_aeskeygenassist() {
     check_sse(
         "aeskeygen",
         &sse_program(&[0x66, 0x0F, 0x3A, 0xDF, 0xC1, 0x01]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "aeskeygen_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xDF, 0x47, 0x10, 0x01]),
         sse_scratch(a, b),
     );
 }
@@ -6307,6 +6337,16 @@ fn sha1_message_schedule() {
         &sse_program(&[0x0F, 0x38, 0xCA, 0xC1]),
         sse_scratch(sha_a(), sha_b()),
     );
+    check_sse(
+        "sha1msg1_mem",
+        &sse_program(&[0x0F, 0x38, 0xC9, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha1msg2_mem",
+        &sse_program(&[0x0F, 0x38, 0xCA, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
 }
 
 #[test]
@@ -6352,6 +6392,21 @@ fn sha256_round_and_schedule() {
         &sse_program(&[0x0F, 0x38, 0xCD, 0xC1]),
         sse_scratch(sha_a(), sha_b()),
     );
+    check_sse(
+        "sha256rnds2_mem",
+        &sse_program(&[0x0F, 0x38, 0xCB, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha256msg1_mem",
+        &sse_program(&[0x0F, 0x38, 0xCC, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha256msg2_mem",
+        &sse_program(&[0x0F, 0x38, 0xCD, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -6393,6 +6448,18 @@ fn pclmulqdq_all_selectors() {
                 _ => "pclmulqdq_ignore_aa",
             },
             &sse_program(&[0x66, 0x0F, 0x3A, 0x44, 0xC1, imm]),
+            sse_scratch(crypto_a(), crypto_b()),
+        );
+        check_sse(
+            match imm {
+                0x00 => "pclmulqdq_mem_ll",
+                0x01 => "pclmulqdq_mem_hl",
+                0x10 => "pclmulqdq_mem_lh",
+                0x11 => "pclmulqdq_mem_hh",
+                0x55 => "pclmulqdq_mem_ignore_55",
+                _ => "pclmulqdq_mem_ignore_aa",
+            },
+            &sse_program(&[0x66, 0x0F, 0x3A, 0x44, 0x47, 0x10, imm]),
             sse_scratch(crypto_a(), crypto_b()),
         );
     }
