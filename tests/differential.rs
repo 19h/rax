@@ -10434,6 +10434,51 @@ fn mmx_memory_source_program(opcode: u8) -> Vec<u8> {
 }
 
 #[test]
+fn mmx_pshufw_register_and_memory_sources() {
+    let a = [0x00, 0x01, 0x10, 0x11, 0x20, 0x21, 0x30, 0x31];
+    let b = [0x80, 0x81, 0x90, 0x91, 0xA0, 0xA1, 0xB0, 0xB1];
+
+    check_mem(
+        "mmx_pshufw_reg",
+        &mmx_program(&[0x0F, 0x70, 0xC1, 0x27]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x70, 0x47, 0x08, 0x72]); // pshufw mm0, [rdi+8], 0x72
+    code.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    code.push(HLT);
+    check_mem("mmx_pshufw_mem", &code, regs(), mmx_scratch(a, b), 0);
+}
+
+#[test]
+fn mmx_immediate_shift_forms_and_edge_counts() {
+    let a = [0x01, 0x80, 0xFF, 0x7F, 0x34, 0x12, 0xCC, 0xDD];
+    let b = [0x55, 0xAA, 0x10, 0x20, 0xFE, 0xDC, 0x98, 0x76];
+
+    for (label, opcode, modrm, imm8) in [
+        ("mmx_psrlw_imm", 0x71, 0xD0, 4),
+        ("mmx_psraw_imm_edge", 0x71, 0xE0, 19),
+        ("mmx_psllw_imm_edge", 0x71, 0xF0, 16),
+        ("mmx_psrld_imm", 0x72, 0xD0, 8),
+        ("mmx_psrad_imm_edge", 0x72, 0xE0, 35),
+        ("mmx_pslld_imm_edge", 0x72, 0xF0, 32),
+        ("mmx_psrlq_imm", 0x73, 0xD0, 17),
+        ("mmx_psllq_imm_edge", 0x73, 0xF0, 64),
+    ] {
+        check_mem(
+            label,
+            &mmx_program(&[0x0F, opcode, modrm, imm8]),
+            regs(),
+            mmx_scratch(a, b),
+            0,
+        );
+    }
+}
+
+#[test]
 fn sse_movups_movupd_unaligned_load_store() {
     let mut s = [0u8; 64];
     for (idx, byte) in s.iter_mut().enumerate() {

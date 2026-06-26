@@ -1,7 +1,7 @@
 //! SSE shuffle and unpack instructions: PSHUFD, UNPCKLPS, UNPCKHPS.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -122,7 +122,19 @@ pub fn pshufd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         vcpu.regs.xmm[xmm_dst][0] = (d0 as u64) | ((d1 as u64) << 32);
         vcpu.regs.xmm[xmm_dst][1] = (d2 as u64) | ((d3 as u64) << 32);
     } else {
-        return Err(Error::Emulator("PSHUFW (MMX) not implemented".to_string()));
+        // PSHUFW: shuffle all 4 words in a 64-bit MMX operand.
+        let mm_dst = reg as usize & 0x7;
+        let src = if is_memory {
+            vcpu.read_mem(addr, 8)?
+        } else {
+            vcpu.regs.mm[rm as usize & 0x7]
+        };
+        let w0 = (src >> (((imm8 >> 0) & 3) * 16)) as u16;
+        let w1 = (src >> (((imm8 >> 2) & 3) * 16)) as u16;
+        let w2 = (src >> (((imm8 >> 4) & 3) * 16)) as u16;
+        let w3 = (src >> (((imm8 >> 6) & 3) * 16)) as u16;
+        vcpu.regs.mm[mm_dst] =
+            (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
