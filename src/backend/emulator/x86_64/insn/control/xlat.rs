@@ -9,7 +9,12 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn xlat(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // AL = [RBX + AL]
     let index = vcpu.regs.rax & 0xFF;
-    let addr = vcpu.regs.rbx.wrapping_add(index);
+    let base = if ctx.address_size_override && vcpu.sregs.cs.l {
+        vcpu.regs.rbx & 0xFFFF_FFFF
+    } else {
+        vcpu.regs.rbx
+    };
+    let addr = base.wrapping_add(index);
     let value = vcpu.read_mem(addr, 1)?;
     vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (value & 0xFF);
     vcpu.regs.rip += ctx.cursor as u64;

@@ -8061,6 +8061,35 @@ fn movdir64b_copy_into_scratch() {
 }
 
 #[test]
+fn movdir_addr32_forms() {
+    let mut r = modern_flags_regs();
+    r.rbx = 0xA5A5_5A5A;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "movdiri_m32_addr32",
+        &with_hlt(vec![0x67, 0x0F, 0x38, 0xF9, 0x1F]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    for (i, b) in s.iter_mut().enumerate() {
+        *b = (0x40u8).wrapping_add(i as u8);
+    }
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "movdir64b_addr32_copy",
+        &with_hlt(vec![0x67, 0x66, 0x0F, 0x38, 0xF8, 0x47, 0x20]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cldemote_hint_preserves_state() {
     // CLDEMOTE m8 = 0F 1C /0. Architecturally a cache hint: no GPR/flag/memory effect.
     let mut s = [0u8; 64];
@@ -11878,6 +11907,29 @@ fn control_jrcxz_taken_and_not_taken() {
 }
 
 #[test]
+fn control_jecxz_and_loop_addr32_forms() {
+    let jecxz = with_hlt(vec![
+        0x67, 0xE3, 0x03, // jecxz taken_target
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // taken_target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0000;
+    check("jecxz_addr32_taken", &jecxz, r);
+
+    let loop_addr32 = with_hlt(vec![
+        0x67, 0xE2, 0x03, // loop target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0002;
+    check("loop_addr32_taken", &loop_addr32, r);
+}
+
+#[test]
 fn control_loopz_loopnz_conditions() {
     let loopz = with_hlt(vec![
         0xE1, 0x03, // loopz target
@@ -11903,6 +11955,31 @@ fn control_loopz_loopnz_conditions() {
 }
 
 #[test]
+fn control_loopz_loopnz_addr32_counter_forms() {
+    let loopz = with_hlt(vec![
+        0x67, 0xE1, 0x03, // loopz target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rflags = flags::bits::ZF;
+    check("loopz_addr32_taken", &loopz, r);
+
+    let loopnz = with_hlt(vec![
+        0x67, 0xE0, 0x03, // loopnz target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rflags = 0;
+    check("loopnz_addr32_taken", &loopnz, r);
+}
+
+#[test]
 fn mov_moffs_load_store_forms() {
     // A0/A1/A2/A3 absolute-offset MOVs in long mode use a 64-bit moffs.
     let mut s = [0u8; 64];
@@ -11920,6 +11997,23 @@ fn mov_moffs_load_store_forms() {
 }
 
 #[test]
+fn mov_moffs_addr32_load_store_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0xFEDC_BA98_7654_3210u64.to_le_bytes());
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x67, 0xA0]); // mov al, moffs8 with a 32-bit offset
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xA2]); // mov moffs8, al with a 32-bit offset
+    code.extend_from_slice(&((DATA_ADDR + 8) as u32).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x48, 0xA1]); // mov rax, moffs64, addr32
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x48, 0xA3]); // mov moffs64, rax, addr32
+    code.extend_from_slice(&((DATA_ADDR + 16) as u32).to_le_bytes());
+    check_mem("mov_moffs_addr32", &with_hlt(code), regs(), s, FLAG_MASK);
+}
+
+#[test]
 fn xlat_table_lookup() {
     // XLAT: AL <- byte ptr [RBX + AL].
     let mut s = [0u8; 64];
@@ -11928,6 +12022,16 @@ fn xlat_table_lookup() {
     r.rbx = DATA_ADDR;
     r.rax = 0x1122_3344_5566_7705;
     check_mem("xlat", &with_hlt(vec![0xD7]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn xlat_addr32_uses_ebx_base() {
+    let mut s = [0u8; 64];
+    s[5] = 0x5C;
+    let mut r = regs();
+    r.rbx = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.rax = 0x1122_3344_5566_7705;
+    check_mem("xlat_addr32", &with_hlt(vec![0x67, 0xD7]), r, s, FLAG_MASK);
 }
 
 #[test]
@@ -13007,6 +13111,33 @@ fn io_outs_string_forms() {
     check_mem(
         "rep_outsw_df",
         &with_hlt(vec![0xF3, 0x66, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_string_addr32_rep_forms() {
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 12;
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rdx = 0x1234;
+    check_mem(
+        "rep_insd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 20;
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rdx = 0x1234;
+    check_mem(
+        "rep_outsd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0x6F]),
         r,
         io_scratch(),
         FLAG_MASK,

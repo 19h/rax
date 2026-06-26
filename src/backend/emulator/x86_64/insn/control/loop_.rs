@@ -15,7 +15,7 @@ pub fn loopnz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     // Use address size to determine counter (RCX in 64-bit mode)
     let counter = if ctx.address_size_override {
         let ecx = (vcpu.regs.rcx as u32).wrapping_sub(1);
-        vcpu.regs.rcx = (vcpu.regs.rcx & !0xFFFF_FFFF) | (ecx as u64);
+        vcpu.regs.rcx = ecx as u64;
         ecx as u64
     } else {
         vcpu.regs.rcx = vcpu.regs.rcx.wrapping_sub(1);
@@ -40,7 +40,7 @@ pub fn loopz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
     let counter = if ctx.address_size_override {
         let ecx = (vcpu.regs.rcx as u32).wrapping_sub(1);
-        vcpu.regs.rcx = (vcpu.regs.rcx & !0xFFFF_FFFF) | (ecx as u64);
+        vcpu.regs.rcx = ecx as u64;
         ecx as u64
     } else {
         vcpu.regs.rcx = vcpu.regs.rcx.wrapping_sub(1);
@@ -64,7 +64,7 @@ pub fn loop_rel8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
     let counter = if ctx.address_size_override {
         let ecx = (vcpu.regs.rcx as u32).wrapping_sub(1);
-        vcpu.regs.rcx = (vcpu.regs.rcx & !0xFFFF_FFFF) | (ecx as u64);
+        vcpu.regs.rcx = ecx as u64;
         ecx as u64
     } else {
         vcpu.regs.rcx = vcpu.regs.rcx.wrapping_sub(1);
