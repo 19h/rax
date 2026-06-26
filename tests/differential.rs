@@ -773,6 +773,31 @@ fn check_with_sregs_scratch(
     assert_match(label, code, &interp, &kvm, CompareOpts::default());
 }
 
+fn check_scratch_expected_with_sregs(
+    label: &str,
+    code: &[u8],
+    init: Registers,
+    scratch_init: [u8; 64],
+    expected: [u8; 64],
+    flag_mask: u64,
+    sregs: &SystemRegisters,
+) {
+    let Some((interp, kvm)) = run_both_with_sregs(code, init, scratch_init, sregs) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask,
+        scratch: true,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+    assert_eq!(
+        interp.scratch, expected,
+        "expected interpreter scratch for {label}"
+    );
+    assert_eq!(kvm.scratch, expected, "expected KVM scratch for {label}");
+}
+
 /// Run a case comparing GPRs + only the flag bits in `flag_mask` (others are
 /// architecturally undefined for this instruction and must not be compared).
 fn check_flags_masked(label: &str, code: &[u8], init: Registers, flag_mask: u64) {
@@ -21682,6 +21707,120 @@ fn stack_push_pop_fs_gs_16bit_selectors() {
             0x66, 0x5A, // pop dx
         ]),
         r,
+    );
+}
+
+#[test]
+fn stack_push_legacy_segments_compat32_forms() {
+    let sregs = compat32_sregs();
+    let mut expected = zero_scratch();
+    for (i, selector) in [0x10u32, 0x08, 0x10, 0x10].iter().enumerate() {
+        expected[i * 4..i * 4 + 4].copy_from_slice(&selector.to_le_bytes());
+    }
+
+    let mut code = vec![0xBF]; // mov edi, DATA_ADDR
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x06, // push es
+        0x58, // pop eax
+        0x89, 0x07, // mov [edi], eax
+        0x0E, // push cs
+        0x58, // pop eax
+        0x89, 0x47, 0x04, // mov [edi+4], eax
+        0x16, // push ss
+        0x58, // pop eax
+        0x89, 0x47, 0x08, // mov [edi+8], eax
+        0x1E, // push ds
+        0x58, // pop eax
+        0x89, 0x47, 0x0C, // mov [edi+12], eax
+        HLT,
+    ]);
+
+    check_scratch_expected_with_sregs(
+        "stack_push_legacy_segments_compat32_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn stack_push_legacy_segments_compat32_16bit_override_forms() {
+    let sregs = compat32_sregs();
+    let mut expected = zero_scratch();
+    for (i, selector) in [0x10u16, 0x08, 0x10, 0x10].iter().enumerate() {
+        expected[i * 2..i * 2 + 2].copy_from_slice(&selector.to_le_bytes());
+    }
+
+    let mut code = vec![0xBF]; // mov edi, DATA_ADDR
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x66, 0x06, // push es
+        0x66, 0x58, // pop ax
+        0x66, 0x89, 0x07, // mov [edi], ax
+        0x66, 0x0E, // push cs
+        0x66, 0x58, // pop ax
+        0x66, 0x89, 0x47, 0x02, // mov [edi+2], ax
+        0x66, 0x16, // push ss
+        0x66, 0x58, // pop ax
+        0x66, 0x89, 0x47, 0x04, // mov [edi+4], ax
+        0x66, 0x1E, // push ds
+        0x66, 0x58, // pop ax
+        0x66, 0x89, 0x47, 0x06, // mov [edi+6], ax
+        HLT,
+    ]);
+
+    check_scratch_expected_with_sregs(
+        "stack_push_legacy_segments_compat32_16bit_override_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn stack_pop_legacy_segments_compat32_forms() {
+    let sregs = compat32_sregs();
+    let mut expected = zero_scratch();
+    for (i, selector) in [0x10u32, 0x10, 0x10].iter().enumerate() {
+        expected[i * 4..i * 4 + 4].copy_from_slice(&selector.to_le_bytes());
+    }
+
+    let mut code = vec![0xBF]; // mov edi, DATA_ADDR
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x6A, 0x10, // push 0x10
+        0x07, // pop es
+        0x06, // push es
+        0x58, // pop eax
+        0x89, 0x07, // mov [edi], eax
+        0x6A, 0x10, // push 0x10
+        0x1F, // pop ds
+        0x1E, // push ds
+        0x58, // pop eax
+        0x89, 0x47, 0x04, // mov [edi+4], eax
+        0x6A, 0x10, // push 0x10
+        0x17, // pop ss
+        0x16, // push ss
+        0x58, // pop eax
+        0x89, 0x47, 0x08, // mov [edi+8], eax
+        HLT,
+    ]);
+
+    check_scratch_expected_with_sregs(
+        "stack_pop_legacy_segments_compat32_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        expected,
+        FLAG_MASK,
+        &sregs,
     );
 }
 
