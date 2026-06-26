@@ -8061,6 +8061,22 @@ fn movdiri_m32_r32() {
 }
 
 #[test]
+fn movdiri_m64_extended_register_base() {
+    let mut r = modern_flags_regs();
+    r.r9 = 0x8877_6655_4433_2211;
+    r.r10 = DATA_ADDR;
+    check_mem(
+        "movdiri_m64_extended_register_base",
+        &with_hlt(vec![
+            0x4D, 0x0F, 0x38, 0xF9, 0x4A, 0x08, // movdiri qword [r10+8], r9
+        ]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn movdir64b_copy_into_scratch() {
     // MOVDIR64B r64, m512 = 66 0F 38 F8 /r. Copy 64 bytes from [RDI+0x20] to
     // the 64-byte-aligned address held in RAX (DATA_ADDR).
@@ -8074,6 +8090,26 @@ fn movdir64b_copy_into_scratch() {
     check_mem(
         "movdir64b_copy",
         &with_hlt(vec![0x66, 0x0F, 0x38, 0xF8, 0x47, 0x20]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn movdir64b_extended_register_source_base() {
+    let mut s = [0u8; 64];
+    for (i, b) in s.iter_mut().enumerate() {
+        *b = (0x20u8).wrapping_add((i as u8).wrapping_mul(3));
+    }
+    let mut r = modern_flags_regs();
+    r.r8 = DATA_ADDR;
+    r.r10 = DATA_ADDR;
+    check_mem(
+        "movdir64b_extended_register_source_base",
+        &with_hlt(vec![
+            0x66, 0x45, 0x0F, 0x38, 0xF8, 0x42, 0x20, // movdir64b r8, [r10+0x20]
+        ]),
         r,
         s,
         FLAG_MASK,
