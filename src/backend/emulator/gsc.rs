@@ -356,6 +356,13 @@ struct GscShared {
     /// this value the run loop asserts `mip.MTIP`. The firmware's timer ISR
     /// rewrites it to re-arm (future deadline) or disarm (all-ones).
     timer_compare: u64,
+    /// Set while a TPM command is being processed (for the crypto trace, which
+    /// otherwise floods with boot traffic).
+    tpm_active: bool,
+    /// GscFifo / TPM-SPI dual-port command/response RAM at `0x40621000`. In the
+    /// wired transport, the host stages a TPM command here and the firmware
+    /// reads it from / writes the response to this real FIFO window via MMIO.
+    fifo_ram: Vec<u8>,
 }
 
 type Shared = Arc<Mutex<GscShared>>;
@@ -376,6 +383,9 @@ struct GscBridge {
     /// Monotonic retired-instruction count, published by the run loop and used
     /// to drive the free-running timer/counter block (`0x400C0014/+0x1C`).
     time: Arc<AtomicU64>,
+    /// When set (`RAX_GSC_CRYPTO_TRACE`), log every access to the crypto/DRBG
+    /// MMIO window (`0x40200000..0x40260000`) — used to find the entropy source.
+    crypto_trace: bool,
 }
 
 impl GscBridge {
@@ -384,6 +394,21 @@ impl GscBridge {
     fn timer_ticks(&self) -> u64 {
         let instret = self.time.load(Ordering::Relaxed);
         instret / self.cfg.timer_div.max(1)
+    }
+
+    /// Deterministic non-zero PRNG word for a DRBG output-file address. Mixes
+    /// the address with a SplitMix64-style avalanche so the firmware's keymgr
+    /// DRBG reads back varied, non-zero entropy/key material instead of zeros.
+    fn drbg_word(&self, addr: u64) -> u32 {
+        let mut x = addr
+            .wrapping_mul(0x9e37_79b9_7f4a_7c15)
+            .wrapping_add(0x1234_5678_9abc_def0);
+        x ^= x >> 30;
+        x = x.wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        x ^= x >> 27;
+        x = x.wrapping_mul(0x94d0_49bb_1331_11eb);
+        x ^= x >> 31;
+        (x as u32) | 1
     }
 }
 
@@ -476,6 +501,9 @@ const GSC_FIFO_IRQ_TEST: u64 = GSC_FIFO_BASE + 0x598;
 const GSC_FIFO_IRQ_STATE: u64 = GSC_FIFO_BASE + 0x59c;
 const GSC_FIFO_IRQ_STATUS: u64 = GSC_FIFO_BASE + 0x5a0;
 const GSC_FIFO_RESET_BUSY_MASK: u32 = 0x9;
+/// GscFifo dual-port command/response RAM window (host TPM frame staging).
+const GSC_FIFO_RAM_BASE: u64 = GSC_FIFO_BASE + 0x1000;
+const GSC_FIFO_RAM_LEN: usize = 0x800;
 
 const GLOBALSEC_BASE: u64 = 0x4010_0000;
 const GLOBALSEC_CRYPTOLIB_BASE: u64 = GLOBALSEC_BASE + 0x1c0;
@@ -544,6 +572,28 @@ const TIMER_BUSY: u64 = TIMER_BASE + 0x78;
 /// timestamps stay in a realistic range rather than racing ahead. Overridable
 /// via `RAX_GSC_TIMER_DIV`.
 const TIMER_DEFAULT_DIV: u64 = 24;
+
+// Second timer/counter instance with the same core layout, exposed at window
+// base `0x40631000` (block base `0x40630000`, accessed via a RAM pointer so no
+// literal appears in the dump). The TPM task polls its 64-bit counter for
+// command-timeout deadlines (reload `+0x38` = 0x2710); leaving it frozen at 0
+// makes those waits spin until the generic spin-breaker trips. Driving it from
+// the same instruction-count source keeps TPM timing live.
+const TIMER2_COUNT_LO: u64 = 0x4063_1014;
+const TIMER2_COUNT_HI: u64 = 0x4063_101c;
+const TIMER2_BUSY: u64 = 0x4063_1070;
+
+// DRBG / CSRNG keymgr block at `0x40250000`. `sub_80434` arms `+0x10`, starts at
+// `+0x14`, then spins until `+0x10` bits[2:0] != 0 and treats value `1` as
+// success (`return status ^ 1`). The 256-bit generated-output file is at
+// `+0xE8`; the second input/output file at `+0xC8`. Modeling "done = 1" plus a
+// non-zero PRNG output lets the keymgr DRBG instantiate/generate succeed instead
+// of failing (`DDRBG instantiate failed`).
+const DRBG_BASE: u64 = 0x4025_0000;
+const DRBG_STATUS: u64 = DRBG_BASE + 0x10;
+const DRBG_OUT_LO: u64 = DRBG_BASE + 0xc8;
+const DRBG_OUT_HI: u64 = DRBG_BASE + 0xe8;
+const DRBG_OUT_LEN: u64 = 0x20;
 
 impl std::fmt::Debug for GscBridge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -616,6 +666,12 @@ fn is_ap_spi_w1c_status(addr: u64) -> bool {
 fn ap_spi_data_offset(addr: u64) -> Option<usize> {
     let off = addr.checked_sub(AP_SPI_DATA_BASE)?;
     (off < AP_SPI_DATA_LEN as u64).then_some(off as usize)
+}
+
+#[inline]
+fn fifo_ram_offset(addr: u64) -> Option<usize> {
+    let off = addr.checked_sub(GSC_FIFO_RAM_BASE)?;
+    (off < GSC_FIFO_RAM_LEN as u64).then_some(off as usize)
 }
 
 #[inline]
@@ -739,6 +795,19 @@ impl GscBridge {
     /// every address; accesses in the PMU control block (reset-source / global
     /// reset) are logged every time, since that region drives the boot path.
     fn note(&self, addr: u64, is_write: bool, value: u32) {
+        if self.crypto_trace
+            && ((0x4020_0000..0x4026_0000).contains(&addr)
+                || (0x4041_0000..0x4042_0000).contains(&addr)
+                || self.shared.lock().unwrap().tpm_active)
+        {
+            eprintln!(
+                "[crypto] {:#010x} {} {:#010x} = {:#010x}",
+                self.pc.load(Ordering::Relaxed),
+                if is_write { "WR" } else { "RD" },
+                addr,
+                value,
+            );
+        }
         if self.cfg.trace == Trace::Off {
             return;
         }
@@ -1243,6 +1312,16 @@ impl Memory for GscBridge {
                 self.note(addr, false, u32::from_le_bytes(word));
                 return Ok(());
             }
+            // GscFifo dual-port command/response RAM: byte-accurate reads so the
+            // firmware reads the staged TPM command (and its own response) from
+            // the real FIFO window.
+            if let Some(off) = fifo_ram_offset(addr) {
+                let sh = self.shared.lock().unwrap();
+                for (i, b) in buf.iter_mut().enumerate() {
+                    *b = sh.fifo_ram.get(off + i).copied().unwrap_or(0);
+                }
+                return Ok(());
+            }
             if addr == AP_SPI_XACT {
                 let v = self
                     .shared
@@ -1423,9 +1502,10 @@ impl Memory for GscBridge {
             // status (`+0x78`) always reads "ready" (0). Other timer registers
             // (enable/prescale/masks) fall through to the persistent store,
             // which already holds the values the init routine wrote.
-            if addr == TIMER_COUNT_LO || addr == TIMER_COUNT_HI {
+            if matches!(addr, TIMER_COUNT_LO | TIMER_COUNT_HI | TIMER2_COUNT_LO | TIMER2_COUNT_HI)
+            {
                 let ticks = self.timer_ticks();
-                let v = if addr == TIMER_COUNT_LO {
+                let v = if addr == TIMER_COUNT_LO || addr == TIMER2_COUNT_LO {
                     ticks as u32
                 } else {
                     (ticks >> 32) as u32
@@ -1434,9 +1514,26 @@ impl Memory for GscBridge {
                 fill_le_word(buf, v);
                 return Ok(());
             }
-            if addr == TIMER_BUSY {
+            if addr == TIMER_BUSY || addr == TIMER2_BUSY {
                 self.note(addr, false, 0);
                 fill_le_word(buf, 0);
+                return Ok(());
+            }
+            // DRBG/CSRNG keymgr: report "operation done, success" (`+0x10`
+            // bits[2:0] == 1) and a non-zero PRNG for the 256-bit output files,
+            // so the firmware's instantiate/generate succeeds instead of
+            // failing and downstream key/entropy material is non-zero.
+            if addr == DRBG_STATUS {
+                self.note(addr, false, 1);
+                fill_le_word(buf, 1);
+                return Ok(());
+            }
+            if (DRBG_OUT_LO..DRBG_OUT_LO + DRBG_OUT_LEN).contains(&addr)
+                || (DRBG_OUT_HI..DRBG_OUT_HI + DRBG_OUT_LEN).contains(&addr)
+            {
+                let v = self.drbg_word(addr);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
                 return Ok(());
             }
             // UART registers go through the normal ready/store path so the
@@ -1508,6 +1605,22 @@ impl Memory for GscBridge {
                         if off + i < AP_SPI_DATA_LEN {
                             sh.ap_spi_data[off + i] = b;
                         }
+                    }
+                }
+                self.note(addr, true, value);
+                return Ok(());
+            }
+            // GscFifo dual-port RAM: byte-accurate writes (the firmware writes
+            // its TPM response into this real FIFO window).
+            if let Some(off) = fifo_ram_offset(addr) {
+                let mut sh = self.shared.lock().unwrap();
+                sh.read_counts.clear();
+                if sh.fifo_ram.len() != GSC_FIFO_RAM_LEN {
+                    sh.fifo_ram.resize(GSC_FIFO_RAM_LEN, 0);
+                }
+                for (i, b) in data.iter().copied().enumerate() {
+                    if off + i < GSC_FIFO_RAM_LEN {
+                        sh.fifo_ram[off + i] = b;
                     }
                 }
                 self.note(addr, true, value);
@@ -1680,7 +1793,25 @@ pub struct GscVcpu {
     /// (`yield` mode, proper context); `false` uses an out-of-context synthetic
     /// call to `sub_E06BE` (`call` mode, `RAX_GSC_TPM_MODE=call`).
     tpm_yield_mode: bool,
+    /// `RAX_GSC_TPM_WIRED=1`: stage the command in (and read the response from)
+    /// the real GscFifo dual-port RAM window (`0x40621000`) so the TPM frame
+    /// transits the actual host-interface hardware instead of scratch RAM. The
+    /// firmware's SPS receive-ISR (which copies FIFO→`0x220C0` and wakes the
+    /// task) lives in the RO image, so that wake step is still bridged.
+    tpm_wired: bool,
     tpm: TpmInject,
+    /// `RAX_GSC_PLT_RST_EVENT=1`: boot with the AP held in reset, then deassert
+    /// PLT_RST_L at runtime (after the boot settles) and raise the GPIO event,
+    /// modeling the host powering on while the GSC is already running.
+    plt_rst_event: bool,
+    plt_rst_fired: bool,
+    /// Disable the entropy hooks (`RAX_GSC_NO_ENTROPY=1`). By default the
+    /// firmware's randomness primitives (`sub_D5558`/`sub_D5606`) are filled
+    /// with a PRNG so TPM RNG/key/nonce output is non-zero; the underlying
+    /// kernel crypto service writes zeros in this board model.
+    entropy_hooks: bool,
+    /// SplitMix64 state advanced once per random byte produced by the hooks.
+    entropy_state: u64,
 }
 
 /// State of an in-flight synthetic TPM command call.
@@ -1745,6 +1876,19 @@ const TPM_SCRATCH_CAPACITY: u32 = 0x1000;
 /// instructions without returning (guards against an unmodeled path looping).
 const TPM_CALL_MAX_INSNS: u64 = 200_000_000;
 
+/// TPM randomness primitives. The firmware delegates random generation to a
+/// kernel crypto service (#1003) over `ecall`, which writes zeros into the
+/// allowed buffer while returning success — so TPM2_GetRandom, nonces, and
+/// generated keys come back all-zero. These two functions are the in-firmware
+/// chokepoints; the run loop fills their destination buffer with a PRNG and
+/// returns the requested length so randomness is non-zero.
+/// `sub_D5558(ctx a0, dest a1, count a2)` — CryptRandomGenerate; returns count.
+const TPM_RAND_GENERATE: u64 = 0xd5558;
+const TPM_RAND_GENERATE_B: u64 = 0xd5558 + 0x80000;
+/// `sub_D5606(count a0, dest a1)` — nonce/session fill; returns count.
+const TPM_RAND_NONCE: u64 = 0xd5606;
+const TPM_RAND_NONCE_B: u64 = 0xd5606 + 0x80000;
+
 impl GscVcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
         let cfg = GscConfig::from_env();
@@ -1780,6 +1924,7 @@ impl GscVcpu {
             ready,
             pc: pc_cell.clone(),
             time: time_cell.clone(),
+            crypto_trace: std::env::var("RAX_GSC_CRYPTO_TRACE").is_ok(),
         };
         let cpu = RiscVCpu::new(RiscVConfig::rv32(Isa::ti50()), Box::new(bridge));
         GscVcpu {
@@ -1807,7 +1952,12 @@ impl GscVcpu {
             tpm_cmds: parse_tpm_cmds_env(),
             tpm_trigger: env_hex("RAX_GSC_TPM_TRIGGER").unwrap_or(0xa2d3c),
             tpm_yield_mode: std::env::var("RAX_GSC_TPM_MODE").as_deref() != Ok("call"),
+            tpm_wired: std::env::var("RAX_GSC_TPM_WIRED").is_ok(),
             tpm: TpmInject::default(),
+            plt_rst_event: std::env::var("RAX_GSC_PLT_RST_EVENT").is_ok(),
+            plt_rst_fired: false,
+            entropy_hooks: !std::env::var("RAX_GSC_NO_ENTROPY").is_ok(),
+            entropy_state: 0x243f_6a88_85a3_08d3,
         }
     }
 
@@ -1873,6 +2023,46 @@ impl GscVcpu {
         } else {
             0
         }
+    }
+
+    /// Fill `count` bytes of guest memory at `dest` with PRNG output (SplitMix64
+    /// advanced per call). Used by the TPM randomness hooks so generated random
+    /// numbers, nonces, and keys are non-zero.
+    fn fill_entropy(&mut self, dest: u64, count: u64) {
+        let count = count.min(4096) as usize;
+        let mut bytes = Vec::with_capacity(count);
+        while bytes.len() < count {
+            self.entropy_state = self.entropy_state.wrapping_add(0x9e37_79b9_7f4a_7c15);
+            let mut z = self.entropy_state;
+            z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+            z ^= z >> 31;
+            bytes.extend_from_slice(&z.to_le_bytes());
+        }
+        bytes.truncate(count);
+        let _ = self.cpu.write_memory(dest, &bytes);
+    }
+
+    /// Service a TPM randomness primitive by guest PC: fill its destination
+    /// buffer with PRNG bytes, set the return value to the requested length,
+    /// and return to the caller (skipping the zero-writing kernel `ecall`).
+    /// Returns `true` if `pc` was a randomness function.
+    fn maybe_fill_random(&mut self, pc: u64) -> bool {
+        let (dest, count) = match pc {
+            // CryptRandomGenerate(ctx=a0, dest=a1, count=a2)
+            TPM_RAND_GENERATE | TPM_RAND_GENERATE_B => (self.cpu.x(11), self.cpu.x(12)),
+            // nonce fill(count=a0, dest=a1)
+            TPM_RAND_NONCE | TPM_RAND_NONCE_B => (self.cpu.x(11), self.cpu.x(10)),
+            _ => return false,
+        };
+        if count == 0 || count > 4096 {
+            return false;
+        }
+        self.fill_entropy(dest, count);
+        self.cpu.set_x(10, count); // return the byte count (success)
+        let ra = self.cpu.x(1);
+        self.cpu.set_pc(ra);
+        true
     }
 
     /// Begin a synthetic call into the TPM 2.0 ExecuteCommand wrapper
@@ -1971,24 +2161,35 @@ impl GscVcpu {
     /// the firmware task loops back, sees the pending flag, and runs the real
     /// `sub_E06BE` path in its own scheduler context (all upcalls registered).
     fn plant_tpm_command(&mut self, cmd: &[u8]) {
-        let _ = self.cpu.write_memory(TPM_SCRATCH_BUF, cmd);
+        // Wired transport stages the frame in the real GscFifo dual-port RAM
+        // window; otherwise a backed-RAM scratch buffer is used.
+        let (buf, cap) = if self.tpm_wired {
+            (GSC_FIFO_RAM_BASE, GSC_FIFO_RAM_LEN as u32)
+        } else {
+            (TPM_SCRATCH_BUF, TPM_SCRATCH_CAPACITY)
+        };
+        let _ = self.cpu.write_memory(buf, cmd);
         let _ = self
             .cpu
-            .write_memory(TPM_GLOBAL_BUF, &(TPM_SCRATCH_BUF as u32).to_le_bytes());
+            .write_memory(TPM_GLOBAL_BUF, &(buf as u32).to_le_bytes());
         let _ = self
             .cpu
             .write_memory(TPM_GLOBAL_LEN, &(cmd.len() as u32).to_le_bytes());
-        let _ = self
-            .cpu
-            .write_memory(TPM_GLOBAL_CAP, &TPM_SCRATCH_CAPACITY.to_le_bytes());
+        let _ = self.cpu.write_memory(TPM_GLOBAL_CAP, &cap.to_le_bytes());
         let _ = self.cpu.write_memory(TPM_GLOBAL_PENDING, &1u32.to_le_bytes());
         self.tpm.awaiting = true;
+        self.shared.lock().unwrap().tpm_active = true;
         if std::env::var("RAX_GSC_TPM_TRACE").is_ok() {
             self.tpm.trace_budget = 6000;
         }
         let preview: String = cmd.iter().map(|b| format!("{b:02x}")).collect();
+        let via = if self.tpm_wired {
+            "wired via GscFifo 0x40621000"
+        } else {
+            "yield"
+        };
         eprintln!(
-            "[gsc] TPM inject #{} (yield): planted {}-byte command {preview} for the firmware task",
+            "[gsc] TPM inject #{} ({via}): {}-byte command {preview}",
             self.tpm.next + 1,
             cmd.len()
         );
@@ -2004,23 +2205,25 @@ impl GscVcpu {
         let len = (self.cpu.x(11) as u32).min(1024) as usize;
         let mut resp = vec![0u8; len];
         let _ = self.cpu.read_memory(bufptr, &mut resp);
+        let via = if self.tpm_wired { "wired" } else { "yield" };
         if resp.len() >= 10 {
             let code = u32::from_be_bytes([resp[6], resp[7], resp[8], resp[9]]);
             let hexs: String = resp.iter().map(|b| format!("{b:02x}")).collect();
             let status = if code == 0 { "SUCCESS" } else { "rc!=0" };
             eprintln!(
-                "[gsc] TPM resp  #{} (yield): len={len} rc={code:#010x} ({status}) bytes={hexs}",
+                "[gsc] TPM resp  #{} ({via}): len={len} rc={code:#010x} ({status}) bytes={hexs}",
                 self.tpm.next + 1
             );
         } else {
             eprintln!(
-                "[gsc] TPM cmd  #{} (yield): firmware processed the command but returned \
+                "[gsc] TPM cmd  #{} ({via}): firmware processed the command but returned \
                  no TPM response (len={len}) — see the firmware log above (e.g. it drops \
                  commands \"while AP off\" when PLT_RST_L is asserted / the host is in reset).",
                 self.tpm.next + 1
             );
         }
         self.tpm.awaiting = false;
+        self.shared.lock().unwrap().tpm_active = false;
         self.tpm.next += 1;
         if self.tpm.next >= self.tpm_cmds.len() {
             return true;
@@ -2059,6 +2262,48 @@ impl VCpu for GscVcpu {
             let pc = self.cpu.pc();
             self.pc_cell.store(pc, Ordering::Relaxed);
             self.time_cell.store(self.cpu.instret(), Ordering::Relaxed);
+            // Runtime PLT_RST_L deassert event: once the firmware has settled at
+            // the idle WFI with the AP held in reset, deassert PLT_RST_L (drive
+            // GPIO bank0 bit11 high) and pulse a GPIO wake so the kernel leaves
+            // WFI and re-samples the line — modeling the host powering on while
+            // the GSC is already running.
+            if self.plt_rst_event && !self.plt_rst_fired && pc == self.tpm_trigger {
+                let booted = {
+                    let sh = self.shared.lock().unwrap();
+                    sh.console.windows(11).any(|w| w == b"TPM SPI dis")
+                };
+                if booted {
+                    self.plt_rst_fired = true;
+                    {
+                        let mut sh = self.shared.lock().unwrap();
+                        // Drive PLT_RST_L high (deasserted) for the rest of the run.
+                        let v = sh.store.entry(GPIO_INPUT_BANK0).or_insert(0);
+                        *v |= GPIO_PLT_RST_L_MASK;
+                        // The GSC reboots on an AP power-state change to re-run AP
+                        // RO verification; request that warm reset so the firmware
+                        // comes back up with the AP powered on (TPM SPI enabled),
+                        // mirroring real "Rebooting GSC for AP RO due to state".
+                        sh.reset_requested = true;
+                    }
+                    eprintln!(
+                        "[gsc] runtime event: PLT_RST_L deasserted (host powering on); \
+                         warm-resetting so the GSC re-boots AP-on"
+                    );
+                    continue;
+                }
+            }
+            // Entropy: intercept the TPM randomness primitives and fill their
+            // output buffer with a PRNG (the kernel crypto service writes zeros
+            // in this board model), so RNG/nonce/key output is non-zero.
+            if self.entropy_hooks
+                && matches!(
+                    pc,
+                    TPM_RAND_GENERATE | TPM_RAND_GENERATE_B | TPM_RAND_NONCE | TPM_RAND_NONCE_B
+                )
+                && self.maybe_fill_random(pc)
+            {
+                continue;
+            }
             // TPM command injection. `yield` mode (default) plants each command
             // into the firmware TPM task at its command-wait yield so the task
             // processes it in its own scheduler context; `call` mode drives a
@@ -2090,9 +2335,12 @@ impl VCpu for GscVcpu {
                         continue;
                     }
                     // Plant the next command at the task's command-wait yield.
+                    // When a runtime PLT_RST event is configured, wait until the
+                    // AP-power-on reboot has happened (so the AP is on).
                     if !self.tpm.awaiting
                         && self.tpm.next < self.tpm_cmds.len()
                         && pc == TPM_TASK_YIELD_ECALL
+                        && (!self.plt_rst_event || self.reset_count >= 1)
                     {
                         let ready = {
                             let sh = self.shared.lock().unwrap();
@@ -2538,6 +2786,7 @@ mod tests {
             ready: builtin_ready_map(),
             pc: Arc::new(AtomicU64::new(0)),
             time: Arc::new(AtomicU64::new(0)),
+            crypto_trace: false,
         }
     }
 
@@ -2595,6 +2844,44 @@ mod tests {
         assert_eq!(rd32(&b, TIMER_COUNT_HI), (ticks >> 32) as u32);
         // Busy/ready status always reads "ready" (0).
         assert_eq!(rd32(&b, TIMER_BUSY), 0);
+    }
+
+    #[test]
+    fn second_timer_counter_advances() {
+        let b = test_bridge();
+        assert_eq!(rd32(&b, TIMER2_COUNT_LO), 0);
+        let instret = (TIMER_DEFAULT_DIV as u64) * 0xfeed_face;
+        b.time.store(instret, Ordering::Relaxed);
+        let ticks = instret / TIMER_DEFAULT_DIV as u64;
+        assert_eq!(rd32(&b, TIMER2_COUNT_LO), ticks as u32);
+        assert_eq!(rd32(&b, TIMER2_COUNT_HI), (ticks >> 32) as u32);
+        assert_eq!(rd32(&b, TIMER2_BUSY), 0);
+    }
+
+    #[test]
+    fn drbg_reports_done_and_nonzero_output() {
+        let b = test_bridge();
+        // sub_80434 spins until status bits[2:0] != 0 and treats 1 as success.
+        assert_eq!(rd32(&b, DRBG_STATUS) & 7, 1);
+        // The 256-bit output files read back non-zero, varied entropy.
+        let w0 = rd32(&b, DRBG_OUT_HI);
+        let w1 = rd32(&b, DRBG_OUT_HI + 4);
+        assert_ne!(w0, 0);
+        assert_ne!(w1, 0);
+        assert_ne!(w0, w1);
+    }
+
+    #[test]
+    fn fifo_ram_window_round_trips() {
+        let mut b = test_bridge();
+        // The GscFifo dual-port RAM stages the wired TPM frame.
+        wr32(&mut b, GSC_FIFO_RAM_BASE, 0x0c00_0180);
+        wr32(&mut b, GSC_FIFO_RAM_BASE + 4, 0x4401_0000);
+        assert_eq!(rd32(&b, GSC_FIFO_RAM_BASE), 0x0c00_0180);
+        assert_eq!(rd32(&b, GSC_FIFO_RAM_BASE + 4), 0x4401_0000);
+        // Byte-accurate access.
+        wr8(&mut b, GSC_FIFO_RAM_BASE + 2, 0xab);
+        assert_eq!(rd8(&b, GSC_FIFO_RAM_BASE + 2), 0xab);
     }
 
     #[test]
