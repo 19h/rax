@@ -22562,6 +22562,34 @@ fn sse_movhlps_movlhps_register_forms() {
 }
 
 #[test]
+fn sse_movhlps_movlhps_extended_register_forms() {
+    let a = [
+        0xC001_D00D_F00D_BAAAu64.to_le_bytes(),
+        0x1020_3040_5060_7080u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+        0xAABB_CCDD_EEFF_0011u64.to_le_bytes(),
+    ]
+    .concat();
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+0x10]
+    code.extend_from_slice(&[0x45, 0x0F, 0x12, 0xC1]); // movhlps xmm8, xmm9
+    code.extend_from_slice(&[0x45, 0x0F, 0x16, 0xC1]); // movlhps xmm8, xmm9
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm8
+    code.push(HLT);
+
+    check_sse(
+        "movhlps_movlhps_extended_register_forms",
+        &code,
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
 fn sse_packed_move_register_forms() {
     let a = [
         0x0123_4567_89AB_CDEFu64.to_le_bytes(),
@@ -22616,6 +22644,157 @@ fn sse2_integer_move_register_forms() {
 }
 
 #[test]
+fn sse_packed_move_extended_register_forms() {
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0x0FED_CBA9_7654_3210u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+    ]
+    .concat();
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&a);
+    s[16..32].copy_from_slice(&b);
+
+    for (label, op) in [
+        ("movups_extended_reg_load_path", &[0x45, 0x0F, 0x10, 0xC1][..]),
+        (
+            "movupd_extended_reg_load_path",
+            &[0x66, 0x45, 0x0F, 0x10, 0xC1][..],
+        ),
+        ("movups_extended_reg_store_path", &[0x45, 0x0F, 0x11, 0xC8][..]),
+        (
+            "movupd_extended_reg_store_path",
+            &[0x66, 0x45, 0x0F, 0x11, 0xC8][..],
+        ),
+        ("movaps_extended_reg_load_path", &[0x45, 0x0F, 0x28, 0xC1][..]),
+        (
+            "movapd_extended_reg_load_path",
+            &[0x66, 0x45, 0x0F, 0x28, 0xC1][..],
+        ),
+        ("movaps_extended_reg_store_path", &[0x45, 0x0F, 0x29, 0xC8][..]),
+        (
+            "movapd_extended_reg_store_path",
+            &[0x66, 0x45, 0x0F, 0x29, 0xC8][..],
+        ),
+        (
+            "movdqa_extended_reg_load_path",
+            &[0x66, 0x45, 0x0F, 0x6F, 0xC1][..],
+        ),
+        (
+            "movdqu_extended_reg_load_path",
+            &[0xF3, 0x45, 0x0F, 0x6F, 0xC1][..],
+        ),
+        (
+            "movdqa_extended_reg_store_path",
+            &[0x66, 0x45, 0x0F, 0x7F, 0xC8][..],
+        ),
+        (
+            "movdqu_extended_reg_store_path",
+            &[0xF3, 0x45, 0x0F, 0x7F, 0xC8][..],
+        ),
+    ] {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+0x10]
+        code.extend_from_slice(op);
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm8
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x4F, 0x30]); // movdqu [rdi+0x30], xmm9
+        code.push(HLT);
+
+        check_mem(label, &code, regs(), s, 0);
+    }
+}
+
+#[test]
+fn sse_scalar_move_extended_register_forms() {
+    let a = [
+        0xFFEEDDCC_BBAA9988u64.to_le_bytes(),
+        0x77665544_33221100u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x01234567_89ABCDEFu64.to_le_bytes(),
+        0x8899AABB_CCDDEEFFu64.to_le_bytes(),
+    ]
+    .concat();
+
+    for (label, op) in [
+        (
+            "movss_extended_memory_load_zeroes_high",
+            &[0xF3, 0x44, 0x0F, 0x10, 0x47, 0x10][..],
+        ),
+        (
+            "movsd_extended_memory_load_zeroes_high",
+            &[0xF2, 0x44, 0x0F, 0x10, 0x47, 0x10][..],
+        ),
+    ] {
+        let mut s = [0u8; 64];
+        s[0..16].copy_from_slice(&a);
+        s[16..32].copy_from_slice(&b);
+
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(op);
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm8
+        code.push(HLT);
+
+        check_mem(label, &code, regs(), s, 0);
+    }
+
+    for (label, op) in [
+        (
+            "movss_extended_reg_load_merge",
+            &[0xF3, 0x45, 0x0F, 0x10, 0xC1][..],
+        ),
+        (
+            "movsd_extended_reg_load_merge",
+            &[0xF2, 0x45, 0x0F, 0x10, 0xC1][..],
+        ),
+        (
+            "movss_extended_reg_store_merge",
+            &[0xF3, 0x45, 0x0F, 0x11, 0xC8][..],
+        ),
+        (
+            "movsd_extended_reg_store_merge",
+            &[0xF2, 0x45, 0x0F, 0x11, 0xC8][..],
+        ),
+    ] {
+        let mut s = [0u8; 64];
+        s[0..16].copy_from_slice(&a);
+        s[16..32].copy_from_slice(&b);
+
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+0x10]
+        code.extend_from_slice(op);
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm8
+        code.push(HLT);
+
+        check_mem(label, &code, regs(), s, 0);
+    }
+
+    let mut s = [0xA5u8; 64];
+    s[0..16].copy_from_slice(&a);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x11, 0x47, 0x20]); // movss [rdi+0x20], xmm8
+    code.extend_from_slice(&[0xF2, 0x44, 0x0F, 0x11, 0x47, 0x28]); // movsd [rdi+0x28], xmm8
+    code.push(HLT);
+    check_mem(
+        "movss_movsd_extended_memory_store_scalars",
+        &code,
+        regs(),
+        s,
+        0,
+    );
+}
+
+#[test]
 fn sse_movlps_movhps_load_store() {
     let mut s = [0u8; 64];
     s[0..16].copy_from_slice(&[
@@ -22633,6 +22812,26 @@ fn sse_movlps_movhps_load_store() {
     code.extend_from_slice(&[0x0F, 0x17, 0x47, 0x28]); // movhps [rdi+0x28], xmm0
     code.push(HLT);
     check_mem("movlps_movhps", &code, regs(), s, 0);
+}
+
+#[test]
+fn sse_movlps_movhps_extended_register_sources() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x80, 0x71, 0x62, 0x53, 0x44, 0x35, 0x26, 0x17, 0x08, 0xF9, 0xEA, 0xDB, 0xCC, 0xBD,
+        0xAE, 0x9F,
+    ]);
+    s[16..24].copy_from_slice(&[0x19, 0x2A, 0x3B, 0x4C, 0x5D, 0x6E, 0x7F, 0x80]);
+    s[24..32].copy_from_slice(&[0x91, 0xA2, 0xB3, 0xC4, 0xD5, 0xE6, 0xF7, 0x08]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0x44, 0x0F, 0x12, 0x47, 0x10]); // movlps xmm8, [rdi+0x10]
+    code.extend_from_slice(&[0x44, 0x0F, 0x16, 0x47, 0x18]); // movhps xmm8, [rdi+0x18]
+    code.extend_from_slice(&[0x44, 0x0F, 0x13, 0x47, 0x20]); // movlps [rdi+0x20], xmm8
+    code.extend_from_slice(&[0x44, 0x0F, 0x17, 0x47, 0x28]); // movhps [rdi+0x28], xmm8
+    code.push(HLT);
+    check_mem("movlps_movhps_extended_register_sources", &code, regs(), s, 0);
 }
 
 #[test]
@@ -22752,6 +22951,31 @@ fn sse_non_temporal_store_extended_forms() {
 }
 
 #[test]
+fn sse_non_temporal_store_extended_register_sources() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s[..48].iter_mut().enumerate() {
+        *byte = 0x29u8.wrapping_add((i as u8).wrapping_mul(0x1D));
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x57, 0x20]); // movdqu xmm10, [rdi+32]
+    code.extend_from_slice(&[0x44, 0x0F, 0x2B, 0x47, 0x10]); // movntps [rdi+16], xmm8
+    code.extend_from_slice(&[0x66, 0x44, 0x0F, 0x2B, 0x4F, 0x20]); // movntpd [rdi+32], xmm9
+    code.extend_from_slice(&[0x66, 0x44, 0x0F, 0xE7, 0x57, 0x30]); // movntdq [rdi+48], xmm10
+    code.push(HLT);
+
+    check_mem(
+        "sse_non_temporal_store_extended_register_sources",
+        &code,
+        regs(),
+        s,
+        0,
+    );
+}
+
+#[test]
 fn sse_movnti_extended_register_source_base() {
     let mut r = modern_flags_regs();
     r.r9 = 0x0123_4567_89AB_CDEF;
@@ -22805,6 +23029,28 @@ fn sse_maskmovdqu_selected_bytes() {
     code.extend_from_slice(&[0x66, 0x0F, 0xF7, 0xC1]); // maskmovdqu xmm0, xmm1
     code.push(HLT);
     check_mem("maskmovdqu", &code, regs(), s, 0);
+}
+
+#[test]
+fn sse_maskmovdqu_extended_register_sources() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5, 0x96, 0x87, 0x78, 0x69, 0x5A, 0x4B, 0x3C, 0x2D,
+        0x1E, 0x0F,
+    ]);
+    s[16..32].copy_from_slice(&[
+        0x80, 0x80, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00, 0x80,
+        0x00, 0x80,
+    ]);
+    s[32..48].fill(0x55);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+0x10]
+    code.extend_from_slice(&[0x48, 0x83, 0xC7, 0x20]); // add rdi, 0x20
+    code.extend_from_slice(&[0x66, 0x45, 0x0F, 0xF7, 0xC1]); // maskmovdqu xmm8, xmm9
+    code.push(HLT);
+    check_mem("maskmovdqu_extended_register_sources", &code, regs(), s, 0);
 }
 
 // ===========================================================================
