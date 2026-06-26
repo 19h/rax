@@ -6012,6 +6012,34 @@ fn movbe_addr32_load_store_forms() {
     check_mem("movbe_addr32_load_store_forms", &code, r, s, FLAG_MASK);
 }
 
+#[test]
+fn movbe_extended_indexed_load_store_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rdx = 0x1122;
+    r.rsi = 0x3344_5566;
+    r.r8 = 0x0123_4567_89AB_CDEF;
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+
+    let code = with_hlt(vec![
+        0x66, 0x43, 0x0F, 0x38, 0xF0, 0x04, 0x5A, // movbe ax, word [r10+r11*2]
+        0x66, 0x43, 0x89, 0x44, 0x5A, 0x18, // mov [r10+r11*2+24], ax
+        0x43, 0x0F, 0x38, 0xF0, 0x5C, 0x5A, 0x04, // movbe ebx, dword [r10+r11*2+4]
+        0x43, 0x89, 0x5C, 0x5A, 0x1C, // mov [r10+r11*2+28], ebx
+        0x4B, 0x0F, 0x38, 0xF0, 0x4C, 0x5A, 0x08, // movbe rcx, qword [r10+r11*2+8]
+        0x4B, 0x89, 0x4C, 0x5A, 0x28, // mov [r10+r11*2+40], rcx
+        0x66, 0x43, 0x0F, 0x38, 0xF1, 0x54, 0x5A, 0x20, // movbe word [r10+r11*2+32], dx
+        0x43, 0x0F, 0x38, 0xF1, 0x74, 0x5A, 0x24, // movbe dword [r10+r11*2+36], esi
+        0x4F, 0x0F, 0x38, 0xF1, 0x44, 0x5A, 0x38, // movbe qword [r10+r11*2+56], r8
+    ]);
+    check_mem("movbe_extended_indexed_load_store_forms", &code, r, s, FLAG_MASK);
+}
+
 // ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
 //
 // BMI1 defines ZF and SF from the result, clears OF; AF/PF are undefined and CF
@@ -12533,6 +12561,32 @@ fn movdir_addr32_forms() {
 }
 
 #[test]
+fn movdir_extended_indexed_forms() {
+    let mut s = [0u8; 64];
+    for (i, b) in s.iter_mut().enumerate() {
+        *b = (0x60u8).wrapping_add((i as u8).wrapping_mul(5));
+    }
+
+    let mut r = modern_flags_regs();
+    r.r8 = DATA_ADDR;
+    r.r9 = 0x8877_6655_4433_2211;
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rbx = 0xA5A5_5A5A;
+    check_mem(
+        "movdir_extended_indexed_forms",
+        &with_hlt(vec![
+            0x66, 0x47, 0x0F, 0x38, 0xF8, 0x44, 0x5A, 0x20, // movdir64b r8, [r10+r11*2+0x20]
+            0x43, 0x0F, 0x38, 0xF9, 0x1C, 0x5A, // movdiri dword [r10+r11*2], ebx
+            0x4F, 0x0F, 0x38, 0xF9, 0x4C, 0x5A, 0x08, // movdiri qword [r10+r11*2+8], r9
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cldemote_hint_preserves_state() {
     // CLDEMOTE m8 = 0F 1C /0. Architecturally a cache hint: no GPR/flag/memory effect.
     let mut s = [0u8; 64];
@@ -14856,6 +14910,118 @@ fn bit_test_addr32_memory_index_forms() {
 }
 
 #[test]
+fn bit_test_extended_memory_index_forms() {
+    let mut s = [0u8; 64];
+    s[0] = 0b0010_0000;
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rdx = 5;
+    check_mem(
+        "bt_extended_mem5",
+        &with_hlt(vec![0x4B, 0x0F, 0xA3, 0x14, 0x5A]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[12] = 0b0001_0000;
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rdx = 100;
+    check_mem(
+        "bt_extended_mem100",
+        &with_hlt(vec![0x4B, 0x0F, 0xA3, 0x14, 0x5A]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rdx = 70;
+    check_mem(
+        "bts_extended_mem70",
+        &with_hlt(vec![0x4B, 0x0F, 0xAB, 0x14, 0x5A]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[16] = 0b0000_0100;
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rdx = 130;
+    check_mem(
+        "btr_extended_mem130",
+        &with_hlt(vec![0x4B, 0x0F, 0xB3, 0x14, 0x5A]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rdx = 200;
+    check_mem(
+        "btc_extended_mem200",
+        &with_hlt(vec![0x4B, 0x0F, 0xBB, 0x14, 0x5A]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "bt_extended_mem_neg",
+        &with_hlt(vec![0x4B, 0x0F, 0xA3, 0x44, 0x5A, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btr_extended_mem_neg",
+        &with_hlt(vec![0x4B, 0x0F, 0xB3, 0x44, 0x5A, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btc_extended_mem_neg",
+        &with_hlt(vec![0x4B, 0x0F, 0xBB, 0x44, 0x5A, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+}
+
+#[test]
 fn bt_mem_imm_index() {
     // BT m64, imm8 (0F BA /4 ib): immediate bit index IS taken modulo operand size
     // (64) for the imm form. imm=63 selects bit 63 of the qword.
@@ -15074,6 +15240,34 @@ fn adcx_adox_addr32_memory_width_forms() {
         0x67, 0x48, 0x89, 0x57, 0x30, // mov [edi+48], rdx
     ]);
     check_mem("adcx_adox_addr32_memory_width_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn adcx_adox_extended_memory_width_forms() {
+    let mut s = [0u8; 64];
+    s[8..16].copy_from_slice(&1u64.to_le_bytes());
+    s[16..24].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_FFFF_FFFF;
+    r.rbx = 0xCCCC_DDDD_FFFF_FFFF;
+    r.rcx = 0xFFFF_FFFF_FFFF_FFFE;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFE;
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rflags = flags::bits::CF | flags::bits::OF | flags::bits::SF | flags::bits::PF;
+
+    let code = with_hlt(vec![
+        0x66, 0x43, 0x0F, 0x38, 0xF6, 0x04, 0x5A, // adcx eax, dword [r10+r11*2]
+        0x43, 0x89, 0x44, 0x5A, 0x20, // mov [r10+r11*2+32], eax
+        0xF3, 0x43, 0x0F, 0x38, 0xF6, 0x5C, 0x5A, 0x04, // adox ebx, dword [r10+r11*2+4]
+        0x43, 0x89, 0x5C, 0x5A, 0x24, // mov [r10+r11*2+36], ebx
+        0x66, 0x4B, 0x0F, 0x38, 0xF6, 0x4C, 0x5A, 0x08, // adcx rcx, qword [r10+r11*2+8]
+        0x4B, 0x89, 0x4C, 0x5A, 0x28, // mov [r10+r11*2+40], rcx
+        0xF3, 0x4B, 0x0F, 0x38, 0xF6, 0x54, 0x5A, 0x10, // adox rdx, qword [r10+r11*2+16]
+        0x4B, 0x89, 0x54, 0x5A, 0x30, // mov [r10+r11*2+48], rdx
+    ]);
+    check_mem("adcx_adox_extended_memory_width_forms", &code, r, s, FLAG_MASK);
 }
 
 // ---------------------------------------------------------------------------
@@ -15937,6 +16131,79 @@ fn cmpxchg8b_cmpxchg16b_addr32_memory_forms() {
     check_mem(
         "cmpxchg16b_addr32_fail",
         &with_hlt(vec![0x67, 0x48, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg8b_cmpxchg16b_extended_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = 0x5566_7788;
+    r.rdx = 0x1122_3344;
+    r.rbx = 0xDEAD_BEEF;
+    r.rcx = 0xCAFE_F00D;
+    check_mem(
+        "cmpxchg8b_extended_success",
+        &with_hlt(vec![0x43, 0x0F, 0xC7, 0x0C, 0x5A]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = 0x1111_2222;
+    r.rdx = 0x3333_4444;
+    r.rbx = 0xDEAD_BEEF;
+    r.rcx = 0xCAFE_F00D;
+    check_mem(
+        "cmpxchg8b_extended_fail",
+        &with_hlt(vec![0x43, 0x0F, 0xC7, 0x0C, 0x5A]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x99AA_BBCC_DDEE_FF00u64.to_le_bytes());
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdx = 0x99AA_BBCC_DDEE_FF00;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0xFEDC_BA98_7654_3210;
+    check_mem(
+        "cmpxchg16b_extended_success",
+        &with_hlt(vec![0x4B, 0x0F, 0xC7, 0x0C, 0x5A]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x99AA_BBCC_DDEE_FF00u64.to_le_bytes());
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r.rax = 0x0102_0304_0506_0708;
+    r.rdx = 0x1112_1314_1516_1718;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0xFEDC_BA98_7654_3210;
+    check_mem(
+        "cmpxchg16b_extended_fail",
+        &with_hlt(vec![0x4B, 0x0F, 0xC7, 0x0C, 0x5A]),
         r,
         s,
         FLAG_MASK,
@@ -21235,6 +21502,15 @@ fn mmx_addr32_memory_source_program(opcode: u8) -> Vec<u8> {
     code
 }
 
+fn mmx_extended_memory_source_program(opcode: u8) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x43, 0x0F, opcode, 0x44, 0x5A, 0x08]); // <op> mm0, [r10+r11*2+8]
+    code.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    code.push(HLT);
+    code
+}
+
 #[test]
 fn mmx_pshufw_register_and_memory_sources() {
     let a = [0x00, 0x01, 0x10, 0x11, 0x20, 0x21, 0x30, 0x31];
@@ -21793,6 +22069,125 @@ fn mmx_addr32_memory_source_forms() {
     r.rsi = 0xFFFF_0000_0000_0000 | 4;
     check_mem(
         "mmx_pshufw_addr32_mem",
+        &code,
+        r,
+        mmx_scratch(unpack_a, unpack_b),
+        0,
+    );
+}
+
+#[test]
+fn mmx_extended_memory_source_forms() {
+    let check = |label: &str, opcode: u8, scratch: [u8; 64]| {
+        let mut r = regs();
+        r.r10 = DATA_ADDR - 8;
+        r.r11 = 4;
+        check_mem(
+            label,
+            &mmx_extended_memory_source_program(opcode),
+            r,
+            scratch,
+            0,
+        );
+    };
+
+    let unpack_a = [0x00, 0x01, 0x02, 0x03, 0x70, 0x71, 0x72, 0x73];
+    let unpack_b = [0x80, 0x81, 0x82, 0x83, 0xF0, 0xF1, 0xF2, 0xF3];
+    for (label, opcode) in [
+        ("mmx_punpcklbw_extended_mem", 0x60),
+        ("mmx_punpcklwd_extended_mem", 0x61),
+        ("mmx_punpckldq_extended_mem", 0x62),
+        ("mmx_punpckhbw_extended_mem", 0x68),
+        ("mmx_punpckhwd_extended_mem", 0x69),
+        ("mmx_punpckhdq_extended_mem", 0x6A),
+    ] {
+        check(label, opcode, mmx_scratch(unpack_a, unpack_b));
+    }
+
+    let arith_a = [0x7F, 0x80, 0xFF, 0x00, 0x10, 0xF0, 0x55, 0xAA];
+    let arith_b = [0x01, 0xFF, 0x01, 0xFF, 0xF0, 0x20, 0xAA, 0x55];
+    for (label, opcode) in [
+        ("mmx_paddq_extended_mem", 0xD4),
+        ("mmx_paddusb_extended_mem", 0xDC),
+        ("mmx_paddusw_extended_mem", 0xDD),
+        ("mmx_paddsb_extended_mem", 0xEC),
+        ("mmx_paddsw_extended_mem", 0xED),
+        ("mmx_paddb_extended_mem", 0xFC),
+        ("mmx_paddw_extended_mem", 0xFD),
+        ("mmx_paddd_extended_mem", 0xFE),
+        ("mmx_psubusb_extended_mem", 0xD8),
+        ("mmx_psubusw_extended_mem", 0xD9),
+        ("mmx_psubsb_extended_mem", 0xE8),
+        ("mmx_psubsw_extended_mem", 0xE9),
+        ("mmx_psubb_extended_mem", 0xF8),
+        ("mmx_psubw_extended_mem", 0xF9),
+        ("mmx_psubd_extended_mem", 0xFA),
+        ("mmx_psubq_extended_mem", 0xFB),
+    ] {
+        check(label, opcode, mmx_scratch(arith_a, arith_b));
+    }
+
+    let cmp_a = [0x80, 0x7F, 0x00, 0xFF, 0x34, 0x12, 0xAA, 0x55];
+    let cmp_b = [0x7F, 0x7F, 0x00, 0x01, 0x78, 0x56, 0x55, 0xAA];
+    for (label, opcode) in [
+        ("mmx_pcmpeqb_extended_mem", 0x74),
+        ("mmx_pcmpeqw_extended_mem", 0x75),
+        ("mmx_pcmpeqd_extended_mem", 0x76),
+        ("mmx_pcmpgtb_extended_mem", 0x64),
+        ("mmx_pcmpgtw_extended_mem", 0x65),
+        ("mmx_pcmpgtd_extended_mem", 0x66),
+        ("mmx_pand_extended_mem", 0xDB),
+        ("mmx_pandn_extended_mem", 0xDF),
+        ("mmx_por_extended_mem", 0xEB),
+        ("mmx_pxor_extended_mem", 0xEF),
+    ] {
+        check(label, opcode, mmx_scratch(cmp_a, cmp_b));
+    }
+
+    let mul_a = [
+        0x0002u16.to_le_bytes(),
+        0xFFFEu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let mul_b = [
+        0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    for (label, opcode) in [
+        ("mmx_pmullw_extended_mem", 0xD5),
+        ("mmx_pmulhuw_extended_mem", 0xE4),
+        ("mmx_pmulhw_extended_mem", 0xE5),
+        ("mmx_pmuludq_extended_mem", 0xF4),
+        ("mmx_pmaddwd_extended_mem", 0xF5),
+        ("mmx_psadbw_extended_mem", 0xF6),
+        ("mmx_pavgb_extended_mem", 0xE0),
+        ("mmx_pavgw_extended_mem", 0xE3),
+        ("mmx_pminub_extended_mem", 0xDA),
+        ("mmx_pmaxub_extended_mem", 0xDE),
+        ("mmx_pminsw_extended_mem", 0xEA),
+        ("mmx_pmaxsw_extended_mem", 0xEE),
+    ] {
+        check(label, opcode, mmx_scratch(mul_a, mul_b));
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x43, 0x0F, 0x70, 0x44, 0x5A, 0x08, 0x1B]); // pshufw mm0, [r10+r11*2+8], 0x1b
+    code.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "mmx_pshufw_extended_mem",
         &code,
         r,
         mmx_scratch(unpack_a, unpack_b),
