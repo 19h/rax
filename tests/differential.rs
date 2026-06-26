@@ -36234,6 +36234,87 @@ fn avx2_ymm_memory_count_shift_forms() {
 }
 
 #[test]
+fn avx2_ymm_memory_count_shift_indexed_forms() {
+    fn poison_rdi_for_addr32(code: &mut Vec<u8>) {
+        code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+        code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    }
+
+    fn check_indexed_count_shift(
+        label: &str,
+        count: u64,
+        addr32_2: &[u8],
+        addr32_3: &[u8],
+        extended_2: &[u8],
+        extended_3: &[u8],
+    ) {
+        let s = avx2_shift_count_scratch(count);
+        let mut code = avx2_ymm_pair_start();
+        poison_rdi_for_addr32(&mut code);
+        code.extend_from_slice(addr32_2);
+        code.extend_from_slice(addr32_3);
+        code.extend_from_slice(&load_rdi_data());
+        avx2_store_ymm23_and_hlt(&mut code);
+        check_mem(
+            &format!("{}_addr32_indexed", label),
+            &code,
+            avx_indexed_addr32_regs(),
+            s,
+            0,
+        );
+
+        let s = avx2_shift_count_scratch(count);
+        let mut code = avx2_ymm_pair_start();
+        code.extend_from_slice(extended_2);
+        code.extend_from_slice(extended_3);
+        avx2_store_ymm23_and_hlt(&mut code);
+        check_mem(
+            &format!("{}_extended_indexed", label),
+            &code,
+            avx_indexed_extended_regs(),
+            s,
+            0,
+        );
+    }
+
+    check_indexed_count_shift(
+        "avx2_ymm_memory_count_word_right_shifts",
+        17,
+        &[0x67, 0xC5, 0xFD, 0xD1, 0x54, 0x77, 0x20], // vpsrlw ymm2, ymm0, [edi+esi*2+32]
+        &[0x67, 0xC5, 0xFD, 0xE1, 0x5C, 0x77, 0x20], // vpsraw ymm3, ymm0, [edi+esi*2+32]
+        &[0xC4, 0x81, 0x7D, 0xD1, 0x54, 0x5A, 0x20], // vpsrlw ymm2, ymm0, [r10+r11*2+32]
+        &[0xC4, 0x81, 0x7D, 0xE1, 0x5C, 0x5A, 0x20], // vpsraw ymm3, ymm0, [r10+r11*2+32]
+    );
+
+    check_indexed_count_shift(
+        "avx2_ymm_memory_count_left_word_right_dword",
+        11,
+        &[0x67, 0xC5, 0xFD, 0xF1, 0x54, 0x77, 0x20], // vpsllw ymm2, ymm0, [edi+esi*2+32]
+        &[0x67, 0xC5, 0xFD, 0xD2, 0x5C, 0x77, 0x20], // vpsrld ymm3, ymm0, [edi+esi*2+32]
+        &[0xC4, 0x81, 0x7D, 0xF1, 0x54, 0x5A, 0x20], // vpsllw ymm2, ymm0, [r10+r11*2+32]
+        &[0xC4, 0x81, 0x7D, 0xD2, 0x5C, 0x5A, 0x20], // vpsrld ymm3, ymm0, [r10+r11*2+32]
+    );
+
+    check_indexed_count_shift(
+        "avx2_ymm_memory_count_dword_shifts",
+        33,
+        &[0x67, 0xC5, 0xFD, 0xE2, 0x54, 0x77, 0x20], // vpsrad ymm2, ymm0, [edi+esi*2+32]
+        &[0x67, 0xC5, 0xFD, 0xF2, 0x5C, 0x77, 0x20], // vpslld ymm3, ymm0, [edi+esi*2+32]
+        &[0xC4, 0x81, 0x7D, 0xE2, 0x54, 0x5A, 0x20], // vpsrad ymm2, ymm0, [r10+r11*2+32]
+        &[0xC4, 0x81, 0x7D, 0xF2, 0x5C, 0x5A, 0x20], // vpslld ymm3, ymm0, [r10+r11*2+32]
+    );
+
+    check_indexed_count_shift(
+        "avx2_ymm_memory_count_qword_shifts",
+        63,
+        &[0x67, 0xC5, 0xFD, 0xD3, 0x54, 0x77, 0x20], // vpsrlq ymm2, ymm0, [edi+esi*2+32]
+        &[0x67, 0xC5, 0xFD, 0xF3, 0x5C, 0x77, 0x20], // vpsllq ymm3, ymm0, [edi+esi*2+32]
+        &[0xC4, 0x81, 0x7D, 0xD3, 0x54, 0x5A, 0x20], // vpsrlq ymm2, ymm0, [r10+r11*2+32]
+        &[0xC4, 0x81, 0x7D, 0xF3, 0x5C, 0x5A, 0x20], // vpsllq ymm3, ymm0, [r10+r11*2+32]
+    );
+}
+
+#[test]
 fn avx2_ymm_shuffle_immediate_memory_forms() {
     let s = avx_byte_pair_scratch();
 
