@@ -7289,6 +7289,348 @@ fn clwb_hint_preserves_state() {
 }
 
 #[test]
+fn fence_and_pause_forms_preserve_state() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x0123_4567_89AB_CDEF;
+    r.rbx = 0xFEDC_BA98_7654_3210;
+    check_flags_masked(
+        "fence_pause_preserve",
+        &with_hlt(vec![
+            0x0F, 0xAE, 0xE8, // lfence
+            0x0F, 0xAE, 0xF0, // mfence
+            0x0F, 0xAE, 0xF8, // sfence
+            0xF3, 0x90, // pause
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn stac_clac_ac_flag_forms() {
+    let ac_and_status = FLAG_MASK | flags::bits::AC;
+
+    let mut r = modern_flags_regs();
+    r.rflags &= !flags::bits::AC;
+    check_flags_masked(
+        "stac_sets_ac",
+        &with_hlt(vec![0x0F, 0x01, 0xCB]), // stac
+        r,
+        ac_and_status,
+    );
+
+    let mut r = modern_flags_regs();
+    r.rflags |= flags::bits::AC;
+    check_flags_masked(
+        "clac_clears_ac",
+        &with_hlt(vec![0x0F, 0x01, 0xCA]), // clac
+        r,
+        ac_and_status,
+    );
+}
+
+fn fsgsbase_enable_prologue() -> Vec<u8> {
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x0F, 0x20, 0xE0]); // mov rax, cr4
+    code.extend_from_slice(&[0x48, 0x0D]); // or rax, imm32
+    code.extend_from_slice(&0x0001_0000u32.to_le_bytes()); // CR4.FSGSBASE
+    code.extend_from_slice(&[0x0F, 0x22, 0xE0]); // mov cr4, rax
+    code
+}
+
+#[test]
+fn fsgsbase_64bit_roundtrip_forms() {
+    let fs_base = 0x0000_0000_0012_3000u64;
+    let gs_base = 0x0000_0000_0045_6000u64;
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 2
+    code.extend_from_slice(&2u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&fs_base.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, imm64
+    code.extend_from_slice(&gs_base.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xDB]); // wrgsbase rbx
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xC1]); // rdfsbase rcx
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xCA]); // rdgsbase rdx
+
+    check_flags_masked(
+        "fsgsbase_64bit_roundtrip",
+        &with_hlt(code),
+        regs(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn fsgsbase_32bit_zero_ext_and_extended_regs() {
+    let fs_base = 0x89AB_CDEFu64;
+    let gs_base = 0x0000_0000_0123_4000u64;
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&(0xFFFF_FFFF_0000_0000u64 | fs_base).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x0F, 0xAE, 0xD0]); // wrfsbase eax
+    code.extend_from_slice(&[0x49, 0xC7, 0xC2]); // mov r10, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x41, 0x0F, 0xAE, 0xC2]); // rdfsbase r10d
+    code.extend_from_slice(&[0x49, 0xB8]); // mov r8, imm64
+    code.extend_from_slice(&gs_base.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xD8]); // wrgsbase r8
+    code.extend_from_slice(&[0x49, 0xC7, 0xC3]); // mov r11, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xCB]); // rdgsbase r11
+
+    check_flags_masked(
+        "fsgsbase_32bit_zero_ext_extended",
+        &with_hlt(code),
+        regs(),
+        FLAG_MASK,
+    );
+}
+
+fn pkru_enable_prologue() -> Vec<u8> {
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x0F, 0x20, 0xE0]); // mov rax, cr4
+    code.extend_from_slice(&[0x48, 0x0D]); // or rax, imm32
+    code.extend_from_slice(&0x0040_0000u32.to_le_bytes()); // CR4.PKE
+    code.extend_from_slice(&[0x0F, 0x22, 0xE0]); // mov cr4, rax
+    code
+}
+
+#[test]
+fn pkru_write_read_roundtrip_preserves_flags() {
+    let pkru = 0x5555_5550u32;
+
+    let mut code = pkru_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.push(0xB8); // mov eax, imm32
+    code.extend_from_slice(&pkru.to_le_bytes());
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0xBA, 0x00, 0x00, 0x00, 0x00]); // mov edx, 0
+    code.extend_from_slice(&[0x0F, 0x01, 0xEF]); // wrpkru
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC2]); // mov rdx, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x01, 0xEE]); // rdpkru
+
+    check_flags_masked("pkru_roundtrip", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn pkru_multiple_writes_last_value_visible() {
+    let first = 0xAAAA_AAA0u32;
+    let second = 0xCAFE_BAB0u32;
+
+    let mut code = pkru_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.push(0xB8); // mov eax, imm32
+    code.extend_from_slice(&first.to_le_bytes());
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0xBA, 0x00, 0x00, 0x00, 0x00]); // mov edx, 0
+    code.extend_from_slice(&[0x0F, 0x01, 0xEF]); // wrpkru
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&(0xFFFF_FFFF_0000_0000u64 | second as u64).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x01, 0xEF]); // wrpkru
+    code.extend_from_slice(&[0x0F, 0x01, 0xEE]); // rdpkru
+
+    check_flags_masked("pkru_last_write_visible", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+fn swapgs_setup_prologue(user_gs: u64, kernel_gs: u64) -> Vec<u8> {
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.push(0xB9); // mov ecx, IA32_KERNEL_GS_BASE
+    code.extend_from_slice(&0xC000_0102u32.to_le_bytes());
+    code.push(0xB8); // mov eax, kernel_gs[31:0]
+    code.extend_from_slice(&(kernel_gs as u32).to_le_bytes());
+    code.push(0xBA); // mov edx, kernel_gs[63:32]
+    code.extend_from_slice(&((kernel_gs >> 32) as u32).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x30]); // wrmsr
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, user_gs
+    code.extend_from_slice(&user_gs.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code
+}
+
+#[test]
+fn swapgs_roundtrip_visible_through_rdgsbase() {
+    let user_gs = 0x0000_0000_0012_3000u64;
+    let kernel_gs = 0x0000_0000_0078_9000u64;
+
+    let mut code = swapgs_setup_prologue(user_gs, kernel_gs);
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xCB]); // rdgsbase rbx
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xC9]); // rdgsbase rcx
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xCA]); // rdgsbase rdx
+
+    check_flags_masked("swapgs_roundtrip", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn swapgs_multiple_toggles_extended_regs() {
+    let user_gs = 0x0000_0000_0024_6000u64;
+    let kernel_gs = 0x0000_0000_009A_B000u64;
+
+    let mut code = swapgs_setup_prologue(user_gs, kernel_gs);
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xC8]); // rdgsbase r8
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xC9]); // rdgsbase r9
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xCA]); // rdgsbase r10
+    code.extend_from_slice(&[0x0F, 0x01, 0xF8]); // swapgs
+    code.extend_from_slice(&[0xF3, 0x49, 0x0F, 0xAE, 0xCB]); // rdgsbase r11
+
+    check_flags_masked("swapgs_multiple_toggles", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn rdmsr_reads_initial_efer() {
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.push(0xB9); // mov ecx, IA32_EFER
+    code.extend_from_slice(&0xC000_0080u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC2]); // mov rdx, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x32]); // rdmsr
+
+    check_flags_masked("rdmsr_efer", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+fn wrmsr_imm64(code: &mut Vec<u8>, msr: u32, value: u64) {
+    code.push(0xB9); // mov ecx, msr
+    code.extend_from_slice(&msr.to_le_bytes());
+    code.push(0xB8); // mov eax, value[31:0]
+    code.extend_from_slice(&(value as u32).to_le_bytes());
+    code.push(0xBA); // mov edx, value[63:32]
+    code.extend_from_slice(&((value >> 32) as u32).to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x30]); // wrmsr
+}
+
+const WRMSR_IMM64_LEN: usize = 17;
+
+fn rdmsr_to_edx_eax(code: &mut Vec<u8>, msr: u32) {
+    code.push(0xB9); // mov ecx, msr
+    code.extend_from_slice(&msr.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x32]); // rdmsr
+}
+
+#[test]
+fn wrmsr_rdmsr_base_msr_roundtrips() {
+    let fs_base = 0x0000_1234_5678_9000u64;
+    let gs_base = 0x0000_2345_6789_A000u64;
+    let kernel_gs_base = 0x0000_3456_789A_B000u64;
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+
+    wrmsr_imm64(&mut code, 0xC000_0100, fs_base); // IA32_FS_BASE
+    rdmsr_to_edx_eax(&mut code, 0xC000_0100);
+    code.extend_from_slice(&[0x48, 0x89, 0xC3]); // mov rbx, rax
+    code.extend_from_slice(&[0x48, 0x89, 0xD6]); // mov rsi, rdx
+
+    wrmsr_imm64(&mut code, 0xC000_0101, gs_base); // IA32_GS_BASE
+    rdmsr_to_edx_eax(&mut code, 0xC000_0101);
+    code.extend_from_slice(&[0x48, 0x89, 0xC7]); // mov rdi, rax
+    code.extend_from_slice(&[0x48, 0x89, 0xD5]); // mov rbp, rdx
+
+    wrmsr_imm64(&mut code, 0xC000_0102, kernel_gs_base); // IA32_KERNEL_GS_BASE
+    rdmsr_to_edx_eax(&mut code, 0xC000_0102);
+    code.extend_from_slice(&[0x49, 0x89, 0xC0]); // mov r8, rax
+    code.extend_from_slice(&[0x49, 0x89, 0xD1]); // mov r9, rdx
+
+    check_flags_masked("wrmsr_rdmsr_base_roundtrips", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn syscall_entry_saves_return_and_masks_flags() {
+    const IA32_STAR: u32 = 0xC000_0081;
+    const IA32_LSTAR: u32 = 0xC000_0082;
+    const IA32_FMASK: u32 = 0xC000_0084;
+
+    let kernel_offset = WRMSR_IMM64_LEN * 3 + 2 + 2; // wrmsrs + stc/std + syscall
+    let kernel_rip = CODE_ADDR + kernel_offset as u64;
+    let star = (0x20u64 << 48) | (0x08u64 << 32);
+
+    let mut code = Vec::new();
+    wrmsr_imm64(&mut code, IA32_STAR, star);
+    wrmsr_imm64(&mut code, IA32_LSTAR, kernel_rip);
+    wrmsr_imm64(&mut code, IA32_FMASK, flags::bits::CF | flags::bits::DF);
+    code.extend_from_slice(&[0xF9, 0xFD]); // stc; std
+    code.extend_from_slice(&[0x0F, 0x05]); // syscall
+    code.extend_from_slice(&[0x48, 0x89, 0x0F]); // mov [rdi], rcx
+    code.extend_from_slice(&[0x4C, 0x89, 0x5F, 0x08]); // mov [rdi+8], r11
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x10]); // mov [rdi+16], rax
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::PF;
+    check_mem("syscall_entry_state", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn sysenter_entry_loads_target_and_clears_if() {
+    const IA32_SYSENTER_CS: u32 = 0x174;
+    const IA32_SYSENTER_ESP: u32 = 0x175;
+    const IA32_SYSENTER_EIP: u32 = 0x176;
+
+    let kernel_offset = WRMSR_IMM64_LEN * 3 + 2; // wrmsrs + sysenter
+    let kernel_rip = CODE_ADDR + kernel_offset as u64;
+    let kernel_rsp = STACK_ADDR - 0x80;
+
+    let mut code = Vec::new();
+    wrmsr_imm64(&mut code, IA32_SYSENTER_CS, 0x08);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_ESP, kernel_rsp);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_EIP, kernel_rip);
+    code.extend_from_slice(&[0x0F, 0x34]); // sysenter
+    code.extend_from_slice(&[0x48, 0x89, 0x27]); // mov [rdi], rsp
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x08]); // mov [rdi+8], rax
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::IF | flags::bits::CF;
+    check_mem("sysenter_entry_state", &code, r, zero_scratch(), 0);
+}
+
+#[test]
 fn serialize_preserves_status_and_gprs() {
     // SERIALIZE = 0F 01 E8. Put the flags into a nontrivial state first, then
     // verify KVM and the interpreter agree that SERIALIZE leaves them alone.
@@ -7596,6 +7938,68 @@ fn flag_stc_clc_cmc_sequence() {
     let mut r = regs();
     r.rflags = 0;
     check("stc_cmc", &with_hlt(vec![0xF9, 0xF5]), r);
+}
+
+#[test]
+fn flag_popfq_restores_wide_flag_image() {
+    let flag_image = flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::DF
+        | flags::bits::OF
+        | flags::bits::AC
+        | flags::bits::ID;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&flag_image.to_le_bytes());
+    code.extend_from_slice(&[0x50, 0x9D]); // push rax; popfq
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.push(HLT);
+
+    check_mem("popfq_flag_image", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn flag_popfw_updates_low_flags_only() {
+    let low_flags =
+        (flags::bits::CF | flags::bits::AF | flags::bits::DF | flags::bits::OF) as u16;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::AC | flags::bits::ID;
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x66, 0x68]); // push imm16
+    code.extend_from_slice(&low_flags.to_le_bytes());
+    code.extend_from_slice(&[0x66, 0x9D]); // popfw
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.push(HLT);
+
+    check_mem("popfw_low_flags_only", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn flag_cli_sti_updates_interrupt_flag() {
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::IF | flags::bits::CF;
+
+    let mut code = Vec::new();
+    code.push(0xFA); // cli
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.push(0xFB); // sti
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x08]); // mov [rdi+8], rax
+    code.push(HLT);
+
+    check_mem("cli_sti_if_image", &code, r, zero_scratch(), 0);
 }
 
 #[test]
@@ -10909,6 +11313,112 @@ fn xcr0_enable_prologue(xcr0_low: u32) -> Vec<u8> {
     code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
     code.extend_from_slice(&[0x0F, 0x01, 0xD1]); // xsetbv
     code
+}
+
+#[test]
+fn xgetbv_reads_default_xcr0_after_osxsave_enable() {
+    let mut code = xcr0_enable_prologue(1);
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC3]); // mov rbx, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC2]); // mov rdx, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x01, 0xD0]); // xgetbv
+
+    check_flags_masked("xgetbv_default_xcr0", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn xsetbv_xgetbv_avx_and_avx512_readback() {
+    let mut code = xcr0_enable_prologue(0x7);
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0x0F, 0x01, 0xD0]); // xgetbv
+    code.extend_from_slice(&[0x48, 0x89, 0xC3]); // mov rbx, rax
+    code.extend_from_slice(&[0x48, 0x89, 0xD6]); // mov rsi, rdx
+
+    code.extend_from_slice(&xcr0_enable_prologue(0xE7));
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0
+    code.extend_from_slice(&0u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xC7, 0xC7]); // mov rdi, 1
+    code.extend_from_slice(&1u32.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x39, 0xF8]); // cmp rax, rdi
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0x0F, 0x01, 0xD0]); // xgetbv
+    code.extend_from_slice(&[0x48, 0x89, 0xC7]); // mov rdi, rax
+    code.extend_from_slice(&[0x48, 0x89, 0xD5]); // mov rbp, rdx
+
+    check_flags_masked("xsetbv_xgetbv_readback", &with_hlt(code), regs(), FLAG_MASK);
+}
+
+#[test]
+fn ldmxcsr_stmxcsr_roundtrips_memory_value() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x04]); // stmxcsr [rdi+4]
+    code.push(HLT);
+
+    check_mem("ldmxcsr_stmxcsr_roundtrip", &code, regs(), s, 0);
+}
+
+#[test]
+fn vldmxcsr_vstmxcsr_roundtrips_memory_value() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_5F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0xAE, 0x17]); // vldmxcsr [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0xAE, 0x5F, 0x04]); // vstmxcsr [rdi+4]
+    code.push(HLT);
+
+    check_avx_mem("vldmxcsr_vstmxcsr_roundtrip", &code, s);
+}
+
+#[test]
+fn fxsave_fxrstor_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_3F80u32.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x03]); // fxsave [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x0B]); // fxrstor [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_mem("fxsave_fxrstor_mxcsr", &code, regs(), s, 0);
+}
+
+#[test]
+fn xsave_xrstor_roundtrips_mxcsr() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
+    s[4..8].copy_from_slice(&0x0000_3F80u32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0x0F, 0xAE, 0x17]); // ldmxcsr [rdi]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x23]); // xsave [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x57, 0x04]); // ldmxcsr [rdi+4]
+    code.extend_from_slice(&[0xB8, 0x03, 0x00, 0x00, 0x00]); // mov eax, 3
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0x0F, 0xAE, 0x5F, 0x08]); // stmxcsr [rdi+8]
+    code.push(HLT);
+
+    check_avx_mem("xsave_xrstor_mxcsr", &code, s);
 }
 
 fn avx_enable_prologue() -> Vec<u8> {

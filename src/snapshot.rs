@@ -99,13 +99,32 @@ impl Default for LazyFlagsSnapshot {
 }
 
 /// Extended CPU state specific to the emulator
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EmulatorState {
     pub fpu: FpuSnapshot,
     pub lazy_flags: LazyFlagsSnapshot,
     pub kernel_gs_base: u64,
     pub pkru: u32,
+    #[serde(default = "default_mxcsr")]
+    pub mxcsr: u32,
     pub halted: bool,
+}
+
+fn default_mxcsr() -> u32 {
+    0x1F80
+}
+
+impl Default for EmulatorState {
+    fn default() -> Self {
+        EmulatorState {
+            fpu: FpuSnapshot::default(),
+            lazy_flags: LazyFlagsSnapshot::default(),
+            kernel_gs_base: 0,
+            pkru: 0,
+            mxcsr: default_mxcsr(),
+            halted: false,
+        }
+    }
 }
 
 /// Snapshot of all stateful device models. Devices implement `Serialize` /

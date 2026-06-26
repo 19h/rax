@@ -610,13 +610,11 @@ impl X86_64Vcpu {
         match reg_op {
             2 => {
                 // VLDMXCSR: load MXCSR from memory
-                // Treat as NOP - we don't emulate MXCSR rounding/exception behavior
-                let _ = self.read_mem(addr, 4)?;
+                self.mxcsr = self.read_mem(addr, 4)? as u32;
             }
             3 => {
                 // VSTMXCSR: store MXCSR to memory
-                // Return default MXCSR value (0x1F80)
-                self.write_mem(addr, 0x1F80u64, 4)?;
+                self.write_mem(addr, self.mxcsr as u64, 4)?;
             }
             _ => {
                 return Err(Error::Emulator(format!("invalid VEX 0xAE /{}", reg_op)));

@@ -306,7 +306,7 @@ impl X86_64Vcpu {
                     // FDP at offset 16 (8 bytes in 64-bit mode)
                     self.write_mem64(addr + 16, self.fpu.data_ptr)?;
                     // MXCSR at offset 24
-                    self.write_mem32(addr + 24, 0x1F80)?;
+                    self.write_mem32(addr + 24, self.mxcsr)?;
                     // MXCSR_MASK at offset 28
                     self.write_mem32(addr + 28, 0xFFFF)?;
                     // ST0-ST7 at offset 32 (16 bytes each)
@@ -346,6 +346,8 @@ impl X86_64Vcpu {
                     self.fpu.instr_ptr = self.read_mem64(addr + 8)?;
                     // FDP at offset 16
                     self.fpu.data_ptr = self.read_mem64(addr + 16)?;
+                    // MXCSR at offset 24
+                    self.mxcsr = self.read_mem32(addr + 24)?;
                     // ST0-ST7 at offset 32
                     for i in 0..8 {
                         let bytes = self.read_bytes(addr + 32 + (i as u64) * 16, 10)?;
@@ -361,14 +363,13 @@ impl X86_64Vcpu {
                 }
                 2 => {
                     // LDMXCSR - load MXCSR register from memory
-                    // Just skip - treat as NOP
+                    self.mxcsr = self.read_mem32(addr)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 3 => {
                     // STMXCSR - store MXCSR register to memory
-                    // Store default MXCSR value (0x1F80)
-                    self.write_mem(addr, 0x1F80u64, 4)?;
+                    self.write_mem(addr, self.mxcsr as u64, 4)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -398,7 +399,7 @@ impl X86_64Vcpu {
                     }
                     // Component 1 (SSE): MXCSR + XMM0-15.
                     if rfbm & 0x2 != 0 {
-                        self.write_mem32(addr + 24, 0x1F80)?;
+                        self.write_mem32(addr + 24, self.mxcsr)?;
                         self.write_mem32(addr + 28, 0xFFFF)?;
                         for i in 0..16 {
                             self.write_mem64(addr + 160 + (i as u64) * 16, self.regs.xmm[i][0])?;
@@ -499,6 +500,7 @@ impl X86_64Vcpu {
                     }
                     if rfbm & 0x2 != 0 {
                         if xstate_bv & 0x2 != 0 {
+                            self.mxcsr = self.read_mem32(addr + 24)?;
                             for i in 0..16 {
                                 self.regs.xmm[i][0] =
                                     self.read_mem64(addr + 160 + (i as u64) * 16)?;
@@ -506,6 +508,7 @@ impl X86_64Vcpu {
                                     self.read_mem64(addr + 160 + (i as u64) * 16 + 8)?;
                             }
                         } else {
+                            self.mxcsr = 0x1F80;
                             for i in 0..16 {
                                 self.regs.xmm[i] = [0, 0];
                             }

@@ -262,6 +262,9 @@ pub struct X86_64Vcpu {
     pub(super) kernel_gs_base: u64,
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
+    /// SIMD floating-point control/status register used by LDMXCSR/STMXCSR and
+    /// by the MXCSR slots in FXSAVE/FXRSTOR and XSAVE/XRSTOR.
+    pub(super) mxcsr: u32,
     /// Extended control register XCR0 (XSAVE feature-enable mask): bit0 x87
     /// (always 1), bit1 SSE, bit2 AVX (YMM_Hi128). Written by XSETBV, read by
     /// XGETBV, and consulted by XSAVE/XRSTOR and CPUID leaf 0xD.
@@ -882,6 +885,7 @@ impl X86_64Vcpu {
             io_pending: None,
             kernel_gs_base: 0,
             pkru: 0,
+            mxcsr: 0x1F80,
             xcr0: 1, // x87 state component always enabled
 
             decode_cache,
@@ -3235,6 +3239,7 @@ impl VCpu for X86_64Vcpu {
             },
             kernel_gs_base: self.kernel_gs_base,
             pkru: self.pkru,
+            mxcsr: self.mxcsr,
             halted: self.halted,
         })
     }
@@ -3271,6 +3276,7 @@ impl VCpu for X86_64Vcpu {
         // Restore other state
         self.kernel_gs_base = state.kernel_gs_base;
         self.pkru = state.pkru;
+        self.mxcsr = state.mxcsr;
         self.halted = state.halted;
 
         Ok(())
