@@ -3696,6 +3696,59 @@ fn x87_fld_fstp_roundtrip() {
 }
 
 #[test]
+fn x87_m32_load_store_forms() {
+    let mut s = [0u8; 64];
+    let val = 13.5f32;
+    s[0..4].copy_from_slice(&val.to_le_bytes());
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xD9, 0x07]); // fld dword [rdi]
+    c.extend_from_slice(&[0xD9, 0x57, 0x10]); // fst dword [rdi+0x10]
+    c.extend_from_slice(&[0xD9, 0x5F, 0x14]); // fstp dword [rdi+0x14]
+    c.push(HLT);
+
+    check_mem("x87_m32_load_store_forms", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_m80_load_store_roundtrip() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDB, 0x7F, 0x10]); // fstp tbyte [rdi+0x10]
+    c.extend_from_slice(&[0xDB, 0x6F, 0x10]); // fld tbyte [rdi+0x10]
+    c.extend_from_slice(&[0xDD, 0x5F, 0x20]); // fstp qword [rdi+0x20]
+    c.push(HLT);
+
+    check_mem(
+        "x87_m80_load_store_roundtrip",
+        &c,
+        regs(),
+        scratch_f64(&[2.5]),
+        0,
+    );
+}
+
+#[test]
+fn x87_constant_load_forms() {
+    let mut c = load_rdi_data();
+    for (op, off) in [
+        (0xE8, 0x00), // fld1
+        (0xE9, 0x08), // fldl2t
+        (0xEA, 0x10), // fldl2e
+        (0xEB, 0x18), // fldpi
+        (0xEC, 0x20), // fldlg2
+        (0xED, 0x28), // fldln2
+        (0xEE, 0x30), // fldz
+    ] {
+        c.extend_from_slice(&[0xD9, op]);
+        c.extend_from_slice(&[0xDD, 0x5F, off]); // fstp qword [rdi+off]
+    }
+    c.push(HLT);
+
+    check_mem("x87_constant_load_forms", &c, regs(), [0u8; 64], 0);
+}
+
+#[test]
 fn x87_memory_addr32_base_index_forms() {
     let mut s = [0u8; 64];
     s[0..8].copy_from_slice(&5.0f64.to_le_bytes());
@@ -3858,6 +3911,27 @@ fn x87_fist_m64() {
 }
 
 #[test]
+fn x87_integer_load_store_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&(-1234i16).to_le_bytes());
+    s[8..16].copy_from_slice(&1_234_567_890_123i64.to_le_bytes());
+    s[16..24].copy_from_slice(&(-42.0f64).to_le_bytes());
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDF, 0x07]); // fild word [rdi]
+    c.extend_from_slice(&[0xDF, 0x5F, 0x20]); // fistp word [rdi+0x20]
+    c.extend_from_slice(&[0xDF, 0x6F, 0x08]); // fild qword [rdi+8]
+    c.extend_from_slice(&[0xDF, 0x7F, 0x28]); // fistp qword [rdi+0x28]
+    c.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+0x10]
+    c.extend_from_slice(&[0xDF, 0x57, 0x30]); // fist word [rdi+0x30]
+    c.extend_from_slice(&[0xDB, 0x57, 0x34]); // fist dword [rdi+0x34]
+    c.extend_from_slice(&[0xDD, 0x5F, 0x38]); // fstp qword [rdi+0x38]
+    c.push(HLT);
+
+    check_mem("x87_integer_load_store_width_forms", &c, regs(), s, 0);
+}
+
+#[test]
 fn x87_fadd_st_chain() {
     // Two sequential memory adds: ((1 + 2.5) + 4.25) = 7.75, all exact dyadic.
     let mut c = load_rdi_data();
@@ -3897,6 +3971,177 @@ fn x87_fdivr_m64() {
         scratch_f64(&[2.0, 8.0]),
         0,
     );
+}
+
+#[test]
+fn x87_m32_float_memory_forms() {
+    let float32_op_program = |modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+        c.extend_from_slice(&[0xD8, modrm, 0x08]); // f<op> dword [rdi+8]
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.push(HLT);
+        c
+    };
+    let scratch_f64_f32 = |a: f64, b: f32| {
+        let mut s = [0u8; 64];
+        s[0..8].copy_from_slice(&a.to_le_bytes());
+        s[8..12].copy_from_slice(&b.to_le_bytes());
+        s
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_fadd_m32", 0x47, 2.0, 4.0),
+        ("x87_fmul_m32", 0x4F, 3.0, 5.0),
+        ("x87_fsub_m32", 0x67, 9.0, 2.5),
+        ("x87_fsubr_m32", 0x6F, 9.0, 2.5),
+        ("x87_fdiv_m32", 0x77, 9.0, 4.0),
+        ("x87_fdivr_m32", 0x7F, 4.0, 16.0),
+    ] {
+        check_mem(
+            label,
+            &float32_op_program(modrm),
+            regs(),
+            scratch_f64_f32(a, b),
+            0,
+        );
+    }
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD8, 0x57, 0x08]); // fcom dword [rdi+8]
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.push(HLT);
+    check_mem(
+        "x87_fcom_m32",
+        &c,
+        regs(),
+        scratch_f64_f32(3.0, 5.0),
+        FCOMI_FLAGS,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD8, 0x5F, 0x08]); // fcomp dword [rdi+8]
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.push(HLT);
+    check_mem(
+        "x87_fcomp_m32",
+        &c,
+        regs(),
+        scratch_f64_f32(7.0, 7.0),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_d8_register_forms() {
+    let reg_op_program = |modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST1 operand
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0 operand
+        c.extend_from_slice(&[0xD8, modrm]); // f<op> st0, st1
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18]
+        c.push(HLT);
+        c
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_fadd_sti", 0xC1, 2.0, 4.0),
+        ("x87_fmul_sti", 0xC9, 3.0, 5.0),
+        ("x87_fsub_sti", 0xE1, 9.0, 2.5),
+        ("x87_fsubr_sti", 0xE9, 9.0, 2.5),
+        ("x87_fdiv_sti", 0xF1, 9.0, 4.0),
+        ("x87_fdivr_sti", 0xF9, 4.0, 16.0),
+    ] {
+        check_mem(label, &reg_op_program(modrm), regs(), scratch_f64(&[a, b]), 0);
+    }
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+    c.extend_from_slice(&[0xD8, 0xD9]); // fcomp st1: compare a vs b, pop once
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = b
+    c.push(HLT);
+    check_mem(
+        "x87_fcomp_sti",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_dc_register_forms() {
+    let reg_op_program = |modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST1 destination
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0 source
+        c.extend_from_slice(&[0xDC, modrm]); // f<op> st1, st0
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = unchanged ST0
+        c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = updated ST1
+        c.push(HLT);
+        c
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_fadd_sti_st0", 0xC1, 2.0, 4.0),
+        ("x87_fmul_sti_st0", 0xC9, 3.0, 5.0),
+        ("x87_fsubr_sti_st0", 0xE1, 9.0, 2.5),
+        ("x87_fsub_sti_st0", 0xE9, 9.0, 2.5),
+        ("x87_fdivr_sti_st0", 0xF1, 9.0, 4.0),
+        ("x87_fdiv_sti_st0", 0xF9, 4.0, 16.0),
+    ] {
+        check_mem(label, &reg_op_program(modrm), regs(), scratch_f64(&[a, b]), 0);
+    }
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+    c.extend_from_slice(&[0xDC, 0xD9]); // fcomp st1: compare a vs b, pop once
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = b
+    c.push(HLT);
+    check_mem(
+        "x87_fcomp_sti_st0",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_de_register_pop_forms() {
+    let pop_op_program = |modrm| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST1 destination
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0 source
+        c.extend_from_slice(&[0xDE, modrm]); // f<op>p st1, st0
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10] = popped result
+        c.push(HLT);
+        c
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_faddp_sti_st0", 0xC1, 2.0, 4.0),
+        ("x87_fmulp_sti_st0", 0xC9, 3.0, 5.0),
+        ("x87_fsubrp_sti_st0", 0xE1, 9.0, 2.5),
+        ("x87_fsubp_sti_st0", 0xE9, 9.0, 2.5),
+        ("x87_fdivrp_sti_st0", 0xF1, 9.0, 4.0),
+        ("x87_fdivp_sti_st0", 0xF9, 4.0, 16.0),
+    ] {
+        check_mem(label, &pop_op_program(modrm), regs(), scratch_f64(&[a, b]), 0);
+    }
 }
 
 // ---- x87 FCOMI / FUCOMI: compare ST0 with ST(i), set ZF/PF/CF directly ----
@@ -14413,6 +14658,20 @@ fn x87_transcendental_exact_results() {
     c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // tan result
     c.push(HLT);
     check_mem("x87_fptan_zero", &c, regs(), scratch_f64(&[0.0]), 0);
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld x=1.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld y=0.0
+    c.extend_from_slice(&[0xD9, 0xF3]); // fpatan -> atan2(0, 1)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fpatan_zero",
+        &c,
+        regs(),
+        scratch_f64(&[0.0, 1.0]),
+        0,
+    );
 
     let mut c = load_rdi_data();
     c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld y=3.0

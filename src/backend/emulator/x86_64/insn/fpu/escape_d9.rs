@@ -90,15 +90,13 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 // FXAM
                 fxam(vcpu);
             }
-            0xE8 => vcpu.fpu.push(1.0),                       // FLD1
-            0xE9 => vcpu.fpu.push(std::f64::consts::LOG2_10), // FLDL2T
-            0xEA => vcpu.fpu.push(std::f64::consts::LOG2_E),  // FLDL2E
-            0xEB => vcpu.fpu.push(std::f64::consts::PI),      // FLDPI
-            0xEC => vcpu
-                .fpu
-                .push(std::f64::consts::LN_2 / std::f64::consts::LN_10), // FLDLG2
-            0xED => vcpu.fpu.push(std::f64::consts::LN_2),    // FLDLN2
-            0xEE => vcpu.fpu.push(0.0),                       // FLDZ
+            0xE8 => vcpu.fpu.push(1.0), // FLD1
+            0xE9 => vcpu.fpu.push(f64::from_bits(0x400A_934F_0979_A371)), // FLDL2T
+            0xEA => vcpu.fpu.push(f64::from_bits(0x3FF7_1547_652B_82FE)), // FLDL2E
+            0xEB => vcpu.fpu.push(f64::from_bits(0x4009_21FB_5444_2D18)), // FLDPI
+            0xEC => vcpu.fpu.push(f64::from_bits(0x3FD3_4413_509F_79FF)), // FLDLG2
+            0xED => vcpu.fpu.push(f64::from_bits(0x3FE6_2E42_FEFA_39EF)), // FLDLN2
+            0xEE => vcpu.fpu.push(0.0), // FLDZ
             0xF0 => {
                 // F2XM1
                 let st0 = vcpu.fpu.get_st(0);
