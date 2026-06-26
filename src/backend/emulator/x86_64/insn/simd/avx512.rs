@@ -1022,6 +1022,7 @@ pub fn evex_gf2p8_affine(
         .evex
         .ok_or_else(|| Error::Emulator("VGF2P8AFFINE* requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm8 = ctx.consume_u8()?;
 
@@ -1030,6 +1031,11 @@ pub fn evex_gf2p8_affine(
     let src2 = evex_rm_vec(&evex, rm);
     let vl_bytes = vl_bytes_of(evex.ll);
     let qwords = vl_bytes / 8;
+    let addr = if is_memory && !evex.broadcast {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes)
+    } else {
+        addr
+    };
 
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let matrix_bytes = if is_memory {
@@ -1077,10 +1083,17 @@ pub fn evex_multishift_qb(
         .evex
         .ok_or_else(|| Error::Emulator("VPMULTISHIFTQB requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let vl_bytes = vl_bytes_of(evex.ll);
     let qwords = vl_bytes / 8;
+    let addr = if is_memory {
+        let scale = if evex.broadcast { 8 } else { vl_bytes };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
 
     let control = read_reg_bytes(vcpu, src1, vl_bytes);
     let source = if is_memory {
@@ -1147,12 +1160,18 @@ pub fn evex_pclmulqdq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm8 = ctx.consume_u8()?;
 
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let vl_bytes = vl_bytes_of(evex.ll);
     let lanes = vl_bytes / 16;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let src2_bytes = if is_memory {
         load_mem_bytes(vcpu, addr, 8, lanes * 2)?
@@ -1200,10 +1219,16 @@ pub fn evex_vaes(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let vl_bytes = vl_bytes_of(evex.ll);
     let lanes = vl_bytes / 16;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes)
+    } else {
+        addr
+    };
 
     let states = read_reg_bytes(vcpu, src1, vl_bytes);
     let keys = if is_memory {
@@ -1654,6 +1679,7 @@ pub fn evex_fixupimm(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX FIXUPIMM requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm = ctx.consume_u8()?;
     let _ = imm;
@@ -1661,6 +1687,16 @@ pub fn evex_fixupimm(
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
     let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
+    let addr = if is_memory {
+        let scale = if scalar || evex.broadcast {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
 
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let src2_bytes = if is_memory {
@@ -1752,6 +1788,7 @@ pub fn evex_fp16_complex(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     if dest == src1 || (!is_memory && dest == src2_reg) {
@@ -1762,6 +1799,16 @@ pub fn evex_fp16_complex(
 
     let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
     let num_pairs = if scalar { 1 } else { vl_bytes / 4 };
+    let addr = if is_memory {
+        let scale = if scalar || evex.broadcast {
+            4
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let src2_bytes = if is_memory {
         if evex.broadcast && !scalar {
