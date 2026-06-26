@@ -7,6 +7,101 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
 use super::control_regs::{is_cpl0, raise_gp0};
 
+#[derive(Clone, Copy)]
+struct Descriptor {
+    raw: u64,
+}
+
+impl Descriptor {
+    fn present(self) -> bool {
+        (self.raw >> 47) & 1 != 0
+    }
+
+    fn type_(self) -> u8 {
+        ((self.raw >> 40) & 0x0F) as u8
+    }
+
+    fn is_code_or_data(self) -> bool {
+        (self.raw >> 44) & 1 != 0
+    }
+
+    fn executable(self) -> bool {
+        self.type_() & 0x8 != 0
+    }
+
+    fn access_rights(self) -> u64 {
+        ((self.raw >> 40) & 0xFFFF) << 8
+    }
+
+    fn limit(self) -> u64 {
+        let mut limit = (self.raw & 0xFFFF) | (((self.raw >> 48) & 0x0F) << 16);
+        if (self.raw >> 55) & 1 != 0 {
+            limit = (limit << 12) | 0xFFF;
+        }
+        limit
+    }
+
+    fn can_lar_lsl(self) -> bool {
+        if !self.present() {
+            return false;
+        }
+
+        if self.is_code_or_data() {
+            return true;
+        }
+
+        matches!(self.type_(), 0x2 | 0x9 | 0xB)
+    }
+
+    fn can_verr(self) -> bool {
+        if !self.present() || !self.is_code_or_data() {
+            return false;
+        }
+
+        !self.executable() || self.type_() & 0x2 != 0
+    }
+
+    fn can_verw(self) -> bool {
+        self.present() && self.is_code_or_data() && !self.executable() && self.type_() & 0x2 != 0
+    }
+}
+
+fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
+    if selector & 0xFFFC == 0 {
+        return Ok(None);
+    }
+
+    let ti = (selector & 0x4) != 0;
+    let index = (selector >> 3) as u64;
+    let (table_base, table_limit) = if ti {
+        (vcpu.sregs.ldt.base, vcpu.sregs.ldt.limit as u64)
+    } else {
+        (vcpu.sregs.gdt.base, vcpu.sregs.gdt.limit as u64)
+    };
+
+    let offset = index * 8;
+    if offset + 7 > table_limit {
+        return Ok(None);
+    }
+
+    let raw = vcpu
+        .mmu
+        .read_u64_supervisor(table_base + offset, &vcpu.sregs)?;
+    Ok(Some(Descriptor { raw }))
+}
+
+fn descriptor_for_lar_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
+    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar_lsl()))
+}
+
+fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
+    if set {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF;
+    }
+}
+
 /// Group 6 - SLDT, STR, LLDT, LTR, VERR, VERW (0x0F 0x00)
 pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
@@ -102,36 +197,31 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // VERR - Verify Read (0x0F 0x00 /4)
         4 => {
-            let _selector = if is_memory {
+            let selector = if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 vcpu.mmu.read_u16(addr, &vcpu.sregs)?
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
-            // In real hardware, this checks if the selector is readable
-            // For emulation, we'll just set ZF=1 (readable) for non-null selectors
-            if _selector != 0 {
-                vcpu.regs.rflags |= flags::bits::ZF;
-            } else {
-                vcpu.regs.rflags &= !flags::bits::ZF;
-            }
+            let readable = descriptor_for_selector(vcpu, selector)?
+                .map(|desc| desc.can_verr())
+                .unwrap_or(false);
+            set_zf(vcpu, readable);
         }
         // VERW - Verify Write (0x0F 0x00 /5)
         5 => {
-            let _selector = if is_memory {
+            let selector = if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 vcpu.mmu.read_u16(addr, &vcpu.sregs)?
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
-            // For emulation, set ZF=1 (writable) for non-null selectors
-            if _selector != 0 {
-                vcpu.regs.rflags |= flags::bits::ZF;
-            } else {
-                vcpu.regs.rflags &= !flags::bits::ZF;
-            }
+            let writable = descriptor_for_selector(vcpu, selector)?
+                .map(|desc| desc.can_verw())
+                .unwrap_or(false);
+            set_zf(vcpu, writable);
         }
         _ => {
             return Err(Error::Emulator(format!(
@@ -160,12 +250,8 @@ pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
         vcpu.get_reg(rm, 2) as u16
     };
 
-    // In a real implementation, we'd read the descriptor from GDT/LDT
-    // For emulation, return a standard code/data segment access rights
-    if selector != 0 {
-        // Return typical access rights: present, ring 0, code/data segment
-        let access_rights: u64 = 0x00CF9300; // Standard access rights
-        vcpu.set_reg(reg, access_rights, ctx.op_size);
+    if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
+        vcpu.set_reg(reg, desc.access_rights(), ctx.op_size);
         vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
     } else {
         vcpu.regs.rflags &= !flags::bits::ZF; // Null selector
@@ -191,10 +277,8 @@ pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
         vcpu.get_reg(rm, 2) as u16
     };
 
-    // For emulation, return max limit for valid selectors
-    if selector != 0 {
-        let limit: u64 = 0xFFFFFFFF; // Max 4GB limit (granularity bit set)
-        vcpu.set_reg(reg, limit, ctx.op_size);
+    if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
+        vcpu.set_reg(reg, desc.limit(), ctx.op_size);
         vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
     } else {
         vcpu.regs.rflags &= !flags::bits::ZF; // Null selector

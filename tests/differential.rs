@@ -38,6 +38,10 @@ const CODE_ADDR: u64 = 0x1_0000;
 const STACK_ADDR: u64 = 0x2_0000;
 /// Scratch data page (read back after the run for memory-effect tests).
 const DATA_ADDR: u64 = 0x3_0000;
+/// Minimal GDT used by far control-flow and descriptor-sensitive tests.
+const GDT_ADDR: u64 = 0x4_000;
+/// Minimal IDT base used to make SIDT deterministic in differential tests.
+const IDT_ADDR: u64 = 0x5_000;
 /// Page-table addresses (mirrors src/arch/x86_64 layout).
 const PML4_ADDR: u64 = 0x9000;
 const PDPTE_ADDR: u64 = 0xA000;
@@ -94,6 +98,10 @@ fn base_sregs() -> SystemRegisters {
     sregs.cr3 = PML4_ADDR;
     sregs.cr4 = CR4_VAL;
     sregs.efer = EFER_VAL;
+    sregs.gdt.base = GDT_ADDR;
+    sregs.gdt.limit = 0x17;
+    sregs.idt.base = IDT_ADDR;
+    sregs.idt.limit = 0x0FFF;
 
     // Flat 64-bit code segment (CS.L=1).
     sregs.cs.base = 0;
@@ -128,6 +136,27 @@ fn base_sregs() -> SystemRegisters {
 
 /// Write the page tables + scratch page into a `Bytes` guest memory.
 fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor = [
+        0xFF, 0xFF, // limit 0:15
+        0x00, 0x00, // base 0:15
+        0x00, // base 16:23
+        0x9B, // present ring-0 executable/readable accessed code
+        0xAF, // limit 16:19, L=1, G=1
+        0x00, // base 24:31
+    ];
+    let data_descriptor = [
+        0xFF, 0xFF, // limit 0:15
+        0x00, 0x00, // base 0:15
+        0x00, // base 16:23
+        0x93, // present ring-0 writable accessed data
+        0xCF, // limit 16:19, DB=1, G=1
+        0x00, // base 24:31
+    ];
+    write(GDT_ADDR, &null_descriptor);
+    write(GDT_ADDR + 8, &code64_descriptor);
+    write(GDT_ADDR + 16, &data_descriptor);
+
     // PML4[0] -> PDPTE (present + writable)
     write(PML4_ADDR, &(PDPTE_ADDR | 0x3).to_le_bytes());
     // PDPTE[i] identity 1GiB huge pages (present + writable + PS), 4 entries (4GiB).
@@ -339,6 +368,10 @@ fn run_kvm(
     sregs.cr3 = our_sregs.cr3;
     sregs.cr4 = our_sregs.cr4;
     sregs.efer = our_sregs.efer;
+    sregs.gdt.base = our_sregs.gdt.base;
+    sregs.gdt.limit = our_sregs.gdt.limit;
+    sregs.idt.base = our_sregs.idt.base;
+    sregs.idt.limit = our_sregs.idt.limit;
     sregs.cs = to_kvm_seg(&our_sregs.cs);
     sregs.ds = to_kvm_seg(&our_sregs.ds);
     sregs.es = to_kvm_seg(&our_sregs.es);
@@ -7696,6 +7729,112 @@ fn control_register_readback_and_smsw_forms() {
     );
 }
 
+#[test]
+fn descriptor_table_store_forms() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x01, 0x07]); // sgdt [rdi]
+    code.extend_from_slice(&[0x0F, 0x01, 0x4F, 0x10]); // sidt [rdi+0x10]
+    code.push(HLT);
+
+    check_mem(
+        "descriptor_table_store_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
+fn descriptor_table_load_then_store_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&0x27u16.to_le_bytes());
+    scratch[2..10].copy_from_slice(&0x6_000u64.to_le_bytes());
+    scratch[0x10..0x12].copy_from_slice(&0x37u16.to_le_bytes());
+    scratch[0x12..0x1A].copy_from_slice(&0x7_000u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x01, 0x17]); // lgdt [rdi]
+    code.extend_from_slice(&[0x0F, 0x01, 0x5F, 0x10]); // lidt [rdi+0x10]
+    code.extend_from_slice(&[0x0F, 0x01, 0x47, 0x20]); // sgdt [rdi+0x20]
+    code.extend_from_slice(&[0x0F, 0x01, 0x4F, 0x30]); // sidt [rdi+0x30]
+    code.push(HLT);
+
+    check_mem("descriptor_table_load_store_forms", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn lmsw_and_clts_update_machine_status_word() {
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&0x000Bu16.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x01, 0x37]); // lmsw [rdi]
+    code.extend_from_slice(&[0x0F, 0x01, 0x67, 0x08]); // smsw [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x06]); // clts
+    code.extend_from_slice(&[0x0F, 0x01, 0x67, 0x10]); // smsw [rdi+0x10]
+    code.push(HLT);
+
+    check_mem("lmsw_clts_msw", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn invlpg_memory_form_preserves_observable_state() {
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check("invlpg_mem", &with_hlt(vec![0x0F, 0x01, 0x3F]), r);
+}
+
+#[test]
+fn lar_lsl_valid_gdt_selector_forms() {
+    let mut r = regs();
+    r.rax = 0x8; // GDT code selector
+    r.rcx = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFF;
+
+    let code = vec![
+        0x0F, 0x02, 0xC8, // lar ecx, ax
+        0x0F, 0x03, 0xD0, // lsl edx, ax
+        HLT,
+    ];
+    check("lar_lsl_valid_gdt_selector", &code, r);
+}
+
+#[test]
+fn verr_verw_code_and_data_selector_permissions() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x66, 0xB8, 0x08, 0x00]); // mov ax, 0x8 (code selector)
+    code.extend_from_slice(&[0x0F, 0x00, 0xE0]); // verr ax
+    code.extend_from_slice(&[0x0F, 0x94, 0x07]); // setz [rdi]
+    code.extend_from_slice(&[0x0F, 0x00, 0xE8]); // verw ax
+    code.extend_from_slice(&[0x0F, 0x94, 0x47, 0x01]); // setz [rdi+1]
+    code.extend_from_slice(&[0x66, 0xB8, 0x10, 0x00]); // mov ax, 0x10 (data selector)
+    code.extend_from_slice(&[0x0F, 0x00, 0xE0]); // verr ax
+    code.extend_from_slice(&[0x0F, 0x94, 0x47, 0x02]); // setz [rdi+2]
+    code.extend_from_slice(&[0x0F, 0x00, 0xE8]); // verw ax
+    code.extend_from_slice(&[0x0F, 0x94, 0x47, 0x03]); // setz [rdi+3]
+    code.push(HLT);
+
+    check_mem("verr_verw_selector_permissions", &code, regs(), zero_scratch(), 0);
+}
+
+#[test]
+fn cache_invd_wbinvd_preserve_observable_state() {
+    let mut r = regs();
+    r.rax = 0x0123_4567_89AB_CDEF;
+    r.rbx = 0xFEDC_BA98_7654_3210;
+    r.rflags = flags::bits::CF | flags::bits::ZF;
+
+    check(
+        "cache_invd_wbinvd",
+        &with_hlt(vec![
+            0x0F, 0x08, // invd
+            0x0F, 0x09, // wbinvd
+        ]),
+        r,
+    );
+}
+
 // ---------------------------------------------------------------------------
 // BT/BTS/BTR/BTC with a MEMORY operand and a bit index that can exceed the
 // operand size. For a memory bit-string the index is NOT taken modulo the
@@ -10021,6 +10160,28 @@ fn control_enter_leave_balanced() {
         &with_hlt(vec![0xC8, 0x20, 0x00, 0x00, 0xC9]),
         r,
     );
+}
+
+#[test]
+fn control_iretq_same_cpl_restores_frame() {
+    let target = CODE_ADDR + 0x1C;
+    let mut code = vec![
+        0x6A, 0x10, // push 0x10 (SS)
+        0x68, 0x00, 0x00, 0x02, 0x00, // push STACK_ADDR
+        0x68, 0x47, 0x02, 0x00, 0x00, // push restored RFLAGS
+        0x6A, 0x08, // push 0x08 (CS)
+        0x48, 0xB8, // movabs rax, target
+    ];
+    code.extend_from_slice(&target.to_le_bytes());
+    code.extend_from_slice(&[
+        0x50, // push rax
+        0x48, 0xCF, // iretq
+        0xF4, // hlt fallback if IRETQ does not branch
+        0xB8, 0x5A, 0x00, 0x00, 0x00, // target: mov eax, 0x5a
+        0xF4, // hlt
+    ]);
+
+    check("iretq_same_cpl", &code, regs());
 }
 
 #[test]
