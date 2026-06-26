@@ -219,7 +219,9 @@ pub fn sha1rnds4(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64, imm8: u
 
     let w = [w0e, w1, w2, w3];
 
-    // Perform 4 rounds
+    // Perform 4 rounds. W0E already includes E for round 0; after that,
+    // E_i is carried separately as the previous round's old D.
+    let mut e = 0u32;
     for i in 0..4 {
         let f_result = match func_select {
             0 => sha1_f0(b, c, d),
@@ -229,9 +231,6 @@ pub fn sha1rnds4(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64, imm8: u
             _ => unreachable!(),
         };
 
-        // For round 0, w[0] already includes E
-        // For rounds 1-3, we need to use d as the previous E
-        let e = if i == 0 { 0 } else { d };
         let wi_plus_e = if i == 0 { w[i] } else { w[i].wrapping_add(e) };
 
         let new_a = f_result
@@ -242,6 +241,7 @@ pub fn sha1rnds4(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64, imm8: u
         let new_c = rol32(b, 30);
         let new_d = c;
 
+        e = d;
         a = new_a;
         b = new_b;
         c = new_c;

@@ -268,7 +268,7 @@ fn run_kvm(
     init: &Registers,
     scratch_init: &[u8; 64],
 ) -> Result<Option<FinalState>, String> {
-    use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+    use kvm_bindings::{kvm_segment, kvm_userspace_memory_region, KVM_MAX_CPUID_ENTRIES};
     use kvm_ioctls::Kvm;
 
     let kvm = match Kvm::new() {
@@ -305,6 +305,13 @@ fn run_kvm(
         Ok(v) => v,
         Err(_) => return Ok(None),
     };
+    let supported_cpuid = match kvm.get_supported_cpuid(KVM_MAX_CPUID_ENTRIES) {
+        Ok(c) => c,
+        Err(_) => return Ok(None),
+    };
+    if vcpu.set_cpuid2(&supported_cpuid).is_err() {
+        return Ok(None);
+    }
 
     // --- sregs: long mode w/ paging, flat segments ---
     let our_sregs = base_sregs();
@@ -6019,6 +6026,181 @@ fn aes_aeskeygenassist() {
 }
 
 // ---------------------------------------------------------------------------
+// SHA-NI: SHA1/SHA256 message schedule and round helpers. Granite Rapids exposes
+// SHA, rax implements the 0F38/0F3A SHA opcodes, and these exact vector
+// transforms had no KVM differential coverage.
+// ---------------------------------------------------------------------------
+
+fn sha_a() -> [u8; 16] {
+    [
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32,
+        0x10,
+    ]
+}
+
+fn sha_b() -> [u8; 16] {
+    [
+        0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85, 0x3c, 0x6e, 0xf3, 0x72, 0xa5, 0x4f, 0xf5,
+        0x3a,
+    ]
+}
+
+#[test]
+fn sha1nexte_reg_mem() {
+    check_sse(
+        "sha1nexte_reg",
+        &sse_program(&[0x0F, 0x38, 0xC8, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha1nexte_mem",
+        &sse_program(&[0x0F, 0x38, 0xC8, 0x47, 0x10]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+}
+
+#[test]
+fn sha1_message_schedule() {
+    check_sse(
+        "sha1msg1",
+        &sse_program(&[0x0F, 0x38, 0xC9, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha1msg2",
+        &sse_program(&[0x0F, 0x38, 0xCA, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+}
+
+#[test]
+fn sha1rnds4_all_modes() {
+    for mode in 0u8..4 {
+        check_sse(
+            match mode {
+                0 => "sha1rnds4_imm0",
+                1 => "sha1rnds4_imm1",
+                2 => "sha1rnds4_imm2",
+                _ => "sha1rnds4_imm3",
+            },
+            &sse_program(&[0x0F, 0x3A, 0xCC, 0xC1, mode]),
+            sse_scratch(sha_a(), sha_b()),
+        );
+        check_sse(
+            match mode {
+                0 => "sha1rnds4_mem_imm0",
+                1 => "sha1rnds4_mem_imm1",
+                2 => "sha1rnds4_mem_imm2",
+                _ => "sha1rnds4_mem_imm3",
+            },
+            &sse_program(&[0x0F, 0x3A, 0xCC, 0x47, 0x10, mode]),
+            sse_scratch(sha_a(), sha_b()),
+        );
+    }
+}
+
+#[test]
+fn sha256_round_and_schedule() {
+    check_sse(
+        "sha256rnds2",
+        &sse_program(&[0x0F, 0x38, 0xCB, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha256msg1",
+        &sse_program(&[0x0F, 0x38, 0xCC, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+    check_sse(
+        "sha256msg2",
+        &sse_program(&[0x0F, 0x38, 0xCD, 0xC1]),
+        sse_scratch(sha_a(), sha_b()),
+    );
+}
+
+// ---------------------------------------------------------------------------
+// PCLMULQDQ and legacy GFNI. The EVEX AVX-512 KVM corpus covers vector GFNI /
+// VPCLMULQDQ, but these legacy 128-bit encodings are a distinct decode path.
+// ---------------------------------------------------------------------------
+
+fn crypto_a() -> [u8; 16] {
+    [
+        0x57, 0x83, 0x01, 0xff, 0x10, 0x20, 0x7f, 0x80, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0xaa,
+        0xfe,
+    ]
+}
+
+fn crypto_b() -> [u8; 16] {
+    [
+        0x83, 0x57, 0xff, 0x01, 0x02, 0x03, 0x80, 0x7f, 0xfe, 0xaa, 0x55, 0x44, 0x33, 0x22, 0x11,
+        0x00,
+    ]
+}
+
+fn gfni_matrix() -> [u8; 16] {
+    [
+        0xf8, 0x7c, 0x3e, 0x1f, 0x8f, 0xc7, 0xe3, 0xf1, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02,
+        0x01,
+    ]
+}
+
+#[test]
+fn pclmulqdq_all_selectors() {
+    for imm in [0x00u8, 0x01, 0x10, 0x11, 0x55, 0xaa] {
+        check_sse(
+            match imm {
+                0x00 => "pclmulqdq_ll",
+                0x01 => "pclmulqdq_hl",
+                0x10 => "pclmulqdq_lh",
+                0x11 => "pclmulqdq_hh",
+                0x55 => "pclmulqdq_ignore_55",
+                _ => "pclmulqdq_ignore_aa",
+            },
+            &sse_program(&[0x66, 0x0F, 0x3A, 0x44, 0xC1, imm]),
+            sse_scratch(crypto_a(), crypto_b()),
+        );
+    }
+}
+
+#[test]
+fn gfni_mul_affine_reg_mem() {
+    check_sse(
+        "gf2p8mulb_reg",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xCF, 0xC1]),
+        sse_scratch(crypto_a(), crypto_b()),
+    );
+    check_sse(
+        "gf2p8mulb_mem",
+        &sse_program(&[0x66, 0x0F, 0x38, 0xCF, 0x47, 0x10]),
+        sse_scratch(crypto_a(), crypto_b()),
+    );
+    check_sse(
+        "gf2p8affineqb_reg",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xCE, 0xC1, 0x63]),
+        sse_scratch(crypto_a(), gfni_matrix()),
+    );
+    check_sse(
+        "gf2p8affineqb_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xCE, 0x47, 0x10, 0x9A]),
+        sse_scratch(crypto_a(), gfni_matrix()),
+    );
+}
+
+#[test]
+fn gfni_affine_inverse_reg_mem() {
+    check_sse(
+        "gf2p8affineinvqb_reg",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xCF, 0xC1, 0x63]),
+        sse_scratch(crypto_a(), gfni_matrix()),
+    );
+    check_sse(
+        "gf2p8affineinvqb_mem",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0xCF, 0x47, 0x10, 0xC0]),
+        sse_scratch(crypto_b(), gfni_matrix()),
+    );
+}
+
+// ---------------------------------------------------------------------------
 // CRC32 (SSE4.2) and POPCNT r/m forms (register + memory operand).
 // CRC32 affects no flags; POPCNT defines ZF (set when src==0) and clears the rest.
 // ---------------------------------------------------------------------------
@@ -6085,6 +6267,162 @@ fn popcnt_r64_mem() {
         r,
         s,
         FLAG_MASK,
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Granite Rapids-era scalar/cache features with deterministic architectural
+// effects. These previously had emulator unit tests, but no KVM differential
+// coverage in this harness.
+// ---------------------------------------------------------------------------
+
+fn modern_flags_regs() -> Registers {
+    let mut r = regs();
+    r.rflags = flags::bits::CF | flags::bits::PF | flags::bits::ZF | flags::bits::OF;
+    r
+}
+
+#[test]
+fn movdiri_m64_r64() {
+    // MOVDIRI m64, r64 = 48 0F 38 F9 /r. Store RAX directly to [RDI].
+    let mut r = modern_flags_regs();
+    r.rax = 0x0123_4567_89AB_CDEF;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "movdiri_m64_r64",
+        &with_hlt(vec![0x48, 0x0F, 0x38, 0xF9, 0x07]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn movdiri_m32_r32() {
+    // MOVDIRI m32, r32 = 0F 38 F9 /r. Store EBX directly to [RDI].
+    let mut r = modern_flags_regs();
+    r.rbx = 0xDEAD_BEEF;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "movdiri_m32_r32",
+        &with_hlt(vec![0x0F, 0x38, 0xF9, 0x1F]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn movdir64b_copy_into_scratch() {
+    // MOVDIR64B r64, m512 = 66 0F 38 F8 /r. Copy 64 bytes from [RDI+0x20] to
+    // the 64-byte-aligned address held in RAX (DATA_ADDR).
+    let mut s = [0u8; 64];
+    for (i, b) in s.iter_mut().enumerate() {
+        *b = (0x80u8).wrapping_add(i as u8);
+    }
+    let mut r = modern_flags_regs();
+    r.rax = DATA_ADDR;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "movdir64b_copy",
+        &with_hlt(vec![0x66, 0x0F, 0x38, 0xF8, 0x47, 0x20]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cldemote_hint_preserves_state() {
+    // CLDEMOTE m8 = 0F 1C /0. Architecturally a cache hint: no GPR/flag/memory effect.
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0xA5A5_5A5A_F0F0_0F0Fu64.to_le_bytes());
+    let mut r = modern_flags_regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "cldemote_m8",
+        &with_hlt(vec![0x0F, 0x1C, 0x07]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn clflush_hint_preserves_state() {
+    // CLFLUSH m8 = 0F AE /7. Cache-line flush: no architectural GPR/flag/memory effect.
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x55AA_33CC_F00D_C0DEu64.to_le_bytes());
+    let mut r = modern_flags_regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "clflush_m8",
+        &with_hlt(vec![0x0F, 0xAE, 0x3F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn clflushopt_hint_preserves_state() {
+    // CLFLUSHOPT m8 = 66 0F AE /7. Optimized cache-line flush, architecturally a hint.
+    let mut s = [0u8; 64];
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    let mut r = modern_flags_regs();
+    r.rdi = DATA_ADDR + 8;
+    check_mem(
+        "clflushopt_m8",
+        &with_hlt(vec![0x66, 0x0F, 0xAE, 0x3F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn clwb_hint_preserves_state() {
+    // CLWB m8 = 66 0F AE /6. Write-back hint without invalidation.
+    let mut s = [0u8; 64];
+    s[16..24].copy_from_slice(&0xCAFE_BABE_7654_3210u64.to_le_bytes());
+    let mut r = modern_flags_regs();
+    r.rdi = DATA_ADDR + 16;
+    check_mem(
+        "clwb_m8",
+        &with_hlt(vec![0x66, 0x0F, 0xAE, 0x37]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn serialize_preserves_status_and_gprs() {
+    // SERIALIZE = 0F 01 E8. Put the flags into a nontrivial state first, then
+    // verify KVM and the interpreter agree that SERIALIZE leaves them alone.
+    let mut r = regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rbx = 0x1122_3344_5566_7788;
+    check(
+        "serialize_preserves",
+        &with_hlt(vec![
+            0x48, 0x83, 0xC0, 0x01, // add rax, 1 -> ZF/CF set
+            0x0F, 0x01, 0xE8, // serialize
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn rdpid_default_tsc_aux() {
+    // RDPID r64 = F3 48 0F C7 /7. Fresh KVM vCPUs default IA32_TSC_AUX to 0,
+    // matching the emulator's current architectural model.
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdpid_r64",
+        &with_hlt(vec![0xF3, 0x48, 0x0F, 0xC7, 0xF8]),
+        r,
     );
 }
 
