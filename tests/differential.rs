@@ -2271,6 +2271,59 @@ fn setcc_all_conditions() {
     }
 }
 
+#[test]
+fn setcc_memory_destination_forms() {
+    let scratch = [0xAAu8; 64];
+    let mut code = load_rdi_data();
+
+    let emit_cmp = |code: &mut Vec<u8>, lhs: u64, rhs: u64| {
+        code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+        code.extend_from_slice(&lhs.to_le_bytes());
+        code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, imm64
+        code.extend_from_slice(&rhs.to_le_bytes());
+        code.extend_from_slice(&[0x48, 0x39, 0xD8]); // cmp rax, rbx
+    };
+    let emit_setcc_mem = |code: &mut Vec<u8>, opcode: u8, offset: u8| {
+        code.extend_from_slice(&[0x0F, opcode]);
+        if offset == 0 {
+            code.push(0x07); // setcc [rdi]
+        } else {
+            code.extend_from_slice(&[0x47, offset]); // setcc [rdi+disp8]
+        }
+    };
+
+    emit_cmp(&mut code, 7, 7);
+    emit_setcc_mem(&mut code, 0x91, 1); // setno [rdi+1]
+    emit_setcc_mem(&mut code, 0x93, 3); // setae [rdi+3]
+    emit_setcc_mem(&mut code, 0x94, 4); // sete [rdi+4]
+    emit_setcc_mem(&mut code, 0x96, 6); // setbe [rdi+6]
+    emit_setcc_mem(&mut code, 0x99, 9); // setns [rdi+9]
+    emit_setcc_mem(&mut code, 0x9A, 10); // setp [rdi+10]
+    emit_setcc_mem(&mut code, 0x9D, 13); // setge [rdi+13]
+    emit_setcc_mem(&mut code, 0x9E, 14); // setle [rdi+14]
+    emit_setcc_mem(&mut code, 0x90, 16); // seto false -> 0
+    emit_setcc_mem(&mut code, 0x9B, 17); // setnp false -> 0
+
+    emit_cmp(&mut code, 1, 2);
+    emit_setcc_mem(&mut code, 0x92, 2); // setb [rdi+2]
+    emit_setcc_mem(&mut code, 0x98, 8); // sets [rdi+8]
+    emit_setcc_mem(&mut code, 0x9C, 12); // setl [rdi+12]
+    emit_setcc_mem(&mut code, 0x9F, 18); // setg false -> 0
+
+    emit_cmp(&mut code, 5, 3);
+    emit_setcc_mem(&mut code, 0x95, 5); // setne [rdi+5]
+    emit_setcc_mem(&mut code, 0x97, 7); // seta [rdi+7]
+    emit_setcc_mem(&mut code, 0x9B, 11); // setnp [rdi+11]
+    emit_setcc_mem(&mut code, 0x9F, 15); // setg [rdi+15]
+    emit_setcc_mem(&mut code, 0x94, 19); // sete false -> 0
+
+    emit_cmp(&mut code, 0x8000_0000_0000_0000, 1);
+    emit_setcc_mem(&mut code, 0x90, 0); // seto [rdi]
+    code.push(HLT);
+
+    check_mem("setcc_memory_destination_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
 // ---- LEA with complex SIB (base + index*scale + disp) ----
 
 #[test]
@@ -5238,6 +5291,22 @@ fn jcc_rel32_forward() {
     c.extend_from_slice(&[0x48, 0xC7, 0xC1, 0x0D, 0x60, 0x00, 0x00]);
     c.push(HLT);
     check("je_rel32", &c, r);
+}
+
+#[test]
+fn jmp_rel8_and_rel32_forms() {
+    let c = vec![
+        0xEB, 0x07, // jmp rel8 forward to the backward jump
+        0xB8, 0x11, 0x00, 0x00, 0x00, // target: mov eax, 0x11
+        0xEB, 0x07, // jmp rel8 forward to rel32 test
+        0xEB, 0xF7, // jmp rel8 backward to target
+        0xB8, 0xEE, 0x00, 0x00, 0x00, // skipped marker
+        0xE9, 0x05, 0x00, 0x00, 0x00, // jmp rel32 forward
+        0xBB, 0xDD, 0x00, 0x00, 0x00, // skipped marker
+        0xB9, 0x44, 0x00, 0x00, 0x00, // mov ecx, 0x44
+        HLT,
+    ];
+    check("jmp_rel8_rel32_forms", &c, regs());
 }
 
 #[test]
@@ -11710,6 +11779,31 @@ fn hint_prefetch_and_nop_forms_preserve_state() {
             0x0F, 0x0D, 0x17, // prefetchwt1 [rdi]
             0xF3, 0x0F, 0x1E, 0xFA, // endbr64
             0x0F, 0x1F, 0x44, 0x00, 0x00, // nop dword ptr [rax+rax]
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn nop_endbr_decode_forms_preserve_state() {
+    let mut s = [0u8; 64];
+    s[24..32].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.rcx = 3;
+    r.rdi = DATA_ADDR;
+
+    check_mem(
+        "nop_endbr_decode_forms",
+        &with_hlt(vec![
+            0x90, // nop
+            0x66, 0x90, // operand-size-prefixed nop
+            0xF3, 0x0F, 0x1E, 0xFB, // endbr32
+            0x0F, 0x1F, 0xC0, // nop eax
+            0x0F, 0x1F, 0x84, 0x8F, 0x78, 0x00, 0x00, 0x00, // nop [rdi+rcx*4+0x78]
         ]),
         r,
         s,
