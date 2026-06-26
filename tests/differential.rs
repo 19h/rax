@@ -1822,6 +1822,82 @@ fn ror_cl_multi() {
 }
 
 #[test]
+fn group2_memory_shift_rotate_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x81;
+    scratch[1] = 0x03;
+    scratch[2] = 0x80;
+    scratch[3] = 0x01;
+    scratch[4] = 0x11;
+    scratch[5] = 0x84;
+    scratch[6] = 0x80;
+    scratch[7] = 0x0F;
+    scratch[8..16].copy_from_slice(&0x8000_0000_0000_0001u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&3u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&1u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&0x100u64.to_le_bytes());
+    scratch[40..48].copy_from_slice(&0xFFFF_FFFF_FFFF_FFF0u64.to_le_bytes());
+    scratch[48..56].copy_from_slice(&0x8000_0000_0000_0000u64.to_le_bytes());
+    scratch[56..64].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xD0, 0x07, // rol byte [rdi], 1
+        0xD0, 0x4F, 0x01, // ror byte [rdi+1], 1
+        0xF9, // stc
+        0xD0, 0x57, 0x02, // rcl byte [rdi+2], 1
+        0xF9, // stc
+        0xD0, 0x5F, 0x03, // rcr byte [rdi+3], 1
+        0xC0, 0x67, 0x04, 0x03, // shl byte [rdi+4], 3
+        0xC0, 0x6F, 0x05, 0x02, // shr byte [rdi+5], 2
+        0xC0, 0x7F, 0x06, 0x03, // sar byte [rdi+6], 3
+        0x48, 0xC7, 0xC1, 0x05, 0x00, 0x00, 0x00, // mov rcx, 5
+        0xD2, 0x67, 0x07, // shl byte [rdi+7], cl
+        0x48, 0xD1, 0x47, 0x08, // rol qword [rdi+8], 1
+        0x48, 0xD1, 0x4F, 0x10, // ror qword [rdi+0x10], 1
+        0x48, 0xC1, 0x67, 0x18, 0x04, // shl qword [rdi+0x18], 4
+        0x48, 0xC1, 0x6F, 0x20, 0x04, // shr qword [rdi+0x20], 4
+        0x48, 0xC1, 0x7F, 0x28, 0x04, // sar qword [rdi+0x28], 4
+        0xF9, // stc
+        0x48, 0xD3, 0x57, 0x30, // rcl qword [rdi+0x30], cl
+        0xF9, // stc
+        0x48, 0xD3, 0x5F, 0x38, // rcr qword [rdi+0x38], cl
+        0x48, 0x83, 0xF9, 0x05, // cmp rcx, 5
+        HLT,
+    ]);
+
+    check_mem("group2_memory_shift_rotate_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn double_shift_memory_destination_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    scratch[8..16].copy_from_slice(&0x8877_6655_4433_2211u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0xFEDC_BA98_7654_3210u64.to_le_bytes());
+    scratch[32..34].copy_from_slice(&0x1234u16.to_le_bytes());
+    scratch[36..40].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xBB]);
+    code.extend_from_slice(&0xAABB_CCDD_EEFF_0011u64.to_le_bytes());
+    code.extend_from_slice(&[
+        0x48, 0xC7, 0xC1, 0x04, 0x00, 0x00, 0x00, // mov rcx, 4
+        0x48, 0x0F, 0xA4, 0x1F, 0x08, // shld qword [rdi], rbx, 8
+        0x48, 0x0F, 0xAC, 0x5F, 0x08, 0x08, // shrd qword [rdi+8], rbx, 8
+        0x48, 0x0F, 0xA5, 0x5F, 0x10, // shld qword [rdi+0x10], rbx, cl
+        0x48, 0x0F, 0xAD, 0x5F, 0x18, // shrd qword [rdi+0x18], rbx, cl
+        0x66, 0x0F, 0xA4, 0x5F, 0x20, 0x04, // shld word [rdi+0x20], bx, 4
+        0x0F, 0xAD, 0x5F, 0x24, // shrd dword [rdi+0x24], ebx, cl
+        0x48, 0x83, 0xF9, 0x04, // cmp rcx, 4
+        HLT,
+    ]);
+
+    check_mem("double_shift_memory_destination_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
 fn shld_imm() {
     // SHLD rax, rbx, 8 : shift rax left by 8, feeding in the top 8 bits of rbx.
     let mut r = regs();
@@ -4083,6 +4159,41 @@ fn cmp8_imm_boundary() {
     check("cmp8_imm80", &with_hlt(vec![0x3C, 0x80]), r); // cmp al, 0x80
 }
 
+#[test]
+fn group1_memory_immediate_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x7F; // add byte [rdi], 1 -> 0x80
+    scratch[1] = 0x80; // or byte [rdi+1], 0x7f -> 0xff
+    scratch[2] = 0x7F; // adc byte [rdi+2], 0 with CF=1 -> 0x80
+    scratch[3] = 0x00; // sbb byte [rdi+3], 0 with CF=1 -> 0xff
+    scratch[4] = 0xF0; // and byte [rdi+4], 0x0f -> 0x00
+    scratch[5] = 0x00; // sub byte [rdi+5], 1 -> 0xff
+    scratch[6] = 0xAA; // xor byte [rdi+6], 0xff -> 0x55
+    scratch[7] = 0x80; // cmp byte [rdi+7], 1 leaves memory unchanged
+    scratch[8..16].copy_from_slice(&1u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&u64::MAX.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x80, 0x07, 0x01, // add byte [rdi], 1
+        0x80, 0x4F, 0x01, 0x7F, // or byte [rdi+1], 0x7f
+        0xF9, // stc
+        0x80, 0x57, 0x02, 0x00, // adc byte [rdi+2], 0
+        0xF9, // stc
+        0x80, 0x5F, 0x03, 0x00, // sbb byte [rdi+3], 0
+        0x80, 0x67, 0x04, 0x0F, // and byte [rdi+4], 0x0f
+        0x80, 0x6F, 0x05, 0x01, // sub byte [rdi+5], 1
+        0x80, 0x77, 0x06, 0xFF, // xor byte [rdi+6], 0xff
+        0x80, 0x7F, 0x07, 0x01, // cmp byte [rdi+7], 1
+        0x48, 0x81, 0x47, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, // add qword [rdi+8], -1
+        0x48, 0x83, 0x6F, 0x10, 0xFF, // sub qword [rdi+0x10], -1
+        0x48, 0x83, 0x7F, 0x18, 0xFF, // cmp qword [rdi+0x18], -1
+        HLT,
+    ]);
+
+    check_mem("group1_memory_immediate_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
 // ---------------------------------------------------------------------------
 // ADC / SBB carry-in chains: model multi-word add/sub with carry propagation.
 // ---------------------------------------------------------------------------
@@ -4199,6 +4310,27 @@ fn dec32_int_min_overflow() {
 }
 
 #[test]
+fn inc_dec_memory_group_paths() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x7F;
+    scratch[1] = 0x00;
+    scratch[8..16].copy_from_slice(&1u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xF9, // stc
+        0xFE, 0x07, // inc byte [rdi]
+        0xFE, 0x4F, 0x01, // dec byte [rdi+1]
+        0x48, 0xFF, 0x47, 0x08, // inc qword [rdi+8]
+        0x48, 0xFF, 0x4F, 0x10, // dec qword [rdi+0x10]
+        HLT,
+    ]);
+
+    check_mem("inc_dec_memory_group_paths", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
 fn neg8_int_min() {
     // neg al with al=0x80 (-128) -> 0x80 (overflow): OF=1, CF=1, SF=1.
     let mut r = regs();
@@ -4220,6 +4352,59 @@ fn neg32_zero_extends() {
     let mut r = regs();
     r.rax = 0x0000_0010;
     check("neg32_zx", &with_hlt(vec![0xF7, 0xD8]), r); // neg eax
+}
+
+#[test]
+fn group3_memory_unary_mul_div_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x55;
+    scratch[1] = 0xAA;
+    scratch[2] = 0x0F;
+    scratch[3] = 0x80;
+    scratch[4] = 0x03;
+    scratch[5] = 0xFE;
+    scratch[6] = 0x07;
+    scratch[7] = 0xFB;
+    scratch[8..16].copy_from_slice(&0x00FF_00FF_00FF_00FFu64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&1u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&3u64.to_le_bytes());
+    scratch[40..48].copy_from_slice(&u64::MAX.to_le_bytes());
+    scratch[48..56].copy_from_slice(&7u64.to_le_bytes());
+    scratch[56..64].copy_from_slice(&0xFFFF_FFFF_FFFF_FFFBu64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xF6, 0x07, 0x0F, // test byte [rdi], 0x0f
+        0xF6, 0x4F, 0x01, 0xF0, // test byte [rdi+1], 0xf0 (/1 alias)
+        0xF6, 0x57, 0x02, // not byte [rdi+2]
+        0xF6, 0x5F, 0x03, // neg byte [rdi+3]
+        0xB0, 0x11, // mov al, 0x11
+        0xF6, 0x67, 0x04, // mul byte [rdi+4]
+        0xB0, 0x7F, // mov al, 0x7f
+        0xF6, 0x6F, 0x05, // imul byte [rdi+5]
+        0x66, 0xB8, 0x23, 0x01, // mov ax, 0x0123
+        0xF6, 0x77, 0x06, // div byte [rdi+6]
+        0x66, 0xB8, 0x9C, 0xFF, // mov ax, -100
+        0xF6, 0x7F, 0x07, // idiv byte [rdi+7]
+        0x48, 0xF7, 0x47, 0x08, 0xFF, 0x00, 0x00, 0x00, // test qword [rdi+8], 0xff
+        0x48, 0xF7, 0x57, 0x10, // not qword [rdi+0x10]
+        0x48, 0xF7, 0x5F, 0x18, // neg qword [rdi+0x18]
+        0x48, 0xC7, 0xC0, 0x05, 0x00, 0x00, 0x00, // mov rax, 5
+        0x48, 0xF7, 0x67, 0x20, // mul qword [rdi+0x20]
+        0x48, 0xC7, 0xC0, 0x05, 0x00, 0x00, 0x00, // mov rax, 5
+        0x48, 0xF7, 0x6F, 0x28, // imul qword [rdi+0x28]
+        0x48, 0x31, 0xD2, // xor rdx, rdx
+        0x48, 0xC7, 0xC0, 0x64, 0x00, 0x00, 0x00, // mov rax, 100
+        0x48, 0xF7, 0x77, 0x30, // div qword [rdi+0x30]
+        0x48, 0xC7, 0xC2, 0xFF, 0xFF, 0xFF, 0xFF, // mov rdx, -1
+        0x48, 0xC7, 0xC0, 0x9C, 0xFF, 0xFF, 0xFF, // mov rax, -100
+        0x48, 0xF7, 0x7F, 0x38, // idiv qword [rdi+0x38]
+        0x48, 0x83, 0xF8, 0x14, // cmp rax, 20
+        HLT,
+    ]);
+
+    check_mem("group3_memory_unary_mul_div_forms", &code, regs(), scratch, FLAG_MASK);
 }
 
 // ---------------------------------------------------------------------------
@@ -8602,6 +8787,26 @@ fn bt_mem_imm_index() {
     );
 }
 
+#[test]
+fn group8_memory_immediate_writeback_forms() {
+    let mut s = [0u8; 64];
+    s[8..16].copy_from_slice(&(1u64 << 15).to_le_bytes());
+    s[28..32].copy_from_slice(&(1u32 << 31).to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    let code = vec![
+        0x48, 0x0F, 0xBA, 0x2F, 0x09, // bts qword [rdi], 9
+        0x48, 0x0F, 0xBA, 0x77, 0x08, 0x0F, // btr qword [rdi+8], 15
+        0x48, 0x0F, 0xBA, 0x7F, 0x10, 0x14, // btc qword [rdi+0x10], 20
+        0x66, 0x0F, 0xBA, 0x6F, 0x18, 0x0F, // bts word [rdi+0x18], 15
+        0x0F, 0xBA, 0x77, 0x1C, 0x1F, // btr dword [rdi+0x1c], 31
+        HLT,
+    ];
+
+    check_mem("group8_memory_immediate_writeback_forms", &code, r, s, BT_DEFINED);
+}
+
 // ---------------------------------------------------------------------------
 // ADCX / ADOX: ADD with carry that touches ONLY CF (ADCX) or ONLY OF (ADOX),
 // enabling two independent carry chains. We model an interleaved chain and check
@@ -10734,6 +10939,33 @@ fn stack_push_pop_extended_regs() {
 }
 
 #[test]
+fn stack_group5_push_rm_widths() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0xBEEFu16.to_le_bytes());
+
+    let mut r = regs();
+    r.rbx = 0xDEAD_BEEF_CAFE_BABE;
+    r.rdx = 0x1111_2222_3333_4444;
+    r.rdi = DATA_ADDR;
+
+    check_mem(
+        "group5_push_rm_widths",
+        &with_hlt(vec![
+            0xFF, 0xF3, // push rbx
+            0x59, // pop rcx
+            0xFF, 0x37, // push qword [rdi]
+            0x58, // pop rax
+            0x66, 0xFF, 0x77, 0x08, // push word [rdi+8]
+            0x66, 0x5A, // pop dx
+        ]),
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn stack_push16_pop16_preserves_upper() {
     // 66 PUSH/POP use a 16-bit stack operand in long mode; POP r16 preserves upper bits.
     let mut r = regs();
@@ -10815,6 +11047,27 @@ fn stack_push_pop_fs_gs_16bit_selectors() {
 }
 
 #[test]
+fn mov_segment_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&0u16.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0u16.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x8C, 0x4F, 0x10, // mov word [rdi+0x10], cs
+        0x8C, 0x5F, 0x12, // mov word [rdi+0x12], ds
+        0x8C, 0x57, 0x14, // mov word [rdi+0x14], ss
+        0x8E, 0x27, // mov fs, word [rdi]
+        0x8C, 0x67, 0x16, // mov word [rdi+0x16], fs
+        0x8E, 0x6F, 0x08, // mov gs, word [rdi+8]
+        0x8C, 0x6F, 0x18, // mov word [rdi+0x18], gs
+        HLT,
+    ]);
+
+    check_mem("mov_segment_register_memory_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
 fn control_call_rel32_ret_balanced() {
     // call func; add rax,2; hlt; func: add rax,5; ret. Final RAX=7, stack balanced.
     let mut r = regs();
@@ -10830,6 +11083,41 @@ fn control_call_rel32_ret_balanced() {
         ]),
         r,
     );
+}
+
+#[test]
+fn control_group5_call_rm64_register_target() {
+    let target = CODE_ADDR + (10 + 2 + 5 + 1) as u64;
+    let mut code = vec![0x48, 0xB8]; // movabs rax, target
+    code.extend_from_slice(&target.to_le_bytes());
+    code.extend_from_slice(&[
+        0xFF, 0xD0, // call rax
+        0xBB, 0x22, 0x22, 0x22, 0x22, // mov ebx, 0x22222222
+        HLT,
+        0xB9, 0x11, 0x11, 0x11, 0x11, // target: mov ecx, 0x11111111
+        0xC3, // ret
+    ]);
+
+    check("group5_call_rm64_register_target", &code, regs());
+}
+
+#[test]
+fn control_group5_jmp_rm64_memory_target() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 2 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+
+    code.extend_from_slice(&[0xFF, 0x27]); // jmp qword [rdi]
+    code.extend_from_slice(&[0x48, 0xB8]); // fallback: movabs rax, bad
+    code.extend_from_slice(&0x1111_2222_3333_4444u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xBA]); // target: movabs rdx, good
+    code.extend_from_slice(&0xAAAA_BBBB_CCCC_DDDDu64.to_le_bytes());
+    code.push(HLT);
+
+    check_mem("group5_jmp_rm64_memory_target", &code, regs(), scratch, 0);
 }
 
 #[test]
