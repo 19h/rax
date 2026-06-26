@@ -1505,6 +1505,11 @@ fn base_table() -> Vec<Base> {
         b("vptestmd", F, Kvv, Int, 4, f, f),
         b("vptestnmd", F, Kvv, Int, 4, f, f),
         b("vptestmq", F, Kvv, Int, 8, f, f),
+        b("vptestnmq", F, Kvv, Int, 8, f, f),
+        b("vptestmb", Bw, Kvv, Int, 0, f, f),
+        b("vptestnmb", Bw, Kvv, Int, 0, f, f),
+        b("vptestmw", Bw, Kvv, Int, 0, f, f),
+        b("vptestnmw", Bw, Kvv, Int, 0, f, f),
         // ---- blend by mask (F) ----
         b("vpblendmd", F, Vvv, Int, 4, f, f),
         b("vpblendmq", F, Vvv, Int, 8, f, f),
