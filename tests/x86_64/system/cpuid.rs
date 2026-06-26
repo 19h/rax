@@ -690,16 +690,44 @@ fn test_cpuid_leaf_d_subleaf0_xsave_area() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // EAX = supported XCR0 low bits = x87|SSE|AVX|APX_F = 0x80007.
+    // EAX = supported XCR0 low bits = x87|SSE|AVX|AVX-512|APX_F = 0x800E7.
     // EBX = current enabled area size (XCR0 default has AVX disabled => 576).
-    // ECX = max area size for all supported (1088). EDX = high XCR0 bits = 0.
+    // ECX = max area size for all supported standard-format state. EDX = high XCR0 bits = 0.
     assert_eq!(
-        regs.rax as u32, 0x80007,
-        "XCR0 valid low bits x87|SSE|AVX|APX_F"
+        regs.rax as u32, 0x800E7,
+        "XCR0 valid low bits x87|SSE|AVX|AVX-512|APX_F"
     );
     assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
-    assert_eq!(regs.rcx as u32, 1088, "max XSAVE area");
+    assert_eq!(regs.rcx as u32, 2688, "max XSAVE area");
     assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
+}
+
+// CPUID leaf 0xD subleaf 1 - XSAVE feature support.
+#[test]
+fn test_cpuid_leaf_d_subleaf1_xsave_features() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    let eax = regs.rax as u32;
+    assert!(eax & (1 << 0) != 0, "XSAVEOPT supported");
+    assert!(eax & (1 << 1) != 0, "XSAVEC and compacted XRSTOR supported");
+    assert!(eax & (1 << 2) != 0, "XGETBV ECX=1 supported");
+    assert!(eax & (1 << 3) != 0, "XSAVES/XRSTORS supported");
+    assert_eq!(eax & !0xF, 0, "no other subleaf 1 EAX features");
+    assert_eq!(
+        regs.rbx as u32, 576,
+        "compacted XSAVE area with default XCR0"
+    );
+    assert_eq!(regs.rcx as u32, 0, "IA32_XSS low valid mask");
+    assert_eq!(regs.rdx as u32, 0, "IA32_XSS high valid mask");
 }
 
 // CPUID leaf 0xD subleaf 2 - AVX (YMM_Hi128) component size/offset.

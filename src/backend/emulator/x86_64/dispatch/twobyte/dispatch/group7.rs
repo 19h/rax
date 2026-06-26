@@ -49,9 +49,17 @@ impl X86_64Vcpu {
                 0xD0 => {
                     // XGETBV (0F 01 D0) - read extended control register XCR[ECX].
                     ctx.consume_u8()?; // consume modrm
-                    // Return the tracked XCR0 (EDX:EAX, zero-extended in 64-bit mode).
-                    // Lenient on CR4.OSXSAVE since the harness reads XCR0 directly.
-                    let value = self.xcr0;
+                    // Lenient on CR4.OSXSAVE since the harness reads XCRs directly.
+                    let value = match self.regs.rcx as u32 {
+                        0 => self.xcr0,
+                        1 => 0, // IA32_XSS defaults to zero in fresh KVM vCPUs.
+                        ecx => {
+                            return Err(Error::Emulator(format!(
+                                "unsupported XGETBV ECX={} at RIP={:#x}",
+                                ecx, self.regs.rip
+                            )));
+                        }
+                    };
                     self.regs.rax = value & 0xFFFF_FFFF;
                     self.regs.rdx = (value >> 32) & 0xFFFF_FFFF;
                     self.regs.rip += ctx.cursor as u64;
@@ -392,8 +400,12 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
-                4 => {
-                    // XSAVE - save x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
+                4 | 6
+                    if reg_op == 4 || (ctx.rep_prefix.is_none() && !ctx.operand_size_override) =>
+                {
+                    // XSAVE/XSAVEOPT - save x87/SSE/AVX/AVX-512 state selected by
+                    // (EDX:EAX) & XCR0. XSAVEOPT may omit clean components, but this
+                    // conservative save model is architecturally valid for observable state.
                     let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let mut xstate_bv = 0u64;
                     // Component 0 (x87): legacy region header + ST0-7.
@@ -492,6 +504,12 @@ impl X86_64Vcpu {
                 }
                 5 => {
                     // XRSTOR - restore x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
+                    if self.read_mem64(addr + 520)? & (1u64 << 63) != 0 {
+                        self.restore_xsave_compacted_area(addr)?;
+                        self.regs.rip += ctx.cursor as u64;
+                        return Ok(None);
+                    }
+
                     let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let xstate_bv = self.read_mem64(addr + 512)?;
                     if rfbm & 0x1 != 0 {

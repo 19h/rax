@@ -8,6 +8,9 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
 use super::super::super::insn;
 
+const XSAVE_COMPACTED_FORMAT: u64 = 1 << 63;
+const XSAVE_EXTENDED_COMPONENTS: [u8; 5] = [2, 5, 6, 7, 19];
+
 // x86 MIN/MAX semantics differ from IEEE/Rust `f32::min`/`f32::max`.
 // SDM: MIN returns `(dst < src) ? dst : src` and MAX returns `(dst > src) ? dst : src`.
 // The comparison is FALSE whenever either operand is NaN (unordered) or on a
@@ -1708,8 +1711,321 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    fn xsave_requested_feature_bitmap(&self) -> u64 {
+        ((self.regs.rax & 0xFFFF_FFFF) | ((self.regs.rdx & 0xFFFF_FFFF) << 32)) & self.xcr0
+    }
+
+    fn xsave_extended_component_size(component: u8) -> Result<u64> {
+        match component {
+            2 => Ok(256),
+            5 => Ok(64),
+            6 => Ok(512),
+            7 => Ok(1024),
+            19 => Ok(128),
+            _ => Err(Error::Emulator(format!(
+                "unsupported XSAVE component {}",
+                component
+            ))),
+        }
+    }
+
+    fn save_xsave_x87_component(&mut self, area_addr: u64) -> Result<()> {
+        self.write_mem16(area_addr, self.fpu.control_word)?;
+        self.write_mem16(area_addr + 2, self.fpu.status_word)?;
+        let mut abtw = 0u8;
+        for i in 0..8 {
+            if (self.fpu.tag_word >> (i * 2)) & 3 != 3 {
+                abtw |= 1 << i;
+            }
+        }
+        self.mmu.write_u8(area_addr + 4, abtw, &self.sregs)?;
+        self.write_mem16(area_addr + 6, self.fpu.last_opcode)?;
+        self.write_mem64(area_addr + 8, self.fpu.instr_ptr)?;
+        self.write_mem64(area_addr + 16, self.fpu.data_ptr)?;
+        for i in 0..8 {
+            let bytes = insn::fpu::f64_to_f80_pub(self.fpu.get_st(i as u8));
+            self.write_bytes(area_addr + 32 + (i as u64) * 16, &bytes)?;
+        }
+        Ok(())
+    }
+
+    fn save_xsave_sse_component(&mut self, area_addr: u64) -> Result<()> {
+        self.write_mem32(area_addr + 24, self.mxcsr)?;
+        self.write_mem32(area_addr + 28, 0xFFFF)?;
+        for i in 0..16 {
+            self.write_mem64(area_addr + 160 + (i as u64) * 16, self.regs.xmm[i][0])?;
+            self.write_mem64(
+                area_addr + 160 + (i as u64) * 16 + 8,
+                self.regs.xmm[i][1],
+            )?;
+        }
+        Ok(())
+    }
+
+    fn save_xsave_extended_component(
+        &mut self,
+        component: u8,
+        component_addr: u64,
+    ) -> Result<()> {
+        match component {
+            2 => {
+                for i in 0..16 {
+                    self.write_mem64(component_addr + (i as u64) * 16, self.regs.ymm_high[i][0])?;
+                    self.write_mem64(
+                        component_addr + (i as u64) * 16 + 8,
+                        self.regs.ymm_high[i][1],
+                    )?;
+                }
+            }
+            5 => {
+                for i in 0..8 {
+                    self.write_mem64(component_addr + (i as u64) * 8, self.regs.k[i])?;
+                }
+            }
+            6 => {
+                for i in 0..16 {
+                    for lane in 0..4 {
+                        self.write_mem64(
+                            component_addr + (i as u64) * 32 + (lane as u64) * 8,
+                            self.regs.zmm_high[i][lane],
+                        )?;
+                    }
+                }
+            }
+            7 => {
+                for i in 0..16 {
+                    for lane in 0..8 {
+                        self.write_mem64(
+                            component_addr + (i as u64) * 64 + (lane as u64) * 8,
+                            self.regs.zmm_ext[i][lane],
+                        )?;
+                    }
+                }
+            }
+            19 => {
+                for i in 0..16 {
+                    self.write_mem64(
+                        component_addr + (i as u64) * 8,
+                        self.get_reg(16 + i as u8, 8),
+                    )?;
+                }
+            }
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "unsupported XSAVE component {}",
+                    component
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn execute_xsave_compacted(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator(
+                "XSAVEC/XSAVES requires memory operand".to_string(),
+            ));
+        }
+
+        let rfbm = self.xsave_requested_feature_bitmap();
+        let mut xstate_bv = 0u64;
+
+        if rfbm & 0x1 != 0 {
+            self.save_xsave_x87_component(addr)?;
+            xstate_bv |= 0x1;
+        }
+        if rfbm & 0x2 != 0 {
+            self.save_xsave_sse_component(addr)?;
+            xstate_bv |= 0x2;
+        }
+
+        let mut next_component_addr = addr + 576;
+        for component in XSAVE_EXTENDED_COMPONENTS {
+            if rfbm & (1u64 << component) != 0 {
+                self.save_xsave_extended_component(component, next_component_addr)?;
+                xstate_bv |= 1u64 << component;
+                next_component_addr += Self::xsave_extended_component_size(component)?;
+            }
+        }
+
+        self.write_mem64(addr + 512, xstate_bv)?;
+        self.write_mem64(addr + 520, XSAVE_COMPACTED_FORMAT | rfbm)?;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    fn restore_xsave_x87_component(&mut self, area_addr: u64) -> Result<()> {
+        self.fpu.control_word = self.read_mem16(area_addr)?;
+        self.fpu.status_word = self.read_mem16(area_addr + 2)?;
+        self.fpu.top = ((self.fpu.status_word >> 11) & 7) as u8;
+        let abtw = self.mmu.read_u8(area_addr + 4, &self.sregs)?;
+        self.fpu.tag_word = 0;
+        for i in 0..8 {
+            if abtw & (1 << i) == 0 {
+                self.fpu.tag_word |= 3 << (i * 2);
+            }
+        }
+        self.fpu.last_opcode = self.read_mem16(area_addr + 6)?;
+        self.fpu.instr_ptr = self.read_mem64(area_addr + 8)?;
+        self.fpu.data_ptr = self.read_mem64(area_addr + 16)?;
+        for i in 0..8 {
+            let bytes = self.read_bytes(area_addr + 32 + (i as u64) * 16, 10)?;
+            self.fpu.set_st(i as u8, insn::fpu::f80_to_f64_pub(&bytes));
+        }
+        Ok(())
+    }
+
+    fn restore_xsave_sse_component(&mut self, area_addr: u64) -> Result<()> {
+        self.mxcsr = self.read_mem32(area_addr + 24)?;
+        for i in 0..16 {
+            self.regs.xmm[i][0] = self.read_mem64(area_addr + 160 + (i as u64) * 16)?;
+            self.regs.xmm[i][1] = self.read_mem64(area_addr + 160 + (i as u64) * 16 + 8)?;
+        }
+        Ok(())
+    }
+
+    fn restore_xsave_extended_component(
+        &mut self,
+        component: u8,
+        component_addr: u64,
+    ) -> Result<()> {
+        match component {
+            2 => {
+                for i in 0..16 {
+                    self.regs.ymm_high[i][0] =
+                        self.read_mem64(component_addr + (i as u64) * 16)?;
+                    self.regs.ymm_high[i][1] =
+                        self.read_mem64(component_addr + (i as u64) * 16 + 8)?;
+                }
+            }
+            5 => {
+                for i in 0..8 {
+                    self.regs.k[i] = self.read_mem64(component_addr + (i as u64) * 8)?;
+                }
+            }
+            6 => {
+                for i in 0..16 {
+                    for lane in 0..4 {
+                        self.regs.zmm_high[i][lane] = self.read_mem64(
+                            component_addr + (i as u64) * 32 + (lane as u64) * 8,
+                        )?;
+                    }
+                }
+            }
+            7 => {
+                for i in 0..16 {
+                    for lane in 0..8 {
+                        self.regs.zmm_ext[i][lane] = self.read_mem64(
+                            component_addr + (i as u64) * 64 + (lane as u64) * 8,
+                        )?;
+                    }
+                }
+            }
+            19 => {
+                for i in 0..16 {
+                    let value = self.read_mem64(component_addr + (i as u64) * 8)?;
+                    self.set_reg(16 + i as u8, value, 8);
+                }
+            }
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "unsupported XSAVE component {}",
+                    component
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn init_xsave_component(&mut self, component: u8) {
+        match component {
+            0 => self.fpu.init(),
+            1 => {
+                self.mxcsr = 0x1F80;
+                for i in 0..16 {
+                    self.regs.xmm[i] = [0, 0];
+                }
+            }
+            2 => {
+                for i in 0..16 {
+                    self.regs.ymm_high[i] = [0, 0];
+                }
+            }
+            5 => self.regs.k = [0; 8],
+            6 => self.regs.zmm_high = [[0; 4]; 16],
+            7 => self.regs.zmm_ext = [[0; 8]; 16],
+            19 => {
+                for i in 0..16 {
+                    self.set_reg(16 + i as u8, 0, 8);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn restore_xsave_compacted_area(
+        &mut self,
+        addr: u64,
+    ) -> Result<()> {
+        let rfbm = self.xsave_requested_feature_bitmap();
+        let xstate_bv = self.read_mem64(addr + 512)?;
+        let xcomp_bv = self.read_mem64(addr + 520)?;
+        if xcomp_bv & XSAVE_COMPACTED_FORMAT == 0 {
+            return Err(Error::Emulator(
+                "compacted XRSTOR requires compacted XSAVE area".to_string(),
+            ));
+        }
+        let format = xcomp_bv & !XSAVE_COMPACTED_FORMAT;
+
+        for component in [0u8, 1] {
+            let bit = 1u64 << component;
+            if rfbm & bit == 0 {
+                continue;
+            }
+            if format & bit != 0 && xstate_bv & bit != 0 {
+                if component == 0 {
+                    self.restore_xsave_x87_component(addr)?;
+                } else {
+                    self.restore_xsave_sse_component(addr)?;
+                }
+            } else {
+                self.init_xsave_component(component);
+            }
+        }
+
+        let mut next_component_addr = addr + 576;
+        for component in XSAVE_EXTENDED_COMPONENTS {
+            let bit = 1u64 << component;
+            if format & bit != 0 {
+                if rfbm & bit != 0 && xstate_bv & bit != 0 {
+                    self.restore_xsave_extended_component(component, next_component_addr)?;
+                }
+                next_component_addr += Self::xsave_extended_component_size(component)?;
+            } else if rfbm & bit != 0 {
+                self.init_xsave_component(component);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn execute_xrstors(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator(
+                "XRSTORS requires memory operand".to_string(),
+            ));
+        }
+
+        self.restore_xsave_compacted_area(addr)?;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// Execute Group 9 instructions (0F C7)
-    /// /1 = CMPXCHG8B/16B, /6 = RDRAND, /7 = RDSEED (or RDPID with F3 prefix)
+    /// /1 = CMPXCHG8B/16B, /3 = XRSTORS, /4 = XSAVEC, /5 = XSAVES,
+    /// /6 = RDRAND, /7 = RDSEED (or RDPID with F3 prefix)
     pub(in crate::backend::emulator::x86_64) fn execute_group9(
         &mut self,
         ctx: &mut InsnContext,
@@ -1733,6 +2049,18 @@ impl X86_64Vcpu {
             1 => {
                 // CMPXCHG8B/CMPXCHG16B - Compare and exchange
                 self.execute_cmpxchg8b_16b(ctx)
+            }
+            3 => {
+                // XRSTORS - Restore processor extended states supervisor.
+                self.execute_xrstors(ctx)
+            }
+            4 => {
+                // XSAVEC - Save processor extended states with compaction.
+                self.execute_xsave_compacted(ctx)
+            }
+            5 => {
+                // XSAVES - Save processor extended states supervisor.
+                self.execute_xsave_compacted(ctx)
             }
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F 0xC7 /{} at RIP={:#x}",

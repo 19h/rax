@@ -27,6 +27,46 @@ const XSAVE_HI16_ZMM_OFFSET: u32 = 0x680;
 const XSAVE_HI16_ZMM_SIZE: u32 = 1024;
 const XSAVE_MAX_SIZE: u32 = XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE;
 
+fn standard_xsave_area_size(xcr0: u64) -> u32 {
+    let mut size = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
+    if xcr0 & XCR0_AVX != 0 {
+        size = XSAVE_AVX_OFFSET + XSAVE_AVX_SIZE;
+    }
+    if xcr0 & XCR0_OPMASK != 0 {
+        size = size.max(XSAVE_OPMASK_OFFSET + XSAVE_OPMASK_SIZE);
+    }
+    if xcr0 & XCR0_ZMM_HI256 != 0 {
+        size = size.max(XSAVE_ZMM_HI256_OFFSET + XSAVE_ZMM_HI256_SIZE);
+    }
+    if xcr0 & XCR0_HI16_ZMM != 0 {
+        size = size.max(XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE);
+    }
+    if xcr0 & XCR0_APX_F != 0 {
+        size = size.max(XSAVE_APX_OFFSET + XSAVE_APX_SIZE);
+    }
+    size
+}
+
+fn compacted_xsave_area_size(xcr0: u64) -> u32 {
+    let mut size = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
+    if xcr0 & XCR0_AVX != 0 {
+        size += XSAVE_AVX_SIZE;
+    }
+    if xcr0 & XCR0_OPMASK != 0 {
+        size += XSAVE_OPMASK_SIZE;
+    }
+    if xcr0 & XCR0_ZMM_HI256 != 0 {
+        size += XSAVE_ZMM_HI256_SIZE;
+    }
+    if xcr0 & XCR0_HI16_ZMM != 0 {
+        size += XSAVE_HI16_ZMM_SIZE;
+    }
+    if xcr0 & XCR0_APX_F != 0 {
+        size += XSAVE_APX_SIZE;
+    }
+    size
+}
+
 /// CPUID (0x0F 0xA2)
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let leaf = vcpu.regs.rax as u32;
@@ -170,31 +210,16 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | XCR0_ZMM_HI256
                         | XCR0_HI16_ZMM
                         | XCR0_APX_F;
-                    let mut cur_size = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
-                    if vcpu.xcr0 & XCR0_AVX != 0 {
-                        cur_size = XSAVE_AVX_OFFSET + XSAVE_AVX_SIZE;
-                    }
-                    if vcpu.xcr0 & XCR0_OPMASK != 0 {
-                        cur_size = cur_size.max(XSAVE_OPMASK_OFFSET + XSAVE_OPMASK_SIZE);
-                    }
-                    if vcpu.xcr0 & XCR0_ZMM_HI256 != 0 {
-                        cur_size = cur_size.max(XSAVE_ZMM_HI256_OFFSET + XSAVE_ZMM_HI256_SIZE);
-                    }
-                    if vcpu.xcr0 & XCR0_HI16_ZMM != 0 {
-                        cur_size = cur_size.max(XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE);
-                    }
-                    if vcpu.xcr0 & XCR0_APX_F != 0 {
-                        cur_size = cur_size.max(XSAVE_APX_OFFSET + XSAVE_APX_SIZE);
-                    }
                     (
                         xcr0_valid as u32,
-                        cur_size,
+                        standard_xsave_area_size(vcpu.xcr0),
                         XSAVE_MAX_SIZE,
                         (xcr0_valid >> 32) as u32,
                     )
                 }
-                // Subleaf 1: XSAVEOPT/XSAVEC/XSAVES not supported.
-                1 => (0, 0, 0, 0),
+                // Subleaf 1: XSAVEOPT, XSAVEC/compacted XRSTOR, XGETBV(ECX=1),
+                // and XSAVES/XRSTORS are implemented. IA32_XSS defaults to zero.
+                1 => (0xF, compacted_xsave_area_size(vcpu.xcr0), 0, 0),
                 // Subleaf 2: AVX (YMM_Hi128) component size + offset.
                 2 => (XSAVE_AVX_SIZE, XSAVE_AVX_OFFSET, 0, 0),
                 // Subleaf 5: opmask component.
