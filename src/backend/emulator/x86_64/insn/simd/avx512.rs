@@ -3461,8 +3461,14 @@ pub enum FpTernaryMathOp {
     Range,
 }
 
-fn fp_round_by_imm(value: f64, imm: u8) -> f64 {
-    match imm & 0x03 {
+fn fp_round_by_imm(value: f64, imm: u8, mxcsr: u32) -> f64 {
+    let rounding = if imm & 0x04 != 0 {
+        ((mxcsr >> 13) & 0x03) as u8
+    } else {
+        imm & 0x03
+    };
+
+    match rounding {
         0 => value.round_ties_even(),
         1 => value.floor(),
         2 => value.ceil(),
@@ -3482,51 +3488,96 @@ fn fp_getexp(value: f64) -> f64 {
     }
 }
 
-fn fp_getmant(value: f64, imm: u8) -> f64 {
-    // NaN is handled by the caller (bit-level quieting). For ±0 and ±Inf the
-    // normalized significand is defined as 1.0; the interval/sign controls below
-    // then apply (so GETMANT(+0)=+1.0, GETMANT(-Inf)=-1.0 for sign-control 0).
-    let sign = if value.is_sign_negative() { -1.0 } else { 1.0 };
-    let finite_exponent = if value == 0.0 || value.is_infinite() {
-        None
-    } else {
-        Some(value.abs().log2().floor() as i32)
-    };
-    let mut mantissa = if value == 0.0 || value.is_infinite() {
-        1.0
-    } else {
-        value.abs() / 2.0f64.powi(finite_exponent.unwrap())
+fn fp_getmant_bits(bits: u64, elem_size: usize, imm: u8) -> u64 {
+    let (sign_mask, frac_mask, frac_bits, max_exp, bias, one_bits) = match elem_size {
+        2 => (0x8000, 0x03ff, 10, 0x1f, 15, 0x3c00),
+        4 => (0x8000_0000, 0x007f_ffff, 23, 0xff, 127, 0x3f80_0000),
+        8 => (
+            0x8000_0000_0000_0000,
+            0x000f_ffff_ffff_ffff,
+            52,
+            0x7ff,
+            1023,
+            0x3ff0_0000_0000_0000,
+        ),
+        _ => return bits,
     };
 
-    match imm & 0x03 {
-        0 => {}
+    let sign = bits & sign_mask;
+    let exp = (bits >> frac_bits) & max_exp;
+    let frac = bits & frac_mask;
+    let sign_control = (imm >> 2) & 0x03;
+    let interval = imm & 0x03;
+    let zero = exp == 0 && frac == 0;
+    let infinity = exp == max_exp && frac == 0;
+    let nan = exp == max_exp && frac != 0;
+
+    if nan {
+        return fp_quiet_nan(bits, elem_size);
+    }
+    if sign == 0 && (zero || infinity) {
+        return one_bits;
+    }
+
+    let signed_one = if sign_control & 0x01 != 0 {
+        one_bits
+    } else {
+        one_bits | sign_mask
+    };
+    if sign != 0 {
+        if zero {
+            return signed_one;
+        }
+        if infinity || sign_control & 0x02 != 0 {
+            return fp_qnan_indefinite(elem_size);
+        }
+    }
+
+    let mut dst_exp = exp as i32;
+    let mut dst_frac = frac;
+    if exp == 0 {
+        dst_exp = bias;
+        loop {
+            let jbit = (dst_frac >> (frac_bits - 1)) & 1;
+            dst_frac = (dst_frac << 1) & frac_mask;
+            dst_exp -= 1;
+            if jbit != 0 {
+                break;
+            }
+        }
+    }
+
+    let unbiased_exp = dst_exp - bias;
+    let odd_exp = (unbiased_exp & 1) != 0;
+    let signaling_bit = (dst_frac >> (frac_bits - 1)) & 1 != 0;
+    let normalized_exp = match interval {
+        0 => bias,
         1 => {
-            if finite_exponent.is_some_and(|exp| (exp & 1) != 0) {
-                mantissa *= 0.5;
+            if odd_exp {
+                bias - 1
+            } else {
+                bias
             }
         }
-        2 => {
-            if mantissa >= 1.0 {
-                mantissa *= 0.5;
-            }
-        }
+        2 => bias - 1,
         _ => {
-            if mantissa >= 1.5 {
-                mantissa *= 0.5;
-            } else if mantissa < 0.75 {
-                mantissa *= 2.0;
+            if signaling_bit {
+                bias - 1
+            } else {
+                bias
             }
         }
-    }
-
-    if (imm >> 2) & 0x03 == 0 {
-        sign * mantissa
+    } as u64;
+    let dst_sign = if sign_control & 0x01 != 0 {
+        0
     } else {
-        mantissa
-    }
+        sign
+    };
+
+    dst_sign | (normalized_exp << frac_bits) | dst_frac
 }
 
-fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
+fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8, mxcsr: u32) -> f64 {
     match op {
         FpUnaryMathOp::GetExp => fp_getexp(value),
         FpUnaryMathOp::Rcp14 => 1.0 / value,
@@ -3536,7 +3587,7 @@ fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
         FpUnaryMathOp::Exp2 => value.exp2(),
         FpUnaryMathOp::RndScale => {
             let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
-            fp_round_by_imm(value * scale, imm) / scale
+            fp_round_by_imm(value * scale, imm, mxcsr) / scale
         }
         FpUnaryMathOp::Reduce => {
             // REDUCE(±Inf) = +0.0 (the naive value - round(value) would be the
@@ -3545,21 +3596,28 @@ fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
                 0.0
             } else {
                 let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
-                value - fp_round_by_imm(value / scale, imm) * scale
+                value - fp_round_by_imm(value * scale, imm, mxcsr) / scale
             }
         }
-        FpUnaryMathOp::GetMant => fp_getmant(value, imm),
+        FpUnaryMathOp::GetMant => unreachable!("GetMant is handled at the bit level"),
     }
 }
 
-fn fp_unary_math_bits(op: FpUnaryMathOp, bits: u64, elem_size: usize, imm: u8) -> u64 {
+fn fp_unary_math_bits(
+    op: FpUnaryMathOp,
+    bits: u64,
+    elem_size: usize,
+    imm: u8,
+    mxcsr: u32,
+) -> u64 {
     match (op, elem_size) {
         (FpUnaryMathOp::Rcp14, 4) => rcp14_f32_bits(bits as u32) as u64,
         (FpUnaryMathOp::Rsqrt14, 4) => rsqrt14_f32_bits(bits as u32) as u64,
         (FpUnaryMathOp::Rcp14, 8) => rcp14_f64_bits(bits),
         (FpUnaryMathOp::Rsqrt14, 8) => rsqrt14_f64_bits(bits),
+        (FpUnaryMathOp::GetMant, _) => fp_getmant_bits(bits, elem_size, imm),
         _ => f64_to_fp_bits(
-            fp_unary_math_result(op, fp_bits_to_f64(bits, elem_size), imm),
+            fp_unary_math_result(op, fp_bits_to_f64(bits, elem_size), imm, mxcsr),
             elem_size,
         ),
     }
@@ -3768,7 +3826,7 @@ pub fn evex_fp_unary_math(
         let out_bits = if fp_is_nan(in_bits, elem_size) {
             fp_quiet_nan(in_bits, elem_size)
         } else {
-            fp_unary_math_bits(op, in_bits, elem_size, imm)
+            fp_unary_math_bits(op, in_bits, elem_size, imm, vcpu.mxcsr)
         };
         write_lane_bits(&mut raw, lane, elem_size, out_bits);
     }
