@@ -136,6 +136,7 @@ struct GscConfig {
     ap_ro_info_stub: bool,
     ap_ro_crypto_stub: bool,
     ap_ro_stub: bool,
+    timer_div: u64,
 }
 
 impl GscConfig {
@@ -161,6 +162,9 @@ impl GscConfig {
         let ap_ro_info_stub = std::env::var("RAX_GSC_AP_RO_INFO_STUB").is_ok();
         let ap_ro_crypto_stub = std::env::var("RAX_GSC_AP_RO_CRYPTO_STUB").is_ok();
         let ap_ro_stub = std::env::var("RAX_GSC_AP_RO_STUB").is_ok();
+        let timer_div = env_hex("RAX_GSC_TIMER_DIV")
+            .filter(|&v| v != 0)
+            .unwrap_or(TIMER_DEFAULT_DIV);
         GscConfig {
             uart_base,
             uart_state,
@@ -173,6 +177,7 @@ impl GscConfig {
             ap_ro_info_stub,
             ap_ro_crypto_stub,
             ap_ro_stub,
+            timer_div,
         }
     }
 }
@@ -231,6 +236,31 @@ fn env_hex(name: &str) -> Option<u64> {
     u64::from_str_radix(s, 16).ok()
 }
 
+/// Parse `RAX_GSC_TPM_CMD` into one or more raw TPM command byte vectors.
+/// Accepts hex bytes with optional whitespace/`0x`; several commands may be
+/// separated by commas or semicolons.
+fn parse_tpm_cmds_env() -> Vec<Vec<u8>> {
+    let Ok(raw) = std::env::var("RAX_GSC_TPM_CMD") else {
+        return Vec::new();
+    };
+    raw.split([',', ';'])
+        .filter_map(|part| {
+            let hex: String = part
+                .chars()
+                .filter(|c| c.is_ascii_hexdigit())
+                .collect();
+            if hex.len() < 2 {
+                return None;
+            }
+            let bytes: Vec<u8> = (0..hex.len() - 1)
+                .step_by(2)
+                .filter_map(|i| u8::from_str_radix(&hex[i..i + 2], 16).ok())
+                .collect();
+            (!bytes.is_empty()).then_some(bytes)
+        })
+        .collect()
+}
+
 /// Once an unmodeled status register has been read this many times since the
 /// last MMIO write (i.e. with no forward progress), the spin-breaker returns
 /// all-ones to satisfy "wait for ready bit" boot loops.
@@ -265,6 +295,11 @@ const DEFAULT_RSTSRC_WARM: u32 = 0x22;
 /// Standard RISC-V machine external interrupt pending bit (`mip.MEIP`). The
 /// Ti50 firmware enables MSIP/MTIP/MEIP (`mie=0x888`) before entering WFI.
 const MIP_MEIP: u64 = 1 << 11;
+/// Standard RISC-V machine timer interrupt pending bit (`mip.MTIP`). The Ti50
+/// alarm driver programs the 64-bit compare at `0x400C002C/+0x34`; when the
+/// free-running counter reaches it the hardware raises MTIP (cause 7, vectored
+/// to `0x9551c`). The firmware's ISR re-arms the compare to disarm/reschedule.
+const MIP_MTIP: u64 = 1 << 7;
 
 /// Safety bound: if the firmware reboots this many times without producing any
 /// console output, give up rather than spin forever.
@@ -316,6 +351,11 @@ struct GscShared {
     ap_spi_data: Vec<u8>,
     /// Deterministic pseudo-random stream for the TRNG data register.
     trng_state: u32,
+    /// 64-bit machine-timer alarm compare (`0x400C002C` low / `+0x34` high).
+    /// Defaults to all-ones (disarmed); when the free-running counter reaches
+    /// this value the run loop asserts `mip.MTIP`. The firmware's timer ISR
+    /// rewrites it to re-arm (future deadline) or disarm (all-ones).
+    timer_compare: u64,
 }
 
 type Shared = Arc<Mutex<GscShared>>;
@@ -333,6 +373,18 @@ struct GscBridge {
     /// Current guest PC, published by the run loop before each step so MMIO
     /// trace lines can be correlated to the faulting instruction.
     pc: Arc<AtomicU64>,
+    /// Monotonic retired-instruction count, published by the run loop and used
+    /// to drive the free-running timer/counter block (`0x400C0014/+0x1C`).
+    time: Arc<AtomicU64>,
+}
+
+impl GscBridge {
+    /// Current value of the free-running 64-bit timer counter, derived from the
+    /// retired-instruction count published by the run loop.
+    fn timer_ticks(&self) -> u64 {
+        let instret = self.time.load(Ordering::Relaxed);
+        instret / self.cfg.timer_div.max(1)
+    }
 }
 
 /// PMU base and control block (reset-source / global-reset registers live here).
@@ -452,6 +504,13 @@ const GPIO_INPUT_BANK0: u64 = 0x4052_0000;
 const GPIO_INPUT_BANK1: u64 = 0x4052_0034;
 const GPIO_INPUT_BANK2: u64 = 0x4052_0068;
 const GPIO_INPUT_BANK3: u64 = 0x4052_009c;
+/// `plt_rst_l` is GPIO input bank0 (`0x40520000`) bit 11 (active-low: 0 =
+/// asserted = AP/host held in reset). Driving it high deasserts PLT_RST_L so
+/// the firmware treats the AP as powered on and accepts host TPM traffic
+/// (without it the TPM task drops commands "while AP off"). Found by runtime
+/// bisection of the `sub_A2F30` pin samples; the bit lives in an RO helper so
+/// it is not statically derivable. `RAX_GSC_AP_ON=1` drives this bit.
+const GPIO_PLT_RST_L_MASK: u32 = 1 << 11;
 
 const FUSE_BASE: u64 = 0x4045_0000;
 const FUSE_TOP: u64 = 0x4046_0000;
@@ -463,6 +522,28 @@ const CORE_IRQ_CLAIM: u64 = CORE_LOCAL_BASE + 0x0d0;
 const CORE_IRQ_EPOCH: u64 = CORE_LOCAL_BASE + 0x0d8;
 const CORE_IRQ_NONE: u32 = 0x8000_0000;
 const CORE_IRQ_UART0: u32 = 0;
+
+// Timer / 64-bit free-running counter block (0x400C0000). `sub_8072E` reads the
+// monotonic "now" as `PAIR64(+0x1C high, +0x14 low)` (right-shifted by 8 only
+// when the prescale at `+0x10` reads zero; the firmware programs it to 261, so
+// the raw counter is used). `sub_806D6` initializes the block (prescale `+0x10`,
+// masks `+0x2C/+0x34 = -1`, enable `+0x00 = 1`) and `+0x78` is the busy/ready
+// status. With the counter frozen at zero every log line prints `[ 0.000]`;
+// advancing it makes the firmware's millisecond timestamps progress.
+const TIMER_BASE: u64 = 0x400c_0000;
+const TIMER_TOP: u64 = TIMER_BASE + 0x100;
+const TIMER_COUNT_LO: u64 = TIMER_BASE + 0x14;
+const TIMER_COUNT_HI: u64 = TIMER_BASE + 0x1c;
+/// 64-bit alarm compare (low/high). `set_alarm` writes these; init disarms by
+/// writing all-ones. MTIP asserts while the counter has reached the compare.
+const TIMER_COMPARE_LO: u64 = TIMER_BASE + 0x2c;
+const TIMER_COMPARE_HI: u64 = TIMER_BASE + 0x34;
+const TIMER_BUSY: u64 = TIMER_BASE + 0x78;
+/// Retired-instruction-to-timer-tick divisor. The Soteria core retires roughly
+/// this many instructions per timer tick; tuned so the boot's millisecond
+/// timestamps stay in a realistic range rather than racing ahead. Overridable
+/// via `RAX_GSC_TIMER_DIV`.
+const TIMER_DEFAULT_DIV: u64 = 24;
 
 impl std::fmt::Debug for GscBridge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -1336,6 +1417,28 @@ impl Memory for GscBridge {
                 fill_le_word(buf, v);
                 return Ok(());
             }
+            // Free-running 64-bit timer/counter: the firmware reads `now` as
+            // `PAIR64(+0x1C, +0x14)`. Derive it from the retired-instruction
+            // count so the firmware's millisecond timestamps advance. The busy
+            // status (`+0x78`) always reads "ready" (0). Other timer registers
+            // (enable/prescale/masks) fall through to the persistent store,
+            // which already holds the values the init routine wrote.
+            if addr == TIMER_COUNT_LO || addr == TIMER_COUNT_HI {
+                let ticks = self.timer_ticks();
+                let v = if addr == TIMER_COUNT_LO {
+                    ticks as u32
+                } else {
+                    (ticks >> 32) as u32
+                };
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == TIMER_BUSY {
+                self.note(addr, false, 0);
+                fill_le_word(buf, 0);
+                return Ok(());
+            }
             // UART registers go through the normal ready/store path so the
             // firmware sees a consistent device (STATE is a fixed "TX ready" in
             // the ready map; WDATA writes are tapped for console output below).
@@ -1430,6 +1533,15 @@ impl Memory for GscBridge {
                     value
                 };
                 sh.store.insert(addr, stored);
+                // Machine-timer alarm compare: the firmware writes the 64-bit
+                // deadline (low `+0x2C`, high `+0x34`); init disarms with -1.
+                // The run loop raises MTIP once the counter reaches it.
+                if addr == TIMER_COMPARE_LO {
+                    sh.timer_compare = (sh.timer_compare & 0xffff_ffff_0000_0000) | value as u64;
+                } else if addr == TIMER_COMPARE_HI {
+                    sh.timer_compare =
+                        (sh.timer_compare & 0x0000_0000_ffff_ffff) | ((value as u64) << 32);
+                }
                 if addr == PMU_CLRRST_REG {
                     // CLRRST: clear the reported reset-source bits.
                     sh.rstsrc &= !value;
@@ -1537,6 +1649,8 @@ pub struct GscVcpu {
     reset_count: u32,
     /// Published to [`GscBridge`] before each step for PC-correlated tracing.
     pc_cell: Arc<AtomicU64>,
+    /// Published to [`GscBridge`] each step to drive the free-running timer.
+    time_cell: Arc<AtomicU64>,
     /// Optional breakpoint PC: dump registers + the call site on first hit
     /// (env `RAX_GSC_BREAK`). Used to diagnose panics/asserts during bring-up.
     break_pc: Option<u64>,
@@ -1555,7 +1669,81 @@ pub struct GscVcpu {
     ap_ro_crypto_stub: bool,
     break_hits_seen: u64,
     broke: bool,
+    /// TPM command injection (`RAX_GSC_TPM_CMD=<hexbytes>`, comma-separated for
+    /// several): once the firmware reaches the idle WFI after boot,
+    /// synthetically call the TPM 2.0 ExecuteCommand wrapper (`sub_E06BE`) with
+    /// each command and print the response. Demonstrates the firmware
+    /// processing real host TPM commands.
+    tpm_cmds: Vec<Vec<u8>>,
+    tpm_trigger: u64,
+    /// `true` (default) drives commands through the firmware task's own yield
+    /// (`yield` mode, proper context); `false` uses an out-of-context synthetic
+    /// call to `sub_E06BE` (`call` mode, `RAX_GSC_TPM_MODE=call`).
+    tpm_yield_mode: bool,
+    tpm: TpmInject,
 }
+
+/// State of an in-flight synthetic TPM command call.
+#[derive(Default)]
+struct TpmInject {
+    /// Index of the next command to send.
+    next: usize,
+    /// True while a synthetic `sub_E06BE` call is executing (`call` mode).
+    in_call: bool,
+    /// True after a command was planted at the task yield and we are waiting
+    /// for the task to reach the response-send (`yield` mode).
+    awaiting: bool,
+    /// Remaining bounded trace lines after a yield-mode plant (debug).
+    trace_budget: u32,
+    /// Instruction-retire count when the in-flight call began (watchdog).
+    call_start_instret: u64,
+    /// Saved integer registers (x1..x31), pc, mstatus, and mie to restore
+    /// after the synthetic call so the firmware resumes its idle loop.
+    saved_x: [u64; 32],
+    saved_pc: u64,
+    saved_mstatus: u64,
+    saved_mie: u64,
+    /// Scratch slots passed by reference to the wrapper: capacity (a2) and the
+    /// response-buffer pointer (a3); both are read back after the call.
+    cap_slot: u64,
+    bufptr_slot: u64,
+}
+
+/// Wrapper VA for the TPM 2.0 ExecuteCommand path (`sub_E06BE`); it unmarshals
+/// the command from `a0`/`a1`, runs the dispatcher, and leaves the response in
+/// the buffer with the new length/pointer written back through `a2`/`a3`.
+const TPM_EXECUTE_WRAPPER: u64 = 0xe06be;
+/// `ecall` VA of the TPM task's command-wait yield (`sub_D3904` LABEL_47). The
+/// following `c.j` loops back to re-read the command-pending flag at `0x220BC`.
+/// Intercepting this yield lets us plant a command and have the task process
+/// it *in its own scheduler context* (all upcalls/clients registered).
+const TPM_TASK_YIELD_ECALL: u64 = 0xd3cca;
+/// Instruction the yield falls through to (`c.j -0x198` back to the loop top).
+const TPM_TASK_YIELD_NEXT: u64 = 0xd3cce;
+/// Entry of the TPM response-send helper (`sub_D4B80`), called right after
+/// `sub_E06BE` with the response in the `0x220C0` buffer and the length in
+/// `a1`. We capture the response here, before the (host-less) send would block.
+const TPM_RESPONSE_SEND: u64 = 0xd4b80;
+/// TPM command-processor globals (`sub_D3904`): pending flag, RX/TX buffer
+/// pointer, command length, and capacity descriptor (low 24 bits = size).
+const TPM_GLOBAL_PENDING: u64 = 0x2_20bc;
+const TPM_GLOBAL_BUF: u64 = 0x2_20c0;
+const TPM_GLOBAL_LEN: u64 = 0x2_20c4;
+const TPM_GLOBAL_CAP: u64 = 0x2_20c8;
+/// Sentinel return address for the synthetic call: chosen outside any mapped
+/// code so the run loop detects "the call returned" before fetching there.
+const TPM_CALL_SENTINEL: u64 = 0xffff_fff0;
+/// Backed-RAM scratch for the injected command/response and the two
+/// by-reference argument slots (clear of firmware SRAM and the flash XIP
+/// window, inside the flat guest-RAM aperture).
+const TPM_SCRATCH_BUF: u64 = 0x0030_0000;
+const TPM_SCRATCH_CAP: u64 = 0x0030_1000;
+const TPM_SCRATCH_BUFPTR: u64 = 0x0030_1004;
+/// Response-buffer capacity advertised to the firmware (low 24 bits of a2).
+const TPM_SCRATCH_CAPACITY: u32 = 0x1000;
+/// Watchdog: abort a synthetic TPM call that retires more than this many
+/// instructions without returning (guards against an unmodeled path looping).
+const TPM_CALL_MAX_INSNS: u64 = 200_000_000;
 
 impl GscVcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
@@ -1567,14 +1755,23 @@ impl GscVcpu {
         let shared: Shared = Arc::new(Mutex::new(GscShared {
             rstsrc: cfg.rstsrc_cold,
             uart_rx,
+            timer_compare: u64::MAX,
             ..GscShared::default()
         }));
         let mut ready = builtin_ready_map();
         // The console UART STATE register reads back "TX ready" so the
         // firmware's transmit-ready poll always passes, at whatever base.
         ready.insert(cfg.uart_base + UART_STATE, cfg.uart_state);
+        // `RAX_GSC_AP_ON=1` deasserts PLT_RST_L (GPIO bank0 bit11) so the
+        // firmware sees the AP host powered on and processes TPM commands
+        // instead of dropping them "while AP off".
+        if std::env::var("RAX_GSC_AP_ON").is_ok() {
+            let v = ready.entry(GPIO_INPUT_BANK0).or_insert(0);
+            *v |= GPIO_PLT_RST_L_MASK;
+        }
         ready.extend(parse_ready_env());
         let pc_cell = Arc::new(AtomicU64::new(0));
+        let time_cell = Arc::new(AtomicU64::new(0));
         let bridge = GscBridge {
             mem,
             shared: shared.clone(),
@@ -1582,6 +1779,7 @@ impl GscVcpu {
             cfg,
             ready,
             pc: pc_cell.clone(),
+            time: time_cell.clone(),
         };
         let cpu = RiscVCpu::new(RiscVConfig::rv32(Isa::ti50()), Box::new(bridge));
         GscVcpu {
@@ -1593,6 +1791,7 @@ impl GscVcpu {
             reset_entry: 0,
             reset_count: 0,
             pc_cell,
+            time_cell,
             break_pc: env_hex("RAX_GSC_BREAK"),
             break_hit: env_hex("RAX_GSC_BREAK_HIT").unwrap_or(1).max(1),
             break_ra: env_hex("RAX_GSC_BREAK_RA"),
@@ -1605,6 +1804,10 @@ impl GscVcpu {
             ap_ro_crypto_stub: cfg.ap_ro_crypto_stub || cfg.ap_ro_stub,
             break_hits_seen: 0,
             broke: false,
+            tpm_cmds: parse_tpm_cmds_env(),
+            tpm_trigger: env_hex("RAX_GSC_TPM_TRIGGER").unwrap_or(0xa2d3c),
+            tpm_yield_mode: std::env::var("RAX_GSC_TPM_MODE").as_deref() != Ok("call"),
+            tpm: TpmInject::default(),
         }
     }
 
@@ -1645,11 +1848,190 @@ impl GscVcpu {
     }
 
     fn sync_machine_external_irq(&mut self) {
-        let pending = {
+        let (meip, compare) = {
             let sh = self.shared.lock().unwrap();
-            sh.uart_irq_armed && !sh.uart_rx.is_empty()
+            (
+                sh.uart_irq_armed && !sh.uart_rx.is_empty(),
+                sh.timer_compare,
+            )
         };
-        self.cpu.set_interrupt_pending(MIP_MEIP, pending);
+        self.cpu.set_interrupt_pending(MIP_MEIP, meip);
+        // Machine timer: assert MTIP while the free-running counter (derived
+        // from retired instructions, same source as the 0x400C0014/+0x1C reads)
+        // has reached the alarm compare. The firmware's cause-7 ISR re-arms or
+        // disarms the compare, which clears MTIP on the next sync.
+        let counter = self.cpu.instret() / self.cfg.timer_div.max(1);
+        self.cpu
+            .set_interrupt_pending(MIP_MTIP, counter >= compare);
+    }
+
+    #[inline]
+    fn read_guest_u32(&self, addr: u64) -> u32 {
+        let mut w = [0u8; 4];
+        if self.cpu.read_memory(addr, &mut w).is_ok() {
+            u32::from_le_bytes(w)
+        } else {
+            0
+        }
+    }
+
+    /// Begin a synthetic call into the TPM 2.0 ExecuteCommand wrapper
+    /// (`sub_E06BE`) with `cmd`. Stages the command and the two by-reference
+    /// argument slots in scratch RAM, snapshots the CPU state, masks
+    /// interrupts, and redirects the hart into the wrapper with a sentinel
+    /// return address. The normal run loop then executes the call to
+    /// completion; [`finish_tpm_call`] captures the response.
+    fn begin_tpm_call(&mut self, cmd: &[u8]) {
+        let _ = self.cpu.write_memory(TPM_SCRATCH_BUF, cmd);
+        let _ = self
+            .cpu
+            .write_memory(TPM_SCRATCH_CAP, &TPM_SCRATCH_CAPACITY.to_le_bytes());
+        let _ = self
+            .cpu
+            .write_memory(TPM_SCRATCH_BUFPTR, &(TPM_SCRATCH_BUF as u32).to_le_bytes());
+
+        for i in 0..32u8 {
+            self.tpm.saved_x[i as usize] = self.cpu.x(i);
+        }
+        self.tpm.saved_pc = self.cpu.pc();
+        self.tpm.saved_mstatus = self.cpu.csr_read(0x300).unwrap_or(0);
+        self.tpm.saved_mie = self.cpu.csr_read(0x304).unwrap_or(0);
+        self.tpm.cap_slot = TPM_SCRATCH_CAP;
+        self.tpm.bufptr_slot = TPM_SCRATCH_BUFPTR;
+        self.tpm.call_start_instret = self.cpu.instret();
+
+        // a0=len, a1=buf, a2=&cap, a3=&bufptr; ra=sentinel.
+        self.cpu.set_x(10, cmd.len() as u64);
+        self.cpu.set_x(11, TPM_SCRATCH_BUF);
+        self.cpu.set_x(12, TPM_SCRATCH_CAP);
+        self.cpu.set_x(13, TPM_SCRATCH_BUFPTR);
+        self.cpu.set_x(1, TPM_CALL_SENTINEL);
+        // Mask interrupts so the timer/UART can't divert the synthetic call.
+        let _ = self.cpu.csr_write(0x304, 0);
+        let _ = self.cpu.csr_write(0x300, self.tpm.saved_mstatus & !0x8);
+        self.cpu.set_pc(TPM_EXECUTE_WRAPPER);
+        self.tpm.in_call = true;
+
+        let preview: String = cmd.iter().map(|b| format!("{b:02x}")).collect();
+        eprintln!(
+            "[gsc] TPM inject #{}: sub_E06BE(len={}, cmd={preview})",
+            self.tpm.next + 1,
+            cmd.len()
+        );
+    }
+
+    /// Restore the pre-call register/CSR snapshot so the firmware resumes its
+    /// idle loop as if the synthetic call never happened.
+    fn restore_tpm_state(&mut self) {
+        for i in 1..32u8 {
+            self.cpu.set_x(i, self.tpm.saved_x[i as usize]);
+        }
+        let _ = self.cpu.csr_write(0x304, self.tpm.saved_mie);
+        let _ = self.cpu.csr_write(0x300, self.tpm.saved_mstatus);
+        self.cpu.set_pc(self.tpm.saved_pc);
+        self.tpm.in_call = false;
+    }
+
+    /// Capture and print the TPM response left by the synthetic call, then
+    /// restore state and advance to the next queued command. Returns `true`
+    /// when no commands remain (the run loop should halt).
+    fn finish_tpm_call(&mut self) -> bool {
+        let rc_reg = self.cpu.x(10);
+        let cap = self.read_guest_u32(self.tpm.cap_slot);
+        let bufptr = self.read_guest_u32(self.tpm.bufptr_slot) as u64;
+        // TPM response framing is big-endian: tag[0:2], size[2:6], code[6:10].
+        let mut hdr = [0u8; 10];
+        let resp_size = if self.cpu.read_memory(bufptr, &mut hdr).is_ok() {
+            u32::from_be_bytes([hdr[2], hdr[3], hdr[4], hdr[5]])
+        } else {
+            0
+        };
+        let len = resp_size.min(cap.max(resp_size)).min(512) as usize;
+        let mut resp = vec![0u8; len];
+        let _ = self.cpu.read_memory(bufptr, &mut resp);
+        let code = if resp.len() >= 10 {
+            u32::from_be_bytes([resp[6], resp[7], resp[8], resp[9]])
+        } else {
+            0xffff_ffff
+        };
+        let hexs: String = resp.iter().map(|b| format!("{b:02x}")).collect();
+        let status = if code == 0 { "SUCCESS" } else { "rc!=0" };
+        eprintln!(
+            "[gsc] TPM resp  #{}: ret_a0={rc_reg:#x} size={resp_size} rc={code:#010x} ({status}) bytes={hexs}",
+            self.tpm.next + 1
+        );
+
+        self.restore_tpm_state();
+        self.tpm.next += 1;
+        self.tpm.next >= self.tpm_cmds.len()
+    }
+
+    /// `yield` mode: plant a command into the TPM task's command-processor
+    /// globals at its command-wait yield. After the caller skips the `ecall`,
+    /// the firmware task loops back, sees the pending flag, and runs the real
+    /// `sub_E06BE` path in its own scheduler context (all upcalls registered).
+    fn plant_tpm_command(&mut self, cmd: &[u8]) {
+        let _ = self.cpu.write_memory(TPM_SCRATCH_BUF, cmd);
+        let _ = self
+            .cpu
+            .write_memory(TPM_GLOBAL_BUF, &(TPM_SCRATCH_BUF as u32).to_le_bytes());
+        let _ = self
+            .cpu
+            .write_memory(TPM_GLOBAL_LEN, &(cmd.len() as u32).to_le_bytes());
+        let _ = self
+            .cpu
+            .write_memory(TPM_GLOBAL_CAP, &TPM_SCRATCH_CAPACITY.to_le_bytes());
+        let _ = self.cpu.write_memory(TPM_GLOBAL_PENDING, &1u32.to_le_bytes());
+        self.tpm.awaiting = true;
+        if std::env::var("RAX_GSC_TPM_TRACE").is_ok() {
+            self.tpm.trace_budget = 6000;
+        }
+        let preview: String = cmd.iter().map(|b| format!("{b:02x}")).collect();
+        eprintln!(
+            "[gsc] TPM inject #{} (yield): planted {}-byte command {preview} for the firmware task",
+            self.tpm.next + 1,
+            cmd.len()
+        );
+    }
+
+    /// `yield` mode: at the response-send entry (`sub_D4B80`) the response is
+    /// already marshalled in the `0x220C0` buffer with its length in `a1`.
+    /// Capture and print it. A `>= 10`-byte buffer is a real TPM response
+    /// (tag/size/rc); a short buffer means the firmware dropped the command
+    /// (e.g. the "while AP off" policy). Returns `true` to halt afterward.
+    fn capture_tpm_response(&mut self) -> bool {
+        let bufptr = self.read_guest_u32(TPM_GLOBAL_BUF) as u64;
+        let len = (self.cpu.x(11) as u32).min(1024) as usize;
+        let mut resp = vec![0u8; len];
+        let _ = self.cpu.read_memory(bufptr, &mut resp);
+        if resp.len() >= 10 {
+            let code = u32::from_be_bytes([resp[6], resp[7], resp[8], resp[9]]);
+            let hexs: String = resp.iter().map(|b| format!("{b:02x}")).collect();
+            let status = if code == 0 { "SUCCESS" } else { "rc!=0" };
+            eprintln!(
+                "[gsc] TPM resp  #{} (yield): len={len} rc={code:#010x} ({status}) bytes={hexs}",
+                self.tpm.next + 1
+            );
+        } else {
+            eprintln!(
+                "[gsc] TPM cmd  #{} (yield): firmware processed the command but returned \
+                 no TPM response (len={len}) — see the firmware log above (e.g. it drops \
+                 commands \"while AP off\" when PLT_RST_L is asserted / the host is in reset).",
+                self.tpm.next + 1
+            );
+        }
+        self.tpm.awaiting = false;
+        self.tpm.next += 1;
+        if self.tpm.next >= self.tpm_cmds.len() {
+            return true;
+        }
+        // More commands queued: short-circuit the host-less send (return
+        // success to the caller) so the task loops back to its command-wait
+        // yield, where the next command is planted.
+        let ra = self.cpu.x(1);
+        self.cpu.set_x(10, 0);
+        self.cpu.set_pc(ra);
+        false
     }
 
     fn trap_exit(&self, t: crate::riscv::Trap) -> VcpuExit {
@@ -1676,6 +2058,122 @@ impl VCpu for GscVcpu {
             self.sync_machine_external_irq();
             let pc = self.cpu.pc();
             self.pc_cell.store(pc, Ordering::Relaxed);
+            self.time_cell.store(self.cpu.instret(), Ordering::Relaxed);
+            // TPM command injection. `yield` mode (default) plants each command
+            // into the firmware TPM task at its command-wait yield so the task
+            // processes it in its own scheduler context; `call` mode drives a
+            // synthetic out-of-context call to the ExecuteCommand wrapper.
+            if !self.tpm_cmds.is_empty() {
+                if self.tpm_yield_mode {
+                    if self.tpm.awaiting
+                        && self.tpm.trace_budget > 0
+                        && std::env::var("RAX_GSC_TPM_TRACE").is_ok()
+                    {
+                        self.tpm.trace_budget -= 1;
+                        eprintln!(
+                            "[tpmtrace] {:#010x}: {}  ra={:#x} a0={:#x} a1={:#x} a2={:#x}",
+                            pc,
+                            self.cpu.disasm_pc(),
+                            self.cpu.x(1),
+                            self.cpu.x(10),
+                            self.cpu.x(11),
+                            self.cpu.x(12)
+                        );
+                    }
+                    // Capture the response at the response-send entry, before
+                    // the (host-less) send would block.
+                    if self.tpm.awaiting && pc == TPM_RESPONSE_SEND {
+                        if self.capture_tpm_response() {
+                            self.halted = true;
+                            return Ok(VcpuExit::Shutdown);
+                        }
+                        continue;
+                    }
+                    // Plant the next command at the task's command-wait yield.
+                    if !self.tpm.awaiting
+                        && self.tpm.next < self.tpm_cmds.len()
+                        && pc == TPM_TASK_YIELD_ECALL
+                    {
+                        let ready = {
+                            let sh = self.shared.lock().unwrap();
+                            sh.console.windows(8).any(|w| w == b"TPM SPI ")
+                        };
+                        if ready {
+                            let cmd = self.tpm_cmds[self.tpm.next].clone();
+                            self.plant_tpm_command(&cmd);
+                            self.cpu.set_pc(TPM_TASK_YIELD_NEXT);
+                            continue;
+                        }
+                    }
+                } else if self.tpm.in_call {
+                    if std::env::var("RAX_GSC_TPM_TRACE").is_ok() {
+                        eprintln!(
+                            "[tpmtrace] {:#010x}: {}  ra={:#x} sp={:#x} a0={:#x} a1={:#x}",
+                            pc,
+                            self.cpu.disasm_pc(),
+                            self.cpu.x(1),
+                            self.cpu.x(2),
+                            self.cpu.x(10),
+                            self.cpu.x(11)
+                        );
+                    }
+                    if pc == TPM_CALL_SENTINEL {
+                        if self.finish_tpm_call() {
+                            self.halted = true;
+                            return Ok(VcpuExit::Shutdown);
+                        }
+                        continue;
+                    }
+                    // Off-the-rails guard: firmware code lives in the flash XIP
+                    // window (>= 0x80000). A jump below it (e.g. a null upcall
+                    // pointer this out-of-context call never registered) means
+                    // the synthetic call derailed deep inside the TPM stack.
+                    // The call already mutated global RAM, so the firmware is
+                    // not cleanly resumable: report and halt rather than fault.
+                    if pc < 0x8_0000 {
+                        eprintln!(
+                            "[gsc] TPM call #{} ran the TPM stack but derailed at {pc:#x} \
+                             (unregistered upcall/client — the ExecuteCommand path is \
+                             user-process code invoked out of its scheduler context). \
+                             See the firmware log above for how far it got.",
+                            self.tpm.next + 1
+                        );
+                        self.halted = true;
+                        return Ok(VcpuExit::Shutdown);
+                    }
+                    if self.cpu.instret().saturating_sub(self.tpm.call_start_instret)
+                        > TPM_CALL_MAX_INSNS
+                    {
+                        eprintln!(
+                            "[gsc] TPM call #{} watchdog tripped at pc={pc:#x}; aborting injection",
+                            self.tpm.next + 1
+                        );
+                        self.halted = true;
+                        return Ok(VcpuExit::Shutdown);
+                    }
+                } else if self.tpm.next < self.tpm_cmds.len() && pc == self.tpm_trigger {
+                    let booted = {
+                        let sh = self.shared.lock().unwrap();
+                        sh.console.windows(11).any(|w| w == b"TPM SPI dis")
+                    };
+                    if booted {
+                        let cmd = self.tpm_cmds[self.tpm.next].clone();
+                        self.begin_tpm_call(&cmd);
+                        continue;
+                    }
+                }
+            }
+            // Diagnostic: log each GPIO pin sample (`sub_A2F30` @0xa2f38 has the
+            // resolved bank base in a0 and the bit index in s0) to map signals
+            // like plt_rst_l / ccd_mode_l to their (bank, bit).
+            if pc == 0xa2f38 && std::env::var("RAX_GSC_GPIO_TRACE").is_ok() {
+                eprintln!(
+                    "[gpio] sample bank={:#x} bit={} ra={:#x}",
+                    self.cpu.x(10),
+                    self.cpu.x(8),
+                    self.cpu.x(1)
+                );
+            }
             if self.ap_ro_stub && pc == 0xce910 {
                 let sp = self.cpu.x(2);
                 let mut expected = [0u8; 0x40];
@@ -2022,6 +2520,7 @@ mod tests {
             ap_ro_info_stub: false,
             ap_ro_crypto_stub: false,
             ap_ro_stub: false,
+            timer_div: TIMER_DEFAULT_DIV,
         }
     }
 
@@ -2031,12 +2530,14 @@ mod tests {
             mem: Arc::new(mem),
             shared: Arc::new(Mutex::new(GscShared {
                 rstsrc: DEFAULT_RSTSRC_COLD,
+                timer_compare: u64::MAX,
                 ..GscShared::default()
             })),
             ap_flash: Arc::new(Vec::new()),
             cfg: test_cfg(),
             ready: builtin_ready_map(),
             pc: Arc::new(AtomicU64::new(0)),
+            time: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -2077,6 +2578,58 @@ mod tests {
         let mut b = test_bridge();
         b.ready.insert(0x4000_1234, 0x5a5a_0001);
         assert_eq!(rd32(&b, 0x4000_1234), 0x5a5a_0001);
+    }
+
+    #[test]
+    fn timer_counter_advances_with_published_time() {
+        let b = test_bridge();
+        // Frozen at zero before any time is published.
+        assert_eq!(rd32(&b, TIMER_COUNT_LO), 0);
+        assert_eq!(rd32(&b, TIMER_COUNT_HI), 0);
+        // The free-running counter reflects the published instruction count
+        // divided by the configured tick divisor.
+        let instret = (TIMER_DEFAULT_DIV as u64) * 0x1_2345_6789;
+        b.time.store(instret, Ordering::Relaxed);
+        let ticks = instret / TIMER_DEFAULT_DIV as u64;
+        assert_eq!(rd32(&b, TIMER_COUNT_LO), ticks as u32);
+        assert_eq!(rd32(&b, TIMER_COUNT_HI), (ticks >> 32) as u32);
+        // Busy/ready status always reads "ready" (0).
+        assert_eq!(rd32(&b, TIMER_BUSY), 0);
+    }
+
+    #[test]
+    fn timer_compare_write_tracks_64bit_deadline() {
+        let mut b = test_bridge();
+        // Init disarms the compare (all-ones); the alarm driver then writes a
+        // 64-bit deadline through the low/high halves.
+        assert_eq!(b.shared.lock().unwrap().timer_compare, u64::MAX);
+        wr32(&mut b, TIMER_COMPARE_LO, 0xdead_beef);
+        wr32(&mut b, TIMER_COMPARE_HI, 0x0000_1234);
+        assert_eq!(b.shared.lock().unwrap().timer_compare, 0x0000_1234_dead_beef);
+    }
+
+    #[test]
+    fn parse_tpm_cmds_splits_hex_commands() {
+        let cmds = {
+            // Mirror parse_tpm_cmds_env's parsing on an explicit string.
+            "80010000000c000001440000, 80 01 00 00"
+                .split([',', ';'])
+                .filter_map(|part| {
+                    let hex: String = part.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+                    if hex.len() < 2 {
+                        return None;
+                    }
+                    let bytes: Vec<u8> = (0..hex.len() - 1)
+                        .step_by(2)
+                        .filter_map(|i| u8::from_str_radix(&hex[i..i + 2], 16).ok())
+                        .collect();
+                    (!bytes.is_empty()).then_some(bytes)
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(cmds.len(), 2);
+        assert_eq!(cmds[0], vec![0x80, 0x01, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x01, 0x44, 0x00, 0x00]);
+        assert_eq!(cmds[1], vec![0x80, 0x01, 0x00, 0x00]);
     }
 
     #[test]
