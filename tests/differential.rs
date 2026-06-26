@@ -9719,6 +9719,45 @@ fn control_register_readback_and_smsw_forms() {
 }
 
 #[test]
+fn control_register_write_roundtrip_forms() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0x0000_0000_0012_3450u64.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x22, 0xD0]); // mov cr2, rax
+    code.extend_from_slice(&[0x0F, 0x20, 0xD3]); // mov rbx, cr2
+    code.extend_from_slice(&[0x48, 0x89, 0x1F]); // mov [rdi], rbx
+    code.extend_from_slice(&[0x0F, 0x20, 0xDB]); // mov rbx, cr3
+    code.extend_from_slice(&[0x0F, 0x22, 0xDB]); // mov cr3, rbx
+    code.extend_from_slice(&[0x0F, 0x20, 0xD9]); // mov rcx, cr3
+    code.extend_from_slice(&[0x48, 0x89, 0x4F, 0x08]); // mov [rdi+8], rcx
+    code.extend_from_slice(&[0x0F, 0x20, 0xE0]); // mov rax, cr4
+    code.extend_from_slice(&[0x48, 0x0D, 0x00, 0x00, 0x04, 0x00]); // or rax, CR4.OSXSAVE
+    code.extend_from_slice(&[0x0F, 0x22, 0xE0]); // mov cr4, rax
+    code.extend_from_slice(&[0x0F, 0x20, 0xE2]); // mov rdx, cr4
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x10]); // mov [rdi+0x10], rdx
+    code.extend_from_slice(&[0x0F, 0x20, 0xC0]); // mov rax, cr0
+    code.extend_from_slice(&[0x0F, 0x22, 0xC0]); // mov cr0, rax
+    code.extend_from_slice(&[0x0F, 0x20, 0xC5]); // mov rbp, cr0
+    code.extend_from_slice(&[0x48, 0x89, 0x6F, 0x18]); // mov [rdi+0x18], rbp
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0x31, 0xDB]); // xor ebx, ebx
+    code.extend_from_slice(&[0x31, 0xC9]); // xor ecx, ecx
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x31, 0xED]); // xor rbp, rbp
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "control_register_write_roundtrip_forms",
+        &code,
+        r,
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
 fn control_smsw_register_width_forms() {
     let mut r = regs();
     r.rax = 0xAAAA_BBBB_CCCC_DDDD;
@@ -10004,6 +10043,34 @@ fn debug_register_move_roundtrip_dr2_dr3_dr6_dr7() {
 }
 
 #[test]
+fn debug_register_dr4_dr5_alias_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0xFFFF_0FF0u64.to_le_bytes());
+    scratch[8..16].copy_from_slice(&0xFFFF_0FF0u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x400u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x400u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&0xFFFF_0FF0u64.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xE0]); // mov dr4, rax (alias DR6 when CR4.DE=0)
+    code.extend_from_slice(&[0x0F, 0x21, 0xF3]); // mov rbx, dr6
+    code.extend_from_slice(&[0x48, 0x89, 0x1F]); // mov [rdi], rbx
+    code.extend_from_slice(&[0x0F, 0x21, 0xE3]); // mov rbx, dr4
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x08]); // mov [rdi+8], rbx
+    code.extend_from_slice(&[0x48, 0xB8]);
+    code.extend_from_slice(&0x400u64.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x23, 0xE8]); // mov dr5, rax (alias DR7 when CR4.DE=0)
+    code.extend_from_slice(&[0x0F, 0x21, 0xFB]); // mov rbx, dr7
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x10]); // mov [rdi+0x10], rbx
+    code.extend_from_slice(&[0x0F, 0x21, 0xEB]); // mov rbx, dr5
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x18]); // mov [rdi+0x18], rbx
+    code.push(HLT);
+
+    check_mem("debug_register_dr4_dr5_alias_forms", &code, regs(), scratch, 0);
+}
+
+#[test]
 fn descriptor_register_store_forms() {
     let mut code = load_rdi_data();
     code.extend_from_slice(&[0x0F, 0x00, 0x07]); // sldt [rdi]
@@ -10052,6 +10119,27 @@ fn descriptor_register_load_task_register_form() {
         &code,
         regs(),
         zero_scratch(),
+        0,
+    );
+}
+
+#[test]
+fn descriptor_register_load_task_memory_form() {
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&0x18u16.to_le_bytes()); // TSS selector
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x00, 0x1F]); // ltr [rdi]
+    code.extend_from_slice(&[0x0F, 0x00, 0x4F, 0x08]); // str [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x00, 0xC8]); // str eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x10]); // mov [rdi+0x10], rax
+    code.push(HLT);
+
+    check_mem(
+        "descriptor_register_load_task_memory_form",
+        &code,
+        regs(),
+        scratch,
         0,
     );
 }
