@@ -1336,34 +1336,40 @@ pub fn evex_fma(
 
     let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
     for lane in 0..num_elems {
-        let base = lane * elem_size;
-        if elem_size == 4 {
-            let src1 = f32::from_bits(u32::from_le_bytes(
-                src1_bytes[base..base + 4].try_into().unwrap(),
-            ));
-            let src2 = f32::from_bits(u32::from_le_bytes(
-                src2_bytes[base..base + 4].try_into().unwrap(),
-            ));
-            let src3 = f32::from_bits(u32::from_le_bytes(
-                src3_bytes[base..base + 4].try_into().unwrap(),
-            ));
-            let (a, b, c) = fma_operands_f32(order, src1, src2, src3);
-            raw[base..base + 4]
-                .copy_from_slice(&fma_result_f32(kind, lane, a, b, c).to_bits().to_le_bytes());
+        let s1 = read_lane_u64(&src1_bytes, lane, elem_size);
+        let s2 = read_lane_u64(&src2_bytes, lane, elem_size);
+        let s3 = read_lane_u64(&src3_bytes, lane, elem_size);
+        // x86 FMA: if any source is NaN, the result is that NaN quieted with its
+        // sign+payload preserved (priority src1, src2, src3) — the add/sub/negate
+        // must NOT flip a NaN operand's sign. If no input is NaN but the op is
+        // invalid (e.g. 0*Inf, Inf-Inf), the result is the QNaN indefinite.
+        let out_bits = if fp_is_nan(s1, elem_size) {
+            fp_quiet_nan(s1, elem_size)
+        } else if fp_is_nan(s2, elem_size) {
+            fp_quiet_nan(s2, elem_size)
+        } else if fp_is_nan(s3, elem_size) {
+            fp_quiet_nan(s3, elem_size)
         } else {
-            let src1 = f64::from_bits(u64::from_le_bytes(
-                src1_bytes[base..base + 8].try_into().unwrap(),
-            ));
-            let src2 = f64::from_bits(u64::from_le_bytes(
-                src2_bytes[base..base + 8].try_into().unwrap(),
-            ));
-            let src3 = f64::from_bits(u64::from_le_bytes(
-                src3_bytes[base..base + 8].try_into().unwrap(),
-            ));
-            let (a, b, c) = fma_operands_f64(order, src1, src2, src3);
-            raw[base..base + 8]
-                .copy_from_slice(&fma_result_f64(kind, lane, a, b, c).to_bits().to_le_bytes());
-        }
+            let computed = if elem_size == 4 {
+                let (a, b, c) = fma_operands_f32(
+                    order,
+                    f32::from_bits(s1 as u32),
+                    f32::from_bits(s2 as u32),
+                    f32::from_bits(s3 as u32),
+                );
+                fma_result_f32(kind, lane, a, b, c).to_bits() as u64
+            } else {
+                let (a, b, c) =
+                    fma_operands_f64(order, f64::from_bits(s1), f64::from_bits(s2), f64::from_bits(s3));
+                fma_result_f64(kind, lane, a, b, c).to_bits()
+            };
+            if fp_is_nan(computed, elem_size) {
+                fp_qnan_indefinite(elem_size)
+            } else {
+                computed
+            }
+        };
+        write_lane_bits(&mut raw, lane, elem_size, out_bits);
     }
 
     let result = if scalar {
@@ -2281,6 +2287,60 @@ fn f64_to_fp_bits(value: f64, elem_size: usize) -> u64 {
     }
 }
 
+// --- Bit-level FP special-value helpers ---------------------------------
+//
+// The f64 round-trip above is lossy for NaN payloads (every f32 NaN collapses
+// to the canonical f64 NaN, and back to 0x7fc00000), so special-value handling
+// that must preserve a source NaN's sign+payload has to work on the raw element
+// bits. These operate directly on the per-lane bit pattern for the given size.
+
+/// Is the element a NaN (max exponent, non-zero mantissa)?
+fn fp_is_nan(bits: u64, elem_size: usize) -> bool {
+    match elem_size {
+        2 => (bits as u16 & 0x7c00) == 0x7c00 && (bits as u16 & 0x03ff) != 0,
+        4 => {
+            let b = bits as u32;
+            (b & 0x7f80_0000) == 0x7f80_0000 && (b & 0x007f_ffff) != 0
+        }
+        8 => {
+            (bits & 0x7ff0_0000_0000_0000) == 0x7ff0_0000_0000_0000
+                && (bits & 0x000f_ffff_ffff_ffff) != 0
+        }
+        _ => false,
+    }
+}
+
+/// Is a NaN element a quiet NaN (mantissa MSB set)?
+fn fp_is_quiet_nan(bits: u64, elem_size: usize) -> bool {
+    let quiet_bit = match elem_size {
+        2 => 0x0200,
+        4 => 0x0040_0000,
+        8 => 0x0008_0000_0000_0000,
+        _ => return true,
+    };
+    (bits & quiet_bit) != 0
+}
+
+/// Quiet a NaN element, preserving its sign and payload (sets the mantissa MSB).
+fn fp_quiet_nan(bits: u64, elem_size: usize) -> u64 {
+    match elem_size {
+        2 => bits | 0x0200,
+        4 => bits | 0x0040_0000,
+        8 => bits | 0x0008_0000_0000_0000,
+        _ => bits,
+    }
+}
+
+/// The architectural QNaN indefinite (sign=1) for the element size.
+fn fp_qnan_indefinite(elem_size: usize) -> u64 {
+    match elem_size {
+        2 => 0xfe00,
+        4 => 0xffc0_0000,
+        8 => 0xfff8_0000_0000_0000,
+        _ => 0,
+    }
+}
+
 fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u64 {
     let rounded = if truncate {
         value.trunc()
@@ -3169,12 +3229,15 @@ fn fp_getexp(value: f64) -> f64 {
 }
 
 fn fp_getmant(value: f64, imm: u8) -> f64 {
-    if !value.is_finite() || value == 0.0 {
-        return value;
-    }
-
+    // NaN is handled by the caller (bit-level quieting). For ±0 and ±Inf the
+    // normalized significand is defined as 1.0; the interval/sign controls below
+    // then apply (so GETMANT(+0)=+1.0, GETMANT(-Inf)=-1.0 for sign-control 0).
     let sign = if value.is_sign_negative() { -1.0 } else { 1.0 };
-    let mut mantissa = value.abs() / 2.0f64.powf(value.abs().log2().floor());
+    let mut mantissa = if value == 0.0 || value.is_infinite() {
+        1.0
+    } else {
+        value.abs() / 2.0f64.powf(value.abs().log2().floor())
+    };
 
     match imm & 0x03 {
         0 => {}
@@ -3215,33 +3278,26 @@ fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
             fp_round_by_imm(value * scale, imm) / scale
         }
         FpUnaryMathOp::Reduce => {
-            let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
-            value - fp_round_by_imm(value / scale, imm) * scale
+            // REDUCE(±Inf) = +0.0 (the naive value - round(value) would be the
+            // invalid inf - inf = NaN). NaN inputs are quieted by the caller.
+            if value.is_infinite() {
+                0.0
+            } else {
+                let scale = 2.0f64.powi(((imm >> 4) & 0x0f) as i32);
+                value - fp_round_by_imm(value / scale, imm) * scale
+            }
         }
         FpUnaryMathOp::GetMant => fp_getmant(value, imm),
     }
 }
 
+/// VRANGE on non-NaN operands (NaN cases are resolved at the bit level by the
+/// caller). `a` is SRC1, `b` is SRC2. imm[1:0] selects the compare (min / max /
+/// min-magnitude / max-magnitude); imm[3:2] selects the sign of the result.
 fn fp_range_result(a: f64, b: f64, imm: u8) -> f64 {
     let result = match imm & 0x03 {
-        0 => {
-            if a.is_nan() {
-                b
-            } else if b.is_nan() {
-                a
-            } else {
-                a.min(b)
-            }
-        }
-        1 => {
-            if a.is_nan() {
-                b
-            } else if b.is_nan() {
-                a
-            } else {
-                a.max(b)
-            }
-        }
+        0 => a.min(b),
+        1 => a.max(b),
         2 => {
             if a.abs() <= b.abs() {
                 a
@@ -3259,9 +3315,33 @@ fn fp_range_result(a: f64, b: f64, imm: u8) -> f64 {
     };
 
     match (imm >> 2) & 0x03 {
-        1 => result.abs(),
-        2 => -result.abs(),
-        _ => result,
+        0 => result.abs().copysign(a), // sign of SRC1
+        1 => result,                   // sign of the selected value
+        2 => result.abs(),             // force positive
+        _ => -(result.abs()),          // force negative
+    }
+}
+
+/// VRANGE element including NaN handling, on the raw element bits. An SNaN in
+/// either source forces a quieted NaN result (SRC1 priority); a QNaN is
+/// "transparent" and yields the other source (SRC1 priority when both QNaN).
+fn fp_range_bits(a_bits: u64, b_bits: u64, elem_size: usize, imm: u8) -> u64 {
+    let a_nan = fp_is_nan(a_bits, elem_size);
+    let b_nan = fp_is_nan(b_bits, elem_size);
+    if a_nan && !fp_is_quiet_nan(a_bits, elem_size) {
+        fp_quiet_nan(a_bits, elem_size)
+    } else if b_nan && !fp_is_quiet_nan(b_bits, elem_size) {
+        fp_quiet_nan(b_bits, elem_size)
+    } else if a_nan && b_nan {
+        fp_quiet_nan(a_bits, elem_size)
+    } else if a_nan {
+        b_bits
+    } else if b_nan {
+        a_bits
+    } else {
+        let a = fp_bits_to_f64(a_bits, elem_size);
+        let b = fp_bits_to_f64(b_bits, elem_size);
+        f64_to_fp_bits(fp_range_result(a, b, imm), elem_size)
     }
 }
 
@@ -3316,13 +3396,19 @@ pub fn evex_fp_unary_math(
         [0u8; 64]
     };
     for lane in 0..num_elems {
-        let value = fp_bits_to_f64(read_lane_u64(&src_bytes, lane, elem_size), elem_size);
-        write_lane_bits(
-            &mut raw,
-            lane,
-            elem_size,
-            f64_to_fp_bits(fp_unary_math_result(op, value, imm), elem_size),
-        );
+        let in_bits = read_lane_u64(&src_bytes, lane, elem_size);
+        // A NaN input is returned quieted with its sign+payload intact for all
+        // of these ops (getexp/getmant/reduce/rndscale/rcp/rsqrt/exp2); the f64
+        // detour would otherwise canonicalize the payload away.
+        let out_bits = if fp_is_nan(in_bits, elem_size) {
+            fp_quiet_nan(in_bits, elem_size)
+        } else {
+            f64_to_fp_bits(
+                fp_unary_math_result(op, fp_bits_to_f64(in_bits, elem_size), imm),
+                elem_size,
+            )
+        };
+        write_lane_bits(&mut raw, lane, elem_size, out_bits);
     }
 
     let result = if scalar {
@@ -3372,14 +3458,18 @@ pub fn evex_fp_ternary_math(
 
     let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
     for lane in 0..num_elems {
-        let a = fp_bits_to_f64(read_lane_u64(&src1_bytes, lane, elem_size), elem_size);
-        let b = fp_bits_to_f64(read_lane_u64(&src2_bytes, lane, elem_size), elem_size);
-        write_lane_bits(
-            &mut raw,
-            lane,
-            elem_size,
-            f64_to_fp_bits(fp_ternary_math_result(op, a, b, imm), elem_size),
-        );
+        let a_bits = read_lane_u64(&src1_bytes, lane, elem_size);
+        let b_bits = read_lane_u64(&src2_bytes, lane, elem_size);
+        // VRANGE needs the raw bits (NaN sign/payload + SRC1-sign control); VSCALEF
+        // keeps the f64 path it already matches silicon on.
+        let out_bits = if matches!(op, FpTernaryMathOp::Range) {
+            fp_range_bits(a_bits, b_bits, elem_size, imm)
+        } else {
+            let a = fp_bits_to_f64(a_bits, elem_size);
+            let b = fp_bits_to_f64(b_bits, elem_size);
+            f64_to_fp_bits(fp_ternary_math_result(op, a, b, imm), elem_size)
+        };
+        write_lane_bits(&mut raw, lane, elem_size, out_bits);
     }
 
     let result = if scalar {
@@ -5077,7 +5167,10 @@ fn narrow_int_value(
             value.clamp(min, max) as i64 as u64
         }
         NarrowMode::UnsignedSaturate => {
-            let value = elem_signed(src, src_elem_size);
+            // The source element is interpreted as UNSIGNED and clamped to
+            // [0, 2^dstbits - 1]; reading it as signed would wrongly collapse
+            // any high-bit-set source to 0 instead of saturating to the max.
+            let value = elem_unsigned(src, src_elem_size) as i128;
             let dst_bits = (dst_elem_size * 8) as u32;
             let max = (1i128 << dst_bits) - 1;
             value.clamp(0, max) as u64

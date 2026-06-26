@@ -7356,7 +7356,9 @@ fn test_narrow_int_value(
             value.clamp(min, max) as i64 as u64
         }
         TestNarrowMode::UnsignedSaturate => {
-            let value = test_elem_signed(src, src_elem_size);
+            // Unsigned-saturate reads the source as UNSIGNED (a high-bit-set
+            // source saturates to the max, not collapses to 0).
+            let value = test_elem_unsigned(src, src_elem_size) as i128;
             let dst_bits = (dst_elem_size * 8) as u32;
             let max = (1i128 << dst_bits) - 1;
             value.clamp(0, max) as u64

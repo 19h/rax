@@ -1,0 +1,1849 @@
+//! AVX-512 differential tests: rax software interpreter vs. KVM (the silicon).
+//!
+//! This is the AVX-512 analogue of `differential.rs`. Where `differential.rs`
+//! exercises scalar / SSE behaviour against KVM, this harness drives full
+//! 512-bit EVEX state — all 32 ZMM registers and all 8 opmask (k) registers —
+//! through identical machine code on the interpreter and on real hardware, then
+//! diffs the resulting architectural state.
+//!
+//! Why this is the strong oracle: the `x86_64_evex_qemu_diff.rs` harness already
+//! checks rax against qemu-x86_64, but qemu is itself an emulator. Now that the
+//! build host has native AVX-512 (F/BW/CD/DQ/VL), the *chip* can be the
+//! reference, and silicon is the final word on x86 semantics.
+//!
+//! How state crosses the KVM boundary: rax models ZMM/opmask in its `Registers`
+//! struct, so the interpreter side injects/extracts them directly. The KVM side
+//! cannot — KVM_SET_REGS only covers GPRs — so it goes through the architectural
+//! XSAVE area (`KVM_GET_XSAVE`/`KVM_SET_XSAVE`) plus `KVM_SET_XCRS` to enable the
+//! AVX-512 XCR0 components and `KVM_SET_CPUID2` so the guest may use them at all.
+//! The component byte offsets inside the XSAVE area are read from the host's own
+//! CPUID(0xD) enumeration, so the layout always matches whatever silicon we run
+//! on. Both backends then execute the *same* `mov rax, scratch; <op>; hlt`, and
+//! the full final state is compared.
+//!
+//! Robustness:
+//!  - Skips cleanly (no failure) when `/dev/kvm`, `KVM_*XSAVE*`, or the host's
+//!    AVX-512 feature set is unavailable, so the suite stays green anywhere.
+//!  - Only emits cases whose required AVX-512 subset the host actually
+//!    implements, and only mnemonics rax claims to implement.
+//!  - Bounded execution on both backends; a faulting case is reported, not hung.
+
+#![cfg(all(feature = "kvm", target_os = "linux"))]
+#![allow(dead_code)]
+
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::sync::OnceLock;
+
+#[path = "x86_64/common/mod.rs"]
+mod common;
+
+use common::{Bytes, GuestAddress, Registers, run_until_hlt, setup_vm};
+
+// ---------------------------------------------------------------------------
+// Wire model (mirrors x86_64_evex_qemu_diff.rs so the two corpora are directly
+// comparable in shape: 32 ZMM regs, 8 opmask regs, a 256-byte scratch operand).
+// ---------------------------------------------------------------------------
+
+const ZMM_REGS: usize = 32;
+const K_REGS: usize = 8;
+const SCRATCH_BYTES: usize = 256;
+
+/// Scratch / memory-operand region (64-byte aligned so EVEX aligned-move forms
+/// and full-width broadcasts never #GP on the alignment check).
+const SCRATCH_ADDR: u64 = 0x4000;
+
+/// Initial RFLAGS (matches the EVEX qemu harness): IF + a spread of status bits
+/// so flag-producing ops (vcomiss, ktest, ...) start from a non-trivial state.
+const INITIAL_RFLAGS: u64 = 0x8d7;
+/// Architecturally-defined status bits to compare (the 6 arithmetic flags).
+const STATUS_RFLAGS_MASK: u64 = 0x8d5;
+/// Value seeded into r8 (GPR-source / GPR-dest EVEX and k<->GPR forms read it).
+const R8_SEED: u64 = 0x8877_6655_4433_2211;
+
+/// One concrete architectural input: register file + scratch memory.
+#[derive(Clone)]
+struct InCase {
+    zmm: [[u64; 8]; ZMM_REGS],
+    k: [u64; K_REGS],
+    r8: u64,
+    rflags: u64,
+    scratch: [u8; SCRATCH_BYTES],
+}
+
+/// One captured architectural output.
+#[derive(Clone, PartialEq, Eq)]
+struct OutCase {
+    zmm: [[u64; 8]; ZMM_REGS],
+    k: [u64; K_REGS],
+    rax: u64,
+    r8: u64,
+    rflags: u64,
+    scratch: [u8; SCRATCH_BYTES],
+}
+
+// ---------------------------------------------------------------------------
+// Host AVX-512 feature detection. The silicon can only execute what it
+// implements; everything else would #UD, so the corpus is gated on this.
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Feat {
+    /// AVX-512 Foundation (always required as a baseline for EVEX).
+    F,
+    /// Byte/Word integer ops.
+    Bw,
+    /// Doubleword/Quadword ops + extra converts.
+    Dq,
+    /// Conflict-detection (vplzcnt/vpconflict/vpbroadcastm).
+    Cd,
+    /// 128/256-bit EVEX width variants (orthogonal capability).
+    Vl,
+    /// FMA / base AVX (always present alongside AVX-512F).
+    Base,
+}
+
+struct HostFeatures {
+    f: bool,
+    bw: bool,
+    dq: bool,
+    cd: bool,
+    vl: bool,
+}
+
+impl HostFeatures {
+    fn detect() -> Self {
+        HostFeatures {
+            f: is_x86_feature_detected!("avx512f"),
+            bw: is_x86_feature_detected!("avx512bw"),
+            dq: is_x86_feature_detected!("avx512dq"),
+            cd: is_x86_feature_detected!("avx512cd"),
+            vl: is_x86_feature_detected!("avx512vl"),
+        }
+    }
+
+    fn supports(&self, feat: Feat) -> bool {
+        match feat {
+            Feat::F | Feat::Base => self.f,
+            Feat::Bw => self.bw,
+            Feat::Dq => self.dq,
+            Feat::Cd => self.cd,
+            Feat::Vl => self.vl,
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// XSAVE area layout, taken from the host's own CPUID(0xD) enumeration so the
+// offsets always match the silicon KVM is running on. The standard
+// (non-compacted) format is fixed for a given CPU; KVM_GET/SET_XSAVE use it.
+// ---------------------------------------------------------------------------
+
+/// Byte offset of XMM0 inside the legacy region (architecturally fixed).
+const XSAVE_XMM_OFFSET: usize = 160;
+/// Byte offset of the XSAVE header's xstate_bv field.
+const XSAVE_XSTATE_BV_OFFSET: usize = 512;
+
+/// XCR0 component bits we drive: x87(0) | SSE(1) | AVX(2) | opmask(5) |
+/// ZMM_Hi256(6) | Hi16_ZMM(7).
+const XCR0_AVX512: u64 = 0b1110_0111;
+
+#[derive(Clone, Copy)]
+struct XsaveLayout {
+    /// AVX (YMM_Hi128) component, 16 regs x 16 bytes. CPUID(0xD,2).
+    avx: usize,
+    /// Opmask component, 8 regs x 8 bytes. CPUID(0xD,5).
+    opmask: usize,
+    /// ZMM_Hi256 component (upper 256 bits of zmm0-15), 16 x 32 bytes. CPUID(0xD,6).
+    zmm_hi: usize,
+    /// Hi16_ZMM component (full zmm16-31), 16 x 64 bytes. CPUID(0xD,7).
+    hi16: usize,
+}
+
+impl XsaveLayout {
+    fn from_host_cpuid() -> Self {
+        use std::arch::x86_64::__cpuid_count;
+        // leaf 0xD is always valid on a host advertising XSAVE/AVX-512, which we
+        // have already feature-gated on before reaching here.
+        XsaveLayout {
+            avx: __cpuid_count(0xD, 2).ebx as usize,
+            opmask: __cpuid_count(0xD, 5).ebx as usize,
+            zmm_hi: __cpuid_count(0xD, 6).ebx as usize,
+            hi16: __cpuid_count(0xD, 7).ebx as usize,
+        }
+    }
+
+    /// Patch the full ZMM/opmask state into a (host-formatted) XSAVE byte area.
+    fn store_state(&self, area: &mut [u8], zmm: &[[u64; 8]; ZMM_REGS], k: &[u64; K_REGS]) {
+        let put = |area: &mut [u8], off: usize, w: u64| {
+            area[off..off + 8].copy_from_slice(&w.to_le_bytes());
+        };
+        for i in 0..16 {
+            // bits 127:0 -> legacy XMM
+            put(area, XSAVE_XMM_OFFSET + i * 16, zmm[i][0]);
+            put(area, XSAVE_XMM_OFFSET + i * 16 + 8, zmm[i][1]);
+            // bits 255:128 -> AVX component
+            put(area, self.avx + i * 16, zmm[i][2]);
+            put(area, self.avx + i * 16 + 8, zmm[i][3]);
+            // bits 511:256 -> ZMM_Hi256 component
+            for w in 0..4 {
+                put(area, self.zmm_hi + i * 32 + w * 8, zmm[i][4 + w]);
+            }
+        }
+        for i in 0..16 {
+            // zmm16..31 full 512 bits -> Hi16_ZMM component
+            for w in 0..8 {
+                put(area, self.hi16 + i * 64 + w * 8, zmm[16 + i][w]);
+            }
+        }
+        for i in 0..K_REGS {
+            put(area, self.opmask + i * 8, k[i]);
+        }
+        // Mark every component we just wrote as in-use so XRSTOR honours it.
+        put(area, XSAVE_XSTATE_BV_OFFSET, XCR0_AVX512);
+    }
+
+    /// Read the full ZMM/opmask state back out of a host-formatted XSAVE area.
+    fn load_state(&self, area: &[u8]) -> ([[u64; 8]; ZMM_REGS], [u64; K_REGS]) {
+        let get = |area: &[u8], off: usize| -> u64 {
+            u64::from_le_bytes(area[off..off + 8].try_into().unwrap())
+        };
+        let mut zmm = [[0u64; 8]; ZMM_REGS];
+        let mut k = [0u64; K_REGS];
+        for i in 0..16 {
+            zmm[i][0] = get(area, XSAVE_XMM_OFFSET + i * 16);
+            zmm[i][1] = get(area, XSAVE_XMM_OFFSET + i * 16 + 8);
+            zmm[i][2] = get(area, self.avx + i * 16);
+            zmm[i][3] = get(area, self.avx + i * 16 + 8);
+            for w in 0..4 {
+                zmm[i][4 + w] = get(area, self.zmm_hi + i * 32 + w * 8);
+            }
+        }
+        for i in 0..16 {
+            for w in 0..8 {
+                zmm[16 + i][w] = get(area, self.hi16 + i * 64 + w * 8);
+            }
+        }
+        for i in 0..K_REGS {
+            k[i] = get(area, self.opmask + i * 8);
+        }
+        (zmm, k)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// KVM guest memory layout (identity-mapped: GVA == GPA).
+// ---------------------------------------------------------------------------
+
+const MEM_SIZE: usize = 8 * 1024 * 1024;
+const PML4_ADDR: u64 = 0x1000;
+const PDPTE_ADDR: u64 = 0x2000;
+const CODE_ADDR: u64 = 0x10000;
+const STACK_ADDR: u64 = 0x20000;
+
+const CR0_PE: u64 = 1 << 0;
+const CR0_MP: u64 = 1 << 1;
+const CR0_ET: u64 = 1 << 4;
+const CR0_NE: u64 = 1 << 5;
+const CR0_WP: u64 = 1 << 16;
+const CR0_PG: u64 = 1 << 31;
+const CR0_VAL: u64 = CR0_PE | CR0_MP | CR0_ET | CR0_NE | CR0_WP | CR0_PG;
+const CR4_PAE: u64 = 1 << 5;
+const CR4_OSFXSR: u64 = 1 << 9;
+const CR4_OSXMMEXCPT: u64 = 1 << 10;
+const CR4_OSXSAVE: u64 = 1 << 18;
+const CR4_VAL: u64 = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT | CR4_OSXSAVE;
+const EFER_LME: u64 = 1 << 8;
+const EFER_LMA: u64 = 1 << 10;
+const EFER_VAL: u64 = EFER_LME | EFER_LMA;
+
+const MAX_ITERS: u64 = 10_000;
+
+// ---------------------------------------------------------------------------
+// KVM oracle. One Kvm handle + supported CPUID is shared across all cases; a
+// fresh VM/vCPU/memory is built per case so no state can leak between them.
+// ---------------------------------------------------------------------------
+
+/// Owns the mmap backing KVM guest memory.
+struct KvmMem {
+    ptr: *mut u8,
+    size: usize,
+}
+
+impl KvmMem {
+    fn new(size: usize) -> Option<Self> {
+        let ptr = unsafe {
+            libc::mmap(
+                std::ptr::null_mut(),
+                size,
+                libc::PROT_READ | libc::PROT_WRITE,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
+                -1,
+                0,
+            )
+        };
+        if ptr == libc::MAP_FAILED {
+            return None;
+        }
+        Some(KvmMem {
+            ptr: ptr as *mut u8,
+            size,
+        })
+    }
+
+    fn write(&self, addr: u64, bytes: &[u8]) {
+        assert!(addr as usize + bytes.len() <= self.size);
+        unsafe {
+            std::ptr::copy_nonoverlapping(bytes.as_ptr(), self.ptr.add(addr as usize), bytes.len());
+        }
+    }
+
+    fn read(&self, addr: u64, out: &mut [u8]) {
+        assert!(addr as usize + out.len() <= self.size);
+        unsafe {
+            std::ptr::copy_nonoverlapping(self.ptr.add(addr as usize), out.as_mut_ptr(), out.len());
+        }
+    }
+}
+
+impl Drop for KvmMem {
+    fn drop(&mut self) {
+        unsafe {
+            libc::munmap(self.ptr as *mut libc::c_void, self.size);
+        }
+    }
+}
+
+/// Result of running a case on the silicon.
+enum KvmOutcome {
+    /// The instruction executed to the trailing HLT; here is the final state.
+    Ran(OutCase),
+    /// The instruction faulted on the silicon (e.g. #UD): a triple fault took
+    /// the guest down. Not comparable; the case is skipped + counted.
+    Faulted,
+}
+
+/// Lazily-initialised, process-wide KVM context. `None` once we determine KVM
+/// is unusable so every subsequent case skips without re-probing.
+struct KvmOracle {
+    kvm: kvm_ioctls::Kvm,
+    supported_cpuid: kvm_bindings::CpuId,
+    layout: XsaveLayout,
+}
+
+fn install_page_tables(mem: &KvmMem) {
+    // PML4[0] -> PDPTE (present + writable)
+    mem.write(PML4_ADDR, &(PDPTE_ADDR | 0x3).to_le_bytes());
+    // PDPTE[i] identity 1GiB huge pages (present + writable + PS), 4 entries.
+    for i in 0u64..4 {
+        let entry: u64 = (i << 30) | 0x83;
+        mem.write(PDPTE_ADDR + i * 8, &entry.to_le_bytes());
+    }
+}
+
+impl KvmOracle {
+    /// Build the shared oracle, or `None` if KVM / XSAVE / AVX-512 is unusable.
+    fn try_new() -> Option<KvmOracle> {
+        use kvm_bindings::KVM_MAX_CPUID_ENTRIES;
+        use kvm_ioctls::Kvm;
+
+        let kvm = Kvm::new().ok()?;
+        // KVM_GET_SUPPORTED_CPUID reflects host capabilities, so on an AVX-512
+        // host it advertises the AVX-512 leaves + XSAVE components the guest
+        // needs in order to set XCR0 and execute EVEX without faulting.
+        let supported_cpuid = kvm.get_supported_cpuid(KVM_MAX_CPUID_ENTRIES).ok()?;
+        let layout = XsaveLayout::from_host_cpuid();
+        Some(KvmOracle {
+            kvm,
+            supported_cpuid,
+            layout,
+        })
+    }
+
+    /// Run `code` from `input`, returning the final architectural state.
+    fn run(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
+        use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+
+        let vm = self.kvm.create_vm().map_err(|e| format!("create_vm: {e:?}"))?;
+        let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
+
+        install_page_tables(&mem);
+        mem.write(CODE_ADDR, code);
+        mem.write(SCRATCH_ADDR, &input.scratch);
+
+        let region = kvm_userspace_memory_region {
+            slot: 0,
+            guest_phys_addr: 0,
+            memory_size: MEM_SIZE as u64,
+            userspace_addr: mem.ptr as u64,
+            flags: 0,
+        };
+        unsafe { vm.set_user_memory_region(region) }.map_err(|e| format!("set_memory: {e:?}"))?;
+
+        let mut vcpu = vm.create_vcpu(0).map_err(|e| format!("create_vcpu: {e:?}"))?;
+
+        // Guest CPUID first: XCR0 validation and EVEX legality depend on it.
+        vcpu.set_cpuid2(&self.supported_cpuid)
+            .map_err(|e| format!("set_cpuid2: {e:?}"))?;
+
+        // --- sregs: long mode, paging, flat 64-bit segments, CR4.OSXSAVE ---
+        let mut sregs = vcpu.get_sregs().map_err(|e| format!("get_sregs: {e:?}"))?;
+        let flat_code = kvm_segment {
+            base: 0,
+            limit: 0xFFFFF,
+            selector: 0x8,
+            type_: 0xB,
+            present: 1,
+            dpl: 0,
+            db: 0,
+            s: 1,
+            l: 1,
+            g: 1,
+            avl: 0,
+            unusable: 0,
+            padding: 0,
+        };
+        let mut flat_data = flat_code;
+        flat_data.selector = 0x10;
+        flat_data.type_ = 0x3;
+        flat_data.l = 0;
+        flat_data.db = 1;
+        sregs.cr0 = CR0_VAL;
+        sregs.cr3 = PML4_ADDR;
+        sregs.cr4 = CR4_VAL;
+        sregs.efer = EFER_VAL;
+        sregs.cs = flat_code;
+        sregs.ds = flat_data;
+        sregs.es = flat_data;
+        sregs.fs = flat_data;
+        sregs.gs = flat_data;
+        sregs.ss = flat_data;
+        vcpu.set_sregs(&sregs).map_err(|e| format!("set_sregs: {e:?}"))?;
+
+        // --- XCR0: enable the AVX-512 state components ---
+        let mut xcrs = kvm_bindings::kvm_xcrs::default();
+        xcrs.nr_xcrs = 1;
+        xcrs.xcrs[0].xcr = 0;
+        xcrs.xcrs[0].value = XCR0_AVX512;
+        vcpu.set_xcrs(&xcrs).map_err(|e| format!("set_xcrs: {e:?}"))?;
+
+        // --- ZMM + opmask: inject via the XSAVE area ---
+        // Start from a live, valid area (correct MXCSR, xcomp_bv, ...) and patch.
+        let mut xsave = vcpu.get_xsave().map_err(|e| format!("get_xsave: {e:?}"))?;
+        {
+            let area = xsave_bytes_mut(&mut xsave);
+            self.layout.store_state(area, &input.zmm, &input.k);
+        }
+        // SAFETY: `xsave` is a well-formed kvm_xsave whose xstate_bv ⊆ XCR0.
+        unsafe { vcpu.set_xsave(&xsave) }.map_err(|e| format!("set_xsave: {e:?}"))?;
+
+        // --- GPRs + RFLAGS ---
+        let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
+        kregs.rip = CODE_ADDR;
+        kregs.rsp = STACK_ADDR;
+        kregs.r8 = input.r8;
+        kregs.rflags = input.rflags | 0x2;
+        vcpu.set_regs(&kregs).map_err(|e| format!("set_regs: {e:?}"))?;
+
+        // --- run, bounded, to the trailing HLT ---
+        let mut iters = 0u64;
+        loop {
+            iters += 1;
+            if iters > MAX_ITERS {
+                return Err(format!("kvm exceeded {MAX_ITERS} iterations"));
+            }
+            match vcpu.run().map_err(|e| format!("kvm run: {e:?}"))? {
+                kvm_ioctls::VcpuExit::Hlt => break,
+                kvm_ioctls::VcpuExit::IoIn(_, data) => data.iter_mut().for_each(|b| *b = 0),
+                kvm_ioctls::VcpuExit::IoOut(..) => {}
+                // A faulting EVEX op with no usable IDT triple-faults the guest.
+                kvm_ioctls::VcpuExit::Shutdown
+                | kvm_ioctls::VcpuExit::FailEntry(..)
+                | kvm_ioctls::VcpuExit::InternalError => return Ok(KvmOutcome::Faulted),
+                other => return Err(format!("kvm abnormal exit: {other:?}")),
+            }
+        }
+
+        // --- extract final state ---
+        let final_regs = vcpu.get_regs().map_err(|e| format!("get_regs(final): {e:?}"))?;
+        let final_xsave = vcpu.get_xsave().map_err(|e| format!("get_xsave(final): {e:?}"))?;
+        let (zmm, k) = self.layout.load_state(xsave_bytes(&final_xsave));
+
+        let mut scratch = [0u8; SCRATCH_BYTES];
+        mem.read(SCRATCH_ADDR, &mut scratch);
+
+        Ok(KvmOutcome::Ran(OutCase {
+            zmm,
+            k,
+            rax: final_regs.rax,
+            r8: final_regs.r8,
+            rflags: final_regs.rflags,
+            scratch,
+        }))
+    }
+}
+
+fn xsave_bytes(x: &kvm_bindings::kvm_xsave) -> &[u8] {
+    // SAFETY: kvm_xsave is `region: [u32; 1024]`, a plain 4096-byte POD blob.
+    unsafe { std::slice::from_raw_parts(x.region.as_ptr() as *const u8, x.region.len() * 4) }
+}
+
+fn xsave_bytes_mut(x: &mut kvm_bindings::kvm_xsave) -> &mut [u8] {
+    unsafe { std::slice::from_raw_parts_mut(x.region.as_mut_ptr() as *mut u8, x.region.len() * 4) }
+}
+
+// ---------------------------------------------------------------------------
+// Interpreter side: inject ZMM/opmask via rax's `Registers`, run the same code.
+// ---------------------------------------------------------------------------
+
+fn set_regs_zmm(regs: &mut Registers, index: usize, value: [u64; 8]) {
+    if index < 16 {
+        regs.xmm[index] = [value[0], value[1]];
+        regs.ymm_high[index] = [value[2], value[3]];
+        regs.zmm_high[index] = [value[4], value[5], value[6], value[7]];
+    } else {
+        regs.zmm_ext[index - 16] = value;
+    }
+}
+
+fn get_regs_zmm(regs: &Registers, index: usize) -> [u64; 8] {
+    if index < 16 {
+        [
+            regs.xmm[index][0],
+            regs.xmm[index][1],
+            regs.ymm_high[index][0],
+            regs.ymm_high[index][1],
+            regs.zmm_high[index][0],
+            regs.zmm_high[index][1],
+            regs.zmm_high[index][2],
+            regs.zmm_high[index][3],
+        ]
+    } else {
+        regs.zmm_ext[index - 16]
+    }
+}
+
+fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
+    let mut regs = Registers {
+        r8: input.r8,
+        rflags: input.rflags,
+        ..Registers::default()
+    };
+    for reg in 0..ZMM_REGS {
+        set_regs_zmm(&mut regs, reg, input.zmm[reg]);
+    }
+    regs.k = input.k;
+
+    let (mut vcpu, mem) = setup_vm(code, Some(regs));
+    mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("write scratch: {e:?}"))?;
+    let out_regs = run_until_hlt(&mut vcpu).map_err(|e| format!("interp run: {e:?}"))?;
+
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("read scratch: {e:?}"))?;
+
+    let mut zmm = [[0u64; 8]; ZMM_REGS];
+    for reg in 0..ZMM_REGS {
+        zmm[reg] = get_regs_zmm(&out_regs, reg);
+    }
+    Ok(OutCase {
+        zmm,
+        k: out_regs.k,
+        rax: out_regs.rax,
+        r8: out_regs.r8,
+        rflags: out_regs.rflags,
+        scratch,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Code emission: the identical `mov rax, scratch; <op>; hlt` both sides run.
+// ---------------------------------------------------------------------------
+
+fn build_code(op: &[u8]) -> Vec<u8> {
+    let mut code = Vec::new();
+    // mov rax, imm64(SCRATCH_ADDR)
+    code.push(0x48);
+    code.push(0xb8);
+    code.extend_from_slice(&SCRATCH_ADDR.to_le_bytes());
+    code.extend_from_slice(op);
+    code.push(0xf4); // hlt
+    code
+}
+
+// ---------------------------------------------------------------------------
+// Comparison.
+// ---------------------------------------------------------------------------
+
+fn diff(interp: &OutCase, kvm: &OutCase) -> Vec<String> {
+    let mut diffs = Vec::new();
+    for i in 0..ZMM_REGS {
+        if interp.zmm[i] != kvm.zmm[i] {
+            diffs.push(format!(
+                "zmm{i}: interp={:016x?} kvm={:016x?}",
+                interp.zmm[i], kvm.zmm[i]
+            ));
+        }
+    }
+    for i in 0..K_REGS {
+        if interp.k[i] != kvm.k[i] {
+            diffs.push(format!(
+                "k{i}: interp={:#018x} kvm={:#018x}",
+                interp.k[i], kvm.k[i]
+            ));
+        }
+    }
+    if interp.rax != kvm.rax {
+        diffs.push(format!("rax: interp={:#x} kvm={:#x}", interp.rax, kvm.rax));
+    }
+    if interp.r8 != kvm.r8 {
+        diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
+    }
+    let im = interp.rflags & STATUS_RFLAGS_MASK;
+    let km = kvm.rflags & STATUS_RFLAGS_MASK;
+    if im != km {
+        diffs.push(format!("rflags(status): interp={im:#x} kvm={km:#x}"));
+    }
+    if interp.scratch != kvm.scratch {
+        diffs.push(format!(
+            "scratch differs:\n    interp={:02x?}\n    kvm   ={:02x?}",
+            &interp.scratch[..],
+            &kvm.scratch[..]
+        ));
+    }
+    diffs
+}
+
+// ---------------------------------------------------------------------------
+// Input construction.
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy)]
+enum InputProfile {
+    Int,
+    F32,
+    F64,
+    /// f32 lanes drawn from a pool of edge values (NaN/Inf/denormal/zeros/signs/
+    /// powers of two), so rounding and special-value handling is stressed.
+    F32Edge,
+    /// f64 analogue.
+    F64Edge,
+}
+
+/// "Interesting" f32 bit patterns: +0, -0, 1, -1, +Inf, -Inf, qNaN, sNaN,
+/// smallest denormal, largest normal, 0.5, 3.5, a value needing rounding, 2^24.
+const F32_EDGES: [u32; 16] = [
+    0x0000_0000,
+    0x8000_0000,
+    0x3f80_0000,
+    0xbf80_0000,
+    0x7f80_0000,
+    0xff80_0000,
+    0x7fc0_0000,
+    0x7f80_0001,
+    0x0000_0001,
+    0x7f7f_ffff,
+    0x3f00_0000,
+    0x4060_0000,
+    0x3fb5_04f3,
+    0x4b80_0000,
+    0x0080_0000,
+    0xc97a_0000,
+];
+
+/// "Interesting" f64 bit patterns mirroring F32_EDGES.
+const F64_EDGES: [u64; 8] = [
+    0x0000_0000_0000_0000,
+    0x8000_0000_0000_0000,
+    0x3ff0_0000_0000_0000,
+    0xbff0_0000_0000_0000,
+    0x7ff0_0000_0000_0000,
+    0xfff0_0000_0000_0000,
+    0x7ff8_0000_0000_0000,
+    0x0000_0000_0000_0001,
+];
+
+fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
+    let mut out = [0u64; 8];
+    for (i, chunk) in bytes.chunks_exact(8).enumerate() {
+        out[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+    }
+    out
+}
+
+fn int_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for (i, byte) in bytes.iter_mut().enumerate() {
+        *byte = (reg * 37 + i * 29 + 0x83) as u8;
+    }
+    bytes
+}
+
+fn f32_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = 1.0 + reg as f32 * 0.125 + lane as f32 * 0.0625;
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f64_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = 1.0 + reg as f64 * 0.25 + lane as f64 * 0.125;
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f32_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = F32_EDGES[(reg * 5 + lane) % F32_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f64_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = F64_EDGES[(reg * 3 + lane) % F64_EDGES.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
+    match profile {
+        InputProfile::Int => int_zmm(reg),
+        InputProfile::F32 => f32_zmm(reg),
+        InputProfile::F64 => f64_zmm(reg),
+        InputProfile::F32Edge => f32_edge_zmm(reg),
+        InputProfile::F64Edge => f64_edge_zmm(reg),
+    }
+}
+
+fn input_for(profile: InputProfile) -> InCase {
+    let mut zmm = [[0u64; 8]; ZMM_REGS];
+    for reg in 0..ZMM_REGS {
+        zmm[reg] = zmm_from_bytes(profile_zmm(profile, reg));
+    }
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    let scratch_profile = profile_zmm(profile, 31);
+    for chunk in scratch.chunks_mut(64) {
+        let n = chunk.len();
+        chunk.copy_from_slice(&scratch_profile[..n]);
+    }
+    InCase {
+        zmm,
+        k: [
+            u64::MAX,
+            0x5555_5555_5555_5555,
+            0xAAAA_AAAA_AAAA_AAAA,
+            0x0F0F_0F0F_0F0F_0F0F,
+            0x00FF_00FF_00FF_00FF,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ],
+        r8: R8_SEED,
+        rflags: INITIAL_RFLAGS,
+        scratch,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Corpus.
+// ---------------------------------------------------------------------------
+
+struct Case {
+    label: String,
+    asm: String,
+    feat: Feat,
+    profile: InputProfile,
+}
+
+/// A small, hand-picked starter corpus that exercises every distinct cross-KVM
+/// path: integer VVV, FP VVV, immediate, compare-into-mask, convert, mask-op,
+/// FMA (dst is also a source), and merge/zero masking. The full generator is
+/// layered on in a later step.
+fn starter_cases() -> Vec<Case> {
+    let c = |label: &str, asm: &str, feat: Feat, profile: InputProfile| Case {
+        label: label.to_string(),
+        asm: asm.to_string(),
+        feat,
+        profile,
+    };
+    vec![
+        c("vpaddd_zmm", "vpaddd %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c(
+            "vpaddd_zmm_merge",
+            "vpaddd %zmm2, %zmm3, %zmm1 {%k2}",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_zmm_zero",
+            "vpaddd %zmm2, %zmm3, %zmm1 {%k2}{z}",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_zmm_mem",
+            "vpaddd (%rax), %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_zmm_bcst",
+            "vpaddd (%rax){1to16}, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_zmm_high",
+            "vpaddd %zmm16, %zmm18, %zmm17",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c("vaddps_zmm", "vaddps %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F32),
+        c("vaddpd_zmm", "vaddpd %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F64),
+        c("vmulps_zmm", "vmulps %zmm2, %zmm3, %zmm1", Feat::F, InputProfile::F32),
+        c("vpsrld_imm", "vpsrld $3, %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c(
+            "vpcmpd_eq",
+            "vpcmpd $0, %zmm2, %zmm3, %k1",
+            Feat::F,
+            InputProfile::Int,
+        ),
+        c("vcvtdq2ps_zmm", "vcvtdq2ps %zmm3, %zmm1", Feat::F, InputProfile::Int),
+        c("kandw_k", "kandw %k2, %k3, %k1", Feat::F, InputProfile::Int),
+        c(
+            "vfmadd213ps_zmm",
+            "vfmadd213ps %zmm2, %zmm3, %zmm1",
+            Feat::F,
+            InputProfile::F32,
+        ),
+        c(
+            "vpaddb_zmm",
+            "vpaddb %zmm2, %zmm3, %zmm1",
+            Feat::Bw,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_ymm_evex",
+            "{evex} vpaddd %ymm2, %ymm3, %ymm1",
+            Feat::Vl,
+            InputProfile::Int,
+        ),
+        c(
+            "vpaddd_xmm_evex",
+            "{evex} vpaddd %xmm2, %xmm3, %xmm1",
+            Feat::Vl,
+            InputProfile::Int,
+        ),
+        c(
+            "vplzcntd_zmm",
+            "vplzcntd %zmm3, %zmm1",
+            Feat::Cd,
+            InputProfile::Int,
+        ),
+    ]
+}
+
+// ---------------------------------------------------------------------------
+// Exhaustive EVEX corpus generator.
+//
+// A compact table of base instructions is expanded across every EVEX dimension
+// where bugs hide: operation width (512 + VL 256/128), write-masking (none /
+// merge / zeroing), the r/m operand (register / memory / embedded broadcast),
+// and high registers (zmm16-31, which also exercise the Hi16_ZMM XSAVE state).
+// All width<512 forms are pinned to EVEX with the `{evex}` pseudo-prefix so we
+// test the AVX-512 encodings rather than letting the assembler pick VEX.
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy, PartialEq)]
+enum Form {
+    /// dst, src1(vvvv), src2/mem. (also covers FMA + 3-source vpermt2/vpternlog-
+    /// without-imm, since the extra source is the injected dst.)
+    Vvv,
+    /// dst, src/mem.
+    Vv,
+    /// dst, src/mem, imm8.
+    VvI(u8),
+    /// dst, src1(vvvv), src2/mem, imm8.
+    VvvI(u8),
+    /// kdst, src1, src2/mem  (compare / test into a mask).
+    Kvv,
+    /// kdst, src1, src2/mem, imm8.
+    KvvI(u8),
+    /// kdst, src/mem, imm8  (vfpclass).
+    KvI(u8),
+    /// kdst, ksrc1, ksrc2  (VEX-encoded opmask ALU).
+    MaskRRR,
+    /// kdst, ksrc, imm8.
+    MaskRRI(u8),
+    /// kdst, ksrc.
+    MaskRR,
+}
+
+impl Form {
+    /// Does this form take a write-mask {k}/{k}{z}?
+    fn maskable(self) -> bool {
+        matches!(
+            self,
+            Form::Vvv | Form::Vv | Form::VvI(_) | Form::VvvI(_)
+        )
+    }
+    /// Is the r/m operand a vector (so register/memory/broadcast applies)?
+    fn vector_rm(self) -> bool {
+        !matches!(self, Form::MaskRRR | Form::MaskRRI(_) | Form::MaskRR)
+    }
+    /// Short tag that keeps labels unique when one mnemonic appears in two forms
+    /// (e.g. variable vs. immediate shift).
+    fn tag(self) -> &'static str {
+        match self {
+            Form::Vvv => "vvv",
+            Form::Vv => "vv",
+            Form::VvI(_) => "vvi",
+            Form::VvvI(_) => "vvvi",
+            Form::Kvv => "kvv",
+            Form::KvvI(_) => "kvvi",
+            Form::KvI(_) => "kvi",
+            Form::MaskRRR | Form::MaskRRI(_) | Form::MaskRR => "k",
+        }
+    }
+}
+
+/// Mnemonics whose r/m operand is a scalar shift count in xmm/m128, regardless
+/// of the destination width (the "shift whole vector by one count" forms).
+fn rm_is_xmm(mnem: &str) -> bool {
+    matches!(
+        mnem,
+        "vpslld" | "vpsrld" | "vpsrad" | "vpsllq" | "vpsrlq" | "vpsraq"
+            | "vpsllw" | "vpsrlw" | "vpsraw"
+    )
+}
+
+/// Mnemonics that do not accept a write-mask in the forms we generate.
+fn is_nomask(mnem: &str) -> bool {
+    matches!(mnem, "vpsadbw")
+}
+
+struct Base {
+    mnem: &'static str,
+    feat: Feat,
+    form: Form,
+    profile: InputProfile,
+    /// Broadcast element size in bytes (4=dword, 8=qword); 0 = no broadcast form.
+    elem: u8,
+    /// Expand the 256-/128-bit VL widths in addition to 512.
+    vl: bool,
+    /// Also run an FP-edge-value input profile (NaN/Inf/denormal/zeros/signs).
+    edge: bool,
+}
+
+const fn b(
+    mnem: &'static str,
+    feat: Feat,
+    form: Form,
+    profile: InputProfile,
+    elem: u8,
+    vl: bool,
+    edge: bool,
+) -> Base {
+    Base {
+        mnem,
+        feat,
+        form,
+        profile,
+        elem,
+        vl,
+        edge,
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Mask {
+    None,
+    Merge,
+    Zero,
+}
+
+#[derive(Clone, Copy)]
+enum Rm {
+    Reg,
+    Mem,
+    Bcst,
+}
+
+fn vec_name(width: u16, idx: u8) -> String {
+    let class = match width {
+        512 => "zmm",
+        256 => "ymm",
+        _ => "xmm",
+    };
+    format!("%{class}{idx}")
+}
+
+fn bcast_token(width: u16, elem: u8) -> String {
+    let count = (width as usize / 8) / elem as usize;
+    format!("(%rax){{1to{count}}}")
+}
+
+fn mask_str(mask: Mask, kreg: u8) -> &'static str {
+    // The mask register itself is fixed (k1 has alternating bits so masking is
+    // observable); only the merge/zero decoration changes here.
+    let _ = kreg;
+    match mask {
+        Mask::None => "",
+        Mask::Merge => " {%k1}",
+        Mask::Zero => " {%k1}{z}",
+    }
+}
+
+/// Build the r/m operand text for a vector form. `rm_width` is the register
+/// width of the r/m operand (usually the op width, but 128 for shift counts).
+fn rm_text(rm_width: u16, op_width: u16, elem: u8, rm: Rm, reg_idx: u8) -> String {
+    match rm {
+        Rm::Reg => vec_name(rm_width, reg_idx),
+        Rm::Mem => "(%rax)".to_string(),
+        Rm::Bcst => bcast_token(op_width, elem),
+    }
+}
+
+/// Emit the AT&T text for one expanded case (or None if the combination is
+/// structurally invalid, e.g. a broadcast on a byte-element op).
+fn emit_asm(base: &Base, width: u16, mask: Mask, rm: Rm, high: bool) -> Option<String> {
+    if matches!(rm, Rm::Bcst) && base.elem == 0 {
+        return None;
+    }
+    let evex = if width == 512 { "" } else { "{evex} " };
+    // Register roles. High variant shifts vector regs into zmm16+.
+    let (d, s1, s2) = if high { (17u8, 18u8, 16u8) } else { (1u8, 2u8, 3u8) };
+    let kd = if high { 6u8 } else { 5u8 };
+    let m = mask_str(mask, 1);
+    // Only the *variable* shift form (Vvv: shift whole vector by an xmm count)
+    // narrows the r/m operand to xmm; the immediate form (VvI) is same-width.
+    let rm_width = if matches!(base.form, Form::Vvv) && rm_is_xmm(base.mnem) {
+        128
+    } else {
+        width
+    };
+    let rmop = |idx: u8| rm_text(rm_width, width, base.elem, rm, idx);
+
+    let asm = match base.form {
+        Form::Vvv => format!("{evex}{} {}, {}, {}{m}", base.mnem, rmop(s2), vec_name(width, s1), vec_name(width, d)),
+        Form::Vv => format!("{evex}{} {}, {}{m}", base.mnem, rmop(s2), vec_name(width, d)),
+        Form::VvI(i) => format!("{evex}{} ${i}, {}, {}{m}", base.mnem, rmop(s2), vec_name(width, d)),
+        Form::VvvI(i) => format!(
+            "{evex}{} ${i}, {}, {}, {}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, s1),
+            vec_name(width, d)
+        ),
+        Form::Kvv => format!("{evex}{} {}, {}, %k{kd}{m}", base.mnem, rmop(s2), vec_name(width, s1)),
+        Form::KvvI(i) => format!(
+            "{evex}{} ${i}, {}, {}, %k{kd}{m}",
+            base.mnem,
+            rmop(s2),
+            vec_name(width, s1)
+        ),
+        Form::KvI(i) => format!("{evex}{} ${i}, {}, %k{kd}{m}", base.mnem, rmop(s2)),
+        Form::MaskRRR => format!("{} %k3, %k2, %k{kd}", base.mnem),
+        Form::MaskRRI(i) => format!("{} ${i}, %k2, %k{kd}", base.mnem),
+        Form::MaskRR => format!("{} %k2, %k{kd}", base.mnem),
+    };
+    let _ = (d, s1, s2);
+    Some(asm)
+}
+
+/// Expand one base instruction into all its case variants.
+fn expand(base: &Base, out: &mut Vec<Case>) {
+    let widths: &[u16] = if base.form.vector_rm() && base.vl {
+        &[512, 256, 128]
+    } else {
+        &[512]
+    };
+    let masks_for = |w: u16| -> &'static [Mask] {
+        if !base.form.maskable() || is_nomask(base.mnem) {
+            &[Mask::None]
+        } else if w == 512 {
+            &[Mask::None, Mask::Merge, Mask::Zero]
+        } else {
+            &[Mask::None, Mask::Zero]
+        }
+    };
+    let tag = base.form.tag();
+
+    let mut push = |label: String, asm: String, profile: InputProfile| {
+        out.push(Case {
+            label,
+            asm,
+            feat: base.feat,
+            profile,
+        });
+    };
+
+    if !base.form.vector_rm() {
+        // Opmask ALU: no width / mask / memory expansion.
+        if let Some(asm) = emit_asm(base, 512, Mask::None, Rm::Reg, false) {
+            push(format!("{}", base.mnem), asm, base.profile);
+        }
+        return;
+    }
+
+    for &w in widths {
+        for &mask in masks_for(w) {
+            // Register r/m, low regs.
+            if let Some(asm) = emit_asm(base, w, mask, Rm::Reg, false) {
+                push(
+                    format!("{}_{tag}_w{w}_{}_reg", base.mnem, mask_tag(mask)),
+                    asm,
+                    base.profile,
+                );
+            }
+            // Memory r/m (only no-mask + merge, to bound counts).
+            if matches!(mask, Mask::None | Mask::Merge) {
+                if let Some(asm) = emit_asm(base, w, mask, Rm::Mem, false) {
+                    push(
+                        format!("{}_{tag}_w{w}_{}_mem", base.mnem, mask_tag(mask)),
+                        asm,
+                        base.profile,
+                    );
+                }
+                // Embedded broadcast (no-mask only).
+                if matches!(mask, Mask::None) {
+                    if let Some(asm) = emit_asm(base, w, mask, Rm::Bcst, false) {
+                        push(format!("{}_{tag}_w{w}_bcst", base.mnem), asm, base.profile);
+                    }
+                }
+            }
+        }
+    }
+
+    // High-register variant at 512 (exercises zmm16-31 / Hi16_ZMM state).
+    if let Some(asm) = emit_asm(base, 512, Mask::None, Rm::Reg, true) {
+        push(format!("{}_{tag}_high", base.mnem), asm, base.profile);
+    }
+
+    // FP edge-value pass (register form, 512, no mask).
+    if base.edge {
+        let edge_profile = match base.profile {
+            InputProfile::F64 => InputProfile::F64Edge,
+            _ => InputProfile::F32Edge,
+        };
+        if let Some(asm) = emit_asm(base, 512, Mask::None, Rm::Reg, false) {
+            push(format!("{}_{tag}_edge", base.mnem), asm, edge_profile);
+        }
+    }
+}
+
+fn mask_tag(mask: Mask) -> &'static str {
+    match mask {
+        Mask::None => "nomask",
+        Mask::Merge => "merge",
+        Mask::Zero => "zero",
+    }
+}
+
+/// The base-instruction table for the host-supported AVX-512 subsets.
+fn base_table() -> Vec<Base> {
+    use Feat::*;
+    use Form::*;
+    use InputProfile::*;
+    let t = true;
+    let f = false;
+    vec![
+        // ---- packed integer arithmetic (F: d/q, BW: b/w) ----
+        b("vpaddd", F, Vvv, Int, 4, t, f),
+        b("vpaddq", F, Vvv, Int, 8, t, f),
+        b("vpsubd", F, Vvv, Int, 4, t, f),
+        b("vpsubq", F, Vvv, Int, 8, t, f),
+        b("vpaddb", Bw, Vvv, Int, 0, t, f),
+        b("vpaddw", Bw, Vvv, Int, 0, t, f),
+        b("vpsubb", Bw, Vvv, Int, 0, t, f),
+        b("vpsubw", Bw, Vvv, Int, 0, t, f),
+        b("vpaddsb", Bw, Vvv, Int, 0, t, f),
+        b("vpaddsw", Bw, Vvv, Int, 0, t, f),
+        b("vpaddusb", Bw, Vvv, Int, 0, f, f),
+        b("vpaddusw", Bw, Vvv, Int, 0, f, f),
+        b("vpsubsb", Bw, Vvv, Int, 0, f, f),
+        b("vpsubsw", Bw, Vvv, Int, 0, f, f),
+        b("vpsubusb", Bw, Vvv, Int, 0, f, f),
+        b("vpsubusw", Bw, Vvv, Int, 0, f, f),
+        b("vpmulld", F, Vvv, Int, 4, t, f),
+        b("vpmullq", Dq, Vvv, Int, 8, t, f),
+        b("vpmullw", Bw, Vvv, Int, 0, t, f),
+        b("vpmuldq", F, Vvv, Int, 8, f, f),
+        b("vpmuludq", F, Vvv, Int, 8, f, f),
+        b("vpmulhw", Bw, Vvv, Int, 0, f, f),
+        b("vpmulhuw", Bw, Vvv, Int, 0, f, f),
+        b("vpavgb", Bw, Vvv, Int, 0, f, f),
+        b("vpavgw", Bw, Vvv, Int, 0, f, f),
+        b("vpsadbw", Bw, Vvv, Int, 0, f, f),
+        b("vpabsd", F, Vv, Int, 4, t, f),
+        b("vpabsq", F, Vv, Int, 8, f, f),
+        b("vpabsb", Bw, Vv, Int, 0, f, f),
+        b("vpabsw", Bw, Vv, Int, 0, f, f),
+        // ---- min/max ----
+        b("vpmaxsd", F, Vvv, Int, 4, t, f),
+        b("vpmaxud", F, Vvv, Int, 4, f, f),
+        b("vpmaxsq", F, Vvv, Int, 8, f, f),
+        b("vpmaxuq", F, Vvv, Int, 8, f, f),
+        b("vpminsd", F, Vvv, Int, 4, t, f),
+        b("vpminud", F, Vvv, Int, 4, f, f),
+        b("vpminsq", F, Vvv, Int, 8, f, f),
+        b("vpminuq", F, Vvv, Int, 8, f, f),
+        b("vpmaxsb", Bw, Vvv, Int, 0, f, f),
+        b("vpmaxuw", Bw, Vvv, Int, 0, f, f),
+        b("vpminsb", Bw, Vvv, Int, 0, f, f),
+        b("vpminuw", Bw, Vvv, Int, 0, f, f),
+        // ---- logical (F) ----
+        b("vpandd", F, Vvv, Int, 4, t, f),
+        b("vpandq", F, Vvv, Int, 8, f, f),
+        b("vpandnd", F, Vvv, Int, 4, f, f),
+        b("vpandnq", F, Vvv, Int, 8, f, f),
+        b("vpord", F, Vvv, Int, 4, t, f),
+        b("vporq", F, Vvv, Int, 8, f, f),
+        b("vpxord", F, Vvv, Int, 4, t, f),
+        b("vpxorq", F, Vvv, Int, 8, f, f),
+        b("vpternlogd", F, VvvI(0xca), Int, 4, t, f),
+        b("vpternlogq", F, VvvI(0xca), Int, 8, f, f),
+        // ---- shifts (F: d/q variable+imm, BW: w) ----
+        b("vpslld", F, Vvv, Int, 0, f, f),
+        b("vpsrld", F, Vvv, Int, 0, f, f),
+        b("vpsrad", F, Vvv, Int, 0, f, f),
+        b("vpsllq", F, Vvv, Int, 0, f, f),
+        b("vpsrlq", F, Vvv, Int, 0, f, f),
+        b("vpsraq", F, Vvv, Int, 0, f, f),
+        b("vpslld", F, VvI(5), Int, 4, t, f),
+        b("vpsrld", F, VvI(5), Int, 4, t, f),
+        b("vpsrad", F, VvI(5), Int, 4, f, f),
+        b("vpsllq", F, VvI(5), Int, 8, f, f),
+        b("vpsrlq", F, VvI(5), Int, 8, f, f),
+        b("vpsraq", F, VvI(5), Int, 8, f, f),
+        b("vpsllw", Bw, VvI(5), Int, 0, f, f),
+        b("vpsrlw", Bw, VvI(5), Int, 0, f, f),
+        b("vpsraw", Bw, VvI(5), Int, 0, f, f),
+        b("vpsllvd", F, Vvv, Int, 4, t, f),
+        b("vpsrlvd", F, Vvv, Int, 4, f, f),
+        b("vpsravd", F, Vvv, Int, 4, f, f),
+        b("vpsllvq", F, Vvv, Int, 8, f, f),
+        b("vpsrlvq", F, Vvv, Int, 8, f, f),
+        b("vpsravq", F, Vvv, Int, 8, f, f),
+        b("vpsllvw", Bw, Vvv, Int, 0, f, f),
+        b("vpsrlvw", Bw, Vvv, Int, 0, f, f),
+        b("vpsravw", Bw, Vvv, Int, 0, f, f),
+        b("vprold", F, VvI(7), Int, 4, f, f),
+        b("vprord", F, VvI(7), Int, 4, f, f),
+        b("vprolvd", F, Vvv, Int, 4, f, f),
+        b("vprorvd", F, Vvv, Int, 4, f, f),
+        // ---- compares into mask (F: d/q, BW: b/w) ----
+        b("vpcmpeqd", F, Kvv, Int, 4, f, f),
+        b("vpcmpgtd", F, Kvv, Int, 4, f, f),
+        b("vpcmpeqq", F, Kvv, Int, 8, f, f),
+        b("vpcmpgtq", F, Kvv, Int, 8, f, f),
+        b("vpcmpd", F, KvvI(1), Int, 4, f, f),
+        b("vpcmpud", F, KvvI(1), Int, 4, f, f),
+        b("vpcmpq", F, KvvI(2), Int, 8, f, f),
+        b("vpcmpuq", F, KvvI(2), Int, 8, f, f),
+        b("vpcmpb", Bw, KvvI(4), Int, 0, f, f),
+        b("vpcmpw", Bw, KvvI(5), Int, 0, f, f),
+        b("vpcmpub", Bw, KvvI(0), Int, 0, f, f),
+        b("vpcmpuw", Bw, KvvI(6), Int, 0, f, f),
+        b("vptestmd", F, Kvv, Int, 4, f, f),
+        b("vptestnmd", F, Kvv, Int, 4, f, f),
+        b("vptestmq", F, Kvv, Int, 8, f, f),
+        // ---- blend by mask (F) ----
+        b("vpblendmd", F, Vvv, Int, 4, f, f),
+        b("vpblendmq", F, Vvv, Int, 8, f, f),
+        b("vblendmps", F, Vvv, F32, 4, f, f),
+        b("vblendmpd", F, Vvv, F64, 8, f, f),
+        // ---- masked moves ----
+        b("vmovdqa32", F, Vv, Int, 0, f, f),
+        b("vmovdqa64", F, Vv, Int, 0, f, f),
+        b("vmovdqu32", F, Vv, Int, 0, f, f),
+        b("vmovdqu64", F, Vv, Int, 0, f, f),
+        b("vmovdqu8", Bw, Vv, Int, 0, f, f),
+        b("vmovdqu16", Bw, Vv, Int, 0, f, f),
+        b("vmovaps", F, Vv, F32, 0, f, f),
+        b("vmovapd", F, Vv, F64, 0, f, f),
+        // ---- permute / shuffle / unpack / align ----
+        b("vpermd", F, Vvv, Int, 4, f, f),
+        b("vpermq", F, VvI(0x1b), Int, 8, f, f),
+        b("vpermw", Bw, Vvv, Int, 0, f, f),
+        b("vpermps", F, Vvv, F32, 4, f, f),
+        b("vpermpd", F, VvI(0x1b), F64, 8, f, f),
+        b("vpermt2d", F, Vvv, Int, 4, f, f),
+        b("vpermt2q", F, Vvv, Int, 8, f, f),
+        b("vpermi2d", F, Vvv, Int, 4, f, f),
+        b("vpermt2ps", F, Vvv, F32, 4, f, f),
+        b("vpermt2pd", F, Vvv, F64, 8, f, f),
+        b("vpermilps", F, VvI(0x1b), F32, 4, f, f),
+        b("vpermilpd", F, VvI(0x05), F64, 8, f, f),
+        b("vshufps", F, VvvI(0x1b), F32, 4, f, f),
+        b("vshufpd", F, VvvI(0x05), F64, 8, f, f),
+        b("vshufi32x4", F, VvvI(0x4e), Int, 4, f, f),
+        b("vshufi64x2", F, VvvI(0x4e), Int, 8, f, f),
+        b("vshuff32x4", F, VvvI(0x4e), F32, 4, f, f),
+        b("vshuff64x2", F, VvvI(0x4e), F64, 8, f, f),
+        b("valignd", F, VvvI(3), Int, 4, f, f),
+        b("valignq", F, VvvI(1), Int, 8, f, f),
+        b("vpalignr", Bw, VvvI(5), Int, 0, f, f),
+        b("vpshufd", F, VvI(0x1b), Int, 4, f, f),
+        b("vpshufhw", Bw, VvI(0x1b), Int, 0, f, f),
+        b("vpshuflw", Bw, VvI(0x1b), Int, 0, f, f),
+        b("vpshufb", Bw, Vvv, Int, 0, f, f),
+        b("vpunpckldq", F, Vvv, Int, 4, f, f),
+        b("vpunpckhdq", F, Vvv, Int, 4, f, f),
+        b("vpunpcklqdq", F, Vvv, Int, 8, f, f),
+        b("vpunpckhqdq", F, Vvv, Int, 8, f, f),
+        b("vpunpcklbw", Bw, Vvv, Int, 0, f, f),
+        b("vpunpckhwd", Bw, Vvv, Int, 0, f, f),
+        b("vunpcklps", F, Vvv, F32, 4, f, f),
+        b("vunpckhpd", F, Vvv, F64, 8, f, f),
+        // ---- same-width converts (dword<->single, qword<->double) ----
+        // (width-changing converts, pmov extend/truncate, and broadcasts have
+        //  asymmetric operand widths and live in `irregular_cases()`.)
+        b("vcvtdq2ps", F, Vv, Int, 4, f, f),
+        b("vcvtudq2ps", F, Vv, Int, 4, f, f),
+        b("vcvtps2dq", F, Vv, F32, 4, f, t),
+        b("vcvttps2dq", F, Vv, F32, 4, f, t),
+        b("vcvtps2udq", F, Vv, F32, 4, f, t),
+        b("vcvtqq2pd", Dq, Vv, Int, 8, f, f),
+        b("vcvtuqq2pd", Dq, Vv, Int, 8, f, f),
+        b("vcvtpd2qq", Dq, Vv, F64, 8, f, t),
+        b("vcvttpd2qq", Dq, Vv, F64, 8, f, t),
+        // ---- packed FP arithmetic (F) ----
+        b("vaddps", F, Vvv, F32, 4, t, t),
+        b("vaddpd", F, Vvv, F64, 8, t, t),
+        b("vsubps", F, Vvv, F32, 4, f, t),
+        b("vsubpd", F, Vvv, F64, 8, f, t),
+        b("vmulps", F, Vvv, F32, 4, t, t),
+        b("vmulpd", F, Vvv, F64, 8, f, t),
+        b("vdivps", F, Vvv, F32, 4, f, t),
+        b("vdivpd", F, Vvv, F64, 8, f, t),
+        b("vminps", F, Vvv, F32, 4, f, t),
+        b("vmaxps", F, Vvv, F32, 4, f, t),
+        b("vminpd", F, Vvv, F64, 8, f, t),
+        b("vmaxpd", F, Vvv, F64, 8, f, t),
+        b("vsqrtps", F, Vv, F32, 4, f, t),
+        b("vsqrtpd", F, Vv, F64, 8, f, t),
+        b("vandps", F, Vvv, F32, 4, f, f),
+        b("vandpd", F, Vvv, F64, 8, f, f),
+        b("vxorps", F, Vvv, F32, 4, f, f),
+        b("vorpd", F, Vvv, F64, 8, f, f),
+        // ---- FMA (F) ----
+        b("vfmadd213ps", F, Vvv, F32, 4, f, t),
+        b("vfmadd213pd", F, Vvv, F64, 8, f, t),
+        b("vfmadd231ps", F, Vvv, F32, 4, f, f),
+        b("vfmsub213ps", F, Vvv, F32, 4, f, t),
+        b("vfnmadd213ps", F, Vvv, F32, 4, f, f),
+        b("vfmaddsub213ps", F, Vvv, F32, 4, f, f),
+        b("vfmsubadd213ps", F, Vvv, F32, 4, f, f),
+        // ---- FP range/scale/round/class (F + DQ) ----
+        b("vscalefps", F, Vvv, F32, 4, f, t),
+        b("vscalefpd", F, Vvv, F64, 8, f, t),
+        b("vgetexpps", F, Vv, F32, 4, f, t),
+        b("vgetexppd", F, Vv, F64, 8, f, t),
+        b("vgetmantps", F, VvI(0x00), F32, 4, f, t),
+        b("vrndscaleps", F, VvI(0x03), F32, 4, f, t),
+        b("vrndscalepd", F, VvI(0x03), F64, 8, f, t),
+        b("vreduceps", Dq, VvI(0x03), F32, 4, f, t),
+        b("vrcp14ps", F, Vv, F32, 4, f, t),
+        b("vrsqrt14ps", F, Vv, F32, 4, f, t),
+        b("vfixupimmps", F, VvvI(0x00), F32, 4, f, f),
+        b("vrangeps", Dq, VvvI(0x00), F32, 4, f, t),
+        b("vcmpps", F, KvvI(0), F32, 4, f, t),
+        b("vcmppd", F, KvvI(0), F64, 8, f, t),
+        b("vfpclassps", Dq, KvI(0x03), F32, 4, f, t),
+        b("vfpclasspd", Dq, KvI(0x03), F64, 8, f, t),
+        // ---- conflict-detection (CD) ----
+        b("vplzcntd", Cd, Vv, Int, 4, f, f),
+        b("vplzcntq", Cd, Vv, Int, 8, f, f),
+        b("vpconflictd", Cd, Vv, Int, 4, f, f),
+        b("vpconflictq", Cd, Vv, Int, 8, f, f),
+        // ---- opmask ALU (VEX-encoded) ----
+        b("kandw", F, MaskRRR, Int, 0, f, f),
+        b("kandq", Bw, MaskRRR, Int, 0, f, f),
+        b("kandb", Dq, MaskRRR, Int, 0, f, f),
+        b("kandnw", F, MaskRRR, Int, 0, f, f),
+        b("korw", F, MaskRRR, Int, 0, f, f),
+        b("korq", Bw, MaskRRR, Int, 0, f, f),
+        b("kxorw", F, MaskRRR, Int, 0, f, f),
+        b("kxnorw", F, MaskRRR, Int, 0, f, f),
+        b("kaddw", Dq, MaskRRR, Int, 0, f, f),
+        b("kaddb", Dq, MaskRRR, Int, 0, f, f),
+        b("knotw", F, MaskRR, Int, 0, f, f),
+        b("kshiftlw", F, MaskRRI(3), Int, 0, f, f),
+        b("kshiftrw", F, MaskRRI(3), Int, 0, f, f),
+        b("kshiftlq", Bw, MaskRRI(5), Int, 0, f, f),
+        b("kunpckbw", F, MaskRRR, Int, 0, f, f),
+    ]
+}
+
+/// Instructions whose source and destination have *different* widths (the
+/// generator assumes a uniform width), written out explicitly with correct
+/// operand register classes. Masking is appended where the form allows it.
+fn irregular_cases() -> Vec<Case> {
+    use Feat::*;
+    use InputProfile::*;
+    let mut out = Vec::new();
+
+    // (label, no-mask AT&T, feature, profile, maskable)
+    let table: &[(&str, &str, Feat, InputProfile, bool)] = &[
+        // widening converts (src ymm -> dst zmm)
+        ("vcvtps2pd", "vcvtps2pd %ymm3, %zmm1", F, F32, true),
+        ("vcvtdq2pd", "vcvtdq2pd %ymm3, %zmm1", F, Int, true),
+        ("vcvtudq2pd", "vcvtudq2pd %ymm3, %zmm1", F, Int, true),
+        ("vcvtps2qq", "vcvtps2qq %ymm3, %zmm1", Dq, F32, true),
+        ("vcvttps2qq", "vcvttps2qq %ymm3, %zmm1", Dq, F32, true),
+        ("vcvtps2uqq", "vcvtps2uqq %ymm3, %zmm1", Dq, F32, true),
+        // narrowing converts (src zmm -> dst ymm)
+        ("vcvtpd2ps", "vcvtpd2ps %zmm3, %ymm1", F, F64, true),
+        ("vcvtpd2dq", "vcvtpd2dq %zmm3, %ymm1", F, F64, true),
+        ("vcvtpd2udq", "vcvtpd2udq %zmm3, %ymm1", F, F64, true),
+        ("vcvttpd2dq", "vcvttpd2dq %zmm3, %ymm1", F, F64, true),
+        ("vcvtqq2ps", "vcvtqq2ps %zmm3, %ymm1", Dq, Int, true),
+        ("vcvtuqq2ps", "vcvtuqq2ps %zmm3, %ymm1", Dq, Int, true),
+        // sign/zero-extend moves (src xmm/ymm -> dst zmm)
+        ("vpmovzxbd", "vpmovzxbd %xmm3, %zmm1", F, Int, true),
+        ("vpmovzxwd", "vpmovzxwd %ymm3, %zmm1", F, Int, true),
+        ("vpmovzxdq", "vpmovzxdq %ymm3, %zmm1", F, Int, true),
+        ("vpmovzxbq", "vpmovzxbq %xmm3, %zmm1", F, Int, true),
+        ("vpmovsxbd", "vpmovsxbd %xmm3, %zmm1", F, Int, true),
+        ("vpmovsxwd", "vpmovsxwd %ymm3, %zmm1", F, Int, true),
+        ("vpmovsxdq", "vpmovsxdq %ymm3, %zmm1", F, Int, true),
+        ("vpmovzxbw", "vpmovzxbw %ymm3, %zmm1", Bw, Int, true),
+        ("vpmovsxbw", "vpmovsxbw %ymm3, %zmm1", Bw, Int, true),
+        // truncating moves (src zmm -> dst xmm/ymm)
+        ("vpmovdb", "vpmovdb %zmm3, %xmm1", F, Int, true),
+        ("vpmovdw", "vpmovdw %zmm3, %ymm1", F, Int, true),
+        ("vpmovqd", "vpmovqd %zmm3, %ymm1", F, Int, true),
+        ("vpmovqw", "vpmovqw %zmm3, %xmm1", F, Int, true),
+        ("vpmovqb", "vpmovqb %zmm3, %xmm1", F, Int, true),
+        ("vpmovwb", "vpmovwb %zmm3, %ymm1", Bw, Int, true),
+        ("vpmovsdb", "vpmovsdb %zmm3, %xmm1", F, Int, true),
+        ("vpmovusdb", "vpmovusdb %zmm3, %xmm1", F, Int, true),
+        ("vpmovsdw", "vpmovsdw %zmm3, %ymm1", F, Int, true),
+        // broadcasts from xmm scalar / m128 / m256
+        ("vpbroadcastd", "vpbroadcastd %xmm3, %zmm1", F, Int, true),
+        ("vpbroadcastq", "vpbroadcastq %xmm3, %zmm1", F, Int, true),
+        ("vpbroadcastb", "vpbroadcastb %xmm3, %zmm1", Bw, Int, true),
+        ("vpbroadcastw", "vpbroadcastw %xmm3, %zmm1", Bw, Int, true),
+        ("vbroadcastss", "vbroadcastss %xmm3, %zmm1", F, F32, true),
+        ("vbroadcastsd", "vbroadcastsd %xmm3, %zmm1", F, F64, true),
+        ("vbroadcasti32x4", "vbroadcasti32x4 (%rax), %zmm1", F, Int, true),
+        ("vbroadcastf32x4", "vbroadcastf32x4 (%rax), %zmm1", F, F32, true),
+        ("vbroadcasti64x4", "vbroadcasti64x4 (%rax), %zmm1", F, Int, true),
+        ("vbroadcastf64x4", "vbroadcastf64x4 (%rax), %zmm1", F, F64, true),
+        ("vbroadcasti32x8", "vbroadcasti32x8 (%rax), %zmm1", Dq, Int, true),
+        ("vbroadcastf64x2", "vbroadcastf64x2 (%rax), %zmm1", Dq, F64, true),
+        // compress / expand (mask selects packed elements)
+        ("vpcompressd", "vpcompressd %zmm2, %zmm1", F, Int, true),
+        ("vpcompressq", "vpcompressq %zmm2, %zmm1", F, Int, true),
+        ("vpexpandd", "vpexpandd %zmm2, %zmm1", F, Int, true),
+        ("vpexpandq", "vpexpandq %zmm2, %zmm1", F, Int, true),
+        ("vcompressps", "vcompressps %zmm2, %zmm1", F, F32, true),
+        ("vexpandps", "vexpandps %zmm2, %zmm1", F, F32, true),
+        ("vcompresspd", "vcompresspd %zmm2, %zmm1", F, F64, true),
+        ("vexpandpd", "vexpandpd %zmm2, %zmm1", F, F64, true),
+    ];
+
+    for &(label, asm, feat, profile, maskable) in table {
+        out.push(Case {
+            label: format!("{label}_nomask"),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+        if maskable {
+            out.push(Case {
+                label: format!("{label}_merge"),
+                asm: format!("{asm} {{%k1}}"),
+                feat,
+                profile,
+            });
+            out.push(Case {
+                label: format!("{label}_zero"),
+                asm: format!("{asm} {{%k1}}{{z}}"),
+                feat,
+                profile,
+            });
+        }
+    }
+
+    // High-register variants exercising zmm16-31 across the irregular forms.
+    for &(label, asm, feat, profile) in &[
+        ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
+        ("vcvtpd2ps_high", "vcvtpd2ps %zmm16, %ymm17", F, F64),
+        ("vpmovzxbd_high", "vpmovzxbd %xmm16, %zmm17", F, Int),
+        ("vpmovdb_high", "vpmovdb %zmm16, %xmm17", F, Int),
+        ("vpbroadcastd_high", "vpbroadcastd %xmm16, %zmm17", F, Int),
+        ("vpcompressd_high", "vpcompressd %zmm16, %zmm17 {%k1}", F, Int),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
+    out
+}
+
+fn generated_cases() -> Vec<Case> {
+    let mut out = Vec::new();
+    for base in base_table() {
+        expand(&base, &mut out);
+    }
+    out.extend(irregular_cases());
+    out
+}
+
+// ---------------------------------------------------------------------------
+// Case classification.
+//
+// Most AVX-512 instructions are exactly defined and must match silicon bit for
+// bit (Status::Compare). Two categories cannot be asserted that way:
+//   * Approx  — approximate instructions (vrcp14/vrsqrt14...) whose low bits are
+//     architecturally implementation-defined; we run them (to catch crashes)
+//     but do not bit-compare.
+//   * Known   — instructions where rax currently *disagrees* with silicon. These
+//     are genuine rax bugs this harness uncovered; they are excluded from the
+//     green corpus and asserted (currently failing) by the ignored regression
+//     test `avx512_kvm_known_divergences`, so a fix flips that test to passing.
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy, PartialEq)]
+enum Status {
+    Compare,
+    Approx,
+}
+
+/// First mnemonic token of an AT&T line (after any `{evex}` pseudo-prefix).
+fn asm_mnemonic(asm: &str) -> &str {
+    asm.strip_prefix("{evex} ")
+        .unwrap_or(asm)
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+}
+
+fn case_status(case: &Case) -> Status {
+    let mnem = asm_mnemonic(&case.asm);
+
+    // Approximate reciprocal / reciprocal-sqrt: Intel specifies only a relative
+    // error bound (<= 2^-14 / 2^-28), so the exact result is microarchitecture-
+    // specific and not reproducible by a software model.
+    if matches!(
+        mnem,
+        "vrcp14ps"
+            | "vrcp14pd"
+            | "vrcp14ss"
+            | "vrcp14sd"
+            | "vrsqrt14ps"
+            | "vrsqrt14pd"
+            | "vrsqrt14ss"
+            | "vrsqrt14sd"
+            | "vrcp28ps"
+            | "vrcp28pd"
+            | "vrsqrt28ps"
+            | "vrsqrt28pd"
+            | "vexp2ps"
+            | "vexp2pd"
+    ) {
+        return Status::Approx;
+    }
+
+    // NOTE: the following families USED to diverge from silicon and were
+    // tracked here as Status::Known; all are now fixed in the interpreter and
+    // are part of the green corpus (verified bit-exact against hardware):
+    //   * vcvtudq2ps / vcvtuqq2ps / vcvtudq2pd / vcvtuqq2pd (unsigned int->FP)
+    //   * vpmovusdb (unsigned saturating narrow)
+    //   * masked vmovaps / vmovapd
+    //   * vfmsub213ps / vgetmantps / vreduceps / vrangeps / vgetexpps on
+    //     NaN/Inf/denormal edge inputs
+    //   * VEX writes zeroing the full ZMM upper (bits 511:256)
+
+    Status::Compare
+}
+
+// ---------------------------------------------------------------------------
+// Assembler bridge (llvm-mc), mirroring the EVEX qemu harness.
+// ---------------------------------------------------------------------------
+
+const LLVM_MATTR: &str = "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+fma";
+
+fn which(prog: &str) -> Option<PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    std::env::split_paths(&path)
+        .map(|dir| dir.join(prog))
+        .find(|candidate| candidate.is_file())
+}
+
+fn llvm_mc_path() -> Option<PathBuf> {
+    std::env::var_os("LLVM_MC")
+        .map(PathBuf::from)
+        .or_else(|| which("llvm-mc"))
+}
+
+fn parse_encoding(text: &str) -> Option<Vec<u8>> {
+    let start = text.find("encoding: [")? + "encoding: [".len();
+    let rest = &text[start..];
+    let end = rest.find(']')?;
+    let mut bytes = Vec::new();
+    for token in rest[..end].split(',') {
+        let token = token.trim().trim_start_matches("0x");
+        bytes.push(u8::from_str_radix(token, 16).ok()?);
+    }
+    Some(bytes)
+}
+
+fn assemble(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
+    use std::io::Write;
+    let mut child = Command::new(llvm_mc)
+        .args([
+            "-triple=x86_64",
+            "-mcpu=skylake-avx512",
+            "-mattr",
+            LLVM_MATTR,
+            "-x86-asm-syntax=att",
+            "-show-encoding",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(format!("{asm}\n").as_bytes())
+        .ok()?;
+    let output = child.wait_with_output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    parse_encoding(&String::from_utf8_lossy(&output.stdout))
+}
+
+// ---------------------------------------------------------------------------
+// Driver.
+// ---------------------------------------------------------------------------
+
+fn oracle() -> Option<&'static KvmOracle> {
+    static ORACLE: OnceLock<Option<KvmOracle>> = OnceLock::new();
+    ORACLE.get_or_init(KvmOracle::try_new).as_ref()
+}
+
+/// Outcome tallies for a corpus run.
+#[derive(Default)]
+struct Tally {
+    compared: usize,
+    approx: usize,
+    faulted: usize,
+    skipped_feature: usize,
+    skipped_asm: usize,
+    interp_err: usize,
+}
+
+/// Run a corpus, asserting interp == silicon on every comparable case. Returns
+/// the tally so callers can assert on coverage / fault counts. Self-skips
+/// cleanly (returning `None`) when KVM / llvm-mc / AVX-512 is unavailable.
+fn run_corpus(cases: &[Case]) -> Option<Tally> {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F; nothing to diff against silicon");
+        return None;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return None;
+    };
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc not found; cannot assemble the AVX-512 corpus");
+        return None;
+    };
+    let host = HostFeatures::detect();
+
+    let mut tally = Tally::default();
+    let mut failures = Vec::new();
+
+    for case in cases {
+        let status = case_status(case);
+        if !host.supports(case.feat) {
+            tally.skipped_feature += 1;
+            continue;
+        }
+        let Some(op) = assemble(&llvm_mc, &case.asm) else {
+            tally.skipped_asm += 1;
+            eprintln!("[skip] assemble failed: {} = `{}`", case.label, case.asm);
+            continue;
+        };
+        // EVEX (0x62) for vector ops; AVX-512 opmask (k*) ops are VEX-encoded
+        // (0xC4/0xC5). Anything else means the assembler picked a legacy form.
+        assert!(
+            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)),
+            "{}: expected EVEX/VEX encoding, got {:02x?}",
+            case.label,
+            op
+        );
+        let code = build_code(&op);
+        let input = input_for(case.profile);
+
+        let kvm = match oracle.run(&code, &input) {
+            Ok(KvmOutcome::Ran(out)) => out,
+            Ok(KvmOutcome::Faulted) => {
+                tally.faulted += 1;
+                eprintln!("[fault] silicon #UD/fault on {} = `{}`", case.label, case.asm);
+                continue;
+            }
+            Err(e) => panic!("{}: KVM backend failure: {e}", case.label),
+        };
+        let interp = match run_interp(&code, &input) {
+            Ok(out) => out,
+            Err(e) => {
+                // rax errored on this form (e.g. an unimplemented encoding).
+                // Record and continue so one gap can't mask the rest.
+                tally.interp_err += 1;
+                eprintln!("[interp-err] {} = `{}`: {e}", case.label, case.asm);
+                continue;
+            }
+        };
+
+        // Approximate instructions are exercised but not bit-compared.
+        if status == Status::Approx {
+            tally.approx += 1;
+            continue;
+        }
+
+        tally.compared += 1;
+        let diffs = diff(&interp, &kvm);
+        if !diffs.is_empty() {
+            failures.push(format!(
+                "DIVERGENCE in `{}` ({}) [op={:02x?}]:\n  {}",
+                case.label,
+                case.asm,
+                op,
+                diffs.join("\n  ")
+            ));
+        }
+    }
+
+    eprintln!(
+        "[avx512-kvm-diff] compared={} approx={} faulted={} interp_err={} \
+         skip(feat)={} skip(asm)={}",
+        tally.compared,
+        tally.approx,
+        tally.faulted,
+        tally.interp_err,
+        tally.skipped_feature,
+        tally.skipped_asm,
+    );
+
+    assert!(
+        failures.is_empty(),
+        "{} AVX-512 divergence(s) vs silicon:\n\n{}",
+        failures.len(),
+        failures.join("\n\n")
+    );
+    Some(tally)
+}
+
+/// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
+/// test, both backends start from identical injected state and must end in
+/// identical state. This proves the XSAVE/XCR0 ZMM+opmask injection/extraction
+/// (and the CPUID-derived component offsets) round-trip bit-exactly — if the
+/// layout were wrong, the injected vector state would not survive the no-op.
+#[test]
+fn avx512_kvm_state_roundtrip() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+    let code = build_code(&[]); // mov rax, scratch; hlt  (no op under test)
+    for profile in [
+        InputProfile::Int,
+        InputProfile::F32,
+        InputProfile::F64,
+        InputProfile::F32Edge,
+        InputProfile::F64Edge,
+    ] {
+        let input = input_for(profile);
+        let kvm = match oracle.run(&code, &input).expect("kvm run") {
+            KvmOutcome::Ran(out) => out,
+            KvmOutcome::Faulted => panic!("no-op faulted on silicon"),
+        };
+        let interp = run_interp(&code, &input).expect("interp run");
+        let diffs = diff(&interp, &kvm);
+        assert!(
+            diffs.is_empty(),
+            "state did not round-trip identically through both backends:\n  {}",
+            diffs.join("\n  ")
+        );
+    }
+}
+
+#[test]
+fn avx512_kvm_starter_corpus() {
+    run_corpus(&starter_cases());
+}
+
+/// The exhaustive corpus: every host-supported (F/BW/CD/DQ/VL) mnemonic rax
+/// implements, expanded across masking / width / memory / broadcast / high
+/// registers, diffed bit-exactly against the silicon.
+#[test]
+fn avx512_kvm_generated_corpus() {
+    let cases = generated_cases();
+    // Guard against the table silently collapsing to nothing.
+    assert!(
+        cases.len() > 400,
+        "generated corpus unexpectedly small: {} cases",
+        cases.len()
+    );
+    let Some(tally) = run_corpus(&cases) else {
+        return; // environment without KVM / llvm-mc — skipped cleanly.
+    };
+    // Everything we fed the silicon was feature-gated, so nothing should fault,
+    // and rax should at least decode every comparable instruction.
+    assert_eq!(tally.faulted, 0, "silicon faulted on feature-gated cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a comparable case");
+    assert!(
+        tally.compared > 800,
+        "too few comparable cases actually ran: {}",
+        tally.compared
+    );
+}
+
+/// On an AVX-512 host every VEX-encoded SIMD write zeros the destination ZMM
+/// above the operation width (VEX.128 zeros bits 511:128, VEX.256 zeros bits
+/// 511:256). This regression guards that property — the per-op VEX handlers only
+/// clear `ymm_high`, so `dispatch/vex/mod.rs` zeros `zmm_high` for any register a
+/// VEX instruction writes. Each case seeds non-zero ZMM-high bits (via the
+/// injected state) and checks they are cleared, matching silicon.
+#[test]
+fn avx512_kvm_vex_zero_upper() {
+    let c = |label: &str, asm: &str| Case {
+        label: label.to_string(),
+        asm: asm.to_string(),
+        feat: Feat::F,
+        profile: InputProfile::Int,
+    };
+    run_corpus(&[
+        c("vex256_vpaddd", "vpaddd %ymm2, %ymm3, %ymm1"),
+        c("vex128_vpaddd", "vpaddd %xmm2, %xmm3, %xmm1"),
+        c("vex256_vaddps", "vaddps %ymm2, %ymm3, %ymm1"),
+        c("vex128_vmovdqa", "vmovdqa %xmm3, %xmm1"),
+    ]);
+}

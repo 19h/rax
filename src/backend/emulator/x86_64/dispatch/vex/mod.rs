@@ -73,8 +73,41 @@ impl X86_64Vcpu {
         self.execute_vex_common(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode)
     }
 
-    /// Common VEX instruction execution logic
+    /// Common VEX instruction execution.
+    ///
+    /// On an AVX-512-capable machine every VEX-encoded SIMD write zeros the
+    /// destination ZMM register *above the operation width* — VEX.128 zeros bits
+    /// 511:128, VEX.256 zeros bits 511:256. The individual handlers clear the
+    /// YMM-high half (bits 255:128) but not the ZMM-high quarter (bits 511:256),
+    /// so this wrapper does it once, centrally: any vector register whose low 256
+    /// bits the instruction modified has its `zmm_high` cleared. (VEX cannot
+    /// encode zmm16-31, so only registers 0-15 are relevant.)
     fn execute_vex_common(
+        &mut self,
+        ctx: &mut InsnContext,
+        m_mmmm: u8,
+        vex_pp: u8,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let xmm_before = self.regs.xmm;
+        let ymm_before = self.regs.ymm_high;
+        let result =
+            self.execute_vex_common_inner(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode);
+        if result.is_ok() {
+            for r in 0..16 {
+                if self.regs.xmm[r] != xmm_before[r] || self.regs.ymm_high[r] != ymm_before[r] {
+                    self.regs.zmm_high[r] = [0; 4];
+                }
+            }
+        }
+        result
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn execute_vex_common_inner(
         &mut self,
         ctx: &mut InsnContext,
         m_mmmm: u8,
@@ -197,6 +230,13 @@ impl X86_64Vcpu {
                     // KMOVQ r64, k1 - VEX.L0.F2.0F.W1 93 /r
                     (3, 1, 0x93) => return self.execute_kmov_to_gpr(ctx, 64),
 
+                    // KNOTW/B/Q/D - VEX.L0.0F/66.W{0,1} 44 /r (unary opmask NOT).
+                    // KNOT is L0 (unlike the L1 KAND/KOR/KXOR... binary ops).
+                    (0, 0, 0x44) => return self.execute_kmask_unaryop(ctx, 16, |a| !a),
+                    (1, 0, 0x44) => return self.execute_kmask_unaryop(ctx, 8, |a| !a),
+                    (0, 1, 0x44) => return self.execute_kmask_unaryop(ctx, 64, |a| !a),
+                    (1, 1, 0x44) => return self.execute_kmask_unaryop(ctx, 32, |a| !a),
+
                     _ => {}
                 }
             }
@@ -226,8 +266,7 @@ impl X86_64Vcpu {
                         0x42 => {
                             return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b);
                         }
-                        // KNOT* - bitwise NOT (unary, vvvv should be 1111)
-                        0x44 => return self.execute_kmask_unaryop(ctx, mask_bits, |a| !a),
+                        // (KNOT* is VEX.L0, handled in the L0 block above.)
                         // KOR* - bitwise OR
                         0x45 => {
                             return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b);

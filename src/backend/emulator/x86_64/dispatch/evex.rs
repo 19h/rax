@@ -61,17 +61,25 @@ impl X86_64Vcpu {
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         match opcode {
-            // VMOVUPS/VMOVAPS load (0x10/0x28)
-            0x10 | 0x28 if evex.pp == 0 => self.execute_evex_mov_load(ctx, opcode == 0x28),
-            // VMOVUPD/VMOVAPD load (0x10/0x28 with 66 prefix)
-            0x10 | 0x28 if evex.pp == 1 => self.execute_evex_mov_load(ctx, opcode == 0x28),
+            // VMOVUPS/VMOVAPS load (0x10/0x28): ps lanes, masked. Aligned for 0x28.
+            0x10 | 0x28 if evex.pp == 0 => {
+                insn::simd::evex_mov_masked_load(self, ctx, 4, opcode == 0x28)
+            }
+            // VMOVUPD/VMOVAPD load (0x10/0x28 with 66 prefix): pd lanes, masked.
+            0x10 | 0x28 if evex.pp == 1 => {
+                insn::simd::evex_mov_masked_load(self, ctx, 8, opcode == 0x28)
+            }
             // VMOVSS/VMOVSD scalar load/reg-reg move forms.
             0x10 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 4, false),
             0x10 if evex.pp == 3 && evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 8, false),
-            // VMOVUPS/VMOVAPS store (0x11/0x29)
-            0x11 | 0x29 if evex.pp == 0 => self.execute_evex_mov_store(ctx, opcode == 0x29),
-            // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix)
-            0x11 | 0x29 if evex.pp == 1 => self.execute_evex_mov_store(ctx, opcode == 0x29),
+            // VMOVUPS/VMOVAPS store (0x11/0x29): ps lanes, masked. Aligned for 0x29.
+            0x11 | 0x29 if evex.pp == 0 => {
+                insn::simd::evex_mov_masked_store(self, ctx, 4, opcode == 0x29)
+            }
+            // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix): pd lanes, masked.
+            0x11 | 0x29 if evex.pp == 1 => {
+                insn::simd::evex_mov_masked_store(self, ctx, 8, opcode == 0x29)
+            }
             // VMOVSS/VMOVSD scalar store/reg-reg move forms.
             0x11 if evex.pp == 2 && !evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 4, true),
             0x11 if evex.pp == 3 && evex.w => insn::simd::evex_scalar_fp_move(self, ctx, 8, true),
@@ -178,16 +186,20 @@ impl X86_64Vcpu {
                 insn::simd::evex_packed_fp_to_int(self, ctx, 8, 8, false, true)
             }
             0x7A if evex.pp == 2 && !evex.w => {
-                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 4, false)
-            }
-            0x7A if evex.pp == 2 && evex.w => {
-                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 4, false)
-            }
-            0x7A if evex.pp == 3 && !evex.w => {
+                // F3.0F.W0 7A = VCVTUDQ2PD: u32 -> f64
                 insn::simd::evex_packed_int_to_fp(self, ctx, 4, 8, false)
             }
-            0x7A if evex.pp == 3 && evex.w => {
+            0x7A if evex.pp == 2 && evex.w => {
+                // F3.0F.W1 7A = VCVTUQQ2PD: u64 -> f64
                 insn::simd::evex_packed_int_to_fp(self, ctx, 8, 8, false)
+            }
+            0x7A if evex.pp == 3 && !evex.w => {
+                // F2.0F.W0 7A = VCVTUDQ2PS: u32 -> f32
+                insn::simd::evex_packed_int_to_fp(self, ctx, 4, 4, false)
+            }
+            0x7A if evex.pp == 3 && evex.w => {
+                // F2.0F.W1 7A = VCVTUQQ2PS: u64 -> f32
+                insn::simd::evex_packed_int_to_fp(self, ctx, 8, 4, false)
             }
             0x7B if evex.pp == 1 && !evex.w => {
                 insn::simd::evex_packed_fp_to_int(self, ctx, 4, 8, false, false)
@@ -559,106 +571,6 @@ impl X86_64Vcpu {
                 opcode, self.regs.rip
             ))),
         }
-    }
-
-    /// EVEX move load (VMOVAPS/VMOVUPS, VMOVAPD/VMOVUPD)
-    fn execute_evex_mov_load(
-        &mut self,
-        ctx: &mut InsnContext,
-        aligned: bool,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.unwrap();
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-
-        // Calculate full destination register (5 bits for ZMM16-31)
-        let zmm_dst = if !evex.r { reg + 8 } else { reg };
-        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
-
-        // Vector length from L'L
-        let vl = match evex.ll {
-            0 => 16, // 128-bit (XMM)
-            1 => 32, // 256-bit (YMM)
-            2 => 64, // 512-bit (ZMM)
-            _ => 64,
-        };
-
-        if is_memory {
-            // Check alignment for VMOVAPS/VMOVAPD
-            if aligned && (addr % vl as u64) != 0 {
-                return Err(Error::Emulator(format!(
-                    "VMOVAPS: unaligned memory access at {:#x}",
-                    addr
-                )));
-            }
-            // Load from memory to ZMM register
-            self.load_zmm_from_mem(zmm_dst, addr, vl)?;
-        } else {
-            // Register to register move
-            let zmm_src = Self::evex_rm_vec_reg(&evex, rm);
-            self.copy_zmm(zmm_dst, zmm_src, vl);
-        }
-
-        // Zero upper bits if not 512-bit
-        if vl < 64 && zmm_dst < 16 {
-            if vl <= 16 {
-                self.regs.ymm_high[zmm_dst][0] = 0;
-                self.regs.ymm_high[zmm_dst][1] = 0;
-            }
-            self.regs.zmm_high[zmm_dst] = [0; 4];
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    /// EVEX move store (VMOVAPS/VMOVUPS, VMOVAPD/VMOVUPD)
-    fn execute_evex_mov_store(
-        &mut self,
-        ctx: &mut InsnContext,
-        aligned: bool,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.unwrap();
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-
-        // Source register
-        let zmm_src = if !evex.r { reg + 8 } else { reg };
-        let zmm_src = if !evex.r_prime { zmm_src + 16 } else { zmm_src } as usize;
-
-        // Vector length from L'L
-        let vl = match evex.ll {
-            0 => 16, // 128-bit (XMM)
-            1 => 32, // 256-bit (YMM)
-            2 => 64, // 512-bit (ZMM)
-            _ => 64,
-        };
-
-        if is_memory {
-            // Check alignment for VMOVAPS/VMOVAPD
-            if aligned && (addr % vl as u64) != 0 {
-                return Err(Error::Emulator(format!(
-                    "VMOVAPS: unaligned memory access at {:#x}",
-                    addr
-                )));
-            }
-            // Store ZMM register to memory
-            self.store_zmm_to_mem(zmm_src, addr, vl)?;
-        } else {
-            // Register to register move (destination is rm)
-            let zmm_dst = Self::evex_rm_vec_reg(&evex, rm);
-            self.copy_zmm(zmm_dst, zmm_src, vl);
-
-            // Zero upper bits if not 512-bit
-            if vl < 64 && zmm_dst < 16 {
-                if vl <= 16 {
-                    self.regs.ymm_high[zmm_dst][0] = 0;
-                    self.regs.ymm_high[zmm_dst][1] = 0;
-                }
-                self.regs.zmm_high[zmm_dst] = [0; 4];
-            }
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
     }
 
     /// EVEX single-precision FP arithmetic (VADDPS, VMULPS, VSUBPS, VDIVPS)

@@ -97,3 +97,46 @@ jobs:
 
       - name: cargo test --test ${{ matrix.test }} (default features incl. kvm + smir-jit)
         run: cargo test --features x86_64-suite --test ${{ matrix.test }} -- --include-ignored
+
+  # AVX-512 differential corpus: rax interpreter vs. silicon over the full EVEX
+  # state (32 ZMM + 8 opmask), injected through the KVM XSAVE/XCR0 area. Requires
+  # both /dev/kvm AND a host that implements AVX-512 (F/BW/CD/DQ/VL); on a runner
+  # without AVX-512 (most GitHub-hosted x64 images) every case self-skips cleanly
+  # and the job is green. Note: NO `--include-ignored` here — the ignored tests
+  # in this binary document known rax↔silicon divergences and are expected to
+  # fail until those bugs are fixed.
+  kvm-avx512:
+    name: kvm avx-512 differential (interp vs hardware)
+    if: github.event_name != 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache-key: kvm-avx512
+
+      - name: Enable /dev/kvm access for the runner user
+        run: |
+          set -euxo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo chmod 0666 /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
+
+      - name: Install llvm-mc (assembles the AVX-512 corpus)
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends llvm
+          # The harness looks for an unsuffixed `llvm-mc`; Ubuntu ships it
+          # version-suffixed under /usr/lib/llvm-*/bin. Pin it explicitly.
+          LLVM_MC_BIN="$(ls /usr/lib/llvm-*/bin/llvm-mc 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -z "$LLVM_MC_BIN" ]; then LLVM_MC_BIN="$(command -v llvm-mc || true)"; fi
+          if [ -n "$LLVM_MC_BIN" ]; then echo "LLVM_MC=$LLVM_MC_BIN" >> "$GITHUB_ENV"; fi
+
+      - name: cargo test --test x86_64_avx512_kvm_diff (silicon oracle)
+        run: cargo test --features x86_64-suite --test x86_64_avx512_kvm_diff -- --nocapture
