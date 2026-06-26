@@ -5235,6 +5235,40 @@ fn str_lods_rep_and_addr32_forms() {
 }
 
 #[test]
+fn str_repne_prefix_repeats_movs_stos_lods() {
+    let r = string_regs(4);
+    check_mem(
+        "repne_movsb_repeats",
+        &with_hlt(vec![0xF2, 0xA4]),
+        r,
+        string_scratch(&[0x21, 0x32, 0x43, 0x54]),
+        0,
+    );
+
+    let mut r = string_regs(5);
+    r.rax = 0x7B;
+    check_mem(
+        "repne_stosb_repeats",
+        &with_hlt(vec![0xF2, 0xAA]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
+
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rcx = 3;
+    r.rax = 0xAAAA_BBBB_CCCC_DD00;
+    check_mem(
+        "repne_lodsb_repeats",
+        &with_hlt(vec![0xF2, 0xAC]),
+        r,
+        string_scratch(&[0xA1, 0xB2, 0xC3]),
+        0,
+    );
+}
+
+#[test]
 fn str_repne_scasb_found() {
     // REPNE SCASB: scan dst for AL, stop on match. F2 AE.
     // Buffer at dst (offset 16) = [1,2,3,4,5,...]; AL=4, count large enough.
@@ -12753,6 +12787,27 @@ fn monitor_addr32_preserves_visible_state() {
         "monitor_addr32_preserve",
         &with_hlt(vec![0x67, 0x0F, 0x01, 0xC8]), // monitor with addr32
         r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn mwait_after_monitor_touch_preserves_visible_state() {
+    let mut r = modern_flags_regs();
+    r.rax = DATA_ADDR;
+    r.rdi = DATA_ADDR;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0;
+    r.rdx = 0;
+    check_mem(
+        "mwait_after_monitor_touch_preserve",
+        &with_hlt(vec![
+            0x0F, 0x01, 0xC8, // monitor
+            0x48, 0x89, 0x1F, // mov [rdi], rbx
+            0x0F, 0x01, 0xC9, // mwait
+        ]),
+        r,
+        zero_scratch(),
         FLAG_MASK,
     );
 }
@@ -25678,6 +25733,93 @@ fn opmask_kmov_logical_wide_roundtrip() {
     code.extend_from_slice(&[0xC5, 0x78, 0x93, 0xE2]); // kmovw r12d, k2
     code.push(HLT);
     check("opmask_kmov_logical_wide_roundtrip", &code, regs());
+}
+
+#[test]
+fn opmask_klogical_byte_dword_qword_forms() {
+    let mut code = opmask_start();
+
+    code.extend_from_slice(&[0xB8, 0x5A, 0x00, 0x00, 0x00]); // mov eax, 0x5a
+    code.extend_from_slice(&[0xBB, 0x33, 0x00, 0x00, 0x00]); // mov ebx, 0x33
+    code.extend_from_slice(&[0xC5, 0xF9, 0x92, 0xC8]); // kmovb k1, eax
+    code.extend_from_slice(&[0xC5, 0xF9, 0x92, 0xD3]); // kmovb k2, ebx
+    code.extend_from_slice(&[0xC5, 0xF5, 0x41, 0xDA]); // kandb k3, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF5, 0x45, 0xE2]); // korb k4, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF5, 0x47, 0xEA]); // kxorb k5, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF5, 0x4A, 0xF2]); // kaddb k6, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF5, 0x42, 0xFA]); // kandnb k7, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF5, 0x46, 0xCA]); // kxnorb k1, k1, k2
+    code.extend_from_slice(&[0xC5, 0xF9, 0x44, 0xD1]); // knotb k2, k1
+    code.extend_from_slice(&[0xC5, 0xF9, 0x93, 0xCB]); // kmovb ecx, k3
+    code.extend_from_slice(&[0xC5, 0xF9, 0x93, 0xD4]); // kmovb edx, k4
+    code.extend_from_slice(&[0xC5, 0x79, 0x93, 0xC5]); // kmovb r8d, k5
+    code.extend_from_slice(&[0xC5, 0x79, 0x93, 0xCE]); // kmovb r9d, k6
+    code.extend_from_slice(&[0xC5, 0x79, 0x93, 0xD7]); // kmovb r10d, k7
+    code.extend_from_slice(&[0xC5, 0x79, 0x93, 0xD9]); // kmovb r11d, k1
+    code.extend_from_slice(&[0xC5, 0x79, 0x93, 0xE2]); // kmovb r12d, k2
+    code.extend_from_slice(&[0x89, 0x0F]); // mov [rdi], ecx
+    code.extend_from_slice(&[0x89, 0x57, 0x04]); // mov [rdi+4], edx
+    code.extend_from_slice(&[0x44, 0x89, 0x47, 0x08]); // mov [rdi+8], r8d
+    code.extend_from_slice(&[0x44, 0x89, 0x4F, 0x0C]); // mov [rdi+12], r9d
+    code.extend_from_slice(&[0x44, 0x89, 0x57, 0x10]); // mov [rdi+16], r10d
+    code.extend_from_slice(&[0x44, 0x89, 0x5F, 0x14]); // mov [rdi+20], r11d
+    code.extend_from_slice(&[0x44, 0x89, 0x67, 0x18]); // mov [rdi+24], r12d
+
+    code.extend_from_slice(&[0xB8, 0x34, 0x12, 0x55, 0xAA]); // mov eax, 0xaa551234
+    code.extend_from_slice(&[0xBB, 0xF0, 0xF0, 0x0F, 0x0F]); // mov ebx, 0x0f0ff0f0
+    code.extend_from_slice(&[0xC5, 0xFB, 0x92, 0xC8]); // kmovd k1, eax
+    code.extend_from_slice(&[0xC5, 0xFB, 0x92, 0xD3]); // kmovd k2, ebx
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x41, 0xDA]); // kandd k3, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x45, 0xE2]); // kord k4, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x47, 0xEA]); // kxord k5, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x4A, 0xF2]); // kaddd k6, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x42, 0xFA]); // kandnd k7, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF5, 0x46, 0xCA]); // kxnord k1, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF9, 0x44, 0xD1]); // knotd k2, k1
+    code.extend_from_slice(&[0xC5, 0xFB, 0x93, 0xCB]); // kmovd ecx, k3
+    code.extend_from_slice(&[0xC5, 0xFB, 0x93, 0xD4]); // kmovd edx, k4
+    code.extend_from_slice(&[0xC5, 0x7B, 0x93, 0xC5]); // kmovd r8d, k5
+    code.extend_from_slice(&[0xC5, 0x7B, 0x93, 0xCE]); // kmovd r9d, k6
+    code.extend_from_slice(&[0xC5, 0x7B, 0x93, 0xD7]); // kmovd r10d, k7
+    code.extend_from_slice(&[0xC5, 0x7B, 0x93, 0xD9]); // kmovd r11d, k1
+    code.extend_from_slice(&[0xC5, 0x7B, 0x93, 0xE2]); // kmovd r12d, k2
+    code.extend_from_slice(&[0x89, 0x4F, 0x1C]); // mov [rdi+28], ecx
+    code.extend_from_slice(&[0x89, 0x57, 0x20]); // mov [rdi+32], edx
+    code.extend_from_slice(&[0x44, 0x89, 0x47, 0x24]); // mov [rdi+36], r8d
+    code.extend_from_slice(&[0x44, 0x89, 0x4F, 0x28]); // mov [rdi+40], r9d
+    code.extend_from_slice(&[0x44, 0x89, 0x57, 0x2C]); // mov [rdi+44], r10d
+    code.extend_from_slice(&[0x44, 0x89, 0x5F, 0x30]); // mov [rdi+48], r11d
+    code.extend_from_slice(&[0x44, 0x89, 0x67, 0x34]); // mov [rdi+52], r12d
+
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x123456789abcdef0
+    code.extend_from_slice(&0x1234_5678_9ABC_DEF0u64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, 0x0f0ff0f03333cccc
+    code.extend_from_slice(&0x0F0F_F0F0_3333_CCCCu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD3]); // kmovq k2, rbx
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x41, 0xDA]); // kandq k3, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x45, 0xE2]); // korq k4, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x47, 0xEA]); // kxorq k5, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x4A, 0xF2]); // kaddq k6, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x42, 0xFA]); // kandnq k7, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF4, 0x46, 0xCA]); // kxnorq k1, k1, k2
+    code.extend_from_slice(&[0xC4, 0xE1, 0xF8, 0x44, 0xD1]); // knotq k2, k1
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xCB]); // kmovq rcx, k3
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD4]); // kmovq rdx, k4
+    code.extend_from_slice(&[0xC4, 0x61, 0xFB, 0x93, 0xC5]); // kmovq r8, k5
+    code.extend_from_slice(&[0xC4, 0x61, 0xFB, 0x93, 0xCE]); // kmovq r9, k6
+    code.extend_from_slice(&[0xC4, 0x61, 0xFB, 0x93, 0xD7]); // kmovq r10, k7
+    code.extend_from_slice(&[0xC4, 0x61, 0xFB, 0x93, 0xD9]); // kmovq r11, k1
+    code.extend_from_slice(&[0xC4, 0x61, 0xFB, 0x93, 0xE2]); // kmovq r12, k2
+    code.push(HLT);
+
+    check_mem(
+        "opmask_klogical_byte_dword_qword_forms",
+        &code,
+        regs(),
+        zero_scratch(),
+        0,
+    );
 }
 
 #[test]
