@@ -16,6 +16,15 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (dst_reg, index_reg, base_addr, scale) = self.decode_vsib(ctx)?;
         let mask_reg = vvvv as usize;
+        let addr32 = ctx.address_size_override && self.sregs.cs.l;
+        let effective_addr = |base: u64, offset: i64| {
+            let addr = (base as i64).wrapping_add(offset);
+            if addr32 {
+                addr as u32 as u64
+            } else {
+                addr as u64
+            }
+        };
 
         let index_size = match opcode {
             0x90 | 0x92 => 4,
@@ -48,7 +57,7 @@ impl X86_64Vcpu {
             for i in 0..elem_count {
                 if (mask[i] & 0x8000_0000) != 0 {
                     let offset = (indices[i] as i128 * scale as i128) as i64;
-                    let addr = (base_addr as i64).wrapping_add(offset) as u64;
+                    let addr = effective_addr(base_addr, offset);
                     dest[i] = self.read_mem(addr, 4)? as u32;
                     mask[i] = 0;
                 }
@@ -67,7 +76,7 @@ impl X86_64Vcpu {
             for i in 0..elem_count {
                 if (mask[i] & 0x8000_0000_0000_0000) != 0 {
                     let offset = (indices[i] as i128 * scale as i128) as i64;
-                    let addr = (base_addr as i64).wrapping_add(offset) as u64;
+                    let addr = effective_addr(base_addr, offset);
                     dest[i] = self.read_mem(addr, 8)?;
                     mask[i] = 0;
                 }
@@ -102,11 +111,16 @@ impl X86_64Vcpu {
         let scale = 1i64 << (sib >> 6);
         let index = ((sib >> 3) & 0x07) | (ctx.rex.map_or(0, |r| (r & 0x02) << 2));
         let base_reg = (sib & 0x07) | ctx.rex_b();
+        let base_size = if ctx.address_size_override && self.sregs.cs.l {
+            4
+        } else {
+            8
+        };
 
         let mut base = if base_reg == 5 && mod_bits == 0 {
             0
         } else {
-            self.get_reg(base_reg, 8) as i64
+            self.get_reg(base_reg, base_size) as i64
         };
 
         match mod_bits {

@@ -9237,6 +9237,47 @@ fn bts_mem_negative_index() {
 }
 
 #[test]
+fn bt_btr_btc_mem_negative_indices() {
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "bt_mem_neg",
+        &with_hlt(vec![0x48, 0x0F, 0xA3, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let mut s = [0u8; 64];
+    s[0] = 1;
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btr_mem_neg",
+        &with_hlt(vec![0x48, 0x0F, 0xB3, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+
+    let s = [0u8; 64];
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rax = (-64i64) as u64;
+    check_mem(
+        "btc_mem_neg",
+        &with_hlt(vec![0x48, 0x0F, 0xBB, 0x47, 0x08]),
+        r,
+        s,
+        BT_DEFINED,
+    );
+}
+
+#[test]
 fn bt_mem_imm_index() {
     // BT m64, imm8 (0F BA /4 ib): immediate bit index IS taken modulo operand size
     // (64) for the imm form. imm=63 selects bit 63 of the qword.
@@ -15297,6 +15338,65 @@ fn avx2_ymm_vpgatherdd_clears_mask() {
 }
 
 #[test]
+fn avx2_ymm_vpgatherdd_addr32_clears_mask() {
+    let mut s = [0u8; 64];
+    let data = [
+        0x0302_0100u32,
+        0x1312_1110,
+        0x2322_2120,
+        0x3332_3130,
+        0x4342_4140,
+        0x5352_5150,
+        0x6362_6160,
+        0x7372_7170,
+    ];
+    let index = [7u32, 0, 5, 2, 6, 1, 4, 3];
+    for i in 0..8 {
+        s[i * 4..i * 4 + 4].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xED, 0x76, 0xD2]); // vpcmpeqd ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0xEF, 0xC0]); // vpxor ymm0, ymm0, ymm0
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | DATA_ADDR).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x6D, 0x90, 0x04, 0x8F]); // vpgatherdd ymm0, [edi+ymm1*4], ymm2
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x07]); // vmovdqu [rdi], ymm0
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpgatherdd_addr32", &code, s);
+
+    let mut s = [0u8; 64];
+    let data = [
+        0x0011_2233_4455_6677u64,
+        0x8899_AABB_CCDD_EEFF,
+        0x0102_0304_0506_0708,
+        0xF1E2_D3C4_B5A6_9788,
+    ];
+    let index = [3u64, 0, 2, 1];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 8..32 + i * 8 + 8].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x29, 0xD2]); // vpcmpeqq ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | DATA_ADDR).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xED, 0x91, 0x1C, 0xCF]); // vpgatherqq ymm3, [edi+ymm1*8], ymm2
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpgatherqq_addr32", &code, s);
+}
+
+#[test]
 fn avx_vex_packed_int_float_conversions() {
     let mut s = [0u8; 64];
     let data = [-128i32, -7, -1, 0, 1, 5, 42, 1024];
@@ -19690,6 +19790,40 @@ fn evex_zmm_vpgatherdd_permuted_indices_clears_mask() {
     code.extend_from_slice(&[0x62, 0xF1, 0x7E, 0x48, 0x7F, 0x17]); // vmovdqu32 [rdi], zmm2
     code.push(HLT);
     check_evex_mem("evex_zmm_vpgatherdd_permuted_indices_clears_mask", &code, s);
+}
+
+#[test]
+fn evex_zmm_vsib_addr32_gather_scatter_forms() {
+    let indices = [15u32, 0, 14, 1, 13, 2, 12, 3, 11, 4, 10, 5, 9, 6, 8, 7];
+    let s = evex_dword_scratch(|i| indices[i]);
+
+    let mut code = opmask_start();
+    code.extend_from_slice(&[0xB8, 0xFF, 0xFF, 0x00, 0x00]); // mov eax, 0xffff
+    code.extend_from_slice(&[0xC5, 0xF8, 0x92, 0xC8]); // kmovw k1, eax
+    code.extend_from_slice(&[0x62, 0xF1, 0x7E, 0x48, 0x6F, 0x07]); // vmovdqu32 zmm0, [rdi]
+    code.extend_from_slice(&[0x62, 0xF2, 0x7D, 0x48, 0x58, 0x17]); // vpbroadcastd zmm2, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | DATA_ADDR).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x62, 0xF2, 0x7D, 0x49, 0x90, 0x14, 0x87]); // vpgatherdd zmm2{k1}, [edi+zmm0*4]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x93, 0xC9]); // kmovw ecx, k1
+    code.extend_from_slice(&[0x62, 0xF1, 0x7E, 0x48, 0x7F, 0x17]); // vmovdqu32 [rdi], zmm2
+    code.push(HLT);
+    check_evex_mem("evex_zmm_vpgatherdd_addr32", &code, s);
+
+    let indices = [3u32, 12, 5, 10, 1, 14, 7, 8, 0, 15, 6, 9, 2, 13, 4, 11];
+    let s = evex_dword_scratch(|i| indices[i]);
+    let mut code = opmask_start();
+    code.extend_from_slice(&[0xB8, 0xFF, 0xFF, 0x00, 0x00]); // mov eax, 0xffff
+    code.extend_from_slice(&[0xC5, 0xF8, 0x92, 0xC8]); // kmovw k1, eax
+    code.extend_from_slice(&[0x62, 0xF1, 0x7E, 0x48, 0x6F, 0x07]); // vmovdqu32 zmm0, [rdi]
+    code.extend_from_slice(&[0x62, 0xF1, 0x75, 0x48, 0x72, 0xF0, 0x08]); // vpslld zmm1, zmm0, 8
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | DATA_ADDR).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x62, 0xF2, 0x7D, 0x49, 0xA0, 0x0C, 0x87]); // vpscatterdd [edi+zmm0*4]{k1}, zmm1
+    code.extend_from_slice(&[0xC5, 0xF8, 0x93, 0xC9]); // kmovw ecx, k1
+    code.push(HLT);
+    check_evex_mem("evex_zmm_vpscatterdd_addr32", &code, s);
 }
 
 #[test]
