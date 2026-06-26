@@ -5445,6 +5445,150 @@ fn x87_compare_pop_and_integer_forms() {
 }
 
 #[test]
+fn x87_ficom_addr32_indexed_forms() {
+    let addr32_regs = || {
+        let mut r = regs();
+        r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+        r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+        r
+    };
+
+    let ficom_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, escape, modrm, 0x77, 0x08, // ficom [edi+esi*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax,0; preserve flags
+            0x67, 0xDD, 0x5C, 0x77, 0x10, // fstp qword [edi+esi*2+0x10]
+        ])
+    };
+    let ficomp_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x44, 0x77, 0x18, // fld qword [edi+esi*2+0x18] -> sentinel
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, escape, modrm, 0x77, 0x08, // ficomp [edi+esi*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax,0; preserve flags
+            0x67, 0xDD, 0x5C, 0x77, 0x20, // fstp qword [edi+esi*2+0x20]
+        ])
+    };
+
+    let mut s = scratch_f64(&[4.0]);
+    s[8..10].copy_from_slice(&6i16.to_le_bytes());
+    check_mem(
+        "x87_ficom_m16_addr32_indexed",
+        &ficom_program(0xDE, 0x54),
+        addr32_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[2.0, 0.0, 0.0, 9.0]);
+    s[8..10].copy_from_slice(&3i16.to_le_bytes());
+    check_mem(
+        "x87_ficomp_m16_addr32_indexed",
+        &ficomp_program(0xDE, 0x5C),
+        addr32_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[5.0]);
+    s[8..12].copy_from_slice(&5i32.to_le_bytes());
+    check_mem(
+        "x87_ficom_m32_addr32_indexed",
+        &ficom_program(0xDA, 0x54),
+        addr32_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[9.0, 0.0, 0.0, 7.0]);
+    s[8..12].copy_from_slice(&7i32.to_le_bytes());
+    check_mem(
+        "x87_ficomp_m32_addr32_indexed",
+        &ficomp_program(0xDA, 0x5C),
+        addr32_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_ficom_extended_indexed_forms() {
+    let extended_regs = || {
+        let mut r = regs();
+        r.r10 = DATA_ADDR - 0x20;
+        r.r11 = 0x10;
+        r
+    };
+
+    let ficom_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, escape, modrm, 0x5A, 0x08, // ficom [r10+r11*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax,0; preserve flags
+            0x43, 0xDD, 0x5C, 0x5A, 0x10, // fstp qword [r10+r11*2+0x10]
+        ])
+    };
+    let ficomp_program = |escape: u8, modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x44, 0x5A, 0x18, // fld qword [r10+r11*2+0x18] -> sentinel
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, escape, modrm, 0x5A, 0x08, // ficomp [r10+r11*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax,0; preserve flags
+            0x43, 0xDD, 0x5C, 0x5A, 0x20, // fstp qword [r10+r11*2+0x20]
+        ])
+    };
+
+    let mut s = scratch_f64(&[4.0]);
+    s[8..10].copy_from_slice(&6i16.to_le_bytes());
+    check_mem(
+        "x87_ficom_m16_extended_indexed",
+        &ficom_program(0xDE, 0x54),
+        extended_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[2.0, 0.0, 0.0, 9.0]);
+    s[8..10].copy_from_slice(&3i16.to_le_bytes());
+    check_mem(
+        "x87_ficomp_m16_extended_indexed",
+        &ficomp_program(0xDE, 0x5C),
+        extended_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[5.0]);
+    s[8..12].copy_from_slice(&5i32.to_le_bytes());
+    check_mem(
+        "x87_ficom_m32_extended_indexed",
+        &ficom_program(0xDA, 0x54),
+        extended_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+
+    let mut s = scratch_f64(&[9.0, 0.0, 0.0, 7.0]);
+    s[8..12].copy_from_slice(&7i32.to_le_bytes());
+    check_mem(
+        "x87_ficomp_m32_extended_indexed",
+        &ficomp_program(0xDA, 0x5C),
+        extended_regs(),
+        s,
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
 fn x87_ftst_fxam_status_forms() {
     let mut c = load_rdi_data();
     c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=-4.0
@@ -5464,6 +5608,52 @@ fn x87_ftst_fxam_status_forms() {
         regs(),
         scratch_f64(&[-4.0, 0.0]),
         FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_status_word_addr32_indexed_forms() {
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_status_word_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0xD9, 0xE5, // fxam
+            0x67, 0xDD, 0x7C, 0x77, 0x10, // fnstsw word [edi+esi*2+0x10]
+            0x67, 0xDD, 0x5C, 0x77, 0x18, // fstp qword [edi+esi*2+0x18]
+            0x67, 0xDD, 0x44, 0x77, 0x08, // fld qword [edi+esi*2+0x08]
+            0xD9, 0xE4, // ftst
+            0x67, 0xDD, 0x7C, 0x77, 0x20, // fnstsw word [edi+esi*2+0x20]
+        ]),
+        r,
+        scratch_f64(&[-4.0, 0.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_status_word_extended_indexed_forms() {
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_status_word_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0xD9, 0xE5, // fxam
+            0x43, 0xDD, 0x7C, 0x5A, 0x10, // fnstsw word [r10+r11*2+0x10]
+            0x43, 0xDD, 0x5C, 0x5A, 0x18, // fstp qword [r10+r11*2+0x18]
+            0x43, 0xDD, 0x44, 0x5A, 0x08, // fld qword [r10+r11*2+0x08]
+            0xD9, 0xE4, // ftst
+            0x43, 0xDD, 0x7C, 0x5A, 0x20, // fnstsw word [r10+r11*2+0x20]
+        ]),
+        r,
+        scratch_f64(&[-4.0, 0.0]),
+        0,
     );
 }
 
@@ -35327,6 +35517,54 @@ fn x87_fisttp_widths_truncate_toward_zero() {
     code.extend_from_slice(&[0xDD, 0x4F, 0x28]); // fisttp qword [rdi+40]
     code.push(HLT);
     check_mem("x87_fisttp_widths", &code, regs(), s, 0);
+}
+
+#[test]
+fn x87_fisttp_addr32_indexed_forms() {
+    let s = scratch_f64(&[-3.75, 12_345.875, -9_876_543_210.25]);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_fisttp_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xDF, 0x4C, 0x77, 0x20, // fisttp word [edi+esi*2+0x20]
+            0x67, 0xDD, 0x44, 0x77, 0x08, // fld qword [edi+esi*2+0x08]
+            0x67, 0xDB, 0x4C, 0x77, 0x24, // fisttp dword [edi+esi*2+0x24]
+            0x67, 0xDD, 0x44, 0x77, 0x10, // fld qword [edi+esi*2+0x10]
+            0x67, 0xDD, 0x4C, 0x77, 0x28, // fisttp qword [edi+esi*2+0x28]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_fisttp_extended_indexed_forms() {
+    let s = scratch_f64(&[-3.75, 12_345.875, -9_876_543_210.25]);
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_fisttp_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xDF, 0x4C, 0x5A, 0x20, // fisttp word [r10+r11*2+0x20]
+            0x43, 0xDD, 0x44, 0x5A, 0x08, // fld qword [r10+r11*2+0x08]
+            0x43, 0xDB, 0x4C, 0x5A, 0x24, // fisttp dword [r10+r11*2+0x24]
+            0x43, 0xDD, 0x44, 0x5A, 0x10, // fld qword [r10+r11*2+0x10]
+            0x43, 0xDD, 0x4C, 0x5A, 0x28, // fisttp qword [r10+r11*2+0x28]
+        ]),
+        r,
+        s,
+        0,
+    );
 }
 
 // ===========================================================================

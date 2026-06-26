@@ -4,7 +4,7 @@ use crate::error::Result;
 
 use super::super::super::cpu::X86_64Vcpu;
 
-/// Set FPU condition codes for comparison (C3, C2, C0)
+/// Set FPU condition codes for comparison (C3, C2, C0; C1 is cleared)
 pub fn set_fpu_compare_flags(vcpu: &mut X86_64Vcpu, a: f64, b: f64) {
     // C3 C2 C0 meaning:
     // 0  0  0  ST(0) > source
@@ -21,7 +21,7 @@ pub fn set_fpu_compare_flags(vcpu: &mut X86_64Vcpu, a: f64, b: f64) {
         (true, false, false)
     };
 
-    vcpu.fpu.status_word &= !0x4500; // Clear C3, C2, C0
+    vcpu.fpu.status_word &= !0x4700; // Clear C3, C2, C1, C0
     if c3 {
         vcpu.fpu.status_word |= 0x4000;
     }
