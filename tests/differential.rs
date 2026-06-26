@@ -33933,6 +33933,522 @@ fn avx2_ymm_variable_qword_shifts() {
 }
 
 #[test]
+fn avx2_xmm_variable_shift_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 31, 8, 16, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x79, 0x45, 0x57, 0x20]); // vpsrlvd xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x79, 0x46, 0x5F, 0x20]); // vpsravd xmm3, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_variable_dword_memory_count_right_shifts", &code, s);
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 7, 16, 31, 1, 15, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x79, 0x47, 0x57, 0x20]); // vpsllvd xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_variable_dword_memory_count_left_shift", &code, s);
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 63, 1, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF9, 0x47, 0x57, 0x20]); // vpsllvq xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF9, 0x45, 0x5F, 0x20]); // vpsrlvq xmm3, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_variable_qword_memory_count_shifts", &code, s);
+}
+
+#[test]
+fn avx2_xmm_variable_shift_addr32_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 31, 8, 16, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x45, 0x54, 0x77, 0x20]); // vpsrlvd xmm2, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x46, 0x5C, 0x77, 0x20]); // vpsravd xmm3, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_xmm_variable_dword_addr32_memory_count_right_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 7, 16, 31, 1, 15, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x47, 0x54, 0x77, 0x20]); // vpsllvd xmm2, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_xmm_variable_dword_addr32_memory_count_left_shift",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 63, 1, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xF9, 0x47, 0x54, 0x77, 0x20]); // vpsllvq xmm2, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xF9, 0x45, 0x5C, 0x77, 0x20]); // vpsrlvq xmm3, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_xmm_variable_qword_addr32_memory_count_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn avx2_xmm_variable_shift_extended_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 31, 8, 16, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0x79, 0x45, 0x54, 0x5A, 0x20]); // vpsrlvd xmm2, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0x79, 0x46, 0x5C, 0x5A, 0x20]); // vpsravd xmm3, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_xmm_variable_dword_extended_memory_count_right_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 7, 16, 31, 1, 15, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0x79, 0x47, 0x54, 0x5A, 0x20]); // vpsllvd xmm2, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_xmm_variable_dword_extended_memory_count_left_shift",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 63, 1, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0xF9, 0x47, 0x54, 0x5A, 0x20]); // vpsllvq xmm2, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0xF9, 0x45, 0x5C, 0x5A, 0x20]); // vpsrlvq xmm3, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_xmm_variable_qword_extended_memory_count_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn avx2_ymm_variable_shift_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 8, 16, 31, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x45, 0x57, 0x20]); // vpsrlvd ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x46, 0x5F, 0x20]); // vpsravd ymm3, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_variable_dword_memory_count_right_shifts", &code, s);
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 1, 7, 15, 16, 31, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x47, 0x57, 0x20]); // vpsllvd ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_variable_dword_memory_count_left_shift", &code, s);
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 1, 63, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xFD, 0x47, 0x57, 0x20]); // vpsllvq ymm2, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xFD, 0x45, 0x5F, 0x20]); // vpsrlvq ymm3, ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_variable_qword_memory_count_shifts", &code, s);
+}
+
+#[test]
+fn avx2_ymm_variable_shift_addr32_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 8, 16, 31, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x45, 0x54, 0x77, 0x20]); // vpsrlvd ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x46, 0x5C, 0x77, 0x20]); // vpsravd ymm3, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_ymm_variable_dword_addr32_memory_count_right_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 1, 7, 15, 16, 31, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x47, 0x54, 0x77, 0x20]); // vpsllvd ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_ymm_variable_dword_addr32_memory_count_left_shift",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 1, 63, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xFD, 0x47, 0x54, 0x77, 0x20]); // vpsllvq ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xFD, 0x45, 0x5C, 0x77, 0x20]); // vpsrlvq ymm3, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "avx2_ymm_variable_qword_addr32_memory_count_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn avx2_ymm_variable_shift_extended_memory_count_forms() {
+    let s = avx2_dword_pair_scratch(
+        [
+            0xFFFF_FF00,
+            0x8000_0000,
+            0x1234_5678,
+            0x0000_FF00,
+            0x7FFF_FFFF,
+            0xF000_0001,
+            0x4000_0000,
+            0x0000_0001,
+        ],
+        [0, 1, 4, 8, 16, 31, 32, 33],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0x7D, 0x45, 0x54, 0x5A, 0x20]); // vpsrlvd ymm2, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0x7D, 0x46, 0x5C, 0x5A, 0x20]); // vpsravd ymm3, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_ymm_variable_dword_extended_memory_count_right_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_dword_pair_scratch(
+        [
+            0x0000_00FF,
+            0x0000_8001,
+            0x1357_9BDF,
+            0x2468_ACE0,
+            0x8000_0001,
+            0x7FFF_FFFF,
+            0x0000_0001,
+            0xFFFF_FFFF,
+        ],
+        [0, 1, 7, 15, 16, 31, 32, 40],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0x7D, 0x47, 0x54, 0x5A, 0x20]); // vpsllvd ymm2, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_ymm_variable_dword_extended_memory_count_left_shift",
+        &code,
+        r,
+        s,
+        0,
+    );
+
+    let s = avx2_qword_pair_scratch(
+        [
+            0x0123_4567_89AB_CDEF,
+            0x8000_0000_0000_0001,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_0000_0000_0001,
+        ],
+        [0, 1, 63, 64],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC4, 0x82, 0xFD, 0x47, 0x54, 0x5A, 0x20]); // vpsllvq ymm2, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0xFD, 0x45, 0x5C, 0x5A, 0x20]); // vpsrlvq ymm3, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "avx2_ymm_variable_qword_extended_memory_count_shifts",
+        &code,
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
 fn avx2_ymm_immediate_lane_byte_shifts() {
     let mut s = [0u8; 64];
     for i in 0..32 {
