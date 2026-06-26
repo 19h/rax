@@ -1404,8 +1404,12 @@ fn base_table() -> Vec<Base> {
         b("vpminsq", F, Vvv, Int, 8, f, f),
         b("vpminuq", F, Vvv, Int, 8, f, f),
         b("vpmaxsb", Bw, Vvv, Int, 0, f, f),
+        b("vpmaxsw", Bw, Vvv, Int, 0, f, f),
+        b("vpmaxub", Bw, Vvv, Int, 0, f, f),
         b("vpmaxuw", Bw, Vvv, Int, 0, f, f),
         b("vpminsb", Bw, Vvv, Int, 0, f, f),
+        b("vpminsw", Bw, Vvv, Int, 0, f, f),
+        b("vpminub", Bw, Vvv, Int, 0, f, f),
         b("vpminuw", Bw, Vvv, Int, 0, f, f),
         // ---- logical (F) ----
         b("vpandd", F, Vvv, Int, 4, t, f),
