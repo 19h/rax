@@ -4861,6 +4861,37 @@ fn str_fs_gs_source_segment_overrides() {
     check_mem("str_fs_gs_source_segment_overrides", &code, regs(), s, FLAG_MASK);
 }
 
+#[test]
+fn str_stos_ignores_fs_gs_segment_overrides() {
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0x10
+    code.extend_from_slice(&0x10u32.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, 0x20
+    code.extend_from_slice(&0x20u32.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+
+    code.push(0xBF); // mov edi, DATA_ADDR+0x08
+    code.extend_from_slice(&((DATA_ADDR + 0x08) as u32).to_le_bytes());
+    code.extend_from_slice(&[0xB0, 0x5A]); // mov al, 0x5a
+    code.extend_from_slice(&[0x64, 0xAA]); // fs stosb
+
+    code.push(0xBF); // mov edi, DATA_ADDR+0x10
+    code.extend_from_slice(&((DATA_ADDR + 0x10) as u32).to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    code.extend_from_slice(&[0x65, 0x48, 0xAB]); // gs stosq
+    code.push(HLT);
+
+    check_mem(
+        "str_stos_ignores_fs_gs_segment_overrides",
+        &code,
+        regs(),
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
 // ---- SSE3 / SSE2 float: HADDPS/HSUBPS/ADDSUBPS/MOVDDUP/SHUFPD + conversions ----
 //
 // All packed-float results below use exactly-representable values so the f64/f32
@@ -10879,6 +10910,57 @@ fn sysexitq_returns_to_user_and_sysenter_reenters_kernel() {
 }
 
 #[test]
+fn sysexit_compat_returns_to_user_and_sysenter_reenters_kernel() {
+    const IA32_SYSENTER_CS: u32 = 0x174;
+    const IA32_SYSENTER_ESP: u32 = 0x175;
+    const IA32_SYSENTER_EIP: u32 = 0x176;
+
+    let user_block: &[u8] = &[
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x07, // mov [edi], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x02, // mov [edi+2], ax
+        0x89, 0x67, 0x08, // mov [edi+8], esp
+        0x9C, // pushfd
+        0x58, // pop eax
+        0x89, 0x47, 0x10, // mov [edi+16], eax
+        0x0F, 0x34, // sysenter
+    ];
+    let kernel_block: &[u8] = &[
+        0x48, 0x89, 0x67, 0x18, // mov [rdi+24], rsp
+        0x9C, // pushfq
+        0x58, // pop rax
+        0x48, 0x89, 0x47, 0x28, // mov [rdi+40], rax
+        0x66, 0x8C, 0xC8, // mov ax, cs
+        0x66, 0x89, 0x47, 0x20, // mov [rdi+32], ax
+        0x66, 0x8C, 0xD0, // mov ax, ss
+        0x66, 0x89, 0x47, 0x22, // mov [rdi+34], ax
+        HLT,
+    ];
+
+    let user_offset = WRMSR_IMM64_LEN * 3 + 10 + 10 + 2;
+    let user_rip = CODE_ADDR + user_offset as u64;
+    let kernel_rip = CODE_ADDR + (user_offset + user_block.len()) as u64;
+    let user_rsp = STACK_ADDR - 0x80;
+    let kernel_rsp = STACK_ADDR - 0x180;
+
+    let mut code = Vec::new();
+    wrmsr_imm64(&mut code, IA32_SYSENTER_CS, 0x08);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_ESP, kernel_rsp);
+    wrmsr_imm64(&mut code, IA32_SYSENTER_EIP, kernel_rip);
+    mov_rcx_imm64(&mut code, user_rsp);
+    mov_rdx_imm64(&mut code, user_rip);
+    code.extend_from_slice(&[0x0F, 0x35]); // sysexit
+    code.extend_from_slice(user_block);
+    code.extend_from_slice(kernel_block);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::CF | flags::bits::PF | flags::bits::IF;
+    check_mem("sysexit_compat_user_sysenter_roundtrip", &code, r, zero_scratch(), 0);
+}
+
+#[test]
 fn serialize_preserves_status_and_gprs() {
     // SERIALIZE = 0F 01 E8. Put the flags into a nontrivial state first, then
     // verify KVM and the interpreter agree that SERIALIZE leaves them alone.
@@ -14903,6 +14985,23 @@ fn stack_push_imm32_pop_rbx() {
 }
 
 #[test]
+fn stack_push_immediate_16bit_width_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0x1111_2222_3333_4444;
+    check(
+        "push_immediate_16bit_width_forms",
+        &with_hlt(vec![
+            0x66, 0x6A, 0x80, // push imm8 -128 as word
+            0x66, 0x58, // pop ax
+            0x66, 0x68, 0x00, 0x80, // push imm16 -32768
+            0x66, 0x5B, // pop bx
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn stack_push_pop_extended_regs() {
     // REX.B extended register stack forms: push r8; pop r9.
     let mut r = regs();
@@ -15159,6 +15258,60 @@ fn mov_segment_register_addr32_memory_forms() {
 }
 
 #[test]
+fn mov_segment_register_register_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rcx = 0xCCCC_DDDD_EEEE_FFFF;
+    r.r8 = 0x8888_9999_AAAA_BBBB;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.rflags = FLAG_MASK;
+
+    check(
+        "mov_segment_register_register_forms",
+        &with_hlt(vec![
+            0x8C, 0xC8, // mov eax, cs
+            0x66, 0x8C, 0xD3, // mov bx, ss
+            0x49, 0x8C, 0xE8, // mov r8, gs
+            0x66, 0xB8, 0x00, 0x00, // mov ax, 0
+            0x8E, 0xE0, // mov fs, ax
+            0x8C, 0xE1, // mov ecx, fs
+            0x8E, 0xE8, // mov gs, ax
+            0x66, 0x41, 0x8C, 0xE9, // mov r9w, gs
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn mov_immediate_register_width_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rcx = 0xCCCC_DDDD_EEEE_FFFF;
+    r.rdx = 0xDDDD_EEEE_FFFF_0001;
+    r.rbp = 0x1111_2222_3333_4444;
+    r.r8 = 0x8888_9999_AAAA_BBBB;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.rflags = FLAG_MASK;
+
+    check(
+        "mov_immediate_register_width_forms",
+        &with_hlt(vec![
+            0xC6, 0xC0, 0xA5, // mov al, 0xa5
+            0xC6, 0xC4, 0x12, // mov ah, 0x12
+            0x40, 0xC6, 0xC5, 0x34, // mov bpl, 0x34
+            0x66, 0xC7, 0xC3, 0xEF, 0xBE, // mov bx, 0xbeef
+            0xC7, 0xC1, 0xEF, 0xCD, 0xAB, 0x89, // mov ecx, 0x89abcdef
+            0x48, 0xC7, 0xC2, 0x98, 0xBA, 0xDC, 0xFE, // mov rdx, sign_extend(0xfedcba98)
+            0x41, 0xC6, 0xC0, 0x7F, // mov r8b, 0x7f
+            0x66, 0x41, 0xC7, 0xC1, 0xCD, 0xAB, // mov r9w, 0xabcd
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn mov_immediate_memory_width_forms() {
     let mut scratch = zero_scratch();
     for (idx, byte) in scratch.iter_mut().enumerate() {
@@ -15216,6 +15369,68 @@ fn mov_immediate_addr32_memory_width_forms() {
         scratch,
         FLAG_MASK,
     );
+}
+
+#[test]
+fn mov_register_immediate_width_forms() {
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.rbx = 0x2222_3333_4444_5555;
+    r.rcx = 0x3333_4444_5555_6666;
+    r.rdx = 0x4444_5555_6666_7777;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.rdi = 0x6666_7777_8888_9999;
+    r.rbp = 0x7777_8888_9999_AAAA;
+    r.r8 = 0x8888_9999_AAAA_BBBB;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r11 = 0xBBBB_CCCC_DDDD_EEEE;
+    r.r12 = 0xCCCC_DDDD_EEEE_FFFF;
+    r.r13 = 0xDDDD_EEEE_FFFF_0001;
+    r.r14 = 0xEEEE_FFFF_0001_2222;
+    r.r15 = 0xFFFF_0001_2222_3333;
+    r.rflags = FLAG_MASK;
+    check(
+        "mov_register_immediate_byte_word_dword_forms",
+        &with_hlt(vec![
+            0xB0, 0xA1, // mov al, 0xa1
+            0xB1, 0xB2, // mov cl, 0xb2
+            0xB2, 0xC3, // mov dl, 0xc3
+            0xB3, 0xD4, // mov bl, 0xd4
+            0xB4, 0x12, // mov ah, 0x12
+            0xB5, 0x34, // mov ch, 0x34
+            0xB6, 0x56, // mov dh, 0x56
+            0xB7, 0x78, // mov bh, 0x78
+            0x40, 0xB4, 0x9A, // mov spl, 0x9a
+            0x40, 0xB5, 0xBC, // mov bpl, 0xbc
+            0x40, 0xB6, 0xDE, // mov sil, 0xde
+            0x40, 0xB7, 0xF0, // mov dil, 0xf0
+            0x41, 0xB0, 0x11, // mov r8b, 0x11
+            0x41, 0xB1, 0x22, // mov r9b, 0x22
+            0x41, 0xB2, 0x33, // mov r10b, 0x33
+            0x41, 0xB3, 0x44, // mov r11b, 0x44
+            0x66, 0x41, 0xBC, 0xEF, 0xBE, // mov r12w, 0xbeef
+            0x66, 0x41, 0xBD, 0xAD, 0xDE, // mov r13w, 0xdead
+            0x41, 0xBE, 0x78, 0x56, 0x34, 0x12, // mov r14d, 0x12345678
+            0x41, 0xBF, 0xF0, 0xDE, 0xBC, 0x9A, // mov r15d, 0x9abcdef0
+        ]),
+        r,
+    );
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.r8 = 0x8888_9999_AAAA_BBBB;
+    r.r15 = 0xFFFF_0001_2222_3333;
+    r.rflags = FLAG_MASK;
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    code.extend_from_slice(&[0x49, 0xB8]); // mov r8, imm64
+    code.extend_from_slice(&0xFEDC_BA98_7654_3210u64.to_le_bytes());
+    code.extend_from_slice(&[0x49, 0xBF]); // mov r15, imm64
+    code.extend_from_slice(&0x8000_0000_0000_0001u64.to_le_bytes());
+    code.push(HLT);
+    check("mov_register_immediate_64bit_forms", &code, r);
 }
 
 #[test]
@@ -15887,6 +16102,51 @@ fn control_loopz_loopnz_addr32_counter_forms() {
 }
 
 #[test]
+fn control_addr32_loop_not_taken_forms() {
+    let jecxz = with_hlt(vec![
+        0x67, 0xE3, 0x03, // jecxz taken_target
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // taken_target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0001;
+    check("jecxz_addr32_not_taken", &jecxz, r);
+
+    let loop_ = with_hlt(vec![
+        0x67, 0xE2, 0x03, // loop target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0001;
+    check("loop_addr32_zero_fallthrough", &loop_, r);
+
+    let loopz = with_hlt(vec![
+        0x67, 0xE1, 0x03, // loopz target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rflags = 0;
+    check("loopz_addr32_zf_clear_fallthrough", &loopz, r);
+
+    let loopnz = with_hlt(vec![
+        0x67, 0xE0, 0x03, // loopnz target using ECX
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 0xFFFF_0000_0000_0002;
+    r.rflags = flags::bits::ZF;
+    check("loopnz_addr32_zf_set_fallthrough", &loopnz, r);
+}
+
+#[test]
 fn mov_moffs_load_store_forms() {
     // A0/A1/A2/A3 absolute-offset MOVs in long mode use a 64-bit moffs.
     let mut s = [0u8; 64];
@@ -15901,6 +16161,28 @@ fn mov_moffs_load_store_forms() {
     code.extend_from_slice(&[0x48, 0xA3]); // mov moffs64, rax
     code.extend_from_slice(&(DATA_ADDR + 16).to_le_bytes());
     check_mem("mov_moffs", &with_hlt(code), regs(), s, FLAG_MASK);
+}
+
+#[test]
+fn mov_moffs_word_dword_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x66, 0xA1]); // mov ax, moffs16
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0x66, 0xA3]); // mov moffs16, ax
+    code.extend_from_slice(&(DATA_ADDR + 8).to_le_bytes());
+    code.push(0xA1); // mov eax, moffs32
+    code.extend_from_slice(&(DATA_ADDR + 4).to_le_bytes());
+    code.push(0xA3); // mov moffs32, eax
+    code.extend_from_slice(&(DATA_ADDR + 12).to_le_bytes());
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    check_mem("mov_moffs_word_dword_forms", &code, r, s, FLAG_MASK);
 }
 
 #[test]
@@ -16054,6 +16336,30 @@ fn prefetch_extended_address_forms_preserve_state() {
             0x41, 0x0F, 0x0D, 0x17, // prefetchwt1 [r15]
             0x43, 0x0F, 0x0D, 0x4C, 0x88, 0x10, // prefetchw [r8 + r9*4 + 16]
             0x43, 0x0F, 0x0D, 0x54, 0x77, 0xF8, // prefetchwt1 [r15 + r14*2 - 8]
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn prefetch_addr32_forms_preserve_state() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[16..24].copy_from_slice(&0xA55A_F00D_DEAD_BEEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "prefetch_addr32_forms",
+        &with_hlt(vec![
+            0x67, 0x0F, 0x18, 0x07, // prefetchnta [edi]
+            0x67, 0x0F, 0x18, 0x4F, 0x08, // prefetcht0 [edi+8]
+            0x67, 0x0F, 0x18, 0x57, 0x10, // prefetcht1 [edi+16]
+            0x67, 0x0F, 0x18, 0x5F, 0x18, // prefetcht2 [edi+24]
+            0x67, 0x0F, 0x0D, 0x0F, // prefetchw [edi]
+            0x67, 0x0F, 0x0D, 0x57, 0x10, // prefetchwt1 [edi+16]
         ]),
         r,
         s,
@@ -16281,6 +16587,98 @@ fn str_scas_cmps_addr32_rep_forms() {
     r.rcx = 0xFFFF_0000_0000_0003;
     check_mem(
         "repe_cmpsd_addr32",
+        &with_hlt(vec![0x67, 0xF3, 0xA7]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn str_addr32_df_rep_forms() {
+    let mut s = [0u8; 64];
+    for (i, val) in [0x1122_3344u32, 0x5566_7788, 0x99AA_BBCC].iter().enumerate() {
+        let off = SRC_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF + 8;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF + 8;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "rep_movsd_addr32_df",
+        &with_hlt(vec![0x67, 0xF3, 0xA5]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF + 8;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rax = 0xAABB_CCDD;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "rep_stosd_addr32_df",
+        &with_hlt(vec![0x67, 0xF3, 0xAB]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    for (i, val) in [0x0102_0304u32, 0x0506_0708, 0x090A_0B0C].iter().enumerate() {
+        let off = SRC_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF + 8;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "rep_lodsd_addr32_df",
+        &with_hlt(vec![0x67, 0xF3, 0xAD]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    for (i, val) in [0x11u32, 0x22, 0x33].iter().enumerate() {
+        let off = DST_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF + 8;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rax = 0x22;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "repne_scasd_addr32_df",
+        &with_hlt(vec![0x67, 0xF2, 0xAF]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+
+    let mut s = [0u8; 64];
+    for (i, val) in [1u32, 2, 3].iter().enumerate() {
+        let off = SRC_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    for (i, val) in [1u32, 7, 3].iter().enumerate() {
+        let off = DST_OFF as usize + i * 4;
+        s[off..off + 4].copy_from_slice(&val.to_le_bytes());
+    }
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | SRC_OFF + 8;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | DST_OFF + 8;
+    r.rcx = 0xFFFF_0000_0000_0003;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "repe_cmpsd_addr32_df",
         &with_hlt(vec![0x67, 0xF3, 0xA7]),
         r,
         s,
@@ -17381,6 +17779,75 @@ fn io_outs_string_forms() {
     check_mem(
         "rep_outsw_df",
         &with_hlt(vec![0xF3, 0x66, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_string_addr32_single_width_forms() {
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 8;
+    r.rdx = 0x1234;
+    check_mem(
+        "insb_addr32_single",
+        &with_hlt(vec![0x67, 0x6C]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 12;
+    r.rdx = 0x1234;
+    check_mem(
+        "insw_addr32_single",
+        &with_hlt(vec![0x67, 0x66, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 16;
+    r.rdx = 0x1234;
+    check_mem(
+        "insd_addr32_single",
+        &with_hlt(vec![0x67, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 20;
+    r.rdx = 0x1234;
+    check_io_mem(
+        "outsb_addr32_single",
+        &with_hlt(vec![0x67, 0x6E]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 24;
+    r.rdx = 0x1234;
+    check_io_mem(
+        "outsw_addr32_single",
+        &with_hlt(vec![0x67, 0x66, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | DATA_ADDR | 28;
+    r.rdx = 0x1234;
+    check_io_mem(
+        "outsd_addr32_single",
+        &with_hlt(vec![0x67, 0x6F]),
         r,
         io_scratch(),
         FLAG_MASK,
