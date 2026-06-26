@@ -10699,6 +10699,88 @@ fn gfni_affine_inverse_reg_mem() {
 }
 
 #[test]
+fn legacy_crypto_addr32_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&crypto_a());
+    s[16..32].copy_from_slice(&crypto_b());
+    s[32..48].copy_from_slice(&sha_a());
+    s[48..64].copy_from_slice(&sha_b());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xDC, 0x44, 0x77, 0x10]); // aesenc xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xDE, 0x4C, 0x77, 0x20]); // aesdec xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xDB, 0x54, 0x77, 0x30]); // aesimc xmm2, [edi+esi*2+48]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x3A, 0xDF, 0x5C, 0x77, 0x10, 0x01]); // aeskeygenassist xmm3, [edi+esi*2+16], 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x5F, 0x30]); // movdqu [rdi+48], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("legacy_crypto_addr32_memory_source_forms_aes", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&sha_a());
+    s[16..32].copy_from_slice(&sha_b());
+    s[32..48].copy_from_slice(&crypto_a());
+    s[48..64].copy_from_slice(&crypto_b());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x1F]); // movdqu xmm3, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xC8, 0x44, 0x77, 0x10]); // sha1nexte xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xC9, 0x4C, 0x77, 0x20]); // sha1msg1 xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xCB, 0x54, 0x77, 0x30]); // sha256rnds2 xmm2, [edi+esi*2+48]
+    code.extend_from_slice(&[0x67, 0x0F, 0x3A, 0xCC, 0x5C, 0x77, 0x10, 0x02]); // sha1rnds4 xmm3, [edi+esi*2+16], 2
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x5F, 0x30]); // movdqu [rdi+48], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("legacy_crypto_addr32_memory_source_forms_sha", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&crypto_a());
+    s[16..32].copy_from_slice(&crypto_b());
+    s[32..48].copy_from_slice(&crypto_b());
+    s[48..64].copy_from_slice(&gfni_matrix());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x1F]); // movdqu xmm3, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x3A, 0x44, 0x44, 0x77, 0x10, 0x11]); // pclmulqdq xmm0, [edi+esi*2+16], 0x11
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xCF, 0x4C, 0x77, 0x20]); // gf2p8mulb xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x3A, 0xCE, 0x54, 0x77, 0x30, 0x63]); // gf2p8affineqb xmm2, [edi+esi*2+48], 0x63
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x3A, 0xCF, 0x5C, 0x77, 0x30, 0x9A]); // gf2p8affineinvqb xmm3, [edi+esi*2+48], 0x9a
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x5F, 0x30]); // movdqu [rdi+48], xmm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("legacy_crypto_addr32_memory_source_forms_gfni", &code, r, s, 0);
+}
+
+#[test]
 fn legacy_crypto_extended_memory_source_forms() {
     let mut s = [0u8; 64];
     s[0..16].copy_from_slice(&crypto_a());
@@ -10821,6 +10903,54 @@ fn vex_ymm_gfni_reg_mem_forms() {
     code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
     code.push(HLT);
     check_avx_mem("vex_ymm_gfni_reg_mem_forms", &code, s);
+}
+
+#[test]
+fn vex_gfni_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x93u8)
+            .wrapping_add((i as u8).wrapping_mul(19))
+            .rotate_left((i % 6) as u32);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0xCF, 0x5C, 0x77, 0x20]); // vgf2p8mulb xmm3, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0xF9, 0xCE, 0x64, 0x77, 0x30, 0x63]); // vgf2p8affineqb xmm4, xmm0, [edi+esi*2+48], 0x63
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0xF9, 0xCF, 0x6C, 0x77, 0x30, 0x9A]); // vgf2p8affineinvqb xmm5, xmm0, [edi+esi*2+48], 0x9a
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x1F]); // vmovdqu [rdi], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x10]); // vmovdqu [rdi+16], xmm4
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x6F, 0x20]); // vmovdqu [rdi+32], xmm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_gfni_addr32_memory_forms_xmm", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x2Fu8)
+            .wrapping_add((i as u8).wrapping_mul(37))
+            .rotate_right((i % 7) as u32);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0xCF, 0x1C, 0x77]); // vgf2p8mulb ymm3, ymm0, [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0xFD, 0xCE, 0x64, 0x77, 0x20, 0x63]); // vgf2p8affineqb ymm4, ymm0, [edi+esi*2+32], 0x63
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0xFD, 0xCF, 0x2C, 0x77, 0x9A]); // vgf2p8affineinvqb ymm5, ymm0, [edi+esi*2], 0x9a
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], ymm4
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_gfni_addr32_memory_forms_ymm", &code, r, s, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -22325,6 +22455,53 @@ fn check_avx_flags_mem(label: &str, code: &[u8], scratch: [u8; 64]) {
 }
 
 #[test]
+fn avx_addr32_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([1.0, 2.0, 3.0, 4.0]));
+    s[16..32].copy_from_slice(&f32x4([5.5, -6.0, 7.25, -8.5]));
+    s[32..48].copy_from_slice(&f32x4([9.0, -10.5, 11.75, -12.25]));
+    s[48..64].copy_from_slice(&f32x4([13.0, 14.5, -15.0, -16.75]));
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x10, 0x04, 0x77]); // vmovups xmm0, [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x58, 0x54, 0x77, 0x10]); // vaddps xmm2, xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0x59, 0x5C, 0x77, 0x20]); // vmulps xmm3, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC5, 0xF8, 0xC6, 0x64, 0x77, 0x30, 0x1B]); // vshufps xmm4, xmm0, [edi+esi*2+48], 0x1b
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x0C, 0x6C, 0x77, 0x10, 0x05]); // vblendps xmm5, xmm0, [edi+esi*2+16], 5
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x17]); // vmovups [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x5F, 0x10]); // vmovups [rdi+16], xmm3
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x67, 0x20]); // vmovups [rdi+32], xmm4
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x6F, 0x30]); // vmovups [rdi+48], xmm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_addr32_memory_source_forms_xmm", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([1.0, -2.0, 3.5, -4.5]));
+    s[16..32].copy_from_slice(&f32x4([5.0, -6.5, 7.0, -8.25]));
+    s[32..48].copy_from_slice(&f32x4([9.5, -10.0, 11.25, -12.75]));
+    s[48..64].copy_from_slice(&f32x4([13.0, -14.5, 15.75, -16.0]));
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC5, 0xFC, 0x10, 0x04, 0x77]); // vmovups ymm0, [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xC5, 0xFC, 0x58, 0x4C, 0x77, 0x20]); // vaddps ymm1, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC5, 0xFC, 0x59, 0x54, 0x77, 0x20]); // vmulps ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x0F]); // vmovups [rdi], ymm1
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x57, 0x20]); // vmovups [rdi+32], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_addr32_memory_source_forms_ymm", &code, r, s, 0);
+}
+
+#[test]
 fn avx_extended_memory_source_forms() {
     let mut s = [0u8; 64];
     s[0..16].copy_from_slice(&f32x4([1.0, 2.0, 3.0, 4.0]));
@@ -22733,6 +22910,64 @@ fn avx_ymm_lane_extended_memory_forms() {
     r.r10 = DATA_ADDR - 8;
     r.r11 = 4;
     check_mem("avx2_ymm_insert_extract_i128_extended_memory", &code, r, s, 0);
+}
+
+#[test]
+fn avx_ymm_lane_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0xA1u8).wrapping_add((i as u8).wrapping_mul(11));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x06, 0x54, 0x77, 0x20, 0x31]); // vperm2f128 ymm2, ymm0, [edi+esi*2+32], 0x31
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x46, 0x5C, 0x77, 0x20, 0x20]); // vperm2i128 ymm3, ymm0, [edi+esi*2+32], 0x20
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_ymm_perm2_addr32_memory_sources", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x47u8).wrapping_add((i as u8).wrapping_mul(9));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x18, 0x54, 0x77, 0x20, 0x01]); // vinsertf128 ymm2, ymm0, [edi+esi*2+32], 1
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x19, 0x54, 0x77, 0x30, 0x01]); // vextractf128 [edi+esi*2+48], ymm2, 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_ymm_insert_extract_f128_addr32_memory", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0xD6u8).wrapping_sub((i as u8).wrapping_mul(7));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x38, 0x54, 0x77, 0x20, 0x01]); // vinserti128 ymm2, ymm0, [edi+esi*2+32], 1
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x39, 0x54, 0x77, 0x30, 0x01]); // vextracti128 [edi+esi*2+48], ymm2, 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx2_ymm_insert_extract_i128_addr32_memory", &code, r, s, 0);
 }
 
 #[test]
@@ -24463,6 +24698,47 @@ fn f16c_ymm_register_roundtrip() {
 }
 
 #[test]
+fn f16c_addr32_memory_roundtrip_forms() {
+    let mut s = [0u8; 64];
+    let halves = [0x3C00u16, 0xC000, 0x3800, 0x4400];
+    for (i, half) in halves.iter().enumerate() {
+        s[i * 2..i * 2 + 2].copy_from_slice(&half.to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x13, 0x0C, 0x77]); // vcvtph2ps xmm1, qword ptr [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x1D, 0x4C, 0x77, 0x20, 0x00]); // vcvtps2ph qword ptr [edi+esi*2+32], xmm1, 0
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x4F, 0x30]); // vmovups [rdi+48], xmm1
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("f16c_xmm_addr32_memory_roundtrip", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    let halves = [
+        0x3C00u16, 0xC000, 0x3800, 0x4400, 0x3400, 0x4200, 0xB800, 0x4000,
+    ];
+    for (i, half) in halves.iter().enumerate() {
+        s[i * 2..i * 2 + 2].copy_from_slice(&half.to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x13, 0x0C, 0x77]); // vcvtph2ps ymm1, xmmword ptr [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x1D, 0x4C, 0x77, 0x10, 0x00]); // vcvtps2ph xmmword ptr [edi+esi*2+16], ymm1, 0
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x4F, 0x20]); // vmovups [rdi+32], ymm1
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("f16c_ymm_addr32_memory_roundtrip", &code, r, s, 0);
+}
+
+#[test]
 fn f16c_extended_memory_roundtrip_forms() {
     let mut s = [0u8; 64];
     let halves = [0x3C00u16, 0xC000, 0x3800, 0x4400];
@@ -24601,6 +24877,78 @@ fn vex_ymm_avx_vnni_word_memory_forms() {
     code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x6F, 0x20]); // vmovdqu [rdi+32], ymm5
     code.push(HLT);
     check_avx_mem("vex_ymm_avx_vnni_word_memory_forms", &code, s);
+}
+
+#[test]
+fn vex_avx_vnni_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0xC6u8.rotate_left((i % 8) as u32) ^ (i as u8).wrapping_mul(13);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x17]); // vmovdqu xmm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x1F]); // vmovdqu xmm3, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x27]); // vmovdqu xmm4, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x2F]); // vmovdqu xmm5, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x50, 0x54, 0x77, 0x10]); // {vex} vpdpbusd xmm2, xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x51, 0x5C, 0x77, 0x20]); // {vex} vpdpbusds xmm3, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x52, 0x64, 0x77, 0x30]); // {vex} vpdpwssd xmm4, xmm0, [edi+esi*2+48]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0x53, 0x6C, 0x77, 0x10]); // {vex} vpdpwssds xmm5, xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], xmm4
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x6F, 0x30]); // vmovdqu [rdi+48], xmm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_avx_vnni_addr32_memory_forms_xmm", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x6Du8.rotate_right((i % 8) as u32) ^ (i as u8).wrapping_mul(7);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x17]); // vmovdqu ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x1F]); // vmovdqu ymm3, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x50, 0x54, 0x77, 0x20]); // {vex} vpdpbusd ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x51, 0x5C, 0x77, 0x20]); // {vex} vpdpbusds ymm3, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_avx_vnni_addr32_memory_forms_ymm_byte", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x3Bu8.rotate_left((i % 8) as u32) ^ (i as u8).wrapping_mul(23);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x27]); // vmovdqu ymm4, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x2F]); // vmovdqu ymm5, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x52, 0x64, 0x77, 0x20]); // {vex} vpdpwssd ymm4, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0x53, 0x2C, 0x77]); // {vex} vpdpwssds ymm5, ymm0, [edi+esi*2]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x27]); // vmovdqu [rdi], ymm4
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x6F, 0x20]); // vmovdqu [rdi+32], ymm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_avx_vnni_addr32_memory_forms_ymm_word", &code, r, s, 0);
 }
 
 #[test]
@@ -29424,6 +29772,96 @@ fn avx_vex_dot_product_memory_forms() {
 }
 
 #[test]
+fn avx_vex_0f3a_addr32_memory_source_forms() {
+    let s = avx_f32_pair_scratch(
+        [0.0; 8],
+        [1.25, -2.75, 3.5, -4.125, 5.5, -6.5, 7.0, -8.25],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x08, 0x54, 0x77, 0x20, 0x01]); // vroundps ymm2, [edi+esi*2+32], 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_vroundps_addr32_memory_source", &code, r, s, 0);
+
+    let s = avx_f64_pair_scratch([0.0; 4], [1.25, -2.75, 3.5, -4.125]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x09, 0x5C, 0x77, 0x20, 0x02]); // vroundpd ymm3, [edi+esi*2+32], 2
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x1F]); // vmovupd [rdi], ymm3
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_vroundpd_addr32_memory_source", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for (i, value) in [10.25f32, 20.5, -30.75, 40.125].iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [100.5f64, -200.75].iter().enumerate() {
+        s[16 + i * 8..24 + i * 8].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..36].copy_from_slice(&(-3.75f32).to_le_bytes());
+    s[40..48].copy_from_slice(&9.25f64.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x07]); // vmovups xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x4F, 0x10]); // vmovups xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x0A, 0x64, 0x77, 0x20, 0x03]); // vroundss xmm4, xmm0, [edi+esi*2+32], 3
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x71, 0x0B, 0x6C, 0x77, 0x28, 0x01]); // vroundsd xmm5, xmm1, [edi+esi*2+40], 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x27]); // vmovups [rdi], xmm4
+    code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x6F, 0x10]); // vmovupd [rdi+16], xmm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_vround_scalar_addr32_memory_source", &code, r, s, 0);
+
+    let s = avx_f32_pair_scratch(
+        [1.0, 2.0, 3.0, 4.0, -1.0, -2.0, -3.0, -4.0],
+        [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x40, 0x74, 0x77, 0x20, 0xF1]); // vdpps xmm6, xmm0, [edi+esi*2+32], 0xf1
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x40, 0x7C, 0x77, 0x20, 0xFF]); // vdpps ymm7, ymm0, [edi+esi*2+32], 0xff
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x37]); // vmovups [rdi], xmm6
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x7F, 0x20]); // vmovups [rdi+32], ymm7
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_vdpps_addr32_memory_source", &code, r, s, 0);
+
+    let s = avx_f64_pair_scratch([1.5, -2.0, 3.0, -4.0], [2.0, 0.5, -1.5, 2.5]);
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x07]); // vmovupd xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x41, 0x54, 0x77, 0x20, 0x31]); // vdppd xmm2, xmm0, [edi+esi*2+32], 0x31
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x17]); // vmovupd [rdi], xmm2
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("avx_vdppd_addr32_memory_source", &code, r, s, 0);
+}
+
+#[test]
 fn avx_vex_0f3a_extended_memory_source_forms() {
     let s = avx_f32_pair_scratch(
         [0.0; 8],
@@ -29657,6 +30095,85 @@ fn vex_vpclmulqdq_xmm_ymm_selectors_and_memory() {
     code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], ymm4
     code.push(HLT);
     check_avx_mem("vex_vpclmulqdq_xmm_ymm_selectors_memory", &code, s);
+}
+
+#[test]
+fn vex_vaes_vpclmulqdq_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0xA9u8)
+            .wrapping_add((i as u8).wrapping_mul(17))
+            .rotate_left((i % 5) as u32);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0xDC, 0x54, 0x77, 0x10]); // vaesenc xmm2, xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x71, 0xDD, 0x5C, 0x77, 0x20]); // vaesenclast xmm3, xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x69, 0xDE, 0x64, 0x77, 0x30]); // vaesdec xmm4, xmm2, [edi+esi*2+48]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x61, 0xDF, 0x6C, 0x77, 0x10]); // vaesdeclast xmm5, xmm3, [edi+esi*2+16]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x5F, 0x10]); // vmovdqu [rdi+16], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], xmm4
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x6F, 0x30]); // vmovdqu [rdi+48], xmm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_vaes_vpclmulqdq_addr32_memory_forms_vaes_xmm", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x37u8)
+            .wrapping_add((i as u8).wrapping_mul(29))
+            .rotate_right((i % 7) as u32);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x7D, 0xDC, 0x54, 0x77, 0x20]); // vaesenc ymm2, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x75, 0xDD, 0x5C, 0x77, 0x20]); // vaesenclast ymm3, ymm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x6D, 0xDE, 0x64, 0x77, 0x20]); // vaesdec ymm4, ymm2, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x65, 0xDF, 0x2C, 0x77]); // vaesdeclast ymm5, ymm3, [edi+esi*2]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x27]); // vmovdqu [rdi], ymm4
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x6F, 0x20]); // vmovdqu [rdi+32], ymm5
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_vaes_vpclmulqdq_addr32_memory_forms_vaes_ymm", &code, r, s, 0);
+
+    let mut s = [0u8; 64];
+    for i in 0..8 {
+        let value = 0x1020_4080_0102_0408u64
+            .wrapping_mul((i as u64) + 11)
+            ^ 0x3C3C_C3C3_A5A5_5A5Au64.rotate_left((i * 3) as u32);
+        s[i * 8..i * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x44, 0x54, 0x77, 0x10, 0x00]); // vpclmulqdq xmm2, xmm0, [edi+esi*2+16], 0
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x79, 0x44, 0x5C, 0x77, 0x20, 0x11]); // vpclmulqdq xmm3, xmm0, [edi+esi*2+32], 0x11
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x44, 0x64, 0x77, 0x20, 0x10]); // vpclmulqdq ymm4, ymm0, [edi+esi*2+32], 0x10
+    code.extend_from_slice(&[0x67, 0xC4, 0xE3, 0x7D, 0x44, 0x2C, 0x77, 0x01]); // vpclmulqdq ymm5, ymm0, [edi+esi*2], 1
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xE9, 0xEF, 0xD3]); // vpxor xmm2, xmm2, xmm3
+    code.extend_from_slice(&[0xC5, 0xDD, 0xEF, 0xE5]); // vpxor ymm4, ymm4, ymm5
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x17]); // vmovdqu [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x67, 0x20]); // vmovdqu [rdi+32], ymm4
+    code.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("vex_vaes_vpclmulqdq_addr32_memory_forms_vpclmul", &code, r, s, 0);
 }
 
 #[test]
