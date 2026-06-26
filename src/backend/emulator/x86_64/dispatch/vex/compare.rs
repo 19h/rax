@@ -86,104 +86,63 @@ impl X86_64Vcpu {
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_src1 = reg as usize;
-        let count = if vex_l == 1 { 8 } else { 4 };
-
-        let (mask1, mask2) = if opcode == 0x0E {
-            // VTESTPS
-            let mut m1 = 0u32;
-            let mut m2 = 0u32;
-            let lo1 = self.regs.xmm[xmm_src1][0];
-            let hi1 = self.regs.xmm[xmm_src1][1];
-            m1 |= ((lo1 >> 31) & 1) as u32;
-            m1 |= (((lo1 >> 63) & 1) as u32) << 1;
-            m1 |= (((hi1 >> 31) & 1) as u32) << 2;
-            m1 |= (((hi1 >> 63) & 1) as u32) << 3;
-            if vex_l == 1 {
-                let hi2 = self.regs.ymm_high[xmm_src1][0];
-                let hi3 = self.regs.ymm_high[xmm_src1][1];
-                m1 |= (((hi2 >> 31) & 1) as u32) << 4;
-                m1 |= (((hi2 >> 63) & 1) as u32) << 5;
-                m1 |= (((hi3 >> 31) & 1) as u32) << 6;
-                m1 |= (((hi3 >> 63) & 1) as u32) << 7;
-            }
-
-            if is_memory {
-                for i in 0..count {
-                    let val = self.read_mem(addr + (i * 4) as u64, 4)? as u32;
-                    if (val & 0x8000_0000) != 0 {
-                        m2 |= 1u32 << i;
-                    }
-                }
-            } else {
-                let xmm_src2 = rm as usize;
-                let lo2 = self.regs.xmm[xmm_src2][0];
-                let hi2 = self.regs.xmm[xmm_src2][1];
-                m2 |= ((lo2 >> 31) & 1) as u32;
-                m2 |= (((lo2 >> 63) & 1) as u32) << 1;
-                m2 |= (((hi2 >> 31) & 1) as u32) << 2;
-                m2 |= (((hi2 >> 63) & 1) as u32) << 3;
-                if vex_l == 1 {
-                    let hi3 = self.regs.ymm_high[xmm_src2][0];
-                    let hi4 = self.regs.ymm_high[xmm_src2][1];
-                    m2 |= (((hi3 >> 31) & 1) as u32) << 4;
-                    m2 |= (((hi3 >> 63) & 1) as u32) << 5;
-                    m2 |= (((hi4 >> 31) & 1) as u32) << 6;
-                    m2 |= (((hi4 >> 63) & 1) as u32) << 7;
-                }
-            }
-            (m1, m2)
-        } else {
-            // VTESTPD
-            let count_q = if vex_l == 1 { 4 } else { 2 };
-            let mut m1 = 0u32;
-            let mut m2 = 0u32;
-            let lo1 = self.regs.xmm[xmm_src1][0];
-            let hi1 = self.regs.xmm[xmm_src1][1];
-            m1 |= ((lo1 >> 63) & 1) as u32;
-            m1 |= (((hi1 >> 63) & 1) as u32) << 1;
-            if vex_l == 1 {
-                let hi2 = self.regs.ymm_high[xmm_src1][0];
-                let hi3 = self.regs.ymm_high[xmm_src1][1];
-                m1 |= (((hi2 >> 63) & 1) as u32) << 2;
-                m1 |= (((hi3 >> 63) & 1) as u32) << 3;
-            }
-
-            if is_memory {
-                for i in 0..count_q {
-                    let val = self.read_mem(addr + (i * 8) as u64, 8)?;
-                    if (val >> 63) != 0 {
-                        m2 |= 1u32 << i;
-                    }
-                }
-            } else {
-                let xmm_src2 = rm as usize;
-                let lo2 = self.regs.xmm[xmm_src2][0];
-                let hi2 = self.regs.xmm[xmm_src2][1];
-                m2 |= ((lo2 >> 63) & 1) as u32;
-                m2 |= (((hi2 >> 63) & 1) as u32) << 1;
-                if vex_l == 1 {
-                    let hi3 = self.regs.ymm_high[xmm_src2][0];
-                    let hi4 = self.regs.ymm_high[xmm_src2][1];
-                    m2 |= (((hi3 >> 63) & 1) as u32) << 2;
-                    m2 |= (((hi4 >> 63) & 1) as u32) << 3;
-                }
-            }
-            let mask = if count_q == 4 { 0xF } else { 0x3 };
-            return self.finish_vtest(m1 & mask, m2 & mask, ctx);
+        let lane_bits = if opcode == 0x0E { 32 } else { 64 };
+        let lane_count = match (lane_bits, vex_l) {
+            (32, 1) => 8,
+            (32, _) => 4,
+            (64, 1) => 4,
+            _ => 2,
         };
-
-        let mask = if count == 8 { 0xFF } else { 0x0F };
-        self.finish_vtest(mask1 & mask, mask2 & mask, ctx)
-    }
-
-    fn finish_vtest(
-        &mut self,
-        mask1: u32,
-        mask2: u32,
-        ctx: &mut InsnContext,
-    ) -> Result<Option<VcpuExit>> {
-        let and = mask1 & mask2;
-        let andn = mask1 & !mask2;
+        let reg_sign_mask = |vcpu: &X86_64Vcpu, reg: usize| -> u32 {
+            let mut mask = 0u32;
+            for lane in 0..lane_count {
+                let qword = match lane {
+                    0 | 1 => vcpu.regs.xmm[reg][0],
+                    2 | 3 => {
+                        if lane_bits == 32 {
+                            vcpu.regs.xmm[reg][1]
+                        } else {
+                            vcpu.regs.ymm_high[reg][lane - 2]
+                        }
+                    }
+                    4 | 5 => vcpu.regs.ymm_high[reg][0],
+                    _ => vcpu.regs.ymm_high[reg][1],
+                };
+                let sign_set = if lane_bits == 32 {
+                    ((qword >> (31 + 32 * (lane & 1))) & 1) != 0
+                } else {
+                    ((qword >> 63) & 1) != 0
+                };
+                if sign_set {
+                    mask |= 1u32 << lane;
+                }
+            }
+            mask
+        };
+        let mask1 = reg_sign_mask(self, xmm_src1);
+        let mask2 = if is_memory {
+            let mut mask = 0u32;
+            for lane in 0..lane_count {
+                let val = if lane_bits == 32 {
+                    self.read_mem(addr + (lane * 4) as u64, 4)?
+                } else {
+                    self.read_mem(addr + (lane * 8) as u64, 8)?
+                };
+                let sign_set = if lane_bits == 32 {
+                    (val & 0x8000_0000) != 0
+                } else {
+                    ((val >> 63) & 1) != 0
+                };
+                if sign_set {
+                    mask |= 1u32 << lane;
+                }
+            }
+            mask
+        } else {
+            reg_sign_mask(self, rm as usize)
+        };
+        let and_result = mask1 & mask2;
+        let andn_result = mask2 & !mask1;
 
         // Clear lazy flags before setting flags directly
         self.clear_lazy_flags();
@@ -194,10 +153,10 @@ impl X86_64Vcpu {
             | flags::bits::SF
             | flags::bits::ZF
             | flags::bits::CF);
-        if and == 0 {
+        if and_result == 0 {
             self.regs.rflags |= flags::bits::ZF;
         }
-        if andn == 0 {
+        if andn_result == 0 {
             self.regs.rflags |= flags::bits::CF;
         }
 
