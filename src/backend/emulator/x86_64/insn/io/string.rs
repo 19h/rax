@@ -147,8 +147,11 @@ fn outs_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result
         return Ok(None);
     }
 
-    // Read data from memory at DS:RSI
-    let addr = si_addr(vcpu, addr_size);
+    // Read data from DS:RSI; FS/GS segment overrides provide nonzero bases in
+    // long mode, while other segment bases are handled for legacy modes.
+    let addr = vcpu
+        .get_segment_base(ctx.segment_override)
+        .wrapping_add(si_addr(vcpu, addr_size));
     let val = vcpu.read_mem(addr, size)?;
     let mut data = Vec::with_capacity(size as usize);
     for i in 0..size {

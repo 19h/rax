@@ -82,6 +82,8 @@ struct FinalState {
     xmm: [[u64; 2]; 16],
     /// Snapshot of the scratch data page (first 64 bytes).
     scratch: [u8; 64],
+    /// Ordered stream of port-output exits: (port, little-endian payload bytes).
+    io_out: Vec<(u16, Vec<u8>)>,
 }
 
 /// Observable, architecturally-defined RFLAGS status bits.
@@ -244,6 +246,7 @@ fn run_interpreter(
         .map_err(|e| format!("set_sregs: {e:?}"))?;
 
     // Run to HLT, counting individual instructions via step().
+    let mut io_out = Vec::new();
     let mut iters = 0u64;
     loop {
         iters += 1;
@@ -255,6 +258,9 @@ fn run_interpreter(
             Some(VcpuExit::IoIn { size, .. }) => {
                 let data = vec![0u8; size as usize];
                 vcpu.complete_io_in(&data);
+            }
+            Some(VcpuExit::IoOut { port, data }) => {
+                io_out.push((port, data));
             }
             Some(VcpuExit::Shutdown)
             | Some(VcpuExit::FailEntry { .. })
@@ -274,6 +280,7 @@ fn run_interpreter(
         xmm: final_regs.xmm,
         regs: final_regs,
         scratch,
+        io_out,
     })
 }
 
@@ -461,6 +468,7 @@ fn run_kvm(
     }
 
     // --- run to HLT, bounded ---
+    let mut io_out = Vec::new();
     let mut iters = 0u64;
     loop {
         iters += 1;
@@ -474,7 +482,9 @@ fn run_kvm(
                     *b = 0;
                 }
             }
-            kvm_ioctls::VcpuExit::IoOut(..) => {}
+            kvm_ioctls::VcpuExit::IoOut(port, data) => {
+                io_out.push((port, data.to_vec()));
+            }
             kvm_ioctls::VcpuExit::MmioRead(_, data) => {
                 for b in data.iter_mut() {
                     *b = 0;
@@ -525,7 +535,12 @@ fn run_kvm(
     let mut scratch = [0u8; 64];
     mem.read(DATA_ADDR, &mut scratch);
 
-    Ok(Some(FinalState { regs, xmm, scratch }))
+    Ok(Some(FinalState {
+        regs,
+        xmm,
+        scratch,
+        io_out,
+    }))
 }
 
 // ---------------------------------------------------------------------------
@@ -544,6 +559,8 @@ struct CompareOpts {
     xmm_count: usize,
     /// Compare the scratch data page.
     scratch: bool,
+    /// Compare the ordered stream of port-output exits.
+    io_out: bool,
     /// Compare RSP/RBP (off for tests that intentionally don't touch the stack
     /// in a comparable way; on by default).
     stack: bool,
@@ -555,6 +572,7 @@ impl Default for CompareOpts {
             flag_mask: FLAG_MASK,
             xmm_count: 0,
             scratch: false,
+            io_out: false,
             stack: true,
         }
     }
@@ -623,6 +641,13 @@ fn compare(interp: &FinalState, kvm: &FinalState, opts: CompareOpts) -> Vec<Stri
             "scratch page differs:\n  interp={:02x?}\n  kvm   ={:02x?}",
             &interp.scratch[..],
             &kvm.scratch[..]
+        ));
+    }
+
+    if opts.io_out && interp.io_out != kvm.io_out {
+        diffs.push(format!(
+            "io_out differs:\n  interp={:?}\n  kvm   ={:?}",
+            interp.io_out, kvm.io_out
         ));
     }
 
@@ -1520,9 +1545,7 @@ fn bsf_zero_source() {
     // Only the ZF flag is defined; RAX is undefined on a zero source.
     let opts = CompareOpts {
         flag_mask: BSF_DEFINED,
-        xmm_count: 0,
-        scratch: false,
-        stack: true,
+        ..CompareOpts::default()
     };
     // Compare everything except RAX (undefined) by checking flags + that RBX/others match.
     let mut diffs = compare(&interp, &kvm, opts);
@@ -2720,6 +2743,28 @@ fn lea_32bit_addrsize_truncates() {
     );
 }
 
+#[test]
+fn lea_ignores_fs_gs_segment_overrides() {
+    let mut r = regs();
+    r.rbx = 0x0000_0000_FFFF_FFF0;
+    r.rcx = 0x10;
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR+0x20
+    code.extend_from_slice(&(DATA_ADDR + 0x20).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.extend_from_slice(&[
+        0x64, 0x4C, 0x8D, 0x44, 0x4B, 0x07, // lea r8, fs:[rbx + rcx*2 + 7]
+        0x65, 0x67, 0x48, 0x8D, 0x94, 0x8B, 0x78, 0x56, 0x34,
+        0x12, // lea rdx, gs:[ebx + ecx*4 + 0x12345678]
+    ]);
+
+    check("lea_ignores_fs_gs_segment_overrides", &with_hlt(code), r);
+}
+
 // ---- 8/16/32-bit operand-size ALU variants for flag exactness ----
 
 #[test]
@@ -3253,6 +3298,20 @@ fn check_mem(label: &str, code: &[u8], init: Registers, scratch_in: [u8; 64], fl
     assert_match(label, code, &interp, &kvm, opts);
 }
 
+/// Scratch-comparing runner that also compares the ordered port-output stream.
+fn check_io_mem(label: &str, code: &[u8], init: Registers, scratch_in: [u8; 64], flag_mask: u64) {
+    let Some((interp, kvm)) = run_both(code, init, scratch_in) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask,
+        scratch: true,
+        io_out: true,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+}
+
 /// Emit `mov rdi, DATA_ADDR` (REX.W mov r/m64, imm32 sign-extended; 0x30000 fits).
 fn load_rdi_data() -> Vec<u8> {
     let mut c = vec![0x48, 0xC7, 0xC7];
@@ -3305,6 +3364,25 @@ fn x87_fld_fstp_roundtrip() {
         scratch_f64(&[12345.5]),
         0,
     );
+}
+
+#[test]
+fn x87_memory_addr32_base_index_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&5.0f64.to_le_bytes());
+    s[0x20..0x28].copy_from_slice(&7.0f64.to_le_bytes());
+
+    let mut c = Vec::new();
+    c.extend_from_slice(&[0x48, 0xBF]); // mov rdi, high-poisoned DATA_ADDR
+    c.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | DATA_ADDR).to_le_bytes());
+    c.extend_from_slice(&[0x48, 0xBE]); // mov rsi, high-poisoned 0x0c
+    c.extend_from_slice(&(0xFFFF_0000_0000_000Cu64).to_le_bytes());
+    c.extend_from_slice(&[0x67, 0xDD, 0x07]); // fld qword [edi]
+    c.extend_from_slice(&[0x67, 0xDC, 0x44, 0x77, 0x08]); // fadd qword [edi+esi*2+8]
+    c.extend_from_slice(&[0x67, 0xDD, 0x5F, 0x10]); // fstp qword [edi+0x10]
+    c.push(HLT);
+
+    check_mem("x87_memory_addr32_base_index_forms", &c, regs(), s, 0);
 }
 
 #[test]
@@ -4152,6 +4230,44 @@ fn str_cmpsb_single() {
     r.rsi = DATA_ADDR + SRC_OFF;
     r.rdi = DATA_ADDR + DST_OFF;
     check_mem("cmpsb_single", &with_hlt(vec![0xA6]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_fs_gs_source_segment_overrides() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&[0xA1, 0xB2, 0xC3, 0xD4]);
+    s[0x18..0x1C].copy_from_slice(&0x0123_4567u32.to_le_bytes());
+    s[0x20..0x24].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    s[0x24..0x28].copy_from_slice(&0x0123_4567u32.to_le_bytes());
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR+0x20
+    code.extend_from_slice(&(DATA_ADDR + 0x20).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.extend_from_slice(&[0xBE, 0x00, 0x00, 0x00, 0x00]); // mov esi, 0
+    code.push(0xBF); // mov edi, DATA_ADDR+0x10
+    code.extend_from_slice(&((DATA_ADDR + 0x10) as u32).to_le_bytes());
+    code.extend_from_slice(&[0xB9, 0x04, 0x00, 0x00, 0x00]); // mov ecx, 4
+    code.extend_from_slice(&[0x64, 0xF3, 0xA4]); // rep movsb, fs:[rsi] -> [rdi]
+    code.extend_from_slice(&[0xBE, 0x00, 0x00, 0x00, 0x00]); // mov esi, 0
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x65, 0xAD]); // lodsd, eax <- gs:[rsi]
+    code.extend_from_slice(&[0xBE, 0x00, 0x00, 0x00, 0x00]); // mov esi, 0
+    code.push(0xBF); // mov edi, DATA_ADDR+0x10
+    code.extend_from_slice(&((DATA_ADDR + 0x10) as u32).to_le_bytes());
+    code.extend_from_slice(&[0xB9, 0x04, 0x00, 0x00, 0x00]); // mov ecx, 4
+    code.extend_from_slice(&[0x64, 0xF3, 0xA6]); // repe cmpsb, fs:[rsi] vs [rdi]
+    code.extend_from_slice(&[0xBE, 0x04, 0x00, 0x00, 0x00]); // mov esi, 4
+    code.push(0xBF); // mov edi, DATA_ADDR+0x18
+    code.extend_from_slice(&((DATA_ADDR + 0x18) as u32).to_le_bytes());
+    code.extend_from_slice(&[0x65, 0xA7]); // cmpsd, gs:[rsi] vs [rdi]
+    code.push(HLT);
+
+    check_mem("str_fs_gs_source_segment_overrides", &code, regs(), s, FLAG_MASK);
 }
 
 // ---- SSE3 / SSE2 float: HADDPS/HSUBPS/ADDSUBPS/MOVDDUP/SHUFPD + conversions ----
@@ -8881,6 +8997,41 @@ fn fsgsbase_32bit_zero_ext_and_extended_regs() {
     );
 }
 
+#[test]
+fn fs_gs_segment_override_memory_operands() {
+    let mut scratch = [0u8; 64];
+    scratch[0..4].copy_from_slice(&0x1122_3344u32.to_le_bytes());
+    scratch[4] = 0x5A;
+    scratch[0x20..0x24].copy_from_slice(&0x0102_0304u32.to_le_bytes());
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR+0x20
+    code.extend_from_slice(&(DATA_ADDR + 0x20).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.extend_from_slice(&[
+        0x31, 0xDB, // xor ebx, ebx
+        0x64, 0x8B, 0x03, // mov eax, fs:[rbx]
+        0x65, 0x89, 0x43, 0x08, // mov gs:[rbx+8], eax
+        0x65, 0x44, 0x8B, 0x03, // mov r8d, gs:[rbx]
+        0x41, 0x01, 0xC0, // add r8d, eax
+        0x64, 0x44, 0x89, 0x43, 0x10, // mov fs:[rbx+0x10], r8d
+        0x64, 0x8A, 0x4B, 0x04, // mov cl, fs:[rbx+4]
+        0x65, 0x88, 0x4B, 0x0C, // mov gs:[rbx+0x0c], cl
+        0x41, 0x39, 0xC0, // cmp r8d, eax
+    ]);
+
+    check_mem(
+        "fs_gs_segment_override_memory_operands",
+        &with_hlt(code),
+        regs(),
+        scratch,
+        FLAG_MASK,
+    );
+}
+
 fn pkru_enable_prologue() -> Vec<u8> {
     let mut code = Vec::new();
     code.extend_from_slice(&[0x0F, 0x20, 0xE0]); // mov rax, cr4
@@ -12930,6 +13081,38 @@ fn mov_moffs_addr32_load_store_forms() {
 }
 
 #[test]
+fn mov_moffs_fs_gs_segment_overrides() {
+    let mut s = [0u8; 64];
+    s[0] = 0x4D;
+    s[0x20..0x28].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR+0x20
+    code.extend_from_slice(&(DATA_ADDR + 0x20).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.extend_from_slice(&[0x64, 0xA0]); // mov al, fs:moffs8
+    code.extend_from_slice(&0u64.to_le_bytes());
+    code.extend_from_slice(&[0x65, 0x67, 0xA2]); // mov gs:moffs8, al with addr32
+    code.extend_from_slice(&8u32.to_le_bytes());
+    code.extend_from_slice(&[0x65, 0x48, 0xA1]); // mov rax, gs:moffs64
+    code.extend_from_slice(&0u64.to_le_bytes());
+    code.extend_from_slice(&[0x64, 0x67, 0x48, 0xA3]); // mov fs:moffs64, rax with addr32
+    code.extend_from_slice(&0x10u32.to_le_bytes());
+    code.extend_from_slice(&[0x3C, 0x88]); // cmp al, 0x88
+
+    check_mem(
+        "mov_moffs_fs_gs_segment_overrides",
+        &with_hlt(code),
+        regs(),
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn xlat_table_lookup() {
     // XLAT: AL <- byte ptr [RBX + AL].
     let mut s = [0u8; 64];
@@ -12948,6 +13131,40 @@ fn xlat_addr32_uses_ebx_base() {
     r.rbx = 0xFFFF_0000_0000_0000 | DATA_ADDR;
     r.rax = 0x1122_3344_5566_7705;
     check_mem("xlat_addr32", &with_hlt(vec![0x67, 0xD7]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn xlat_segment_override_and_addr32_wrap() {
+    let mut s = [0u8; 64];
+    s[1] = 0xC6;
+    s[0x23] = 0x7A;
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.push(0xBF); // mov edi, DATA_ADDR+0x10
+    code.extend_from_slice(&((DATA_ADDR + 0x10) as u32).to_le_bytes());
+    code.extend_from_slice(&[0xBB, 0x20, 0x00, 0x00, 0x00]); // mov ebx, 0x20
+    code.extend_from_slice(&[0xB0, 0x03]); // mov al, 3
+    code.extend_from_slice(&[0x64, 0xD7]); // fs xlat
+    code.extend_from_slice(&[0x88, 0x07]); // mov [rdi], al
+    code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, imm64
+    code.extend_from_slice(&0xAAAA_0000_FFFF_FFFEu64.to_le_bytes());
+    code.extend_from_slice(&[0xB0, 0x03]); // mov al, 3
+    code.extend_from_slice(&[0x65, 0x67, 0xD7]); // gs addr32 xlat
+    code.extend_from_slice(&[0x88, 0x47, 0x01]); // mov [rdi+1], al
+    code.extend_from_slice(&[0x3C, 0xC6]); // cmp al, 0xc6
+    code.push(HLT);
+
+    check_mem(
+        "xlat_segment_override_and_addr32_wrap",
+        &code,
+        regs(),
+        s,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -13939,7 +14156,7 @@ fn io_out_forms_preserve_state() {
     let mut r = regs();
     r.rax = 0x0123_4567_89AB_CDEF;
     r.rdx = 0x03F8;
-    check(
+    check_io_mem(
         "out_all_forms",
         &with_hlt(vec![
             0xE6, 0x80, // out 0x80, al
@@ -13950,6 +14167,8 @@ fn io_out_forms_preserve_state() {
             0xEF, // out dx, eax
         ]),
         r,
+        zero_scratch(),
+        FLAG_MASK,
     );
 }
 
@@ -14029,6 +14248,39 @@ fn io_outs_string_forms() {
         &with_hlt(vec![0xF3, 0x66, 0x6F]),
         r,
         io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_outs_fs_gs_source_segment_overrides() {
+    let mut s = io_scratch();
+    s[5] = 0x5A;
+    s[0x20..0x22].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    s[0x24..0x28].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+
+    let mut code = fsgsbase_enable_prologue();
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD0]); // wrfsbase rax
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, DATA_ADDR+0x20
+    code.extend_from_slice(&(DATA_ADDR + 0x20).to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xD8]); // wrgsbase rax
+    code.extend_from_slice(&[0xBA, 0x34, 0x12, 0x00, 0x00]); // mov edx, 0x1234
+    code.extend_from_slice(&[0xBE, 0x05, 0x00, 0x00, 0x00]); // mov esi, 5
+    code.extend_from_slice(&[0x64, 0x6E]); // outsb dx, fs:[rsi]
+    code.extend_from_slice(&[0xBE, 0x00, 0x00, 0x00, 0x00]); // mov esi, 0
+    code.extend_from_slice(&[0x65, 0x66, 0x6F]); // outsw dx, gs:[rsi]
+    code.extend_from_slice(&[0x48, 0xBE]); // mov rsi, high-poisoned 4
+    code.extend_from_slice(&0xFFFF_0000_0000_0004u64.to_le_bytes());
+    code.extend_from_slice(&[0x65, 0x67, 0x6F]); // outsd dx, gs:[esi]
+    code.push(HLT);
+
+    check_io_mem(
+        "io_outs_fs_gs_source_segment_overrides",
+        &code,
+        regs(),
+        s,
         FLAG_MASK,
     );
 }

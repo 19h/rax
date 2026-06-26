@@ -948,6 +948,9 @@ impl X86_64Vcpu {
             ));
         }
 
+        let addr_size_32 = ctx.address_size_override && self.sregs.cs.l;
+        let reg_size: u8 = if addr_size_32 { 4 } else { 8 };
+
         let mut addr: u64;
         let mut default_ss = false;
 
@@ -971,12 +974,12 @@ impl X86_64Vcpu {
                 disp as u64
             } else {
                 default_ss = Self::modrm_base_defaults_to_ss(base_reg);
-                self.get_reg(base_reg, 8)
+                self.get_reg(base_reg, reg_size)
             };
 
             // Add scaled index (index=4 means no index)
             if index != 4 {
-                addr = addr.wrapping_add(self.get_reg(index, 8).wrapping_mul(scale));
+                addr = addr.wrapping_add(self.get_reg(index, reg_size).wrapping_mul(scale));
             }
 
             // Handle displacement for mod != 0
@@ -999,7 +1002,7 @@ impl X86_64Vcpu {
         } else {
             // Regular register indirect
             default_ss = Self::modrm_base_defaults_to_ss(rm);
-            addr = self.get_reg(rm, 8);
+            addr = self.get_reg(rm, reg_size);
 
             // Handle displacement
             match mod_bits {
@@ -1013,6 +1016,10 @@ impl X86_64Vcpu {
                 }
                 _ => {}
             }
+        }
+
+        if addr_size_32 {
+            addr &= 0xFFFF_FFFF;
         }
 
         // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
