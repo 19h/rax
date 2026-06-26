@@ -2486,12 +2486,21 @@ fn fp_qnan_indefinite(elem_size: usize) -> u64 {
     }
 }
 
-fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool) -> u64 {
-    let rounded = if truncate {
-        value.trunc()
-    } else {
-        value.round_ties_even()
-    };
+fn fp_round_to_int(value: f64, truncate: bool, rounding: u8) -> f64 {
+    if truncate {
+        return value.trunc();
+    }
+
+    match rounding & 0x03 {
+        0 => value.round_ties_even(),
+        1 => value.floor(),
+        2 => value.ceil(),
+        _ => value.trunc(),
+    }
+}
+
+fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool, rounding: u8) -> u64 {
+    let rounded = fp_round_to_int(value, truncate, rounding);
 
     if unsigned {
         if !rounded.is_finite() || rounded < 0.0 {
@@ -3013,7 +3022,12 @@ pub fn evex_fp_to_gpr(
     };
     let value = fp_bits_to_f64(src_bits, elem_size);
     let dst_size = if evex.w { 8 } else { 4 };
-    let result = fp_to_int_bits(value, dst_size, unsigned, truncate);
+    let rounding = if !is_memory && evex.broadcast {
+        evex.ll
+    } else {
+        ((vcpu.mxcsr >> 13) & 0x03) as u8
+    };
+    let result = fp_to_int_bits(value, dst_size, unsigned, truncate, rounding);
     let dest = evex_reg_gpr(&evex, reg);
 
     vcpu.set_reg(dest, result, dst_size);
@@ -3318,13 +3332,18 @@ pub fn evex_packed_fp_to_int(
     )?;
 
     let mut raw = [0u8; 64];
+    let rounding = if !is_memory && evex.broadcast {
+        evex.ll
+    } else {
+        ((vcpu.mxcsr >> 13) & 0x03) as u8
+    };
     for lane in 0..num_elems {
         let value = fp_bits_to_f64(read_lane_u64(&src_data, lane, src_elem_size), src_elem_size);
         write_lane_bits(
             &mut raw,
             lane,
             dst_elem_size,
-            fp_to_int_bits(value, dst_elem_size as u8, unsigned, truncate),
+            fp_to_int_bits(value, dst_elem_size as u8, unsigned, truncate, rounding),
         );
     }
 
