@@ -14297,6 +14297,33 @@ fn stack_group5_push_rm_widths() {
 }
 
 #[test]
+fn stack_group5_push_addr32_rm_widths() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0xBEEFu16.to_le_bytes());
+
+    let mut r = regs();
+    r.rbx = 0xDEAD_BEEF_CAFE_BABE;
+    r.rdx = 0x1111_2222_3333_4444;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    check_mem(
+        "group5_push_addr32_rm_widths",
+        &with_hlt(vec![
+            0xFF, 0xF3, // push rbx
+            0x59, // pop rcx
+            0x67, 0xFF, 0x37, // push qword [edi]
+            0x58, // pop rax
+            0x67, 0x66, 0xFF, 0x77, 0x08, // push word [edi+8]
+            0x66, 0x5A, // pop dx
+        ]),
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn stack_push16_pop16_preserves_upper() {
     // 66 PUSH/POP use a 16-bit stack operand in long mode; POP r16 preserves upper bits.
     let mut r = regs();
@@ -14325,6 +14352,60 @@ fn stack_pop_rm64_memory() {
     check_mem(
         "pop_rm64_mem",
         &with_hlt(vec![0x50, 0x8F, 0x07]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn stack_pop_rm16_memory() {
+    // POP r/m16 to memory: push AX, then pop the word into scratch.
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "pop_rm16_mem",
+        &with_hlt(vec![
+            0x66, 0x50, // push ax
+            0x66, 0x8F, 0x07, // pop word [rdi]
+        ]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn stack_pop_rm16_addr32_memory() {
+    // POP r/m16 through a 32-bit effective address: push AX, then pop into scratch.
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "pop_rm16_addr32_mem",
+        &with_hlt(vec![
+            0x66, 0x50, // push ax
+            0x67, 0x66, 0x8F, 0x07, // pop word [edi]
+        ]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn stack_pop_rm64_addr32_memory() {
+    // POP r/m64 through a 32-bit effective address: push RAX, then pop into scratch.
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "pop_rm64_addr32_mem",
+        &with_hlt(vec![
+            0x50, // push rax
+            0x67, 0x8F, 0x07, // pop qword [edi]
+        ]),
         r,
         zero_scratch(),
         FLAG_MASK,
@@ -14673,6 +14754,31 @@ fn control_group5_call_rm64_memory_target() {
 }
 
 #[test]
+fn control_group5_call_rm64_addr32_memory_target() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 3 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0xFF, 0x17]); // call qword [edi]
+    code.extend_from_slice(&[0xBB, 0x22, 0x22, 0x22, 0x22]); // mov ebx, 0x22222222
+    code.push(HLT);
+    code.extend_from_slice(&[0xB9, 0x11, 0x11, 0x11, 0x11]); // target: mov ecx, 0x11111111
+    code.push(0xC3); // ret
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "group5_call_rm64_addr32_memory_target",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn control_group5_jmp_rm64_register_target() {
     let target = CODE_ADDR + (10 + 2 + 5 + 1) as u64;
     let mut code = vec![0x48, 0xB8]; // movabs rax, target
@@ -14705,6 +14811,33 @@ fn control_group5_jmp_rm64_memory_target() {
     code.push(HLT);
 
     check_mem("group5_jmp_rm64_memory_target", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_group5_jmp_rm64_addr32_memory_target() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 3 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0xFF, 0x27]); // jmp qword [edi]
+    code.extend_from_slice(&[0x48, 0xB8]); // fallback: movabs rax, bad
+    code.extend_from_slice(&0x1111_2222_3333_4444u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xBA]); // target: movabs rdx, good
+    code.extend_from_slice(&0xAAAA_BBBB_CCCC_DDDDu64.to_le_bytes());
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "group5_jmp_rm64_addr32_memory_target",
+        &code,
+        r,
+        scratch,
+        0,
+    );
 }
 
 #[test]
@@ -14833,6 +14966,28 @@ fn control_far_jmp_mem64_same_code_segment() {
 }
 
 #[test]
+fn control_far_jmp_mem64_addr32_same_code_segment() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 4 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0x48, 0xFF, 0x2F]); // ljmpq *[edi]
+    code.extend_from_slice(&[0x48, 0xB8]); // fallback: movabs rax, bad
+    code.extend_from_slice(&0x1234_5678_9ABC_DEF0u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xBA]); // target: movabs rdx, good
+    code.extend_from_slice(&0x0BAD_F00D_CAFE_BABEu64.to_le_bytes());
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem("control_far_jmp_mem64_addr32_same_cs", &code, r, scratch, 0);
+}
+
+#[test]
 fn control_far_jmp_mem32_same_code_segment() {
     let mut code = load_rdi_data();
     let target = CODE_ADDR + (code.len() + 2 + 5 + 1) as u64;
@@ -14848,6 +15003,26 @@ fn control_far_jmp_mem32_same_code_segment() {
     code.push(HLT);
 
     check_mem("control_far_jmp_mem32_same_cs", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_jmp_mem32_addr32_same_code_segment() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 3 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&(target as u32).to_le_bytes());
+    scratch[4..6].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0xFF, 0x2F]); // ljmpl *[edi]
+    code.extend_from_slice(&[0xB8, 0x44, 0x44, 0x44, 0x44]); // mov eax, bad
+    code.push(HLT);
+    code.extend_from_slice(&[0xBA, 0x33, 0x33, 0x33, 0x33]); // target: mov edx, good
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem("control_far_jmp_mem32_addr32_same_cs", &code, r, scratch, 0);
 }
 
 #[test]
@@ -14871,6 +15046,28 @@ fn control_far_call_mem64_lretq_roundtrip() {
 }
 
 #[test]
+fn control_far_call_mem64_addr32_lretq_roundtrip() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 4 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0x48, 0xFF, 0x1F]); // lcallq *[edi]
+    code.extend_from_slice(&[0x48, 0xBB]); // return path: movabs rbx, marker
+    code.extend_from_slice(&0x2222_3333_4444_5555u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xB8]); // target: movabs rax, marker
+    code.extend_from_slice(&0xAAAA_BBBB_CCCC_DDDDu64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xCB]); // lretq
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem("control_far_call_mem64_addr32_lretq", &code, r, scratch, 0);
+}
+
+#[test]
 fn control_far_call_mem32_lret_roundtrip() {
     let mut code = load_rdi_data();
     let target = CODE_ADDR + (code.len() + 2 + 5 + 1) as u64;
@@ -14886,6 +15083,26 @@ fn control_far_call_mem32_lret_roundtrip() {
     code.push(0xCB); // lret
 
     check_mem("control_far_call_mem32_lret", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_call_mem32_addr32_lret_roundtrip() {
+    let mut code = vec![];
+    let target = CODE_ADDR + (code.len() + 3 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&(target as u32).to_le_bytes());
+    scratch[4..6].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0xFF, 0x1F]); // lcalll *[edi]
+    code.extend_from_slice(&[0xBB, 0x22, 0x22, 0x22, 0x22]); // return path: mov ebx, marker
+    code.push(HLT);
+    code.extend_from_slice(&[0xB8, 0x5A, 0x00, 0x00, 0x00]); // target: mov eax, marker
+    code.push(0xCB); // lret
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem("control_far_call_mem32_addr32_lret", &code, r, scratch, 0);
 }
 
 #[test]
@@ -14907,6 +15124,34 @@ fn control_far_call_mem64_lretq_imm16_cleans_arguments() {
     code.extend_from_slice(&[0x48, 0xCA, 0x10, 0x00]); // lretq 16
 
     check_mem("control_far_call_mem64_lretq_imm16", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_call_mem64_addr32_lretq_imm16_cleans_arguments() {
+    let mut code = vec![0x48, 0x83, 0xEC, 0x10]; // sub rsp, 16
+    let target = CODE_ADDR + (code.len() + 4 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x67, 0x48, 0xFF, 0x1F]); // lcallq *[edi]
+    code.extend_from_slice(&[0x48, 0xBB]); // return path: movabs rbx, marker
+    code.extend_from_slice(&0x3333_4444_5555_6666u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xB8]); // target: movabs rax, marker
+    code.extend_from_slice(&0xBBBB_CCCC_DDDD_EEEEu64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xCA, 0x10, 0x00]); // lretq 16
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "control_far_call_mem64_addr32_lretq_imm16",
+        &code,
+        r,
+        scratch,
+        0,
+    );
 }
 
 #[test]
