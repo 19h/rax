@@ -9663,6 +9663,60 @@ fn cpuid_xsave_feature_enumeration() {
 }
 
 #[test]
+fn cpuid_zero_extends_outputs_and_preserves_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_0000_0001;
+    r.rbx = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rcx = 0xFFFF_FFFF_0000_0000;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFF;
+    check_flags_masked(
+        "cpuid_zero_extends_outputs_and_preserves_flags",
+        &with_hlt(vec![
+            0x0F, 0xA2, // cpuid
+            0x9C, // pushfq
+            0x5E, // pop rsi
+            0x48, 0xC1, 0xE8, 0x20, // shr rax, 32
+            0x48, 0xC1, 0xEB, 0x20, // shr rbx, 32
+            0x48, 0xC1, 0xE9, 0x20, // shr rcx, 32
+            0x48, 0xC1, 0xEA, 0x20, // shr rdx, 32
+            0x56, // push rsi
+            0x9D, // popfq
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cpuid_osxsave_bit_tracks_cr4() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xB8, 0x01, 0x00, 0x00, 0x00, // mov eax, 1
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x81, 0xE1, 0x00, 0x00, 0x00, 0x08, // and ecx, OSXSAVE
+        0x89, 0x0F, // mov [rdi], ecx
+        0x0F, 0x20, 0xE0, // mov rax, cr4
+        0x48, 0x0D, 0x00, 0x00, 0x04, 0x00, // or rax, CR4.OSXSAVE
+        0x0F, 0x22, 0xE0, // mov cr4, rax
+        0xB8, 0x01, 0x00, 0x00, 0x00, // mov eax, 1
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x81, 0xE1, 0x00, 0x00, 0x00, 0x08, // and ecx, OSXSAVE
+        0x89, 0x4F, 0x04, // mov [rdi+4], ecx
+        0x31, 0xC0, // xor eax, eax
+        0x31, 0xDB, // xor ebx, ebx
+        0x31, 0xC9, // xor ecx, ecx
+        0x31, 0xD2, // xor edx, edx
+    ]);
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem("cpuid_osxsave_bit_tracks_cr4", &code, r, zero_scratch(), 0);
+}
+
+#[test]
 fn movdiri_m64_r64() {
     // MOVDIRI m64, r64 = 48 0F 38 F9 /r. Store RAX directly to [RDI].
     let mut r = modern_flags_regs();
@@ -10039,6 +10093,22 @@ fn waitpkg_tpause_extended_register_forms_zero_deadline() {
 }
 
 #[test]
+fn waitpkg_control_one_zero_deadline_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rcx = 1;
+    r.rdx = 0;
+    check(
+        "waitpkg_control_one_zero_deadline_forms",
+        &with_hlt(vec![
+            0xF2, 0x0F, 0xAE, 0xF1, // umwait ecx
+            0x66, 0x0F, 0xAE, 0xF1, // tpause ecx
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn stac_clac_ac_flag_forms() {
     let ac_and_status = FLAG_MASK | flags::bits::AC;
 
@@ -10058,6 +10128,32 @@ fn stac_clac_ac_flag_forms() {
         &with_hlt(vec![0x0F, 0x01, 0xCA]), // clac
         r,
         ac_and_status,
+    );
+}
+
+#[test]
+fn stac_clac_repeated_forms_are_idempotent() {
+    let mut r = modern_flags_regs();
+    r.rflags &= !flags::bits::AC;
+    r.rdi = DATA_ADDR;
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x0F, 0x01, 0xCB]); // stac
+    code.extend_from_slice(&[0x0F, 0x01, 0xCB]); // stac
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0x0F, 0x01, 0xCA]); // clac
+    code.extend_from_slice(&[0x0F, 0x01, 0xCA]); // clac
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x08]); // mov [rdi+8], rax
+    code.push(HLT);
+
+    check_mem(
+        "stac_clac_repeated_forms_are_idempotent",
+        &code,
+        r,
+        zero_scratch(),
+        FLAG_MASK | flags::bits::AC,
     );
 }
 
@@ -12116,6 +12212,28 @@ fn flag_popfw_updates_low_flags_only() {
     code.push(HLT);
 
     check_mem("popfw_low_flags_only", &code, r, zero_scratch(), 0);
+}
+
+#[test]
+fn flag_pushfw_popw_low_image() {
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_0000;
+    r.rdi = DATA_ADDR;
+    r.rflags = flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::AF
+        | flags::bits::ZF
+        | flags::bits::SF
+        | flags::bits::DF
+        | flags::bits::OF;
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x66, 0x9C]); // pushfw
+    code.extend_from_slice(&[0x66, 0x58]); // pop ax
+    code.extend_from_slice(&[0x66, 0x89, 0x07]); // mov [rdi], ax
+    code.push(HLT);
+
+    check_mem("pushfw_popw_low_image", &code, r, zero_scratch(), FLAG_MASK);
 }
 
 #[test]
