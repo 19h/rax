@@ -287,6 +287,7 @@ pub fn vpmullq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         .evex
         .ok_or_else(|| Error::Emulator("VPMULLQ requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     // Calculate full register indices using EVEX extension bits
@@ -301,6 +302,12 @@ pub fn vpmullq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         _ => 128,
     };
     let num_elements = vl / 64; // Number of qword elements
+    let addr = if is_memory {
+        let scale = if evex.broadcast { 8 } else { vl / 8 };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
 
     // Get source 1 register
     let src1_val = get_zmm(vcpu, src1);
@@ -375,6 +382,7 @@ pub fn vpmulld_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         .evex
         .ok_or_else(|| Error::Emulator("VPMULLD requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     // Calculate full register indices
@@ -389,6 +397,12 @@ pub fn vpmulld_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         _ => 128,
     };
     let num_elements = vl / 32; // Number of dword elements
+    let addr = if is_memory {
+        let scale = if evex.broadcast { 4 } else { vl / 8 };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
 
     // Get source 1 register
     let src1_val = get_zmm(vcpu, src1);
@@ -2984,7 +2998,13 @@ pub fn evex_fp_to_gpr(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
+    } else {
+        addr
+    };
     let src_bits = if is_memory {
         vcpu.read_mem(addr, elem_size as u8)?
     } else {
@@ -3018,8 +3038,14 @@ pub fn evex_gpr_to_fp(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src_size = if evex.w { 8 } else { 4 };
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, src_size as usize)
+    } else {
+        addr
+    };
     let int_bits = if is_memory {
         vcpu.read_mem(addr, src_size)?
     } else {
@@ -3060,10 +3086,16 @@ pub fn evex_fp_scalar_convert(
         Error::Emulator("EVEX scalar FP width conversion requires EVEX prefix".to_string())
     })?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src1 = ctx.evex_vvvv();
     let src2 = evex_rm_vec(&evex, rm);
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, src_elem_size)
+    } else {
+        addr
+    };
     let src_bits = if is_memory {
         vcpu.read_mem(addr, src_elem_size as u8)?
     } else {
@@ -3109,11 +3141,22 @@ pub fn evex_packed_fp_convert(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
     let (src_bytes, dst_vl_bytes, num_elems) =
         packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let addr = if is_memory {
+        let scale = if evex.broadcast {
+            src_elem_size
+        } else {
+            src_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src_data = read_packed_conversion_src(
         vcpu,
         &evex,
@@ -3170,11 +3213,22 @@ pub fn evex_packed_int_to_fp(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
     let (src_bytes, dst_vl_bytes, num_elems) =
         packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let addr = if is_memory {
+        let scale = if evex.broadcast {
+            src_elem_size
+        } else {
+            src_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src_data = read_packed_conversion_src(
         vcpu,
         &evex,
@@ -3236,11 +3290,22 @@ pub fn evex_packed_fp_to_int(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
     let (src_bytes, dst_vl_bytes, num_elems) =
         packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let addr = if is_memory {
+        let scale = if evex.broadcast {
+            src_elem_size
+        } else {
+            src_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src_data = read_packed_conversion_src(
         vcpu,
         &evex,
@@ -3296,6 +3361,7 @@ pub fn evex_packed_fp_convert_store(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let _imm = ctx.consume_u8()?;
     let src = evex_reg_vec(&evex, reg);
@@ -3304,6 +3370,11 @@ pub fn evex_packed_fp_convert_store(
     let num_elems = src_vl_bytes / src_elem_size;
     let dst_bytes = num_elems * dst_elem_size;
     let dst_vl_bytes = reg_vl_for_bytes(dst_bytes);
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, dst_bytes)
+    } else {
+        addr
+    };
     let src_data = read_reg_bytes(vcpu, src, src_vl_bytes);
 
     let mut raw = [0u8; 64];
@@ -3900,7 +3971,13 @@ pub fn evex_gpr_or_mem_to_xmm(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
+    } else {
+        addr
+    };
     let dest = evex_reg_vec(&evex, reg);
     let value = if is_memory {
         vcpu.read_mem(addr, elem_size as u8)?
@@ -3931,7 +4008,13 @@ pub fn evex_xmm_to_gpr_or_mem(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
+    } else {
+        addr
+    };
     let src = evex_reg_vec(&evex, reg);
     let value = read_vec_scalar(vcpu, src, elem_size);
 
@@ -4145,7 +4228,13 @@ pub fn evex_movq_vec_load(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, 8)
+    } else {
+        addr
+    };
     let dest = evex_reg_vec(&evex, reg);
     let value = if is_memory {
         vcpu.read_mem(addr, 8)?
@@ -4174,7 +4263,13 @@ pub fn evex_movq_vec_store(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, 8)
+    } else {
+        addr
+    };
     let src = evex_reg_vec(&evex, reg);
     let value = read_vec_scalar(vcpu, src, 8);
 
@@ -4206,7 +4301,13 @@ pub fn evex_scalar_fp_move(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
+    } else {
+        addr
+    };
     let reg_vec = evex_reg_vec(&evex, reg);
     let active = evex.aaa == 0 || (vcpu.regs.k[evex.aaa as usize] & 1) != 0;
 
@@ -4281,7 +4382,13 @@ pub fn evex_high_low_move(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, 8)
+    } else {
+        addr
+    };
     let dest = evex_reg_vec(&evex, reg);
     let src1 = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
     let src1_bytes = read_reg_bytes(vcpu, src1, 16);
@@ -5897,11 +6004,22 @@ pub fn evex_blend_select(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX blend requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast && matches!(elem_size, 4 | 8) {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let src2_bytes = if is_memory {
         if evex.broadcast && matches!(elem_size, 4 | 8) {
