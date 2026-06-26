@@ -39312,6 +39312,175 @@ fn avx_fma_scalar_non_add_sd_memory_order_forms() {
     }
 }
 
+fn avx_fma_extended_regs() -> Registers {
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    r
+}
+
+fn avx_fma_addr32_regs() -> Registers {
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    r
+}
+
+#[test]
+fn avx_fma_packed_extended_memory_source_forms() {
+    let s = avx_f32_pair_scratch(
+        [1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0],
+        [0.5, 1.5, -2.5, -3.5, 4.5, -5.5, 6.5, -7.5],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x17]); // vmovups ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x4F, 0x20]); // vmovups ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0x75, 0x98, 0x54, 0x5A, 0x20]); // vfmadd132ps ymm2, ymm1, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.push(HLT);
+    check_mem(
+        "avx_fma_packed_vfmadd132ps_extended_memory",
+        &code,
+        avx_fma_extended_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_f64_pair_scratch(
+        [1.25, -2.5, 4.0, -8.0],
+        [-0.75, 1.25, -1.5, 2.25],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x1F]); // vmovupd ymm3, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x47, 0x20]); // vmovupd ymm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0x82, 0xFD, 0xBC, 0x5C, 0x5A, 0x20]); // vfnmadd231pd ymm3, ymm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x1F]); // vmovupd [rdi], ymm3
+    code.push(HLT);
+    check_mem(
+        "avx_fma_packed_vfnmadd231pd_extended_memory",
+        &code,
+        avx_fma_extended_regs(),
+        s,
+        0,
+    );
+}
+
+#[test]
+fn avx_fma_packed_addr32_memory_source_forms() {
+    let s = avx_f32_pair_scratch(
+        [1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0],
+        [0.5, 1.5, -2.5, -3.5, 4.5, -5.5, 6.5, -7.5],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x17]); // vmovups ymm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x4F, 0x20]); // vmovups ymm1, [rdi+32]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x75, 0x98, 0x54, 0x77, 0x20]); // vfmadd132ps ymm2, ymm1, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.push(HLT);
+    check_mem(
+        "avx_fma_packed_vfmadd132ps_addr32_memory",
+        &code,
+        avx_fma_addr32_regs(),
+        s,
+        0,
+    );
+
+    let s = avx_f64_pair_scratch(
+        [1.25, -2.5, 4.0, -8.0],
+        [-0.75, 1.25, -1.5, 2.25],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x1F]); // vmovupd ymm3, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x47, 0x20]); // vmovupd ymm0, [rdi+32]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xFD, 0xBC, 0x5C, 0x77, 0x20]); // vfnmadd231pd ymm3, ymm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x1F]); // vmovupd [rdi], ymm3
+    code.push(HLT);
+    check_mem(
+        "avx_fma_packed_vfnmadd231pd_addr32_memory",
+        &code,
+        avx_fma_addr32_regs(),
+        s,
+        0,
+    );
+}
+
+#[test]
+fn avx_fma_scalar_extended_memory_source_forms() {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x27]); // vmovups xmm4, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x47, 0x10]); // vmovups xmm0, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0x82, 0x79, 0xAB, 0x64, 0x5A, 0x20]); // vfmsub213ss xmm4, xmm0, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x67, 0x30]); // vmovups [rdi+48], xmm4
+    code.push(HLT);
+    check_mem(
+        "avx_fma_scalar_vfmsub213ss_extended_memory",
+        &code,
+        avx_fma_extended_regs(),
+        avx_scalar_fma_ss_scratch(),
+        0,
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x2F]); // vmovups xmm5, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x4F, 0x10]); // vmovups xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC4, 0x82, 0xF1, 0x9F, 0x6C, 0x5A, 0x20]); // vfnmsub132sd xmm5, xmm1, [r10+r11*2+32]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x6F, 0x30]); // vmovups [rdi+48], xmm5
+    code.push(HLT);
+    check_mem(
+        "avx_fma_scalar_vfnmsub132sd_extended_memory",
+        &code,
+        avx_fma_extended_regs(),
+        avx_scalar_fma_sd_scratch(),
+        0,
+    );
+}
+
+#[test]
+fn avx_fma_scalar_addr32_memory_source_forms() {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x27]); // vmovups xmm4, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x47, 0x10]); // vmovups xmm0, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0x79, 0xAB, 0x64, 0x77, 0x20]); // vfmsub213ss xmm4, xmm0, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x67, 0x30]); // vmovups [rdi+48], xmm4
+    code.push(HLT);
+    check_mem(
+        "avx_fma_scalar_vfmsub213ss_addr32_memory",
+        &code,
+        avx_fma_addr32_regs(),
+        avx_scalar_fma_ss_scratch(),
+        0,
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x2F]); // vmovups xmm5, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x4F, 0x10]); // vmovups xmm1, [rdi+16]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xC4, 0xE2, 0xF1, 0x9F, 0x6C, 0x77, 0x20]); // vfnmsub132sd xmm5, xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x6F, 0x30]); // vmovups [rdi+48], xmm5
+    code.push(HLT);
+    check_mem(
+        "avx_fma_scalar_vfnmsub132sd_addr32_memory",
+        &code,
+        avx_fma_addr32_regs(),
+        avx_scalar_fma_sd_scratch(),
+        0,
+    );
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 26: VEX add-sub and horizontal FP forms.
 // ===========================================================================
