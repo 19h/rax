@@ -16748,6 +16748,80 @@ fn avx_fma_ymm_vfmadd231ps() {
 }
 
 #[test]
+fn avx_fma_ymm_pd_memory_order_forms() {
+    let s = avx_f64_pair_scratch(
+        [1.0, -2.0, 3.0, -4.0],
+        [0.5, 1.5, -2.5, -3.5],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x07]); // vmovupd ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x4F, 0x20]); // vmovupd ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x58, 0xD0]); // vaddpd ymm2, ymm0, ymm0
+    code.extend_from_slice(&[0xC5, 0xED, 0x58, 0xD8]); // vaddpd ymm3, ymm2, ymm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF5, 0x98, 0x17]); // vfmadd132pd ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF5, 0xA8, 0x1F]); // vfmadd213pd ymm3, ymm1, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x17]); // vmovupd [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x5F, 0x20]); // vmovupd [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_vfmadd132_213pd_memory", &code, s);
+
+    let s = avx_f64_pair_scratch(
+        [1.25, -2.5, 4.0, -8.0],
+        [-0.75, 1.25, -1.5, 2.25],
+    );
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x07]); // vmovupd ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x10, 0x4F, 0x20]); // vmovupd ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x58, 0xD0]); // vaddpd ymm2, ymm0, ymm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF5, 0xB8, 0x17]); // vfmadd231pd ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x11, 0x17]); // vmovupd [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_vfmadd231pd_memory", &code, s);
+}
+
+#[test]
+fn avx_fma_ymm_ps_memory_order_forms() {
+    let s = avx_f32_scratch(|i| {
+        if i < 8 {
+            [1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0][i]
+        } else {
+            [0.5, 1.5, -2.5, -3.5, 4.5, -5.5, 6.5, -7.5][i - 8]
+        }
+    });
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x4F, 0x20]); // vmovups ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x58, 0xD0]); // vaddps ymm2, ymm0, ymm0
+    code.extend_from_slice(&[0xC5, 0xEC, 0x58, 0xD8]); // vaddps ymm3, ymm2, ymm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0x98, 0x17]); // vfmadd132ps ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0xA8, 0x1F]); // vfmadd213ps ymm3, ymm1, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x5F, 0x20]); // vmovups [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_vfmadd132_213ps_memory", &code, s);
+
+    let s = avx_f32_scratch(|i| {
+        if i < 8 {
+            [1.25, -2.5, 4.0, -8.0, 0.75, -1.25, 2.0, -3.0][i]
+        } else {
+            [-0.75, 1.25, -1.5, 2.25, -2.5, 3.5, -4.5, 5.5][i - 8]
+        }
+    });
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x07]); // vmovups ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x10, 0x4F, 0x20]); // vmovups ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x58, 0xD0]); // vaddps ymm2, ymm0, ymm0
+    code.extend_from_slice(&[0xC4, 0xE2, 0x75, 0xB8, 0x17]); // vfmadd231ps ymm2, ymm1, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x11, 0x17]); // vmovups [rdi], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_fma_ymm_vfmadd231ps_memory", &code, s);
+}
+
+#[test]
 fn avx_fma_scalar_vfmsub132sd_preserves_upper() {
     let mut s = [0u8; 64];
     for (i, v) in [3.0f64, 1234.5, 2.0, 5.0].iter().enumerate() {
@@ -21156,6 +21230,53 @@ fn avx_fma_scalar_ss_sd_memory_preserves_upper() {
     code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x5F, 0x20]); // vmovupd [rdi+32], xmm3
     code.push(HLT);
     check_avx_mem("avx_fma_scalar_vfnmsub231sd_memory", &code, s);
+}
+
+#[test]
+fn avx_fma_scalar_add_memory_order_forms() {
+    let mut s = [0u8; 64];
+    for (i, value) in [2.0f32, 11.0, 12.0, 13.0].iter().enumerate() {
+        s[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [3.0f32, 21.0, 22.0, 23.0].iter().enumerate() {
+        s[16 + i * 4..20 + i * 4].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..36].copy_from_slice(&5.0f32.to_le_bytes());
+    s[36..40].copy_from_slice(&7.0f32.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x17]); // vmovups xmm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x5F, 0x10]); // vmovups xmm3, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x47, 0x10]); // vmovups xmm0, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x10, 0x0F]); // vmovups xmm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x79, 0xA9, 0x57, 0x20]); // vfmadd213ss xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x71, 0xB9, 0x5F, 0x24]); // vfmadd231ss xmm3, xmm1, [rdi+36]
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x17]); // vmovups [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xF8, 0x11, 0x5F, 0x10]); // vmovups [rdi+16], xmm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_scalar_vfmadd213_231ss_memory", &code, s);
+
+    let mut s = [0u8; 64];
+    for (i, value) in [2.0f64, 101.0].iter().enumerate() {
+        s[i * 8..i * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    for (i, value) in [3.0f64, 201.0].iter().enumerate() {
+        s[16 + i * 8..24 + i * 8].copy_from_slice(&value.to_le_bytes());
+    }
+    s[32..40].copy_from_slice(&5.0f64.to_le_bytes());
+    s[40..48].copy_from_slice(&7.0f64.to_le_bytes());
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x17]); // vmovupd xmm2, [rdi]
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x5F, 0x10]); // vmovupd xmm3, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x47, 0x10]); // vmovupd xmm0, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xF9, 0x10, 0x0F]); // vmovupd xmm1, [rdi]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF9, 0xA9, 0x57, 0x20]); // vfmadd213sd xmm2, xmm0, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF1, 0xB9, 0x5F, 0x28]); // vfmadd231sd xmm3, xmm1, [rdi+40]
+    code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x17]); // vmovupd [rdi], xmm2
+    code.extend_from_slice(&[0xC5, 0xF9, 0x11, 0x5F, 0x10]); // vmovupd [rdi+16], xmm3
+    code.push(HLT);
+    check_avx_mem("avx_fma_scalar_vfmadd213_231sd_memory", &code, s);
 }
 
 // ===========================================================================
