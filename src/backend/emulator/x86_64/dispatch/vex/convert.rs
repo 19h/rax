@@ -233,11 +233,11 @@ impl X86_64Vcpu {
                     let f1 = f32::from_bits((src_lo >> 32) as u32);
                     let f2 = f32::from_bits(src_hi as u32);
                     let f3 = f32::from_bits((src_hi >> 32) as u32);
-                    // Round to nearest (default MXCSR rounding mode)
-                    let i0 = f32_to_i32_saturate(f0.round()) as u32 as u64;
-                    let i1 = f32_to_i32_saturate(f1.round()) as u32 as u64;
-                    let i2 = f32_to_i32_saturate(f2.round()) as u32 as u64;
-                    let i3 = f32_to_i32_saturate(f3.round()) as u32 as u64;
+                    // Round to nearest-even (default MXCSR rounding mode).
+                    let i0 = f32_to_i32_saturate(f0.round_ties_even()) as u32 as u64;
+                    let i1 = f32_to_i32_saturate(f1.round_ties_even()) as u32 as u64;
+                    let i2 = f32_to_i32_saturate(f2.round_ties_even()) as u32 as u64;
+                    let i3 = f32_to_i32_saturate(f3.round_ties_even()) as u32 as u64;
                     self.regs.xmm[xmm_dst][0] = i0 | (i1 << 32);
                     self.regs.xmm[xmm_dst][1] = i2 | (i3 << 32);
                     self.regs.ymm_high[xmm_dst][0] = 0;
@@ -261,8 +261,8 @@ impl X86_64Vcpu {
                     let convert = |v: u64| -> u64 {
                         let f0 = f32::from_bits(v as u32);
                         let f1 = f32::from_bits((v >> 32) as u32);
-                        let i0 = f32_to_i32_saturate(f0.round()) as u32 as u64;
-                        let i1 = f32_to_i32_saturate(f1.round()) as u32 as u64;
+                        let i0 = f32_to_i32_saturate(f0.round_ties_even()) as u32 as u64;
+                        let i1 = f32_to_i32_saturate(f1.round_ties_even()) as u32 as u64;
                         i0 | (i1 << 32)
                     };
                     self.regs.xmm[xmm_dst][0] = convert(src0);
@@ -459,8 +459,8 @@ impl X86_64Vcpu {
                     };
                     let d0 = f64::from_bits(src_lo);
                     let d1 = f64::from_bits(src_hi);
-                    let i0 = f64_to_i32_saturate(d0.round()) as u32 as u64;
-                    let i1 = f64_to_i32_saturate(d1.round()) as u32 as u64;
+                    let i0 = f64_to_i32_saturate(d0.round_ties_even()) as u32 as u64;
+                    let i1 = f64_to_i32_saturate(d1.round_ties_even()) as u32 as u64;
                     self.regs.xmm[xmm_dst][0] = i0 | (i1 << 32);
                     self.regs.xmm[xmm_dst][1] = 0;
                     self.regs.ymm_high[xmm_dst][0] = 0;
@@ -486,10 +486,10 @@ impl X86_64Vcpu {
                     let d1 = f64::from_bits(src1);
                     let d2 = f64::from_bits(src2);
                     let d3 = f64::from_bits(src3);
-                    let i0 = f64_to_i32_saturate(d0.round()) as u32 as u64;
-                    let i1 = f64_to_i32_saturate(d1.round()) as u32 as u64;
-                    let i2 = f64_to_i32_saturate(d2.round()) as u32 as u64;
-                    let i3 = f64_to_i32_saturate(d3.round()) as u32 as u64;
+                    let i0 = f64_to_i32_saturate(d0.round_ties_even()) as u32 as u64;
+                    let i1 = f64_to_i32_saturate(d1.round_ties_even()) as u32 as u64;
+                    let i2 = f64_to_i32_saturate(d2.round_ties_even()) as u32 as u64;
+                    let i3 = f64_to_i32_saturate(d3.round_ties_even()) as u32 as u64;
                     self.regs.xmm[xmm_dst][0] = i0 | (i1 << 32);
                     self.regs.xmm[xmm_dst][1] = i2 | (i3 << 32);
                     self.regs.ymm_high[xmm_dst][0] = 0;
@@ -642,13 +642,13 @@ impl X86_64Vcpu {
                     if src.is_nan() || src >= i64::MAX as f32 || src <= i64::MIN as f32 {
                         i64::MIN as u64
                     } else {
-                        src.round() as i64 as u64
+                        src.round_ties_even() as i64 as u64
                     }
                 } else {
                     if src.is_nan() || src >= i32::MAX as f32 || src <= i32::MIN as f32 {
                         i32::MIN as u32 as u64
                     } else {
-                        src.round() as i32 as u32 as u64
+                        src.round_ties_even() as i32 as u32 as u64
                     }
                 }
             }
@@ -663,13 +663,13 @@ impl X86_64Vcpu {
                     if src.is_nan() || src >= i64::MAX as f64 || src <= i64::MIN as f64 {
                         i64::MIN as u64
                     } else {
-                        src.round() as i64 as u64
+                        src.round_ties_even() as i64 as u64
                     }
                 } else {
                     if src.is_nan() || src >= i32::MAX as f64 || src <= i32::MIN as f64 {
                         i32::MIN as u32 as u64
                     } else {
-                        src.round() as i32 as u32 as u64
+                        src.round_ties_even() as i32 as u32 as u64
                     }
                 }
             }
