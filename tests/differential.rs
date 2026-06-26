@@ -6017,6 +6017,19 @@ fn jcc_rel32_forward() {
 }
 
 #[test]
+fn jcc_rel32_backward_taken_then_fallthrough() {
+    let c = vec![
+        0x31, 0xC0, // xor eax, eax
+        0xB9, 0x02, 0x00, 0x00, 0x00, // mov ecx, 2
+        0x83, 0xC0, 0x01, // loop: add eax, 1
+        0xFF, 0xC9, // dec ecx
+        0x0F, 0x85, 0xF5, 0xFF, 0xFF, 0xFF, // jnz rel32 back to add
+        HLT,
+    ];
+    check("jnz_rel32_backward_taken_then_fallthrough", &c, regs());
+}
+
+#[test]
 fn jmp_rel8_and_rel32_forms() {
     let c = vec![
         0xEB, 0x07, // jmp rel8 forward to the backward jump
@@ -6030,6 +6043,17 @@ fn jmp_rel8_and_rel32_forms() {
         HLT,
     ];
     check("jmp_rel8_rel32_forms", &c, regs());
+}
+
+#[test]
+fn jmp_rel32_backward_form() {
+    let c = vec![
+        0xE9, 0x06, 0x00, 0x00, 0x00, // jmp rel32 forward to backward jump
+        0xB8, 0x11, 0x00, 0x00, 0x00, // target: mov eax, 0x11
+        HLT,
+        0xE9, 0xF5, 0xFF, 0xFF, 0xFF, // jmp rel32 backward to target
+    ];
+    check("jmp_rel32_backward_form", &c, regs());
 }
 
 #[test]
@@ -12720,6 +12744,23 @@ fn control_call_rel32_ret_balanced() {
 }
 
 #[test]
+fn control_call_rel32_backward_ret_balanced() {
+    let mut r = regs();
+    r.rax = 0;
+    check(
+        "call_rel32_backward_ret_balanced",
+        &with_hlt(vec![
+            0xE9, 0x05, 0x00, 0x00, 0x00, // jmp +5 -> call site
+            0x48, 0x83, 0xC0, 0x05, // target: add rax, 5
+            0xC3, // ret
+            0xE8, 0xF6, 0xFF, 0xFF, 0xFF, // call rel32 back to target
+            0x48, 0x83, 0xC0, 0x02, // add rax, 2
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn control_group5_call_rm64_register_target() {
     let target = CODE_ADDR + (10 + 2 + 5 + 1) as u64;
     let mut code = vec![0x48, 0xB8]; // movabs rax, target
@@ -12733,6 +12774,39 @@ fn control_group5_call_rm64_register_target() {
     ]);
 
     check("group5_call_rm64_register_target", &code, regs());
+}
+
+#[test]
+fn control_group5_call_rm64_memory_target() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 2 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+
+    code.extend_from_slice(&[0xFF, 0x17]); // call qword [rdi]
+    code.extend_from_slice(&[0xBB, 0x22, 0x22, 0x22, 0x22]); // mov ebx, 0x22222222
+    code.push(HLT);
+    code.extend_from_slice(&[0xB9, 0x11, 0x11, 0x11, 0x11]); // target: mov ecx, 0x11111111
+    code.push(0xC3); // ret
+
+    check_mem("group5_call_rm64_memory_target", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn control_group5_jmp_rm64_register_target() {
+    let target = CODE_ADDR + (10 + 2 + 5 + 1) as u64;
+    let mut code = vec![0x48, 0xB8]; // movabs rax, target
+    code.extend_from_slice(&target.to_le_bytes());
+    code.extend_from_slice(&[
+        0xFF, 0xE0, // jmp rax
+        0xBB, 0x22, 0x22, 0x22, 0x22, // fallback: mov ebx, 0x22222222
+        HLT,
+        0xB9, 0x11, 0x11, 0x11, 0x11, // target: mov ecx, 0x11111111
+        HLT,
+    ]);
+
+    check("group5_jmp_rm64_register_target", &code, regs());
 }
 
 #[test]
