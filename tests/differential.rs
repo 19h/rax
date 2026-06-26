@@ -11565,6 +11565,17 @@ fn stack_push16_pop16_preserves_upper() {
 }
 
 #[test]
+fn stack_pop_sp_preserves_incremented_upper_rsp() {
+    // POP SP first advances the stack pointer, then writes only the low 16 bits
+    // of the popped value into SP.
+    check(
+        "pop_sp_preserves_upper_rsp",
+        &with_hlt(vec![0x66, 0x68, 0x34, 0x12, 0x66, 0x5C]),
+        regs(),
+    );
+}
+
+#[test]
 fn stack_pop_rm64_memory() {
     // POP r/m64 to memory: push RAX, then pop into scratch.
     let mut r = regs();
@@ -11833,6 +11844,50 @@ fn control_enter_leave_balanced() {
         &with_hlt(vec![0xC8, 0x20, 0x00, 0x00, 0xC9]),
         r,
     );
+}
+
+#[test]
+fn control_enter_nested_frame_chain() {
+    let mut scratch = zero_scratch();
+    scratch[0x18..0x20].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rbp = DATA_ADDR + 0x20;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xC8, 0x10, 0x00, 0x02, // enter 0x10, 2
+        0x48, 0x89, 0x6F, 0x20, // mov [rdi+0x20], rbp
+        0x48, 0x89, 0x67, 0x28, // mov [rdi+0x28], rsp
+        0xC9, // leave
+        HLT,
+    ]);
+
+    check_mem("enter_nested_frame_chain", &code, r, scratch, 0);
+}
+
+#[test]
+fn control_enter_16bit_operand_size() {
+    let mut r = regs();
+    r.rbp = 0xAAAA_BBBB_CCCC_1234;
+    check(
+        "enter_16bit_operand_size",
+        &with_hlt(vec![0x66, 0xC8, 0x04, 0x00, 0x00]),
+        r,
+    );
+}
+
+#[test]
+fn control_leave_16bit_operand_size() {
+    let mut code = vec![0x48, 0xC7, 0xC5];
+    code.extend_from_slice(&((STACK_ADDR + 0x20) as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x66, 0xC7, 0x45, 0x00, 0x34, 0x12, // mov word [rbp], 0x1234
+        0x66, 0xC9, // leavew
+        HLT,
+    ]);
+
+    check("leave_16bit_operand_size", &code, regs());
 }
 
 #[test]

@@ -5,27 +5,53 @@ use crate::error::{Error, Result};
 
 use super::super::super::cpu::{EvexPrefix, InsnContext, X86_64Vcpu};
 
+fn frame_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
+    if in_64bit_mode {
+        if ctx.operand_size_override {
+            2
+        } else {
+            8
+        }
+    } else {
+        let default_16bit = !vcpu.sregs.cs.db;
+        let is_16bit = default_16bit ^ ctx.operand_size_override;
+        if is_16bit { 2 } else { 4 }
+    }
+}
+
+fn push_frame(vcpu: &mut X86_64Vcpu, value: u64, op_size: u8) -> Result<()> {
+    match op_size {
+        2 => vcpu.push16(value as u16),
+        4 => vcpu.push32(value as u32),
+        8 => vcpu.push64(value),
+        _ => unreachable!(),
+    }
+}
+
 /// ENTER imm16, imm8 (0xC8) - Create stack frame
 pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let alloc_size = ctx.consume_u16()? as u64;
     let nesting_level = (ctx.consume_u8()? & 0x1F) as u64;
+    let op_size = frame_op_size(vcpu, ctx);
+    let delta = op_size as u64;
 
-    // Push RBP
-    vcpu.push64(vcpu.regs.rbp)?;
+    push_frame(vcpu, vcpu.get_reg(5, op_size), op_size)?;
     let frame_ptr = vcpu.regs.rsp;
 
     if nesting_level > 0 {
-        // Push nested frame pointers
-        for i in 1..nesting_level {
-            vcpu.regs.rbp = vcpu.regs.rbp.wrapping_sub(8);
-            let ptr = vcpu.read_mem(vcpu.regs.rbp, 8)?;
-            vcpu.push64(ptr)?;
-            let _ = i;
+        for _ in 1..nesting_level {
+            let next = vcpu.get_reg(5, op_size).wrapping_sub(delta);
+            vcpu.set_reg(5, next, op_size);
+            let ptr = vcpu.read_mem(vcpu.regs.rbp, op_size)?;
+            push_frame(vcpu, ptr, op_size)?;
         }
-        vcpu.push64(frame_ptr)?;
+        push_frame(vcpu, frame_ptr, op_size)?;
     }
 
-    vcpu.regs.rbp = frame_ptr;
+    vcpu.set_reg(5, frame_ptr, op_size);
     vcpu.regs.rsp = vcpu.regs.rsp.wrapping_sub(alloc_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -33,8 +59,15 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
 /// LEAVE (0xC9)
 pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = frame_op_size(vcpu, ctx);
     vcpu.regs.rsp = vcpu.regs.rbp;
-    vcpu.regs.rbp = vcpu.pop64()?;
+    let value = match op_size {
+        2 => vcpu.pop16()? as u64,
+        4 => vcpu.pop32()? as u64,
+        8 => vcpu.pop64()?,
+        _ => unreachable!(),
+    };
+    vcpu.set_reg(5, value, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

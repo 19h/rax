@@ -188,31 +188,6 @@ pub fn pop_r64(
     let reg = (opcode - 0x58) | ctx.any_rex_b();
     let op_size = stack_op_size(vcpu, ctx);
 
-    // Special handling for POP RSP (reg 4)
-    // Intel manual: "The POP ESP instruction increments the stack pointer (ESP)
-    // before data at the old top of stack is written into the destination."
-    // But since DEST is RSP itself, the increment to old RSP is effectively discarded.
-    // Final RSP = value read from [old_RSP]
-    if reg == 4 {
-        // POP RSP - special case: just read value and set RSP to it
-        let value = match op_size {
-            2 => vcpu.mmu.read_u16(vcpu.regs.rsp, &vcpu.sregs)? as u64,
-            4 => vcpu.mmu.read_u32(vcpu.regs.rsp, &vcpu.sregs)? as u64,
-            8 => vcpu.mmu.read_u64(vcpu.regs.rsp, &vcpu.sregs)?,
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "invalid POP RSP op size: {}",
-                    op_size
-                )));
-            }
-        };
-        // For POP RSP, the final RSP is just the value read from stack
-        // The normal +8 increment is discarded because we're writing to RSP
-        vcpu.regs.rsp = value;
-        vcpu.regs.rip += ctx.cursor as u64;
-        return Ok(None);
-    }
-
     let value = match op_size {
         2 => vcpu.pop16()? as u64,
         4 => vcpu.pop32()? as u64,
