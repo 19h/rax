@@ -1676,6 +1676,13 @@ impl X86_64Vcpu {
             0x78 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 1),
             // VPBROADCASTW (0x79, W0): broadcast 16-bit integer
             0x79 if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast(self, ctx, 2),
+            // VPBROADCASTB/W/D/Q GPR-source forms.
+            0x7A if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast_gpr(self, ctx, 1),
+            0x7B if evex.pp == 1 && !evex.w => insn::simd::evex_broadcast_gpr(self, ctx, 2),
+            0x7C if evex.pp == 1 => {
+                let es = if evex.w { 8 } else { 4 };
+                insn::simd::evex_broadcast_gpr(self, ctx, es)
+            }
 
             // FP32/FP64 FMA 132/213/231 packed and scalar families.
             0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF if evex.pp == 1 => {
