@@ -1574,6 +1574,23 @@ fn bswap_r32() {
     check("bswap32", &with_hlt(vec![0x0F, 0xC8]), r);
 }
 
+#[test]
+fn bswap_extended_register_forms() {
+    let mut r = modern_flags_regs();
+    r.r8 = 0xFFFF_FFFF_1122_3344;
+    r.r15 = 0x0011_2233_4455_6677;
+
+    check_flags_masked(
+        "bswap_extended_register_forms",
+        &with_hlt(vec![
+            0x41, 0x0F, 0xC8, // bswap r8d
+            0x49, 0x0F, 0xCF, // bswap r15
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
 // ---- POPCNT / LZCNT / TZCNT ----
 
 #[test]
@@ -2218,6 +2235,31 @@ fn movsx_byte_to_word() {
 }
 
 #[test]
+fn movx_register_byte_source_width_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_CCCC_80F2;
+    r.rbx = 0xDDDD_EEEE_FFFF_9003;
+    r.rcx = 0x1111_2222_3333_7F01;
+    r.r8 = 0x7777_8888_9999_AA80;
+    r.r9 = 0x8888_9999_AAAA_BB7F;
+
+    check_flags_masked(
+        "movx_register_byte_source_width_forms",
+        &with_hlt(vec![
+            0x0F, 0xB6, 0xD4, // movzx edx, ah
+            0x0F, 0xBE, 0xF5, // movsx esi, ch
+            0x0F, 0xB6, 0xFF, // movzx edi, bh
+            0x66, 0x0F, 0xBE, 0xC7, // movsx ax, bh
+            0x66, 0x0F, 0xB6, 0xCB, // movzx cx, bl
+            0x41, 0x0F, 0xB6, 0xE8, // movzx ebp, r8b
+            0x4D, 0x0F, 0xBE, 0xD1, // movsx r10, r9b
+        ]),
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn movx_memory_source_width_forms() {
     let mut scratch = zero_scratch();
     scratch[0] = 0xF2;
@@ -2370,6 +2412,36 @@ fn cmovcc_all_conditions() {
 }
 
 #[test]
+fn cmovcc_register_operand_width_forms() {
+    let mut r = regs();
+    r.rax = 7;
+    r.rbx = 7;
+    r.rcx = 0x1111_2222_3333_4444;
+    r.rdx = 0x5555_6666_7777_BEEF;
+    r.rbp = 0x9999_AAAA_BBBB_CCCC;
+    r.rdi = 0xDDDD_EEEE_FFFF_1234;
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x1111_2222_89AB_CDEF;
+    r.r10 = 0x2222_3333_4444_5555;
+    r.r11 = 0x6666_7777_8888_9999;
+    r.r12 = 0xAAAA_1111_BBBB_2222;
+    r.r13 = 0xCCCC_3333_DDDD_4444;
+
+    check(
+        "cmovcc_register_operand_width_forms",
+        &with_hlt(vec![
+            0x48, 0x39, 0xD8, // cmp rax, rbx -> ZF=1
+            0x66, 0x0F, 0x44, 0xCA, // cmove cx, dx
+            0x45, 0x0F, 0x44, 0xC1, // cmove r8d, r9d
+            0x4D, 0x0F, 0x44, 0xD3, // cmove r10, r11
+            0x66, 0x0F, 0x45, 0xEF, // cmovne bp, di
+            0x4D, 0x0F, 0x45, 0xE5, // cmovne r12, r13
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn cmovcc_memory_source_width_forms() {
     let mut scratch = zero_scratch();
     scratch[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
@@ -2449,6 +2521,37 @@ fn setcc_all_conditions() {
 }
 
 #[test]
+fn setcc_register_byte_destination_forms() {
+    let mut r = regs();
+    r.rax = 1;
+    r.rbx = 2;
+    r.rcx = 0x1111_2222_3333_4444;
+    r.rdx = 0x5555_6666_7777_8888;
+    r.rbp = 0x9999_AAAA_BBBB_CCCC;
+    r.rsi = 0xDDDD_EEEE_FFFF_0001;
+    r.rdi = 0x2222_3333_4444_5555;
+    r.r8 = 0x6666_7777_8888_9999;
+    r.r9 = 0xAAAA_BBBB_CCCC_DDDD;
+
+    check(
+        "setcc_register_byte_destination_forms",
+        &with_hlt(vec![
+            0x48, 0x39, 0xD8, // cmp rax, rbx -> CF=1, ZF=0, SF=1, OF=0, PF=1
+            0x0F, 0x92, 0xC4, // setb ah
+            0x0F, 0x9A, 0xC5, // setp ch
+            0x0F, 0x9C, 0xC6, // setl dh
+            0x0F, 0x9F, 0xC7, // setg bh
+            0x41, 0x0F, 0x94, 0xC0, // sete r8b
+            0x41, 0x0F, 0x96, 0xC1, // setbe r9b
+            0x40, 0x0F, 0x99, 0xC5, // setns bpl
+            0x40, 0x0F, 0x9B, 0xC6, // setnp sil
+            0x40, 0x0F, 0x93, 0xC7, // setae dil
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn setcc_memory_destination_forms() {
     let scratch = [0xAAu8; 64];
     let mut code = load_rdi_data();
@@ -2525,6 +2628,28 @@ fn lea_index_scale8_disp32() {
     check(
         "lea_sib_disp32",
         &with_hlt(vec![0x48, 0x8D, 0x84, 0xF7, 0x00, 0x10, 0x00, 0x00]),
+        r,
+    );
+}
+
+#[test]
+fn lea_extended_base_index_forms() {
+    let mut r = modern_flags_regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x0000_0000_0000_1000;
+    r.r11 = 0x0000_0000_0000_0020;
+    r.r12 = 0xFFFF_FFFF_AAAA_BBBB;
+    r.r13 = 0x0000_0001_0000_0000;
+    r.r14 = 0x0000_0000_0000_0040;
+    r.rdx = 0x0000_0000_0000_3000;
+
+    check(
+        "lea_extended_base_index_forms",
+        &with_hlt(vec![
+            0x4F, 0x8D, 0x04, 0x59, // lea r8, [r9 + r11*2]
+            0x4A, 0x8D, 0x04, 0xDA, // lea rax, [rdx + r11*8]
+            0x47, 0x8D, 0x64, 0xB5, 0xE0, // lea r12d, [r13 + r14*4 - 0x20]
+        ]),
         r,
     );
 }
@@ -4171,6 +4296,29 @@ fn movbe_memory_width_forms() {
         0x4C, 0x0F, 0x38, 0xF1, 0x47, 0x38, // movbe qword [rdi+56], r8
     ]);
     check_mem("movbe_memory_width_forms", &code, r, s, 0);
+}
+
+#[test]
+fn movbe_extended_register_base_forms() {
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&0x1122_3344u32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x1111_2222_3333_BEEF;
+    r.r10 = DATA_ADDR;
+    r.r11 = 0x4444_5555_89AB_CDEF;
+    r.r15 = 0x9999_AAAA_BBBB_CCCC;
+
+    let code = with_hlt(vec![
+        0x45, 0x0F, 0x38, 0xF0, 0x02, // movbe r8d, dword [r10]
+        0x4D, 0x0F, 0x38, 0xF0, 0x7A, 0x08, // movbe r15, qword [r10+8]
+        0x66, 0x45, 0x0F, 0x38, 0xF1, 0x4A, 0x18, // movbe word [r10+24], r9w
+        0x45, 0x0F, 0x38, 0xF1, 0x5A, 0x1C, // movbe dword [r10+28], r11d
+        0x4D, 0x0F, 0x38, 0xF1, 0x42, 0x20, // movbe qword [r10+32], r8
+    ]);
+    check_mem("movbe_extended_register_base_forms", &code, r, s, FLAG_MASK);
 }
 
 // ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
