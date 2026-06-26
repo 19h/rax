@@ -5737,6 +5737,34 @@ fn sse2_cvttps2dq_truncates() {
 }
 
 #[test]
+fn sse2_legacy_pd_dq_conversion_forms() {
+    let mut scratch = [0u8; 64];
+    for (i, value) in [-3i32, 7].iter().enumerate() {
+        scratch[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    scratch[16..32].copy_from_slice(&f64x2([2.5, -3.75]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xF3, 0x0F, 0xE6, 0xD0]); // cvtdq2pd xmm2, xmm0
+    code.extend_from_slice(&[0xF2, 0x0F, 0xE6, 0xD9]); // cvtpd2dq xmm3, xmm1
+    code.extend_from_slice(&[0x66, 0x0F, 0xE6, 0xE1]); // cvttpd2dq xmm4, xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x1F]); // movdqu [rdi], xmm3
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x67, 0x10]); // movdqu [rdi+16], xmm4
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.push(HLT);
+
+    check_mem(
+        "sse2_legacy_pd_dq_conversion_forms",
+        &code,
+        regs(),
+        scratch,
+        0,
+    );
+}
+
+#[test]
 fn sse_conversion_addr32_memory_forms() {
     let mut s = [0u8; 64];
     s[16..32].copy_from_slice(&f32x4([2.0, -4.0, 7.0, -8.0]));
@@ -11538,6 +11566,63 @@ fn aes_aeskeygenassist() {
     );
 }
 
+#[test]
+fn aes_last_round_addr32_extended_memory_forms() {
+    let scratch = || {
+        let mut s = [0u8; 64];
+        s[0..16].copy_from_slice(&[
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC,
+            0xDD, 0xEE, 0xFF,
+        ]);
+        s[16..32].copy_from_slice(&[
+            0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03,
+            0x02, 0x01, 0x00,
+        ]);
+        s
+    };
+    let store_results = |code: &mut Vec<u8>| {
+        code.extend_from_slice(&load_rdi_data());
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+        code.push(HLT);
+    };
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xDD, 0x44, 0x77, 0x10]); // aesenclast xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0xDF, 0x4C, 0x77, 0x10]); // aesdeclast xmm1, [edi+esi*2+16]
+    store_results(&mut code);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "aes_last_round_addr32_memory_forms",
+        &code,
+        r,
+        scratch(),
+        0,
+    );
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0x66, 0x43, 0x0F, 0x38, 0xDD, 0x44, 0x5A, 0x10]); // aesenclast xmm0, [r10+r11*2+16]
+    code.extend_from_slice(&[0x66, 0x43, 0x0F, 0x38, 0xDF, 0x4C, 0x5A, 0x10]); // aesdeclast xmm1, [r10+r11*2+16]
+    store_results(&mut code);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "aes_last_round_extended_memory_forms",
+        &code,
+        r,
+        scratch(),
+        0,
+    );
+}
+
 // ---------------------------------------------------------------------------
 // SHA-NI: SHA1/SHA256 message schedule and round helpers. Granite Rapids exposes
 // SHA, rax implements the 0F38/0F3A SHA opcodes, and these exact vector
@@ -11653,6 +11738,62 @@ fn sha256_round_and_schedule() {
         "sha256msg2_mem",
         &sse_program(&[0x0F, 0x38, 0xCD, 0x47, 0x10]),
         sse_scratch(sha_a(), sha_b()),
+    );
+}
+
+#[test]
+fn sha_schedule_addr32_extended_memory_forms() {
+    let schedule_scratch = || {
+        let mut s = [0u8; 64];
+        s[0..16].copy_from_slice(&sha_a());
+        s[16..32].copy_from_slice(&sha_b());
+        s
+    };
+    let store_results = |code: &mut Vec<u8>| {
+        code.extend_from_slice(&load_rdi_data());
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+        code.push(HLT);
+    };
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xCA, 0x44, 0x77, 0x10]); // sha1msg2 xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xCC, 0x4C, 0x77, 0x10]); // sha256msg1 xmm1, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x0F, 0x38, 0xCD, 0x54, 0x77, 0x10]); // sha256msg2 xmm2, [edi+esi*2+16]
+    store_results(&mut code);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem(
+        "sha_schedule_addr32_memory_forms",
+        &code,
+        r,
+        schedule_scratch(),
+        0,
+    );
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0x43, 0x0F, 0x38, 0xCA, 0x44, 0x5A, 0x10]); // sha1msg2 xmm0, [r10+r11*2+16]
+    code.extend_from_slice(&[0x43, 0x0F, 0x38, 0xCC, 0x4C, 0x5A, 0x10]); // sha256msg1 xmm1, [r10+r11*2+16]
+    code.extend_from_slice(&[0x43, 0x0F, 0x38, 0xCD, 0x54, 0x5A, 0x10]); // sha256msg2 xmm2, [r10+r11*2+16]
+    store_results(&mut code);
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 8;
+    r.r11 = 4;
+    check_mem(
+        "sha_schedule_extended_memory_forms",
+        &code,
+        r,
+        schedule_scratch(),
+        0,
     );
 }
 
