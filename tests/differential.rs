@@ -13738,6 +13738,34 @@ fn sse_non_temporal_stores() {
         zero_scratch(),
         FLAG_MASK,
     );
+
+    let mut r = regs();
+    r.rax = 0xFFFF_FFFF_89AB_CDEF;
+    r.rdi = DATA_ADDR + 8;
+    check_mem(
+        "movnti_m32",
+        &with_hlt(vec![0x0F, 0xC3, 0x07]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_movnti_extended_register_source_base() {
+    let mut r = modern_flags_regs();
+    r.r9 = 0x0123_4567_89AB_CDEF;
+    r.r10 = DATA_ADDR;
+    check_mem(
+        "movnti_extended_register_source_base",
+        &with_hlt(vec![
+            0x45, 0x0F, 0xC3, 0x4A, 0x04, // movnti dword [r10+4], r9d
+            0x4D, 0x0F, 0xC3, 0x4A, 0x10, // movnti qword [r10+16], r9
+        ]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
 }
 
 #[test]
