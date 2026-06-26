@@ -16062,6 +16062,96 @@ fn evex_zmm_vfmadd231ps_memory_disp8_form() {
 }
 
 #[test]
+fn evex_zmm_vfmadd132ps_memory_disp8_form() {
+    let lhs = [
+        1.0f32, -2.0, 3.0, -4.0, 0.5, 0.25, -8.0, 16.0, -3.5, 7.0, -9.0, 11.0,
+        -0.125, 0.5, -13.0, 17.0,
+    ];
+    let rhs = [
+        -2.0f32, 1.0, -0.5, 0.25, -4.0, 8.0, -0.125, 0.0625, -1.5, 2.0, -0.75,
+        0.5, -16.0, 32.0, -0.25, 0.125,
+    ];
+    check_evex_fma_memory_disp8(
+        "evex_zmm_vfmadd132ps_memory_disp8_form",
+        evex_dword_scratch(|i| lhs[i].to_bits()),
+        evex_f32_words(rhs),
+        &[0x62, 0xF2, 0x7D, 0x48, 0x98, 0x57, 0x01],
+    );
+}
+
+#[test]
+fn evex_zmm_vfmadd213ps_memory_disp8_form() {
+    let lhs = [
+        0.25f32, 0.5, 1.0, 2.0, -0.25, -0.5, -1.0, -2.0, 4.0, -4.0, 8.0, -8.0,
+        16.0, -16.0, 32.0, -32.0,
+    ];
+    let rhs = [
+        3.0f32, -3.0, 5.0, -5.0, 7.0, -7.0, 9.0, -9.0, 11.0, -11.0, 13.0,
+        -13.0, 15.0, -15.0, 17.0, -17.0,
+    ];
+    check_evex_fma_memory_disp8(
+        "evex_zmm_vfmadd213ps_memory_disp8_form",
+        evex_dword_scratch(|i| lhs[i].to_bits()),
+        evex_f32_words(rhs),
+        &[0x62, 0xF2, 0x7D, 0x48, 0xA8, 0x57, 0x01],
+    );
+}
+
+#[test]
+fn evex_zmm_vfmsub231ps_memory_disp8_form() {
+    let lhs = [
+        1.0f32, 2.0, 3.0, 4.0, -1.0, -2.0, -3.0, -4.0, 0.5, -0.5, 1.5, -1.5,
+        2.5, -2.5, 3.5, -3.5,
+    ];
+    let rhs = [
+        0.25f32, -0.25, 0.5, -0.5, 0.75, -0.75, 1.0, -1.0, 1.25, -1.25, 1.5,
+        -1.5, 1.75, -1.75, 2.0, -2.0,
+    ];
+    check_evex_fma_memory_disp8(
+        "evex_zmm_vfmsub231ps_memory_disp8_form",
+        evex_dword_scratch(|i| lhs[i].to_bits()),
+        evex_f32_words(rhs),
+        &[0x62, 0xF2, 0x7D, 0x48, 0xBA, 0x57, 0x01],
+    );
+}
+
+#[test]
+fn evex_zmm_vfnmadd231ps_memory_disp8_form() {
+    let lhs = [
+        -8.0f32, -7.0, -6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0,
+        5.0, 6.0, 7.0, 8.0,
+    ];
+    let rhs = [
+        2.0f32, 1.5, 1.0, 0.5, -0.5, -1.0, -1.5, -2.0, 0.25, -0.25, 0.75,
+        -0.75, 1.25, -1.25, 1.75, -1.75,
+    ];
+    check_evex_fma_memory_disp8(
+        "evex_zmm_vfnmadd231ps_memory_disp8_form",
+        evex_dword_scratch(|i| lhs[i].to_bits()),
+        evex_f32_words(rhs),
+        &[0x62, 0xF2, 0x7D, 0x48, 0xBC, 0x57, 0x01],
+    );
+}
+
+#[test]
+fn evex_zmm_vfnmsub231ps_memory_disp8_form() {
+    let lhs = [
+        0.125f32, -0.125, 0.25, -0.25, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0, 4.0,
+        -4.0, 8.0, -8.0, 16.0, -16.0,
+    ];
+    let rhs = [
+        -3.0f32, 3.0, -5.0, 5.0, -7.0, 7.0, -9.0, 9.0, -11.0, 11.0, -13.0,
+        13.0, -15.0, 15.0, -17.0, 17.0,
+    ];
+    check_evex_fma_memory_disp8(
+        "evex_zmm_vfnmsub231ps_memory_disp8_form",
+        evex_dword_scratch(|i| lhs[i].to_bits()),
+        evex_f32_words(rhs),
+        &[0x62, 0xF2, 0x7D, 0x48, 0xBE, 0x57, 0x01],
+    );
+}
+
+#[test]
 fn evex_zmm_vfmadd231pd_memory_disp8_form() {
     let lhs = [1.0f64, 2.0, -3.0, 4.0, 0.5, -0.25, 8.0, -16.0];
     let rhs = [2.0f64, -1.0, 0.5, -0.25, 4.0, -8.0, 0.125, -0.0625];
