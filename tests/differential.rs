@@ -9034,6 +9034,30 @@ fn clwb_hint_preserves_state() {
 }
 
 #[test]
+fn cache_hint_addr32_forms_preserve_state() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x55AA_33CC_F00D_C0DEu64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[16..24].copy_from_slice(&0xCAFE_BABE_7654_3210u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0xA5A5_5A5A_F0F0_0F0Fu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "cache_hint_addr32_forms",
+        &with_hlt(vec![
+            0x67, 0x0F, 0xAE, 0x3F, // clflush [edi]
+            0x67, 0x66, 0x0F, 0xAE, 0x7F, 0x08, // clflushopt [edi+8]
+            0x67, 0x66, 0x0F, 0xAE, 0x77, 0x10, // clwb [edi+16]
+            0x67, 0x0F, 0x1C, 0x47, 0x18, // cldemote [edi+24]
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn fence_and_pause_forms_preserve_state() {
     let mut r = modern_flags_regs();
     r.rax = 0x0123_4567_89AB_CDEF;
@@ -14280,6 +14304,31 @@ fn sse_non_temporal_stores() {
 }
 
 #[test]
+fn sse_non_temporal_store_addr32_forms() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x10, 0x32, 0x54, 0x76, 0x98, 0xBA, 0xDC, 0xFE, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45,
+        0x23, 0x01,
+    ]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // mov rdi, imm64
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000 | DATA_ADDR).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x0F, 0x2B, 0x47, 0x20]); // movntps [edi+0x20], xmm0
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0xE7, 0x47, 0x30]); // movntdq [edi+0x30], xmm0
+    code.push(HLT);
+
+    check_mem(
+        "sse_non_temporal_store_addr32_forms",
+        &code,
+        regs(),
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn sse_movnti_extended_register_source_base() {
     let mut r = modern_flags_regs();
     r.r9 = 0x0123_4567_89AB_CDEF;
@@ -14289,6 +14338,24 @@ fn sse_movnti_extended_register_source_base() {
         &with_hlt(vec![
             0x45, 0x0F, 0xC3, 0x4A, 0x04, // movnti dword [r10+4], r9d
             0x4D, 0x0F, 0xC3, 0x4A, 0x10, // movnti qword [r10+16], r9
+        ]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_movnti_addr32_forms() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xAABB_CCDD_EEFF_0011;
+    r.r8 = 0x8877_6655_4433_2211;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    check_mem(
+        "movnti_addr32_forms",
+        &with_hlt(vec![
+            0x67, 0x0F, 0xC3, 0x47, 0x04, // movnti dword [edi+4], eax
+            0x67, 0x4C, 0x0F, 0xC3, 0x47, 0x10, // movnti qword [edi+16], r8
         ]),
         r,
         zero_scratch(),
