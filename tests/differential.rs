@@ -3173,6 +3173,7 @@ fn movbe_store_r32() {
 // is defined per-instruction (ANDN clears CF; BLS* set CF specially). To stay on
 // the safe side we compare the architecturally-defined bits: ZF, SF, CF, OF.
 const BMI_DEFINED: u64 = flags::bits::ZF | flags::bits::SF | flags::bits::CF | flags::bits::OF;
+const BMI_BEXTR_DEFINED: u64 = flags::bits::ZF | flags::bits::CF | flags::bits::OF;
 
 #[test]
 fn bmi_andn() {
@@ -3233,6 +3234,47 @@ fn bmi_blsmsk() {
         r,
         BMI_DEFINED,
     );
+}
+
+#[test]
+fn bmi_bextr_register_widths() {
+    let mut r = regs();
+    r.rcx = 0xFEDC_BA98_7654_3210;
+    r.rbx = 12 | (20 << 8);
+    check_flags_masked(
+        "bextr_r64",
+        &with_hlt(vec![0xC4, 0xE2, 0xE0, 0xF7, 0xC1]),
+        r,
+        BMI_BEXTR_DEFINED,
+    );
+
+    let mut r = regs();
+    r.rcx = 0x8765_4321;
+    r.rbx = 13;
+    check_flags_masked(
+        "bextr_r32_zero_length",
+        &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF7, 0xC1]),
+        r,
+        BMI_BEXTR_DEFINED,
+    );
+}
+
+#[test]
+fn bmi_bextr_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[8..12].copy_from_slice(&0xF0E1_D2C3u32.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rbx = 7 | (24 << 8);
+
+    let mut code = vec![0xC4, 0xE2, 0xE0, 0xF7, 0x07]; // bextr rax, [rdi], rbx
+    code.extend_from_slice(&[0xBB]);
+    code.extend_from_slice(&(4 | (12 << 8) as u32).to_le_bytes()); // mov ebx, start=4,len=12
+    code.extend_from_slice(&[0xC4, 0xE2, 0x60, 0xF7, 0x57, 0x08]); // bextr edx, [rdi+8], ebx
+    code.push(HLT);
+    check_mem("bextr_memory_forms", &code, r, s, BMI_BEXTR_DEFINED);
 }
 
 // ---- BMI2: PEXT / PDEP / MULX / RORX / SARX / SHRX / SHLX ----
