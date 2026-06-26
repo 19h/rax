@@ -1514,6 +1514,30 @@ fn btc_reg_toggles_bit() {
     );
 }
 
+#[test]
+fn bit_test_extended_register_forms() {
+    let mut r = regs();
+    r.r8 = 1 << 9;
+    r.r9 = 73; // 73 mod 64 = 9
+    r.r10 = 0;
+    r.r11 = 5;
+    r.r12 = (1 << 8) | 1;
+    r.r13 = 72; // 72 mod 64 = 8
+    r.r14 = 0;
+    r.r15 = 130; // 130 mod 64 = 2
+    check_flags_masked(
+        "bit_test_extended_register_forms",
+        &with_hlt(vec![
+            0x4D, 0x0F, 0xA3, 0xC8, // bt r8, r9
+            0x4D, 0x0F, 0xAB, 0xDA, // bts r10, r11
+            0x4D, 0x0F, 0xB3, 0xEC, // btr r12, r13
+            0x4D, 0x0F, 0xBB, 0xFE, // btc r14, r15
+        ]),
+        r,
+        BT_DEFINED,
+    );
+}
+
 // ---- BSF / BSR (incl. zero-source, where ZF=1 and dest is undefined) ----
 
 #[test]
@@ -1680,6 +1704,36 @@ fn tzcnt_zero_source() {
     check_flags_masked(
         "tzcnt_zero",
         &with_hlt(vec![0xF3, 0x48, 0x0F, 0xBC, 0xC3]),
+        r,
+        CNT_DEFINED,
+    );
+}
+
+#[test]
+fn bit_count_register_source_width_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0x0000_0000_F0F0_F00F;
+    r.rdx = 0x0000_0000_0000_00F0;
+    r.rsi = 0x1111_2222_3333_4444;
+    r.rdi = 0x0000_0000_0000_0100;
+    r.r8 = 0x8000_0000_0000_0001;
+    r.r9 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r10 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r11 = 0x0000_0000_0000_1000;
+    r.r12 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r13 = 0x0000_0001_0000_0000;
+
+    check_flags_masked(
+        "bit_count_register_source_width_forms",
+        &with_hlt(vec![
+            0xF3, 0x0F, 0xB8, 0xCB, // popcnt ecx, ebx
+            0xF3, 0x4D, 0x0F, 0xB8, 0xC8, // popcnt r9, r8
+            0x66, 0xF3, 0x0F, 0xBD, 0xC2, // lzcnt ax, dx
+            0xF3, 0x45, 0x0F, 0xBD, 0xD3, // lzcnt r10d, r11d
+            0x66, 0xF3, 0x0F, 0xBC, 0xF7, // tzcnt si, di
+            0xF3, 0x4D, 0x0F, 0xBC, 0xE5, // tzcnt r12, r13
+        ]),
         r,
         CNT_DEFINED,
     );
@@ -3637,6 +3691,23 @@ fn x87_fucomi_equal() {
         &c,
         regs(),
         scratch_f64(&[7.5, 7.5]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_fucomi_unordered_nan_sets_flags() {
+    let qnan = f64::from_bits(0x7FF8_0000_0000_0001);
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> ST0=number
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> ST0=NaN, ST1=number
+    c.extend_from_slice(&[0xDB, 0xE9]); // fucomi st0, st1
+    c.push(HLT);
+    check_mem(
+        "x87_fucomi_unordered_nan",
+        &c,
+        regs(),
+        scratch_f64(&[qnan, 5.0]),
         FCOMI_FLAGS,
     );
 }
@@ -8534,6 +8605,31 @@ fn crc32_r64_r64() {
 }
 
 #[test]
+fn crc32_register_source_width_forms() {
+    let mut r = regs();
+    r.rax = 0x0000_0000_FFFF_FFFF;
+    r.rbx = 0x0000_0000_1234_BEEF;
+    r.rcx = 0x0000_0000_89AB_CDEF;
+    r.rdx = 0x0000_0000_1357_9BDF;
+    r.r8 = 0x0000_0000_0000_00A7;
+    r.r9 = 0x0000_0000_2468_ACE0;
+    r.r10 = 0x0000_0000_FEDC_BA98;
+    r.r11 = 0x0123_4567_89AB_CDEF;
+
+    check_gpr_only(
+        "crc32_register_source_width_forms",
+        &with_hlt(vec![
+            0xF2, 0x0F, 0x38, 0xF1, 0xC3, // crc32 eax, ebx
+            0x66, 0xF2, 0x0F, 0x38, 0xF1, 0xCB, // crc32 ecx, bx
+            0xF2, 0x48, 0x0F, 0x38, 0xF0, 0xD0, // crc32 rdx, al
+            0xF2, 0x45, 0x0F, 0x38, 0xF0, 0xC8, // crc32 r9d, r8b
+            0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xD3, // crc32 r10, r11
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn crc32_r32_mem8() {
     // CRC32 r32, m8 (F2 0F 38 F0 /r) reading [rdi]. Memory operand form.
     let mut s = [0u8; 64];
@@ -9533,6 +9629,21 @@ fn rdpid_r32_zero_extends_destination() {
 }
 
 #[test]
+fn rdpid_extended_register_forms_preserve_flags() {
+    let mut r = modern_flags_regs();
+    r.r8 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r15 = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdpid_extended_register_forms_preserve_flags",
+        &with_hlt(vec![
+            0xF3, 0x41, 0x0F, 0xC7, 0xF8, // rdpid r8d
+            0xF3, 0x49, 0x0F, 0xC7, 0xFF, // rdpid r15
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn rdrand_r64_success_flags() {
     let mut r = modern_flags_regs();
     r.rax = 0xFFFF_FFFF_FFFF_FFFF;
@@ -9627,6 +9738,44 @@ fn rdseed_r32_zero_extends_destination() {
         ]),
         r,
         FLAG_MASK & !flags::bits::AF,
+    );
+}
+
+#[test]
+fn rdrand_rdseed_extended_register_width_forms() {
+    let mut r = modern_flags_regs();
+    r.r8 = 0x1122_3344_5566_7788;
+    r.r9 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r11 = 0x8877_6655_4433_2211;
+    r.r12 = 0xFFFF_FFFF_FFFF_FFFF;
+
+    check(
+        "rdrand_rdseed_extended_register_width_forms",
+        &with_hlt(vec![
+            0x66, 0x41, 0x0F, 0xC7, 0xF0, // retry: rdrand r8w
+            0x73, 0xF9, // jnc retry
+            0x48, 0xB8, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // mov rax, -0x10000
+            0x49, 0x21, 0xC0, // and r8, rax
+            0x41, 0x0F, 0xC7, 0xF1, // retry: rdrand r9d
+            0x73, 0xFA, // jnc retry
+            0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // mov rax, -0x100000000
+            0x49, 0x21, 0xC1, // and r9, rax
+            0x49, 0x0F, 0xC7, 0xF2, // retry: rdrand r10
+            0x73, 0xFA, // jnc retry
+            0x49, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x00, // mov r10, 0
+            0x66, 0x41, 0x0F, 0xC7, 0xFB, // retry: rdseed r11w
+            0x73, 0xF9, // jnc retry
+            0x48, 0xB8, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // mov rax, -0x10000
+            0x49, 0x21, 0xC3, // and r11, rax
+            0x41, 0x0F, 0xC7, 0xFC, // retry: rdseed r12d
+            0x73, 0xFA, // jnc retry
+            0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // mov rax, -0x100000000
+            0x49, 0x21, 0xC4, // and r12, rax
+            0x49, 0x0F, 0xC7, 0xFD, // retry: rdseed r13
+            0x73, 0xFA, // jnc retry
+            0x49, 0xC7, 0xC5, 0x00, 0x00, 0x00, 0x00, // mov r13, 0
+        ]),
+        r,
     );
 }
 
@@ -10830,6 +10979,45 @@ fn lock_xadd_mem() {
         s,
         FLAG_MASK,
     );
+}
+
+#[test]
+fn lock_memory_rmw_group_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x10u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0xFF00u64.to_le_bytes());
+    s[16..24].copy_from_slice(&0x20u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0x02u64.to_le_bytes());
+    s[40..48].copy_from_slice(&0x55u64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xF0, 0x48, 0x83, 0x07, 0x05, // lock add qword [rdi], 5
+        0xF0, 0x48, 0xFF, 0x07, // lock inc qword [rdi]
+        0x48, 0xB8, // mov rax, 0x0f0f
+    ]);
+    code.extend_from_slice(&0x0F0Fu64.to_le_bytes());
+    code.extend_from_slice(&[
+        0xF0, 0x48, 0x31, 0x47, 0x08, // lock xor [rdi+8], rax
+        0xF0, 0x48, 0xF7, 0x5F, 0x10, // lock neg qword [rdi+0x10]
+        0x48, 0xBB, // mov rbx, 0xa5
+    ]);
+    code.extend_from_slice(&0xA5u64.to_le_bytes());
+    code.extend_from_slice(&[
+        0xF0, 0x48, 0x87, 0x5F, 0x18, // lock xchg [rdi+0x18], rbx
+        0x48, 0xB8, // mov rax, 0x55
+    ]);
+    code.extend_from_slice(&0x55u64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xB9]); // mov rcx, 0xaa
+    code.extend_from_slice(&0xAAu64.to_le_bytes());
+    code.extend_from_slice(&[
+        0xF0, 0x48, 0x0F, 0xB1, 0x4F, 0x28, // lock cmpxchg [rdi+0x28], rcx
+        HLT,
+    ]);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem("lock_memory_rmw_group_forms", &code, r, s, FLAG_MASK);
 }
 
 #[test]
@@ -13493,6 +13681,35 @@ fn hint_prefetch_and_nop_forms_preserve_state() {
             0x0F, 0x0D, 0x17, // prefetchwt1 [rdi]
             0xF3, 0x0F, 0x1E, 0xFA, // endbr64
             0x0F, 0x1F, 0x44, 0x00, 0x00, // nop dword ptr [rax+rax]
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn prefetch_extended_address_forms_preserve_state() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[16..24].copy_from_slice(&0xA55A_F00D_DEAD_BEEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.r8 = DATA_ADDR;
+    r.r9 = 0;
+    r.r14 = 0;
+    r.r15 = DATA_ADDR + 24;
+    check_mem(
+        "prefetch_extended_address_forms",
+        &with_hlt(vec![
+            0x41, 0x0F, 0x18, 0x00, // prefetchnta [r8]
+            0x41, 0x0F, 0x18, 0x0F, // prefetcht0 [r15]
+            0x43, 0x0F, 0x18, 0x54, 0x88, 0x10, // prefetcht1 [r8 + r9*4 + 16]
+            0x43, 0x0F, 0x18, 0x5C, 0x77, 0xF8, // prefetcht2 [r15 + r14*2 - 8]
+            0x41, 0x0F, 0x0D, 0x08, // prefetchw [r8]
+            0x41, 0x0F, 0x0D, 0x17, // prefetchwt1 [r15]
+            0x43, 0x0F, 0x0D, 0x4C, 0x88, 0x10, // prefetchw [r8 + r9*4 + 16]
+            0x43, 0x0F, 0x0D, 0x54, 0x77, 0xF8, // prefetchwt1 [r15 + r14*2 - 8]
         ]),
         r,
         s,
