@@ -14271,3 +14271,185 @@ fn evex_zmm_pack_saturate_memory_disp8_forms() {
         evex_shuffle_scratch(),
     );
 }
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 54: EVEX immediate shift and rotate memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_imm_shift_rotate_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &evex_shuffle_source());
+    code.extend_from_slice(&[0x62, 0xF1, 0x5D, 0x48, 0x73, 0x7F, 0x01, 0x05]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0x72, 0x67, 0x01, 0x03]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xF5, 0x58, 0x73, 0x57, 0x08, 0x07]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x6D, 0x48, 0x72, 0x4F, 0x01, 0x0B]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xE5, 0x58, 0x72, 0x47, 0x08, 0x0D]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC4]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC1]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEB, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_imm_shift_rotate_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 55: EVEX immediate funnel-shift memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_funnel_shift_imm_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &evex_shuffle_source());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF3, 0x75, 0x48, 0x71, 0x47, 0x01, 0x05]);
+    code.extend_from_slice(&[0x62, 0xF3, 0xF5, 0x58, 0x73, 0x57, 0x08, 0x0B]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_funnel_shift_imm_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 56: EVEX xmm-count shift memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_xmm_count_shift_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(
+        &mut code,
+        &[
+            3,
+            0x7161_5141_3121_1101,
+            0x8899_aabb_ccdd_eeff,
+            0x0f1e_2d3c_4b5a_6978,
+            0xf0e1_d2c3_b4a5_9687,
+            0x7654_3210_fedc_ba98,
+            0x1357_9bdf_2468_ace0,
+            0xcafe_babe_dead_beef,
+        ],
+    );
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x75, 0x48, 0xF2, 0x47, 0x04]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xF5, 0x48, 0xD3, 0x57, 0x04]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x75, 0x48, 0xE2, 0x5F, 0x04]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_xmm_count_shift_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 57: EVEX per-element shift count memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_per_elem_shift_count_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &[1, 2, 3, 4, 5, 6, 7, 8]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x48, 0x47, 0x47, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF2, 0xF5, 0x58, 0x45, 0x57, 0x08]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x58, 0x46, 0x5F, 0x10]);
+    code.extend_from_slice(&[0x62, 0xF2, 0xF5, 0x48, 0x10, 0x67, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC4]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_per_elem_shift_count_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 58: EVEX per-element rotate count memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_per_elem_rotate_count_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &[1, 2, 3, 4, 5, 6, 7, 8]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x48, 0x15, 0x47, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF2, 0xF5, 0x58, 0x14, 0x57, 0x08]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x58, 0x14, 0x5F, 0x10]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_per_elem_rotate_count_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 59: EVEX variable funnel-shift count memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_funnel_shift_count_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &[1, 2, 3, 4, 5, 6, 7, 8]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x17]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x1F]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x27]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x48, 0x71, 0x47, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF2, 0x75, 0x58, 0x73, 0x57, 0x10]);
+    code.extend_from_slice(&[0x62, 0xF2, 0xF5, 0x58, 0x73, 0x5F, 0x08]);
+    code.extend_from_slice(&[0x62, 0xF2, 0xF5, 0x48, 0x70, 0x67, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC4]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_funnel_shift_count_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 60: EVEX VALIGN memory forms.
+// ===========================================================================
+
+#[test]
+fn evex_zmm_valign_memory_disp8_forms() {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &evex_shuffle_source());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x0F]);
+    code.extend_from_slice(&[0x62, 0xF3, 0x75, 0x48, 0x03, 0x47, 0x01, 0x03]);
+    code.extend_from_slice(&[0x62, 0xF3, 0xF5, 0x58, 0x03, 0x57, 0x08, 0x01]);
+    code.extend_from_slice(&[0x62, 0xF3, 0x75, 0x58, 0x03, 0x5F, 0x10, 0x02]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC2]);
+    code.extend_from_slice(&[0x62, 0xF1, 0x7D, 0x48, 0xEF, 0xC3]);
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]);
+    code.push(HLT);
+    check_evex_mem(
+        "evex_zmm_valign_memory_disp8_forms",
+        &code,
+        evex_shuffle_scratch(),
+    );
+}

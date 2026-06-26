@@ -6770,12 +6770,18 @@ pub fn evex_shift_bytes_imm(
         ));
     }
 
+    let modrm_start = ctx.cursor;
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
     let src_reg = evex_rm_vec(&evex, rm);
     let imm = ctx.consume_u8()? as usize;
 
     let vl_bytes = vl_bytes_of(evex.ll);
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes)
+    } else {
+        addr
+    };
     let src = if is_memory {
         load_mem_bytes(vcpu, addr, 1, vl_bytes)?
     } else {
@@ -6815,6 +6821,7 @@ pub fn evex_shift_imm(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX shift requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     // Destination = EVEX.vvvv (the group-encoded shift writes back to vvvv).
@@ -6823,6 +6830,12 @@ pub fn evex_shift_imm(
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast { elem_size } else { vl_bytes };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
 
     // src elements, then imm8 shift count.
     let src_bytes = if is_memory {
@@ -6879,12 +6892,19 @@ pub fn evex_rotate_imm(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX rotate requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
     let src_reg = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast { elem_size } else { vl_bytes };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src_bytes = if is_memory {
         if evex.broadcast {
             let elem = vcpu.read_mem(addr, elem_size as u8)?;
@@ -6936,12 +6956,23 @@ pub fn evex_funnel_shift_imm(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX funnel shift requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let imm = ctx.consume_u8()? as u64;
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast && matches!(elem_size, 4 | 8) {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let primary_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let secondary_bytes = if is_memory {
         if evex.broadcast && matches!(elem_size, 4 | 8) {
@@ -6996,11 +7027,17 @@ pub fn evex_shift_var(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX shift requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, 16)
+    } else {
+        addr
+    };
 
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
 
@@ -7047,11 +7084,22 @@ pub fn evex_funnel_shift_per_elem(
         Error::Emulator("EVEX variable funnel shift requires EVEX prefix".to_string())
     })?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, count_reg) = evex_three_op(&evex, reg, rm);
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast && matches!(elem_size, 4 | 8) {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let dest_old = read_reg_bytes(vcpu, dest, vl_bytes);
     let secondary_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let count_bytes = if is_memory {
@@ -7107,11 +7155,22 @@ pub fn evex_shift_per_elem(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX variable shift requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast && matches!(elem_size, 4 | 8) {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let count_bytes = if is_memory {
         if evex.broadcast && matches!(elem_size, 4 | 8) {
@@ -7165,11 +7224,22 @@ pub fn evex_rotate_per_elem(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX variable rotate requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let count_bytes = if is_memory {
         if evex.broadcast {
@@ -7223,12 +7293,23 @@ pub fn evex_valign(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX valign requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
     let imm = ctx.consume_u8()?;
 
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let addr = if is_memory {
+        let scale = if evex.broadcast {
+            elem_size
+        } else {
+            vl_bytes
+        };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+    } else {
+        addr
+    };
     let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
     let src2_bytes = if is_memory {
         if evex.broadcast {
