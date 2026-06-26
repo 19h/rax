@@ -11275,3 +11275,37 @@ fn avx_scalar_vcvtsi_and_vcvts2si_memory_forms() {
     code.push(HLT);
     check_avx_mem("avx_scalar_vcvtsi_and_vcvts2si_memory_forms", &code, s);
 }
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 22: x87 BCD and truncating integer store forms.
+// ===========================================================================
+
+#[test]
+fn x87_fbld_fbstp_positive_and_negative_bcd() {
+    let mut s = [0u8; 64];
+    s[0..10].copy_from_slice(&[0x90, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0, 0]);
+    s[16..26].copy_from_slice(&[0x10, 0x32, 0x54, 0x76, 0x98, 0, 0, 0, 0, 0x80]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xDF, 0x27]); // fbld tbyte [rdi]
+    code.extend_from_slice(&[0xDF, 0x77, 0x20]); // fbstp tbyte [rdi+32]
+    code.extend_from_slice(&[0xDF, 0x67, 0x10]); // fbld tbyte [rdi+16]
+    code.extend_from_slice(&[0xDF, 0x77, 0x30]); // fbstp tbyte [rdi+48]
+    code.push(HLT);
+    check_mem("x87_fbld_fbstp_bcd", &code, regs(), s, 0);
+}
+
+#[test]
+fn x87_fisttp_widths_truncate_toward_zero() {
+    let s = scratch_f64(&[-3.75, 12_345.875, -9_876_543_210.25]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    code.extend_from_slice(&[0xDF, 0x4F, 0x20]); // fisttp word [rdi+32]
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
+    code.extend_from_slice(&[0xDB, 0x4F, 0x24]); // fisttp dword [rdi+36]
+    code.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+16]
+    code.extend_from_slice(&[0xDD, 0x4F, 0x28]); // fisttp qword [rdi+40]
+    code.push(HLT);
+    check_mem("x87_fisttp_widths", &code, regs(), s, 0);
+}
