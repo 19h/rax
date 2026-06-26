@@ -30,7 +30,7 @@ fn maddubs(a: u8, b: i8, c: u8, d: i8) -> i16 {
 
 fn sign_byte(dst: u8, src: i8) -> u8 {
     if src < 0 {
-        (-(dst as i8)) as u8
+        (dst as i8).wrapping_neg() as u8
     } else if src == 0 {
         0
     } else {
@@ -40,7 +40,7 @@ fn sign_byte(dst: u8, src: i8) -> u8 {
 
 fn sign_word(dst: u16, src: i16) -> u16 {
     if src < 0 {
-        (-(dst as i16)) as u16
+        (dst as i16).wrapping_neg() as u16
     } else if src == 0 {
         0
     } else {
@@ -50,7 +50,7 @@ fn sign_word(dst: u16, src: i16) -> u16 {
 
 fn sign_dword(dst: u32, src: i32) -> u32 {
     if src < 0 {
-        (-(dst as i32)) as u32
+        (dst as i32).wrapping_neg() as u32
     } else if src == 0 {
         0
     } else {

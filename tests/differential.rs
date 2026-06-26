@@ -1129,6 +1129,18 @@ fn sse_program(op: &[u8]) -> Vec<u8> {
     code
 }
 
+/// Build a guest program for memory-source SSE instructions: load xmm0 from
+/// scratch, clear xmm1, run `op` against memory, store xmm0 back, HLT.
+fn sse_memory_source_program(op: &[u8]) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x66, 0x0F, 0xEF, 0xC9]); // pxor xmm1, xmm1
+    code.extend_from_slice(op);
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    code.push(HLT);
+    code
+}
+
 /// Build a 64-byte scratch page from two 16-byte inputs.
 fn sse_scratch(a: [u8; 16], b: [u8; 16]) -> [u8; 64] {
     let mut s = [0u8; 64];
@@ -3048,6 +3060,40 @@ fn sse3_movddup() {
         &sse_program(&[0xF2, 0x0F, 0x12, 0xC1]),
         sse_scratch(a, b.try_into().unwrap()),
     );
+}
+
+#[test]
+fn sse3_packed_memory_sources() {
+    let ps_a = f32x4([8.0, 1.5, -4.0, 2.0]);
+    let ps_b = f32x4([3.0, -2.0, 10.0, 0.5]);
+    for (label, op) in [
+        ("haddps_mem", [0xF2, 0x0F, 0x7C, 0x47, 0x10]),
+        ("hsubps_mem", [0xF2, 0x0F, 0x7D, 0x47, 0x10]),
+        ("addsubps_mem", [0xF2, 0x0F, 0xD0, 0x47, 0x10]),
+        ("movsldup_mem", [0xF3, 0x0F, 0x12, 0x47, 0x10]),
+        ("movshdup_mem", [0xF3, 0x0F, 0x16, 0x47, 0x10]),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&op),
+            sse_scratch(ps_a, ps_b),
+        );
+    }
+
+    let pd_a = f64x2([16.0, 1.25]);
+    let pd_b = f64x2([3.5, -8.0]);
+    for (label, op) in [
+        ("haddpd_mem", [0x66, 0x0F, 0x7C, 0x47, 0x10]),
+        ("hsubpd_mem", [0x66, 0x0F, 0x7D, 0x47, 0x10]),
+        ("addsubpd_mem", [0x66, 0x0F, 0xD0, 0x47, 0x10]),
+        ("movddup_mem", [0xF2, 0x0F, 0x12, 0x47, 0x10]),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&op),
+            sse_scratch(pd_a, pd_b),
+        );
+    }
 }
 
 #[test]
@@ -5981,6 +6027,51 @@ fn ssse3_pmaddubsw() {
 }
 
 #[test]
+fn ssse3_memory_source_forms() {
+    let a = u16x8([
+        0x7FFF, 0x7FFF, 0x8000, 0x8000, 0x0001, 0xFFFF, 0x4000, 0x4000,
+    ]);
+    let b = u16x8([
+        0x0001, 0xFFFF, 0x0000, 0x8000, 0x7FFF, 0x0001, 0xC000, 0xC000,
+    ]);
+
+    for (label, opcode) in [
+        ("pshufb_mem", 0x00),
+        ("phaddw_mem", 0x01),
+        ("phaddd_mem", 0x02),
+        ("phaddsw_mem", 0x03),
+        ("pmaddubsw_mem", 0x04),
+        ("phsubw_mem", 0x05),
+        ("phsubd_mem", 0x06),
+        ("phsubsw_mem", 0x07),
+        ("psignb_mem", 0x08),
+        ("psignw_mem", 0x09),
+        ("psignd_mem", 0x0A),
+        ("pmulhrsw_mem", 0x0B),
+        ("pabsb_mem", 0x1C),
+        ("pabsw_mem", 0x1D),
+        ("pabsd_mem", 0x1E),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&[0x66, 0x0F, 0x38, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+
+    check_sse(
+        "palignr_mem",
+        &sse_memory_source_program(&[0x66, 0x0F, 0x3A, 0x0F, 0x47, 0x10, 0x05]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "palignr_mem_edge",
+        &sse_memory_source_program(&[0x66, 0x0F, 0x3A, 0x0F, 0x47, 0x10, 0x12]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
 fn ssse3_pabsb() {
     // PABSB xmm0, xmm1 = 66 0F 38 1C C1 : per-byte absolute value (src xmm1 -> xmm0).
     // abs(-128) saturates to 0x80 (stays -128 pattern) per the ISA.
@@ -7851,6 +7942,126 @@ fn sse4_packusdw() {
     );
 }
 
+#[test]
+fn sse4_0f38_memory_source_forms() {
+    let a = [
+        0x80, 0x01, 0x7F, 0xFF, 0x00, 0x80, 0xFF, 0x7F, 0x34, 0x12, 0xCC, 0xDD, 0x10, 0x20,
+        0xF0, 0xE0,
+    ];
+    let b = [
+        0x01, 0xFF, 0x80, 0x7F, 0x00, 0x40, 0xC0, 0x10, 0xFF, 0x7F, 0x00, 0x80, 0x55, 0xAA,
+        0x33, 0xCC,
+    ];
+
+    for (label, opcode) in [
+        ("pmovsxbw_mem", 0x20),
+        ("pmovsxbd_mem", 0x21),
+        ("pmovsxbq_mem", 0x22),
+        ("pmovsxwd_mem", 0x23),
+        ("pmovsxwq_mem", 0x24),
+        ("pmovsxdq_mem", 0x25),
+        ("pmuldq_mem", 0x28),
+        ("pcmpeqq_mem", 0x29),
+        ("movntdqa_mem", 0x2A),
+        ("packusdw_mem", 0x2B),
+        ("pmovzxbw_mem", 0x30),
+        ("pmovzxbd_mem", 0x31),
+        ("pmovzxbq_mem", 0x32),
+        ("pmovzxwd_mem", 0x33),
+        ("pmovzxwq_mem", 0x34),
+        ("pmovzxdq_mem", 0x35),
+        ("pcmpgtq_mem", 0x37),
+        ("pminsb_mem", 0x38),
+        ("pminsd_mem", 0x39),
+        ("pminuw_mem", 0x3A),
+        ("pminud_mem", 0x3B),
+        ("pmaxsb_mem", 0x3C),
+        ("pmaxsd_mem", 0x3D),
+        ("pmaxuw_mem", 0x3E),
+        ("pmaxud_mem", 0x3F),
+        ("pmulld_mem", 0x40),
+        ("phminposuw_mem", 0x41),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&[0x66, 0x0F, 0x38, opcode, 0x47, 0x10]),
+            sse_scratch(a, b),
+        );
+    }
+}
+
+#[test]
+fn sse4_variable_blend_memory_source_forms() {
+    let blendv_mem_program = |opcode| {
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+        code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x47, 0x20]); // movdqu xmm0, [rdi+0x20]
+        code.extend_from_slice(&[0x66, 0x0F, 0x38, opcode, 0x57, 0x10]); // blendv* xmm2, [rdi+0x10]
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x30]); // movdqu [rdi+0x30], xmm2
+        code.push(HLT);
+        code
+    };
+    let scratch = |dst: [u8; 16], src: [u8; 16], mask: [u8; 16]| {
+        let mut s = [0u8; 64];
+        s[0..16].copy_from_slice(&dst);
+        s[16..32].copy_from_slice(&src);
+        s[32..48].copy_from_slice(&mask);
+        s
+    };
+
+    let mut byte_mask = [0u8; 16];
+    for (i, m) in byte_mask.iter_mut().enumerate() {
+        *m = if i % 3 == 1 { 0x80 } else { 0x00 };
+    }
+    check_sse(
+        "pblendvb_mem",
+        &blendv_mem_program(0x10),
+        scratch(
+            [
+                0x10, 0x11, 0x12, 0x13, 0x20, 0x21, 0x22, 0x23, 0x30, 0x31, 0x32, 0x33, 0x40,
+                0x41, 0x42, 0x43,
+            ],
+            [
+                0xA0, 0xA1, 0xA2, 0xA3, 0xB0, 0xB1, 0xB2, 0xB3, 0xC0, 0xC1, 0xC2, 0xC3, 0xD0,
+                0xD1, 0xD2, 0xD3,
+            ],
+            byte_mask,
+        ),
+    );
+
+    let blendvps_mask = [
+        0x8000_0000u32.to_le_bytes(),
+        0x0000_0000u32.to_le_bytes(),
+        0x8000_0000u32.to_le_bytes(),
+        0x0000_0000u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "blendvps_mem",
+        &blendv_mem_program(0x14),
+        scratch(
+            f32x4([1.0, 2.0, 3.0, 4.0]),
+            f32x4([10.0, 20.0, 30.0, 40.0]),
+            blendvps_mask.try_into().unwrap(),
+        ),
+    );
+
+    let blendvpd_mask = [
+        0x0000_0000_0000_0000u64.to_le_bytes(),
+        0x8000_0000_0000_0000u64.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "blendvpd_mem",
+        &blendv_mem_program(0x15),
+        scratch(
+            f64x2([1.0, 2.0]),
+            f64x2([10.0, 20.0]),
+            blendvpd_mask.try_into().unwrap(),
+        ),
+    );
+}
+
 // ---- SSE4.1 DPPS / DPPD (dot product) — exactly-representable inputs ----
 
 #[test]
@@ -7882,6 +8093,58 @@ fn sse4_dppd() {
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
     prog.push(HLT);
     check_sse("dppd", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_0f3a_memory_source_forms() {
+    let ps_a = f32x4([1.0, 11.0, 12.0, 13.0]);
+    let ps_b = f32x4([2.5, -1.4, 3.5, -2.9]);
+    for (label, opcode, imm) in [
+        ("roundps_mem", 0x08, 0x00),
+        ("roundss_mem", 0x0A, 0x00),
+        ("blendps_mem", 0x0C, 0b0101),
+        ("dpps_mem", 0x40, 0xF1),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&[0x66, 0x0F, 0x3A, opcode, 0x47, 0x10, imm]),
+            sse_scratch(ps_a, ps_b),
+        );
+    }
+
+    let pd_a = f64x2([1.0, 99.0]);
+    let pd_b = f64x2([2.5, -3.5]);
+    for (label, opcode, imm) in [
+        ("roundpd_mem", 0x09, 0x00),
+        ("roundsd_mem", 0x0B, 0x01),
+        ("blendpd_mem", 0x0D, 0b10),
+        ("dppd_mem", 0x41, 0x33),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&[0x66, 0x0F, 0x3A, opcode, 0x47, 0x10, imm]),
+            sse_scratch(pd_a, pd_b),
+        );
+    }
+
+    let a = [
+        0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0,
+        0xE0, 0xF0,
+    ];
+    let b = [
+        0x05, 0x15, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x85, 0x95, 0xA5, 0xB5, 0xC5, 0xD5,
+        0xE5, 0xF5,
+    ];
+    for (label, opcode, imm) in [
+        ("pblendw_mem", 0x0E, 0b1010_0101),
+        ("mpsadbw_mem", 0x42, 0x05),
+    ] {
+        check_sse(
+            label,
+            &sse_memory_source_program(&[0x66, 0x0F, 0x3A, opcode, 0x47, 0x10, imm]),
+            sse_scratch(a, b),
+        );
+    }
 }
 
 // ---- SSE4.1 PBLENDW / BLENDPS (imm-controlled blends) ----
@@ -9343,6 +9606,15 @@ fn mmx_program(op: &[u8]) -> Vec<u8> {
     code
 }
 
+fn mmx_memory_source_program(opcode: u8) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x0F, opcode, 0x47, 0x08]); // <op> mm0, [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    code.push(HLT);
+    code
+}
+
 #[test]
 fn sse_movups_movupd_unaligned_load_store() {
     let mut s = [0u8; 64];
@@ -9415,6 +9687,134 @@ fn mmx_maskmovq_selected_bytes() {
     code.extend_from_slice(&[0x0F, 0xF7, 0xC1]); // maskmovq mm0, mm1
     code.push(HLT);
     check_mem("maskmovq", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_unpack_memory_source_forms() {
+    let a = [0x00, 0x01, 0x02, 0x03, 0x70, 0x71, 0x72, 0x73];
+    let b = [0x80, 0x81, 0x82, 0x83, 0xF0, 0xF1, 0xF2, 0xF3];
+
+    for (label, opcode) in [
+        ("mmx_punpcklbw_mem", 0x60),
+        ("mmx_punpcklwd_mem", 0x61),
+        ("mmx_punpckldq_mem", 0x62),
+        ("mmx_punpckhbw_mem", 0x68),
+        ("mmx_punpckhwd_mem", 0x69),
+        ("mmx_punpckhdq_mem", 0x6A),
+    ] {
+        check_mem(
+            label,
+            &mmx_memory_source_program(opcode),
+            regs(),
+            mmx_scratch(a, b),
+            0,
+        );
+    }
+}
+
+#[test]
+fn mmx_arithmetic_memory_source_forms() {
+    let a = [0x7F, 0x80, 0xFF, 0x00, 0x10, 0xF0, 0x55, 0xAA];
+    let b = [0x01, 0xFF, 0x01, 0xFF, 0xF0, 0x20, 0xAA, 0x55];
+
+    for (label, opcode) in [
+        ("mmx_paddq_mem", 0xD4),
+        ("mmx_paddusb_mem", 0xDC),
+        ("mmx_paddusw_mem", 0xDD),
+        ("mmx_paddsb_mem", 0xEC),
+        ("mmx_paddsw_mem", 0xED),
+        ("mmx_paddb_mem", 0xFC),
+        ("mmx_paddw_mem", 0xFD),
+        ("mmx_paddd_mem", 0xFE),
+        ("mmx_psubusb_mem", 0xD8),
+        ("mmx_psubusw_mem", 0xD9),
+        ("mmx_psubsb_mem", 0xE8),
+        ("mmx_psubsw_mem", 0xE9),
+        ("mmx_psubb_mem", 0xF8),
+        ("mmx_psubw_mem", 0xF9),
+        ("mmx_psubd_mem", 0xFA),
+        ("mmx_psubq_mem", 0xFB),
+    ] {
+        check_mem(
+            label,
+            &mmx_memory_source_program(opcode),
+            regs(),
+            mmx_scratch(a, b),
+            0,
+        );
+    }
+}
+
+#[test]
+fn mmx_compare_logical_memory_source_forms() {
+    let a = [0x80, 0x7F, 0x00, 0xFF, 0x34, 0x12, 0xAA, 0x55];
+    let b = [0x7F, 0x7F, 0x00, 0x01, 0x78, 0x56, 0x55, 0xAA];
+
+    for (label, opcode) in [
+        ("mmx_pcmpeqb_mem", 0x74),
+        ("mmx_pcmpeqw_mem", 0x75),
+        ("mmx_pcmpeqd_mem", 0x76),
+        ("mmx_pcmpgtb_mem", 0x64),
+        ("mmx_pcmpgtw_mem", 0x65),
+        ("mmx_pcmpgtd_mem", 0x66),
+        ("mmx_pand_mem", 0xDB),
+        ("mmx_pandn_mem", 0xDF),
+        ("mmx_por_mem", 0xEB),
+        ("mmx_pxor_mem", 0xEF),
+    ] {
+        check_mem(
+            label,
+            &mmx_memory_source_program(opcode),
+            regs(),
+            mmx_scratch(a, b),
+            0,
+        );
+    }
+}
+
+#[test]
+fn mmx_multiply_average_minmax_memory_source_forms() {
+    let a = [
+        0x0002u16.to_le_bytes(),
+        0xFFFEu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let b = [
+        0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+
+    for (label, opcode) in [
+        ("mmx_pmullw_mem", 0xD5),
+        ("mmx_pmulhuw_mem", 0xE4),
+        ("mmx_pmulhw_mem", 0xE5),
+        ("mmx_pmuludq_mem", 0xF4),
+        ("mmx_pmaddwd_mem", 0xF5),
+        ("mmx_psadbw_mem", 0xF6),
+        ("mmx_pavgb_mem", 0xE0),
+        ("mmx_pavgw_mem", 0xE3),
+        ("mmx_pminub_mem", 0xDA),
+        ("mmx_pmaxub_mem", 0xDE),
+        ("mmx_pminsw_mem", 0xEA),
+        ("mmx_pmaxsw_mem", 0xEE),
+    ] {
+        check_mem(
+            label,
+            &mmx_memory_source_program(opcode),
+            regs(),
+            mmx_scratch(a, b),
+            0,
+        );
+    }
 }
 
 #[test]
