@@ -4171,6 +4171,56 @@ fn load_rdi_data() -> Vec<u8> {
     c
 }
 
+fn append_mov_r64_imm64(code: &mut Vec<u8>, reg: u8, value: u64) {
+    assert!(reg < 8, "only low GPR movabs encodings are supported");
+    code.extend_from_slice(&[0x48, 0xB8 + reg]); // mov r64, imm64
+    code.extend_from_slice(&value.to_le_bytes());
+}
+
+fn append_seed_absolute_bytes(code: &mut Vec<u8>, addr: u64, bytes: &[u8]) {
+    append_mov_r64_imm64(code, 7, addr); // rdi = addr
+    for (offset, byte) in bytes.iter().enumerate() {
+        let offset = u8::try_from(offset).expect("seed byte offset fits in disp8");
+        if offset == 0 {
+            code.extend_from_slice(&[0xC6, 0x07, *byte]); // mov byte ptr [rdi], imm8
+        } else {
+            code.extend_from_slice(&[0xC6, 0x47, offset, *byte]); // mov byte ptr [rdi+disp8], imm8
+        }
+    }
+}
+
+fn append_store_rax_to_data_offset(code: &mut Vec<u8>, offset: u8) {
+    append_mov_r64_imm64(code, 7, DATA_ADDR); // rdi = DATA_ADDR
+    if offset == 0 {
+        code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    } else {
+        code.extend_from_slice(&[0x48, 0x89, 0x47, offset]); // mov [rdi+disp8], rax
+    }
+}
+
+fn check_scratch_expected(
+    label: &str,
+    code: &[u8],
+    init: Registers,
+    expected: [u8; 64],
+    flag_mask: u64,
+) {
+    let Some((interp, kvm)) = run_both(code, init, zero_scratch()) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask,
+        scratch: true,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+    assert_eq!(
+        interp.scratch, expected,
+        "expected interpreter scratch for {label}"
+    );
+    assert_eq!(kvm.scratch, expected, "expected KVM scratch for {label}");
+}
+
 /// Build a 64-byte scratch page from a list of f64 inputs laid out from offset 0.
 fn scratch_f64(vals: &[f64]) -> [u8; 64] {
     let mut s = [0u8; 64];
@@ -7139,6 +7189,199 @@ fn movbe_extended_indexed_load_store_forms() {
         0x4F, 0x0F, 0x38, 0xF1, 0x44, 0x5A, 0x38, // movbe qword [r10+r11*2+56], r8
     ]);
     check_mem("movbe_extended_indexed_load_store_forms", &code, r, s, FLAG_MASK);
+}
+
+fn pext64_expected(src: u64, mut mask: u64) -> u64 {
+    let mut out = 0u64;
+    let mut out_bit = 1u64;
+    while mask != 0 {
+        let bit = mask & mask.wrapping_neg();
+        if src & bit != 0 {
+            out |= out_bit;
+        }
+        mask &= mask - 1;
+        out_bit <<= 1;
+    }
+    out
+}
+
+fn pdep64_expected(mut src: u64, mut mask: u64) -> u64 {
+    let mut out = 0u64;
+    while mask != 0 {
+        let bit = mask & mask.wrapping_neg();
+        if src & 1 != 0 {
+            out |= bit;
+        }
+        src >>= 1;
+        mask &= mask - 1;
+    }
+    out
+}
+
+#[test]
+fn split_page_movbe_and_count_memory_operands() {
+    const SOURCE_ADDR: u64 = DATA_ADDR + 0x0FFF;
+
+    let count_source = 0x00F0_0000_0000_0010u64;
+    let mut expected = zero_scratch();
+    expected[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.swap_bytes().to_le_bytes());
+    expected[8..16].copy_from_slice(&5u64.to_le_bytes());
+    expected[16..24].copy_from_slice(&8u64.to_le_bytes());
+    expected[24..32].copy_from_slice(&4u64.to_le_bytes());
+    expected[32..40].copy_from_slice(&0x0102_0304_0506_0708u64.swap_bytes().to_le_bytes());
+
+    let mut code = Vec::new();
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x0F, 0x38, 0xF0, 0x07]); // movbe rax, [rdi]
+    append_store_rax_to_data_offset(&mut code, 0);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &count_source.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xB8, 0x07]); // popcnt rax, [rdi]
+    append_store_rax_to_data_offset(&mut code, 8);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &count_source.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xBD, 0x07]); // lzcnt rax, [rdi]
+    append_store_rax_to_data_offset(&mut code, 16);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &count_source.to_le_bytes());
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xBC, 0x07]); // tzcnt rax, [rdi]
+    append_store_rax_to_data_offset(&mut code, 24);
+
+    append_mov_r64_imm64(&mut code, 0, 0x0102_0304_0506_0708); // rax
+    append_mov_r64_imm64(&mut code, 7, SOURCE_ADDR); // rdi
+    code.extend_from_slice(&[0x48, 0x0F, 0x38, 0xF1, 0x07]); // movbe [rdi], rax
+    code.extend_from_slice(&[0x48, 0x8B, 0x07]); // mov rax, [rdi]
+    append_store_rax_to_data_offset(&mut code, 32);
+    code.push(HLT);
+
+    check_scratch_expected(
+        "split_page_movbe_and_count_memory_operands",
+        &code,
+        regs(),
+        expected,
+        0,
+    );
+}
+
+#[test]
+fn split_page_bmi1_memory_source_operands() {
+    const SOURCE_ADDR: u64 = DATA_ADDR + 0x0FFF;
+
+    let mut expected = zero_scratch();
+    expected[0..8].copy_from_slice(&0xAA00u64.to_le_bytes());
+    expected[8..16].copy_from_slice(&0x10u64.to_le_bytes());
+    expected[16..24].copy_from_slice(&0xA0u64.to_le_bytes());
+    expected[24..32].copy_from_slice(&0x1Fu64.to_le_bytes());
+    expected[32..40].copy_from_slice(&0xABCDu64.to_le_bytes());
+
+    let mut code = Vec::new();
+
+    append_mov_r64_imm64(&mut code, 3, 0x00FF); // rbx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xAAAAu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE0, 0xF2, 0x07]); // andn rax, rbx, [rdi]
+    append_store_rax_to_data_offset(&mut code, 0);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xB0u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF0, 0xF3, 0x1F]); // blsi rcx, [rdi]
+    code.extend_from_slice(&[0x48, 0x89, 0xC8]); // mov rax, rcx
+    append_store_rax_to_data_offset(&mut code, 8);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xB0u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE8, 0xF3, 0x0F]); // blsr rdx, [rdi]
+    code.extend_from_slice(&[0x48, 0x89, 0xD0]); // mov rax, rdx
+    append_store_rax_to_data_offset(&mut code, 16);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xB0u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE0, 0xF3, 0x17]); // blsmsk rbx, [rdi]
+    code.extend_from_slice(&[0x48, 0x89, 0xD8]); // mov rax, rbx
+    append_store_rax_to_data_offset(&mut code, 24);
+
+    append_mov_r64_imm64(&mut code, 3, 8 | (16 << 8)); // rbx = start,len
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE0, 0xF7, 0x07]); // bextr rax, [rdi], rbx
+    append_store_rax_to_data_offset(&mut code, 32);
+    code.push(HLT);
+
+    check_scratch_expected(
+        "split_page_bmi1_memory_source_operands",
+        &code,
+        regs(),
+        expected,
+        BMI_BEXTR_DEFINED,
+    );
+}
+
+#[test]
+fn split_page_bmi2_memory_source_operands() {
+    const SOURCE_ADDR: u64 = DATA_ADDR + 0x0FFF;
+
+    let pext_src = 0x0123_4567_89AB_CDEFu64;
+    let sparse_mask = 0x8421_1248_8421_1248u64;
+    let pdep_src = 0x0000_0000_0000_FFFFu64;
+    let nibble_mask = 0xF0F0_F0F0_F0F0_F0F0u64;
+    let rorx_src = 0x0123_4567_89AB_CDEFu64;
+
+    let mut expected = zero_scratch();
+    expected[0..8].copy_from_slice(&pext64_expected(pext_src, sparse_mask).to_le_bytes());
+    expected[8..16].copy_from_slice(&pdep64_expected(pdep_src, nibble_mask).to_le_bytes());
+    expected[16..24].copy_from_slice(&1u64.to_le_bytes());
+    expected[24..32].copy_from_slice(&rorx_src.rotate_right(20).to_le_bytes());
+    expected[32..40].copy_from_slice(&0xFFFF_FFFF_FFFF_F800u64.to_le_bytes());
+    expected[40..48].copy_from_slice(&0x00F0_0000_0000_0000u64.to_le_bytes());
+    expected[48..56].copy_from_slice(&0x0000_0000_000F_F000u64.to_le_bytes());
+    expected[56..64].copy_from_slice(&0x0FFFu64.to_le_bytes());
+
+    let mut code = Vec::new();
+
+    append_mov_r64_imm64(&mut code, 3, pext_src); // rbx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &sparse_mask.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE2, 0xF5, 0x07]); // pext rax, rbx, [rdi]
+    append_store_rax_to_data_offset(&mut code, 0);
+
+    append_mov_r64_imm64(&mut code, 3, pdep_src); // rbx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &nibble_mask.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE3, 0xF5, 0x0F]); // pdep rcx, rbx, [rdi]
+    code.extend_from_slice(&[0x48, 0x89, 0xC8]); // mov rax, rcx
+    append_store_rax_to_data_offset(&mut code, 8);
+
+    append_mov_r64_imm64(&mut code, 2, 0x0000_0001_0000_0000); // rdx implicit
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0x0000_0001_0000_0000u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE3, 0xF6, 0x07]); // mulx rax, rbx, [rdi]
+    append_store_rax_to_data_offset(&mut code, 16);
+
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &rorx_src.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE3, 0xFB, 0xF0, 0x07, 0x14]); // rorx rax, [rdi], 20
+    append_store_rax_to_data_offset(&mut code, 24);
+
+    append_mov_r64_imm64(&mut code, 1, 4); // rcx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xFFFF_FFFF_FFFF_8000u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF2, 0xF7, 0x07]); // sarx rax, [rdi], rcx
+    append_store_rax_to_data_offset(&mut code, 32);
+
+    append_mov_r64_imm64(&mut code, 1, 8); // rcx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xF000_0000_0000_0000u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF3, 0xF7, 0x07]); // shrx rax, [rdi], rcx
+    append_store_rax_to_data_offset(&mut code, 40);
+
+    append_mov_r64_imm64(&mut code, 1, 12); // rcx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xFFu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF1, 0xF7, 0x07]); // shlx rax, [rdi], rcx
+    append_store_rax_to_data_offset(&mut code, 48);
+
+    append_mov_r64_imm64(&mut code, 1, 12); // rcx
+    append_seed_absolute_bytes(&mut code, SOURCE_ADDR, &0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE2, 0xF0, 0xF5, 0x07]); // bzhi rax, [rdi], rcx
+    append_store_rax_to_data_offset(&mut code, 56);
+    code.push(HLT);
+
+    check_scratch_expected(
+        "split_page_bmi2_memory_source_operands",
+        &code,
+        regs(),
+        expected,
+        BZHI_DEFINED,
+    );
 }
 
 // ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
