@@ -7660,6 +7660,42 @@ fn rdpid_default_tsc_aux() {
     );
 }
 
+#[test]
+fn rdpid_r32_zero_extends_destination() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdpid_r32",
+        &with_hlt(vec![0xF3, 0x0F, 0xC7, 0xF8]),
+        r,
+    );
+}
+
+#[test]
+fn control_register_readback_and_smsw_forms() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x20, 0xC0]); // mov rax, cr0
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0x0F, 0x20, 0xDB]); // mov rbx, cr3
+    code.extend_from_slice(&[0x48, 0x89, 0x5F, 0x08]); // mov [rdi+8], rbx
+    code.extend_from_slice(&[0x0F, 0x20, 0xE1]); // mov rcx, cr4
+    code.extend_from_slice(&[0x48, 0x89, 0x4F, 0x10]); // mov [rdi+0x10], rcx
+    code.extend_from_slice(&[0x0F, 0x01, 0x67, 0x18]); // smsw [rdi+0x18]
+    code.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, -1
+    code.extend_from_slice(&0xFFFF_FFFFu32.to_le_bytes());
+    code.extend_from_slice(&[0x0F, 0x01, 0xE0]); // smsw eax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x20]); // mov [rdi+0x20], rax
+    code.push(HLT);
+
+    check_mem(
+        "control_register_readback_smsw",
+        &code,
+        regs(),
+        zero_scratch(),
+        0,
+    );
+}
+
 // ---------------------------------------------------------------------------
 // BT/BTS/BTR/BTC with a MEMORY operand and a bit index that can exceed the
 // operand size. For a memory bit-string the index is NOT taken modulo the
@@ -8198,6 +8234,26 @@ fn cmpxchg8_mem_success() {
 }
 
 #[test]
+fn cmpxchg8_mem_failure_loads_observed_value() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rax = 0x1111_2222;
+    r.rdx = 0x3333_4444;
+    r.rbx = 0xDEAD_BEEF;
+    r.rcx = 0xCAFE_F00D;
+
+    check_mem(
+        "cmpxchg8b_fail",
+        &with_hlt(vec![0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cmpxchg16_mem_success() {
     // CMPXCHG16B m128 (48 0F C7 /1) : 128-bit compare-and-swap. Success path:
     // RDX:RAX == [rdi] -> ZF=1, [rdi] = RCX:RBX.
@@ -8213,6 +8269,27 @@ fn cmpxchg16_mem_success() {
     // 48 0F C7 0F  cmpxchg16b [rdi]
     check_mem(
         "cmpxchg16b_ok",
+        &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn cmpxchg16_mem_failure_loads_observed_value() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x99AA_BBCC_DDEE_FF00u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rax = 0x0102_0304_0506_0708;
+    r.rdx = 0x1112_1314_1516_1718;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    r.rcx = 0xFEDC_BA98_7654_3210;
+
+    check_mem(
+        "cmpxchg16b_fail",
         &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]),
         r,
         s,

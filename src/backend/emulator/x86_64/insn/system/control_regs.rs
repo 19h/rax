@@ -126,14 +126,19 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         4 => {
             let rm = (modrm & 0x07) | ctx.rex_b();
             let is_memory = modrm >> 6 != 3;
-            let msw = (vcpu.sregs.cr0 & 0xFFFF) as u16;
             if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
-                vcpu.mmu.write_u16(addr, msw, &vcpu.sregs)?;
+                vcpu.mmu
+                    .write_u16(addr, (vcpu.sregs.cr0 & 0xFFFF) as u16, &vcpu.sregs)?;
             } else {
-                // Store to register - zero extends to 32/64 bits in long mode
-                vcpu.set_reg(rm, msw as u64, ctx.op_size);
+                let value = match ctx.op_size {
+                    2 => vcpu.sregs.cr0 & 0xFFFF,
+                    4 => vcpu.sregs.cr0 & 0xFFFF_FFFF,
+                    8 => vcpu.sregs.cr0,
+                    _ => unreachable!(),
+                };
+                vcpu.set_reg(rm, value, ctx.op_size);
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }
