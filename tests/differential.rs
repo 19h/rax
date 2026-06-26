@@ -2041,6 +2041,39 @@ fn movsx_byte_to_word() {
 }
 
 #[test]
+fn movx_memory_source_width_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0xF2;
+    scratch[2..4].copy_from_slice(&0xFEDCu16.to_le_bytes());
+    scratch[4] = 0x80;
+    scratch[6..8].copy_from_slice(&0x8001u16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    scratch[12..16].copy_from_slice(&0xF123_4567u32.to_le_bytes());
+    scratch[16..18].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    scratch[18] = 0x90;
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4444;
+    r.rbx = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbp = 0x5555_6666_7777_8888;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x4C, 0x0F, 0xB6, 0x07, // movzx r8, byte [rdi]
+        0x4C, 0x0F, 0xB7, 0x4F, 0x02, // movzx r9, word [rdi+2]
+        0x4C, 0x0F, 0xBE, 0x57, 0x04, // movsx r10, byte [rdi+4]
+        0x4C, 0x0F, 0xBF, 0x5F, 0x06, // movsx r11, word [rdi+6]
+        0x4C, 0x63, 0x67, 0x08, // movsxd r12, dword [rdi+8]
+        0x63, 0x6F, 0x0C, // movsxd ebp, dword [rdi+0xc]
+        0x66, 0x63, 0x5F, 0x10, // movsxd bx, word [rdi+0x10]
+        0x66, 0x0F, 0xBE, 0x47, 0x12, // movsx ax, byte [rdi+0x12]
+        HLT,
+    ]);
+
+    check_mem("movx_memory_source_width_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
 fn cbw() {
     // AL -> AX sign extension; 66 98
     let mut r = regs();
@@ -2157,6 +2190,37 @@ fn cmovcc_all_conditions() {
     check_cmov("cmovo_false", 0x40, 5, 3); // no overflow -> no move
     check_cmov("cmove_false", 0x44, 7, 8); // not equal -> no move
     check_cmov("cmovg_false", 0x4F, 1, 2); // not greater -> no move
+}
+
+#[test]
+fn cmovcc_memory_source_width_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    scratch[8..16].copy_from_slice(&0x8877_6655_4433_2211u64.to_le_bytes());
+    scratch[16..20].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    scratch[20..22].copy_from_slice(&0xBEEFu16.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x44;
+    r.rbx = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rcx = 0x55;
+    r.rdx = 0x1111_2222_3333_4444;
+    r.rsi = 0x5555_6666_7777_8888;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x48, 0x39, 0xC0, // cmp rax, rax
+        0x48, 0x0F, 0x44, 0x1F, // cmove rbx, qword [rdi]
+        0x48, 0x39, 0xC8, // cmp rax, rcx
+        0x48, 0x0F, 0x44, 0x57, 0x08, // cmove rdx, qword [rdi+8]
+        0x48, 0x39, 0xC0, // cmp rax, rax
+        0x0F, 0x44, 0x4F, 0x10, // cmove ecx, dword [rdi+0x10]
+        0x48, 0x39, 0xC8, // cmp rax, rcx
+        0x66, 0x0F, 0x45, 0x77, 0x14, // cmovne si, word [rdi+0x14]
+        HLT,
+    ]);
+
+    check_mem("cmovcc_memory_source_width_forms", &code, r, scratch, FLAG_MASK);
 }
 
 // ---- SETcc across conditions ----
