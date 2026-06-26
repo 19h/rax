@@ -11608,6 +11608,64 @@ fn sse_movq_xmm_to_xmm_zeroes_high() {
 }
 
 #[test]
+fn sse_movq_xmm_m64_load_store_forms() {
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+        0xEEEE_DDDD_CCCC_BBBBu64.to_le_bytes(),
+    ]
+    .concat();
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7E, 0x07]); // movq xmm0, [rdi]
+    code.extend_from_slice(&[0x66, 0x0F, 0xD6, 0x47, 0x20]); // movq [rdi+0x20], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7E, 0x4F, 0x10]); // movq xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0xD6, 0xC8]); // movq xmm0, xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x30]); // movdqu [rdi+0x30], xmm0
+    code.push(HLT);
+
+    check_sse(
+        "movq_xmm_m64_load_store_forms",
+        &code,
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn mmx_movd_movq_gpr_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0xA5A5_5A5A_DEAD_BEEFu64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0xCCCC_DDDD_5566_7788;
+    r.rbx = 0x1122_3344_5566_7788;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6E, 0xC0]); // movd mm0, eax
+    code.extend_from_slice(&[0x0F, 0x7E, 0x47, 0x10]); // movd [rdi+0x10], mm0
+    code.extend_from_slice(&[0x0F, 0x7E, 0xC1]); // movd ecx, mm0
+    code.extend_from_slice(&[0x89, 0x4F, 0x14]); // mov [rdi+0x14], ecx
+
+    code.extend_from_slice(&[0x48, 0x0F, 0x6E, 0xCB]); // movq mm1, rbx
+    code.extend_from_slice(&[0x48, 0x0F, 0x7E, 0x4F, 0x18]); // movq [rdi+0x18], mm1
+    code.extend_from_slice(&[0x48, 0x0F, 0x7E, 0xCA]); // movq rdx, mm1
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x20]); // mov [rdi+0x20], rdx
+
+    code.extend_from_slice(&[0x0F, 0x6E, 0x17]); // movd mm2, [rdi]
+    code.extend_from_slice(&[0x0F, 0x7E, 0x57, 0x28]); // movd [rdi+0x28], mm2
+    code.extend_from_slice(&[0x48, 0x0F, 0x6E, 0x5F, 0x08]); // movq mm3, [rdi+8]
+    code.extend_from_slice(&[0x48, 0x0F, 0x7E, 0x5F, 0x30]); // movq [rdi+0x30], mm3
+    code.push(HLT);
+
+    check_mem("mmx_movd_movq_gpr_memory_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
 fn mmx_sse_conversion_memory_forms() {
     let mut s = [0u8; 64];
     let packed_i32 = ((5i32 as u32 as u64) << 32) | (-3i32 as u32 as u64);
@@ -13691,6 +13749,83 @@ fn sse2_memory_count_shift_forms() {
             &sse_program(&[0x66, 0x0F, opcode, 0x47, 0x10]),
             sse_scratch(a, count_bytes),
         );
+    }
+}
+
+#[test]
+fn sse_movhlps_movlhps_register_forms() {
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0x0FED_CBA9_7654_3210u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+    ]
+    .concat();
+
+    check_sse(
+        "movhlps_movlhps_register_forms",
+        &sse_program(&[
+            0x0F, 0x12, 0xC1, // movhlps xmm0, xmm1
+            0x0F, 0x16, 0xC1, // movlhps xmm0, xmm1
+        ]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn sse_packed_move_register_forms() {
+    let a = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0x0FED_CBA9_7654_3210u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1122_3344_5566_7788u64.to_le_bytes(),
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+    ]
+    .concat();
+    let a: [u8; 16] = a.try_into().unwrap();
+    let b: [u8; 16] = b.try_into().unwrap();
+
+    for (label, op) in [
+        ("movups_reg_load_path", &[0x0F, 0x10, 0xC1][..]),
+        ("movupd_reg_load_path", &[0x66, 0x0F, 0x10, 0xC1][..]),
+        ("movups_reg_store_path", &[0x0F, 0x11, 0xC8][..]),
+        ("movupd_reg_store_path", &[0x66, 0x0F, 0x11, 0xC8][..]),
+        ("movaps_reg_load_path", &[0x0F, 0x28, 0xC1][..]),
+        ("movapd_reg_load_path", &[0x66, 0x0F, 0x28, 0xC1][..]),
+        ("movaps_reg_store_path", &[0x0F, 0x29, 0xC8][..]),
+        ("movapd_reg_store_path", &[0x66, 0x0F, 0x29, 0xC8][..]),
+    ] {
+        check_sse(label, &sse_program(op), sse_scratch(a, b));
+    }
+}
+
+#[test]
+fn sse2_integer_move_register_forms() {
+    let a = [
+        0xFEDC_BA98_7654_3210u64.to_le_bytes(),
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0F1E_2D3C_4B5A_6978u64.to_le_bytes(),
+        0x8877_6655_4433_2211u64.to_le_bytes(),
+    ]
+    .concat();
+    let a: [u8; 16] = a.try_into().unwrap();
+    let b: [u8; 16] = b.try_into().unwrap();
+
+    for (label, op) in [
+        ("movdqa_reg_load_path", &[0x66, 0x0F, 0x6F, 0xC1][..]),
+        ("movdqu_reg_load_path", &[0xF3, 0x0F, 0x6F, 0xC1][..]),
+        ("movdqa_reg_store_path", &[0x66, 0x0F, 0x7F, 0xC8][..]),
+        ("movdqu_reg_store_path", &[0xF3, 0x0F, 0x7F, 0xC8][..]),
+    ] {
+        check_sse(label, &sse_program(op), sse_scratch(a, b));
     }
 }
 
