@@ -5548,6 +5548,24 @@ fn x87_compare_pop_and_integer_forms() {
     );
 
     let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x10]); // fld qword [rdi+0x10] -> sentinel
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
+    c.extend_from_slice(&[0xDA, 0xE9]); // fucompp: compare a vs b, pop twice
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf
+    c.extend_from_slice(&[0xB8, 0x00, 0x00, 0x00, 0x00]); // mov eax,0; preserve flags
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18] = sentinel
+    c.push(HLT);
+    check_mem(
+        "x87_fucompp_pops_twice",
+        &c,
+        regs(),
+        scratch_f64(&[3.0, 5.0, 9.0]),
+        FCOMI_FLAGS,
+    );
+
+    let mut c = load_rdi_data();
     c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8] -> b
     c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi] -> a
     c.extend_from_slice(&[0xDD, 0xE9]); // fucomp st1: compare a vs b, pop once

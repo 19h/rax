@@ -32,6 +32,13 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             7 => vcpu.fpu.set_st(0, val / st0), // FIDIVR m32int
             _ => unreachable!(),
         }
+    } else if modrm == 0xE9 {
+        // FUCOMPP: compare ST(0) with ST(1), then pop both.
+        let st0 = vcpu.fpu.get_st(0);
+        let st1 = vcpu.fpu.get_st(1);
+        set_fpu_compare_flags(vcpu, st0, st1);
+        vcpu.fpu.pop();
+        vcpu.fpu.pop();
     } else {
         // Register forms - FCMOV
         vcpu.materialize_flags();
