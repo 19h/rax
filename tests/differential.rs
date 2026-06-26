@@ -1763,6 +1763,30 @@ fn lzcnt_tzcnt_memory_forms() {
     check_mem("lzcnt_tzcnt_memory_forms", &code, r, s, CNT_DEFINED);
 }
 
+#[test]
+fn lzcnt_tzcnt_addr32_memory_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0x00F0u16.to_le_bytes());
+    s[8..12].copy_from_slice(&0x0000_1000u32.to_le_bytes());
+    s[16..24].copy_from_slice(&0x0000_0000_0000_0001u64.to_le_bytes());
+    s[24..32].copy_from_slice(&0u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0x1111_2222_3333_4444;
+    r.rcx = 0x5555_6666_7777_8888;
+    r.rdx = 0x9999_AAAA_BBBB_CCCC;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0xF3, 0x0F, 0xBD, 0x07, // lzcnt ax, word [edi]
+        0x67, 0xF3, 0x0F, 0xBC, 0x4F, 0x08, // tzcnt ecx, dword [edi+8]
+        0x67, 0xF3, 0x48, 0x0F, 0xBD, 0x57, 0x10, // lzcnt rdx, qword [edi+16]
+        0x67, 0xF3, 0x48, 0x0F, 0xBC, 0x5F, 0x18, // tzcnt rbx, qword [edi+24]
+    ]);
+    check_mem("lzcnt_tzcnt_addr32_memory_forms", &code, r, s, CNT_DEFINED);
+}
+
 // ---- XCHG / XADD / CMPXCHG (register operands) ----
 
 #[test]
@@ -4640,6 +4664,30 @@ fn movbe_extended_register_base_forms() {
         0x4D, 0x0F, 0x38, 0xF1, 0x42, 0x20, // movbe qword [r10+32], r8
     ]);
     check_mem("movbe_extended_register_base_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn movbe_addr32_load_store_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    s[4..8].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    s[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rdx = 0x1122;
+    r.rsi = 0x3344_5566;
+    r.r8 = 0x0123_4567_89AB_CDEF;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0x0F, 0x38, 0xF0, 0x07, // movbe ax, word [edi]
+        0x67, 0x0F, 0x38, 0xF0, 0x5F, 0x04, // movbe ebx, dword [edi+4]
+        0x67, 0x48, 0x0F, 0x38, 0xF0, 0x4F, 0x08, // movbe rcx, qword [edi+8]
+        0x67, 0x66, 0x0F, 0x38, 0xF1, 0x57, 0x20, // movbe word [edi+32], dx
+        0x67, 0x0F, 0x38, 0xF1, 0x77, 0x24, // movbe dword [edi+36], esi
+        0x67, 0x4C, 0x0F, 0x38, 0xF1, 0x47, 0x38, // movbe qword [edi+56], r8
+    ]);
+    check_mem("movbe_addr32_load_store_forms", &code, r, s, FLAG_MASK);
 }
 
 // ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
@@ -8672,6 +8720,30 @@ fn crc32_memory_width_forms() {
 }
 
 #[test]
+fn crc32_addr32_memory_source_forms() {
+    let mut s = [0u8; 64];
+    s[0] = 0x5A;
+    s[4..6].copy_from_slice(&0xBEEFu16.to_le_bytes());
+    s[8..12].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+    s[16..24].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0x0000_0000_FFFF_FFFF;
+    r.rbx = 0x0000_0000_1234_5678;
+    r.rcx = 0x0000_0000_1357_9BDF;
+    r.rdx = 0x0000_0000_2468_ACE0;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0xF2, 0x0F, 0x38, 0xF0, 0x07, // crc32 eax, byte [edi]
+        0x67, 0x66, 0xF2, 0x0F, 0x38, 0xF1, 0x5F, 0x04, // crc32 ebx, word [edi+4]
+        0x67, 0xF2, 0x0F, 0x38, 0xF1, 0x4F, 0x08, // crc32 ecx, dword [edi+8]
+        0x67, 0xF2, 0x48, 0x0F, 0x38, 0xF1, 0x57, 0x10, // crc32 rdx, qword [edi+16]
+    ]);
+    check_mem("crc32_addr32_memory_source_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
 fn popcnt_r16() {
     // POPCNT r16, r/m16 = 66 F3 0F B8 C3. Count bits in bx.
     let mut r = regs();
@@ -8715,6 +8787,27 @@ fn popcnt_memory_width_forms() {
         0x89, 0x57, 0x28, // mov [rdi+40], edx
     ]);
     check_mem("popcnt_memory_width_forms", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn popcnt_addr32_memory_width_forms() {
+    let mut s = [0u8; 64];
+    s[0..2].copy_from_slice(&0xF0F0u16.to_le_bytes());
+    s[8..12].copy_from_slice(&0xF0F0_000Fu32.to_le_bytes());
+    s[16..24].copy_from_slice(&0u64.to_le_bytes());
+
+    let mut r = modern_flags_regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rcx = 0x1111_2222_3333_4444;
+    r.rdx = 0x5555_6666_7777_8888;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x66, 0xF3, 0x0F, 0xB8, 0x07, // popcnt ax, word [edi]
+        0x67, 0xF3, 0x0F, 0xB8, 0x4F, 0x08, // popcnt ecx, dword [edi+8]
+        0x67, 0xF3, 0x48, 0x0F, 0xB8, 0x57, 0x10, // popcnt rdx, qword [edi+16]
+    ]);
+    check_mem("popcnt_addr32_memory_width_forms", &code, r, s, FLAG_MASK);
 }
 
 // ---------------------------------------------------------------------------
