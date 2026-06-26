@@ -10433,6 +10433,20 @@ fn x87_fprem() {
 }
 
 #[test]
+fn x87_fnop_and_stack_pointer_control() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xD9, 0xD0]); // fnop
+    c.extend_from_slice(&[0xD9, 0xF7]); // fincstp
+    c.extend_from_slice(&[0xDD, 0x3F]); // fnstsw [rdi]
+    c.extend_from_slice(&[0xD9, 0xF6]); // fdecstp
+    c.extend_from_slice(&[0xDD, 0x7F, 0x08]); // fnstsw [rdi+8]
+    c.push(HLT);
+
+    check_mem("x87_fnop_fincstp_fdecstp", &c, regs(), zero_scratch(), 0);
+}
+
+#[test]
 fn x87_transcendental_exact_results() {
     let unary_store = |op: &[u8]| {
         let mut c = load_rdi_data();
@@ -10752,6 +10766,55 @@ fn stack_pushfq_pop_rax() {
 }
 
 #[test]
+fn stack_push_pop_fs_gs_selectors() {
+    check(
+        "push_pop_fs_gs_selectors",
+        &with_hlt(vec![
+            0x0F, 0xA0, // push fs
+            0x58, // pop rax
+            0x0F, 0xA8, // push gs
+            0x5B, // pop rbx
+            0x6A, 0x00, // push 0
+            0x0F, 0xA1, // pop fs
+            0x0F, 0xA0, // push fs
+            0x59, // pop rcx
+            0x6A, 0x00, // push 0
+            0x0F, 0xA9, // pop gs
+            0x0F, 0xA8, // push gs
+            0x5A, // pop rdx
+        ]),
+        regs(),
+    );
+}
+
+#[test]
+fn stack_push_pop_fs_gs_16bit_selectors() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0x1111_2222_3333_4444;
+    r.rcx = 0x5555_6666_7777_8888;
+    r.rdx = 0x9999_AAAA_BBBB_CCCC;
+    check(
+        "push_pop_fs_gs_16bit_selectors",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xA0, // push fs
+            0x66, 0x58, // pop ax
+            0x66, 0x0F, 0xA8, // push gs
+            0x66, 0x5B, // pop bx
+            0x66, 0x6A, 0x00, // push 0
+            0x66, 0x0F, 0xA1, // pop fs
+            0x66, 0x0F, 0xA0, // push fs
+            0x66, 0x59, // pop cx
+            0x66, 0x6A, 0x00, // push 0
+            0x66, 0x0F, 0xA9, // pop gs
+            0x66, 0x0F, 0xA8, // push gs
+            0x66, 0x5A, // pop dx
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn control_call_rel32_ret_balanced() {
     // call func; add rax,2; hlt; func: add rax,5; ret. Final RAX=7, stack balanced.
     let mut r = regs();
@@ -10868,6 +10931,27 @@ fn control_far_call_mem64_lretq_roundtrip() {
     code.extend_from_slice(&[0x48, 0xCB]); // lretq
 
     check_mem("control_far_call_mem64_lretq", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_call_mem64_lretq_imm16_cleans_arguments() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0x83, 0xEC, 0x10]); // sub rsp, 16
+    let target = CODE_ADDR + (code.len() + 3 + 10 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&target.to_le_bytes());
+    scratch[8..10].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0x48, 0xFF, 0x1F]); // lcallq *[rdi]
+    code.extend_from_slice(&[0x48, 0xBB]); // mov rbx, imm64
+    code.extend_from_slice(&0x3333_4444_5555_6666u64.to_le_bytes());
+    code.push(HLT);
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0xBBBB_CCCC_DDDD_EEEEu64.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xCA, 0x10, 0x00]); // lretq 16
+
+    check_mem("control_far_call_mem64_lretq_imm16", &code, regs(), scratch, 0);
 }
 
 #[test]
