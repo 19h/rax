@@ -17,20 +17,68 @@
 //!
 //! | env var | meaning | default |
 //! |---|---|---|
-//! | `RAX_GSC_UART` | console UART base (hex) | `0x4060_0000` |
-//! | `RAX_GSC_UART_STATE` | value returned by UART STATE reads (hex) | `0xffff_ffff` |
+//! | `RAX_GSC_UART` | console UART base (hex) | `0x404d_0000` |
+//! | `RAX_GSC_UART_STATE` | base UART STATE bits (hex); RX-empty bit is dynamic | `0x30` (TX ready bits) |
+//! | `RAX_GSC_UART_RX` | initial console RX bytes (raw env string) | empty |
 //! | `RAX_GSC_OPENBUS` | value returned for unmodeled MMIO reads (hex) | `0` |
 //! | `RAX_GSC_READY` | extra fixed status registers, `addr=val,...` (hex) | — |
+//! | `RAX_GSC_RSTSRC_COLD` | RSTSRC value on the first (cold) boot (hex) | `0x01` (POR) |
+//! | `RAX_GSC_RSTSRC_WARM` | RSTSRC value after a warm reset (hex) | `0x22` (SOFTWARE\|EXIT) |
+//! | `RAX_GSC_AP_FLASH` | optional external AP SPI flash image backing opcode `0x0b` reads | blank flash |
 //! | `RAX_GSC_ENTRY` | override the boot entry PC (hex; parsed in the loader) | auto |
-//! | `RAX_GSC_TRACE` | `mmio` = log first-touch MMIO; `insn` = also trace every instruction | off |
+//! | `RAX_GSC_TRACE` | `mmio` = log first-touch + PMU + console-candidate MMIO; `insn` = also trace every instruction | off |
+//! | `RAX_GSC_BREAK` | breakpoint PC for register/stack/string dump (hex) | off |
+//! | `RAX_GSC_BREAK_HIT` | 1-based breakpoint hit to dump (hex) | `1` |
+//! | `RAX_GSC_BREAK_RA` | only count/dump breakpoint hits with this `ra` value (hex) | off |
+//! | `RAX_GSC_BREAK_SAVED_RA` | only count/dump hits whose word at `sp+0x11c` matches (hex) | off |
+//! | `RAX_GSC_BREAK_STACK` | bytes of stack words to dump at `RAX_GSC_BREAK` (hex) | `0` |
+//! | `RAX_GSC_BREAK_STOP` | terminate the run immediately after dumping the breakpoint | off |
+//! | `RAX_GSC_SYSCALL_TRACE` | log userspace ecall arguments | off |
+//! | `RAX_GSC_PRINT_TRACE` | log firmware debug-print pointer/length calls | off |
+//! | `RAX_GSC_CONSOLE_TRACE` | log PC + byte for visible UART console writes | off |
+//! | `RAX_GSC_AP_RO_INFO_STUB` | synthesize the AP RO cached INFO record only | off |
+//! | `RAX_GSC_AP_RO_CRYPTO_STUB` | synthesize AP RO cryptolib digest results without forcing verifier success | off |
+//! | `RAX_GSC_AP_RO_STUB` | synthesize AP RO/GVD success for standalone boot bring-up | off |
 //!
-//! The bridge also models persistent register storage (writes read back), a
-//! generic spin-breaker for "wait for status bit" boot loops, a built-in map of
-//! known clock/PLL "ready" status registers, and the PMU self-reset
-//! (`0x4000_0008 <- 0x0704_1776`) as a warm reboot of the hart.
+//! What's modeled (enough for Ti50 to boot through init into the Tock idle path,
+//! and for the `nugget`/Dauntless image to reach its console boot path):
+//!  - **Console UART** at `0x404d_0000` (RDATA `+0x00`, WDATA `+0x04`, STATE
+//!    `+0x14`: bit0 clear = TX ready, bit7 set = RX empty). Transmit bytes are
+//!    emitted to stdout and captured; receive bytes can be seeded with
+//!    `RAX_GSC_UART_RX` and become visible once the firmware reaches WFI.
+//!  - **Core-local interrupt claim** at `0xe000_e0d0`: source `0` is exposed
+//!    as the console UART RX interrupt once the firmware reaches idle/WFI.
+//!  - **PMU reset block**: RSTSRC (`+0x00`, cold=POR / warm=SOFTWARE|EXIT),
+//!    CLRRST (`+0x04`, write-1-to-clear), GLOBAL_RESET (`+0x08`, key
+//!    `0x0704_1776` → warm reboot). The reset-source is what lets the firmware
+//!    classify the reset and report `Reset cause: POR/SW` instead of looping.
+//!  - **Persistent registers**: writes read back and survive a warm reset, so
+//!    the PMU boot-counter / init-flag scratch (`+0x4c`/`+0xb0`/`+0xa0`) stays
+//!    sticky across reboots.
+//!  - **Flash controller / INFO flash**: the `0x4011_0000` PE controller reads,
+//!    programs, and erases the mapped XIP image plus separate blank INFO banks.
+//!  - **GLOBALSEC/cryptolib discovery**: active RO/RW windows and a minimal
+//!    synthetic cryptolib header/entry let the boot verifier continue.
+//!  - **GPIO/sleep qualification**: the `0x4003_046c..0x4003_0488` config and
+//!    `0x4052_0000/34/68/9c` input-bank words are stable status/config regs.
+//!  - **RBOX** at `0x4009_0000`: interrupt/status W1C groups, init-ready, and
+//!    control-status handshakes needed for RBOX init.
+//!  - **AP SPI host** at `0x4060_0000`: control/transaction registers and the
+//!    byte-addressable SPI data window used by AP flash status and fast-read
+//!    traffic.
+//!  - **GSC FIFO / TPM-SPI FIFO** at `0x4062_0000`: reset-busy bits clear and
+//!    IRQ/status registers complete the TPM FIFO reset path.
+//!  - A generic **spin-breaker** for "wait for status bit" boot loops, and a
+//!    built-in map of known "ready" status registers.
+//!
+//! Partially modeled but still incomplete: production crypto/keyladder behavior
+//! (AP RO currently uses narrow digest hooks), host-side USB/event delivery, TPM
+//! host transactions, AP provisioning/fuses, and detailed timer/interrupt
+//! routing.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::io::Write;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
@@ -44,18 +92,24 @@ use crate::riscv::{Isa, MemError, MemResult, Memory, RiscVConfig, RiscVCpu, Risc
 const MMIO_LO: u64 = 0x4000_0000;
 const MMIO_HI: u64 = 0x5000_0000;
 
-/// UART register offsets (Cr50/Ti50 family, from the gscemu reference model).
+/// UART register offsets (Cr50/Ti50 family, from the gscemu reference model and
+/// confirmed against the nugget/Dauntless firmware: chars are written to
+/// `base+0x04` and the firmware polls `base+0x14` bits [5:4] for "TX ready").
 const UART_RDATA: u64 = 0x00;
 const UART_WDATA: u64 = 0x04;
 const UART_STATE: u64 = 0x14;
+const UART_STATE_TX_BUSY: u32 = 0x0000_0001;
+const UART_STATE_RX_EMPTY: u32 = 0x0000_0080;
 /// Width of the modeled UART register block.
 const UART_LEN: u64 = 0x100;
 
-/// Default console UART base (overridable via `RAX_GSC_UART`).
-const DEFAULT_UART_BASE: u64 = 0x4060_0000;
-/// Default UART STATE read value (overridable via `RAX_GSC_UART_STATE`).
-/// All-ones keeps any "transmitter ready" poll from spinning during bring-up.
-const DEFAULT_UART_STATE: u32 = 0xffff_ffff;
+/// Default console UART base — the Ti50/Dauntless console is at 0x404d_0000
+/// (discovered from the firmware's character writes). Overridable via
+/// `RAX_GSC_UART`.
+const DEFAULT_UART_BASE: u64 = 0x404d_0000;
+/// Default UART STATE read value: TX-ready bits [5:4] set (overridable via
+/// `RAX_GSC_UART_STATE`).
+const DEFAULT_UART_STATE: u32 = 0x0000_0030;
 
 /// Bound on instructions executed per `run()` call.
 const MAX_ITERS: u64 = 50_000_000;
@@ -74,7 +128,14 @@ struct GscConfig {
     uart_base: u64,
     uart_state: u32,
     open_bus: u32,
+    rstsrc_cold: u32,
+    rstsrc_warm: u32,
+    flash_img_base: u64,
     trace: Trace,
+    console_trace: bool,
+    ap_ro_info_stub: bool,
+    ap_ro_crypto_stub: bool,
+    ap_ro_stub: bool,
 }
 
 impl GscConfig {
@@ -84,16 +145,34 @@ impl GscConfig {
             .map(|v| v as u32)
             .unwrap_or(DEFAULT_UART_STATE);
         let open_bus = env_hex("RAX_GSC_OPENBUS").map(|v| v as u32).unwrap_or(0);
+        let rstsrc_cold = env_hex("RAX_GSC_RSTSRC_COLD")
+            .map(|v| v as u32)
+            .unwrap_or(DEFAULT_RSTSRC_COLD);
+        let rstsrc_warm = env_hex("RAX_GSC_RSTSRC_WARM")
+            .map(|v| v as u32)
+            .unwrap_or(DEFAULT_RSTSRC_WARM);
+        let flash_img_base = env_hex("RAX_GSC_FLASH_BASE").unwrap_or(DEFAULT_FLASH_IMG_BASE);
         let trace = match std::env::var("RAX_GSC_TRACE").as_deref() {
             Ok("insn") => Trace::Insn,
             Ok("mmio") | Ok("1") => Trace::Mmio,
             _ => Trace::Off,
         };
+        let console_trace = std::env::var("RAX_GSC_CONSOLE_TRACE").is_ok();
+        let ap_ro_info_stub = std::env::var("RAX_GSC_AP_RO_INFO_STUB").is_ok();
+        let ap_ro_crypto_stub = std::env::var("RAX_GSC_AP_RO_CRYPTO_STUB").is_ok();
+        let ap_ro_stub = std::env::var("RAX_GSC_AP_RO_STUB").is_ok();
         GscConfig {
             uart_base,
             uart_state,
             open_bus,
+            rstsrc_cold,
+            rstsrc_warm,
+            flash_img_base,
             trace,
+            console_trace,
+            ap_ro_info_stub,
+            ap_ro_crypto_stub,
+            ap_ro_stub,
         }
     }
 }
@@ -127,7 +206,10 @@ fn parse_ready_env() -> HashMap<u64, u32> {
         if let Some((a, v)) = pair.split_once('=') {
             let parse = |s: &str| {
                 let s = s.trim();
-                let s = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")).unwrap_or(s);
+                let s = s
+                    .strip_prefix("0x")
+                    .or_else(|| s.strip_prefix("0X"))
+                    .unwrap_or(s);
                 u64::from_str_radix(s, 16).ok()
             };
             if let (Some(addr), Some(val)) = (parse(a), parse(v)) {
@@ -142,7 +224,10 @@ fn parse_ready_env() -> HashMap<u64, u32> {
 fn env_hex(name: &str) -> Option<u64> {
     let raw = std::env::var(name).ok()?;
     let s = raw.trim();
-    let s = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")).unwrap_or(s);
+    let s = s
+        .strip_prefix("0x")
+        .or_else(|| s.strip_prefix("0X"))
+        .unwrap_or(s);
     u64::from_str_radix(s, 16).ok()
 }
 
@@ -151,11 +236,35 @@ fn env_hex(name: &str) -> Option<u64> {
 /// all-ones to satisfy "wait for ready bit" boot loops.
 const SPIN_THRESHOLD: u32 = 4096;
 
-/// PMU "global reset" register and its magic value (`0x0704_1776` — a July-4
-/// 1776 magic). Writing the magic here reboots the chip; GSC firmware does this
-/// as a normal boot step ("configure clocks/fuses, then reset to apply").
+/// PMU reset-control block (offsets confirmed from the nugget/Dauntless boot
+/// handler: it reads RSTSRC at +0x00, clears it via CLRRST at +0x04, and
+/// reboots via GLOBAL_RESET at +0x08).
+const PMU_RSTSRC_REG: u64 = 0x4000_0000;
+const PMU_CLRRST_REG: u64 = 0x4000_0004;
 const PMU_RESET_REG: u64 = 0x4000_0008;
+const PMU_CHIP_ID_REG: u64 = 0x4001_ffe0;
+const PMU_WAKE_EXIT_SRC_REG: u64 = 0x4001_ffe4;
+const PMU_CHIP_ID_ALT_REG: u64 = 0x4001_fff8;
+/// GLOBAL_RESET magic (`0x0704_1776` — a July-4 1776 magic, == Cr50
+/// `GC_PMU_GLOBAL_RESET_KEY`). Writing it reboots the chip.
 const PMU_RESET_MAGIC: u32 = 0x0704_1776;
+/// Packed PMU chip ID fields from the Cr50/GSC register model:
+/// standard=1, mfg=0x4a6, part=0x4856, rev=8. Ti50 firmware accepts this
+/// value before falling back to the Dauntless revision.
+const PMU_CHIP_ID: u32 = 0x8485_694d;
+
+/// RSTSRC cause bits (Cr50/Ti50 family): POR=bit0, EXIT=bit1, WDOG=bit2,
+/// LOCKUP=bit3, SYSRESET=bit4, SOFTWARE=bit5.
+const RSTSRC_POR: u32 = 0x01;
+/// Default reset-source the firmware sees on the first (cold) boot.
+const DEFAULT_RSTSRC_COLD: u32 = RSTSRC_POR;
+/// Default reset-source after a firmware-triggered warm reset. `0x22` =
+/// SOFTWARE | EXIT, which satisfies both fw.bin's SOFTWARE(0x20) check and the
+/// ti50 RO's EXIT(bit1) check, so neither re-runs one-time POR setup.
+const DEFAULT_RSTSRC_WARM: u32 = 0x22;
+/// Standard RISC-V machine external interrupt pending bit (`mip.MEIP`). The
+/// Ti50 firmware enables MSIP/MTIP/MEIP (`mie=0x888`) before entering WFI.
+const MIP_MEIP: u64 = 1 << 11;
 
 /// Safety bound: if the firmware reboots this many times without producing any
 /// console output, give up rather than spin forever.
@@ -167,6 +276,12 @@ const MAX_RESETS: u32 = 32;
 struct GscShared {
     /// Captured UART transmit bytes (the console output).
     console: Vec<u8>,
+    /// Optional UART receive bytes exposed through RDATA/STATE.
+    uart_rx: VecDeque<u8>,
+    /// Seeded UART RX is held until the firmware has reached WFI once. Without
+    /// this, preload bytes assert MEIP while the Tock UART interrupt tables are
+    /// still being initialized.
+    uart_irq_armed: bool,
     /// First-touch MMIO accesses, keyed by `(addr << 1) | is_write`, for the
     /// trace-driven peripheral-map discovery.
     seen: BTreeSet<u64>,
@@ -182,6 +297,25 @@ struct GscShared {
     spin_phase: HashMap<u64, bool>,
     /// Set when the firmware writes the PMU reset magic; drained by the run loop.
     reset_requested: bool,
+    /// PMU RSTSRC (reset-source) value the firmware reads at boot to classify
+    /// why the chip reset. Cleared by CLRRST; reloaded on each warm reset.
+    rstsrc: u32,
+    /// Flash controller: PE_EN armed (magic written), current program/erase
+    /// and read transactions, payload and readback registers.
+    flash_pe_en: bool,
+    flash_trans: u32,
+    flash_read_trans: u32,
+    flash_wr_data: [u32; 2],
+    flash_dout: [[u32; 2]; 2],
+    flash_error: u32,
+    /// INFO flash banks are not part of the loaded XIP image. Model them as
+    /// blank flash by default and keep programmed words separately.
+    flash_info: HashMap<u64, u32>,
+    /// AP SPI host transfer window (`base+0x1000`). The firmware copies bytes
+    /// through this aperture before starting a transaction.
+    ap_spi_data: Vec<u8>,
+    /// Deterministic pseudo-random stream for the TRNG data register.
+    trng_state: u32,
 }
 
 type Shared = Arc<Mutex<GscShared>>;
@@ -191,10 +325,144 @@ type Shared = Arc<Mutex<GscShared>>;
 struct GscBridge {
     mem: Arc<GuestMemoryMmap>,
     shared: Shared,
+    /// Optional external AP SPI flash image. Missing bytes read as erased flash.
+    ap_flash: Arc<Vec<u8>>,
     cfg: GscConfig,
     /// Status registers that read back a fixed "ready" value.
     ready: HashMap<u64, u32>,
+    /// Current guest PC, published by the run loop before each step so MMIO
+    /// trace lines can be correlated to the faulting instruction.
+    pc: Arc<AtomicU64>,
 }
+
+/// PMU base and control block (reset-source / global-reset registers live here).
+const PMU_BASE: u64 = 0x4000_0000;
+const PMU_CTRL_TOP: u64 = 0x4000_0100;
+
+/// Flash controller registers. Ti50 uses PE_CONTROL0/1 at `+0x04/+0x08` for
+/// command opcodes; payload data lives at `+0x78/+0x7c`. PE_EN magic at `+0x8c`
+/// arms a command. Ti50 has a read transaction register at `+0x0c` and a
+/// program/erase transaction register at `+0x10`; the latter is encoded by the
+/// firmware helper at VA 0x9f9ac as `byte = ((TRANS >> 7) & 0xffff) * 4`.
+/// Program operations are applied to the flash image in guest memory so the
+/// storage layer reads the result back via XIP.
+const FLASH_BASE: u64 = 0x4011_0000;
+const FLASH_PE_CONTROL0: u64 = FLASH_BASE + 0x04;
+const FLASH_PE_CONTROL1: u64 = FLASH_BASE + 0x08;
+const FLASH_READ_TRANS: u64 = FLASH_BASE + 0x0c;
+const FLASH_TRANS: u64 = FLASH_BASE + 0x10;
+const FLASH_STATUS0: u64 = FLASH_BASE + 0x18;
+const FLASH_STATUS1: u64 = FLASH_BASE + 0x1c;
+const FLASH_DOUT0_LO: u64 = FLASH_BASE + 0x60;
+const FLASH_DOUT0_HI: u64 = FLASH_BASE + 0x64;
+const FLASH_DOUT1_LO: u64 = FLASH_BASE + 0x6c;
+const FLASH_DOUT1_HI: u64 = FLASH_BASE + 0x70;
+const FLASH_WR_DATA0: u64 = FLASH_BASE + 0x78;
+const FLASH_WR_DATA1: u64 = FLASH_BASE + 0x7c;
+const FLASH_PE_EN: u64 = FLASH_BASE + 0x8c;
+const FLASH_ERROR: u64 = FLASH_BASE + 0x9c;
+const FLASH_PE_EN_MAGIC: u32 = 0xB119_24E1;
+/// Program opcode observed in Ti50 persistent-storage writes.
+const FLASH_OP_TI50_PROGRAM: u32 = 0xe89d_48b7;
+/// Cr50/H1 opcodes kept for the shared controller family behavior.
+const FLASH_OP_CR50_READ: u32 = 0x1602_1765;
+const FLASH_OP_CR50_PROGRAM: u32 = 0x2718_2818;
+const FLASH_OP_CR50_ERASE: u32 = 0x3141_5927;
+/// Default base of the flash image in guest memory (Ti50: 0x80000; the nugget
+/// single-slot image loads at 0xa0000). Overridable via `RAX_GSC_FLASH_BASE`.
+const DEFAULT_FLASH_IMG_BASE: u64 = 0x8_0000;
+/// Ti50 full flash images are two 512 KiB slots. FLASH PE_CONTROL0 targets the
+/// first slot and PE_CONTROL1 targets the second slot.
+const TI50_FLASH_SLOT_SIZE: u64 = 0x8_0000;
+
+const USB_BASE: u64 = 0x400e_0000;
+const USB_SOFT_RESET: u64 = USB_BASE + 0x0d4;
+const USB_INT_STATE0: u64 = USB_BASE + 0x148;
+const USB_INT_STATE1: u64 = USB_BASE + 0x150;
+const USB_INT_STATE2: u64 = USB_BASE + 0x154;
+
+const GSC_EVENT_USB_RESET: u64 = 0x4004_0010;
+const GSC_EVENT_USB_TRIGGER: u64 = 0x4008_0000;
+
+const RBOX_BASE: u64 = 0x4009_0000;
+const RBOX_TOP: u64 = RBOX_BASE + 0x1000;
+const RBOX_INTR0_ENABLE: u64 = RBOX_BASE + 0x04;
+const RBOX_INTR0_TEST: u64 = RBOX_BASE + 0x0c;
+const RBOX_INTR0_STATE: u64 = RBOX_BASE + 0x10;
+const RBOX_INTR1_ENABLE: u64 = RBOX_BASE + 0x18;
+const RBOX_INTR1_TEST: u64 = RBOX_BASE + 0x20;
+const RBOX_INTR1_STATE: u64 = RBOX_BASE + 0x24;
+const RBOX_INTR2_ENABLE: u64 = RBOX_BASE + 0x2c;
+const RBOX_INTR2_TEST: u64 = RBOX_BASE + 0x34;
+const RBOX_INTR2_STATE: u64 = RBOX_BASE + 0x38;
+const RBOX_CONTROL0: u64 = RBOX_BASE + 0x44;
+const RBOX_CONTROL1: u64 = RBOX_BASE + 0x48;
+const RBOX_STATUS: u64 = RBOX_BASE + 0x54;
+const RBOX_INIT_READY: u64 = RBOX_BASE + 0x58;
+const RBOX_CMD_STATUS: u64 = RBOX_BASE + 0xa4;
+
+const AP_SPI_BASE: u64 = 0x4060_0000;
+const AP_SPI_TOP: u64 = AP_SPI_BASE + 0x2000;
+const AP_SPI_XACT: u64 = AP_SPI_BASE + 0x04;
+const AP_SPI_XFER_CFG: u64 = AP_SPI_BASE + 0x08;
+const AP_SPI_INTR0: u64 = AP_SPI_BASE + 0x14;
+const AP_SPI_INTR1: u64 = AP_SPI_BASE + 0x1c;
+const AP_SPI_INTR2: u64 = AP_SPI_BASE + 0x20;
+const AP_SPI_XACT_START: u32 = 1;
+const AP_SPI_DATA_BASE: u64 = AP_SPI_BASE + 0x1000;
+const AP_SPI_DATA_LEN: usize = 0x100;
+const AP_SPI_OP_READ_SR1: u8 = 0x05;
+const AP_SPI_OP_FAST_READ: u8 = 0x0b;
+const AP_SPI_OP_READ_SR3: u8 = 0x15;
+const AP_SPI_OP_READ_SR2: u8 = 0x35;
+
+const GSC_FIFO_BASE: u64 = 0x4062_0000;
+const GSC_FIFO_TOP: u64 = GSC_FIFO_BASE + 0x1000;
+const GSC_FIFO_CONTROL: u64 = GSC_FIFO_BASE + 0x10;
+const GSC_FIFO_IRQ_ENABLE: u64 = GSC_FIFO_BASE + 0x590;
+const GSC_FIFO_IRQ_TEST: u64 = GSC_FIFO_BASE + 0x598;
+const GSC_FIFO_IRQ_STATE: u64 = GSC_FIFO_BASE + 0x59c;
+const GSC_FIFO_IRQ_STATUS: u64 = GSC_FIFO_BASE + 0x5a0;
+const GSC_FIFO_RESET_BUSY_MASK: u32 = 0x9;
+
+const GLOBALSEC_BASE: u64 = 0x4010_0000;
+const GLOBALSEC_CRYPTOLIB_BASE: u64 = GLOBALSEC_BASE + 0x1c0;
+const GLOBALSEC_ACTIVE_RO_BASE: u64 = GLOBALSEC_BASE + 0x270;
+const GLOBALSEC_ACTIVE_RO_SIZE: u64 = GLOBALSEC_BASE + 0x274;
+const GLOBALSEC_ACTIVE_RW_BASE: u64 = GLOBALSEC_BASE + 0x280;
+const GLOBALSEC_ACTIVE_RW_SIZE: u64 = GLOBALSEC_BASE + 0x284;
+const TI50_RO_IMAGE_SIZE: u32 = 0x1_4000;
+const TI50_RW_SLOT_OFFSET: u64 = 0x1_5000;
+const TI50_RW_IMAGE_SIZE: u32 = 0x5_a000;
+const CRYPTOLIB_ROM_BASE: u64 = 0;
+const CRYPTOLIB_HEADER: u64 = CRYPTOLIB_ROM_BASE + 0x800;
+const CRYPTOLIB_ENTRY: u64 = CRYPTOLIB_ROM_BASE + 0x900;
+const CRYPTOLIB_MAGIC: u32 = 0xca11_ab1e;
+
+const TRNG_READ_DATA: u64 = 0x4041_00a8;
+
+// GPIO/pad block used by the idle/sleep path. IDA confirms the sleep helper
+// programs the 0x4003046c..0x40030488 registers, while GPIO input sampling
+// reads one word per bank from 0x40520000/34/68/9c.
+const GPIO_CFG_BASE: u64 = 0x4003_0000;
+const GPIO_CFG_TOP: u64 = 0x4003_0500;
+const GPIO_INTR_STATE0: u64 = 0x4003_0484;
+const GPIO_INTR_STATE1: u64 = 0x4003_0488;
+const GPIO_INPUT_BANK0: u64 = 0x4052_0000;
+const GPIO_INPUT_BANK1: u64 = 0x4052_0034;
+const GPIO_INPUT_BANK2: u64 = 0x4052_0068;
+const GPIO_INPUT_BANK3: u64 = 0x4052_009c;
+
+const FUSE_BASE: u64 = 0x4045_0000;
+const FUSE_TOP: u64 = 0x4046_0000;
+const FUSE_DEFAULT: u32 = 0x5555_5555;
+
+const CORE_LOCAL_BASE: u64 = 0xe000_e000;
+const CORE_LOCAL_TOP: u64 = CORE_LOCAL_BASE + 0x1000;
+const CORE_IRQ_CLAIM: u64 = CORE_LOCAL_BASE + 0x0d0;
+const CORE_IRQ_EPOCH: u64 = CORE_LOCAL_BASE + 0x0d8;
+const CORE_IRQ_NONE: u32 = 0x8000_0000;
+const CORE_IRQ_UART0: u32 = 0;
 
 impl std::fmt::Debug for GscBridge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -207,6 +475,178 @@ fn in_mmio(addr: u64) -> bool {
     (MMIO_LO..MMIO_HI).contains(&addr)
 }
 
+#[inline]
+fn in_core_local(addr: u64) -> bool {
+    (CORE_LOCAL_BASE..CORE_LOCAL_TOP).contains(&addr)
+}
+
+#[inline]
+fn fill_le_word(buf: &mut [u8], word: u32) {
+    let bytes = word.to_le_bytes();
+    for (i, b) in buf.iter_mut().enumerate() {
+        *b = bytes[i & 3];
+    }
+}
+
+#[inline]
+fn is_usb_w1c_status(addr: u64) -> bool {
+    matches!(
+        addr,
+        USB_INT_STATE0
+            | USB_INT_STATE1
+            | USB_INT_STATE2
+            | GSC_EVENT_USB_RESET
+            | GSC_EVENT_USB_TRIGGER
+    )
+}
+
+#[inline]
+fn is_rbox(addr: u64) -> bool {
+    (RBOX_BASE..RBOX_TOP).contains(&addr)
+}
+
+#[inline]
+fn is_rbox_w1c_status(addr: u64) -> bool {
+    matches!(
+        addr,
+        RBOX_INTR0_ENABLE
+            | RBOX_INTR0_TEST
+            | RBOX_INTR0_STATE
+            | RBOX_INTR1_ENABLE
+            | RBOX_INTR1_TEST
+            | RBOX_INTR1_STATE
+            | RBOX_INTR2_ENABLE
+            | RBOX_INTR2_TEST
+            | RBOX_INTR2_STATE
+    )
+}
+
+#[inline]
+fn is_ap_spi(addr: u64) -> bool {
+    (AP_SPI_BASE..AP_SPI_TOP).contains(&addr)
+}
+
+#[inline]
+fn is_ap_spi_w1c_status(addr: u64) -> bool {
+    matches!(addr, AP_SPI_INTR0 | AP_SPI_INTR1 | AP_SPI_INTR2)
+}
+
+#[inline]
+fn ap_spi_data_offset(addr: u64) -> Option<usize> {
+    let off = addr.checked_sub(AP_SPI_DATA_BASE)?;
+    (off < AP_SPI_DATA_LEN as u64).then_some(off as usize)
+}
+
+#[inline]
+fn ap_spi_fast_read_addr(data: &[u8]) -> u32 {
+    let b1 = data.get(1).copied().unwrap_or(0) as u32;
+    let b2 = data.get(2).copied().unwrap_or(0) as u32;
+    let b3 = data.get(3).copied().unwrap_or(0) as u32;
+    (b1 << 16) | (b2 << 8) | b3
+}
+
+fn load_ap_flash_from_env() -> Arc<Vec<u8>> {
+    let Ok(path) = std::env::var("RAX_GSC_AP_FLASH") else {
+        return Arc::new(Vec::new());
+    };
+    if path.trim().is_empty() {
+        return Arc::new(Vec::new());
+    }
+    match std::fs::read(&path) {
+        Ok(bytes) => Arc::new(bytes),
+        Err(e) => {
+            eprintln!("[gsc] failed to read RAX_GSC_AP_FLASH={path:?}: {e}; using blank AP flash");
+            Arc::new(Vec::new())
+        }
+    }
+}
+
+#[inline]
+fn is_gsc_fifo(addr: u64) -> bool {
+    (GSC_FIFO_BASE..GSC_FIFO_TOP).contains(&addr)
+}
+
+#[inline]
+fn is_gsc_fifo_w1c_status(addr: u64) -> bool {
+    matches!(
+        addr,
+        GSC_FIFO_IRQ_ENABLE | GSC_FIFO_IRQ_TEST | GSC_FIFO_IRQ_STATE
+    )
+}
+
+#[inline]
+fn is_gpio_cfg(addr: u64) -> bool {
+    (GPIO_CFG_BASE..GPIO_CFG_TOP).contains(&addr)
+}
+
+#[inline]
+fn is_gpio_w1c_status(addr: u64) -> bool {
+    matches!(addr, GPIO_INTR_STATE0 | GPIO_INTR_STATE1)
+}
+
+#[inline]
+fn is_gpio_input_bank(addr: u64) -> bool {
+    matches!(
+        addr,
+        GPIO_INPUT_BANK0 | GPIO_INPUT_BANK1 | GPIO_INPUT_BANK2 | GPIO_INPUT_BANK3
+    )
+}
+
+#[inline]
+fn is_flash_control(addr: u64) -> bool {
+    matches!(addr, FLASH_PE_CONTROL0 | FLASH_PE_CONTROL1)
+}
+
+#[inline]
+fn flash_control_index(addr: u64) -> usize {
+    usize::from(addr == FLASH_PE_CONTROL1)
+}
+
+#[inline]
+fn flash_trans_offset(trans: u32) -> u64 {
+    (((trans >> 7) & 0xffff) as u64) * 4
+}
+
+#[inline]
+fn flash_read_trans_offset(trans: u32) -> u64 {
+    ((trans & 0xffff) as u64) * 4
+}
+
+#[inline]
+fn flash_trans_is_info(trans: u32) -> bool {
+    trans & 0x8 != 0
+}
+
+#[inline]
+fn flash_read_trans_is_info(trans: u32) -> bool {
+    trans & 0x1_0000 != 0
+}
+
+fn install_synthetic_cryptolib(mem: &GuestMemoryMmap) {
+    // Ti50 discovers a ROM-resident cryptolib through GLOBALSEC+0x1c0 and
+    // tail-calls its entry. The proprietary image does not include that ROM
+    // blob, so provide the minimal header/entry needed for the boot verifier to
+    // continue.
+    let header = [1u32, 0, CRYPTOLIB_MAGIC, CRYPTOLIB_ENTRY as u32];
+    for (i, word) in header.iter().enumerate() {
+        let _ = mem.write_slice(
+            &word.to_le_bytes(),
+            GuestAddress(CRYPTOLIB_HEADER + 4 * i as u64),
+        );
+    }
+    let code = [
+        0xaa55_b537u32, // lui  a0, 0xaa55b
+        0xa555_0513u32, // addi a0, a0, -0x5ab => 0xaa55aa55
+        0x0000_8067u32, // ret
+    ];
+    for (i, word) in code.iter().enumerate() {
+        let _ = mem.write_slice(
+            &word.to_le_bytes(),
+            GuestAddress(CRYPTOLIB_ENTRY + 4 * i as u64),
+        );
+    }
+}
+
 impl GscBridge {
     #[inline]
     fn in_uart(&self, addr: u64) -> bool {
@@ -214,47 +654,692 @@ impl GscBridge {
         addr >= base && addr < base + UART_LEN
     }
 
-    /// Record a first-touch MMIO access for the discovery trace.
+    /// Record an MMIO access for the discovery trace. First-touch is logged for
+    /// every address; accesses in the PMU control block (reset-source / global
+    /// reset) are logged every time, since that region drives the boot path.
     fn note(&self, addr: u64, is_write: bool, value: u32) {
         if self.cfg.trace == Trace::Off {
             return;
         }
+        let pmu_ctrl = (PMU_BASE..PMU_CTRL_TOP).contains(&addr);
+        let core_local = in_core_local(addr);
+        let usb_or_event = (USB_BASE..USB_BASE + 0x200).contains(&addr)
+            || matches!(addr, GSC_EVENT_USB_RESET | GSC_EVENT_USB_TRIGGER);
+        let rbox = is_rbox(addr);
+        let ap_spi = is_ap_spi(addr);
+        let gsc_fifo = is_gsc_fifo(addr);
         let key = (addr << 1) | is_write as u64;
-        let mut sh = self.shared.lock().unwrap();
-        if sh.seen.insert(key) {
+        let first_touch = self.shared.lock().unwrap().seen.insert(key);
+        if first_touch || pmu_ctrl || core_local || usb_or_event || rbox || ap_spi || gsc_fifo {
             eprintln!(
-                "[gsc] mmio {} {:#010x} {:#010x}",
+                "[gsc] {:#010x} mmio {} {:#010x} = {:#010x}{}",
+                self.pc.load(Ordering::Relaxed),
                 if is_write { "WR" } else { "RD" },
                 addr,
-                value
+                value,
+                if pmu_ctrl {
+                    "  <PMU>"
+                } else if core_local {
+                    "  <COREIRQ>"
+                } else if usb_or_event {
+                    "  <USB>"
+                } else if rbox {
+                    "  <RBOX>"
+                } else if ap_spi {
+                    "  <AP_SPI>"
+                } else if gsc_fifo {
+                    "  <GSC_FIFO>"
+                } else {
+                    ""
+                },
             );
-        }
-    }
-
-    /// Read a UART register (no shared state needed).
-    fn uart_read(&self, addr: u64) -> u32 {
-        match addr - self.cfg.uart_base {
-            UART_STATE => self.cfg.uart_state,
-            UART_RDATA => 0, // no console input modeled yet
-            _ => 0,
         }
     }
 
     /// Emit a console byte (to stdout and the capture buffer).
     fn console_out(&self, byte: u8) {
+        if self.cfg.console_trace {
+            let shown = if byte.is_ascii_graphic() || byte == b' ' {
+                byte as char
+            } else {
+                '.'
+            };
+            eprintln!(
+                "[gsc] console pc={:#010x} byte={:#04x} '{}'",
+                self.pc.load(Ordering::Relaxed),
+                byte,
+                shown
+            );
+        }
         self.shared.lock().unwrap().console.push(byte);
         let mut out = std::io::stdout();
         let _ = out.write_all(&[byte]);
         let _ = out.flush();
     }
+
+    fn uart_irq_pending(&self) -> bool {
+        let sh = self.shared.lock().unwrap();
+        sh.uart_irq_armed && !sh.uart_rx.is_empty()
+    }
+
+    fn flash_gpa(&self, control: u64, off: u64) -> u64 {
+        self.cfg.flash_img_base + flash_control_index(control) as u64 * TI50_FLASH_SLOT_SIZE + off
+    }
+
+    fn read_flash_word(&self, control: u64, off: u64) -> u32 {
+        let mut bytes = [0xffu8; 4];
+        let _ = self
+            .mem
+            .read_slice(&mut bytes, GuestAddress(self.flash_gpa(control, off)));
+        u32::from_le_bytes(bytes)
+    }
+
+    fn flash_info_key(control: u64, off: u64) -> u64 {
+        ((flash_control_index(control) as u64) << 32) | (off & 0xffff_ffff)
+    }
+
+    fn read_flash_info_word(&self, control: u64, off: u64) -> u32 {
+        const AP_RO_CACHED_STATUS_OFF: u64 = 0x0c00;
+        const AP_RO_CACHED_STATUS: [u8; 0x28] = {
+            let mut bytes = [0u8; 0x28];
+            bytes[0] = 1;
+            bytes[4] = 1;
+            // sub_9D33A accepts this status/complement pair and returns
+            // success state 0. The following bytes overlap the first AP SPI
+            // write-protect policy slot after the firmware's cached-record
+            // copy helper repacks the flash-read DOUT lanes.
+            bytes[8] = 0;
+            bytes[9] = 0xff;
+            // AP SPI write-protect policy words for SR-1/SR-2/SR-3. Each
+            // word encodes two bytes as (value, ~value): expected, then mask.
+            // The AP SPI model returns SR-1=0x02 and SR-2/SR-3=0x00.
+            bytes[0x0a] = 0xff;
+            bytes[0x0b] = 0x00;
+            bytes[0x0c] = 0x02;
+            bytes[0x0d] = 0xfd;
+            bytes[0x0e] = 0xff;
+            bytes[0x0f] = 0x00;
+            bytes[0x10] = 0x00;
+            bytes[0x11] = 0xff;
+            bytes[0x12] = 0xff;
+            bytes[0x13] = 0x00;
+            bytes[0x14] = 0x00;
+            bytes[0x15] = 0xff;
+            bytes[0x16] = 0xff;
+            bytes[0x17] = 0x00;
+            bytes[0x18] = 0x00;
+            bytes[0x19] = 0xff;
+            bytes[0x1a] = 0xff;
+            bytes[0x1b] = 0x00;
+            bytes
+        };
+
+        let ap_ro_info_word = if (self.cfg.ap_ro_stub || self.cfg.ap_ro_info_stub)
+            && flash_control_index(control) == 1
+            && (AP_RO_CACHED_STATUS_OFF..AP_RO_CACHED_STATUS_OFF + AP_RO_CACHED_STATUS.len() as u64)
+                .contains(&off)
+        {
+            let start = (off - AP_RO_CACHED_STATUS_OFF) as usize;
+            let mut bytes = [0u8; 4];
+            let n = (AP_RO_CACHED_STATUS.len() - start).min(4);
+            bytes[..n].copy_from_slice(&AP_RO_CACHED_STATUS[start..start + n]);
+            Some(u32::from_le_bytes(bytes))
+        } else {
+            None
+        };
+        if let Some(value) = ap_ro_info_word {
+            if self.cfg.trace != Trace::Off {
+                eprintln!("[gsc] AP RO cached INFO off={off:#x} -> {value:#010x}");
+            }
+            return value;
+        }
+        let value = self
+            .shared
+            .lock()
+            .unwrap()
+            .flash_info
+            .get(&Self::flash_info_key(control, off))
+            .copied()
+            .unwrap_or(0xffff_ffff);
+        if (self.cfg.ap_ro_stub || self.cfg.ap_ro_info_stub)
+            && flash_control_index(control) == 1
+            && (AP_RO_CACHED_STATUS_OFF..AP_RO_CACHED_STATUS_OFF + AP_RO_CACHED_STATUS.len() as u64)
+                .contains(&off)
+            && self.cfg.trace != Trace::Off
+        {
+            eprintln!("[gsc] AP RO cached INFO fallback off={off:#x} -> {value:#010x}");
+        }
+        value
+    }
+
+    fn program_flash_info_word(&self, control: u64, off: u64, value: u32) {
+        let key = Self::flash_info_key(control, off);
+        let mut sh = self.shared.lock().unwrap();
+        let old = sh.flash_info.get(&key).copied().unwrap_or(0xffff_ffff);
+        let programmed = old & value;
+        if self.cfg.trace != Trace::Off {
+            eprintln!(
+                "[gsc] flash PROGRAM INFO control={} off={off:#x} old={old:#010x} value={value:#010x} -> {programmed:#010x}",
+                flash_control_index(control)
+            );
+        }
+        sh.flash_info.insert(key, programmed);
+    }
+
+    fn erase_flash_info_range(&self, control: u64, off: u64, len: usize) {
+        if self.cfg.trace != Trace::Off {
+            eprintln!(
+                "[gsc] flash ERASE INFO control={} off={off:#x} len={len:#x}",
+                flash_control_index(control)
+            );
+        }
+        let start = off & !3;
+        let end = start + len as u64;
+        let mut sh = self.shared.lock().unwrap();
+        let lane = flash_control_index(control) as u64;
+        sh.flash_info.retain(|&key, _| {
+            (key >> 32) != lane || (key & 0xffff_ffff) < start || (key & 0xffff_ffff) >= end
+        });
+    }
+
+    fn program_flash_word(&self, control: u64, off: u64, value: u32) {
+        let gpa = self.flash_gpa(control, off);
+        let old = self.read_flash_word(control, off);
+        let programmed = old & value;
+        if self.cfg.trace != Trace::Off {
+            eprintln!(
+                "[gsc] flash PROGRAM control={} off={off:#x} gpa={gpa:#x} old={old:#010x} value={value:#010x} -> {programmed:#010x}",
+                flash_control_index(control)
+            );
+        }
+        let _ = self
+            .mem
+            .write_slice(&programmed.to_le_bytes(), GuestAddress(gpa));
+    }
+
+    fn erase_flash_range(&self, control: u64, off: u64, len: usize) {
+        if self.cfg.trace != Trace::Off {
+            let gpa = self.flash_gpa(control, off);
+            eprintln!(
+                "[gsc] flash ERASE control={} off={off:#x} gpa={gpa:#x} len={len:#x}",
+                flash_control_index(control)
+            );
+        }
+        let blank = vec![0xffu8; len];
+        let _ = self
+            .mem
+            .write_slice(&blank, GuestAddress(self.flash_gpa(control, off)));
+    }
+
+    fn execute_flash_op(
+        &self,
+        control: u64,
+        opcode: u32,
+        trans: u32,
+        read_trans: u32,
+        wr_data: [u32; 2],
+    ) -> [u32; 2] {
+        let prog_off = flash_trans_offset(trans);
+        let read_off = flash_read_trans_offset(read_trans);
+        let prog_info = flash_trans_is_info(trans);
+        let read_info = flash_read_trans_is_info(read_trans);
+        if self.cfg.trace != Trace::Off {
+            eprintln!(
+                "[gsc] flash OP control={} opcode={opcode:#010x} trans={trans:#010x} off={prog_off:#x} prog_info={} read_trans={read_trans:#010x} read_off={read_off:#x} read_info={} bank_bit={} hi_bit={}",
+                flash_control_index(control),
+                prog_info,
+                read_info,
+                (trans >> 6) & 1,
+                (trans >> 23) & 1,
+            );
+        }
+        match opcode {
+            FLASH_OP_TI50_PROGRAM | FLASH_OP_CR50_PROGRAM => {
+                if prog_info {
+                    self.program_flash_info_word(control, prog_off, wr_data[0]);
+                    self.program_flash_info_word(control, prog_off + 4, wr_data[1]);
+                } else {
+                    self.program_flash_word(control, prog_off, wr_data[0]);
+                    self.program_flash_word(control, prog_off + 4, wr_data[1]);
+                }
+                [0, 0]
+            }
+            FLASH_OP_CR50_READ => {
+                if read_info {
+                    [
+                        self.read_flash_info_word(control, read_off),
+                        self.read_flash_info_word(control, read_off + 4),
+                    ]
+                } else {
+                    [
+                        self.read_flash_word(control, read_off),
+                        self.read_flash_word(control, read_off + 4),
+                    ]
+                }
+            }
+            FLASH_OP_CR50_ERASE => {
+                if prog_info {
+                    self.erase_flash_info_range(control, prog_off & !0x7ff, 0x800);
+                } else {
+                    self.erase_flash_range(control, prog_off & !0x7ff, 0x800);
+                }
+                [0, 0]
+            }
+            _ => {
+                if self.cfg.trace != Trace::Off {
+                    eprintln!(
+                        "[gsc] flash op {opcode:#010x} control={} at TRANS {trans:#010x} treated as complete",
+                        flash_control_index(control)
+                    );
+                }
+                [0, 0]
+            }
+        }
+    }
+
+    fn ap_spi_tx_len(xfer_cfg: u32) -> usize {
+        let tx_bits_minus_one = (xfer_cfg >> 7) & 0x0fff;
+        (tx_bits_minus_one as usize + 8) / 8
+    }
+
+    fn ap_spi_rx_base_offset(xfer_cfg: u32) -> usize {
+        (Self::ap_spi_tx_len(xfer_cfg) + 3) & !3
+    }
+
+    fn ap_spi_payload_offset(xfer_cfg: u32) -> usize {
+        Self::ap_spi_rx_base_offset(xfer_cfg) + Self::ap_spi_tx_len(xfer_cfg)
+    }
+
+    fn ap_spi_rx_capacity(xfer_cfg: u32) -> usize {
+        let rx_words = ((xfer_cfg >> 19) & 0x7f) as usize + 1;
+        rx_words * 4
+    }
+
+    fn execute_ap_spi_transaction(&self, xact: u32) -> u32 {
+        let mut sh = self.shared.lock().unwrap();
+        if sh.ap_spi_data.len() != AP_SPI_DATA_LEN {
+            sh.ap_spi_data.resize(AP_SPI_DATA_LEN, 0);
+        }
+        let xfer_cfg = sh.store.get(&AP_SPI_XFER_CFG).copied().unwrap_or(0);
+        let rx = Self::ap_spi_payload_offset(xfer_cfg).min(AP_SPI_DATA_LEN - 1);
+        let tx_len = Self::ap_spi_tx_len(xfer_cfg);
+        let payload_len = Self::ap_spi_rx_capacity(xfer_cfg).saturating_sub(tx_len);
+        let opcode = sh.ap_spi_data.first().copied().unwrap_or(0);
+
+        match opcode {
+            // The AP RO verifier reads the external AP flash write-protect
+            // status bytes with opcodes 0x05, 0x35, and 0x15. The first cached
+            // policy word in the production image expects SR-1 bit1 set; the
+            // remaining status bytes are accepted as zero.
+            AP_SPI_OP_READ_SR1 | AP_SPI_OP_READ_SR2 | AP_SPI_OP_READ_SR3 => {
+                let status = match opcode {
+                    AP_SPI_OP_READ_SR1 => 0x02,
+                    _ => 0x00,
+                };
+                sh.ap_spi_data[rx] = status;
+                if self.cfg.trace != Trace::Off {
+                    eprintln!(
+                        "[gsc] AP SPI xact opcode={opcode:#04x} cfg={xfer_cfg:#010x} rx_off={rx:#x} value={status:#04x}"
+                    );
+                }
+            }
+            AP_SPI_OP_FAST_READ => {
+                let addr = ap_spi_fast_read_addr(&sh.ap_spi_data);
+                let len = payload_len.min(AP_SPI_DATA_LEN - rx);
+                for i in 0..len {
+                    sh.ap_spi_data[rx + i] = self
+                        .ap_flash
+                        .get(addr as usize + i)
+                        .copied()
+                        .unwrap_or(0xff);
+                }
+                if self.cfg.trace != Trace::Off {
+                    let first = sh.ap_spi_data.get(rx).copied().unwrap_or(0xff);
+                    eprintln!(
+                        "[gsc] AP SPI fast-read addr={addr:#08x} cfg={xfer_cfg:#010x} rx_off={rx:#x} len={len:#x} first={first:#04x}"
+                    );
+                }
+            }
+            _ => {
+                let len = payload_len.min(AP_SPI_DATA_LEN - rx);
+                for i in 0..len {
+                    sh.ap_spi_data[rx + i] = 0xff;
+                }
+                if self.cfg.trace != Trace::Off {
+                    eprintln!(
+                        "[gsc] AP SPI xact opcode={opcode:#04x} cfg={xfer_cfg:#010x} rx_off={rx:#x} len={len:#x} blank"
+                    );
+                }
+            }
+        }
+        xact & !AP_SPI_XACT_START
+    }
+
+    fn globalsec_region_word(&self, addr: u64) -> Option<u32> {
+        match addr {
+            GLOBALSEC_CRYPTOLIB_BASE => Some(CRYPTOLIB_ROM_BASE as u32),
+            GLOBALSEC_ACTIVE_RO_BASE => Some(self.cfg.flash_img_base as u32),
+            GLOBALSEC_ACTIVE_RO_SIZE => Some(TI50_RO_IMAGE_SIZE),
+            GLOBALSEC_ACTIVE_RW_BASE => {
+                Some((self.cfg.flash_img_base + TI50_RW_SLOT_OFFSET) as u32)
+            }
+            GLOBALSEC_ACTIVE_RW_SIZE => Some(TI50_RW_IMAGE_SIZE),
+            _ => None,
+        }
+    }
 }
 
 impl Memory for GscBridge {
     fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+        if in_core_local(addr) {
+            let v = if addr == CORE_IRQ_CLAIM {
+                if self.uart_irq_pending() {
+                    CORE_IRQ_UART0
+                } else {
+                    CORE_IRQ_NONE
+                }
+            } else if addr == CORE_IRQ_EPOCH {
+                0
+            } else {
+                self.shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(self.cfg.open_bus)
+            };
+            self.note(addr, false, v);
+            fill_le_word(buf, v);
+            return Ok(());
+        }
         if in_mmio(addr) {
-            let word = if self.in_uart(addr) {
-                self.uart_read(addr)
-            } else if let Some(&v) = self.ready.get(&addr) {
+            // The PMU reset-source register is stateful (cold = POR, warm =
+            // software reset; cleared by CLRRST), so the firmware classifies the
+            // reset cause instead of seeing "Other" and rebooting forever.
+            if addr == PMU_RSTSRC_REG {
+                let v = self.shared.lock().unwrap().rstsrc;
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == PMU_CHIP_ID_REG || addr == PMU_CHIP_ID_ALT_REG {
+                self.note(addr, false, PMU_CHIP_ID);
+                fill_le_word(buf, PMU_CHIP_ID);
+                return Ok(());
+            }
+            if addr == PMU_WAKE_EXIT_SRC_REG {
+                self.note(addr, false, 0);
+                fill_le_word(buf, 0);
+                return Ok(());
+            }
+            // Flash controller ERROR (+0x9c) and STATUS (+0x18/+0x1c) read 0 (op
+            // complete, no error). Read commands fill DOUT0/1; program/erase
+            // commands update either the mapped XIP image or the separate blank
+            // INFO-bank store.
+            if matches!(addr, FLASH_ERROR | FLASH_STATUS0 | FLASH_STATUS1) {
+                let v = if addr == FLASH_ERROR {
+                    self.shared.lock().unwrap().flash_error
+                } else {
+                    0
+                };
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if matches!(
+                addr,
+                FLASH_DOUT0_LO | FLASH_DOUT0_HI | FLASH_DOUT1_LO | FLASH_DOUT1_HI
+            ) {
+                let lane = usize::from(matches!(addr, FLASH_DOUT1_LO | FLASH_DOUT1_HI));
+                let word = usize::from(matches!(addr, FLASH_DOUT0_HI | FLASH_DOUT1_HI));
+                let v = self.shared.lock().unwrap().flash_dout[lane][word];
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if let Some(v) = self.globalsec_region_word(addr) {
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == GSC_EVENT_USB_RESET {
+                let v = 0x8000_0000;
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == USB_SOFT_RESET || is_usb_w1c_status(addr) {
+                self.note(addr, false, 0);
+                fill_le_word(buf, 0);
+                return Ok(());
+            }
+            if addr == RBOX_STATUS {
+                let sh = self.shared.lock().unwrap();
+                let control0_ack = sh.store.get(&RBOX_CONTROL0).copied().unwrap_or(0) & 1;
+                let control1 = sh.store.get(&RBOX_CONTROL1).copied().unwrap_or(1) & 1;
+                let control1_ack = (control1 ^ 1) << 5;
+                let v = control0_ack | control1_ack;
+                drop(sh);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == RBOX_INIT_READY {
+                self.note(addr, false, 1);
+                fill_le_word(buf, 1);
+                return Ok(());
+            }
+            if addr == RBOX_CMD_STATUS {
+                self.note(addr, false, 0);
+                fill_le_word(buf, 0);
+                return Ok(());
+            }
+            if is_rbox_w1c_status(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if let Some(off) = ap_spi_data_offset(addr) {
+                let mut word = [0u8; 4];
+                {
+                    let sh = self.shared.lock().unwrap();
+                    for (i, b) in buf.iter_mut().enumerate() {
+                        *b = sh.ap_spi_data.get(off + i).copied().unwrap_or(0);
+                    }
+                    for (i, b) in word.iter_mut().enumerate() {
+                        *b = sh.ap_spi_data.get(off + i).copied().unwrap_or(0);
+                    }
+                }
+                self.note(addr, false, u32::from_le_bytes(word));
+                return Ok(());
+            }
+            if addr == AP_SPI_XACT {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0)
+                    & !AP_SPI_XACT_START;
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if is_ap_spi_w1c_status(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if is_ap_spi(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == GSC_FIFO_CONTROL {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0)
+                    & !GSC_FIFO_RESET_BUSY_MASK;
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if addr == GSC_FIFO_IRQ_STATUS {
+                self.note(addr, false, 0);
+                fill_le_word(buf, 0);
+                return Ok(());
+            }
+            if is_gsc_fifo_w1c_status(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if self.in_uart(addr) {
+                let off = addr - self.cfg.uart_base;
+                if off == UART_RDATA {
+                    let v = {
+                        let mut sh = self.shared.lock().unwrap();
+                        if sh.uart_irq_armed {
+                            sh.uart_rx.pop_front().map(u32::from)
+                        } else {
+                            None
+                        }
+                    }
+                    .unwrap_or(self.cfg.open_bus);
+                    self.note(addr, false, v);
+                    fill_le_word(buf, v);
+                    return Ok(());
+                }
+                if off == UART_STATE {
+                    let rx_empty = {
+                        let sh = self.shared.lock().unwrap();
+                        !sh.uart_irq_armed || sh.uart_rx.is_empty()
+                    };
+                    let mut v = self.cfg.uart_state & !UART_STATE_TX_BUSY;
+                    if rx_empty {
+                        v |= UART_STATE_RX_EMPTY;
+                    } else {
+                        v &= !UART_STATE_RX_EMPTY;
+                    }
+                    self.note(addr, false, v);
+                    fill_le_word(buf, v);
+                    return Ok(());
+                }
+            }
+            if addr == TRNG_READ_DATA {
+                let v = {
+                    let mut sh = self.shared.lock().unwrap();
+                    if sh.trng_state == 0 {
+                        sh.trng_state = 0x6d5a_56a5;
+                    }
+                    let mut x = sh.trng_state;
+                    x ^= x << 13;
+                    x ^= x >> 17;
+                    x ^= x << 5;
+                    sh.trng_state = x;
+                    x
+                };
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if is_gpio_input_bank(addr) {
+                let v = self.ready.get(&addr).copied().unwrap_or_else(|| {
+                    self.shared
+                        .lock()
+                        .unwrap()
+                        .store
+                        .get(&addr)
+                        .copied()
+                        .unwrap_or(0)
+                });
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if is_gpio_w1c_status(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if is_gpio_cfg(addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(0);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            if (FUSE_BASE..FUSE_TOP).contains(&addr) {
+                let v = self
+                    .shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .get(&addr)
+                    .copied()
+                    .unwrap_or(FUSE_DEFAULT);
+                self.note(addr, false, v);
+                fill_le_word(buf, v);
+                return Ok(());
+            }
+            // UART registers go through the normal ready/store path so the
+            // firmware sees a consistent device (STATE is a fixed "TX ready" in
+            // the ready map; WDATA writes are tapped for console output below).
+            let word = if let Some(&v) = self.ready.get(&addr) {
                 v
             } else {
                 // Persistent register read with the generic spin-breaker: an
@@ -271,15 +1356,17 @@ impl Memory for GscBridge {
                     // and "wait for clear" (needs zeros) loops both resolve.
                     let phase = sh.spin_phase.entry(addr).or_insert(false);
                     *phase = !*phase;
-                    if *phase { 0xffff_ffff } else { 0x0000_0000 }
+                    if *phase {
+                        0xffff_ffff
+                    } else {
+                        0x0000_0000
+                    }
                 } else {
                     base
                 }
             };
             self.note(addr, false, word);
-            for (i, b) in buf.iter_mut().enumerate() {
-                *b = (word >> (8 * (i as u32 & 3))) as u8;
-            }
+            fill_le_word(buf, word);
             return Ok(());
         }
         self.mem
@@ -291,25 +1378,142 @@ impl Memory for GscBridge {
     }
 
     fn write(&mut self, addr: u64, data: &[u8]) -> MemResult<()> {
+        if in_core_local(addr) {
+            let mut word = [0u8; 4];
+            let n = data.len().min(4);
+            word[..n].copy_from_slice(&data[..n]);
+            let value = u32::from_le_bytes(word);
+            self.shared.lock().unwrap().store.insert(addr, value);
+            self.note(addr, true, value);
+            return Ok(());
+        }
         if in_mmio(addr) {
             let mut word = [0u8; 4];
             let n = data.len().min(4);
             word[..n].copy_from_slice(&data[..n]);
             let value = u32::from_le_bytes(word);
+            let mut flash_op = None;
+            let mut ap_spi_xact = None;
+            if let Some(off) = ap_spi_data_offset(addr) {
+                {
+                    let mut sh = self.shared.lock().unwrap();
+                    sh.read_counts.clear();
+                    if sh.ap_spi_data.len() != AP_SPI_DATA_LEN {
+                        sh.ap_spi_data.resize(AP_SPI_DATA_LEN, 0);
+                    }
+                    for (i, b) in data.iter().copied().enumerate() {
+                        if off + i < AP_SPI_DATA_LEN {
+                            sh.ap_spi_data[off + i] = b;
+                        }
+                    }
+                }
+                self.note(addr, true, value);
+                return Ok(());
+            }
             {
                 let mut sh = self.shared.lock().unwrap();
                 // A write is forward progress: reset the spin-breaker window.
                 sh.read_counts.clear();
-                sh.store.insert(addr, value);
+                let stored = if is_gpio_w1c_status(addr) {
+                    sh.store.get(&addr).copied().unwrap_or(0) & !value
+                } else if is_rbox_w1c_status(addr) {
+                    sh.store.get(&addr).copied().unwrap_or(0) & !value
+                } else if is_ap_spi_w1c_status(addr) {
+                    sh.store.get(&addr).copied().unwrap_or(0) & !value
+                } else if addr == AP_SPI_XACT && value & AP_SPI_XACT_START != 0 {
+                    value & !AP_SPI_XACT_START
+                } else if is_gsc_fifo_w1c_status(addr) {
+                    sh.store.get(&addr).copied().unwrap_or(0) & !value
+                } else if addr == USB_SOFT_RESET || is_usb_w1c_status(addr) {
+                    0
+                } else {
+                    value
+                };
+                sh.store.insert(addr, stored);
+                if addr == PMU_CLRRST_REG {
+                    // CLRRST: clear the reported reset-source bits.
+                    sh.rstsrc &= !value;
+                }
                 if addr == PMU_RESET_REG && value == PMU_RESET_MAGIC {
                     sh.reset_requested = true;
                 }
+                if addr == AP_SPI_XACT && value & AP_SPI_XACT_START != 0 {
+                    ap_spi_xact = Some(value);
+                }
+                // Flash controller programming sequence.
+                if addr == FLASH_PE_EN {
+                    sh.flash_pe_en = value == FLASH_PE_EN_MAGIC;
+                } else if addr == FLASH_READ_TRANS {
+                    sh.flash_read_trans = value;
+                } else if addr == FLASH_TRANS {
+                    sh.flash_trans = value;
+                } else if addr == FLASH_WR_DATA0 {
+                    sh.flash_wr_data[0] = value;
+                } else if addr == FLASH_WR_DATA1 {
+                    sh.flash_wr_data[1] = value;
+                } else if is_flash_control(addr) && sh.flash_pe_en {
+                    flash_op = Some((
+                        addr,
+                        value,
+                        sh.flash_trans,
+                        sh.flash_read_trans,
+                        sh.flash_wr_data,
+                    ));
+                    sh.flash_pe_en = false;
+                    sh.store.insert(addr, 0);
+                }
+            }
+            if let Some((control, opcode, trans, read_trans, wr_data)) = flash_op {
+                let dout = self.execute_flash_op(control, opcode, trans, read_trans, wr_data);
+                let mut sh = self.shared.lock().unwrap();
+                sh.flash_dout[flash_control_index(control)] = dout;
+                sh.flash_error = 0;
+                sh.store.insert(control, 0);
+            }
+            if let Some(xact) = ap_spi_xact {
+                let stored = self.execute_ap_spi_transaction(xact);
+                self.shared
+                    .lock()
+                    .unwrap()
+                    .store
+                    .insert(AP_SPI_XACT, stored);
             }
             self.note(addr, true, value);
+            // Console sniffer: any byte-sized printable write to an MMIO
+            // register is a candidate UART TX — log it so the real console base
+            // can be discovered.
+            if self.cfg.trace != Trace::Off {
+                let b = value & 0xff;
+                let printable = (0x20..0x7f).contains(&b) || b == 0x0a || b == 0x0d || b == 0x09;
+                if value <= 0xff && printable {
+                    eprintln!(
+                        "[gsc] {:#010x} CONSOLE? {:#010x} <- {:#04x} '{}'",
+                        self.pc.load(Ordering::Relaxed),
+                        addr,
+                        b,
+                        b as u8 as char
+                    );
+                }
+            }
             if self.in_uart(addr) && addr - self.cfg.uart_base == UART_WDATA {
                 self.console_out((value & 0xff) as u8);
             }
             return Ok(());
+        }
+        if self.cfg.trace != Trace::Off
+            && (self.cfg.flash_img_base..self.cfg.flash_img_base + 0x10_0000).contains(&addr)
+        {
+            let mut word = [0u8; 4];
+            let n = data.len().min(4);
+            word[..n].copy_from_slice(&data[..n]);
+            let value = u32::from_le_bytes(word);
+            eprintln!(
+                "[gsc] {:#010x} XIP WR {:#010x} size={} value={:#010x}",
+                self.pc.load(Ordering::Relaxed),
+                addr,
+                data.len(),
+                value
+            );
         }
         self.mem
             .write_slice(data, GuestAddress(addr))
@@ -331,19 +1535,53 @@ pub struct GscVcpu {
     reset_entry: u64,
     /// Number of warm resets so far (bounded by [`MAX_RESETS`]).
     reset_count: u32,
+    /// Published to [`GscBridge`] before each step for PC-correlated tracing.
+    pc_cell: Arc<AtomicU64>,
+    /// Optional breakpoint PC: dump registers + the call site on first hit
+    /// (env `RAX_GSC_BREAK`). Used to diagnose panics/asserts during bring-up.
+    break_pc: Option<u64>,
+    /// 1-based occurrence of `break_pc` to dump (`RAX_GSC_BREAK_HIT`).
+    break_hit: u64,
+    /// Optional RA filter for breakpoint hits (`RAX_GSC_BREAK_RA`).
+    break_ra: Option<u64>,
+    /// Optional saved-RA filter for helper frames (`RAX_GSC_BREAK_SAVED_RA`).
+    break_saved_ra: Option<u64>,
+    /// Optional number of bytes to dump from `sp` when the breakpoint fires.
+    break_stack_bytes: u64,
+    break_stop: bool,
+    syscall_trace: bool,
+    print_trace: bool,
+    ap_ro_stub: bool,
+    ap_ro_crypto_stub: bool,
+    break_hits_seen: u64,
+    broke: bool,
 }
 
 impl GscVcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
         let cfg = GscConfig::from_env();
-        let shared: Shared = Arc::new(Mutex::new(GscShared::default()));
+        install_synthetic_cryptolib(&mem);
+        let uart_rx = std::env::var("RAX_GSC_UART_RX")
+            .map(|s| s.into_bytes().into())
+            .unwrap_or_default();
+        let shared: Shared = Arc::new(Mutex::new(GscShared {
+            rstsrc: cfg.rstsrc_cold,
+            uart_rx,
+            ..GscShared::default()
+        }));
         let mut ready = builtin_ready_map();
+        // The console UART STATE register reads back "TX ready" so the
+        // firmware's transmit-ready poll always passes, at whatever base.
+        ready.insert(cfg.uart_base + UART_STATE, cfg.uart_state);
         ready.extend(parse_ready_env());
+        let pc_cell = Arc::new(AtomicU64::new(0));
         let bridge = GscBridge {
             mem,
             shared: shared.clone(),
+            ap_flash: load_ap_flash_from_env(),
             cfg,
             ready,
+            pc: pc_cell.clone(),
         };
         let cpu = RiscVCpu::new(RiscVConfig::rv32(Isa::ti50()), Box::new(bridge));
         GscVcpu {
@@ -354,6 +1592,19 @@ impl GscVcpu {
             halted: false,
             reset_entry: 0,
             reset_count: 0,
+            pc_cell,
+            break_pc: env_hex("RAX_GSC_BREAK"),
+            break_hit: env_hex("RAX_GSC_BREAK_HIT").unwrap_or(1).max(1),
+            break_ra: env_hex("RAX_GSC_BREAK_RA"),
+            break_saved_ra: env_hex("RAX_GSC_BREAK_SAVED_RA"),
+            break_stack_bytes: env_hex("RAX_GSC_BREAK_STACK").unwrap_or(0),
+            break_stop: std::env::var("RAX_GSC_BREAK_STOP").is_ok(),
+            syscall_trace: std::env::var("RAX_GSC_SYSCALL_TRACE").is_ok(),
+            print_trace: std::env::var("RAX_GSC_PRINT_TRACE").is_ok(),
+            ap_ro_stub: cfg.ap_ro_stub,
+            ap_ro_crypto_stub: cfg.ap_ro_crypto_stub || cfg.ap_ro_stub,
+            break_hits_seen: 0,
+            broke: false,
         }
     }
 
@@ -381,6 +1632,9 @@ impl GscVcpu {
                 self.reset_count, self.reset_entry
             );
         }
+        // After a software reset the firmware must see a non-POR cause, else it
+        // re-runs POR init and reboots again.
+        self.shared.lock().unwrap().rstsrc = self.cfg.rstsrc_warm;
         self.cpu.reset(self.reset_entry);
         None
     }
@@ -390,13 +1644,25 @@ impl GscVcpu {
         self.shared.lock().unwrap().console.clone()
     }
 
+    fn sync_machine_external_irq(&mut self) {
+        let pending = {
+            let sh = self.shared.lock().unwrap();
+            sh.uart_irq_armed && !sh.uart_rx.is_empty()
+        };
+        self.cpu.set_interrupt_pending(MIP_MEIP, pending);
+    }
+
     fn trap_exit(&self, t: crate::riscv::Trap) -> VcpuExit {
+        let mepc = self.cpu.csr_read(0x341).unwrap_or(self.cpu.pc());
+        let raw = self.cpu.memory().read_u32(mepc).unwrap_or(0);
         VcpuExit::Unknown(format!(
-            "gsc riscv trap: cause={} tval={:#x} pc={:#x} insn=[{}]",
+            "gsc riscv trap: cause={} tval={:#x} pc={:#x} mepc={:#x} raw={:#010x} insn=[{}]",
             t.cause,
             t.tval,
             self.cpu.pc(),
-            self.cpu.disasm_pc(),
+            mepc,
+            raw,
+            self.cpu.disassemble_at(mepc),
         ))
     }
 }
@@ -407,6 +1673,198 @@ impl VCpu for GscVcpu {
             return Ok(VcpuExit::Hlt);
         }
         for _ in 0..MAX_ITERS {
+            self.sync_machine_external_irq();
+            let pc = self.cpu.pc();
+            self.pc_cell.store(pc, Ordering::Relaxed);
+            if self.ap_ro_stub && pc == 0xce910 {
+                let sp = self.cpu.x(2);
+                let mut expected = [0u8; 0x40];
+                if self.cpu.read_memory(sp + 0x40, &mut expected).is_ok() {
+                    let _ = self.cpu.write_memory(sp, &expected);
+                }
+            }
+            if self.ap_ro_crypto_stub && pc == 0xb2904 {
+                let sp = self.cpu.x(2);
+                let mut ptr = [0u8; 4];
+                if self.cpu.read_memory(sp + 0x68, &mut ptr).is_ok() {
+                    let expected = u32::from_le_bytes(ptr) as u64;
+                    let mut digest = [0u8; 0x20];
+                    if self.cpu.read_memory(expected, &mut digest).is_ok() {
+                        let _ = self.cpu.write_memory(sp + 0x250, &digest);
+                    }
+                }
+            }
+            if self.ap_ro_crypto_stub && pc == 0xb1efe {
+                let actual = self.cpu.x(18); // s2
+                let actual_len = self.cpu.x(19); // s3
+                let expected = self.cpu.x(21); // s5
+                let expected_len = self.cpu.x(9); // s1
+                if actual_len == expected_len && (1..=64).contains(&actual_len) {
+                    let mut digest = vec![0u8; actual_len as usize];
+                    if self.cpu.read_memory(expected, &mut digest).is_ok() {
+                        let _ = self.cpu.write_memory(actual, &digest);
+                    }
+                }
+            }
+            if self.ap_ro_stub && pc == 0xb7462 {
+                // Kernel AP-RO verification returns here after reading AP
+                // flash/GVD data over the AP SPI host. Without a real AP flash
+                // image signed for this production root, the standalone
+                // bring-up stub reports verifier success at the call boundary
+                // and lets the firmware's normal success path run.
+                self.cpu.set_x(10, 0);
+            }
+            if self.print_trace && matches!(pc, 0xce272 | 0x14e272) {
+                let ptr = self.cpu.x(10);
+                let len = self.cpu.x(11).min(96) as usize;
+                let mut buf = vec![0u8; len];
+                let preview = if self.cpu.read_memory(ptr, &mut buf).is_ok() {
+                    String::from_utf8_lossy(&buf)
+                        .chars()
+                        .map(|c| {
+                            if c.is_ascii_graphic() || c == ' ' {
+                                c
+                            } else {
+                                '.'
+                            }
+                        })
+                        .collect::<String>()
+                } else {
+                    "<unreadable>".to_string()
+                };
+                eprintln!(
+                    "[gsc] print pc={pc:#x} ptr={ptr:#x} len={:#x} {preview:?}",
+                    self.cpu.x(11)
+                );
+            }
+            let saved_ra_matches = self
+                .break_saved_ra
+                .map(|expect| {
+                    let mut w = [0u8; 4];
+                    self.cpu.read_memory(self.cpu.x(2) + 0x11c, &mut w).is_ok()
+                        && u32::from_le_bytes(w) as u64 == expect
+                })
+                .unwrap_or(true);
+            let break_matches = self.break_pc == Some(pc)
+                && self.break_ra.map(|ra| self.cpu.x(1) == ra).unwrap_or(true)
+                && saved_ra_matches;
+            if break_matches && !self.broke {
+                self.break_hits_seen += 1;
+            }
+            if break_matches && !self.broke && self.break_hits_seen >= self.break_hit {
+                self.broke = true;
+                let x = |i: u8| self.cpu.x(i);
+                eprintln!(
+                    "[gsc] BREAK @{:#x} hit={} ra={:#x} sp={:#x} a0={:#x} a1={:#x} a2={:#x} a3={:#x} a4={:#x} a5={:#x} s0={:#x} s1={:#x} s2={:#x} s3={:#x} s4={:#x} s5={:#x} s6={:#x} s7={:#x} s8={:#x} s9={:#x} s10={:#x} s11={:#x}",
+                    pc,
+                    self.break_hits_seen,
+                    x(1),
+                    x(2),
+                    x(10),
+                    x(11),
+                    x(12),
+                    x(13),
+                    x(14),
+                    x(15),
+                    x(8),
+                    x(9),
+                    x(18),
+                    x(19),
+                    x(20),
+                    x(21),
+                    x(22),
+                    x(23),
+                    x(24),
+                    x(25),
+                    x(26),
+                    x(27)
+                );
+                let csr = |addr| self.cpu.csr_read(addr).unwrap_or(0);
+                eprintln!(
+                    "[gsc] BREAK csr mstatus={:#x} mie={:#x} mip={:#x} mideleg={:#x} mtvec={:#x} mepc={:#x} mcause={:#x}",
+                    csr(0x300),
+                    csr(0x304),
+                    csr(0x344),
+                    csr(0x303),
+                    csr(0x305),
+                    csr(0x341),
+                    csr(0x342)
+                );
+                // Dump stack words that look like code return-addresses, to
+                // reconstruct the call chain that led here.
+                let sp = self.cpu.x(2);
+                if self.break_stack_bytes != 0 {
+                    let dump_len = self.break_stack_bytes.min(0x400);
+                    for row in (0..dump_len).step_by(0x10) {
+                        let mut words = Vec::new();
+                        for off in (0..0x10u64).step_by(4) {
+                            if row + off >= dump_len {
+                                break;
+                            }
+                            let mut w = [0u8; 4];
+                            if self.cpu.read_memory(sp + row + off, &mut w).is_ok() {
+                                words.push(format!("{:#010x}", u32::from_le_bytes(w)));
+                            } else {
+                                words.push("????????".to_string());
+                            }
+                        }
+                        eprintln!("[gsc]   stack +{row:03x}: {}", words.join(" "));
+                    }
+                }
+                let mut chain = Vec::new();
+                for off in (0..0x80u64).step_by(4) {
+                    let mut w = [0u8; 4];
+                    if self.cpu.read_memory(sp + off, &mut w).is_ok() {
+                        let v = u32::from_le_bytes(w) as u64;
+                        if (0x8_0000..0x18_0000).contains(&v) {
+                            chain.push(format!("{v:#x}"));
+                        }
+                    }
+                }
+                eprintln!("[gsc] BREAK callstack: {}", chain.join(" "));
+                // Scan registers + stack for pointers to ASCII strings in the
+                // image (panic message / source location).
+                let mut probes: Vec<u64> = (0..32u8).map(|i| self.cpu.x(i)).collect();
+                for off in (0..0x100u64).step_by(4) {
+                    let mut w = [0u8; 4];
+                    if self.cpu.read_memory(sp + off, &mut w).is_ok() {
+                        probes.push(u32::from_le_bytes(w) as u64);
+                    }
+                }
+                let mut seen_str = std::collections::BTreeSet::new();
+                for p in probes {
+                    if !(0x8_0000..0x18_0000).contains(&p) {
+                        continue;
+                    }
+                    let mut s = [0u8; 48];
+                    if self.cpu.read_memory(p, &mut s).is_ok() {
+                        let n = s.iter().take_while(|&&b| (0x20..0x7f).contains(&b)).count();
+                        if n >= 6 {
+                            let txt = String::from_utf8_lossy(&s[..n]).to_string();
+                            if seen_str.insert(txt.clone()) {
+                                eprintln!("[gsc]   str@{p:#x}: {txt:?}");
+                            }
+                        }
+                    }
+                }
+                for (name, base) in [("a0", x(10)), ("a2", x(12)), ("s0", x(8)), ("s3", x(19))] {
+                    if !(0x1_0000..0x2_0000).contains(&base) {
+                        continue;
+                    }
+                    let mut words = Vec::new();
+                    for off in (0..0x40u64).step_by(4) {
+                        let mut w = [0u8; 4];
+                        if self.cpu.read_memory(base + off, &mut w).is_ok() {
+                            words.push(format!("+{off:02x}={:#010x}", u32::from_le_bytes(w)));
+                        }
+                    }
+                    eprintln!("[gsc]   mem {name}@{base:#x}: {}", words.join(" "));
+                }
+                if self.break_stop {
+                    self.halted = true;
+                    return Ok(VcpuExit::Unknown(format!("gsc breakpoint stop at {pc:#x}")));
+                }
+            }
             if self.cfg.trace == Trace::Insn {
                 eprintln!("[gsc] {:#010x}: {}", self.cpu.pc(), self.cpu.disasm_pc());
             }
@@ -419,18 +1877,47 @@ impl VCpu for GscVcpu {
             }
             match exit {
                 RiscVExit::Continue => {}
-                // Treat WFI as a hint: the firmware spins waiting for an
-                // interrupt we don't deliver yet; keep going so polling loops
-                // around the WFI make progress (bounded by MAX_ITERS).
-                RiscVExit::Wfi => {}
+                // WFI marks the point where the Tock driver tables are live.
+                // Seeded UART RX bytes can now assert the external interrupt.
+                RiscVExit::Wfi => {
+                    self.shared.lock().unwrap().uart_irq_armed = true;
+                }
                 RiscVExit::Ecall => {
-                    self.halted = true;
-                    return Ok(VcpuExit::Unknown(format!(
-                        "gsc riscv ecall at pc={:#x} (a7={:#x} a0={:#x})",
-                        self.cpu.pc(),
-                        self.cpu.x(17),
-                        self.cpu.x(10),
-                    )));
+                    if self.syscall_trace {
+                        let x = |i: u8| self.cpu.x(i);
+                        eprintln!(
+                            "[gsc] {pc:#010x} ecall a0={:#x} a1={:#x} a2={:#x} a3={:#x} a4={:#x} a5={:#x} a6={:#x} a7={:#x}",
+                            x(10),
+                            x(11),
+                            x(12),
+                            x(13),
+                            x(14),
+                            x(15),
+                            x(16),
+                            x(17),
+                        );
+                    }
+                    if self.ap_ro_stub
+                        && self.cpu.pc() == 0xce778
+                        && self.cpu.x(10) == 1003
+                        && self.cpu.x(11) == 62
+                        && self.cpu.x(12) == 7
+                        && self.cpu.x(13) == 0
+                        && self.cpu.x(14) == 7
+                    {
+                        // The AP RO app asks the gscvd driver to verify a
+                        // cached GVD. In the current standalone emulator there
+                        // is no host/AP flash source to populate that object,
+                        // so this bring-up knob returns Tock CommandReturn::
+                        // success and lets the caller reach the later path.
+                        self.cpu.set_x(10, 129);
+                        self.cpu.set_x(11, 0);
+                        self.cpu.set_x(12, 0);
+                        self.cpu.set_x(13, 0);
+                        self.cpu.set_pc(self.cpu.pc() + 4);
+                        continue;
+                    }
+                    self.cpu.deliver_ecall_trap();
                 }
                 RiscVExit::Ebreak => {
                     self.halted = true;
@@ -502,11 +1989,8 @@ impl VCpu for GscVcpu {
         match self.cpu.step() {
             RiscVExit::Continue | RiscVExit::Wfi => Ok(None),
             RiscVExit::Ecall => {
-                self.halted = true;
-                Ok(Some(VcpuExit::Unknown(format!(
-                    "gsc riscv ecall at pc={:#x}",
-                    self.cpu.pc()
-                ))))
+                self.cpu.deliver_ecall_trap();
+                Ok(None)
             }
             RiscVExit::Ebreak => {
                 self.halted = true;
@@ -530,17 +2014,29 @@ mod tests {
             uart_base: DEFAULT_UART_BASE,
             uart_state: DEFAULT_UART_STATE,
             open_bus: 0,
+            rstsrc_cold: DEFAULT_RSTSRC_COLD,
+            rstsrc_warm: DEFAULT_RSTSRC_WARM,
+            flash_img_base: DEFAULT_FLASH_IMG_BASE,
             trace: Trace::Off,
+            console_trace: false,
+            ap_ro_info_stub: false,
+            ap_ro_crypto_stub: false,
+            ap_ro_stub: false,
         }
     }
 
     fn test_bridge() -> GscBridge {
-        let mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x1_0000usize)]).unwrap();
+        let mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x20_0000usize)]).unwrap();
         GscBridge {
             mem: Arc::new(mem),
-            shared: Arc::new(Mutex::new(GscShared::default())),
+            shared: Arc::new(Mutex::new(GscShared {
+                rstsrc: DEFAULT_RSTSRC_COLD,
+                ..GscShared::default()
+            })),
+            ap_flash: Arc::new(Vec::new()),
             cfg: test_cfg(),
             ready: builtin_ready_map(),
+            pc: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -554,11 +2050,94 @@ mod tests {
         b.write(addr, &value.to_le_bytes()).unwrap();
     }
 
+    fn rd8(b: &GscBridge, addr: u64) -> u8 {
+        let mut buf = [0u8; 1];
+        b.read(addr, &mut buf).unwrap();
+        buf[0]
+    }
+
+    fn wr8(b: &mut GscBridge, addr: u64, value: u8) {
+        b.write(addr, &[value]).unwrap();
+    }
+
+    fn mem_rd32(b: &GscBridge, addr: u64) -> u32 {
+        let mut buf = [0u8; 4];
+        b.mem.read_slice(&mut buf, GuestAddress(addr)).unwrap();
+        u32::from_le_bytes(buf)
+    }
+
+    fn mem_wr32(b: &GscBridge, addr: u64, value: u32) {
+        b.mem
+            .write_slice(&value.to_le_bytes(), GuestAddress(addr))
+            .unwrap();
+    }
+
     #[test]
     fn ready_map_returns_fixed_status() {
+        let mut b = test_bridge();
+        b.ready.insert(0x4000_1234, 0x5a5a_0001);
+        assert_eq!(rd32(&b, 0x4000_1234), 0x5a5a_0001);
+    }
+
+    #[test]
+    fn uart_state_tracks_rx_queue() {
         let b = test_bridge();
-        // The built-in clock/PLL "locked" status (fw.bin / nugget).
-        assert_eq!(rd32(&b, 0x404d_0014), 0x30);
+        let state = rd32(&b, DEFAULT_UART_BASE + UART_STATE);
+        assert_eq!(state & UART_STATE_TX_BUSY, 0);
+        assert_eq!(state & UART_STATE_RX_EMPTY, UART_STATE_RX_EMPTY);
+
+        b.shared.lock().unwrap().uart_rx.extend(b"AB");
+        let state = rd32(&b, DEFAULT_UART_BASE + UART_STATE);
+        assert_eq!(state & UART_STATE_RX_EMPTY, UART_STATE_RX_EMPTY);
+
+        b.shared.lock().unwrap().uart_irq_armed = true;
+        let state = rd32(&b, DEFAULT_UART_BASE + UART_STATE);
+        assert_eq!(state & UART_STATE_RX_EMPTY, 0);
+        assert_eq!(rd32(&b, DEFAULT_UART_BASE + UART_RDATA), b'A' as u32);
+        assert_eq!(rd32(&b, DEFAULT_UART_BASE + UART_RDATA), b'B' as u32);
+        let state = rd32(&b, DEFAULT_UART_BASE + UART_STATE);
+        assert_eq!(state & UART_STATE_RX_EMPTY, UART_STATE_RX_EMPTY);
+    }
+
+    #[test]
+    fn core_irq_claim_tracks_armed_uart_rx() {
+        let b = test_bridge();
+        assert_eq!(rd32(&b, CORE_IRQ_CLAIM), CORE_IRQ_NONE);
+
+        b.shared.lock().unwrap().uart_rx.extend(b"A");
+        assert_eq!(rd32(&b, CORE_IRQ_CLAIM), CORE_IRQ_NONE);
+
+        b.shared.lock().unwrap().uart_irq_armed = true;
+        assert_eq!(rd32(&b, CORE_IRQ_CLAIM), CORE_IRQ_UART0);
+        assert_eq!(rd32(&b, CORE_IRQ_EPOCH), 0);
+
+        assert_eq!(rd32(&b, DEFAULT_UART_BASE + UART_RDATA), b'A' as u32);
+        assert_eq!(rd32(&b, CORE_IRQ_CLAIM), CORE_IRQ_NONE);
+    }
+
+    #[test]
+    fn rstsrc_reads_por_then_clears_via_clrrst() {
+        let mut b = test_bridge();
+        // Cold boot: RSTSRC (PMU+0x00) reads back POR, so the firmware
+        // classifies the reset cause instead of "Other" + reboot.
+        assert_eq!(rd32(&b, PMU_RSTSRC_REG), RSTSRC_POR);
+        // CLRRST (PMU+0x04, write-1-to-clear) clears the reported bits.
+        wr32(&mut b, PMU_CLRRST_REG, RSTSRC_POR);
+        assert_eq!(rd32(&b, PMU_RSTSRC_REG), 0);
+    }
+
+    #[test]
+    fn global_reset_preserves_persistent_pmu_scratch() {
+        // The persistent PMU scratch (boot counter / init flags) must survive a
+        // warm reset, so the firmware sees "already initialized" on reboot.
+        let mut b = test_bridge();
+        // Boot-attempt counter.
+        wr32(&mut b, 0x4000_00b0, 0x0000_0300);
+        // RO init flags (bits 30/31).
+        wr32(&mut b, 0x4000_004c, 0xc000_0000);
+        // A warm reset clears CPU/arch state but NOT the bridge's store.
+        assert_eq!(rd32(&b, 0x4000_00b0), 0x0000_0300);
+        assert_eq!(rd32(&b, 0x4000_004c), 0xc000_0000);
     }
 
     #[test]
@@ -599,6 +2178,426 @@ mod tests {
         assert!(b.shared.lock().unwrap().reset_requested);
     }
 
+    #[test]
+    fn pmu_chip_id_and_wake_source_are_fixed() {
+        let b = test_bridge();
+        assert_eq!(rd32(&b, PMU_CHIP_ID_REG), PMU_CHIP_ID);
+        assert_eq!(rd32(&b, PMU_CHIP_ID_ALT_REG), PMU_CHIP_ID);
+        assert_eq!(rd32(&b, PMU_WAKE_EXIT_SRC_REG), 0);
+    }
+
+    #[test]
+    fn flash_program_op_uses_payload_registers_and_clears_control() {
+        let mut b = test_bridge();
+        let off = 0x3e400;
+        let gpa = DEFAULT_FLASH_IMG_BASE + off;
+        let trans = ((off / 4) as u32) << 7;
+
+        mem_wr32(&b, gpa, 0xffff_00ff);
+        mem_wr32(&b, gpa + 4, 0xffff_ffff);
+        wr32(&mut b, FLASH_TRANS, trans);
+        wr32(&mut b, FLASH_WR_DATA0, 0x1234_5678);
+        wr32(&mut b, FLASH_WR_DATA1, 0x0000_ffff);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_TI50_PROGRAM);
+
+        assert_eq!(rd32(&b, FLASH_PE_CONTROL0), 0);
+        assert_eq!(rd32(&b, FLASH_ERROR), 0);
+        assert_eq!(mem_rd32(&b, gpa), 0x1234_0078);
+        assert_eq!(mem_rd32(&b, gpa + 4), 0x0000_ffff);
+    }
+
+    #[test]
+    fn flash_control1_programs_second_slot() {
+        let mut b = test_bridge();
+        let off = 0x3b800;
+        let slot0_gpa = DEFAULT_FLASH_IMG_BASE + off;
+        let slot1_gpa = DEFAULT_FLASH_IMG_BASE + TI50_FLASH_SLOT_SIZE + off;
+        let trans = ((off / 4) as u32) << 7;
+
+        mem_wr32(&b, slot0_gpa, 0x4622_4592);
+        mem_wr32(&b, slot1_gpa, 0xffff_ffff);
+        wr32(&mut b, FLASH_TRANS, trans);
+        wr32(&mut b, FLASH_WR_DATA0, 0);
+        wr32(&mut b, FLASH_WR_DATA1, 0);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL1, FLASH_OP_TI50_PROGRAM);
+
+        assert_eq!(mem_rd32(&b, slot0_gpa), 0x4622_4592);
+        assert_eq!(mem_rd32(&b, slot1_gpa), 0);
+    }
+
+    #[test]
+    fn flash_read_and_erase_family_ops_work() {
+        let mut b = test_bridge();
+        let off = 0x1200;
+        let gpa = DEFAULT_FLASH_IMG_BASE + off;
+        let read_trans = (off / 4) as u32;
+        let trans = read_trans << 7;
+
+        mem_wr32(&b, gpa, 0xa5a5_5a5a);
+        mem_wr32(&b, gpa + 4, 0x1122_3344);
+        wr32(&mut b, FLASH_READ_TRANS, read_trans);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_CR50_READ);
+        assert_eq!(rd32(&b, FLASH_DOUT0_LO), 0xa5a5_5a5a);
+        assert_eq!(rd32(&b, FLASH_DOUT0_HI), 0x1122_3344);
+
+        let slot1_gpa = DEFAULT_FLASH_IMG_BASE + TI50_FLASH_SLOT_SIZE + off;
+        mem_wr32(&b, slot1_gpa, 0x5566_7788);
+        mem_wr32(&b, slot1_gpa + 4, 0x99aa_bbcc);
+        wr32(&mut b, FLASH_READ_TRANS, read_trans);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL1, FLASH_OP_CR50_READ);
+        assert_eq!(rd32(&b, FLASH_DOUT1_LO), 0x5566_7788);
+        assert_eq!(rd32(&b, FLASH_DOUT1_HI), 0x99aa_bbcc);
+        assert_eq!(rd32(&b, FLASH_STATUS1), 0);
+
+        wr32(&mut b, FLASH_TRANS, trans);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_CR50_ERASE);
+        assert_eq!(mem_rd32(&b, gpa), 0xffff_ffff);
+        assert_eq!(mem_rd32(&b, gpa + 4), 0xffff_ffff);
+    }
+
+    #[test]
+    fn flash_info_bank_is_separate_from_xip_flash() {
+        let mut b = test_bridge();
+        let off = 0x500;
+        let gpa = DEFAULT_FLASH_IMG_BASE + off;
+        let read_trans = 0x1_0000 | (off / 4) as u32;
+        let prog_trans = (((off / 4) as u32) << 7) | 0x8;
+
+        mem_wr32(&b, gpa, 0x1234_5678);
+        wr32(&mut b, FLASH_READ_TRANS, read_trans);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_CR50_READ);
+        assert_eq!(rd32(&b, FLASH_DOUT0_LO), 0xffff_ffff);
+
+        wr32(&mut b, FLASH_TRANS, prog_trans);
+        wr32(&mut b, FLASH_WR_DATA0, 0x00ff_00ff);
+        wr32(&mut b, FLASH_WR_DATA1, 0xff00_ff00);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_CR50_PROGRAM);
+
+        wr32(&mut b, FLASH_READ_TRANS, read_trans);
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL0, FLASH_OP_CR50_READ);
+        assert_eq!(rd32(&b, FLASH_DOUT0_LO), 0x00ff_00ff);
+        assert_eq!(rd32(&b, FLASH_DOUT0_HI), 0xff00_ff00);
+        assert_eq!(mem_rd32(&b, gpa), 0x1234_5678);
+    }
+
+    #[test]
+    fn ap_ro_stub_supplies_cached_status_info_words() {
+        let mut b = test_bridge();
+        b.cfg.ap_ro_stub = true;
+
+        let read_info = |b: &mut GscBridge, off: u64| -> [u32; 2] {
+            wr32(b, FLASH_READ_TRANS, 0x1_0000 | (off / 4) as u32);
+            wr32(b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+            wr32(b, FLASH_PE_CONTROL1, FLASH_OP_CR50_READ);
+            [rd32(b, FLASH_DOUT1_LO), rd32(b, FLASH_DOUT1_HI)]
+        };
+
+        assert_eq!(read_info(&mut b, 0x0c00), [0x0000_0001, 0x0000_0001]);
+        assert_eq!(read_info(&mut b, 0x0c08), [0x00ff_ff00, 0x00ff_fd02]);
+        assert_eq!(read_info(&mut b, 0x0c10), [0x00ff_ff00, 0x00ff_ff00]);
+        assert_eq!(read_info(&mut b, 0x0c18), [0x00ff_ff00, 0x0000_0000]);
+    }
+
+    #[test]
+    fn ap_ro_info_stub_only_supplies_cached_status_info_words() {
+        let mut b = test_bridge();
+        b.cfg.ap_ro_info_stub = true;
+
+        wr32(&mut b, FLASH_READ_TRANS, 0x1_0000 | (0x0c08 / 4));
+        wr32(&mut b, FLASH_PE_EN, FLASH_PE_EN_MAGIC);
+        wr32(&mut b, FLASH_PE_CONTROL1, FLASH_OP_CR50_READ);
+
+        assert_eq!(rd32(&b, FLASH_DOUT1_LO), 0x00ff_ff00);
+        assert_eq!(rd32(&b, FLASH_DOUT1_HI), 0x00ff_fd02);
+    }
+
+    #[test]
+    fn ap_ro_stub_forces_kernel_verifier_return_to_ok() {
+        let mem =
+            Arc::new(GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x20_0000usize)]).unwrap());
+        let mut vcpu = GscVcpu::new(0, mem.clone());
+        vcpu.ap_ro_stub = true;
+        vcpu.cpu.set_x(10, 0xdead_beef);
+        vcpu.cpu.set_pc(0xb7462);
+        mem.write_slice(&0x0010_0073u32.to_le_bytes(), GuestAddress(0xb7462))
+            .unwrap();
+
+        assert!(matches!(vcpu.run().unwrap(), VcpuExit::Debug));
+        assert_eq!(vcpu.cpu.x(10), 0);
+    }
+
+    #[test]
+    fn ap_ro_crypto_stub_supplies_root_key_digest_compare_result() {
+        let mem =
+            Arc::new(GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x20_0000usize)]).unwrap());
+        let mut vcpu = GscVcpu::new(0, mem.clone());
+        vcpu.ap_ro_crypto_stub = true;
+        vcpu.cpu.set_x(2, 0x12_000);
+        vcpu.cpu.set_pc(0xb2904);
+
+        let expected_addr = 0x18_000u32;
+        let expected = [0x5au8; 0x20];
+        mem.write_slice(&expected_addr.to_le_bytes(), GuestAddress(0x12_000 + 0x68))
+            .unwrap();
+        mem.write_slice(&expected, GuestAddress(expected_addr as u64))
+            .unwrap();
+        mem.write_slice(&0x0010_0073u32.to_le_bytes(), GuestAddress(0xb2904))
+            .unwrap();
+
+        assert!(matches!(vcpu.run().unwrap(), VcpuExit::Debug));
+        let mut actual = [0u8; 0x20];
+        mem.read_slice(&mut actual, GuestAddress(0x12_000 + 0x250))
+            .unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn ap_ro_crypto_stub_supplies_range_digest_compare_result() {
+        let mem =
+            Arc::new(GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x20_0000usize)]).unwrap());
+        let mut vcpu = GscVcpu::new(0, mem.clone());
+        vcpu.ap_ro_crypto_stub = true;
+        vcpu.cpu.set_pc(0xb1efe);
+        vcpu.cpu.set_x(18, 0x12_000);
+        vcpu.cpu.set_x(19, 0x20);
+        vcpu.cpu.set_x(21, 0x18_000);
+        vcpu.cpu.set_x(9, 0x20);
+
+        let expected = [0xacu8; 0x20];
+        mem.write_slice(&expected, GuestAddress(0x18_000)).unwrap();
+        mem.write_slice(&[0x55u8; 0x20], GuestAddress(0x12_000))
+            .unwrap();
+        mem.write_slice(&0x0010_0073u32.to_le_bytes(), GuestAddress(0xb1efe))
+            .unwrap();
+
+        assert!(matches!(vcpu.run().unwrap(), VcpuExit::Debug));
+        let mut actual = [0u8; 0x20];
+        mem.read_slice(&mut actual, GuestAddress(0x12_000)).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn usb_status_and_reset_registers_self_clear() {
+        let mut b = test_bridge();
+        wr32(&mut b, USB_INT_STATE2, 0xffff_ffff);
+        assert_eq!(rd32(&b, USB_INT_STATE2), 0);
+        wr32(&mut b, USB_SOFT_RESET, 1);
+        assert_eq!(rd32(&b, USB_SOFT_RESET), 0);
+        wr32(&mut b, GSC_EVENT_USB_RESET, 1);
+        assert_eq!(rd32(&b, GSC_EVENT_USB_RESET), 0x8000_0000);
+    }
+
+    #[test]
+    fn rbox_interrupt_state_is_write_one_to_clear() {
+        let mut b = test_bridge();
+        b.shared
+            .lock()
+            .unwrap()
+            .store
+            .insert(RBOX_INTR0_STATE, 0x0000_00ff);
+
+        wr32(&mut b, RBOX_INTR0_STATE, 0x0000_000f);
+        assert_eq!(rd32(&b, RBOX_INTR0_STATE), 0x0000_00f0);
+
+        wr32(&mut b, RBOX_INTR1_STATE, 0xffff_ffff);
+        assert_eq!(rd32(&b, RBOX_INTR1_STATE), 0);
+    }
+
+    #[test]
+    fn rbox_ready_and_control_status_complete_immediately() {
+        let mut b = test_bridge();
+        assert_eq!(rd32(&b, RBOX_INIT_READY), 1);
+        assert_eq!(rd32(&b, RBOX_CMD_STATUS), 0);
+
+        wr32(&mut b, RBOX_CONTROL0, 0);
+        assert_eq!(rd32(&b, RBOX_STATUS) & 1, 0);
+        wr32(&mut b, RBOX_CONTROL0, 1);
+        assert_eq!(rd32(&b, RBOX_STATUS) & 1, 1);
+
+        wr32(&mut b, RBOX_CONTROL1, 1);
+        assert_eq!(rd32(&b, RBOX_STATUS) & 0x20, 0);
+        wr32(&mut b, RBOX_CONTROL1, 0);
+        assert_eq!(rd32(&b, RBOX_STATUS) & 0x20, 0x20);
+    }
+
+    #[test]
+    fn ap_spi_status_registers_are_write_one_to_clear() {
+        let mut b = test_bridge();
+        b.shared
+            .lock()
+            .unwrap()
+            .store
+            .insert(AP_SPI_INTR2, 0x0000_00ff);
+
+        wr32(&mut b, AP_SPI_INTR2, 0x0000_000f);
+        assert_eq!(rd32(&b, AP_SPI_INTR2), 0x0000_00f0);
+
+        wr32(&mut b, AP_SPI_INTR2, 0xffff_ffff);
+        assert_eq!(rd32(&b, AP_SPI_INTR2), 0);
+    }
+
+    #[test]
+    fn ap_spi_transaction_clears_busy_and_returns_status_byte() {
+        let mut b = test_bridge();
+
+        wr8(&mut b, AP_SPI_DATA_BASE, 0x05);
+        wr32(&mut b, AP_SPI_XFER_CFG, 0x0000_0380);
+        wr32(&mut b, AP_SPI_XACT, 0x000f_0001);
+
+        assert_eq!(rd32(&b, AP_SPI_XACT) & AP_SPI_XACT_START, 0);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 5), 0x02);
+
+        wr8(&mut b, AP_SPI_DATA_BASE, 0x35);
+        wr32(&mut b, AP_SPI_XACT, 0x000f_0001);
+        assert_eq!(rd32(&b, AP_SPI_XACT) & AP_SPI_XACT_START, 0);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 5), 0);
+    }
+
+    #[test]
+    fn ap_spi_fast_read_returns_erased_flash_without_image() {
+        let mut b = test_bridge();
+
+        wr32(&mut b, AP_SPI_DATA_BASE, 0x3412_000b); // 0x0b fast-read @ 0x001234
+        wr32(&mut b, AP_SPI_DATA_BASE + 4, 0);
+        wr32(&mut b, AP_SPI_XFER_CFG, 0x0018_1380);
+        wr32(&mut b, AP_SPI_XACT, 0x0067_0001);
+
+        assert_eq!(rd32(&b, AP_SPI_XACT) & AP_SPI_XACT_START, 0);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x0d), 0xff);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x11), 0xff);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x17), 0xff);
+    }
+
+    #[test]
+    fn ap_spi_fast_read_uses_backing_ap_flash_image() {
+        let mut b = test_bridge();
+        let mut ap_flash = vec![0xff; 0x1244];
+        for i in 0..16 {
+            ap_flash[0x1234 + i] = 0xa0 + i as u8;
+        }
+        b.ap_flash = Arc::new(ap_flash);
+
+        wr32(&mut b, AP_SPI_DATA_BASE, 0x3412_000b); // 0x0b fast-read @ 0x001234
+        wr32(&mut b, AP_SPI_DATA_BASE + 4, 0);
+        wr32(&mut b, AP_SPI_XFER_CFG, 0x0018_1380);
+        wr32(&mut b, AP_SPI_XACT, 0x0067_0001);
+
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x0d), 0xa0);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x11), 0xa4);
+        assert_eq!(rd8(&b, AP_SPI_DATA_BASE + 0x17), 0xaa);
+    }
+
+    #[test]
+    fn gsc_fifo_reset_busy_bits_clear_on_read() {
+        let mut b = test_bridge();
+        wr32(&mut b, GSC_FIFO_CONTROL, 0x1b);
+        assert_eq!(rd32(&b, GSC_FIFO_CONTROL), 0x12);
+
+        wr32(&mut b, GSC_FIFO_CONTROL, 0x12);
+        assert_eq!(rd32(&b, GSC_FIFO_CONTROL), 0x12);
+        assert_eq!(rd32(&b, GSC_FIFO_IRQ_STATUS), 0);
+    }
+
+    #[test]
+    fn gsc_fifo_interrupt_state_is_write_one_to_clear() {
+        let mut b = test_bridge();
+        b.shared
+            .lock()
+            .unwrap()
+            .store
+            .insert(GSC_FIFO_IRQ_STATE, 0x0000_ffff);
+
+        wr32(&mut b, GSC_FIFO_IRQ_STATE, 0x0000_00ff);
+        assert_eq!(rd32(&b, GSC_FIFO_IRQ_STATE), 0x0000_ff00);
+
+        wr32(&mut b, GSC_FIFO_IRQ_ENABLE, 0xffff_ffff);
+        assert_eq!(rd32(&b, GSC_FIFO_IRQ_ENABLE), 0);
+    }
+
+    #[test]
+    fn gpio_input_banks_are_stable_status_words() {
+        let mut b = test_bridge();
+        assert_eq!(rd32(&b, GPIO_INPUT_BANK0), 0);
+        assert_eq!(rd32(&b, GPIO_INPUT_BANK1), 0);
+        assert_eq!(rd32(&b, GPIO_INPUT_BANK2), 0);
+        assert_eq!(rd32(&b, GPIO_INPUT_BANK3), 0);
+
+        // Board strap experiments can override levels through the persistent
+        // store/ready path without falling back to the generic spin-breaker.
+        wr32(&mut b, GPIO_INPUT_BANK1, 0x0000_1000);
+        for _ in 0..SPIN_THRESHOLD {
+            assert_eq!(rd32(&b, GPIO_INPUT_BANK1), 0x0000_1000);
+        }
+    }
+
+    #[test]
+    fn gpio_interrupt_state_is_write_one_to_clear() {
+        let mut b = test_bridge();
+        b.shared
+            .lock()
+            .unwrap()
+            .store
+            .insert(GPIO_INTR_STATE0, 0x0000_00ff);
+        wr32(&mut b, GPIO_INTR_STATE0, 0x0000_000f);
+        assert_eq!(rd32(&b, GPIO_INTR_STATE0), 0x0000_00f0);
+
+        wr32(&mut b, GPIO_INTR_STATE0, 0xffff_ffff);
+        assert_eq!(rd32(&b, GPIO_INTR_STATE0), 0);
+    }
+
+    #[test]
+    fn fuse_defaults_and_trng_are_available() {
+        let b = test_bridge();
+        assert_eq!(rd32(&b, FUSE_BASE + 0x280), FUSE_DEFAULT);
+        let first = rd32(&b, TRNG_READ_DATA);
+        let second = rd32(&b, TRNG_READ_DATA);
+        assert_ne!(first, second);
+    }
+
+    #[test]
+    fn globalsec_active_image_regions_are_available() {
+        let b = test_bridge();
+        assert_eq!(
+            rd32(&b, GLOBALSEC_CRYPTOLIB_BASE),
+            CRYPTOLIB_ROM_BASE as u32
+        );
+        assert_eq!(
+            rd32(&b, GLOBALSEC_ACTIVE_RO_BASE),
+            DEFAULT_FLASH_IMG_BASE as u32
+        );
+        assert_eq!(rd32(&b, GLOBALSEC_ACTIVE_RO_SIZE), TI50_RO_IMAGE_SIZE);
+        assert_eq!(
+            rd32(&b, GLOBALSEC_ACTIVE_RW_BASE),
+            (DEFAULT_FLASH_IMG_BASE + TI50_RW_SLOT_OFFSET) as u32
+        );
+        assert_eq!(rd32(&b, GLOBALSEC_ACTIVE_RW_SIZE), TI50_RW_IMAGE_SIZE);
+    }
+
+    #[test]
+    fn synthetic_cryptolib_rom_is_installed() {
+        let mem =
+            Arc::new(GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x20_0000usize)]).unwrap());
+        let _vcpu = GscVcpu::new(0, mem.clone());
+        let read_word = |addr| {
+            let mut bytes = [0u8; 4];
+            mem.read_slice(&mut bytes, GuestAddress(addr)).unwrap();
+            u32::from_le_bytes(bytes)
+        };
+
+        assert_eq!(read_word(CRYPTOLIB_HEADER), 1);
+        assert_eq!(read_word(CRYPTOLIB_HEADER + 8), CRYPTOLIB_MAGIC);
+        assert_eq!(read_word(CRYPTOLIB_HEADER + 0x0c), CRYPTOLIB_ENTRY as u32);
+        assert_eq!(read_word(CRYPTOLIB_ENTRY), 0xaa55_b537);
+    }
+
     /// Boot a synthetic RV32 program on the GSC machine and return the vCPU
     /// (for `console()`) and the run exit.
     fn boot(base: u64, program: &[u32]) -> (GscVcpu, VcpuExit) {
@@ -619,18 +2618,18 @@ mod tests {
     fn end_to_end_rv32_xsoteria_uart_console() {
         // Program: print "OK", then use the Xsoteria `pcnt` op to compute
         // popcount(7)=3, turn it into '3', and print it. Ends with `ebreak`.
-        //   lui   a0, 0x40600        ; UART base
-        //   addi  a1, x0, 'O'        ; 0x4f
-        //   sw    a1, 4(a0)          ; UART WDATA
-        //   addi  a1, x0, 'K'        ; 0x4b
+        //   lui   a0, 0x404d0       ; console UART base
+        //   addi  a1, x0, 'O'       ; 0x4f
+        //   sw    a1, 4(a0)         ; UART WDATA
+        //   addi  a1, x0, 'K'       ; 0x4b
         //   sw    a1, 4(a0)
         //   addi  a2, x0, 7
-        //   pcnt  a3, a2             ; Xsoteria: a3 = popcount(7) = 3
-        //   addi  a3, a3, 0x30       ; '0' + 3 = '3'
+        //   pcnt  a3, a2            ; Xsoteria: a3 = popcount(7) = 3
+        //   addi  a3, a3, 0x30      ; '0' + 3 = '3'
         //   sw    a3, 4(a0)
         //   ebreak
         let program = [
-            0x4060_0537u32,
+            0x404d_0537u32, // lui a0, 0x404d0
             0x04f0_0593,
             0x00b5_2223,
             0x04b0_0593,
