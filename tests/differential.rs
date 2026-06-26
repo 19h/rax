@@ -5823,6 +5823,93 @@ fn sse2_legacy_pd_dq_conversion_forms() {
 }
 
 #[test]
+fn sse_conversion_extended_register_forms() {
+    fn run_case(label: &str, dst: [u8; 16], src: [u8; 16], op: &[u8]) {
+        let mut scratch = [0xA5u8; 64];
+        scratch[0..16].copy_from_slice(&dst);
+        scratch[16..32].copy_from_slice(&src);
+
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(op);
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+
+    let poison = u32x4([0xDEAD_BEEF, 0x0123_4567, 0x89AB_CDEF, 0xFACE_CAFE]);
+    let int_src = u32x4([3, (-7i32) as u32, 100, (-1i32) as u32]);
+    let fp32_src = f32x4([2.5, -4.0, 99.0, -99.0]);
+    let int_fp32_src = f32x4([3.0, -7.0, 100.0, -1.0]);
+    let trunc_fp32_src = f32x4([3.9, -3.9, 2.1, -0.9]);
+    let fp64_src = f64x2([3.5, -7.25]);
+    let round_fp64_src = f64x2([2.5, -3.75]);
+
+    run_case(
+        "sse_cvtps2pd_xmm8_xmm9",
+        poison,
+        fp32_src,
+        &[0x45, 0x0F, 0x5A, 0xC1],
+    );
+    run_case(
+        "sse_cvtpd2ps_xmm8_xmm9",
+        poison,
+        fp64_src,
+        &[0x66, 0x45, 0x0F, 0x5A, 0xC1],
+    );
+    run_case(
+        "sse_cvtss2sd_xmm8_xmm9",
+        f64x2([99.0, 7.0]),
+        fp32_src,
+        &[0xF3, 0x45, 0x0F, 0x5A, 0xC1],
+    );
+    run_case(
+        "sse_cvtsd2ss_xmm8_xmm9",
+        poison,
+        fp64_src,
+        &[0xF2, 0x45, 0x0F, 0x5A, 0xC1],
+    );
+    run_case(
+        "sse_cvtdq2ps_xmm8_xmm9",
+        poison,
+        int_src,
+        &[0x45, 0x0F, 0x5B, 0xC1],
+    );
+    run_case(
+        "sse_cvtps2dq_xmm8_xmm9",
+        poison,
+        int_fp32_src,
+        &[0x66, 0x45, 0x0F, 0x5B, 0xC1],
+    );
+    run_case(
+        "sse_cvttps2dq_xmm8_xmm9",
+        poison,
+        trunc_fp32_src,
+        &[0xF3, 0x45, 0x0F, 0x5B, 0xC1],
+    );
+    run_case(
+        "sse_cvtdq2pd_xmm8_xmm9",
+        poison,
+        int_src,
+        &[0xF3, 0x45, 0x0F, 0xE6, 0xC1],
+    );
+    run_case(
+        "sse_cvtpd2dq_xmm8_xmm9",
+        poison,
+        round_fp64_src,
+        &[0xF2, 0x45, 0x0F, 0xE6, 0xC1],
+    );
+    run_case(
+        "sse_cvttpd2dq_xmm8_xmm9",
+        poison,
+        round_fp64_src,
+        &[0x66, 0x45, 0x0F, 0xE6, 0xC1],
+    );
+}
+
+#[test]
 fn sse_conversion_addr32_memory_forms() {
     let mut s = [0u8; 64];
     s[16..32].copy_from_slice(&f32x4([2.0, -4.0, 7.0, -8.0]));
@@ -8748,6 +8835,45 @@ fn sse_reciprocal_estimate_scalar_forms() {
 }
 
 #[test]
+fn sse_reciprocal_estimate_extended_register_forms() {
+    for (label, op, a, b) in [
+        (
+            "sse_rcpps_extended_register_form",
+            &[0x45, 0x0F, 0x53, 0xC1][..],
+            f32x4([0.0, 0.0, 0.0, 0.0]),
+            f32x4([3.0, 5.0, 7.0, 11.0]),
+        ),
+        (
+            "sse_rsqrtps_extended_register_form",
+            &[0x45, 0x0F, 0x52, 0xC1][..],
+            f32x4([0.0, 0.0, 0.0, 0.0]),
+            f32x4([4.0, 9.0, 16.0, 25.0]),
+        ),
+        (
+            "sse_rcpss_extended_register_form",
+            &[0xF3, 0x45, 0x0F, 0x53, 0xC1][..],
+            f32x4([1.0, 21.0, 22.0, 23.0]),
+            f32x4([3.0, 5.0, 7.0, 11.0]),
+        ),
+        (
+            "sse_rsqrtss_extended_register_form",
+            &[0xF3, 0x45, 0x0F, 0x52, 0xC1][..],
+            f32x4([1.0, 21.0, 22.0, 23.0]),
+            f32x4([4.0, 9.0, 16.0, 25.0]),
+        ),
+    ] {
+        let scratch = sse_scratch(a, b);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(op);
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+}
+
+#[test]
 fn sse_reciprocal_estimate_memory_forms() {
     let a = f32x4([1.0, 31.0, 32.0, 33.0]);
     let b = f32x4([3.0, 5.0, 7.0, 11.0]);
@@ -9051,6 +9177,228 @@ fn sse_fp_extended_memory_source_forms() {
             &[0x66, 0x43, 0x0F, 0xC2, 0x4C, 0x5A, 0x30, 0x01][..], // cmppd xmm1, [r10+r11*2+48], 1
         ],
     );
+}
+
+#[test]
+fn sse_packed_fp_extended_register_forms() {
+    for (label, opcode, a, b) in [
+        (
+            "sse_addps_extended_register_form",
+            0x58,
+            f32x4([8.0, 16.0, 4.0, 32.0]),
+            f32x4([2.0, 4.0, 2.0, 8.0]),
+        ),
+        (
+            "sse_subps_extended_register_form",
+            0x5C,
+            f32x4([10.0, 20.0, -5.0, 256.0]),
+            f32x4([2.0, 4.0, -1.0, 64.0]),
+        ),
+        (
+            "sse_mulps_extended_register_form",
+            0x59,
+            f32x4([2.0, 3.0, -4.0, 0.5]),
+            f32x4([8.0, 0.25, -2.0, 16.0]),
+        ),
+        (
+            "sse_divps_extended_register_form",
+            0x5E,
+            f32x4([1.0, 9.0, -8.0, 256.0]),
+            f32x4([2.0, 8.0, 2.0, 4.0]),
+        ),
+        (
+            "sse_minps_extended_register_form",
+            0x5D,
+            f32x4([1.0, 5.0, -3.0, 7.0]),
+            f32x4([2.0, 4.0, -1.0, 7.0]),
+        ),
+        (
+            "sse_maxps_extended_register_form",
+            0x5F,
+            f32x4([1.0, 5.0, -3.0, 7.0]),
+            f32x4([2.0, 4.0, -1.0, 7.0]),
+        ),
+        (
+            "sse_sqrtps_extended_register_form",
+            0x51,
+            f32x4([0.0, 0.0, 0.0, 0.0]),
+            f32x4([4.0, 9.0, 16.0, 0.25]),
+        ),
+    ] {
+        let scratch = sse_scratch(a, b);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+
+    for (label, opcode, a, b) in [
+        (
+            "sse2_addpd_extended_register_form",
+            0x58,
+            f64x2([8.0, 16.0]),
+            f64x2([2.0, 4.0]),
+        ),
+        (
+            "sse2_subpd_extended_register_form",
+            0x5C,
+            f64x2([20.0, -8.0]),
+            f64x2([4.0, -2.0]),
+        ),
+        (
+            "sse2_mulpd_extended_register_form",
+            0x59,
+            f64x2([3.0, 0.5]),
+            f64x2([2.0, 8.0]),
+        ),
+        (
+            "sse2_divpd_extended_register_form",
+            0x5E,
+            f64x2([9.0, -8.0]),
+            f64x2([2.0, 4.0]),
+        ),
+        (
+            "sse2_minpd_extended_register_form",
+            0x5D,
+            f64x2([1.0, 5.0]),
+            f64x2([2.0, 4.0]),
+        ),
+        (
+            "sse2_maxpd_extended_register_form",
+            0x5F,
+            f64x2([1.0, 5.0]),
+            f64x2([2.0, 4.0]),
+        ),
+        (
+            "sse2_sqrtpd_extended_register_form",
+            0x51,
+            f64x2([0.0, 0.0]),
+            f64x2([81.0, 0.0625]),
+        ),
+    ] {
+        let scratch = sse_scratch(a, b);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0x66, 0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+}
+
+#[test]
+fn sse_scalar_fp_extended_register_forms() {
+    for (label, opcode, a, b) in [
+        (
+            "sse_addss_extended_register_form",
+            0x58,
+            f32x4([8.0, 11.0, 12.0, 13.0]),
+            f32x4([2.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_subss_extended_register_form",
+            0x5C,
+            f32x4([10.0, 11.0, 12.0, 13.0]),
+            f32x4([2.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_mulss_extended_register_form",
+            0x59,
+            f32x4([3.0, 11.0, 12.0, 13.0]),
+            f32x4([4.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_divss_extended_register_form",
+            0x5E,
+            f32x4([9.0, 11.0, 12.0, 13.0]),
+            f32x4([2.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_minss_extended_register_form",
+            0x5D,
+            f32x4([5.0, 11.0, 12.0, 13.0]),
+            f32x4([2.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_maxss_extended_register_form",
+            0x5F,
+            f32x4([5.0, 11.0, 12.0, 13.0]),
+            f32x4([2.0, 99.0, 99.0, 99.0]),
+        ),
+        (
+            "sse_sqrtss_extended_register_form",
+            0x51,
+            f32x4([1.0, 11.0, 12.0, 13.0]),
+            f32x4([25.0, 99.0, 99.0, 99.0]),
+        ),
+    ] {
+        let scratch = sse_scratch(a, b);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0xF3, 0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
+
+    for (label, opcode, a, b) in [
+        (
+            "sse2_addsd_extended_register_form",
+            0x58,
+            f64x2([8.0, 11.0]),
+            f64x2([2.0, 99.0]),
+        ),
+        (
+            "sse2_subsd_extended_register_form",
+            0x5C,
+            f64x2([10.0, 11.0]),
+            f64x2([2.0, 99.0]),
+        ),
+        (
+            "sse2_mulsd_extended_register_form",
+            0x59,
+            f64x2([3.0, 11.0]),
+            f64x2([4.0, 99.0]),
+        ),
+        (
+            "sse2_divsd_extended_register_form",
+            0x5E,
+            f64x2([9.0, 11.0]),
+            f64x2([2.0, 99.0]),
+        ),
+        (
+            "sse2_minsd_extended_register_form",
+            0x5D,
+            f64x2([5.0, 11.0]),
+            f64x2([2.0, 99.0]),
+        ),
+        (
+            "sse2_maxsd_extended_register_form",
+            0x5F,
+            f64x2([5.0, 11.0]),
+            f64x2([2.0, 99.0]),
+        ),
+        (
+            "sse2_sqrtsd_extended_register_form",
+            0x51,
+            f64x2([1.0, 11.0]),
+            f64x2([81.0, 99.0]),
+        ),
+    ] {
+        let scratch = sse_scratch(a, b);
+        let mut code = load_rdi_data();
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+        code.extend_from_slice(&[0xF2, 0x45, 0x0F, opcode, 0xC1]); // op xmm8, xmm9
+        code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+32], xmm8
+        code.push(HLT);
+        check_mem(label, &code, regs(), scratch, 0);
+    }
 }
 
 #[test]
@@ -21789,6 +22137,42 @@ fn sse_ucomiss_comisd_register_flags() {
 
     check_mem(
         "sse_ucomiss_comisd_register_flags",
+        &code,
+        flags_seeded_regs(),
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_comi_extended_register_flags() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([5.0, 0.0, 0.0, 0.0]));
+    s[16..32].copy_from_slice(&f32x4([7.0, 0.0, 0.0, 0.0]));
+    s[32..48].copy_from_slice(&f64x2([2.0, 0.0]));
+    s[48..64].copy_from_slice(&f64x2([7.0, 0.0]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x07]); // movdqu xmm8, [rdi]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm9, [rdi+16]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x57, 0x20]); // movdqu xmm10, [rdi+32]
+    code.extend_from_slice(&[0xF3, 0x44, 0x0F, 0x6F, 0x5F, 0x30]); // movdqu xmm11, [rdi+48]
+    code.extend_from_slice(&[0x45, 0x0F, 0x2E, 0xC1]); // ucomiss xmm8, xmm9
+    code.extend_from_slice(&[0x9C, 0x41, 0x58]); // pushfq; pop r8
+    code.extend_from_slice(&[0x45, 0x0F, 0x2F, 0xC8]); // comiss xmm9, xmm8
+    code.extend_from_slice(&[0x9C, 0x41, 0x59]); // pushfq; pop r9
+    code.extend_from_slice(&[0x66, 0x45, 0x0F, 0x2F, 0xD3]); // comisd xmm10, xmm11
+    code.extend_from_slice(&[0x9C, 0x41, 0x5A]); // pushfq; pop r10
+    code.extend_from_slice(&[0x66, 0x45, 0x0F, 0x2E, 0xDA]); // ucomisd xmm11, xmm10
+    code.extend_from_slice(&[0x9C, 0x41, 0x5B]); // pushfq; pop r11
+    code.extend_from_slice(&[0x4C, 0x89, 0x47, 0x00]); // mov [rdi], r8
+    code.extend_from_slice(&[0x4C, 0x89, 0x4F, 0x08]); // mov [rdi+8], r9
+    code.extend_from_slice(&[0x4C, 0x89, 0x57, 0x10]); // mov [rdi+16], r10
+    code.extend_from_slice(&[0x4C, 0x89, 0x5F, 0x18]); // mov [rdi+24], r11
+    code.push(HLT);
+
+    check_mem(
+        "sse_comi_extended_register_flags",
         &code,
         flags_seeded_regs(),
         s,
