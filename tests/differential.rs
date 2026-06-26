@@ -2270,6 +2270,61 @@ fn group2_memory_shift_rotate_forms() {
 }
 
 #[test]
+fn group2_addr32_memory_shift_rotate_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x81;
+    scratch[1] = 0x03;
+    scratch[2] = 0x80;
+    scratch[3] = 0x01;
+    scratch[4] = 0x11;
+    scratch[5] = 0x84;
+    scratch[6] = 0x80;
+    scratch[7] = 0x0F;
+    scratch[8..16].copy_from_slice(&0x8000_0000_0000_0001u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&3u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&1u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&0x100u64.to_le_bytes());
+    scratch[40..48].copy_from_slice(&0xFFFF_FFFF_FFFF_FFF0u64.to_le_bytes());
+    scratch[48..56].copy_from_slice(&0x8000_0000_0000_0000u64.to_le_bytes());
+    scratch[56..64].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0xD0, 0x07, // rol byte [edi], 1
+        0x67, 0xD0, 0x4F, 0x01, // ror byte [edi+1], 1
+        0xF9, // stc
+        0x67, 0xD0, 0x57, 0x02, // rcl byte [edi+2], 1
+        0xF9, // stc
+        0x67, 0xD0, 0x5F, 0x03, // rcr byte [edi+3], 1
+        0x67, 0xC0, 0x67, 0x04, 0x03, // shl byte [edi+4], 3
+        0x67, 0xC0, 0x6F, 0x05, 0x02, // shr byte [edi+5], 2
+        0x67, 0xC0, 0x7F, 0x06, 0x03, // sar byte [edi+6], 3
+        0x48, 0xC7, 0xC1, 0x05, 0x00, 0x00, 0x00, // mov rcx, 5
+        0x67, 0xD2, 0x67, 0x07, // shl byte [edi+7], cl
+        0x67, 0x48, 0xD1, 0x47, 0x08, // rol qword [edi+8], 1
+        0x67, 0x48, 0xD1, 0x4F, 0x10, // ror qword [edi+0x10], 1
+        0x67, 0x48, 0xC1, 0x67, 0x18, 0x04, // shl qword [edi+0x18], 4
+        0x67, 0x48, 0xC1, 0x6F, 0x20, 0x04, // shr qword [edi+0x20], 4
+        0x67, 0x48, 0xC1, 0x7F, 0x28, 0x04, // sar qword [edi+0x28], 4
+        0xF9, // stc
+        0x67, 0x48, 0xD3, 0x57, 0x30, // rcl qword [edi+0x30], cl
+        0xF9, // stc
+        0x67, 0x48, 0xD3, 0x5F, 0x38, // rcr qword [edi+0x38], cl
+        0x48, 0x83, 0xF9, 0x05, // cmp rcx, 5
+    ]);
+
+    check_mem(
+        "group2_addr32_memory_shift_rotate_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn double_shift_memory_destination_forms() {
     let mut scratch = zero_scratch();
     scratch[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
@@ -2295,6 +2350,42 @@ fn double_shift_memory_destination_forms() {
     ]);
 
     check_mem("double_shift_memory_destination_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn double_shift_addr32_memory_destination_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0..8].copy_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    scratch[8..16].copy_from_slice(&0x8877_6655_4433_2211u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0xFEDC_BA98_7654_3210u64.to_le_bytes());
+    scratch[32..34].copy_from_slice(&0x1234u16.to_le_bytes());
+    scratch[36..40].copy_from_slice(&0x89AB_CDEFu32.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let mut code = vec![0x48, 0xBB];
+    code.extend_from_slice(&0xAABB_CCDD_EEFF_0011u64.to_le_bytes());
+    code.extend_from_slice(&[
+        0x48, 0xC7, 0xC1, 0x04, 0x00, 0x00, 0x00, // mov rcx, 4
+        0x67, 0x48, 0x0F, 0xA4, 0x1F, 0x08, // shld qword [edi], rbx, 8
+        0x67, 0x48, 0x0F, 0xAC, 0x5F, 0x08, 0x08, // shrd qword [edi+8], rbx, 8
+        0x67, 0x48, 0x0F, 0xA5, 0x5F, 0x10, // shld qword [edi+0x10], rbx, cl
+        0x67, 0x48, 0x0F, 0xAD, 0x5F, 0x18, // shrd qword [edi+0x18], rbx, cl
+        0x67, 0x66, 0x0F, 0xA4, 0x5F, 0x20, 0x04, // shld word [edi+0x20], bx, 4
+        0x67, 0x0F, 0xAD, 0x5F, 0x24, // shrd dword [edi+0x24], ebx, cl
+        0x48, 0x83, 0xF9, 0x04, // cmp rcx, 4
+        HLT,
+    ]);
+
+    check_mem(
+        "double_shift_addr32_memory_destination_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5351,6 +5442,48 @@ fn group1_memory_immediate_forms() {
 }
 
 #[test]
+fn group1_addr32_memory_immediate_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x7F; // add byte [edi], 1 -> 0x80
+    scratch[1] = 0x80; // or byte [edi+1], 0x7f -> 0xff
+    scratch[2] = 0x7F; // adc byte [edi+2], 0 with CF=1 -> 0x80
+    scratch[3] = 0x00; // sbb byte [edi+3], 0 with CF=1 -> 0xff
+    scratch[4] = 0xF0; // and byte [edi+4], 0x0f -> 0x00
+    scratch[5] = 0x00; // sub byte [edi+5], 1 -> 0xff
+    scratch[6] = 0xAA; // xor byte [edi+6], 0xff -> 0x55
+    scratch[7] = 0x80; // cmp byte [edi+7], 1 leaves memory unchanged
+    scratch[8..16].copy_from_slice(&1u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&u64::MAX.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x80, 0x07, 0x01, // add byte [edi], 1
+        0x67, 0x80, 0x4F, 0x01, 0x7F, // or byte [edi+1], 0x7f
+        0xF9, // stc
+        0x67, 0x80, 0x57, 0x02, 0x00, // adc byte [edi+2], 0
+        0xF9, // stc
+        0x67, 0x80, 0x5F, 0x03, 0x00, // sbb byte [edi+3], 0
+        0x67, 0x80, 0x67, 0x04, 0x0F, // and byte [edi+4], 0x0f
+        0x67, 0x80, 0x6F, 0x05, 0x01, // sub byte [edi+5], 1
+        0x67, 0x80, 0x77, 0x06, 0xFF, // xor byte [edi+6], 0xff
+        0x67, 0x80, 0x7F, 0x07, 0x01, // cmp byte [edi+7], 1
+        0x67, 0x48, 0x81, 0x47, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, // add qword [edi+8], -1
+        0x67, 0x48, 0x83, 0x6F, 0x10, 0xFF, // sub qword [edi+0x10], -1
+        0x67, 0x48, 0x83, 0x7F, 0x18, 0xFF, // cmp qword [edi+0x18], -1
+    ]);
+
+    check_mem(
+        "group1_addr32_memory_immediate_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn add_adc_register_memory_forms() {
     let mut scratch = zero_scratch();
     scratch[0] = 0x70;
@@ -5396,6 +5529,56 @@ fn add_adc_register_memory_forms() {
 }
 
 #[test]
+fn add_adc_addr32_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x70;
+    scratch[1] = 0x21;
+    scratch[2] = 0xFE;
+    scratch[4..6].copy_from_slice(&0x7000u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0102u16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x7000_0000u32.to_le_bytes());
+    scratch[12..16].copy_from_slice(&0x0102_0304u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x7000_0000_0000_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x0102_0304_0506_0708u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4410;
+    r.rbx = 0x2222_3333_4444_0011;
+    r.rcx = 0x3333_4444_5555_1001;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.rbp = 0x6666_7777_8888_9999;
+    r.r8 = 0x0102_0304_0506_0708;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = u64::MAX;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x00, 0x1F, // add byte [edi], bl
+        0x67, 0x66, 0x01, 0x4F, 0x04, // add word [edi+4], cx
+        0x67, 0x01, 0x57, 0x08, // add dword [edi+8], edx
+        0x67, 0x4C, 0x01, 0x47, 0x10, // add qword [edi+0x10], r8
+        0x67, 0x02, 0x47, 0x01, // add al, byte [edi+1]
+        0x67, 0x66, 0x03, 0x77, 0x06, // add si, word [edi+6]
+        0x67, 0x03, 0x6F, 0x0C, // add ebp, dword [edi+0xc]
+        0x67, 0x4C, 0x03, 0x4F, 0x18, // add r9, qword [edi+0x18]
+        0xF9, // stc
+        0x67, 0x10, 0x5F, 0x02, // adc byte [edi+2], bl
+        0xF9, // stc
+        0x67, 0x4C, 0x13, 0x57, 0x20, // adc r10, qword [edi+0x20]
+    ]);
+
+    check_mem(
+        "add_adc_addr32_register_memory_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn sub_sbb_register_memory_forms() {
     let mut scratch = zero_scratch();
     scratch[0] = 0x80;
@@ -5438,6 +5621,56 @@ fn sub_sbb_register_memory_forms() {
     ]);
 
     check_mem("sub_sbb_register_memory_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn sub_sbb_addr32_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x80;
+    scratch[1] = 0x21;
+    scratch[2] = 0x00;
+    scratch[4..6].copy_from_slice(&0x8000u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0102u16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+    scratch[12..16].copy_from_slice(&0x0102_0304u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x8000_0000_0000_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0x0102_0304_0506_0708u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_4440;
+    r.rbx = 0x2222_3333_4444_0011;
+    r.rcx = 0x3333_4444_5555_1001;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_8888;
+    r.rbp = 0x6666_7777_8888_9999;
+    r.r8 = 0x0102_0304_0506_0708;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = 0;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x28, 0x1F, // sub byte [edi], bl
+        0x67, 0x66, 0x29, 0x4F, 0x04, // sub word [edi+4], cx
+        0x67, 0x29, 0x57, 0x08, // sub dword [edi+8], edx
+        0x67, 0x4C, 0x29, 0x47, 0x10, // sub qword [edi+0x10], r8
+        0x67, 0x2A, 0x47, 0x01, // sub al, byte [edi+1]
+        0x67, 0x66, 0x2B, 0x77, 0x06, // sub si, word [edi+6]
+        0x67, 0x2B, 0x6F, 0x0C, // sub ebp, dword [edi+0xc]
+        0x67, 0x4C, 0x2B, 0x4F, 0x18, // sub r9, qword [edi+0x18]
+        0xF9, // stc
+        0x67, 0x18, 0x5F, 0x02, // sbb byte [edi+2], bl
+        0xF9, // stc
+        0x67, 0x4C, 0x1B, 0x57, 0x20, // sbb r10, qword [edi+0x20]
+    ]);
+
+    check_mem(
+        "sub_sbb_addr32_register_memory_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
 }
 
 #[test]
@@ -5487,6 +5720,57 @@ fn logic_register_memory_forms() {
 }
 
 #[test]
+fn logic_addr32_register_memory_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0xF0;
+    scratch[1] = 0x0F;
+    scratch[2] = 0x10;
+    scratch[3] = 0x40;
+    scratch[4..6].copy_from_slice(&0xFF00u16.to_le_bytes());
+    scratch[6..8].copy_from_slice(&0x0F0Fu16.to_le_bytes());
+    scratch[8..12].copy_from_slice(&0x00FF_0000u32.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0F0F_0000_F0F0_0000u64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&0xFFFF_0000_FFFF_0000u64.to_le_bytes());
+    scratch[32] = 0xAA;
+    scratch[33] = 0x55;
+    scratch[40..48].copy_from_slice(&0x1234_5678_9ABC_DEF0u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0x1111_2222_3333_33CC;
+    r.rbx = 0x2222_3333_4444_330F;
+    r.rcx = 0x3333_4444_5555_00F0;
+    r.rdx = 0x4444_5555_2222_3333;
+    r.rsi = 0x5555_6666_7777_F0F0;
+    r.r8 = 0x00FF_00FF_00FF_00FF;
+    r.r9 = 0x9999_AAAA_BBBB_CCCC;
+    r.r10 = 0xFEDC_BA98_7654_3210;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x20, 0x1F, // and byte [edi], bl
+        0x67, 0x66, 0x21, 0x4F, 0x04, // and word [edi+4], cx
+        0x67, 0x22, 0x47, 0x01, // and al, byte [edi+1]
+        0x67, 0x66, 0x23, 0x77, 0x06, // and si, word [edi+6]
+        0x67, 0x08, 0x57, 0x02, // or byte [edi+2], dl
+        0x67, 0x09, 0x57, 0x08, // or dword [edi+8], edx
+        0x67, 0x0A, 0x5F, 0x03, // or bl, byte [edi+3]
+        0x67, 0x4C, 0x0B, 0x4F, 0x10, // or r9, qword [edi+0x10]
+        0x67, 0x30, 0x4F, 0x20, // xor byte [edi+0x20], cl
+        0x67, 0x4C, 0x31, 0x47, 0x18, // xor qword [edi+0x18], r8
+        0x67, 0x32, 0x47, 0x21, // xor al, byte [edi+0x21]
+        0x67, 0x4C, 0x33, 0x57, 0x28, // xor r10, qword [edi+0x28]
+    ]);
+
+    check_mem(
+        "logic_addr32_register_memory_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn cmp_test_memory_operand_forms() {
     let mut scratch = zero_scratch();
     scratch[0] = 0xF0;
@@ -5517,6 +5801,44 @@ fn cmp_test_memory_operand_forms() {
     ]);
 
     check_mem("cmp_test_memory_operand_forms", &code, r, scratch, FLAG_MASK);
+}
+
+#[test]
+fn cmp_test_addr32_memory_operand_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0xF0;
+    scratch[1] = 0x80;
+    scratch[8..16].copy_from_slice(&0x00FF_0000_0000_00FFu64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x1111_2222_3333_4444u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rbx = 0x11;
+    r.rcx = 0x2222_3333_4444_5555;
+    r.rdx = 0x0F0F_0000_0000_000Fu64;
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0x84, 0x1F, // test byte [edi], bl
+        0x9C, 0x58, // pushfq; pop rax
+        0x67, 0x48, 0x89, 0x47, 0x20, // mov [edi+0x20], rax
+        0x67, 0x48, 0x85, 0x57, 0x08, // test qword [edi+8], rdx
+        0x9C, 0x58, // pushfq; pop rax
+        0x67, 0x48, 0x89, 0x47, 0x28, // mov [edi+0x28], rax
+        0x67, 0x38, 0x5F, 0x01, // cmp byte [edi+1], bl
+        0x9C, 0x58, // pushfq; pop rax
+        0x67, 0x48, 0x89, 0x47, 0x30, // mov [edi+0x30], rax
+        0x67, 0x48, 0x3B, 0x4F, 0x10, // cmp rcx, qword [edi+0x10]
+        0x9C, 0x58, // pushfq; pop rax
+        0x67, 0x48, 0x89, 0x47, 0x38, // mov [edi+0x38], rax
+    ]);
+
+    check_mem(
+        "cmp_test_addr32_memory_operand_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -5656,6 +5978,34 @@ fn inc_dec_memory_group_paths() {
 }
 
 #[test]
+fn inc_dec_addr32_memory_group_paths() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x7F;
+    scratch[1] = 0x00;
+    scratch[8..16].copy_from_slice(&1u64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&1u64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0xF9, // stc
+        0x67, 0xFE, 0x07, // inc byte [edi]
+        0x67, 0xFE, 0x4F, 0x01, // dec byte [edi+1]
+        0x67, 0x48, 0xFF, 0x47, 0x08, // inc qword [edi+8]
+        0x67, 0x48, 0xFF, 0x4F, 0x10, // dec qword [edi+0x10]
+    ]);
+
+    check_mem(
+        "inc_dec_addr32_memory_group_paths",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn neg8_int_min() {
     // neg al with al=0x80 (-128) -> 0x80 (overflow): OF=1, CF=1, SF=1.
     let mut r = regs();
@@ -5771,6 +6121,66 @@ fn group3_memory_unary_mul_div_forms() {
     ]);
 
     check_mem("group3_memory_unary_mul_div_forms", &code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn group3_addr32_memory_unary_mul_div_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0] = 0x55;
+    scratch[1] = 0xAA;
+    scratch[2] = 0x0F;
+    scratch[3] = 0x80;
+    scratch[4] = 0x03;
+    scratch[5] = 0xFE;
+    scratch[6] = 0x07;
+    scratch[7] = 0xFB;
+    scratch[8..16].copy_from_slice(&0x00FF_00FF_00FF_00FFu64.to_le_bytes());
+    scratch[16..24].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    scratch[24..32].copy_from_slice(&1u64.to_le_bytes());
+    scratch[32..40].copy_from_slice(&3u64.to_le_bytes());
+    scratch[40..48].copy_from_slice(&u64::MAX.to_le_bytes());
+    scratch[48..56].copy_from_slice(&7u64.to_le_bytes());
+    scratch[56..64].copy_from_slice(&0xFFFF_FFFF_FFFF_FFFBu64.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+
+    let code = with_hlt(vec![
+        0x67, 0xF6, 0x07, 0x0F, // test byte [edi], 0x0f
+        0x67, 0xF6, 0x4F, 0x01, 0xF0, // test byte [edi+1], 0xf0 (/1 alias)
+        0x67, 0xF6, 0x57, 0x02, // not byte [edi+2]
+        0x67, 0xF6, 0x5F, 0x03, // neg byte [edi+3]
+        0xB0, 0x11, // mov al, 0x11
+        0x67, 0xF6, 0x67, 0x04, // mul byte [edi+4]
+        0xB0, 0x7F, // mov al, 0x7f
+        0x67, 0xF6, 0x6F, 0x05, // imul byte [edi+5]
+        0x66, 0xB8, 0x23, 0x01, // mov ax, 0x0123
+        0x67, 0xF6, 0x77, 0x06, // div byte [edi+6]
+        0x66, 0xB8, 0x9C, 0xFF, // mov ax, -100
+        0x67, 0xF6, 0x7F, 0x07, // idiv byte [edi+7]
+        0x67, 0x48, 0xF7, 0x47, 0x08, 0xFF, 0x00, 0x00, 0x00, // test qword [edi+8], 0xff
+        0x67, 0x48, 0xF7, 0x57, 0x10, // not qword [edi+0x10]
+        0x67, 0x48, 0xF7, 0x5F, 0x18, // neg qword [edi+0x18]
+        0x48, 0xC7, 0xC0, 0x05, 0x00, 0x00, 0x00, // mov rax, 5
+        0x67, 0x48, 0xF7, 0x67, 0x20, // mul qword [edi+0x20]
+        0x48, 0xC7, 0xC0, 0x05, 0x00, 0x00, 0x00, // mov rax, 5
+        0x67, 0x48, 0xF7, 0x6F, 0x28, // imul qword [edi+0x28]
+        0x48, 0x31, 0xD2, // xor rdx, rdx
+        0x48, 0xC7, 0xC0, 0x64, 0x00, 0x00, 0x00, // mov rax, 100
+        0x67, 0x48, 0xF7, 0x77, 0x30, // div qword [edi+0x30]
+        0x48, 0xC7, 0xC2, 0xFF, 0xFF, 0xFF, 0xFF, // mov rdx, -1
+        0x48, 0xC7, 0xC0, 0x9C, 0xFF, 0xFF, 0xFF, // mov rax, -100
+        0x67, 0x48, 0xF7, 0x7F, 0x38, // idiv qword [edi+0x38]
+        0x48, 0x83, 0xF8, 0x14, // cmp rax, 20
+    ]);
+
+    check_mem(
+        "group3_addr32_memory_unary_mul_div_forms",
+        &code,
+        r,
+        scratch,
+        FLAG_MASK,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -10907,6 +11317,31 @@ fn group8_memory_immediate_writeback_forms() {
     ];
 
     check_mem("group8_memory_immediate_writeback_forms", &code, r, s, BT_DEFINED);
+}
+
+#[test]
+fn group8_addr32_memory_immediate_writeback_forms() {
+    let mut s = [0u8; 64];
+    s[8..16].copy_from_slice(&(1u64 << 15).to_le_bytes());
+    s[28..32].copy_from_slice(&(1u32 << 31).to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    let code = with_hlt(vec![
+        0x67, 0x48, 0x0F, 0xBA, 0x2F, 0x09, // bts qword [edi], 9
+        0x67, 0x48, 0x0F, 0xBA, 0x77, 0x08, 0x0F, // btr qword [edi+8], 15
+        0x67, 0x48, 0x0F, 0xBA, 0x7F, 0x10, 0x14, // btc qword [edi+0x10], 20
+        0x67, 0x66, 0x0F, 0xBA, 0x6F, 0x18, 0x0F, // bts word [edi+0x18], 15
+        0x67, 0x0F, 0xBA, 0x77, 0x1C, 0x1F, // btr dword [edi+0x1c], 31
+    ]);
+
+    check_mem(
+        "group8_addr32_memory_immediate_writeback_forms",
+        &code,
+        r,
+        s,
+        BT_DEFINED,
+    );
 }
 
 // ---------------------------------------------------------------------------
