@@ -261,6 +261,30 @@ pub fn f64_to_bcd(val: f64) -> [u8; 10] {
     bytes
 }
 
+fn uses_64bit_env_tag_format(vcpu: &X86_64Vcpu) -> bool {
+    (vcpu.sregs.efer & 0x400) != 0 && vcpu.sregs.cs.l
+}
+
+fn abridged_tag_word(tag_word: u16) -> u16 {
+    let mut abridged = 0u16;
+    for i in 0..8 {
+        if (tag_word >> (i * 2)) & 3 != 3 {
+            abridged |= 1 << i;
+        }
+    }
+    abridged
+}
+
+fn expand_abridged_tag_word(abridged: u8) -> u16 {
+    let mut tag_word = 0u16;
+    for i in 0..8 {
+        if abridged & (1 << i) == 0 {
+            tag_word |= 3 << (i * 2);
+        }
+    }
+    tag_word
+}
+
 /// FLDENV - load FPU environment
 pub fn fldenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     // Format (28 bytes):
@@ -268,7 +292,12 @@ pub fn fldenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     // 14-27: reserved
     vcpu.fpu.control_word = vcpu.read_mem16(addr)?;
     vcpu.fpu.status_word = vcpu.read_mem16(addr + 2)?;
-    vcpu.fpu.tag_word = vcpu.read_mem16(addr + 4)?;
+    let stored_tag_word = vcpu.read_mem16(addr + 4)?;
+    vcpu.fpu.tag_word = if uses_64bit_env_tag_format(vcpu) {
+        expand_abridged_tag_word(stored_tag_word as u8)
+    } else {
+        stored_tag_word
+    };
     vcpu.fpu.instr_ptr = vcpu.read_mem16(addr + 6)? as u64;
     // FCS at offset 8 (code segment, ignored in 64-bit mode)
     vcpu.fpu.data_ptr = vcpu.read_mem16(addr + 10)? as u64;
@@ -284,7 +313,12 @@ pub fn fnstenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     // 14-27: reserved
     vcpu.write_mem16(addr, vcpu.fpu.control_word)?;
     vcpu.write_mem16(addr + 2, vcpu.fpu.status_word)?;
-    vcpu.write_mem16(addr + 4, vcpu.fpu.tag_word)?;
+    let stored_tag_word = if uses_64bit_env_tag_format(vcpu) {
+        abridged_tag_word(vcpu.fpu.tag_word)
+    } else {
+        vcpu.fpu.tag_word
+    };
+    vcpu.write_mem16(addr + 4, stored_tag_word)?;
     vcpu.write_mem16(addr + 6, vcpu.fpu.instr_ptr as u16)?;
     vcpu.write_mem16(addr + 8, 0)?; // FCS (code segment)
     vcpu.write_mem16(addr + 10, vcpu.fpu.data_ptr as u16)?;

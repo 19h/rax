@@ -7713,6 +7713,14 @@ fn fence_and_pause_forms_preserve_state() {
 }
 
 #[test]
+fn fwait_preserves_visible_state() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x0123_4567_89AB_CDEF;
+    r.rbx = 0xFEDC_BA98_7654_3210;
+    check_flags_masked("fwait_preserve", &with_hlt(vec![0x9B]), r, FLAG_MASK);
+}
+
+#[test]
 fn monitor_preserves_visible_state() {
     let mut r = modern_flags_regs();
     r.rax = DATA_ADDR;
@@ -11846,6 +11854,24 @@ fn mmx_maskmovq_selected_bytes() {
     code.extend_from_slice(&[0x0F, 0xF7, 0xC1]); // maskmovq mm0, mm1
     code.push(HLT);
     check_mem("maskmovq", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_emms_marks_x87_tags_empty() {
+    const FPU_ENV_OFF: u32 = 0x100;
+
+    let s = scratch_f64(&[3.0, 7.0]);
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    code.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x77]); // emms
+    code.extend_from_slice(&[0xD9, 0xB7]); // fnstenv [rdi+0x100]
+    code.extend_from_slice(&FPU_ENV_OFF.to_le_bytes());
+    code.extend_from_slice(&[0x66, 0x8B, 0x87]); // mov ax, word [rdi+0x104]
+    code.extend_from_slice(&(FPU_ENV_OFF + 4).to_le_bytes());
+    code.extend_from_slice(&[0x66, 0x89, 0x47, 0x20]); // mov word [rdi+0x20], ax
+    code.push(HLT);
+    check_mem("mmx_emms_x87_empty_tags", &code, regs(), s, 0);
 }
 
 #[test]
