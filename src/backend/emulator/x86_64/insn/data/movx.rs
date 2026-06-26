@@ -4,6 +4,44 @@ use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::super::flags;
+
+/// ARPL r/m16, r16 (0x63 outside 64-bit mode) - Adjust RPL Field of Segment Selector.
+pub fn arpl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if vcpu.sregs.cs.l || vcpu.sregs.cr0 & 1 == 0 {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let src_rpl = (vcpu.get_reg(reg, 2) & 0x3) as u16;
+    let dest = if is_memory {
+        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+    } else {
+        vcpu.get_reg(rm, 2) as u16
+    };
+    let dest_rpl = dest & 0x3;
+    let adjusted = src_rpl > dest_rpl;
+
+    if adjusted {
+        let value = (dest & !0x3) | src_rpl;
+        if is_memory {
+            vcpu.mmu.write_u16(addr, value, &vcpu.sregs)?;
+        } else {
+            vcpu.set_reg(rm, value as u64, 2);
+        }
+    }
+
+    vcpu.materialize_flags();
+    if adjusted {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF;
+    }
+    vcpu.clear_lazy_flags();
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
 
 /// MOVSXD r, r/m (0x63). Operand-size–dependent:
 ///   - REX.W: sign-extend r/m32 -> r64.

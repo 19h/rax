@@ -118,6 +118,13 @@ fn sh_mov_rax_moffs_or_jmp_abs(
         insn::data::mov_rax_moffs(v, c)
     }
 }
+fn sh_arpl_or_movsxd(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if v.sregs.cs.l {
+        insn::data::movsxd(v, c)
+    } else {
+        insn::data::arpl(v, c)
+    }
+}
 
 impl X86_64Vcpu {
     /// Resolve a single-byte opcode to its uniform-signature handler.
@@ -196,7 +203,7 @@ impl X86_64Vcpu {
             0x86 => insn::data::xchg_r8_rm8,
             0x87 => insn::data::xchg_r_rm,
             0x91..=0x97 => sh_xchg_rax_r,
-            0x63 => insn::data::movsxd,
+            0x63 => sh_arpl_or_movsxd,
 
             // Arithmetic
             0x00 => insn::arith::add_rm8_r8,

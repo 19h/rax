@@ -125,7 +125,8 @@ impl X86_64Vcpu {
             0x86 => insn::data::xchg_r8_rm8(self, ctx),
             0x87 => insn::data::xchg_r_rm(self, ctx),
             0x91..=0x97 => insn::data::xchg_rax_r(self, ctx, opcode),
-            0x63 => insn::data::movsxd(self, ctx),
+            0x63 if self.sregs.cs.l => insn::data::movsxd(self, ctx),
+            0x63 => insn::data::arpl(self, ctx),
 
             // Arithmetic
             0x00 => insn::arith::add_rm8_r8(self, ctx),

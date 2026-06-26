@@ -21357,6 +21357,63 @@ fn movsxd_no_rex_w() {
     check("movsxd_no_rexw", &with_hlt(vec![0x63, 0xC3]), r);
 }
 
+#[test]
+fn arpl_compat32_register_forms_adjust_rpl_and_zf() {
+    let sregs = compat32_sregs();
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_0001;
+    r.rbx = 0xBBBB_CCCC_DDDD_0003;
+    check_flags_masked_with_sregs(
+        "arpl_compat32_reg_adjusts_rpl",
+        &with_hlt(vec![0x63, 0xD8]), // arpl ax, bx
+        r,
+        flags::bits::ZF,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_0003;
+    r.rbx = 0xBBBB_CCCC_DDDD_0001;
+    r.rflags = flags::bits::ZF;
+    check_flags_masked_with_sregs(
+        "arpl_compat32_reg_clears_zf_without_adjust",
+        &with_hlt(vec![0x63, 0xD8]), // arpl ax, bx
+        r,
+        flags::bits::ZF,
+        &sregs,
+    );
+}
+
+#[test]
+fn arpl_compat32_memory_forms_adjust_rpl_and_zf() {
+    let sregs = compat32_sregs();
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&0x1231u16.to_le_bytes());
+    scratch[2..4].copy_from_slice(&0x4563u16.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[0..2].copy_from_slice(&0x1232u16.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rcx = 0x0002;
+    r.rbx = 0x0001;
+
+    check_scratch_expected_with_sregs(
+        "arpl_compat32_memory_adjust_and_no_adjust",
+        &with_hlt(vec![
+            0x63, 0x0F, // arpl word [edi], cx
+            0x63, 0x5F, 0x02, // arpl word [edi+2], bx
+        ]),
+        r,
+        scratch,
+        expected,
+        flags::bits::ZF,
+        &sregs,
+    );
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 5: stack/control/data-movement/hint/string gaps.
 //
