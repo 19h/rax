@@ -8536,3 +8536,1139 @@ fn str_scasd_and_scasq() {
     r.rax = 0x1111_1111_1111_1111;
     check_mem("scasq_ne", &with_hlt(vec![0x48, 0xAF]), r, s, FLAG_MASK);
 }
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 6: remaining exact SIMD/memory forms.
+//
+// These target implemented SSE/SSE2 paths that were still absent from the
+// differential corpus: scalar compare flags, non-temporal stores, mask stores,
+// logical-not vector ops, signed word min/max, qword arithmetic, and XMM-count
+// packed shifts.
+// ===========================================================================
+
+fn flags_seeded_regs() -> Registers {
+    let mut r = regs();
+    r.rflags = FLAG_MASK;
+    r
+}
+
+#[test]
+fn sse_comiss_ucomisd_flags() {
+    let a = f32x4([1.5, 0.0, 0.0, 0.0]);
+    let b = f32x4([2.5, 0.0, 0.0, 0.0]);
+    check_mem(
+        "comiss_less",
+        &sse_program(&[0x0F, 0x2F, 0xC1]),
+        flags_seeded_regs(),
+        sse_scratch(a, b),
+        FLAG_MASK,
+    );
+
+    let a = f64x2([3.0, 0.0]);
+    let b = f64x2([3.0, 0.0]);
+    check_mem(
+        "ucomisd_equal",
+        &sse_program(&[0x66, 0x0F, 0x2E, 0xC1]),
+        flags_seeded_regs(),
+        sse_scratch(a, b),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_logical_not_and_or_forms() {
+    let a = [
+        0x00, 0xFF, 0x55, 0xAA, 0x11, 0x22, 0x33, 0x44, 0x80, 0x7F, 0xCC, 0x33, 0xF0, 0x0F,
+        0x5A, 0xA5,
+    ];
+    let b = [
+        0xFF, 0x0F, 0xF0, 0x55, 0xEE, 0xDD, 0xCC, 0xBB, 0x7F, 0x80, 0x33, 0xCC, 0x0F, 0xF0,
+        0xA5, 0x5A,
+    ];
+    check_sse(
+        "andnps",
+        &sse_program(&[0x0F, 0x55, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "andnpd",
+        &sse_program(&[0x66, 0x0F, 0x55, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pandn",
+        &sse_program(&[0x66, 0x0F, 0xDF, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "por",
+        &sse_program(&[0x66, 0x0F, 0xEB, 0xC1]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
+fn sse2_pavgw_pminsw_pmaxsw() {
+    let a = [
+        0x0000u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0xFFFEu16.to_le_bytes(),
+        0x1234u16.to_le_bytes(),
+        0xFEDCu16.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0001u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0x4321u16.to_le_bytes(),
+        0x1111u16.to_le_bytes(),
+    ]
+    .concat();
+    let a: [u8; 16] = a.try_into().unwrap();
+    let b: [u8; 16] = b.try_into().unwrap();
+    check_sse(
+        "pavgw",
+        &sse_program(&[0x66, 0x0F, 0xE3, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pminsw",
+        &sse_program(&[0x66, 0x0F, 0xEA, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "pmaxsw",
+        &sse_program(&[0x66, 0x0F, 0xEE, 0xC1]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
+fn sse2_paddq_psubq() {
+    let a = [
+        0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(),
+        0x8000_0000_0000_0000u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x0000_0000_0000_0002u64.to_le_bytes(),
+        0x8000_0000_0000_0001u64.to_le_bytes(),
+    ]
+    .concat();
+    let a: [u8; 16] = a.try_into().unwrap();
+    let b: [u8; 16] = b.try_into().unwrap();
+    check_sse(
+        "paddq",
+        &sse_program(&[0x66, 0x0F, 0xD4, 0xC1]),
+        sse_scratch(a, b),
+    );
+    check_sse(
+        "psubq",
+        &sse_program(&[0x66, 0x0F, 0xFB, 0xC1]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
+fn sse2_xmm_count_shifts() {
+    let a = [
+        0x8000_0000_0000_0001u64.to_le_bytes(),
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+    ]
+    .concat();
+    let mut count = [0u8; 16];
+    count[0..8].copy_from_slice(&4u64.to_le_bytes());
+    let a: [u8; 16] = a.try_into().unwrap();
+    check_sse(
+        "psrlq_xmm_count",
+        &sse_program(&[0x66, 0x0F, 0xD3, 0xC1]),
+        sse_scratch(a, count),
+    );
+    check_sse(
+        "psllq_xmm_count",
+        &sse_program(&[0x66, 0x0F, 0xF3, 0xC1]),
+        sse_scratch(a, count),
+    );
+    check_sse(
+        "psrad_xmm_count",
+        &sse_program(&[0x66, 0x0F, 0xE2, 0xC1]),
+        sse_scratch(a, count),
+    );
+}
+
+#[test]
+fn sse_movlps_movhps_load_store() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D,
+        0x1E, 0x1F,
+    ]);
+    s[16..24].copy_from_slice(&[0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7]);
+    s[24..32].copy_from_slice(&[0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x12, 0x47, 0x10]); // movlps xmm0, [rdi+0x10]
+    code.extend_from_slice(&[0x0F, 0x16, 0x47, 0x18]); // movhps xmm0, [rdi+0x18]
+    code.extend_from_slice(&[0x0F, 0x13, 0x47, 0x20]); // movlps [rdi+0x20], xmm0
+    code.extend_from_slice(&[0x0F, 0x17, 0x47, 0x28]); // movhps [rdi+0x28], xmm0
+    code.push(HLT);
+    check_mem("movlps_movhps", &code, regs(), s, 0);
+}
+
+#[test]
+fn sse_non_temporal_stores() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54,
+        0x32, 0x10,
+    ]);
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x2B, 0x47, 0x20]); // movntps [rdi+0x20], xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0xE7, 0x47, 0x30]); // movntdq [rdi+0x30], xmm0
+    code.push(HLT);
+    check_mem("movntps_movntdq", &code, regs(), s, 0);
+
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "movnti_m64",
+        &with_hlt(vec![0x48, 0x0F, 0xC3, 0x07]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn sse_maskmovdqu_selected_bytes() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+        0xEE, 0xFF,
+    ]);
+    s[16..32].copy_from_slice(&[
+        0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80,
+        0x00, 0x80,
+    ]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x48, 0x83, 0xC7, 0x20]); // add rdi, 0x20
+    code.extend_from_slice(&[0x66, 0x0F, 0xF7, 0xC1]); // maskmovdqu xmm0, xmm1
+    code.push(HLT);
+    check_mem("maskmovdqu", &code, regs(), s, 0);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 7: packed move forms and MMX-only aliases.
+//
+// These cover aligned/unaligned SSE move opcodes and the MMX dispatch branches
+// that share opcode space with XMM forms but operate on MM registers.
+// ===========================================================================
+
+fn mmx_scratch(a: [u8; 8], b: [u8; 8]) -> [u8; 64] {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&a);
+    s[8..16].copy_from_slice(&b);
+    s
+}
+
+fn mmx_program(op: &[u8]) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]); // movq mm1, [rdi+8]
+    code.extend_from_slice(op);
+    code.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    code.push(HLT);
+    code
+}
+
+#[test]
+fn sse_movups_movupd_unaligned_load_store() {
+    let mut s = [0u8; 64];
+    for (idx, byte) in s.iter_mut().enumerate() {
+        *byte = idx.wrapping_mul(3).wrapping_add(0x11) as u8;
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0x83, 0xC7, 0x01]); // add rdi, 1
+    code.extend_from_slice(&[0x0F, 0x10, 0x07]); // movups xmm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x11, 0x47, 0x20]); // movups [rdi+0x20], xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0x10, 0x4F, 0x02]); // movupd xmm1, [rdi+2]
+    code.extend_from_slice(&[0x66, 0x0F, 0x11, 0x4F, 0x2C]); // movupd [rdi+0x2c], xmm1
+    code.push(HLT);
+    check_mem("movups_movupd_unaligned", &code, regs(), s, 0);
+}
+
+#[test]
+fn sse_movaps_movapd_aligned_load_store() {
+    let mut s = [0u8; 64];
+    for (idx, byte) in s.iter_mut().enumerate() {
+        *byte = idx.wrapping_mul(5).wrapping_add(0x23) as u8;
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x28, 0x07]); // movaps xmm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x29, 0x47, 0x20]); // movaps [rdi+0x20], xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0x28, 0x4F, 0x10]); // movapd xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0x29, 0x4F, 0x30]); // movapd [rdi+0x30], xmm1
+    code.push(HLT);
+    check_mem("movaps_movapd_aligned", &code, regs(), s, 0);
+}
+
+#[test]
+fn sse2_movdqa_aligned_load_store() {
+    let mut s = [0u8; 64];
+    for (idx, byte) in s.iter_mut().enumerate() {
+        *byte = idx.wrapping_mul(7).wrapping_add(0x41) as u8;
+    }
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x66, 0x0F, 0x6F, 0x07]); // movdqa xmm0, [rdi]
+    code.extend_from_slice(&[0x66, 0x0F, 0x7F, 0x47, 0x20]); // movdqa [rdi+0x20], xmm0
+    code.push(HLT);
+    check_mem("movdqa_aligned", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_movntq_store() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0xE7, 0x47, 0x20]); // movntq [rdi+0x20], mm0
+    code.push(HLT);
+    check_mem("movntq", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_maskmovq_selected_bytes() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&[0x10, 0x21, 0x32, 0x43, 0x54, 0x65, 0x76, 0x87]);
+    s[8..16].copy_from_slice(&[0x80, 0x00, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]); // movq mm1, [rdi+8]
+    code.extend_from_slice(&[0x48, 0x83, 0xC7, 0x20]); // add rdi, 0x20
+    code.extend_from_slice(&[0x0F, 0xF7, 0xC1]); // maskmovq mm0, mm1
+    code.push(HLT);
+    check_mem("maskmovq", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_pandn_por() {
+    let a = [0x00, 0xFF, 0x55, 0xAA, 0x11, 0x22, 0x33, 0x44];
+    let b = [0xFF, 0x0F, 0xF0, 0x55, 0xEE, 0xDD, 0xCC, 0xBB];
+
+    check_mem(
+        "mmx_pandn",
+        &mmx_program(&[0x0F, 0xDF, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+    check_mem(
+        "mmx_por",
+        &mmx_program(&[0x0F, 0xEB, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+}
+
+#[test]
+fn mmx_paddq_psubq() {
+    let a = 0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes();
+    let b = 0x0000_0000_0000_0002u64.to_le_bytes();
+
+    check_mem(
+        "mmx_paddq",
+        &mmx_program(&[0x0F, 0xD4, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+    check_mem(
+        "mmx_psubq",
+        &mmx_program(&[0x0F, 0xFB, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+}
+
+#[test]
+fn mmx_pavgw_pminsw_pmaxsw() {
+    let a = [
+        0x0000u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let b = [
+        0x0001u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+
+    check_mem(
+        "mmx_pavgw",
+        &mmx_program(&[0x0F, 0xE3, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+    check_mem(
+        "mmx_pminsw",
+        &mmx_program(&[0x0F, 0xEA, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+    check_mem(
+        "mmx_pmaxsw",
+        &mmx_program(&[0x0F, 0xEE, 0xC1]),
+        regs(),
+        mmx_scratch(a, b),
+        0,
+    );
+}
+
+#[test]
+fn mmx_pmaddwd_psadbw() {
+    let words_a = [
+        0x0002u16.to_le_bytes(),
+        0xFFFEu16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(),
+        0x8000u16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    let words_b = [
+        0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x0002u16.to_le_bytes(),
+        0xFFFFu16.to_le_bytes(),
+    ]
+    .concat()
+    .try_into()
+    .unwrap();
+    check_mem(
+        "mmx_pmaddwd",
+        &mmx_program(&[0x0F, 0xF5, 0xC1]),
+        regs(),
+        mmx_scratch(words_a, words_b),
+        0,
+    );
+
+    let bytes_a = [0x00, 0x10, 0x20, 0x80, 0x90, 0xA0, 0xF0, 0xFF];
+    let bytes_b = [0x01, 0x08, 0x40, 0x7F, 0xB0, 0x80, 0x10, 0x00];
+    check_mem(
+        "mmx_psadbw",
+        &mmx_program(&[0x0F, 0xF6, 0xC1]),
+        regs(),
+        mmx_scratch(bytes_a, bytes_b),
+        0,
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 8: deterministic port I/O exits.
+//
+// The harness completes KVM and interpreter input exits with zero bytes and
+// ignores output exits, so these compare the architectural register/memory/index
+// effects of IN/OUT/INS/OUTS without depending on any external device model.
+// ===========================================================================
+
+#[test]
+fn io_in_immediate_widths() {
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    check("in_al_imm8", &with_hlt(vec![0xE4, 0x80]), r);
+
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    check("in_ax_imm8", &with_hlt(vec![0x66, 0xE5, 0x81]), r);
+
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    check("in_eax_imm8", &with_hlt(vec![0xE5, 0x82]), r);
+}
+
+#[test]
+fn io_in_dx_widths() {
+    let mut r = regs();
+    r.rax = 0x8877_6655_4433_2211;
+    r.rdx = 0x1234;
+    check("in_al_dx", &with_hlt(vec![0xEC]), r);
+
+    let mut r = regs();
+    r.rax = 0x8877_6655_4433_2211;
+    r.rdx = 0x1234;
+    check("in_ax_dx", &with_hlt(vec![0x66, 0xED]), r);
+
+    let mut r = regs();
+    r.rax = 0x8877_6655_4433_2211;
+    r.rdx = 0x1234;
+    check("in_eax_dx", &with_hlt(vec![0xED]), r);
+}
+
+#[test]
+fn io_out_forms_preserve_state() {
+    let mut r = regs();
+    r.rax = 0x0123_4567_89AB_CDEF;
+    r.rdx = 0x03F8;
+    check(
+        "out_all_forms",
+        &with_hlt(vec![
+            0xE6, 0x80, // out 0x80, al
+            0x66, 0xE7, 0x81, // out 0x81, ax
+            0xE7, 0x82, // out 0x82, eax
+            0xEE, // out dx, al
+            0x66, 0xEF, // out dx, ax
+            0xEF, // out dx, eax
+        ]),
+        r,
+    );
+}
+
+fn io_scratch() -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for (idx, byte) in s.iter_mut().enumerate() {
+        *byte = 0xA0u8.wrapping_add(idx as u8);
+    }
+    s
+}
+
+#[test]
+fn io_ins_string_widths() {
+    let mut r = regs();
+    r.rdi = DATA_ADDR + 8;
+    r.rdx = 0x1234;
+    check_mem("insb", &with_hlt(vec![0x6C]), r, io_scratch(), FLAG_MASK);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR + 8;
+    r.rdx = 0x1234;
+    check_mem(
+        "insw",
+        &with_hlt(vec![0x66, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR + 8;
+    r.rdx = 0x1234;
+    check_mem("insd", &with_hlt(vec![0x6D]), r, io_scratch(), FLAG_MASK);
+}
+
+#[test]
+fn io_rep_ins_forward() {
+    let mut r = regs();
+    r.rdi = DATA_ADDR + 12;
+    r.rcx = 3;
+    r.rdx = 0x1234;
+    check_mem(
+        "rep_insb",
+        &with_hlt(vec![0xF3, 0x6C]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR + 24;
+    r.rcx = 2;
+    r.rdx = 0x1234;
+    check_mem(
+        "rep_insd",
+        &with_hlt(vec![0xF3, 0x6D]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn io_outs_string_forms() {
+    let mut r = regs();
+    r.rsi = DATA_ADDR + 5;
+    r.rdx = 0x1234;
+    check_mem("outsb", &with_hlt(vec![0x6E]), r, io_scratch(), FLAG_MASK);
+
+    let mut r = regs();
+    r.rsi = DATA_ADDR + 20;
+    r.rcx = 2;
+    r.rdx = 0x1234;
+    r.rflags = flags::bits::DF;
+    check_mem(
+        "rep_outsw_df",
+        &with_hlt(vec![0xF3, 0x66, 0x6F]),
+        r,
+        io_scratch(),
+        FLAG_MASK,
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 9: remaining deterministic SSE4 immediate forms.
+//
+// These exercise SSE4.1/SSE4.2 immediate encodings that produce exact bit-pattern
+// results: double blends, extract/insert lane forms, MPSADBW, and PHMINPOSUW.
+// ===========================================================================
+
+#[test]
+fn sse4_blendpd() {
+    let a = [
+        0x1111_1111_1111_1111u64.to_le_bytes(),
+        0x2222_2222_2222_2222u64.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0xAAAA_AAAA_AAAA_AAAAu64.to_le_bytes(),
+        0xBBBB_BBBB_BBBB_BBBBu64.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "blendpd",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x0D, 0xC1, 0b10]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn sse4_extractps_to_reg_and_mem() {
+    let a = [0u8; 16];
+    let b = [
+        0x1111_1111u32.to_le_bytes(),
+        0x2222_2222u32.to_le_bytes(),
+        0x3333_3333u32.to_le_bytes(),
+        0x4444_4444u32.to_le_bytes(),
+    ]
+    .concat();
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x17, 0xC9, 0x03]); // extractps ecx, xmm1, 3
+    code.extend_from_slice(&[0x89, 0x4F, 0x20]); // mov [rdi+0x20], ecx
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x17, 0x4F, 0x24, 0x01]); // extractps [rdi+0x24], xmm1, 1
+    code.push(HLT);
+    check_sse(
+        "extractps_reg_mem",
+        &code,
+        sse_scratch(a, b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn sse4_pextrq_to_reg() {
+    let a = [0u8; 16];
+    let b = [
+        0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        0xFEDC_BA98_7654_3210u64.to_le_bytes(),
+    ]
+    .concat();
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x48, 0x0F, 0x3A, 0x16, 0xC9, 0x01]); // pextrq rcx, xmm1, 1
+    code.extend_from_slice(&[0x48, 0x89, 0x4F, 0x20]); // mov [rdi+0x20], rcx
+    code.push(HLT);
+    check_sse("pextrq_reg", &code, sse_scratch(a, b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pinsrb_and_pinsrq_from_reg() {
+    let a = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+        0xEE, 0xFF,
+    ];
+    let b = [0u8; 16];
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xB8, 0x5A, 0x00, 0x00, 0x00]); // mov eax, 0x5a
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x20, 0xC0, 0x0E]); // pinsrb xmm0, eax, 14
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    code.extend_from_slice(&0x1122_3344_5566_7788u64.to_le_bytes());
+    code.extend_from_slice(&[0x66, 0x48, 0x0F, 0x3A, 0x22, 0xC0, 0x01]); // pinsrq xmm0, rax, 1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    code.push(HLT);
+    check_sse("pinsrb_pinsrq", &code, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_insertps_reg_source() {
+    let a = [
+        0xAAAA_0000u32.to_le_bytes(),
+        0xBBBB_1111u32.to_le_bytes(),
+        0xCCCC_2222u32.to_le_bytes(),
+        0xDDDD_3333u32.to_le_bytes(),
+    ]
+    .concat();
+    let b = [
+        0x1000_0001u32.to_le_bytes(),
+        0x2000_0002u32.to_le_bytes(),
+        0x3000_0003u32.to_le_bytes(),
+        0x4000_0004u32.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "insertps_reg",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x21, 0xC1, 0x98]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn sse4_mpsadbw() {
+    let a = [
+        0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0,
+        0xE0, 0xF0,
+    ];
+    let b = [
+        0x05, 0x15, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x85, 0x95, 0xA5, 0xB5, 0xC5, 0xD5,
+        0xE5, 0xF5,
+    ];
+    check_sse(
+        "mpsadbw",
+        &sse_program(&[0x66, 0x0F, 0x3A, 0x42, 0xC1, 0x05]),
+        sse_scratch(a, b),
+    );
+}
+
+#[test]
+fn sse4_phminposuw() {
+    let a = [0u8; 16];
+    let b = [
+        0x1000u16.to_le_bytes(),
+        0x0007u16.to_le_bytes(),
+        0x0020u16.to_le_bytes(),
+        0x0007u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(),
+        0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(),
+        0x0003u16.to_le_bytes(),
+    ]
+    .concat();
+    check_sse(
+        "phminposuw",
+        &sse_program(&[0x66, 0x0F, 0x38, 0x41, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 10: SSE4.2 string compare instructions.
+//
+// PCMPxSTRx has several unusually subtle architectural outputs: RCX or XMM0,
+// CF/ZF/SF/OF, explicit signed lengths, implicit NUL scanning, polarity, output
+// selection, and a separate memory-source ModR/M path. These deterministic KVM
+// cases complement the randomized fuzz generator and keep the important edge
+// shapes in the normal differential suite.
+// ===========================================================================
+
+fn pcmp_scratch(op1: [u8; 16], op2: [u8; 16]) -> [u8; 64] {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&op1);
+    s[16..32].copy_from_slice(&op2);
+    s
+}
+
+fn pcmp_reg_program(opcode: u8, imm: u8, store_xmm0: bool) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x57, 0x10]); // movdqu xmm2, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, opcode, 0xCA, imm]); // pcmp* xmm1, xmm2, imm
+    if store_xmm0 {
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    }
+    code.push(HLT);
+    code
+}
+
+fn pcmp_mem_program(opcode: u8, imm: u8, store_xmm0: bool) -> Vec<u8> {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0x66, 0x0F, 0x3A, opcode, 0x4F, 0x10, imm]); // pcmp* xmm1, [rdi+0x10], imm
+    if store_xmm0 {
+        code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    }
+    code.push(HLT);
+    code
+}
+
+fn check_pcmp_index(label: &str, code: &[u8], init: Registers, scratch: [u8; 64]) {
+    let Some((interp, kvm)) = run_both(code, init, scratch) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask: FLAG_MASK,
+        scratch: false,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+}
+
+fn check_pcmp_mask(label: &str, code: &[u8], init: Registers, scratch: [u8; 64]) {
+    let Some((interp, kvm)) = run_both(code, init, scratch) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask: FLAG_MASK,
+        xmm_count: 1,
+        scratch: true,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+}
+
+#[test]
+fn sse42_pcmpistri_strlen_idiom() {
+    let op = *b"rax\0............";
+    let mut init = regs();
+    init.rcx = 0xFFFF_FFFF_FFFF_FFFF;
+    // PCMPISTRI xmm1, xmm2, 0x3a: byte equal-each, masked-negative polarity,
+    // least-significant index. Self-compare should report the NUL position.
+    check_pcmp_index(
+        "pcmpistri_strlen_idiom",
+        &pcmp_reg_program(0x63, 0x3A, false),
+        init,
+        pcmp_scratch(op, op),
+    );
+}
+
+#[test]
+fn sse42_pcmpistri_memory_ranges() {
+    let ranges = [
+        b'0', b'9', b'A', b'F', b'a', b'f', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    let haystack = *b"z-7Fq\0..........";
+    let mut init = regs();
+    init.rcx = 0xAAAA_AAAA_AAAA_AAAA;
+    // PCMPISTRI xmm1, [rdi+0x10], 0x04: unsigned byte ranges, LSB index.
+    check_pcmp_index(
+        "pcmpistri_mem_ranges",
+        &pcmp_mem_program(0x63, 0x04, false),
+        init,
+        pcmp_scratch(ranges, haystack),
+    );
+}
+
+#[test]
+fn sse42_pcmpistrm_word_expanded_mask() {
+    let mut ranges = [0u8; 16];
+    for (i, word) in [0x0030u16, 0x0039, 0x0041, 0x005A].iter().enumerate() {
+        ranges[i * 2..i * 2 + 2].copy_from_slice(&word.to_le_bytes());
+    }
+
+    let mut haystack = [0u8; 16];
+    for (i, word) in [0x002Fu16, 0x0035, 0x0042, 0x0061, 0, 0, 0, 0]
+        .iter()
+        .enumerate()
+    {
+        haystack[i * 2..i * 2 + 2].copy_from_slice(&word.to_le_bytes());
+    }
+
+    // PCMPISTRM xmm1, xmm2, 0x45: unsigned word ranges, expanded word mask.
+    check_pcmp_mask(
+        "pcmpistrm_word_expanded",
+        &pcmp_reg_program(0x62, 0x45, true),
+        regs(),
+        pcmp_scratch(ranges, haystack),
+    );
+}
+
+#[test]
+fn sse42_pcmpestri_negative_lengths_equal_ordered() {
+    let needle = *b"bar.............";
+    let haystack = *b"foobarbaz.......";
+    let mut init = regs();
+    init.rax = (-3i32) as u32 as u64;
+    init.rdx = (-9i32) as u32 as u64;
+    init.rcx = 0xFFFF_FFFF_FFFF_FFFF;
+    // PCMPESTRI xmm1, xmm2, 0x0c: byte equal-ordered. Negative EAX/EDX lengths
+    // use their absolute values, saturated to the element count.
+    check_pcmp_index(
+        "pcmpestri_negative_lengths",
+        &pcmp_reg_program(0x61, 0x0C, false),
+        init,
+        pcmp_scratch(needle, haystack),
+    );
+}
+
+#[test]
+fn sse42_pcmpestri_memory_msb_index() {
+    let needle = *b"a...............";
+    let haystack = *b"abracadabra.....";
+    let mut init = regs();
+    init.rax = 1;
+    init.rdx = 11;
+    init.rcx = 0x7777_7777_7777_7777;
+    // PCMPESTRI xmm1, [rdi+0x10], 0x4c: byte equal-ordered, MSB index.
+    check_pcmp_index(
+        "pcmpestri_mem_msb",
+        &pcmp_mem_program(0x61, 0x4C, false),
+        init,
+        pcmp_scratch(needle, haystack),
+    );
+}
+
+#[test]
+fn sse42_pcmpestrm_equal_each_masks() {
+    let lhs = *b"HELLO...........";
+    let rhs = *b"HEXLO...........";
+    let mut init = regs();
+    init.rax = 5;
+    init.rdx = 5;
+
+    // PCMPESTRM xmm1, xmm2, 0x08: byte equal-each, bit mask.
+    check_pcmp_mask(
+        "pcmpestrm_equal_each_bitmask",
+        &pcmp_reg_program(0x60, 0x08, true),
+        init.clone(),
+        pcmp_scratch(lhs, rhs),
+    );
+
+    // PCMPESTRM xmm1, xmm2, 0x48: same comparison, expanded byte mask.
+    check_pcmp_mask(
+        "pcmpestrm_equal_each_expanded",
+        &pcmp_reg_program(0x60, 0x48, true),
+        init,
+        pcmp_scratch(lhs, rhs),
+    );
+}
+
+#[test]
+fn sse42_pcmpestrm_memory_signed_ranges() {
+    let ranges = [
+        0x80u8, 0x90, 0xF0, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    let values = [
+        0x7F, 0x80, 0x8F, 0xE0, 0xF8, 0x00, 0x11, 0x22, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    let mut init = regs();
+    init.rax = 4;
+    init.rdx = 8;
+    // PCMPESTRM xmm1, [rdi+0x10], 0x46: signed byte ranges, expanded byte mask.
+    check_pcmp_mask(
+        "pcmpestrm_mem_signed_ranges",
+        &pcmp_mem_program(0x60, 0x46, true),
+        init,
+        pcmp_scratch(ranges, values),
+    );
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 11: AVX/AVX2 VEX-encoded vector operations.
+//
+// These programs enable OSXSAVE + XCR0[AVX] inside the guest before executing
+// VEX instructions, then store all vector results back into the existing
+// 64-byte scratch page. That keeps the KVM/interpreter comparison fully
+// memory-observable without widening the differential harness state.
+// ===========================================================================
+
+fn xcr0_enable_prologue(xcr0_low: u32) -> Vec<u8> {
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x0F, 0x20, 0xE0]); // mov rax, cr4
+    code.extend_from_slice(&[0x48, 0x0D, 0x00, 0x00, 0x04, 0x00]); // or rax, 0x40000
+    code.extend_from_slice(&[0x0F, 0x22, 0xE0]); // mov cr4, rax
+    code.push(0xB8); // mov eax, imm32
+    code.extend_from_slice(&xcr0_low.to_le_bytes());
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0xB9, 0x00, 0x00, 0x00, 0x00]); // mov ecx, 0
+    code.extend_from_slice(&[0x0F, 0x01, 0xD1]); // xsetbv
+    code
+}
+
+fn avx_enable_prologue() -> Vec<u8> {
+    xcr0_enable_prologue(0x7)
+}
+
+fn avx512_enable_prologue() -> Vec<u8> {
+    xcr0_enable_prologue(0xE7)
+}
+
+fn avx_start() -> Vec<u8> {
+    let mut code = avx_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code
+}
+
+fn check_avx_mem(label: &str, code: &[u8], scratch: [u8; 64]) {
+    check_mem(label, code, regs(), scratch, 0);
+}
+
+fn check_avx_flags_mem(label: &str, code: &[u8], scratch: [u8; 64]) {
+    check_mem(label, code, regs(), scratch, FLAG_MASK);
+}
+
+#[test]
+fn avx2_ymm_paddb_psubusb() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (i as u8).wrapping_mul(7).wrapping_add(3);
+        s[32 + i] = 0xF0u8.wrapping_sub((i as u8).wrapping_mul(5));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0xFC, 0xD1]); // vpaddb ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0xD8, 0xD9]); // vpsubusb ymm3, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x5F, 0x20]); // vmovdqu [rdi+32], ymm3
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_paddb_psubusb", &code, s);
+}
+
+#[test]
+fn avx2_ymm_packuswb_punpcklbw() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x80u8).wrapping_add((i as u8).wrapping_mul(3));
+        s[32 + i] = (0x7Fu8).wrapping_sub((i as u8).wrapping_mul(2));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFD, 0x67, 0xD1]); // vpackuswb ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC5, 0xFD, 0x60, 0xD1]); // vpunpcklbw ymm2, ymm0, ymm1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_packuswb_punpcklbw", &code, s);
+}
+
+#[test]
+fn avx2_ymm_mpsadbw_blendd() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (i as u8).wrapping_mul(8);
+        s[32 + i] = (i as u8).wrapping_mul(8).wrapping_add(5);
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x42, 0xD1, 0x05]); // vmpsadbw ymm2, ymm0, ymm1, 5
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x02, 0xD1, 0xAA]); // vpblendd ymm2, ymm0, ymm1, 0xaa
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_mpsadbw_blendd", &code, s);
+}
+
+#[test]
+fn avx_ymm_vlddqu_vmovntdqa() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0xA5u8).wrapping_add((i as u8).wrapping_mul(11));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFF, 0xF0, 0x57, 0x01]); // vlddqu ymm2, [rdi+1]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7D, 0x2A, 0x57, 0x20]); // vmovntdqa ymm2, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx_ymm_vlddqu_vmovntdqa", &code, s);
+}
+
+#[test]
+fn avx_ymm_insert_extract_f128() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x10u8).wrapping_add(i as u8);
+    }
+    for i in 0..16 {
+        s[32 + i] = (0xE0u8).wrapping_sub((i as u8).wrapping_mul(3));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x20]); // vmovdqu xmm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x18, 0xD1, 0x01]); // vinsertf128 ymm2, ymm0, xmm1, 1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x17]); // vmovdqu [rdi], ymm2
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x19, 0x57, 0x20, 0x01]); // vextractf128 [rdi+32], ymm2, 1
+    code.push(HLT);
+    check_avx_mem("avx_ymm_insert_extract_f128", &code, s);
+}
+
+#[test]
+fn avx2_xmm_pblendvb() {
+    let mut s = [0u8; 64];
+    for i in 0..16 {
+        s[i] = (0x10 + i) as u8;
+        s[16 + i] = (0xF0 - i) as u8;
+        s[32 + i] = if i % 3 == 0 { 0x80 } else { 0x00 };
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x07]); // vmovdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x5F, 0x20]); // vmovdqu xmm3, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE3, 0x79, 0x4C, 0xD1, 0x30]); // vpblendvb xmm2, xmm0, xmm1, xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x57, 0x30]); // vmovdqu [rdi+48], xmm2
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_pblendvb", &code, s);
+}
+
+#[test]
+fn avx_vzeroall_clears_ymm0() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0x55u8).wrapping_add((i as u8).wrapping_mul(9));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x07]); // vmovdqu [rdi], ymm0
+    code.push(HLT);
+    check_avx_mem("avx_vzeroall_ymm0", &code, s);
+}
+
+#[test]
+fn avx_xsave_xrstor_ymm_roundtrip() {
+    let mut s = [0u8; 64];
+    for i in 0..32 {
+        s[i] = (0xC3u8).wrapping_add((i as u8).wrapping_mul(13));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x07]); // vmovdqu ymm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x23]); // xsave [rbx]
+    code.extend_from_slice(&[0xC5, 0xFC, 0x77]); // vzeroall
+    code.extend_from_slice(&[0xB8, 0x07, 0x00, 0x00, 0x00]); // mov eax, 7
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x47, 0x20]); // vmovdqu [rdi+32], ymm0
+    code.push(HLT);
+    check_avx_mem("avx_xsave_xrstor_ymm", &code, s);
+}
