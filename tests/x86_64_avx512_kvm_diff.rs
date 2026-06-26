@@ -1641,8 +1641,12 @@ fn base_table() -> Vec<Base> {
         b("vfcmaddcph", Fp16, Vvv, F16, 4, t, f),
         b("vandps", F, Vvv, F32, 4, f, f),
         b("vandpd", F, Vvv, F64, 8, f, f),
+        b("vandnps", F, Vvv, F32, 4, f, f),
+        b("vandnpd", F, Vvv, F64, 8, f, f),
+        b("vorps", F, Vvv, F32, 4, f, f),
         b("vxorps", F, Vvv, F32, 4, f, f),
         b("vorpd", F, Vvv, F64, 8, f, f),
+        b("vxorpd", F, Vvv, F64, 8, f, f),
         // ---- FMA (F) ----
         b("vfmadd213ps", F, Vvv, F32, 4, f, t),
         b("vfmadd213pd", F, Vvv, F64, 8, f, t),
