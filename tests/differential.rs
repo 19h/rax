@@ -4234,6 +4234,52 @@ fn x87_m32_load_store_forms() {
 }
 
 #[test]
+fn x87_m32_load_store_addr32_indexed_forms() {
+    let mut s = [0u8; 64];
+    let val = 13.5f32;
+    s[0..4].copy_from_slice(&val.to_le_bytes());
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_m32_load_store_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0xD9, 0x04, 0x77, // fld dword [edi+esi*2]
+            0x67, 0xD9, 0x54, 0x77, 0x10, // fst dword [edi+esi*2+0x10]
+            0x67, 0xD9, 0x5C, 0x77, 0x14, // fstp dword [edi+esi*2+0x14]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_m32_load_store_extended_indexed_forms() {
+    let mut s = [0u8; 64];
+    let val = 13.5f32;
+    s[0..4].copy_from_slice(&val.to_le_bytes());
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_m32_load_store_extended_indexed_forms",
+        &with_hlt(vec![
+            0x43, 0xD9, 0x04, 0x5A, // fld dword [r10+r11*2]
+            0x43, 0xD9, 0x54, 0x5A, 0x10, // fst dword [r10+r11*2+0x10]
+            0x43, 0xD9, 0x5C, 0x5A, 0x14, // fstp dword [r10+r11*2+0x14]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
 fn x87_m80_load_store_roundtrip() {
     let mut c = load_rdi_data();
     c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
@@ -4356,6 +4402,156 @@ fn x87_memory_extended_base_index_forms() {
         r,
         s,
         0,
+    );
+}
+
+#[test]
+fn x87_m64_float_addr32_indexed_forms() {
+    let float64_op_program = |modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xDC, modrm, 0x77, 0x08, // f<op> qword [edi+esi*2+8]
+            0x67, 0xDD, 0x5C, 0x77, 0x10, // fstp qword [edi+esi*2+0x10]
+        ])
+    };
+    let compare_program = |modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xDC, modrm, 0x77, 0x08, // fcom/fcomp qword [edi+esi*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+        ])
+    };
+    let addr32_regs = || {
+        let mut r = regs();
+        r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+        r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+        r
+    };
+
+    for (label, modrm, scratch) in [
+        (
+            "x87_fadd_m64_addr32_indexed",
+            0x44,
+            scratch_f64(&[2.0, 4.0]),
+        ),
+        (
+            "x87_fmul_m64_addr32_indexed",
+            0x4C,
+            scratch_f64(&[3.0, 5.0]),
+        ),
+        (
+            "x87_fsub_m64_addr32_indexed",
+            0x64,
+            scratch_f64(&[9.0, 2.5]),
+        ),
+        (
+            "x87_fsubr_m64_addr32_indexed",
+            0x6C,
+            scratch_f64(&[9.0, 2.5]),
+        ),
+        (
+            "x87_fdiv_m64_addr32_indexed",
+            0x74,
+            scratch_f64(&[9.0, 4.0]),
+        ),
+        (
+            "x87_fdivr_m64_addr32_indexed",
+            0x7C,
+            scratch_f64(&[4.0, 16.0]),
+        ),
+    ] {
+        check_mem(label, &float64_op_program(modrm), addr32_regs(), scratch, 0);
+    }
+
+    check_mem(
+        "x87_fcom_m64_addr32_indexed",
+        &compare_program(0x54),
+        addr32_regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
+    check_mem(
+        "x87_fcomp_m64_addr32_indexed",
+        &compare_program(0x5C),
+        addr32_regs(),
+        scratch_f64(&[7.0, 7.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_m64_float_extended_indexed_forms() {
+    let float64_op_program = |modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xDC, modrm, 0x5A, 0x08, // f<op> qword [r10+r11*2+8]
+            0x43, 0xDD, 0x5C, 0x5A, 0x10, // fstp qword [r10+r11*2+0x10]
+        ])
+    };
+    let compare_program = |modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xDC, modrm, 0x5A, 0x08, // fcom/fcomp qword [r10+r11*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+        ])
+    };
+    let extended_regs = || {
+        let mut r = regs();
+        r.r10 = DATA_ADDR - 0x20;
+        r.r11 = 0x10;
+        r
+    };
+
+    for (label, modrm, scratch) in [
+        (
+            "x87_fadd_m64_extended_indexed",
+            0x44,
+            scratch_f64(&[2.0, 4.0]),
+        ),
+        (
+            "x87_fmul_m64_extended_indexed",
+            0x4C,
+            scratch_f64(&[3.0, 5.0]),
+        ),
+        (
+            "x87_fsub_m64_extended_indexed",
+            0x64,
+            scratch_f64(&[9.0, 2.5]),
+        ),
+        (
+            "x87_fsubr_m64_extended_indexed",
+            0x6C,
+            scratch_f64(&[9.0, 2.5]),
+        ),
+        (
+            "x87_fdiv_m64_extended_indexed",
+            0x74,
+            scratch_f64(&[9.0, 4.0]),
+        ),
+        (
+            "x87_fdivr_m64_extended_indexed",
+            0x7C,
+            scratch_f64(&[4.0, 16.0]),
+        ),
+    ] {
+        check_mem(label, &float64_op_program(modrm), extended_regs(), scratch, 0);
+    }
+
+    check_mem(
+        "x87_fcom_m64_extended_indexed",
+        &compare_program(0x54),
+        extended_regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
+    check_mem(
+        "x87_fcomp_m64_extended_indexed",
+        &compare_program(0x5C),
+        extended_regs(),
+        scratch_f64(&[7.0, 7.0]),
+        FCOMI_FLAGS,
     );
 }
 
@@ -4809,6 +5005,132 @@ fn x87_m32_float_memory_forms() {
 }
 
 #[test]
+fn x87_m32_float_addr32_indexed_forms() {
+    let float32_op_program = |modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xD8, modrm, 0x77, 0x08, // f<op> dword [edi+esi*2+8]
+            0x67, 0xDD, 0x5C, 0x77, 0x10, // fstp qword [edi+esi*2+0x10]
+        ])
+    };
+    let compare_program = |modrm: u8| {
+        with_hlt(vec![
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0x67, 0xD8, modrm, 0x77, 0x08, // fcom/fcomp dword [edi+esi*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+        ])
+    };
+    let addr32_regs = || {
+        let mut r = regs();
+        r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+        r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+        r
+    };
+    let scratch_f64_f32 = |a: f64, b: f32| {
+        let mut s = [0u8; 64];
+        s[0..8].copy_from_slice(&a.to_le_bytes());
+        s[8..12].copy_from_slice(&b.to_le_bytes());
+        s
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_fadd_m32_addr32_indexed", 0x44, 2.0, 4.0),
+        ("x87_fmul_m32_addr32_indexed", 0x4C, 3.0, 5.0),
+        ("x87_fsub_m32_addr32_indexed", 0x64, 9.0, 2.5),
+        ("x87_fsubr_m32_addr32_indexed", 0x6C, 9.0, 2.5),
+        ("x87_fdiv_m32_addr32_indexed", 0x74, 9.0, 4.0),
+        ("x87_fdivr_m32_addr32_indexed", 0x7C, 4.0, 16.0),
+    ] {
+        check_mem(
+            label,
+            &float32_op_program(modrm),
+            addr32_regs(),
+            scratch_f64_f32(a, b),
+            0,
+        );
+    }
+
+    check_mem(
+        "x87_fcom_m32_addr32_indexed",
+        &compare_program(0x54),
+        addr32_regs(),
+        scratch_f64_f32(3.0, 5.0),
+        FCOMI_FLAGS,
+    );
+    check_mem(
+        "x87_fcomp_m32_addr32_indexed",
+        &compare_program(0x5C),
+        addr32_regs(),
+        scratch_f64_f32(7.0, 7.0),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_m32_float_extended_indexed_forms() {
+    let float32_op_program = |modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xD8, modrm, 0x5A, 0x08, // f<op> dword [r10+r11*2+8]
+            0x43, 0xDD, 0x5C, 0x5A, 0x10, // fstp qword [r10+r11*2+0x10]
+        ])
+    };
+    let compare_program = |modrm: u8| {
+        with_hlt(vec![
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0x43, 0xD8, modrm, 0x5A, 0x08, // fcom/fcomp dword [r10+r11*2+8]
+            0xDF, 0xE0, // fnstsw ax
+            0x9E, // sahf
+        ])
+    };
+    let extended_regs = || {
+        let mut r = regs();
+        r.r10 = DATA_ADDR - 0x20;
+        r.r11 = 0x10;
+        r
+    };
+    let scratch_f64_f32 = |a: f64, b: f32| {
+        let mut s = [0u8; 64];
+        s[0..8].copy_from_slice(&a.to_le_bytes());
+        s[8..12].copy_from_slice(&b.to_le_bytes());
+        s
+    };
+
+    for (label, modrm, a, b) in [
+        ("x87_fadd_m32_extended_indexed", 0x44, 2.0, 4.0),
+        ("x87_fmul_m32_extended_indexed", 0x4C, 3.0, 5.0),
+        ("x87_fsub_m32_extended_indexed", 0x64, 9.0, 2.5),
+        ("x87_fsubr_m32_extended_indexed", 0x6C, 9.0, 2.5),
+        ("x87_fdiv_m32_extended_indexed", 0x74, 9.0, 4.0),
+        ("x87_fdivr_m32_extended_indexed", 0x7C, 4.0, 16.0),
+    ] {
+        check_mem(
+            label,
+            &float32_op_program(modrm),
+            extended_regs(),
+            scratch_f64_f32(a, b),
+            0,
+        );
+    }
+
+    check_mem(
+        "x87_fcom_m32_extended_indexed",
+        &compare_program(0x54),
+        extended_regs(),
+        scratch_f64_f32(3.0, 5.0),
+        FCOMI_FLAGS,
+    );
+    check_mem(
+        "x87_fcomp_m32_extended_indexed",
+        &compare_program(0x5C),
+        extended_regs(),
+        scratch_f64_f32(7.0, 7.0),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
 fn x87_d8_register_forms() {
     let reg_op_program = |modrm| {
         let mut c = load_rdi_data();
@@ -5161,6 +5483,58 @@ fn x87_control_word_rounding_forms() {
     c.push(HLT);
 
     check_mem("x87_control_word_rounding", &c, regs(), s, 0);
+}
+
+#[test]
+fn x87_control_word_addr32_indexed_forms() {
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate, exceptions masked
+
+    let mut r = regs();
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 0x20);
+    r.rsi = 0xFFFF_0000_0000_0000 | 0x10;
+
+    check_mem(
+        "x87_control_word_addr32_indexed_forms",
+        &with_hlt(vec![
+            0xDB, 0xE3, // fninit
+            0x67, 0xD9, 0x7C, 0x77, 0x20, // fnstcw word [edi+esi*2+0x20]
+            0x67, 0xD9, 0x6C, 0x77, 0x08, // fldcw word [edi+esi*2+0x08]
+            0x67, 0xD9, 0x7C, 0x77, 0x22, // fnstcw word [edi+esi*2+0x22]
+            0x67, 0xDD, 0x04, 0x77, // fld qword [edi+esi*2]
+            0xD9, 0xFC, // frndint using truncation RC
+            0x67, 0xDD, 0x5C, 0x77, 0x10, // fstp qword [edi+esi*2+0x10]
+        ]),
+        r,
+        s,
+        0,
+    );
+}
+
+#[test]
+fn x87_control_word_extended_indexed_forms() {
+    let mut s = scratch_f64(&[2.75]);
+    s[8..10].copy_from_slice(&0x0F7Fu16.to_le_bytes()); // RC=truncate, exceptions masked
+
+    let mut r = regs();
+    r.r10 = DATA_ADDR - 0x20;
+    r.r11 = 0x10;
+
+    check_mem(
+        "x87_control_word_extended_indexed_forms",
+        &with_hlt(vec![
+            0xDB, 0xE3, // fninit
+            0x43, 0xD9, 0x7C, 0x5A, 0x20, // fnstcw word [r10+r11*2+0x20]
+            0x43, 0xD9, 0x6C, 0x5A, 0x08, // fldcw word [r10+r11*2+0x08]
+            0x43, 0xD9, 0x7C, 0x5A, 0x22, // fnstcw word [r10+r11*2+0x22]
+            0x43, 0xDD, 0x04, 0x5A, // fld qword [r10+r11*2]
+            0xD9, 0xFC, // frndint using truncation RC
+            0x43, 0xDD, 0x5C, 0x5A, 0x10, // fstp qword [r10+r11*2+0x10]
+        ]),
+        r,
+        s,
+        0,
+    );
 }
 
 #[test]
