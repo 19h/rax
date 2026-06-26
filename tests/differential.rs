@@ -16704,6 +16704,30 @@ fn sse4_pmovzxdq() {
     );
 }
 
+#[test]
+fn sse4_pmovsx_pmovzx_register_source_forms() {
+    let src = [
+        0x80, 0x7F, 0xFF, 0x01, 0x00, 0x80, 0xFF, 0x7F, 0x01, 0x00, 0x00, 0x80, 0xFE, 0xFF,
+        0xFF, 0x7F,
+    ];
+
+    for (label, opcode) in [
+        ("pmovsxbq_reg", 0x22),
+        ("pmovsxwq_reg", 0x24),
+        ("pmovsxdq_reg", 0x25),
+        ("pmovzxbd_reg", 0x31),
+        ("pmovzxbq_reg", 0x32),
+        ("pmovzxwd_reg", 0x33),
+        ("pmovzxwq_reg", 0x34),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, 0x38, opcode, 0xC1]),
+            sse_scratch([0u8; 16], src),
+        );
+    }
+}
+
 // ---- SSE4.1 packed integer min/max (signed/unsigned dwords & bytes) ----
 
 #[test]
@@ -16752,6 +16776,34 @@ fn sse4_pmaxud() {
         &sse_program(&[0x66, 0x0F, 0x38, 0x3F, 0xC1]),
         sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
     );
+}
+
+#[test]
+fn sse4_compare_minmax_register_source_forms() {
+    let a = [
+        0x80, 0x7F, 0x00, 0xFF, 0x01, 0xFE, 0x40, 0xC0, 0x00, 0x00, 0x00, 0x80, 0xFF, 0xFF,
+        0xFF, 0x7F,
+    ];
+    let b = [
+        0x7F, 0x80, 0xFF, 0x00, 0xFE, 0x01, 0xC0, 0x40, 0xFF, 0xFF, 0xFF, 0x7F, 0x00, 0x00,
+        0x00, 0x80,
+    ];
+
+    for (label, opcode) in [
+        ("pcmpgtq_reg", 0x37),
+        ("pminsb_reg", 0x38),
+        ("pminuw_reg", 0x3A),
+        ("pminud_reg", 0x3B),
+        ("pmaxsb_reg", 0x3C),
+        ("pmaxsd_reg", 0x3D),
+        ("pmaxuw_reg", 0x3E),
+    ] {
+        check_sse(
+            label,
+            &sse_program(&[0x66, 0x0F, 0x38, opcode, 0xC1]),
+            sse_scratch(a, b),
+        );
+    }
 }
 
 #[test]
@@ -25608,6 +25660,40 @@ fn avx_ymm_insert_extract_f128() {
     code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x19, 0x57, 0x20, 0x01]); // vextractf128 [rdi+32], ymm2, 1
     code.push(HLT);
     check_avx_mem("avx_ymm_insert_extract_f128", &code, s);
+}
+
+#[test]
+fn avx2_ymm_perm2_register_source_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x51u8).wrapping_add((i as u8).wrapping_mul(17));
+    }
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x06, 0xD1, 0x31]); // vperm2f128 ymm2, ymm0, ymm1, 0x31
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x46, 0xD9, 0x20]); // vperm2i128 ymm3, ymm0, ymm1, 0x20
+    avx2_store_ymm23_and_hlt(&mut code);
+
+    check_avx_mem("avx2_ymm_perm2_register_source_forms", &code, s);
+}
+
+#[test]
+fn avx2_ymm_lane_register_source_and_destination_forms() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x37u8).wrapping_add((i as u8).wrapping_mul(23));
+    }
+
+    let mut code = avx2_ymm_pair_start();
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x38, 0xD9, 0x01]); // vinserti128 ymm3, ymm0, xmm1, 1
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x19, 0xC2, 0x01]); // vextractf128 xmm2, ymm0, 1
+    code.extend_from_slice(&[0xC4, 0xE3, 0x7D, 0x39, 0xDC, 0x01]); // vextracti128 xmm4, ymm3, 1
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x30]); // vmovdqu [rdi+48], xmm4
+    code.push(HLT);
+
+    check_avx_mem("avx2_ymm_lane_register_source_and_destination_forms", &code, s);
 }
 
 #[test]
