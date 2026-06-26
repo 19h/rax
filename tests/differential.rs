@@ -16869,6 +16869,192 @@ fn avx2_ymm_vpgatherdd_clears_mask() {
 }
 
 #[test]
+fn avx2_ymm_vpgatherqq_clears_mask() {
+    let mut s = [0u8; 64];
+    let data = [
+        0x0011_2233_4455_6677u64,
+        0x8899_AABB_CCDD_EEFF,
+        0x0102_0304_0506_0708,
+        0xF1E2_D3C4_B5A6_9788,
+    ];
+    let index = [3u64, 0, 2, 1];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 8..32 + i * 8 + 8].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x29, 0xD2]); // vpcmpeqq ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0xED, 0x91, 0x1C, 0xCF]); // vpgatherqq ymm3, [rdi+ymm1*8], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpgatherqq_clears_mask", &code, s);
+}
+
+#[test]
+fn avx2_mixed_integer_gathers_clear_mask() {
+    let mut s = [0u8; 64];
+    let data = [
+        0x1122_3344_5566_7788u64,
+        0x8877_6655_4433_2211,
+        0x0102_0304_0506_0708,
+        0xf0e1_d2c3_b4a5_9687,
+    ];
+    let index = [2u32, 0, 3, 1];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x20]); // vmovdqu xmm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x29, 0xD2]); // vpcmpeqq ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0xED, 0x90, 0x1C, 0xCF]); // vpgatherdq ymm3, [rdi+xmm1*8], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vpgatherdq_clears_mask", &code, s);
+
+    let mut s = [0u8; 64];
+    let data = [
+        0x0f1e_2d3c_4b5a_6978u64,
+        0x89ab_cdef_0123_4567,
+        0xfeed_face_cafe_babe,
+        0x1357_9bdf_2468_ace0,
+    ];
+    let index = [3u32, 1];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+    }
+    for i in 0..2 {
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x20]); // vmovdqu xmm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xE9, 0x76, 0xD2]); // vpcmpeqd xmm2, xmm2, xmm2
+    code.extend_from_slice(&[0xC5, 0xE1, 0xEF, 0xDB]); // vpxor xmm3, xmm3, xmm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0xE9, 0x90, 0x1C, 0xCF]); // vpgatherdq xmm3, [rdi+xmm1*8], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x1F]); // vmovdqu [rdi], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], xmm2
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_vpgatherdq_clears_mask", &code, s);
+
+    let mut s = [0u8; 64];
+    let data = [
+        0x0302_0100u32,
+        0x1312_1110,
+        0x2322_2120,
+        0x3332_3130,
+        0x4342_4140,
+        0x5352_5150,
+        0x6362_6160,
+        0x7372_7170,
+    ];
+    let index = [6u64, 0, 7, 3];
+    for i in 0..8 {
+        s[i * 4..i * 4 + 4].copy_from_slice(&data[i].to_le_bytes());
+    }
+    for i in 0..4 {
+        s[32 + i * 8..32 + i * 8 + 8].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xE9, 0x76, 0xD2]); // vpcmpeqd xmm2, xmm2, xmm2
+    code.extend_from_slice(&[0xC5, 0xE1, 0xEF, 0xDB]); // vpxor xmm3, xmm3, xmm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x91, 0x1C, 0x8F]); // vpgatherqd xmm3, [rdi+ymm1*4], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x1F]); // vmovdqu [rdi], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], xmm2
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_vpgatherqd_clears_mask", &code, s);
+}
+
+#[test]
+fn avx2_ymm_fp_gather_clears_mask() {
+    let mut s = [0u8; 64];
+    let data = [1.0f32, -2.0, 3.5, -4.5, 8.0, 13.0, -21.0, 34.0];
+    let index = [6u32, 1, 4, 7, 0, 5, 2, 3];
+    for i in 0..8 {
+        s[i * 4..i * 4 + 4].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xED, 0x76, 0xD2]); // vpcmpeqd ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x92, 0x1C, 0x8F]); // vgatherdps ymm3, [rdi+ymm1*4], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vgatherdps_clears_mask", &code, s);
+
+    let mut s = [0u8; 64];
+    let data = [1.0f64, -2.0, 3.5, -4.5];
+    let index = [3u32, 0, 2, 1];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 4..32 + i * 4 + 4].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x29, 0xD2]); // vpcmpeqq ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0xED, 0x92, 0x1C, 0xCF]); // vgatherdpd ymm3, [rdi+xmm1*8], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vgatherdpd_clears_mask", &code, s);
+
+    let mut s = [0u8; 64];
+    let data = [2.0f64, -3.0, 5.0, -7.0];
+    let index = [2u64, 1, 3, 0];
+    for i in 0..4 {
+        s[i * 8..i * 8 + 8].copy_from_slice(&data[i].to_le_bytes());
+        s[32 + i * 8..32 + i * 8 + 8].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x29, 0xD2]); // vpcmpeqq ymm2, ymm2, ymm2
+    code.extend_from_slice(&[0xC5, 0xE5, 0xEF, 0xDB]); // vpxor ymm3, ymm3, ymm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0xED, 0x93, 0x1C, 0xCF]); // vgatherqpd ymm3, [rdi+ymm1*8], ymm2
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x1F]); // vmovdqu [rdi], ymm3
+    code.extend_from_slice(&[0xC5, 0xFE, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], ymm2
+    code.push(HLT);
+    check_avx_mem("avx2_ymm_vgatherqpd_clears_mask", &code, s);
+}
+
+#[test]
+fn avx2_xmm_vgatherqps_clears_mask() {
+    let mut s = [0u8; 64];
+    let data = [1.5f32, -2.25, 3.75, -4.125, 6.5, -8.0, 13.0, -21.0];
+    let index = [5u64, 0, 7, 2];
+    for i in 0..8 {
+        s[i * 4..i * 4 + 4].copy_from_slice(&data[i].to_le_bytes());
+    }
+    for i in 0..4 {
+        s[32 + i * 8..32 + i * 8 + 8].copy_from_slice(&index[i].to_le_bytes());
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFE, 0x6F, 0x4F, 0x20]); // vmovdqu ymm1, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xE9, 0x76, 0xD2]); // vpcmpeqd xmm2, xmm2, xmm2
+    code.extend_from_slice(&[0xC5, 0xE1, 0xEF, 0xDB]); // vpxor xmm3, xmm3, xmm3
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6D, 0x93, 0x1C, 0x8F]); // vgatherqps xmm3, [rdi+ymm1*4], xmm2
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x1F]); // vmovdqu [rdi], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x57, 0x20]); // vmovdqu [rdi+32], xmm2
+    code.push(HLT);
+    check_avx_mem("avx2_xmm_vgatherqps_clears_mask", &code, s);
+}
+
+#[test]
 fn avx2_ymm_vpgatherdd_addr32_clears_mask() {
     let mut s = [0u8; 64];
     let data = [
