@@ -2057,6 +2057,45 @@ fn ror_cl_multi() {
 }
 
 #[test]
+fn group2_byte_register_high_and_rex_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_8180;
+    r.rbx = 0xBBBB_CCCC_DDDD_0102;
+    r.rcx = 0xCCCC_DDDD_EEEE_0301;
+    r.rdx = 0xDDDD_EEEE_FFFF_8004;
+    r.rbp = 0x1111_2222_3333_4411;
+    r.rsi = 0x2222_3333_4444_5584;
+    r.rdi = 0x3333_4444_5555_6680;
+    r.r8 = 0x8888_9999_AAAA_BB81;
+    r.r9 = 0x9999_AAAA_BBBB_CC03;
+    r.r10 = 0xAAAA_BBBB_CCCC_DD11;
+    r.r11 = 0xBBBB_CCCC_DDDD_EE84;
+    r.r12 = 0xCCCC_DDDD_EEEE_FF80;
+
+    check(
+        "group2_byte_register_high_and_rex_forms",
+        &with_hlt(vec![
+            0xD0, 0xC4, // rol ah, 1
+            0xD0, 0xCD, // ror ch, 1
+            0xF9, // stc
+            0xD0, 0xD6, // rcl dh, 1
+            0xF9, // stc
+            0xD0, 0xDF, // rcr bh, 1
+            0x40, 0xC0, 0xE5, 0x01, // shl bpl, 1
+            0x40, 0xC0, 0xEE, 0x01, // shr sil, 1
+            0x40, 0xC0, 0xFF, 0x01, // sar dil, 1
+            0x41, 0xD2, 0xC0, // rol r8b, cl
+            0x41, 0xD2, 0xC9, // ror r9b, cl
+            0x41, 0xD2, 0xE2, // shl r10b, cl
+            0x41, 0xD2, 0xEB, // shr r11b, cl
+            0x41, 0xD2, 0xFC, // sar r12b, cl
+            0x48, 0x83, 0xF9, 0x01, // cmp rcx, 1
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn group2_memory_shift_rotate_forms() {
     let mut scratch = zero_scratch();
     scratch[0] = 0x81;
@@ -2765,6 +2804,43 @@ fn test8() {
 }
 
 #[test]
+fn alu_high_byte_and_rex_low_byte_register_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_1088;
+    r.rbx = 0x3333_4444_5555_01F0;
+    r.rcx = 0x1111_2222_3333_2201;
+    r.rdx = 0x2222_3333_4444_4002;
+    r.rbp = 0xBBBB_CCCC_DDDD_EE08;
+    r.rsi = 0xCCCC_DDDD_EEEE_FF02;
+    r.rdi = 0xDDDD_EEEE_FFFF_0005;
+    r.r8 = 0x8888_9999_AAAA_BB20;
+    r.r9 = 0x9999_AAAA_BBBB_CCFE;
+    r.r10 = 0xAAAA_BBBB_CCCC_DD03;
+    r.r11 = 0xBBBB_CCCC_DDDD_EEF0;
+    r.r12 = 0xCCCC_DDDD_EEEE_FF0F;
+    r.r13 = 0xDDDD_EEEE_FFFF_00AA;
+
+    check(
+        "alu_high_byte_and_rex_low_byte_register_forms",
+        &with_hlt(vec![
+            0x00, 0xEC, // add ah, ch
+            0x08, 0xFE, // or dh, bh
+            0x30, 0xE3, // xor bl, ah
+            0x28, 0xEF, // sub bh, ch
+            0x40, 0x00, 0xF5, // add bpl, sil
+            0x41, 0x28, 0xF8, // sub r8b, dil
+            0x41, 0x10, 0xE9, // adc r9b, bpl
+            0x44, 0x18, 0xD6, // sbb sil, r10b
+            0x45, 0x20, 0xD3, // and r11b, r10b
+            0x45, 0x08, 0xE1, // or r9b, r12b
+            0x45, 0x30, 0xE8, // xor r8b, r13b
+            0x45, 0x84, 0xC9, // test r9b, r9b
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn inc8_overflow() {
     let mut r = regs();
     r.rax = 0x7F; // inc -> 0x80, OF set, SF set, AF set
@@ -2824,6 +2900,64 @@ fn add16_imm() {
     r.rax = 0x00FF;
     // 66 05 01 00  add ax, 1
     check("add16_imm", &with_hlt(vec![0x66, 0x05, 0x01, 0x00]), r);
+}
+
+#[test]
+fn accumulator_immediate_arith_logic_forms() {
+    let mut r = regs();
+    r.rax = 0x1234_5678_9ABC_DEF0;
+
+    check(
+        "accumulator_immediate_arith_logic_forms",
+        &with_hlt(vec![
+            0x48, 0x05, 0x10, 0x00, 0x00, 0x00, // add rax, 0x10
+            0x0C, 0x0F, // or al, 0x0f
+            0x48, 0x25, 0xFF, 0x00, 0xFF, 0xFF, // and rax, sign_extend(0xffff00ff)
+            0x34, 0x5A, // xor al, 0x5a
+            0xF9, // stc
+            0x14, 0x5A, // adc al, 0x5a
+            0xF9, // stc
+            0x48, 0x15, 0xFF, 0xFF, 0xFF, 0x7F, // adc rax, 0x7fffffff
+            0xF9, // stc
+            0x1C, 0x01, // sbb al, 1
+            0xF9, // stc
+            0x48, 0x1D, 0x00, 0x00, 0xFF, 0xFF, // sbb rax, sign_extend(0xffff0000)
+            0x48, 0x0D, 0x0F, 0xF0, 0x00, 0x00, // or rax, 0xf00f
+            0x48, 0x35, 0x00, 0x00, 0x00, 0x80, // xor rax, sign_extend(0x80000000)
+            0x48, 0x3D, 0xFE, 0x00, 0x00, 0x00, // cmp rax, 0xfe
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn group1_immediate_byte_register_high_and_rex_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_7088;
+    r.rbx = 0xBBBB_CCCC_DDDD_0102;
+    r.rcx = 0xCCCC_DDDD_EEEE_0103;
+    r.rdx = 0xDDDD_EEEE_FFFF_7E04;
+    r.rbp = 0x1111_2222_3333_44F3;
+    r.rsi = 0x2222_3333_4444_5510;
+    r.rdi = 0x3333_4444_5555_6655;
+    r.r8 = 0x8888_9999_AAAA_BB80;
+
+    check(
+        "group1_immediate_byte_register_high_and_rex_forms",
+        &with_hlt(vec![
+            0x80, 0xC4, 0x10, // add ah, 0x10
+            0x80, 0xCD, 0x80, // or ch, 0x80
+            0xF9, // stc
+            0x80, 0xD6, 0x01, // adc dh, 1
+            0xF9, // stc
+            0x80, 0xDF, 0x02, // sbb bh, 2
+            0x40, 0x80, 0xE5, 0x0F, // and bpl, 0x0f
+            0x40, 0x80, 0xEE, 0x10, // sub sil, 0x10
+            0x40, 0x80, 0xF7, 0xFF, // xor dil, 0xff
+            0x41, 0x80, 0xF8, 0x7F, // cmp r8b, 0x7f
+        ]),
+        r,
+    );
 }
 
 // ---- More SSE2 integer ops (PMULLW/PMADDWD/PSADBW/PACK*/PUNPCK*) ----
@@ -5111,6 +5245,47 @@ fn neg32_zero_extends() {
     let mut r = regs();
     r.rax = 0x0000_0010;
     check("neg32_zx", &with_hlt(vec![0xF7, 0xD8]), r); // neg eax
+}
+
+#[test]
+fn group3_byte_register_high_and_rex_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_0505;
+    r.rbx = 0xBBBB_CCCC_DDDD_FEFB;
+    r.rcx = 0xCCCC_DDDD_EEEE_0311;
+    r.rdx = 0xDDDD_EEEE_FFFF_0204;
+    r.rbp = 0x1111_2222_3333_44AA;
+    r.rsi = 0x2222_3333_4444_5580;
+    r.r8 = 0x8888_9999_AAAA_BB03;
+    r.r9 = 0x9999_AAAA_BBBB_CCFE;
+    r.r10 = 0xAAAA_BBBB_CCCC_DD11;
+    r.r11 = 0xBBBB_CCCC_DDDD_EEFB;
+
+    check(
+        "group3_byte_register_high_and_rex_forms",
+        &with_hlt(vec![
+            0xF6, 0xD4, // not ah
+            0xF6, 0xDD, // neg ch
+            0xF6, 0xE6, // mul dh
+            0xB0, 0x7F, // mov al, 0x7f
+            0xF6, 0xEF, // imul bh
+            0x66, 0xB8, 0x23, 0x01, // mov ax, 0x0123
+            0xF6, 0xF1, // div cl
+            0x66, 0xB8, 0x9C, 0xFF, // mov ax, -100
+            0xF6, 0xFB, // idiv bl
+            0x40, 0xF6, 0xD5, // not bpl
+            0x40, 0xF6, 0xDE, // neg sil
+            0x41, 0xF6, 0xE0, // mul r8b
+            0xB0, 0x7F, // mov al, 0x7f
+            0x41, 0xF6, 0xE9, // imul r9b
+            0x66, 0xB8, 0x23, 0x01, // mov ax, 0x0123
+            0x41, 0xF6, 0xF2, // div r10b
+            0x66, 0xB8, 0x9C, 0xFF, // mov ax, -100
+            0x41, 0xF6, 0xFB, // idiv r11b
+            0x66, 0x3D, 0x14, 0x00, // cmp ax, 0x14
+        ]),
+        r,
+    );
 }
 
 #[test]
