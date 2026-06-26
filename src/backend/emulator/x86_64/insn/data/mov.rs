@@ -1,7 +1,7 @@
 //! MOV instructions (GPR data movement).
 
 use crate::cpu::VcpuExit;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -190,6 +190,45 @@ pub fn mov_sreg_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     vcpu.set_sreg(sreg, value);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+fn load_pointer_to_segment(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    segment: u8,
+) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    if op_size != 2 && op_size != 4 {
+        return Err(Error::Emulator(format!(
+            "invalid LDS/LES operand size: {op_size}"
+        )));
+    }
+
+    let (reg, _, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return Err(Error::Emulator(
+            "LDS/LES requires a memory pointer operand".to_string(),
+        ));
+    }
+
+    let offset = vcpu.read_mem(addr, op_size)?;
+    let selector = vcpu
+        .mmu
+        .read_u16(addr.wrapping_add(op_size as u64), &vcpu.sregs)?;
+    vcpu.set_reg(reg, offset, op_size);
+    vcpu.set_sreg(segment, selector);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LES r16/32, m16:16/32 (0xC4) - Load far pointer into ES and GPR.
+pub fn les(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    load_pointer_to_segment(vcpu, ctx, 0)
+}
+
+/// LDS r16/32, m16:16/32 (0xC5) - Load far pointer into DS and GPR.
+pub fn lds(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    load_pointer_to_segment(vcpu, ctx, 3)
 }
 
 /// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)

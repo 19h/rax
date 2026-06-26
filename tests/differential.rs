@@ -23,7 +23,7 @@
 use std::sync::Arc;
 
 use rax::backend::emulator::x86_64::{X86_64Vcpu, flags};
-use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
+use rax::cpu::{Registers, Segment, SystemRegisters, VCpu, VcpuExit};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 // ---------------------------------------------------------------------------
@@ -148,6 +148,21 @@ fn compat32_sregs() -> SystemRegisters {
     sregs.cs.l = false;
     sregs.cs.db = true;
     sregs
+}
+
+fn mark_segment_unusable(seg: &mut Segment) {
+    seg.base = 0;
+    seg.limit = 0;
+    seg.selector = 0;
+    seg.type_ = 0;
+    seg.present = false;
+    seg.dpl = 0;
+    seg.db = false;
+    seg.s = false;
+    seg.l = false;
+    seg.g = false;
+    seg.avl = false;
+    seg.unusable = true;
 }
 
 /// Write the page tables + scratch page into a `Bytes` guest memory.
@@ -22080,6 +22095,80 @@ fn mov_segment_register_register_forms() {
             0x66, 0x41, 0x8C, 0xE9, // mov r9w, gs
         ]),
         r,
+    );
+}
+
+#[test]
+fn mov_les_compat32_loads_pointer_and_es() {
+    let mut sregs = compat32_sregs();
+    mark_segment_unusable(&mut sregs.es);
+
+    let offset = 0x1234_5678u32;
+    let selector = 0x10u16;
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&offset.to_le_bytes());
+    scratch[4..6].copy_from_slice(&selector.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[8..12].copy_from_slice(&offset.to_le_bytes());
+    expected[12..16].copy_from_slice(&(selector as u32).to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rdi = DATA_ADDR;
+
+    check_scratch_expected_with_sregs(
+        "les_compat32_m16_32_loads_es",
+        &with_hlt(vec![
+            0xC4, 0x07, // les eax, m16:32 [edi]
+            0x06, // push es
+            0x5B, // pop ebx
+            0x89, 0x47, 0x08, // mov [edi+8], eax
+            0x89, 0x5F, 0x0C, // mov [edi+12], ebx
+        ]),
+        r,
+        scratch,
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn mov_lds_compat32_16bit_pointer_loads_ds() {
+    let mut sregs = compat32_sregs();
+    mark_segment_unusable(&mut sregs.ds);
+
+    let offset = 0xBEEFu16;
+    let selector = 0x10u16;
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&offset.to_le_bytes());
+    scratch[2..4].copy_from_slice(&selector.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[8..10].copy_from_slice(&offset.to_le_bytes());
+    expected[12..16].copy_from_slice(&(selector as u32).to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_0000;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rdi = DATA_ADDR;
+
+    check_scratch_expected_with_sregs(
+        "lds_compat32_m16_16_loads_ds",
+        &with_hlt(vec![
+            0x36, 0x66, 0xC5, 0x07, // lds ax, m16:16 ss:[edi]
+            0x1E, // push ds
+            0x5B, // pop ebx
+            0x66, 0x89, 0x47, 0x08, // mov [edi+8], ax
+            0x89, 0x5F, 0x0C, // mov [edi+12], ebx
+        ]),
+        r,
+        scratch,
+        expected,
+        FLAG_MASK,
+        &sregs,
     );
 }
 

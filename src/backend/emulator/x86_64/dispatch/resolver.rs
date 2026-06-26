@@ -102,11 +102,11 @@ fn sh_fwait(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>>
 fn sh_0f(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
     v.execute_0f(c)
 }
-fn sh_vex3(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    v.execute_vex3(c)
+fn sh_les_or_vex3(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    v.execute_les_or_vex3(c)
 }
-fn sh_vex2(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    v.execute_vex2(c)
+fn sh_lds_or_vex2(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    v.execute_lds_or_vex2(c)
 }
 fn sh_mov_rax_moffs_or_jmp_abs(
     v: &mut X86_64Vcpu,
@@ -145,9 +145,9 @@ impl X86_64Vcpu {
             0xCF => insn::control::iret,
             0x70..=0x7F => sh_jcc_rel8,
 
-            // VEX
-            0xC4 => sh_vex3,
-            0xC5 => sh_vex2,
+            // Legacy LES/LDS in compatibility mode, or VEX prefixes otherwise.
+            0xC4 => sh_les_or_vex3,
+            0xC5 => sh_lds_or_vex2,
 
             // I/O
             0xE4 => insn::io::in_al_imm8,

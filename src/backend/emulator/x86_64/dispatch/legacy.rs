@@ -72,9 +72,9 @@ impl X86_64Vcpu {
             0xCF => insn::control::iret(self, ctx),
             0x70..=0x7F => insn::control::jcc_rel8(self, ctx, opcode & 0x0F),
 
-            // VEX-encoded instructions (partial support)
-            0xC4 => self.execute_vex3(ctx),
-            0xC5 => self.execute_vex2(ctx),
+            // Legacy LES/LDS in compatibility mode, or VEX prefixes otherwise.
+            0xC4 => self.execute_les_or_vex3(ctx),
+            0xC5 => self.execute_lds_or_vex2(ctx),
 
             // I/O
             0xE4 => insn::io::in_al_imm8(self, ctx),
@@ -271,6 +271,32 @@ impl X86_64Vcpu {
             0xDF => insn::fpu::escape_df(self, ctx),
 
             _ => self.inject_undefined_instruction(),
+        }
+    }
+
+    fn c4_c5_memory_form(&self, ctx: &InsnContext) -> Result<bool> {
+        Ok(!self.sregs.cs.l && (ctx.peek_u8()? >> 6) != 3)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_les_or_vex3(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        if self.c4_c5_memory_form(ctx)? {
+            insn::data::les(self, ctx)
+        } else {
+            self.execute_vex3(ctx)
+        }
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_lds_or_vex2(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        if self.c4_c5_memory_form(ctx)? {
+            insn::data::lds(self, ctx)
+        } else {
+            self.execute_vex2(ctx)
         }
     }
 }
