@@ -563,6 +563,30 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let b2 = bytes[2];
     let b3 = bytes[3];
 
+    // The SMIR vector model does not represent EVEX write-masking ({k}), zeroing
+    // ({z}), or the EVEX.b bit (memory broadcast {1toN} / register embedded
+    // rounding {er}+SAE — which also repurposes L'L as the rounding mode, so even
+    // the vector-length decode below would be wrong). Refuse to lift any vector
+    // EVEX instruction that uses them so the interpreter (which models them
+    // correctly) handles it. This keeps a future vector-JIT from silently
+    // miscompiling them regardless of the op whitelist:
+    //   - aaa (b3 bits[2:0]) != 0  -> a real write-mask {k1}..{k7}
+    //   - z   (b3 bit[7])          -> zeroing {z}
+    //   - b   (b3 bit[4])          -> broadcast / embedded rounding
+    //
+    // EXCEPTION: APX GPR instructions on map 0F38 (opcodes F2/F3/F5/F6/F7) are
+    // also 0x62/EVEX-encoded and share this decoder, but repurpose byte3's aaa/b
+    // bits as the APX NF/ND fields. They re-decode with APX semantics in
+    // lift_apx_{nf_,}bmi2_0f38, so the vector mask guard must not trip on them.
+    let is_apx_gpr_0f38 =
+        (b1 & 0x07) == 0x02 && matches!(bytes.get(4), Some(0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7));
+    if !is_apx_gpr_0f38 && ((b3 & 0x07) != 0 || (b3 & 0x80) != 0 || (b3 & 0x10) != 0) {
+        return Err(LiftError::Unsupported {
+            addr,
+            mnemonic: "EVEX write-mask / zeroing / broadcast / embedded-rounding".to_string(),
+        });
+    }
+
     let r = ((b1 >> 4) & 1) ^ 1;
     let x = ((b1 >> 6) & 1) ^ 1;
     let b = ((b1 >> 5) & 1) ^ 1;

@@ -4377,6 +4377,45 @@ impl X86_64Vcpu {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
                 }
             }
+            // Vector (XMM/YMM/ZMM) + opmask (k) state. A masked-EVEX miscompile —
+            // or any vector divergence — surfaces here. The interpreter result is
+            // in self.regs, the native result in `jit`. No vector op is currently
+            // JIT-whitelisted (`OpKind::is_jit_safe`), so these always match today;
+            // this is the safety net that catches any future vector JIT regression
+            // (the GPR/flags/memory checks above are blind to ZMM/k).
+            for i in 0..16 {
+                if self.regs.xmm[i] != jit.xmm[i] {
+                    diffs.push(format!(
+                        "xmm{i}: interp={:016x?} jit={:016x?}",
+                        self.regs.xmm[i], jit.xmm[i]
+                    ));
+                }
+                if self.regs.ymm_high[i] != jit.ymm_high[i] {
+                    diffs.push(format!(
+                        "ymm_hi{i}: interp={:016x?} jit={:016x?}",
+                        self.regs.ymm_high[i], jit.ymm_high[i]
+                    ));
+                }
+                if self.regs.zmm_high[i] != jit.zmm_high[i] {
+                    diffs.push(format!(
+                        "zmm_hi{i}: interp={:016x?} jit={:016x?}",
+                        self.regs.zmm_high[i], jit.zmm_high[i]
+                    ));
+                }
+                if self.regs.zmm_ext[i] != jit.zmm_ext[i] {
+                    diffs.push(format!(
+                        "zmm{}: interp={:016x?} jit={:016x?}",
+                        i + 16,
+                        self.regs.zmm_ext[i],
+                        jit.zmm_ext[i]
+                    ));
+                }
+            }
+            for i in 0..8 {
+                if self.regs.k[i] != jit.k[i] {
+                    diffs.push(format!("k{i}: interp={:#x} jit={:#x}", self.regs.k[i], jit.k[i]));
+                }
+            }
             // A flags-ONLY divergence (registers + memory all match) is a benign
             // dead-flag artifact: the optimizer drops a flag update it proved
             // dead across the FULL lifted function, but the JIT region is
