@@ -161,6 +161,84 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_vpdpbusd(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let vl_bytes = if vex_l == 0 { 16 } else { 32 };
+        let dwords = vl_bytes / 4;
+        let src1 = read_vex_vec(self, vvvv as usize, vl_bytes);
+        let src2 = if is_memory {
+            read_vex_mem(self, addr, vl_bytes)?
+        } else {
+            read_vex_vec(self, rm as usize, vl_bytes)
+        };
+        let mut result = read_vex_vec(self, reg as usize, vl_bytes);
+
+        for lane in 0..dwords {
+            let base = lane * 4;
+            let mut sum = i32::from_le_bytes(result[base..base + 4].try_into().unwrap()) as i64;
+            for byte in 0..4 {
+                let a = src1[base + byte] as i32;
+                let b = src2[base + byte] as i8 as i32;
+                sum += (a * b) as i64;
+            }
+            let value = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+            result[base..base + 4].copy_from_slice(&value.to_le_bytes());
+        }
+
+        write_vex_vec(self, reg as usize, vl_bytes, &result);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_vpdpwssd(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        saturate: bool,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let vl_bytes = if vex_l == 0 { 16 } else { 32 };
+        let dwords = vl_bytes / 4;
+        let src1 = read_vex_vec(self, vvvv as usize, vl_bytes);
+        let src2 = if is_memory {
+            read_vex_mem(self, addr, vl_bytes)?
+        } else {
+            read_vex_vec(self, rm as usize, vl_bytes)
+        };
+        let mut result = read_vex_vec(self, reg as usize, vl_bytes);
+
+        for lane in 0..dwords {
+            let base = lane * 4;
+            let mut sum = i32::from_le_bytes(result[base..base + 4].try_into().unwrap()) as i64;
+            let a0 = i16::from_le_bytes(src1[base..base + 2].try_into().unwrap()) as i32;
+            let b0 = i16::from_le_bytes(src2[base..base + 2].try_into().unwrap()) as i32;
+            let a1 = i16::from_le_bytes(src1[base + 2..base + 4].try_into().unwrap()) as i32;
+            let b1 = i16::from_le_bytes(src2[base + 2..base + 4].try_into().unwrap()) as i32;
+            sum += (a0 * b0 + a1 * b1) as i64;
+            let value = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+            result[base..base + 4].copy_from_slice(&value.to_le_bytes());
+        }
+
+        write_vex_vec(self, reg as usize, vl_bytes, &result);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vex_pclmulqdq(
         &mut self,
         ctx: &mut InsnContext,

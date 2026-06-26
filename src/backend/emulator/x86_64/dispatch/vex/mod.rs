@@ -171,6 +171,13 @@ impl X86_64Vcpu {
                 0x45 | 0x46 | 0x47 => {
                     return self.execute_vex_variable_shift(ctx, vex_l, vvvv, vex_w, opcode);
                 }
+                // AVX-VNNI VEX encodings: VPDPBUSD/VPDPBUSDS/VPDPWSSD/VPDPWSSDS.
+                0x50 | 0x51 if vex_w == 0 => {
+                    return self.execute_vex_vpdpbusd(ctx, vex_l, vvvv, opcode == 0x51);
+                }
+                0x52 | 0x53 if vex_w == 0 => {
+                    return self.execute_vex_vpdpwssd(ctx, vex_l, vvvv, opcode == 0x53);
+                }
                 _ => {}
             }
         }
