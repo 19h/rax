@@ -583,6 +583,7 @@ impl X86_64Vcpu {
         F: Fn(f32, f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         // Destination register (5 bits): reg + EVEX.R + EVEX.R'
@@ -602,6 +603,12 @@ impl X86_64Vcpu {
 
         // Number of f32 elements
         let num_elems = vl / 4;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 4 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
@@ -683,6 +690,7 @@ impl X86_64Vcpu {
         F: Fn(f64, f64) -> f64,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         // Destination register (5 bits): reg + EVEX.R + EVEX.R'
@@ -702,6 +710,12 @@ impl X86_64Vcpu {
 
         // Number of f64 elements
         let num_elems = vl / 8;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 8 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
@@ -791,6 +805,7 @@ impl X86_64Vcpu {
         F: Fn(f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -802,6 +817,12 @@ impl X86_64Vcpu {
             _ => 64,
         };
         let num_elems = vl / 4;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 4 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src = if is_memory {
             if evex.broadcast {
@@ -850,6 +871,7 @@ impl X86_64Vcpu {
         F: Fn(f64) -> f64,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -861,6 +883,12 @@ impl X86_64Vcpu {
             _ => 64,
         };
         let num_elems = vl / 8;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 8 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src = if is_memory {
             if evex.broadcast {
@@ -909,11 +937,17 @@ impl X86_64Vcpu {
         F: Fn(f32, f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let dst = if !evex.r { reg + 8 } else { reg };
         let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
         let src1 = ctx.evex_vvvv() as usize;
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, 4)
+        } else {
+            addr
+        };
         let src2 = if is_memory {
             f32::from_bits(self.read_mem(addr, 4)? as u32)
         } else {
@@ -962,11 +996,17 @@ impl X86_64Vcpu {
         F: Fn(f64, f64) -> f64,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let dst = if !evex.r { reg + 8 } else { reg };
         let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
         let src1 = ctx.evex_vvvv() as usize;
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, 8)
+        } else {
+            addr
+        };
         let src2 = if is_memory {
             f64::from_bits(self.read_mem(addr, 8)?)
         } else {
@@ -1104,6 +1144,7 @@ impl X86_64Vcpu {
         F: Fn(u8, u8) -> u8,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -1116,6 +1157,12 @@ impl X86_64Vcpu {
             _ => 64,
         };
         let num_elems = vl / elem_size;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { elem_size } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src2 = if is_memory {
             if evex.broadcast {
@@ -2595,6 +2642,7 @@ impl X86_64Vcpu {
         F: Fn(f32, f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         // Destination register (5 bits)
@@ -2614,6 +2662,12 @@ impl X86_64Vcpu {
 
         // Number of FP16 elements (2 bytes each)
         let num_elems = vl / 2;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 2 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src2 = if is_memory {
             if evex.broadcast {
@@ -2667,6 +2721,7 @@ impl X86_64Vcpu {
         F: Fn(f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -2679,6 +2734,12 @@ impl X86_64Vcpu {
             _ => 64,
         };
         let num_elems = vl / 2;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 2 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src = if is_memory {
             if evex.broadcast {
@@ -2730,11 +2791,17 @@ impl X86_64Vcpu {
         F: Fn(f32, f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let dst = if !evex.r { reg + 8 } else { reg };
         let dst = if !evex.r_prime { dst + 16 } else { dst } as usize;
         let src1 = ctx.evex_vvvv() as usize;
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, 2)
+        } else {
+            addr
+        };
         let src2 = if is_memory {
             self.read_mem(addr, 2)? as u16
         } else {
@@ -2776,6 +2843,7 @@ impl X86_64Vcpu {
         saturate: bool,
     ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         // Destination/accumulator register
@@ -2794,6 +2862,12 @@ impl X86_64Vcpu {
         };
 
         let num_dwords = vl / 4;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 4 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         // Load source2
         let src2 = if is_memory {
@@ -2867,6 +2941,7 @@ impl X86_64Vcpu {
         saturate: bool,
     ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -2882,6 +2957,12 @@ impl X86_64Vcpu {
         };
 
         let num_dwords = vl / 4;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 4 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src2 = if is_memory {
             if evex.broadcast {
@@ -2954,6 +3035,7 @@ impl X86_64Vcpu {
     /// VPMADD52LUQ/VPMADD52HUQ - Packed Multiply of Unsigned 52-bit and Add
     fn execute_vpmadd52(&mut self, ctx: &mut InsnContext, high: bool) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -2969,6 +3051,12 @@ impl X86_64Vcpu {
         };
 
         let num_qwords = vl / 8;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 8 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src2 = if is_memory {
             if evex.broadcast {
@@ -3067,6 +3155,7 @@ impl X86_64Vcpu {
     /// VPERMB - Permute Packed Bytes Elements
     fn execute_vpermb(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -3079,6 +3168,11 @@ impl X86_64Vcpu {
             1 => 32,
             2 => 64,
             _ => 64,
+        };
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, vl)
+        } else {
+            addr
         };
 
         let src = if is_memory {
@@ -3123,6 +3217,7 @@ impl X86_64Vcpu {
     /// VPSHUFBITQMB - Shuffle Bits from Quadword Elements Using Byte Indexes into Mask
     fn execute_vpshufbitqmb(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let k_dst = reg as usize & 0x7;
@@ -3134,6 +3229,11 @@ impl X86_64Vcpu {
             1 => 32,
             2 => 64,
             _ => 64,
+        };
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, vl)
+        } else {
+            addr
         };
 
         let src2 = if is_memory {
@@ -3175,6 +3275,7 @@ impl X86_64Vcpu {
     /// VDPBF16PS - Dot Product of BF16 Pairs Accumulated into FP32
     fn execute_vdpbf16ps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -3190,6 +3291,12 @@ impl X86_64Vcpu {
         };
 
         let num_floats = vl / 4;
+        let addr = if is_memory {
+            let scale = if evex.broadcast { 4 } else { vl };
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
+        } else {
+            addr
+        };
 
         let src2 = if is_memory {
             if evex.broadcast {
@@ -3251,6 +3358,7 @@ impl X86_64Vcpu {
     /// VCVTNEPS2BF16 - Convert Packed Single-Precision to BF16
     fn execute_vcvtneps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -3261,6 +3369,11 @@ impl X86_64Vcpu {
             1 => 32,
             2 => 64,
             _ => 64,
+        };
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, vl)
+        } else {
+            addr
         };
 
         let src = if is_memory {
@@ -3314,6 +3427,7 @@ impl X86_64Vcpu {
     /// VCVTNE2PS2BF16 - Convert Two Packed Single-Precision to BF16
     fn execute_vcvtne2ps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
@@ -3326,6 +3440,11 @@ impl X86_64Vcpu {
             1 => 32,
             2 => 64,
             _ => 64,
+        };
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, vl)
+        } else {
+            addr
         };
 
         let src2 = if is_memory {
@@ -3404,6 +3523,7 @@ impl X86_64Vcpu {
     /// VDBPSADBW - Double Block Packed Sum-Absolute-Differences
     fn execute_vdbpsadbw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
+        let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
 
@@ -3417,6 +3537,11 @@ impl X86_64Vcpu {
             1 => 32,
             2 => 64,
             _ => 64,
+        };
+        let addr = if is_memory {
+            insn::simd::evex_scaled_disp8_addr(ctx, modrm_start, addr, vl)
+        } else {
+            addr
         };
 
         let src2 = if is_memory {

@@ -232,7 +232,7 @@ fn load_mem_bytes(
     Ok(data)
 }
 
-fn evex_scaled_disp8_addr(
+pub(in crate::backend::emulator::x86_64) fn evex_scaled_disp8_addr(
     ctx: &InsnContext,
     modrm_start: usize,
     addr: u64,
