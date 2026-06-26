@@ -7340,6 +7340,45 @@ fn fence_and_pause_forms_preserve_state() {
 }
 
 #[test]
+fn waitpkg_umonitor_preserves_visible_state() {
+    let mut r = modern_flags_regs();
+    r.rax = DATA_ADDR;
+    r.rbx = 0x0123_4567_89AB_CDEF;
+    check_flags_masked(
+        "waitpkg_umonitor",
+        &with_hlt(vec![0xF3, 0x0F, 0xAE, 0xF0]), // umonitor rax
+        r,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn waitpkg_umwait_zero_deadline_clears_status_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rcx = 0;
+    r.rdx = 0;
+    check(
+        "waitpkg_umwait_zero_deadline",
+        &with_hlt(vec![0xF2, 0x0F, 0xAE, 0xF1]), // umwait ecx
+        r,
+    );
+}
+
+#[test]
+fn waitpkg_tpause_zero_deadline_clears_status_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0;
+    r.rcx = 0;
+    r.rdx = 0;
+    check(
+        "waitpkg_tpause_zero_deadline",
+        &with_hlt(vec![0x66, 0x0F, 0xAE, 0xF1]), // tpause ecx
+        r,
+    );
+}
+
+#[test]
 fn stac_clac_ac_flag_forms() {
     let ac_and_status = FLAG_MASK | flags::bits::AC;
 
@@ -7705,6 +7744,167 @@ fn rdpid_r32_zero_extends_destination() {
 }
 
 #[test]
+fn rdrand_r64_success_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdrand_r64_success_flags",
+        &with_hlt(vec![
+            0x48, 0x0F, 0xC7, 0xF0, // retry: rdrand rax
+            0x73, 0xFA, // jnc retry
+            0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // mov rax, 0
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn rdrand_r16_preserves_upper_bits() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1122_3344_5566_7788;
+    check_flags_masked(
+        "rdrand_r16_preserves_upper_bits",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xC7, 0xF0, // retry: rdrand ax
+            0x73, 0xFA, // jnc retry
+            0x48, 0xBB, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // mov rbx, -0x10000
+            0x48, 0x21, 0xD8, // and rax, rbx
+        ]),
+        r,
+        FLAG_MASK & !flags::bits::AF,
+    );
+}
+
+#[test]
+fn rdrand_r32_zero_extends_destination() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check_flags_masked(
+        "rdrand_r32_zero_extends_destination",
+        &with_hlt(vec![
+            0x0F, 0xC7, 0xF0, // retry: rdrand eax
+            0x73, 0xFB, // jnc retry
+            0x48, 0xBB, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // mov rbx, -0x100000000
+            0x48, 0x21, 0xD8, // and rax, rbx
+        ]),
+        r,
+        FLAG_MASK & !flags::bits::AF,
+    );
+}
+
+#[test]
+fn rdseed_r64_success_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdseed_r64_success_flags",
+        &with_hlt(vec![
+            0x48, 0x0F, 0xC7, 0xF8, // retry: rdseed rax
+            0x73, 0xFA, // jnc retry
+            0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // mov rax, 0
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn rdseed_r16_preserves_upper_bits() {
+    let mut r = modern_flags_regs();
+    r.rax = 0x1122_3344_5566_7788;
+    check_flags_masked(
+        "rdseed_r16_preserves_upper_bits",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xC7, 0xF8, // retry: rdseed ax
+            0x73, 0xFA, // jnc retry
+            0x48, 0xBB, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // mov rbx, -0x10000
+            0x48, 0x21, 0xD8, // and rax, rbx
+        ]),
+        r,
+        FLAG_MASK & !flags::bits::AF,
+    );
+}
+
+#[test]
+fn rdseed_r32_zero_extends_destination() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check_flags_masked(
+        "rdseed_r32_zero_extends_destination",
+        &with_hlt(vec![
+            0x0F, 0xC7, 0xF8, // retry: rdseed eax
+            0x73, 0xFB, // jnc retry
+            0x48, 0xBB, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, // mov rbx, -0x100000000
+            0x48, 0x21, 0xD8, // and rax, rbx
+        ]),
+        r,
+        FLAG_MASK & !flags::bits::AF,
+    );
+}
+
+#[test]
+fn rdtsc_zero_extends_outputs_and_preserves_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdtsc_zero_extends_outputs",
+        &with_hlt(vec![
+            0x0F, 0x31, // rdtsc
+            0x9C, // pushfq
+            0x5B, // pop rbx
+            0x48, 0xC1, 0xE8, 0x20, // shr rax, 32
+            0x48, 0xC1, 0xEA, 0x20, // shr rdx, 32
+            0x53, // push rbx
+            0x9D, // popfq
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn rdtscp_zero_extends_outputs_and_preserves_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rcx = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdtscp_zero_extends_outputs",
+        &with_hlt(vec![
+            0x0F, 0x01, 0xF9, // rdtscp
+            0x9C, // pushfq
+            0x5B, // pop rbx
+            0x48, 0xC1, 0xE8, 0x20, // shr rax, 32
+            0x48, 0xC1, 0xEA, 0x20, // shr rdx, 32
+            0x48, 0xC1, 0xE9, 0x20, // shr rcx, 32
+            0x53, // push rbx
+            0x9D, // popfq
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn rdpmc_zero_extends_outputs_and_preserves_flags() {
+    let mut r = modern_flags_regs();
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    r.rcx = 0;
+    r.rdx = 0xFFFF_FFFF_FFFF_FFFF;
+    check(
+        "rdpmc_zero_extends_outputs",
+        &with_hlt(vec![
+            0x0F, 0x33, // rdpmc
+            0x9C, // pushfq
+            0x5B, // pop rbx
+            0x48, 0xC1, 0xE8, 0x20, // shr rax, 32
+            0x48, 0xC1, 0xEA, 0x20, // shr rdx, 32
+            0x53, // push rbx
+            0x9D, // popfq
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn control_register_readback_and_smsw_forms() {
     let mut code = load_rdi_data();
     code.extend_from_slice(&[0x0F, 0x20, 0xC0]); // mov rax, cr0
@@ -7826,10 +8026,11 @@ fn cache_invd_wbinvd_preserve_observable_state() {
     r.rflags = flags::bits::CF | flags::bits::ZF;
 
     check(
-        "cache_invd_wbinvd",
+        "cache_invd_wbinvd_wbnoinvd",
         &with_hlt(vec![
             0x0F, 0x08, // invd
             0x0F, 0x09, // wbinvd
+            0xF3, 0x0F, 0x09, // wbnoinvd
         ]),
         r,
     );

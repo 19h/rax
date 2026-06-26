@@ -218,6 +218,25 @@ impl X86_64Vcpu {
         if modrm >> 6 == 3 {
             let rm = (modrm & 0x07) | ctx.rex_b(); // Apply REX.B for extended registers
             match reg_op {
+                // WAITPKG register forms using the 0F AE /6 slot.
+                6 if ctx.rep_prefix == Some(0xF3) => {
+                    // UMONITOR r16/r32/r64 - arm monitor hardware. No visible state in emulation.
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                6 if ctx.rep_prefix == Some(0xF2) || ctx.operand_size_override => {
+                    // UMWAIT/TPAUSE return immediately in emulation. For the deterministic
+                    // zero-deadline case this matches hardware: CF=0 and other status flags clear.
+                    self.clear_lazy_flags();
+                    self.regs.rflags &= !(flags::bits::CF
+                        | flags::bits::PF
+                        | flags::bits::AF
+                        | flags::bits::ZF
+                        | flags::bits::SF
+                        | flags::bits::OF);
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 // FSGSBASE instructions (require F3 prefix)
                 0 if ctx.rep_prefix == Some(0xF3) => {
                     // RDFSBASE - Read FS base to register
