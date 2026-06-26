@@ -4448,13 +4448,16 @@ pub fn evex_duplicate_lanes(
     let src_reg = evex_rm_vec(&evex, rm);
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
+    let xmm_movddup_mem = is_memory && elem_size == 8 && vl_bytes == 16;
     let addr = if is_memory {
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes)
+        let tuple_bytes = if xmm_movddup_mem { elem_size } else { vl_bytes };
+        evex_scaled_disp8_addr(ctx, modrm_start, addr, tuple_bytes)
     } else {
         addr
     };
     let src = if is_memory {
-        load_mem_bytes(vcpu, addr, elem_size, num_elems)?
+        let mem_elems = if xmm_movddup_mem { 1 } else { num_elems };
+        load_mem_bytes(vcpu, addr, elem_size, mem_elems)?
     } else {
         read_reg_bytes(vcpu, src_reg, vl_bytes)
     };
