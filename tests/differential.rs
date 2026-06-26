@@ -2472,6 +2472,26 @@ fn inc8_overflow() {
 }
 
 #[test]
+fn group4_high_byte_and_rex_low_byte_registers() {
+    let mut r = regs();
+    r.rax = 0x0000_0000_0000_7F00;
+    r.rcx = 0x0000_0000_0000_0100;
+    r.rbp = 0xAAAA_BBBB_CCCC_DD7F;
+    r.rsi = 0x1111_2222_3333_4401;
+    r.rflags = flags::bits::CF;
+    check(
+        "group4_high_byte_and_rex_low_byte_registers",
+        &with_hlt(vec![
+            0xFE, 0xC4, // inc ah
+            0xFE, 0xCD, // dec ch
+            0x40, 0xFE, 0xC5, // inc bpl
+            0x40, 0xFE, 0xCE, // dec sil
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn dec16_to_zero() {
     let mut r = regs();
     r.rax = 0x0001;
@@ -8900,6 +8920,24 @@ fn control_register_readback_and_smsw_forms() {
 }
 
 #[test]
+fn control_smsw_register_width_forms() {
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r8 = 0x1111_2222_3333_4444;
+    r.r9 = 0x5555_6666_7777_8888;
+
+    check(
+        "control_smsw_register_width_forms",
+        &with_hlt(vec![
+            0x66, 0x0F, 0x01, 0xE0, // smsw ax
+            0x41, 0x0F, 0x01, 0xE0, // smsw r8d
+            0x49, 0x0F, 0x01, 0xE1, // smsw r9
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn descriptor_table_store_forms() {
     let mut code = load_rdi_data();
     code.extend_from_slice(&[0x0F, 0x01, 0x07]); // sgdt [rdi]
@@ -8949,6 +8987,27 @@ fn lmsw_and_clts_update_machine_status_word() {
 }
 
 #[test]
+fn lmsw_extended_register_form_updates_machine_status_word() {
+    let mut r = regs();
+    r.r8 = 0x000B;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x41, 0x0F, 0x01, 0xF0]); // lmsw r8w
+    code.extend_from_slice(&[0x0F, 0x01, 0x67, 0x08]); // smsw [rdi+8]
+    code.extend_from_slice(&[0x0F, 0x06]); // clts
+    code.extend_from_slice(&[0x0F, 0x01, 0x67, 0x10]); // smsw [rdi+0x10]
+    code.push(HLT);
+
+    check_mem(
+        "lmsw_extended_register_form_updates_machine_status_word",
+        &code,
+        r,
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
 fn invlpg_memory_form_preserves_observable_state() {
     let mut r = regs();
     r.rdi = DATA_ADDR;
@@ -8971,6 +9030,57 @@ fn lar_lsl_valid_gdt_selector_forms() {
 }
 
 #[test]
+fn lar_lsl_memory_selector_scaled_address_forms() {
+    let mut scratch = zero_scratch();
+    scratch[0x18..0x1A].copy_from_slice(&0x08u16.to_le_bytes()); // GDT code selector
+
+    let mut r = regs();
+    r.r9 = 0xFFFF_FFFF_FFFF_FFFF;
+    r.r10 = 0xFFFF_FFFF_FFFF_FFFF;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xBB, 0x08, 0x00, 0x00, 0x00, // mov ebx, 8
+        0x44, 0x0F, 0x02, 0x4C, 0x5F, 0x08, // lar r9d, [rdi+rbx*2+8]
+        0x44, 0x0F, 0x03, 0x54, 0x5F, 0x08, // lsl r10d, [rdi+rbx*2+8]
+        HLT,
+    ]);
+
+    check_mem(
+        "lar_lsl_memory_selector_scaled_address_forms",
+        &code,
+        r,
+        scratch,
+        flags::bits::ZF,
+    );
+}
+
+#[test]
+fn lar_lsl_invalid_memory_selector_preserves_destinations() {
+    let mut r = regs();
+    r.r8 = 0xAAAA_BBBB_CCCC_DDDD;
+    r.r9 = 0x1111_2222_3333_4444;
+    r.rflags = flags::bits::ZF;
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x44, 0x0F, 0x02, 0x47, 0x18, // lar r8d, [rdi+0x18]
+        0x0F, 0x94, 0x07, // setz [rdi]
+        0x44, 0x0F, 0x03, 0x4F, 0x18, // lsl r9d, [rdi+0x18]
+        0x0F, 0x94, 0x47, 0x01, // setz [rdi+1]
+        HLT,
+    ]);
+
+    check_mem(
+        "lar_lsl_invalid_memory_selector_preserves_destinations",
+        &code,
+        r,
+        zero_scratch(),
+        flags::bits::ZF,
+    );
+}
+
+#[test]
 fn verr_verw_code_and_data_selector_permissions() {
     let mut code = load_rdi_data();
     code.extend_from_slice(&[0x66, 0xB8, 0x08, 0x00]); // mov ax, 0x8 (code selector)
@@ -8986,6 +9096,32 @@ fn verr_verw_code_and_data_selector_permissions() {
     code.push(HLT);
 
     check_mem("verr_verw_selector_permissions", &code, regs(), zero_scratch(), 0);
+}
+
+#[test]
+fn verr_verw_memory_selector_permissions() {
+    let mut scratch = zero_scratch();
+    scratch[0x18..0x1A].copy_from_slice(&0x08u16.to_le_bytes()); // GDT code selector
+    scratch[0x20..0x22].copy_from_slice(&0x10u16.to_le_bytes()); // GDT data selector
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0x0F, 0x00, 0x67, 0x18, // verr word [rdi+0x18]
+        0x0F, 0x94, 0x07, // setz [rdi]
+        0x0F, 0x00, 0x6F, 0x18, // verw word [rdi+0x18]
+        0x0F, 0x94, 0x47, 0x01, // setz [rdi+1]
+        0x0F, 0x00, 0x67, 0x20, // verr word [rdi+0x20]
+        0x0F, 0x94, 0x47, 0x02, // setz [rdi+2]
+        0x0F, 0x00, 0x6F, 0x20, // verw word [rdi+0x20]
+        0x0F, 0x94, 0x47, 0x03, // setz [rdi+3]
+        0x0F, 0x00, 0x67, 0x28, // verr word [rdi+0x28]
+        0x0F, 0x94, 0x47, 0x04, // setz [rdi+4]
+        0x0F, 0x00, 0x6F, 0x28, // verw word [rdi+0x28]
+        0x0F, 0x94, 0x47, 0x05, // setz [rdi+5]
+        HLT,
+    ]);
+
+    check_mem("verr_verw_memory_selector_permissions", &code, regs(), scratch, 0);
 }
 
 #[test]
@@ -11945,6 +12081,24 @@ fn control_far_jmp_mem64_same_code_segment() {
 }
 
 #[test]
+fn control_far_jmp_mem32_same_code_segment() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 2 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&(target as u32).to_le_bytes());
+    scratch[4..6].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0xFF, 0x2F]); // ljmpl *[rdi]
+    code.extend_from_slice(&[0xB8, 0x44, 0x44, 0x44, 0x44]); // mov eax, bad
+    code.push(HLT);
+    code.extend_from_slice(&[0xBA, 0x33, 0x33, 0x33, 0x33]); // mov edx, good
+    code.push(HLT);
+
+    check_mem("control_far_jmp_mem32_same_cs", &code, regs(), scratch, 0);
+}
+
+#[test]
 fn control_far_call_mem64_lretq_roundtrip() {
     let mut code = load_rdi_data();
     let target = CODE_ADDR + (code.len() + 3 + 10 + 1) as u64;
@@ -11962,6 +12116,24 @@ fn control_far_call_mem64_lretq_roundtrip() {
     code.extend_from_slice(&[0x48, 0xCB]); // lretq
 
     check_mem("control_far_call_mem64_lretq", &code, regs(), scratch, 0);
+}
+
+#[test]
+fn control_far_call_mem32_lret_roundtrip() {
+    let mut code = load_rdi_data();
+    let target = CODE_ADDR + (code.len() + 2 + 5 + 1) as u64;
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&(target as u32).to_le_bytes());
+    scratch[4..6].copy_from_slice(&0x08u16.to_le_bytes());
+
+    code.extend_from_slice(&[0xFF, 0x1F]); // lcalll *[rdi]
+    code.extend_from_slice(&[0xBB, 0x22, 0x22, 0x22, 0x22]); // mov ebx, bad
+    code.push(HLT);
+    code.extend_from_slice(&[0xB8, 0x5A, 0x00, 0x00, 0x00]); // mov eax, good
+    code.push(0xCB); // lret
+
+    check_mem("control_far_call_mem32_lret", &code, regs(), scratch, 0);
 }
 
 #[test]
