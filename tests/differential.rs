@@ -18473,6 +18473,30 @@ fn x87_fprem() {
 }
 
 #[test]
+fn x87_fprem_quotient_status_bits() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld [rdi+8] ST0=divisor=5.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld [rdi] ST0=17.0, ST1=5.0
+    c.extend_from_slice(&[0xD9, 0xF8]); // fprem: quotient trunc(17/5)=3
+    c.extend_from_slice(&[0xDD, 0x7F, 0x10]); // fnstsw [rdi+0x10]
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld [rdi+8] ST0=divisor=5.0
+    c.extend_from_slice(&[0xDD, 0x47, 0x18]); // fld [rdi+0x18] ST0=18.0, ST1=5.0
+    c.extend_from_slice(&[0xD9, 0xF5]); // fprem1: quotient round-to-nearest-even(18/5)=4
+    c.extend_from_slice(&[0xDD, 0x7F, 0x12]); // fnstsw [rdi+0x12]
+    c.push(HLT);
+
+    check_mem(
+        "x87_fprem_quotient_status_bits",
+        &c,
+        regs(),
+        scratch_f64(&[17.0, 5.0, 0.0, 18.0]),
+        0,
+    );
+}
+
+#[test]
 fn x87_fnop_and_stack_pointer_control() {
     let mut c = load_rdi_data();
     c.extend_from_slice(&[0xDB, 0xE3]); // fninit
@@ -18484,6 +18508,26 @@ fn x87_fnop_and_stack_pointer_control() {
     c.push(HLT);
 
     check_mem("x87_fnop_fincstp_fdecstp", &c, regs(), zero_scratch(), 0);
+}
+
+#[test]
+fn x87_fclex_fnclex_clear_exception_status() {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0xE3]); // fninit
+    c.extend_from_slice(&[0xDD, 0x1F]); // fstp qword [rdi], underflowing an empty stack
+    c.extend_from_slice(&[0xDB, 0xE2]); // fnclex
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x0F, 0xB7, 0xD8]); // movzx ebx, ax
+    c.extend_from_slice(&[0xDD, 0x5F, 0x08]); // fstp qword [rdi+0x08], underflow again
+    c.extend_from_slice(&[0x9B, 0xDB, 0xE2]); // fclex
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.push(HLT);
+
+    check(
+        "x87_fclex_fnclex_clear_exception_status",
+        &c,
+        regs(),
+    );
 }
 
 #[test]
@@ -18596,6 +18640,68 @@ fn x87_transcendental_exact_results() {
         &c,
         regs(),
         scratch_f64(&[18.0, 5.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_transcendental_negative_exact_results() {
+    let unary_store = |op: &[u8]| {
+        let mut c = load_rdi_data();
+        c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+        c.extend_from_slice(op);
+        c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+        c.push(HLT);
+        c
+    };
+
+    check_mem(
+        "x87_f2xm1_negative_one",
+        &unary_store(&[0xD9, 0xF0]),
+        regs(),
+        scratch_f64(&[-1.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld y=3.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld x=0.5
+    c.extend_from_slice(&[0xD9, 0xF1]); // fyl2x -> 3.0 * log2(0.5) = -3.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fyl2x_reciprocal_power_of_two",
+        &c,
+        regs(),
+        scratch_f64(&[0.5, 3.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld y=4.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld x=-0.5
+    c.extend_from_slice(&[0xD9, 0xF9]); // fyl2xp1 -> 4.0 * log2(1.0 - 0.5) = -4.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fyl2xp1_negative_half",
+        &c,
+        regs(),
+        scratch_f64(&[-0.5, 4.0]),
+        0,
+    );
+
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld exponent=-3.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld significand=12.0
+    c.extend_from_slice(&[0xD9, 0xFD]); // fscale -> 12.0 * 2^-3 = 1.5
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem(
+        "x87_fscale_negative_exponent",
+        &c,
+        regs(),
+        scratch_f64(&[12.0, -3.0]),
         0,
     );
 }
