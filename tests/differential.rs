@@ -23762,6 +23762,102 @@ fn evex_zmm_vpmovqd_memory_disp8_form() {
     );
 }
 
+#[test]
+fn evex_zmm_vpmovdb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovdb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x31, 0x47, 0x04],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovdw_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovdw_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x33, 0x47, 0x02],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovqb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovqb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x32, 0x47, 0x08],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovqw_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovqw_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x34, 0x47, 0x04],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovsdb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovsdb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x21, 0x47, 0x04],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovsdw_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovsdw_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x23, 0x47, 0x02],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovsqb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovsqb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x22, 0x47, 0x08],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovsqd_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovsqd_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x25, 0x47, 0x02],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovusdb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovusdb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x11, 0x47, 0x04],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovusdw_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovusdw_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x13, 0x47, 0x02],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovusqb_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovusqb_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x12, 0x47, 0x08],
+    );
+}
+
+#[test]
+fn evex_zmm_vpmovusqw_memory_disp8_form() {
+    check_evex_pmov_narrow_memory_disp8(
+        "evex_zmm_vpmovusqw_memory_disp8_form",
+        &[0x62, 0xF2, 0x7E, 0x48, 0x14, 0x47, 0x04],
+    );
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 40: EVEX FP classify memory forms.
 // ===========================================================================
