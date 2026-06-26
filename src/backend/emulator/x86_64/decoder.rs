@@ -116,8 +116,14 @@ impl Decoder {
             }
             let b = ctx.bytes[ctx.cursor];
             match b {
-                0x66 => ctx.operand_size_override = true,
-                0x67 => ctx.address_size_override = true,
+                0x66 => {
+                    ctx.rex = None;
+                    ctx.operand_size_override = true;
+                }
+                0x67 => {
+                    ctx.rex = None;
+                    ctx.address_size_override = true;
+                }
                 // REX prefixes exist ONLY in 64-bit mode. In 16/32-bit (real or
                 // protected) mode, 0x40-0x4F are INC/DEC r16/r32 opcodes — stop
                 // prefix scanning and let the opcode decoder handle them.
@@ -152,9 +158,15 @@ impl Decoder {
                     // REX2 is always the last prefix
                     break;
                 }
-                0xF0 => {} // LOCK prefix (legality enforced at dispatch via enforce_lock_prefix)
-                0xF2 | 0xF3 => ctx.rep_prefix = Some(b),
+                0xF0 => {
+                    ctx.rex = None;
+                } // LOCK prefix (legality enforced at dispatch via enforce_lock_prefix)
+                0xF2 | 0xF3 => {
+                    ctx.rex = None;
+                    ctx.rep_prefix = Some(b);
+                }
                 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {
+                    ctx.rex = None;
                     ctx.segment_override = Some(b);
                 }
                 _ => break,
@@ -232,6 +244,28 @@ mod tests {
         assert!(!rex2.w); // W=0
         assert!(!rex2.r3);
         assert!(!rex2.r4);
+    }
+
+    #[test]
+    fn test_legacy_prefix_after_rex_clears_rex_state() {
+        use super::super::cpu::MAX_INSN_LEN;
+
+        let mut bytes = [0u8; MAX_INSN_LEN];
+        bytes[0] = 0x48; // REX.W
+        bytes[1] = 0xF3; // REP after REX: hardware ignores the earlier REX.
+        bytes[2] = 0xAB; // STOS
+        let ctx = Decoder::decode_prefixes(bytes, 3, false, true).unwrap();
+        assert_eq!(ctx.rex, None);
+        assert_eq!(ctx.rep_prefix, Some(0xF3));
+        assert_eq!(ctx.cursor, 2);
+
+        bytes[0] = 0xF3;
+        bytes[1] = 0x48;
+        bytes[2] = 0xAB;
+        let ctx = Decoder::decode_prefixes(bytes, 3, false, true).unwrap();
+        assert_eq!(ctx.rex, Some(0x48));
+        assert_eq!(ctx.rep_prefix, Some(0xF3));
+        assert_eq!(ctx.cursor, 2);
     }
 
     // ---- 0x67 address-size override (ModR/M EA computation) ----

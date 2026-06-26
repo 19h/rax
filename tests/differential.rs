@@ -268,7 +268,7 @@ fn run_kvm(
     init: &Registers,
     scratch_init: &[u8; 64],
 ) -> Result<Option<FinalState>, String> {
-    use kvm_bindings::{kvm_segment, kvm_userspace_memory_region, KVM_MAX_CPUID_ENTRIES};
+    use kvm_bindings::{KVM_MAX_CPUID_ENTRIES, kvm_segment, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
 
     let kvm = match Kvm::new() {
@@ -8235,4 +8235,304 @@ fn movsxd_no_rex_w() {
     r.rax = 0xFFFF_FFFF_FFFF_FFFF; // should be overwritten
     // 63 C3  movsxd eax, ebx  -> eax = ebx, zero-extended into rax
     check("movsxd_no_rexw", &with_hlt(vec![0x63, 0xC3]), r);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 5: stack/control/data-movement/hint/string gaps.
+//
+// These are intentionally exact-state cases: balanced stack control flow,
+// absolute-offset MOVs against the scratch page, no-op/hint instructions, XLAT,
+// and string widths/modes that were still thin in the corpus.
+// ===========================================================================
+
+#[test]
+fn stack_push_imm8_signext_pop_rax() {
+    // PUSH imm8 sign-extends in 64-bit mode; POP r64 recovers the full qword.
+    check(
+        "push_imm8_pop_rax",
+        &with_hlt(vec![0x6A, 0x80, 0x58]),
+        regs(),
+    );
+}
+
+#[test]
+fn stack_push_imm32_pop_rbx() {
+    // PUSH imm32 sign-extends to the 64-bit stack operand size.
+    check(
+        "push_imm32_pop_rbx",
+        &with_hlt(vec![0x68, 0xEF, 0xBE, 0xAD, 0xDE, 0x5B]),
+        regs(),
+    );
+}
+
+#[test]
+fn stack_push_pop_extended_regs() {
+    // REX.B extended register stack forms: push r8; pop r9.
+    let mut r = regs();
+    r.r8 = 0x0123_4567_89AB_CDEF;
+    r.r9 = 0xFFFF_FFFF_FFFF_FFFF;
+    check("push_r8_pop_r9", &with_hlt(vec![0x41, 0x50, 0x41, 0x59]), r);
+}
+
+#[test]
+fn stack_push16_pop16_preserves_upper() {
+    // 66 PUSH/POP use a 16-bit stack operand in long mode; POP r16 preserves upper bits.
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_1234;
+    r.rbx = 0x1111_2222_3333_4444;
+    check("push16_pop16", &with_hlt(vec![0x66, 0x50, 0x66, 0x5B]), r);
+}
+
+#[test]
+fn stack_pop_rm64_memory() {
+    // POP r/m64 to memory: push RAX, then pop into scratch.
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "pop_rm64_mem",
+        &with_hlt(vec![0x50, 0x8F, 0x07]),
+        r,
+        zero_scratch(),
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn stack_pushfq_pop_rax() {
+    // PUSHFQ then POP RAX exposes the exact flags image both backends pushed.
+    let mut r = regs();
+    r.rflags = flags::bits::CF | flags::bits::PF | flags::bits::ZF | flags::bits::OF;
+    check("pushfq_pop_rax", &with_hlt(vec![0x9C, 0x58]), r);
+}
+
+#[test]
+fn control_call_rel32_ret_balanced() {
+    // call func; add rax,2; hlt; func: add rax,5; ret. Final RAX=7, stack balanced.
+    let mut r = regs();
+    r.rax = 0;
+    check(
+        "call_ret",
+        &with_hlt(vec![
+            0xE8, 0x05, 0x00, 0x00, 0x00, // call +5 -> func
+            0x48, 0x83, 0xC0, 0x02, // add rax, 2
+            0xF4, // hlt
+            0x48, 0x83, 0xC0, 0x05, // func: add rax, 5
+            0xC3, // ret
+        ]),
+        r,
+    );
+}
+
+#[test]
+fn control_ret_imm16_cleans_arguments() {
+    // sub rsp,16; call func; hlt; func: ret 16. RET imm restores the pre-call RSP.
+    check(
+        "ret_imm16",
+        &with_hlt(vec![
+            0x48, 0x83, 0xEC, 0x10, // sub rsp, 16
+            0xE8, 0x01, 0x00, 0x00, 0x00, // call +1 -> func
+            0xF4, // hlt
+            0xC2, 0x10, 0x00, // ret 16
+        ]),
+        regs(),
+    );
+}
+
+#[test]
+fn control_enter_leave_balanced() {
+    // ENTER allocates a frame and LEAVE tears it back down.
+    let mut r = regs();
+    r.rbp = STACK_ADDR - 0x80;
+    check(
+        "enter_leave",
+        &with_hlt(vec![0xC8, 0x20, 0x00, 0x00, 0xC9]),
+        r,
+    );
+}
+
+#[test]
+fn control_jrcxz_taken_and_not_taken() {
+    let code = with_hlt(vec![
+        0xE3, 0x03, // jrcxz taken_target
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // taken_target: mov al, 2
+    ]);
+    let mut taken = regs();
+    taken.rcx = 0;
+    check("jrcxz_taken", &code, taken);
+
+    let mut not_taken = regs();
+    not_taken.rcx = 1;
+    check("jrcxz_not_taken", &code, not_taken);
+}
+
+#[test]
+fn control_loopz_loopnz_conditions() {
+    let loopz = with_hlt(vec![
+        0xE1, 0x03, // loopz target
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 2;
+    r.rflags = flags::bits::ZF;
+    check("loopz_taken", &loopz, r);
+
+    let loopnz = with_hlt(vec![
+        0xE0, 0x03, // loopnz target
+        0xB0, 0x01, // mov al, 1
+        0xF4, // hlt
+        0xB0, 0x02, // target: mov al, 2
+    ]);
+    let mut r = regs();
+    r.rcx = 2;
+    r.rflags = 0;
+    check("loopnz_taken", &loopnz, r);
+}
+
+#[test]
+fn mov_moffs_load_store_forms() {
+    // A0/A1/A2/A3 absolute-offset MOVs in long mode use a 64-bit moffs.
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    let mut code = Vec::new();
+    code.push(0xA0); // mov al, moffs8
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.push(0xA2); // mov moffs8, al
+    code.extend_from_slice(&(DATA_ADDR + 8).to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xA1]); // mov rax, moffs64
+    code.extend_from_slice(&DATA_ADDR.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xA3]); // mov moffs64, rax
+    code.extend_from_slice(&(DATA_ADDR + 16).to_le_bytes());
+    check_mem("mov_moffs", &with_hlt(code), regs(), s, FLAG_MASK);
+}
+
+#[test]
+fn xlat_table_lookup() {
+    // XLAT: AL <- byte ptr [RBX + AL].
+    let mut s = [0u8; 64];
+    s[5] = 0xA7;
+    let mut r = regs();
+    r.rbx = DATA_ADDR;
+    r.rax = 0x1122_3344_5566_7705;
+    check_mem("xlat", &with_hlt(vec![0xD7]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn hint_prefetch_and_nop_forms_preserve_state() {
+    // PREFETCHNTA/T0/T1/T2, PREFETCHW/WT1, ENDBR64, and NOP r/m are architectural no-ops.
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes());
+    let mut r = modern_flags_regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "prefetch_endbr_nop",
+        &with_hlt(vec![
+            0x0F, 0x18, 0x07, // prefetchnta [rdi]
+            0x0F, 0x18, 0x0F, // prefetcht0 [rdi]
+            0x0F, 0x18, 0x17, // prefetcht1 [rdi]
+            0x0F, 0x18, 0x1F, // prefetcht2 [rdi]
+            0x0F, 0x0D, 0x0F, // prefetchw [rdi]
+            0x0F, 0x0D, 0x17, // prefetchwt1 [rdi]
+            0xF3, 0x0F, 0x1E, 0xFA, // endbr64
+            0x0F, 0x1F, 0x44, 0x00, 0x00, // nop dword ptr [rax+rax]
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn str_rep_stosw_and_stosq() {
+    let mut r = string_regs(4);
+    r.rax = 0xBEEF;
+    check_mem(
+        "rep_stosw",
+        &with_hlt(vec![0xF3, 0x66, 0xAB]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
+
+    let mut r = string_regs(2);
+    r.rax = 0x0123_4567_89AB_CDEF;
+    check_mem(
+        "rep_stosq",
+        &with_hlt(vec![0xF3, 0x48, 0xAB]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
+}
+
+#[test]
+fn prefix_rex_before_rep_stos_is_ignored() {
+    // REX must be the effective final prefix before the opcode. Hardware consumes
+    // `48 F3 AB` as REP STOSD, not REP STOSQ, because REP follows and masks off
+    // the earlier REX.W state.
+    let mut r = string_regs(2);
+    r.rax = 0x0123_4567_89AB_CDEF;
+    check_mem(
+        "rex_before_rep_stosd",
+        &with_hlt(vec![0x48, 0xF3, 0xAB]),
+        r,
+        string_scratch(&[]),
+        0,
+    );
+}
+
+#[test]
+fn str_lodsw_lodsd_lodsq() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+
+    let mut r = regs();
+    r.rsi = DATA_ADDR;
+    r.rax = 0xFFFF_FFFF_FFFF_0000;
+    check_mem("lodsw", &with_hlt(vec![0x66, 0xAD]), r, s, 0);
+
+    let mut r = regs();
+    r.rsi = DATA_ADDR;
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    check_mem("lodsd", &with_hlt(vec![0xAD]), r, s, 0);
+
+    let mut r = regs();
+    r.rsi = DATA_ADDR;
+    r.rax = 0;
+    check_mem("lodsq", &with_hlt(vec![0x48, 0xAD]), r, s, 0);
+}
+
+#[test]
+fn str_repne_cmpsb_mismatch() {
+    // REPNE CMPSB keeps going while bytes differ, stopping on equality.
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 5].copy_from_slice(&[9, 8, 7, 6, 5]);
+    s[DST_OFF as usize..DST_OFF as usize + 5].copy_from_slice(&[1, 2, 7, 4, 3]);
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 5;
+    check_mem("repne_cmpsb", &with_hlt(vec![0xF2, 0xA6]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_scasd_and_scasq() {
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize..DST_OFF as usize + 4].copy_from_slice(&0x8000_0000u32.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0x8000_0000;
+    check_mem("scasd_eq", &with_hlt(vec![0xAF]), r, s, FLAG_MASK);
+
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize..DST_OFF as usize + 8]
+        .copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0x1111_1111_1111_1111;
+    check_mem("scasq_ne", &with_hlt(vec![0x48, 0xAF]), r, s, FLAG_MASK);
 }
