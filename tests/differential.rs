@@ -15344,6 +15344,25 @@ fn avx_vmovdqa_vmovdqu_register_forms() {
 }
 
 #[test]
+fn avx_xmm_vmovhlps_vmovlhps_register_forms() {
+    let mut s = [0u8; 64];
+    for (idx, byte) in s.iter_mut().enumerate() {
+        *byte = (0x5Du8).wrapping_add((idx as u8).wrapping_mul(7));
+    }
+
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x4F, 0x10]); // vmovdqu xmm1, [rdi+16]
+    code.extend_from_slice(&[0xC5, 0xFA, 0x6F, 0x57, 0x20]); // vmovdqu xmm2, [rdi+32]
+    code.extend_from_slice(&[0xC5, 0xE8, 0x12, 0xD9]); // vmovhlps xmm3, xmm2, xmm1
+    code.extend_from_slice(&[0xC5, 0xE8, 0x16, 0xE1]); // vmovlhps xmm4, xmm2, xmm1
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x1F]); // vmovdqu [rdi], xmm3
+    code.extend_from_slice(&[0xC5, 0xFA, 0x7F, 0x67, 0x10]); // vmovdqu [rdi+16], xmm4
+    code.push(HLT);
+
+    check_avx_mem("avx_xmm_vmovhlps_vmovlhps_register_forms", &code, s);
+}
+
+#[test]
 fn avx_vmovd_vmovq_scalar_transfer_forms() {
     let mut s = [0u8; 64];
     s[0..8].copy_from_slice(&0xA5A5_5A5A_DEAD_BEEFu64.to_le_bytes());
@@ -30183,6 +30202,51 @@ fn evex_zmm_packed_multiply_memory_disp8_forms() {
 // ===========================================================================
 // EXPANDED COVERAGE PART 68: EVEX scalar move memory forms.
 // ===========================================================================
+
+fn check_evex_aligned_zmm_move_memory_disp8(label: &str, load: &[u8], store: &[u8]) {
+    let mut code = opmask_start();
+    append_seed_rdi_plus_64_qwords(&mut code, &evex_shuffle_source());
+    code.extend_from_slice(load);
+    code.extend_from_slice(store);
+    code.push(HLT);
+    check_evex_mem(label, &code, evex_shuffle_scratch());
+}
+
+#[test]
+fn evex_zmm_vmovaps_memory_disp8_form() {
+    check_evex_aligned_zmm_move_memory_disp8(
+        "evex_zmm_vmovaps_memory_disp8_form",
+        &[0x62, 0xF1, 0x7C, 0x48, 0x28, 0x57, 0x01],
+        &[0x62, 0xF1, 0x7C, 0x48, 0x29, 0x17],
+    );
+}
+
+#[test]
+fn evex_zmm_vmovapd_memory_disp8_form() {
+    check_evex_aligned_zmm_move_memory_disp8(
+        "evex_zmm_vmovapd_memory_disp8_form",
+        &[0x62, 0xF1, 0xFD, 0x48, 0x28, 0x5F, 0x01],
+        &[0x62, 0xF1, 0xFD, 0x48, 0x29, 0x1F],
+    );
+}
+
+#[test]
+fn evex_zmm_vmovdqa32_memory_disp8_form() {
+    check_evex_aligned_zmm_move_memory_disp8(
+        "evex_zmm_vmovdqa32_memory_disp8_form",
+        &[0x62, 0xF1, 0x7D, 0x48, 0x6F, 0x67, 0x01],
+        &[0x62, 0xF1, 0x7D, 0x48, 0x7F, 0x27],
+    );
+}
+
+#[test]
+fn evex_zmm_vmovdqa64_memory_disp8_form() {
+    check_evex_aligned_zmm_move_memory_disp8(
+        "evex_zmm_vmovdqa64_memory_disp8_form",
+        &[0x62, 0xF1, 0xFD, 0x48, 0x6F, 0x6F, 0x01],
+        &[0x62, 0xF1, 0xFD, 0x48, 0x7F, 0x2F],
+    );
+}
 
 #[test]
 fn evex_scalar_move_memory_disp8_forms() {
