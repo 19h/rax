@@ -40,8 +40,9 @@ const STACK_ADDR: u64 = 0x2_0000;
 const DATA_ADDR: u64 = 0x3_0000;
 /// Minimal GDT used by far control-flow and descriptor-sensitive tests.
 const GDT_ADDR: u64 = 0x4_000;
-const GDT_LIMIT: u16 = 0x2F;
+const GDT_LIMIT: u16 = 0x37;
 const CODE32_SELECTOR: u16 = 0x28;
+const DATA_ALIAS_SELECTOR: u16 = 0x30;
 /// Minimal IDT base used to make SIDT deterministic in differential tests.
 const IDT_ADDR: u64 = 0x5_000;
 /// Shared IDT handler used by software-interrupt differential tests.
@@ -212,6 +213,7 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
     write(GDT_ADDR + 16, &data_descriptor);
     write(GDT_ADDR + 24, &tss64_descriptor);
     write(GDT_ADDR + CODE32_SELECTOR as u64, &code32_descriptor);
+    write(GDT_ADDR + DATA_ALIAS_SELECTOR as u64, &data_descriptor);
 
     let mut write_idt_gate = |vector: u8, handler: u64| {
         let mut gate = [0u8; 16];
@@ -22160,6 +22162,115 @@ fn mov_lds_compat32_16bit_pointer_loads_ds() {
         &with_hlt(vec![
             0x36, 0x66, 0xC5, 0x07, // lds ax, m16:16 ss:[edi]
             0x1E, // push ds
+            0x5B, // pop ebx
+            0x66, 0x89, 0x47, 0x08, // mov [edi+8], ax
+            0x89, 0x5F, 0x0C, // mov [edi+12], ebx
+        ]),
+        r,
+        scratch,
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn mov_lss_compat32_loads_pointer_and_ss() {
+    let sregs = compat32_sregs();
+    let offset = 0x8765_4321u32;
+    let selector = DATA_ALIAS_SELECTOR;
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&offset.to_le_bytes());
+    scratch[4..6].copy_from_slice(&selector.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[8..12].copy_from_slice(&offset.to_le_bytes());
+    expected[12..16].copy_from_slice(&(selector as u32).to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rdi = DATA_ADDR;
+
+    check_scratch_expected_with_sregs(
+        "lss_compat32_m16_32_loads_ss",
+        &with_hlt(vec![
+            0x0F, 0xB2, 0x07, // lss eax, m16:32 [edi]
+            0x16, // push ss
+            0x5B, // pop ebx
+            0x89, 0x47, 0x08, // mov [edi+8], eax
+            0x89, 0x5F, 0x0C, // mov [edi+12], ebx
+        ]),
+        r,
+        scratch,
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn mov_lfs_compat32_loads_pointer_and_fs() {
+    let mut sregs = compat32_sregs();
+    mark_segment_unusable(&mut sregs.fs);
+
+    let offset = 0x1020_3040u32;
+    let selector = DATA_ALIAS_SELECTOR;
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&offset.to_le_bytes());
+    scratch[4..6].copy_from_slice(&selector.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[8..12].copy_from_slice(&offset.to_le_bytes());
+    expected[12..16].copy_from_slice(&(selector as u32).to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rdi = DATA_ADDR;
+
+    check_scratch_expected_with_sregs(
+        "lfs_compat32_m16_32_loads_fs",
+        &with_hlt(vec![
+            0x0F, 0xB4, 0x07, // lfs eax, m16:32 [edi]
+            0x0F, 0xA0, // push fs
+            0x5B, // pop ebx
+            0x89, 0x47, 0x08, // mov [edi+8], eax
+            0x89, 0x5F, 0x0C, // mov [edi+12], ebx
+        ]),
+        r,
+        scratch,
+        expected,
+        FLAG_MASK,
+        &sregs,
+    );
+}
+
+#[test]
+fn mov_lgs_compat32_16bit_pointer_loads_gs() {
+    let mut sregs = compat32_sregs();
+    mark_segment_unusable(&mut sregs.gs);
+
+    let offset = 0xCAFEu16;
+    let selector = DATA_ALIAS_SELECTOR;
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&offset.to_le_bytes());
+    scratch[2..4].copy_from_slice(&selector.to_le_bytes());
+
+    let mut expected = scratch;
+    expected[8..10].copy_from_slice(&offset.to_le_bytes());
+    expected[12..16].copy_from_slice(&(selector as u32).to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xAAAA_BBBB_CCCC_0000;
+    r.rbx = 0xBBBB_CCCC_DDDD_EEEE;
+    r.rdi = DATA_ADDR;
+
+    check_scratch_expected_with_sregs(
+        "lgs_compat32_m16_16_loads_gs",
+        &with_hlt(vec![
+            0x66, 0x0F, 0xB5, 0x07, // lgs ax, m16:16 [edi]
+            0x0F, 0xA8, // push gs
             0x5B, // pop ebx
             0x66, 0x89, 0x47, 0x08, // mov [edi+8], ax
             0x89, 0x5F, 0x0C, // mov [edi+12], ebx

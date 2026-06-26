@@ -93,6 +93,9 @@ impl X86_64Vcpu {
             0x90..=0x9F => insn::control::setcc(self, ctx, opcode2 & 0x0F),
 
             // Data movement
+            0xB2 => insn::data::lss(self, ctx),
+            0xB4 => insn::data::lfs(self, ctx),
+            0xB5 => insn::data::lgs(self, ctx),
             0xB6 => insn::data::movzx_r_rm8(self, ctx),
             0xB7 => insn::data::movzx_r_rm16(self, ctx),
             0xBE => insn::data::movsx_r_rm8(self, ctx),

@@ -198,16 +198,16 @@ fn load_pointer_to_segment(
     segment: u8,
 ) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
-    if op_size != 2 && op_size != 4 {
+    if op_size != 2 && op_size != 4 && op_size != 8 {
         return Err(Error::Emulator(format!(
-            "invalid LDS/LES operand size: {op_size}"
+            "invalid far pointer load operand size: {op_size}"
         )));
     }
 
     let (reg, _, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
         return Err(Error::Emulator(
-            "LDS/LES requires a memory pointer operand".to_string(),
+            "far pointer load requires a memory pointer operand".to_string(),
         ));
     }
 
@@ -229,6 +229,21 @@ pub fn les(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// LDS r16/32, m16:16/32 (0xC5) - Load far pointer into DS and GPR.
 pub fn lds(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     load_pointer_to_segment(vcpu, ctx, 3)
+}
+
+/// LSS r16/32/64, m16:16/32/64 (0F B2) - Load far pointer into SS and GPR.
+pub fn lss(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    load_pointer_to_segment(vcpu, ctx, 2)
+}
+
+/// LFS r16/32/64, m16:16/32/64 (0F B4) - Load far pointer into FS and GPR.
+pub fn lfs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    load_pointer_to_segment(vcpu, ctx, 4)
+}
+
+/// LGS r16/32/64, m16:16/32/64 (0F B5) - Load far pointer into GS and GPR.
+pub fn lgs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    load_pointer_to_segment(vcpu, ctx, 5)
 }
 
 /// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)
