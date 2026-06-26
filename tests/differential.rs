@@ -5545,6 +5545,80 @@ fn sse3_extended_memory_source_forms() {
 }
 
 #[test]
+fn sse3_duplicate_addr32_memory_sources() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&f32x4([1.0, 2.0, 3.0, 4.0]));
+    s[16..32].copy_from_slice(&f32x4([-1.5, 7.0, -3.25, 0.75]));
+    s[32..48].copy_from_slice(&f64x2([3.5, -8.0]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xF3, 0x0F, 0x12, 0x04, 0x77]); // movsldup xmm0, [edi+esi*2]
+    code.extend_from_slice(&[0x67, 0xF3, 0x0F, 0x16, 0x4C, 0x77, 0x10]); // movshdup xmm1, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xF2, 0x0F, 0x12, 0x54, 0x77, 0x20]); // movddup xmm2, [edi+esi*2+32]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.push(HLT);
+    let mut r = modern_flags_regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("sse3_duplicate_addr32_memory_sources", &code, r, s, FLAG_MASK);
+}
+
+#[test]
+fn sse3_packed_addr32_memory_sources() {
+    let mut ps = [0u8; 64];
+    ps[0..16].copy_from_slice(&f32x4([8.0, 1.5, -4.0, 2.0]));
+    ps[16..32].copy_from_slice(&f32x4([3.0, -2.0, 10.0, 0.5]));
+    ps[32..48].copy_from_slice(&f32x4([-7.5, 6.25, 1.0, -3.0]));
+    ps[48..64].copy_from_slice(&f32x4([4.5, -8.0, 2.25, 9.0]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0xF2, 0x0F, 0x7C, 0x44, 0x77, 0x10]); // haddps xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0xF2, 0x0F, 0x7D, 0x4C, 0x77, 0x20]); // hsubps xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0xF2, 0x0F, 0xD0, 0x54, 0x77, 0x30]); // addsubps xmm2, [edi+esi*2+48]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.push(HLT);
+    let mut r = modern_flags_regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("sse3_packed_addr32_memory_sources_ps", &code, r, ps, FLAG_MASK);
+
+    let mut pd = [0u8; 64];
+    pd[0..16].copy_from_slice(&f64x2([16.0, 1.25]));
+    pd[16..32].copy_from_slice(&f64x2([3.5, -8.0]));
+    pd[32..48].copy_from_slice(&f64x2([-4.0, 9.75]));
+    pd[48..64].copy_from_slice(&f64x2([2.0, -6.5]));
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x0F]); // movdqu xmm1, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x17]); // movdqu xmm2, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x7C, 0x44, 0x77, 0x10]); // haddpd xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x7D, 0x4C, 0x77, 0x20]); // hsubpd xmm1, [edi+esi*2+32]
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0xD0, 0x54, 0x77, 0x30]); // addsubpd xmm2, [edi+esi*2+48]
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x07]); // movdqu [rdi], xmm0
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x10]); // movdqu [rdi+16], xmm1
+    code.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+32], xmm2
+    code.push(HLT);
+    let mut r = modern_flags_regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("sse3_packed_addr32_memory_sources_pd", &code, r, pd, FLAG_MASK);
+}
+
+#[test]
 fn sse2_shufpd() {
     // SHUFPD xmm0, xmm1, imm8 = 66 0F C6 C1 ib. imm=0b10 -> dst.lo=a.hi, dst.hi=b.lo.
     let a = [1.0f64.to_le_bytes(), 2.0f64.to_le_bytes()].concat();
@@ -10175,6 +10249,25 @@ fn sse3_lddqu() {
     prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
     prog.push(HLT);
     check_sse("lddqu", &prog, sse_scratch(a, [0u8; 16]));
+}
+
+#[test]
+fn sse3_lddqu_addr32_load() {
+    let mut s = [0u8; 64];
+    for i in 0..64 {
+        s[i] = (0x19u8).wrapping_add((i as u8).wrapping_mul(23));
+    }
+
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    prog.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    prog.extend_from_slice(&[0x67, 0xF2, 0x0F, 0xF0, 0x4C, 0x77, 0x01]); // lddqu xmm1, [edi+esi*2+1]
+    prog.extend_from_slice(&load_rdi_data());
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x20]); // movdqu [rdi+32], xmm1
+    prog.push(HLT);
+    let mut r = regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("sse3_lddqu_addr32_load", &prog, r, s, 0);
 }
 
 #[test]
@@ -15375,6 +15468,37 @@ fn sse4_ptest_register_and_memory_flags() {
     code.push(HLT);
 
     check_mem("sse4_ptest_register_and_memory_flags", &code, modern_flags_regs(), s, FLAG_MASK);
+}
+
+#[test]
+fn sse4_ptest_addr32_memory_flags() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
+        0xF0, 0xF0,
+    ]);
+    s[16..32].copy_from_slice(&[
+        0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
+        0x0F, 0x0F,
+    ]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0x17, 0x44, 0x77, 0x10]); // ptest xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x9C, 0x41, 0x58]); // pushfq; pop r8
+    code.extend_from_slice(&[0x66, 0x0F, 0xEF, 0xC0]); // pxor xmm0, xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0x76, 0xC0]); // pcmpeqd xmm0, xmm0
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0x38, 0x17, 0x44, 0x77, 0x10]); // ptest xmm0, [edi+esi*2+16]
+    code.extend_from_slice(&[0x9C, 0x41, 0x59]); // pushfq; pop r9
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x4C, 0x89, 0x47, 0x20]); // mov [rdi+32], r8
+    code.extend_from_slice(&[0x4C, 0x89, 0x4F, 0x28]); // mov [rdi+40], r9
+    code.push(HLT);
+    let mut r = modern_flags_regs();
+    r.rsi = 0xFFFF_0000_0000_0000 | 4;
+    check_mem("sse4_ptest_addr32_memory_flags", &code, r, s, FLAG_MASK);
 }
 
 #[test]
