@@ -2916,6 +2916,22 @@ fn cmovcc_all_conditions() {
 }
 
 #[test]
+fn cmovcc_false_memory_source_not_read() {
+    let mut r = regs();
+    r.rax = 0x1122_3344_5566_7788;
+    r.rsi = MEM_SIZE as u64 + 0x1000;
+
+    check(
+        "cmovcc_false_memory_source_not_read",
+        &with_hlt(vec![
+            0x39, 0xC0, // cmp eax, eax -> ZF=1
+            0x48, 0x0F, 0x45, 0x06, // cmovne rax, qword [rsi]
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn cmovcc_register_operand_width_forms() {
     let mut r = regs();
     r.rax = 7;
@@ -5938,6 +5954,20 @@ fn sahf_loads_flags() {
 }
 
 #[test]
+fn sahf_preserves_overflow_after_lazy_flags() {
+    let mut r = regs();
+    r.rax = 0x7F; // AH=0 for SAHF; AL overflows when incremented.
+    check(
+        "sahf_preserves_overflow_after_lazy_flags",
+        &with_hlt(vec![
+            0x04, 0x01, // add al, 1 -> OF=1
+            0x9E, // sahf clears AH-controlled flags but preserves OF
+        ]),
+        r,
+    );
+}
+
+#[test]
 fn lahf_stores_flags() {
     // LAHF (9F): low byte of RFLAGS -> AH. Set a known flag state via CMP first.
     let mut r = regs();
@@ -8381,6 +8411,16 @@ fn lea_rip_relative_negative_disp() {
     check(
         "lea_rip_neg",
         &with_hlt(vec![0x48, 0x8D, 0x05, 0xF0, 0xFF, 0xFF, 0xFF]),
+        r,
+    );
+}
+
+#[test]
+fn lea_rip_relative_preserves_flags() {
+    let r = modern_flags_regs();
+    check(
+        "lea_rip_relative_preserves_flags",
+        &with_hlt(vec![0x48, 0x8D, 0x0D, 0x34, 0x12, 0x00, 0x00]),
         r,
     );
 }
@@ -12513,6 +12553,44 @@ fn cpuid_leaf1_and_extended_feature_bits() {
     r.rdi = DATA_ADDR;
     check_mem(
         "cpuid_leaf1_and_extended_feature_bits",
+        &code,
+        r,
+        zero_scratch(),
+        0,
+    );
+}
+
+#[test]
+fn cpuid_extended_limits_and_address_size_booleans() {
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[
+        0xB8, 0x02, 0x00, 0x00, 0x00, // mov eax, 2
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x84, 0xC0, // test al, al
+        0x0F, 0x95, 0x07, // setne [rdi]
+        0xB8, 0x00, 0x00, 0x00, 0x80, // mov eax, 0x80000000
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0x3D, 0x08, 0x00, 0x00, 0x80, // cmp eax, 0x80000008
+        0x0F, 0x93, 0x47, 0x01, // setae [rdi+1]
+        0xB8, 0x08, 0x00, 0x00, 0x80, // mov eax, 0x80000008
+        0x31, 0xC9, // xor ecx, ecx
+        0x0F, 0xA2, // cpuid
+        0xC1, 0xE8, 0x08, // shr eax, 8
+        0x3C, 0x30, // cmp al, 48
+        0x0F, 0x93, 0x47, 0x02, // setae [rdi+2]
+        0x31, 0xC0, // xor eax, eax
+        0x31, 0xDB, // xor ebx, ebx
+        0x31, 0xC9, // xor ecx, ecx
+        0x31, 0xD2, // xor edx, edx
+    ]);
+    code.push(HLT);
+
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    check_mem(
+        "cpuid_extended_limits_and_address_size_booleans",
         &code,
         r,
         zero_scratch(),
@@ -20744,6 +20822,25 @@ fn prefetch_addr32_forms_preserve_state() {
         ]),
         r,
         s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
+fn prefetch_unmapped_memory_sources_do_not_fault() {
+    let mut r = modern_flags_regs();
+    r.rsi = MEM_SIZE as u64 + 0x1000;
+    check_flags_masked(
+        "prefetch_unmapped_memory_sources_do_not_fault",
+        &with_hlt(vec![
+            0x0F, 0x18, 0x06, // prefetchnta [rsi]
+            0x0F, 0x18, 0x0E, // prefetcht0 [rsi]
+            0x0F, 0x18, 0x16, // prefetcht1 [rsi]
+            0x0F, 0x18, 0x1E, // prefetcht2 [rsi]
+            0x0F, 0x0D, 0x0E, // prefetchw [rsi]
+            0x0F, 0x0D, 0x16, // prefetchwt1 [rsi]
+        ]),
+        r,
         FLAG_MASK,
     );
 }
