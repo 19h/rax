@@ -8,6 +8,9 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 const XCR0_X87: u64 = 1 << 0;
 const XCR0_SSE: u64 = 1 << 1;
 const XCR0_AVX: u64 = 1 << 2;
+const XCR0_OPMASK: u64 = 1 << 5;
+const XCR0_ZMM_HI256: u64 = 1 << 6;
+const XCR0_HI16_ZMM: u64 = 1 << 7;
 const XCR0_APX_F: u64 = 1 << 19;
 
 const XSAVE_LEGACY_SIZE: u32 = 512;
@@ -16,7 +19,13 @@ const XSAVE_AVX_OFFSET: u32 = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
 const XSAVE_AVX_SIZE: u32 = 256;
 const XSAVE_APX_OFFSET: u32 = 0x3C0;
 const XSAVE_APX_SIZE: u32 = 128;
-const XSAVE_MAX_SIZE: u32 = XSAVE_APX_OFFSET + XSAVE_APX_SIZE;
+const XSAVE_OPMASK_OFFSET: u32 = 0x440;
+const XSAVE_OPMASK_SIZE: u32 = 64;
+const XSAVE_ZMM_HI256_OFFSET: u32 = 0x480;
+const XSAVE_ZMM_HI256_SIZE: u32 = 512;
+const XSAVE_HI16_ZMM_OFFSET: u32 = 0x680;
+const XSAVE_HI16_ZMM_SIZE: u32 = 1024;
+const XSAVE_MAX_SIZE: u32 = XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE;
 
 /// CPUID (0x0F 0xA2)
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -154,10 +163,25 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 // Subleaf 0: EAX/EDX = supported XCR0 bits; EBX = area size for the
                 // currently-enabled features; ECX = max area size for all supported.
                 0 => {
-                    let xcr0_valid = XCR0_X87 | XCR0_SSE | XCR0_AVX | XCR0_APX_F;
+                    let xcr0_valid = XCR0_X87
+                        | XCR0_SSE
+                        | XCR0_AVX
+                        | XCR0_OPMASK
+                        | XCR0_ZMM_HI256
+                        | XCR0_HI16_ZMM
+                        | XCR0_APX_F;
                     let mut cur_size = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
                     if vcpu.xcr0 & XCR0_AVX != 0 {
                         cur_size = XSAVE_AVX_OFFSET + XSAVE_AVX_SIZE;
+                    }
+                    if vcpu.xcr0 & XCR0_OPMASK != 0 {
+                        cur_size = cur_size.max(XSAVE_OPMASK_OFFSET + XSAVE_OPMASK_SIZE);
+                    }
+                    if vcpu.xcr0 & XCR0_ZMM_HI256 != 0 {
+                        cur_size = cur_size.max(XSAVE_ZMM_HI256_OFFSET + XSAVE_ZMM_HI256_SIZE);
+                    }
+                    if vcpu.xcr0 & XCR0_HI16_ZMM != 0 {
+                        cur_size = cur_size.max(XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE);
                     }
                     if vcpu.xcr0 & XCR0_APX_F != 0 {
                         cur_size = cur_size.max(XSAVE_APX_OFFSET + XSAVE_APX_SIZE);
@@ -173,6 +197,12 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 1 => (0, 0, 0, 0),
                 // Subleaf 2: AVX (YMM_Hi128) component size + offset.
                 2 => (XSAVE_AVX_SIZE, XSAVE_AVX_OFFSET, 0, 0),
+                // Subleaf 5: opmask component.
+                5 => (XSAVE_OPMASK_SIZE, XSAVE_OPMASK_OFFSET, 0, 0),
+                // Subleaf 6: upper 256 bits of ZMM0-15.
+                6 => (XSAVE_ZMM_HI256_SIZE, XSAVE_ZMM_HI256_OFFSET, 0, 0),
+                // Subleaf 7: full ZMM16-31.
+                7 => (XSAVE_HI16_ZMM_SIZE, XSAVE_HI16_ZMM_OFFSET, 0, 0),
                 // Subleaf 19: APX_F EGPR component (R16-R31).
                 19 => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
                 _ => (0, 0, 0, 0),

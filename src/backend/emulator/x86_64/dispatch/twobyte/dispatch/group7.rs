@@ -68,13 +68,18 @@ impl X86_64Vcpu {
                     let ecx = self.regs.rcx as u32;
                     let value = (self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32);
                     // Only XCR0 exists; x87 (bit0) must stay set; AVX (bit2) requires
-                    // SSE (bit1); APX_F (bit19) enables APX EGPR state.
+                    // SSE (bit1); AVX-512 state bits must be enabled as a group;
+                    // APX_F (bit19) enables APX EGPR state.
+                    const XCR0_AVX512: u64 = (1 << 5) | (1 << 6) | (1 << 7);
                     const XCR0_APX_F: u64 = 1 << 19;
-                    const SUPPORTED: u64 = 0x7 | XCR0_APX_F;
+                    const SUPPORTED: u64 = 0x7 | XCR0_AVX512 | XCR0_APX_F;
+                    let avx512_bits = value & XCR0_AVX512;
                     let invalid = ecx != 0
                         || (value & 1) == 0
                         || (value & !SUPPORTED) != 0
-                        || ((value & 0x4) != 0 && (value & 0x2) == 0);
+                        || ((value & 0x4) != 0 && (value & 0x2) == 0)
+                        || (avx512_bits != 0
+                            && (avx512_bits != XCR0_AVX512 || (value & 0x6) != 0x6));
                     if invalid {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
@@ -368,7 +373,7 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 4 => {
-                    // XSAVE - save x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
+                    // XSAVE - save x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
                     let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let mut xstate_bv = 0u64;
                     // Component 0 (x87): legacy region header + ST0-7.
@@ -418,6 +423,37 @@ impl X86_64Vcpu {
                         }
                         xstate_bv |= 0x4;
                     }
+                    // Component 5 (opmask): k0-k7 at offset 1088.
+                    if rfbm & (1 << 5) != 0 {
+                        for i in 0..8 {
+                            self.write_mem64(addr + 1088 + (i as u64) * 8, self.regs.k[i])?;
+                        }
+                        xstate_bv |= 1 << 5;
+                    }
+                    // Component 6 (ZMM_Hi256): upper 256 bits of ZMM0-15.
+                    if rfbm & (1 << 6) != 0 {
+                        for i in 0..16 {
+                            for lane in 0..4 {
+                                self.write_mem64(
+                                    addr + 1152 + (i as u64) * 32 + (lane as u64) * 8,
+                                    self.regs.zmm_high[i][lane],
+                                )?;
+                            }
+                        }
+                        xstate_bv |= 1 << 6;
+                    }
+                    // Component 7 (Hi16_ZMM): full ZMM16-31.
+                    if rfbm & (1 << 7) != 0 {
+                        for i in 0..16 {
+                            for lane in 0..8 {
+                                self.write_mem64(
+                                    addr + 1664 + (i as u64) * 64 + (lane as u64) * 8,
+                                    self.regs.zmm_ext[i][lane],
+                                )?;
+                            }
+                        }
+                        xstate_bv |= 1 << 7;
+                    }
                     // Component 19 (APX_F): R16-R31 at offset 960.
                     if rfbm & (1 << 19) != 0 {
                         for i in 0..16 {
@@ -435,7 +471,7 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 5 => {
-                    // XRSTOR - restore x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
+                    // XRSTOR - restore x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
                     let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32)) & self.xcr0;
                     let xstate_bv = self.read_mem64(addr + 512)?;
                     if rfbm & 0x1 != 0 {
@@ -487,6 +523,41 @@ impl X86_64Vcpu {
                             for i in 0..16 {
                                 self.regs.ymm_high[i] = [0, 0];
                             }
+                        }
+                    }
+                    if rfbm & (1 << 5) != 0 {
+                        if xstate_bv & (1 << 5) != 0 {
+                            for i in 0..8 {
+                                self.regs.k[i] = self.read_mem64(addr + 1088 + (i as u64) * 8)?;
+                            }
+                        } else {
+                            self.regs.k = [0; 8];
+                        }
+                    }
+                    if rfbm & (1 << 6) != 0 {
+                        if xstate_bv & (1 << 6) != 0 {
+                            for i in 0..16 {
+                                for lane in 0..4 {
+                                    self.regs.zmm_high[i][lane] = self.read_mem64(
+                                        addr + 1152 + (i as u64) * 32 + (lane as u64) * 8,
+                                    )?;
+                                }
+                            }
+                        } else {
+                            self.regs.zmm_high = [[0; 4]; 16];
+                        }
+                    }
+                    if rfbm & (1 << 7) != 0 {
+                        if xstate_bv & (1 << 7) != 0 {
+                            for i in 0..16 {
+                                for lane in 0..8 {
+                                    self.regs.zmm_ext[i][lane] = self.read_mem64(
+                                        addr + 1664 + (i as u64) * 64 + (lane as u64) * 8,
+                                    )?;
+                                }
+                            }
+                        } else {
+                            self.regs.zmm_ext = [[0; 8]; 16];
                         }
                     }
                     if rfbm & (1 << 19) != 0 {
