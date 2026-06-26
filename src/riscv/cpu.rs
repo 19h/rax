@@ -36,7 +36,7 @@ enum Avl {
     Reg(u64),
 }
 
-/// Standard RISC-V synchronous exception cause codes.
+/// Standard RISC-V trap cause codes.
 pub mod cause {
     /// Instruction address misaligned.
     pub const INSTR_MISALIGNED: u64 = 0;
@@ -60,9 +60,15 @@ pub mod cause {
     pub const ECALL_S: u64 = 9;
     /// Environment call from M-mode.
     pub const ECALL_M: u64 = 11;
+    /// Machine software interrupt.
+    pub const INT_M_SOFTWARE: u64 = 3;
+    /// Machine timer interrupt.
+    pub const INT_M_TIMER: u64 = 7;
+    /// Machine external interrupt.
+    pub const INT_M_EXTERNAL: u64 = 11;
 }
 
-/// A synchronous trap raised while executing an instruction.
+/// A trap raised while executing an instruction or accepting an interrupt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Trap {
     /// Cause code (see [`cause`]).
@@ -92,7 +98,7 @@ pub enum RiscVExit {
     Ebreak,
     /// `WFI` executed (treated as a hint).
     Wfi,
-    /// A synchronous exception was raised (and delivered to the trap vector).
+    /// A trap was raised and delivered to the trap vector.
     Trap(Trap),
 }
 
@@ -199,6 +205,11 @@ const SSTATUS_BASE_MASK: u64 = (1 << 1) // SIE
     | (1 << 18) // SUM
     | (1 << 19); // MXR
 const S_INTERRUPT_MASK: u64 = (1 << 1) | (1 << 5) | (1 << 9); // SSIP, STIP, SEIP
+const MSTATUS_MIE: u64 = 1 << 3;
+const MIP_MSIP: u64 = 1 << cause::INT_M_SOFTWARE;
+const MIP_MTIP: u64 = 1 << cause::INT_M_TIMER;
+const MIP_MEIP: u64 = 1 << cause::INT_M_EXTERNAL;
+const M_INTERRUPT_MASK: u64 = MIP_MSIP | MIP_MTIP | MIP_MEIP;
 
 impl RiscVCpu {
     /// Create a hart with the given configuration and memory.
@@ -401,6 +412,29 @@ impl RiscVCpu {
         self.priv_ = p;
     }
 
+    /// Assert or deassert one or more pending interrupt bits in `mip`.
+    pub fn set_interrupt_pending(&mut self, mask: u64, pending: bool) {
+        let mask = mask & self.xmask();
+        if pending {
+            self.mip |= mask;
+        } else {
+            self.mip &= !mask;
+        }
+    }
+
+    /// Deliver the `ECALL` left pending by [`RiscVExit::Ecall`].
+    pub fn deliver_ecall_trap(&mut self) {
+        let trap = Trap {
+            cause: match self.priv_ {
+                Priv::User => cause::ECALL_U,
+                Priv::Supervisor => cause::ECALL_S,
+                Priv::Machine => cause::ECALL_M,
+            },
+            tval: 0,
+        };
+        self.deliver_trap(trap, self.pc);
+    }
+
     /// Retired instruction count.
     pub fn instret(&self) -> u64 {
         self.instret
@@ -477,6 +511,11 @@ impl RiscVCpu {
 
     /// Fetch, decode and execute one instruction.
     pub fn step(&mut self) -> RiscVExit {
+        if let Some(trap) = self.pending_machine_interrupt() {
+            self.deliver_trap(trap, self.pc);
+            return RiscVExit::Continue;
+        }
+
         let pc = self.pc;
         let insn = match decode_at(self.mem.as_ref(), pc, self.cfg.xlen, &self.cfg.isa) {
             Ok(i) => i,
@@ -515,7 +554,7 @@ impl RiscVCpu {
         RiscVExit::Continue
     }
 
-    /// Deliver a synchronous trap to M-mode (direct vectoring).
+    /// Deliver a trap to M-mode.
     fn deliver_trap(&mut self, trap: Trap, epc: u64) {
         self.mepc = epc;
         self.mcause = trap.cause;
@@ -528,7 +567,42 @@ impl RiscVCpu {
         self.mstatus &= !(0b11 << 11); // clear MPP
         self.mstatus |= (self.priv_ as u64 & 0b11) << 11;
         self.priv_ = Priv::Machine;
-        self.pc = self.mtvec & !0b11; // BASE (synchronous -> direct entry)
+        let base = self.mtvec & !0b11;
+        let interrupt_bit = self.interrupt_cause_bit();
+        let is_interrupt = trap.cause & interrupt_bit != 0;
+        self.pc = if is_interrupt && self.mtvec & 0b11 == 1 {
+            base.wrapping_add(4 * (trap.cause & !interrupt_bit)) & self.xmask()
+        } else {
+            base & self.xmask()
+        };
+    }
+
+    fn pending_machine_interrupt(&self) -> Option<Trap> {
+        let machine_interrupts_enabled =
+            self.priv_ < Priv::Machine || self.mstatus & MSTATUS_MIE != 0;
+        if !machine_interrupts_enabled {
+            return None;
+        }
+
+        let pending = self.mip & self.mie & !self.mideleg & M_INTERRUPT_MASK & self.xmask();
+        let cause = if pending & MIP_MEIP != 0 {
+            cause::INT_M_EXTERNAL
+        } else if pending & MIP_MSIP != 0 {
+            cause::INT_M_SOFTWARE
+        } else if pending & MIP_MTIP != 0 {
+            cause::INT_M_TIMER
+        } else {
+            return None;
+        };
+
+        Some(Trap {
+            cause: self.interrupt_cause_bit() | cause,
+            tval: 0,
+        })
+    }
+
+    fn interrupt_cause_bit(&self) -> u64 {
+        1u64 << (self.xbits() - 1)
     }
 
     // ---------------------------------------------------------------
@@ -4886,6 +4960,46 @@ mod tests {
         c.csr_write(0x144, 0).unwrap();
         assert_eq!(c.csr_read(0x344).unwrap() & ssip, 0);
         assert_eq!(c.csr_read(0x344).unwrap() & (msip | mtip | stip), msip | mtip | stip);
+    }
+
+    #[test]
+    fn ecall_exit_can_be_delivered_as_machine_trap() {
+        let mut c = cpu();
+        c.set_pc(0x200);
+        c.csr_write(0x305, 0x1000).unwrap(); // mtvec
+
+        assert_eq!(run_one(&mut c, 0x0000_0073), RiscVExit::Ecall);
+        c.deliver_ecall_trap();
+
+        assert_eq!(c.pc(), 0x1000);
+        assert_eq!(c.csr_read(0x341).unwrap(), 0x200); // mepc
+        assert_eq!(c.csr_read(0x342).unwrap(), cause::ECALL_M); // mcause
+        assert_eq!(c.csr_read(0x343).unwrap(), 0); // mtval
+    }
+
+    #[test]
+    fn machine_external_interrupt_enters_rv32_vectored_mtvec() {
+        let mut c = rv32();
+        c.set_pc(0x200);
+        c.csr_write(0x305, 0x1001).unwrap(); // mtvec BASE=0x1000, MODE=vectored
+        c.csr_write(0x304, MIP_MEIP).unwrap(); // mie.MEIE
+        c.csr_write(0x300, MSTATUS_MIE).unwrap(); // mstatus.MIE
+
+        c.set_interrupt_pending(MIP_MEIP, true);
+
+        assert_eq!(c.step(), RiscVExit::Continue);
+        assert_eq!(c.pc(), 0x1000 + 4 * cause::INT_M_EXTERNAL);
+        assert_eq!(c.csr_read(0x341).unwrap(), 0x200); // mepc
+        assert_eq!(
+            c.csr_read(0x342).unwrap(),
+            (1u64 << 31) | cause::INT_M_EXTERNAL
+        );
+        assert_eq!(c.csr_read(0x343).unwrap(), 0); // mtval
+        assert_eq!(c.csr_read(0x300).unwrap() & MSTATUS_MIE, 0);
+        assert_eq!(c.instret(), 0);
+
+        c.set_interrupt_pending(MIP_MEIP, false);
+        assert_eq!(c.csr_read(0x344).unwrap() & MIP_MEIP, 0);
     }
 
     #[test]
