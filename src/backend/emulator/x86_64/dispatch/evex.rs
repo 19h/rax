@@ -313,7 +313,7 @@ impl X86_64Vcpu {
             0x15 if evex.pp == 1 && evex.w => insn::simd::evex_unpack(self, ctx, 8, true),
             // VPINSRW and VPEXTRW register-destination form.
             0xC4 if evex.pp == 1 => insn::simd::evex_pinsr(self, ctx, 2),
-            0xC5 if evex.pp == 1 => insn::simd::evex_extract_scalar(self, ctx, 2, 4, false),
+            0xC5 if evex.pp == 1 => insn::simd::evex_extract_word_rm_src(self, ctx),
 
             // ================================================================
             // Broadened EVEX coverage: integer/logical/compare/move/broadcast/shift
