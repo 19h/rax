@@ -10067,6 +10067,34 @@ fn sse4_packusdw() {
 }
 
 #[test]
+fn sse4_ptest_register_and_memory_flags() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
+        0xF0, 0xF0,
+    ]);
+    s[16..32].copy_from_slice(&[
+        0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F,
+        0x0F, 0x0F,
+    ]);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x66, 0x0F, 0x38, 0x17, 0xC1]); // ptest xmm0, xmm1
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x20]); // mov [rdi+0x20], rax
+    code.extend_from_slice(&[0x66, 0x0F, 0xEF, 0xC0]); // pxor xmm0, xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0x76, 0xC0]); // pcmpeqd xmm0, xmm0
+    code.extend_from_slice(&[0x66, 0x0F, 0x38, 0x17, 0x47, 0x10]); // ptest xmm0, [rdi+0x10]
+    code.extend_from_slice(&[0x9C, 0x58]); // pushfq; pop rax
+    code.extend_from_slice(&[0x48, 0x89, 0x47, 0x28]); // mov [rdi+0x28], rax
+    code.push(HLT);
+
+    check_mem("sse4_ptest_register_and_memory_flags", &code, modern_flags_regs(), s, FLAG_MASK);
+}
+
+#[test]
 fn sse4_0f38_memory_source_forms() {
     let a = [
         0x80, 0x01, 0x7F, 0xFF, 0x00, 0x80, 0xFF, 0x7F, 0x34, 0x12, 0xCC, 0xDD, 0x10, 0x20,
@@ -10460,6 +10488,60 @@ fn sse_movq_xmm_to_xmm_zeroes_high() {
         "movq_xmm_xmm",
         &sse_program(&[0xF3, 0x0F, 0x7E, 0xC1]),
         sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn mmx_sse_conversion_memory_forms() {
+    let mut s = [0u8; 64];
+    let packed_i32 = ((5i32 as u32 as u64) << 32) | (-3i32 as u32 as u64);
+    s[0..8].copy_from_slice(&packed_i32.to_le_bytes());
+    s[8..12].copy_from_slice(&1.5f32.to_le_bytes());
+    s[12..16].copy_from_slice(&(-2.75f32).to_le_bytes());
+    s[16..24].copy_from_slice(&2.5f64.to_le_bytes());
+    s[24..32].copy_from_slice(&(-3.75f64).to_le_bytes());
+
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x2A, 0x07]); // cvtpi2ps xmm0, qword [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2A, 0x0F]); // cvtpi2pd xmm1, qword [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x4F, 0x30]); // movdqu [rdi+0x30], xmm1
+
+    prog.extend_from_slice(&[0x0F, 0x2D, 0x47, 0x08]); // cvtps2pi mm0, qword [rdi+8]
+    prog.extend_from_slice(&[0x0F, 0x2C, 0x4F, 0x08]); // cvttps2pi mm1, qword [rdi+8]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2D, 0x57, 0x10]); // cvtpd2pi mm2, [rdi+0x10]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x2C, 0x5F, 0x10]); // cvttpd2pi mm3, [rdi+0x10]
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x07]); // movq [rdi], mm0
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x4F, 0x08]); // movq [rdi+8], mm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x57, 0x10]); // movq [rdi+0x10], mm2
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x5F, 0x18]); // movq [rdi+0x18], mm3
+    prog.push(HLT);
+
+    check_mem("mmx_sse_conversion_memory_forms", &prog, modern_flags_regs(), s, FLAG_MASK);
+}
+
+#[test]
+fn mmx_xmm_movq2dq_movdq2q_forms() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    s[8..16].copy_from_slice(&0x1111_2222_3333_4444u64.to_le_bytes());
+    s[16..24].copy_from_slice(&0x5555_6666_7777_8888u64.to_le_bytes());
+
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x08]); // movdqu xmm1, [rdi+8]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0xD6, 0xD0]); // movq2dq xmm2, mm0
+    prog.extend_from_slice(&[0xF2, 0x0F, 0xD6, 0xD9]); // movdq2q mm3, xmm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x5F, 0x18]); // movq [rdi+0x18], mm3
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x57, 0x20]); // movdqu [rdi+0x20], xmm2
+    prog.push(HLT);
+
+    check_mem(
+        "mmx_xmm_movq2dq_movdq2q_forms",
+        &prog,
+        modern_flags_regs(),
+        s,
+        FLAG_MASK,
     );
 }
 
