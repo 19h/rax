@@ -15106,6 +15106,116 @@ fn xsaveopt_xrstor_roundtrips_mxcsr() {
 }
 
 #[test]
+fn xsaveopt_xrstor_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x91u8.wrapping_add((i as u8).wrapping_mul(3));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x33]); // xsaveopt [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt_xrstor_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsaveopt_xrstor_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x13579bdf2468ace0
+    code.extend_from_slice(&0x1357_9BDF_2468_ACE0u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x0ace13579bdf2468
+    code.extend_from_slice(&0x0ACE_1357_9BDF_2468u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x33]); // xsaveopt [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt_xrstor_avx512_opmask", &code, s);
+}
+
+#[test]
+fn xsaveopt64_xrstor64_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0xE1u8.wrapping_add((i as u8).wrapping_mul(29));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x33]); // xsaveopt64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt64_xrstor64_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsaveopt64_xrstor64_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0xc001d00df00dface
+    code.extend_from_slice(&0xC001_D00D_F00D_FACEu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0xfeedbeefcafebabe
+    code.extend_from_slice(&0xFEED_BEEF_CAFE_BABEu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x33]); // xsaveopt64 [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsaveopt64_xrstor64_avx512_opmask", &code, s);
+}
+
+#[test]
 fn xsavec_writes_compacted_sse_header() {
     let mut s = [0u8; 64];
     s[0..4].copy_from_slice(&0x0000_5F80u32.to_le_bytes());
@@ -15194,6 +15304,116 @@ fn xsavec_xrstor_roundtrips_ymm() {
 }
 
 #[test]
+fn xsavec_xrstors_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0xC3u8.wrapping_add((i as u8).wrapping_mul(7));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x23]); // xsavec [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsavec_xrstors_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsavec_xrstors_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x0f1e2d3c4b5a6978
+    code.extend_from_slice(&0x0F1E_2D3C_4B5A_6978u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x8877665544332211
+    code.extend_from_slice(&0x8877_6655_4433_2211u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x23]); // xsavec [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsavec_xrstors_avx512_opmask", &code, s);
+}
+
+#[test]
+fn xsavec64_xrstors64_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0xAFu8.wrapping_add((i as u8).wrapping_mul(31));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x23]); // xsavec64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsavec64_xrstors64_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsavec64_xrstors64_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x6a5b4c3d2e1f8079
+    code.extend_from_slice(&0x6A5B_4C3D_2E1F_8079u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x1122eeff3344ccdd
+    code.extend_from_slice(&0x1122_EEFF_3344_CCDDu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x23]); // xsavec64 [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsavec64_xrstors64_avx512_opmask", &code, s);
+}
+
+#[test]
 fn xsaves_xrstors_roundtrips_mxcsr() {
     let mut s = [0u8; 64];
     s[0..4].copy_from_slice(&0x0000_7F80u32.to_le_bytes());
@@ -15236,6 +15456,226 @@ fn xsaves_xrstors_roundtrips_ymm() {
     code.push(HLT);
 
     check_avx_mem("xsaves_xrstors_ymm", &code, s);
+}
+
+#[test]
+fn xsaves_xrstors_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x5Bu8.wrapping_add((i as u8).wrapping_mul(19));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x2B]); // xsaves [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsaves_xrstors_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsaves_xrstors_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0xa1b2c3d4e5f60718
+    code.extend_from_slice(&0xA1B2_C3D4_E5F6_0718u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x1020304050607080
+    code.extend_from_slice(&0x1020_3040_5060_7080u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x2B]); // xsaves [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xC7, 0x1B]); // xrstors [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsaves_xrstors_avx512_opmask", &code, s);
+}
+
+#[test]
+fn xsaves64_xrstors64_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x73u8.wrapping_add((i as u8).wrapping_mul(37));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x2B]); // xsaves64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsaves64_xrstors64_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsaves64_xrstors64_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x88442211ddccbbaa
+    code.extend_from_slice(&0x8844_2211_DDCC_BBAAu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x55aa996600ff33cc
+    code.extend_from_slice(&0x55AA_9966_00FF_33CCu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x2B]); // xsaves64 [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xC7, 0x1B]); // xrstors64 [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsaves64_xrstors64_avx512_opmask", &code, s);
+}
+
+#[test]
+fn xsave_xrstor_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x37u8.wrapping_add((i as u8).wrapping_mul(13));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x23]); // xsave [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsave_xrstor_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsave_xrstor_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x0123456789abcdef
+    code.extend_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0xfedcba9876543210
+    code.extend_from_slice(&0xFEDC_BA98_7654_3210u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x23]); // xsave [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x0F, 0xAE, 0x2B]); // xrstor [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsave_xrstor_avx512_opmask", &code, s);
+}
+
+#[test]
+fn xsave64_xrstor64_roundtrips_avx512_zmm() {
+    let mut s = [0u8; 64];
+    for (i, byte) in s.iter_mut().enumerate() {
+        *byte = 0x2Du8.wrapping_add((i as u8).wrapping_mul(23));
+    }
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x07]); // vmovdqu64 zmm0, [rdi]
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x23]); // xsave64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFD, 0x48, 0xEF, 0xC0]); // vpxorq zmm0, zmm0, zmm0
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x07]); // vmovdqu64 [rdi], zmm0
+    code.push(HLT);
+
+    check_avx_mem("xsave64_xrstor64_avx512_zmm", &code, s);
+}
+
+#[test]
+fn xsave64_xrstor64_roundtrips_avx512_opmask() {
+    let s = [0u8; 64];
+
+    let mut code = avx512_enable_prologue();
+    code.extend_from_slice(&load_rdi_data());
+    code.extend_from_slice(&[0x48, 0xB8]); // mov rax, 0x3141592653589793
+    code.extend_from_slice(&0x3141_5926_5358_9793u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0x48, 0xBA]); // mov rdx, 0x2718281828459045
+    code.extend_from_slice(&0x2718_2818_2845_9045u64.to_le_bytes());
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD2]); // kmovq k2, rdx
+    code.extend_from_slice(&[0xBB, 0x00, 0x10, 0x03, 0x00]); // mov ebx, DATA_ADDR+0x1000
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x23]); // xsave64 [rbx]
+    code.extend_from_slice(&[0x31, 0xC0]); // xor eax, eax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xC8]); // kmovq k1, rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x92, 0xD0]); // kmovq k2, rax
+    code.extend_from_slice(&[0xB8, 0xE7, 0x00, 0x00, 0x00]); // mov eax, x87|SSE|YMM|opmask|ZMM state
+    code.extend_from_slice(&[0x31, 0xD2]); // xor edx, edx
+    code.extend_from_slice(&[0x48, 0x0F, 0xAE, 0x2B]); // xrstor64 [rbx]
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xC1]); // kmovq rax, k1
+    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+    code.extend_from_slice(&[0xC4, 0xE1, 0xFB, 0x93, 0xD2]); // kmovq rdx, k2
+    code.extend_from_slice(&[0x48, 0x89, 0x57, 0x08]); // mov [rdi+8], rdx
+    code.push(HLT);
+
+    check_avx_mem("xsave64_xrstor64_avx512_opmask", &code, s);
 }
 
 fn avx_enable_prologue() -> Vec<u8> {
