@@ -36343,6 +36343,66 @@ fn avx2_ymm_shuffle_immediate_memory_forms() {
 }
 
 #[test]
+fn avx2_ymm_shuffle_immediate_indexed_memory_forms() {
+    fn poison_rdi_for_addr32(code: &mut Vec<u8>) {
+        code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+        code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    }
+
+    fn check_indexed_shuffle(
+        label: &str,
+        addr32_2: &[u8],
+        addr32_3: &[u8],
+        extended_2: &[u8],
+        extended_3: &[u8],
+    ) {
+        let s = avx_byte_pair_scratch();
+        let mut code = avx_start();
+        poison_rdi_for_addr32(&mut code);
+        code.extend_from_slice(addr32_2);
+        code.extend_from_slice(addr32_3);
+        code.extend_from_slice(&load_rdi_data());
+        avx2_store_ymm23_and_hlt(&mut code);
+        check_mem(
+            &format!("{}_addr32_indexed", label),
+            &code,
+            avx_indexed_addr32_regs(),
+            s,
+            0,
+        );
+
+        let s = avx_byte_pair_scratch();
+        let mut code = avx_start();
+        code.extend_from_slice(extended_2);
+        code.extend_from_slice(extended_3);
+        avx2_store_ymm23_and_hlt(&mut code);
+        check_mem(
+            &format!("{}_extended_indexed", label),
+            &code,
+            avx_indexed_extended_regs(),
+            s,
+            0,
+        );
+    }
+
+    check_indexed_shuffle(
+        "avx2_ymm_vpshufd_vpshufhw_memory",
+        &[0x67, 0xC5, 0xFD, 0x70, 0x14, 0x77, 0x4E], // vpshufd ymm2, [edi+esi*2], 0x4e
+        &[0x67, 0xC5, 0xFE, 0x70, 0x5C, 0x77, 0x20, 0xB1], // vpshufhw ymm3, [edi+esi*2+32], 0xb1
+        &[0xC4, 0x81, 0x7D, 0x70, 0x14, 0x5A, 0x4E], // vpshufd ymm2, [r10+r11*2], 0x4e
+        &[0xC4, 0x81, 0x7E, 0x70, 0x5C, 0x5A, 0x20, 0xB1], // vpshufhw ymm3, [r10+r11*2+32], 0xb1
+    );
+
+    check_indexed_shuffle(
+        "avx2_ymm_vpshuflw_vpshufhw_memory",
+        &[0x67, 0xC5, 0xFF, 0x70, 0x14, 0x77, 0x1B], // vpshuflw ymm2, [edi+esi*2], 0x1b
+        &[0x67, 0xC5, 0xFE, 0x70, 0x5C, 0x77, 0x20, 0x4E], // vpshufhw ymm3, [edi+esi*2+32], 0x4e
+        &[0xC4, 0x81, 0x7F, 0x70, 0x14, 0x5A, 0x1B], // vpshuflw ymm2, [r10+r11*2], 0x1b
+        &[0xC4, 0x81, 0x7E, 0x70, 0x5C, 0x5A, 0x20, 0x4E], // vpshufhw ymm3, [r10+r11*2+32], 0x4e
+    );
+}
+
+#[test]
 fn avx2_ymm_xmm_count_word_and_qword_shifts() {
     let mut s = [0u8; 64];
     for i in 0..16 {
