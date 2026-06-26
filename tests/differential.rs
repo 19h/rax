@@ -140,6 +140,13 @@ fn base_sregs() -> SystemRegisters {
     sregs
 }
 
+fn compat32_sregs() -> SystemRegisters {
+    let mut sregs = base_sregs();
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    sregs
+}
+
 /// Write the page tables + scratch page into a `Bytes` guest memory.
 fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
     let null_descriptor = [0u8; 8];
@@ -213,10 +220,11 @@ fn install_tables_mmap(write: &mut dyn FnMut(u64, &[u8])) {
 // Interpreter backend
 // ---------------------------------------------------------------------------
 
-fn run_interpreter(
+fn run_interpreter_with_sregs(
     code: &[u8],
     init: &Registers,
     scratch_init: &[u8; 64],
+    sregs: &SystemRegisters,
 ) -> Result<FinalState, String> {
     let regions = vec![(GuestAddress(0), MEM_SIZE)];
     let mem =
@@ -242,7 +250,7 @@ fn run_interpreter(
     regs.rflags |= 0x2; // reserved bit 1 always set
     vcpu.set_regs(&regs)
         .map_err(|e| format!("set_regs: {e:?}"))?;
-    vcpu.set_sregs(&base_sregs())
+    vcpu.set_sregs(sregs)
         .map_err(|e| format!("set_sregs: {e:?}"))?;
 
     // Run to HLT, counting individual instructions via step().
@@ -340,10 +348,11 @@ impl Drop for KvmMem {
 
 /// Returns Ok(None) if KVM is unavailable (so callers can skip gracefully),
 /// Ok(Some(state)) on success, Err on a genuine run failure.
-fn run_kvm(
+fn run_kvm_with_sregs(
     code: &[u8],
     init: &Registers,
     scratch_init: &[u8; 64],
+    our_sregs: &SystemRegisters,
 ) -> Result<Option<FinalState>, String> {
     use kvm_bindings::{KVM_MAX_CPUID_ENTRIES, kvm_segment, kvm_userspace_memory_region};
     use kvm_ioctls::Kvm;
@@ -390,8 +399,7 @@ fn run_kvm(
         return Ok(None);
     }
 
-    // --- sregs: long mode w/ paging, flat segments ---
-    let our_sregs = base_sregs();
+    // --- sregs: caller-selected x86 mode with shared paging + flat segments ---
     let mut sregs = vcpu
         .get_sregs()
         .map_err(|e| format!("kvm get_sregs: {e:?}"))?;
@@ -688,8 +696,18 @@ fn run_both(
     init: Registers,
     scratch_init: [u8; 64],
 ) -> Option<(FinalState, FinalState)> {
+    let sregs = base_sregs();
+    run_both_with_sregs(code, init, scratch_init, &sregs)
+}
+
+fn run_both_with_sregs(
+    code: &[u8],
+    init: Registers,
+    scratch_init: [u8; 64],
+    sregs: &SystemRegisters,
+) -> Option<(FinalState, FinalState)> {
     // KVM first: if unavailable we skip without even bothering the interpreter.
-    let kvm = match run_kvm(code, &init, &scratch_init) {
+    let kvm = match run_kvm_with_sregs(code, &init, &scratch_init, sregs) {
         Ok(Some(s)) => s,
         Ok(None) => {
             eprintln!("[skip] /dev/kvm unavailable or undrivable; skipping differential case");
@@ -697,7 +715,7 @@ fn run_both(
         }
         Err(e) => panic!("KVM backend failure: {e}"),
     };
-    let interp = match run_interpreter(code, &init, &scratch_init) {
+    let interp = match run_interpreter_with_sregs(code, &init, &scratch_init, sregs) {
         Ok(s) => s,
         Err(e) => panic!("interpreter backend failure: {e}"),
     };
@@ -735,10 +753,34 @@ fn check(label: &str, code: &[u8], init: Registers) {
     assert_match(label, code, &interp, &kvm, CompareOpts::default());
 }
 
+fn check_with_sregs(label: &str, code: &[u8], init: Registers, sregs: &SystemRegisters) {
+    let Some((interp, kvm)) = run_both_with_sregs(code, init, zero_scratch(), sregs) else {
+        return;
+    };
+    assert_match(label, code, &interp, &kvm, CompareOpts::default());
+}
+
 /// Run a case comparing GPRs + only the flag bits in `flag_mask` (others are
 /// architecturally undefined for this instruction and must not be compared).
 fn check_flags_masked(label: &str, code: &[u8], init: Registers, flag_mask: u64) {
     let Some((interp, kvm)) = run_both(code, init, zero_scratch()) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+}
+
+fn check_flags_masked_with_sregs(
+    label: &str,
+    code: &[u8],
+    init: Registers,
+    flag_mask: u64,
+    sregs: &SystemRegisters,
+) {
+    let Some((interp, kvm)) = run_both_with_sregs(code, init, zero_scratch(), sregs) else {
         return;
     };
     let opts = CompareOpts {
@@ -9482,15 +9524,78 @@ fn shrd_cl_31() {
 
 // ---------------------------------------------------------------------------
 // BCD adjust instructions (AAA/AAS/AAD/AAM/DAA/DAS).
-//
-// NOTE: these opcodes (0x37, 0x3F, 0x27, 0x2F, 0xD4, 0xD5) are INVALID in
-// 64-bit mode and raise #UD on real hardware and under KVM. The differential
-// harness only sets up 64-bit long mode, so these cannot be exercised here and
-// are intentionally NOT added as runnable cases (they would only "diverge"
-// because both backends should #UD, which the harness models as an abnormal
-// exit rather than a comparable architectural state). This block documents the
-// deliberate omission required by the harness's 64-bit-only setup.
 // ---------------------------------------------------------------------------
+
+const DAA_DAS_DEFINED: u64 =
+    flags::bits::CF | flags::bits::PF | flags::bits::AF | flags::bits::ZF | flags::bits::SF;
+const AAA_AAS_DEFINED: u64 = flags::bits::CF | flags::bits::AF;
+const AAM_AAD_DEFINED: u64 = flags::bits::PF | flags::bits::ZF | flags::bits::SF;
+
+#[test]
+fn bcd_adjust_compat32_forms() {
+    let sregs = compat32_sregs();
+
+    let mut r = regs();
+    r.rax = 0x9B;
+    check_flags_masked_with_sregs(
+        "daa_compat32_adjusts_both_digits",
+        &with_hlt(vec![0x27]),
+        r,
+        DAA_DAS_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x00;
+    r.rflags = flags::bits::CF | flags::bits::AF;
+    check_flags_masked_with_sregs(
+        "das_compat32_adjusts_with_borrow",
+        &with_hlt(vec![0x2F]),
+        r,
+        DAA_DAS_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x010A;
+    check_flags_masked_with_sregs(
+        "aaa_compat32_adjusts_unpacked_digit",
+        &with_hlt(vec![0x37]),
+        r,
+        AAA_AAS_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x020A;
+    check_flags_masked_with_sregs(
+        "aas_compat32_adjusts_unpacked_digit",
+        &with_hlt(vec![0x3F]),
+        r,
+        AAA_AAS_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x2A;
+    check_flags_masked_with_sregs(
+        "aam_compat32_base10",
+        &with_hlt(vec![0xD4, 0x0A]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+
+    let mut r = regs();
+    r.rax = 0x0402;
+    check_flags_masked_with_sregs(
+        "aad_compat32_base10",
+        &with_hlt(vec![0xD5, 0x0A]),
+        r,
+        AAM_AAD_DEFINED,
+        &sregs,
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Conditional branch (Jcc) across the flag matrix. Each program does
@@ -21286,6 +21391,126 @@ fn stack_push_pop_16bit_extended_register_opcode_forms() {
             0x66, 0x41, 0x5F, // pop r15w
         ]),
         r,
+    );
+}
+
+#[test]
+fn stack_pushad_compat32_stack_layout() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rax = 0x1111_1111;
+    r.rcx = 0x2222_2222;
+    r.rdx = 0x3333_3333;
+    r.rbx = 0x4444_4444;
+    r.rsp = STACK_ADDR + 0x80;
+    r.rbp = 0x5555_5555;
+    r.rsi = 0x6666_6666;
+    r.rdi = 0x7777_7777;
+
+    let mut expected = zero_scratch();
+    let saved = [
+        0x7777_7777u32,
+        0x6666_6666,
+        0x5555_5555,
+        r.rsp as u32,
+        0x4444_4444,
+        0x3333_3333,
+        0x2222_2222,
+        0x1111_1111,
+    ];
+    for (i, value) in saved.iter().enumerate() {
+        expected[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    let mut code = vec![
+        0x60, // pushad
+        0x89, 0xE6, // mov esi, esp
+        0xBF, // mov edi, DATA_ADDR
+    ];
+    code.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0xB9, 0x08, 0x00, 0x00, 0x00, // mov ecx, 8
+        0xF3, 0xA5, // rep movsd
+        HLT,
+    ]);
+
+    let Some((interp, kvm)) = run_both_with_sregs(&code, r, zero_scratch(), &sregs) else {
+        return;
+    };
+    let opts = CompareOpts {
+        scratch: true,
+        ..CompareOpts::default()
+    };
+    assert_match("stack_pushad_compat32_stack_layout", &code, &interp, &kvm, opts);
+    assert_eq!(
+        interp.scratch, expected,
+        "expected interpreter scratch for stack_pushad_compat32_stack_layout"
+    );
+    assert_eq!(
+        kvm.scratch, expected,
+        "expected KVM scratch for stack_pushad_compat32_stack_layout"
+    );
+}
+
+#[test]
+fn stack_pushad_popad_compat32_roundtrip() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rax = 0x1111_1111;
+    r.rcx = 0x2222_2222;
+    r.rdx = 0x3333_3333;
+    r.rbx = 0x4444_4444;
+    r.rsp = STACK_ADDR + 0x100;
+    r.rbp = 0x5555_5555;
+    r.rsi = 0x6666_6666;
+    r.rdi = 0x7777_7777;
+
+    check_with_sregs(
+        "stack_pushad_popad_compat32_roundtrip",
+        &with_hlt(vec![
+            0x60, // pushad
+            0xB8, 0xEF, 0xBE, 0xAD, 0xDE, // mov eax, 0xdeadbeef
+            0xB9, 0x10, 0x32, 0x54, 0x76, // mov ecx, 0x76543210
+            0xBA, 0xFE, 0xCA, 0xAD, 0x0B, // mov edx, 0x0badcafe
+            0xBB, 0x78, 0x56, 0x34, 0x12, // mov ebx, 0x12345678
+            0xBD, 0x04, 0x03, 0x02, 0x01, // mov ebp, 0x01020304
+            0xBE, 0x08, 0x07, 0x06, 0x05, // mov esi, 0x05060708
+            0xBF, 0x0C, 0x0B, 0x0A, 0x09, // mov edi, 0x090a0b0c
+            0x61, // popad
+        ]),
+        r,
+        &sregs,
+    );
+}
+
+#[test]
+fn stack_pusha_popa_compat32_16bit_override_roundtrip() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rax = 0xAAAA_0000_0000_1111;
+    r.rcx = 0xBBBB_0000_0000_2222;
+    r.rdx = 0xCCCC_0000_0000_3333;
+    r.rbx = 0xDDDD_0000_0000_4444;
+    r.rsp = STACK_ADDR + 0x1234;
+    r.rbp = 0xEEEE_0000_0000_5555;
+    r.rsi = 0xFFFF_0000_0000_6666;
+    r.rdi = 0x9999_0000_0000_7777;
+
+    check_with_sregs(
+        "stack_pusha_popa_compat32_16bit_override_roundtrip",
+        &with_hlt(vec![
+            0x66, 0x60, // pusha
+            0x66, 0xB8, 0xEF, 0xBE, // mov ax, 0xbeef
+            0x66, 0xB9, 0x10, 0x32, // mov cx, 0x3210
+            0x66, 0xBA, 0xFE, 0xCA, // mov dx, 0xcafe
+            0x66, 0xBB, 0x78, 0x56, // mov bx, 0x5678
+            0x66, 0xBD, 0x04, 0x03, // mov bp, 0x0304
+            0x66, 0xBE, 0x08, 0x07, // mov si, 0x0708
+            0x66, 0xBF, 0x0C, 0x0B, // mov di, 0x0b0c
+            0x66, 0x61, // popa
+        ]),
+        r,
+        &sregs,
     );
 }
 
