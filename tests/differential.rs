@@ -39312,14 +39312,14 @@ fn avx_fma_scalar_non_add_sd_memory_order_forms() {
     }
 }
 
-fn avx_fma_extended_regs() -> Registers {
+fn avx_indexed_extended_regs() -> Registers {
     let mut r = regs();
     r.r10 = DATA_ADDR - 8;
     r.r11 = 4;
     r
 }
 
-fn avx_fma_addr32_regs() -> Registers {
+fn avx_indexed_addr32_regs() -> Registers {
     let mut r = regs();
     r.rsi = 0xFFFF_0000_0000_0000 | 4;
     r
@@ -39341,7 +39341,7 @@ fn avx_fma_packed_extended_memory_source_forms() {
     check_mem(
         "avx_fma_packed_vfmadd132ps_extended_memory",
         &code,
-        avx_fma_extended_regs(),
+        avx_indexed_extended_regs(),
         s,
         0,
     );
@@ -39360,7 +39360,7 @@ fn avx_fma_packed_extended_memory_source_forms() {
     check_mem(
         "avx_fma_packed_vfnmadd231pd_extended_memory",
         &code,
-        avx_fma_extended_regs(),
+        avx_indexed_extended_regs(),
         s,
         0,
     );
@@ -39385,7 +39385,7 @@ fn avx_fma_packed_addr32_memory_source_forms() {
     check_mem(
         "avx_fma_packed_vfmadd132ps_addr32_memory",
         &code,
-        avx_fma_addr32_regs(),
+        avx_indexed_addr32_regs(),
         s,
         0,
     );
@@ -39407,7 +39407,7 @@ fn avx_fma_packed_addr32_memory_source_forms() {
     check_mem(
         "avx_fma_packed_vfnmadd231pd_addr32_memory",
         &code,
-        avx_fma_addr32_regs(),
+        avx_indexed_addr32_regs(),
         s,
         0,
     );
@@ -39463,7 +39463,7 @@ fn avx_fma_packed_addsub_extended_memory_order_forms() {
         check_mem(
             label,
             &avx_fma_packed_indexed_memory_program(0xFC, &insn, false),
-            avx_fma_extended_regs(),
+            avx_indexed_extended_regs(),
             avx_packed_fma_ps_scratch(),
             0,
         );
@@ -39486,7 +39486,7 @@ fn avx_fma_packed_addsub_extended_memory_order_forms() {
         check_mem(
             label,
             &avx_fma_packed_indexed_memory_program(0xFD, &insn, false),
-            avx_fma_extended_regs(),
+            avx_indexed_extended_regs(),
             avx_packed_fma_pd_scratch(),
             0,
         );
@@ -39512,7 +39512,7 @@ fn avx_fma_packed_addsub_addr32_memory_order_forms() {
         check_mem(
             label,
             &avx_fma_packed_indexed_memory_program(0xFC, &insn, true),
-            avx_fma_addr32_regs(),
+            avx_indexed_addr32_regs(),
             avx_packed_fma_ps_scratch(),
             0,
         );
@@ -39535,7 +39535,7 @@ fn avx_fma_packed_addsub_addr32_memory_order_forms() {
         check_mem(
             label,
             &avx_fma_packed_indexed_memory_program(0xFD, &insn, true),
-            avx_fma_addr32_regs(),
+            avx_indexed_addr32_regs(),
             avx_packed_fma_pd_scratch(),
             0,
         );
@@ -39553,7 +39553,7 @@ fn avx_fma_scalar_extended_memory_source_forms() {
     check_mem(
         "avx_fma_scalar_vfmsub213ss_extended_memory",
         &code,
-        avx_fma_extended_regs(),
+        avx_indexed_extended_regs(),
         avx_scalar_fma_ss_scratch(),
         0,
     );
@@ -39567,7 +39567,7 @@ fn avx_fma_scalar_extended_memory_source_forms() {
     check_mem(
         "avx_fma_scalar_vfnmsub132sd_extended_memory",
         &code,
-        avx_fma_extended_regs(),
+        avx_indexed_extended_regs(),
         avx_scalar_fma_sd_scratch(),
         0,
     );
@@ -39587,7 +39587,7 @@ fn avx_fma_scalar_addr32_memory_source_forms() {
     check_mem(
         "avx_fma_scalar_vfmsub213ss_addr32_memory",
         &code,
-        avx_fma_addr32_regs(),
+        avx_indexed_addr32_regs(),
         avx_scalar_fma_ss_scratch(),
         0,
     );
@@ -39604,7 +39604,7 @@ fn avx_fma_scalar_addr32_memory_source_forms() {
     check_mem(
         "avx_fma_scalar_vfnmsub132sd_addr32_memory",
         &code,
-        avx_fma_addr32_regs(),
+        avx_indexed_addr32_regs(),
         avx_scalar_fma_sd_scratch(),
         0,
     );
@@ -39613,6 +39613,247 @@ fn avx_fma_scalar_addr32_memory_source_forms() {
 // ===========================================================================
 // EXPANDED COVERAGE PART 26: VEX add-sub and horizontal FP forms.
 // ===========================================================================
+
+fn avx_indexed_fp_memory_program(vex_mov: u8, insn: &[u8], addr32: bool) -> Vec<u8> {
+    let mut code = avx_start();
+    code.extend_from_slice(&[0xC5, vex_mov, 0x10, 0x07]); // vmovup{s,d} xmm/ymm0, [rdi]
+    if addr32 {
+        code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR-8
+        code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR - 8)).to_le_bytes());
+    }
+    code.extend_from_slice(insn);
+    if addr32 {
+        code.extend_from_slice(&load_rdi_data());
+    }
+    code.extend_from_slice(&[0xC5, vex_mov, 0x11, 0x17]); // vmovup{s,d} [rdi], xmm/ymm2
+    code.push(HLT);
+    code
+}
+
+fn avx_addsub_horizontal_ps_scratch() -> [u8; 64] {
+    avx_f32_pair_scratch(
+        [1.0, -2.0, 3.5, -4.5, 5.25, -6.75, 7.0, -8.0],
+        [0.5, 1.25, -2.5, 3.75, -4.25, 5.5, -6.5, 7.75],
+    )
+}
+
+fn avx_addsub_horizontal_pd_scratch() -> [u8; 64] {
+    avx_f64_pair_scratch(
+        [1.5, -2.25, 3.75, -4.5],
+        [0.25, 1.75, -2.5, 3.125],
+    )
+}
+
+fn check_avx_indexed_fp_memory(
+    label: &str,
+    vex_mov: u8,
+    insn: &[u8],
+    addr32: bool,
+    scratch: [u8; 64],
+) {
+    let r = if addr32 {
+        avx_indexed_addr32_regs()
+    } else {
+        avx_indexed_extended_regs()
+    };
+    check_mem(
+        label,
+        &avx_indexed_fp_memory_program(vex_mov, insn, addr32),
+        r,
+        scratch,
+        0,
+    );
+}
+
+#[test]
+fn avx_addsub_horizontal_extended_memory_forms() {
+    for (label, insn) in [
+        (
+            "avx_ymm_vaddsubps_extended_memory",
+            [0xC4, 0x81, 0x7F, 0xD0, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_ymm_vhaddps_extended_memory",
+            [0xC4, 0x81, 0x7F, 0x7C, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_ymm_vhsubps_extended_memory",
+            [0xC4, 0x81, 0x7F, 0x7D, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xFC,
+            &insn,
+            false,
+            avx_addsub_horizontal_ps_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_ymm_vaddsubpd_extended_memory",
+            [0xC4, 0x81, 0x7D, 0xD0, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_ymm_vhaddpd_extended_memory",
+            [0xC4, 0x81, 0x7D, 0x7C, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_ymm_vhsubpd_extended_memory",
+            [0xC4, 0x81, 0x7D, 0x7D, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xFD,
+            &insn,
+            false,
+            avx_addsub_horizontal_pd_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_xmm_vaddsubps_extended_memory",
+            [0xC4, 0x81, 0x7B, 0xD0, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_xmm_vhaddps_extended_memory",
+            [0xC4, 0x81, 0x7B, 0x7C, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_xmm_vhsubps_extended_memory",
+            [0xC4, 0x81, 0x7B, 0x7D, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xF8,
+            &insn,
+            false,
+            avx_addsub_horizontal_ps_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_xmm_vaddsubpd_extended_memory",
+            [0xC4, 0x81, 0x79, 0xD0, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_xmm_vhaddpd_extended_memory",
+            [0xC4, 0x81, 0x79, 0x7C, 0x54, 0x5A, 0x20],
+        ),
+        (
+            "avx_xmm_vhsubpd_extended_memory",
+            [0xC4, 0x81, 0x79, 0x7D, 0x54, 0x5A, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xF9,
+            &insn,
+            false,
+            avx_addsub_horizontal_pd_scratch(),
+        );
+    }
+}
+
+#[test]
+fn avx_addsub_horizontal_addr32_memory_forms() {
+    for (label, insn) in [
+        (
+            "avx_ymm_vaddsubps_addr32_memory",
+            [0x67, 0xC5, 0xFF, 0xD0, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_ymm_vhaddps_addr32_memory",
+            [0x67, 0xC5, 0xFF, 0x7C, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_ymm_vhsubps_addr32_memory",
+            [0x67, 0xC5, 0xFF, 0x7D, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xFC,
+            &insn,
+            true,
+            avx_addsub_horizontal_ps_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_ymm_vaddsubpd_addr32_memory",
+            [0x67, 0xC5, 0xFD, 0xD0, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_ymm_vhaddpd_addr32_memory",
+            [0x67, 0xC5, 0xFD, 0x7C, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_ymm_vhsubpd_addr32_memory",
+            [0x67, 0xC5, 0xFD, 0x7D, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xFD,
+            &insn,
+            true,
+            avx_addsub_horizontal_pd_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_xmm_vaddsubps_addr32_memory",
+            [0x67, 0xC5, 0xFB, 0xD0, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_xmm_vhaddps_addr32_memory",
+            [0x67, 0xC5, 0xFB, 0x7C, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_xmm_vhsubps_addr32_memory",
+            [0x67, 0xC5, 0xFB, 0x7D, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xF8,
+            &insn,
+            true,
+            avx_addsub_horizontal_ps_scratch(),
+        );
+    }
+
+    for (label, insn) in [
+        (
+            "avx_xmm_vaddsubpd_addr32_memory",
+            [0x67, 0xC5, 0xF9, 0xD0, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_xmm_vhaddpd_addr32_memory",
+            [0x67, 0xC5, 0xF9, 0x7C, 0x54, 0x77, 0x20],
+        ),
+        (
+            "avx_xmm_vhsubpd_addr32_memory",
+            [0x67, 0xC5, 0xF9, 0x7D, 0x54, 0x77, 0x20],
+        ),
+    ] {
+        check_avx_indexed_fp_memory(
+            label,
+            0xF9,
+            &insn,
+            true,
+            avx_addsub_horizontal_pd_scratch(),
+        );
+    }
+}
 
 #[test]
 fn avx_ymm_addsub_and_hadd_ps_memory_forms() {
