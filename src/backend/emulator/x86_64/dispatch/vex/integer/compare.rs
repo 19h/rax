@@ -319,7 +319,7 @@ impl X86_64Vcpu {
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
         let mut and_result = (src1_lo & src2_lo) | (src1_hi & src2_hi);
-        let mut andn_result = (src1_lo & !src2_lo) | (src1_hi & !src2_hi);
+        let mut andn_result = (src2_lo & !src1_lo) | (src2_hi & !src1_hi);
 
         if vex_l == 1 {
             let (src2_hi2, src2_hi3) = if is_memory {
@@ -333,7 +333,7 @@ impl X86_64Vcpu {
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
             and_result |= (src1_hi2 & src2_hi2) | (src1_hi3 & src2_hi3);
-            andn_result |= (src1_hi2 & !src2_hi2) | (src1_hi3 & !src2_hi3);
+            andn_result |= (src2_hi2 & !src1_hi2) | (src2_hi3 & !src1_hi3);
         }
 
         // Clear lazy flags before setting flags directly
