@@ -6,6 +6,15 @@ use crate::error::{Error, Result};
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::simd_native;
 
+#[inline(always)]
+fn implicit_rdi_addr(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u64 {
+    if ctx.address_size_override && vcpu.sregs.cs.l {
+        vcpu.regs.rdi & 0xFFFF_FFFF
+    } else {
+        vcpu.regs.rdi
+    }
+}
+
 // =============================================================================
 // Packed Move Instructions (MOVUPS, MOVAPS, MOVSS, MOVSD)
 // =============================================================================
@@ -1813,7 +1822,7 @@ pub fn maskmovdqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 
     let xmm_src = reg as usize;
     let xmm_mask = rm as usize;
-    let addr = vcpu.regs.rdi;
+    let addr = implicit_rdi_addr(vcpu, ctx);
 
     let src_lo = vcpu.regs.xmm[xmm_src][0];
     let src_hi = vcpu.regs.xmm[xmm_src][1];
@@ -1850,7 +1859,7 @@ fn maskmovq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
     let mm_src = (reg & 0x7) as usize;
     let mm_mask = (rm & 0x7) as usize;
-    let addr = vcpu.regs.rdi;
+    let addr = implicit_rdi_addr(vcpu, ctx);
 
     let src = vcpu.regs.mm[mm_src];
     let mask = vcpu.regs.mm[mm_mask];

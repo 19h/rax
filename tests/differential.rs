@@ -13500,6 +13500,32 @@ fn movdir_addr32_forms() {
 }
 
 #[test]
+fn movdir_addr32_indexed_forms() {
+    let mut s = [0u8; 64];
+    for (i, b) in s.iter_mut().enumerate() {
+        *b = (0x31u8).wrapping_add((i as u8).wrapping_mul(7));
+    }
+
+    let mut r = modern_flags_regs();
+    r.r8 = 0xFFFF_0000_0000_0000 | DATA_ADDR;
+    r.r9 = 0x8877_6655_4433_2211;
+    r.rbx = 0xA5A5_5A5A;
+    r.rdi = 0xFFFF_0000_0000_0000 | (DATA_ADDR - 16);
+    r.rsi = 0xFFFF_0000_0000_0000 | 8;
+    check_mem(
+        "movdir_addr32_indexed_forms",
+        &with_hlt(vec![
+            0x67, 0x66, 0x44, 0x0F, 0x38, 0xF8, 0x44, 0x77, 0x20, // movdir64b r8, [edi+esi*2+0x20]
+            0x67, 0x0F, 0x38, 0xF9, 0x5C, 0x77, 0x04, // movdiri dword [edi+esi*2+4], ebx
+            0x67, 0x4C, 0x0F, 0x38, 0xF9, 0x4C, 0x77, 0x08, // movdiri qword [edi+esi*2+8], r9
+        ]),
+        r,
+        s,
+        FLAG_MASK,
+    );
+}
+
+#[test]
 fn movdir_extended_indexed_forms() {
     let mut s = [0u8; 64];
     for (i, b) in s.iter_mut().enumerate() {
@@ -23172,6 +23198,30 @@ fn sse_maskmovdqu_extended_register_sources() {
     check_mem("maskmovdqu_extended_register_sources", &code, regs(), s, 0);
 }
 
+#[test]
+fn sse_maskmovdqu_addr32_destination() {
+    let mut s = [0u8; 64];
+    s[0..16].copy_from_slice(&[
+        0xF1, 0xE2, 0xD3, 0xC4, 0xB5, 0xA6, 0x97, 0x88, 0x79, 0x6A, 0x5B, 0x4C, 0x3D, 0x2E,
+        0x1F, 0x10,
+    ]);
+    s[16..32].copy_from_slice(&[
+        0x80, 0x00, 0x80, 0x80, 0x00, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00, 0x80, 0x00, 0x80,
+        0x80, 0x00,
+    ]);
+    s[32..48].fill(0xCC);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    code.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR+0x20
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR + 0x20)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x66, 0x0F, 0xF7, 0xC1]); // maskmovdqu xmm0, xmm1
+    code.push(HLT);
+
+    check_mem("maskmovdqu_addr32_destination", &code, regs(), s, 0);
+}
+
 // ===========================================================================
 // EXPANDED COVERAGE PART 7: packed move forms and MMX-only aliases.
 //
@@ -23468,6 +23518,24 @@ fn mmx_maskmovq_selected_bytes() {
     code.extend_from_slice(&[0x0F, 0xF7, 0xC1]); // maskmovq mm0, mm1
     code.push(HLT);
     check_mem("maskmovq", &code, regs(), s, 0);
+}
+
+#[test]
+fn mmx_maskmovq_addr32_destination() {
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&[0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6, 0x17, 0x28]);
+    s[8..16].copy_from_slice(&[0x00, 0x80, 0x80, 0x00, 0x80, 0x00, 0x80, 0x80]);
+    s[32..40].fill(0x99);
+
+    let mut code = load_rdi_data();
+    code.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    code.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]); // movq mm1, [rdi+8]
+    code.extend_from_slice(&[0x48, 0xBF]); // movabs rdi, high-poisoned DATA_ADDR+0x20
+    code.extend_from_slice(&(0xFFFF_0000_0000_0000u64 | (DATA_ADDR + 0x20)).to_le_bytes());
+    code.extend_from_slice(&[0x67, 0x0F, 0xF7, 0xC1]); // maskmovq mm0, mm1
+    code.push(HLT);
+
+    check_mem("maskmovq_addr32_destination", &code, regs(), s, 0);
 }
 
 #[test]
