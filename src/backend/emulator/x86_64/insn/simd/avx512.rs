@@ -3445,6 +3445,8 @@ pub fn evex_packed_fp_convert_store(
 #[derive(Clone, Copy)]
 pub enum FpUnaryMathOp {
     GetExp,
+    Rcp14,
+    Rsqrt14,
     Rcp,
     Rsqrt,
     Exp2,
@@ -3527,6 +3529,8 @@ fn fp_getmant(value: f64, imm: u8) -> f64 {
 fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
     match op {
         FpUnaryMathOp::GetExp => fp_getexp(value),
+        FpUnaryMathOp::Rcp14 => 1.0 / value,
+        FpUnaryMathOp::Rsqrt14 => 1.0 / value.sqrt(),
         FpUnaryMathOp::Rcp => 1.0 / value,
         FpUnaryMathOp::Rsqrt => 1.0 / value.sqrt(),
         FpUnaryMathOp::Exp2 => value.exp2(),
@@ -3546,6 +3550,99 @@ fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8) -> f64 {
         }
         FpUnaryMathOp::GetMant => fp_getmant(value, imm),
     }
+}
+
+fn fp_unary_math_bits(op: FpUnaryMathOp, bits: u64, elem_size: usize, imm: u8) -> u64 {
+    match (op, elem_size) {
+        (FpUnaryMathOp::Rcp14, 4) => rcp14_f32_bits(bits as u32) as u64,
+        (FpUnaryMathOp::Rsqrt14, 4) => rsqrt14_f32_bits(bits as u32) as u64,
+        (FpUnaryMathOp::Rcp14, 8) => rcp14_f64_bits(bits),
+        (FpUnaryMathOp::Rsqrt14, 8) => rsqrt14_f64_bits(bits),
+        _ => f64_to_fp_bits(
+            fp_unary_math_result(op, fp_bits_to_f64(bits, elem_size), imm),
+            elem_size,
+        ),
+    }
+}
+
+fn rcp14_f32_bits(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if std::arch::is_x86_feature_detected!("avx512f") {
+            return unsafe { rcp14_f32_bits_native(bits) };
+        }
+    }
+
+    (1.0f32 / f32::from_bits(bits)).to_bits()
+}
+
+fn rsqrt14_f32_bits(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if std::arch::is_x86_feature_detected!("avx512f") {
+            return unsafe { rsqrt14_f32_bits_native(bits) };
+        }
+    }
+
+    (1.0f32 / f32::from_bits(bits).sqrt()).to_bits()
+}
+
+fn rcp14_f64_bits(bits: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if std::arch::is_x86_feature_detected!("avx512f") {
+            return unsafe { rcp14_f64_bits_native(bits) };
+        }
+    }
+
+    (1.0f64 / f64::from_bits(bits)).to_bits()
+}
+
+fn rsqrt14_f64_bits(bits: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        if std::arch::is_x86_feature_detected!("avx512f") {
+            return unsafe { rsqrt14_f64_bits_native(bits) };
+        }
+    }
+
+    (1.0f64 / f64::from_bits(bits).sqrt()).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+unsafe fn rcp14_f32_bits_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rcp14_ss(_mm_setzero_ps(), src)).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+unsafe fn rsqrt14_f32_bits_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rsqrt14_ss(_mm_setzero_ps(), src)).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+unsafe fn rcp14_f64_bits_native(bits: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_sd(f64::from_bits(bits));
+    _mm_cvtsd_f64(_mm_rcp14_sd(_mm_setzero_pd(), src)).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx512f")]
+unsafe fn rsqrt14_f64_bits_native(bits: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_sd(f64::from_bits(bits));
+    _mm_cvtsd_f64(_mm_rsqrt14_sd(_mm_setzero_pd(), src)).to_bits()
 }
 
 /// VRANGE on non-NaN operands (NaN cases are resolved at the bit level by the
@@ -3671,10 +3768,7 @@ pub fn evex_fp_unary_math(
         let out_bits = if fp_is_nan(in_bits, elem_size) {
             fp_quiet_nan(in_bits, elem_size)
         } else {
-            f64_to_fp_bits(
-                fp_unary_math_result(op, fp_bits_to_f64(in_bits, elem_size), imm),
-                elem_size,
-            )
+            fp_unary_math_bits(op, in_bits, elem_size, imm)
         };
         write_lane_bits(&mut raw, lane, elem_size, out_bits);
     }

@@ -443,29 +443,21 @@ impl X86_64Vcpu {
             } else {
                 f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
             };
-            let result = (1.0f32 / src.sqrt()).to_bits() as u64;
+            let result = rsqrt_scalar_f32(src.to_bits()) as u64;
             self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_src1][0] & !0xFFFFFFFF) | result;
             self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
             self.regs.ymm_high[xmm_dst][0] = 0;
             self.regs.ymm_high[xmm_dst][1] = 0;
         } else {
             // VRSQRTPS: packed singles
-            let rsqrt = |v: u64| -> u64 {
-                let f0 = f32::from_bits(v as u32);
-                let f1 = f32::from_bits((v >> 32) as u32);
-                let r0 = (1.0f32 / f0.sqrt()).to_bits() as u64;
-                let r1 = (1.0f32 / f1.sqrt()).to_bits() as u64;
-                r0 | (r1 << 32)
-            };
-
             if vex_l == 0 {
                 let (src_lo, src_hi) = if is_memory {
                     (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
                 } else {
                     (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
                 };
-                self.regs.xmm[xmm_dst][0] = rsqrt(src_lo);
-                self.regs.xmm[xmm_dst][1] = rsqrt(src_hi);
+                self.regs.xmm[xmm_dst][0] = rsqrt_packed_f32(src_lo);
+                self.regs.xmm[xmm_dst][1] = rsqrt_packed_f32(src_hi);
                 self.regs.ymm_high[xmm_dst][0] = 0;
                 self.regs.ymm_high[xmm_dst][1] = 0;
             } else {
@@ -484,10 +476,10 @@ impl X86_64Vcpu {
                         self.regs.ymm_high[rm as usize][1],
                     )
                 };
-                self.regs.xmm[xmm_dst][0] = rsqrt(src0);
-                self.regs.xmm[xmm_dst][1] = rsqrt(src1);
-                self.regs.ymm_high[xmm_dst][0] = rsqrt(src2);
-                self.regs.ymm_high[xmm_dst][1] = rsqrt(src3);
+                self.regs.xmm[xmm_dst][0] = rsqrt_packed_f32(src0);
+                self.regs.xmm[xmm_dst][1] = rsqrt_packed_f32(src1);
+                self.regs.ymm_high[xmm_dst][0] = rsqrt_packed_f32(src2);
+                self.regs.ymm_high[xmm_dst][1] = rsqrt_packed_f32(src3);
             }
         }
 
@@ -514,29 +506,21 @@ impl X86_64Vcpu {
             } else {
                 f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
             };
-            let result = (1.0f32 / src).to_bits() as u64;
+            let result = rcp_scalar_f32(src.to_bits()) as u64;
             self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_src1][0] & !0xFFFFFFFF) | result;
             self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
             self.regs.ymm_high[xmm_dst][0] = 0;
             self.regs.ymm_high[xmm_dst][1] = 0;
         } else {
             // VRCPPS: packed singles
-            let rcp = |v: u64| -> u64 {
-                let f0 = f32::from_bits(v as u32);
-                let f1 = f32::from_bits((v >> 32) as u32);
-                let r0 = (1.0f32 / f0).to_bits() as u64;
-                let r1 = (1.0f32 / f1).to_bits() as u64;
-                r0 | (r1 << 32)
-            };
-
             if vex_l == 0 {
                 let (src_lo, src_hi) = if is_memory {
                     (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
                 } else {
                     (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
                 };
-                self.regs.xmm[xmm_dst][0] = rcp(src_lo);
-                self.regs.xmm[xmm_dst][1] = rcp(src_hi);
+                self.regs.xmm[xmm_dst][0] = rcp_packed_f32(src_lo);
+                self.regs.xmm[xmm_dst][1] = rcp_packed_f32(src_hi);
                 self.regs.ymm_high[xmm_dst][0] = 0;
                 self.regs.ymm_high[xmm_dst][1] = 0;
             } else {
@@ -555,10 +539,10 @@ impl X86_64Vcpu {
                         self.regs.ymm_high[rm as usize][1],
                     )
                 };
-                self.regs.xmm[xmm_dst][0] = rcp(src0);
-                self.regs.xmm[xmm_dst][1] = rcp(src1);
-                self.regs.ymm_high[xmm_dst][0] = rcp(src2);
-                self.regs.ymm_high[xmm_dst][1] = rcp(src3);
+                self.regs.xmm[xmm_dst][0] = rcp_packed_f32(src0);
+                self.regs.xmm[xmm_dst][1] = rcp_packed_f32(src1);
+                self.regs.ymm_high[xmm_dst][0] = rcp_packed_f32(src2);
+                self.regs.ymm_high[xmm_dst][1] = rcp_packed_f32(src3);
             }
         }
 
@@ -1493,4 +1477,102 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
+}
+
+fn rcp_packed_f32(v: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rcp_packed_f32_native(v) };
+    }
+
+    let f0 = f32::from_bits(v as u32);
+    let f1 = f32::from_bits((v >> 32) as u32);
+    let r0 = (1.0f32 / f0).to_bits() as u64;
+    let r1 = (1.0f32 / f1).to_bits() as u64;
+    r0 | (r1 << 32)
+}
+
+fn rsqrt_packed_f32(v: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rsqrt_packed_f32_native(v) };
+    }
+
+    let f0 = f32::from_bits(v as u32);
+    let f1 = f32::from_bits((v >> 32) as u32);
+    let r0 = (1.0f32 / f0.sqrt()).to_bits() as u64;
+    let r1 = (1.0f32 / f1.sqrt()).to_bits() as u64;
+    r0 | (r1 << 32)
+}
+
+fn rcp_scalar_f32(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rcp_scalar_f32_native(bits) };
+    }
+
+    (1.0f32 / f32::from_bits(bits)).to_bits()
+}
+
+fn rsqrt_scalar_f32(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rsqrt_scalar_f32_native(bits) };
+    }
+
+    (1.0f32 / f32::from_bits(bits).sqrt()).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rcp_packed_f32_native(v: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let lanes = [
+        f32::from_bits(v as u32),
+        f32::from_bits((v >> 32) as u32),
+        0.0,
+        0.0,
+    ];
+    let src = unsafe { _mm_loadu_ps(lanes.as_ptr()) };
+    let result = _mm_rcp_ps(src);
+    let mut out = [0.0f32; 4];
+    unsafe { _mm_storeu_ps(out.as_mut_ptr(), result) };
+    out[0].to_bits() as u64 | ((out[1].to_bits() as u64) << 32)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rsqrt_packed_f32_native(v: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let lanes = [
+        f32::from_bits(v as u32),
+        f32::from_bits((v >> 32) as u32),
+        0.0,
+        0.0,
+    ];
+    let src = unsafe { _mm_loadu_ps(lanes.as_ptr()) };
+    let result = _mm_rsqrt_ps(src);
+    let mut out = [0.0f32; 4];
+    unsafe { _mm_storeu_ps(out.as_mut_ptr(), result) };
+    out[0].to_bits() as u64 | ((out[1].to_bits() as u64) << 32)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rcp_scalar_f32_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rcp_ss(src)).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rsqrt_scalar_f32_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rsqrt_ss(src)).to_bits()
 }

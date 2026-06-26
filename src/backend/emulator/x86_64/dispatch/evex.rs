@@ -1372,7 +1372,7 @@ impl X86_64Vcpu {
                     self,
                     ctx,
                     es,
-                    insn::simd::FpUnaryMathOp::Rcp,
+                    insn::simd::FpUnaryMathOp::Rcp14,
                     false,
                     false,
                 )
@@ -1383,7 +1383,7 @@ impl X86_64Vcpu {
                     self,
                     ctx,
                     es,
-                    insn::simd::FpUnaryMathOp::Rcp,
+                    insn::simd::FpUnaryMathOp::Rcp14,
                     true,
                     false,
                 )
@@ -1394,7 +1394,7 @@ impl X86_64Vcpu {
                     self,
                     ctx,
                     es,
-                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    insn::simd::FpUnaryMathOp::Rsqrt14,
                     false,
                     false,
                 )
@@ -1405,7 +1405,7 @@ impl X86_64Vcpu {
                     self,
                     ctx,
                     es,
-                    insn::simd::FpUnaryMathOp::Rsqrt,
+                    insn::simd::FpUnaryMathOp::Rsqrt14,
                     true,
                     false,
                 )

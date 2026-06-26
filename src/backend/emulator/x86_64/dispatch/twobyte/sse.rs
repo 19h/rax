@@ -344,12 +344,12 @@ impl X86_64Vcpu {
         let xmm_dst = reg as usize;
 
         if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            let src_bits = if is_memory {
+                self.read_mem(addr, 4)? as u32
             } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+                self.regs.xmm[rm as usize][0] as u32
             };
-            let result = (1.0f32 / src.sqrt()).to_bits() as u64;
+            let result = rsqrt_scalar_f32(src_bits) as u64;
             self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
         } else {
             let (src_lo, src_hi) = if is_memory {
@@ -374,12 +374,12 @@ impl X86_64Vcpu {
         let xmm_dst = reg as usize;
 
         if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            let src_bits = if is_memory {
+                self.read_mem(addr, 4)? as u32
             } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+                self.regs.xmm[rm as usize][0] as u32
             };
-            let result = (1.0f32 / src).to_bits() as u64;
+            let result = rcp_scalar_f32(src_bits) as u64;
             self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
         } else {
             let (src_lo, src_hi) = if is_memory {
@@ -2360,6 +2360,11 @@ fn unpack_high_words(a: u64, b: u64) -> u64 {
 }
 
 fn rcp_packed_f32(v: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rcp_packed_f32_native(v) };
+    }
+
     let f0 = f32::from_bits(v as u32);
     let f1 = f32::from_bits((v >> 32) as u32);
     let r0 = (1.0f32 / f0).to_bits() as u64;
@@ -2368,9 +2373,86 @@ fn rcp_packed_f32(v: u64) -> u64 {
 }
 
 fn rsqrt_packed_f32(v: u64) -> u64 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rsqrt_packed_f32_native(v) };
+    }
+
     let f0 = f32::from_bits(v as u32);
     let f1 = f32::from_bits((v >> 32) as u32);
     let r0 = (1.0f32 / f0.sqrt()).to_bits() as u64;
     let r1 = (1.0f32 / f1.sqrt()).to_bits() as u64;
     r0 | (r1 << 32)
+}
+
+fn rcp_scalar_f32(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rcp_scalar_f32_native(bits) };
+    }
+
+    (1.0f32 / f32::from_bits(bits)).to_bits()
+}
+
+fn rsqrt_scalar_f32(bits: u32) -> u32 {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return unsafe { rsqrt_scalar_f32_native(bits) };
+    }
+
+    (1.0f32 / f32::from_bits(bits).sqrt()).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rcp_packed_f32_native(v: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let lanes = [
+        f32::from_bits(v as u32),
+        f32::from_bits((v >> 32) as u32),
+        0.0,
+        0.0,
+    ];
+    let src = unsafe { _mm_loadu_ps(lanes.as_ptr()) };
+    let result = _mm_rcp_ps(src);
+    let mut out = [0.0f32; 4];
+    unsafe { _mm_storeu_ps(out.as_mut_ptr(), result) };
+    out[0].to_bits() as u64 | ((out[1].to_bits() as u64) << 32)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rsqrt_packed_f32_native(v: u64) -> u64 {
+    use std::arch::x86_64::*;
+
+    let lanes = [
+        f32::from_bits(v as u32),
+        f32::from_bits((v >> 32) as u32),
+        0.0,
+        0.0,
+    ];
+    let src = unsafe { _mm_loadu_ps(lanes.as_ptr()) };
+    let result = _mm_rsqrt_ps(src);
+    let mut out = [0.0f32; 4];
+    unsafe { _mm_storeu_ps(out.as_mut_ptr(), result) };
+    out[0].to_bits() as u64 | ((out[1].to_bits() as u64) << 32)
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rcp_scalar_f32_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rcp_ss(src)).to_bits()
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "sse")]
+unsafe fn rsqrt_scalar_f32_native(bits: u32) -> u32 {
+    use std::arch::x86_64::*;
+
+    let src = _mm_set_ss(f32::from_bits(bits));
+    _mm_cvtss_f32(_mm_rsqrt_ss(src)).to_bits()
 }
