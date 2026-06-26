@@ -760,6 +760,19 @@ fn check_with_sregs(label: &str, code: &[u8], init: Registers, sregs: &SystemReg
     assert_match(label, code, &interp, &kvm, CompareOpts::default());
 }
 
+fn check_with_sregs_scratch(
+    label: &str,
+    code: &[u8],
+    init: Registers,
+    scratch_init: [u8; 64],
+    sregs: &SystemRegisters,
+) {
+    let Some((interp, kvm)) = run_both_with_sregs(code, init, scratch_init, sregs) else {
+        return;
+    };
+    assert_match(label, code, &interp, &kvm, CompareOpts::default());
+}
+
 /// Run a case comparing GPRs + only the flag bits in `flag_mask` (others are
 /// architecturally undefined for this instruction and must not be compared).
 fn check_flags_masked(label: &str, code: &[u8], init: Registers, flag_mask: u64) {
@@ -22395,6 +22408,72 @@ fn control_leave_16bit_operand_size() {
     ]);
 
     check("leave_16bit_operand_size", &code, regs());
+}
+
+#[test]
+fn control_bound_compat32_in_range_forms() {
+    let sregs = compat32_sregs();
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&(-10i32).to_le_bytes());
+    scratch[4..8].copy_from_slice(&10i32.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 7;
+    r.rdi = DATA_ADDR;
+    check_with_sregs_scratch(
+        "bound_compat32_eax_in_range",
+        &with_hlt(vec![0x62, 0x07]), // bound eax, [edi]
+        r,
+        scratch,
+        &sregs,
+    );
+
+    let mut scratch = zero_scratch();
+    scratch[0..2].copy_from_slice(&(-4i16).to_le_bytes());
+    scratch[2..4].copy_from_slice(&4i16.to_le_bytes());
+
+    let mut r = regs();
+    r.rax = 0xFFFE;
+    r.rdi = DATA_ADDR;
+    check_with_sregs_scratch(
+        "bound_compat32_ax_in_range",
+        &with_hlt(vec![0x66, 0x62, 0x07]), // bound ax, [edi]
+        r,
+        scratch,
+        &sregs,
+    );
+
+    let mut scratch = zero_scratch();
+    scratch[0..4].copy_from_slice(&100i32.to_le_bytes());
+    scratch[4..8].copy_from_slice(&200i32.to_le_bytes());
+
+    let mut r = regs();
+    r.rcx = 150;
+    r.rdi = DATA_ADDR;
+    check_with_sregs_scratch(
+        "bound_compat32_ecx_in_range",
+        &with_hlt(vec![0x62, 0x0F]), // bound ecx, [edi]
+        r,
+        scratch,
+        &sregs,
+    );
+}
+
+#[test]
+fn control_into_compat32_no_overflow_falls_through() {
+    let sregs = compat32_sregs();
+    let mut r = regs();
+    r.rflags = flags::bits::CF | flags::bits::ZF;
+    check_with_sregs(
+        "into_compat32_no_overflow_falls_through",
+        &with_hlt(vec![
+            0xCE, // into
+            0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax, 0x12345678
+        ]),
+        r,
+        &sregs,
+    );
 }
 
 #[test]
