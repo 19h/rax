@@ -3427,40 +3427,51 @@ impl X86_64Vcpu {
         };
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
-        let mut dst = [0u8; 64];
+        let mut tmp1 = [0u8; 64];
+        let mut raw = [0u8; 64];
 
-        // Process 128-bit lanes
-        // imm8 encoding: bits [2:0] select src1 offset, bits [5:3] select src2 offset
-        // Each lane uses the same block selection from imm8
-        let num_lanes = vl / 16;
-        let src1_blk = (imm8 & 0x3) as usize; // bits [1:0]
-        let src2_blk = ((imm8 >> 2) & 0x3) as usize; // bits [3:2]
+        for lane_base in (0..vl).step_by(16) {
+            for dword in 0..4 {
+                let sel = ((imm8 >> (dword * 2)) & 0x03) as usize;
+                let src_base = lane_base + sel * 4;
+                let dst_base = lane_base + dword * 4;
+                tmp1[dst_base..dst_base + 4].copy_from_slice(&src2[src_base..src_base + 4]);
+            }
+        }
 
-        for lane in 0..num_lanes {
-            let lane_base = lane * 16;
+        let sad4 = |a_base: usize, b_base: usize| -> u16 {
+            let mut sad = 0u16;
+            for byte in 0..4 {
+                let a = src1[a_base + byte] as i16;
+                let b = tmp1[b_base + byte] as i16;
+                sad += (a - b).unsigned_abs();
+            }
+            sad
+        };
 
-            // Source block offsets within the lane
-            let src1_offset = lane_base + (src1_blk * 4);
+        for block_base in (0..vl).step_by(8) {
+            let results = [
+                sad4(block_base, block_base),
+                sad4(block_base, block_base + 1),
+                sad4(block_base + 4, block_base + 2),
+                sad4(block_base + 4, block_base + 3),
+            ];
+            for (idx, sad) in results.iter().enumerate() {
+                let dst_offset = block_base + idx * 2;
+                raw[dst_offset..dst_offset + 2].copy_from_slice(&sad.to_le_bytes());
+            }
+        }
 
-            // Calculate 8 SAD values per lane
-            for i in 0..8 {
-                let mut sad: u16 = 0;
-                // src2 uses a sliding window of 4 consecutive bytes starting at blk2*4 + i
-                let src2_start = lane_base + (src2_blk * 4) + i;
-                for j in 0..4 {
-                    let a = src1[src1_offset + j] as i16;
-                    let b_idx = src2_start + j;
-                    // Handle wrap-around within lane
-                    let b = if b_idx < lane_base + 16 {
-                        src2[b_idx] as i16
-                    } else {
-                        0 // Zero-pad beyond lane boundary
-                    };
-                    sad += (a - b).unsigned_abs();
-                }
-                let dst_offset = lane_base + i * 2;
-                let bytes = sad.to_le_bytes();
-                dst[dst_offset..dst_offset + 2].copy_from_slice(&bytes);
+        let mask = Self::evex_kmask(&evex, &self.regs.k, vl / 2);
+        let mut dst = if evex.z {
+            [0u8; 64]
+        } else {
+            self.get_zmm_data(zmm_dst, vl)
+        };
+        for word in 0..(vl / 2) {
+            if (mask >> word) & 1 != 0 {
+                let base = word * 2;
+                dst[base..base + 2].copy_from_slice(&raw[base..base + 2]);
             }
         }
 
