@@ -198,7 +198,9 @@ impl X86_64Vcpu {
                     (1, 1, 0x90) => return self.execute_kmov_load(ctx, 32),
                     // KMOVD k1, k2/m32 - VEX.L0.F2.0F.W0 90 /r (alternate encoding)
                     (3, 0, 0x90) => return self.execute_kmov_load(ctx, 32),
-                    // KMOVQ k1, k2/m64 - VEX.L0.F2.0F.W1 90 /r
+                    // KMOVQ k1, k2/m64 - VEX.L0.0F.W1 90 /r (memory/opmask form)
+                    (0, 1, 0x90) => return self.execute_kmov_load(ctx, 64),
+                    // KMOVQ k1, k2/m64 - VEX.L0.F2.0F.W1 90 /r (accepted alias)
                     (3, 1, 0x90) => return self.execute_kmov_load(ctx, 64),
 
                     // KMOVW m16, k1 - VEX.L0.0F.W0 91 /r
@@ -209,7 +211,9 @@ impl X86_64Vcpu {
                     (1, 1, 0x91) => return self.execute_kmov_store(ctx, 32),
                     // KMOVD m32, k1 - VEX.L0.F2.0F.W0 91 /r
                     (3, 0, 0x91) => return self.execute_kmov_store(ctx, 32),
-                    // KMOVQ m64, k1 - VEX.L0.F2.0F.W1 91 /r
+                    // KMOVQ m64, k1 - VEX.L0.0F.W1 91 /r
+                    (0, 1, 0x91) => return self.execute_kmov_store(ctx, 64),
+                    // KMOVQ m64, k1 - VEX.L0.F2.0F.W1 91 /r (accepted alias)
                     (3, 1, 0x91) => return self.execute_kmov_store(ctx, 64),
 
                     // KMOVW k1, r32 - VEX.L0.0F.W0 92 /r
