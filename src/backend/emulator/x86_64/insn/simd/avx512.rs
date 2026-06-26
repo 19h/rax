@@ -232,6 +232,34 @@ fn load_mem_bytes(
     Ok(data)
 }
 
+fn evex_tuple1_disp8_addr(
+    ctx: &InsnContext,
+    modrm_start: usize,
+    addr: u64,
+    elem_size: usize,
+) -> u64 {
+    if elem_size <= 1 || modrm_start >= ctx.bytes_len {
+        return addr;
+    }
+
+    let modrm = ctx.bytes[modrm_start];
+    if modrm >> 6 != 1 {
+        return addr;
+    }
+
+    let mut disp_idx = modrm_start + 1;
+    if modrm & 0x07 == 4 {
+        disp_idx += 1;
+    }
+    if disp_idx >= ctx.bytes_len {
+        return addr;
+    }
+
+    let disp = ctx.bytes[disp_idx] as i8 as i64;
+    let delta = disp.wrapping_mul(elem_size as i64 - 1);
+    (addr as i64).wrapping_add(delta) as u64
+}
+
 fn store_mem_bytes(
     vcpu: &mut X86_64Vcpu,
     addr: u64,
@@ -5986,7 +6014,13 @@ pub fn evex_broadcast(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX broadcast requires EVEX prefix".to_string()))?;
 
+    let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let addr = if is_memory {
+        evex_tuple1_disp8_addr(ctx, modrm_start, addr, elem_size)
+    } else {
+        addr
+    };
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
     let src_reg = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
 
