@@ -6573,6 +6573,23 @@ fn irregular_cases() -> Vec<Case> {
             "x87_fwait_preserves_cmp_flags",
             "fninit\ncmpq %rcx, %r8\nfwait",
         ),
+        (
+            "x87_fnop_preserves_stack_value",
+            "fninit\nfld1\nfnop\nfstpl 32(%rax)",
+        ),
+        ("x87_fnstcw_default", "fninit\nfnstcw 32(%rax)"),
+        (
+            "x87_fldcw_fnstcw_roundtrip",
+            "movw $0x027f, 32(%rax)\nfninit\nfldcw 32(%rax)\nfnstcw 34(%rax)",
+        ),
+        (
+            "x87_fnstsw_ax_after_fninit",
+            "fninit\nmovq $-1, %rax\nfnstsw %ax",
+        ),
+        (
+            "x87_fnstsw_memory_after_fld1",
+            "fninit\nfld1\nfnstsw 32(%rax)\nfstpl 40(%rax)",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -8904,7 +8921,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 16, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 21, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -8915,7 +8932,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 16, "all x87 cases should compare");
+    assert_eq!(tally.compared, 21, "all x87 cases should compare");
 }
 
 #[test]
