@@ -11686,6 +11686,147 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core multiply/divide edge forms. These keep quotient overflow and
+    // divide-by-zero out of the corpus while stressing implicit RDX:RAX results,
+    // signed overflow flags, exact quotients, and signed remainders.
+    for &(label, asm) in &[
+        (
+            "mul_core_muldiv_edge_r8_no_overflow",
+            "movb $0x12, %al\nmovb $0x03, 64(%rdi)\nmulb 64(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r8_overflow",
+            "movb $0xff, %al\nmovb $0x02, 65(%rdi)\nmulb 65(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r16_no_overflow",
+            "movw $0x1234, %ax\nmovw $0x0002, 66(%rdi)\nmulw 66(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r16_overflow",
+            "movw $0xffff, %ax\nmovw $0x0002, 68(%rdi)\nmulw 68(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r32_no_overflow",
+            "movl $0x12345678, %eax\nmovl $0x00000002, 72(%rdi)\nmull 72(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r32_overflow",
+            "movl $0x80000000, %eax\nmovl $0x00000002, 76(%rdi)\nmull 76(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r64_no_overflow",
+            "movabsq $0x123456789, %rax\nmovq $0x0000000000000002, 80(%rdi)\nmulq 80(%rdi)",
+        ),
+        (
+            "mul_core_muldiv_edge_r64_overflow",
+            "movabsq $0x8000000000000000, %rax\nmovq $0x0000000000000002, 88(%rdi)\nmulq 88(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r8_no_overflow",
+            "movb $-4, %al\nmovb $8, 96(%rdi)\nimulb 96(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r8_overflow",
+            "movb $0x40, %al\nmovb $4, 97(%rdi)\nimulb 97(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r16_no_overflow",
+            "movw $-123, %ax\nmovw $4, 98(%rdi)\nimulw 98(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r16_overflow",
+            "movw $0x4000, %ax\nmovw $4, 100(%rdi)\nimulw 100(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r32_no_overflow",
+            "movl $-123456, %eax\nmovl $17, 104(%rdi)\nimull 104(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r32_overflow",
+            "movl $0x40000000, %eax\nmovl $4, 108(%rdi)\nimull 108(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r64_no_overflow",
+            "movabsq $-123456789, %rax\nmovq $1000, 112(%rdi)\nimulq 112(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r64_overflow",
+            "movabsq $0x4000000000000000, %rax\nmovq $4, 120(%rdi)\nimulq 120(%rdi)",
+        ),
+        (
+            "imul_core_muldiv_edge_r64_two_operand_no_overflow",
+            "movq $-9, %r8\nmovq $8, %rcx\nimulq %rcx, %r8",
+        ),
+        (
+            "imul_core_muldiv_edge_r64_two_operand_overflow",
+            "movabsq $0x4000000000000000, %r8\nmovq $4, %rcx\nimulq %rcx, %r8",
+        ),
+        (
+            "imul_core_muldiv_edge_r32_three_operand_no_overflow",
+            "movl $123456, %ecx\nimull $-17, %ecx, %r8d",
+        ),
+        (
+            "imul_core_muldiv_edge_r32_three_operand_overflow",
+            "movl $0x40000000, %ecx\nimull $4, %ecx, %r8d",
+        ),
+        (
+            "div_core_muldiv_edge_r8_exact",
+            "movw $0x00f0, %ax\nmovb $0x10, 128(%rdi)\ndivb 128(%rdi)",
+        ),
+        (
+            "div_core_muldiv_edge_r8_max_quotient",
+            "movw $0xfe01, %ax\nmovb $0xff, 129(%rdi)\ndivb 129(%rdi)",
+        ),
+        (
+            "div_core_muldiv_edge_r16_remainder",
+            "xorl %edx, %edx\nmovw $0xffff, %ax\nmovw $1000, 130(%rdi)\ndivw 130(%rdi)",
+        ),
+        (
+            "div_core_muldiv_edge_r32_high_half",
+            "movl $1, %edx\nxorl %eax, %eax\nmovl $0x10000, 132(%rdi)\ndivl 132(%rdi)",
+        ),
+        (
+            "div_core_muldiv_edge_r64_large_exact",
+            "xorq %rdx, %rdx\nmovq $-1, %rax\nmovabsq $0xffffffff, %r8\nmovq %r8, 136(%rdi)\ndivq 136(%rdi)",
+        ),
+        (
+            "div_core_muldiv_edge_r64_remainder",
+            "xorq %rdx, %rdx\nmovabsq $0x123456789abcdef0, %rax\nmovabsq $0x100000001, %r8\nmovq %r8, 144(%rdi)\ndivq 144(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r8_negative_remainder",
+            "movw $-127, %ax\nmovb $-3, 152(%rdi)\nidivb 152(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r16_negative_remainder",
+            "movw $-32768, %ax\ncwtd\nmovw $-7, 154(%rdi)\nidivw 154(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r32_min_divisor",
+            "movl $0x80000000, %eax\ncltd\nmovl $7, 156(%rdi)\nidivl 156(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r64_min_divisor",
+            "movabsq $0x8000000000000000, %rax\ncqto\nmovq $2, 160(%rdi)\nidivq 160(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r64_negative_divisor",
+            "movabsq $-1234567890123, %rax\ncqto\nmovq $-12345, 168(%rdi)\nidivq 168(%rdi)",
+        ),
+        (
+            "idiv_core_muldiv_edge_r64_positive_remainder",
+            "movabsq $1234567890123, %rax\ncqto\nmovq $-12345, 176(%rdi)\nidivq 176(%rdi)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core string instructions. These use case-specific RSI/RDI/RCX seeds and
     // a non-repeating scratch pattern so both pointer movement and memory side
     // effects are visible in the KVM diff.
@@ -12229,6 +12370,13 @@ fn case_status(case: &Case) -> Status {
 
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
+
+    if case.label.contains("_core_muldiv_edge_") {
+        if case.label.starts_with("div_") || case.label.starts_with("idiv_") {
+            return 0;
+        }
+        return RFLAGS_CF | RFLAGS_OF;
+    }
 
     if case.label.contains("_scalar_bit_edge_") {
         if case.label.starts_with("popcnt_") {
@@ -13922,6 +14070,48 @@ fn avx512_kvm_core_implicit_operand_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all core implicit-operand cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_muldiv_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_muldiv_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        32,
+        "unexpected core multiply/divide edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core multiply/divide edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core multiply/divide edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core multiply/divide edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core multiply/divide edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        32,
+        "all core multiply/divide edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 32,
+        "all core multiply/divide edge cases should compare"
     );
 }
 
