@@ -6816,6 +6816,59 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX-512 VNNI and IFMA accumulator edge operands. Zero sources make the
+    // accumulator behavior exact, while all-one memory sources exercise the
+    // saturating and high-half multiply-add paths with dense input bits.
+    for &(label, asm, feat) in &[
+        (
+            "vpdpbusd_vnni_ifma_edge_zero_acc_src",
+            "vpxord %zmm1, %zmm1, %zmm1\nvpxord %zmm2, %zmm2, %zmm2\nvpdpbusd %zmm2, %zmm3, %zmm1",
+            Vnni,
+        ),
+        (
+            "vpdpbusds_vnni_ifma_edge_allones_acc_mem",
+            "vpternlogd $0xff, %zmm1, %zmm1, %zmm1\nvpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpdpbusds 64(%rax), %zmm3, %zmm1",
+            Vnni,
+        ),
+        (
+            "vpdpwssd_vnni_ifma_edge_zero_acc_src",
+            "vpxord %zmm1, %zmm1, %zmm1\nvpxord %zmm2, %zmm2, %zmm2\nvpdpwssd %zmm2, %zmm3, %zmm1",
+            Vnni,
+        ),
+        (
+            "vpdpwssds_vnni_ifma_edge_allones_acc_mem",
+            "vpternlogd $0xff, %zmm1, %zmm1, %zmm1\nvpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpdpwssds 64(%rax), %zmm3, %zmm1",
+            Vnni,
+        ),
+        (
+            "vpmadd52luq_vnni_ifma_edge_zero_acc_src",
+            "vpxorq %zmm1, %zmm1, %zmm1\nvpxorq %zmm2, %zmm2, %zmm2\nvpmadd52luq %zmm2, %zmm3, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52luq_vnni_ifma_edge_allones_acc_mem",
+            "vpternlogq $0xff, %zmm1, %zmm1, %zmm1\nvpternlogq $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpmadd52luq 64(%rax), %zmm3, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52huq_vnni_ifma_edge_zero_acc_src",
+            "vpxorq %zmm1, %zmm1, %zmm1\nvpxorq %zmm2, %zmm2, %zmm2\nvpmadd52huq %zmm2, %zmm3, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52huq_vnni_ifma_edge_allones_acc_mem",
+            "vpternlogq $0xff, %zmm1, %zmm1, %zmm1\nvpternlogq $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpmadd52huq 64(%rax), %zmm3, %zmm1",
+            Ifma,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // AVX/AVX2 VEX mask extraction, masked memory operations, non-temporal
     // moves, and explicit zeroing forms. These exercise GPR writes, scratch
     // side effects, and VEX upper-zeroing outside the EVEX generator.
@@ -16042,6 +16095,49 @@ fn avx512_kvm_avx_vnni_corpus() {
         "all AVX-VNNI cases should run"
     );
     assert_eq!(tally.compared, 48, "all AVX-VNNI cases should compare");
+}
+
+#[test]
+fn avx512_kvm_vnni_ifma_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_vnni_ifma_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected VNNI/IFMA edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VNNI/IFMA edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VNNI/IFMA edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VNNI/IFMA edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VNNI/IFMA edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vnni),
+        4,
+        "all AVX-512 VNNI edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Ifma),
+        4,
+        "all AVX-512 IFMA edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all VNNI/IFMA edge cases should compare"
+    );
 }
 
 #[test]
