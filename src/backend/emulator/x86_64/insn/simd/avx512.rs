@@ -2432,6 +2432,134 @@ fn f64_to_fp_bits(value: f64, elem_size: usize) -> u64 {
     }
 }
 
+fn rounded_int_magnitude_to_fp_bits(
+    negative: bool,
+    magnitude: u128,
+    frac_bits: u32,
+    exp_bits: u32,
+    bias: i32,
+    rounding: u8,
+) -> u64 {
+    let sign_shift = exp_bits + frac_bits;
+    let sign = if negative { 1u64 << sign_shift } else { 0 };
+    if magnitude == 0 {
+        return sign;
+    }
+
+    let precision = frac_bits + 1;
+    let mut exponent = (u128::BITS - 1 - magnitude.leading_zeros()) as i32;
+    let mut significand = if exponent as u32 <= frac_bits {
+        magnitude << (frac_bits - exponent as u32)
+    } else {
+        let shift = exponent as u32 - frac_bits;
+        let mut significand = magnitude >> shift;
+        let remainder = magnitude & ((1u128 << shift) - 1);
+        let increment = if remainder == 0 {
+            false
+        } else {
+            match rounding & 0x03 {
+                0 => {
+                    let half = 1u128 << (shift - 1);
+                    remainder > half || (remainder == half && (significand & 1) != 0)
+                }
+                1 => negative,
+                2 => !negative,
+                _ => false,
+            }
+        };
+        if increment {
+            significand += 1;
+        }
+        significand
+    };
+
+    if significand == (1u128 << precision) {
+        significand >>= 1;
+        exponent += 1;
+    }
+
+    let max_exp = (1u64 << exp_bits) - 1;
+    let biased = exponent + bias;
+    if biased >= max_exp as i32 {
+        let round_to_infinity = match rounding & 0x03 {
+            0 => true,
+            1 => negative,
+            2 => !negative,
+            _ => false,
+        };
+        if round_to_infinity {
+            return sign | (max_exp << frac_bits);
+        }
+        return sign | ((max_exp - 1) << frac_bits) | ((1u64 << frac_bits) - 1);
+    }
+
+    let frac = (significand & ((1u128 << frac_bits) - 1)) as u64;
+    sign | ((biased as u64) << frac_bits) | frac
+}
+
+fn int_elem_parts(bits: u64, elem_size: usize, signed: bool) -> (bool, u128) {
+    if signed {
+        let value = match elem_size {
+            2 => (bits as u16 as i16) as i128,
+            4 => (bits as u32 as i32) as i128,
+            8 => (bits as i64) as i128,
+            _ => 0,
+        };
+        if value < 0 {
+            (true, (-value) as u128)
+        } else {
+            (false, value as u128)
+        }
+    } else {
+        let value = match elem_size {
+            2 => bits as u16 as u128,
+            4 => bits as u32 as u128,
+            8 => bits as u128,
+            _ => 0,
+        };
+        (false, value)
+    }
+}
+
+fn int_to_fp_bits(
+    bits: u64,
+    src_elem_size: usize,
+    dst_elem_size: usize,
+    signed: bool,
+    rounding: u8,
+) -> u64 {
+    let (negative, magnitude) = int_elem_parts(bits, src_elem_size, signed);
+    match dst_elem_size {
+        2 => rounded_int_magnitude_to_fp_bits(negative, magnitude, 10, 5, 15, rounding),
+        4 => rounded_int_magnitude_to_fp_bits(negative, magnitude, 23, 8, 127, rounding),
+        8 => rounded_int_magnitude_to_fp_bits(negative, magnitude, 52, 11, 1023, rounding),
+        _ => 0,
+    }
+}
+
+fn evex_rounding_mode(
+    evex: &super::super::super::cpu::EvexPrefix,
+    is_memory: bool,
+    mxcsr: u32,
+) -> u8 {
+    if !is_memory && evex.broadcast {
+        evex.ll
+    } else {
+        ((mxcsr >> 13) & 0x03) as u8
+    }
+}
+
+fn evex_conversion_vl_bytes(
+    evex: &super::super::super::cpu::EvexPrefix,
+    is_memory: bool,
+) -> usize {
+    if !is_memory && evex.broadcast {
+        64
+    } else {
+        vl_bytes_of(evex.ll)
+    }
+}
+
 // --- Bit-level FP special-value helpers ---------------------------------
 //
 // The f64 round-trip above is lossy for NaN payloads (every f32 NaN collapses
@@ -2501,6 +2629,8 @@ fn fp_round_to_int(value: f64, truncate: bool, rounding: u8) -> f64 {
 
 fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool, rounding: u8) -> u64 {
     let rounded = fp_round_to_int(value, truncate, rounding);
+    const I64_MAX_EXCLUSIVE: f64 = 9_223_372_036_854_775_808.0;
+    const U64_MAX_EXCLUSIVE: f64 = 18_446_744_073_709_551_616.0;
 
     if unsigned {
         if !rounded.is_finite() || rounded < 0.0 {
@@ -2513,7 +2643,7 @@ fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool, roun
             };
         }
         if dst_size == 8 {
-            if rounded > u64::MAX as f64 {
+            if rounded >= U64_MAX_EXCLUSIVE {
                 u64::MAX
             } else {
                 rounded as u64
@@ -2530,7 +2660,7 @@ fn fp_to_int_bits(value: f64, dst_size: u8, unsigned: bool, truncate: bool, roun
             rounded as u32 as u64
         }
     } else if dst_size == 8 {
-        if !rounded.is_finite() || rounded > i64::MAX as f64 || rounded < i64::MIN as f64 {
+        if !rounded.is_finite() || rounded >= I64_MAX_EXCLUSIVE || rounded < i64::MIN as f64 {
             i64::MIN as u64
         } else {
             (rounded as i64) as u64
@@ -2561,11 +2691,10 @@ fn reg_vl_for_bytes(bytes: usize) -> usize {
 
 #[inline]
 fn packed_conversion_layout(
-    ll: u8,
+    operation_vl: usize,
     src_elem_size: usize,
     dst_elem_size: usize,
 ) -> (usize, usize, usize) {
-    let operation_vl = vl_bytes_of(ll);
     if dst_elem_size >= src_elem_size {
         let num_elems = operation_vl / dst_elem_size;
         let src_bytes = num_elems * src_elem_size;
@@ -3022,11 +3151,7 @@ pub fn evex_fp_to_gpr(
     };
     let value = fp_bits_to_f64(src_bits, elem_size);
     let dst_size = if evex.w { 8 } else { 4 };
-    let rounding = if !is_memory && evex.broadcast {
-        evex.ll
-    } else {
-        ((vcpu.mxcsr >> 13) & 0x03) as u8
-    };
+    let rounding = evex_rounding_mode(&evex, is_memory, vcpu.mxcsr);
     let result = fp_to_int_bits(value, dst_size, unsigned, truncate, rounding);
     let dest = evex_reg_gpr(&evex, reg);
 
@@ -3066,22 +3191,11 @@ pub fn evex_gpr_to_fp(
         let src = evex_rm_gpr(&evex, rm);
         vcpu.get_reg(src, src_size)
     };
-    let value = if unsigned {
-        if src_size == 8 {
-            int_bits as f64
-        } else {
-            (int_bits as u32) as f64
-        }
-    } else if src_size == 8 {
-        (int_bits as i64) as f64
-    } else {
-        (int_bits as i32) as f64
-    };
-
     let dest = evex_reg_vec(&evex, reg);
     let src1 = ctx.evex_vvvv();
     let mut result = read_reg_bytes(vcpu, src1, 16);
-    let fp_bits = f64_to_fp_bits(value, elem_size);
+    let rounding = evex_rounding_mode(&evex, is_memory, vcpu.mxcsr);
+    let fp_bits = int_to_fp_bits(int_bits, src_size as usize, elem_size, !unsigned, rounding);
     result[..elem_size].copy_from_slice(&scalar_low_bytes(fp_bits, elem_size)[..elem_size]);
 
     write_vec_vl(vcpu, dest, 16, &result);
@@ -3159,8 +3273,11 @@ pub fn evex_packed_fp_convert(
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
-    let (src_bytes, dst_vl_bytes, num_elems) =
-        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let (src_bytes, dst_vl_bytes, num_elems) = packed_conversion_layout(
+        evex_conversion_vl_bytes(&evex, is_memory),
+        src_elem_size,
+        dst_elem_size,
+    );
     let addr = if is_memory {
         let scale = if evex.broadcast {
             src_elem_size
@@ -3231,8 +3348,11 @@ pub fn evex_packed_int_to_fp(
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
-    let (src_bytes, dst_vl_bytes, num_elems) =
-        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let (src_bytes, dst_vl_bytes, num_elems) = packed_conversion_layout(
+        evex_conversion_vl_bytes(&evex, is_memory),
+        src_elem_size,
+        dst_elem_size,
+    );
     let addr = if is_memory {
         let scale = if evex.broadcast {
             src_elem_size
@@ -3256,16 +3376,17 @@ pub fn evex_packed_int_to_fp(
 
     let mut raw = [0u8; 64];
     for lane in 0..num_elems {
-        let value = int_elem_to_f64(
-            read_lane_u64(&src_data, lane, src_elem_size),
-            src_elem_size,
-            signed,
-        );
         write_lane_bits(
             &mut raw,
             lane,
             dst_elem_size,
-            f64_to_fp_bits(value, dst_elem_size),
+            int_to_fp_bits(
+                read_lane_u64(&src_data, lane, src_elem_size),
+                src_elem_size,
+                dst_elem_size,
+                signed,
+                evex_rounding_mode(&evex, is_memory, vcpu.mxcsr),
+            ),
         );
     }
 
@@ -3308,8 +3429,11 @@ pub fn evex_packed_fp_to_int(
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dest = evex_reg_vec(&evex, reg);
     let src = evex_rm_vec(&evex, rm);
-    let (src_bytes, dst_vl_bytes, num_elems) =
-        packed_conversion_layout(evex.ll, src_elem_size, dst_elem_size);
+    let (src_bytes, dst_vl_bytes, num_elems) = packed_conversion_layout(
+        evex_conversion_vl_bytes(&evex, is_memory),
+        src_elem_size,
+        dst_elem_size,
+    );
     let addr = if is_memory {
         let scale = if evex.broadcast {
             src_elem_size
@@ -3332,11 +3456,7 @@ pub fn evex_packed_fp_to_int(
     )?;
 
     let mut raw = [0u8; 64];
-    let rounding = if !is_memory && evex.broadcast {
-        evex.ll
-    } else {
-        ((vcpu.mxcsr >> 13) & 0x03) as u8
-    };
+    let rounding = evex_rounding_mode(&evex, is_memory, vcpu.mxcsr);
     for lane in 0..num_elems {
         let value = fp_bits_to_f64(read_lane_u64(&src_data, lane, src_elem_size), src_elem_size);
         write_lane_bits(

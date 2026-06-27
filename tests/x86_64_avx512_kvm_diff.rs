@@ -1318,6 +1318,9 @@ enum InputProfile {
     /// Integer data for mask-producing/vector-conflict instructions: duplicate
     /// dword/qword lanes, zero/all-ones values, and alternating bit patterns.
     IntPredicateEdge,
+    /// Integer data around conversion-sensitive dword/qword boundaries and
+    /// precision cliffs for integer-to-FP conversion forms.
+    IntConvertEdge,
     F32,
     F64,
     F16,
@@ -1326,6 +1329,11 @@ enum InputProfile {
     F32Edge,
     /// f64 analogue.
     F64Edge,
+    /// f32 values around signed/unsigned integer conversion boundaries plus
+    /// half-way rounding cases and invalid NaN/Inf inputs.
+    F32ConvertEdge,
+    /// f64 analogue with qword-sized signed/unsigned conversion boundaries.
+    F64ConvertEdge,
     /// f32 values that keep sqrt exact-comparable while still stressing zeros,
     /// denormals, infinities, and large finite magnitudes.
     F32SqrtEdge,
@@ -1370,6 +1378,44 @@ const F64_EDGES: [u64; 8] = [
     0xfff0_0000_0000_0000,
     0x7ff8_0000_0000_0000,
     0x0000_0000_0000_0001,
+];
+
+const F32_CONVERT_EDGES: [u32; 16] = [
+    0x0000_0000, // +0.0
+    0x8000_0000, // -0.0
+    0x3f00_0000, // +0.5
+    0xbf00_0000, // -0.5
+    0x3fc0_0000, // +1.5
+    0xbfc0_0000, // -1.5
+    0x4eff_ffff, // largest f32 below +2^31
+    0x4f00_0000, // +2^31
+    0xcf00_0000, // -2^31
+    0xcf00_0001, // below -2^31
+    0x4f7f_ffff, // largest f32 below +2^32
+    0x4f80_0000, // +2^32
+    0x5f00_0000, // +2^63
+    0x5f80_0000, // +2^64
+    0x7f80_0000, // +Inf
+    0x7fc0_0000, // qNaN
+];
+
+const F64_CONVERT_EDGES: [u64; 16] = [
+    0x0000_0000_0000_0000, // +0.0
+    0xbff0_0000_0000_0000, // -1.0
+    0x3fe0_0000_0000_0000, // +0.5
+    0xbfe0_0000_0000_0000, // -0.5
+    0x3ff8_0000_0000_0000, // +1.5
+    0xbff8_0000_0000_0000, // -1.5
+    0x41e0_0000_0000_0000, // +2^31
+    0x41f0_0000_0000_0000, // +2^32
+    0xc1e0_0000_0000_0000, // -2^31
+    0x43df_ffff_ffff_ffff, // largest f64 below +2^63
+    0x43e0_0000_0000_0000, // +2^63
+    0xc3e0_0000_0000_0000, // -2^63
+    0x43ef_ffff_ffff_ffff, // largest f64 below +2^64
+    0x43f0_0000_0000_0000, // +2^64
+    0x7ff0_0000_0000_0000, // +Inf
+    0x7ff8_0000_0000_0000, // qNaN
 ];
 
 const F32_SQRT_EDGES: [u32; 16] = [
@@ -1493,6 +1539,16 @@ const INT_PREDICATE_EDGE_SCRATCH: [u32; 16] = [
     0xaaaa_aaaa,
     0x5555_5555,
 ];
+const INT_CONVERT_EDGE_QWORDS: [u64; 8] = [
+    0x0000_0001_0000_0000,
+    0xffff_ffff_7fff_ffff,
+    0x8000_0000_0000_0000,
+    0x0000_0000_ffff_ffff,
+    0x7fff_ffff_ffff_ffff,
+    0x8000_0000_0000_0001,
+    0xffff_ffff_ffff_ffff,
+    0x0020_0000_0000_0001,
+];
 
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
@@ -1549,6 +1605,15 @@ fn int_predicate_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for (lane, value) in values.iter().enumerate() {
         bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn int_convert_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = INT_CONVERT_EDGE_QWORDS[(reg * 3 + lane) % INT_CONVERT_EDGE_QWORDS.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
     }
     bytes
 }
@@ -1616,6 +1681,24 @@ fn f64_edge_zmm(reg: usize) -> [u8; 64] {
     bytes
 }
 
+fn f32_convert_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = F32_CONVERT_EDGES[(reg * 5 + lane) % F32_CONVERT_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f64_convert_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = F64_CONVERT_EDGES[(reg * 3 + lane) % F64_CONVERT_EDGES.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
 fn f32_sqrt_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for lane in 0..16 {
@@ -1640,11 +1723,14 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::IntSatEdge => int_sat_edge_zmm(reg),
         InputProfile::IntShiftEdge => int_shift_edge_zmm(reg),
         InputProfile::IntPredicateEdge => int_predicate_edge_zmm(reg),
+        InputProfile::IntConvertEdge => int_convert_edge_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
         InputProfile::F16 => f16_zmm(reg),
         InputProfile::F32Edge => f32_edge_zmm(reg),
         InputProfile::F64Edge => f64_edge_zmm(reg),
+        InputProfile::F32ConvertEdge => f32_convert_edge_zmm(reg),
+        InputProfile::F64ConvertEdge => f64_convert_edge_zmm(reg),
         InputProfile::F32SqrtEdge => f32_sqrt_edge_zmm(reg),
         InputProfile::F64SqrtEdge => f64_sqrt_edge_zmm(reg),
         InputProfile::F16Edge => f16_edge_zmm(reg),
@@ -4950,6 +5036,310 @@ fn irregular_cases() -> Vec<Case> {
         ),
     ] {
         push_compare(label.to_string(), asm.to_string(), feat, profile);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vcvtps2dq_avx512_convert_edge_reg",
+            "vcvtps2dq %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2dq_avx512_convert_edge_mem",
+            "vcvtps2dq 32(%rax), %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2dq_avx512_convert_edge_rd_sae",
+            "vcvtps2dq {rd-sae}, %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2dq_avx512_convert_edge_ru_sae",
+            "vcvtps2dq {ru-sae}, %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2dq_avx512_convert_edge_sae",
+            "vcvttps2dq {sae}, %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2udq_avx512_convert_edge_ru_sae",
+            "vcvtps2udq {ru-sae}, %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2udq_avx512_convert_edge_sae",
+            "vcvttps2udq {sae}, %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtpd2dq_avx512_convert_edge_reg",
+            "vcvtpd2dq %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2dq_avx512_convert_edge_mem",
+            "vcvtpd2dq 32(%rax), %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2dq_avx512_convert_edge_rd_sae",
+            "vcvtpd2dq {rd-sae}, %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2dq_avx512_convert_edge_sae",
+            "vcvttpd2dq {sae}, %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2udq_avx512_convert_edge_ru_sae",
+            "vcvtpd2udq {ru-sae}, %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2udq_avx512_convert_edge_sae",
+            "vcvttpd2udq {sae}, %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtps2qq_avx512_convert_edge_reg",
+            "vcvtps2qq %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2qq_avx512_convert_edge_mem",
+            "vcvtps2qq 32(%rax), %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2qq_avx512_convert_edge_rd_sae",
+            "vcvtps2qq {rd-sae}, %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2qq_avx512_convert_edge_sae",
+            "vcvttps2qq {sae}, %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2uqq_avx512_convert_edge_ru_sae",
+            "vcvtps2uqq {ru-sae}, %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2uqq_avx512_convert_edge_sae",
+            "vcvttps2uqq {sae}, %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtpd2qq_avx512_convert_edge_reg",
+            "vcvtpd2qq %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2qq_avx512_convert_edge_mem",
+            "vcvtpd2qq 32(%rax), %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2qq_avx512_convert_edge_rd_sae",
+            "vcvtpd2qq {rd-sae}, %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2qq_avx512_convert_edge_sae",
+            "vcvttpd2qq {sae}, %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2uqq_avx512_convert_edge_ru_sae",
+            "vcvtpd2uqq {ru-sae}, %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2uqq_avx512_convert_edge_sae",
+            "vcvttpd2uqq {sae}, %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtdq2ps_avx512_convert_edge_reg",
+            "vcvtdq2ps %zmm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtdq2ps_avx512_convert_edge_mem",
+            "vcvtdq2ps 32(%rax), %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtdq2ps_avx512_convert_edge_rd_sae",
+            "vcvtdq2ps {rd-sae}, %zmm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtudq2ps_avx512_convert_edge_ru_sae",
+            "vcvtudq2ps {ru-sae}, %zmm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtdq2pd_avx512_convert_edge_reg",
+            "vcvtdq2pd %ymm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtudq2pd_avx512_convert_edge_reg",
+            "vcvtudq2pd %ymm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2pd_avx512_convert_edge_reg",
+            "vcvtqq2pd %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2pd_avx512_convert_edge_mem",
+            "vcvtqq2pd 32(%rax), %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2pd_avx512_convert_edge_reg",
+            "vcvtuqq2pd %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2pd_avx512_convert_edge_rd_sae",
+            "vcvtqq2pd {rd-sae}, %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2pd_avx512_convert_edge_ru_sae",
+            "vcvtuqq2pd {ru-sae}, %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2ps_avx512_convert_edge_reg",
+            "vcvtqq2ps %zmm3, %ymm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2ps_avx512_convert_edge_mem",
+            "vcvtqq2ps 32(%rax), %ymm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2ps_avx512_convert_edge_reg",
+            "vcvtuqq2ps %zmm3, %ymm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2ps_avx512_convert_edge_rd_sae",
+            "vcvtqq2ps {rd-sae}, %zmm3, %ymm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2ps_avx512_convert_edge_ru_sae",
+            "vcvtuqq2ps {ru-sae}, %zmm3, %ymm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtss2si_avx512_convert_edge_rd_sae",
+            "vcvtss2si {rd-sae}, %xmm3, %r8",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttss2si_avx512_convert_edge_sae",
+            "vcvttss2si {sae}, %xmm3, %r8",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtss2usi_avx512_convert_edge_ru_sae",
+            "vcvtss2usi {ru-sae}, %xmm3, %r8",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttss2usi_avx512_convert_edge_sae",
+            "vcvttss2usi {sae}, %xmm3, %r8",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtsd2si_avx512_convert_edge_rd_sae",
+            "vcvtsd2si {rd-sae}, %xmm3, %r8",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttsd2si_avx512_convert_edge_sae",
+            "vcvttsd2si {sae}, %xmm3, %r8",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtsd2usi_avx512_convert_edge_ru_sae",
+            "vcvtsd2usi {ru-sae}, %xmm3, %r8",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttsd2usi_avx512_convert_edge_sae",
+            "vcvttsd2usi {sae}, %xmm3, %r8",
+            F,
+            F64ConvertEdge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
     }
 
     // AVX-512VL permute/shuffle/blend forms. These stay explicit because some
@@ -14497,11 +14887,14 @@ fn avx512_kvm_state_roundtrip() {
     for profile in [
         InputProfile::Int,
         InputProfile::IntPredicateEdge,
+        InputProfile::IntConvertEdge,
         InputProfile::F32,
         InputProfile::F64,
         InputProfile::F16,
         InputProfile::F32Edge,
         InputProfile::F64Edge,
+        InputProfile::F32ConvertEdge,
+        InputProfile::F64ConvertEdge,
     ] {
         let input = input_for(profile);
         let kvm = match oracle.run(&code, &input).expect("kvm run") {
@@ -16920,6 +17313,53 @@ fn avx512_kvm_avx512_compare_edge_corpus() {
     assert_eq!(
         tally.compared, 40,
         "all AVX-512 compare edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx512_convert_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx512_convert_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        49,
+        "unexpected AVX-512 conversion edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512 conversion edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512 conversion edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512 conversion edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512 conversion edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        27,
+        "all AVX-512F conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Dq),
+        22,
+        "all AVX-512DQ conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 49,
+        "all AVX-512 conversion edge cases should compare"
     );
 }
 
