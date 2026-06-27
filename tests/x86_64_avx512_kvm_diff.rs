@@ -4608,6 +4608,397 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX VEX floating-point and move/conversion coverage. These cases verify
+    // three-operand FP arithmetic, scalar merge semantics, VEX upper-zeroing,
+    // scratch side effects, FP compares/test flag writes, lane insertion and
+    // extraction, broadcasts, and scalar/vector FP-int conversions.
+    for &(label, asm, profile) in &[
+        ("vmovaps_avx_xmm_reg", "{vex} vmovaps %xmm2, %xmm1", F32),
+        ("vmovaps_avx_ymm_load", "{vex} vmovaps 32(%rax), %ymm1", F32),
+        (
+            "vmovaps_avx_ymm_store",
+            "{vex} vmovaps %ymm1, 64(%rax)",
+            F32,
+        ),
+        ("vmovups_avx_xmm_load", "{vex} vmovups 17(%rax), %xmm1", F32),
+        (
+            "vmovups_avx_ymm_store",
+            "{vex} vmovups %ymm1, 96(%rax)",
+            F32,
+        ),
+        ("vmovapd_avx_xmm_reg", "{vex} vmovapd %xmm2, %xmm1", F64),
+        ("vmovapd_avx_ymm_load", "{vex} vmovapd 32(%rax), %ymm1", F64),
+        (
+            "vmovapd_avx_ymm_store",
+            "{vex} vmovapd %ymm1, 128(%rax)",
+            F64,
+        ),
+        ("vmovupd_avx_xmm_load", "{vex} vmovupd 17(%rax), %xmm1", F64),
+        (
+            "vmovupd_avx_ymm_store",
+            "{vex} vmovupd %ymm1, 160(%rax)",
+            F64,
+        ),
+        ("vmovss_avx_reg", "{vex} vmovss %xmm2, %xmm3, %xmm1", F32),
+        ("vmovss_avx_load", "{vex} vmovss 4(%rax), %xmm1", F32),
+        ("vmovss_avx_store", "{vex} vmovss %xmm1, 4(%rax)", F32),
+        ("vmovsd_avx_reg", "{vex} vmovsd %xmm2, %xmm3, %xmm1", F64),
+        ("vmovsd_avx_load", "{vex} vmovsd 8(%rax), %xmm1", F64),
+        ("vmovsd_avx_store", "{vex} vmovsd %xmm1, 8(%rax)", F64),
+        (
+            "vaddps_avx_ymm_reg",
+            "{vex} vaddps %ymm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vaddps_avx_xmm_mem",
+            "{vex} vaddps 32(%rax), %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vaddpd_avx_xmm_reg",
+            "{vex} vaddpd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vaddpd_avx_ymm_mem",
+            "{vex} vaddpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        ("vaddss_avx_reg", "{vex} vaddss %xmm2, %xmm3, %xmm1", F32),
+        ("vaddss_avx_mem", "{vex} vaddss 32(%rax), %xmm3, %xmm1", F32),
+        ("vaddsd_avx_reg", "{vex} vaddsd %xmm2, %xmm3, %xmm1", F64),
+        ("vaddsd_avx_mem", "{vex} vaddsd 32(%rax), %xmm3, %xmm1", F64),
+        (
+            "vsubps_avx_xmm_reg",
+            "{vex} vsubps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vsubpd_avx_ymm_mem",
+            "{vex} vsubpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vmulps_avx_ymm_reg",
+            "{vex} vmulps %ymm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vmulpd_avx_xmm_mem",
+            "{vex} vmulpd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vdivps_avx_xmm_reg",
+            "{vex} vdivps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vdivpd_avx_ymm_mem",
+            "{vex} vdivpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vmaxps_avx_ymm_reg",
+            "{vex} vmaxps %ymm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vminpd_avx_xmm_mem",
+            "{vex} vminpd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        ("vmaxss_avx_reg", "{vex} vmaxss %xmm2, %xmm3, %xmm1", F32),
+        ("vminsd_avx_mem", "{vex} vminsd 32(%rax), %xmm3, %xmm1", F64),
+        ("vsqrtps_avx_ymm_reg", "{vex} vsqrtps %ymm3, %ymm1", F32),
+        ("vsqrtpd_avx_xmm_mem", "{vex} vsqrtpd 32(%rax), %xmm1", F64),
+        ("vsqrtss_avx_reg", "{vex} vsqrtss %xmm2, %xmm3, %xmm1", F32),
+        (
+            "vsqrtsd_avx_mem",
+            "{vex} vsqrtsd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vandps_avx_xmm_reg",
+            "{vex} vandps %xmm2, %xmm3, %xmm1",
+            Int,
+        ),
+        (
+            "vandnps_avx_ymm_mem",
+            "{vex} vandnps 32(%rax), %ymm3, %ymm1",
+            Int,
+        ),
+        ("vorps_avx_ymm_reg", "{vex} vorps %ymm2, %ymm3, %ymm1", Int),
+        (
+            "vxorps_avx_xmm_mem",
+            "{vex} vxorps 32(%rax), %xmm3, %xmm1",
+            Int,
+        ),
+        (
+            "vandpd_avx_xmm_reg",
+            "{vex} vandpd %xmm2, %xmm3, %xmm1",
+            Int,
+        ),
+        (
+            "vandnpd_avx_ymm_mem",
+            "{vex} vandnpd 32(%rax), %ymm3, %ymm1",
+            Int,
+        ),
+        ("vorpd_avx_ymm_reg", "{vex} vorpd %ymm2, %ymm3, %ymm1", Int),
+        (
+            "vxorpd_avx_xmm_mem",
+            "{vex} vxorpd 32(%rax), %xmm3, %xmm1",
+            Int,
+        ),
+        (
+            "vcmpeqps_avx_xmm_reg",
+            "{vex} vcmpeqps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcmpltps_avx_ymm_mem",
+            "{vex} vcmpltps 32(%rax), %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vcmpunordps_avx_ymm_reg",
+            "{vex} vcmpunordps %ymm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vcmpeqpd_avx_xmm_reg",
+            "{vex} vcmpeqpd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vcmpnltpd_avx_ymm_mem",
+            "{vex} vcmpnltpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vcmpeqss_avx_reg",
+            "{vex} vcmpeqss %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcmpunordss_avx_mem",
+            "{vex} vcmpunordss 32(%rax), %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcmpeqsd_avx_reg",
+            "{vex} vcmpeqsd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vcmpnltsd_avx_mem",
+            "{vex} vcmpnltsd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        ("vucomiss_avx_reg", "{vex} vucomiss %xmm2, %xmm1", F32),
+        ("vcomiss_avx_mem", "{vex} vcomiss 32(%rax), %xmm1", F32),
+        ("vucomisd_avx_reg", "{vex} vucomisd %xmm2, %xmm1", F64),
+        ("vcomisd_avx_mem", "{vex} vcomisd 32(%rax), %xmm1", F64),
+        ("vtestps_avx_xmm_reg", "{vex} vtestps %xmm2, %xmm1", Int),
+        ("vtestps_avx_ymm_mem", "{vex} vtestps 32(%rax), %ymm1", Int),
+        ("vtestpd_avx_ymm_reg", "{vex} vtestpd %ymm2, %ymm1", Int),
+        ("vtestpd_avx_xmm_mem", "{vex} vtestpd 32(%rax), %xmm1", Int),
+        (
+            "vshufps_avx_xmm_reg",
+            "{vex} vshufps $0x1b, %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vshufps_avx_ymm_mem",
+            "{vex} vshufps $0xb1, 32(%rax), %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vshufpd_avx_xmm_reg",
+            "{vex} vshufpd $0x1, %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vshufpd_avx_ymm_mem",
+            "{vex} vshufpd $0x2, 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vunpcklps_avx_xmm_reg",
+            "{vex} vunpcklps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vunpckhps_avx_ymm_mem",
+            "{vex} vunpckhps 32(%rax), %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vunpcklpd_avx_xmm_reg",
+            "{vex} vunpcklpd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vunpckhpd_avx_ymm_mem",
+            "{vex} vunpckhpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vblendps_avx_xmm_reg",
+            "{vex} vblendps $0x5a, %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vblendps_avx_ymm_mem",
+            "{vex} vblendps $0xa5, 32(%rax), %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vblendpd_avx_xmm_reg",
+            "{vex} vblendpd $0x1, %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vblendpd_avx_ymm_mem",
+            "{vex} vblendpd $0x2, 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vblendvps_avx_xmm_reg",
+            "{vex} vblendvps %xmm4, %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vblendvpd_avx_ymm_mem",
+            "{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vpermilps_avx_xmm_imm",
+            "{vex} vpermilps $0x1b, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vpermilps_avx_ymm_mem_imm",
+            "{vex} vpermilps $0xb1, 32(%rax), %ymm1",
+            F32,
+        ),
+        (
+            "vpermilps_avx_xmm_reg",
+            "{vex} vpermilps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vpermilpd_avx_ymm_imm",
+            "{vex} vpermilpd $0x5, %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vpermilpd_avx_xmm_reg",
+            "{vex} vpermilpd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vperm2f128_avx_ymm_reg",
+            "{vex} vperm2f128 $0x31, %ymm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vinsertf128_avx_ymm_reg",
+            "{vex} vinsertf128 $0x1, %xmm2, %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vinsertf128_avx_ymm_mem",
+            "{vex} vinsertf128 $0x1, 32(%rax), %ymm3, %ymm1",
+            F32,
+        ),
+        (
+            "vextractf128_avx_xmm8",
+            "{vex} vextractf128 $0x1, %ymm1, %xmm8",
+            F32,
+        ),
+        (
+            "vextractf128_avx_mem",
+            "{vex} vextractf128 $0x0, %ymm1, 32(%rax)",
+            F32,
+        ),
+        (
+            "vbroadcastss_avx_xmm_mem",
+            "{vex} vbroadcastss 32(%rax), %xmm1",
+            F32,
+        ),
+        (
+            "vbroadcastss_avx_ymm_mem",
+            "{vex} vbroadcastss 32(%rax), %ymm1",
+            F32,
+        ),
+        (
+            "vbroadcastsd_avx_ymm_mem",
+            "{vex} vbroadcastsd 32(%rax), %ymm1",
+            F64,
+        ),
+        (
+            "vbroadcastf128_avx_ymm_mem",
+            "{vex} vbroadcastf128 32(%rax), %ymm1",
+            F32,
+        ),
+        ("vcvtps2pd_avx_reg", "{vex} vcvtps2pd %xmm3, %ymm1", F32),
+        ("vcvtps2pd_avx_mem", "{vex} vcvtps2pd 32(%rax), %ymm1", F32),
+        ("vcvtpd2ps_avx_reg", "{vex} vcvtpd2ps %ymm3, %xmm1", F64),
+        ("vcvtps2dq_avx_reg", "{vex} vcvtps2dq %ymm3, %ymm1", F32),
+        (
+            "vcvttps2dq_avx_mem",
+            "{vex} vcvttps2dq 32(%rax), %xmm1",
+            F32,
+        ),
+        ("vcvtdq2ps_avx_reg", "{vex} vcvtdq2ps %xmm3, %xmm1", Int),
+        ("vcvtpd2dq_avx_reg", "{vex} vcvtpd2dq %ymm3, %xmm1", F64),
+        ("vcvtdq2pd_avx_reg", "{vex} vcvtdq2pd %xmm3, %ymm1", Int),
+        (
+            "vcvtsi2ss_avx_r64",
+            "{vex} vcvtsi2ss %r8, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcvtsi2sd_avx_m32",
+            "{vex} vcvtsi2sd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        ("vcvtss2si_avx_xmm_r8", "{vex} vcvtss2si %xmm1, %r8", F32),
+        (
+            "vcvttss2si_avx_m32_r8",
+            "{vex} vcvttss2si 32(%rax), %r8",
+            F32,
+        ),
+        ("vcvtsd2si_avx_xmm_r8", "{vex} vcvtsd2si %xmm1, %r8", F64),
+        (
+            "vcvttsd2si_avx_m64_r8",
+            "{vex} vcvttsd2si 32(%rax), %r8",
+            F64,
+        ),
+        ("vmovsldup_avx_xmm_reg", "{vex} vmovsldup %xmm3, %xmm1", F32),
+        (
+            "vmovsldup_avx_ymm_mem",
+            "{vex} vmovsldup 32(%rax), %ymm1",
+            F32,
+        ),
+        ("vmovshdup_avx_ymm_reg", "{vex} vmovshdup %ymm3, %ymm1", F32),
+        (
+            "vmovddup_avx_xmm_mem",
+            "{vex} vmovddup 32(%rax), %xmm1",
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx,
+            profile,
+        });
+    }
+
     // AVX2 VEX packed-integer coverage. This spans the destructive-to-3-source
     // transition for arithmetic/logical/compare/minmax/multiply, pack/unpack,
     // immediate/count/variable shifts, SSSE3-style byte/word transforms,
