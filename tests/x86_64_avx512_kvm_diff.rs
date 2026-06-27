@@ -164,6 +164,16 @@ enum Feat {
     Cx8,
     /// CMPXCHG16B quadword compare-and-exchange.
     Cx16,
+    /// Load/store fence ordering instructions.
+    Fence,
+    /// CLFLUSH cache-line invalidation.
+    Clflush,
+    /// CLFLUSHOPT optimized cache-line invalidation.
+    Clflushopt,
+    /// CLWB cache-line writeback.
+    Clwb,
+    /// CLDEMOTE cache-line demotion hint.
+    Cldemote,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -243,6 +253,11 @@ impl Feat {
             Feat::Xsave => "xsave",
             Feat::Cx8 => "cx8",
             Feat::Cx16 => "cx16",
+            Feat::Fence => "fence",
+            Feat::Clflush => "clflush",
+            Feat::Clflushopt => "clflushopt",
+            Feat::Clwb => "clwb",
+            Feat::Cldemote => "cldemote",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -286,6 +301,11 @@ impl Feat {
             Feat::Xsave,
             Feat::Cx8,
             Feat::Cx16,
+            Feat::Fence,
+            Feat::Clflush,
+            Feat::Clflushopt,
+            Feat::Clwb,
+            Feat::Cldemote,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -333,6 +353,11 @@ struct HostFeatures {
     xsave: bool,
     cx8: bool,
     cx16: bool,
+    fence: bool,
+    clflush: bool,
+    clflushopt: bool,
+    clwb: bool,
+    cldemote: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -379,6 +404,11 @@ impl HostFeatures {
             xsave: host_cpu_flag("xsave"),
             cx8: host_cpu_flag("cx8"),
             cx16: host_cpu_flag("cx16"),
+            fence: is_x86_feature_detected!("sse2"),
+            clflush: host_cpu_flag("clflush"),
+            clflushopt: host_cpu_flag("clflushopt"),
+            clwb: host_cpu_flag("clwb"),
+            cldemote: host_cpu_flag("cldemote"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -426,6 +456,11 @@ impl HostFeatures {
             Feat::Xsave => self.xsave,
             Feat::Cx8 => self.cx8,
             Feat::Cx16 => self.cx16,
+            Feat::Fence => self.fence,
+            Feat::Clflush => self.clflush,
+            Feat::Clflushopt => self.clflushopt,
+            Feat::Clwb => self.clwb,
+            Feat::Cldemote => self.cldemote,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6403,6 +6438,55 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Cache-maintenance and memory-ordering instructions. The cache side
+    // effects are not directly observable, so each case brackets the operation
+    // with ordinary loads/stores and relies on the GPR/RFLAGS/scratch diff to
+    // catch architectural side effects or address calculation mistakes.
+    for &(label, asm, feat) in &[
+        (
+            "lfence_load_order",
+            "movq 32(%rax), %r8\nlfence\nmovq %r8, 64(%rax)",
+            Fence,
+        ),
+        (
+            "mfence_store_order",
+            "movq %r8, 32(%rax)\nmfence\nmovq 32(%rax), %rcx",
+            Fence,
+        ),
+        (
+            "sfence_store_order",
+            "movq %r8, 40(%rax)\nsfence\nmovq 40(%rax), %rcx",
+            Fence,
+        ),
+        (
+            "clflush_cache_line",
+            "movq %r8, 32(%rax)\nclflush 32(%rax)\nmovq 32(%rax), %rcx",
+            Clflush,
+        ),
+        (
+            "clflushopt_cache_line",
+            "movq %r8, 64(%rax)\nclflushopt 64(%rax)\nsfence\nmovq 64(%rax), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clwb_cache_line",
+            "movq %r8, 96(%rax)\nclwb 96(%rax)\nsfence\nmovq 96(%rax), %rcx",
+            Clwb,
+        ),
+        (
+            "cldemote_cache_line",
+            "movq %r8, 128(%rax)\ncldemote 128(%rax)\nmovq 128(%rax), %rcx",
+            Cldemote,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
@@ -7039,7 +7123,8 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
+    "+clflushopt,+clwb,+cldemote,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7307,7 +7392,16 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         // scalar feature probes below are intentionally 0F-family encodings.
         let scalar_encoding = matches!(
             case.feat,
-            Feat::Core | Feat::Fxsave | Feat::Xsave | Feat::Cx8 | Feat::Cx16
+            Feat::Core
+                | Feat::Fxsave
+                | Feat::Xsave
+                | Feat::Cx8
+                | Feat::Cx16
+                | Feat::Fence
+                | Feat::Clflush
+                | Feat::Clflushopt
+                | Feat::Clwb
+                | Feat::Cldemote
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
