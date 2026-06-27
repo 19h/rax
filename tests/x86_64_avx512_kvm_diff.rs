@@ -6829,6 +6829,28 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for mnem in ["vaesenc", "vaesenclast", "vaesdec", "vaesdeclast"] {
+        for class in ["xmm", "ymm"] {
+            out.push(Case {
+                label: format!("{mnem}_vex_vaes_addr_{class}_indexed"),
+                asm: format!("{{vex}} {mnem} -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                feat: Vaes,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_vaes_addr_{class}_addr32"),
+                asm: format!("addr32 {{vex}} {mnem} -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                feat: Vaes,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_vaes_addr_{class}_high_indexed"),
+                asm: format!("{{vex}} {mnem} -32(%rbx,%r9,1), %{class}11, %{class}9"),
+                feat: Vaes,
+                profile: Int,
+            });
+        }
+    }
 
     for &(imm, tag) in &[(0x00, "ll"), (0x01, "hl"), (0x10, "lh"), (0x11, "hh")] {
         for class in ["xmm", "ymm"] {
@@ -6858,6 +6880,34 @@ fn irregular_cases() -> Vec<Case> {
         feat: Vpclmulqdq,
         profile: Int,
     });
+    for &(imm, tag) in &[(0x00, "ll"), (0x01, "hl"), (0x10, "lh"), (0x11, "hh")] {
+        for class in ["xmm", "ymm"] {
+            out.push(Case {
+                label: format!("vpclmulqdq_vex_crypto_addr_{class}_{tag}_indexed"),
+                asm: format!(
+                    "{{vex}} vpclmulqdq ${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"
+                ),
+                feat: Vpclmulqdq,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("vpclmulqdq_vex_crypto_addr_{class}_{tag}_addr32"),
+                asm: format!(
+                    "addr32 {{vex}} vpclmulqdq ${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"
+                ),
+                feat: Vpclmulqdq,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("vpclmulqdq_vex_crypto_addr_{class}_{tag}_high_indexed"),
+                asm: format!(
+                    "{{vex}} vpclmulqdq ${imm:#x}, -32(%rbx,%r9,1), %{class}11, %{class}9"
+                ),
+                feat: Vpclmulqdq,
+                profile: Int,
+            });
+        }
+    }
 
     // VEX-encoded AVX-512 opmask moves. These exercise all KMOV transfer
     // classes: k<-mem, k<-k, mem<-k, k<-GPR, and GPR<-k across b/w/d/q widths.
@@ -12303,6 +12353,73 @@ fn avx512_kvm_gfni_crypto_corpus() {
         "all GFNI cases should run"
     );
     assert_eq!(tally.compared, 84, "all GFNI cases should compare");
+}
+
+#[test]
+fn avx512_kvm_vaes_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Vaes)
+        .collect();
+    assert_eq!(cases.len(), 72, "unexpected VAES corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on VAES cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a VAES case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VAES corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VAES cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vaes),
+        72,
+        "all VAES cases should run"
+    );
+    assert_eq!(tally.compared, 72, "all VAES cases should compare");
+}
+
+#[test]
+fn avx512_kvm_vpclmulqdq_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Vpclmulqdq)
+        .collect();
+    assert_eq!(cases.len(), 49, "unexpected VPCLMULQDQ corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VPCLMULQDQ cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VPCLMULQDQ case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VPCLMULQDQ corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VPCLMULQDQ cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vpclmulqdq),
+        49,
+        "all VPCLMULQDQ cases should run"
+    );
+    assert_eq!(
+        tally.compared, 49,
+        "all VPCLMULQDQ cases should compare"
+    );
 }
 
 #[test]
