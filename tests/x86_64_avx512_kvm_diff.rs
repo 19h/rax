@@ -185,6 +185,8 @@ enum Feat {
     Msr,
     /// Debug-register read/write instructions.
     DebugReg,
+    /// Port I/O instructions and string I/O forms.
+    Io,
     /// Privileged cache invalidation/writeback instructions without CPUID gates.
     CacheInvd,
     /// WBNOINVD cache writeback without invalidation.
@@ -300,6 +302,7 @@ impl Feat {
             Feat::DescriptorTable => "descriptor_table",
             Feat::Msr => "msr",
             Feat::DebugReg => "debug_reg",
+            Feat::Io => "io",
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
@@ -366,6 +369,7 @@ impl Feat {
             Feat::DescriptorTable,
             Feat::Msr,
             Feat::DebugReg,
+            Feat::Io,
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
@@ -561,6 +565,7 @@ impl HostFeatures {
             Feat::DescriptorTable => true,
             Feat::Msr => true,
             Feat::DebugReg => true,
+            Feat::Io => true,
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
@@ -1398,6 +1403,12 @@ fn is_string_mnemonic(mnem: &str) -> bool {
             | "cmpsw"
             | "cmpsl"
             | "cmpsq"
+            | "insb"
+            | "insw"
+            | "insl"
+            | "outsb"
+            | "outsw"
+            | "outsl"
             | "rep"
             | "repe"
             | "repne"
@@ -6318,6 +6329,41 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Port I/O instructions. The KVM and interpreter test runners both satisfy
+    // IN/INS exits with zero bytes and ignore OUT/OUTS payloads, so these cases
+    // can compare register, pointer, REP-count, and scratch effects directly.
+    for &(label, asm) in &[
+        ("in_io_al_imm8", "inb $0x80, %al"),
+        ("in_io_ax_imm8", "inw $0x81, %ax"),
+        ("in_io_eax_imm8", "inl $0x82, %eax"),
+        ("in_io_al_dx", "inb %dx, %al"),
+        ("in_io_ax_dx", "inw %dx, %ax"),
+        ("in_io_eax_dx", "inl %dx, %eax"),
+        ("out_io_al_imm8", "outb %al, $0x80"),
+        ("out_io_ax_imm8", "outw %ax, $0x81"),
+        ("out_io_eax_imm8", "outl %eax, $0x82"),
+        ("out_io_al_dx", "outb %al, %dx"),
+        ("out_io_ax_dx", "outw %ax, %dx"),
+        ("out_io_eax_dx", "outl %eax, %dx"),
+        ("insb_io_string", "insb"),
+        ("insw_io_string", "insw"),
+        ("insl_io_string", "insl"),
+        ("rep_insb_io_string", "rep insb"),
+        ("addr32_insb_io_string", "addr32 insb"),
+        ("outsb_io_string", "outsb"),
+        ("outsw_io_string", "outsw"),
+        ("outsl_io_string", "outsl"),
+        ("rep_outsb_io_string", "rep outsb"),
+        ("addr32_outsb_io_string", "addr32 outsb"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Io,
+            profile: Int,
+        });
+    }
+
     // Core bit-test and bit-scan instructions. These cover register operands,
     // immediate memory operands, and register-indexed memory bit strings using
     // r9 as a small index that stays within the compared scratch page.
@@ -7869,6 +7915,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::DescriptorTable
                 | Feat::Msr
                 | Feat::DebugReg
+                | Feat::Io
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
@@ -8048,6 +8095,26 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         "privileged corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 13, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_io_port_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Io)
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected I/O corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on I/O cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an I/O case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "I/O corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.compared, 22, "all I/O cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
