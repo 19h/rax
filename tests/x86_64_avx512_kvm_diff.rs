@@ -7370,6 +7370,45 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "movdiri_m32_r9d_indexed",
+            "movdiri %r9d, -32(%rbx,%r9,1)",
+            Movdiri,
+        ),
+        (
+            "movdiri_m64_r9_indexed",
+            "movdiri %r9, -24(%rbx,%r9,1)",
+            Movdiri,
+        ),
+        (
+            "movdiri_m32_r9d_addr32_indexed",
+            "addr32 movdiri %r9d, -32(%rbx,%r9,1)",
+            Movdiri,
+        ),
+        (
+            "movdiri_m64_r9_addr32_indexed",
+            "addr32 movdiri %r9, -24(%rbx,%r9,1)",
+            Movdiri,
+        ),
+        (
+            "movdir64b_scratch_128_to_0_indexed",
+            "movdir64b 42(%rbx,%r9,1), %rax",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_scratch_128_to_0_addr32_indexed",
+            "addr32 movdir64b 42(%rbx,%r9,1), %rax",
+            Movdir64b,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // ADX dual-carry arithmetic. The initial CF and OF are set, and the harness
     // compares r8 plus all arithmetic status flags, so ADCX/ADOX flag isolation
@@ -12434,6 +12473,43 @@ fn avx512_kvm_scalar_crc_movbe_operand_form_corpus() {
         tally.compared, 14,
         "all scalar CRC/MOVBE operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_movdir_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::Movdiri | Feat::Movdir64b))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected MOVDIR corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on MOVDIR cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a MOVDIR case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "MOVDIR corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "MOVDIR cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Movdiri),
+        8,
+        "all MOVDIRI cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Movdir64b),
+        4,
+        "all MOVDIR64B cases should run"
+    );
+    assert_eq!(tally.compared, 12, "all MOVDIR cases should compare");
 }
 
 #[test]
