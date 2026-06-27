@@ -186,6 +186,10 @@ enum Feat {
     Rdrand,
     /// RDSEED hardware seed generation.
     Rdseed,
+    /// RDTSC time-stamp counter read.
+    Tsc,
+    /// RDTSCP ordered time-stamp counter and IA32_TSC_AUX read.
+    Rdtscp,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -276,6 +280,8 @@ impl Feat {
             Feat::Rdpid => "rdpid",
             Feat::Rdrand => "rdrand",
             Feat::Rdseed => "rdseed",
+            Feat::Tsc => "tsc",
+            Feat::Rdtscp => "rdtscp",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -330,6 +336,8 @@ impl Feat {
             Feat::Rdpid,
             Feat::Rdrand,
             Feat::Rdseed,
+            Feat::Tsc,
+            Feat::Rdtscp,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -388,6 +396,8 @@ struct HostFeatures {
     rdpid: bool,
     rdrand: bool,
     rdseed: bool,
+    tsc: bool,
+    rdtscp: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -445,6 +455,8 @@ impl HostFeatures {
             rdpid: host_cpu_flag("rdpid"),
             rdrand: host_cpu_flag("rdrand"),
             rdseed: host_cpu_flag("rdseed"),
+            tsc: host_cpu_flag("tsc"),
+            rdtscp: host_cpu_flag("rdtscp"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -503,6 +515,8 @@ impl HostFeatures {
             Feat::Rdpid => self.rdpid,
             Feat::Rdrand => self.rdrand,
             Feat::Rdseed => self.rdseed,
+            Feat::Tsc => self.tsc,
+            Feat::Rdtscp => self.rdtscp,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6636,6 +6650,39 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // RDTSC/RDTSCP return time-varying values. These cases either normalize
+    // the outputs with flag-preserving MOVs or shift away variable payload bits
+    // while restoring the instruction-preserved flags.
+    for &(label, asm, feat) in &[
+        (
+            "rdtsc_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nrdtsc\nmovq $0, %rax\nmovq $0, %rdx",
+            Tsc,
+        ),
+        (
+            "rdtsc_zero_extends_outputs",
+            "rdtsc\npushfq\npopq %rbx\nshrq $32, %rax\nshrq $32, %rdx\npushq %rbx\npopfq",
+            Tsc,
+        ),
+        (
+            "rdtscp_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nrdtscp\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %rcx",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_zero_extends_outputs",
+            "rdtscp\npushfq\npopq %rbx\nshrq $32, %rax\nshrq $32, %rdx\nshrq $32, %rcx\npushq %rbx\npopfq",
+            Rdtscp,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // FSGSBASE instructions. The harness does not snapshot segment bases
     // directly, so each write is immediately read back into compared GPRs;
     // 32-bit read/write forms also check architectural zero-extension.
@@ -7594,6 +7641,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Rdpid
                 | Feat::Rdrand
                 | Feat::Rdseed
+                | Feat::Tsc
+                | Feat::Rdtscp
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
