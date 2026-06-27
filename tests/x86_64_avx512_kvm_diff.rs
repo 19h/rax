@@ -8873,6 +8873,59 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Exchange/atomic operand-width variants. These hit high-byte register
+    // paths, word memory operands, same-register XADD aliases, CMPXCHG
+    // success/failure writeback, and LOCK-prefixed memory RMW forms.
+    for &(label, asm) in &[
+        ("bswap_core_atomic_width_r9d", "bswapl %r9d"),
+        ("bswap_core_atomic_width_rax", "bswapq %rax"),
+        ("xchg_core_atomic_width_high8", "xchgb %ch, %dl"),
+        ("xchg_core_atomic_width_r16_reg", "xchgw %cx, %r8w"),
+        ("xchg_core_atomic_width_m16_r8w", "xchgw %r8w, 18(%rax)"),
+        ("xchg_core_atomic_width_rax_r9", "xchgq %r9, %rax"),
+        ("xadd_core_atomic_width_high8", "xaddb %ch, %dl"),
+        ("xadd_core_atomic_width_same_r8b", "xaddb %r8b, %r8b"),
+        ("xadd_core_atomic_width_r16_reg", "xaddw %cx, %r8w"),
+        ("xadd_core_atomic_width_m16_r8w", "xaddw %r8w, 18(%rax)"),
+        ("xadd_core_atomic_width_same_r32", "xaddl %r8d, %r8d"),
+        ("xadd_core_atomic_width_same_r64", "xaddq %r8, %r8"),
+        (
+            "lock_xadd_core_atomic_width_m16_r8w",
+            "lock xaddw %r8w, 20(%rax)",
+        ),
+        ("cmpxchg_core_atomic_width_r8_success", "cmpxchgb %r8b, %al"),
+        ("cmpxchg_core_atomic_width_high8_fail", "cmpxchgb %ch, %dl"),
+        ("cmpxchg_core_atomic_width_r16_fail", "cmpxchgw %r8w, %cx"),
+        ("cmpxchg_core_atomic_width_r32_fail", "cmpxchgl %r8d, %ecx"),
+        (
+            "cmpxchg_core_atomic_width_m8_success",
+            "movb %al, 24(%rax)\ncmpxchgb %r8b, 24(%rax)",
+        ),
+        (
+            "cmpxchg_core_atomic_width_m16_success",
+            "movw %ax, 26(%rax)\ncmpxchgw %r8w, 26(%rax)",
+        ),
+        (
+            "cmpxchg_core_atomic_width_m32_success",
+            "movl %eax, 28(%rax)\ncmpxchgl %r8d, 28(%rax)",
+        ),
+        (
+            "cmpxchg_core_atomic_width_m16_fail",
+            "cmpxchgw %r8w, 30(%rax)",
+        ),
+        (
+            "lock_cmpxchg_core_atomic_width_m32_success",
+            "movl %eax, 36(%rax)\nlock cmpxchgl %r8d, 36(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // LOCK-prefixed core read-modify-write forms. Single-vCPU execution makes
     // atomicity unobservable, but the prefix must still be accepted only on
     // legal memory destinations while preserving the ordinary instruction
@@ -10979,6 +11032,39 @@ fn avx512_kvm_core_group_width_corpus() {
     assert_eq!(
         tally.compared, 54,
         "all core group-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_atomic_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_atomic_width_"))
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected core atomic-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core atomic-width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core atomic-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core atomic-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core atomic-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 22,
+        "all core atomic-width cases should compare"
     );
 }
 
