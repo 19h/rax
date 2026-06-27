@@ -3883,6 +3883,48 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE4.1 0F38 integer/vector forms cover partial-width sign/zero
+    // extends, integer min/max, multiply/compare, pack, and non-temporal load.
+    for &(label, asm) in &[
+        ("pmovsxbw_sse41_reg", "pmovsxbw %xmm2, %xmm1"),
+        ("pmovsxbd_sse41_mem", "pmovsxbd 32(%rax), %xmm1"),
+        ("pmovsxbq_sse41_reg", "pmovsxbq %xmm2, %xmm1"),
+        ("pmovsxwd_sse41_mem", "pmovsxwd 32(%rax), %xmm1"),
+        ("pmovsxwq_sse41_reg", "pmovsxwq %xmm2, %xmm1"),
+        ("pmovsxdq_sse41_mem", "pmovsxdq 32(%rax), %xmm1"),
+        ("pmovzxbw_sse41_reg", "pmovzxbw %xmm2, %xmm1"),
+        ("pmovzxbd_sse41_mem", "pmovzxbd 32(%rax), %xmm1"),
+        ("pmovzxbq_sse41_reg", "pmovzxbq %xmm2, %xmm1"),
+        ("pmovzxwd_sse41_mem", "pmovzxwd 32(%rax), %xmm1"),
+        ("pmovzxwq_sse41_reg", "pmovzxwq %xmm2, %xmm1"),
+        ("pmovzxdq_sse41_mem", "pmovzxdq 32(%rax), %xmm1"),
+        ("pmuldq_sse41_reg", "pmuldq %xmm2, %xmm1"),
+        ("pmuldq_sse41_mem", "pmuldq 32(%rax), %xmm1"),
+        ("pcmpeqq_sse41_reg", "pcmpeqq %xmm2, %xmm1"),
+        ("movntdqa_sse41_mem", "movntdqa 32(%rax), %xmm1"),
+        ("packusdw_sse41_reg", "packusdw %xmm2, %xmm1"),
+        ("packusdw_sse41_mem", "packusdw 32(%rax), %xmm1"),
+        ("pminsb_sse41_reg", "pminsb %xmm2, %xmm1"),
+        ("pminsd_sse41_mem", "pminsd 32(%rax), %xmm1"),
+        ("pminuw_sse41_reg", "pminuw %xmm2, %xmm1"),
+        ("pminud_sse41_mem", "pminud 32(%rax), %xmm1"),
+        ("pmaxsb_sse41_reg", "pmaxsb %xmm2, %xmm1"),
+        ("pmaxsd_sse41_mem", "pmaxsd 32(%rax), %xmm1"),
+        ("pmaxuw_sse41_reg", "pmaxuw %xmm2, %xmm1"),
+        ("pmaxud_sse41_mem", "pmaxud 32(%rax), %xmm1"),
+        ("pmulld_sse41_reg", "pmulld %xmm2, %xmm1"),
+        ("pmulld_sse41_mem", "pmulld 32(%rax), %xmm1"),
+        ("phminposuw_sse41_reg", "phminposuw %xmm2, %xmm1"),
+        ("phminposuw_sse41_mem", "phminposuw 32(%rax), %xmm1"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse41,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
