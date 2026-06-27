@@ -160,6 +160,10 @@ enum Feat {
     Fxsave,
     /// XGETBV/XSETBV and XSAVE/XRSTOR state-management instructions.
     Xsave,
+    /// CMPXCHG8B doubleword compare-and-exchange.
+    Cx8,
+    /// CMPXCHG16B quadword compare-and-exchange.
+    Cx16,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -237,6 +241,8 @@ impl Feat {
             Feat::Fma => "fma",
             Feat::Fxsave => "fxsr",
             Feat::Xsave => "xsave",
+            Feat::Cx8 => "cx8",
+            Feat::Cx16 => "cx16",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -278,6 +284,8 @@ impl Feat {
             Feat::Fma,
             Feat::Fxsave,
             Feat::Xsave,
+            Feat::Cx8,
+            Feat::Cx16,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -323,6 +331,8 @@ struct HostFeatures {
     fma: bool,
     fxsave: bool,
     xsave: bool,
+    cx8: bool,
+    cx16: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -367,6 +377,8 @@ impl HostFeatures {
             fma: is_x86_feature_detected!("fma"),
             fxsave: host_cpu_flag("fxsr"),
             xsave: host_cpu_flag("xsave"),
+            cx8: host_cpu_flag("cx8"),
+            cx16: host_cpu_flag("cx16"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -412,6 +424,8 @@ impl HostFeatures {
             Feat::Fma => self.fma,
             Feat::Fxsave => self.fxsave,
             Feat::Xsave => self.xsave,
+            Feat::Cx8 => self.cx8,
+            Feat::Cx16 => self.cx16,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6430,6 +6444,49 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Double-width atomic compare/exchange. These explicitly seed the memory
+    // operand plus accumulator/new-value registers, then check success, failure,
+    // and LOCK-prefixed memory forms through the scratch/GPR/RFLAGS diff.
+    for &(label, asm, feat) in &[
+        (
+            "cmpxchg8b_success",
+            "movl $0x11223344, 32(%rdi)\nmovl $0x55667788, 36(%rdi)\nmovl $0x11223344, %eax\nmovl $0x55667788, %edx\nmovl $0xaabbccdd, %ebx\nmovl $0xeeff0011, %ecx\ncmpxchg8b 32(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg8b_failure",
+            "movl $0x01234567, 32(%rdi)\nmovl $0x89abcdef, 36(%rdi)\nmovl $0x11223344, %eax\nmovl $0x55667788, %edx\nmovl $0xaabbccdd, %ebx\nmovl $0xeeff0011, %ecx\ncmpxchg8b 32(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg8b_lock_success",
+            "movl $0x10203040, 32(%rdi)\nmovl $0x50607080, 36(%rdi)\nmovl $0x10203040, %eax\nmovl $0x50607080, %edx\nmovl $0x90a0b0c0, %ebx\nmovl $0xd0e0f000, %ecx\nlock cmpxchg8b 32(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg16b_success",
+            "movabsq $0x1122334455667788, %r8\nmovq %r8, 64(%rdi)\nmovabsq $0x99aabbccddeeff00, %r8\nmovq %r8, 72(%rdi)\nmovabsq $0x1122334455667788, %rax\nmovabsq $0x99aabbccddeeff00, %rdx\nmovabsq $0x0102030405060708, %rbx\nmovabsq $0x1112131415161718, %rcx\ncmpxchg16b 64(%rdi)",
+            Cx16,
+        ),
+        (
+            "cmpxchg16b_failure",
+            "movabsq $0x8877665544332211, %r8\nmovq %r8, 64(%rdi)\nmovabsq $0x00ffeeddccbbaa99, %r8\nmovq %r8, 72(%rdi)\nmovabsq $0x1122334455667788, %rax\nmovabsq $0x99aabbccddeeff00, %rdx\nmovabsq $0x0102030405060708, %rbx\nmovabsq $0x1112131415161718, %rcx\ncmpxchg16b 64(%rdi)",
+            Cx16,
+        ),
+        (
+            "cmpxchg16b_lock_success",
+            "movabsq $0x123456789abcdef0, %r8\nmovq %r8, 64(%rdi)\nmovabsq $0x0fedcba987654321, %r8\nmovq %r8, 72(%rdi)\nmovabsq $0x123456789abcdef0, %rax\nmovabsq $0x0fedcba987654321, %rdx\nmovabsq $0x55aa55aa55aa55aa, %rbx\nmovabsq $0xaa55aa55aa55aa55, %rcx\nlock cmpxchg16b 64(%rdi)",
+            Cx16,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Core integer ALU and logical forms. The table spans register, memory,
     // immediate, accumulator-addressed, and scratch-writing paths while using
     // r8/rcx/rdx plus the scratch page so the harness observes every effect.
@@ -7248,8 +7305,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
         // are VEX-encoded (0xC4/0xC5). Legacy SIMD/scalar extensions and
         // scalar feature probes below are intentionally 0F-family encodings.
-        let scalar_encoding = matches!(case.feat, Feat::Core | Feat::Fxsave | Feat::Xsave)
-            && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
+        let scalar_encoding = matches!(
+            case.feat,
+            Feat::Core | Feat::Fxsave | Feat::Xsave | Feat::Cx8 | Feat::Cx16
+        ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
                 case.feat,
