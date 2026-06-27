@@ -32,6 +32,15 @@ use rax::cpu::Registers;
 // ============================================================================
 
 #[test]
+fn test_group1_opcode_82_rejected_in_64_bit_mode() {
+    // 0x82 was a non-64-bit alias for the 0x80 group-1 byte-immediate opcode.
+    // In long mode it is invalid, so inject #UD before the ADD can retire.
+    let code = [0x82, 0xc0, 0x01, 0xf4]; // ADD AL, 1 using invalid 0x82 alias
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    assert!(run_until_hlt(&mut vcpu).is_err());
+}
+
+#[test]
 fn test_add_al_imm8() {
     let code = [0x04, 0x05, 0xf4]; // ADD AL, 5; HLT
     let mut regs = Registers::default();

@@ -8997,6 +8997,80 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Non-qword legacy group/direct integer forms. These cover byte, word, and
+    // dword register and memory operands across group-1 immediate dispatch,
+    // direct ALU/logical ModR/M opcodes, high-byte registers, and group-3
+    // TEST/NOT/NEG forms.
+    for &(label, asm) in &[
+        ("add_core_group_width_m8_r8", "addb %r8b, 1(%rax)"),
+        ("add_core_group_width_r16_mem_src", "addw 4(%rax), %r8w"),
+        ("adc_core_group_width_r8_mem_src", "adcb 2(%rax), %r8b"),
+        ("adc_core_group_width_m32_r8", "adcl %r8d, 8(%rax)"),
+        ("sbb_core_group_width_m8_r8", "sbbb %r8b, 3(%rax)"),
+        ("sbb_core_group_width_r16_mem_src", "sbbw 6(%rax), %r8w"),
+        ("sub_core_group_width_r8_mem_src", "subb 4(%rax), %r8b"),
+        ("sub_core_group_width_m32_r8", "subl %r8d, 12(%rax)"),
+        ("cmp_core_group_width_m8_r8", "cmpb %r8b, 5(%rax)"),
+        ("cmp_core_group_width_r16_mem_src", "cmpw 8(%rax), %r8w"),
+        ("or_core_group_width_m8_r8", "orb %r8b, 6(%rax)"),
+        ("or_core_group_width_r16_mem_src", "orw 10(%rax), %r8w"),
+        ("and_core_group_width_r8_mem_src", "andb 7(%rax), %r8b"),
+        ("and_core_group_width_m32_r8", "andl %r8d, 16(%rax)"),
+        ("xor_core_group_width_m8_r8", "xorb %r8b, 17(%rax)"),
+        ("xor_core_group_width_r32_mem_src", "xorl 20(%rax), %r8d"),
+        ("test_core_group_width_m8_r8", "testb %r8b, 18(%rax)"),
+        ("test_core_group_width_r16_mem_src", "testw 22(%rax), %r8w"),
+        ("add_core_group_width_high8", "addb %ch, %dh"),
+        ("xor_core_group_width_high8", "xorb %bh, %ah"),
+        ("add_core_group_width_r8_imm8", "addb $0x7f, %r8b"),
+        ("add_core_group_width_m8_imm8", "addb $0x10, 24(%rax)"),
+        ("or_core_group_width_r8_imm8", "orb $0xf0, %r8b"),
+        ("or_core_group_width_m8_imm8", "orb $0x0f, 25(%rax)"),
+        ("adc_core_group_width_r16_imm8", "adcw $-1, %r8w"),
+        ("adc_core_group_width_m16_imm16", "adcw $0x101, 26(%rax)"),
+        ("sbb_core_group_width_r32_imm8", "sbbl $-2, %r8d"),
+        (
+            "sbb_core_group_width_m32_imm32",
+            "sbbl $0x1020304, 28(%rax)",
+        ),
+        ("and_core_group_width_r16_imm16", "andw $0xff0, %r8w"),
+        ("and_core_group_width_m16_imm8", "andw $0x7f, 32(%rax)"),
+        ("sub_core_group_width_r8_imm8", "subb $0x20, %r8b"),
+        ("sub_core_group_width_m32_imm8", "subl $0x20, 36(%rax)"),
+        ("xor_core_group_width_r32_imm32", "xorl $0x55aa55aa, %r8d"),
+        ("xor_core_group_width_m8_imm8", "xorb $0xaa, 40(%rax)"),
+        ("cmp_core_group_width_r16_imm8", "cmpw $-1, %r8w"),
+        ("cmp_core_group_width_m32_imm32", "cmpl $0x4000, 44(%rax)"),
+        ("test_core_group_width_r8_imm8", "testb $0xf0, %r8b"),
+        ("test_core_group_width_m8_imm8", "testb $0x0f, 48(%rax)"),
+        ("test_core_group_width_r16_imm16", "testw $0xff0, %r8w"),
+        ("test_core_group_width_m16_imm16", "testw $0x101, 50(%rax)"),
+        ("test_core_group_width_r32_imm32", "testl $0xff00ff, %r8d"),
+        (
+            "test_core_group_width_m32_imm32",
+            "testl $0x7f00ff00, 52(%rax)",
+        ),
+        ("not_core_group_width_r8", "notb %r8b"),
+        ("not_core_group_width_m8", "notb 56(%rax)"),
+        ("not_core_group_width_r16", "notw %r8w"),
+        ("not_core_group_width_m16", "notw 58(%rax)"),
+        ("not_core_group_width_r32", "notl %r8d"),
+        ("not_core_group_width_m32", "notl 60(%rax)"),
+        ("neg_core_group_width_r8", "negb %r8b"),
+        ("neg_core_group_width_m8", "negb 64(%rax)"),
+        ("neg_core_group_width_r16", "negw %r8w"),
+        ("neg_core_group_width_m16", "negw 66(%rax)"),
+        ("neg_core_group_width_r32", "negl %r8d"),
+        ("neg_core_group_width_m32", "negl 68(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // INC/DEC width variants. Byte forms dispatch through group 4 (0xFE),
     // including high-byte registers without REX; word/dword forms use group 5
     // with non-qword operand sizes.
@@ -10872,6 +10946,39 @@ fn avx512_kvm_core_incdec_width_corpus() {
     assert_eq!(
         tally.compared, 14,
         "all core inc/dec-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_group_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_group_width_"))
+        .collect();
+    assert_eq!(cases.len(), 54, "unexpected core group-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core group-width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core group-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core group-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core group-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 54,
+        "all core group-width cases should compare"
     );
 }
 
