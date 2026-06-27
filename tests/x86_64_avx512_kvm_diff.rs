@@ -8910,6 +8910,73 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        ("lfence_preserves_cmp_flags", "cmpq %rcx, %r8\nlfence", Fence),
+        ("mfence_preserves_cmp_flags", "cmpq %rcx, %r8\nmfence", Fence),
+        ("sfence_preserves_cmp_flags", "cmpq %rcx, %r8\nsfence", Fence),
+        (
+            "clflush_cache_line_disp",
+            "movq %r8, -16(%rbx)\nclflush -16(%rbx)\nmovq -16(%rbx), %rcx",
+            Clflush,
+        ),
+        (
+            "clflush_cache_line_addr32_disp",
+            "movq %r8, -16(%rbx)\naddr32 clflush -16(%rbx)\nmovq -16(%rbx), %rcx",
+            Clflush,
+        ),
+        (
+            "clflushopt_cache_line_disp",
+            "movq %r8, -16(%rbx)\nclflushopt -16(%rbx)\nsfence\nmovq -16(%rbx), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clflushopt_cache_line_addr32_disp",
+            "movq %r8, -16(%rbx)\naddr32 clflushopt -16(%rbx)\nsfence\nmovq -16(%rbx), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clwb_cache_line_disp",
+            "movq %r8, -16(%rbx)\nclwb -16(%rbx)\nsfence\nmovq -16(%rbx), %rcx",
+            Clwb,
+        ),
+        (
+            "clwb_cache_line_addr32_disp",
+            "movq %r8, -16(%rbx)\naddr32 clwb -16(%rbx)\nsfence\nmovq -16(%rbx), %rcx",
+            Clwb,
+        ),
+        (
+            "cldemote_cache_line_disp",
+            "movq %r8, -16(%rbx)\ncldemote -16(%rbx)\nmovq -16(%rbx), %rcx",
+            Cldemote,
+        ),
+        (
+            "cldemote_cache_line_addr32_disp",
+            "movq %r8, -16(%rbx)\naddr32 cldemote -16(%rbx)\nmovq -16(%rbx), %rcx",
+            Cldemote,
+        ),
+        (
+            "invd_preserves_cmp_flags",
+            "cmpq %rcx, %r8\ninvd",
+            CacheInvd,
+        ),
+        (
+            "wbinvd_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nwbinvd",
+            CacheInvd,
+        ),
+        (
+            "wbnoinvd_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nwbnoinvd",
+            Wbnoinvd,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // Hint/no-op instructions must decode addressing forms and preserve all
     // architectural state that is visible to this harness.
@@ -9033,6 +9100,50 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "serialize_stack_roundtrip",
+            "pushq %r8\nserialize\npopq %rcx",
+            Serialize,
+        ),
+        (
+            "serialize_after_lfence",
+            "movq %r8, 96(%rax)\nlfence\nserialize\nmovq 96(%rax), %rcx",
+            Serialize,
+        ),
+        (
+            "umonitor_r32_address",
+            "leaq 96(%rax), %r8\numonitor %r8d\nmovq %r8, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umonitor_r10_address",
+            "leaq 112(%rax), %r10\numonitor %r10\nmovq %r10, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umonitor_r10d_address",
+            "leaq 120(%rax), %r10\numonitor %r10d\nmovq %r10, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umwait_r10d_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nxorl %r10d, %r10d\numwait %r10d\naddq $0, %r8",
+            Waitpkg,
+        ),
+        (
+            "tpause_r10d_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nxorl %r10d, %r10d\ntpause %r10d\naddq $0, %r8",
+            Waitpkg,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // RDPID reads IA32_TSC_AUX. Fresh KVM vCPUs expose zero here, matching the
     // emulator model; the cases verify destination width, extended registers,
@@ -9043,6 +9154,20 @@ fn irregular_cases() -> Vec<Case> {
         ("rdpid_r8_zeroext", "movabsq $-1, %r8\nrdpid %r8"),
         ("rdpid_preserves_cmp_flags", "cmpq %rcx, %r8\nrdpid %r9"),
         ("rdpid_rexw_rax", ".byte 0xf3, 0x48, 0x0f, 0xc7, 0xf8\n"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Rdpid,
+            profile: Int,
+        });
+    }
+    for &(label, asm) in &[
+        ("rdpid_rbx_zeroext", "movabsq $-1, %rbx\nrdpid %rbx"),
+        (
+            "rdpid_r10_to_rcx_zeroext",
+            "movabsq $-1, %r10\nrdpid %r10\nmovq %r10, %rcx",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -9085,6 +9210,45 @@ fn irregular_cases() -> Vec<Case> {
         (
             "rdseed_r32_zeroext",
             "movabsq $-1, %r9\n1:\nrdseed %r9d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r9\njz 2f\nmovq $1, %r9\njmp 3f\n2:\nmovq $0, %r9\n3:\naddq $0, %r9",
+            Rdseed,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+    for &(label, asm, feat) in &[
+        (
+            "rdrand_r64_rbx_success_flags",
+            "1:\nrdrand %rbx\njnc 1b\nmovq $0, %rbx",
+            Rdrand,
+        ),
+        (
+            "rdrand_r16_cx_preserves_upper",
+            "movabsq $0x1020304050607080, %rcx\n1:\nrdrand %cx\njnc 1b\nmovw $0, %cx",
+            Rdrand,
+        ),
+        (
+            "rdrand_r32_r8d_zeroext",
+            "movabsq $-1, %r8\n1:\nrdrand %r8d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r8\njz 2f\nmovq $1, %r8\njmp 3f\n2:\nmovq $0, %r8\n3:\naddq $0, %r8",
+            Rdrand,
+        ),
+        (
+            "rdseed_r64_rbx_success_flags",
+            "1:\nrdseed %rbx\njnc 1b\nmovq $0, %rbx",
+            Rdseed,
+        ),
+        (
+            "rdseed_r16_cx_preserves_upper",
+            "movabsq $0x8877665544332211, %rcx\n1:\nrdseed %cx\njnc 1b\nmovw $0, %cx",
+            Rdseed,
+        ),
+        (
+            "rdseed_r32_r8d_zeroext",
+            "movabsq $-1, %r8\n1:\nrdseed %r8d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r8\njz 2f\nmovq $1, %r8\njmp 3f\n2:\nmovq $0, %r8\n3:\naddq $0, %r8",
             Rdseed,
         ),
     ] {
@@ -9370,6 +9534,35 @@ fn irregular_cases() -> Vec<Case> {
         (
             "rdtscp_zero_extends_outputs",
             "rdtscp\npushfq\npopq %rbx\nshrq $32, %rax\nshrq $32, %rdx\nshrq $32, %rcx\npushq %rbx\npopfq",
+            Rdtscp,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+    for &(label, asm, feat) in &[
+        (
+            "rdtsc_lfence_normalized",
+            "lfence\nrdtsc\nmovq $0, %rax\nmovq $0, %rdx",
+            Tsc,
+        ),
+        (
+            "rdtsc_serialize_normalized",
+            "serialize\nrdtsc\nmovq $0, %rax\nmovq $0, %rdx",
+            Tsc,
+        ),
+        (
+            "rdtscp_reads_aux_zero",
+            "rdtscp\nmovq $0, %rax\nmovq $0, %rdx",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_lfence_normalized",
+            "lfence\nrdtscp\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %rcx",
             Rdtscp,
         ),
     ] {
@@ -11238,6 +11431,81 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
 }
 
 #[test]
+fn avx512_kvm_cache_memory_order_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            matches!(
+                case.feat,
+                Feat::Fence
+                    | Feat::Clflush
+                    | Feat::Clflushopt
+                    | Feat::Clwb
+                    | Feat::Cldemote
+                    | Feat::CacheInvd
+                    | Feat::Wbnoinvd
+            )
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        24,
+        "unexpected cache/memory-order corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on cache/memory-order cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a cache/memory-order case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "cache/memory-order corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "cache/memory-order cases should not feature-skip"
+    );
+    assert_eq!(tally.ran_for(Feat::Fence), 6, "all fence cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Clflush),
+        3,
+        "all CLFLUSH cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Clflushopt),
+        3,
+        "all CLFLUSHOPT cases should run"
+    );
+    assert_eq!(tally.ran_for(Feat::Clwb), 3, "all CLWB cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Cldemote),
+        3,
+        "all CLDEMOTE cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::CacheInvd),
+        4,
+        "all INVD/WBINVD cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Wbnoinvd),
+        2,
+        "all WBNOINVD cases should run"
+    );
+    assert_eq!(
+        tally.compared, 24,
+        "all cache/memory-order cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_monitor_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -11272,6 +11540,58 @@ fn avx512_kvm_monitor_corpus() {
         );
         assert_eq!(tally.compared, 0, "MONITOR cases should not run");
     }
+}
+
+#[test]
+fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::Serialize | Feat::Waitpkg | Feat::Rdpid))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        20,
+        "unexpected serialize/WAITPKG/RDPID corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on serialize/WAITPKG/RDPID cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a serialize/WAITPKG/RDPID case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "serialize/WAITPKG/RDPID corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "serialize/WAITPKG/RDPID cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Serialize),
+        5,
+        "all SERIALIZE cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Waitpkg),
+        9,
+        "all WAITPKG cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdpid),
+        6,
+        "all RDPID cases should run"
+    );
+    assert_eq!(
+        tally.compared, 20,
+        "all serialize/WAITPKG/RDPID cases should compare"
+    );
 }
 
 #[test]
@@ -11365,6 +11685,49 @@ fn avx512_kvm_processor_query_corpus() {
         );
         assert_eq!(tally.compared, 5, "all CPUID cases should compare");
     }
+}
+
+#[test]
+fn avx512_kvm_random_tsc_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::Rdrand | Feat::Rdseed | Feat::Tsc | Feat::Rdtscp))
+        .collect();
+    assert_eq!(cases.len(), 20, "unexpected random/TSC corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on random/TSC cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a random/TSC case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "random/TSC corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "random/TSC cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdrand),
+        6,
+        "all RDRAND cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdseed),
+        6,
+        "all RDSEED cases should run"
+    );
+    assert_eq!(tally.ran_for(Feat::Tsc), 4, "all RDTSC cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Rdtscp),
+        4,
+        "all RDTSCP cases should run"
+    );
+    assert_eq!(tally.compared, 20, "all random/TSC cases should compare");
 }
 
 #[test]
