@@ -9538,6 +9538,118 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // Legacy GFNI/SHA-NI edge operands. These keep non-VEX XMM decoder paths
+    // under exact zero/all-one inputs and include SHA1RNDS4 endpoint functions.
+    for &(label, asm, feat) in &[
+        (
+            "gf2p8mulb_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\ngf2p8mulb %xmm2, %xmm1",
+            Gfni,
+        ),
+        (
+            "gf2p8mulb_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\ngf2p8mulb 64(%rax), %xmm1",
+            Gfni,
+        ),
+        (
+            "gf2p8affineqb_legacy_gfni_sha_edge_imm0_zero_reg",
+            "pxor %xmm2, %xmm2\ngf2p8affineqb $0x00, %xmm2, %xmm1",
+            Gfni,
+        ),
+        (
+            "gf2p8affineqb_legacy_gfni_sha_edge_immff_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\ngf2p8affineqb $0xff, 64(%rax), %xmm1",
+            Gfni,
+        ),
+        (
+            "gf2p8affineinvqb_legacy_gfni_sha_edge_imm0_zero_reg",
+            "pxor %xmm2, %xmm2\ngf2p8affineinvqb $0x00, %xmm2, %xmm1",
+            Gfni,
+        ),
+        (
+            "gf2p8affineinvqb_legacy_gfni_sha_edge_immff_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\ngf2p8affineinvqb $0xff, 64(%rax), %xmm1",
+            Gfni,
+        ),
+        (
+            "sha1nexte_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha1nexte %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha1nexte_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha1nexte 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha1msg1_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha1msg1 %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha1msg1_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha1msg1 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha1msg2_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha1msg2 %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha1msg2_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha1msg2 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha256rnds2_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha256rnds2 %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha256rnds2_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha256rnds2 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha256msg1_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha256msg1 %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha256msg1_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha256msg1 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha256msg2_legacy_gfni_sha_edge_zero_reg",
+            "pxor %xmm2, %xmm2\nsha256msg2 %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha256msg2_legacy_gfni_sha_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha256msg2 64(%rax), %xmm1",
+            Sha,
+        ),
+        (
+            "sha1rnds4_legacy_gfni_sha_edge_imm0_zero_reg",
+            "pxor %xmm2, %xmm2\nsha1rnds4 $0, %xmm2, %xmm1",
+            Sha,
+        ),
+        (
+            "sha1rnds4_legacy_gfni_sha_edge_imm3_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\nsha1rnds4 $3, 64(%rax), %xmm1",
+            Sha,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // MOVDIR direct stores. The harness compares the scratch page, so these
     // cases exercise the architectural memory side effects against silicon.
     for &(label, asm, feat) in &[
@@ -16319,7 +16431,7 @@ fn avx512_kvm_gfni_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Gfni)
         .collect();
-    assert_eq!(cases.len(), 90, "unexpected GFNI corpus size");
+    assert_eq!(cases.len(), 96, "unexpected GFNI corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16336,10 +16448,10 @@ fn avx512_kvm_gfni_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Gfni),
-        90,
+        96,
         "all GFNI cases should run"
     );
-    assert_eq!(tally.compared, 90, "all GFNI cases should compare");
+    assert_eq!(tally.compared, 96, "all GFNI cases should compare");
 }
 
 #[test]
@@ -16505,6 +16617,53 @@ fn avx512_kvm_legacy_xmm_crypto_edge_corpus() {
 }
 
 #[test]
+fn avx512_kvm_legacy_gfni_sha_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_gfni_sha_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        20,
+        "unexpected legacy GFNI/SHA edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy GFNI/SHA edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy GFNI/SHA edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy GFNI/SHA edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy GFNI/SHA edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Gfni),
+        6,
+        "all legacy GFNI edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sha),
+        14,
+        "all SHA-NI edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 20,
+        "all legacy GFNI/SHA edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_aes_legacy_crypto_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -16587,7 +16746,7 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Sha)
         .collect();
-    assert_eq!(cases.len(), 60, "unexpected SHA-NI legacy corpus size");
+    assert_eq!(cases.len(), 74, "unexpected SHA-NI legacy corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16610,11 +16769,11 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Sha),
-        60,
+        74,
         "all SHA-NI legacy cases should run"
     );
     assert_eq!(
-        tally.compared, 60,
+        tally.compared, 74,
         "all SHA-NI legacy cases should compare"
     );
 }
