@@ -3257,6 +3257,42 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Extend loads read the compact source from scratch memory and expand into
+    // a ZMM destination, including masked merge and zeroing forms.
+    for &(label, asm, feat) in &[
+        ("vpmovzxbd_memsrc", "vpmovzxbd 16(%rax), %zmm1", F),
+        ("vpmovzxwd_memsrc", "vpmovzxwd 32(%rax), %zmm1", F),
+        ("vpmovzxdq_memsrc", "vpmovzxdq 64(%rax), %zmm1", F),
+        ("vpmovzxbq_memsrc", "vpmovzxbq 8(%rax), %zmm1", F),
+        ("vpmovzxwq_memsrc", "vpmovzxwq 16(%rax), %zmm1", F),
+        ("vpmovsxbd_memsrc", "vpmovsxbd 16(%rax), %zmm1", F),
+        ("vpmovsxwd_memsrc", "vpmovsxwd 32(%rax), %zmm1", F),
+        ("vpmovsxdq_memsrc", "vpmovsxdq 64(%rax), %zmm1", F),
+        ("vpmovsxbq_memsrc", "vpmovsxbq 8(%rax), %zmm1", F),
+        ("vpmovsxwq_memsrc", "vpmovsxwq 16(%rax), %zmm1", F),
+        ("vpmovzxbw_memsrc", "vpmovzxbw 32(%rax), %zmm1", Bw),
+        ("vpmovsxbw_memsrc", "vpmovsxbw 64(%rax), %zmm1", Bw),
+    ] {
+        out.push(Case {
+            label: format!("{label}_nomask"),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{label}_merge"),
+            asm: format!("{asm} {{%k1}}"),
+            feat,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{label}_zero"),
+            asm: format!("{asm} {{%k1}}{{z}}"),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Selected compare predicates beyond the single baseline immediate in
     // `base_table()`. K-destination compares do not accept {z}, so enumerate
     // no-mask and merge forms explicitly.
