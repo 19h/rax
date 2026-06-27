@@ -64,6 +64,7 @@ const RFLAGS_PF: u64 = 0x004;
 const RFLAGS_AF: u64 = 0x010;
 const RFLAGS_ZF: u64 = 0x040;
 const RFLAGS_SF: u64 = 0x080;
+const RFLAGS_IF: u64 = 0x200;
 const RFLAGS_DF: u64 = 0x400;
 const RFLAGS_OF: u64 = 0x800;
 const RFLAGS_AC: u64 = 0x40000;
@@ -165,6 +166,10 @@ enum Feat {
     X87,
     /// Legacy MMX packed-integer instructions.
     Mmx,
+    /// ENTER/LEAVE stack-frame setup and teardown.
+    StackFrame,
+    /// Stack-based and privileged RFLAGS control instructions.
+    FlagControl,
     /// CMPXCHG8B doubleword compare-and-exchange.
     Cx8,
     /// CMPXCHG16B quadword compare-and-exchange.
@@ -302,6 +307,8 @@ impl Feat {
             Feat::Xsave => "xsave",
             Feat::X87 => "x87",
             Feat::Mmx => "mmx",
+            Feat::StackFrame => "stack_frame",
+            Feat::FlagControl => "flag_control",
             Feat::Cx8 => "cx8",
             Feat::Cx16 => "cx16",
             Feat::Fence => "fence",
@@ -374,6 +381,8 @@ impl Feat {
             Feat::Xsave,
             Feat::X87,
             Feat::Mmx,
+            Feat::StackFrame,
+            Feat::FlagControl,
             Feat::Cx8,
             Feat::Cx16,
             Feat::Fence,
@@ -583,6 +592,8 @@ impl HostFeatures {
             Feat::Xsave => self.xsave,
             Feat::X87 => true,
             Feat::Mmx => self.mmx,
+            Feat::StackFrame => true,
+            Feat::FlagControl => true,
             Feat::Cx8 => self.cx8,
             Feat::Cx16 => self.cx16,
             Feat::Fence => self.fence,
@@ -7314,6 +7325,44 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // ENTER/LEAVE implicit stack-frame operations. The harness snapshots the
+    // stack window and GPRs, so both pushed frame links and final RBP/RSP are
+    // compared against KVM.
+    for &(label, asm) in &[
+        ("enter_frame_alloc16", "enter $0x10, $0"),
+        ("enter_frame_nested1", "enter $0x8, $1"),
+        ("enter_leave_roundtrip", "enter $0x20, $0\nleave"),
+        (
+            "leave_frame_from_scratch",
+            "leaq 64(%rax), %rbp\nmovabsq $0x1122334455667788, %r8\nmovq %r8, (%rbp)\nleave",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: StackFrame,
+            profile: Int,
+        });
+    }
+
+    // POPFQ/CLI/STI affect RFLAGS and, for POPFQ, implicit stack state. The
+    // flag mask below includes IF/DF for this feature so interrupt/direction
+    // flag transitions are part of the KVM comparison, not just status flags.
+    for &(label, asm) in &[
+        ("popfq_clear_status_flags", "pushq $0x2\npopfq"),
+        ("popfq_restore_if_df", "pushq $0x602\npopfq"),
+        ("pushfq_popfq_roundtrip", "pushfq\npopfq"),
+        ("sti_sets_interrupt_flag", "sti"),
+        ("sti_cli_clears_interrupt_flag", "sti\ncli"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: FlagControl,
+            profile: Int,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
@@ -7943,6 +7992,10 @@ fn case_rflags_mask(case: &Case) -> u64 {
         return STATUS_RFLAGS_MASK | RFLAGS_AC;
     }
 
+    if case.feat == Feat::FlagControl {
+        return STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    }
+
     STATUS_RFLAGS_MASK
 }
 
@@ -8229,6 +8282,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Xsave
                 | Feat::X87
                 | Feat::Mmx
+                | Feat::StackFrame
+                | Feat::FlagControl
                 | Feat::Cx8
                 | Feat::Cx16
                 | Feat::Fence
@@ -8517,6 +8572,53 @@ fn avx512_kvm_processor_query_corpus() {
         );
         assert_eq!(tally.compared, 5, "all CPUID cases should compare");
     }
+}
+
+#[test]
+fn avx512_kvm_stack_frame_flag_control_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::StackFrame | Feat::FlagControl))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        9,
+        "unexpected stack-frame/flag-control corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on stack-frame/flag-control cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a stack-frame/flag-control case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "stack-frame/flag-control corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "stack-frame/flag-control cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::StackFrame),
+        4,
+        "all stack-frame cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::FlagControl),
+        5,
+        "all flag-control cases should run"
+    );
+    assert_eq!(
+        tally.compared, 9,
+        "all stack-frame/flag-control cases should compare"
+    );
 }
 
 #[test]
