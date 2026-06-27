@@ -4778,6 +4778,104 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core conditional moves and byte condition writes. INITIAL_RFLAGS has all
+    // six status flags set, so the all-condition tables cover both true and
+    // false destinations without needing a multi-instruction setup sequence.
+    for mnem in [
+        "cmovo", "cmovno", "cmovb", "cmovae", "cmove", "cmovne", "cmovbe", "cmova", "cmovs",
+        "cmovns", "cmovp", "cmovnp", "cmovl", "cmovge", "cmovle", "cmovg",
+    ] {
+        out.push(Case {
+            label: format!("{mnem}_core_r64_reg"),
+            asm: format!("{mnem} %rcx, %r8"),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        ("cmove_core_m64_true", "cmove 8(%rax), %r8"),
+        ("cmovne_core_m64_false", "cmovne 8(%rax), %r8"),
+        ("cmovb_core_m64_true", "cmovb 16(%rax), %r8"),
+        ("cmova_core_m64_false", "cmova 16(%rax), %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
+    for mnem in [
+        "seto", "setno", "setb", "setae", "sete", "setne", "setbe", "seta", "sets", "setns",
+        "setp", "setnp", "setl", "setge", "setle", "setg",
+    ] {
+        out.push(Case {
+            label: format!("{mnem}_core_r8b"),
+            asm: format!("{mnem} %r8b"),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        ("seto_core_m8_true", "seto 8(%rax)"),
+        ("setno_core_m8_false", "setno 9(%rax)"),
+        ("sete_core_m8_true", "sete 10(%rax)"),
+        ("setne_core_m8_false", "setne 11(%rax)"),
+        ("setbe_core_m8_true", "setbe 12(%rax)"),
+        ("seta_core_m8_false", "seta 13(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
+    // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
+    // intentionally mix register and memory destinations so GPR, flag, and
+    // scratch effects are all checked against silicon.
+    for &(label, asm) in &[
+        ("movzx_core_r8b_rcx", "movzbq %r8b, %rcx"),
+        ("movzx_core_r8w_rcx", "movzwq %r8w, %rcx"),
+        ("movsx_core_r8b_rcx", "movsbq %r8b, %rcx"),
+        ("movsx_core_r8w_rcx", "movswq %r8w, %rcx"),
+        ("movsxd_core_r8d_rcx", "movslq %r8d, %rcx"),
+        ("movzx_core_m8_r8", "movzbq 32(%rax), %r8"),
+        ("movzx_core_m16_r8", "movzwq 32(%rax), %r8"),
+        ("movsx_core_m8_r8", "movsbq 33(%rax), %r8"),
+        ("movsx_core_m16_r8", "movswq 34(%rax), %r8"),
+        ("movsxd_core_m32_r8", "movslq 36(%rax), %r8"),
+        ("bswap_core_r32", "bswapl %r8d"),
+        ("bswap_core_r64", "bswapq %r8"),
+        ("xchg_core_r64_reg", "xchgq %rcx, %r8"),
+        ("xchg_core_r32_reg", "xchgl %ecx, %r8d"),
+        ("xchg_core_rax_r8", "xchgq %rax, %r8"),
+        ("xchg_core_m64_r8", "xchgq %r8, 8(%rax)"),
+        ("xchg_core_m8_r8b", "xchgb %r8b, 2(%rax)"),
+        ("xchg_core_m32_r8d", "xchgl %r8d, 16(%rax)"),
+        ("xadd_core_r64_reg", "xaddq %rcx, %r8"),
+        ("xadd_core_r32_reg", "xaddl %ecx, %r8d"),
+        ("xadd_core_m64_r8", "xaddq %r8, 8(%rax)"),
+        ("xadd_core_m8_r8b", "xaddb %r8b, 2(%rax)"),
+        ("xadd_core_m32_r8d", "xaddl %r8d, 16(%rax)"),
+        ("cmpxchg_core_r64_success", "cmpxchgq %r8, %rax"),
+        ("cmpxchg_core_r32_success", "cmpxchgl %r8d, %eax"),
+        ("cmpxchg_core_r64_fail", "cmpxchgq %rcx, %r8"),
+        ("cmpxchg_core_m64_fail", "cmpxchgq %r8, 8(%rax)"),
+        ("cmpxchg_core_m8_fail", "cmpxchgb %r8b, 2(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -5213,27 +5311,29 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
         // are VEX-encoded (0xC4/0xC5). Legacy SIMD/scalar extensions and
         // scalar feature probes below are intentionally 0F-family encodings.
-        let legacy_allowed = matches!(
-            case.feat,
-            Feat::Core
-                | Feat::Aes
-                | Feat::Pclmulqdq
-                | Feat::Gfni
-                | Feat::Sse
-                | Feat::Sse2
-                | Feat::Ssse3
-                | Feat::Sse41
-                | Feat::Sse42
-                | Feat::Sha
-                | Feat::Movdiri
-                | Feat::Movdir64b
-                | Feat::Adx
-                | Feat::Movbe
-                | Feat::Crc32
-                | Feat::Popcnt
-                | Feat::Bmi1
-                | Feat::Lzcnt
-        ) && legacy_0f_encoding(&op);
+        let core_encoding =
+            case.feat == Feat::Core && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
+        let legacy_allowed = core_encoding
+            || (matches!(
+                case.feat,
+                Feat::Aes
+                    | Feat::Pclmulqdq
+                    | Feat::Gfni
+                    | Feat::Sse
+                    | Feat::Sse2
+                    | Feat::Ssse3
+                    | Feat::Sse41
+                    | Feat::Sse42
+                    | Feat::Sha
+                    | Feat::Movdiri
+                    | Feat::Movdir64b
+                    | Feat::Adx
+                    | Feat::Movbe
+                    | Feat::Crc32
+                    | Feat::Popcnt
+                    | Feat::Bmi1
+                    | Feat::Lzcnt
+            ) && legacy_0f_encoding(&op));
         let expected_encoding =
             matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
         assert!(

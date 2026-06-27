@@ -38,7 +38,9 @@ impl X86_64Vcpu {
             }
             // NOP / PAUSE (F3 90)
             0x90 => {
-                if ctx.rep_prefix == Some(0xF3) {
+                if ctx.rex_b() != 0 {
+                    insn::data::xchg_rax_r(self, ctx, opcode)
+                } else if ctx.rep_prefix == Some(0xF3) {
                     insn::system::pause(self, ctx)
                 } else {
                     self.regs.rip += ctx.cursor as u64;

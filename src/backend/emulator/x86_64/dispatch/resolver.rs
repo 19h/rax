@@ -80,7 +80,9 @@ fn sh_pop_ds(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>
 // call get their own shims so the fast path mirrors them exactly.
 fn sh_nop_or_pause(v: &mut X86_64Vcpu, c: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // 0x90: PAUSE under F3, otherwise NOP.
-    if c.rep_prefix == Some(0xF3) {
+    if c.rex_b() != 0 {
+        insn::data::xchg_rax_r(v, c, 0x90)
+    } else if c.rep_prefix == Some(0xF3) {
         insn::system::pause(v, c)
     } else {
         v.regs.rip += c.cursor as u64;
