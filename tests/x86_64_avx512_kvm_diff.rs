@@ -103,6 +103,10 @@ enum Feat {
     Vl,
     /// FMA / base AVX (always present alongside AVX-512F).
     Base,
+    /// AVX VEX-encoded SIMD instructions.
+    Avx,
+    /// AVX2 VEX-encoded integer/memory SIMD instructions.
+    Avx2,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
@@ -158,6 +162,8 @@ impl Feat {
             Feat::Cd => "avx512cd",
             Feat::Vl => "avx512vl",
             Feat::Base => "base",
+            Feat::Avx => "avx",
+            Feat::Avx2 => "avx2",
             Feat::AvxVnni => "avx_vnni",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
@@ -185,6 +191,8 @@ impl Feat {
 
     fn expanded_xeon() -> &'static [Feat] {
         &[
+            Feat::Avx,
+            Feat::Avx2,
             Feat::AvxVnni,
             Feat::Aes,
             Feat::Pclmulqdq,
@@ -217,6 +225,8 @@ struct HostFeatures {
     dq: bool,
     cd: bool,
     vl: bool,
+    avx: bool,
+    avx2: bool,
     avx_vnni: bool,
     aes: bool,
     pclmulqdq: bool,
@@ -249,6 +259,8 @@ impl HostFeatures {
             dq: is_x86_feature_detected!("avx512dq"),
             cd: is_x86_feature_detected!("avx512cd"),
             vl: is_x86_feature_detected!("avx512vl"),
+            avx: is_x86_feature_detected!("avx"),
+            avx2: is_x86_feature_detected!("avx2"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
@@ -281,6 +293,8 @@ impl HostFeatures {
             Feat::Dq => self.dq,
             Feat::Cd => self.cd,
             Feat::Vl => self.vl,
+            Feat::Avx => self.avx,
+            Feat::Avx2 => self.avx2,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
@@ -3745,6 +3759,115 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // AVX/AVX2 VEX mask extraction, masked memory operations, non-temporal
+    // moves, and explicit zeroing forms. These exercise GPR writes, scratch
+    // side effects, and VEX upper-zeroing outside the EVEX generator.
+    for &(label, asm, feat) in &[
+        ("vmovmskps_vex_xmm", "{vex} vmovmskps %xmm3, %r8d", Avx),
+        ("vmovmskps_vex_ymm", "{vex} vmovmskps %ymm3, %r8d", Avx),
+        ("vmovmskpd_vex_xmm", "{vex} vmovmskpd %xmm3, %r8d", Avx),
+        ("vmovmskpd_vex_ymm", "{vex} vmovmskpd %ymm3, %r8d", Avx),
+        ("vpmovmskb_vex_xmm", "{vex} vpmovmskb %xmm3, %r8d", Avx2),
+        ("vpmovmskb_vex_ymm", "{vex} vpmovmskb %ymm3, %r8d", Avx2),
+        ("vzeroupper_vex", "vzeroupper", Avx),
+        ("vzeroall_vex", "vzeroall", Avx),
+        ("vmovntdqa_vex_xmm", "{vex} vmovntdqa (%rax), %xmm1", Avx2),
+        ("vmovntdqa_vex_ymm", "{vex} vmovntdqa 32(%rax), %ymm1", Avx2),
+        ("vmovntps_vex_xmm", "{vex} vmovntps %xmm3, (%rax)", Avx),
+        ("vmovntps_vex_ymm", "{vex} vmovntps %ymm3, 32(%rax)", Avx),
+        ("vmovntpd_vex_xmm", "{vex} vmovntpd %xmm3, 64(%rax)", Avx),
+        ("vmovntpd_vex_ymm", "{vex} vmovntpd %ymm3, 96(%rax)", Avx),
+        ("vmovntdq_vex_xmm", "{vex} vmovntdq %xmm3, 128(%rax)", Avx2),
+        ("vmovntdq_vex_ymm", "{vex} vmovntdq %ymm3, 160(%rax)", Avx2),
+        (
+            "vmaskmovps_vex_xmm_load",
+            "{vex} vmaskmovps (%rax), %xmm2, %xmm1",
+            Avx,
+        ),
+        (
+            "vmaskmovps_vex_xmm_store",
+            "{vex} vmaskmovps %xmm3, %xmm2, 32(%rax)",
+            Avx,
+        ),
+        (
+            "vmaskmovps_vex_ymm_load",
+            "{vex} vmaskmovps 64(%rax), %ymm2, %ymm1",
+            Avx,
+        ),
+        (
+            "vmaskmovps_vex_ymm_store",
+            "{vex} vmaskmovps %ymm3, %ymm2, 96(%rax)",
+            Avx,
+        ),
+        (
+            "vmaskmovpd_vex_xmm_load",
+            "{vex} vmaskmovpd (%rax), %xmm2, %xmm1",
+            Avx,
+        ),
+        (
+            "vmaskmovpd_vex_xmm_store",
+            "{vex} vmaskmovpd %xmm3, %xmm2, 32(%rax)",
+            Avx,
+        ),
+        (
+            "vmaskmovpd_vex_ymm_load",
+            "{vex} vmaskmovpd 64(%rax), %ymm2, %ymm1",
+            Avx,
+        ),
+        (
+            "vmaskmovpd_vex_ymm_store",
+            "{vex} vmaskmovpd %ymm3, %ymm2, 96(%rax)",
+            Avx,
+        ),
+        (
+            "vpmaskmovd_vex_xmm_load",
+            "{vex} vpmaskmovd (%rax), %xmm2, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaskmovd_vex_xmm_store",
+            "{vex} vpmaskmovd %xmm3, %xmm2, 32(%rax)",
+            Avx2,
+        ),
+        (
+            "vpmaskmovd_vex_ymm_load",
+            "{vex} vpmaskmovd 64(%rax), %ymm2, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpmaskmovd_vex_ymm_store",
+            "{vex} vpmaskmovd %ymm3, %ymm2, 96(%rax)",
+            Avx2,
+        ),
+        (
+            "vpmaskmovq_vex_xmm_load",
+            "{vex} vpmaskmovq (%rax), %xmm2, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaskmovq_vex_xmm_store",
+            "{vex} vpmaskmovq %xmm3, %xmm2, 32(%rax)",
+            Avx2,
+        ),
+        (
+            "vpmaskmovq_vex_ymm_load",
+            "{vex} vpmaskmovq 64(%rax), %ymm2, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpmaskmovq_vex_ymm_store",
+            "{vex} vpmaskmovq %ymm3, %ymm2, 96(%rax)",
+            Avx2,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded crypto/media forms are separate from both the legacy XMM
     // decoders and the EVEX AVX-512 forms generated by `base_table()`.
     for &(mnem, imm, feat) in &[
@@ -4283,7 +4406,7 @@ fn case_status(case: &Case) -> Status {
 // ---------------------------------------------------------------------------
 
 const LLVM_MATTR: &str = concat!(
-    "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+fma,",
+    "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+avx,+avx2,+fma,",
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
