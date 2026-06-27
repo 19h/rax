@@ -6653,6 +6653,66 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfcompp\nfnstsw 56(%rax)\nfldl 40(%rax)\nfldl 32(%rax)\nfucompp\nfnstsw 58(%rax)",
         ),
         (
+            "x87_fld_constants_store_m64",
+            "fninit\nfldl2t\nfstpl 32(%rax)\nfldl2e\nfstpl 40(%rax)\nfldpi\nfstpl 48(%rax)\nfldlg2\nfstpl 56(%rax)\nfldln2\nfstpl 64(%rax)\nfldz\nfstpl 72(%rax)\nfld1\nfstpl 80(%rax)",
+        ),
+        (
+            "x87_ftst_fxam_status",
+            "fninit\nfldz\nftst\nfnstsw 32(%rax)\nfxam\nfnstsw 34(%rax)\nfstpl 40(%rax)\nfld1\nfxam\nfnstsw 48(%rax)\nfstpl 56(%rax)",
+        ),
+        (
+            "x87_fsqrt_exact_square",
+            "movabsq $0x4022000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfsqrt\nfstpl 40(%rax)",
+        ),
+        (
+            "x87_frndint_rounding_modes",
+            "movw $0x037f, 32(%rax)\nmovw $0x077f, 34(%rax)\nmovw $0x0b7f, 36(%rax)\nmovw $0x0f7f, 38(%rax)\nmovabsq $0x400c000000000000, %r8\nmovq %r8, 40(%rax)\nmovabsq $0xc00c000000000000, %r8\nmovq %r8, 48(%rax)\nfninit\nfldcw 32(%rax)\nfldl 40(%rax)\nfrndint\nfstpl 56(%rax)\nfldcw 34(%rax)\nfldl 40(%rax)\nfrndint\nfstpl 64(%rax)\nfldcw 36(%rax)\nfldl 48(%rax)\nfrndint\nfstpl 72(%rax)\nfldcw 38(%rax)\nfldl 48(%rax)\nfrndint\nfstpl 80(%rax)",
+        ),
+        (
+            "x87_fscale_exact_positive_negative",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nmovabsq $0x4020000000000000, %r8\nmovq %r8, 48(%rax)\nmovabsq $0xbff0000000000000, %r8\nmovq %r8, 56(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfscale\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 56(%rax)\nfldl 48(%rax)\nfscale\nfstpl 80(%rax)\nfstpl 88(%rax)",
+        ),
+        (
+            "x87_fxtract_fscale_roundtrip",
+            "movabsq $0x4028000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfxtract\nfscale\nfstpl 40(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fprem_exact_remainder_status",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x401c000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfprem\nfnstsw 56(%rax)\nfstpl 48(%rax)\nfstpl 64(%rax)",
+        ),
+        (
+            "x87_fprem1_nearest_remainder_status",
+            "movabsq $0x4010000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x401c000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfprem1\nfnstsw 56(%rax)\nfstpl 48(%rax)\nfstpl 64(%rax)",
+        ),
+        (
+            "x87_f2xm1_exact_edges",
+            "fninit\nfldz\nf2xm1\nfstpl 32(%rax)\nfld1\nf2xm1\nfstpl 40(%rax)\nfld1\nfchs\nf2xm1\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fyl2x_exact_power",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfyl2x\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fyl2xp1_exact_power",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfld1\nfyl2xp1\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fptan_zero_stack_result",
+            "fninit\nfldz\nfptan\nfstpl 32(%rax)\nfstpl 40(%rax)",
+        ),
+        (
+            "x87_fpatan_zero_ratio",
+            "fninit\nfldz\nfld1\nfpatan\nfstpl 32(%rax)",
+        ),
+        (
+            "x87_fsin_fcos_zero",
+            "fninit\nfldz\nfsin\nfstpl 32(%rax)\nfldz\nfcos\nfstpl 40(%rax)",
+        ),
+        (
+            "x87_fsincos_zero_stack_result",
+            "fninit\nfldz\nfsincos\nfstpl 32(%rax)\nfstpl 40(%rax)",
+        ),
+        (
             "x87_fxch_stack_order",
             "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfxch %st(1)\nfstpl 48(%rax)\nfstpl 56(%rax)",
         ),
@@ -9050,7 +9110,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 54, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 69, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -9061,7 +9121,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 54, "all x87 cases should compare");
+    assert_eq!(tally.compared, 69, "all x87 cases should compare");
 }
 
 #[test]
