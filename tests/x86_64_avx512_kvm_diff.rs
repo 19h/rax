@@ -156,6 +156,10 @@ enum Feat {
     Avx2,
     /// VEX-encoded FMA fused multiply-add/subtract instructions.
     Fma,
+    /// FXSAVE/FXRSTOR and MXCSR state-management instructions.
+    Fxsave,
+    /// XGETBV/XSETBV and XSAVE/XRSTOR state-management instructions.
+    Xsave,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -231,6 +235,8 @@ impl Feat {
             Feat::Avx => "avx",
             Feat::Avx2 => "avx2",
             Feat::Fma => "fma",
+            Feat::Fxsave => "fxsr",
+            Feat::Xsave => "xsave",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -270,6 +276,8 @@ impl Feat {
             Feat::Avx,
             Feat::Avx2,
             Feat::Fma,
+            Feat::Fxsave,
+            Feat::Xsave,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -313,6 +321,8 @@ struct HostFeatures {
     avx: bool,
     avx2: bool,
     fma: bool,
+    fxsave: bool,
+    xsave: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -355,6 +365,8 @@ impl HostFeatures {
             avx: is_x86_feature_detected!("avx"),
             avx2: is_x86_feature_detected!("avx2"),
             fma: is_x86_feature_detected!("fma"),
+            fxsave: host_cpu_flag("fxsr"),
+            xsave: host_cpu_flag("xsave"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -398,6 +410,8 @@ impl HostFeatures {
             Feat::Avx => self.avx,
             Feat::Avx2 => self.avx2,
             Feat::Fma => self.fma,
+            Feat::Fxsave => self.fxsave,
+            Feat::Xsave => self.xsave,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6332,6 +6346,49 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Processor state-management forms. Save areas live beyond the compared
+    // scratch window; each case exposes the restored state through scratch
+    // stores or the architectural vector register comparison.
+    for &(label, asm, feat, profile) in &[
+        (
+            "mxcsr_ldmxcsr_stmxcsr_roundtrip",
+            "movl $0x1f80, 48(%rbx)\nldmxcsr 48(%rbx)\nstmxcsr 56(%rbx)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_fxrstor_x87_roundtrip",
+            "fninit\nfldl 32(%rax)\nfxsave64 256(%rax)\nfninit\nfxrstor64 256(%rax)\nfstpl 64(%rax)",
+            Fxsave,
+            F64,
+        ),
+        (
+            "fxsave64_fxrstor_xmm_roundtrip",
+            "fxsave64 256(%rax)\npxor %xmm1, %xmm1\nfxrstor64 256(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "xgetbv_xsetbv_xcr0_store",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxgetbv\nmovl %eax, 48(%rbx)\nmovl %edx, 52(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_xrstor64_zmm_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
@@ -7191,9 +7248,9 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
         // are VEX-encoded (0xC4/0xC5). Legacy SIMD/scalar extensions and
         // scalar feature probes below are intentionally 0F-family encodings.
-        let core_encoding =
-            case.feat == Feat::Core && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
-        let legacy_allowed = core_encoding
+        let scalar_encoding = matches!(case.feat, Feat::Core | Feat::Fxsave | Feat::Xsave)
+            && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
+        let legacy_allowed = scalar_encoding
             || (matches!(
                 case.feat,
                 Feat::Aes
