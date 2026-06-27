@@ -6766,6 +6766,46 @@ fn irregular_cases() -> Vec<Case> {
         feat: Gfni,
         profile: Int,
     });
+    for &(mnem, imm) in &[
+        ("vgf2p8mulb", None),
+        ("vgf2p8affineqb", Some(0x9a)),
+        ("vgf2p8affineinvqb", Some(0x5a)),
+    ] {
+        for class in ["xmm", "ymm"] {
+            let operands = match imm {
+                Some(imm) => format!("${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                None => format!("-32(%rbx,%r9,1), %{class}3, %{class}1"),
+            };
+            out.push(Case {
+                label: format!("{mnem}_vex_gfni_addr_{class}_indexed"),
+                asm: format!("{{vex}} {mnem} {operands}"),
+                feat: Gfni,
+                profile: Int,
+            });
+
+            let operands = match imm {
+                Some(imm) => format!("${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                None => format!("-32(%rbx,%r9,1), %{class}3, %{class}1"),
+            };
+            out.push(Case {
+                label: format!("{mnem}_vex_gfni_addr_{class}_addr32"),
+                asm: format!("addr32 {{vex}} {mnem} {operands}"),
+                feat: Gfni,
+                profile: Int,
+            });
+
+            let operands = match imm {
+                Some(imm) => format!("${imm:#x}, -32(%rbx,%r9,1), %{class}11, %{class}9"),
+                None => format!("-32(%rbx,%r9,1), %{class}11, %{class}9"),
+            };
+            out.push(Case {
+                label: format!("{mnem}_vex_gfni_addr_{class}_high_indexed"),
+                asm: format!("{{vex}} {mnem} {operands}"),
+                feat: Gfni,
+                profile: Int,
+            });
+        }
+    }
 
     for mnem in ["vaesenc", "vaesenclast", "vaesdec", "vaesdeclast"] {
         for class in ["xmm", "ymm"] {
@@ -12234,6 +12274,35 @@ fn avx512_kvm_avx_vnni_corpus() {
         "all AVX-VNNI cases should run"
     );
     assert_eq!(tally.compared, 48, "all AVX-VNNI cases should compare");
+}
+
+#[test]
+fn avx512_kvm_gfni_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Gfni)
+        .collect();
+    assert_eq!(cases.len(), 84, "unexpected GFNI corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on GFNI cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a GFNI case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "GFNI corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "GFNI cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Gfni),
+        84,
+        "all GFNI cases should run"
+    );
+    assert_eq!(tally.compared, 84, "all GFNI cases should compare");
 }
 
 #[test]
