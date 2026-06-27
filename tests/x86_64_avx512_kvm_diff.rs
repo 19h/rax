@@ -4568,6 +4568,84 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy packed shuffle, mask extraction, average, and SAD instructions.
+    // The XMM forms cover SSE2 decoders; the MMX aliases exercise the same
+    // opcode families' separate MMX register paths and store results to scratch.
+    for &(label, asm, feat) in &[
+        (
+            "pshufd_sse2_packed_misc_reg",
+            "pshufd $0x1b, %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pshufd_sse2_packed_misc_mem",
+            "pshufd $0x4e, 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pshufhw_sse2_packed_misc_reg",
+            "pshufhw $0x1b, %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pshufhw_sse2_packed_misc_mem",
+            "pshufhw $0xb1, 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pshuflw_sse2_packed_misc_reg",
+            "pshuflw $0x1b, %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pshuflw_sse2_packed_misc_mem",
+            "pshuflw $0xb1, 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pmovmskb_sse2_packed_misc_xmm",
+            "pmovmskb %xmm1, %r8d",
+            Sse2,
+        ),
+        ("psadbw_sse2_packed_misc_reg", "psadbw %xmm2, %xmm1", Sse2),
+        (
+            "psadbw_sse2_packed_misc_mem",
+            "psadbw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        ("pavgb_sse2_packed_misc_reg", "pavgb %xmm2, %xmm1", Sse2),
+        ("pavgb_sse2_packed_misc_mem", "pavgb 32(%rax), %xmm1", Sse2),
+        ("pavgw_sse2_packed_misc_reg", "pavgw %xmm2, %xmm1", Sse2),
+        ("pavgw_sse2_packed_misc_mem", "pavgw 32(%rax), %xmm1", Sse2),
+        (
+            "pshufw_mmx_packed_misc_mem_store",
+            "pshufw $0x1b, 40(%rax), %mm1\nmovq %mm1, 64(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psadbw_mmx_packed_misc_store",
+            "movq 32(%rax), %mm0\npsadbw 40(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pavgb_mmx_packed_misc_store",
+            "movq 32(%rax), %mm0\npavgb 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pavgw_mmx_packed_misc_store",
+            "movq 32(%rax), %mm0\npavgw 40(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Mmx,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE2 scalar/vector transfer forms cover the 0F 6E/7E MOVD/MOVQ
     // GPR paths plus the MMX bridge instructions that feed or consume XMM
     // state.
@@ -10135,6 +10213,49 @@ fn avx512_kvm_sse2_shift_corpus() {
 }
 
 #[test]
+fn avx512_kvm_legacy_packed_misc_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_packed_misc_"))
+        .collect();
+    assert_eq!(cases.len(), 17, "unexpected legacy packed misc corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy packed misc cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy packed misc case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy packed misc corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy packed misc cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        13,
+        "all SSE2 packed misc cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        4,
+        "all MMX packed misc cases should run"
+    );
+    assert_eq!(
+        tally.compared, 17,
+        "all legacy packed misc cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_sse3_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -10236,7 +10357,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 41, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 45, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -10247,7 +10368,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 41, "all MMX cases should compare");
+    assert_eq!(tally.compared, 45, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
