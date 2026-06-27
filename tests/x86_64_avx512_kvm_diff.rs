@@ -7144,6 +7144,24 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "mxcsr_ldmxcsr_stmxcsr_round_up",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nstmxcsr 36(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_stores_mxcsr_and_mask",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave64 256(%rax)\nmovl 280(%rax), %r8d\nmovl %r8d, 36(%rax)\nmovl 284(%rax), %r8d\nmovl %r8d, 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_fxrstor_mxcsr_roundtrip",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave64 256(%rax)\nmovl $0x1f80, 36(%rax)\nldmxcsr 36(%rax)\nfxrstor64 256(%rax)\nstmxcsr 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
             "fxsave64_fxrstor_x87_roundtrip",
             "fninit\nfldl 32(%rax)\nfxsave64 256(%rax)\nfninit\nfxrstor64 256(%rax)\nfstpl 64(%rax)",
             Fxsave,
@@ -7164,6 +7182,18 @@ fn irregular_cases() -> Vec<Case> {
         (
             "xsave64_xrstor64_zmm_roundtrip",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_xrstor64_mxcsr_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x5f80, 48(%rbx)\nldmxcsr 48(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxsave64 240(%rbx)\nmovl $0x1f80, 52(%rbx)\nldmxcsr 52(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)\nstmxcsr 56(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_xrstor64_xmm_roundtrip",
+            "movdqu 32(%rbx), %xmm2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\npxor %xmm2, %xmm2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)\nmovdqu %xmm2, 64(%rbx)",
             Xsave,
             Int,
         ),
@@ -9055,6 +9085,53 @@ fn avx512_kvm_processor_query_corpus() {
         );
         assert_eq!(tally.compared, 5, "all CPUID cases should compare");
     }
+}
+
+#[test]
+fn avx512_kvm_processor_state_management_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::Fxsave | Feat::Xsave))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected processor state-management corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on processor state-management cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a processor state-management case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "processor state-management corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "processor state-management cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fxsave),
+        6,
+        "all FXSAVE/MXCSR cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Xsave),
+        4,
+        "all XSAVE/XRSTOR cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all processor state-management cases should compare"
+    );
 }
 
 #[test]
