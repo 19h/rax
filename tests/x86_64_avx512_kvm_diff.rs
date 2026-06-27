@@ -161,6 +161,8 @@ enum Feat {
     Fxsave,
     /// XGETBV/XSETBV and XSAVE/XRSTOR state-management instructions.
     Xsave,
+    /// x87 FPU stack, arithmetic, and conversion instructions.
+    X87,
     /// CMPXCHG8B doubleword compare-and-exchange.
     Cx8,
     /// CMPXCHG16B quadword compare-and-exchange.
@@ -290,6 +292,7 @@ impl Feat {
             Feat::Fma => "fma",
             Feat::Fxsave => "fxsr",
             Feat::Xsave => "xsave",
+            Feat::X87 => "x87",
             Feat::Cx8 => "cx8",
             Feat::Cx16 => "cx16",
             Feat::Fence => "fence",
@@ -357,6 +360,7 @@ impl Feat {
             Feat::Fma,
             Feat::Fxsave,
             Feat::Xsave,
+            Feat::X87,
             Feat::Cx8,
             Feat::Cx16,
             Feat::Fence,
@@ -553,6 +557,7 @@ impl HostFeatures {
             Feat::Fma => self.fma,
             Feat::Fxsave => self.fxsave,
             Feat::Xsave => self.xsave,
+            Feat::X87 => true,
             Feat::Cx8 => self.cx8,
             Feat::Cx16 => self.cx16,
             Feat::Fence => self.fence,
@@ -6364,6 +6369,48 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // x87 FPU stack/data-path cases. Each snippet initializes the FPU and
+    // stores the observable result to scratch, avoiding hidden x87 state in the
+    // final KVM/interpreter comparison.
+    for &(label, asm) in &[
+        ("x87_fld1_fstp", "fninit\nfld1\nfstpl 32(%rax)"),
+        (
+            "x87_fldz_fchs_fabs",
+            "fninit\nfldz\nfchs\nfstpl 32(%rax)\nfldl 32(%rax)\nfabs\nfstpl 40(%rax)",
+        ),
+        (
+            "x87_fadd_m64",
+            "movabsq $0x3ff8000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4002000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfaddl 40(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fsub_m64",
+            "movabsq $0x4016000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfsubl 40(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fmul_m64",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4004000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfmull 40(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fdiv_m64",
+            "movabsq $0x401c000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfdivl 40(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fild_fistp_i32",
+            "movl $-12345, 32(%rax)\nfninit\nfildl 32(%rax)\nfistpl 40(%rax)",
+        ),
+        (
+            "x87_fxch_stack_order",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfxch %st(1)\nfstpl 48(%rax)\nfstpl 56(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: X87,
+            profile: Int,
+        });
+    }
+
     // Core bit-test and bit-scan instructions. These cover register operands,
     // immediate memory operands, and register-indexed memory bit strings using
     // r9 as a small index that stays within the compared scratch page.
@@ -7903,6 +7950,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             Feat::Core
                 | Feat::Fxsave
                 | Feat::Xsave
+                | Feat::X87
                 | Feat::Cx8
                 | Feat::Cx16
                 | Feat::Fence
@@ -8115,6 +8163,26 @@ fn avx512_kvm_io_port_corpus() {
         "I/O corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 22, "all I/O cases should compare");
+}
+
+#[test]
+fn avx512_kvm_x87_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::X87)
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected x87 corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on x87 cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an x87 case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "x87 corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.compared, 8, "all x87 cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
