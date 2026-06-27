@@ -4456,6 +4456,126 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy packed conversion forms that bridge MMX integer pairs with SSE/SSE2
+    // floating-point vectors, plus SSE2 packed dword/single conversions.
+    for &(label, asm, feat, profile) in &[
+        (
+            "cvtpi2ps_sse_legacy_convert_mmx_to_xmm",
+            "movq 32(%rax), %mm0\ncvtpi2ps %mm0, %xmm1\nemms",
+            Sse,
+            Int,
+        ),
+        (
+            "cvtpi2ps_sse_legacy_convert_mem_to_xmm",
+            "cvtpi2ps 32(%rax), %xmm1",
+            Sse,
+            Int,
+        ),
+        (
+            "cvtps2pi_sse_legacy_convert_xmm_to_mmx_store",
+            "cvtps2pi %xmm1, %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Sse,
+            F32,
+        ),
+        (
+            "cvtps2pi_sse_legacy_convert_mem_to_mmx_store",
+            "cvtps2pi 32(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Sse,
+            F32,
+        ),
+        (
+            "cvttps2pi_sse_legacy_convert_xmm_to_mmx_store",
+            "cvttps2pi %xmm1, %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Sse,
+            F32,
+        ),
+        (
+            "cvttps2pi_sse_legacy_convert_mem_to_mmx_store",
+            "cvttps2pi 32(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Sse,
+            F32,
+        ),
+        (
+            "cvtpi2pd_sse2_legacy_convert_mmx_to_xmm",
+            "movq 32(%rax), %mm0\ncvtpi2pd %mm0, %xmm1\nemms",
+            Sse2,
+            Int,
+        ),
+        (
+            "cvtpi2pd_sse2_legacy_convert_mem_to_xmm",
+            "cvtpi2pd 32(%rax), %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "cvtpd2pi_sse2_legacy_convert_xmm_to_mmx_store",
+            "cvtpd2pi %xmm1, %mm0\nmovq %mm0, 96(%rax)\nemms",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvtpd2pi_sse2_legacy_convert_mem_to_mmx_store",
+            "cvtpd2pi 32(%rax), %mm0\nmovq %mm0, 104(%rax)\nemms",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvttpd2pi_sse2_legacy_convert_xmm_to_mmx_store",
+            "cvttpd2pi %xmm1, %mm0\nmovq %mm0, 112(%rax)\nemms",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvttpd2pi_sse2_legacy_convert_mem_to_mmx_store",
+            "cvttpd2pi 32(%rax), %mm0\nmovq %mm0, 120(%rax)\nemms",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvtdq2ps_sse2_legacy_convert_reg",
+            "cvtdq2ps %xmm2, %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "cvtdq2ps_sse2_legacy_convert_mem",
+            "cvtdq2ps 32(%rax), %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "cvtps2dq_sse2_legacy_convert_reg",
+            "cvtps2dq %xmm2, %xmm1",
+            Sse2,
+            F32,
+        ),
+        (
+            "cvtps2dq_sse2_legacy_convert_mem",
+            "cvtps2dq 32(%rax), %xmm1",
+            Sse2,
+            F32,
+        ),
+        (
+            "cvttps2dq_sse2_legacy_convert_reg",
+            "cvttps2dq %xmm2, %xmm1",
+            Sse2,
+            F32,
+        ),
+        (
+            "cvttps2dq_sse2_legacy_convert_mem",
+            "cvttps2dq 32(%rax), %xmm1",
+            Sse2,
+            F32,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Legacy SSE2 packed-integer forms. These cover aligned/unaligned moves,
     // destructive two-operand arithmetic/logical/compare/multiply/pack/unpack,
     // and both immediate and XMM/memory shift-count encodings.
@@ -10252,6 +10372,49 @@ fn avx512_kvm_legacy_packed_misc_corpus() {
     assert_eq!(
         tally.compared, 17,
         "all legacy packed misc cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_legacy_convert_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_convert_"))
+        .collect();
+    assert_eq!(cases.len(), 18, "unexpected legacy conversion corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy conversion cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy conversion case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy conversion corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy conversion cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        6,
+        "all SSE legacy conversion cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        12,
+        "all SSE2 legacy conversion cases should run"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all legacy conversion cases should compare"
     );
 }
 
