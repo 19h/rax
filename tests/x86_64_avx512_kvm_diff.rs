@@ -7794,6 +7794,56 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // FS/GS segment-override memory references. Each case programs the segment
+    // base to the scratch page, then uses a small segment offset so loads,
+    // stores, RMW operations, address-size overrides, moffs, and LEA behavior
+    // are visible through compared GPRs or scratch bytes.
+    for &(label, asm) in &[
+        (
+            "fs_segment_load_m64",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nxorq %r9, %r9\nmovq %fs:32(%r9), %rcx",
+        ),
+        (
+            "gs_segment_load_m32_zeroext",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $-1, %rcx\nxorq %r9, %r9\nmovl %gs:36(%r9), %ecx",
+        ),
+        (
+            "fs_segment_store_m64",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nxorq %r9, %r9\nmovq %rcx, %fs:48(%r9)",
+        ),
+        (
+            "gs_segment_store_m16",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nxorq %r9, %r9\nmovw %cx, %gs:58(%r9)",
+        ),
+        (
+            "fs_segment_add_m64",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nxorq %r9, %r9\naddq %rcx, %fs:64(%r9)",
+        ),
+        (
+            "gs_segment_addr32_load_m64",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nxorl %eax, %eax\nmovq $-1, %rcx\naddr32 movq %gs:72(%eax), %rcx",
+        ),
+        (
+            "fs_segment_moffs_load_rax",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\n.byte 0x64, 0x48, 0xa1\n.quad 80",
+        ),
+        (
+            "gs_segment_moffs_store_rax",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $0x1122334455667788, %rax\n.byte 0x65, 0x48, 0xa3\n.quad 88",
+        ),
+        (
+            "fs_segment_lea_ignores_base",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nxorq %r9, %r9\nleaq %fs:96(%r9), %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Fsgsbase,
+            profile: Int,
+        });
+    }
+
     // ENTER/LEAVE implicit stack-frame operations. The harness snapshots the
     // stack window and GPRs, so both pushed frame links and final RBP/RSP are
     // compared against KVM.
@@ -9338,6 +9388,43 @@ fn avx512_kvm_processor_state_management_corpus() {
     assert_eq!(
         tally.compared, 10,
         "all processor state-management cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_fsgsbase_segment_memory_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Fsgsbase && case.label.contains("_segment_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        9,
+        "unexpected FSGSBASE segment-memory corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on FSGSBASE segment-memory cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an FSGSBASE segment-memory case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "FSGSBASE segment-memory corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "FSGSBASE segment-memory cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 9,
+        "all FSGSBASE segment-memory cases should compare"
     );
 }
 
