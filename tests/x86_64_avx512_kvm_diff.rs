@@ -58,12 +58,21 @@ const SCRATCH_ADDR: u64 = 0x4000;
 /// Initial RFLAGS (matches the EVEX qemu harness): IF + a spread of status bits
 /// so flag-producing ops (vcomiss, ktest, ...) start from a non-trivial state.
 const INITIAL_RFLAGS: u64 = 0x8d7;
+const RFLAGS_CF: u64 = 0x001;
+const RFLAGS_PF: u64 = 0x004;
+const RFLAGS_AF: u64 = 0x010;
+const RFLAGS_ZF: u64 = 0x040;
+const RFLAGS_SF: u64 = 0x080;
+const RFLAGS_OF: u64 = 0x800;
 /// Architecturally-defined status bits to compare (the 6 arithmetic flags).
-const STATUS_RFLAGS_MASK: u64 = 0x8d5;
+const STATUS_RFLAGS_MASK: u64 =
+    RFLAGS_CF | RFLAGS_PF | RFLAGS_AF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
 /// Value seeded into r8 (GPR-source / GPR-dest EVEX and k<->GPR forms read it).
 const R8_SEED: u64 = 0x8877_6655_4433_2211;
-/// Value seeded into rcx, which SSE4.2 PCMPISTRI writes architecturally.
-const RCX_SEED: u64 = 0x1020_3040_5060_7080;
+/// Value seeded into rcx; its low bits also drive BMI bit ranges / shift counts.
+const RCX_SEED: u64 = 0x1020_3040_5060_0c04;
+/// Value seeded into rdx, the implicit BMI2 MULX multiplicand.
+const RDX_SEED: u64 = 0x1357_9bdf_2468_ace0;
 
 /// One concrete architectural input: register file + scratch memory.
 #[derive(Clone)]
@@ -71,6 +80,7 @@ struct InCase {
     zmm: [[u64; 8]; ZMM_REGS],
     k: [u64; K_REGS],
     rcx: u64,
+    rdx: u64,
     r8: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
@@ -83,6 +93,7 @@ struct OutCase {
     k: [u64; K_REGS],
     rax: u64,
     rcx: u64,
+    rdx: u64,
     r8: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
@@ -145,6 +156,12 @@ enum Feat {
     Crc32,
     /// POPCNT scalar population count.
     Popcnt,
+    /// BMI1 scalar bit-manipulation instructions.
+    Bmi1,
+    /// BMI2 scalar bit-manipulation instructions.
+    Bmi2,
+    /// LZCNT scalar leading-zero count instruction.
+    Lzcnt,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -197,6 +214,9 @@ impl Feat {
             Feat::Movbe => "movbe",
             Feat::Crc32 => "sse4_2_crc32",
             Feat::Popcnt => "popcnt",
+            Feat::Bmi1 => "bmi1",
+            Feat::Bmi2 => "bmi2",
+            Feat::Lzcnt => "lzcnt",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -232,6 +252,9 @@ impl Feat {
             Feat::Movbe,
             Feat::Crc32,
             Feat::Popcnt,
+            Feat::Bmi1,
+            Feat::Bmi2,
+            Feat::Lzcnt,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -271,6 +294,9 @@ struct HostFeatures {
     movbe: bool,
     sse4_2: bool,
     popcnt: bool,
+    bmi1: bool,
+    bmi2: bool,
+    lzcnt: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -310,6 +336,9 @@ impl HostFeatures {
             movbe: host_cpu_flag("movbe"),
             sse4_2: is_x86_feature_detected!("sse4.2"),
             popcnt: host_cpu_flag("popcnt"),
+            bmi1: host_cpu_flag("bmi1"),
+            bmi2: host_cpu_flag("bmi2"),
+            lzcnt: host_cpu_flag("lzcnt") || host_cpu_flag("abm"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -350,6 +379,9 @@ impl HostFeatures {
             Feat::Movbe => self.movbe,
             Feat::Crc32 => self.sse4_2,
             Feat::Popcnt => self.popcnt,
+            Feat::Bmi1 => self.bmi1,
+            Feat::Bmi2 => self.bmi2,
+            Feat::Lzcnt => self.lzcnt,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -696,6 +728,7 @@ impl KvmOracle {
         kregs.rip = CODE_ADDR;
         kregs.rsp = STACK_ADDR;
         kregs.rcx = input.rcx;
+        kregs.rdx = input.rdx;
         kregs.r8 = input.r8;
         kregs.rflags = input.rflags | 0x2;
         vcpu.set_regs(&kregs)
@@ -737,6 +770,7 @@ impl KvmOracle {
             k,
             rax: final_regs.rax,
             rcx: final_regs.rcx,
+            rdx: final_regs.rdx,
             r8: final_regs.r8,
             rflags: final_regs.rflags,
             scratch,
@@ -787,6 +821,7 @@ fn get_regs_zmm(regs: &Registers, index: usize) -> [u64; 8] {
 fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     let mut regs = Registers {
         rcx: input.rcx,
+        rdx: input.rdx,
         r8: input.r8,
         rflags: input.rflags,
         ..Registers::default()
@@ -814,6 +849,7 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         k: out_regs.k,
         rax: out_regs.rax,
         rcx: out_regs.rcx,
+        rdx: out_regs.rdx,
         r8: out_regs.r8,
         rflags: out_regs.rflags,
         scratch,
@@ -839,7 +875,7 @@ fn build_code(op: &[u8]) -> Vec<u8> {
 // Comparison.
 // ---------------------------------------------------------------------------
 
-fn diff(interp: &OutCase, kvm: &OutCase) -> Vec<String> {
+fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
     let mut diffs = Vec::new();
     for i in 0..ZMM_REGS {
         if interp.zmm[i] != kvm.zmm[i] {
@@ -863,13 +899,18 @@ fn diff(interp: &OutCase, kvm: &OutCase) -> Vec<String> {
     if interp.rcx != kvm.rcx {
         diffs.push(format!("rcx: interp={:#x} kvm={:#x}", interp.rcx, kvm.rcx));
     }
+    if interp.rdx != kvm.rdx {
+        diffs.push(format!("rdx: interp={:#x} kvm={:#x}", interp.rdx, kvm.rdx));
+    }
     if interp.r8 != kvm.r8 {
         diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
     }
-    let im = interp.rflags & STATUS_RFLAGS_MASK;
-    let km = kvm.rflags & STATUS_RFLAGS_MASK;
+    let im = interp.rflags & rflags_mask;
+    let km = kvm.rflags & rflags_mask;
     if im != km {
-        diffs.push(format!("rflags(status): interp={im:#x} kvm={km:#x}"));
+        diffs.push(format!(
+            "rflags(mask={rflags_mask:#x}): interp={im:#x} kvm={km:#x}"
+        ));
     }
     if interp.scratch != kvm.scratch {
         diffs.push(format!(
@@ -1034,6 +1075,7 @@ fn input_for(profile: InputProfile) -> InCase {
             u64::MAX,
         ],
         rcx: RCX_SEED,
+        rdx: RDX_SEED,
         r8: R8_SEED,
         rflags: INITIAL_RFLAGS,
         scratch,
@@ -4728,6 +4770,74 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // BMI1 scalar bit-manipulation forms. These cover VEX register and memory
+    // operands plus flag-producing extract/count behavior with undefined flags
+    // masked per instruction.
+    for &(label, asm) in &[
+        ("andn_bmi1_r64_reg", "andnq %rcx, %r8, %r8"),
+        ("andn_bmi1_r32_mem", "andnl 32(%rax), %r8d, %r8d"),
+        ("bextr_bmi1_r64_reg", "bextrq %rcx, %r8, %r8"),
+        ("bextr_bmi1_r32_mem", "bextrl %ecx, 32(%rax), %r8d"),
+        ("blsi_bmi1_r64_reg", "blsiq %rcx, %r8"),
+        ("blsi_bmi1_r32_mem", "blsil 32(%rax), %r8d"),
+        ("blsr_bmi1_r64_reg", "blsrq %rcx, %r8"),
+        ("blsr_bmi1_r32_mem", "blsrl 32(%rax), %r8d"),
+        ("blsmsk_bmi1_r64_reg", "blsmskq %rcx, %r8"),
+        ("blsmsk_bmi1_r32_mem", "blsmskl 32(%rax), %r8d"),
+        ("tzcnt_bmi1_r64_reg", "tzcntq %rcx, %r8"),
+        ("tzcnt_bmi1_r32_mem", "tzcntl 32(%rax), %r8d"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bmi1,
+            profile: Int,
+        });
+    }
+
+    // BMI2 scalar bit-manipulation forms. MULX observes the newly captured RDX
+    // seed as its implicit multiplicand; the other BMI2 forms check flag
+    // preservation or BZHI's defined flag subset.
+    for &(label, asm) in &[
+        ("bzhi_bmi2_r64_reg", "bzhiq %rcx, %r8, %r8"),
+        ("bzhi_bmi2_r32_mem", "bzhil %ecx, 32(%rax), %r8d"),
+        ("pdep_bmi2_r64_reg", "pdepq %rcx, %r8, %r8"),
+        ("pdep_bmi2_r32_mem", "pdepl 32(%rax), %r8d, %r8d"),
+        ("pext_bmi2_r64_reg", "pextq %rcx, %r8, %r8"),
+        ("pext_bmi2_r32_mem", "pextl 32(%rax), %r8d, %r8d"),
+        ("mulx_bmi2_r64_mem", "mulxq 32(%rax), %r8, %rcx"),
+        ("mulx_bmi2_r32_reg", "mulxl %r8d, %ecx, %r8d"),
+        ("rorx_bmi2_r64_reg", "rorxq $13, %rcx, %r8"),
+        ("rorx_bmi2_r32_mem", "rorxl $9, 32(%rax), %r8d"),
+        ("sarx_bmi2_r64_reg", "sarxq %rcx, %r8, %r8"),
+        ("sarx_bmi2_r32_mem", "sarxl %ecx, 32(%rax), %r8d"),
+        ("shrx_bmi2_r64_reg", "shrxq %rcx, %r8, %r8"),
+        ("shrx_bmi2_r32_mem", "shrxl %ecx, 32(%rax), %r8d"),
+        ("shlx_bmi2_r64_reg", "shlxq %rcx, %r8, %r8"),
+        ("shlx_bmi2_r32_mem", "shlxl %ecx, 32(%rax), %r8d"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bmi2,
+            profile: Int,
+        });
+    }
+
+    // LZCNT is advertised separately from BMI1 on Linux (`abm` on Intel hosts)
+    // but shares the same F3 0F legacy count/flag shape as TZCNT.
+    for &(label, asm) in &[
+        ("lzcnt_r64_reg", "lzcntq %rcx, %r8"),
+        ("lzcnt_r32_mem", "lzcntl 32(%rax), %r8d"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Lzcnt,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -4839,6 +4949,39 @@ fn case_status(case: &Case) -> Status {
     Status::Compare
 }
 
+fn case_rflags_mask(case: &Case) -> u64 {
+    let mnem = asm_mnemonic(&case.asm);
+
+    // BMI1/BZHI define CF/ZF/SF/OF and leave AF/PF undefined.
+    if matches!(
+        mnem,
+        "andnl"
+            | "andnq"
+            | "blsil"
+            | "blsiq"
+            | "blsrl"
+            | "blsrq"
+            | "blsmskl"
+            | "blsmskq"
+            | "bzhil"
+            | "bzhiq"
+    ) {
+        return RFLAGS_CF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+    }
+
+    // BEXTR defines ZF and clears CF/OF; SF/AF/PF are undefined.
+    if matches!(mnem, "bextrl" | "bextrq") {
+        return RFLAGS_CF | RFLAGS_ZF | RFLAGS_OF;
+    }
+
+    // TZCNT/LZCNT define CF and ZF; the other arithmetic flags are undefined.
+    if matches!(mnem, "tzcntl" | "tzcntq" | "lzcntl" | "lzcntq") {
+        return RFLAGS_CF | RFLAGS_ZF;
+    }
+
+    STATUS_RFLAGS_MASK
+}
+
 // ---------------------------------------------------------------------------
 // Assembler bridge (llvm-mc), mirroring the EVEX qemu harness.
 // ---------------------------------------------------------------------------
@@ -4848,7 +4991,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -5016,6 +5159,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Movbe
                 | Feat::Crc32
                 | Feat::Popcnt
+                | Feat::Bmi1
+                | Feat::Lzcnt
         ) && legacy_0f_encoding(&op);
         let expected_encoding =
             matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
@@ -5058,7 +5203,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         }
 
         tally.compared += 1;
-        let diffs = diff(&interp, &kvm);
+        let diffs = diff(&interp, &kvm, case_rflags_mask(case));
         if !diffs.is_empty() {
             failures.push(format!(
                 "DIVERGENCE in `{}` ({}) [op={:02x?}]:\n  {}",
@@ -5121,7 +5266,7 @@ fn avx512_kvm_state_roundtrip() {
             KvmOutcome::Faulted => panic!("no-op faulted on silicon"),
         };
         let interp = run_interp(&code, &input).expect("interp run");
-        let diffs = diff(&interp, &kvm);
+        let diffs = diff(&interp, &kvm, STATUS_RFLAGS_MASK);
         assert!(
             diffs.is_empty(),
             "state did not round-trip identically through both backends:\n  {}",
