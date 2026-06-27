@@ -5398,6 +5398,28 @@ fn irregular_cases() -> Vec<Case> {
             });
         }
     }
+    for mnem in ["vpdpbusd", "vpdpbusds", "vpdpwssd", "vpdpwssds"] {
+        for class in ["xmm", "ymm"] {
+            out.push(Case {
+                label: format!("{mnem}_vex_avx_vnni_addr_{class}_indexed"),
+                asm: format!("{{vex}} {mnem} -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_avx_vnni_addr_{class}_addr32"),
+                asm: format!("addr32 {{vex}} {mnem} -32(%rbx,%r9,1), %{class}3, %{class}1"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_avx_vnni_addr_{class}_high_indexed"),
+                asm: format!("{{vex}} {mnem} -32(%rbx,%r9,1), %{class}11, %{class}9"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+        }
+    }
 
     // AVX/AVX2 VEX mask extraction, masked memory operations, non-temporal
     // moves, and explicit zeroing forms. These exercise GPR writes, scratch
@@ -10670,9 +10692,12 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             ) && legacy_0f_encoding(&op));
         let sse42_string_setup_allowed = case.label.contains("_sse42_string_width_")
             && op.windows(2).any(|bytes| bytes == [0x0f, 0x3a]);
+        let addr32_vex_allowed = matches!(op.first(), Some(0x67))
+            && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
             || legacy_allowed
-            || sse42_string_setup_allowed;
+            || sse42_string_setup_allowed
+            || addr32_vex_allowed;
         assert!(
             expected_encoding,
             "{}: unexpected encoding class, got {:02x?}",
@@ -12177,6 +12202,38 @@ fn avx512_kvm_adx_operand_form_corpus() {
         tally.compared, 8,
         "all ADX operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_avx_vnni_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::AvxVnni)
+        .collect();
+    assert_eq!(cases.len(), 48, "unexpected AVX-VNNI corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on AVX-VNNI cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-VNNI case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-VNNI corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-VNNI cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::AvxVnni),
+        48,
+        "all AVX-VNNI cases should run"
+    );
+    assert_eq!(tally.compared, 48, "all AVX-VNNI cases should compare");
 }
 
 #[test]
