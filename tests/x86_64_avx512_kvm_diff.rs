@@ -6054,6 +6054,100 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // VEX AVX2 gathers are VSIB memory operations with an architecturally
+    // cleared mask register. Each case creates all-zero indices and an all-one
+    // mask, then gathers from a fixed scratch displacement so both destination
+    // data and mask side effects are compared against KVM.
+    for &(label, asm, profile) in &[
+        (
+            "vgatherdps_avx2_gather_xmm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vgatherdps %xmm3, 64(%rax,%xmm2,4), %xmm1",
+            F32,
+        ),
+        (
+            "vgatherdps_avx2_gather_ymm_i32",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqd %ymm3, %ymm3, %ymm3\n{vex} vgatherdps %ymm3, 64(%rax,%ymm2,4), %ymm1",
+            F32,
+        ),
+        (
+            "vgatherdpd_avx2_gather_xmm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %xmm3, %xmm3, %xmm3\n{vex} vgatherdpd %xmm3, 64(%rax,%xmm2,8), %xmm1",
+            F64,
+        ),
+        (
+            "vgatherdpd_avx2_gather_ymm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %ymm3, %ymm3, %ymm3\n{vex} vgatherdpd %ymm3, 64(%rax,%xmm2,8), %ymm1",
+            F64,
+        ),
+        (
+            "vgatherqps_avx2_gather_xmm_i64",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vgatherqps %xmm3, 64(%rax,%xmm2,4), %xmm1",
+            F32,
+        ),
+        (
+            "vgatherqps_avx2_gather_ymm_i64",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vgatherqps %xmm3, 64(%rax,%ymm2,4), %xmm1",
+            F32,
+        ),
+        (
+            "vgatherqpd_avx2_gather_xmm_i64",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %xmm3, %xmm3, %xmm3\n{vex} vgatherqpd %xmm3, 64(%rax,%xmm2,8), %xmm1",
+            F64,
+        ),
+        (
+            "vgatherqpd_avx2_gather_ymm_i64",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqq %ymm3, %ymm3, %ymm3\n{vex} vgatherqpd %ymm3, 64(%rax,%ymm2,8), %ymm1",
+            F64,
+        ),
+        (
+            "vpgatherdd_avx2_gather_xmm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vpgatherdd %xmm3, 64(%rax,%xmm2,4), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherdd_avx2_gather_ymm_i32",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqd %ymm3, %ymm3, %ymm3\n{vex} vpgatherdd %ymm3, 64(%rax,%ymm2,4), %ymm1",
+            Int,
+        ),
+        (
+            "vpgatherdq_avx2_gather_xmm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %xmm3, %xmm3, %xmm3\n{vex} vpgatherdq %xmm3, 64(%rax,%xmm2,8), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherdq_avx2_gather_ymm_i32",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %ymm3, %ymm3, %ymm3\n{vex} vpgatherdq %ymm3, 64(%rax,%xmm2,8), %ymm1",
+            Int,
+        ),
+        (
+            "vpgatherqd_avx2_gather_xmm_i64",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vpgatherqd %xmm3, 64(%rax,%xmm2,4), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherqd_avx2_gather_ymm_i64",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqd %xmm3, %xmm3, %xmm3\n{vex} vpgatherqd %xmm3, 64(%rax,%ymm2,4), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherqq_avx2_gather_xmm_i64",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpcmpeqq %xmm3, %xmm3, %xmm3\n{vex} vpgatherqq %xmm3, 64(%rax,%xmm2,8), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherqq_avx2_gather_ymm_i64",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpcmpeqq %ymm3, %ymm3, %ymm3\n{vex} vpgatherqq %ymm3, 64(%rax,%ymm2,8), %ymm1",
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile,
+        });
+    }
+
     // VEX-encoded FMA and AVX floating-point misc forms cover the packed,
     // scalar, horizontal, rounding, and dot-product paths outside EVEX.
     for &(label, asm, feat, profile) in &[
@@ -10881,6 +10975,38 @@ fn avx512_kvm_adx_operand_form_corpus() {
         tally.compared, 8,
         "all ADX operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_avx2_gather_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_gather_"))
+        .collect();
+    assert_eq!(cases.len(), 16, "unexpected AVX2 gather corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on AVX2 gather cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 gather case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 gather corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 gather cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        16,
+        "all AVX2 gather cases should run"
+    );
+    assert_eq!(tally.compared, 16, "all AVX2 gather cases should compare");
 }
 
 #[test]
