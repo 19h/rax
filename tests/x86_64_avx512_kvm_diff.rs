@@ -113,6 +113,8 @@ enum Feat {
     Movdir64b,
     /// ADX dual-carry arithmetic (ADCX/ADOX).
     Adx,
+    /// MOVBE endian-swapping loads/stores.
+    Movbe,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -151,6 +153,7 @@ impl Feat {
             Feat::Movdiri => "movdiri",
             Feat::Movdir64b => "movdir64b",
             Feat::Adx => "adx",
+            Feat::Movbe => "movbe",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -172,6 +175,7 @@ impl Feat {
             Feat::Movdiri,
             Feat::Movdir64b,
             Feat::Adx,
+            Feat::Movbe,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -198,6 +202,7 @@ struct HostFeatures {
     movdiri: bool,
     movdir64b: bool,
     adx: bool,
+    movbe: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -224,6 +229,7 @@ impl HostFeatures {
             movdiri: host_cpu_flag("movdiri"),
             movdir64b: host_cpu_flag("movdir64b"),
             adx: host_cpu_flag("adx"),
+            movbe: host_cpu_flag("movbe"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -250,6 +256,7 @@ impl HostFeatures {
             Feat::Movdiri => self.movdiri,
             Feat::Movdir64b => self.movdir64b,
             Feat::Adx => self.adx,
+            Feat::Movbe => self.movbe,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -3580,6 +3587,24 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // MOVBE endian-swapping loads/stores across all operand sizes. Loads are
+    // observed through r8; stores are observed through the scratch page diff.
+    for &(label, asm) in &[
+        ("movbe_r16_m16_r8w", "movbe (%rax), %r8w"),
+        ("movbe_r32_m32_r8d", "movbe (%rax), %r8d"),
+        ("movbe_r64_m64_r8", "movbe (%rax), %r8"),
+        ("movbe_m16_r16_r8w", "movbe %r8w, 2(%rax)"),
+        ("movbe_m32_r32_r8d", "movbe %r8d, 4(%rax)"),
+        ("movbe_m64_r64_r8", "movbe %r8, 8(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Movbe,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -3696,7 +3721,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b,+adx"
+    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b,+adx,+movbe"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -3845,11 +3870,11 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). SHA-NI, MOVDIR, and ADX are
+        // are VEX-encoded (0xC4/0xC5). SHA-NI, MOVDIR, ADX, and MOVBE are
         // intentionally legacy 0F-family encodings.
         let legacy_allowed = matches!(
             case.feat,
-            Feat::Sha | Feat::Movdiri | Feat::Movdir64b | Feat::Adx
+            Feat::Sha | Feat::Movdiri | Feat::Movdir64b | Feat::Adx | Feat::Movbe
         ) && legacy_0f_encoding(&op);
         let expected_encoding =
             matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
