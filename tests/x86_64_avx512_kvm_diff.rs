@@ -216,6 +216,8 @@ enum Feat {
     Wbnoinvd,
     /// INVLPG TLB invalidation by linear address.
     Invlpg,
+    /// INVPCID process-context TLB invalidation.
+    Invpcid,
     /// SMAP access-flag control instructions.
     Smap,
     /// Protection-key user access register instructions.
@@ -340,6 +342,7 @@ impl Feat {
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
+            Feat::Invpcid => "invpcid",
             Feat::Smap => "smap",
             Feat::Pku => "pku",
             Feat::Swapgs => "swapgs",
@@ -418,6 +421,7 @@ impl Feat {
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
+            Feat::Invpcid,
             Feat::Smap,
             Feat::Pku,
             Feat::Swapgs,
@@ -485,6 +489,7 @@ struct HostFeatures {
     monitor: bool,
     fsgsbase: bool,
     wbnoinvd: bool,
+    invpcid: bool,
     smap: bool,
     pku: bool,
     serialize: bool,
@@ -553,6 +558,7 @@ impl HostFeatures {
             monitor: host_cpu_flag("monitor"),
             fsgsbase: host_cpu_flag("fsgsbase"),
             wbnoinvd: host_cpu_flag("wbnoinvd"),
+            invpcid: host_cpu_flag("invpcid"),
             smap: host_cpu_flag("smap"),
             pku: host_cpu_flag("pku"),
             serialize: host_cpu_flag("serialize"),
@@ -637,6 +643,7 @@ impl HostFeatures {
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
+            Feat::Invpcid => self.invpcid,
             Feat::Smap => self.smap,
             Feat::Pku => self.pku,
             Feat::Swapgs => true,
@@ -7564,6 +7571,43 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // INVPCID has no directly visible TLB output in this harness, so these
+    // cases cover all four invalidation types and descriptor addressing forms
+    // while comparing preserved GPR, scratch, and RFLAGS state against KVM.
+    for &(label, asm) in &[
+        (
+            "invpcid_type0_individual_address",
+            "movq $0, 32(%rax)\nmovq %rax, 40(%rax)\nmovq $0, %r8\ncmpq %rcx, %r9\ninvpcid 32(%rax), %r8\nmovq 40(%rax), %rcx",
+        ),
+        (
+            "invpcid_type1_single_context",
+            "movq $0, 48(%rax)\nmovq $0, 56(%rax)\nmovq $1, %r8\ncmpq %rcx, %r9\ninvpcid 48(%rax), %r8\nmovq 48(%rax), %rcx",
+        ),
+        (
+            "invpcid_type2_all_contexts",
+            "movq $0, 64(%rax)\nmovq $0, 72(%rax)\nmovq $2, %r8\ncmpq %rcx, %r9\ninvpcid 64(%rax), %r8\nmovq 72(%rax), %rcx",
+        ),
+        (
+            "invpcid_type3_all_nonglobal_contexts",
+            "movq $0, 80(%rax)\nmovq $0, 88(%rax)\nmovq $3, %r8\ncmpq %rcx, %r9\ninvpcid 80(%rax), %r8\nmovq 80(%rax), %rcx",
+        ),
+        (
+            "invpcid_indexed_descriptor",
+            "movq $0, 96(%rax)\nmovq %rax, 104(%rax)\nleaq 96(%rax), %r9\nmovq $0, %r8\ncmpq %rcx, %r9\ninvpcid (%r9), %r8\nmovq 104(%rax), %rcx",
+        ),
+        (
+            "invpcid_addr32_descriptor",
+            "movq $0, 112(%rax)\nmovq %rax, 120(%rax)\nmovq $0, %r8\ncmpq %rcx, %r9\naddr32 invpcid 112(%eax), %r8\nmovq 120(%rax), %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Invpcid,
+            profile: Int,
+        });
+    }
+
     // Privileged machine-state instructions. These seed known architectural
     // state before reading it back, avoiding dependence on different initial
     // KVM/interpreter CRx, descriptor-table, or MSR setup.
@@ -7671,6 +7715,35 @@ fn irregular_cases() -> Vec<Case> {
         out.push(Case {
             label: label.to_string(),
             asm: format!("{descriptor_access_setup}\n{check}"),
+            feat: DescriptorAccess,
+            profile: Int,
+        });
+    }
+
+    // Group-6 descriptor-register stores. These read the current LDTR/TR
+    // selectors into register and memory destinations, covering the SLDT/STR
+    // paths that complement the LAR/LSL/VERR/VERW descriptor access cases.
+    for &(label, asm) in &[
+        (
+            "sldt_descriptor_group6_r64_zeroext",
+            "movabsq $-1, %r8\nsldt %r8",
+        ),
+        (
+            "str_descriptor_group6_r64_zeroext",
+            "movabsq $-1, %r9\nstr %r9",
+        ),
+        (
+            "sldt_descriptor_group6_m16",
+            "movw $0xffff, 152(%rax)\nsldt 152(%rax)",
+        ),
+        (
+            "str_descriptor_group6_m16",
+            "movw $0xffff, 154(%rax)\nstr 154(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
             feat: DescriptorAccess,
             profile: Int,
         });
@@ -8993,6 +9066,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
+                | Feat::Invpcid
                 | Feat::Smap
                 | Feat::Pku
                 | Feat::Swapgs
@@ -9177,7 +9251,7 @@ fn avx512_kvm_descriptor_access_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::DescriptorAccess)
         .collect();
-    assert_eq!(cases.len(), 5, "unexpected descriptor-access corpus size");
+    assert_eq!(cases.len(), 9, "unexpected descriptor-access corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -9199,7 +9273,7 @@ fn avx512_kvm_descriptor_access_corpus() {
         "descriptor-access cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 5,
+        tally.compared, 9,
         "all descriptor-access cases should compare"
     );
 }
@@ -9432,6 +9506,30 @@ fn avx512_kvm_processor_state_management_corpus() {
         tally.compared, 10,
         "all processor state-management cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_invpcid_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Invpcid)
+        .collect();
+    assert_eq!(cases.len(), 6, "unexpected INVPCID corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on INVPCID cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an INVPCID case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "INVPCID corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "INVPCID cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 6, "all INVPCID cases should compare");
 }
 
 #[test]
