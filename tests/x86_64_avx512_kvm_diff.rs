@@ -7983,6 +7983,92 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core implicit-operand sign extension and group-3 multiply/divide width
+    // forms. MUL/DIV/IDIV leave several status flags undefined, so those cases
+    // finish with a deterministic CMP after exposing the implicit RAX/RDX
+    // results.
+    for &(label, asm) in &[
+        (
+            "cbw_core_implicit_sign_extend",
+            "movabsq $0x7f80, %rax\ncbtw",
+        ),
+        (
+            "cwde_core_implicit_sign_extend",
+            "movabsq $0x8000, %rax\ncwtl",
+        ),
+        (
+            "cdqe_core_implicit_sign_extend",
+            "movabsq $0x80000001, %rax\ncltq",
+        ),
+        (
+            "cwd_core_implicit_sign_extend",
+            "movabsq $0x8001, %rax\nmovabsq $-1, %rdx\ncwtd",
+        ),
+        (
+            "cdq_core_implicit_sign_extend",
+            "movabsq $0x80000001, %rax\nmovabsq $-1, %rdx\ncltd",
+        ),
+        (
+            "cqo_core_implicit_sign_extend",
+            "movabsq $-5, %rax\nxorq %rdx, %rdx\ncqto",
+        ),
+        (
+            "mul_core_implicit_r8_mem",
+            "movb $0x12, %al\nmovb $0x11, 16(%rdi)\nmulb 16(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "imul_core_implicit_r8_mem",
+            "movb $-7, %al\nmovb $6, 17(%rdi)\nimulb 17(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "mul_core_implicit_r16_mem",
+            "movw $0x1234, %ax\nmovw $0x10, 18(%rdi)\nmulw 18(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "imul_core_implicit_r16_mem",
+            "movw $-1234, %ax\nmovw $7, 20(%rdi)\nimulw 20(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "div_core_implicit_r8_mem",
+            "movw $0x0123, %ax\nmovb $0x12, 16(%rdi)\ndivb 16(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "idiv_core_implicit_r8_mem",
+            "movw $-123, %ax\nmovb $-7, 17(%rdi)\nidivb 17(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "div_core_implicit_r16_mem",
+            "xorl %edx, %edx\nmovw $0x1234, %ax\nmovw $0x13, 18(%rdi)\ndivw 18(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "idiv_core_implicit_r16_mem",
+            "movw $-1234, %ax\ncwtd\nmovw $-13, 20(%rdi)\nidivw 20(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "div_core_implicit_r32_mem",
+            "xorl %edx, %edx\nmovl $0x12345678, %eax\nmovl $0x1234, 24(%rdi)\ndivl 24(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "idiv_core_implicit_r32_mem",
+            "movl $-12345678, %eax\ncltd\nmovl $-1234, 28(%rdi)\nidivl 28(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "div_core_implicit_r64_mem",
+            "xorq %rdx, %rdx\nmovabsq $0x123456789abcdef, %rax\nmovq $0x12345, 32(%rdi)\ndivq 32(%rdi)\ncmpq %r8, %r8",
+        ),
+        (
+            "idiv_core_implicit_r64_mem",
+            "movabsq $-1234567890123, %rax\ncqto\nmovq $-1234567, 40(%rdi)\nidivq 40(%rdi)\ncmpq %r8, %r8",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core string instructions. These use case-specific RSI/RDI/RCX seeds and
     // a non-repeating scratch pattern so both pointer movement and memory side
     // effects are visible in the KVM diff.
@@ -9274,6 +9360,43 @@ fn avx512_kvm_core_lock_corpus() {
         "core LOCK cases should not feature-skip"
     );
     assert_eq!(tally.compared, 16, "all core LOCK cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_implicit_operand_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_implicit"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        18,
+        "unexpected core implicit-operand corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core implicit-operand cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core implicit-operand case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core implicit-operand corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core implicit-operand cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all core implicit-operand cases should compare"
+    );
 }
 
 #[test]
