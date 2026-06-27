@@ -4108,6 +4108,58 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE2 double-precision data movement, logical, compare, shuffle,
+    // mask extraction, scalar conversion, and packed FP/int conversion forms.
+    for &(label, asm, profile) in &[
+        ("movapd_sse2_reg", "movapd %xmm2, %xmm1", F64),
+        ("movapd_sse2_load", "movapd 16(%rax), %xmm1", F64),
+        ("movapd_sse2_store", "movapd %xmm1, 16(%rax)", F64),
+        ("movupd_sse2_load_unaligned", "movupd 17(%rax), %xmm1", F64),
+        ("movupd_sse2_store_unaligned", "movupd %xmm1, 17(%rax)", F64),
+        ("movsd_sse2_reg", "movsd %xmm2, %xmm1", F64),
+        ("movsd_sse2_load", "movsd 8(%rax), %xmm1", F64),
+        ("movsd_sse2_store", "movsd %xmm1, 8(%rax)", F64),
+        ("andpd_sse2_reg", "andpd %xmm2, %xmm1", Int),
+        ("andnpd_sse2_mem", "andnpd 16(%rax), %xmm1", Int),
+        ("orpd_sse2_reg", "orpd %xmm2, %xmm1", Int),
+        ("xorpd_sse2_mem", "xorpd 16(%rax), %xmm1", Int),
+        ("cmpeqpd_sse2_reg", "cmpeqpd %xmm2, %xmm1", F64),
+        ("cmpltpd_sse2_mem", "cmpltpd 16(%rax), %xmm1", F64),
+        ("cmpunordpd_sse2_reg", "cmpunordpd %xmm2, %xmm1", F64),
+        ("cmpeqsd_sse2_reg", "cmpeqsd %xmm2, %xmm1", F64),
+        ("cmpnltsd_sse2_mem", "cmpnltsd 16(%rax), %xmm1", F64),
+        ("shufpd_sse2_reg", "shufpd $0x1, %xmm2, %xmm1", F64),
+        ("shufpd_sse2_mem", "shufpd $0x2, 16(%rax), %xmm1", F64),
+        ("movmskpd_sse2_r8d", "movmskpd %xmm1, %r8d", F64),
+        ("comisd_sse2_reg", "comisd %xmm2, %xmm1", F64),
+        ("comisd_sse2_mem", "comisd 16(%rax), %xmm1", F64),
+        ("ucomisd_sse2_reg", "ucomisd %xmm2, %xmm1", F64),
+        ("ucomisd_sse2_mem", "ucomisd 16(%rax), %xmm1", F64),
+        ("cvtsi2sd_sse2_r64", "cvtsi2sd %r8, %xmm1", F64),
+        ("cvtsi2sd_sse2_m32", "cvtsi2sd 16(%rax), %xmm1", F64),
+        ("cvtsd2si_sse2_xmm_r8", "cvtsd2si %xmm1, %r8", F64),
+        ("cvtsd2si_sse2_m64_r8", "cvtsd2si 16(%rax), %r8", F64),
+        ("cvttsd2si_sse2_xmm_r8", "cvttsd2si %xmm1, %r8", F64),
+        ("cvttsd2si_sse2_m64_r8", "cvttsd2si 16(%rax), %r8", F64),
+        ("cvtpd2ps_sse2_reg", "cvtpd2ps %xmm2, %xmm1", F64),
+        ("cvtpd2ps_sse2_mem", "cvtpd2ps 16(%rax), %xmm1", F64),
+        ("cvtps2pd_sse2_reg", "cvtps2pd %xmm2, %xmm1", F32),
+        ("cvtps2pd_sse2_mem", "cvtps2pd 16(%rax), %xmm1", F32),
+        ("cvtdq2pd_sse2_reg", "cvtdq2pd %xmm2, %xmm1", Int),
+        ("cvtdq2pd_sse2_mem", "cvtdq2pd 16(%rax), %xmm1", Int),
+        ("cvtpd2dq_sse2_reg", "cvtpd2dq %xmm2, %xmm1", F64),
+        ("cvtpd2dq_sse2_mem", "cvtpd2dq 16(%rax), %xmm1", F64),
+        ("cvttpd2dq_sse2_reg", "cvttpd2dq %xmm2, %xmm1", F64),
+        ("cvttpd2dq_sse2_mem", "cvttpd2dq 16(%rax), %xmm1", F64),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse2,
+            profile,
+        });
+    }
+
     // Legacy SSE2 packed-integer forms. These cover aligned/unaligned moves,
     // destructive two-operand arithmetic/logical/compare/multiply/pack/unpack,
     // and both immediate and XMM/memory shift-count encodings.
