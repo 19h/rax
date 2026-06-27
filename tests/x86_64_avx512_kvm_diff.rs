@@ -69,6 +69,8 @@ const STATUS_RFLAGS_MASK: u64 =
     RFLAGS_CF | RFLAGS_PF | RFLAGS_AF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
 /// Value seeded into r8 (GPR-source / GPR-dest EVEX and k<->GPR forms read it).
 const R8_SEED: u64 = 0x8877_6655_4433_2211;
+/// Small bit index for core BT/BTS/BTR/BTC register-indexed memory forms.
+const R9_SEED: u64 = 70;
 /// Value seeded into rcx; its low bits also drive BMI bit ranges / shift counts.
 const RCX_SEED: u64 = 0x1020_3040_5060_0c04;
 /// Value seeded into rdx, the implicit BMI2 MULX multiplicand.
@@ -82,6 +84,7 @@ struct InCase {
     rcx: u64,
     rdx: u64,
     r8: u64,
+    r9: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
 }
@@ -95,6 +98,7 @@ struct OutCase {
     rcx: u64,
     rdx: u64,
     r8: u64,
+    r9: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
 }
@@ -106,6 +110,8 @@ struct OutCase {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Feat {
+    /// Core scalar x86-64 instructions that do not require an optional CPUID bit.
+    Core,
     /// AVX-512 Foundation (always required as a baseline for EVEX).
     F,
     /// Byte/Word integer ops.
@@ -189,6 +195,7 @@ enum Feat {
 impl Feat {
     fn name(self) -> &'static str {
         match self {
+            Feat::Core => "core",
             Feat::F => "avx512f",
             Feat::Bw => "avx512bw",
             Feat::Dq => "avx512dq",
@@ -233,6 +240,7 @@ impl Feat {
 
     fn expanded_xeon() -> &'static [Feat] {
         &[
+            Feat::Core,
             Feat::Avx,
             Feat::Avx2,
             Feat::Fma,
@@ -355,6 +363,7 @@ impl HostFeatures {
 
     fn supports(&self, feat: Feat) -> bool {
         match feat {
+            Feat::Core => true,
             Feat::F | Feat::Base => self.f,
             Feat::Bw => self.bw,
             Feat::Dq => self.dq,
@@ -730,6 +739,7 @@ impl KvmOracle {
         kregs.rcx = input.rcx;
         kregs.rdx = input.rdx;
         kregs.r8 = input.r8;
+        kregs.r9 = input.r9;
         kregs.rflags = input.rflags | 0x2;
         vcpu.set_regs(&kregs)
             .map_err(|e| format!("set_regs: {e:?}"))?;
@@ -772,6 +782,7 @@ impl KvmOracle {
             rcx: final_regs.rcx,
             rdx: final_regs.rdx,
             r8: final_regs.r8,
+            r9: final_regs.r9,
             rflags: final_regs.rflags,
             scratch,
         }))
@@ -823,6 +834,7 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         rcx: input.rcx,
         rdx: input.rdx,
         r8: input.r8,
+        r9: input.r9,
         rflags: input.rflags,
         ..Registers::default()
     };
@@ -851,6 +863,7 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         rcx: out_regs.rcx,
         rdx: out_regs.rdx,
         r8: out_regs.r8,
+        r9: out_regs.r9,
         rflags: out_regs.rflags,
         scratch,
     })
@@ -904,6 +917,9 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
     }
     if interp.r8 != kvm.r8 {
         diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
+    }
+    if interp.r9 != kvm.r9 {
+        diffs.push(format!("r9: interp={:#x} kvm={:#x}", interp.r9, kvm.r9));
     }
     let im = interp.rflags & rflags_mask;
     let km = kvm.rflags & rflags_mask;
@@ -1077,6 +1093,7 @@ fn input_for(profile: InputProfile) -> InCase {
         rcx: RCX_SEED,
         rdx: RDX_SEED,
         r8: R8_SEED,
+        r9: R9_SEED,
         rflags: INITIAL_RFLAGS,
         scratch,
     }
@@ -4732,6 +4749,35 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core bit-test and bit-scan instructions. These cover register operands,
+    // immediate memory operands, and register-indexed memory bit strings using
+    // r9 as a small index that stays within the compared scratch page.
+    for &(label, asm) in &[
+        ("bt_core_r64_reg", "btq %rcx, %r8"),
+        ("bts_core_r64_reg", "btsq %rcx, %r8"),
+        ("btr_core_r32_reg", "btrl %ecx, %r8d"),
+        ("btc_core_r64_reg", "btcq %rcx, %r8"),
+        ("bt_core_m64_imm", "btq $9, 8(%rax)"),
+        ("bts_core_m64_imm", "btsq $9, 8(%rax)"),
+        ("btr_core_m32_imm", "btrl $15, 16(%rax)"),
+        ("btc_core_m64_imm", "btcq $20, 24(%rax)"),
+        ("bt_core_m64_r9", "btq %r9, (%rax)"),
+        ("bts_core_m64_r9", "btsq %r9, (%rax)"),
+        ("btr_core_m32_r9d", "btrl %r9d, (%rax)"),
+        ("btc_core_m64_r9_disp", "btcq %r9, 16(%rax)"),
+        ("bsf_core_r64_reg", "bsfq %rcx, %r8"),
+        ("bsf_core_r32_mem", "bsfl 32(%rax), %r8d"),
+        ("bsr_core_r64_reg", "bsrq %r8, %rcx"),
+        ("bsr_core_r32_mem", "bsrl 36(%rax), %ecx"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -4952,6 +4998,31 @@ fn case_status(case: &Case) -> Status {
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
 
+    // BT/BTS/BTR/BTC define CF from the selected bit; the other status flags
+    // are architecturally undefined.
+    if matches!(
+        mnem,
+        "btw"
+            | "btl"
+            | "btq"
+            | "btsw"
+            | "btsl"
+            | "btsq"
+            | "btrw"
+            | "btrl"
+            | "btrq"
+            | "btcw"
+            | "btcl"
+            | "btcq"
+    ) {
+        return RFLAGS_CF;
+    }
+
+    // BSF/BSR define ZF; the destination is only compared for non-zero sources.
+    if matches!(mnem, "bsfw" | "bsfl" | "bsfq" | "bsrw" | "bsrl" | "bsrq") {
+        return RFLAGS_ZF;
+    }
+
     // BMI1/BZHI define CF/ZF/SF/OF and leave AF/PF undefined.
     if matches!(
         mnem,
@@ -5144,7 +5215,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         // scalar feature probes below are intentionally 0F-family encodings.
         let legacy_allowed = matches!(
             case.feat,
-            Feat::Aes
+            Feat::Core
+                | Feat::Aes
                 | Feat::Pclmulqdq
                 | Feat::Gfni
                 | Feat::Sse
