@@ -9311,6 +9311,89 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // Legacy AES-NI/PCLMUL XMM edge operands. These keep the legacy decoder
+    // and XMM write semantics under exact zero/all-one inputs, separate from
+    // the EVEX crypto edge corpus above.
+    for &(label, asm, feat) in &[
+        (
+            "aesenc_legacy_xmm_edge_zero_key",
+            "pxor %xmm2, %xmm2\naesenc %xmm2, %xmm1",
+            Aes,
+        ),
+        (
+            "aesenc_legacy_xmm_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\naesenc 64(%rax), %xmm1",
+            Aes,
+        ),
+        (
+            "aesenclast_legacy_xmm_edge_zero_key",
+            "pxor %xmm2, %xmm2\naesenclast %xmm2, %xmm1",
+            Aes,
+        ),
+        (
+            "aesenclast_legacy_xmm_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\naesenclast 64(%rax), %xmm1",
+            Aes,
+        ),
+        (
+            "aesdec_legacy_xmm_edge_zero_key",
+            "pxor %xmm2, %xmm2\naesdec %xmm2, %xmm1",
+            Aes,
+        ),
+        (
+            "aesdec_legacy_xmm_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\naesdec 64(%rax), %xmm1",
+            Aes,
+        ),
+        (
+            "aesdeclast_legacy_xmm_edge_zero_key",
+            "pxor %xmm2, %xmm2\naesdeclast %xmm2, %xmm1",
+            Aes,
+        ),
+        (
+            "aesdeclast_legacy_xmm_edge_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\naesdeclast 64(%rax), %xmm1",
+            Aes,
+        ),
+        (
+            "aesimc_legacy_xmm_edge_zero_reg",
+            "pxor %xmm2, %xmm2\naesimc %xmm2, %xmm1",
+            Aes,
+        ),
+        (
+            "aeskeygenassist_legacy_xmm_edge_immff_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\naeskeygenassist $0xff, 64(%rax), %xmm1",
+            Aes,
+        ),
+        (
+            "pclmulqdq_legacy_xmm_edge_ll_zero_reg",
+            "pxor %xmm2, %xmm2\npclmulqdq $0x00, %xmm2, %xmm1",
+            Pclmulqdq,
+        ),
+        (
+            "pclmulqdq_legacy_xmm_edge_hl_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\npclmulqdq $0x01, 64(%rax), %xmm1",
+            Pclmulqdq,
+        ),
+        (
+            "pclmulqdq_legacy_xmm_edge_lh_zero_reg",
+            "pxor %xmm2, %xmm2\npclmulqdq $0x10, %xmm2, %xmm1",
+            Pclmulqdq,
+        ),
+        (
+            "pclmulqdq_legacy_xmm_edge_hh_allones_mem",
+            "pcmpeqb %xmm2, %xmm2\nmovdqu %xmm2, 64(%rax)\npclmulqdq $0x11, 64(%rax), %xmm1",
+            Pclmulqdq,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Legacy GFNI XMM forms share the GFNI feature with the EVEX vector cases,
     // but exercise separate 0F38/0F3A decoders and legacy XMM write semantics.
     for &(label, asm) in &[
@@ -16375,12 +16458,59 @@ fn avx512_kvm_crypto_edge_operand_corpus() {
 }
 
 #[test]
+fn avx512_kvm_legacy_xmm_crypto_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_xmm_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        14,
+        "unexpected legacy XMM crypto edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy XMM crypto edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy XMM crypto edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy XMM crypto edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy XMM crypto edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Aes),
+        10,
+        "all AES-NI legacy XMM edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Pclmulqdq),
+        4,
+        "all PCLMULQDQ legacy XMM edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 14,
+        "all legacy XMM crypto edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_aes_legacy_crypto_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| case.feat == Feat::Aes)
         .collect();
-    assert_eq!(cases.len(), 36, "unexpected AES legacy corpus size");
+    assert_eq!(cases.len(), 46, "unexpected AES legacy corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16400,11 +16530,11 @@ fn avx512_kvm_aes_legacy_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Aes),
-        36,
+        46,
         "all AES legacy cases should run"
     );
     assert_eq!(
-        tally.compared, 36,
+        tally.compared, 46,
         "all AES legacy cases should compare"
     );
 }
@@ -16417,7 +16547,7 @@ fn avx512_kvm_pclmulqdq_legacy_crypto_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        21,
+        25,
         "unexpected PCLMULQDQ legacy corpus size"
     );
 
@@ -16442,11 +16572,11 @@ fn avx512_kvm_pclmulqdq_legacy_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Pclmulqdq),
-        21,
+        25,
         "all PCLMULQDQ legacy cases should run"
     );
     assert_eq!(
-        tally.compared, 21,
+        tally.compared, 25,
         "all PCLMULQDQ legacy cases should compare"
     );
 }
