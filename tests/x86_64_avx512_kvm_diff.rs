@@ -7002,6 +7002,54 @@ fn irregular_cases() -> Vec<Case> {
             profile,
         });
     }
+    for class in ["xmm", "ymm"] {
+        for (tag, asm) in [
+            (
+                "indexed",
+                format!("{{vex}} vcvtph2ps -32(%rbx,%r9,1), %{class}1"),
+            ),
+            (
+                "addr32_indexed",
+                format!("addr32 {{vex}} vcvtph2ps -32(%rbx,%r9,1), %{class}1"),
+            ),
+            (
+                "high_disp",
+                format!("{{vex}} vcvtph2ps -16(%rbx), %{class}9"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("vcvtph2ps_f16c_{class}_addr_{tag}"),
+                asm,
+                feat: F16c,
+                profile: F16,
+            });
+        }
+    }
+    for &(class, imm_indexed, imm_addr32, imm_high) in
+        &[("xmm", 0x3, 0x7, 0x1), ("ymm", 0x5, 0x7, 0x1)]
+    {
+        for (tag, asm) in [
+            (
+                "disp",
+                format!("{{vex}} vcvtps2ph ${imm_indexed:#x}, %{class}2, -16(%rbx)"),
+            ),
+            (
+                "addr32_disp",
+                format!("addr32 {{vex}} vcvtps2ph ${imm_addr32:#x}, %{class}2, -16(%rbx)"),
+            ),
+            (
+                "high_disp",
+                format!("{{vex}} vcvtps2ph ${imm_high:#x}, %{class}9, -16(%rbx)"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("vcvtps2ph_f16c_{class}_addr_{tag}"),
+                asm,
+                feat: F16c,
+                profile: F32,
+            });
+        }
+    }
 
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
@@ -12424,6 +12472,36 @@ fn avx512_kvm_adx_operand_form_corpus() {
         tally.compared, 8,
         "all ADX operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_f16c_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::F16c)
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected F16C corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on F16C cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an F16C case");
+    assert_eq!(
+        tally.skipped_asm,
+        0,
+        "F16C corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "F16C cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F16c),
+        22,
+        "all F16C cases should run"
+    );
+    assert_eq!(tally.compared, 22, "all F16C cases should compare");
 }
 
 #[test]
