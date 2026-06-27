@@ -246,6 +246,8 @@ enum Feat {
     Sse,
     /// Legacy SSE2 packed/scalar double-precision SIMD instructions.
     Sse2,
+    /// Legacy SSE3 horizontal, duplicate, and unaligned-load instructions.
+    Sse3,
     /// Legacy SSSE3 byte/word shuffle, horizontal, sign, and abs instructions.
     Ssse3,
     /// Legacy SSE4.1 blend and test instructions.
@@ -359,6 +361,7 @@ impl Feat {
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
+            Feat::Sse3 => "sse3",
             Feat::Ssse3 => "ssse3",
             Feat::Sse41 => "sse4_1",
             Feat::Sse42 => "sse4_2",
@@ -439,6 +442,7 @@ impl Feat {
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
+            Feat::Sse3,
             Feat::Ssse3,
             Feat::Sse41,
             Feat::Sse42,
@@ -512,6 +516,7 @@ struct HostFeatures {
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
+    sse3: bool,
     ssse3: bool,
     sse4_1: bool,
     aes: bool,
@@ -584,6 +589,7 @@ impl HostFeatures {
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
+            sse3: is_x86_feature_detected!("sse3"),
             ssse3: is_x86_feature_detected!("ssse3"),
             sse4_1: is_x86_feature_detected!("sse4.1"),
             aes: host_cpu_flag("aes"),
@@ -668,6 +674,7 @@ impl HostFeatures {
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
+            Feat::Sse3 => self.sse3,
             Feat::Ssse3 => self.ssse3,
             Feat::Sse41 => self.sse4_1,
             Feat::Sse42 => self.sse4_2,
@@ -4521,6 +4528,42 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat: Sse2,
             profile: Int,
+        });
+    }
+
+    // Legacy SSE3 forms. These cover horizontal add/subtract, alternating
+    // add/subtract, duplicate moves, and LDDQU's unaligned/addr32 load paths.
+    for &(label, asm, profile) in &[
+        ("addsubps_sse3_reg", "addsubps %xmm2, %xmm1", F32),
+        ("addsubps_sse3_mem", "addsubps 16(%rax), %xmm1", F32),
+        ("addsubpd_sse3_reg", "addsubpd %xmm2, %xmm1", F64),
+        ("addsubpd_sse3_mem", "addsubpd 16(%rax), %xmm1", F64),
+        ("haddps_sse3_reg", "haddps %xmm2, %xmm1", F32),
+        ("haddps_sse3_mem", "haddps 16(%rax), %xmm1", F32),
+        ("haddpd_sse3_reg", "haddpd %xmm2, %xmm1", F64),
+        ("haddpd_sse3_mem", "haddpd 16(%rax), %xmm1", F64),
+        ("hsubps_sse3_reg", "hsubps %xmm2, %xmm1", F32),
+        ("hsubps_sse3_mem", "hsubps 16(%rax), %xmm1", F32),
+        ("hsubpd_sse3_reg", "hsubpd %xmm2, %xmm1", F64),
+        ("hsubpd_sse3_mem", "hsubpd 16(%rax), %xmm1", F64),
+        ("movddup_sse3_reg", "movddup %xmm2, %xmm1", F64),
+        ("movddup_sse3_mem", "movddup 16(%rax), %xmm1", F64),
+        ("movsldup_sse3_reg", "movsldup %xmm2, %xmm1", F32),
+        ("movsldup_sse3_mem", "movsldup 16(%rax), %xmm1", F32),
+        ("movshdup_sse3_reg", "movshdup %xmm2, %xmm1", F32),
+        ("movshdup_sse3_mem", "movshdup 16(%rax), %xmm1", F32),
+        ("lddqu_sse3_load_unaligned", "lddqu 17(%rax), %xmm1", Int),
+        (
+            "addr32_lddqu_sse3_load",
+            "addr32 lddqu 17(%eax), %xmm1",
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse3,
+            profile,
         });
     }
 
@@ -9128,6 +9171,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                     | Feat::Gfni
                     | Feat::Sse
                     | Feat::Sse2
+                    | Feat::Sse3
                     | Feat::Ssse3
                     | Feat::Sse41
                     | Feat::Sse42
@@ -9848,6 +9892,30 @@ fn avx512_kvm_core_control_transfer_corpus() {
         tally.compared, 18,
         "all core control-transfer cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_sse3_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Sse3)
+        .collect();
+    assert_eq!(cases.len(), 20, "unexpected SSE3 corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE3 cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an SSE3 case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE3 corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE3 cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 20, "all SSE3 cases should compare");
 }
 
 #[test]
