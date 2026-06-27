@@ -6288,6 +6288,50 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy x87/MMX coverage. The harness does not snapshot the x87/MMX
+    // register file directly, so these snippets make results visible through
+    // scratch-memory stores and reset transient x87/MMX state inside the case.
+    for &(label, asm, profile) in &[
+        ("x87_fld1_fstp_m64", "fninit\nfld1\nfstpl 64(%rax)", F64),
+        (
+            "x87_fadds_fstp_m32",
+            "fninit\nflds 32(%rax)\nfadds 36(%rax)\nfstps 64(%rax)",
+            F32,
+        ),
+        (
+            "x87_fmull_fstp_m64",
+            "fninit\nfldl 32(%rax)\nfmull 40(%rax)\nfstpl 72(%rax)",
+            F64,
+        ),
+        (
+            "x87_fildl_fistpl_m32",
+            "fninit\nfildl 32(%rax)\nfistpl 80(%rax)",
+            Int,
+        ),
+        (
+            "mmx_paddb_store",
+            "movq 32(%rax), %mm0\npaddb 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Int,
+        ),
+        (
+            "mmx_psllw_store",
+            "movq 32(%rax), %mm0\npsllw $3, %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Int,
+        ),
+        (
+            "mmx_punpcklbw_store",
+            "movq 32(%rax), %mm0\npunpcklbw 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
