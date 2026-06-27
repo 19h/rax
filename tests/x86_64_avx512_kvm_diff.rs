@@ -7092,6 +7092,48 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Scalar integer extension instructions, including the legacy accumulator
+    // forms and MOVSXD's accepted non-REX.W encodings in 64-bit mode.
+    for &(label, asm) in &[
+        ("cbw_core_extend_negative", "movw $0x0080, %ax\ncbtw"),
+        ("cwde_core_extend_negative", "movl $0x00008000, %eax\ncwtl"),
+        ("cdqe_core_extend_negative", "movl $0x80000000, %eax\ncltq"),
+        ("cwd_core_extend_negative", "movw $0x8000, %ax\ncwtd"),
+        ("cdq_core_extend_negative", "movl $0x80000000, %eax\ncltd"),
+        ("cqo_core_extend_negative", "movq $-1, %rax\ncqto"),
+        ("cbw_core_extend_positive", "movw $0x007f, %ax\ncbtw"),
+        ("cwde_core_extend_positive", "movl $0x00007fff, %eax\ncwtl"),
+        ("cdqe_core_extend_positive", "movl $0x7fffffff, %eax\ncltq"),
+        ("cwd_core_extend_positive", "movw $0x7fff, %ax\ncwtd"),
+        ("cdq_core_extend_positive", "movl $0x7fffffff, %eax\ncltd"),
+        ("cqo_core_extend_positive", "movq $0x7fffffff, %rax\ncqto"),
+        ("movzx_core_extend_r8_to_r64", "movzbq %cl, %r8"),
+        ("movzx_core_extend_high8_to_r32", "movzbl %ch, %edx"),
+        ("movzx_core_extend_r16_to_r64", "movzwq %cx, %r8"),
+        ("movzx_core_extend_m8_to_r32", "movzbl (%rax), %r8d"),
+        ("movzx_core_extend_m8_to_r16", "movzbw 1(%rax), %r8w"),
+        ("movzx_core_extend_m16_to_r32", "movzwl 2(%rax), %r8d"),
+        ("movzx_core_extend_m16_to_r64", "movzwq 2(%rax), %r8"),
+        ("movsx_core_extend_r8_to_r64", "movsbq %cl, %r8"),
+        ("movsx_core_extend_high8_to_r32", "movsbl %ch, %edx"),
+        ("movsx_core_extend_r16_to_r64", "movswq %cx, %r8"),
+        ("movsx_core_extend_m8_to_r32", "movsbl (%rax), %r8d"),
+        ("movsx_core_extend_m8_to_r16", "movsbw (%rax), %r8w"),
+        ("movsx_core_extend_m16_to_r32", "movswl 2(%rax), %r8d"),
+        ("movsx_core_extend_m16_to_r64", "movswq 2(%rax), %r8"),
+        ("movsxd_core_extend_r32_to_r64", "movslq %ecx, %r8"),
+        ("movsxd_core_extend_m32_to_r64", "movslq 4(%rax), %r8"),
+        ("movsxd_core_extend_r32_default", ".byte 0x63, 0xc1\n"),
+        ("movsxd_core_extend_r16_operand", ".byte 0x66, 0x63, 0xc1\n"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Direct MOV moffs opcodes (A0-A3) carry an absolute offset operand and are
     // distinct from the usual ModRM absolute-address encodings.
     for &(label, asm) in &[
@@ -10655,6 +10697,36 @@ fn avx512_kvm_core_segment_corpus() {
         "core segment cases should not feature-skip"
     );
     assert_eq!(tally.compared, 14, "all core segment cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_extend_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_extend_"))
+        .collect();
+    assert_eq!(cases.len(), 30, "unexpected core extension corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core extension cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core extension case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core extension corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core extension cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 30,
+        "all core extension cases should compare"
+    );
 }
 
 #[test]
