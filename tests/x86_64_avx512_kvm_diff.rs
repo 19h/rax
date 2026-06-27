@@ -4660,6 +4660,115 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE/SSE2 compare-predicate immediate forms. The ordinary compare
+    // coverage mostly uses assembler aliases; these force raw CMP* imm8
+    // decoding over edge-value profiles with NaN/Inf/zero lanes.
+    for &(label, asm, feat, profile) in &[
+        (
+            "cmpps_legacy_cmp_pred_eq_reg",
+            "cmpps $0x0, %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpps_legacy_cmp_pred_unord_mem",
+            "cmpps $0x3, 16(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpps_legacy_cmp_pred_nle_reg",
+            "cmpps $0x6, %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpps_legacy_cmp_pred_ord_mem",
+            "cmpps $0x7, 16(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpss_legacy_cmp_pred_lt_reg",
+            "cmpss $0x1, %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpss_legacy_cmp_pred_le_mem",
+            "cmpss $0x2, 16(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpss_legacy_cmp_pred_neq_reg",
+            "cmpss $0x4, %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmpss_legacy_cmp_pred_nlt_mem",
+            "cmpss $0x5, 16(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "cmppd_legacy_cmp_pred_eq_reg",
+            "cmppd $0x0, %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmppd_legacy_cmp_pred_unord_mem",
+            "cmppd $0x3, 16(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmppd_legacy_cmp_pred_nle_reg",
+            "cmppd $0x6, %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmppd_legacy_cmp_pred_ord_mem",
+            "cmppd $0x7, 16(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmpsd_legacy_cmp_pred_lt_reg",
+            "cmpsd $0x1, %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmpsd_legacy_cmp_pred_le_mem",
+            "cmpsd $0x2, 16(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmpsd_legacy_cmp_pred_neq_reg",
+            "cmpsd $0x4, %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "cmpsd_legacy_cmp_pred_nlt_mem",
+            "cmpsd $0x5, 16(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Legacy SSE2 packed-integer forms. These cover aligned/unaligned moves,
     // destructive two-operand arithmetic/logical/compare/multiply/pack/unpack,
     // and both immediate and XMM/memory shift-count encodings.
@@ -13124,6 +13233,73 @@ fn avx512_kvm_legacy_convert_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all legacy conversion cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_legacy_cmp_predicate_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_cmp_pred_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected legacy compare-predicate corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy compare-predicate cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy compare-predicate case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy compare-predicate corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy compare-predicate cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        8,
+        "all SSE compare-predicate cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        8,
+        "all SSE2 compare-predicate cases should run"
+    );
+    assert_eq!(
+        tally.ran_mnemonic("cmpps"),
+        4,
+        "all CMPPS predicate cases should run"
+    );
+    assert_eq!(
+        tally.ran_mnemonic("cmpss"),
+        4,
+        "all CMPSS predicate cases should run"
+    );
+    assert_eq!(
+        tally.ran_mnemonic("cmppd"),
+        4,
+        "all CMPPD predicate cases should run"
+    );
+    assert_eq!(
+        tally.ran_mnemonic("cmpsd"),
+        4,
+        "all CMPSD predicate cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all legacy compare-predicate cases should compare"
     );
 }
 
