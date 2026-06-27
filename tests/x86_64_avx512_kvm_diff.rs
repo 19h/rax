@@ -111,6 +111,8 @@ enum Feat {
     Fma,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
+    /// Legacy SSE packed/scalar single-precision SIMD instructions.
+    Sse,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
@@ -168,6 +170,7 @@ impl Feat {
             Feat::Avx2 => "avx2",
             Feat::Fma => "fma",
             Feat::AvxVnni => "avx_vnni",
+            Feat::Sse => "sse",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
             Feat::F16c => "f16c",
@@ -198,6 +201,7 @@ impl Feat {
             Feat::Avx2,
             Feat::Fma,
             Feat::AvxVnni,
+            Feat::Sse,
             Feat::Aes,
             Feat::Pclmulqdq,
             Feat::F16c,
@@ -233,6 +237,7 @@ struct HostFeatures {
     avx2: bool,
     fma: bool,
     avx_vnni: bool,
+    sse: bool,
     aes: bool,
     pclmulqdq: bool,
     f16c: bool,
@@ -268,6 +273,7 @@ impl HostFeatures {
             avx2: is_x86_feature_detected!("avx2"),
             fma: is_x86_feature_detected!("fma"),
             avx_vnni: host_cpu_flag("avx_vnni"),
+            sse: is_x86_feature_detected!("sse"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
             f16c: host_cpu_flag("f16c"),
@@ -303,6 +309,7 @@ impl HostFeatures {
             Feat::Avx2 => self.avx2,
             Feat::Fma => self.fma,
             Feat::AvxVnni => self.avx_vnni,
+            Feat::Sse => self.sse,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
             Feat::F16c => self.f16c,
@@ -3740,6 +3747,40 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE single-precision forms use destructive two-operand XMM
+    // semantics and must preserve all upper AVX/AVX-512 state.
+    for &(label, asm, profile) in &[
+        ("addps_sse_reg", "addps %xmm2, %xmm1", F32),
+        ("addps_sse_mem", "addps (%rax), %xmm1", F32),
+        ("addss_sse_reg", "addss %xmm2, %xmm1", F32),
+        ("addss_sse_mem", "addss 32(%rax), %xmm1", F32),
+        ("subps_sse_reg", "subps %xmm2, %xmm1", F32),
+        ("subss_sse_mem", "subss 32(%rax), %xmm1", F32),
+        ("mulps_sse_mem", "mulps (%rax), %xmm1", F32),
+        ("mulss_sse_reg", "mulss %xmm2, %xmm1", F32),
+        ("divps_sse_reg", "divps %xmm2, %xmm1", F32),
+        ("divss_sse_mem", "divss 32(%rax), %xmm1", F32),
+        ("sqrtps_sse_reg", "sqrtps %xmm3, %xmm1", F32),
+        ("sqrtss_sse_mem", "sqrtss 32(%rax), %xmm1", F32),
+        ("rsqrtps_sse_reg", "rsqrtps %xmm3, %xmm1", F32),
+        ("rsqrtss_sse_mem", "rsqrtss 32(%rax), %xmm1", F32),
+        ("rcpps_sse_reg", "rcpps %xmm3, %xmm1", F32),
+        ("rcpss_sse_mem", "rcpss 32(%rax), %xmm1", F32),
+        ("minps_sse_reg", "minps %xmm2, %xmm1", F32),
+        ("minss_sse_mem", "minss 32(%rax), %xmm1", F32),
+        ("maxps_sse_reg", "maxps %xmm2, %xmm1", F32),
+        ("maxss_sse_mem", "maxss 32(%rax), %xmm1", F32),
+        ("unpcklps_sse_reg", "unpcklps %xmm2, %xmm1", F32),
+        ("unpckhps_sse_mem", "unpckhps 32(%rax), %xmm1", F32),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse,
+            profile,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -4535,6 +4576,10 @@ fn case_status(case: &Case) -> Status {
             | "vrsqrtsh"
             | "vexp2ps"
             | "vexp2pd"
+            | "rcpps"
+            | "rcpss"
+            | "rsqrtps"
+            | "rsqrtss"
     ) {
         return Status::Approx;
     }
@@ -4561,7 +4606,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -4710,14 +4755,14 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). AES/PCLMUL, legacy GFNI, SHA-NI, MOVDIR,
-        // ADX, MOVBE, CRC32, and POPCNT are intentionally legacy 0F-family
-        // encodings.
+        // are VEX-encoded (0xC4/0xC5). Legacy SIMD/scalar extensions and
+        // scalar feature probes below are intentionally 0F-family encodings.
         let legacy_allowed = matches!(
             case.feat,
             Feat::Aes
                 | Feat::Pclmulqdq
                 | Feat::Gfni
+                | Feat::Sse
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
