@@ -7050,6 +7050,62 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
+        for (tag, asm) in [
+            (
+                "disp",
+                format!("{mnem} -16(%rbx), %xmm1"),
+            ),
+            (
+                "addr32_disp",
+                format!("addr32 {mnem} -16(%ebx), %xmm1"),
+            ),
+            (
+                "high_disp",
+                format!("{mnem} -16(%rbx), %xmm9"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("{mnem}_legacy_aes_addr_{tag}"),
+                asm,
+                feat: Aes,
+                profile: Int,
+            });
+        }
+    }
+    for &(label, asm) in &[
+        (
+            "aesimc_legacy_aes_addr_disp",
+            "aesimc -16(%rbx), %xmm1",
+        ),
+        (
+            "aesimc_legacy_aes_addr_addr32_disp",
+            "addr32 aesimc -16(%ebx), %xmm1",
+        ),
+        (
+            "aesimc_legacy_aes_addr_high_disp",
+            "aesimc -16(%rbx), %xmm9",
+        ),
+        (
+            "aeskeygenassist_legacy_aes_addr_disp",
+            "aeskeygenassist $0x00, -16(%rbx), %xmm1",
+        ),
+        (
+            "aeskeygenassist_legacy_aes_addr_addr32_disp",
+            "addr32 aeskeygenassist $0xff, -16(%ebx), %xmm1",
+        ),
+        (
+            "aeskeygenassist_legacy_aes_addr_high_disp",
+            "aeskeygenassist $0x36, -16(%rbx), %xmm9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Aes,
+            profile: Int,
+        });
+    }
 
     // Legacy PCLMULQDQ selector coverage. The low bits of the immediate choose
     // independent qwords from the destination and source operands.
@@ -7073,6 +7129,29 @@ fn irregular_cases() -> Vec<Case> {
         feat: Pclmulqdq,
         profile: Int,
     });
+    for &(imm, tag) in &[(0x00, "ll"), (0x01, "hl"), (0x10, "lh"), (0x11, "hh")] {
+        for (form, asm) in [
+            (
+                "disp",
+                format!("pclmulqdq ${imm:#x}, -16(%rbx), %xmm1"),
+            ),
+            (
+                "addr32_disp",
+                format!("addr32 pclmulqdq ${imm:#x}, -16(%ebx), %xmm1"),
+            ),
+            (
+                "high_disp",
+                format!("pclmulqdq ${imm:#x}, -16(%rbx), %xmm9"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("pclmulqdq_legacy_crypto_addr_{tag}_{form}"),
+                asm,
+                feat: Pclmulqdq,
+                profile: Int,
+            });
+        }
+    }
 
     // Legacy GFNI XMM forms share the GFNI feature with the EVEX vector cases,
     // but exercise separate 0F38/0F3A decoders and legacy XMM write semantics.
@@ -12419,6 +12498,83 @@ fn avx512_kvm_vpclmulqdq_crypto_corpus() {
     assert_eq!(
         tally.compared, 49,
         "all VPCLMULQDQ cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_aes_legacy_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Aes)
+        .collect();
+    assert_eq!(cases.len(), 36, "unexpected AES legacy corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on AES legacy cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AES legacy case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AES legacy corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AES legacy cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Aes),
+        36,
+        "all AES legacy cases should run"
+    );
+    assert_eq!(
+        tally.compared, 36,
+        "all AES legacy cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_pclmulqdq_legacy_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Pclmulqdq)
+        .collect();
+    assert_eq!(
+        cases.len(),
+        21,
+        "unexpected PCLMULQDQ legacy corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on PCLMULQDQ legacy cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a PCLMULQDQ legacy case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "PCLMULQDQ legacy corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "PCLMULQDQ legacy cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Pclmulqdq),
+        21,
+        "all PCLMULQDQ legacy cases should run"
+    );
+    assert_eq!(
+        tally.compared, 21,
+        "all PCLMULQDQ legacy cases should compare"
     );
 }
 
