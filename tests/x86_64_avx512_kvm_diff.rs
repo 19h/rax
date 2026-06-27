@@ -5334,6 +5334,71 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // SSE4.1 edge forms: PTEST flag outcomes, implicit-XMM0 variable blend
+    // masks, all-destination/all-source immediate blends, and INSERTPS zeroing.
+    for &(label, asm, profile) in &[
+        (
+            "ptest_sse41_edge_zero_zero",
+            "pxor %xmm1, %xmm1\nptest %xmm1, %xmm1",
+            Int,
+        ),
+        (
+            "ptest_sse41_edge_allones_allones",
+            "pcmpeqb %xmm1, %xmm1\nptest %xmm1, %xmm1",
+            Int,
+        ),
+        (
+            "ptest_sse41_edge_dest_subset",
+            "pcmpeqb %xmm1, %xmm1\npxor %xmm2, %xmm2\nptest %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "pblendvb_sse41_edge_zero_mask",
+            "pxor %xmm0, %xmm0\npblendvb %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "pblendvb_sse41_edge_allones_mask",
+            "pcmpeqb %xmm0, %xmm0\npblendvb %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "blendvps_sse41_edge_zero_mask",
+            "pxor %xmm0, %xmm0\nblendvps %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "blendvps_sse41_edge_allones_mask",
+            "pcmpeqb %xmm0, %xmm0\nblendvps %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "blendvpd_sse41_edge_zero_mask",
+            "pxor %xmm0, %xmm0\nblendvpd %xmm2, %xmm1",
+            F64,
+        ),
+        (
+            "blendvpd_sse41_edge_allones_mask",
+            "pcmpeqb %xmm0, %xmm0\nblendvpd %xmm2, %xmm1",
+            F64,
+        ),
+        ("blendps_sse41_edge_imm0", "blendps $0x00, %xmm2, %xmm1", F32),
+        ("blendps_sse41_edge_immf", "blendps $0x0f, %xmm2, %xmm1", F32),
+        ("blendpd_sse41_edge_imm0", "blendpd $0x0, %xmm2, %xmm1", F64),
+        ("blendpd_sse41_edge_imm3", "blendpd $0x3, %xmm2, %xmm1", F64),
+        ("pblendw_sse41_edge_imm0", "pblendw $0x00, %xmm2, %xmm1", Int),
+        ("pblendw_sse41_edge_immff", "pblendw $0xff, %xmm2, %xmm1", Int),
+        ("insertps_sse41_edge_lane0", "insertps $0x00, %xmm2, %xmm1", F32),
+        ("insertps_sse41_edge_zero_all", "insertps $0xff, %xmm2, %xmm1", F32),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse41,
+            profile,
+        });
+    }
+
     // Legacy SSE4.2 compare/string forms cover qword compares, XMM0 mask
     // results, RCX index results, and the PCMPxSTRx status flags.
     for &(label, asm) in &[
@@ -13446,6 +13511,38 @@ fn avx512_kvm_sse41_operand_form_corpus() {
         tally.compared, 21,
         "all SSE4.1 operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_sse41_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse41_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 17, "unexpected SSE4.1 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE4.1 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE4.1 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE4.1 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE4.1 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        17,
+        "all SSE4.1 edge cases should run"
+    );
+    assert_eq!(tally.compared, 17, "all SSE4.1 edge cases should compare");
 }
 
 #[test]
