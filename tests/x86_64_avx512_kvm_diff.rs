@@ -4567,6 +4567,67 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy streaming and masked memory stores. These instructions are mostly
+    // memory side effects, so the scratch-page diff directly checks the
+    // ordinary-store model used for non-temporal hints and mask-selected bytes.
+    for &(label, asm, feat, profile) in &[
+        (
+            "movntps_legacy_stream_xmm",
+            "movntps %xmm1, 32(%rax)",
+            Sse,
+            F32,
+        ),
+        (
+            "movntpd_legacy_stream_xmm",
+            "movntpd %xmm1, 48(%rax)",
+            Sse2,
+            F64,
+        ),
+        (
+            "movntdq_legacy_stream_xmm",
+            "movntdq %xmm1, 64(%rax)",
+            Sse2,
+            Int,
+        ),
+        (
+            "movnti_legacy_stream_m64_r8",
+            "movnti %r8, 80(%rax)",
+            Sse2,
+            Int,
+        ),
+        (
+            "movnti_legacy_stream_m32_r8d",
+            "movnti %r8d, 88(%rax)",
+            Sse2,
+            Int,
+        ),
+        (
+            "maskmovdqu_legacy_mask_store",
+            "maskmovdqu %xmm2, %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "movntq_legacy_stream_mmx",
+            "movq 32(%rax), %mm0\nmovntq %mm0, 96(%rax)\nemms",
+            Mmx,
+            Int,
+        ),
+        (
+            "maskmovq_legacy_mask_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nmaskmovq %mm1, %mm0\nemms",
+            Mmx,
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Legacy SSSE3 forms cover 0F38 byte shuffles, horizontal arithmetic,
     // sign/absolute-value operations, and 0F3A PALIGNR immediate handling.
     for &(label, asm) in &[
@@ -9919,6 +9980,58 @@ fn avx512_kvm_sse3_corpus() {
 }
 
 #[test]
+fn avx512_kvm_legacy_streaming_masked_memory_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_stream") || case.label.contains("_legacy_mask"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected legacy streaming/masked memory corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy streaming/masked memory cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy streaming/masked memory case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy streaming/masked memory corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy streaming/masked memory cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        1,
+        "all SSE streaming memory cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        5,
+        "all SSE2 streaming/masked memory cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        2,
+        "all MMX streaming/masked memory cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all legacy streaming/masked memory cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_x87_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -9944,7 +10057,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 39, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 41, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -9955,7 +10068,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 39, "all MMX cases should compare");
+    assert_eq!(tally.compared, 41, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
