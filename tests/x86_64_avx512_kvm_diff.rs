@@ -7844,6 +7844,49 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // FS/GS segment overrides on string-source operands. MOVS/LODS/CMPS honor
+    // the source segment base while STOS/SCAS destinations remain ES-relative;
+    // these snippets seed the string registers explicitly after programming the
+    // segment base so pointer movement, loaded accumulator state, flags, and
+    // destination scratch effects are all compared.
+    for &(label, asm) in &[
+        (
+            "fs_segstring_movsb",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\n.byte 0x64\nmovsb",
+        ),
+        (
+            "fs_segstring_rep_movsb",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\n.byte 0x64\nrep movsb",
+        ),
+        (
+            "fs_segstring_addr32_movsb",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $128, %esi\nmovl $0x4020, %edi\n.byte 0x64\naddr32 movsb",
+        ),
+        (
+            "fs_segstring_lodsb",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $128, %esi\nmovabsq $-1, %rax\n.byte 0x64\nlodsb",
+        ),
+        (
+            "gs_segstring_lodsl_zeroext",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovl $132, %esi\nmovabsq $-1, %rax\n.byte 0x65\nlodsl",
+        ),
+        (
+            "fs_segstring_cmpsb_equal",
+            "movb 128(%rax), %r10b\nmovb %r10b, 32(%rax)\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\n.byte 0x64\ncmpsb",
+        ),
+        (
+            "gs_segstring_repe_cmpsb_equal",
+            "movl 128(%rax), %r10d\nmovl %r10d, 32(%rax)\nmovabsq $0x4000, %r8\nwrgsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\n.byte 0x65\nrepe cmpsb",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Fsgsbase,
+            profile: Int,
+        });
+    }
+
     // ENTER/LEAVE implicit stack-frame operations. The harness snapshots the
     // stack window and GPRs, so both pushed frame links and final RBP/RSP are
     // compared against KVM.
@@ -9425,6 +9468,43 @@ fn avx512_kvm_fsgsbase_segment_memory_corpus() {
     assert_eq!(
         tally.compared, 9,
         "all FSGSBASE segment-memory cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_fsgsbase_segment_string_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Fsgsbase && case.label.contains("_segstring_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        7,
+        "unexpected FSGSBASE segment-string corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on FSGSBASE segment-string cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an FSGSBASE segment-string case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "FSGSBASE segment-string corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "FSGSBASE segment-string cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 7,
+        "all FSGSBASE segment-string cases should compare"
     );
 }
 
