@@ -176,6 +176,10 @@ enum Feat {
     Cldemote,
     /// FSGSBASE FS/GS base read/write instructions.
     Fsgsbase,
+    /// Privileged cache invalidation/writeback instructions without CPUID gates.
+    CacheInvd,
+    /// WBNOINVD cache writeback without invalidation.
+    Wbnoinvd,
     /// SERIALIZE instruction execution barrier.
     Serialize,
     /// WAITPKG user-level monitor/wait instructions.
@@ -275,6 +279,8 @@ impl Feat {
             Feat::Clwb => "clwb",
             Feat::Cldemote => "cldemote",
             Feat::Fsgsbase => "fsgsbase",
+            Feat::CacheInvd => "cache_invd",
+            Feat::Wbnoinvd => "wbnoinvd",
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
             Feat::Rdpid => "rdpid",
@@ -331,6 +337,8 @@ impl Feat {
             Feat::Clwb,
             Feat::Cldemote,
             Feat::Fsgsbase,
+            Feat::CacheInvd,
+            Feat::Wbnoinvd,
             Feat::Serialize,
             Feat::Waitpkg,
             Feat::Rdpid,
@@ -391,6 +399,7 @@ struct HostFeatures {
     clwb: bool,
     cldemote: bool,
     fsgsbase: bool,
+    wbnoinvd: bool,
     serialize: bool,
     waitpkg: bool,
     rdpid: bool,
@@ -450,6 +459,7 @@ impl HostFeatures {
             clwb: host_cpu_flag("clwb"),
             cldemote: host_cpu_flag("cldemote"),
             fsgsbase: host_cpu_flag("fsgsbase"),
+            wbnoinvd: host_cpu_flag("wbnoinvd"),
             serialize: host_cpu_flag("serialize"),
             waitpkg: host_cpu_flag("waitpkg"),
             rdpid: host_cpu_flag("rdpid"),
@@ -510,6 +520,8 @@ impl HostFeatures {
             Feat::Clwb => self.clwb,
             Feat::Cldemote => self.cldemote,
             Feat::Fsgsbase => self.fsgsbase,
+            Feat::CacheInvd => true,
+            Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
             Feat::Rdpid => self.rdpid,
@@ -6535,6 +6547,21 @@ fn irregular_cases() -> Vec<Case> {
             "movq %r8, 128(%rax)\ncldemote 128(%rax)\nmovq 128(%rax), %rcx",
             Cldemote,
         ),
+        (
+            "invd_preserves_observable_state",
+            "movq %r8, 32(%rax)\ninvd\nmovq 32(%rax), %rcx",
+            CacheInvd,
+        ),
+        (
+            "wbinvd_preserves_observable_state",
+            "movq %r8, 48(%rax)\nwbinvd\nmovq 48(%rax), %rcx",
+            CacheInvd,
+        ),
+        (
+            "wbnoinvd_preserves_observable_state",
+            "movq %r8, 64(%rax)\nwbnoinvd\nmovq 64(%rax), %rcx",
+            Wbnoinvd,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -7357,7 +7384,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+wbnoinvd,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7636,6 +7663,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Clwb
                 | Feat::Cldemote
                 | Feat::Fsgsbase
+                | Feat::CacheInvd
+                | Feat::Wbnoinvd
                 | Feat::Serialize
                 | Feat::Waitpkg
                 | Feat::Rdpid
