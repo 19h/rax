@@ -1308,6 +1308,10 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
 #[derive(Clone, Copy)]
 enum InputProfile {
     Int,
+    /// Integer values around signed/unsigned byte, word, and dword saturation
+    /// boundaries, laid out as dwords so pack/narrow and saturated arithmetic
+    /// all see clamp-sensitive lanes.
+    IntSatEdge,
     F32,
     F64,
     F16,
@@ -1409,6 +1413,25 @@ const F16_SQRT_EDGES: [u16; 16] = [
     0x4880, 0x4c00, 0x3555, 0x7b00,
 ];
 
+const INT_SAT_EDGES: [u32; 16] = [
+    0x0000_0000,
+    0x0000_0001,
+    0x0000_007f,
+    0x0000_0080,
+    0xffff_ff80,
+    0xffff_ff7f,
+    0x0000_00ff,
+    0x0000_0100,
+    0xffff_8000,
+    0xffff_7fff,
+    0x0000_7fff,
+    0x0000_8000,
+    0x0000_ffff,
+    0x0001_0000,
+    0x7fff_ffff,
+    0x8000_0000,
+];
+
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
     for (i, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -1421,6 +1444,15 @@ fn int_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for (i, byte) in bytes.iter_mut().enumerate() {
         *byte = (reg * 37 + i * 29 + 0x83) as u8;
+    }
+    bytes
+}
+
+fn int_sat_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = INT_SAT_EDGES[(reg * 7 + lane) % INT_SAT_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
     }
     bytes
 }
@@ -1509,6 +1541,7 @@ fn f64_sqrt_edge_zmm(reg: usize) -> [u8; 64] {
 fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
     match profile {
         InputProfile::Int => int_zmm(reg),
+        InputProfile::IntSatEdge => int_sat_edge_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
         InputProfile::F16 => f16_zmm(reg),
@@ -5400,6 +5433,201 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat: Ssse3,
             profile: Int,
+        });
+    }
+
+    for &(label, asm, feat) in &[
+        (
+            "paddsb_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npaddsb 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "paddusw_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npaddusw 40(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psubusb_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npsubusb 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "packsswb_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npacksswb 40(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "packssdw_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npackssdw 40(%rax), %mm0\nmovq %mm0, 96(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "packuswb_mmx_int_sat_edge_store",
+            "movq 32(%rax), %mm0\npackuswb 40(%rax), %mm0\nmovq %mm0, 104(%rax)\nemms",
+            Mmx,
+        ),
+        ("paddsb_sse2_int_sat_edge_reg", "paddsb %xmm2, %xmm1", Sse2),
+        ("paddsw_sse2_int_sat_edge_mem", "paddsw 32(%rax), %xmm1", Sse2),
+        ("paddusb_sse2_int_sat_edge_reg", "paddusb %xmm2, %xmm1", Sse2),
+        ("paddusw_sse2_int_sat_edge_mem", "paddusw 32(%rax), %xmm1", Sse2),
+        ("psubsb_sse2_int_sat_edge_reg", "psubsb %xmm2, %xmm1", Sse2),
+        ("psubsw_sse2_int_sat_edge_mem", "psubsw 32(%rax), %xmm1", Sse2),
+        ("psubusb_sse2_int_sat_edge_reg", "psubusb %xmm2, %xmm1", Sse2),
+        ("psubusw_sse2_int_sat_edge_mem", "psubusw 32(%rax), %xmm1", Sse2),
+        ("packsswb_sse2_int_sat_edge_reg", "packsswb %xmm2, %xmm1", Sse2),
+        ("packssdw_sse2_int_sat_edge_mem", "packssdw 32(%rax), %xmm1", Sse2),
+        ("packuswb_sse2_int_sat_edge_reg", "packuswb %xmm2, %xmm1", Sse2),
+        ("packuswb_sse2_int_sat_edge_mem", "packuswb 32(%rax), %xmm1", Sse2),
+        ("phaddsw_ssse3_int_sat_edge_reg", "phaddsw %xmm2, %xmm1", Ssse3),
+        ("phaddsw_ssse3_int_sat_edge_mem", "phaddsw 32(%rax), %xmm1", Ssse3),
+        ("phsubsw_ssse3_int_sat_edge_reg", "phsubsw %xmm2, %xmm1", Ssse3),
+        ("phsubsw_ssse3_int_sat_edge_mem", "phsubsw 32(%rax), %xmm1", Ssse3),
+        (
+            "pmaddubsw_ssse3_int_sat_edge_reg",
+            "pmaddubsw %xmm2, %xmm1",
+            Ssse3,
+        ),
+        (
+            "pmaddubsw_ssse3_int_sat_edge_mem",
+            "pmaddubsw 32(%rax), %xmm1",
+            Ssse3,
+        ),
+        ("packusdw_sse41_int_sat_edge_reg", "packusdw %xmm2, %xmm1", Sse41),
+        ("packusdw_sse41_int_sat_edge_mem", "packusdw 32(%rax), %xmm1", Sse41),
+        (
+            "vpaddsb_avx2_int_sat_edge_reg",
+            "{vex} vpaddsb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpaddsw_avx2_int_sat_edge_mem",
+            "{vex} vpaddsw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpaddusb_avx2_int_sat_edge_reg",
+            "{vex} vpaddusb %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpaddusw_avx2_int_sat_edge_mem",
+            "{vex} vpaddusw 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsubsb_avx2_int_sat_edge_reg",
+            "{vex} vpsubsb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsubsw_avx2_int_sat_edge_mem",
+            "{vex} vpsubsw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsubusb_avx2_int_sat_edge_reg",
+            "{vex} vpsubusb %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsubusw_avx2_int_sat_edge_mem",
+            "{vex} vpsubusw 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpacksswb_avx2_int_sat_edge_reg",
+            "{vex} vpacksswb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpackssdw_avx2_int_sat_edge_mem",
+            "{vex} vpackssdw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpackuswb_avx2_int_sat_edge_reg",
+            "{vex} vpackuswb %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpackusdw_avx2_int_sat_edge_mem",
+            "{vex} vpackusdw 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vphaddsw_avx2_int_sat_edge_reg",
+            "{vex} vphaddsw %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vphsubsw_avx2_int_sat_edge_mem",
+            "{vex} vphsubsw 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaddubsw_avx2_int_sat_edge_mem",
+            "{vex} vpmaddubsw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        ("vpaddsb_avx512_int_sat_edge_reg", "vpaddsb %zmm2, %zmm3, %zmm1", Bw),
+        (
+            "vpaddsw_avx512_int_sat_edge_mem",
+            "vpaddsw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpaddusb_avx512_int_sat_edge_reg",
+            "vpaddusb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpaddusw_avx512_int_sat_edge_mem",
+            "vpaddusw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        ("vpsubsb_avx512_int_sat_edge_reg", "vpsubsb %zmm2, %zmm3, %zmm1", Bw),
+        (
+            "vpsubsw_avx512_int_sat_edge_mem",
+            "vpsubsw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsubusb_avx512_int_sat_edge_reg",
+            "vpsubusb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsubusw_avx512_int_sat_edge_mem",
+            "vpsubusw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpacksswb_avx512_int_sat_edge_reg",
+            "vpacksswb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpackuswb_avx512_int_sat_edge_mem",
+            "vpackuswb 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpackssdw_avx512_int_sat_edge_reg",
+            "vpackssdw %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpackusdw_avx512_int_sat_edge_mem",
+            "vpackusdw 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: IntSatEdge,
         });
     }
 
@@ -13733,6 +13961,78 @@ fn avx512_kvm_legacy_packed_misc_corpus() {
 }
 
 #[test]
+fn avx512_kvm_integer_saturation_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_int_sat_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        53,
+        "unexpected integer saturation edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on integer saturation edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an integer saturation edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "integer saturation edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "integer saturation edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        6,
+        "all MMX saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        12,
+        "all SSE2 saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Ssse3),
+        6,
+        "all SSSE3 saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        2,
+        "all SSE4.1 saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        15,
+        "all AVX2 saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        10,
+        "all AVX-512BW saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        2,
+        "all AVX-512F saturation edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 53,
+        "all integer saturation edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_legacy_convert_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -14941,7 +15241,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 45, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 51, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -14952,7 +15252,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 45, "all MMX cases should compare");
+    assert_eq!(tally.compared, 51, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
