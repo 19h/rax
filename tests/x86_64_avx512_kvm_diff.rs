@@ -4332,6 +4332,32 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat, profile) in &[
+        ("minps_sse_minmax_edge_reg", "minps %xmm2, %xmm1", Sse, F32Edge),
+        ("minps_sse_minmax_edge_mem", "minps 32(%rax), %xmm1", Sse, F32Edge),
+        ("minss_sse_minmax_edge_reg", "minss %xmm2, %xmm1", Sse, F32Edge),
+        ("minss_sse_minmax_edge_mem", "minss 32(%rax), %xmm1", Sse, F32Edge),
+        ("maxps_sse_minmax_edge_reg", "maxps %xmm2, %xmm1", Sse, F32Edge),
+        ("maxps_sse_minmax_edge_mem", "maxps 32(%rax), %xmm1", Sse, F32Edge),
+        ("maxss_sse_minmax_edge_reg", "maxss %xmm2, %xmm1", Sse, F32Edge),
+        ("maxss_sse_minmax_edge_mem", "maxss 32(%rax), %xmm1", Sse, F32Edge),
+        ("minpd_sse_minmax_edge_reg", "minpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("minpd_sse_minmax_edge_mem", "minpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("minsd_sse_minmax_edge_reg", "minsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("minsd_sse_minmax_edge_mem", "minsd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("maxpd_sse_minmax_edge_reg", "maxpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("maxpd_sse_minmax_edge_mem", "maxpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("maxsd_sse_minmax_edge_reg", "maxsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("maxsd_sse_minmax_edge_mem", "maxsd 32(%rax), %xmm1", Sse2, F64Edge),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Legacy SSE single-precision data movement, logical, compare, shuffle,
     // mask extraction, and scalar integer conversion forms.
     for &(label, asm, profile) in &[
@@ -13194,6 +13220,46 @@ fn avx512_kvm_core_accumulator_immediate_corpus() {
     assert_eq!(
         tally.compared, 36,
         "all core accumulator-immediate cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_sse_minmax_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse_minmax_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 16, "unexpected SSE min/max edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE min/max edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE min/max edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE min/max edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE min/max edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        8,
+        "all SSE min/max edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        8,
+        "all SSE2 min/max edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all SSE min/max edge cases should compare"
     );
 }
 
