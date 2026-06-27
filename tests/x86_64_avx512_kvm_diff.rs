@@ -1844,6 +1844,15 @@ fn irregular_cases() -> Vec<Case> {
         ("vpmovsdb", "vpmovsdb %zmm3, %xmm1", F, Int, true),
         ("vpmovusdb", "vpmovusdb %zmm3, %xmm1", F, Int, true),
         ("vpmovsdw", "vpmovsdw %zmm3, %ymm1", F, Int, true),
+        ("vpmovswb", "vpmovswb %zmm3, %ymm1", F, Int, true),
+        ("vpmovsqb", "vpmovsqb %zmm3, %xmm1", F, Int, true),
+        ("vpmovsqw", "vpmovsqw %zmm3, %xmm1", F, Int, true),
+        ("vpmovsqd", "vpmovsqd %zmm3, %ymm1", F, Int, true),
+        ("vpmovuswb", "vpmovuswb %zmm3, %ymm1", F, Int, true),
+        ("vpmovusqb", "vpmovusqb %zmm3, %xmm1", F, Int, true),
+        ("vpmovusdw", "vpmovusdw %zmm3, %ymm1", F, Int, true),
+        ("vpmovusqw", "vpmovusqw %zmm3, %xmm1", F, Int, true),
+        ("vpmovusqd", "vpmovusqd %zmm3, %ymm1", F, Int, true),
         // broadcasts from xmm scalar / m128 / m256
         ("vpbroadcastd", "vpbroadcastd %xmm3, %zmm1", F, Int, true),
         ("vpbroadcastq", "vpbroadcastq %xmm3, %zmm1", F, Int, true),
@@ -3210,6 +3219,42 @@ fn irregular_cases() -> Vec<Case> {
                 profile,
             });
         }
+    }
+
+    // Narrowing stores write partial vectors to scratch memory. Memory
+    // destinations accept merge masks but not EVEX zeroing masks.
+    for &(label, asm, feat) in &[
+        ("vpmovdb_mem", "vpmovdb %zmm3, (%rax)", F),
+        ("vpmovdw_mem", "vpmovdw %zmm3, 32(%rax)", F),
+        ("vpmovqd_mem", "vpmovqd %zmm3, 64(%rax)", F),
+        ("vpmovqw_mem", "vpmovqw %zmm3, 96(%rax)", F),
+        ("vpmovqb_mem", "vpmovqb %zmm3, 112(%rax)", F),
+        ("vpmovwb_mem", "vpmovwb %zmm3, 128(%rax)", Bw),
+        ("vpmovsdb_mem", "vpmovsdb %zmm3, (%rax)", F),
+        ("vpmovsdw_mem", "vpmovsdw %zmm3, 32(%rax)", F),
+        ("vpmovsqd_mem", "vpmovsqd %zmm3, 64(%rax)", F),
+        ("vpmovsqw_mem", "vpmovsqw %zmm3, 96(%rax)", F),
+        ("vpmovsqb_mem", "vpmovsqb %zmm3, 112(%rax)", F),
+        ("vpmovswb_mem", "vpmovswb %zmm3, 128(%rax)", F),
+        ("vpmovusdb_mem", "vpmovusdb %zmm3, (%rax)", F),
+        ("vpmovusdw_mem", "vpmovusdw %zmm3, 32(%rax)", F),
+        ("vpmovusqd_mem", "vpmovusqd %zmm3, 64(%rax)", F),
+        ("vpmovusqw_mem", "vpmovusqw %zmm3, 96(%rax)", F),
+        ("vpmovusqb_mem", "vpmovusqb %zmm3, 112(%rax)", F),
+        ("vpmovuswb_mem", "vpmovuswb %zmm3, 128(%rax)", F),
+    ] {
+        out.push(Case {
+            label: format!("{label}_nomask"),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{label}_merge"),
+            asm: format!("{asm} {{%k1}}"),
+            feat,
+            profile: Int,
+        });
     }
 
     // Selected compare predicates beyond the single baseline immediate in
