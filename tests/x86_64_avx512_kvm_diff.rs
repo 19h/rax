@@ -115,6 +115,8 @@ enum Feat {
     Sse,
     /// Legacy SSE2 packed/scalar double-precision SIMD instructions.
     Sse2,
+    /// Legacy SSSE3 byte/word shuffle, horizontal, sign, and abs instructions.
+    Ssse3,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
@@ -174,6 +176,7 @@ impl Feat {
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
+            Feat::Ssse3 => "ssse3",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
             Feat::F16c => "f16c",
@@ -206,6 +209,7 @@ impl Feat {
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
+            Feat::Ssse3,
             Feat::Aes,
             Feat::Pclmulqdq,
             Feat::F16c,
@@ -243,6 +247,7 @@ struct HostFeatures {
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
+    ssse3: bool,
     aes: bool,
     pclmulqdq: bool,
     f16c: bool,
@@ -280,6 +285,7 @@ impl HostFeatures {
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
+            ssse3: is_x86_feature_detected!("ssse3"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
             f16c: host_cpu_flag("f16c"),
@@ -317,6 +323,7 @@ impl HostFeatures {
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
+            Feat::Ssse3 => self.ssse3,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
             Feat::F16c => self.f16c,
@@ -3818,6 +3825,37 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSSE3 forms cover 0F38 byte shuffles, horizontal arithmetic,
+    // sign/absolute-value operations, and 0F3A PALIGNR immediate handling.
+    for &(label, asm) in &[
+        ("pshufb_ssse3_reg", "pshufb %xmm2, %xmm1"),
+        ("pshufb_ssse3_mem", "pshufb (%rax), %xmm1"),
+        ("phaddw_ssse3_reg", "phaddw %xmm2, %xmm1"),
+        ("phaddd_ssse3_mem", "phaddd 32(%rax), %xmm1"),
+        ("phaddsw_ssse3_reg", "phaddsw %xmm2, %xmm1"),
+        ("pmaddubsw_ssse3_reg", "pmaddubsw %xmm2, %xmm1"),
+        ("pmaddubsw_ssse3_mem", "pmaddubsw 32(%rax), %xmm1"),
+        ("phsubw_ssse3_mem", "phsubw 32(%rax), %xmm1"),
+        ("phsubd_ssse3_reg", "phsubd %xmm2, %xmm1"),
+        ("phsubsw_ssse3_mem", "phsubsw 32(%rax), %xmm1"),
+        ("psignb_ssse3_reg", "psignb %xmm2, %xmm1"),
+        ("psignw_ssse3_mem", "psignw 32(%rax), %xmm1"),
+        ("psignd_ssse3_reg", "psignd %xmm2, %xmm1"),
+        ("pmulhrsw_ssse3_mem", "pmulhrsw 32(%rax), %xmm1"),
+        ("pabsb_ssse3_reg", "pabsb %xmm2, %xmm1"),
+        ("pabsw_ssse3_mem", "pabsw 32(%rax), %xmm1"),
+        ("pabsd_ssse3_reg", "pabsd %xmm2, %xmm1"),
+        ("palignr_ssse3_reg_5", "palignr $5, %xmm2, %xmm1"),
+        ("palignr_ssse3_mem_17", "palignr $17, 32(%rax), %xmm1"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Ssse3,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -4643,7 +4681,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -4801,6 +4839,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Gfni
                 | Feat::Sse
                 | Feat::Sse2
+                | Feat::Ssse3
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
