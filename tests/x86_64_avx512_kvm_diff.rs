@@ -9082,6 +9082,47 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Non-qword group-2 shift/rotate forms. These exercise the byte helper,
+    // word/dword operand sizes, memory destinations with CL counts, and count
+    // masking edge cases distinct from the baseline qword shift corpus above.
+    for &(label, asm) in &[
+        ("rol_core_shift_width_r8_one", "rolb $1, %r8b"),
+        ("ror_core_shift_width_r8_one", "rorb $1, %r8b"),
+        ("rcl_core_shift_width_r8_one", "rclb $1, %r8b"),
+        ("rcr_core_shift_width_r8_one", "rcrb $1, %r8b"),
+        ("shl_core_shift_width_r8_one", "shlb $1, %r8b"),
+        ("shr_core_shift_width_r8_one", "shrb $1, %r8b"),
+        ("sar_core_shift_width_r8_one", "sarb $1, %r8b"),
+        ("rol_core_shift_width_r16_one", "rolw $1, %r8w"),
+        ("ror_core_shift_width_r16_one", "rorw $1, %r8w"),
+        ("rcl_core_shift_width_r16_one", "rclw $1, %r8w"),
+        ("rcr_core_shift_width_r32_one", "rcrl $1, %r8d"),
+        ("shl_core_shift_width_r16_imm3", "shlw $3, %r8w"),
+        ("shr_core_shift_width_r16_imm5", "shrw $5, %r8w"),
+        ("sar_core_shift_width_r16_imm7", "sarw $7, %r8w"),
+        ("sal_core_shift_width_r32_imm4", "sall $4, %r8d"),
+        ("shr_core_shift_width_r32_imm6", "shrl $6, %r8d"),
+        ("sar_core_shift_width_r32_imm7", "sarl $7, %r8d"),
+        ("shl_core_shift_width_m8_cl", "shlb %cl, 2(%rax)"),
+        ("shr_core_shift_width_m16_cl", "shrw %cl, 4(%rax)"),
+        ("sar_core_shift_width_m32_cl", "sarl %cl, 8(%rax)"),
+        ("sal_core_shift_width_m64_cl", "salq %cl, 16(%rax)"),
+        ("shl_core_shift_width_m8_imm3", "shlb $3, 24(%rax)"),
+        ("shr_core_shift_width_m16_imm4", "shrw $4, 32(%rax)"),
+        ("sar_core_shift_width_m32_imm5", "sarl $5, 40(%rax)"),
+        ("shl_core_shift_width_r8_masked_count", "shlb $40, %r8b"),
+        ("sar_core_shift_width_r8_saturating_count", "sarb $31, %r8b"),
+        ("shl_core_shift_width_r64_zero_count", "shlq $64, %r8"),
+        ("shr_core_shift_width_r64_masked_one", "shrq $65, %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core integer multiply and divide forms. One-operand MUL/IMUL and
     // DIV/IDIV exercise the implicit RDX:RAX / RAX architectural operands; the
     // explicit IMUL forms cover register, memory, imm8, and imm32 encodings.
@@ -10726,6 +10767,39 @@ fn avx512_kvm_core_extend_corpus() {
     assert_eq!(
         tally.compared, 30,
         "all core extension cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_shift_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_shift_width_"))
+        .collect();
+    assert_eq!(cases.len(), 28, "unexpected core shift-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core shift-width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core shift-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core shift-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core shift-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 28,
+        "all core shift-width cases should compare"
     );
 }
 
