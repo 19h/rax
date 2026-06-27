@@ -1316,6 +1316,11 @@ enum InputProfile {
     F32Edge,
     /// f64 analogue.
     F64Edge,
+    /// f32 values that keep sqrt exact-comparable while still stressing zeros,
+    /// denormals, infinities, and large finite magnitudes.
+    F32SqrtEdge,
+    /// f64 analogue.
+    F64SqrtEdge,
 }
 
 /// "Interesting" f32 bit patterns: +0, -0, 1, -1, +Inf, -Inf, qNaN, sNaN,
@@ -1349,6 +1354,36 @@ const F64_EDGES: [u64; 8] = [
     0xfff0_0000_0000_0000,
     0x7ff8_0000_0000_0000,
     0x0000_0000_0000_0001,
+];
+
+const F32_SQRT_EDGES: [u32; 16] = [
+    0x0000_0000,
+    0x8000_0000,
+    0x3f80_0000,
+    0x4080_0000,
+    0x7f80_0000,
+    0x0000_0001,
+    0x0080_0000,
+    0x7f7f_ffff,
+    0x3f00_0000,
+    0x4060_0000,
+    0x3fb5_04f3,
+    0x4b80_0000,
+    0x4110_0000,
+    0x4180_0000,
+    0x4000_0000,
+    0x7e7f_ffff,
+];
+
+const F64_SQRT_EDGES: [u64; 8] = [
+    0x0000_0000_0000_0000,
+    0x8000_0000_0000_0000,
+    0x3ff0_0000_0000_0000,
+    0x4010_0000_0000_0000,
+    0x7ff0_0000_0000_0000,
+    0x0000_0000_0000_0001,
+    0x0010_0000_0000_0000,
+    0x7fef_ffff_ffff_ffff,
 ];
 
 /// Finite, non-zero half-precision values. Keeping the FP16 corpus away from
@@ -1419,6 +1454,24 @@ fn f64_edge_zmm(reg: usize) -> [u8; 64] {
     bytes
 }
 
+fn f32_sqrt_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = F32_SQRT_EDGES[(reg * 5 + lane) % F32_SQRT_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f64_sqrt_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = F64_SQRT_EDGES[(reg * 3 + lane) % F64_SQRT_EDGES.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
 fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
     match profile {
         InputProfile::Int => int_zmm(reg),
@@ -1427,6 +1480,8 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::F16 => f16_zmm(reg),
         InputProfile::F32Edge => f32_edge_zmm(reg),
         InputProfile::F64Edge => f64_edge_zmm(reg),
+        InputProfile::F32SqrtEdge => f32_sqrt_edge_zmm(reg),
+        InputProfile::F64SqrtEdge => f64_sqrt_edge_zmm(reg),
     }
 }
 
@@ -4349,6 +4404,71 @@ fn irregular_cases() -> Vec<Case> {
         ("maxpd_sse_minmax_edge_mem", "maxpd 32(%rax), %xmm1", Sse2, F64Edge),
         ("maxsd_sse_minmax_edge_reg", "maxsd %xmm2, %xmm1", Sse2, F64Edge),
         ("maxsd_sse_minmax_edge_mem", "maxsd 32(%rax), %xmm1", Sse2, F64Edge),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
+    // SIMD floating-point edge semantics across legacy SSE/SSE2, VEX AVX, and
+    // EVEX AVX-512. Sqrt uses non-NaN inputs so exact comparison is meaningful;
+    // min/max and compare intentionally use NaN-capable profiles.
+    for &(label, asm, feat, profile) in &[
+        ("sqrtps_sse_simd_fp_sqrt_edge_reg", "sqrtps %xmm3, %xmm1", Sse, F32SqrtEdge),
+        ("sqrtps_sse_simd_fp_sqrt_edge_mem", "sqrtps 64(%rax), %xmm1", Sse, F32SqrtEdge),
+        ("sqrtss_sse_simd_fp_sqrt_edge_reg", "sqrtss %xmm2, %xmm1", Sse, F32SqrtEdge),
+        ("sqrtss_sse_simd_fp_sqrt_edge_mem", "sqrtss 32(%rax), %xmm1", Sse, F32SqrtEdge),
+        ("sqrtpd_sse2_simd_fp_sqrt_edge_reg", "sqrtpd %xmm3, %xmm1", Sse2, F64SqrtEdge),
+        ("sqrtpd_sse2_simd_fp_sqrt_edge_mem", "sqrtpd 64(%rax), %xmm1", Sse2, F64SqrtEdge),
+        ("sqrtsd_sse2_simd_fp_sqrt_edge_reg", "sqrtsd %xmm2, %xmm1", Sse2, F64SqrtEdge),
+        ("sqrtsd_sse2_simd_fp_sqrt_edge_mem", "sqrtsd 32(%rax), %xmm1", Sse2, F64SqrtEdge),
+        ("vsqrtps_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtps %ymm3, %ymm1", Avx, F32SqrtEdge),
+        ("vsqrtps_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtps 64(%rax), %ymm1", Avx, F32SqrtEdge),
+        ("vsqrtss_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtss %xmm2, %xmm3, %xmm1", Avx, F32SqrtEdge),
+        ("vsqrtss_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtss 32(%rax), %xmm3, %xmm1", Avx, F32SqrtEdge),
+        ("vsqrtpd_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtpd %ymm3, %ymm1", Avx, F64SqrtEdge),
+        ("vsqrtpd_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtpd 64(%rax), %ymm1", Avx, F64SqrtEdge),
+        ("vsqrtsd_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtsd %xmm2, %xmm3, %xmm1", Avx, F64SqrtEdge),
+        ("vsqrtsd_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtsd 32(%rax), %xmm3, %xmm1", Avx, F64SqrtEdge),
+        ("vsqrtps_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtps %zmm3, %zmm1", F, F32SqrtEdge),
+        ("vsqrtps_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtps 64(%rax), %zmm1", F, F32SqrtEdge),
+        ("vsqrtss_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtss %xmm2, %xmm3, %xmm1", F, F32SqrtEdge),
+        ("vsqrtss_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtss 32(%rax), %xmm3, %xmm1", F, F32SqrtEdge),
+        ("vsqrtpd_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtpd %zmm3, %zmm1", F, F64SqrtEdge),
+        ("vsqrtpd_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtpd 64(%rax), %zmm1", F, F64SqrtEdge),
+        ("vsqrtsd_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtsd %xmm2, %xmm3, %xmm1", F, F64SqrtEdge),
+        ("vsqrtsd_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtsd 32(%rax), %xmm3, %xmm1", F, F64SqrtEdge),
+        ("vminps_avx_simd_fp_minmax_edge_reg", "{vex} vminps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
+        ("vmaxps_avx_simd_fp_minmax_edge_mem", "{vex} vmaxps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vminss_avx_simd_fp_minmax_edge_reg", "{vex} vminss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
+        ("vmaxss_avx_simd_fp_minmax_edge_mem", "{vex} vmaxss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vminpd_avx_simd_fp_minmax_edge_reg", "{vex} vminpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
+        ("vmaxpd_avx_simd_fp_minmax_edge_mem", "{vex} vmaxpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vminsd_avx_simd_fp_minmax_edge_reg", "{vex} vminsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
+        ("vmaxsd_avx_simd_fp_minmax_edge_mem", "{vex} vmaxsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
+        ("vminps_avx512_simd_fp_minmax_edge_reg", "{evex} vminps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vmaxps_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxps 64(%rax), %zmm3, %zmm1", F, F32Edge),
+        ("vminss_avx512_simd_fp_minmax_edge_reg", "{evex} vminss %xmm2, %xmm3, %xmm1", F, F32Edge),
+        ("vmaxss_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxss 32(%rax), %xmm3, %xmm1", F, F32Edge),
+        ("vminpd_avx512_simd_fp_minmax_edge_reg", "{evex} vminpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        ("vmaxpd_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
+        ("vminsd_avx512_simd_fp_minmax_edge_reg", "{evex} vminsd %xmm2, %xmm3, %xmm1", F, F64Edge),
+        ("vmaxsd_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
+        ("comiss_sse_simd_fp_compare_edge_qnan_mem", "comiss 44(%rax), %xmm1", Sse, F32Edge),
+        ("ucomiss_sse_simd_fp_compare_edge_qnan_mem", "ucomiss 44(%rax), %xmm1", Sse, F32Edge),
+        ("comisd_sse2_simd_fp_compare_edge_qnan_mem", "comisd 8(%rax), %xmm1", Sse2, F64Edge),
+        ("ucomisd_sse2_simd_fp_compare_edge_qnan_mem", "ucomisd 8(%rax), %xmm1", Sse2, F64Edge),
+        ("vcomiss_avx_simd_fp_compare_edge_qnan_mem", "{vex} vcomiss 44(%rax), %xmm1", Avx, F32Edge),
+        ("vucomiss_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomiss 44(%rax), %xmm1", Avx, F32Edge),
+        ("vcomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vcomisd 8(%rax), %xmm1", Avx, F64Edge),
+        ("vucomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomisd 8(%rax), %xmm1", Avx, F64Edge),
+        ("vcomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomiss 44(%rax), %xmm1", F, F32Edge),
+        ("vucomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vucomiss 44(%rax), %xmm1", F, F32Edge),
+        ("vcomisd_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomisd 8(%rax), %xmm1", F, F64Edge),
+        ("vucomisd_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vucomisd 8(%rax), %xmm1", F, F64Edge),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -13260,6 +13380,148 @@ fn avx512_kvm_sse_minmax_edge_corpus() {
     assert_eq!(
         tally.compared, 16,
         "all SSE min/max edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_fp_sqrt_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_fp_sqrt_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 24, "unexpected SIMD FP sqrt edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SIMD FP sqrt edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD FP sqrt edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD FP sqrt edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD FP sqrt edge cases should not feature-skip"
+    );
+    assert_eq!(tally.ran_for(Feat::Sse), 4, "all SSE sqrt edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        4,
+        "all SSE2 sqrt edge cases should run"
+    );
+    assert_eq!(tally.ran_for(Feat::Avx), 8, "all AVX sqrt edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        8,
+        "all AVX-512 sqrt edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 24,
+        "all SIMD FP sqrt edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_fp_minmax_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_fp_minmax_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 16, "unexpected SIMD FP min/max edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD FP min/max edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD FP min/max edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD FP min/max edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD FP min/max edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        8,
+        "all AVX min/max edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        8,
+        "all AVX-512 min/max edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all SIMD FP min/max edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_fp_compare_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_fp_compare_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected SIMD FP compare edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD FP compare edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD FP compare edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD FP compare edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD FP compare edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        2,
+        "all SSE compare edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        2,
+        "all SSE2 compare edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        4,
+        "all AVX compare edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        4,
+        "all AVX-512 compare edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all SIMD FP compare edge cases should compare"
     );
 }
 
