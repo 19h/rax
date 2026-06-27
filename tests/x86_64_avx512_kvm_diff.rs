@@ -5921,6 +5921,140 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // VEX AVX data movement and lane forms that sit outside the arithmetic and
+    // conversion tables above. These cover aligned/unaligned integer vector
+    // moves, LDDQU, and low/high scalar-pair loads and stores in their VEX
+    // encodings.
+    for &(label, asm, profile) in &[
+        (
+            "vmovdqa_avx_data_xmm_reg",
+            "{vex} vmovdqa %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "vmovdqa_avx_data_ymm_reg",
+            "{vex} vmovdqa %ymm2, %ymm1",
+            Int,
+        ),
+        (
+            "vmovdqa_avx_data_xmm_load",
+            "{vex} vmovdqa 32(%rax), %xmm1",
+            Int,
+        ),
+        (
+            "vmovdqa_avx_data_ymm_load",
+            "{vex} vmovdqa 64(%rax), %ymm1",
+            Int,
+        ),
+        (
+            "vmovdqa_avx_data_xmm_store",
+            "{vex} vmovdqa %xmm1, 96(%rax)",
+            Int,
+        ),
+        (
+            "vmovdqa_avx_data_ymm_store",
+            "{vex} vmovdqa %ymm1, 128(%rax)",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_xmm_reg",
+            "{vex} vmovdqu %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_ymm_reg",
+            "{vex} vmovdqu %ymm2, %ymm1",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_xmm_load_unaligned",
+            "{vex} vmovdqu 17(%rax), %xmm1",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_ymm_load_unaligned",
+            "{vex} vmovdqu 33(%rax), %ymm1",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_xmm_store_unaligned",
+            "{vex} vmovdqu %xmm1, 17(%rax)",
+            Int,
+        ),
+        (
+            "vmovdqu_avx_data_ymm_store_unaligned",
+            "{vex} vmovdqu %ymm1, 33(%rax)",
+            Int,
+        ),
+        (
+            "vlddqu_avx_data_xmm_load_unaligned",
+            "{vex} vlddqu 17(%rax), %xmm1",
+            Int,
+        ),
+        (
+            "vlddqu_avx_data_ymm_load_unaligned",
+            "{vex} vlddqu 33(%rax), %ymm1",
+            Int,
+        ),
+        (
+            "vmovlps_avx_data_load",
+            "{vex} vmovlps 32(%rax), %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vmovlps_avx_data_store",
+            "{vex} vmovlps %xmm1, 48(%rax)",
+            F32,
+        ),
+        (
+            "vmovhps_avx_data_load",
+            "{vex} vmovhps 32(%rax), %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vmovhps_avx_data_store",
+            "{vex} vmovhps %xmm1, 56(%rax)",
+            F32,
+        ),
+        (
+            "vmovlhps_avx_data_reg",
+            "{vex} vmovlhps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vmovhlps_avx_data_reg",
+            "{vex} vmovhlps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vmovlpd_avx_data_load",
+            "{vex} vmovlpd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vmovlpd_avx_data_store",
+            "{vex} vmovlpd %xmm1, 48(%rax)",
+            F64,
+        ),
+        (
+            "vmovhpd_avx_data_load",
+            "{vex} vmovhpd 32(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vmovhpd_avx_data_store",
+            "{vex} vmovhpd %xmm1, 56(%rax)",
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx,
+            profile,
+        });
+    }
+
     // AVX2 VEX packed-integer coverage. This spans the destructive-to-3-source
     // transition for arithmetic/logical/compare/minmax/multiply, pack/unpack,
     // immediate/count/variable shifts, SSSE3-style byte/word transforms,
@@ -13184,6 +13318,77 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
         tally.compared, 60,
         "all SHA-NI legacy cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_vex_avx_data_movement_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx_data_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        24,
+        "unexpected VEX AVX data-movement corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VEX AVX data-movement cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VEX AVX data-movement case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX AVX data-movement corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX AVX data-movement cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        24,
+        "all VEX AVX data-movement cases should run"
+    );
+    assert_eq!(
+        tally.compared, 24,
+        "all VEX AVX data-movement cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vex_fma_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Fma && case.label.contains("_vex_"))
+        .collect();
+    assert_eq!(cases.len(), 59, "unexpected VEX FMA corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on VEX FMA cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a VEX FMA case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX FMA corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX FMA cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fma),
+        59,
+        "all VEX FMA cases should run"
+    );
+    assert_eq!(tally.compared, 59, "all VEX FMA cases should compare");
 }
 
 #[test]
