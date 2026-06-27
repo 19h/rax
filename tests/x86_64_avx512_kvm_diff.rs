@@ -6075,6 +6075,82 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX VEX integer lane insert/extract forms cover the 0F C4/C5 word
+    // encodings plus the 0F3A byte/dword/qword register and memory forms.
+    for &(label, asm) in &[
+        (
+            "vpextrb_avx_insert_extract_r8d",
+            "{vex} vpextrb $10, %xmm1, %r8d",
+        ),
+        (
+            "vpextrb_avx_insert_extract_mem",
+            "{vex} vpextrb $5, %xmm1, 32(%rax)",
+        ),
+        (
+            "vpextrw_avx_insert_extract_r8d",
+            "{vex} vpextrw $4, %xmm1, %r8d",
+        ),
+        (
+            "vpextrw_avx_insert_extract_mem",
+            "{vex} vpextrw $4, %xmm1, 34(%rax)",
+        ),
+        (
+            "vpextrd_avx_insert_extract_r8d",
+            "{vex} vpextrd $2, %xmm1, %r8d",
+        ),
+        (
+            "vpextrd_avx_insert_extract_mem",
+            "{vex} vpextrd $1, %xmm1, 40(%rax)",
+        ),
+        (
+            "vpextrq_avx_insert_extract_r8",
+            "{vex} vpextrq $1, %xmm1, %r8",
+        ),
+        (
+            "vpextrq_avx_insert_extract_mem",
+            "{vex} vpextrq $0, %xmm1, 48(%rax)",
+        ),
+        (
+            "vpinsrb_avx_insert_extract_r8d",
+            "{vex} vpinsrb $14, %r8d, %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrb_avx_insert_extract_mem",
+            "{vex} vpinsrb $5, 31(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrw_avx_insert_extract_r8d",
+            "{vex} vpinsrw $3, %r8d, %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrw_avx_insert_extract_mem",
+            "{vex} vpinsrw $6, 30(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrd_avx_insert_extract_r8d",
+            "{vex} vpinsrd $2, %r8d, %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrd_avx_insert_extract_mem",
+            "{vex} vpinsrd $1, 28(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrq_avx_insert_extract_r8",
+            "{vex} vpinsrq $1, %r8, %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrq_avx_insert_extract_mem",
+            "{vex} vpinsrq $0, 24(%rax), %xmm3, %xmm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx,
+            profile: Int,
+        });
+    }
+
     // AVX2 VEX packed-integer coverage. This spans the destructive-to-3-source
     // transition for arithmetic/logical/compare/minmax/multiply, pack/unpack,
     // immediate/count/variable shifts, SSSE3-style byte/word transforms,
@@ -13379,6 +13455,48 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
     assert_eq!(
         tally.compared, 28,
         "all VEX AVX data-movement cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vex_insert_extract_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx_insert_extract_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected VEX insert/extract corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VEX insert/extract cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VEX insert/extract case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX insert/extract corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX insert/extract cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        16,
+        "all VEX insert/extract cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all VEX insert/extract cases should compare"
     );
 }
 

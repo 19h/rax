@@ -5,12 +5,38 @@ use crate::error::{Error, Result};
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
+fn xmm_byte(xmm: [u64; 2], idx: usize) -> u8 {
+    let lane = idx / 8;
+    let shift = (idx % 8) * 8;
+    ((xmm[lane] >> shift) & 0xFF) as u8
+}
+
+fn xmm_word(xmm: [u64; 2], idx: usize) -> u16 {
+    let lane = idx / 4;
+    let shift = (idx % 4) * 16;
+    ((xmm[lane] >> shift) & 0xFFFF) as u16
+}
+
 fn xmm_dword(xmm: [u64; 2], idx: usize) -> u32 {
     if idx < 2 {
         ((xmm[0] >> (idx * 32)) & 0xFFFF_FFFF) as u32
     } else {
         ((xmm[1] >> ((idx - 2) * 32)) & 0xFFFF_FFFF) as u32
     }
+}
+
+fn put_xmm_byte(xmm: &mut [u64; 2], idx: usize, value: u8) {
+    let lane = idx / 8;
+    let shift = (idx % 8) * 8;
+    let mask = !(0xFFu64 << shift);
+    xmm[lane] = (xmm[lane] & mask) | ((value as u64) << shift);
+}
+
+fn put_xmm_word(xmm: &mut [u64; 2], idx: usize, value: u16) {
+    let lane = idx / 4;
+    let shift = (idx % 4) * 16;
+    let mask = !(0xFFFFu64 << shift);
+    xmm[lane] = (xmm[lane] & mask) | ((value as u64) << shift);
 }
 
 fn put_xmm_dword(xmm: &mut [u64; 2], idx: usize, value: u32) {
@@ -24,7 +50,125 @@ fn put_xmm_dword(xmm: &mut [u64; 2], idx: usize, value: u32) {
     }
 }
 
+fn put_xmm_qword(xmm: &mut [u64; 2], idx: usize, value: u64) {
+    xmm[idx] = value;
+}
+
 impl X86_64Vcpu {
+    pub(in crate::backend::emulator::x86_64) fn execute_vpextrb(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 || vex_w != 0 {
+            return Err(Error::Emulator(
+                "VPEXTRB requires VEX.L=0 and VEX.W=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let value = xmm_byte(self.regs.xmm[reg as usize], (imm8 & 0x0F) as usize);
+
+        if is_memory {
+            self.write_mem(addr, value as u64, 1)?;
+        } else {
+            self.set_reg(rm, value as u64, 4);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpextrw_0f(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 || vex_w != 0 {
+            return Err(Error::Emulator(
+                "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
+        if is_memory {
+            return Err(Error::Emulator(
+                "VPEXTRW 0F C5 form does not support memory source".to_string(),
+            ));
+        }
+        let imm8 = ctx.consume_u8()?;
+        let value = xmm_word(self.regs.xmm[rm as usize], (imm8 & 0x07) as usize);
+
+        self.set_reg(reg, value as u64, 4);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpextrw_0f3a(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 || vex_w != 0 {
+            return Err(Error::Emulator(
+                "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let value = xmm_word(self.regs.xmm[reg as usize], (imm8 & 0x07) as usize);
+
+        if is_memory {
+            self.write_mem(addr, value as u64, 2)?;
+        } else {
+            self.set_reg(rm, value as u64, 4);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpextrd_q(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 {
+            return Err(Error::Emulator(
+                "VPEXTRD/Q requires VEX.L=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm = self.regs.xmm[reg as usize];
+
+        if vex_w != 0 {
+            let value = xmm[(imm8 & 0x01) as usize];
+            if is_memory {
+                self.write_mem(addr, value, 8)?;
+            } else {
+                self.set_reg(rm, value, 8);
+            }
+        } else {
+            let value = xmm_dword(xmm, (imm8 & 0x03) as usize);
+            if is_memory {
+                self.write_mem(addr, value as u64, 4)?;
+            } else {
+                self.set_reg(rm, value as u64, 4);
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vextractps(
         &mut self,
         ctx: &mut InsnContext,
@@ -47,6 +191,108 @@ impl X86_64Vcpu {
             self.set_reg(rm, value as u64, 4);
         }
 
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpinsrb(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 || vex_w != 0 {
+            return Err(Error::Emulator(
+                "VPINSRB requires VEX.L=0 and VEX.W=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let value = if is_memory {
+            self.read_mem(addr, 1)? as u8
+        } else {
+            self.get_reg(rm, 1) as u8
+        };
+
+        let dst = reg as usize;
+        let mut result = self.regs.xmm[vvvv as usize];
+        put_xmm_byte(&mut result, (imm8 & 0x0F) as usize, value);
+
+        self.regs.xmm[dst] = result;
+        self.regs.ymm_high[dst] = [0; 2];
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpinsrw(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 || vex_w != 0 {
+            return Err(Error::Emulator(
+                "VPINSRW requires VEX.L=0 and VEX.W=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let value = if is_memory {
+            self.read_mem(addr, 2)? as u16
+        } else {
+            self.get_reg(rm, 2) as u16
+        };
+
+        let dst = reg as usize;
+        let mut result = self.regs.xmm[vvvv as usize];
+        put_xmm_word(&mut result, (imm8 & 0x07) as usize, value);
+
+        self.regs.xmm[dst] = result;
+        self.regs.ymm_high[dst] = [0; 2];
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vpinsrd_q(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 {
+            return Err(Error::Emulator(
+                "VPINSRD/Q requires VEX.L=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let dst = reg as usize;
+        let mut result = self.regs.xmm[vvvv as usize];
+
+        if vex_w != 0 {
+            let value = if is_memory {
+                self.read_mem(addr, 8)?
+            } else {
+                self.get_reg(rm, 8)
+            };
+            put_xmm_qword(&mut result, (imm8 & 0x01) as usize, value);
+        } else {
+            let value = if is_memory {
+                self.read_mem(addr, 4)? as u32
+            } else {
+                self.get_reg(rm, 4) as u32
+            };
+            put_xmm_dword(&mut result, (imm8 & 0x03) as usize, value);
+        }
+
+        self.regs.xmm[dst] = result;
+        self.regs.ymm_high[dst] = [0; 2];
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }

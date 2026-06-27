@@ -318,6 +318,10 @@ impl X86_64Vcpu {
                 (2, 0x7E) => return insn::simd::vmovq_load(self, ctx),
                 // VMOVQ store - VEX.66.0F D6 /r (xmm -> xmm/m64)
                 (1, 0xD6) => return insn::simd::vmovq_store(self, ctx),
+                // VPINSRW xmm1, xmm2, r32/m16, imm8 - VEX.66.0F.W0 C4 /r ib
+                (1, 0xC4) => return self.execute_vpinsrw(ctx, vex_l, vex_w, vvvv),
+                // VPEXTRW r32, xmm1, imm8 - VEX.66.0F.W0 C5 /r ib
+                (1, 0xC5) => return self.execute_vpextrw_0f(ctx, vex_l, vex_w),
                 // VMOVDQA load - VEX.66.0F 6F /r
                 (1, 0x6F) => return insn::simd::vmovdqa_load(self, ctx, vex_l),
                 // VMOVDQU load - VEX.F3.0F 6F /r
@@ -724,9 +728,25 @@ impl X86_64Vcpu {
         // VEX.0F3A encoded instructions (m_mmmm=3)
         if m_mmmm == 0x3 && vex_pp == 1 {
             match opcode {
+                // VPEXTRB r32/m8, xmm1, imm8 (VEX.66.0F3A.W0 14 /r ib)
+                0x14 => {
+                    return self.execute_vpextrb(ctx, vex_l, vex_w);
+                }
+                // VPEXTRW r32/m16, xmm1, imm8 (VEX.66.0F3A.W0 15 /r ib)
+                0x15 => {
+                    return self.execute_vpextrw_0f3a(ctx, vex_l, vex_w);
+                }
+                // VPEXTRD/VPEXTRQ r/m32/64, xmm1, imm8 (VEX.66.0F3A.W0/W1 16 /r ib)
+                0x16 => {
+                    return self.execute_vpextrd_q(ctx, vex_l, vex_w);
+                }
                 // VEXTRACTPS r/m32, xmm1, imm8 (VEX.66.0F3A.WIG 17 /r ib)
                 0x17 => {
                     return self.execute_vextractps(ctx, vex_l);
+                }
+                // VPINSRB xmm1, xmm2, r32/m8, imm8 (VEX.66.0F3A.W0 20 /r ib)
+                0x20 => {
+                    return self.execute_vpinsrb(ctx, vex_l, vex_w, vvvv);
                 }
                 // VINSERTF128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 18 /r ib)
                 0x18 => {
@@ -743,6 +763,10 @@ impl X86_64Vcpu {
                 // VINSERTPS xmm1, xmm2, xmm3/m32, imm8 (VEX.66.0F3A.WIG 21 /r ib)
                 0x21 => {
                     return self.execute_vinsertps(ctx, vex_l, vvvv);
+                }
+                // VPINSRD/VPINSRQ xmm1, xmm2, r/m32/64, imm8 (VEX.66.0F3A.W0/W1 22 /r ib)
+                0x22 => {
+                    return self.execute_vpinsrd_q(ctx, vex_l, vex_w, vvvv);
                 }
                 // VPERM2F128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 06 /r ib)
                 0x06 => {
