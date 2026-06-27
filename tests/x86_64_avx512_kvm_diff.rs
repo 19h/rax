@@ -7092,6 +7092,51 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core data-movement/addressing width variants. These exercise MOV
+    // immediate encodings beyond the starter set, SPL/high-byte byte-register
+    // selection, RIP-relative and SIB addressing, and stack-width forms with
+    // visible scratch/stack effects.
+    for &(label, asm) in &[
+        ("mov_core_data_width_r16_imm", "movw $0x1234, %r8w"),
+        ("mov_core_data_width_r64_imm32_signext", "movq $-7, %r8"),
+        ("mov_core_data_width_m8_imm", "movb $0xaa, 24(%rax)"),
+        ("mov_core_data_width_m32_imm", "movl $0x89abcdef, 28(%rax)"),
+        ("mov_core_data_width_m64_imm32", "movq $-7, 32(%rax)"),
+        ("mov_core_data_width_high8_imm", "movb $0x55, %ah"),
+        ("mov_core_data_width_spl_imm", "movb $0x66, %spl"),
+        ("mov_core_data_width_m8_spl", "movb %spl, 40(%rax)"),
+        ("mov_core_data_width_r8_spl", "movb %spl, %r8b"),
+        (
+            "mov_core_data_width_rip_relative",
+            "jmp 2f\n1:\n.quad 0x1122334455667788\n2:\nmovq 1b(%rip), %r8",
+        ),
+        (
+            "mov_core_data_width_sib_no_base",
+            "movl 0x3ef0(,%r9,4), %r8d",
+        ),
+        ("mov_core_data_width_rbp_store", "movq %r8, -96(%rbp)"),
+        ("mov_core_data_width_rsp_store", "movq %r8, 16(%rsp)"),
+        ("lea_core_data_width_negative_disp", "leaq -16(%rax), %r8"),
+        (
+            "lea_core_data_width_addr32_indexed",
+            "addr32 leaq 16(%eax,%ecx,2), %r8",
+        ),
+        ("lea_core_data_width_rsp_sib", "leaq 16(%rsp,%r9,2), %r8"),
+        ("push_core_data_width_r9_pop", "pushq %r9\npopq %r8"),
+        ("push_core_data_width_r9w_pop", "pushw %r9w\npopw %r8w"),
+        ("pop_core_data_width_r9", "pushq %r8\npopq %r9"),
+        ("pop_core_data_width_m16", "pushw $0x1234\npopw 42(%rax)"),
+        ("pop_core_data_width_m64", "pushq %r8\npopq 48(%rax)"),
+        ("pop_core_data_width_m16_rbp", "pushw %r8w\npopw -80(%rbp)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Scalar integer extension instructions, including the legacy accumulator
     // forms and MOVSXD's accepted non-REX.W encodings in 64-bit mode.
     for &(label, asm) in &[
@@ -10877,6 +10922,36 @@ fn avx512_kvm_core_moffs_corpus() {
         "core moffs cases should not feature-skip"
     );
     assert_eq!(tally.compared, 8, "all core moffs cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_data_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_data_width_"))
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected core data-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core data-width cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core data-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core data-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core data-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 22,
+        "all core data-width cases should compare"
+    );
 }
 
 #[test]
