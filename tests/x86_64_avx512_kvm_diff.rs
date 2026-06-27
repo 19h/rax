@@ -7170,6 +7170,175 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // VEX permute/blend edge selectors: all-destination/all-source blend
+    // immediates, zero/all-one variable blend masks, lane-zeroing 128-bit
+    // permutes, duplicated permute selectors, and PALIGNR boundary counts.
+    for &(label, asm, feat, profile) in &[
+        (
+            "vblendps_vex_perm_blend_edge_imm0",
+            "{vex} vblendps $0x00, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vblendps_vex_perm_blend_edge_immff_mem",
+            "{vex} vblendps $0xff, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vblendpd_vex_perm_blend_edge_imm0",
+            "{vex} vblendpd $0x0, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vblendpd_vex_perm_blend_edge_immf_mem",
+            "{vex} vblendpd $0xf, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vblendvps_vex_perm_blend_edge_zero_mask",
+            "{vex} vxorps %xmm4, %xmm4, %xmm4\n{vex} vblendvps %xmm4, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vblendvps_vex_perm_blend_edge_allones_mask",
+            "{vex} vxorps %xmm4, %xmm4, %xmm4\n{vex} vcmpeqps %xmm4, %xmm4, %xmm4\n{vex} vblendvps %xmm4, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vblendvpd_vex_perm_blend_edge_zero_mask",
+            "{vex} vxorpd %ymm4, %ymm4, %ymm4\n{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vblendvpd_vex_perm_blend_edge_allones_mask",
+            "{vex} vxorpd %ymm4, %ymm4, %ymm4\n{vex} vcmpeqpd %ymm4, %ymm4, %ymm4\n{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vperm2f128_vex_perm_blend_edge_zero_low",
+            "{vex} vperm2f128 $0x08, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vperm2f128_vex_perm_blend_edge_zero_high",
+            "{vex} vperm2f128 $0x80, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vperm2f128_vex_perm_blend_edge_zero_both",
+            "{vex} vperm2f128 $0x88, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vpermilps_vex_perm_blend_edge_dup0",
+            "{vex} vpermilps $0x00, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vpermilps_vex_perm_blend_edge_dup3_mem",
+            "{vex} vpermilps $0xff, 32(%rax), %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vpermilpd_vex_perm_blend_edge_dup0",
+            "{vex} vpermilpd $0x0, %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vpermilpd_vex_perm_blend_edge_dup1_mem",
+            "{vex} vpermilpd $0xf, 32(%rax), %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vpalignr_vex_perm_blend_edge_imm0",
+            "{vex} vpalignr $0, %xmm2, %xmm3, %xmm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpalignr_vex_perm_blend_edge_imm16",
+            "{vex} vpalignr $16, %xmm2, %xmm3, %xmm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpalignr_vex_perm_blend_edge_imm31_mem",
+            "{vex} vpalignr $31, 32(%rax), %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpalignr_vex_perm_blend_edge_imm32_mem",
+            "{vex} vpalignr $32, 32(%rax), %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vperm2i128_vex_perm_blend_edge_zero_low",
+            "{vex} vperm2i128 $0x08, %ymm2, %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vperm2i128_vex_perm_blend_edge_zero_high",
+            "{vex} vperm2i128 $0x80, %ymm2, %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vperm2i128_vex_perm_blend_edge_zero_both",
+            "{vex} vperm2i128 $0x88, %ymm2, %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpermq_vex_perm_blend_edge_dup0",
+            "{vex} vpermq $0x00, %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpermq_vex_perm_blend_edge_dup3_mem",
+            "{vex} vpermq $0xff, 32(%rax), %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpermd_vex_perm_blend_edge_index_zero",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpermd %ymm3, %ymm2, %ymm1",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpermd_vex_perm_blend_edge_index_allones_mem",
+            "{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vpermd 32(%rax), %ymm2, %ymm1",
+            Avx2,
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // VEX AVX data movement and lane forms that sit outside the arithmetic and
     // conversion tables above. These cover aligned/unaligned integer vector
     // moves, LDDQU, low/high scalar-pair loads and stores, and SSE4.1 insert /
@@ -15835,6 +16004,53 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
     assert_eq!(
         tally.compared, 60,
         "all SHA-NI legacy cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vex_permute_blend_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_vex_perm_blend_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        26,
+        "unexpected VEX permute/blend edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VEX permute/blend edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VEX permute/blend edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX permute/blend edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX permute/blend edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        15,
+        "all AVX permute/blend edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        11,
+        "all AVX2 permute/blend edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 26,
+        "all VEX permute/blend edge cases should compare"
     );
 }
 
