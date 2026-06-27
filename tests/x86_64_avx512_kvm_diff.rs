@@ -4558,6 +4558,25 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE2 word insertion/extraction and whole-XMM byte-lane shifts use
+    // the compact 0F C4/C5 and group-14 immediate encodings.
+    for &(label, asm) in &[
+        ("pinsrw_sse2_lane_insert_r8w", "pinsrw $3, %r8d, %xmm1"),
+        ("pinsrw_sse2_lane_insert_m16", "pinsrw $5, 32(%rax), %xmm1"),
+        ("pextrw_sse2_lane_extract_r8d", "pextrw $6, %xmm1, %r8d"),
+        ("pslldq_sse2_lane_shift_left_4", "pslldq $4, %xmm1"),
+        ("psrldq_sse2_lane_shift_right_6", "psrldq $6, %xmm1"),
+        ("pslldq_sse2_lane_shift_left_zero_17", "pslldq $17, %xmm1"),
+        ("psrldq_sse2_lane_shift_right_zero_16", "psrldq $16, %xmm1"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse2,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE3 forms. These cover horizontal add/subtract, alternating
     // add/subtract, duplicate moves, and LDDQU's unaligned/addr32 load paths.
     for &(label, asm, profile) in &[
@@ -10012,6 +10031,38 @@ fn avx512_kvm_sse2_transfer_corpus() {
         "all SSE2 transfer cases should run"
     );
     assert_eq!(tally.compared, 8, "all SSE2 transfer cases should compare");
+}
+
+#[test]
+fn avx512_kvm_sse2_lane_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse2_lane_"))
+        .collect();
+    assert_eq!(cases.len(), 7, "unexpected SSE2 lane corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE2 lane cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE2 lane case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE2 lane corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE2 lane cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        7,
+        "all SSE2 lane cases should run"
+    );
+    assert_eq!(tally.compared, 7, "all SSE2 lane cases should compare");
 }
 
 #[test]
