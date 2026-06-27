@@ -6605,6 +6605,54 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0x0000000000000123, %r8\nmovq %r8, 32(%rax)\nmovw $0, 40(%rax)\nmovw $7, 48(%rax)\nfninit\nfbld 32(%rax)\nfiadds 48(%rax)\nfbstp 64(%rax)",
         ),
         (
+            "x87_fcmovcc_taken_conditions",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nstc\nfcmovb %st(1), %st(0)\nfstpl 48(%rax)\nfstpl 56(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nfcmove %st(1), %st(0)\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nfcmovbe %st(1), %st(0)\nfstpl 80(%rax)\nfstpl 88(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nfcmovu %st(1), %st(0)\nfstpl 96(%rax)\nfstpl 104(%rax)",
+        ),
+        (
+            "x87_fcmovncc_taken_conditions",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovnb %st(1), %st(0)\nfstpl 48(%rax)\nfstpl 56(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovne %st(1), %st(0)\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovnbe %st(1), %st(0)\nfstpl 80(%rax)\nfstpl 88(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovnu %st(1), %st(0)\nfstpl 96(%rax)\nfstpl 104(%rax)",
+        ),
+        (
+            "x87_fcmovcc_not_taken_conditions",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovb %st(1), %st(0)\nfstpl 48(%rax)\nfstpl 56(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmove %st(1), %st(0)\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovbe %st(1), %st(0)\nfstpl 80(%rax)\nfstpl 88(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nmovl $1, %ecx\norb %cl, %cl\nfcmovu %st(1), %st(0)\nfstpl 96(%rax)\nfstpl 104(%rax)",
+        ),
+        (
+            "x87_fcmovncc_not_taken_conditions",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nstc\nfcmovnb %st(1), %st(0)\nfstpl 48(%rax)\nfstpl 56(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nstc\nfcmovne %st(1), %st(0)\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nstc\nfcmovnbe %st(1), %st(0)\nfstpl 80(%rax)\nfstpl 88(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nxorl %ecx, %ecx\nstc\nfcmovnu %st(1), %st(0)\nfstpl 96(%rax)\nfstpl 104(%rax)",
+        ),
+        (
+            "x87_fcomi_flag_outcomes",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfcomi %st(1), %st(0)\nsetb 112(%rax)\nsete 113(%rax)\nsetp 114(%rax)\nfstpl 64(%rax)\nfstpl 72(%rax)\nfldl 40(%rax)\nfldl 40(%rax)\nfcomi %st(1), %st(0)\nsetb 115(%rax)\nsete 116(%rax)\nsetp 117(%rax)\nfstpl 80(%rax)\nfstpl 88(%rax)\nfldl 32(%rax)\nfldl 40(%rax)\nfcomi %st(1), %st(0)\nsetb 118(%rax)\nsete 119(%rax)\nsetp 120(%rax)\nfstpl 96(%rax)\nfstpl 104(%rax)",
+        ),
+        (
+            "x87_fucomi_flag_outcome",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfucomi %st(1), %st(0)\nsetb 112(%rax)\nsete 113(%rax)\nsetp 114(%rax)\nfstpl 64(%rax)\nfstpl 72(%rax)",
+        ),
+        (
+            "x87_fcomip_pops_and_sets_flags",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfcomip %st(1), %st(0)\nsetb 112(%rax)\nsete 113(%rax)\nsetp 114(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fucomip_pops_and_sets_flags",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfucomip %st(1), %st(0)\nsetb 112(%rax)\nsete 113(%rax)\nsetp 114(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fcom_memory_status_and_pop",
+            "movl $0x3f800000, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfcoms 32(%rax)\nfnstsw 56(%rax)\nfcomps 32(%rax)\nfnstsw 58(%rax)\nfldl 40(%rax)\nfcoml 40(%rax)\nfnstsw 60(%rax)\nfcompl 40(%rax)\nfnstsw 62(%rax)",
+        ),
+        (
+            "x87_fcom_register_status_variants",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfcom %st(1)\nfnstsw 56(%rax)\nfcomp %st(1)\nfnstsw 58(%rax)\nfstpl 64(%rax)",
+        ),
+        (
+            "x87_fucom_fucomp_status_and_pop",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfucom %st(1)\nfnstsw 56(%rax)\nfucomp %st(1)\nfnstsw 58(%rax)\nfstpl 64(%rax)",
+        ),
+        (
+            "x87_fcompp_fucompp_pop_both",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\nfcompp\nfnstsw 56(%rax)\nfldl 40(%rax)\nfldl 32(%rax)\nfucompp\nfnstsw 58(%rax)",
+        ),
+        (
             "x87_fxch_stack_order",
             "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfxch %st(1)\nfstpl 48(%rax)\nfstpl 56(%rax)",
         ),
@@ -9002,7 +9050,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 42, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 54, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -9013,7 +9061,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 42, "all x87 cases should compare");
+    assert_eq!(tally.compared, 54, "all x87 cases should compare");
 }
 
 #[test]
