@@ -8989,6 +8989,29 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Complementary BMI1 width/source forms.
+    for &(label, asm) in &[
+        ("andn_bmi1_operand_r32_reg", "andnl %ecx, %r8d, %r8d"),
+        ("andn_bmi1_operand_r64_mem", "andnq 32(%rax), %r8, %r8"),
+        ("bextr_bmi1_operand_r32_reg", "bextrl %ecx, %r8d, %r8d"),
+        ("bextr_bmi1_operand_r64_mem", "bextrq %rcx, 32(%rax), %r8"),
+        ("blsi_bmi1_operand_r32_reg", "blsil %ecx, %r8d"),
+        ("blsi_bmi1_operand_r64_mem", "blsiq 32(%rax), %r8"),
+        ("blsr_bmi1_operand_r32_reg", "blsrl %ecx, %r8d"),
+        ("blsr_bmi1_operand_r64_mem", "blsrq 32(%rax), %r8"),
+        ("blsmsk_bmi1_operand_r32_reg", "blsmskl %ecx, %r8d"),
+        ("blsmsk_bmi1_operand_r64_mem", "blsmskq 32(%rax), %r8"),
+        ("tzcnt_bmi1_operand_r32_reg", "tzcntl %ecx, %r8d"),
+        ("tzcnt_bmi1_operand_r64_mem", "tzcntq 32(%rax), %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bmi1,
+            profile: Int,
+        });
+    }
+
     // BMI2 scalar bit-manipulation forms. MULX observes the newly captured RDX
     // seed as its implicit multiplicand; the other BMI2 forms check flag
     // preservation or BZHI's defined flag subset.
@@ -9018,11 +9041,51 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Complementary BMI2 width/source forms, including the alternate MULX
+    // source shape.
+    for &(label, asm) in &[
+        ("bzhi_bmi2_operand_r32_reg", "bzhil %ecx, %r8d, %r8d"),
+        ("bzhi_bmi2_operand_r64_mem", "bzhiq %rcx, 32(%rax), %r8"),
+        ("pdep_bmi2_operand_r32_reg", "pdepl %ecx, %r8d, %r8d"),
+        ("pdep_bmi2_operand_r64_mem", "pdepq 32(%rax), %r8, %r8"),
+        ("pext_bmi2_operand_r32_reg", "pextl %ecx, %r8d, %r8d"),
+        ("pext_bmi2_operand_r64_mem", "pextq 32(%rax), %r8, %r8"),
+        ("mulx_bmi2_operand_r32_mem", "mulxl 32(%rax), %r8d, %ecx"),
+        ("mulx_bmi2_operand_r64_reg", "mulxq %r8, %r9, %rcx"),
+        ("rorx_bmi2_operand_r32_reg", "rorxl $7, %ecx, %r8d"),
+        ("rorx_bmi2_operand_r64_mem", "rorxq $11, 32(%rax), %r8"),
+        ("sarx_bmi2_operand_r32_reg", "sarxl %ecx, %r8d, %r8d"),
+        ("sarx_bmi2_operand_r64_mem", "sarxq %rcx, 32(%rax), %r8"),
+        ("shrx_bmi2_operand_r32_reg", "shrxl %ecx, %r8d, %r8d"),
+        ("shrx_bmi2_operand_r64_mem", "shrxq %rcx, 32(%rax), %r8"),
+        ("shlx_bmi2_operand_r32_reg", "shlxl %ecx, %r8d, %r8d"),
+        ("shlx_bmi2_operand_r64_mem", "shlxq %rcx, 32(%rax), %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bmi2,
+            profile: Int,
+        });
+    }
+
     // LZCNT is advertised separately from BMI1 on Linux (`abm` on Intel hosts)
     // but shares the same F3 0F legacy count/flag shape as TZCNT.
     for &(label, asm) in &[
         ("lzcnt_r64_reg", "lzcntq %rcx, %r8"),
         ("lzcnt_r32_mem", "lzcntl 32(%rax), %r8d"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Lzcnt,
+            profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        ("lzcnt_operand_r32_reg", "lzcntl %ecx, %r8d"),
+        ("lzcnt_operand_r64_mem", "lzcntq 32(%rax), %r8"),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -10622,6 +10685,62 @@ fn avx512_kvm_sse41_operand_form_corpus() {
     assert_eq!(
         tally.compared, 21,
         "all SSE4.1 operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_scalar_bit_operand_form_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.label.contains("_bmi1_operand_")
+                || case.label.contains("_bmi2_operand_")
+                || case.label.contains("lzcnt_operand_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        30,
+        "unexpected scalar bit operand-form corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on scalar bit operand-form cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a scalar bit operand-form case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "scalar bit operand-form corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "scalar bit operand-form cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi1),
+        12,
+        "all BMI1 operand-form cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi2),
+        16,
+        "all BMI2 operand-form cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Lzcnt),
+        2,
+        "all LZCNT operand-form cases should run"
+    );
+    assert_eq!(
+        tally.compared, 30,
+        "all scalar bit operand-form cases should compare"
     );
 }
 
