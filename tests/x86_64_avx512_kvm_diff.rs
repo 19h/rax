@@ -8867,6 +8867,54 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core accumulator-immediate opcodes use dedicated legacy encodings
+    // (04/05/0c/0d/.../a8/a9), not the ModRM group-1/group-3 immediate paths.
+    for &(label, asm) in &[
+        ("add_core_accum_al_imm8", "addb $0x7f, %al"),
+        ("add_core_accum_ax_imm16", "addw $0x1234, %ax"),
+        ("add_core_accum_eax_imm32", "addl $0x12345678, %eax"),
+        ("add_core_accum_rax_imm32", "addq $-7, %rax"),
+        ("adc_core_accum_al_imm8", "adcb $0x33, %al"),
+        ("adc_core_accum_ax_imm16", "adcw $0x101, %ax"),
+        ("adc_core_accum_eax_imm32", "adcl $0x10111213, %eax"),
+        ("adc_core_accum_rax_imm32", "adcq $-9, %rax"),
+        ("sbb_core_accum_al_imm8", "sbbb $0x11, %al"),
+        ("sbb_core_accum_ax_imm16", "sbbw $0x20, %ax"),
+        ("sbb_core_accum_eax_imm32", "sbbl $0x1020304, %eax"),
+        ("sbb_core_accum_rax_imm32", "sbbq $-5, %rax"),
+        ("sub_core_accum_al_imm8", "subb $0x55, %al"),
+        ("sub_core_accum_ax_imm16", "subw $0x2222, %ax"),
+        ("sub_core_accum_eax_imm32", "subl $0x1020304, %eax"),
+        ("sub_core_accum_rax_imm32", "subq $-3, %rax"),
+        ("cmp_core_accum_al_imm8", "cmpb $0, %al"),
+        ("cmp_core_accum_ax_imm16", "cmpw $0x4000, %ax"),
+        ("cmp_core_accum_eax_imm32", "cmpl $0x4000, %eax"),
+        ("cmp_core_accum_rax_imm32", "cmpq $0x4000, %rax"),
+        ("or_core_accum_al_imm8", "orb $0xf0, %al"),
+        ("or_core_accum_ax_imm16", "orw $0xf0, %ax"),
+        ("or_core_accum_eax_imm32", "orl $0xf0f0, %eax"),
+        ("or_core_accum_rax_imm32", "orq $-4096, %rax"),
+        ("and_core_accum_al_imm8", "andb $0xf0, %al"),
+        ("and_core_accum_ax_imm16", "andw $0xff0, %ax"),
+        ("and_core_accum_eax_imm32", "andl $0xff00ff, %eax"),
+        ("and_core_accum_rax_imm32", "andq $-16, %rax"),
+        ("xor_core_accum_al_imm8", "xorb $0xaa, %al"),
+        ("xor_core_accum_ax_imm16", "xorw $0xaaaa, %ax"),
+        ("xor_core_accum_eax_imm32", "xorl $0x55aa55aa, %eax"),
+        ("xor_core_accum_rax_imm32", "xorq $-21846, %rax"),
+        ("test_core_accum_al_imm8", "testb $0xf0, %al"),
+        ("test_core_accum_ax_imm16", "testw $0xff0, %ax"),
+        ("test_core_accum_eax_imm32", "testl $0xff00ff, %eax"),
+        ("test_core_accum_rax_imm32", "testq $-16, %rax"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core rotate, shift, and double-shift forms. These cover one-bit counts
     // with OF defined, multi-bit immediate counts with OF undefined, CL counts
     // sourced from the seeded RCX, and memory destinations in the scratch page.
@@ -10592,6 +10640,43 @@ fn avx512_kvm_core_control_transfer_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all core control-transfer cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_accumulator_immediate_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_accum_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        36,
+        "unexpected core accumulator-immediate corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core accumulator-immediate cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core accumulator-immediate case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core accumulator-immediate corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core accumulator-immediate cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 36,
+        "all core accumulator-immediate cases should compare"
     );
 }
 
