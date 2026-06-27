@@ -8313,6 +8313,57 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX-512 opmask ALU/test edge forms. These force zero/all-one inputs,
+    // width truncation for b/w/d/q masks, carry-discarding KADD behavior,
+    // KTEST/KORTEST status flags, and KUNPCK packing boundaries.
+    for &(label, asm, feat) in &[
+        ("kandw_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkandw %k1, %k2, %k5", F),
+        ("kandnw_opmask_edge_allones_zero", "kxnorw %k1, %k1, %k1\nkxorw %k2, %k2, %k2\nkandnw %k1, %k2, %k5", F),
+        ("korw_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkorw %k1, %k2, %k5", F),
+        ("kxorw_opmask_edge_self_zero", "kxnorw %k1, %k1, %k1\nkxorw %k1, %k1, %k5", F),
+        ("kxnorw_opmask_edge_self_allones", "kxnorw %k1, %k1, %k1\nkxnorw %k1, %k1, %k5", F),
+        ("knotw_opmask_edge_width", "kxnorw %k1, %k1, %k1\nknotw %k1, %k5", F),
+        ("ktestw_opmask_edge_zero_zero_flags", "kxorw %k1, %k1, %k1\nktestw %k1, %k1", F),
+        ("ktestw_opmask_edge_allones_flags", "kxnorw %k1, %k1, %k1\nktestw %k1, %k1", F),
+        ("kortestw_opmask_edge_zero_zero_flags", "kxorw %k1, %k1, %k1\nkortestw %k1, %k1", F),
+        ("kortestw_opmask_edge_allones_flags", "kxnorw %k1, %k1, %k1\nkortestw %k1, %k1", F),
+        ("kunpckbw_opmask_edge_zero_allones", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkunpckbw %k1, %k2, %k5", F),
+        ("kunpckwd_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkunpckwd %k1, %k2, %k5", F),
+        ("kandb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nkandb %k2, %k1, %k5", Dq),
+        ("kandd_opmask_edge_width", "kxnord %k1, %k1, %k1\nkandd %k2, %k1, %k5", Dq),
+        ("kandnb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nkandnb %k2, %k1, %k5", Dq),
+        ("kandnd_opmask_edge_width", "kxnord %k1, %k1, %k1\nkandnd %k2, %k1, %k5", Dq),
+        ("korb_opmask_edge_zero_allones", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkorb %k1, %k2, %k5", Dq),
+        ("kord_opmask_edge_zero_allones", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkord %k1, %k2, %k5", Dq),
+        ("kxorb_opmask_edge_self_zero", "kxnorb %k1, %k1, %k1\nkxorb %k1, %k1, %k5", Dq),
+        ("kxord_opmask_edge_self_zero", "kxnord %k1, %k1, %k1\nkxord %k1, %k1, %k5", Dq),
+        ("kxnorb_opmask_edge_self_allones", "kxnorb %k1, %k1, %k1\nkxnorb %k1, %k1, %k5", Dq),
+        ("kxnord_opmask_edge_self_allones", "kxnord %k1, %k1, %k1\nkxnord %k1, %k1, %k5", Dq),
+        ("kaddb_opmask_edge_discard_carry", "kxnorb %k1, %k1, %k1\nkaddb %k1, %k1, %k5", Dq),
+        ("kaddd_opmask_edge_discard_carry", "kxnord %k1, %k1, %k1\nkaddd %k1, %k1, %k5", Dq),
+        ("knotb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nknotb %k1, %k5", Dq),
+        ("knotd_opmask_edge_width", "kxnord %k1, %k1, %k1\nknotd %k1, %k5", Dq),
+        ("ktestb_opmask_edge_zero_allones_flags", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nktestb %k1, %k2", Dq),
+        ("kortestd_opmask_edge_zero_allones_flags", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkortestd %k1, %k2", Dq),
+        ("kandq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nkandq %k2, %k1, %k5", Bw),
+        ("kandnq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nkandnq %k2, %k1, %k5", Bw),
+        ("korq_opmask_edge_zero_allones", "kxorq %k1, %k1, %k1\nkxnorq %k2, %k2, %k2\nkorq %k1, %k2, %k5", Bw),
+        ("kxorq_opmask_edge_self_zero", "kxnorq %k1, %k1, %k1\nkxorq %k1, %k1, %k5", Bw),
+        ("kxnorq_opmask_edge_self_allones", "kxnorq %k1, %k1, %k1\nkxnorq %k1, %k1, %k5", Bw),
+        ("kaddq_opmask_edge_discard_carry", "kxnorq %k1, %k1, %k1\nkaddq %k1, %k1, %k5", Bw),
+        ("knotq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nknotq %k1, %k5", Bw),
+        ("ktestq_opmask_edge_allones_flags", "kxnorq %k1, %k1, %k1\nktestq %k1, %k1", Bw),
+        ("kortestq_opmask_edge_zero_zero_flags", "kxorq %k1, %k1, %k1\nkortestq %k1, %k1", Bw),
+        ("kunpckdq_opmask_edge_zero_allones", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkunpckdq %k1, %k2, %k5", Bw),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // F16C VEX half/single-precision conversion forms are distinct from the
     // AVX-512-FP16 EVEX conversion family above.
     for &(label, asm, profile) in &[
@@ -15794,6 +15845,48 @@ fn avx512_kvm_kmov_corpus() {
         "all AVX-512BW KMOV qword cases should run"
     );
     assert_eq!(tally.compared, 20, "all KMOV cases should compare");
+}
+
+#[test]
+fn avx512_kvm_opmask_logic_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_opmask_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 38, "unexpected opmask edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on opmask edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an opmask edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "opmask edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "opmask edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        12,
+        "all AVX-512F opmask edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Dq),
+        16,
+        "all AVX-512DQ opmask edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        10,
+        "all AVX-512BW opmask edge cases should run"
+    );
+    assert_eq!(tally.compared, 38, "all opmask edge cases should compare");
 }
 
 #[test]
