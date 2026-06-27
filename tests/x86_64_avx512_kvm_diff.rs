@@ -6938,6 +6938,86 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core near control-transfer and group-5 stack/addressing forms not covered
+    // by the direct rel8 starter cases above. These include forced rel32
+    // branches, indirect CALL/JMP through registers and memory, RET imm16 stack
+    // adjustment, LOOPcc/J*CXZ condition variants, and PUSH r/m memory forms.
+    for &(label, asm) in &[
+        (
+            "jmp_core_control_rel32_taken",
+            "jmp 1f\n.space 140, 0x90\n1:\nmovq $0x2222, %r8",
+        ),
+        (
+            "je_core_control_rel32_taken",
+            "cmpq %r8, %r8\nje 1f\nmovq $0x1111, %r8\njmp 2f\n.space 140, 0x90\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "jne_core_control_rel32_not_taken",
+            "cmpq %r8, %r8\njne 1f\nmovq $0x2222, %r8\njmp 2f\n.space 140, 0x90\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "jmp_core_control_indirect_reg",
+            "leaq 1f(%rip), %r8\njmp *%r8\nmovq $0x1111, %r9\n1:\nxorq %r8, %r8\nmovq $0x2222, %r9",
+        ),
+        (
+            "jmp_core_control_indirect_mem",
+            "leaq 1f(%rip), %r8\nmovq %r8, 120(%rax)\njmp *120(%rax)\nmovq $0x1111, %r9\n1:\nxorq %r8, %r8\nmovq $0, 120(%rax)\nmovq $0x2222, %r9",
+        ),
+        (
+            "call_core_control_indirect_reg_ret",
+            "leaq 1f(%rip), %r8\ncall *%r8\nmovq $0, -8(%rsp)\nmovq $0x3333, %r8\njmp 2f\n1:\nmovq $0x2222, %r9\nretq\n2:",
+        ),
+        (
+            "call_core_control_indirect_mem_ret",
+            "leaq 1f(%rip), %r8\nmovq %r8, 128(%rax)\ncall *128(%rax)\nmovq $0, -8(%rsp)\nmovq $0, 128(%rax)\nmovq $0x3333, %r8\njmp 2f\n1:\nmovq $0x2222, %r9\nretq\n2:",
+        ),
+        (
+            "ret_core_control_imm16_stack_adjust",
+            "pushq $0x1122\ncall 1f\nmovq $0, -16(%rsp)\nmovq $0, -8(%rsp)\nmovq $0x3333, %r8\njmp 2f\n1:\nmovq $0x2222, %r9\nretq $8\n2:",
+        ),
+        ("push_core_control_m64_pop", "pushq 32(%rax)\npopq %r8"),
+        ("push_core_control_m16_pop", "pushw 34(%rax)\npopw %r8w"),
+        (
+            "loop_core_control_rel8_not_taken",
+            "movl $1, %ecx\nloop 1f\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "loopne_core_control_rel8_taken",
+            "movl $2, %ecx\ncmpq %r8, %r9\nloopne 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "loopne_core_control_rel8_not_taken_zf",
+            "movl $2, %ecx\ncmpq %r8, %r8\nloopne 1f\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "loope_core_control_rel8_taken",
+            "movl $2, %ecx\ncmpq %r8, %r8\nloope 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "loope_core_control_rel8_not_taken_zf_clear",
+            "movl $2, %ecx\ncmpq %r8, %r9\nloope 1f\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "jecxz_core_control_rel8_taken",
+            "xorl %ecx, %ecx\njecxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "jrcxz_core_control_rel8_taken",
+            "xorq %rcx, %rcx\njrcxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "addr32_jrcxz_core_control_ecx_taken",
+            "movabsq $0x0000000100000000, %rcx\naddr32 jrcxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Legacy x87 starter cases using input profiles from the generic corpus.
     // The harness does not snapshot the x87 register file directly, so results
     // are made visible through scratch-memory stores.
@@ -9396,6 +9476,43 @@ fn avx512_kvm_core_implicit_operand_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all core implicit-operand cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_control_transfer_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_control"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        18,
+        "unexpected core control-transfer corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core control-transfer cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core control-transfer case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core control-transfer corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core control-transfer cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all core control-transfer cases should compare"
     );
 }
 
