@@ -7243,6 +7243,59 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for mnem in [
+        "sha1nexte",
+        "sha1msg1",
+        "sha1msg2",
+        "sha256rnds2",
+        "sha256msg1",
+        "sha256msg2",
+    ] {
+        for (tag, asm) in [
+            (
+                "disp",
+                format!("{mnem} -16(%rbx), %xmm1"),
+            ),
+            (
+                "addr32_disp",
+                format!("addr32 {mnem} -16(%ebx), %xmm1"),
+            ),
+            (
+                "high_disp",
+                format!("{mnem} -16(%rbx), %xmm9"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("{mnem}_sha_ni_addr_{tag}"),
+                asm,
+                feat: Sha,
+                profile: Int,
+            });
+        }
+    }
+    for imm in 0..=3 {
+        for (tag, asm) in [
+            (
+                "disp",
+                format!("sha1rnds4 ${imm}, -16(%rbx), %xmm1"),
+            ),
+            (
+                "addr32_disp",
+                format!("addr32 sha1rnds4 ${imm}, -16(%ebx), %xmm1"),
+            ),
+            (
+                "high_disp",
+                format!("sha1rnds4 ${imm}, -16(%rbx), %xmm9"),
+            ),
+        ] {
+            out.push(Case {
+                label: format!("sha1rnds4_imm{imm}_sha_ni_addr_{tag}"),
+                asm,
+                feat: Sha,
+                profile: Int,
+            });
+        }
+    }
 
     // MOVDIR direct stores. The harness compares the scratch page, so these
     // cases exercise the architectural memory side effects against silicon.
@@ -12575,6 +12628,44 @@ fn avx512_kvm_pclmulqdq_legacy_crypto_corpus() {
     assert_eq!(
         tally.compared, 21,
         "all PCLMULQDQ legacy cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Sha)
+        .collect();
+    assert_eq!(cases.len(), 60, "unexpected SHA-NI legacy corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SHA-NI legacy cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SHA-NI legacy case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SHA-NI legacy corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SHA-NI legacy cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sha),
+        60,
+        "all SHA-NI legacy cases should run"
+    );
+    assert_eq!(
+        tally.compared, 60,
+        "all SHA-NI legacy cases should compare"
     );
 }
 
