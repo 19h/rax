@@ -4531,6 +4531,33 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE2 scalar/vector transfer forms cover the 0F 6E/7E MOVD/MOVQ
+    // GPR paths plus the MMX bridge instructions that feed or consume XMM
+    // state.
+    for &(label, asm) in &[
+        ("movd_sse2_transfer_xmm_from_r8d", "movd %r8d, %xmm1"),
+        ("movq_sse2_transfer_xmm_from_r8", "movq %r8, %xmm1"),
+        ("movd_sse2_transfer_r8d_from_xmm", "movd %xmm1, %r8d"),
+        ("movq_sse2_transfer_r8_from_xmm", "movq %xmm1, %r8"),
+        ("movd_sse2_transfer_xmm_from_m32", "movd 12(%rax), %xmm1"),
+        ("movd_sse2_transfer_m32_from_xmm", "movd %xmm1, 44(%rax)"),
+        (
+            "movq2dq_sse2_transfer_mmx_to_xmm",
+            "movq 32(%rax), %mm0\nmovq2dq %mm0, %xmm1\nemms",
+        ),
+        (
+            "movdq2q_sse2_transfer_xmm_to_mmx",
+            "movdq2q %xmm1, %mm0\nmovq %mm0, 72(%rax)\nemms",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse2,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE3 forms. These cover horizontal add/subtract, alternating
     // add/subtract, duplicate moves, and LDDQU's unaligned/addr32 load paths.
     for &(label, asm, profile) in &[
@@ -9953,6 +9980,38 @@ fn avx512_kvm_core_control_transfer_corpus() {
         tally.compared, 18,
         "all core control-transfer cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_sse2_transfer_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse2_transfer_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected SSE2 transfer corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE2 transfer cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE2 transfer case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE2 transfer corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE2 transfer cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        8,
+        "all SSE2 transfer cases should run"
+    );
+    assert_eq!(tally.compared, 8, "all SSE2 transfer cases should compare");
 }
 
 #[test]
