@@ -4707,6 +4707,251 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    for &(label, asm, feat, profile) in &[
+        (
+            "vpcmpd_avx512_cmp_edge_eq_reg",
+            "vpcmpd $0, %zmm2, %zmm3, %k5",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpd_avx512_cmp_edge_signed_lt_mem_merge",
+            "vpcmpd $1, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpud_avx512_cmp_edge_unsigned_le_reg",
+            "vpcmpud $2, %zmm2, %zmm3, %k5",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpud_avx512_cmp_edge_unsigned_nle_mem_merge",
+            "vpcmpud $6, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpq_avx512_cmp_edge_signed_lt_reg",
+            "vpcmpq $1, %zmm2, %zmm3, %k5",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpq_avx512_cmp_edge_signed_nlt_mem_merge",
+            "vpcmpq $5, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpuq_avx512_cmp_edge_unsigned_le_reg",
+            "vpcmpuq $2, %zmm2, %zmm3, %k5",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpuq_avx512_cmp_edge_unsigned_nle_mem_merge",
+            "vpcmpuq $6, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpb_avx512_cmp_edge_signed_lt_reg",
+            "vpcmpb $1, %zmm2, %zmm3, %k5",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpb_avx512_cmp_edge_signed_nlt_mem_merge",
+            "vpcmpb $5, (%rax), %zmm3, %k5 {%k1}",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpub_avx512_cmp_edge_unsigned_le_reg",
+            "vpcmpub $2, %zmm2, %zmm3, %k5",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpub_avx512_cmp_edge_unsigned_nle_mem_merge",
+            "vpcmpub $6, (%rax), %zmm3, %k5 {%k1}",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpw_avx512_cmp_edge_signed_lt_reg",
+            "vpcmpw $1, %zmm2, %zmm3, %k5",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpw_avx512_cmp_edge_signed_nlt_mem_merge",
+            "vpcmpw $5, (%rax), %zmm3, %k5 {%k1}",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpuw_avx512_cmp_edge_unsigned_le_reg",
+            "vpcmpuw $2, %zmm2, %zmm3, %k5",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vpcmpuw_avx512_cmp_edge_unsigned_nle_mem_merge",
+            "vpcmpuw $6, (%rax), %zmm3, %k5 {%k1}",
+            Bw,
+            IntSatEdge,
+        ),
+        (
+            "vcmpps_avx512_cmp_edge_eq_reg",
+            "vcmpps $0x00, %zmm2, %zmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpps_avx512_cmp_edge_unord_reg",
+            "vcmpps $0x03, %zmm2, %zmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpps_avx512_cmp_edge_gt_oq_reg",
+            "vcmpps $0x1e, %zmm2, %zmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpps_avx512_cmp_edge_ord_mem_merge",
+            "vcmpps $0x07, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmppd_avx512_cmp_edge_neq_reg",
+            "vcmppd $0x04, %zmm2, %zmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmppd_avx512_cmp_edge_unord_reg",
+            "vcmppd $0x03, %zmm2, %zmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmppd_avx512_cmp_edge_gt_oq_reg",
+            "vcmppd $0x1e, %zmm2, %zmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmppd_avx512_cmp_edge_ord_mem_merge",
+            "vcmppd $0x07, (%rax), %zmm3, %k5 {%k1}",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmpss_avx512_cmp_edge_unord_reg",
+            "vcmpss $0x03, %xmm2, %xmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpss_avx512_cmp_edge_ord_qnan_mem_merge",
+            "vcmpss $0x07, 44(%rax), %xmm3, %k5 {%k1}",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpss_avx512_cmp_edge_true_reg",
+            "vcmpss $0x1f, %xmm2, %xmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpss_avx512_cmp_edge_gt_oq_reg",
+            "vcmpss $0x1e, %xmm2, %xmm3, %k5",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcmpsd_avx512_cmp_edge_unord_reg",
+            "vcmpsd $0x03, %xmm2, %xmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmpsd_avx512_cmp_edge_ord_qnan_mem_merge",
+            "vcmpsd $0x07, 8(%rax), %xmm3, %k5 {%k1}",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmpsd_avx512_cmp_edge_true_reg",
+            "vcmpsd $0x1f, %xmm2, %xmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmpsd_avx512_cmp_edge_gt_oq_reg",
+            "vcmpsd $0x1e, %xmm2, %xmm3, %k5",
+            F,
+            F64Edge,
+        ),
+        (
+            "vcmpph_avx512_cmp_edge_eq_reg",
+            "vcmpph $0x00, %zmm2, %zmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpph_avx512_cmp_edge_unord_reg",
+            "vcmpph $0x03, %zmm2, %zmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpph_avx512_cmp_edge_ord_mem_merge",
+            "vcmpph $0x07, 64(%rax), %zmm3, %k5 {%k1}",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpph_avx512_cmp_edge_gt_reg",
+            "vcmpph $0x1e, %zmm2, %zmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpsh_avx512_cmp_edge_unord_reg",
+            "vcmpsh $0x03, %xmm2, %xmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpsh_avx512_cmp_edge_ord_qnan_mem_merge",
+            "vcmpsh $0x07, 22(%rax), %xmm3, %k5 {%k1}",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpsh_avx512_cmp_edge_gt_reg",
+            "vcmpsh $0x1e, %xmm2, %xmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpsh_avx512_cmp_edge_true_reg",
+            "vcmpsh $0x1f, %xmm2, %xmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+    ] {
+        push_compare(label.to_string(), asm.to_string(), feat, profile);
+    }
+
     // AVX-512VL permute/shuffle/blend forms. These stay explicit because some
     // related mnemonics have only 256-bit VL encodings, not 128-bit forms.
     let mut push_vl_maskable = |label: String, asm: String, profile: InputProfile| {
@@ -5107,6 +5352,10 @@ fn irregular_cases() -> Vec<Case> {
         ("vucomiss_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomiss 44(%rax), %xmm1", Avx, F32Edge),
         ("vcomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vcomisd 8(%rax), %xmm1", Avx, F64Edge),
         ("vucomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomisd 8(%rax), %xmm1", Avx, F64Edge),
+        ("vcmpps_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpps $0x1e, 32(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vcmppd_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmppd $0x1e, 32(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vcmpss_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpss $0x1e, 44(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vcmpsd_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpsd $0x1e, 8(%rax), %xmm3, %xmm1", Avx, F64Edge),
         ("vcomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomiss 44(%rax), %xmm1", F, F32Edge),
         ("vucomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vucomiss 44(%rax), %xmm1", F, F32Edge),
         ("vcomisd_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomisd 8(%rax), %xmm1", F, F64Edge),
@@ -15560,7 +15809,7 @@ fn avx512_kvm_simd_fp_compare_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        12,
+        16,
         "unexpected SIMD FP compare edge corpus size"
     );
 
@@ -15595,7 +15844,7 @@ fn avx512_kvm_simd_fp_compare_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        4,
+        8,
         "all AVX compare edge cases should run"
     );
     assert_eq!(
@@ -15604,7 +15853,7 @@ fn avx512_kvm_simd_fp_compare_edge_corpus() {
         "all AVX-512 compare edge cases should run"
     );
     assert_eq!(
-        tally.compared, 12,
+        tally.compared, 16,
         "all SIMD FP compare edge cases should compare"
     );
 }
@@ -16619,6 +16868,58 @@ fn avx512_kvm_avx512_predicate_edge_corpus() {
     assert_eq!(
         tally.compared, 36,
         "all AVX-512 predicate/classification edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx512_compare_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx512_cmp_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        40,
+        "unexpected AVX-512 compare edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512 compare edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512 compare edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512 compare edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512 compare edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        24,
+        "all AVX-512F compare edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        8,
+        "all AVX-512BW compare edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fp16),
+        8,
+        "all AVX-512-FP16 compare edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 40,
+        "all AVX-512 compare edge cases should compare"
     );
 }
 

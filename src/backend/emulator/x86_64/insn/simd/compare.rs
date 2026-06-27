@@ -30,8 +30,8 @@ pub fn cmp_predicate_f32(a: f32, b: f32, pred: u8) -> bool {
         0x0E => a > b,                                 // GT_OS
         0x0F => true,                                  // TRUE_UQ
         0x10 => a == b,                                // EQ_OS
-        0x11 => a < b || a.is_nan() || b.is_nan(),     // LT_OQ
-        0x12 => a <= b || a.is_nan() || b.is_nan(),    // LE_OQ
+        0x11 => a < b,                                 // LT_OQ
+        0x12 => a <= b,                                // LE_OQ
         0x13 => a.is_nan() || b.is_nan(),              // UNORD_S
         0x14 => a != b,                                // NEQ_US
         0x15 => !(a < b) || a.is_nan() || b.is_nan(),  // NLT_UQ
@@ -42,8 +42,8 @@ pub fn cmp_predicate_f32(a: f32, b: f32, pred: u8) -> bool {
         0x1A => !(a > b) || a.is_nan() || b.is_nan(),  // NGT_UQ
         0x1B => false,                                 // FALSE_OS
         0x1C => a != b || a.is_nan() || b.is_nan(),    // NEQ_OS
-        0x1D => a >= b || a.is_nan() || b.is_nan(),    // GE_OQ
-        0x1E => a > b || a.is_nan() || b.is_nan(),     // GT_OQ
+        0x1D => a >= b,                                // GE_OQ
+        0x1E => a > b,                                 // GT_OQ
         0x1F => true,                                  // TRUE_US
         _ => false,
     }
@@ -69,8 +69,8 @@ pub fn cmp_predicate_f64(a: f64, b: f64, pred: u8) -> bool {
         0x0E => a > b,
         0x0F => true,
         0x10 => a == b,
-        0x11 => a < b || a.is_nan() || b.is_nan(),
-        0x12 => a <= b || a.is_nan() || b.is_nan(),
+        0x11 => a < b,
+        0x12 => a <= b,
         0x13 => a.is_nan() || b.is_nan(),
         0x14 => a != b,
         0x15 => !(a < b) || a.is_nan() || b.is_nan(),
@@ -81,8 +81,8 @@ pub fn cmp_predicate_f64(a: f64, b: f64, pred: u8) -> bool {
         0x1A => !(a > b) || a.is_nan() || b.is_nan(),
         0x1B => false,
         0x1C => a != b || a.is_nan() || b.is_nan(),
-        0x1D => a >= b || a.is_nan() || b.is_nan(),
-        0x1E => a > b || a.is_nan() || b.is_nan(),
+        0x1D => a >= b,
+        0x1E => a > b,
         0x1F => true,
         _ => false,
     }
