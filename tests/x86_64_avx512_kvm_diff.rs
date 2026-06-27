@@ -8730,6 +8730,108 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // Crypto edge operands exercise exact zero/all-one vectors on EVEX zmm
+    // paths, complementing the address-form and width coverage above.
+    for &(label, asm, feat) in &[
+        (
+            "vgf2p8mulb_gfni_crypto_edge_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvgf2p8mulb %zmm2, %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vgf2p8mulb_gfni_crypto_edge_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvgf2p8mulb 64(%rax), %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vgf2p8affineqb_gfni_crypto_edge_imm0_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvgf2p8affineqb $0x00, %zmm2, %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vgf2p8affineqb_gfni_crypto_edge_immff_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvgf2p8affineqb $0xff, 64(%rax), %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vgf2p8affineinvqb_gfni_crypto_edge_imm0_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvgf2p8affineinvqb $0x00, %zmm2, %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vgf2p8affineinvqb_gfni_crypto_edge_immff_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvgf2p8affineinvqb $0xff, 64(%rax), %zmm3, %zmm1",
+            Gfni,
+        ),
+        (
+            "vaesenc_vaes_crypto_edge_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvaesenc %zmm2, %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesenc_vaes_crypto_edge_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvaesenc 64(%rax), %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesenclast_vaes_crypto_edge_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvaesenclast %zmm2, %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesenclast_vaes_crypto_edge_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvaesenclast 64(%rax), %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesdec_vaes_crypto_edge_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvaesdec %zmm2, %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesdec_vaes_crypto_edge_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvaesdec 64(%rax), %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesdeclast_vaes_crypto_edge_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvaesdeclast %zmm2, %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vaesdeclast_vaes_crypto_edge_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvaesdeclast 64(%rax), %zmm3, %zmm1",
+            Vaes,
+        ),
+        (
+            "vpclmulqdq_vpclmulqdq_crypto_edge_ll_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpclmulqdq $0x00, %zmm2, %zmm3, %zmm1",
+            Vpclmulqdq,
+        ),
+        (
+            "vpclmulqdq_vpclmulqdq_crypto_edge_hl_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpclmulqdq $0x01, 64(%rax), %zmm3, %zmm1",
+            Vpclmulqdq,
+        ),
+        (
+            "vpclmulqdq_vpclmulqdq_crypto_edge_lh_zero_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpclmulqdq $0x10, %zmm2, %zmm3, %zmm1",
+            Vpclmulqdq,
+        ),
+        (
+            "vpclmulqdq_vpclmulqdq_crypto_edge_hh_allones_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpclmulqdq $0x11, 64(%rax), %zmm3, %zmm1",
+            Vpclmulqdq,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded AVX-512 opmask moves. These exercise all KMOV transfer
     // classes: k<-mem, k<-k, mem<-k, k<-GPR, and GPR<-k across b/w/d/q widths.
     for &(label, asm, feat) in &[
@@ -15912,7 +16014,7 @@ fn avx512_kvm_gfni_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Gfni)
         .collect();
-    assert_eq!(cases.len(), 84, "unexpected GFNI corpus size");
+    assert_eq!(cases.len(), 90, "unexpected GFNI corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -15929,10 +16031,10 @@ fn avx512_kvm_gfni_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Gfni),
-        84,
+        90,
         "all GFNI cases should run"
     );
-    assert_eq!(tally.compared, 84, "all GFNI cases should compare");
+    assert_eq!(tally.compared, 90, "all GFNI cases should compare");
 }
 
 #[test]
@@ -15941,7 +16043,7 @@ fn avx512_kvm_vaes_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Vaes)
         .collect();
-    assert_eq!(cases.len(), 72, "unexpected VAES corpus size");
+    assert_eq!(cases.len(), 80, "unexpected VAES corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -15958,10 +16060,10 @@ fn avx512_kvm_vaes_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Vaes),
-        72,
+        80,
         "all VAES cases should run"
     );
-    assert_eq!(tally.compared, 72, "all VAES cases should compare");
+    assert_eq!(tally.compared, 80, "all VAES cases should compare");
 }
 
 #[test]
@@ -15970,7 +16072,7 @@ fn avx512_kvm_vpclmulqdq_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Vpclmulqdq)
         .collect();
-    assert_eq!(cases.len(), 49, "unexpected VPCLMULQDQ corpus size");
+    assert_eq!(cases.len(), 53, "unexpected VPCLMULQDQ corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -15993,12 +16095,60 @@ fn avx512_kvm_vpclmulqdq_crypto_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Vpclmulqdq),
-        49,
+        53,
         "all VPCLMULQDQ cases should run"
     );
     assert_eq!(
-        tally.compared, 49,
+        tally.compared, 53,
         "all VPCLMULQDQ cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_crypto_edge_operand_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_crypto_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 18, "unexpected crypto edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on crypto edge operand cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a crypto edge operand case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "crypto edge operand corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "crypto edge operand cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Gfni),
+        6,
+        "all GFNI edge operand cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vaes),
+        8,
+        "all VAES edge operand cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vpclmulqdq),
+        4,
+        "all VPCLMULQDQ edge operand cases should run"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all crypto edge operand cases should compare"
     );
 }
 
