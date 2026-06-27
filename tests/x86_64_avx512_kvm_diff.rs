@@ -5086,6 +5086,40 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE4.1 complementary operand forms exercise the alternate
+    // register/memory decoder paths for the 0F38 sign/zero-extend, qword
+    // compare, and signed/unsigned min/max families.
+    for &(label, asm) in &[
+        ("pmovsxbw_sse41_operand_mem", "pmovsxbw 32(%rax), %xmm1"),
+        ("pmovsxbd_sse41_operand_reg", "pmovsxbd %xmm2, %xmm1"),
+        ("pmovsxbq_sse41_operand_mem", "pmovsxbq 32(%rax), %xmm1"),
+        ("pmovsxwd_sse41_operand_reg", "pmovsxwd %xmm2, %xmm1"),
+        ("pmovsxwq_sse41_operand_mem", "pmovsxwq 32(%rax), %xmm1"),
+        ("pmovsxdq_sse41_operand_reg", "pmovsxdq %xmm2, %xmm1"),
+        ("pmovzxbw_sse41_operand_mem", "pmovzxbw 32(%rax), %xmm1"),
+        ("pmovzxbd_sse41_operand_reg", "pmovzxbd %xmm2, %xmm1"),
+        ("pmovzxbq_sse41_operand_mem", "pmovzxbq 32(%rax), %xmm1"),
+        ("pmovzxwd_sse41_operand_reg", "pmovzxwd %xmm2, %xmm1"),
+        ("pmovzxwq_sse41_operand_mem", "pmovzxwq 32(%rax), %xmm1"),
+        ("pmovzxdq_sse41_operand_reg", "pmovzxdq %xmm2, %xmm1"),
+        ("pcmpeqq_sse41_operand_mem", "pcmpeqq 32(%rax), %xmm1"),
+        ("pminsb_sse41_operand_mem", "pminsb 32(%rax), %xmm1"),
+        ("pminsd_sse41_operand_reg", "pminsd %xmm2, %xmm1"),
+        ("pminuw_sse41_operand_mem", "pminuw 32(%rax), %xmm1"),
+        ("pminud_sse41_operand_reg", "pminud %xmm2, %xmm1"),
+        ("pmaxsb_sse41_operand_mem", "pmaxsb 32(%rax), %xmm1"),
+        ("pmaxsd_sse41_operand_reg", "pmaxsd %xmm2, %xmm1"),
+        ("pmaxuw_sse41_operand_mem", "pmaxuw 32(%rax), %xmm1"),
+        ("pmaxud_sse41_operand_reg", "pmaxud %xmm2, %xmm1"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse41,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE4.1 0F3A immediate/control forms cover rounding modes, blends,
     // dot products, byte SAD, extract-to-GPR/memory, and insert-from-GPR/memory.
     for &(label, asm, profile) in &[
@@ -10546,6 +10580,48 @@ fn avx512_kvm_scalar_convert_width_corpus() {
     assert_eq!(
         tally.compared, 12,
         "all scalar conversion width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_sse41_operand_form_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse41_operand_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        21,
+        "unexpected SSE4.1 operand-form corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SSE4.1 operand-form cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE4.1 operand-form case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE4.1 operand-form corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE4.1 operand-form cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        21,
+        "all SSE4.1 operand-form cases should run"
+    );
+    assert_eq!(
+        tally.compared, 21,
+        "all SSE4.1 operand-form cases should compare"
     );
 }
 
