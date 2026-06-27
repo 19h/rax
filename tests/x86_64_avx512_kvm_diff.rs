@@ -107,6 +107,10 @@ enum Feat {
     AvxVnni,
     /// SHA-NI XMM crypto/message-schedule instructions.
     Sha,
+    /// MOVDIRI direct stores from GPR to memory.
+    Movdiri,
+    /// MOVDIR64B 64-byte direct stores.
+    Movdir64b,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -142,6 +146,8 @@ impl Feat {
             Feat::Base => "base",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sha => "sha_ni",
+            Feat::Movdiri => "movdiri",
+            Feat::Movdir64b => "movdir64b",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -160,6 +166,8 @@ impl Feat {
         &[
             Feat::AvxVnni,
             Feat::Sha,
+            Feat::Movdiri,
+            Feat::Movdir64b,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -183,6 +191,8 @@ struct HostFeatures {
     vl: bool,
     avx_vnni: bool,
     sha: bool,
+    movdiri: bool,
+    movdir64b: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -206,6 +216,8 @@ impl HostFeatures {
             vl: is_x86_feature_detected!("avx512vl"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sha: host_cpu_flag("sha_ni"),
+            movdiri: host_cpu_flag("movdiri"),
+            movdir64b: host_cpu_flag("movdir64b"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -229,6 +241,8 @@ impl HostFeatures {
             Feat::Vl => self.vl,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sha => self.sha,
+            Feat::Movdiri => self.movdiri,
+            Feat::Movdir64b => self.movdir64b,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -3514,6 +3528,32 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // MOVDIR direct stores. The harness compares the scratch page, so these
+    // cases exercise the architectural memory side effects against silicon.
+    for &(label, asm, feat) in &[
+        ("movdiri_m32_r8d_base", "movdiri %r8d, (%rax)", Movdiri),
+        ("movdiri_m64_r8_disp", "movdiri %r8, 8(%rax)", Movdiri),
+        ("movdiri_m32_eax_disp", "movdiri %eax, 16(%rax)", Movdiri),
+        ("movdiri_m64_rax_disp", "movdiri %rax, 32(%rax)", Movdiri),
+        (
+            "movdir64b_scratch_64_to_0",
+            "movdir64b 64(%rax), %rax",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_scratch_128_to_0",
+            "movdir64b 128(%rax), %rax",
+            Movdir64b,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -3630,7 +3670,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+sha"
+    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -3685,6 +3725,17 @@ fn assemble(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
         return None;
     }
     parse_encoding(&String::from_utf8_lossy(&output.stdout))
+}
+
+fn legacy_0f_encoding(op: &[u8]) -> bool {
+    let mut i = 0;
+    while matches!(op.get(i), Some(0x66 | 0x67 | 0xf2 | 0xf3)) {
+        i += 1;
+    }
+    if matches!(op.get(i), Some(0x40..=0x4f)) {
+        i += 1;
+    }
+    matches!(op.get(i), Some(0x0f))
 }
 
 // ---------------------------------------------------------------------------
@@ -3768,12 +3819,12 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). SHA-NI is intentionally legacy 0F38/0F3A.
-        let sha_legacy = case.feat == Feat::Sha
-            && (matches!(op.first(), Some(0x0f))
-                || matches!(op.as_slice(), [0x40..=0x4f, 0x0f, ..]));
+        // are VEX-encoded (0xC4/0xC5). SHA-NI and MOVDIR are intentionally
+        // legacy 0F-family encodings.
+        let legacy_allowed = matches!(case.feat, Feat::Sha | Feat::Movdiri | Feat::Movdir64b)
+            && legacy_0f_encoding(&op);
         let expected_encoding =
-            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || sha_legacy;
+            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
         assert!(
             expected_encoding,
             "{}: unexpected encoding class, got {:02x?}",
