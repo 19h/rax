@@ -5133,6 +5133,62 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // SSSE3 edge forms around byte-shuffle high-bit masking, PALIGNR boundary
+    // counts, self-sign/absolute operations, and MMX encodings made visible by
+    // storing the MMX result before EMMS.
+    for &(label, asm) in &[
+        (
+            "pshufb_ssse3_edge_xmm_mem_highbits",
+            "pshufb 48(%rax), %xmm1",
+        ),
+        ("pshufb_ssse3_edge_xmm_self_mask", "pshufb %xmm1, %xmm1"),
+        (
+            "palignr_ssse3_edge_xmm_imm0_reg",
+            "palignr $0, %xmm2, %xmm1",
+        ),
+        (
+            "palignr_ssse3_edge_xmm_imm15_mem",
+            "palignr $15, 32(%rax), %xmm1",
+        ),
+        (
+            "palignr_ssse3_edge_xmm_imm16_reg",
+            "palignr $16, %xmm2, %xmm1",
+        ),
+        (
+            "palignr_ssse3_edge_xmm_imm31_mem",
+            "palignr $31, 32(%rax), %xmm1",
+        ),
+        (
+            "palignr_ssse3_edge_xmm_imm32_reg",
+            "palignr $32, %xmm2, %xmm1",
+        ),
+        ("psignb_ssse3_edge_xmm_self", "psignb %xmm1, %xmm1"),
+        ("psignw_ssse3_edge_xmm_self", "psignw %xmm1, %xmm1"),
+        ("psignd_ssse3_edge_xmm_self", "psignd %xmm1, %xmm1"),
+        ("pabsb_ssse3_edge_xmm_mem", "pabsb 32(%rax), %xmm1"),
+        ("pabsw_ssse3_edge_xmm_self", "pabsw %xmm1, %xmm1"),
+        ("pabsd_ssse3_edge_xmm_mem", "pabsd 32(%rax), %xmm1"),
+        (
+            "pshufb_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\npshufb 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
+        ),
+        (
+            "pmaddubsw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\npmaddubsw 40(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+        ),
+        (
+            "palignr_ssse3_edge_mmx_imm7_store",
+            "movq 32(%rax), %mm0\npalignr $7, 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Ssse3,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE4.1 blend forms use implicit XMM0 masks; PTEST exercises
     // status-flag writes in the same legacy 0F38 map.
     for &(label, asm, profile) in &[
@@ -14185,6 +14241,38 @@ fn avx512_kvm_sse3_corpus() {
         "SSE3 cases should not feature-skip"
     );
     assert_eq!(tally.compared, 20, "all SSE3 cases should compare");
+}
+
+#[test]
+fn avx512_kvm_ssse3_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_ssse3_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 16, "unexpected SSSE3 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSSE3 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSSE3 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSSE3 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSSE3 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Ssse3),
+        16,
+        "all SSSE3 edge cases should run"
+    );
+    assert_eq!(tally.compared, 16, "all SSSE3 edge cases should compare");
 }
 
 #[test]

@@ -278,7 +278,7 @@ impl X86_64Vcpu {
                 let imm8 = ctx.consume_u8()?;
 
                 if ctx.operand_size_override {
-                    // XMM version: concatenate dst:src (256 bits), shift right by imm8 bytes
+                    // XMM version: concatenate dst:src (256 bits), shift right by imm8 bytes.
                     let xmm_dst = reg as usize;
                     let (src_lo, src_hi) = if is_memory {
                         (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -292,6 +292,9 @@ impl X86_64Vcpu {
                     if shift >= 256 {
                         self.regs.xmm[xmm_dst][0] = 0;
                         self.regs.xmm[xmm_dst][1] = 0;
+                    } else if shift == 0 {
+                        self.regs.xmm[xmm_dst][0] = src_lo;
+                        self.regs.xmm[xmm_dst][1] = src_hi;
                     } else if shift >= 128 {
                         // Shift only uses dst bits
                         let s = shift - 128;
@@ -320,7 +323,6 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm_dst][0] = (src_lo >> shift) | (src_hi << (64 - shift));
                         self.regs.xmm[xmm_dst][1] = (src_hi >> shift) | (dst_lo << (64 - shift));
                     }
-                    // shift == 0: no change needed
                 } else {
                     // MMX version: concatenate dst:src (128 bits), shift right by imm8 bytes
                     let mm_dst = reg as usize & 0x7;
@@ -334,12 +336,13 @@ impl X86_64Vcpu {
                     let shift = (imm8 as usize) * 8;
                     if shift >= 128 {
                         self.regs.mm[mm_dst] = 0;
+                    } else if shift == 0 {
+                        self.regs.mm[mm_dst] = src;
                     } else if shift >= 64 {
                         self.regs.mm[mm_dst] = dst >> (shift - 64);
                     } else if shift > 0 {
                         self.regs.mm[mm_dst] = (src >> shift) | (dst << (64 - shift));
                     }
-                    // shift == 0: no change
                 }
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
