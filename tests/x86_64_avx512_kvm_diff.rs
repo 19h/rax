@@ -10989,6 +10989,28 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        ("crc32_crc32_edge_same_r32_b", "crc32b %r8b, %r8d"),
+        ("crc32_crc32_edge_same_r32_w", "crc32w %r8w, %r8d"),
+        ("crc32_crc32_edge_same_r32_l", "crc32l %r8d, %r8d"),
+        ("crc32_crc32_edge_same_r64_b", "crc32b %r8b, %r8"),
+        ("crc32_crc32_edge_same_r64_q", "crc32q %r8, %r8"),
+        ("crc32_crc32_edge_high8_src", "crc32b %ch, %edx"),
+        ("crc32_crc32_edge_r32_src_high_reg", "crc32l %r9d, %r8d"),
+        ("crc32_crc32_edge_r64_src_high_reg", "crc32q %r9, %r8"),
+        ("crc32_crc32_edge_m8_unaligned", "crc32b 7(%rax), %r8d"),
+        ("crc32_crc32_edge_m64_unaligned", "crc32q 9(%rax), %r8"),
+        ("crc32_crc32_edge_dest_r9d", "crc32l %r8d, %r9d"),
+        ("crc32_crc32_edge_dest_r9", "crc32q %r8, %r9"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Crc32,
+            profile: Int,
+        });
+    }
+
     // POPCNT scalar forms. These cover 16/32/64-bit destinations, register and
     // memory sources, plus the architectural flag result.
     for &(label, asm) in &[
@@ -13739,6 +13761,41 @@ fn avx512_kvm_scalar_crc_movbe_operand_form_corpus() {
     assert_eq!(
         tally.compared, 14,
         "all scalar CRC/MOVBE operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_crc32_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_crc32_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected CRC32 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on CRC32 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a CRC32 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "CRC32 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "CRC32 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Crc32),
+        12,
+        "all CRC32 edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all CRC32 edge cases should compare"
     );
 }
 
