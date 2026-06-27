@@ -115,6 +115,8 @@ enum Feat {
     Adx,
     /// MOVBE endian-swapping loads/stores.
     Movbe,
+    /// SSE4.2 CRC32C accumulator instructions.
+    Crc32,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -154,6 +156,7 @@ impl Feat {
             Feat::Movdir64b => "movdir64b",
             Feat::Adx => "adx",
             Feat::Movbe => "movbe",
+            Feat::Crc32 => "sse4_2_crc32",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -176,6 +179,7 @@ impl Feat {
             Feat::Movdir64b,
             Feat::Adx,
             Feat::Movbe,
+            Feat::Crc32,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -203,6 +207,7 @@ struct HostFeatures {
     movdir64b: bool,
     adx: bool,
     movbe: bool,
+    sse4_2: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -230,6 +235,7 @@ impl HostFeatures {
             movdir64b: host_cpu_flag("movdir64b"),
             adx: host_cpu_flag("adx"),
             movbe: host_cpu_flag("movbe"),
+            sse4_2: is_x86_feature_detected!("sse4.2"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -257,6 +263,7 @@ impl HostFeatures {
             Feat::Movdir64b => self.movdir64b,
             Feat::Adx => self.adx,
             Feat::Movbe => self.movbe,
+            Feat::Crc32 => self.sse4_2,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -3605,6 +3612,26 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
+    // unchanged, with source coverage across byte/word/dword/qword and memory.
+    for &(label, asm) in &[
+        ("crc32_r32_m8", "crc32b (%rax), %r8d"),
+        ("crc32_r32_m16", "crc32w (%rax), %r8d"),
+        ("crc32_r32_m32", "crc32l (%rax), %r8d"),
+        ("crc32_r64_m64", "crc32q (%rax), %r8"),
+        ("crc32_r32_al", "crc32b %al, %r8d"),
+        ("crc32_r32_ax", "crc32w %ax, %r8d"),
+        ("crc32_r32_eax", "crc32l %eax, %r8d"),
+        ("crc32_r64_rax", "crc32q %rax, %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Crc32,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -3721,7 +3748,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b,+adx,+movbe"
+    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -3870,11 +3897,11 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). SHA-NI, MOVDIR, ADX, and MOVBE are
-        // intentionally legacy 0F-family encodings.
+        // are VEX-encoded (0xC4/0xC5). SHA-NI, MOVDIR, ADX, MOVBE, and CRC32
+        // are intentionally legacy 0F-family encodings.
         let legacy_allowed = matches!(
             case.feat,
-            Feat::Sha | Feat::Movdiri | Feat::Movdir64b | Feat::Adx | Feat::Movbe
+            Feat::Sha | Feat::Movdiri | Feat::Movdir64b | Feat::Adx | Feat::Movbe | Feat::Crc32
         ) && legacy_0f_encoding(&op);
         let expected_encoding =
             matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
