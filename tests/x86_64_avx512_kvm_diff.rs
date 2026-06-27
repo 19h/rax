@@ -188,6 +188,8 @@ enum Feat {
     HintNop,
     /// PREFETCHW write-intent cache hint.
     Prefetchw,
+    /// MONITOR address-range monitoring setup instruction.
+    Monitor,
     /// FSGSBASE FS/GS base read/write instructions.
     Fsgsbase,
     /// Privileged control-register and machine-status-word instructions.
@@ -324,6 +326,7 @@ impl Feat {
             Feat::Cldemote => "cldemote",
             Feat::HintNop => "hint_nop",
             Feat::Prefetchw => "prefetchw",
+            Feat::Monitor => "monitor",
             Feat::Fsgsbase => "fsgsbase",
             Feat::ControlReg => "control_reg",
             Feat::DescriptorTable => "descriptor_table",
@@ -401,6 +404,7 @@ impl Feat {
             Feat::Cldemote,
             Feat::HintNop,
             Feat::Prefetchw,
+            Feat::Monitor,
             Feat::Fsgsbase,
             Feat::ControlReg,
             Feat::DescriptorTable,
@@ -478,6 +482,7 @@ struct HostFeatures {
     clwb: bool,
     cldemote: bool,
     prefetchw: bool,
+    monitor: bool,
     fsgsbase: bool,
     wbnoinvd: bool,
     smap: bool,
@@ -545,6 +550,7 @@ impl HostFeatures {
             clwb: host_cpu_flag("clwb"),
             cldemote: host_cpu_flag("cldemote"),
             prefetchw: host_cpu_flag("3dnowprefetch") || host_cpu_flag("prefetchw"),
+            monitor: host_cpu_flag("monitor"),
             fsgsbase: host_cpu_flag("fsgsbase"),
             wbnoinvd: host_cpu_flag("wbnoinvd"),
             smap: host_cpu_flag("smap"),
@@ -617,6 +623,7 @@ impl HostFeatures {
             Feat::Cldemote => self.cldemote,
             Feat::HintNop => true,
             Feat::Prefetchw => self.prefetchw,
+            Feat::Monitor => self.monitor,
             Feat::Fsgsbase => self.fsgsbase,
             Feat::ControlReg => true,
             Feat::DescriptorTable => true,
@@ -7064,6 +7071,35 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // MONITOR arms an address range for subsequent MWAIT. The monitor setup has
+    // no directly visible architectural side effect, so these cases exercise
+    // operand setup, hint registers, flags, and the addr32 prefix without MWAIT.
+    for &(label, asm) in &[
+        (
+            "monitor_scratch_base",
+            "xorl %ecx, %ecx\nxorl %edx, %edx\nmonitor",
+        ),
+        (
+            "monitor_scratch_offset",
+            "leaq 64(%rax), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor",
+        ),
+        (
+            "monitor_preserves_cmp_flags",
+            "xorl %ecx, %ecx\nxorl %edx, %edx\ncmpq %r8, %r9\nmonitor",
+        ),
+        (
+            "monitor_addr32_zero_ext_address",
+            "movabsq $0xffff000000004020, %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\naddr32 monitor",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Monitor,
+            profile: Int,
+        });
+    }
+
     // Serialization and user-level wait instructions. Their ordering and
     // monitor/wait side effects are not directly visible, so these snippets
     // bracket them with deterministic GPR, flag, and scratch-visible state.
@@ -8394,6 +8430,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Cldemote
                 | Feat::HintNop
                 | Feat::Prefetchw
+                | Feat::Monitor
                 | Feat::Fsgsbase
                 | Feat::ControlReg
                 | Feat::DescriptorTable
@@ -8668,6 +8705,43 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
             tally.compared, 11,
             "all non-PREFETCHW hint cases should compare"
         );
+    }
+}
+
+#[test]
+fn avx512_kvm_monitor_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Monitor)
+        .collect();
+    assert_eq!(cases.len(), 4, "unexpected MONITOR corpus size");
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Monitor) {
+        eprintln!("[skip] host lacks MONITOR support; MONITOR cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    if host.supports(Feat::Monitor) {
+        assert_eq!(tally.faulted, 0, "silicon faulted on MONITOR cases");
+        assert_eq!(tally.interp_err, 0, "rax failed to execute a MONITOR case");
+        assert_eq!(
+            tally.skipped_asm, 0,
+            "MONITOR corpus produced assembler-rejected cases"
+        );
+        assert_eq!(
+            tally.skipped_feature, 0,
+            "MONITOR cases should not feature-skip"
+        );
+        assert_eq!(tally.compared, 4, "all MONITOR cases should compare");
+    } else {
+        assert_eq!(
+            tally.skipped_feature, 4,
+            "all MONITOR cases should feature-skip"
+        );
+        assert_eq!(tally.compared, 0, "MONITOR cases should not run");
     }
 }
 
