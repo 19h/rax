@@ -6555,7 +6555,7 @@ fn fp16_to_f32(h: u16) -> f32 {
                 e += 1;
             }
             m &= 0x3FF; // Remove implicit bit
-            let new_exp = (127 - 15 - e) as u32;
+            let new_exp = (127 - 14 - e) as u32;
             (sign << 31) | (new_exp << 23) | (m << 13)
         }
     } else if exp == 0x1F {

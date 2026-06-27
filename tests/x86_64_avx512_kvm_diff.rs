@@ -1321,6 +1321,12 @@ enum InputProfile {
     F32SqrtEdge,
     /// f64 analogue.
     F64SqrtEdge,
+    /// FP16 values covering zeros, infinities, quiet NaNs, denormals, and
+    /// saturated finite magnitudes without relying on signaling-NaN behavior.
+    F16Edge,
+    /// FP16 values that keep sqrt exact-comparable while still stressing zeros,
+    /// denormals, infinities, and large finite magnitudes.
+    F16SqrtEdge,
 }
 
 /// "Interesting" f32 bit patterns: +0, -0, 1, -1, +Inf, -Inf, qNaN, sNaN,
@@ -1393,6 +1399,16 @@ const F16_VALUES: [u16; 16] = [
     0x4600, 0x4800, 0x4900, 0x4a00,
 ];
 
+const F16_EDGES: [u16; 16] = [
+    0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x7e00, 0x0001, 0x0400, 0x7bff, 0x3800, 0x4300,
+    0x4000, 0xc000, 0x3555, 0x7d00,
+];
+
+const F16_SQRT_EDGES: [u16; 16] = [
+    0x0000, 0x8000, 0x3c00, 0x4400, 0x7c00, 0x0001, 0x0002, 0x0400, 0x7bff, 0x3800, 0x4300, 0x4000,
+    0x4880, 0x4c00, 0x3555, 0x7b00,
+];
+
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
     for (i, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -1431,6 +1447,24 @@ fn f16_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for lane in 0..32 {
         let value = F16_VALUES[(reg * 7 + lane) % F16_VALUES.len()];
+        bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f16_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..32 {
+        let value = F16_EDGES[(reg * 5 + lane) % F16_EDGES.len()];
+        bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn f16_sqrt_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..32 {
+        let value = F16_SQRT_EDGES[(reg * 5 + lane) % F16_SQRT_EDGES.len()];
         bytes[lane * 2..lane * 2 + 2].copy_from_slice(&value.to_le_bytes());
     }
     bytes
@@ -1482,6 +1516,8 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::F64Edge => f64_edge_zmm(reg),
         InputProfile::F32SqrtEdge => f32_sqrt_edge_zmm(reg),
         InputProfile::F64SqrtEdge => f64_sqrt_edge_zmm(reg),
+        InputProfile::F16Edge => f16_edge_zmm(reg),
+        InputProfile::F16SqrtEdge => f16_sqrt_edge_zmm(reg),
     }
 }
 
@@ -3874,6 +3910,38 @@ fn irregular_cases() -> Vec<Case> {
                 profile,
             });
         }
+    }
+
+    for &(label, asm, profile) in &[
+        ("vminph_fp16_edge_minmax_reg", "vminph %zmm2, %zmm3, %zmm1", F16Edge),
+        ("vminph_fp16_edge_minmax_mem", "vminph 64(%rax), %zmm3, %zmm1", F16Edge),
+        ("vmaxph_fp16_edge_minmax_reg", "vmaxph %zmm2, %zmm3, %zmm1", F16Edge),
+        ("vmaxph_fp16_edge_minmax_mem", "vmaxph 64(%rax), %zmm3, %zmm1", F16Edge),
+        ("vminsh_fp16_edge_minmax_reg", "vminsh %xmm2, %xmm3, %xmm1", F16Edge),
+        ("vminsh_fp16_edge_minmax_mem", "vminsh 22(%rax), %xmm3, %xmm1", F16Edge),
+        ("vmaxsh_fp16_edge_minmax_reg", "vmaxsh %xmm2, %xmm3, %xmm1", F16Edge),
+        ("vmaxsh_fp16_edge_minmax_mem", "vmaxsh 22(%rax), %xmm3, %xmm1", F16Edge),
+        ("vsqrtph_fp16_edge_sqrt_reg", "vsqrtph %zmm3, %zmm1", F16SqrtEdge),
+        ("vsqrtph_fp16_edge_sqrt_mem", "vsqrtph 64(%rax), %zmm1", F16SqrtEdge),
+        ("vsqrtsh_fp16_edge_sqrt_reg", "vsqrtsh %xmm2, %xmm3, %xmm1", F16SqrtEdge),
+        ("vsqrtsh_fp16_edge_sqrt_mem", "vsqrtsh 32(%rax), %xmm3, %xmm1", F16SqrtEdge),
+        ("vcomish_fp16_edge_compare_qnan_mem", "vcomish 22(%rax), %xmm1", F16Edge),
+        ("vucomish_fp16_edge_compare_qnan_mem", "vucomish 22(%rax), %xmm1", F16Edge),
+        ("vcmpph_fp16_edge_compare_unord_reg", "vcmpph $0x03, %zmm2, %zmm3, %k5", F16Edge),
+        ("vcmpph_fp16_edge_compare_ord_mem", "vcmpph $0x07, 64(%rax), %zmm3, %k5", F16Edge),
+        ("vcmpsh_fp16_edge_compare_unord_reg", "vcmpsh $0x03, %xmm2, %xmm3, %k5", F16Edge),
+        ("vcmpsh_fp16_edge_compare_ord_mem", "vcmpsh $0x07, 22(%rax), %xmm3, %k5", F16Edge),
+        ("vfpclassph_fp16_edge_class_reg", "vfpclassph $0x7f, %zmm3, %k5", F16Edge),
+        ("vfpclassph_fp16_edge_class_merge", "vfpclassph $0x7f, %zmm3, %k5 {%k1}", F16Edge),
+        ("vfpclasssh_fp16_edge_class_reg", "vfpclasssh $0x7f, %xmm2, %k5", F16Edge),
+        ("vfpclasssh_fp16_edge_class_mem", "vfpclasssh $0x7f, 22(%rax), %k5", F16Edge),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Fp16,
+            profile,
+        });
     }
 
     // Narrowing stores write partial vectors to scratch memory. Memory
@@ -14230,6 +14298,44 @@ fn avx512_kvm_f16c_corpus() {
         "all F16C cases should run"
     );
     assert_eq!(tally.compared, 22, "all F16C cases should compare");
+}
+
+#[test]
+fn avx512_kvm_fp16_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_fp16_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected AVX-512-FP16 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512-FP16 edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512-FP16 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512-FP16 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512-FP16 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fp16),
+        22,
+        "all AVX-512-FP16 edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 22,
+        "all AVX-512-FP16 edge cases should compare"
+    );
 }
 
 #[test]
