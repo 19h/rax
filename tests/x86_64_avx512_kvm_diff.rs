@@ -109,6 +109,8 @@ enum Feat {
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
     Pclmulqdq,
+    /// F16C VEX half/single-precision conversion instructions.
+    F16c,
     /// SHA-NI XMM crypto/message-schedule instructions.
     Sha,
     /// MOVDIRI direct stores from GPR to memory.
@@ -159,6 +161,7 @@ impl Feat {
             Feat::AvxVnni => "avx_vnni",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
+            Feat::F16c => "f16c",
             Feat::Sha => "sha_ni",
             Feat::Movdiri => "movdiri",
             Feat::Movdir64b => "movdir64b",
@@ -185,6 +188,7 @@ impl Feat {
             Feat::AvxVnni,
             Feat::Aes,
             Feat::Pclmulqdq,
+            Feat::F16c,
             Feat::Sha,
             Feat::Movdiri,
             Feat::Movdir64b,
@@ -216,6 +220,7 @@ struct HostFeatures {
     avx_vnni: bool,
     aes: bool,
     pclmulqdq: bool,
+    f16c: bool,
     sha: bool,
     movdiri: bool,
     movdir64b: bool,
@@ -247,6 +252,7 @@ impl HostFeatures {
             avx_vnni: host_cpu_flag("avx_vnni"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
+            f16c: host_cpu_flag("f16c"),
             sha: host_cpu_flag("sha_ni"),
             movdiri: host_cpu_flag("movdiri"),
             movdir64b: host_cpu_flag("movdir64b"),
@@ -278,6 +284,7 @@ impl HostFeatures {
             Feat::AvxVnni => self.avx_vnni,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
+            Feat::F16c => self.f16c,
             Feat::Sha => self.sha,
             Feat::Movdiri => self.movdiri,
             Feat::Movdir64b => self.movdir64b,
@@ -3839,6 +3846,68 @@ fn irregular_cases() -> Vec<Case> {
         profile: Int,
     });
 
+    // F16C VEX half/single-precision conversion forms are distinct from the
+    // AVX-512-FP16 EVEX conversion family above.
+    for &(label, asm, profile) in &[
+        (
+            "vcvtph2ps_f16c_xmm_reg",
+            "{vex} vcvtph2ps %xmm3, %xmm1",
+            F16,
+        ),
+        (
+            "vcvtph2ps_f16c_xmm_mem",
+            "{vex} vcvtph2ps (%rax), %xmm1",
+            F16,
+        ),
+        (
+            "vcvtph2ps_f16c_ymm_reg",
+            "{vex} vcvtph2ps %xmm3, %ymm1",
+            F16,
+        ),
+        (
+            "vcvtph2ps_f16c_ymm_mem",
+            "{vex} vcvtph2ps 16(%rax), %ymm1",
+            F16,
+        ),
+        (
+            "vcvtph2ps_f16c_ymm_high",
+            "{vex} vcvtph2ps %xmm10, %ymm9",
+            F16,
+        ),
+        (
+            "vcvtps2ph_f16c_xmm_reg",
+            "{vex} vcvtps2ph $0, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcvtps2ph_f16c_xmm_mem",
+            "{vex} vcvtps2ph $0, %xmm3, 32(%rax)",
+            F32,
+        ),
+        (
+            "vcvtps2ph_f16c_ymm_reg",
+            "{vex} vcvtps2ph $0, %ymm3, %xmm1",
+            F32,
+        ),
+        (
+            "vcvtps2ph_f16c_ymm_mem",
+            "{vex} vcvtps2ph $0, %ymm3, 48(%rax)",
+            F32,
+        ),
+        (
+            "vcvtps2ph_f16c_ymm_high",
+            "{vex} vcvtps2ph $0, %ymm10, %xmm9",
+            F32,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: F16c,
+            profile,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -4218,7 +4287,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
