@@ -7092,6 +7092,26 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Direct MOV moffs opcodes (A0-A3) carry an absolute offset operand and are
+    // distinct from the usual ModRM absolute-address encodings.
+    for &(label, asm) in &[
+        ("mov_core_moffs_load_al", "movabsb 0x4000, %al"),
+        ("mov_core_moffs_load_ax", "movabsw 0x4002, %ax"),
+        ("mov_core_moffs_load_eax", "movabsl 0x4004, %eax"),
+        ("mov_core_moffs_load_rax", "movabsq 0x4008, %rax"),
+        ("mov_core_moffs_store_al", "movabsb %al, 0x4010"),
+        ("mov_core_moffs_store_ax", "movabsw %ax, 0x4012"),
+        ("mov_core_moffs_store_eax", "movabsl %eax, 0x4014"),
+        ("mov_core_moffs_store_rax", "movabsq %rax, 0x4018"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Port I/O instructions. The KVM and interpreter test runners both satisfy
     // IN/INS exits with zero bytes and ignore OUT/OUTS payloads, so these cases
     // can compare register, pointer, REP-count, and scratch effects directly.
@@ -10513,6 +10533,33 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
         tally.compared, 9,
         "all stack-frame/flag-control cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_core_moffs_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_moffs_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected core moffs corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core moffs cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core moffs case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core moffs corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core moffs cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 8, "all core moffs cases should compare");
 }
 
 #[test]
