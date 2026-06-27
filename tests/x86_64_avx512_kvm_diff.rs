@@ -117,6 +117,8 @@ enum Feat {
     Sse2,
     /// Legacy SSSE3 byte/word shuffle, horizontal, sign, and abs instructions.
     Ssse3,
+    /// Legacy SSE4.1 blend and test instructions.
+    Sse41,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
@@ -177,6 +179,7 @@ impl Feat {
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
             Feat::Ssse3 => "ssse3",
+            Feat::Sse41 => "sse4_1",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
             Feat::F16c => "f16c",
@@ -210,6 +213,7 @@ impl Feat {
             Feat::Sse,
             Feat::Sse2,
             Feat::Ssse3,
+            Feat::Sse41,
             Feat::Aes,
             Feat::Pclmulqdq,
             Feat::F16c,
@@ -248,6 +252,7 @@ struct HostFeatures {
     sse: bool,
     sse2: bool,
     ssse3: bool,
+    sse4_1: bool,
     aes: bool,
     pclmulqdq: bool,
     f16c: bool,
@@ -286,6 +291,7 @@ impl HostFeatures {
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
             ssse3: is_x86_feature_detected!("ssse3"),
+            sse4_1: is_x86_feature_detected!("sse4.1"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
             f16c: host_cpu_flag("f16c"),
@@ -324,6 +330,7 @@ impl HostFeatures {
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
             Feat::Ssse3 => self.ssse3,
+            Feat::Sse41 => self.sse4_1,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
             Feat::F16c => self.f16c,
@@ -3856,6 +3863,26 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE4.1 blend forms use implicit XMM0 masks; PTEST exercises
+    // status-flag writes in the same legacy 0F38 map.
+    for &(label, asm, profile) in &[
+        ("pblendvb_sse41_reg", "pblendvb %xmm2, %xmm1", Int),
+        ("pblendvb_sse41_mem", "pblendvb 32(%rax), %xmm1", Int),
+        ("blendvps_sse41_reg", "blendvps %xmm2, %xmm1", F32),
+        ("blendvps_sse41_mem", "blendvps 32(%rax), %xmm1", F32),
+        ("blendvpd_sse41_reg", "blendvpd %xmm2, %xmm1", F64),
+        ("blendvpd_sse41_mem", "blendvpd 32(%rax), %xmm1", F64),
+        ("ptest_sse41_reg", "ptest %xmm2, %xmm1", Int),
+        ("ptest_sse41_mem", "ptest 32(%rax), %xmm1", Int),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse41,
+            profile,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -4681,7 +4708,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -4840,6 +4867,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Sse
                 | Feat::Sse2
                 | Feat::Ssse3
+                | Feat::Sse41
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
