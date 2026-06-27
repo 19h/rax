@@ -6590,6 +6590,39 @@ fn irregular_cases() -> Vec<Case> {
             "x87_fnstsw_memory_after_fld1",
             "fninit\nfld1\nfnstsw 32(%rax)\nfstpl 40(%rax)",
         ),
+        (
+            "x87_fincstp_fdecstp_visible_top",
+            "movabsq $0x4008000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x401c000000000000, %r8\nmovq %r8, 40(%rax)\nmovabsq $0x4026000000000000, %r8\nmovq %r8, 48(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfldl 48(%rax)\nfincstp\nfstl 56(%rax)\nfdecstp\nfstpl 64(%rax)",
+        ),
+        ("x87_fnclex_clean_status", "fninit\nfnclex\nfnstsw 32(%rax)"),
+        (
+            "x87_fclex_wait_clean_status",
+            "fninit\nfclex\nfnstsw 32(%rax)",
+        ),
+        (
+            "x87_fnstenv_fldenv_control_roundtrip",
+            "movw $0x0f7f, 32(%rax)\nfninit\nfldcw 32(%rax)\nfnstenv 96(%rax)\nfninit\nfldenv 96(%rax)\nfnstcw 34(%rax)\nmovq $0, 96(%rax)\nmovq $0, 104(%rax)\nmovq $0, 112(%rax)\nmovl $0, 120(%rax)",
+        ),
+        (
+            "x87_fstenv_alias_fldenv_control_roundtrip",
+            "movw $0x027f, 32(%rax)\nfninit\nfldcw 32(%rax)\nfstenv 96(%rax)\nfninit\nfldenv 96(%rax)\nfnstcw 34(%rax)\nmovq $0, 96(%rax)\nmovq $0, 104(%rax)\nmovq $0, 112(%rax)\nmovl $0, 120(%rax)",
+        ),
+        (
+            "x87_fldenv_manual_control_word",
+            "movq $0, 96(%rax)\nmovq $0, 104(%rax)\nmovq $0, 112(%rax)\nmovq $0, 120(%rax)\nmovw $0x0f7f, 96(%rax)\nfninit\nfldenv 96(%rax)\nfnstcw 32(%rax)",
+        ),
+        (
+            "x87_fnsave_frstor_stack_roundtrip",
+            "movabsq $0x402a000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x403d000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfnsave 128(%rax)\nfld1\nfrstor 128(%rax)\nfstpl 48(%rax)\nfstpl 56(%rax)\nmovq $0, 128(%rax)\nmovq $0, 136(%rax)\nmovq $0, 144(%rax)\nmovq $0, 152(%rax)\nmovq $0, 160(%rax)\nmovq $0, 168(%rax)\nmovq $0, 176(%rax)\nmovq $0, 184(%rax)\nmovq $0, 192(%rax)\nmovq $0, 200(%rax)\nmovq $0, 208(%rax)\nmovq $0, 216(%rax)\nmovq $0, 224(%rax)\nmovq $0, 232(%rax)",
+        ),
+        (
+            "x87_fnsave_reinitializes_fpu",
+            "fninit\nfld1\nfnsave 128(%rax)\nfnstcw 32(%rax)\nfnstsw 34(%rax)\nmovq $0, 128(%rax)\nmovq $0, 136(%rax)\nmovq $0, 144(%rax)\nmovq $0, 152(%rax)\nmovq $0, 160(%rax)\nmovq $0, 168(%rax)\nmovq $0, 176(%rax)\nmovq $0, 184(%rax)\nmovq $0, 192(%rax)\nmovq $0, 200(%rax)\nmovq $0, 208(%rax)\nmovq $0, 216(%rax)\nmovq $0, 224(%rax)\nmovq $0, 232(%rax)",
+        ),
+        (
+            "x87_ffree_full_stack_allows_push",
+            "fninit\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nffree %st(7)\nfldz\nfstpl 32(%rax)\nfnstsw 40(%rax)",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -8921,7 +8954,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 21, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 30, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -8932,7 +8965,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 21, "all x87 cases should compare");
+    assert_eq!(tally.compared, 30, "all x87 cases should compare");
 }
 
 #[test]
