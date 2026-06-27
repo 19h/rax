@@ -1311,14 +1311,19 @@ fn expand(base: &Base, out: &mut Vec<Case>) {
                     base.profile,
                 );
             }
-            // Memory r/m (only no-mask + merge, to bound counts).
+            // Memory r/m (only no-mask + merge, to bound counts). 512-bit
+            // packed vfpclass (KvI) accepts memory only as embedded broadcast,
+            // which is emitted below; the VL memory forms are valid.
+            let skip_plain_mem = w == 512 && matches!(base.form, Form::KvI(_));
             if matches!(mask, Mask::None | Mask::Merge) {
-                if let Some(asm) = emit_asm(base, w, mask, Rm::Mem, false) {
-                    push(
-                        format!("{}_{tag}_w{w}_{}_mem", base.mnem, mask_tag(mask)),
-                        asm,
-                        base.profile,
-                    );
+                if !skip_plain_mem {
+                    if let Some(asm) = emit_asm(base, w, mask, Rm::Mem, false) {
+                        push(
+                            format!("{}_{tag}_w{w}_{}_mem", base.mnem, mask_tag(mask)),
+                            asm,
+                            base.profile,
+                        );
+                    }
                 }
                 // Embedded broadcast (no-mask only).
                 if matches!(mask, Mask::None) {
@@ -3539,6 +3544,10 @@ fn avx512_kvm_generated_corpus() {
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a comparable case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "generated corpus produced assembler-rejected cases"
     );
     assert!(
         tally.compared > 800,
