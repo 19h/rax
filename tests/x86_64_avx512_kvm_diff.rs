@@ -5265,6 +5265,114 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // SSE4.2 string compares have unusual control-byte mode selection and
+    // implicit EAX/EDX length inputs on the explicit-length forms.
+    for &(label, asm) in &[
+        (
+            "pcmpistri_sse42_string_width_eqany_u8_reg",
+            "pcmpistri $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_string_width_ranges_u8_mem",
+            "pcmpistrm $0x04, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_string_width_eqeach_u8_neg_reg",
+            "pcmpistri $0x18, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_string_width_eqordered_u8_bitmask_mem",
+            "pcmpistrm $0x4c, 48(%rax), %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_string_width_ranges_i8_msb_reg",
+            "pcmpistri $0x46, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_string_width_eqany_u16_neg_reg",
+            "pcmpistrm $0x11, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_string_width_eqeach_u16_mem",
+            "pcmpistri $0x09, 64(%rax), %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_string_width_eqordered_i16_neg_bitmask_reg",
+            "pcmpistrm $0x5f, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqany_u8_len16_reg",
+            "movq %rax, %r10\nmovl $16, %eax\nmovl $16, %edx\npcmpestri $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqany_u8_len16_reg",
+            "movq %rax, %r10\nmovl $16, %eax\nmovl $16, %edx\npcmpestrm $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_ranges_u8_len16_mem",
+            "movq %rax, %r10\nmovl $16, %eax\nmovl $16, %edx\npcmpestri $0x04, 32(%r10), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_ranges_u8_len16_mem",
+            "movq %rax, %r10\nmovl $16, %eax\nmovl $16, %edx\npcmpestrm $0x04, 32(%r10), %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqeach_u8_lenneg_mem",
+            "movq %rax, %r10\nmovl $-9, %eax\nmovl $12, %edx\npcmpestri $0x18, 48(%r10), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqeach_u8_lenneg_mem",
+            "movq %rax, %r10\nmovl $-9, %eax\nmovl $12, %edx\npcmpestrm $0x18, 48(%r10), %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqordered_u8_len8_mem",
+            "movq %rax, %r10\nmovl $8, %eax\nmovl $15, %edx\npcmpestri $0x0c, 64(%r10), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqordered_u8_len8_bitmask_mem",
+            "movq %rax, %r10\nmovl $8, %eax\nmovl $15, %edx\npcmpestrm $0x4c, 64(%r10), %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqany_u16_len8_reg",
+            "movq %rax, %r10\nmovl $8, %eax\nmovl $8, %edx\npcmpestri $0x01, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqany_u16_len8_bitmask_reg",
+            "movq %rax, %r10\nmovl $8, %eax\nmovl $8, %edx\npcmpestrm $0x41, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_ranges_i16_lenneg_mem",
+            "movq %rax, %r10\nmovl $-4, %eax\nmovl $8, %edx\npcmpestri $0x17, 80(%r10), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_ranges_i16_lenneg_mem",
+            "movq %rax, %r10\nmovl $-4, %eax\nmovl $8, %edx\npcmpestrm $0x17, 80(%r10), %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqeach_i16_len4_msb_reg",
+            "movq %rax, %r10\nmovl $4, %eax\nmovl $4, %edx\npcmpestri $0x4b, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqeach_i16_len4_bitmask_reg",
+            "movq %rax, %r10\nmovl $4, %eax\nmovl $4, %edx\npcmpestrm $0x4b, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_string_width_eqordered_i16_len6_neg_mem",
+            "movq %rax, %r10\nmovl $6, %eax\nmovl $6, %edx\npcmpestri $0x1f, 96(%r10), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_string_width_eqordered_i16_len6_neg_bitmask_mem",
+            "movq %rax, %r10\nmovl $6, %eax\nmovl $6, %edx\npcmpestrm $0x5f, 96(%r10), %xmm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse42,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -10057,6 +10165,10 @@ fn case_rflags_mask(case: &Case) -> u64 {
         return RFLAGS_CF;
     }
 
+    if case.label.contains("_sse42_string_width_") {
+        return RFLAGS_CF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+    }
+
     // Logical integer ops define CF/PF/ZF/SF/OF and leave AF undefined.
     if matches!(
         mnem,
@@ -10556,8 +10668,11 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                     | Feat::Bmi1
                     | Feat::Lzcnt
             ) && legacy_0f_encoding(&op));
-        let expected_encoding =
-            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || legacy_allowed;
+        let sse42_string_setup_allowed = case.label.contains("_sse42_string_width_")
+            && op.windows(2).any(|bytes| bytes == [0x0f, 0x3a]);
+        let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
+            || legacy_allowed
+            || sse42_string_setup_allowed;
         assert!(
             expected_encoding,
             "{}: unexpected encoding class, got {:02x?}",
@@ -11883,6 +11998,41 @@ fn avx512_kvm_sse41_operand_form_corpus() {
     assert_eq!(
         tally.compared, 21,
         "all SSE4.1 operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_sse42_string_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse42_string_width_"))
+        .collect();
+    assert_eq!(cases.len(), 24, "unexpected SSE4.2 string corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE4.2 string cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE4.2 string case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE4.2 string corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE4.2 string cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse42),
+        24,
+        "all SSE4.2 string cases should run"
+    );
+    assert_eq!(
+        tally.compared, 24,
+        "all SSE4.2 string cases should compare"
     );
 }
 
