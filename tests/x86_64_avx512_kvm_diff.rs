@@ -191,6 +191,8 @@ enum Feat {
     DebugReg,
     /// Port I/O instructions and string I/O forms.
     Io,
+    /// Fast system-call transition instructions.
+    FastSyscall,
     /// Privileged cache invalidation/writeback instructions without CPUID gates.
     CacheInvd,
     /// WBNOINVD cache writeback without invalidation.
@@ -309,6 +311,7 @@ impl Feat {
             Feat::Msr => "msr",
             Feat::DebugReg => "debug_reg",
             Feat::Io => "io",
+            Feat::FastSyscall => "fast_syscall",
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
@@ -378,6 +381,7 @@ impl Feat {
             Feat::Msr,
             Feat::DebugReg,
             Feat::Io,
+            Feat::FastSyscall,
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
@@ -455,6 +459,8 @@ struct HostFeatures {
     rdseed: bool,
     tsc: bool,
     rdtscp: bool,
+    syscall: bool,
+    sep: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -518,6 +524,8 @@ impl HostFeatures {
             rdseed: host_cpu_flag("rdseed"),
             tsc: host_cpu_flag("tsc"),
             rdtscp: host_cpu_flag("rdtscp"),
+            syscall: host_cpu_flag("syscall"),
+            sep: host_cpu_flag("sep"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -578,6 +586,7 @@ impl HostFeatures {
             Feat::Msr => true,
             Feat::DebugReg => true,
             Feat::Io => true,
+            Feat::FastSyscall => self.syscall && self.sep,
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
@@ -840,11 +849,13 @@ struct KvmOracle {
 }
 
 fn install_page_tables(mem: &KvmMem) {
-    // PML4[0] -> PDPTE (present + writable)
-    mem.write(PML4_ADDR, &(PDPTE_ADDR | 0x3).to_le_bytes());
-    // PDPTE[i] identity 1GiB huge pages (present + writable + PS), 4 entries.
+    // PML4[0] -> PDPTE (present + writable + user). The user bit lets
+    // SYSRET/SYSEXIT ring-3 trampolines fetch instructions before immediately
+    // returning to ring 0 through SYSCALL.
+    mem.write(PML4_ADDR, &(PDPTE_ADDR | 0x7).to_le_bytes());
+    // PDPTE[i] identity 1GiB huge pages (present + writable + user + PS).
     for i in 0u64..4 {
-        let entry: u64 = (i << 30) | 0x83;
+        let entry: u64 = (i << 30) | 0x87;
         mem.write(PDPTE_ADDR + i * 8, &entry.to_le_bytes());
     }
 }
@@ -6376,6 +6387,36 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Fast system-call transition instructions. The ring-3 return legs do not
+    // touch memory; they immediately re-enter ring 0 with SYSCALL so the final
+    // HLT executes privileged. RIP-dependent results are normalized to booleans
+    // before comparison because KVM and interpreter code bases differ.
+    for &(label, asm) in &[
+        (
+            "syscall_fast_entry",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nleaq 2f(%rip), %r8\ncmpq %r9, %r9\nsyscall\n2:\nmovq $0xbad, %rbx\njmp 3f\n1:\ncmpq %r8, %rcx\nsete %cl\nmovzbl %cl, %ecx\nmovq $0x5151, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "sysret_fast_roundtrip",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nleaq 2f(%rip), %rcx\nmovq $0x202, %r11\nsysretq\n2:\nmovq $0x2468, %r8\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\ncmpq $0x2468, %r8\nsete %cl\nmovzbl %cl, %ecx\nmovq $0x6262, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "sysenter_fast_entry",
+            "movq %rax, %rdi\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x175, %ecx\nmovl $0x20000, %eax\nxorl %edx, %edx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0x176, %ecx\nwrmsr\nmovq $0x1111, %r8\nsysenter\nmovq $0xbad, %rbx\njmp 2f\n1:\ncmpq $0x1111, %r8\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovq $0x7373, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n2:",
+        ),
+        (
+            "sysexit_fast_roundtrip",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $0x20000, %rcx\nleaq 2f(%rip), %rdx\nsysexitq\n2:\nmovq $0x1357, %r8\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\ncmpq $0x1357, %r8\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovq $0x8484, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: FastSyscall,
+            profile: Int,
+        });
+    }
+
     // x87 FPU stack/data-path cases. Each snippet initializes the FPU and
     // stores the observable result to scratch, avoiding hidden x87 state in the
     // final KVM/interpreter comparison.
@@ -8126,6 +8167,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Msr
                 | Feat::DebugReg
                 | Feat::Io
+                | Feat::FastSyscall
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
@@ -8325,6 +8367,34 @@ fn avx512_kvm_io_port_corpus() {
         "I/O corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 22, "all I/O cases should compare");
+}
+
+#[test]
+fn avx512_kvm_fast_syscall_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::FastSyscall)
+        .collect();
+    assert_eq!(cases.len(), 4, "unexpected fast syscall corpus size");
+
+    if !HostFeatures::detect().supports(Feat::FastSyscall) {
+        eprintln!("[skip] host lacks SYSCALL or SYSENTER support");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on fast syscall cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a fast syscall case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "fast syscall corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.compared, 4, "all fast syscall cases should compare");
 }
 
 #[test]
