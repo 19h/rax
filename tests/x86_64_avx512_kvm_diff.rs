@@ -76,6 +76,13 @@ const R9_SEED: u64 = 70;
 const RCX_SEED: u64 = 0x1020_3040_5060_0c04;
 /// Value seeded into rdx, the implicit BMI2 MULX multiplicand.
 const RDX_SEED: u64 = 0x1357_9bdf_2468_ace0;
+/// Value seeded into rbx, used as an XLAT table base in core data-move cases.
+const RBX_SEED: u64 = SCRATCH_ADDR + 16;
+/// Stack/base-pointer seeds for core stack and addressing cases.
+const RBP_SEED: u64 = STACK_ADDR + 0x80;
+const RSP_SEED: u64 = STACK_ADDR;
+const STACK_WINDOW_ADDR: u64 = STACK_ADDR - 64;
+const STACK_BYTES: usize = 128;
 /// Scratch-local source/destination windows for string instructions.
 const STRING_SRC_ADDR: u64 = SCRATCH_ADDR + 128;
 const STRING_DST_ADDR: u64 = SCRATCH_ADDR + 32;
@@ -87,14 +94,18 @@ const STRING_DF_OFFSET: u64 = 24;
 struct InCase {
     zmm: [[u64; 8]; ZMM_REGS],
     k: [u64; K_REGS],
+    rbx: u64,
     rcx: u64,
     rdx: u64,
     rsi: u64,
     rdi: u64,
+    rbp: u64,
+    rsp: u64,
     r8: u64,
     r9: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
+    stack: [u8; STACK_BYTES],
 }
 
 /// One captured architectural output.
@@ -103,14 +114,18 @@ struct OutCase {
     zmm: [[u64; 8]; ZMM_REGS],
     k: [u64; K_REGS],
     rax: u64,
+    rbx: u64,
     rcx: u64,
     rdx: u64,
     rsi: u64,
     rdi: u64,
+    rbp: u64,
+    rsp: u64,
     r8: u64,
     r9: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
+    stack: [u8; STACK_BYTES],
 }
 
 // ---------------------------------------------------------------------------
@@ -671,6 +686,7 @@ impl KvmOracle {
         install_page_tables(&mem);
         mem.write(CODE_ADDR, code);
         mem.write(SCRATCH_ADDR, &input.scratch);
+        mem.write(STACK_WINDOW_ADDR, &input.stack);
 
         let region = kvm_userspace_memory_region {
             slot: 0,
@@ -745,11 +761,13 @@ impl KvmOracle {
         // --- GPRs + RFLAGS ---
         let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
         kregs.rip = CODE_ADDR;
-        kregs.rsp = STACK_ADDR;
+        kregs.rbx = input.rbx;
         kregs.rcx = input.rcx;
         kregs.rdx = input.rdx;
         kregs.rsi = input.rsi;
         kregs.rdi = input.rdi;
+        kregs.rbp = input.rbp;
+        kregs.rsp = input.rsp;
         kregs.r8 = input.r8;
         kregs.r9 = input.r9;
         kregs.rflags = input.rflags | 0x2;
@@ -786,19 +804,25 @@ impl KvmOracle {
 
         let mut scratch = [0u8; SCRATCH_BYTES];
         mem.read(SCRATCH_ADDR, &mut scratch);
+        let mut stack = [0u8; STACK_BYTES];
+        mem.read(STACK_WINDOW_ADDR, &mut stack);
 
         Ok(KvmOutcome::Ran(OutCase {
             zmm,
             k,
             rax: final_regs.rax,
+            rbx: final_regs.rbx,
             rcx: final_regs.rcx,
             rdx: final_regs.rdx,
             rsi: final_regs.rsi,
             rdi: final_regs.rdi,
+            rbp: final_regs.rbp,
+            rsp: final_regs.rsp,
             r8: final_regs.r8,
             r9: final_regs.r9,
             rflags: final_regs.rflags,
             scratch,
+            stack,
         }))
     }
 }
@@ -845,10 +869,13 @@ fn get_regs_zmm(regs: &Registers, index: usize) -> [u64; 8] {
 
 fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     let mut regs = Registers {
+        rbx: input.rbx,
         rcx: input.rcx,
         rdx: input.rdx,
         rsi: input.rsi,
         rdi: input.rdi,
+        rbp: input.rbp,
+        rsp: input.rsp,
         r8: input.r8,
         r9: input.r9,
         rflags: input.rflags,
@@ -862,11 +889,16 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     let (mut vcpu, mem) = setup_vm(code, Some(regs));
     mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
         .map_err(|e| format!("write scratch: {e:?}"))?;
+    mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("write stack: {e:?}"))?;
     let out_regs = run_until_hlt(&mut vcpu).map_err(|e| format!("interp run: {e:?}"))?;
 
     let mut scratch = [0u8; SCRATCH_BYTES];
     mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
         .map_err(|e| format!("read scratch: {e:?}"))?;
+    let mut stack = [0u8; STACK_BYTES];
+    mem.read_slice(&mut stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("read stack: {e:?}"))?;
 
     let mut zmm = [[0u64; 8]; ZMM_REGS];
     for reg in 0..ZMM_REGS {
@@ -876,14 +908,18 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         zmm,
         k: out_regs.k,
         rax: out_regs.rax,
+        rbx: out_regs.rbx,
         rcx: out_regs.rcx,
         rdx: out_regs.rdx,
         rsi: out_regs.rsi,
         rdi: out_regs.rdi,
+        rbp: out_regs.rbp,
+        rsp: out_regs.rsp,
         r8: out_regs.r8,
         r9: out_regs.r9,
         rflags: out_regs.rflags,
         scratch,
+        stack,
     })
 }
 
@@ -927,6 +963,9 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
     if interp.rax != kvm.rax {
         diffs.push(format!("rax: interp={:#x} kvm={:#x}", interp.rax, kvm.rax));
     }
+    if interp.rbx != kvm.rbx {
+        diffs.push(format!("rbx: interp={:#x} kvm={:#x}", interp.rbx, kvm.rbx));
+    }
     if interp.rcx != kvm.rcx {
         diffs.push(format!("rcx: interp={:#x} kvm={:#x}", interp.rcx, kvm.rcx));
     }
@@ -938,6 +977,12 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
     }
     if interp.rdi != kvm.rdi {
         diffs.push(format!("rdi: interp={:#x} kvm={:#x}", interp.rdi, kvm.rdi));
+    }
+    if interp.rbp != kvm.rbp {
+        diffs.push(format!("rbp: interp={:#x} kvm={:#x}", interp.rbp, kvm.rbp));
+    }
+    if interp.rsp != kvm.rsp {
+        diffs.push(format!("rsp: interp={:#x} kvm={:#x}", interp.rsp, kvm.rsp));
     }
     if interp.r8 != kvm.r8 {
         diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
@@ -957,6 +1002,13 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
             "scratch differs:\n    interp={:02x?}\n    kvm   ={:02x?}",
             &interp.scratch[..],
             &kvm.scratch[..]
+        ));
+    }
+    if interp.stack != kvm.stack {
+        diffs.push(format!(
+            "stack differs:\n    interp={:02x?}\n    kvm   ={:02x?}",
+            &interp.stack[..],
+            &kvm.stack[..]
         ));
     }
     diffs
@@ -1114,15 +1166,27 @@ fn input_for(profile: InputProfile) -> InCase {
             u64::MAX,
             u64::MAX,
         ],
+        rbx: RBX_SEED,
         rcx: RCX_SEED,
         rdx: RDX_SEED,
         rsi: STRING_SRC_ADDR,
         rdi: STRING_DST_ADDR,
+        rbp: RBP_SEED,
+        rsp: RSP_SEED,
         r8: R8_SEED,
         r9: R9_SEED,
         rflags: INITIAL_RFLAGS,
         scratch,
+        stack: stack_pattern(),
     }
+}
+
+fn stack_pattern() -> [u8; STACK_BYTES] {
+    let mut stack = [0u8; STACK_BYTES];
+    for (i, byte) in stack.iter_mut().enumerate() {
+        *byte = (i as u8).wrapping_mul(19).wrapping_add(0xa7);
+    }
+    stack
 }
 
 fn string_scratch() -> [u8; SCRATCH_BYTES] {
@@ -1165,6 +1229,12 @@ fn is_string_mnemonic(mnem: &str) -> bool {
 
 fn input_for_case(case: &Case) -> InCase {
     let mut input = input_for(case.profile);
+    if case.label.contains("initial_cf_clear") {
+        input.rflags &= !RFLAGS_CF;
+    }
+    if case.label.contains("initial_df") {
+        input.rflags |= RFLAGS_DF;
+    }
     if !is_string_mnemonic(asm_mnemonic(&case.asm)) {
         return input;
     }
@@ -4837,6 +4907,56 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core data movement, effective-address, stack, table-lookup, and direct
+    // flag-state instructions. The harness compares RBX/RBP/RSP plus a stack
+    // window so implicit stack effects are visible, not only register results.
+    for &(label, asm) in &[
+        ("mov_core_r64_reg", "movq %rcx, %r8"),
+        ("mov_core_r32_reg_zeroext", "movl %ecx, %r8d"),
+        ("mov_core_r16_reg", "movw %cx, %r8w"),
+        ("mov_core_r8_reg", "movb %cl, %r8b"),
+        ("mov_core_high8_reg", "movb %ch, %dl"),
+        ("mov_core_r64_mem", "movq 16(%rax), %r8"),
+        ("mov_core_r32_mem", "movl 8(%rax), %r8d"),
+        ("mov_core_r16_mem", "movw 4(%rax), %r8w"),
+        ("mov_core_r8_mem", "movb 2(%rax), %r8b"),
+        ("mov_core_m64_r8", "movq %r8, 16(%rax)"),
+        ("mov_core_m32_r8d", "movl %r8d, 8(%rax)"),
+        ("mov_core_m16_r8w", "movw %r8w, 4(%rax)"),
+        ("mov_core_m8_r8b", "movb %r8b, 2(%rax)"),
+        ("mov_core_r8_imm", "movb $0x7f, %r8b"),
+        ("mov_core_m16_imm", "movw $0x1234, 4(%rax)"),
+        ("mov_core_r32_imm_zeroext", "movl $0x89abcdef, %r8d"),
+        ("movabs_core_r64_imm", "movabsq $0x0123456789abcdef, %r8"),
+        ("lea_core_r64_indexed", "leaq 16(%rax,%rcx,2), %r8"),
+        ("lea_core_r32_indexed", "leal 16(%rax,%rcx,2), %r8d"),
+        ("lea_core_r64_rbx_base", "leaq (%rbx,%r9,4), %rcx"),
+        ("xlat_core_rbx_table", "xlatb"),
+        ("addr32_xlat_core_rbx_table", "addr32 xlatb"),
+        ("push_core_r64", "pushq %r8"),
+        ("push_core_r16", "pushw %r8w"),
+        ("push_core_imm8", "pushq $-7"),
+        ("push_core_imm32", "pushq $0x1234"),
+        ("pushf_core_flags", "pushfq"),
+        ("pop_core_r64", "popq %r8"),
+        ("pop_core_r16", "popw %r8w"),
+        ("pop_core_m64", "popq 8(%rax)"),
+        ("clc_core_flags", "clc"),
+        ("stc_core_flags_initial_cf_clear", "stc"),
+        ("cmc_core_flags", "cmc"),
+        ("cld_core_flags_initial_df", "cld"),
+        ("std_core_flags", "std"),
+        ("lahf_core_flags", "lahf"),
+        ("sahf_core_flags", "sahf"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core bit-test and bit-scan instructions. These cover register operands,
     // immediate memory operands, and register-indexed memory bit strings using
     // r9 as a small index that stays within the compared scratch page.
@@ -5496,6 +5616,12 @@ fn case_rflags_mask(case: &Case) -> u64 {
     // TZCNT/LZCNT define CF and ZF; the other arithmetic flags are undefined.
     if matches!(mnem, "tzcntl" | "tzcntq" | "lzcntl" | "lzcntq") {
         return RFLAGS_CF | RFLAGS_ZF;
+    }
+
+    // CLD/STD are the only core cases here that define DF; status flags are
+    // otherwise unchanged and remain comparable.
+    if matches!(mnem, "cld" | "std") {
+        return STATUS_RFLAGS_MASK | RFLAGS_DF;
     }
 
     STATUS_RFLAGS_MASK
