@@ -3153,6 +3153,123 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // Selected compare predicates beyond the single baseline immediate in
+    // `base_table()`. K-destination compares do not accept {z}, so enumerate
+    // no-mask and merge forms explicitly.
+    let mut push_compare = |label: String, asm: String, feat: Feat, profile: InputProfile| {
+        out.push(Case {
+            label,
+            asm,
+            feat,
+            profile,
+        });
+    };
+
+    for &(mnem, feat) in &[
+        ("vpcmpd", F),
+        ("vpcmpud", F),
+        ("vpcmpq", F),
+        ("vpcmpuq", F),
+        ("vpcmpb", Bw),
+        ("vpcmpub", Bw),
+        ("vpcmpw", Bw),
+        ("vpcmpuw", Bw),
+    ] {
+        for pred in 0..=7 {
+            push_compare(
+                format!("{mnem}_pred{pred}_reg"),
+                format!("{mnem} ${pred}, %zmm2, %zmm3, %k5"),
+                feat,
+                Int,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_reg_merge"),
+                format!("{mnem} ${pred}, %zmm2, %zmm3, %k5 {{%k1}}"),
+                feat,
+                Int,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem"),
+                format!("{mnem} ${pred}, (%rax), %zmm3, %k5"),
+                feat,
+                Int,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem_merge"),
+                format!("{mnem} ${pred}, (%rax), %zmm3, %k5 {{%k1}}"),
+                feat,
+                Int,
+            );
+        }
+    }
+
+    let fp_predicates = [0u8, 1, 4, 7, 16, 17, 30, 31];
+    for &(mnem, feat, profile) in &[
+        ("vcmpps", F, F32),
+        ("vcmppd", F, F64),
+        ("vcmpph", Fp16, F16),
+    ] {
+        for pred in fp_predicates {
+            push_compare(
+                format!("{mnem}_pred{pred}_reg"),
+                format!("{mnem} ${pred}, %zmm2, %zmm3, %k5"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_reg_merge"),
+                format!("{mnem} ${pred}, %zmm2, %zmm3, %k5 {{%k1}}"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem"),
+                format!("{mnem} ${pred}, (%rax), %zmm3, %k5"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem_merge"),
+                format!("{mnem} ${pred}, (%rax), %zmm3, %k5 {{%k1}}"),
+                feat,
+                profile,
+            );
+        }
+    }
+
+    for &(mnem, prefix, feat, profile) in &[
+        ("vcmpss", "{evex} ", F, F32),
+        ("vcmpsd", "{evex} ", F, F64),
+        ("vcmpsh", "", Fp16, F16),
+    ] {
+        for pred in fp_predicates {
+            push_compare(
+                format!("{mnem}_pred{pred}_reg"),
+                format!("{prefix}{mnem} ${pred}, %xmm2, %xmm3, %k5"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_reg_merge"),
+                format!("{prefix}{mnem} ${pred}, %xmm2, %xmm3, %k5 {{%k1}}"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem"),
+                format!("{prefix}{mnem} ${pred}, (%rax), %xmm3, %k5"),
+                feat,
+                profile,
+            );
+            push_compare(
+                format!("{mnem}_pred{pred}_mem_merge"),
+                format!("{prefix}{mnem} ${pred}, (%rax), %xmm3, %k5 {{%k1}}"),
+                feat,
+                profile,
+            );
+        }
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
