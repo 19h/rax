@@ -190,6 +190,8 @@ enum Feat {
     ControlReg,
     /// Descriptor-table load/store instructions.
     DescriptorTable,
+    /// Descriptor access-rights, limit, and permission-check instructions.
+    DescriptorAccess,
     /// Model-specific register read/write instructions.
     Msr,
     /// Debug-register read/write instructions.
@@ -319,6 +321,7 @@ impl Feat {
             Feat::Fsgsbase => "fsgsbase",
             Feat::ControlReg => "control_reg",
             Feat::DescriptorTable => "descriptor_table",
+            Feat::DescriptorAccess => "descriptor_access",
             Feat::Msr => "msr",
             Feat::DebugReg => "debug_reg",
             Feat::Io => "io",
@@ -393,6 +396,7 @@ impl Feat {
             Feat::Fsgsbase,
             Feat::ControlReg,
             Feat::DescriptorTable,
+            Feat::DescriptorAccess,
             Feat::Msr,
             Feat::DebugReg,
             Feat::Io,
@@ -604,6 +608,7 @@ impl HostFeatures {
             Feat::Fsgsbase => self.fsgsbase,
             Feat::ControlReg => true,
             Feat::DescriptorTable => true,
+            Feat::DescriptorAccess => true,
             Feat::Msr => true,
             Feat::DebugReg => true,
             Feat::Io => true,
@@ -7207,6 +7212,40 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Descriptor access checks. Each case installs a tiny local GDT with one
+    // present writable data descriptor, then observes LAR/LSL/VERR/VERW through
+    // stable GPR booleans or the architecturally loaded segment limit.
+    let descriptor_access_setup = "movq $0, 128(%rax)\nmovabsq $0x0041930000002345, %r8\nmovq %r8, 136(%rax)\nmovw $0x000f, 32(%rax)\nleaq 128(%rax), %r8\nmovq %r8, 34(%rax)\nlgdt 32(%rax)";
+    for &(label, check) in &[
+        (
+            "lsl_descriptor_limit",
+            "movw $0x8, %r8w\nlsl %r8w, %r9d\ncmpl $0x12345, %r9d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lar_descriptor_valid_nonzero",
+            "movw $0x8, %r8w\nlar %r8w, %r9d\nsetz %cl\ntestl %r9d, %r9d\nsetnz %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lar_descriptor_invalid_preserves_dest",
+            "movl $0x7777, %r9d\nmovw $0x18, %r8w\nlar %r8w, %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "verr_descriptor_readable",
+            "movw $0x8, %r8w\nverr %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rcx, %rcx",
+        ),
+        (
+            "verw_descriptor_writable",
+            "movw $0x8, %r8w\nverw %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rcx, %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: format!("{descriptor_access_setup}\n{check}"),
+            feat: DescriptorAccess,
+            profile: Int,
+        });
+    }
+
     // STAC/CLAC are SMAP access-control flag operations. The ordinary status
     // flags are preserved while AC is the visible architectural output.
     for &(label, asm) in &[
@@ -8294,6 +8333,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Fsgsbase
                 | Feat::ControlReg
                 | Feat::DescriptorTable
+                | Feat::DescriptorAccess
                 | Feat::Msr
                 | Feat::DebugReg
                 | Feat::Io
@@ -8479,6 +8519,39 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         "privileged corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 13, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_descriptor_access_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::DescriptorAccess)
+        .collect();
+    assert_eq!(cases.len(), 5, "unexpected descriptor-access corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on descriptor-access cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a descriptor-access case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "descriptor-access corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "descriptor-access cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 5,
+        "all descriptor-access cases should compare"
+    );
 }
 
 #[test]
