@@ -6670,6 +6670,69 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // BITALG/VPOPCNTDQ edge operands. Zero and all-one vectors exercise exact
+    // population-count results across every element width, and VPSHUFBITQMB
+    // gets explicit zero/all-one selector vectors.
+    for &(label, asm, feat) in &[
+        (
+            "vpopcntb_bitalg_popcnt_edge_zero_reg",
+            "vpxord %zmm3, %zmm3, %zmm3\nvpopcntb %zmm3, %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpopcntb_bitalg_popcnt_edge_allones_mem",
+            "vpternlogd $0xff, %zmm3, %zmm3, %zmm3\nvmovdqu64 %zmm3, 64(%rax)\nvpopcntb 64(%rax), %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpopcntw_bitalg_popcnt_edge_zero_mem",
+            "vpxord %zmm3, %zmm3, %zmm3\nvmovdqu64 %zmm3, 64(%rax)\nvpopcntw 64(%rax), %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpopcntw_bitalg_popcnt_edge_allones_reg",
+            "vpternlogd $0xff, %zmm3, %zmm3, %zmm3\nvpopcntw %zmm3, %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpshufbitqmb_bitalg_popcnt_edge_zero_selector",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpshufbitqmb %zmm2, %zmm3, %k5",
+            Bitalg,
+        ),
+        (
+            "vpshufbitqmb_bitalg_popcnt_edge_allones_selector",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvpshufbitqmb %zmm2, %zmm3, %k5",
+            Bitalg,
+        ),
+        (
+            "vpopcntd_vpopcntdq_popcnt_edge_zero_reg",
+            "vpxord %zmm3, %zmm3, %zmm3\nvpopcntd %zmm3, %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntd_vpopcntdq_popcnt_edge_allones_mem",
+            "vpternlogd $0xff, %zmm3, %zmm3, %zmm3\nvmovdqu64 %zmm3, 64(%rax)\nvpopcntd 64(%rax), %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntq_vpopcntdq_popcnt_edge_zero_mem",
+            "vpxord %zmm3, %zmm3, %zmm3\nvmovdqu64 %zmm3, 64(%rax)\nvpopcntq 64(%rax), %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntq_vpopcntdq_popcnt_edge_allones_reg",
+            "vpternlogd $0xff, %zmm3, %zmm3, %zmm3\nvpopcntq %zmm3, %zmm1",
+            Vpopcntdq,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // AVX/AVX2 VEX mask extraction, masked memory operations, non-temporal
     // moves, and explicit zeroing forms. These exercise GPR writes, scratch
     // side effects, and VEX upper-zeroing outside the EVEX generator.
@@ -15794,6 +15857,53 @@ fn avx512_kvm_avx_vnni_corpus() {
         "all AVX-VNNI cases should run"
     );
     assert_eq!(tally.compared, 48, "all AVX-VNNI cases should compare");
+}
+
+#[test]
+fn avx512_kvm_bitalg_popcnt_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_popcnt_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected BITALG/VPOPCNTDQ edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on BITALG/VPOPCNTDQ edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a BITALG/VPOPCNTDQ edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "BITALG/VPOPCNTDQ edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "BITALG/VPOPCNTDQ edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bitalg),
+        6,
+        "all BITALG edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vpopcntdq),
+        4,
+        "all VPOPCNTDQ edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all BITALG/VPOPCNTDQ edge cases should compare"
+    );
 }
 
 #[test]
