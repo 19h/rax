@@ -1315,6 +1315,9 @@ enum InputProfile {
     /// Integer data plus per-lane shift counts around architectural masking and
     /// zero/sign-fill boundaries for word, dword, and qword vector shifts.
     IntShiftEdge,
+    /// Integer data for mask-producing/vector-conflict instructions: duplicate
+    /// dword/qword lanes, zero/all-ones values, and alternating bit patterns.
+    IntPredicateEdge,
     F32,
     F64,
     F16,
@@ -1436,6 +1439,60 @@ const INT_SAT_EDGES: [u32; 16] = [
 ];
 
 const INT_SHIFT_COUNTS: [u32; 16] = [0, 1, 7, 8, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 255];
+const INT_PREDICATE_EDGE_BASE: [u32; 16] = [
+    0x0000_0000,
+    0x0000_0000,
+    0xffff_ffff,
+    0xffff_ffff,
+    0x8000_0000,
+    0x0000_0000,
+    0x8000_0000,
+    0x0000_0000,
+    0x0000_0001,
+    0x0000_0000,
+    0x0000_0001,
+    0x0000_0000,
+    0xaaaa_aaaa,
+    0x5555_5555,
+    0xaaaa_aaaa,
+    0x5555_5555,
+];
+const INT_PREDICATE_EDGE_TESTER: [u32; 16] = [
+    0xffff_ffff,
+    0x0000_0000,
+    0x0000_0000,
+    0xffff_ffff,
+    0x7fff_ffff,
+    0xffff_ffff,
+    0x0000_0001,
+    0x8000_0000,
+    0x00ff_00ff,
+    0xff00_ff00,
+    0xffff_0000,
+    0x0000_ffff,
+    0xaaaa_aaaa,
+    0xaaaa_aaaa,
+    0x5555_5555,
+    0x5555_5555,
+];
+const INT_PREDICATE_EDGE_SCRATCH: [u32; 16] = [
+    0x0000_0000,
+    0x0000_0000,
+    0x0000_0000,
+    0x0000_0000,
+    0xffff_ffff,
+    0xffff_ffff,
+    0xffff_ffff,
+    0xffff_ffff,
+    0x8000_0000,
+    0x0000_0000,
+    0x8000_0000,
+    0x0000_0000,
+    0xaaaa_aaaa,
+    0x5555_5555,
+    0xaaaa_aaaa,
+    0x5555_5555,
+];
 
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
@@ -1471,6 +1528,26 @@ fn int_shift_edge_zmm(reg: usize) -> [u8; 64] {
     };
     for lane in 0..16 {
         let value = values[(reg * 7 + lane) % values.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn int_predicate_edge_zmm(reg: usize) -> [u8; 64] {
+    let values = match reg {
+        2 => INT_PREDICATE_EDGE_BASE,
+        3 => INT_PREDICATE_EDGE_TESTER,
+        31 => INT_PREDICATE_EDGE_SCRATCH,
+        _ => {
+            let mut values = [0u32; 16];
+            for lane in 0..16 {
+                values[lane] = INT_PREDICATE_EDGE_BASE[(lane + reg * 3) % 16];
+            }
+            values
+        }
+    };
+    let mut bytes = [0u8; 64];
+    for (lane, value) in values.iter().enumerate() {
         bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
     }
     bytes
@@ -1562,6 +1639,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::Int => int_zmm(reg),
         InputProfile::IntSatEdge => int_sat_edge_zmm(reg),
         InputProfile::IntShiftEdge => int_shift_edge_zmm(reg),
+        InputProfile::IntPredicateEdge => int_predicate_edge_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
         InputProfile::F16 => f16_zmm(reg),
@@ -3993,6 +4071,232 @@ fn irregular_cases() -> Vec<Case> {
             label: label.to_string(),
             asm: asm.to_string(),
             feat: Fp16,
+            profile,
+        });
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vpconflictd_avx512_predicate_edge_reg",
+            "vpconflictd %zmm2, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vpconflictd_avx512_predicate_edge_mem",
+            "vpconflictd 64(%rax), %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vpconflictq_avx512_predicate_edge_reg",
+            "vpconflictq %zmm2, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vpconflictq_avx512_predicate_edge_mem",
+            "vpconflictq 64(%rax), %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vplzcntd_avx512_predicate_edge_reg",
+            "vplzcntd %zmm2, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vplzcntd_avx512_predicate_edge_mem",
+            "vplzcntd 64(%rax), %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vplzcntq_avx512_predicate_edge_reg",
+            "vplzcntq %zmm2, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vplzcntq_avx512_predicate_edge_mem",
+            "vplzcntq 64(%rax), %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestmd_avx512_predicate_edge_reg",
+            "vptestmd %zmm2, %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestnmd_avx512_predicate_edge_mem",
+            "vptestnmd 64(%rax), %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestmq_avx512_predicate_edge_reg",
+            "vptestmq %zmm2, %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestnmq_avx512_predicate_edge_mem",
+            "vptestnmq 64(%rax), %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestmb_avx512_predicate_edge_reg",
+            "vptestmb %zmm2, %zmm3, %k5",
+            Bw,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestnmb_avx512_predicate_edge_mem",
+            "vptestnmb 64(%rax), %zmm3, %k5",
+            Bw,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestmw_avx512_predicate_edge_reg",
+            "vptestmw %zmm2, %zmm3, %k5",
+            Bw,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestnmw_avx512_predicate_edge_mem",
+            "vptestnmw 64(%rax), %zmm3, %k5",
+            Bw,
+            IntPredicateEdge,
+        ),
+        (
+            "vfpclassps_avx512_predicate_edge_reg",
+            "vfpclassps $0x7f, %zmm3, %k5",
+            Dq,
+            F32Edge,
+        ),
+        (
+            "vfpclassps_avx512_predicate_edge_mem_bcst",
+            "vfpclassps $0x7f, 44(%rax){1to16}, %k5",
+            Dq,
+            F32Edge,
+        ),
+        (
+            "vfpclasspd_avx512_predicate_edge_reg",
+            "vfpclasspd $0x7f, %zmm3, %k5",
+            Dq,
+            F64Edge,
+        ),
+        (
+            "vfpclasspd_avx512_predicate_edge_mem_bcst",
+            "vfpclasspd $0x7f, 8(%rax){1to8}, %k5",
+            Dq,
+            F64Edge,
+        ),
+        (
+            "vfpclassss_avx512_predicate_edge_reg",
+            "vfpclassss $0x7f, %xmm2, %k5",
+            Dq,
+            F32Edge,
+        ),
+        (
+            "vfpclassss_avx512_predicate_edge_mem",
+            "vfpclassss $0x7f, 44(%rax), %k5",
+            Dq,
+            F32Edge,
+        ),
+        (
+            "vfpclasssd_avx512_predicate_edge_reg",
+            "vfpclasssd $0x7f, %xmm2, %k5",
+            Dq,
+            F64Edge,
+        ),
+        (
+            "vfpclasssd_avx512_predicate_edge_mem",
+            "vfpclasssd $0x7f, 8(%rax), %k5",
+            Dq,
+            F64Edge,
+        ),
+        (
+            "vreduceps_avx512_predicate_edge_imm_max",
+            "vreduceps $0x0f, %zmm3, %zmm1",
+            Dq,
+            F32,
+        ),
+        (
+            "vreducepd_avx512_predicate_edge_imm_max",
+            "vreducepd $0x0f, %zmm3, %zmm1",
+            Dq,
+            F64,
+        ),
+        (
+            "vreducess_avx512_predicate_edge_imm_max",
+            "vreducess $0x0f, %xmm2, %xmm3, %xmm1",
+            Dq,
+            F32,
+        ),
+        (
+            "vreducesd_avx512_predicate_edge_imm_max",
+            "vreducesd $0x0f, %xmm2, %xmm3, %xmm1",
+            Dq,
+            F64,
+        ),
+        (
+            "vrangeps_avx512_predicate_edge_imm_max",
+            "vrangeps $0x0f, %zmm2, %zmm3, %zmm1",
+            Dq,
+            F32,
+        ),
+        (
+            "vrangepd_avx512_predicate_edge_imm_max",
+            "vrangepd $0x0f, %zmm2, %zmm3, %zmm1",
+            Dq,
+            F64,
+        ),
+        (
+            "vrangess_avx512_predicate_edge_imm_max",
+            "vrangess $0x0f, %xmm2, %xmm3, %xmm1",
+            Dq,
+            F32,
+        ),
+        (
+            "vrangesd_avx512_predicate_edge_imm_max",
+            "vrangesd $0x0f, %xmm2, %xmm3, %xmm1",
+            Dq,
+            F64,
+        ),
+        (
+            "vfixupimmps_avx512_predicate_edge_imm_ff",
+            "vfixupimmps $0xff, %zmm2, %zmm3, %zmm1",
+            F,
+            F32,
+        ),
+        (
+            "vfixupimmpd_avx512_predicate_edge_imm_ff",
+            "vfixupimmpd $0xff, %zmm2, %zmm3, %zmm1",
+            F,
+            F64,
+        ),
+        (
+            "vfixupimmss_avx512_predicate_edge_imm_ff",
+            "vfixupimmss $0xff, %xmm2, %xmm3, %xmm1",
+            F,
+            F32,
+        ),
+        (
+            "vfixupimmsd_avx512_predicate_edge_imm_ff",
+            "vfixupimmsd $0xff, %xmm2, %xmm3, %xmm1",
+            F,
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
             profile,
         });
     }
@@ -13943,6 +14247,7 @@ fn avx512_kvm_state_roundtrip() {
     let code = build_code(&[]); // mov rax, scratch; hlt  (no op under test)
     for profile in [
         InputProfile::Int,
+        InputProfile::IntPredicateEdge,
         InputProfile::F32,
         InputProfile::F64,
         InputProfile::F16,
@@ -16257,6 +16562,63 @@ fn avx512_kvm_fp16_edge_corpus() {
     assert_eq!(
         tally.compared, 22,
         "all AVX-512-FP16 edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx512_predicate_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx512_predicate_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        36,
+        "unexpected AVX-512 predicate/classification edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512 predicate/classification edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512 predicate/classification edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512 predicate/classification edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512 predicate/classification edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cd),
+        8,
+        "all AVX-512CD predicate edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        8,
+        "all AVX-512F predicate edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        4,
+        "all AVX-512BW predicate edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Dq),
+        16,
+        "all AVX-512DQ predicate edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 36,
+        "all AVX-512 predicate/classification edge cases should compare"
     );
 }
 
