@@ -182,6 +182,10 @@ enum Feat {
     Waitpkg,
     /// RDPID processor ID read from IA32_TSC_AUX.
     Rdpid,
+    /// RDRAND hardware random-number generation.
+    Rdrand,
+    /// RDSEED hardware seed generation.
+    Rdseed,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -270,6 +274,8 @@ impl Feat {
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
             Feat::Rdpid => "rdpid",
+            Feat::Rdrand => "rdrand",
+            Feat::Rdseed => "rdseed",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -322,6 +328,8 @@ impl Feat {
             Feat::Serialize,
             Feat::Waitpkg,
             Feat::Rdpid,
+            Feat::Rdrand,
+            Feat::Rdseed,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -378,6 +386,8 @@ struct HostFeatures {
     serialize: bool,
     waitpkg: bool,
     rdpid: bool,
+    rdrand: bool,
+    rdseed: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -433,6 +443,8 @@ impl HostFeatures {
             serialize: host_cpu_flag("serialize"),
             waitpkg: host_cpu_flag("waitpkg"),
             rdpid: host_cpu_flag("rdpid"),
+            rdrand: host_cpu_flag("rdrand"),
+            rdseed: host_cpu_flag("rdseed"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -489,6 +501,8 @@ impl HostFeatures {
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
             Feat::Rdpid => self.rdpid,
+            Feat::Rdrand => self.rdrand,
+            Feat::Rdseed => self.rdseed,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6578,6 +6592,50 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // RDRAND/RDSEED produce non-deterministic data, so these cases retry until
+    // success and then normalize the destination with flag-preserving MOVs.
+    // Width cases branch on normalized architectural invariants and finish with
+    // deterministic ADD flags, avoiding dependence on the random payload.
+    for &(label, asm, feat) in &[
+        (
+            "rdrand_r64_success_flags",
+            "1:\nrdrand %rax\njnc 1b\nmovq $0, %rax",
+            Rdrand,
+        ),
+        (
+            "rdrand_r16_preserves_upper",
+            "movabsq $0x1122334455667788, %r8\n1:\nrdrand %r8w\njnc 1b\nmovw $0, %r8w",
+            Rdrand,
+        ),
+        (
+            "rdrand_r32_zeroext",
+            "movabsq $-1, %r9\n1:\nrdrand %r9d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r9\njz 2f\nmovq $1, %r9\njmp 3f\n2:\nmovq $0, %r9\n3:\naddq $0, %r9",
+            Rdrand,
+        ),
+        (
+            "rdseed_r64_success_flags",
+            "1:\nrdseed %rax\njnc 1b\nmovq $0, %rax",
+            Rdseed,
+        ),
+        (
+            "rdseed_r16_preserves_upper",
+            "movabsq $0x8877665544332211, %r8\n1:\nrdseed %r8w\njnc 1b\nmovw $0, %r8w",
+            Rdseed,
+        ),
+        (
+            "rdseed_r32_zeroext",
+            "movabsq $-1, %r9\n1:\nrdseed %r9d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r9\njz 2f\nmovq $1, %r9\njmp 3f\n2:\nmovq $0, %r9\n3:\naddq $0, %r9",
+            Rdseed,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // FSGSBASE instructions. The harness does not snapshot segment bases
     // directly, so each write is immediately read back into compared GPRs;
     // 32-bit read/write forms also check architectural zero-extension.
@@ -7252,7 +7310,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+rdpid,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7534,6 +7592,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Serialize
                 | Feat::Waitpkg
                 | Feat::Rdpid
+                | Feat::Rdrand
+                | Feat::Rdseed
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
