@@ -4400,6 +4400,70 @@ fn irregular_cases() -> Vec<Case> {
             "pcmpistri_sse42_reg_ranges",
             "pcmpistri $0x3a, %xmm2, %xmm1",
         ),
+        (
+            "pcmpistrm_sse42_reg_eqany_u8",
+            "pcmpistrm $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_reg_eqany_u8",
+            "pcmpistri $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_mem_eqordered_u8",
+            "pcmpistrm $0x0c, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_mem_eqordered_u8",
+            "pcmpistri $0x0c, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_reg_eqany_u16_neg",
+            "pcmpistrm $0x11, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_reg_eqany_u16_neg",
+            "pcmpistri $0x11, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_reg_eqany_bitmask",
+            "pcmpistrm $0x40, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_reg_eqeach_msb",
+            "pcmpistri $0x58, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_reg_eqany_u8",
+            "pcmpestrm $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_reg_eqany_u8",
+            "pcmpestri $0x00, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_mem_eqordered_u8",
+            "pcmpestrm $0x0c, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_mem_eqordered_u8",
+            "pcmpestri $0x0c, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_reg_eqany_u16_neg",
+            "pcmpestrm $0x11, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_reg_eqany_u16_neg",
+            "pcmpestri $0x11, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestrm_sse42_reg_eqany_bitmask",
+            "pcmpestrm $0x40, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpestri_sse42_reg_eqeach_msb",
+            "pcmpestri $0x58, %xmm2, %xmm1",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
