@@ -4876,6 +4876,91 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core integer ALU and logical forms. The table spans register, memory,
+    // immediate, accumulator-addressed, and scratch-writing paths while using
+    // r8/rcx/rdx plus the scratch page so the harness observes every effect.
+    for &(label, asm) in &[
+        ("add_core_r64_reg", "addq %rcx, %r8"),
+        ("add_core_r32_reg", "addl %ecx, %r8d"),
+        ("add_core_r64_mem_src", "addq 8(%rax), %r8"),
+        ("add_core_m64_r8", "addq %r8, 8(%rax)"),
+        ("add_core_r64_imm32", "addq $0x1234, %r8"),
+        ("add_core_r64_imm8", "addq $-7, %r8"),
+        ("add_core_m64_imm8", "addq $0x20, 8(%rax)"),
+        ("adc_core_r64_reg", "adcq %rcx, %r8"),
+        ("adc_core_r64_mem_src", "adcq 8(%rax), %r8"),
+        ("sub_core_r64_reg", "subq %rcx, %r8"),
+        ("sub_core_r64_mem_src", "subq 8(%rax), %r8"),
+        ("sub_core_m64_r8", "subq %r8, 16(%rax)"),
+        ("sbb_core_r64_reg", "sbbq %rcx, %r8"),
+        ("cmp_core_r64_reg", "cmpq %rcx, %r8"),
+        ("cmp_core_r64_mem_src", "cmpq 8(%rax), %r8"),
+        ("cmp_core_r64_imm32", "cmpq $0x1234, %r8"),
+        ("inc_core_r64", "incq %r8"),
+        ("dec_core_r64", "decq %r8"),
+        ("inc_core_m64", "incq 8(%rax)"),
+        ("dec_core_m64", "decq 16(%rax)"),
+        ("neg_core_r64", "negq %r8"),
+        ("neg_core_m64", "negq 24(%rax)"),
+        ("not_core_r64", "notq %r8"),
+        ("not_core_m64", "notq 32(%rax)"),
+        ("and_core_r64_reg", "andq %rcx, %r8"),
+        ("and_core_r64_mem_src", "andq 8(%rax), %r8"),
+        ("and_core_m64_r8", "andq %r8, 40(%rax)"),
+        ("or_core_r64_reg", "orq %rcx, %r8"),
+        ("xor_core_r64_reg", "xorq %rcx, %r8"),
+        ("test_core_r64_reg", "testq %rcx, %r8"),
+        ("test_core_m64_r8", "testq 8(%rax), %r8"),
+        ("and_core_r64_imm8", "andq $0x7f, %r8"),
+        ("or_core_r64_imm32", "orq $0x1234, %r8"),
+        ("xor_core_r64_imm32", "xorq $0x55aa, %r8"),
+        ("test_core_r64_imm32", "testq $0x55aa, %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
+    // Core rotate, shift, and double-shift forms. These cover one-bit counts
+    // with OF defined, multi-bit immediate counts with OF undefined, CL counts
+    // sourced from the seeded RCX, and memory destinations in the scratch page.
+    for &(label, asm) in &[
+        ("rol_core_r64_one", "rolq $1, %r8"),
+        ("ror_core_r64_one", "rorq $1, %r8"),
+        ("rcl_core_r64_one", "rclq $1, %r8"),
+        ("rcr_core_r64_one", "rcrq $1, %r8"),
+        ("shl_core_r64_one", "shlq $1, %r8"),
+        ("shr_core_r64_one", "shrq $1, %r8"),
+        ("sar_core_r64_one", "sarq $1, %r8"),
+        ("rol_core_r64_imm5", "rolq $5, %r8"),
+        ("ror_core_r64_imm7", "rorq $7, %r8"),
+        ("shl_core_r64_imm4", "shlq $4, %r8"),
+        ("shr_core_r64_imm6", "shrq $6, %r8"),
+        ("sar_core_r64_imm6", "sarq $6, %r8"),
+        ("shl_core_r64_cl", "shlq %cl, %r8"),
+        ("shr_core_r64_cl", "shrq %cl, %r8"),
+        ("sar_core_r64_cl", "sarq %cl, %r8"),
+        ("rol_core_r64_cl", "rolq %cl, %r8"),
+        ("ror_core_r64_cl", "rorq %cl, %r8"),
+        ("shl_core_m64_imm3", "shlq $3, 8(%rax)"),
+        ("shr_core_m64_imm5", "shrq $5, 16(%rax)"),
+        ("sar_core_m64_imm7", "sarq $7, 24(%rax)"),
+        ("shld_core_r64_imm5", "shldq $5, %rcx, %r8"),
+        ("shrd_core_r64_imm5", "shrdq $5, %rcx, %r8"),
+        ("shld_core_r64_cl", "shldq %cl, %rdx, %r8"),
+        ("shrd_core_r64_cl", "shrdq %cl, %rdx, %r8"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -5095,6 +5180,76 @@ fn case_status(case: &Case) -> Status {
 
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
+
+    // Logical integer ops define CF/PF/ZF/SF/OF and leave AF undefined.
+    if matches!(
+        mnem,
+        "andb"
+            | "andw"
+            | "andl"
+            | "andq"
+            | "orb"
+            | "orw"
+            | "orl"
+            | "orq"
+            | "xorb"
+            | "xorw"
+            | "xorl"
+            | "xorq"
+            | "testb"
+            | "testw"
+            | "testl"
+            | "testq"
+    ) {
+        return RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+    }
+
+    // Rotate count > 1 leaves OF undefined; all other status flags are
+    // unaffected and still worth comparing.
+    if matches!(
+        case.label.as_str(),
+        "rol_core_r64_imm5" | "ror_core_r64_imm7" | "rol_core_r64_cl" | "ror_core_r64_cl"
+    ) {
+        return STATUS_RFLAGS_MASK & !RFLAGS_OF;
+    }
+
+    // One-bit shifts define CF/OF/SF/ZF/PF and leave AF undefined.
+    if matches!(
+        case.label.as_str(),
+        "shl_core_r64_one" | "shr_core_r64_one" | "sar_core_r64_one"
+    ) {
+        return RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+    }
+
+    // Multi-bit shifts and SHLD/SHRD leave AF/OF undefined for the counts used
+    // below; CF/SF/ZF/PF remain defined.
+    if matches!(
+        mnem,
+        "shlb"
+            | "shlw"
+            | "shll"
+            | "shlq"
+            | "shrb"
+            | "shrw"
+            | "shrl"
+            | "shrq"
+            | "salb"
+            | "salw"
+            | "sall"
+            | "salq"
+            | "sarb"
+            | "sarw"
+            | "sarl"
+            | "sarq"
+            | "shldw"
+            | "shldl"
+            | "shldq"
+            | "shrdw"
+            | "shrdl"
+            | "shrdq"
+    ) {
+        return RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF;
+    }
 
     // BT/BTS/BTR/BTC define CF from the selected bit; the other status flags
     // are architecturally undefined.
