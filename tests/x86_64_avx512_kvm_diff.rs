@@ -6836,15 +6836,31 @@ fn llvm_mc_path() -> Option<PathBuf> {
 }
 
 fn parse_encoding(text: &str) -> Option<Vec<u8>> {
-    let start = text.find("encoding: [")? + "encoding: [".len();
-    let rest = &text[start..];
-    let end = rest.find(']')?;
     let mut bytes = Vec::new();
-    for token in rest[..end].split(',') {
-        let token = token.trim().trim_start_matches("0x");
-        bytes.push(u8::from_str_radix(token, 16).ok()?);
+    let mut rest = text;
+    while let Some(start) = rest.find("encoding: [") {
+        rest = &rest[start + "encoding: [".len()..];
+        let end = rest.find(']')?;
+        for token in rest[..end].split(',') {
+            let token = token.trim().trim_start_matches("0x");
+            bytes.push(u8::from_str_radix(token, 16).ok()?);
+        }
+        rest = &rest[end + 1..];
     }
-    Some(bytes)
+    if bytes.is_empty() { None } else { Some(bytes) }
+}
+
+#[test]
+fn llvm_mc_parse_concatenates_instruction_encodings() {
+    let output = "\
+\tje\t.Ltmp0                          # encoding: [0x74,0x08]\n\
+\tmovq\t$17, %r8                       # encoding: [0x49,0xc7,0xc0,0x11,0x00,0x00,0x00]\n\
+.Ltmp0:\n";
+
+    assert_eq!(
+        parse_encoding(output),
+        Some(vec![0x74, 0x08, 0x49, 0xc7, 0xc0, 0x11, 0x00, 0x00, 0x00])
+    );
 }
 
 fn assemble(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
