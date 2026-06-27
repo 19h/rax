@@ -1312,6 +1312,9 @@ enum InputProfile {
     /// boundaries, laid out as dwords so pack/narrow and saturated arithmetic
     /// all see clamp-sensitive lanes.
     IntSatEdge,
+    /// Integer data plus per-lane shift counts around architectural masking and
+    /// zero/sign-fill boundaries for word, dword, and qword vector shifts.
+    IntShiftEdge,
     F32,
     F64,
     F16,
@@ -1432,6 +1435,8 @@ const INT_SAT_EDGES: [u32; 16] = [
     0x8000_0000,
 ];
 
+const INT_SHIFT_COUNTS: [u32; 16] = [0, 1, 7, 8, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 255];
+
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
     for (i, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -1452,6 +1457,20 @@ fn int_sat_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for lane in 0..16 {
         let value = INT_SAT_EDGES[(reg * 7 + lane) % INT_SAT_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn int_shift_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    let values = if matches!(reg, 2 | 31) {
+        &INT_SHIFT_COUNTS
+    } else {
+        &INT_SAT_EDGES
+    };
+    for lane in 0..16 {
+        let value = values[(reg * 7 + lane) % values.len()];
         bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
     }
     bytes
@@ -1542,6 +1561,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
     match profile {
         InputProfile::Int => int_zmm(reg),
         InputProfile::IntSatEdge => int_sat_edge_zmm(reg),
+        InputProfile::IntShiftEdge => int_shift_edge_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
         InputProfile::F16 => f16_zmm(reg),
@@ -5776,6 +5796,198 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat,
             profile: IntSatEdge,
+        });
+    }
+
+    for &(label, asm, feat) in &[
+        (
+            "psllw_mmx_int_shift_edge_imm15_store",
+            "movq 32(%rax), %mm0\npsllw $15, %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psllw_mmx_int_shift_edge_imm16_store",
+            "movq 32(%rax), %mm0\npsllw $16, %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrlw_mmx_int_shift_edge_imm15_store",
+            "movq 32(%rax), %mm0\npsrlw $15, %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrlw_mmx_int_shift_edge_imm16_store",
+            "movq 32(%rax), %mm0\npsrlw $16, %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psraw_mmx_int_shift_edge_imm15_store",
+            "movq 32(%rax), %mm0\npsraw $15, %mm0\nmovq %mm0, 96(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psraw_mmx_int_shift_edge_imm16_store",
+            "movq 32(%rax), %mm0\npsraw $16, %mm0\nmovq %mm0, 104(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pslld_mmx_int_shift_edge_imm31_store",
+            "movq 32(%rax), %mm0\npslld $31, %mm0\nmovq %mm0, 112(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pslld_mmx_int_shift_edge_imm32_store",
+            "movq 32(%rax), %mm0\npslld $32, %mm0\nmovq %mm0, 120(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrld_mmx_int_shift_edge_imm31_store",
+            "movq 32(%rax), %mm0\npsrld $31, %mm0\nmovq %mm0, 128(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrld_mmx_int_shift_edge_imm32_store",
+            "movq 32(%rax), %mm0\npsrld $32, %mm0\nmovq %mm0, 136(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrad_mmx_int_shift_edge_imm31_store",
+            "movq 32(%rax), %mm0\npsrad $31, %mm0\nmovq %mm0, 144(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrad_mmx_int_shift_edge_imm32_store",
+            "movq 32(%rax), %mm0\npsrad $32, %mm0\nmovq %mm0, 152(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psllq_mmx_int_shift_edge_imm63_store",
+            "movq 32(%rax), %mm0\npsllq $63, %mm0\nmovq %mm0, 160(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psllq_mmx_int_shift_edge_imm64_store",
+            "movq 32(%rax), %mm0\npsllq $64, %mm0\nmovq %mm0, 168(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrlq_mmx_int_shift_edge_imm63_store",
+            "movq 32(%rax), %mm0\npsrlq $63, %mm0\nmovq %mm0, 176(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "psrlq_mmx_int_shift_edge_imm64_store",
+            "movq 32(%rax), %mm0\npsrlq $64, %mm0\nmovq %mm0, 184(%rax)\nemms",
+            Mmx,
+        ),
+        ("pslldq_sse2_int_shift_edge_imm0", "pslldq $0, %xmm1", Sse2),
+        ("pslldq_sse2_int_shift_edge_imm15", "pslldq $15, %xmm1", Sse2),
+        ("pslldq_sse2_int_shift_edge_imm16", "pslldq $16, %xmm1", Sse2),
+        ("pslldq_sse2_int_shift_edge_imm31", "pslldq $31, %xmm1", Sse2),
+        ("psrldq_sse2_int_shift_edge_imm0", "psrldq $0, %xmm1", Sse2),
+        ("psrldq_sse2_int_shift_edge_imm15", "psrldq $15, %xmm1", Sse2),
+        ("psrldq_sse2_int_shift_edge_imm16", "psrldq $16, %xmm1", Sse2),
+        ("psrldq_sse2_int_shift_edge_imm31", "psrldq $31, %xmm1", Sse2),
+        ("psllw_sse2_int_shift_edge_xmm_count", "psllw %xmm2, %xmm1", Sse2),
+        ("psrlw_sse2_int_shift_edge_xmm_count", "psrlw %xmm2, %xmm1", Sse2),
+        ("psraw_sse2_int_shift_edge_xmm_count", "psraw %xmm2, %xmm1", Sse2),
+        ("pslld_sse2_int_shift_edge_xmm_count", "pslld %xmm2, %xmm1", Sse2),
+        ("psrld_sse2_int_shift_edge_xmm_count", "psrld %xmm2, %xmm1", Sse2),
+        ("psrad_sse2_int_shift_edge_xmm_count", "psrad %xmm2, %xmm1", Sse2),
+        ("vpsllw_avx2_int_shift_edge_imm15", "{vex} vpsllw $15, %xmm3, %xmm1", Avx2),
+        ("vpsllw_avx2_int_shift_edge_imm16", "{vex} vpsllw $16, %xmm3, %xmm1", Avx2),
+        ("vpsrlw_avx2_int_shift_edge_imm15", "{vex} vpsrlw $15, %ymm3, %ymm1", Avx2),
+        ("vpsrlw_avx2_int_shift_edge_imm16", "{vex} vpsrlw $16, %ymm3, %ymm1", Avx2),
+        ("vpsraw_avx2_int_shift_edge_imm15", "{vex} vpsraw $15, %xmm3, %xmm1", Avx2),
+        ("vpsraw_avx2_int_shift_edge_imm16", "{vex} vpsraw $16, %ymm3, %ymm1", Avx2),
+        ("vpslld_avx2_int_shift_edge_imm31", "{vex} vpslld $31, %ymm3, %ymm1", Avx2),
+        ("vpslld_avx2_int_shift_edge_imm32", "{vex} vpslld $32, %xmm3, %xmm1", Avx2),
+        ("vpsrld_avx2_int_shift_edge_imm31", "{vex} vpsrld $31, %ymm3, %ymm1", Avx2),
+        ("vpsrld_avx2_int_shift_edge_imm32", "{vex} vpsrld $32, %xmm3, %xmm1", Avx2),
+        ("vpsrad_avx2_int_shift_edge_imm31", "{vex} vpsrad $31, %ymm3, %ymm1", Avx2),
+        ("vpsrad_avx2_int_shift_edge_imm32", "{vex} vpsrad $32, %xmm3, %xmm1", Avx2),
+        ("vpsllq_avx2_int_shift_edge_imm63", "{vex} vpsllq $63, %ymm3, %ymm1", Avx2),
+        ("vpsllq_avx2_int_shift_edge_imm64", "{vex} vpsllq $64, %xmm3, %xmm1", Avx2),
+        ("vpsrlq_avx2_int_shift_edge_imm63", "{vex} vpsrlq $63, %ymm3, %ymm1", Avx2),
+        ("vpsrlq_avx2_int_shift_edge_imm64", "{vex} vpsrlq $64, %xmm3, %xmm1", Avx2),
+        ("vpsllvd_avx2_int_shift_edge_reg", "{vex} vpsllvd %ymm2, %ymm3, %ymm1", Avx2),
+        ("vpsrlvd_avx2_int_shift_edge_mem", "{vex} vpsrlvd 32(%rax), %ymm3, %ymm1", Avx2),
+        ("vpsravd_avx2_int_shift_edge_reg", "{vex} vpsravd %ymm2, %ymm3, %ymm1", Avx2),
+        ("vpsllvq_avx2_int_shift_edge_mem", "{vex} vpsllvq 32(%rax), %ymm3, %ymm1", Avx2),
+        ("vpsrlvq_avx2_int_shift_edge_reg", "{vex} vpsrlvq %ymm2, %ymm3, %ymm1", Avx2),
+        ("vpsllw_avx512_int_shift_edge_imm15", "vpsllw $15, %zmm3, %zmm1", Bw),
+        ("vpsllw_avx512_int_shift_edge_imm16", "vpsllw $16, %zmm3, %zmm1", Bw),
+        ("vpsrlw_avx512_int_shift_edge_imm15", "vpsrlw $15, %zmm3, %zmm1", Bw),
+        ("vpsrlw_avx512_int_shift_edge_imm16", "vpsrlw $16, %zmm3, %zmm1", Bw),
+        ("vpsraw_avx512_int_shift_edge_imm15", "vpsraw $15, %zmm3, %zmm1", Bw),
+        ("vpsraw_avx512_int_shift_edge_imm16", "vpsraw $16, %zmm3, %zmm1", Bw),
+        ("vpsllvw_avx512_int_shift_edge_reg", "vpsllvw %zmm2, %zmm3, %zmm1", Bw),
+        ("vpsrlvw_avx512_int_shift_edge_mem", "vpsrlvw 64(%rax), %zmm3, %zmm1", Bw),
+        ("vpsravw_avx512_int_shift_edge_reg", "vpsravw %zmm2, %zmm3, %zmm1", Bw),
+        ("vpslld_avx512_int_shift_edge_imm31", "vpslld $31, %zmm3, %zmm1", F),
+        ("vpslld_avx512_int_shift_edge_imm32", "vpslld $32, %zmm3, %zmm1", F),
+        ("vpsrld_avx512_int_shift_edge_imm31", "vpsrld $31, %zmm3, %zmm1", F),
+        ("vpsrld_avx512_int_shift_edge_imm32", "vpsrld $32, %zmm3, %zmm1", F),
+        ("vpsrad_avx512_int_shift_edge_imm31", "vpsrad $31, %zmm3, %zmm1", F),
+        ("vpsrad_avx512_int_shift_edge_imm32", "vpsrad $32, %zmm3, %zmm1", F),
+        ("vpsllq_avx512_int_shift_edge_imm63", "vpsllq $63, %zmm3, %zmm1", F),
+        ("vpsllq_avx512_int_shift_edge_imm64", "vpsllq $64, %zmm3, %zmm1", F),
+        ("vpsrlq_avx512_int_shift_edge_imm63", "vpsrlq $63, %zmm3, %zmm1", F),
+        ("vpsrlq_avx512_int_shift_edge_imm64", "vpsrlq $64, %zmm3, %zmm1", F),
+        ("vpsraq_avx512_int_shift_edge_imm63", "vpsraq $63, %zmm3, %zmm1", F),
+        ("vpsraq_avx512_int_shift_edge_imm64", "vpsraq $64, %zmm3, %zmm1", F),
+        ("vpsllvd_avx512_int_shift_edge_reg", "vpsllvd %zmm2, %zmm3, %zmm1", F),
+        ("vpsrlvd_avx512_int_shift_edge_mem", "vpsrlvd 64(%rax), %zmm3, %zmm1", F),
+        ("vpsravd_avx512_int_shift_edge_reg", "vpsravd %zmm2, %zmm3, %zmm1", F),
+        ("vpsllvq_avx512_int_shift_edge_mem", "vpsllvq 64(%rax), %zmm3, %zmm1", F),
+        ("vpsrlvq_avx512_int_shift_edge_reg", "vpsrlvq %zmm2, %zmm3, %zmm1", F),
+        ("vpsravq_avx512_int_shift_edge_mem", "vpsravq 64(%rax), %zmm3, %zmm1", F),
+        ("vprold_avx512_int_shift_edge_imm31", "vprold $31, %zmm3, %zmm1", F),
+        ("vprold_avx512_int_shift_edge_imm32", "vprold $32, %zmm3, %zmm1", F),
+        ("vprord_avx512_int_shift_edge_imm31", "vprord $31, %zmm3, %zmm1", F),
+        ("vprord_avx512_int_shift_edge_imm32", "vprord $32, %zmm3, %zmm1", F),
+        ("vprolq_avx512_int_shift_edge_imm63", "vprolq $63, %zmm3, %zmm1", F),
+        ("vprolq_avx512_int_shift_edge_imm64", "vprolq $64, %zmm3, %zmm1", F),
+        ("vprorq_avx512_int_shift_edge_imm63", "vprorq $63, %zmm3, %zmm1", F),
+        ("vprorq_avx512_int_shift_edge_imm64", "vprorq $64, %zmm3, %zmm1", F),
+        ("vprolvd_avx512_int_shift_edge_reg", "vprolvd %zmm2, %zmm3, %zmm1", F),
+        ("vprorvd_avx512_int_shift_edge_mem", "vprorvd 64(%rax), %zmm3, %zmm1", F),
+        ("vprolvq_avx512_int_shift_edge_reg", "vprolvq %zmm2, %zmm3, %zmm1", F),
+        ("vprorvq_avx512_int_shift_edge_mem", "vprorvq 64(%rax), %zmm3, %zmm1", F),
+        ("vpshldw_vbmi2_int_shift_edge_imm15", "vpshldw $15, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshldw_vbmi2_int_shift_edge_imm16", "vpshldw $16, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdw_vbmi2_int_shift_edge_imm15", "vpshrdw $15, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdw_vbmi2_int_shift_edge_imm16", "vpshrdw $16, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshldd_vbmi2_int_shift_edge_imm31", "vpshldd $31, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshldd_vbmi2_int_shift_edge_imm32", "vpshldd $32, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdd_vbmi2_int_shift_edge_imm31", "vpshrdd $31, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdd_vbmi2_int_shift_edge_imm32", "vpshrdd $32, %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshldvw_vbmi2_int_shift_edge_reg", "vpshldvw %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdvw_vbmi2_int_shift_edge_mem", "vpshrdvw 64(%rax), %zmm3, %zmm1", Vbmi2),
+        ("vpshldvd_vbmi2_int_shift_edge_reg", "vpshldvd %zmm2, %zmm3, %zmm1", Vbmi2),
+        ("vpshrdvq_vbmi2_int_shift_edge_mem", "vpshrdvq 64(%rax), %zmm3, %zmm1", Vbmi2),
+        ("kshiftlb_int_shift_edge_imm7", "kshiftlb $7, %k2, %k5", Dq),
+        ("kshiftlb_int_shift_edge_imm8", "kshiftlb $8, %k2, %k5", Dq),
+        ("kshiftrb_int_shift_edge_imm7", "kshiftrb $7, %k2, %k5", Dq),
+        ("kshiftrb_int_shift_edge_imm8", "kshiftrb $8, %k2, %k5", Dq),
+        ("kshiftlw_int_shift_edge_imm15", "kshiftlw $15, %k2, %k5", F),
+        ("kshiftlw_int_shift_edge_imm16", "kshiftlw $16, %k2, %k5", F),
+        ("kshiftrw_int_shift_edge_imm15", "kshiftrw $15, %k2, %k5", F),
+        ("kshiftrw_int_shift_edge_imm16", "kshiftrw $16, %k2, %k5", F),
+        ("kshiftld_int_shift_edge_imm31", "kshiftld $31, %k2, %k5", Dq),
+        ("kshiftld_int_shift_edge_imm32", "kshiftld $32, %k2, %k5", Dq),
+        ("kshiftrd_int_shift_edge_imm31", "kshiftrd $31, %k2, %k5", Dq),
+        ("kshiftrd_int_shift_edge_imm32", "kshiftrd $32, %k2, %k5", Dq),
+        ("kshiftlq_int_shift_edge_imm63", "kshiftlq $63, %k2, %k5", Bw),
+        ("kshiftlq_int_shift_edge_imm64", "kshiftlq $64, %k2, %k5", Bw),
+        ("kshiftrq_int_shift_edge_imm63", "kshiftrq $63, %k2, %k5", Bw),
+        ("kshiftrq_int_shift_edge_imm64", "kshiftrq $64, %k2, %k5", Bw),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: IntShiftEdge,
         });
     }
 
@@ -14248,6 +14460,78 @@ fn avx512_kvm_integer_order_edge_corpus() {
 }
 
 #[test]
+fn avx512_kvm_integer_shift_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_int_shift_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        118,
+        "unexpected integer shift edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on integer shift edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an integer shift edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "integer shift edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "integer shift edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        16,
+        "all MMX shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        14,
+        "all SSE2 shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        21,
+        "all AVX2 shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        13,
+        "all AVX-512BW shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        34,
+        "all AVX-512F shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vbmi2),
+        12,
+        "all AVX-512 VBMI2 shift edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Dq),
+        8,
+        "all AVX-512DQ mask shift edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 118,
+        "all integer shift edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_legacy_convert_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -15456,7 +15740,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 51, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 67, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -15467,7 +15751,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 51, "all MMX cases should compare");
+    assert_eq!(tally.compared, 67, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
