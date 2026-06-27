@@ -1826,9 +1826,12 @@ fn irregular_cases() -> Vec<Case> {
         ("vpmovzxwd", "vpmovzxwd %ymm3, %zmm1", F, Int, true),
         ("vpmovzxdq", "vpmovzxdq %ymm3, %zmm1", F, Int, true),
         ("vpmovzxbq", "vpmovzxbq %xmm3, %zmm1", F, Int, true),
+        ("vpmovzxwq", "vpmovzxwq %xmm3, %zmm1", F, Int, true),
         ("vpmovsxbd", "vpmovsxbd %xmm3, %zmm1", F, Int, true),
         ("vpmovsxwd", "vpmovsxwd %ymm3, %zmm1", F, Int, true),
         ("vpmovsxdq", "vpmovsxdq %ymm3, %zmm1", F, Int, true),
+        ("vpmovsxbq", "vpmovsxbq %xmm3, %zmm1", F, Int, true),
+        ("vpmovsxwq", "vpmovsxwq %xmm3, %zmm1", F, Int, true),
         ("vpmovzxbw", "vpmovzxbw %ymm3, %zmm1", Bw, Int, true),
         ("vpmovsxbw", "vpmovsxbw %ymm3, %zmm1", Bw, Int, true),
         // truncating moves (src zmm -> dst xmm/ymm)
@@ -3476,6 +3479,142 @@ fn irregular_cases() -> Vec<Case> {
                 profile,
             );
         }
+    }
+
+    // AVX-512 lane extract/insert forms cover register upper-lane zeroing and
+    // memory side effects for both 128-bit and 256-bit chunks.
+    for &(label, asm, profile) in &[
+        ("vextracti32x4_reg", "vextracti32x4 $2, %zmm2, %xmm3", Int),
+        ("vextracti32x4_mem", "vextracti32x4 $2, %zmm2, (%rax)", Int),
+        ("vextractf32x4_reg", "vextractf32x4 $3, %zmm2, %xmm3", F32),
+        (
+            "vextractf32x4_mem",
+            "vextractf32x4 $3, %zmm2, 16(%rax)",
+            F32,
+        ),
+        (
+            "vinserti32x4_reg",
+            "vinserti32x4 $2, %xmm3, %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinserti32x4_mem",
+            "vinserti32x4 $2, 64(%rax), %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinsertf32x4_reg",
+            "vinsertf32x4 $3, %xmm3, %zmm2, %zmm1",
+            F32,
+        ),
+        (
+            "vinsertf32x4_mem",
+            "vinsertf32x4 $3, 64(%rax), %zmm2, %zmm1",
+            F32,
+        ),
+        ("vextracti32x8_reg", "vextracti32x8 $1, %zmm2, %ymm3", Int),
+        (
+            "vextracti32x8_mem",
+            "vextracti32x8 $1, %zmm2, 32(%rax)",
+            Int,
+        ),
+        ("vextractf32x8_reg", "vextractf32x8 $1, %zmm2, %ymm3", F32),
+        (
+            "vextractf32x8_mem",
+            "vextractf32x8 $1, %zmm2, 64(%rax)",
+            F32,
+        ),
+        (
+            "vinserti32x8_reg",
+            "vinserti32x8 $1, %ymm3, %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinserti32x8_mem",
+            "vinserti32x8 $1, 64(%rax), %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinsertf32x8_reg",
+            "vinsertf32x8 $1, %ymm3, %zmm2, %zmm1",
+            F32,
+        ),
+        (
+            "vinsertf32x8_mem",
+            "vinsertf32x8 $1, 64(%rax), %zmm2, %zmm1",
+            F32,
+        ),
+        ("vextracti64x2_reg", "vextracti64x2 $1, %zmm2, %xmm3", Int),
+        (
+            "vextracti64x2_mem",
+            "vextracti64x2 $1, %zmm2, 32(%rax)",
+            Int,
+        ),
+        ("vextractf64x2_reg", "vextractf64x2 $1, %zmm2, %xmm3", F64),
+        (
+            "vextractf64x2_mem",
+            "vextractf64x2 $1, %zmm2, 48(%rax)",
+            F64,
+        ),
+        (
+            "vinserti64x2_reg",
+            "vinserti64x2 $1, %xmm3, %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinserti64x2_mem",
+            "vinserti64x2 $1, 64(%rax), %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinsertf64x2_reg",
+            "vinsertf64x2 $1, %xmm3, %zmm2, %zmm1",
+            F64,
+        ),
+        (
+            "vinsertf64x2_mem",
+            "vinsertf64x2 $1, 80(%rax), %zmm2, %zmm1",
+            F64,
+        ),
+        ("vextracti64x4_reg", "vextracti64x4 $1, %zmm2, %ymm3", Int),
+        (
+            "vextracti64x4_mem",
+            "vextracti64x4 $1, %zmm2, 64(%rax)",
+            Int,
+        ),
+        ("vextractf64x4_reg", "vextractf64x4 $1, %zmm2, %ymm3", F64),
+        (
+            "vextractf64x4_mem",
+            "vextractf64x4 $1, %zmm2, 96(%rax)",
+            F64,
+        ),
+        (
+            "vinserti64x4_reg",
+            "vinserti64x4 $1, %ymm3, %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinserti64x4_mem",
+            "vinserti64x4 $1, 64(%rax), %zmm2, %zmm1",
+            Int,
+        ),
+        (
+            "vinsertf64x4_reg",
+            "vinsertf64x4 $1, %ymm3, %zmm2, %zmm1",
+            F64,
+        ),
+        (
+            "vinsertf64x4_mem",
+            "vinsertf64x4 $1, 96(%rax), %zmm2, %zmm1",
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: F,
+            profile,
+        });
     }
 
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
