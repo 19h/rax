@@ -62,12 +62,15 @@ const INITIAL_RFLAGS: u64 = 0x8d7;
 const STATUS_RFLAGS_MASK: u64 = 0x8d5;
 /// Value seeded into r8 (GPR-source / GPR-dest EVEX and k<->GPR forms read it).
 const R8_SEED: u64 = 0x8877_6655_4433_2211;
+/// Value seeded into rcx, which SSE4.2 PCMPISTRI writes architecturally.
+const RCX_SEED: u64 = 0x1020_3040_5060_7080;
 
 /// One concrete architectural input: register file + scratch memory.
 #[derive(Clone)]
 struct InCase {
     zmm: [[u64; 8]; ZMM_REGS],
     k: [u64; K_REGS],
+    rcx: u64,
     r8: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
@@ -79,6 +82,7 @@ struct OutCase {
     zmm: [[u64; 8]; ZMM_REGS],
     k: [u64; K_REGS],
     rax: u64,
+    rcx: u64,
     r8: u64,
     rflags: u64,
     scratch: [u8; SCRATCH_BYTES],
@@ -119,6 +123,8 @@ enum Feat {
     Ssse3,
     /// Legacy SSE4.1 blend and test instructions.
     Sse41,
+    /// Legacy SSE4.2 compare and string instructions.
+    Sse42,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
@@ -180,6 +186,7 @@ impl Feat {
             Feat::Sse2 => "sse2",
             Feat::Ssse3 => "ssse3",
             Feat::Sse41 => "sse4_1",
+            Feat::Sse42 => "sse4_2",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
             Feat::F16c => "f16c",
@@ -214,6 +221,7 @@ impl Feat {
             Feat::Sse2,
             Feat::Ssse3,
             Feat::Sse41,
+            Feat::Sse42,
             Feat::Aes,
             Feat::Pclmulqdq,
             Feat::F16c,
@@ -331,6 +339,7 @@ impl HostFeatures {
             Feat::Sse2 => self.sse2,
             Feat::Ssse3 => self.ssse3,
             Feat::Sse41 => self.sse4_1,
+            Feat::Sse42 => self.sse4_2,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
             Feat::F16c => self.f16c,
@@ -686,6 +695,7 @@ impl KvmOracle {
         let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
         kregs.rip = CODE_ADDR;
         kregs.rsp = STACK_ADDR;
+        kregs.rcx = input.rcx;
         kregs.r8 = input.r8;
         kregs.rflags = input.rflags | 0x2;
         vcpu.set_regs(&kregs)
@@ -726,6 +736,7 @@ impl KvmOracle {
             zmm,
             k,
             rax: final_regs.rax,
+            rcx: final_regs.rcx,
             r8: final_regs.r8,
             rflags: final_regs.rflags,
             scratch,
@@ -775,6 +786,7 @@ fn get_regs_zmm(regs: &Registers, index: usize) -> [u64; 8] {
 
 fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     let mut regs = Registers {
+        rcx: input.rcx,
         r8: input.r8,
         rflags: input.rflags,
         ..Registers::default()
@@ -801,6 +813,7 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         zmm,
         k: out_regs.k,
         rax: out_regs.rax,
+        rcx: out_regs.rcx,
         r8: out_regs.r8,
         rflags: out_regs.rflags,
         scratch,
@@ -846,6 +859,9 @@ fn diff(interp: &OutCase, kvm: &OutCase) -> Vec<String> {
     }
     if interp.rax != kvm.rax {
         diffs.push(format!("rax: interp={:#x} kvm={:#x}", interp.rax, kvm.rax));
+    }
+    if interp.rcx != kvm.rcx {
+        diffs.push(format!("rcx: interp={:#x} kvm={:#x}", interp.rcx, kvm.rcx));
     }
     if interp.r8 != kvm.r8 {
         diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
@@ -1017,6 +1033,7 @@ fn input_for(profile: InputProfile) -> InCase {
             u64::MAX,
             u64::MAX,
         ],
+        rcx: RCX_SEED,
         r8: R8_SEED,
         rflags: INITIAL_RFLAGS,
         scratch,
@@ -3974,6 +3991,38 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE4.2 compare/string forms cover qword compares, XMM0 mask
+    // results, RCX index results, and the PCMPxSTRx status flags.
+    for &(label, asm) in &[
+        ("pcmpgtq_sse42_reg", "pcmpgtq %xmm2, %xmm1"),
+        ("pcmpgtq_sse42_mem", "pcmpgtq 32(%rax), %xmm1"),
+        ("pcmpistrm_sse42_reg_eqany", "pcmpistrm $0x08, %xmm2, %xmm1"),
+        (
+            "pcmpistrm_sse42_mem_eqany",
+            "pcmpistrm $0x08, 32(%rax), %xmm1",
+        ),
+        ("pcmpistri_sse42_reg_eqany", "pcmpistri $0x08, %xmm2, %xmm1"),
+        (
+            "pcmpistri_sse42_mem_eqany",
+            "pcmpistri $0x08, 32(%rax), %xmm1",
+        ),
+        (
+            "pcmpistrm_sse42_reg_ranges",
+            "pcmpistrm $0x3a, %xmm2, %xmm1",
+        ),
+        (
+            "pcmpistri_sse42_reg_ranges",
+            "pcmpistri $0x3a, %xmm2, %xmm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse42,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -4959,6 +5008,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Sse2
                 | Feat::Ssse3
                 | Feat::Sse41
+                | Feat::Sse42
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
