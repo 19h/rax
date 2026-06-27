@@ -193,6 +193,10 @@ enum Feat {
     Io,
     /// Fast system-call transition instructions.
     FastSyscall,
+    /// CPUID processor-query instruction.
+    Cpuid,
+    /// RDPMC performance-monitor counter reads.
+    Rdpmc,
     /// Privileged cache invalidation/writeback instructions without CPUID gates.
     CacheInvd,
     /// WBNOINVD cache writeback without invalidation.
@@ -312,6 +316,8 @@ impl Feat {
             Feat::DebugReg => "debug_reg",
             Feat::Io => "io",
             Feat::FastSyscall => "fast_syscall",
+            Feat::Cpuid => "cpuid",
+            Feat::Rdpmc => "rdpmc",
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
@@ -382,6 +388,8 @@ impl Feat {
             Feat::DebugReg,
             Feat::Io,
             Feat::FastSyscall,
+            Feat::Cpuid,
+            Feat::Rdpmc,
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
@@ -461,6 +469,7 @@ struct HostFeatures {
     rdtscp: bool,
     syscall: bool,
     sep: bool,
+    rdpmc: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -526,6 +535,7 @@ impl HostFeatures {
             rdtscp: host_cpu_flag("rdtscp"),
             syscall: host_cpu_flag("syscall"),
             sep: host_cpu_flag("sep"),
+            rdpmc: host_cpu_flag("arch_perfmon") && host_kvm_pmu_enabled(),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -587,6 +597,8 @@ impl HostFeatures {
             Feat::DebugReg => true,
             Feat::Io => true,
             Feat::FastSyscall => self.syscall && self.sep,
+            Feat::Cpuid => true,
+            Feat::Rdpmc => self.rdpmc,
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
@@ -647,6 +659,15 @@ fn host_cpu_flag(flag: &str) -> bool {
             .unwrap_or_default()
     });
     flags.split_whitespace().any(|word| word == flag)
+}
+
+fn host_kvm_pmu_enabled() -> bool {
+    static ENABLED: OnceLock<bool> = OnceLock::new();
+    *ENABLED.get_or_init(|| {
+        std::fs::read_to_string("/sys/module/kvm/parameters/enable_pmu")
+            .map(|text| matches!(text.trim(), "Y" | "y" | "1"))
+            .unwrap_or(true)
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -6417,6 +6438,60 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // CPUID and RDPMC expose host/model-specific values, so these cases reduce
+    // the architectural result to stable booleans before comparing KVM and rax.
+    for &(label, asm) in &[
+        (
+            "cpuid_leaf0_zero_ext",
+            "movabsq $0xffffffff00000000, %rax\nmovq $-1, %rbx\nmovq $-1, %rcx\nmovq $-1, %rdx\ncpuid\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rbx, %r9\nshrq $32, %r9\norq %r9, %r8\nmovq %rcx, %r9\nshrq $32, %r9\norq %r9, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_preserves_status_flags",
+            "movl $1, %eax\nmovl $0, %ecx\nmovq $0x10, %r8\nsubq $0x21, %r8\ncpuid\nmovq $0, %rax\nmovq $0, %rbx\nmovq $0, %rcx\nmovq $0, %rdx\nmovq $0, %r8\nmovq $0, %r9",
+        ),
+        (
+            "cpuid_eax_upper_ignored",
+            "xorl %eax, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %eax, %r8d\nmovl %ebx, %r9d\nmovl %ecx, %esi\nmovl %edx, %edi\nmovabsq $0xffffffff00000000, %rax\nxorl %ecx, %ecx\ncpuid\nxorl %r8d, %eax\nxorl %r9d, %ebx\nxorl %esi, %ecx\nxorl %edi, %edx\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %rsi, %rsi\nxorq %rdi, %rdi\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_ecx_upper_ignored",
+            "movl $7, %eax\nmovl $1, %ecx\ncpuid\nmovl %eax, %r8d\nmovl %ebx, %r9d\nmovl %ecx, %esi\nmovl %edx, %edi\nmovl $7, %eax\nmovabsq $0xffffffff00000001, %rcx\ncpuid\nxorl %r8d, %eax\nxorl %r9d, %ebx\nxorl %esi, %ecx\nxorl %edi, %edx\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %rsi, %rsi\nxorq %rdi, %rdi\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_leaf1_zero_ext",
+            "movabsq $0xffffffff00000001, %rax\nmovq $-1, %rbx\nmovq $-1, %rcx\nmovq $-1, %rdx\ncpuid\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rbx, %r9\nshrq $32, %r9\norq %r9, %r8\nmovq %rcx, %r9\nshrq $32, %r9\norq %r9, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Cpuid,
+            profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        (
+            "rdpmc_counter0_zero_ext",
+            "movq $-1, %rax\nxorq %rcx, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "rdpmc_preserves_status_flags",
+            "xorq %rcx, %rcx\nmovq $0x10, %r8\nsubq $0x21, %r8\nrdpmc\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %r8\nmovq $0, %r9",
+        ),
+        (
+            "rdpmc_ecx_upper_ignored_zero_ext",
+            "movq $-1, %rax\nmovabsq $0xffffffff00000000, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Rdpmc,
+            profile: Int,
+        });
+    }
+
     // x87 FPU stack/data-path cases. Each snippet initializes the FPU and
     // stores the observable result to scratch, avoiding hidden x87 state in the
     // final KVM/interpreter comparison.
@@ -8168,6 +8243,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::DebugReg
                 | Feat::Io
                 | Feat::FastSyscall
+                | Feat::Cpuid
+                | Feat::Rdpmc
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
@@ -8395,6 +8472,51 @@ fn avx512_kvm_fast_syscall_corpus() {
         "fast syscall corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 4, "all fast syscall cases should compare");
+}
+
+#[test]
+fn avx512_kvm_processor_query_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected processor-query corpus size");
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Rdpmc) {
+        eprintln!("[skip] host KVM PMU support unavailable; RDPMC cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on processor-query cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a processor-query case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "processor-query corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.ran_for(Feat::Cpuid), 5, "all CPUID cases should run");
+    if host.supports(Feat::Rdpmc) {
+        assert_eq!(tally.ran_for(Feat::Rdpmc), 3, "all RDPMC cases should run");
+        assert_eq!(
+            tally.skipped_feature, 0,
+            "processor-query cases should not feature-skip"
+        );
+        assert_eq!(
+            tally.compared, 8,
+            "all processor-query cases should compare"
+        );
+    } else {
+        assert_eq!(
+            tally.skipped_feature, 3,
+            "only RDPMC cases should feature-skip"
+        );
+        assert_eq!(tally.compared, 5, "all CPUID cases should compare");
+    }
 }
 
 #[test]
