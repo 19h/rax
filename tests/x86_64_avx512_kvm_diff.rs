@@ -185,6 +185,10 @@ enum Feat {
     Invlpg,
     /// SMAP access-flag control instructions.
     Smap,
+    /// Protection-key user access register instructions.
+    Pku,
+    /// SWAPGS GS-base exchange instruction.
+    Swapgs,
     /// SERIALIZE instruction execution barrier.
     Serialize,
     /// WAITPKG user-level monitor/wait instructions.
@@ -288,6 +292,8 @@ impl Feat {
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
             Feat::Smap => "smap",
+            Feat::Pku => "pku",
+            Feat::Swapgs => "swapgs",
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
             Feat::Rdpid => "rdpid",
@@ -348,6 +354,8 @@ impl Feat {
             Feat::Wbnoinvd,
             Feat::Invlpg,
             Feat::Smap,
+            Feat::Pku,
+            Feat::Swapgs,
             Feat::Serialize,
             Feat::Waitpkg,
             Feat::Rdpid,
@@ -410,6 +418,7 @@ struct HostFeatures {
     fsgsbase: bool,
     wbnoinvd: bool,
     smap: bool,
+    pku: bool,
     serialize: bool,
     waitpkg: bool,
     rdpid: bool,
@@ -471,6 +480,7 @@ impl HostFeatures {
             fsgsbase: host_cpu_flag("fsgsbase"),
             wbnoinvd: host_cpu_flag("wbnoinvd"),
             smap: host_cpu_flag("smap"),
+            pku: host_cpu_flag("pku"),
             serialize: host_cpu_flag("serialize"),
             waitpkg: host_cpu_flag("waitpkg"),
             rdpid: host_cpu_flag("rdpid"),
@@ -535,6 +545,8 @@ impl HostFeatures {
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
             Feat::Smap => self.smap,
+            Feat::Pku => self.pku,
+            Feat::Swapgs => true,
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
             Feat::Rdpid => self.rdpid,
@@ -6731,6 +6743,39 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // PKRU and SWAPGS privileged state instructions. Setup instructions may
+    // touch flags, so each snippet establishes deterministic CMP flags
+    // immediately before the operation being checked.
+    for &(label, asm, feat) in &[
+        (
+            "pkru_write_read_roundtrip",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\ncmpq %rcx, %r8\nmovl $0x55555550, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nmovq $-1, %rax\nmovq $-1, %rdx\nrdpkru",
+            Pku,
+        ),
+        (
+            "pkru_last_write_visible",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\ncmpq %rcx, %r8\nmovl $0xaaaaaaa0, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nmovl $0xcafebab0, %eax\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "swapgs_roundtrip_rdgsbase",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000789000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000123000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nrdgsbase %rbx\nswapgs\nrdgsbase %rcx\nswapgs\nrdgsbase %rdx",
+            Swapgs,
+        ),
+        (
+            "swapgs_extended_rdgsbase",
+            "movl $0xc0000102, %ecx\nmovabsq $0x00000000009ab000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000246000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nrdgsbase %r8\nswapgs\nrdgsbase %r9",
+            Swapgs,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // RDTSC/RDTSCP return time-varying values. These cases either normalize
     // the outputs with flag-preserving MOVs or shift away variable payload bits
     // while restoring the instruction-preserved flags.
@@ -7443,7 +7488,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+wbnoinvd,+smap,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+wbnoinvd,+smap,+pku,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7726,6 +7771,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
                 | Feat::Smap
+                | Feat::Pku
+                | Feat::Swapgs
                 | Feat::Serialize
                 | Feat::Waitpkg
                 | Feat::Rdpid
