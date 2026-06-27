@@ -4961,6 +4961,35 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core integer multiply and divide forms. One-operand MUL/IMUL and
+    // DIV/IDIV exercise the implicit RDX:RAX / RAX architectural operands; the
+    // explicit IMUL forms cover register, memory, imm8, and imm32 encodings.
+    for &(label, asm) in &[
+        ("imul_core_r64_reg", "imulq %rcx, %r8"),
+        ("imul_core_r32_reg", "imull %ecx, %r8d"),
+        ("imul_core_r64_mem_src", "imulq 8(%rax), %r8"),
+        ("imul_core_r64_imm8", "imulq $-3, %rcx, %r8"),
+        ("imul_core_r64_imm32", "imulq $0x10000, %rcx, %r8"),
+        ("imul_core_r64_mem_imm8", "imulq $7, 8(%rax), %r8"),
+        ("mul_core_r64_reg", "mulq %r8"),
+        ("mul_core_r32_reg", "mull %ecx"),
+        ("mul_core_r64_mem", "mulq 8(%rax)"),
+        ("imul_one_core_r64_reg", "imulq %rcx"),
+        ("imul_one_core_r32_reg", "imull %ecx"),
+        ("imul_one_core_r64_mem", "imulq 8(%rax)"),
+        ("div_core_r64_reg", "divq %r8"),
+        ("div_core_r32_reg", "divl %ecx"),
+        ("idiv_core_r64_reg", "idivq %r8"),
+        ("idiv_core_r32_reg", "idivl %ecx"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -5249,6 +5278,22 @@ fn case_rflags_mask(case: &Case) -> u64 {
             | "shrdq"
     ) {
         return RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF;
+    }
+
+    // MUL/IMUL define CF and OF; the other arithmetic flags are undefined.
+    if matches!(
+        mnem,
+        "mulb" | "mulw" | "mull" | "mulq" | "imulb" | "imulw" | "imull" | "imulq"
+    ) {
+        return RFLAGS_CF | RFLAGS_OF;
+    }
+
+    // DIV/IDIV leave all status flags undefined.
+    if matches!(
+        mnem,
+        "divb" | "divw" | "divl" | "divq" | "idivb" | "idivw" | "idivl" | "idivq"
+    ) {
+        return 0;
     }
 
     // BT/BTS/BTR/BTC define CF from the selected bit; the other status flags
