@@ -6557,6 +6557,54 @@ fn irregular_cases() -> Vec<Case> {
             "movl $-12345, 32(%rax)\nfninit\nfildl 32(%rax)\nfistpl 40(%rax)",
         ),
         (
+            "x87_fild_widths_exact_store",
+            "movw $-1234, 32(%rax)\nmovl $56789, 36(%rax)\nmovabsq $-1234567, %r8\nmovq %r8, 40(%rax)\nfninit\nfilds 32(%rax)\nfstpl 48(%rax)\nfildl 36(%rax)\nfstpl 56(%rax)\nfildll 40(%rax)\nfstpl 64(%rax)",
+        ),
+        (
+            "x87_fist_nonpop_preserves_st0",
+            "movabsq $0x4012000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfists 40(%rax)\nfistl 44(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_fistp_widths_round_nearest_even",
+            "movabsq $0x400c000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfistps 40(%rax)\nfldl 32(%rax)\nfistpl 44(%rax)\nfldl 32(%rax)\nfistpll 48(%rax)",
+        ),
+        (
+            "x87_fisttp_widths_truncate",
+            "movabsq $0xc00e000000000000, %r8\nmovq %r8, 32(%rax)\nfninit\nfldl 32(%rax)\nfisttps 40(%rax)\nfldl 32(%rax)\nfisttpl 44(%rax)\nfldl 32(%rax)\nfisttpll 48(%rax)",
+        ),
+        (
+            "x87_fldcw_controls_fistp_rounding",
+            "movw $0x077f, 32(%rax)\nmovw $0x0b7f, 34(%rax)\nmovabsq $0x400e000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldcw 32(%rax)\nfldl 40(%rax)\nfistpl 48(%rax)\nfldcw 34(%rax)\nfldl 40(%rax)\nfistpl 52(%rax)",
+        ),
+        (
+            "x87_fisttp_ignores_rounding_control",
+            "movw $0x0b7f, 32(%rax)\nmovabsq $0x400e000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldcw 32(%rax)\nfldl 40(%rax)\nfisttpl 48(%rax)\nfldl 40(%rax)\nfistpl 52(%rax)",
+        ),
+        (
+            "x87_fiadd_fimul_fisub_fidiv_m16",
+            "movw $5, 32(%rax)\nmovw $3, 34(%rax)\nmovw $2, 36(%rax)\nmovw $4, 38(%rax)\nmovw $3, 40(%rax)\nfninit\nfilds 32(%rax)\nfiadds 34(%rax)\nfimuls 36(%rax)\nfisubs 38(%rax)\nfidivs 40(%rax)\nfistpl 48(%rax)",
+        ),
+        (
+            "x87_fisubr_fidivr_m32",
+            "movl $8, 32(%rax)\nmovl $20, 36(%rax)\nmovl $36, 40(%rax)\nfninit\nfildl 32(%rax)\nfisubrl 36(%rax)\nfidivrl 40(%rax)\nfistpl 48(%rax)",
+        ),
+        (
+            "x87_ficom_m16_m32_status",
+            "movw $7, 32(%rax)\nmovl $9, 36(%rax)\nfninit\nfilds 32(%rax)\nficoms 32(%rax)\nfnstsw 40(%rax)\nficoml 36(%rax)\nfnstsw 42(%rax)\nfstpl 48(%rax)",
+        ),
+        (
+            "x87_ficomp_pops_after_compare",
+            "movw $4, 32(%rax)\nmovl $5, 36(%rax)\nfninit\nfilds 32(%rax)\nfildl 36(%rax)\nficomps 32(%rax)\nfstpl 40(%rax)\nfildl 36(%rax)\nficompl 36(%rax)\nfnstsw 48(%rax)",
+        ),
+        (
+            "x87_fbld_fbstp_positive_negative",
+            "movabsq $0x0000000000012345, %r8\nmovq %r8, 32(%rax)\nmovw $0, 40(%rax)\nmovabsq $0x0000000000000456, %r8\nmovq %r8, 64(%rax)\nmovw $0x8000, 72(%rax)\nfninit\nfbld 32(%rax)\nfbstp 80(%rax)\nfbld 64(%rax)\nfbstp 96(%rax)",
+        ),
+        (
+            "x87_fbld_fiadd_fbstp_result",
+            "movabsq $0x0000000000000123, %r8\nmovq %r8, 32(%rax)\nmovw $0, 40(%rax)\nmovw $7, 48(%rax)\nfninit\nfbld 32(%rax)\nfiadds 48(%rax)\nfbstp 64(%rax)",
+        ),
+        (
             "x87_fxch_stack_order",
             "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfxch %st(1)\nfstpl 48(%rax)\nfstpl 56(%rax)",
         ),
@@ -8954,7 +9002,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 30, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 42, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -8965,7 +9013,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 30, "all x87 cases should compare");
+    assert_eq!(tally.compared, 42, "all x87 cases should compare");
 }
 
 #[test]
