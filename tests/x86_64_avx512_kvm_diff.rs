@@ -3809,6 +3809,45 @@ fn irregular_cases() -> Vec<Case> {
         profile: Int,
     });
 
+    // Legacy GFNI XMM forms share the GFNI feature with the EVEX vector cases,
+    // but exercise separate 0F38/0F3A decoders and legacy XMM write semantics.
+    for &(label, asm) in &[
+        ("gf2p8mulb_legacy_reg", "gf2p8mulb %xmm2, %xmm1"),
+        ("gf2p8mulb_legacy_mem", "gf2p8mulb (%rax), %xmm1"),
+        ("gf2p8mulb_legacy_high", "gf2p8mulb %xmm10, %xmm9"),
+        (
+            "gf2p8affineqb_imm63_legacy_reg",
+            "gf2p8affineqb $0x63, %xmm2, %xmm1",
+        ),
+        (
+            "gf2p8affineqb_imm1b_legacy_mem",
+            "gf2p8affineqb $0x1b, (%rax), %xmm1",
+        ),
+        (
+            "gf2p8affineqb_imma5_legacy_high",
+            "gf2p8affineqb $0xa5, %xmm10, %xmm9",
+        ),
+        (
+            "gf2p8affineinvqb_imm63_legacy_reg",
+            "gf2p8affineinvqb $0x63, %xmm2, %xmm1",
+        ),
+        (
+            "gf2p8affineinvqb_imm1b_legacy_mem",
+            "gf2p8affineinvqb $0x1b, (%rax), %xmm1",
+        ),
+        (
+            "gf2p8affineinvqb_imma5_legacy_high",
+            "gf2p8affineinvqb $0xa5, %xmm10, %xmm9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Gfni,
+            profile: Int,
+        });
+    }
+
     // SHA-NI legacy XMM crypto/message-schedule instructions. These exercise
     // non-VEX XMM writes, memory operands, high XMM registers, and all
     // SHA1RNDS4 function selector immediates.
@@ -4227,12 +4266,14 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). AES/PCLMUL, SHA-NI, MOVDIR, ADX, MOVBE,
-        // CRC32, and POPCNT are intentionally legacy 0F-family encodings.
+        // are VEX-encoded (0xC4/0xC5). AES/PCLMUL, legacy GFNI, SHA-NI, MOVDIR,
+        // ADX, MOVBE, CRC32, and POPCNT are intentionally legacy 0F-family
+        // encodings.
         let legacy_allowed = matches!(
             case.feat,
             Feat::Aes
                 | Feat::Pclmulqdq
+                | Feat::Gfni
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
