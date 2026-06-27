@@ -6864,6 +6864,24 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        ("adcx_adx_operand_r64_r9", "adcx %r9, %r8"),
+        ("adcx_adx_operand_r32_r9d", "adcx %r9d, %r8d"),
+        ("adcx_adx_operand_m64_disp_r8", "adcx 16(%rax), %r8"),
+        ("adcx_adx_operand_m32_disp_r8d", "adcx 20(%rax), %r8d"),
+        ("adox_adx_operand_r64_r9", "adox %r9, %r8"),
+        ("adox_adx_operand_r32_r9d", "adox %r9d, %r8d"),
+        ("adox_adx_operand_m64_disp_r8", "adox 24(%rax), %r8"),
+        ("adox_adx_operand_m32_disp_r8d", "adox 28(%rax), %r8d"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Adx,
+            profile: Int,
+        });
+    }
+
     // MOVBE endian-swapping loads/stores across all operand sizes. Loads are
     // observed through r8; stores are observed through the scratch page diff.
     for &(label, asm) in &[
@@ -10824,6 +10842,44 @@ fn avx512_kvm_scalar_crc_movbe_operand_form_corpus() {
     assert_eq!(
         tally.compared, 14,
         "all scalar CRC/MOVBE operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_adx_operand_form_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_adx_operand_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected ADX operand-form corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on ADX operand-form cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an ADX operand-form case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "ADX operand-form corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "ADX operand-form cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Adx),
+        8,
+        "all ADX operand-form cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all ADX operand-form cases should compare"
     );
 }
 
