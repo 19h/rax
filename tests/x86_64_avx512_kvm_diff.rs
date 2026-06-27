@@ -174,6 +174,8 @@ enum Feat {
     Clwb,
     /// CLDEMOTE cache-line demotion hint.
     Cldemote,
+    /// FSGSBASE FS/GS base read/write instructions.
+    Fsgsbase,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -258,6 +260,7 @@ impl Feat {
             Feat::Clflushopt => "clflushopt",
             Feat::Clwb => "clwb",
             Feat::Cldemote => "cldemote",
+            Feat::Fsgsbase => "fsgsbase",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -306,6 +309,7 @@ impl Feat {
             Feat::Clflushopt,
             Feat::Clwb,
             Feat::Cldemote,
+            Feat::Fsgsbase,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -358,6 +362,7 @@ struct HostFeatures {
     clflushopt: bool,
     clwb: bool,
     cldemote: bool,
+    fsgsbase: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -409,6 +414,7 @@ impl HostFeatures {
             clflushopt: host_cpu_flag("clflushopt"),
             clwb: host_cpu_flag("clwb"),
             cldemote: host_cpu_flag("cldemote"),
+            fsgsbase: host_cpu_flag("fsgsbase"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -461,6 +467,7 @@ impl HostFeatures {
             Feat::Clflushopt => self.clflushopt,
             Feat::Clwb => self.clwb,
             Feat::Cldemote => self.cldemote,
+            Feat::Fsgsbase => self.fsgsbase,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -626,10 +633,11 @@ const CR0_WP: u64 = 1 << 16;
 const CR0_PG: u64 = 1 << 31;
 const CR0_VAL: u64 = CR0_PE | CR0_MP | CR0_ET | CR0_NE | CR0_WP | CR0_PG;
 const CR4_PAE: u64 = 1 << 5;
+const CR4_FSGSBASE: u64 = 1 << 16;
 const CR4_OSFXSR: u64 = 1 << 9;
 const CR4_OSXMMEXCPT: u64 = 1 << 10;
 const CR4_OSXSAVE: u64 = 1 << 18;
-const CR4_VAL: u64 = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT | CR4_OSXSAVE;
+const CR4_VAL: u64 = CR4_PAE | CR4_FSGSBASE | CR4_OSFXSR | CR4_OSXMMEXCPT | CR4_OSXSAVE;
 const EFER_LME: u64 = 1 << 8;
 const EFER_LMA: u64 = 1 << 10;
 const EFER_VAL: u64 = EFER_LME | EFER_LMA;
@@ -6487,6 +6495,43 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // FSGSBASE instructions. The harness does not snapshot segment bases
+    // directly, so each write is immediately read back into compared GPRs;
+    // 32-bit read/write forms also check architectural zero-extension.
+    for &(label, asm) in &[
+        (
+            "wrfsbase_r64_rdfsbase",
+            "movabsq $0x0000000012345000, %r8\nwrfsbase %r8\nrdfsbase %rcx",
+        ),
+        (
+            "wrgsbase_r64_rdgsbase",
+            "movabsq $0x0000000023456000, %r8\nwrgsbase %r8\nrdgsbase %rcx",
+        ),
+        (
+            "wrfsbase_r32_zeroext",
+            "movabsq $0xffff800012345678, %r8\nwrfsbase %r8d\nrdfsbase %rcx",
+        ),
+        (
+            "wrgsbase_r32_zeroext",
+            "movabsq $0xffff800087654321, %r8\nwrgsbase %r8d\nrdgsbase %rcx",
+        ),
+        (
+            "rdfsbase_r32_zeroext_dest",
+            "movabsq $0x00000000fedcba98, %rcx\nwrfsbase %rcx\nmovabsq $0xffffffffffffffff, %r8\nrdfsbase %r8d",
+        ),
+        (
+            "rdgsbase_r32_zeroext_dest",
+            "movabsq $0x0000000076543210, %rcx\nwrgsbase %rcx\nmovabsq $0xffffffffffffffff, %r8\nrdgsbase %r8d",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Fsgsbase,
+            profile: Int,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
@@ -7124,7 +7169,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7402,6 +7447,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Clflushopt
                 | Feat::Clwb
                 | Feat::Cldemote
+                | Feat::Fsgsbase
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
