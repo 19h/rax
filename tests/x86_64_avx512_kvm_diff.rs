@@ -180,6 +180,8 @@ enum Feat {
     Serialize,
     /// WAITPKG user-level monitor/wait instructions.
     Waitpkg,
+    /// RDPID processor ID read from IA32_TSC_AUX.
+    Rdpid,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -267,6 +269,7 @@ impl Feat {
             Feat::Fsgsbase => "fsgsbase",
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
+            Feat::Rdpid => "rdpid",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -318,6 +321,7 @@ impl Feat {
             Feat::Fsgsbase,
             Feat::Serialize,
             Feat::Waitpkg,
+            Feat::Rdpid,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -373,6 +377,7 @@ struct HostFeatures {
     fsgsbase: bool,
     serialize: bool,
     waitpkg: bool,
+    rdpid: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -427,6 +432,7 @@ impl HostFeatures {
             fsgsbase: host_cpu_flag("fsgsbase"),
             serialize: host_cpu_flag("serialize"),
             waitpkg: host_cpu_flag("waitpkg"),
+            rdpid: host_cpu_flag("rdpid"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -482,6 +488,7 @@ impl HostFeatures {
             Feat::Fsgsbase => self.fsgsbase,
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
+            Feat::Rdpid => self.rdpid,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6553,6 +6560,24 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // RDPID reads IA32_TSC_AUX. Fresh KVM vCPUs expose zero here, matching the
+    // emulator model; the cases verify destination width, extended registers,
+    // and flag preservation. The explicit byte case covers the REX.W form that
+    // llvm-mc does not spell directly in 64-bit AT&T syntax.
+    for &(label, asm) in &[
+        ("rdpid_rax_zeroext", "movabsq $-1, %rax\nrdpid %rax"),
+        ("rdpid_r8_zeroext", "movabsq $-1, %r8\nrdpid %r8"),
+        ("rdpid_preserves_cmp_flags", "cmpq %rcx, %r8\nrdpid %r9"),
+        ("rdpid_rexw_rax", ".byte 0xf3, 0x48, 0x0f, 0xc7, 0xf8\n"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Rdpid,
+            profile: Int,
+        });
+    }
+
     // FSGSBASE instructions. The harness does not snapshot segment bases
     // directly, so each write is immediately read back into compared GPRs;
     // 32-bit read/write forms also check architectural zero-extension.
@@ -7227,7 +7252,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+rdpid,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7508,6 +7533,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Fsgsbase
                 | Feat::Serialize
                 | Feat::Waitpkg
+                | Feat::Rdpid
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
