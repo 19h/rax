@@ -4531,6 +4531,43 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE2 packed shifts need distinct coverage for immediate,
+    // XMM-count, and memory-count encodings, including the architectural
+    // all-zero/saturating boundary counts.
+    for &(label, asm) in &[
+        ("psrlw_sse2_shift_xmm_count", "psrlw %xmm2, %xmm1"),
+        ("psrld_sse2_shift_xmm_count", "psrld %xmm2, %xmm1"),
+        ("psrlq_sse2_shift_xmm_count", "psrlq %xmm2, %xmm1"),
+        ("psraw_sse2_shift_xmm_count", "psraw %xmm2, %xmm1"),
+        ("psrad_sse2_shift_xmm_count", "psrad %xmm2, %xmm1"),
+        ("psllw_sse2_shift_xmm_count", "psllw %xmm2, %xmm1"),
+        ("pslld_sse2_shift_xmm_count", "pslld %xmm2, %xmm1"),
+        ("psllq_sse2_shift_xmm_count", "psllq %xmm2, %xmm1"),
+        ("psllw_sse2_shift_mem_count", "psllw 16(%rax), %xmm1"),
+        ("psllq_sse2_shift_mem_count", "psllq 16(%rax), %xmm1"),
+        ("psrlw_sse2_shift_mem_count", "psrlw 16(%rax), %xmm1"),
+        ("psrlq_sse2_shift_mem_count", "psrlq 16(%rax), %xmm1"),
+        ("psraw_sse2_shift_mem_count", "psraw 16(%rax), %xmm1"),
+        ("psllw_sse2_shift_imm15_edge", "psllw $15, %xmm1"),
+        ("psllw_sse2_shift_imm16_zero", "psllw $16, %xmm1"),
+        ("pslld_sse2_shift_imm31_edge", "pslld $31, %xmm1"),
+        ("pslld_sse2_shift_imm32_zero", "pslld $32, %xmm1"),
+        ("psllq_sse2_shift_imm63_edge", "psllq $63, %xmm1"),
+        ("psllq_sse2_shift_imm64_zero", "psllq $64, %xmm1"),
+        ("psrlw_sse2_shift_imm16_zero", "psrlw $16, %xmm1"),
+        ("psrld_sse2_shift_imm32_zero", "psrld $32, %xmm1"),
+        ("psrlq_sse2_shift_imm64_zero", "psrlq $64, %xmm1"),
+        ("psraw_sse2_shift_imm15_saturate", "psraw $15, %xmm1"),
+        ("psrad_sse2_shift_imm31_saturate", "psrad $31, %xmm1"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse2,
+            profile: Int,
+        });
+    }
+
     // Legacy SSE2 scalar/vector transfer forms cover the 0F 6E/7E MOVD/MOVQ
     // GPR paths plus the MMX bridge instructions that feed or consume XMM
     // state.
@@ -10063,6 +10100,38 @@ fn avx512_kvm_sse2_lane_corpus() {
         "all SSE2 lane cases should run"
     );
     assert_eq!(tally.compared, 7, "all SSE2 lane cases should compare");
+}
+
+#[test]
+fn avx512_kvm_sse2_shift_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sse2_shift_"))
+        .collect();
+    assert_eq!(cases.len(), 24, "unexpected SSE2 shift corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE2 shift cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE2 shift case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE2 shift corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE2 shift cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        24,
+        "all SSE2 shift cases should run"
+    );
+    assert_eq!(tally.compared, 24, "all SSE2 shift cases should compare");
 }
 
 #[test]
