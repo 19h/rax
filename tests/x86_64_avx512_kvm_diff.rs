@@ -10908,6 +10908,160 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Scalar bit-count/manipulation edge cases. These deliberately force zero
+    // sources, boundary counts, and all-one masks so the differential harness
+    // checks flag semantics and count masking beyond the ordinary operand-form
+    // coverage above.
+    for &(label, asm, feat) in &[
+        (
+            "popcnt_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\npopcntq %rcx, %r8",
+            Popcnt,
+        ),
+        (
+            "popcnt_scalar_bit_edge_allones_r64",
+            "movq $-1, %rcx\npopcntq %rcx, %r8",
+            Popcnt,
+        ),
+        (
+            "popcnt_scalar_bit_edge_zero_m32",
+            "movl $0, 32(%rax)\npopcntl 32(%rax), %r8d",
+            Popcnt,
+        ),
+        (
+            "popcnt_scalar_bit_edge_highbit_m16",
+            "movw $0x8000, 32(%rax)\npopcntw 32(%rax), %r8w",
+            Popcnt,
+        ),
+        (
+            "tzcnt_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\ntzcntq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "tzcnt_scalar_bit_edge_lowbit_r64",
+            "movq $1, %rcx\ntzcntq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "andn_scalar_bit_edge_allones_r64",
+            "movq $-1, %rcx\nandnq %rcx, %r8, %r8",
+            Bmi1,
+        ),
+        (
+            "bextr_scalar_bit_edge_zero_len_r32",
+            "movl $0, %ecx\nbextrl %ecx, %r8d, %r8d",
+            Bmi1,
+        ),
+        (
+            "bextr_scalar_bit_edge_start_past_r32",
+            "movl $0x0528, %ecx\nbextrl %ecx, %r8d, %r8d",
+            Bmi1,
+        ),
+        (
+            "blsi_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\nblsiq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "blsi_scalar_bit_edge_single_r64",
+            "movq $0x1000, %rcx\nblsiq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "blsr_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\nblsrq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "blsmsk_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\nblsmskq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "lzcnt_scalar_bit_edge_zero_r64",
+            "xorq %rcx, %rcx\nlzcntq %rcx, %r8",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_scalar_bit_edge_highbit_r64",
+            "movabsq $0x8000000000000000, %rcx\nlzcntq %rcx, %r8",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_scalar_bit_edge_zero_m32",
+            "movl $0, 32(%rax)\nlzcntl 32(%rax), %r8d",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_scalar_bit_edge_highbit_m32",
+            "movl $0x80000000, 32(%rax)\nlzcntl 32(%rax), %r8d",
+            Lzcnt,
+        ),
+        (
+            "bzhi_scalar_bit_edge_zero_index_r32",
+            "movl $0, %ecx\nbzhil %ecx, %r8d, %r8d",
+            Bmi2,
+        ),
+        (
+            "bzhi_scalar_bit_edge_width_index_r32",
+            "movl $32, %ecx\nbzhil %ecx, %r8d, %r8d",
+            Bmi2,
+        ),
+        (
+            "pdep_scalar_bit_edge_zero_selector_r64",
+            "xorq %rcx, %rcx\npdepq %rcx, %r8, %r8",
+            Bmi2,
+        ),
+        (
+            "pdep_scalar_bit_edge_zero_source_r64",
+            "xorq %r8, %r8\npdepq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_zero_selector_r64",
+            "xorq %rcx, %rcx\npextq %rcx, %r8, %r8",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_zero_source_r64",
+            "xorq %r8, %r8\npextq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "rorx_scalar_bit_edge_zero_count_r64",
+            "rorxq $0, %rcx, %r8",
+            Bmi2,
+        ),
+        (
+            "rorx_scalar_bit_edge_max_count_r64",
+            "rorxq $63, %rcx, %r8",
+            Bmi2,
+        ),
+        (
+            "sarx_scalar_bit_edge_masked_count_r64",
+            "movl $64, %ecx\nsarxq %rcx, %r8, %r8",
+            Bmi2,
+        ),
+        (
+            "shrx_scalar_bit_edge_masked_count_r64",
+            "movl $64, %ecx\nshrxq %rcx, %r8, %r8",
+            Bmi2,
+        ),
+        (
+            "shlx_scalar_bit_edge_masked_count_r32",
+            "movl $32, %ecx\nshlxl %ecx, %r8d, %r8d",
+            Bmi2,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -11021,6 +11175,26 @@ fn case_status(case: &Case) -> Status {
 
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
+
+    if case.label.contains("_scalar_bit_edge_") {
+        if case.label.starts_with("popcnt_") {
+            return STATUS_RFLAGS_MASK;
+        }
+        if case.label.starts_with("tzcnt_") || case.label.starts_with("lzcnt_") {
+            return RFLAGS_CF | RFLAGS_ZF;
+        }
+        if case.label.starts_with("bextr_") {
+            return RFLAGS_CF | RFLAGS_ZF | RFLAGS_OF;
+        }
+        if case.label.starts_with("andn_")
+            || case.label.starts_with("blsi_")
+            || case.label.starts_with("blsr_")
+            || case.label.starts_with("blsmsk_")
+            || case.label.starts_with("bzhi_")
+        {
+            return RFLAGS_CF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+        }
+    }
 
     if case.label.contains("_core_bit_width_") {
         if case.label.starts_with("bsf_") || case.label.starts_with("bsr_") {
@@ -11534,11 +11708,15 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             ) && legacy_0f_encoding(&op));
         let sse42_string_setup_allowed = case.label.contains("_sse42_string_width_")
             && op.windows(2).any(|bytes| bytes == [0x0f, 0x3a]);
+        let scalar_bit_edge_setup_allowed = case.label.contains("_scalar_bit_edge_")
+            && (op.windows(2).any(|bytes| bytes[0] == 0x0f)
+                || op.iter().any(|byte| matches!(byte, 0xc4 | 0xc5)));
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
             || legacy_allowed
             || sse42_string_setup_allowed
+            || scalar_bit_edge_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -13126,6 +13304,63 @@ fn avx512_kvm_scalar_bit_operand_form_corpus() {
     assert_eq!(
         tally.compared, 30,
         "all scalar bit operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_scalar_bit_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_scalar_bit_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        28,
+        "unexpected scalar bit edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on scalar bit edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a scalar bit edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "scalar bit edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "scalar bit edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Popcnt),
+        4,
+        "all POPCNT scalar bit edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi1),
+        9,
+        "all BMI1 scalar bit edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Lzcnt),
+        4,
+        "all LZCNT scalar bit edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi2),
+        11,
+        "all BMI2 scalar bit edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 28,
+        "all scalar bit edge cases should compare"
     );
 }
 
