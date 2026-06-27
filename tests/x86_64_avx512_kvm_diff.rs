@@ -105,6 +105,8 @@ enum Feat {
     Base,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
+    /// SHA-NI XMM crypto/message-schedule instructions.
+    Sha,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -139,6 +141,7 @@ impl Feat {
             Feat::Vl => "avx512vl",
             Feat::Base => "base",
             Feat::AvxVnni => "avx_vnni",
+            Feat::Sha => "sha_ni",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -156,6 +159,7 @@ impl Feat {
     fn expanded_xeon() -> &'static [Feat] {
         &[
             Feat::AvxVnni,
+            Feat::Sha,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -178,6 +182,7 @@ struct HostFeatures {
     cd: bool,
     vl: bool,
     avx_vnni: bool,
+    sha: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -200,6 +205,7 @@ impl HostFeatures {
             cd: is_x86_feature_detected!("avx512cd"),
             vl: is_x86_feature_detected!("avx512vl"),
             avx_vnni: host_cpu_flag("avx_vnni"),
+            sha: host_cpu_flag("sha_ni"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -222,6 +228,7 @@ impl HostFeatures {
             Feat::Cd => self.cd,
             Feat::Vl => self.vl,
             Feat::AvxVnni => self.avx_vnni,
+            Feat::Sha => self.sha,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -3455,6 +3462,58 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // SHA-NI legacy XMM crypto/message-schedule instructions. These exercise
+    // non-VEX XMM writes, memory operands, high XMM registers, and all
+    // SHA1RNDS4 function selector immediates.
+    for mnem in [
+        "sha1nexte",
+        "sha1msg1",
+        "sha1msg2",
+        "sha256rnds2",
+        "sha256msg1",
+        "sha256msg2",
+    ] {
+        out.push(Case {
+            label: format!("{mnem}_reg"),
+            asm: format!("{mnem} %xmm2, %xmm1"),
+            feat: Sha,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{mnem}_mem"),
+            asm: format!("{mnem} (%rax), %xmm1"),
+            feat: Sha,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{mnem}_high"),
+            asm: format!("{mnem} %xmm10, %xmm9"),
+            feat: Sha,
+            profile: Int,
+        });
+    }
+
+    for imm in 0..=3 {
+        out.push(Case {
+            label: format!("sha1rnds4_imm{imm}_reg"),
+            asm: format!("sha1rnds4 ${imm}, %xmm2, %xmm1"),
+            feat: Sha,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("sha1rnds4_imm{imm}_mem"),
+            asm: format!("sha1rnds4 ${imm}, (%rax), %xmm1"),
+            feat: Sha,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("sha1rnds4_imm{imm}_high"),
+            asm: format!("sha1rnds4 ${imm}, %xmm10, %xmm9"),
+            feat: Sha,
+            profile: Int,
+        });
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -3571,7 +3630,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq"
+    "+gfni,+vaes,+vpclmulqdq,+sha"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -3708,13 +3767,17 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             eprintln!("[skip] assemble failed: {} = `{}`", case.label, case.asm);
             continue;
         };
-        // EVEX (0x62) for vector ops; AVX-512 opmask (k*) ops are VEX-encoded
-        // (0xC4/0xC5). Anything else means the assembler picked a legacy form.
+        // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
+        // are VEX-encoded (0xC4/0xC5). SHA-NI is intentionally legacy 0F38/0F3A.
+        let sha_legacy = case.feat == Feat::Sha
+            && (matches!(op.first(), Some(0x0f))
+                || matches!(op.as_slice(), [0x40..=0x4f, 0x0f, ..]));
+        let expected_encoding =
+            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)) || sha_legacy;
         assert!(
-            matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5)),
-            "{}: expected EVEX/VEX encoding, got {:02x?}",
-            case.label,
-            op
+            expected_encoding,
+            "{}: unexpected encoding class, got {:02x?}",
+            case.label, op
         );
         let code = build_code(&op);
         let input = input_for(case.profile);
