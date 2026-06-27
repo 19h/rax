@@ -113,6 +113,8 @@ enum Feat {
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
     Sse,
+    /// Legacy SSE2 packed/scalar double-precision SIMD instructions.
+    Sse2,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
     Aes,
     /// PCLMULQDQ legacy XMM carry-less multiplication.
@@ -171,6 +173,7 @@ impl Feat {
             Feat::Fma => "fma",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
+            Feat::Sse2 => "sse2",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
             Feat::F16c => "f16c",
@@ -202,6 +205,7 @@ impl Feat {
             Feat::Fma,
             Feat::AvxVnni,
             Feat::Sse,
+            Feat::Sse2,
             Feat::Aes,
             Feat::Pclmulqdq,
             Feat::F16c,
@@ -238,6 +242,7 @@ struct HostFeatures {
     fma: bool,
     avx_vnni: bool,
     sse: bool,
+    sse2: bool,
     aes: bool,
     pclmulqdq: bool,
     f16c: bool,
@@ -274,6 +279,7 @@ impl HostFeatures {
             fma: is_x86_feature_detected!("fma"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
+            sse2: is_x86_feature_detected!("sse2"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
             f16c: host_cpu_flag("f16c"),
@@ -310,6 +316,7 @@ impl HostFeatures {
             Feat::Fma => self.fma,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
+            Feat::Sse2 => self.sse2,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
             Feat::F16c => self.f16c,
@@ -3781,6 +3788,36 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE2 double-precision forms cover the operand-size override and
+    // F2-prefix variants of the same two-operand XMM execution paths.
+    for &(label, asm, profile) in &[
+        ("addpd_sse2_reg", "addpd %xmm2, %xmm1", F64),
+        ("addpd_sse2_mem", "addpd (%rax), %xmm1", F64),
+        ("addsd_sse2_reg", "addsd %xmm2, %xmm1", F64),
+        ("addsd_sse2_mem", "addsd 32(%rax), %xmm1", F64),
+        ("subpd_sse2_reg", "subpd %xmm2, %xmm1", F64),
+        ("subsd_sse2_mem", "subsd 32(%rax), %xmm1", F64),
+        ("mulpd_sse2_mem", "mulpd (%rax), %xmm1", F64),
+        ("mulsd_sse2_reg", "mulsd %xmm2, %xmm1", F64),
+        ("divpd_sse2_reg", "divpd %xmm2, %xmm1", F64),
+        ("divsd_sse2_mem", "divsd 32(%rax), %xmm1", F64),
+        ("sqrtpd_sse2_reg", "sqrtpd %xmm3, %xmm1", F64),
+        ("sqrtsd_sse2_mem", "sqrtsd 32(%rax), %xmm1", F64),
+        ("minpd_sse2_reg", "minpd %xmm2, %xmm1", F64),
+        ("minsd_sse2_mem", "minsd 32(%rax), %xmm1", F64),
+        ("maxpd_sse2_reg", "maxpd %xmm2, %xmm1", F64),
+        ("maxsd_sse2_mem", "maxsd 32(%rax), %xmm1", F64),
+        ("unpcklpd_sse2_reg", "unpcklpd %xmm2, %xmm1", F64),
+        ("unpckhpd_sse2_mem", "unpckhpd 32(%rax), %xmm1", F64),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse2,
+            profile,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
@@ -4606,7 +4643,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse,+sse2,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -4763,6 +4800,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Pclmulqdq
                 | Feat::Gfni
                 | Feat::Sse
+                | Feat::Sse2
                 | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
