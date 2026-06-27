@@ -105,6 +105,10 @@ enum Feat {
     Base,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
+    /// AES-NI legacy XMM crypto/key-schedule instructions.
+    Aes,
+    /// PCLMULQDQ legacy XMM carry-less multiplication.
+    Pclmulqdq,
     /// SHA-NI XMM crypto/message-schedule instructions.
     Sha,
     /// MOVDIRI direct stores from GPR to memory.
@@ -153,6 +157,8 @@ impl Feat {
             Feat::Vl => "avx512vl",
             Feat::Base => "base",
             Feat::AvxVnni => "avx_vnni",
+            Feat::Aes => "aes",
+            Feat::Pclmulqdq => "pclmulqdq",
             Feat::Sha => "sha_ni",
             Feat::Movdiri => "movdiri",
             Feat::Movdir64b => "movdir64b",
@@ -177,6 +183,8 @@ impl Feat {
     fn expanded_xeon() -> &'static [Feat] {
         &[
             Feat::AvxVnni,
+            Feat::Aes,
+            Feat::Pclmulqdq,
             Feat::Sha,
             Feat::Movdiri,
             Feat::Movdir64b,
@@ -206,6 +214,8 @@ struct HostFeatures {
     cd: bool,
     vl: bool,
     avx_vnni: bool,
+    aes: bool,
+    pclmulqdq: bool,
     sha: bool,
     movdiri: bool,
     movdir64b: bool,
@@ -235,6 +245,8 @@ impl HostFeatures {
             cd: is_x86_feature_detected!("avx512cd"),
             vl: is_x86_feature_detected!("avx512vl"),
             avx_vnni: host_cpu_flag("avx_vnni"),
+            aes: host_cpu_flag("aes"),
+            pclmulqdq: host_cpu_flag("pclmulqdq"),
             sha: host_cpu_flag("sha_ni"),
             movdiri: host_cpu_flag("movdiri"),
             movdir64b: host_cpu_flag("movdir64b"),
@@ -264,6 +276,8 @@ impl HostFeatures {
             Feat::Cd => self.cd,
             Feat::Vl => self.vl,
             Feat::AvxVnni => self.avx_vnni,
+            Feat::Aes => self.aes,
+            Feat::Pclmulqdq => self.pclmulqdq,
             Feat::Sha => self.sha,
             Feat::Movdiri => self.movdiri,
             Feat::Movdir64b => self.movdir64b,
@@ -3724,6 +3738,77 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
+    // XMM write semantics alongside register, memory, and high-XMM operands.
+    for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
+        out.push(Case {
+            label: format!("{mnem}_legacy_reg"),
+            asm: format!("{mnem} %xmm2, %xmm1"),
+            feat: Aes,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{mnem}_legacy_mem"),
+            asm: format!("{mnem} (%rax), %xmm1"),
+            feat: Aes,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("{mnem}_legacy_high"),
+            asm: format!("{mnem} %xmm10, %xmm9"),
+            feat: Aes,
+            profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        ("aesimc_legacy_reg", "aesimc %xmm2, %xmm1"),
+        ("aesimc_legacy_mem", "aesimc (%rax), %xmm1"),
+        ("aesimc_legacy_high", "aesimc %xmm10, %xmm9"),
+        (
+            "aeskeygenassist_imm1b_legacy_reg",
+            "aeskeygenassist $0x1b, %xmm2, %xmm1",
+        ),
+        (
+            "aeskeygenassist_imm63_legacy_mem",
+            "aeskeygenassist $0x63, (%rax), %xmm1",
+        ),
+        (
+            "aeskeygenassist_imm36_legacy_high",
+            "aeskeygenassist $0x36, %xmm10, %xmm9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Aes,
+            profile: Int,
+        });
+    }
+
+    // Legacy PCLMULQDQ selector coverage. The low bits of the immediate choose
+    // independent qwords from the destination and source operands.
+    for &(imm, tag) in &[(0x00, "ll"), (0x01, "hl"), (0x10, "lh"), (0x11, "hh")] {
+        out.push(Case {
+            label: format!("pclmulqdq_legacy_{tag}_reg"),
+            asm: format!("pclmulqdq ${imm:#x}, %xmm2, %xmm1"),
+            feat: Pclmulqdq,
+            profile: Int,
+        });
+        out.push(Case {
+            label: format!("pclmulqdq_legacy_{tag}_mem"),
+            asm: format!("pclmulqdq ${imm:#x}, 16(%rax), %xmm1"),
+            feat: Pclmulqdq,
+            profile: Int,
+        });
+    }
+    out.push(Case {
+        label: "pclmulqdq_legacy_hh_high".to_string(),
+        asm: "pclmulqdq $0x11, %xmm10, %xmm9".to_string(),
+        feat: Pclmulqdq,
+        profile: Int,
+    });
+
     // SHA-NI legacy XMM crypto/message-schedule instructions. These exercise
     // non-VEX XMM writes, memory operands, high XMM registers, and all
     // SHA1RNDS4 function selector immediates.
@@ -3993,7 +4078,7 @@ const LLVM_MATTR: &str = concat!(
     "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
-    "+gfni,+vaes,+vpclmulqdq,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2,+popcnt"
+    "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+sha,+movdiri,+movdir64b,+adx,+movbe,+sse4.2,+popcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -4142,11 +4227,13 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             continue;
         };
         // EVEX (0x62) for AVX-512 vector ops; AVX-512 opmask and AVX-VNNI ops
-        // are VEX-encoded (0xC4/0xC5). SHA-NI, MOVDIR, ADX, MOVBE, CRC32, and
-        // POPCNT are intentionally legacy 0F-family encodings.
+        // are VEX-encoded (0xC4/0xC5). AES/PCLMUL, SHA-NI, MOVDIR, ADX, MOVBE,
+        // CRC32, and POPCNT are intentionally legacy 0F-family encodings.
         let legacy_allowed = matches!(
             case.feat,
-            Feat::Sha
+            Feat::Aes
+                | Feat::Pclmulqdq
+                | Feat::Sha
                 | Feat::Movdiri
                 | Feat::Movdir64b
                 | Feat::Adx
