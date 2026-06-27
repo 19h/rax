@@ -3270,6 +3270,158 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // AVX-512VL permute/shuffle/blend forms. These stay explicit because some
+    // related mnemonics have only 256-bit VL encodings, not 128-bit forms.
+    let mut push_vl_maskable = |label: String, asm: String, profile: InputProfile| {
+        out.push(Case {
+            label: format!("{label}_nomask"),
+            asm: asm.clone(),
+            feat: Vl,
+            profile,
+        });
+        out.push(Case {
+            label: format!("{label}_merge"),
+            asm: format!("{asm} {{%k1}}"),
+            feat: Vl,
+            profile,
+        });
+        out.push(Case {
+            label: format!("{label}_zero"),
+            asm: format!("{asm} {{%k1}}{{z}}"),
+            feat: Vl,
+            profile,
+        });
+    };
+
+    for &(mnem, profile) in &[
+        ("vpblendmd", Int),
+        ("vpblendmq", Int),
+        ("vblendmps", F32),
+        ("vblendmpd", F64),
+    ] {
+        for class in ["xmm", "ymm"] {
+            push_vl_maskable(
+                format!("{mnem}_{class}_reg"),
+                format!("{{evex}} {mnem} %{class}2, %{class}3, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_{class}_mem"),
+                format!("{{evex}} {mnem} (%rax), %{class}3, %{class}1"),
+                profile,
+            );
+        }
+    }
+
+    for &(mnem, imm, profile) in &[("vshufps", 0x1b, F32), ("vshufpd", 0x05, F64)] {
+        for class in ["xmm", "ymm"] {
+            push_vl_maskable(
+                format!("{mnem}_{class}_reg"),
+                format!("{{evex}} {mnem} ${imm}, %{class}2, %{class}3, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_{class}_mem"),
+                format!("{{evex}} {mnem} ${imm}, (%rax), %{class}3, %{class}1"),
+                profile,
+            );
+        }
+    }
+
+    for &(mnem, imm, profile) in &[("vpermilps", 0x1b, F32), ("vpermilpd", 0x05, F64)] {
+        for class in ["xmm", "ymm"] {
+            push_vl_maskable(
+                format!("{mnem}_imm_{class}_reg"),
+                format!("{{evex}} {mnem} ${imm}, %{class}2, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_imm_{class}_mem"),
+                format!("{{evex}} {mnem} ${imm}, (%rax), %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_var_{class}_reg"),
+                format!("{{evex}} {mnem} %{class}2, %{class}3, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_var_{class}_mem"),
+                format!("{{evex}} {mnem} (%rax), %{class}3, %{class}1"),
+                profile,
+            );
+        }
+    }
+
+    for &(mnem, imm, profile) in &[("valignd", 3, Int), ("valignq", 1, Int)] {
+        for class in ["xmm", "ymm"] {
+            push_vl_maskable(
+                format!("{mnem}_{class}_reg"),
+                format!("{{evex}} {mnem} ${imm}, %{class}2, %{class}3, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_{class}_mem"),
+                format!("{{evex}} {mnem} ${imm}, (%rax), %{class}3, %{class}1"),
+                profile,
+            );
+        }
+    }
+
+    for &(mnem, profile) in &[
+        ("vpermd", Int),
+        ("vpermq", Int),
+        ("vpermps", F32),
+        ("vpermpd", F64),
+    ] {
+        push_vl_maskable(
+            format!("{mnem}_var_ymm_reg"),
+            format!("{{evex}} {mnem} %ymm2, %ymm3, %ymm1"),
+            profile,
+        );
+        push_vl_maskable(
+            format!("{mnem}_var_ymm_mem"),
+            format!("{{evex}} {mnem} (%rax), %ymm3, %ymm1"),
+            profile,
+        );
+    }
+    for &(mnem, imm, profile) in &[("vpermq", 0x1b, Int), ("vpermpd", 0x1b, F64)] {
+        push_vl_maskable(
+            format!("{mnem}_imm_ymm_reg"),
+            format!("{{evex}} {mnem} ${imm}, %ymm2, %ymm1"),
+            profile,
+        );
+        push_vl_maskable(
+            format!("{mnem}_imm_ymm_mem"),
+            format!("{{evex}} {mnem} ${imm}, (%rax), %ymm1"),
+            profile,
+        );
+    }
+
+    for &(mnem, profile) in &[
+        ("vpermi2d", Int),
+        ("vpermt2d", Int),
+        ("vpermi2q", Int),
+        ("vpermt2q", Int),
+        ("vpermi2ps", F32),
+        ("vpermt2ps", F32),
+        ("vpermi2pd", F64),
+        ("vpermt2pd", F64),
+    ] {
+        for class in ["xmm", "ymm"] {
+            push_vl_maskable(
+                format!("{mnem}_{class}_reg"),
+                format!("{{evex}} {mnem} %{class}2, %{class}3, %{class}1"),
+                profile,
+            );
+            push_vl_maskable(
+                format!("{mnem}_{class}_mem"),
+                format!("{{evex}} {mnem} (%rax), %{class}3, %{class}1"),
+                profile,
+            );
+        }
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
