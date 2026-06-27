@@ -176,6 +176,10 @@ enum Feat {
     Cldemote,
     /// FSGSBASE FS/GS base read/write instructions.
     Fsgsbase,
+    /// SERIALIZE instruction execution barrier.
+    Serialize,
+    /// WAITPKG user-level monitor/wait instructions.
+    Waitpkg,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// Legacy SSE packed/scalar single-precision SIMD instructions.
@@ -261,6 +265,8 @@ impl Feat {
             Feat::Clwb => "clwb",
             Feat::Cldemote => "cldemote",
             Feat::Fsgsbase => "fsgsbase",
+            Feat::Serialize => "serialize",
+            Feat::Waitpkg => "waitpkg",
             Feat::AvxVnni => "avx_vnni",
             Feat::Sse => "sse",
             Feat::Sse2 => "sse2",
@@ -310,6 +316,8 @@ impl Feat {
             Feat::Clwb,
             Feat::Cldemote,
             Feat::Fsgsbase,
+            Feat::Serialize,
+            Feat::Waitpkg,
             Feat::AvxVnni,
             Feat::Sse,
             Feat::Sse2,
@@ -363,6 +371,8 @@ struct HostFeatures {
     clwb: bool,
     cldemote: bool,
     fsgsbase: bool,
+    serialize: bool,
+    waitpkg: bool,
     avx_vnni: bool,
     sse: bool,
     sse2: bool,
@@ -415,6 +425,8 @@ impl HostFeatures {
             clwb: host_cpu_flag("clwb"),
             cldemote: host_cpu_flag("cldemote"),
             fsgsbase: host_cpu_flag("fsgsbase"),
+            serialize: host_cpu_flag("serialize"),
+            waitpkg: host_cpu_flag("waitpkg"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             sse: is_x86_feature_detected!("sse"),
             sse2: is_x86_feature_detected!("sse2"),
@@ -468,6 +480,8 @@ impl HostFeatures {
             Feat::Clwb => self.clwb,
             Feat::Cldemote => self.cldemote,
             Feat::Fsgsbase => self.fsgsbase,
+            Feat::Serialize => self.serialize,
+            Feat::Waitpkg => self.waitpkg,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Sse => self.sse,
             Feat::Sse2 => self.sse2,
@@ -6495,6 +6509,50 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Serialization and user-level wait instructions. Their ordering and
+    // monitor/wait side effects are not directly visible, so these snippets
+    // bracket them with deterministic GPR, flag, and scratch-visible state.
+    for &(label, asm, feat) in &[
+        ("serialize_basic", "serialize", Serialize),
+        (
+            "serialize_between_memory_ops",
+            "movq %r8, 32(%rax)\nserialize\nmovq 32(%rax), %rcx",
+            Serialize,
+        ),
+        (
+            "serialize_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nserialize",
+            Serialize,
+        ),
+        (
+            "umonitor_r64_address",
+            "leaq 32(%rax), %r8\numonitor %r8\nmovq %r8, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umwait_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nxorl %ecx, %ecx\numwait %ecx",
+            Waitpkg,
+        ),
+        (
+            "tpause_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nxorl %ecx, %ecx\ntpause %ecx",
+            Waitpkg,
+        ),
+        (
+            "umonitor_umwait_zero_deadline",
+            "leaq 64(%rax), %r8\numonitor %r8\nxorl %edx, %edx\nxorl %eax, %eax\nxorl %ecx, %ecx\numwait %ecx",
+            Waitpkg,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // FSGSBASE instructions. The harness does not snapshot segment bases
     // directly, so each write is immediately read back into compared GPRs;
     // 32-bit read/write forms also check architectural zero-extension.
@@ -7169,7 +7227,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+serialize,+waitpkg,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7448,6 +7506,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Clwb
                 | Feat::Cldemote
                 | Feat::Fsgsbase
+                | Feat::Serialize
+                | Feat::Waitpkg
         ) && !matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5));
         let legacy_allowed = scalar_encoding
             || (matches!(
