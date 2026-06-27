@@ -7793,6 +7793,39 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // LOCK-prefixed core read-modify-write forms. Single-vCPU execution makes
+    // atomicity unobservable, but the prefix must still be accepted only on
+    // legal memory destinations while preserving the ordinary instruction
+    // semantics for memory, register, and RFLAGS outputs.
+    for &(label, asm) in &[
+        ("add_core_lock_m64_r8", "lock addq %r8, 8(%rax)"),
+        ("or_core_lock_m32_imm8", "lock orl $0x55, 16(%rax)"),
+        ("adc_core_lock_m16_imm8", "lock adcw $0x11, 24(%rax)"),
+        ("sub_core_lock_m8_r8b", "lock subb %r8b, 2(%rax)"),
+        ("and_core_lock_m64_imm8", "lock andq $0x7f, 32(%rax)"),
+        ("xor_core_lock_m32_r8d", "lock xorl %r8d, 40(%rax)"),
+        ("not_core_lock_m64", "lock notq 48(%rax)"),
+        ("neg_core_lock_m32", "lock negl 56(%rax)"),
+        ("inc_core_lock_m64", "lock incq 64(%rax)"),
+        ("dec_core_lock_m16", "lock decw 72(%rax)"),
+        ("xchg_core_lock_m64_r8", "lock xchgq %r8, 80(%rax)"),
+        ("xadd_core_lock_m64_r8", "lock xaddq %r8, 88(%rax)"),
+        (
+            "cmpxchg_core_lock_m64_success",
+            "movq %rax, 96(%rax)\nlock cmpxchgq %r8, 96(%rax)",
+        ),
+        ("bts_core_lock_m64_imm", "lock btsq $9, 104(%rax)"),
+        ("btr_core_lock_m64_r9", "lock btrq %r9, (%rax)"),
+        ("btc_core_lock_m64_imm", "lock btcq $20, 112(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Double-width atomic compare/exchange. These explicitly seed the memory
     // operand plus accumulator/new-value registers, then check success, failure,
     // and LOCK-prefixed memory forms through the scratch/GPR/RFLAGS diff.
@@ -9214,6 +9247,33 @@ fn avx512_kvm_core_string_corpus() {
         "core string cases should not feature-skip"
     );
     assert_eq!(tally.compared, 54, "all core string cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_lock_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_lock"))
+        .collect();
+    assert_eq!(cases.len(), 16, "unexpected core LOCK corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core LOCK cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core LOCK case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core LOCK corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core LOCK cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 16, "all core LOCK cases should compare");
 }
 
 #[test]
