@@ -6733,6 +6733,89 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // VBMI selector edge operands and VBMI2 qword funnel-shift boundaries.
+    // These hit zero/all-one byte selectors and the qword count limits that
+    // are easy to miss when only the default generated immediates are used.
+    for &(label, asm, feat) in &[
+        (
+            "vpermb_vbmi_selector_edge_zero_index_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpermb %zmm3, %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpermb_vbmi_selector_edge_allones_index_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvpermb 64(%rax), %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpermi2b_vbmi_selector_edge_zero_index_reg",
+            "vpxord %zmm1, %zmm1, %zmm1\nvpermi2b %zmm3, %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpermi2b_vbmi_selector_edge_allones_index_mem",
+            "vpternlogd $0xff, %zmm1, %zmm1, %zmm1\nvpermi2b 64(%rax), %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpermt2b_vbmi_selector_edge_zero_index_reg",
+            "vpxord %zmm1, %zmm1, %zmm1\nvpermt2b %zmm3, %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpermt2b_vbmi_selector_edge_allones_index_mem",
+            "vpternlogd $0xff, %zmm1, %zmm1, %zmm1\nvpermt2b 64(%rax), %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpmultishiftqb_vbmi_selector_edge_zero_control_reg",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpmultishiftqb %zmm3, %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpmultishiftqb_vbmi_selector_edge_allones_control_mem",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvpmultishiftqb 64(%rax), %zmm2, %zmm1",
+            Vbmi,
+        ),
+        (
+            "vpshldq_vbmi2_selector_edge_imm63",
+            "vpshldq $63, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldq_vbmi2_selector_edge_imm64",
+            "vpshldq $64, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdq_vbmi2_selector_edge_imm63",
+            "vpshrdq $63, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdq_vbmi2_selector_edge_imm64",
+            "vpshrdq $64, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldvq_vbmi2_selector_edge_zero_count",
+            "vpxord %zmm2, %zmm2, %zmm2\nvpshldvq %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdvq_vbmi2_selector_edge_allones_count",
+            "vpternlogd $0xff, %zmm2, %zmm2, %zmm2\nvpshrdvq %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // AVX/AVX2 VEX mask extraction, masked memory operations, non-temporal
     // moves, and explicit zeroing forms. These exercise GPR writes, scratch
     // side effects, and VEX upper-zeroing outside the EVEX generator.
@@ -16005,6 +16088,49 @@ fn avx512_kvm_bitalg_popcnt_edge_corpus() {
     assert_eq!(
         tally.compared, 10,
         "all BITALG/VPOPCNTDQ edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vbmi_selector_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_selector_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 14, "unexpected VBMI selector edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VBMI selector edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VBMI selector edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VBMI selector edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VBMI selector edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vbmi),
+        8,
+        "all AVX-512 VBMI selector edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vbmi2),
+        6,
+        "all AVX-512 VBMI2 selector edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 14,
+        "all VBMI selector edge cases should compare"
     );
 }
 
