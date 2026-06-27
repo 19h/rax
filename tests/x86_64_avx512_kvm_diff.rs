@@ -8997,6 +8997,45 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // INC/DEC width variants. Byte forms dispatch through group 4 (0xFE),
+    // including high-byte registers without REX; word/dword forms use group 5
+    // with non-qword operand sizes.
+    for &(label, asm) in &[
+        (
+            "inc_core_incdec_width_r8_overflow",
+            "movb $0x7f, %r8b\nincb %r8b",
+        ),
+        (
+            "dec_core_incdec_width_r8_overflow",
+            "movb $0x80, %r8b\ndecb %r8b",
+        ),
+        ("inc_core_incdec_width_high8", "incb %ch"),
+        ("dec_core_incdec_width_high8", "decb %dh"),
+        (
+            "inc_core_incdec_width_m8_overflow",
+            "movb $0x7f, 2(%rax)\nincb 2(%rax)",
+        ),
+        (
+            "dec_core_incdec_width_m8_overflow",
+            "movb $0x80, 3(%rax)\ndecb 3(%rax)",
+        ),
+        ("inc_core_incdec_width_r16", "incw %r8w"),
+        ("dec_core_incdec_width_r16", "decw %r8w"),
+        ("inc_core_incdec_width_m16", "incw 4(%rax)"),
+        ("dec_core_incdec_width_m16", "decw 6(%rax)"),
+        ("inc_core_incdec_width_r32", "incl %r8d"),
+        ("dec_core_incdec_width_r32", "decl %r8d"),
+        ("inc_core_incdec_width_m32", "incl 8(%rax)"),
+        ("dec_core_incdec_width_m32", "decl 12(%rax)"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core accumulator-immediate opcodes use dedicated legacy encodings
     // (04/05/0c/0d/.../a8/a9), not the ModRM group-1/group-3 immediate paths.
     for &(label, asm) in &[
@@ -10800,6 +10839,39 @@ fn avx512_kvm_core_shift_width_corpus() {
     assert_eq!(
         tally.compared, 28,
         "all core shift-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_incdec_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_incdec_width_"))
+        .collect();
+    assert_eq!(cases.len(), 14, "unexpected core inc/dec-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core inc/dec-width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core inc/dec-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core inc/dec-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core inc/dec-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 14,
+        "all core inc/dec-width cases should compare"
     );
 }
 
