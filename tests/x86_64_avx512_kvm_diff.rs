@@ -7676,6 +7676,120 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core bit-test/scan width variants. These cover 16/32/64-bit register
+    // forms, group-8 immediate register forms, memory bit-string address
+    // adjustment, and nonzero BSF/BSR destinations with explicit sources.
+    for &(label, asm) in &[
+        (
+            "bt_core_bit_width_r16_reg_masked",
+            "movw $0x8000, %r8w\nmovw $31, %cx\nbtw %cx, %r8w",
+        ),
+        (
+            "bts_core_bit_width_r16_reg_set",
+            "movw $0, %r8w\nmovw $15, %cx\nbtsw %cx, %r8w",
+        ),
+        (
+            "btr_core_bit_width_r16_reg_reset",
+            "movw $0xffff, %r8w\nmovw $15, %cx\nbtrw %cx, %r8w",
+        ),
+        (
+            "btc_core_bit_width_r16_reg_toggle",
+            "movw $0, %r8w\nmovw $20, %cx\nbtcw %cx, %r8w",
+        ),
+        (
+            "bt_core_bit_width_r32_reg_masked",
+            "movl $0x20, %r8d\nmovl $37, %ecx\nbtl %ecx, %r8d",
+        ),
+        (
+            "bts_core_bit_width_r32_reg_high",
+            "movl $0, %r8d\nmovl $31, %ecx\nbtsl %ecx, %r8d",
+        ),
+        (
+            "btr_core_bit_width_r64_reg_high",
+            "movq $-1, %r8\nmovq $63, %rcx\nbtrq %rcx, %r8",
+        ),
+        (
+            "btc_core_bit_width_r64_reg_masked",
+            "movq $0, %r8\nmovq $70, %rcx\nbtcq %rcx, %r8",
+        ),
+        ("bt_core_bit_width_imm_r64_masked", "btq $70, %r8"),
+        (
+            "bts_core_bit_width_imm_r32_high",
+            "movl $0, %r8d\nbtsl $31, %r8d",
+        ),
+        (
+            "btr_core_bit_width_imm_r16_high",
+            "movw $0xffff, %r8w\nbtrw $15, %r8w",
+        ),
+        (
+            "btc_core_bit_width_imm_r64_toggle",
+            "movq $0, %r8\nbtcq $40, %r8",
+        ),
+        (
+            "bt_core_bit_width_m16_imm_high",
+            "movw $0x8000, 40(%rax)\nbtw $15, 40(%rax)",
+        ),
+        (
+            "bts_core_bit_width_m16_imm_set",
+            "movw $0, 42(%rax)\nbtsw $7, 42(%rax)",
+        ),
+        (
+            "btr_core_bit_width_m32_imm_reset",
+            "movl $0x80000000, 44(%rax)\nbtrl $31, 44(%rax)",
+        ),
+        (
+            "btc_core_bit_width_m64_imm_toggle",
+            "movq $0, 48(%rax)\nbtcq $63, 48(%rax)",
+        ),
+        (
+            "bt_core_bit_width_m64_r9_negative",
+            "movabsq $0x8000000000000000, %r10\nmovq %r10, 48(%rax)\nmovq $-1, %r9\nbtq %r9, 56(%rax)",
+        ),
+        (
+            "bts_core_bit_width_m64_r9_negative",
+            "movq $0, 56(%rax)\nmovq $-1, %r9\nbtsq %r9, 64(%rax)",
+        ),
+        (
+            "btr_core_bit_width_m32_rcx_positive_span",
+            "movl $8, 72(%rax)\nmovl $35, %ecx\nbtrl %ecx, 68(%rax)",
+        ),
+        (
+            "btc_core_bit_width_m16_rcx_positive_span",
+            "movw $0, 82(%rax)\nmovw $19, %cx\nbtcw %cx, 80(%rax)",
+        ),
+        (
+            "bsf_core_bit_width_r16_reg",
+            "movw $0x0100, %cx\nbsfw %cx, %r8w",
+        ),
+        (
+            "bsf_core_bit_width_r32_reg_zeroext",
+            "movabsq $-1, %r8\nmovl $0x00001000, %ecx\nbsfl %ecx, %r8d",
+        ),
+        (
+            "bsf_core_bit_width_m16",
+            "movw $0x0040, 84(%rax)\nbsfw 84(%rax), %r8w",
+        ),
+        (
+            "bsr_core_bit_width_r16_reg",
+            "movw $0x8000, %cx\nbsrw %cx, %r8w",
+        ),
+        (
+            "bsr_core_bit_width_r32_mem_zeroext",
+            "movabsq $-1, %r8\nmovl $0x80000000, 88(%rax)\nbsrl 88(%rax), %r8d",
+        ),
+        (
+            "bsr_core_bit_width_r64_mem",
+            "movabsq $0x4000000000000000, %r10\nmovq %r10, 96(%rax)\nbsrq 96(%rax), %r8",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core conditional moves and byte condition writes. INITIAL_RFLAGS has all
     // six status flags set, so the all-condition tables cover both true and
     // false destinations without needing a multi-instruction setup sequence.
@@ -9936,6 +10050,13 @@ fn case_status(case: &Case) -> Status {
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
 
+    if case.label.contains("_core_bit_width_") {
+        if case.label.starts_with("bsf_") || case.label.starts_with("bsr_") {
+            return RFLAGS_ZF;
+        }
+        return RFLAGS_CF;
+    }
+
     // Logical integer ops define CF/PF/ZF/SF/OF and leave AF undefined.
     if matches!(
         mnem,
@@ -11259,6 +11380,36 @@ fn avx512_kvm_core_atomic_width_corpus() {
     assert_eq!(
         tally.compared, 22,
         "all core atomic-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_bit_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_bit_width_"))
+        .collect();
+    assert_eq!(cases.len(), 26, "unexpected core bit-width corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core bit-width cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core bit-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core bit-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core bit-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 26,
+        "all core bit-width cases should compare"
     );
 }
 
