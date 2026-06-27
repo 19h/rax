@@ -36,6 +36,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 #[path = "x86_64/common/mod.rs"]
 mod common;
@@ -6226,6 +6227,67 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core direct control-flow. Multi-instruction snippets make the taken and
+    // fallthrough paths visibly different in r8 while preserving the seeded
+    // status flags for comparison.
+    out.push(Case {
+        label: "jmp_core_rel8_taken".to_string(),
+        asm: "jmp 1f\nmovq $0x1111, %r8\n1:\nmovq $0x2222, %r8".to_string(),
+        feat: Core,
+        profile: Int,
+    });
+    let branch = |mnem: &str, tag: &str| Case {
+        label: format!("{mnem}_core_rel8_{tag}"),
+        asm: format!("{mnem} 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:"),
+        feat: Core,
+        profile: Int,
+    };
+    for &(mnem, tag) in &[
+        ("jo", "taken"),
+        ("jno", "not_taken"),
+        ("jb", "taken"),
+        ("jae", "not_taken"),
+        ("je", "taken"),
+        ("jne", "not_taken"),
+        ("jbe", "taken"),
+        ("ja", "not_taken"),
+        ("js", "taken"),
+        ("jns", "not_taken"),
+        ("jp", "taken"),
+        ("jnp", "not_taken"),
+        ("jl", "not_taken"),
+        ("jge", "taken"),
+        ("jle", "taken"),
+        ("jg", "not_taken"),
+    ] {
+        out.push(branch(mnem, tag));
+    }
+    for &(label, asm) in &[
+        (
+            "loop_core_rel8_taken",
+            "loop 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "jecxz_core_rel8_not_taken",
+            "jecxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "jrcxz_core_rel8_not_taken",
+            "jrcxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "call_core_rel32_ret",
+            "callq 1f\nmovq $0x3333, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\nretq\n2:\nmovl $0x08f5e2cf, -8(%rsp)\nmovl $0x54412e1b, -4(%rsp)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Scalar extension, byte-swap, exchange, and compare/exchange forms. These
     // intentionally mix register and memory destinations so GPR, flag, and
     // scratch effects are all checked against silicon.
@@ -6835,6 +6897,12 @@ fn llvm_mc_path() -> Option<PathBuf> {
         .or_else(|| which("llvm-mc"))
 }
 
+fn llvm_objcopy_path() -> Option<PathBuf> {
+    std::env::var_os("LLVM_OBJCOPY")
+        .map(PathBuf::from)
+        .or_else(|| which("llvm-objcopy"))
+}
+
 fn parse_encoding(text: &str) -> Option<Vec<u8>> {
     let mut bytes = Vec::new();
     let mut rest = text;
@@ -6842,7 +6910,8 @@ fn parse_encoding(text: &str) -> Option<Vec<u8>> {
         rest = &rest[start + "encoding: [".len()..];
         let end = rest.find(']')?;
         for token in rest[..end].split(',') {
-            let token = token.trim().trim_start_matches("0x");
+            let token = token.trim();
+            let token = token.strip_prefix("0x")?;
             bytes.push(u8::from_str_radix(token, 16).ok()?);
         }
         rest = &rest[end + 1..];
@@ -6863,7 +6932,99 @@ fn llvm_mc_parse_concatenates_instruction_encodings() {
     );
 }
 
+#[test]
+fn llvm_mc_parse_rejects_fixup_placeholders() {
+    let output = "\
+\tjmp\t.Ltmp0                          # encoding: [0xeb,A]\n\
+                                        #   fixup A - offset: 1, value: .Ltmp0-1, kind: FK_PCRel_1\n";
+
+    assert_eq!(parse_encoding(output), None);
+}
+
+fn assemble_object_text(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
+    static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
+
+    let objcopy = llvm_objcopy_path()?;
+    let id = NEXT_TEMP.fetch_add(1, Ordering::Relaxed);
+    let base =
+        std::env::temp_dir().join(format!("rax-avx512-kvm-diff-{}-{id}", std::process::id()));
+    let obj_path = base.with_extension("o");
+    let bin_path = base.with_extension("bin");
+
+    let result = (|| {
+        use std::io::Write;
+        let mut child = Command::new(llvm_mc)
+            .args([
+                "-triple=x86_64",
+                "-mcpu=skylake-avx512",
+                "-mattr",
+                LLVM_MATTR,
+                "-x86-asm-syntax=att",
+                "--filetype=obj",
+                "-o",
+            ])
+            .arg(&obj_path)
+            .stdin(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .ok()?;
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(format!("{asm}\n").as_bytes())
+            .ok()?;
+        if !child.wait().ok()?.success() {
+            return None;
+        }
+        if !Command::new(&objcopy)
+            .args(["-O", "binary", "--only-section=.text"])
+            .arg(&obj_path)
+            .arg(&bin_path)
+            .stderr(Stdio::null())
+            .status()
+            .ok()?
+            .success()
+        {
+            return None;
+        }
+        let bytes = std::fs::read(&bin_path).ok()?;
+        if bytes.is_empty() { None } else { Some(bytes) }
+    })();
+
+    let _ = std::fs::remove_file(&obj_path);
+    let _ = std::fs::remove_file(&bin_path);
+    result
+}
+
+#[test]
+fn llvm_mc_assembles_multiline_fixups_to_text_bytes() {
+    let Some(llvm_mc) = llvm_mc_path() else {
+        eprintln!("[skip] llvm-mc not found");
+        return;
+    };
+    if llvm_objcopy_path().is_none() {
+        eprintln!("[skip] llvm-objcopy not found");
+        return;
+    }
+
+    let bytes = assemble_object_text(&llvm_mc, "jmp 1f\nmovq $0x1111, %r8\n1:\nmovq $0x2222, %r8")
+        .expect("assemble multi-instruction snippet");
+
+    assert_eq!(
+        bytes,
+        vec![
+            0xeb, 0x07, 0x49, 0xc7, 0xc0, 0x11, 0x11, 0x00, 0x00, 0x49, 0xc7, 0xc0, 0x22, 0x22,
+            0x00, 0x00,
+        ]
+    );
+}
+
 fn assemble(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
+    if asm.contains('\n') {
+        return assemble_object_text(llvm_mc, asm);
+    }
+
     use std::io::Write;
     let mut child = Command::new(llvm_mc)
         .args([
