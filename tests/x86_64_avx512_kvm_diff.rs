@@ -163,6 +163,8 @@ enum Feat {
     Xsave,
     /// x87 FPU stack, arithmetic, and conversion instructions.
     X87,
+    /// Legacy MMX packed-integer instructions.
+    Mmx,
     /// CMPXCHG8B doubleword compare-and-exchange.
     Cx8,
     /// CMPXCHG16B quadword compare-and-exchange.
@@ -293,6 +295,7 @@ impl Feat {
             Feat::Fxsave => "fxsr",
             Feat::Xsave => "xsave",
             Feat::X87 => "x87",
+            Feat::Mmx => "mmx",
             Feat::Cx8 => "cx8",
             Feat::Cx16 => "cx16",
             Feat::Fence => "fence",
@@ -361,6 +364,7 @@ impl Feat {
             Feat::Fxsave,
             Feat::Xsave,
             Feat::X87,
+            Feat::Mmx,
             Feat::Cx8,
             Feat::Cx16,
             Feat::Fence,
@@ -432,6 +436,7 @@ struct HostFeatures {
     fma: bool,
     fxsave: bool,
     xsave: bool,
+    mmx: bool,
     cx8: bool,
     cx16: bool,
     fence: bool,
@@ -494,6 +499,7 @@ impl HostFeatures {
             fma: is_x86_feature_detected!("fma"),
             fxsave: host_cpu_flag("fxsr"),
             xsave: host_cpu_flag("xsave"),
+            mmx: host_cpu_flag("mmx"),
             cx8: host_cpu_flag("cx8"),
             cx16: host_cpu_flag("cx16"),
             fence: is_x86_feature_detected!("sse2"),
@@ -558,6 +564,7 @@ impl HostFeatures {
             Feat::Fxsave => self.fxsave,
             Feat::Xsave => self.xsave,
             Feat::X87 => true,
+            Feat::Mmx => self.mmx,
             Feat::Cx8 => self.cx8,
             Feat::Cx16 => self.cx16,
             Feat::Fence => self.fence,
@@ -6558,9 +6565,9 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
-    // Legacy x87/MMX coverage. The harness does not snapshot the x87/MMX
-    // register file directly, so these snippets make results visible through
-    // scratch-memory stores and reset transient x87/MMX state inside the case.
+    // Legacy x87 starter cases using input profiles from the generic corpus.
+    // The harness does not snapshot the x87 register file directly, so results
+    // are made visible through scratch-memory stores.
     for &(label, asm, profile) in &[
         ("x87_fld1_fstp_m64", "fninit\nfld1\nfstpl 64(%rax)", F64),
         (
@@ -6578,27 +6585,181 @@ fn irregular_cases() -> Vec<Case> {
             "fninit\nfildl 32(%rax)\nfistpl 80(%rax)",
             Int,
         ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: X87,
+            profile,
+        });
+    }
+
+    // Legacy MMX packed-integer coverage. Every case stores its result to
+    // scratch before EMMS, making MMX effects visible without comparing hidden
+    // x87/MMX register-file state.
+    for &(label, asm) in &[
+        (
+            "mmx_movq_load_store",
+            "movq 32(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
+        ),
+        (
+            "mmx_movq_reg_store",
+            "movq 32(%rax), %mm0\nmovq %mm0, %mm1\nmovq %mm1, 64(%rax)\nemms",
+        ),
         (
             "mmx_paddb_store",
             "movq 32(%rax), %mm0\npaddb 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
-            Int,
+        ),
+        (
+            "mmx_paddw_store",
+            "movq 32(%rax), %mm0\npaddw 40(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+        ),
+        (
+            "mmx_paddd_store",
+            "movq 32(%rax), %mm0\npaddd 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+        ),
+        (
+            "mmx_psubb_store",
+            "movq 32(%rax), %mm0\npsubb 40(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+        ),
+        (
+            "mmx_psubw_store",
+            "movq 32(%rax), %mm0\npsubw 40(%rax), %mm0\nmovq %mm0, 96(%rax)\nemms",
+        ),
+        (
+            "mmx_psubd_store",
+            "movq 32(%rax), %mm0\npsubd 40(%rax), %mm0\nmovq %mm0, 104(%rax)\nemms",
+        ),
+        (
+            "mmx_paddsb_store",
+            "movq 32(%rax), %mm0\npaddsb 40(%rax), %mm0\nmovq %mm0, 112(%rax)\nemms",
+        ),
+        (
+            "mmx_paddusb_store",
+            "movq 32(%rax), %mm0\npaddusb 40(%rax), %mm0\nmovq %mm0, 120(%rax)\nemms",
+        ),
+        (
+            "mmx_psubsb_store",
+            "movq 32(%rax), %mm0\npsubsb 40(%rax), %mm0\nmovq %mm0, 128(%rax)\nemms",
+        ),
+        (
+            "mmx_psubusb_store",
+            "movq 32(%rax), %mm0\npsubusb 40(%rax), %mm0\nmovq %mm0, 136(%rax)\nemms",
+        ),
+        (
+            "mmx_pmullw_store",
+            "movq 32(%rax), %mm0\npmullw 40(%rax), %mm0\nmovq %mm0, 144(%rax)\nemms",
+        ),
+        (
+            "mmx_pmulhw_store",
+            "movq 32(%rax), %mm0\npmulhw 40(%rax), %mm0\nmovq %mm0, 152(%rax)\nemms",
+        ),
+        (
+            "mmx_pmaddwd_store",
+            "movq 32(%rax), %mm0\npmaddwd 40(%rax), %mm0\nmovq %mm0, 160(%rax)\nemms",
+        ),
+        (
+            "mmx_pand_store",
+            "movq 32(%rax), %mm0\npand 40(%rax), %mm0\nmovq %mm0, 168(%rax)\nemms",
+        ),
+        (
+            "mmx_pandn_store",
+            "movq 32(%rax), %mm0\npandn 40(%rax), %mm0\nmovq %mm0, 176(%rax)\nemms",
+        ),
+        (
+            "mmx_por_store",
+            "movq 32(%rax), %mm0\npor 40(%rax), %mm0\nmovq %mm0, 184(%rax)\nemms",
+        ),
+        (
+            "mmx_pxor_store",
+            "movq 32(%rax), %mm0\npxor 40(%rax), %mm0\nmovq %mm0, 192(%rax)\nemms",
+        ),
+        (
+            "mmx_pcmpeqb_store",
+            "movq 32(%rax), %mm0\npcmpeqb 32(%rax), %mm0\nmovq %mm0, 200(%rax)\nemms",
+        ),
+        (
+            "mmx_pcmpeqw_store",
+            "movq 32(%rax), %mm0\npcmpeqw 32(%rax), %mm0\nmovq %mm0, 208(%rax)\nemms",
+        ),
+        (
+            "mmx_pcmpgtb_store",
+            "movq 32(%rax), %mm0\npcmpgtb 40(%rax), %mm0\nmovq %mm0, 216(%rax)\nemms",
+        ),
+        (
+            "mmx_pcmpgtw_store",
+            "movq 32(%rax), %mm0\npcmpgtw 40(%rax), %mm0\nmovq %mm0, 224(%rax)\nemms",
+        ),
+        (
+            "mmx_packsswb_store",
+            "movq 32(%rax), %mm0\npacksswb 40(%rax), %mm0\nmovq %mm0, 232(%rax)\nemms",
+        ),
+        (
+            "mmx_packuswb_store",
+            "movq 32(%rax), %mm0\npackuswb 40(%rax), %mm0\nmovq %mm0, 240(%rax)\nemms",
+        ),
+        (
+            "mmx_packssdw_store",
+            "movq 32(%rax), %mm0\npackssdw 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
         ),
         (
             "mmx_psllw_store",
             "movq 32(%rax), %mm0\npsllw $3, %mm0\nmovq %mm0, 72(%rax)\nemms",
-            Int,
+        ),
+        (
+            "mmx_psrlw_store",
+            "movq 32(%rax), %mm0\npsrlw $5, %mm0\nmovq %mm0, 80(%rax)\nemms",
+        ),
+        (
+            "mmx_psraw_store",
+            "movq 32(%rax), %mm0\npsraw $4, %mm0\nmovq %mm0, 88(%rax)\nemms",
+        ),
+        (
+            "mmx_pslld_store",
+            "movq 32(%rax), %mm0\npslld $7, %mm0\nmovq %mm0, 96(%rax)\nemms",
+        ),
+        (
+            "mmx_psrld_store",
+            "movq 32(%rax), %mm0\npsrld $6, %mm0\nmovq %mm0, 104(%rax)\nemms",
+        ),
+        (
+            "mmx_psrad_store",
+            "movq 32(%rax), %mm0\npsrad $5, %mm0\nmovq %mm0, 112(%rax)\nemms",
+        ),
+        (
+            "mmx_psllq_store",
+            "movq 32(%rax), %mm0\npsllq $9, %mm0\nmovq %mm0, 120(%rax)\nemms",
+        ),
+        (
+            "mmx_psrlq_store",
+            "movq 32(%rax), %mm0\npsrlq $11, %mm0\nmovq %mm0, 128(%rax)\nemms",
         ),
         (
             "mmx_punpcklbw_store",
             "movq 32(%rax), %mm0\npunpcklbw 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
-            Int,
+        ),
+        (
+            "mmx_punpckhbw_store",
+            "movq 32(%rax), %mm0\npunpckhbw 40(%rax), %mm0\nmovq %mm0, 136(%rax)\nemms",
+        ),
+        (
+            "mmx_punpcklwd_store",
+            "movq 32(%rax), %mm0\npunpcklwd 40(%rax), %mm0\nmovq %mm0, 144(%rax)\nemms",
+        ),
+        (
+            "mmx_punpckhwd_store",
+            "movq 32(%rax), %mm0\npunpckhwd 40(%rax), %mm0\nmovq %mm0, 152(%rax)\nemms",
+        ),
+        (
+            "mmx_emms_then_x87_store",
+            "movq 32(%rax), %mm0\npaddb 40(%rax), %mm0\nemms\nfld1\nfstpl 160(%rax)",
         ),
     ] {
         out.push(Case {
             label: label.to_string(),
             asm: asm.to_string(),
-            feat: Core,
-            profile,
+            feat: Mmx,
+            profile: Int,
         });
     }
 
@@ -7951,6 +8112,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Fxsave
                 | Feat::Xsave
                 | Feat::X87
+                | Feat::Mmx
                 | Feat::Cx8
                 | Feat::Cx16
                 | Feat::Fence
@@ -8171,7 +8333,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 12, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -8182,7 +8344,27 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 8, "all x87 cases should compare");
+    assert_eq!(tally.compared, 12, "all x87 cases should compare");
+}
+
+#[test]
+fn avx512_kvm_mmx_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Mmx)
+        .collect();
+    assert_eq!(cases.len(), 39, "unexpected MMX corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on MMX cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an MMX case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "MMX corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.compared, 39, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
