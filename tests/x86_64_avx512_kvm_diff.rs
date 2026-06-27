@@ -63,6 +63,7 @@ const RFLAGS_PF: u64 = 0x004;
 const RFLAGS_AF: u64 = 0x010;
 const RFLAGS_ZF: u64 = 0x040;
 const RFLAGS_SF: u64 = 0x080;
+const RFLAGS_DF: u64 = 0x400;
 const RFLAGS_OF: u64 = 0x800;
 /// Architecturally-defined status bits to compare (the 6 arithmetic flags).
 const STATUS_RFLAGS_MASK: u64 =
@@ -75,6 +76,11 @@ const R9_SEED: u64 = 70;
 const RCX_SEED: u64 = 0x1020_3040_5060_0c04;
 /// Value seeded into rdx, the implicit BMI2 MULX multiplicand.
 const RDX_SEED: u64 = 0x1357_9bdf_2468_ace0;
+/// Scratch-local source/destination windows for string instructions.
+const STRING_SRC_ADDR: u64 = SCRATCH_ADDR + 128;
+const STRING_DST_ADDR: u64 = SCRATCH_ADDR + 32;
+const STRING_REP_COUNT: u64 = 4;
+const STRING_DF_OFFSET: u64 = 24;
 
 /// One concrete architectural input: register file + scratch memory.
 #[derive(Clone)]
@@ -83,6 +89,8 @@ struct InCase {
     k: [u64; K_REGS],
     rcx: u64,
     rdx: u64,
+    rsi: u64,
+    rdi: u64,
     r8: u64,
     r9: u64,
     rflags: u64,
@@ -97,6 +105,8 @@ struct OutCase {
     rax: u64,
     rcx: u64,
     rdx: u64,
+    rsi: u64,
+    rdi: u64,
     r8: u64,
     r9: u64,
     rflags: u64,
@@ -738,6 +748,8 @@ impl KvmOracle {
         kregs.rsp = STACK_ADDR;
         kregs.rcx = input.rcx;
         kregs.rdx = input.rdx;
+        kregs.rsi = input.rsi;
+        kregs.rdi = input.rdi;
         kregs.r8 = input.r8;
         kregs.r9 = input.r9;
         kregs.rflags = input.rflags | 0x2;
@@ -781,6 +793,8 @@ impl KvmOracle {
             rax: final_regs.rax,
             rcx: final_regs.rcx,
             rdx: final_regs.rdx,
+            rsi: final_regs.rsi,
+            rdi: final_regs.rdi,
             r8: final_regs.r8,
             r9: final_regs.r9,
             rflags: final_regs.rflags,
@@ -833,6 +847,8 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     let mut regs = Registers {
         rcx: input.rcx,
         rdx: input.rdx,
+        rsi: input.rsi,
+        rdi: input.rdi,
         r8: input.r8,
         r9: input.r9,
         rflags: input.rflags,
@@ -862,6 +878,8 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
         rax: out_regs.rax,
         rcx: out_regs.rcx,
         rdx: out_regs.rdx,
+        rsi: out_regs.rsi,
+        rdi: out_regs.rdi,
         r8: out_regs.r8,
         r9: out_regs.r9,
         rflags: out_regs.rflags,
@@ -914,6 +932,12 @@ fn diff(interp: &OutCase, kvm: &OutCase, rflags_mask: u64) -> Vec<String> {
     }
     if interp.rdx != kvm.rdx {
         diffs.push(format!("rdx: interp={:#x} kvm={:#x}", interp.rdx, kvm.rdx));
+    }
+    if interp.rsi != kvm.rsi {
+        diffs.push(format!("rsi: interp={:#x} kvm={:#x}", interp.rsi, kvm.rsi));
+    }
+    if interp.rdi != kvm.rdi {
+        diffs.push(format!("rdi: interp={:#x} kvm={:#x}", interp.rdi, kvm.rdi));
     }
     if interp.r8 != kvm.r8 {
         diffs.push(format!("r8: interp={:#x} kvm={:#x}", interp.r8, kvm.r8));
@@ -1092,11 +1116,75 @@ fn input_for(profile: InputProfile) -> InCase {
         ],
         rcx: RCX_SEED,
         rdx: RDX_SEED,
+        rsi: STRING_SRC_ADDR,
+        rdi: STRING_DST_ADDR,
         r8: R8_SEED,
         r9: R9_SEED,
         rflags: INITIAL_RFLAGS,
         scratch,
     }
+}
+
+fn string_scratch() -> [u8; SCRATCH_BYTES] {
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    for (i, byte) in scratch.iter_mut().enumerate() {
+        *byte = (i as u8).wrapping_mul(37).wrapping_add(0x53);
+    }
+    scratch
+}
+
+fn is_string_mnemonic(mnem: &str) -> bool {
+    matches!(
+        mnem,
+        "movsb"
+            | "movsw"
+            | "movsl"
+            | "movsq"
+            | "stosb"
+            | "stosw"
+            | "stosl"
+            | "stosq"
+            | "lodsb"
+            | "lodsw"
+            | "lodsl"
+            | "lodsq"
+            | "scasb"
+            | "scasw"
+            | "scasl"
+            | "scasq"
+            | "cmpsb"
+            | "cmpsw"
+            | "cmpsl"
+            | "cmpsq"
+            | "rep"
+            | "repe"
+            | "repne"
+            | "addr32"
+    )
+}
+
+fn input_for_case(case: &Case) -> InCase {
+    let mut input = input_for(case.profile);
+    if !is_string_mnemonic(asm_mnemonic(&case.asm)) {
+        return input;
+    }
+
+    input.scratch = string_scratch();
+    input.rsi = STRING_SRC_ADDR;
+    input.rdi = STRING_DST_ADDR;
+    if case
+        .asm
+        .split_whitespace()
+        .any(|token| matches!(token, "rep" | "repe" | "repne"))
+    {
+        input.rcx = STRING_REP_COUNT;
+    }
+    if case.label.contains("_df") {
+        input.rsi = input.rsi.wrapping_add(STRING_DF_OFFSET);
+        input.rdi = input.rdi.wrapping_add(STRING_DF_OFFSET);
+        input.rflags |= RFLAGS_DF;
+    }
+    input
 }
 
 // ---------------------------------------------------------------------------
@@ -4990,6 +5078,68 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core string instructions. These use case-specific RSI/RDI/RCX seeds and
+    // a non-repeating scratch pattern so both pointer movement and memory side
+    // effects are visible in the KVM diff.
+    for &(label, asm) in &[
+        ("movsb_core_string", "movsb"),
+        ("movsw_core_string", "movsw"),
+        ("movsl_core_string", "movsl"),
+        ("movsq_core_string", "movsq"),
+        ("movsb_core_string_df", "movsb"),
+        ("rep_movsb_core_string", "rep movsb"),
+        ("rep_movsw_core_string", "rep movsw"),
+        ("rep_movsl_core_string", "rep movsl"),
+        ("rep_movsq_core_string", "rep movsq"),
+        ("repne_movsb_core_string", "repne movsb"),
+        ("rep_movsb_core_string_df", "rep movsb"),
+        ("addr32_movsb_core_string", "addr32 movsb"),
+        ("addr32_rep_movsb_core_string", "addr32 rep movsb"),
+        ("stosb_core_string", "stosb"),
+        ("stosw_core_string", "stosw"),
+        ("stosl_core_string", "stosl"),
+        ("stosq_core_string", "stosq"),
+        ("stosb_core_string_df", "stosb"),
+        ("rep_stosb_core_string", "rep stosb"),
+        ("rep_stosw_core_string", "rep stosw"),
+        ("rep_stosl_core_string", "rep stosl"),
+        ("rep_stosq_core_string", "rep stosq"),
+        ("addr32_rep_stosq_core_string", "addr32 rep stosq"),
+        ("lodsb_core_string", "lodsb"),
+        ("lodsw_core_string", "lodsw"),
+        ("lodsl_core_string", "lodsl"),
+        ("lodsq_core_string", "lodsq"),
+        ("lodsb_core_string_df", "lodsb"),
+        ("rep_lodsb_core_string", "rep lodsb"),
+        ("rep_lodsq_core_string", "rep lodsq"),
+        ("addr32_lodsl_core_string", "addr32 lodsl"),
+        ("scasb_core_string", "scasb"),
+        ("scasw_core_string", "scasw"),
+        ("scasl_core_string", "scasl"),
+        ("scasq_core_string", "scasq"),
+        ("scasb_core_string_df", "scasb"),
+        ("repe_scasb_core_string", "repe scasb"),
+        ("repne_scasb_core_string", "repne scasb"),
+        ("repne_scasq_core_string", "repne scasq"),
+        ("addr32_scasl_core_string", "addr32 scasl"),
+        ("cmpsb_core_string", "cmpsb"),
+        ("cmpsw_core_string", "cmpsw"),
+        ("cmpsl_core_string", "cmpsl"),
+        ("cmpsq_core_string", "cmpsq"),
+        ("cmpsb_core_string_df", "cmpsb"),
+        ("repe_cmpsb_core_string", "repe cmpsb"),
+        ("repne_cmpsb_core_string", "repne cmpsb"),
+        ("repe_cmpsq_core_string", "repe cmpsq"),
+        ("addr32_repe_cmpsb_core_string", "addr32 repe cmpsb"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -5542,7 +5692,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             case.label, op
         );
         let code = build_code(&op);
-        let input = input_for(case.profile);
+        let input = input_for_case(case);
 
         let kvm = match oracle.run(&code, &input) {
             Ok(KvmOutcome::Ran(out)) => out,
