@@ -101,12 +101,14 @@ enum Feat {
     Cd,
     /// 128/256-bit EVEX width variants (orthogonal capability).
     Vl,
-    /// FMA / base AVX (always present alongside AVX-512F).
+    /// Base AVX-512F cases that do not require an optional extension gate.
     Base,
     /// AVX VEX-encoded SIMD instructions.
     Avx,
     /// AVX2 VEX-encoded integer/memory SIMD instructions.
     Avx2,
+    /// VEX-encoded FMA fused multiply-add/subtract instructions.
+    Fma,
     /// VEX-encoded AVX VNNI dot-product instructions.
     AvxVnni,
     /// AES-NI legacy XMM crypto/key-schedule instructions.
@@ -164,6 +166,7 @@ impl Feat {
             Feat::Base => "base",
             Feat::Avx => "avx",
             Feat::Avx2 => "avx2",
+            Feat::Fma => "fma",
             Feat::AvxVnni => "avx_vnni",
             Feat::Aes => "aes",
             Feat::Pclmulqdq => "pclmulqdq",
@@ -193,6 +196,7 @@ impl Feat {
         &[
             Feat::Avx,
             Feat::Avx2,
+            Feat::Fma,
             Feat::AvxVnni,
             Feat::Aes,
             Feat::Pclmulqdq,
@@ -227,6 +231,7 @@ struct HostFeatures {
     vl: bool,
     avx: bool,
     avx2: bool,
+    fma: bool,
     avx_vnni: bool,
     aes: bool,
     pclmulqdq: bool,
@@ -261,6 +266,7 @@ impl HostFeatures {
             vl: is_x86_feature_detected!("avx512vl"),
             avx: is_x86_feature_detected!("avx"),
             avx2: is_x86_feature_detected!("avx2"),
+            fma: is_x86_feature_detected!("fma"),
             avx_vnni: host_cpu_flag("avx_vnni"),
             aes: host_cpu_flag("aes"),
             pclmulqdq: host_cpu_flag("pclmulqdq"),
@@ -295,6 +301,7 @@ impl HostFeatures {
             Feat::Vl => self.vl,
             Feat::Avx => self.avx,
             Feat::Avx2 => self.avx2,
+            Feat::Fma => self.fma,
             Feat::AvxVnni => self.avx_vnni,
             Feat::Aes => self.aes,
             Feat::Pclmulqdq => self.pclmulqdq,
@@ -3865,6 +3872,150 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat,
             profile: Int,
+        });
+    }
+
+    // VEX-encoded FMA and AVX floating-point misc forms cover the packed,
+    // scalar, horizontal, rounding, and dot-product paths outside EVEX.
+    for &(label, asm, feat, profile) in &[
+        (
+            "vfmadd132ps_vex_xmm_reg",
+            "{vex} vfmadd132ps %xmm2, %xmm3, %xmm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfmadd213ps_vex_xmm_mem",
+            "{vex} vfmadd213ps 32(%rax), %xmm3, %xmm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfmadd231ps_vex_ymm_reg",
+            "{vex} vfmadd231ps %ymm2, %ymm3, %ymm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfmadd132pd_vex_ymm_mem",
+            "{vex} vfmadd132pd 32(%rax), %ymm3, %ymm1",
+            Fma,
+            F64,
+        ),
+        (
+            "vfmaddsub132ps_vex_ymm_reg",
+            "{vex} vfmaddsub132ps %ymm2, %ymm3, %ymm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfmsubadd231pd_vex_ymm_mem",
+            "{vex} vfmsubadd231pd 64(%rax), %ymm3, %ymm1",
+            Fma,
+            F64,
+        ),
+        (
+            "vfmadd132ss_vex_reg",
+            "{vex} vfmadd132ss %xmm2, %xmm3, %xmm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfmadd213sd_vex_mem",
+            "{vex} vfmadd213sd 32(%rax), %xmm3, %xmm1",
+            Fma,
+            F64,
+        ),
+        (
+            "vfmsub231ss_vex_reg",
+            "{vex} vfmsub231ss %xmm2, %xmm3, %xmm1",
+            Fma,
+            F32,
+        ),
+        (
+            "vfnmadd231sd_vex_mem",
+            "{vex} vfnmadd231sd 32(%rax), %xmm3, %xmm1",
+            Fma,
+            F64,
+        ),
+        (
+            "vaddsubps_vex_ymm_reg",
+            "{vex} vaddsubps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vaddsubpd_vex_ymm_mem",
+            "{vex} vaddsubpd 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vhaddps_vex_xmm_reg",
+            "{vex} vhaddps %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vhsubpd_vex_ymm_mem",
+            "{vex} vhsubpd 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vroundps_vex_ymm_reg",
+            "{vex} vroundps $1, %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vroundpd_vex_ymm_mem",
+            "{vex} vroundpd $2, 32(%rax), %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vroundss_vex_reg",
+            "{vex} vroundss $3, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vroundsd_vex_mem",
+            "{vex} vroundsd $1, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vdpps_vex_xmm_reg",
+            "{vex} vdpps $0xf1, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vdpps_vex_ymm_mem",
+            "{vex} vdpps $0xff, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F32,
+        ),
+        (
+            "vdppd_vex_xmm_reg",
+            "{vex} vdppd $0x31, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vdppd_vex_xmm_mem",
+            "{vex} vdppd $0x31, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
         });
     }
 
