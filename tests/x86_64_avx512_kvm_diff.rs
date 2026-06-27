@@ -4608,6 +4608,269 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX2 VEX packed-integer coverage. This spans the destructive-to-3-source
+    // transition for arithmetic/logical/compare/minmax/multiply, pack/unpack,
+    // immediate/count/variable shifts, SSSE3-style byte/word transforms,
+    // 128-bit lane permutes, element permutes, and broadcasts.
+    for &(label, asm) in &[
+        ("vpaddb_avx2_xmm_reg", "{vex} vpaddb %xmm2, %xmm3, %xmm1"),
+        ("vpaddw_avx2_ymm_mem", "{vex} vpaddw 32(%rax), %ymm3, %ymm1"),
+        ("vpaddd_avx2_ymm_reg", "{vex} vpaddd %ymm2, %ymm3, %ymm1"),
+        ("vpaddq_avx2_xmm_mem", "{vex} vpaddq 32(%rax), %xmm3, %xmm1"),
+        ("vpaddsb_avx2_xmm_reg", "{vex} vpaddsb %xmm2, %xmm3, %xmm1"),
+        (
+            "vpaddsw_avx2_ymm_mem",
+            "{vex} vpaddsw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpaddusb_avx2_ymm_reg",
+            "{vex} vpaddusb %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpaddusw_avx2_xmm_mem",
+            "{vex} vpaddusw 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpsubb_avx2_xmm_reg", "{vex} vpsubb %xmm2, %xmm3, %xmm1"),
+        ("vpsubw_avx2_ymm_mem", "{vex} vpsubw 32(%rax), %ymm3, %ymm1"),
+        ("vpsubd_avx2_ymm_reg", "{vex} vpsubd %ymm2, %ymm3, %ymm1"),
+        ("vpsubq_avx2_xmm_mem", "{vex} vpsubq 32(%rax), %xmm3, %xmm1"),
+        ("vpsubsb_avx2_xmm_reg", "{vex} vpsubsb %xmm2, %xmm3, %xmm1"),
+        (
+            "vpsubsw_avx2_ymm_mem",
+            "{vex} vpsubsw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpsubusb_avx2_ymm_reg",
+            "{vex} vpsubusb %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpsubusw_avx2_xmm_mem",
+            "{vex} vpsubusw 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpand_avx2_ymm_reg", "{vex} vpand %ymm2, %ymm3, %ymm1"),
+        ("vpandn_avx2_ymm_mem", "{vex} vpandn 32(%rax), %ymm3, %ymm1"),
+        ("vpor_avx2_xmm_reg", "{vex} vpor %xmm2, %xmm3, %xmm1"),
+        ("vpxor_avx2_xmm_mem", "{vex} vpxor 32(%rax), %xmm3, %xmm1"),
+        (
+            "vpcmpeqb_avx2_xmm_reg",
+            "{vex} vpcmpeqb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpcmpeqw_avx2_ymm_mem",
+            "{vex} vpcmpeqw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpcmpeqd_avx2_ymm_reg",
+            "{vex} vpcmpeqd %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpcmpeqq_avx2_xmm_mem",
+            "{vex} vpcmpeqq 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpcmpgtb_avx2_xmm_reg",
+            "{vex} vpcmpgtb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpcmpgtw_avx2_ymm_mem",
+            "{vex} vpcmpgtw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpcmpgtd_avx2_ymm_reg",
+            "{vex} vpcmpgtd %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpcmpgtq_avx2_xmm_mem",
+            "{vex} vpcmpgtq 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpminub_avx2_xmm_reg", "{vex} vpminub %xmm2, %xmm3, %xmm1"),
+        (
+            "vpminsw_avx2_ymm_mem",
+            "{vex} vpminsw 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpmaxub_avx2_ymm_reg", "{vex} vpmaxub %ymm2, %ymm3, %ymm1"),
+        (
+            "vpmaxsw_avx2_xmm_mem",
+            "{vex} vpmaxsw 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpminsb_avx2_xmm_reg", "{vex} vpminsb %xmm2, %xmm3, %xmm1"),
+        (
+            "vpminsd_avx2_ymm_mem",
+            "{vex} vpminsd 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpminuw_avx2_ymm_reg", "{vex} vpminuw %ymm2, %ymm3, %ymm1"),
+        (
+            "vpminud_avx2_xmm_mem",
+            "{vex} vpminud 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpmaxsb_avx2_xmm_reg", "{vex} vpmaxsb %xmm2, %xmm3, %xmm1"),
+        (
+            "vpmaxsd_avx2_ymm_mem",
+            "{vex} vpmaxsd 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpmaxuw_avx2_ymm_reg", "{vex} vpmaxuw %ymm2, %ymm3, %ymm1"),
+        (
+            "vpmaxud_avx2_xmm_mem",
+            "{vex} vpmaxud 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpmullw_avx2_xmm_reg", "{vex} vpmullw %xmm2, %xmm3, %xmm1"),
+        (
+            "vpmulhw_avx2_ymm_mem",
+            "{vex} vpmulhw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpmulhuw_avx2_ymm_reg",
+            "{vex} vpmulhuw %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpmuludq_avx2_xmm_mem",
+            "{vex} vpmuludq 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpmaddwd_avx2_xmm_reg",
+            "{vex} vpmaddwd %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpmaddubsw_avx2_ymm_mem",
+            "{vex} vpmaddubsw 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpmulld_avx2_ymm_reg", "{vex} vpmulld %ymm2, %ymm3, %ymm1"),
+        (
+            "vpmuldq_avx2_xmm_mem",
+            "{vex} vpmuldq 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpacksswb_avx2_xmm_reg",
+            "{vex} vpacksswb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpackssdw_avx2_ymm_mem",
+            "{vex} vpackssdw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpackuswb_avx2_ymm_reg",
+            "{vex} vpackuswb %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpackusdw_avx2_xmm_mem",
+            "{vex} vpackusdw 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpunpcklbw_avx2_xmm_reg",
+            "{vex} vpunpcklbw %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpunpcklwd_avx2_ymm_mem",
+            "{vex} vpunpcklwd 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpunpckldq_avx2_ymm_reg",
+            "{vex} vpunpckldq %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpunpcklqdq_avx2_xmm_mem",
+            "{vex} vpunpcklqdq 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpunpckhbw_avx2_xmm_reg",
+            "{vex} vpunpckhbw %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpunpckhwd_avx2_ymm_mem",
+            "{vex} vpunpckhwd 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpunpckhdq_avx2_ymm_reg",
+            "{vex} vpunpckhdq %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpunpckhqdq_avx2_xmm_mem",
+            "{vex} vpunpckhqdq 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpsllw_avx2_xmm_imm", "{vex} vpsllw $3, %xmm3, %xmm1"),
+        ("vpslld_avx2_ymm_imm", "{vex} vpslld $7, %ymm3, %ymm1"),
+        ("vpsllq_avx2_xmm_imm", "{vex} vpsllq $11, %xmm3, %xmm1"),
+        ("vpsrlw_avx2_ymm_imm", "{vex} vpsrlw $5, %ymm3, %ymm1"),
+        ("vpsrld_avx2_xmm_imm", "{vex} vpsrld $9, %xmm3, %xmm1"),
+        ("vpsrlq_avx2_ymm_imm", "{vex} vpsrlq $13, %ymm3, %ymm1"),
+        ("vpsraw_avx2_xmm_imm", "{vex} vpsraw $2, %xmm3, %xmm1"),
+        ("vpsrad_avx2_ymm_imm", "{vex} vpsrad $6, %ymm3, %ymm1"),
+        (
+            "vpslld_avx2_xmm_count",
+            "{vex} vpslld 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpsrlq_avx2_ymm_count",
+            "{vex} vpsrlq 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpsllvd_avx2_xmm_reg", "{vex} vpsllvd %xmm2, %xmm3, %xmm1"),
+        (
+            "vpsllvq_avx2_ymm_mem",
+            "{vex} vpsllvq 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpsrlvd_avx2_ymm_reg", "{vex} vpsrlvd %ymm2, %ymm3, %ymm1"),
+        (
+            "vpsrlvq_avx2_xmm_mem",
+            "{vex} vpsrlvq 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpsravd_avx2_ymm_reg", "{vex} vpsravd %ymm2, %ymm3, %ymm1"),
+        ("vpshufb_avx2_xmm_reg", "{vex} vpshufb %xmm2, %xmm3, %xmm1"),
+        (
+            "vpsignb_avx2_ymm_mem",
+            "{vex} vpsignb 32(%rax), %ymm3, %ymm1",
+        ),
+        ("vpsignw_avx2_ymm_reg", "{vex} vpsignw %ymm2, %ymm3, %ymm1"),
+        (
+            "vpsignd_avx2_xmm_mem",
+            "{vex} vpsignd 32(%rax), %xmm3, %xmm1",
+        ),
+        ("vpabsb_avx2_xmm_reg", "{vex} vpabsb %xmm3, %xmm1"),
+        ("vpabsw_avx2_ymm_mem", "{vex} vpabsw 32(%rax), %ymm1"),
+        ("vpabsd_avx2_ymm_reg", "{vex} vpabsd %ymm3, %ymm1"),
+        (
+            "vpalignr_avx2_xmm_reg",
+            "{vex} vpalignr $5, %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpalignr_avx2_ymm_mem",
+            "{vex} vpalignr $17, 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vperm2i128_avx2_ymm_reg",
+            "{vex} vperm2i128 $0x31, %ymm2, %ymm3, %ymm1",
+        ),
+        ("vpermq_avx2_ymm_imm", "{vex} vpermq $0x1b, %ymm3, %ymm1"),
+        ("vpermd_avx2_ymm_reg", "{vex} vpermd %ymm2, %ymm3, %ymm1"),
+        ("vpermd_avx2_ymm_mem", "{vex} vpermd 32(%rax), %ymm3, %ymm1"),
+        (
+            "vpbroadcastb_avx2_xmm_mem",
+            "{vex} vpbroadcastb 32(%rax), %xmm1",
+        ),
+        (
+            "vpbroadcastw_avx2_ymm_mem",
+            "{vex} vpbroadcastw 32(%rax), %ymm1",
+        ),
+        (
+            "vpbroadcastd_avx2_ymm_reg",
+            "{vex} vpbroadcastd %xmm2, %ymm1",
+        ),
+        (
+            "vpbroadcastq_avx2_ymm_mem",
+            "{vex} vpbroadcastq 32(%rax), %ymm1",
+        ),
+        (
+            "vbroadcasti128_avx2_ymm_mem",
+            "{vex} vbroadcasti128 32(%rax), %ymm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: Int,
+        });
+    }
+
     // VEX-encoded FMA and AVX floating-point misc forms cover the packed,
     // scalar, horizontal, rounding, and dot-product paths outside EVEX.
     for &(label, asm, feat, profile) in &[
