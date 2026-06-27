@@ -4456,6 +4456,90 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Scalar conversion width variants. These exercise the REX.W-sensitive
+    // r/m32 vs r/m64 and r32 vs r64 paths that share the same mnemonics.
+    for &(label, asm, feat, profile) in &[
+        (
+            "cvtsi2ss_sse_scalar_width_r32",
+            "cvtsi2ss %r8d, %xmm1",
+            Sse,
+            F32,
+        ),
+        (
+            "cvtsi2ss_sse_scalar_width_m64",
+            "cvtsi2ssq 16(%rax), %xmm1",
+            Sse,
+            Int,
+        ),
+        (
+            "cvtss2si_sse_scalar_width_xmm_r32",
+            "cvtss2si %xmm1, %r8d",
+            Sse,
+            F32,
+        ),
+        (
+            "cvtss2si_sse_scalar_width_m32_r32",
+            "cvtss2si 16(%rax), %r8d",
+            Sse,
+            F32,
+        ),
+        (
+            "cvttss2si_sse_scalar_width_xmm_r32",
+            "cvttss2si %xmm1, %r8d",
+            Sse,
+            F32,
+        ),
+        (
+            "cvttss2si_sse_scalar_width_m32_r32",
+            "cvttss2si 16(%rax), %r8d",
+            Sse,
+            F32,
+        ),
+        (
+            "cvtsi2sd_sse2_scalar_width_r32",
+            "cvtsi2sd %r8d, %xmm1",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvtsi2sd_sse2_scalar_width_m64",
+            "cvtsi2sdq 16(%rax), %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "cvtsd2si_sse2_scalar_width_xmm_r32",
+            "cvtsd2si %xmm1, %r8d",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvtsd2si_sse2_scalar_width_m64_r32",
+            "cvtsd2si 16(%rax), %r8d",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvttsd2si_sse2_scalar_width_xmm_r32",
+            "cvttsd2si %xmm1, %r8d",
+            Sse2,
+            F64,
+        ),
+        (
+            "cvttsd2si_sse2_scalar_width_m64_r32",
+            "cvttsd2si 16(%rax), %r8d",
+            Sse2,
+            F64,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Legacy packed conversion forms that bridge MMX integer pairs with SSE/SSE2
     // floating-point vectors, plus SSE2 packed dword/single conversions.
     for &(label, asm, feat, profile) in &[
@@ -10415,6 +10499,53 @@ fn avx512_kvm_legacy_convert_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all legacy conversion cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_scalar_convert_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_scalar_width_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected scalar conversion width corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on scalar conversion width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a scalar conversion width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "scalar conversion width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "scalar conversion width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        6,
+        "all SSE scalar conversion width cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        6,
+        "all SSE2 scalar conversion width cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all scalar conversion width cases should compare"
     );
 }
 
