@@ -180,6 +180,8 @@ enum Feat {
     CacheInvd,
     /// WBNOINVD cache writeback without invalidation.
     Wbnoinvd,
+    /// INVLPG TLB invalidation by linear address.
+    Invlpg,
     /// SERIALIZE instruction execution barrier.
     Serialize,
     /// WAITPKG user-level monitor/wait instructions.
@@ -281,6 +283,7 @@ impl Feat {
             Feat::Fsgsbase => "fsgsbase",
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
+            Feat::Invlpg => "invlpg",
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
             Feat::Rdpid => "rdpid",
@@ -339,6 +342,7 @@ impl Feat {
             Feat::Fsgsbase,
             Feat::CacheInvd,
             Feat::Wbnoinvd,
+            Feat::Invlpg,
             Feat::Serialize,
             Feat::Waitpkg,
             Feat::Rdpid,
@@ -522,6 +526,7 @@ impl HostFeatures {
             Feat::Fsgsbase => self.fsgsbase,
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
+            Feat::Invlpg => true,
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
             Feat::Rdpid => self.rdpid,
@@ -6677,6 +6682,32 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // INVLPG invalidates TLB state for the addressed page but has no visible
+    // architectural output here. These cases cover ordinary, extended-base, and
+    // 32-bit address-size forms while bracketing the instruction with visible
+    // GPR/memory state.
+    for &(label, asm) in &[
+        (
+            "invlpg_mem",
+            "movq %r8, 32(%rax)\ninvlpg 32(%rax)\nmovq 32(%rax), %rcx",
+        ),
+        (
+            "invlpg_extended_base",
+            "leaq 64(%rax), %r8\ninvlpg (%r8)\nmovq %r8, %rcx",
+        ),
+        (
+            "invlpg_addr32_mem",
+            "movq %r8, 96(%rax)\naddr32\ninvlpg 96(%eax)\nmovq 96(%rax), %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Invlpg,
+            profile: Int,
+        });
+    }
+
     // RDTSC/RDTSCP return time-varying values. These cases either normalize
     // the outputs with flag-preserving MOVs or shift away variable payload bits
     // while restoring the instruction-preserved flags.
@@ -7665,6 +7696,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Fsgsbase
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
+                | Feat::Invlpg
                 | Feat::Serialize
                 | Feat::Waitpkg
                 | Feat::Rdpid
