@@ -724,6 +724,10 @@ impl X86_64Vcpu {
         // VEX.0F3A encoded instructions (m_mmmm=3)
         if m_mmmm == 0x3 && vex_pp == 1 {
             match opcode {
+                // VEXTRACTPS r/m32, xmm1, imm8 (VEX.66.0F3A.WIG 17 /r ib)
+                0x17 => {
+                    return self.execute_vextractps(ctx, vex_l);
+                }
                 // VINSERTF128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 18 /r ib)
                 0x18 => {
                     return self.execute_vinsertf128(ctx, vex_l, vvvv);
@@ -735,6 +739,10 @@ impl X86_64Vcpu {
                 // VEXTRACTF128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 19 /r ib)
                 0x19 => {
                     return self.execute_vextractf128(ctx, vex_l);
+                }
+                // VINSERTPS xmm1, xmm2, xmm3/m32, imm8 (VEX.66.0F3A.WIG 21 /r ib)
+                0x21 => {
+                    return self.execute_vinsertps(ctx, vex_l, vvvv);
                 }
                 // VPERM2F128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 06 /r ib)
                 0x06 => {

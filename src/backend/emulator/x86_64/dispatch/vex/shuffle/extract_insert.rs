@@ -5,7 +5,92 @@ use crate::error::{Error, Result};
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
+fn xmm_dword(xmm: [u64; 2], idx: usize) -> u32 {
+    if idx < 2 {
+        ((xmm[0] >> (idx * 32)) & 0xFFFF_FFFF) as u32
+    } else {
+        ((xmm[1] >> ((idx - 2) * 32)) & 0xFFFF_FFFF) as u32
+    }
+}
+
+fn put_xmm_dword(xmm: &mut [u64; 2], idx: usize, value: u32) {
+    if idx < 2 {
+        let mask = !(0xFFFF_FFFFu64 << (idx * 32));
+        xmm[0] = (xmm[0] & mask) | ((value as u64) << (idx * 32));
+    } else {
+        let pos = idx - 2;
+        let mask = !(0xFFFF_FFFFu64 << (pos * 32));
+        xmm[1] = (xmm[1] & mask) | ((value as u64) << (pos * 32));
+    }
+}
+
 impl X86_64Vcpu {
+    pub(in crate::backend::emulator::x86_64) fn execute_vextractps(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 {
+            return Err(Error::Emulator(
+                "VEXTRACTPS requires VEX.L=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let idx = (imm8 & 0x03) as usize;
+        let value = xmm_dword(self.regs.xmm[reg as usize], idx);
+
+        if is_memory {
+            self.write_mem(addr, value as u64, 4)?;
+        } else {
+            self.set_reg(rm, value as u64, 4);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vinsertps(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l != 0 {
+            return Err(Error::Emulator(
+                "VINSERTPS requires VEX.L=0".to_string(),
+            ));
+        }
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let dst = reg as usize;
+        let src1 = vvvv as usize;
+        let src_lane = ((imm8 >> 6) & 0x03) as usize;
+        let dst_lane = ((imm8 >> 4) & 0x03) as usize;
+        let zmask = imm8 & 0x0F;
+
+        let src_value = if is_memory {
+            self.read_mem(addr, 4)? as u32
+        } else {
+            xmm_dword(self.regs.xmm[rm as usize], src_lane)
+        };
+
+        let mut result = self.regs.xmm[src1];
+        put_xmm_dword(&mut result, dst_lane, src_value);
+        for lane in 0..4 {
+            if zmask & (1 << lane) != 0 {
+                put_xmm_dword(&mut result, lane, 0);
+            }
+        }
+
+        self.regs.xmm[dst] = result;
+        self.regs.ymm_high[dst] = [0; 2];
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_vinsertf128(
         &mut self,
         ctx: &mut InsnContext,

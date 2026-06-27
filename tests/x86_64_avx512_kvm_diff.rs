@@ -5923,8 +5923,8 @@ fn irregular_cases() -> Vec<Case> {
 
     // VEX AVX data movement and lane forms that sit outside the arithmetic and
     // conversion tables above. These cover aligned/unaligned integer vector
-    // moves, LDDQU, and low/high scalar-pair loads and stores in their VEX
-    // encodings.
+    // moves, LDDQU, low/high scalar-pair loads and stores, and SSE4.1 insert /
+    // extract forms in their VEX encodings.
     for &(label, asm, profile) in &[
         (
             "vmovdqa_avx_data_xmm_reg",
@@ -6045,6 +6045,26 @@ fn irregular_cases() -> Vec<Case> {
             "vmovhpd_avx_data_store",
             "{vex} vmovhpd %xmm1, 56(%rax)",
             F64,
+        ),
+        (
+            "vinsertps_avx_data_reg",
+            "{vex} vinsertps $0x20, %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vinsertps_avx_data_mem",
+            "{vex} vinsertps $0x30, 32(%rax), %xmm3, %xmm1",
+            F32,
+        ),
+        (
+            "vextractps_avx_data_r8d",
+            "{vex} vextractps $2, %xmm1, %r8d",
+            F32,
+        ),
+        (
+            "vextractps_avx_data_mem",
+            "{vex} vextractps $3, %xmm1, 44(%rax)",
+            F32,
         ),
     ] {
         out.push(Case {
@@ -13328,7 +13348,7 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        24,
+        28,
         "unexpected VEX AVX data-movement corpus size"
     );
 
@@ -13353,11 +13373,11 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        24,
+        28,
         "all VEX AVX data-movement cases should run"
     );
     assert_eq!(
-        tally.compared, 24,
+        tally.compared, 28,
         "all VEX AVX data-movement cases should compare"
     );
 }
