@@ -66,6 +66,7 @@ const RFLAGS_ZF: u64 = 0x040;
 const RFLAGS_SF: u64 = 0x080;
 const RFLAGS_DF: u64 = 0x400;
 const RFLAGS_OF: u64 = 0x800;
+const RFLAGS_AC: u64 = 0x40000;
 /// Architecturally-defined status bits to compare (the 6 arithmetic flags).
 const STATUS_RFLAGS_MASK: u64 =
     RFLAGS_CF | RFLAGS_PF | RFLAGS_AF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
@@ -182,6 +183,8 @@ enum Feat {
     Wbnoinvd,
     /// INVLPG TLB invalidation by linear address.
     Invlpg,
+    /// SMAP access-flag control instructions.
+    Smap,
     /// SERIALIZE instruction execution barrier.
     Serialize,
     /// WAITPKG user-level monitor/wait instructions.
@@ -284,6 +287,7 @@ impl Feat {
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
+            Feat::Smap => "smap",
             Feat::Serialize => "serialize",
             Feat::Waitpkg => "waitpkg",
             Feat::Rdpid => "rdpid",
@@ -343,6 +347,7 @@ impl Feat {
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
+            Feat::Smap,
             Feat::Serialize,
             Feat::Waitpkg,
             Feat::Rdpid,
@@ -404,6 +409,7 @@ struct HostFeatures {
     cldemote: bool,
     fsgsbase: bool,
     wbnoinvd: bool,
+    smap: bool,
     serialize: bool,
     waitpkg: bool,
     rdpid: bool,
@@ -464,6 +470,7 @@ impl HostFeatures {
             cldemote: host_cpu_flag("cldemote"),
             fsgsbase: host_cpu_flag("fsgsbase"),
             wbnoinvd: host_cpu_flag("wbnoinvd"),
+            smap: host_cpu_flag("smap"),
             serialize: host_cpu_flag("serialize"),
             waitpkg: host_cpu_flag("waitpkg"),
             rdpid: host_cpu_flag("rdpid"),
@@ -527,6 +534,7 @@ impl HostFeatures {
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
+            Feat::Smap => self.smap,
             Feat::Serialize => self.serialize,
             Feat::Waitpkg => self.waitpkg,
             Feat::Rdpid => self.rdpid,
@@ -6708,6 +6716,21 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // STAC/CLAC are SMAP access-control flag operations. The ordinary status
+    // flags are preserved while AC is the visible architectural output.
+    for &(label, asm) in &[
+        ("stac_sets_ac", "stac"),
+        ("clac_clears_ac", "stac\nclac"),
+        ("stac_clac_repeated", "stac\nstac\nclac\nclac"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Smap,
+            profile: Int,
+        });
+    }
+
     // RDTSC/RDTSCP return time-varying values. These cases either normalize
     // the outputs with flag-preserving MOVs or shift away variable payload bits
     // while restoring the instruction-preserved flags.
@@ -7402,6 +7425,11 @@ fn case_rflags_mask(case: &Case) -> u64 {
         return STATUS_RFLAGS_MASK | RFLAGS_DF;
     }
 
+    // STAC/CLAC only change AC; status flags remain comparable.
+    if matches!(mnem, "stac" | "clac") {
+        return STATUS_RFLAGS_MASK | RFLAGS_AC;
+    }
+
     STATUS_RFLAGS_MASK
 }
 
@@ -7415,7 +7443,7 @@ const LLVM_MATTR: &str = concat!(
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq,+aes,+pclmul,+f16c,+sha,+movdiri,+movdir64b,+adx,+movbe,",
-    "+clflushopt,+clwb,+cldemote,+fsgsbase,+wbnoinvd,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
+    "+clflushopt,+clwb,+cldemote,+fsgsbase,+wbnoinvd,+smap,+serialize,+waitpkg,+rdpid,+rdrnd,+rdseed,+sse,+sse2,+ssse3,+sse4.1,+sse4.2,+popcnt,+bmi,+bmi2,+lzcnt"
 );
 
 fn which(prog: &str) -> Option<PathBuf> {
@@ -7697,6 +7725,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
+                | Feat::Smap
                 | Feat::Serialize
                 | Feat::Waitpkg
                 | Feat::Rdpid
