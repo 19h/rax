@@ -103,6 +103,8 @@ enum Feat {
     Vl,
     /// FMA / base AVX (always present alongside AVX-512F).
     Base,
+    /// VEX-encoded AVX VNNI dot-product instructions.
+    AvxVnni,
     /// AVX-512 Integer FMA (VPMADD52*).
     Ifma,
     /// AVX-512 VNNI dot-product instructions.
@@ -136,6 +138,7 @@ impl Feat {
             Feat::Cd => "avx512cd",
             Feat::Vl => "avx512vl",
             Feat::Base => "base",
+            Feat::AvxVnni => "avx_vnni",
             Feat::Ifma => "avx512ifma",
             Feat::Vnni => "avx512_vnni",
             Feat::Vbmi => "avx512vbmi",
@@ -152,6 +155,7 @@ impl Feat {
 
     fn expanded_xeon() -> &'static [Feat] {
         &[
+            Feat::AvxVnni,
             Feat::Ifma,
             Feat::Vnni,
             Feat::Vbmi,
@@ -173,6 +177,7 @@ struct HostFeatures {
     dq: bool,
     cd: bool,
     vl: bool,
+    avx_vnni: bool,
     ifma: bool,
     vnni: bool,
     vbmi: bool,
@@ -194,6 +199,7 @@ impl HostFeatures {
             dq: is_x86_feature_detected!("avx512dq"),
             cd: is_x86_feature_detected!("avx512cd"),
             vl: is_x86_feature_detected!("avx512vl"),
+            avx_vnni: host_cpu_flag("avx_vnni"),
             ifma: host_cpu_flag("avx512ifma"),
             vnni: host_cpu_flag("avx512_vnni"),
             vbmi: host_cpu_flag("avx512vbmi"),
@@ -215,6 +221,7 @@ impl HostFeatures {
             Feat::Dq => self.dq,
             Feat::Cd => self.cd,
             Feat::Vl => self.vl,
+            Feat::AvxVnni => self.avx_vnni,
             Feat::Ifma => self.ifma,
             Feat::Vnni => self.vnni,
             Feat::Vbmi => self.vbmi,
@@ -3422,6 +3429,32 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
+    // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
+    // zeroing semantics.
+    for mnem in ["vpdpbusd", "vpdpbusds", "vpdpwssd", "vpdpwssds"] {
+        for class in ["xmm", "ymm"] {
+            out.push(Case {
+                label: format!("{mnem}_vex_{class}_reg"),
+                asm: format!("{{vex}} {mnem} %{class}2, %{class}3, %{class}1"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_{class}_mem"),
+                asm: format!("{{vex}} {mnem} (%rax), %{class}3, %{class}1"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+            out.push(Case {
+                label: format!("{mnem}_vex_{class}_high"),
+                asm: format!("{{vex}} {mnem} %{class}10, %{class}11, %{class}9"),
+                feat: AvxVnni,
+                profile: Int,
+            });
+        }
+    }
+
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
         ("vcvtps2pd_high", "vcvtps2pd %ymm16, %zmm17", F, F32),
@@ -3476,9 +3509,10 @@ enum Status {
     Approx,
 }
 
-/// First mnemonic token of an AT&T line (after any `{evex}` pseudo-prefix).
+/// First mnemonic token of an AT&T line (after any `{evex}` / `{vex}` pseudo-prefix).
 fn asm_mnemonic(asm: &str) -> &str {
     asm.strip_prefix("{evex} ")
+        .or_else(|| asm.strip_prefix("{vex} "))
         .unwrap_or(asm)
         .split_whitespace()
         .next()
@@ -3534,6 +3568,7 @@ fn case_status(case: &Case) -> Status {
 
 const LLVM_MATTR: &str = concat!(
     "+avx512f,+avx512bw,+avx512dq,+avx512cd,+avx512vl,+fma,",
+    "+avxvnni,",
     "+avx512ifma,+avx512vnni,+avx512vbmi,+avx512vbmi2,",
     "+avx512bitalg,+avx512vpopcntdq,+avx512bf16,+avx512fp16,",
     "+gfni,+vaes,+vpclmulqdq"
