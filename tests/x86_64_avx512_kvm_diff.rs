@@ -184,6 +184,10 @@ enum Feat {
     Clwb,
     /// CLDEMOTE cache-line demotion hint.
     Cldemote,
+    /// NOP, PAUSE, and PREFETCHh no-op/hint instructions.
+    HintNop,
+    /// PREFETCHW write-intent cache hint.
+    Prefetchw,
     /// FSGSBASE FS/GS base read/write instructions.
     Fsgsbase,
     /// Privileged control-register and machine-status-word instructions.
@@ -318,6 +322,8 @@ impl Feat {
             Feat::Clflushopt => "clflushopt",
             Feat::Clwb => "clwb",
             Feat::Cldemote => "cldemote",
+            Feat::HintNop => "hint_nop",
+            Feat::Prefetchw => "prefetchw",
             Feat::Fsgsbase => "fsgsbase",
             Feat::ControlReg => "control_reg",
             Feat::DescriptorTable => "descriptor_table",
@@ -393,6 +399,8 @@ impl Feat {
             Feat::Clflushopt,
             Feat::Clwb,
             Feat::Cldemote,
+            Feat::HintNop,
+            Feat::Prefetchw,
             Feat::Fsgsbase,
             Feat::ControlReg,
             Feat::DescriptorTable,
@@ -469,6 +477,7 @@ struct HostFeatures {
     clflushopt: bool,
     clwb: bool,
     cldemote: bool,
+    prefetchw: bool,
     fsgsbase: bool,
     wbnoinvd: bool,
     smap: bool,
@@ -535,6 +544,7 @@ impl HostFeatures {
             clflushopt: host_cpu_flag("clflushopt"),
             clwb: host_cpu_flag("clwb"),
             cldemote: host_cpu_flag("cldemote"),
+            prefetchw: host_cpu_flag("3dnowprefetch") || host_cpu_flag("prefetchw"),
             fsgsbase: host_cpu_flag("fsgsbase"),
             wbnoinvd: host_cpu_flag("wbnoinvd"),
             smap: host_cpu_flag("smap"),
@@ -605,6 +615,8 @@ impl HostFeatures {
             Feat::Clflushopt => self.clflushopt,
             Feat::Clwb => self.clwb,
             Feat::Cldemote => self.cldemote,
+            Feat::HintNop => true,
+            Feat::Prefetchw => self.prefetchw,
             Feat::Fsgsbase => self.fsgsbase,
             Feat::ControlReg => true,
             Feat::DescriptorTable => true,
@@ -7002,6 +7014,56 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Hint/no-op instructions must decode addressing forms and preserve all
+    // architectural state that is visible to this harness.
+    for &(label, asm, feat) in &[
+        ("nop_one_byte", "nop", HintNop),
+        ("nop_rm_disp", "nopl 32(%rax)", HintNop),
+        ("nopw_rm_disp", "nopw 48(%rax)", HintNop),
+        (
+            "nop_rm_sib_zero_index",
+            "xorl %ecx, %ecx\nnopl 64(%rax,%rcx,1)",
+            HintNop,
+        ),
+        (
+            "pause_preserves_cmp_flags",
+            "cmpq %rcx, %r8\npause",
+            HintNop,
+        ),
+        (
+            "pause_between_memory_ops",
+            "movq %r8, 80(%rax)\npause\nmovq 80(%rax), %rcx",
+            HintNop,
+        ),
+        ("prefetchnta_memory", "prefetchnta 96(%rax)", HintNop),
+        ("prefetcht0_memory", "prefetcht0 112(%rax)", HintNop),
+        ("prefetcht1_memory", "prefetcht1 128(%rax)", HintNop),
+        ("prefetcht2_memory", "prefetcht2 144(%rax)", HintNop),
+        (
+            "prefetch_sib_zero_index",
+            "xorl %ecx, %ecx\nprefetcht0 160(%rax,%rcx,1)",
+            HintNop,
+        ),
+        ("prefetchw_memory", "prefetchw 176(%rax)", Prefetchw),
+        (
+            "prefetchw_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nprefetchw 192(%rax)",
+            Prefetchw,
+        ),
+        (
+            "prefetchw_sib_zero_index",
+            "xorl %ecx, %ecx\nprefetchw 208(%rax,%rcx,1)",
+            Prefetchw,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Serialization and user-level wait instructions. Their ordering and
     // monitor/wait side effects are not directly visible, so these snippets
     // bracket them with deterministic GPR, flag, and scratch-visible state.
@@ -8330,6 +8392,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Clflushopt
                 | Feat::Clwb
                 | Feat::Cldemote
+                | Feat::HintNop
+                | Feat::Prefetchw
                 | Feat::Fsgsbase
                 | Feat::ControlReg
                 | Feat::DescriptorTable
@@ -8552,6 +8616,59 @@ fn avx512_kvm_descriptor_access_corpus() {
         tally.compared, 5,
         "all descriptor-access cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_hint_nop_prefetch_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| matches!(case.feat, Feat::HintNop | Feat::Prefetchw))
+        .collect();
+    assert_eq!(cases.len(), 14, "unexpected hint/prefetch corpus size");
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Prefetchw) {
+        eprintln!("[skip] host lacks PREFETCHW support; PREFETCHW cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on hint/prefetch cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a hint/prefetch case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "hint/prefetch corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::HintNop),
+        11,
+        "all NOP/PAUSE/PREFETCHh cases should run"
+    );
+    if host.supports(Feat::Prefetchw) {
+        assert_eq!(
+            tally.ran_for(Feat::Prefetchw),
+            3,
+            "all PREFETCHW cases should run"
+        );
+        assert_eq!(
+            tally.skipped_feature, 0,
+            "hint/prefetch cases should not feature-skip"
+        );
+        assert_eq!(tally.compared, 14, "all hint/prefetch cases should compare");
+    } else {
+        assert_eq!(
+            tally.skipped_feature, 3,
+            "only PREFETCHW cases should feature-skip"
+        );
+        assert_eq!(
+            tally.compared, 11,
+            "all non-PREFETCHW hint cases should compare"
+        );
+    }
 }
 
 #[test]
