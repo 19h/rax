@@ -3925,6 +3925,55 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE4.1 0F3A immediate/control forms cover rounding modes, blends,
+    // dot products, byte SAD, extract-to-GPR/memory, and insert-from-GPR/memory.
+    for &(label, asm, profile) in &[
+        ("roundps_sse41_reg", "roundps $1, %xmm2, %xmm1", F32),
+        ("roundps_sse41_mem", "roundps $2, 32(%rax), %xmm1", F32),
+        ("roundpd_sse41_reg", "roundpd $2, %xmm2, %xmm1", F64),
+        ("roundpd_sse41_mem", "roundpd $1, 32(%rax), %xmm1", F64),
+        ("roundss_sse41_reg", "roundss $3, %xmm2, %xmm1", F32),
+        ("roundss_sse41_mem", "roundss $1, 32(%rax), %xmm1", F32),
+        ("roundsd_sse41_reg", "roundsd $1, %xmm2, %xmm1", F64),
+        ("roundsd_sse41_mem", "roundsd $2, 32(%rax), %xmm1", F64),
+        ("blendps_sse41_reg", "blendps $0x5a, %xmm2, %xmm1", F32),
+        ("blendps_sse41_mem", "blendps $0xa5, 32(%rax), %xmm1", F32),
+        ("blendpd_sse41_reg", "blendpd $0x1, %xmm2, %xmm1", F64),
+        ("blendpd_sse41_mem", "blendpd $0x2, 32(%rax), %xmm1", F64),
+        ("pblendw_sse41_reg", "pblendw $0xa5, %xmm2, %xmm1", Int),
+        ("pblendw_sse41_mem", "pblendw $0x5a, 32(%rax), %xmm1", Int),
+        ("dpps_sse41_reg", "dpps $0xf1, %xmm2, %xmm1", F32),
+        ("dpps_sse41_mem", "dpps $0xff, 32(%rax), %xmm1", F32),
+        ("dppd_sse41_reg", "dppd $0x31, %xmm2, %xmm1", F64),
+        ("dppd_sse41_mem", "dppd $0x33, 32(%rax), %xmm1", F64),
+        ("mpsadbw_sse41_reg", "mpsadbw $5, %xmm2, %xmm1", Int),
+        ("mpsadbw_sse41_mem", "mpsadbw $2, 32(%rax), %xmm1", Int),
+        ("pextrb_sse41_gpr", "pextrb $10, %xmm1, %r8d", Int),
+        ("pextrb_sse41_mem", "pextrb $5, %xmm1, 32(%rax)", Int),
+        ("pextrw_sse41_mem", "pextrw $4, %xmm1, 34(%rax)", Int),
+        ("pextrd_sse41_gpr", "pextrd $2, %xmm1, %r8d", Int),
+        ("pextrd_sse41_mem", "pextrd $1, %xmm1, 40(%rax)", Int),
+        ("pextrq_sse41_gpr", "pextrq $1, %xmm1, %r8", Int),
+        ("pextrq_sse41_mem", "pextrq $0, %xmm1, 48(%rax)", Int),
+        ("extractps_sse41_gpr", "extractps $2, %xmm1, %r8d", F32),
+        ("extractps_sse41_mem", "extractps $3, %xmm1, 56(%rax)", F32),
+        ("pinsrb_sse41_gpr", "pinsrb $14, %r8d, %xmm1", Int),
+        ("pinsrb_sse41_mem", "pinsrb $5, 31(%rax), %xmm1", Int),
+        ("pinsrd_sse41_gpr", "pinsrd $2, %r8d, %xmm1", Int),
+        ("pinsrd_sse41_mem", "pinsrd $1, 28(%rax), %xmm1", Int),
+        ("pinsrq_sse41_gpr", "pinsrq $1, %r8, %xmm1", Int),
+        ("pinsrq_sse41_mem", "pinsrq $0, 24(%rax), %xmm1", Int),
+        ("insertps_sse41_reg", "insertps $0x2c, %xmm2, %xmm1", F32),
+        ("insertps_sse41_mem", "insertps $0x10, 12(%rax), %xmm1", F32),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse41,
+            profile,
+        });
+    }
+
     // VEX-encoded AVX VNNI dot products are distinct from the EVEX AVX-512
     // VNNI forms in `base_table()`: XMM/YMM only, no write-mask, and VEX upper
     // zeroing semantics.
