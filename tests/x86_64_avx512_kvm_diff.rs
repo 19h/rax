@@ -7733,6 +7733,125 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core condition-code width variants. These set flags explicitly before
+    // CMOVcc/SETcc so true and false paths exercise word/dword/qword
+    // destinations, high-byte register writes, and byte memory writes.
+    for &(label, asm) in &[
+        (
+            "cmove_core_condition_width_r16_mem_true",
+            "cmpq %r8, %r8\ncmovew 4(%rax), %r8w",
+        ),
+        (
+            "cmovne_core_condition_width_r16_mem_false",
+            "cmpq %r8, %r8\ncmovnew 4(%rax), %r8w",
+        ),
+        (
+            "cmovne_core_condition_width_r32_mem_true_zeroext",
+            "movq $1, %r8\nmovq $2, %r9\ncmpq %r9, %r8\ncmovnel 8(%rax), %r8d",
+        ),
+        (
+            "cmovne_core_condition_width_r32_mem_false_preserve",
+            "movabsq $0x1234567887654321, %r8\ncmpq %r9, %r9\ncmovnel 8(%rax), %r8d",
+        ),
+        (
+            "cmovb_core_condition_width_r64_reg_true",
+            "movq $1, %r8\nmovq $2, %r9\ncmpq %r9, %r8\ncmovbq %r9, %r8",
+        ),
+        (
+            "cmovae_core_condition_width_r64_reg_false",
+            "movq $1, %r8\nmovq $2, %r9\ncmpq %r9, %r8\ncmovaeq %r9, %r8",
+        ),
+        (
+            "cmovs_core_condition_width_r64_mem_true",
+            "movq $-1, %r8\ntestq %r8, %r8\ncmovsq 16(%rax), %r8",
+        ),
+        (
+            "cmovns_core_condition_width_r64_mem_false",
+            "movq $-1, %r8\ntestq %r8, %r8\ncmovnsq 16(%rax), %r8",
+        ),
+        (
+            "cmovg_core_condition_width_r16_reg_true",
+            "movw $7, %r8w\nmovw $3, %r9w\ncmpw %r9w, %r8w\ncmovgw %r9w, %r8w",
+        ),
+        (
+            "cmovle_core_condition_width_r16_reg_false",
+            "movw $7, %r8w\nmovw $3, %r9w\ncmpw %r9w, %r8w\ncmovlew %r9w, %r8w",
+        ),
+        (
+            "cmovl_core_condition_width_r32_reg_true",
+            "movl $-5, %r8d\nmovl $7, %r9d\ncmpl %r9d, %r8d\ncmovll %r9d, %r8d",
+        ),
+        (
+            "cmovge_core_condition_width_r32_reg_false",
+            "movl $-5, %r8d\nmovl $7, %r9d\ncmpl %r9d, %r8d\ncmovgel %r9d, %r8d",
+        ),
+        (
+            "cmovo_core_condition_width_r64_mem_true",
+            "movb $0x7f, %r8b\naddb $1, %r8b\ncmovoq 24(%rax), %r8",
+        ),
+        (
+            "cmovno_core_condition_width_r64_mem_false",
+            "movb $0x7f, %r8b\naddb $1, %r8b\ncmovnoq 24(%rax), %r8",
+        ),
+        (
+            "cmovp_core_condition_width_r32_mem_true_zeroext",
+            "xorl %r8d, %r8d\ntestb %r8b, %r8b\ncmovpl 28(%rax), %r8d",
+        ),
+        (
+            "cmovnp_core_condition_width_r32_mem_false",
+            "xorl %r8d, %r8d\ntestb %r8b, %r8b\ncmovnpl 28(%rax), %r8d",
+        ),
+        (
+            "setz_core_condition_width_r8_true",
+            "cmpq %r8, %r8\nsetz %r8b",
+        ),
+        (
+            "setnz_core_condition_width_r8_false",
+            "cmpq %r8, %r8\nsetnz %r8b",
+        ),
+        ("setc_core_condition_width_ah_true", "stc\nsetc %ah"),
+        ("setnc_core_condition_width_ah_false", "stc\nsetnc %ah"),
+        (
+            "seto_core_condition_width_r9b_true",
+            "movb $0x7f, %r8b\naddb $1, %r8b\nseto %r9b",
+        ),
+        (
+            "setno_core_condition_width_r9b_false",
+            "movb $0x7f, %r8b\naddb $1, %r8b\nsetno %r9b",
+        ),
+        (
+            "sets_core_condition_width_m8_true",
+            "movl $-1, %r8d\ntestl %r8d, %r8d\nsets 48(%rax)",
+        ),
+        (
+            "setns_core_condition_width_m8_false",
+            "movl $-1, %r8d\ntestl %r8d, %r8d\nsetns 49(%rax)",
+        ),
+        (
+            "setp_core_condition_width_m8_true",
+            "xorl %r8d, %r8d\ntestb %r8b, %r8b\nsetp 50(%rax)",
+        ),
+        (
+            "setnp_core_condition_width_m8_false",
+            "xorl %r8d, %r8d\ntestb %r8b, %r8b\nsetnp 51(%rax)",
+        ),
+        (
+            "setg_core_condition_width_r9b_true",
+            "movl $5, %r8d\nmovl $3, %r9d\ncmpl %r9d, %r8d\nsetg %r9b",
+        ),
+        (
+            "setle_core_condition_width_r9b_false",
+            "movl $5, %r8d\nmovl $3, %r9d\ncmpl %r9d, %r8d\nsetle %r9b",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core direct control-flow. Multi-instruction snippets make the taken and
     // fallthrough paths visibly different in r8 while preserving the seeded
     // status flags for comparison.
@@ -11140,6 +11259,43 @@ fn avx512_kvm_core_atomic_width_corpus() {
     assert_eq!(
         tally.compared, 22,
         "all core atomic-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_condition_width_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_condition_width_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        28,
+        "unexpected core condition-width corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core condition-width cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core condition-width case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core condition-width corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core condition-width cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 28,
+        "all core condition-width cases should compare"
     );
 }
 

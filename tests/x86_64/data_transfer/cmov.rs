@@ -1479,6 +1479,25 @@ fn test_strict_cmov_taken_r32_zero_extends() {
 }
 
 #[test]
+fn test_strict_cmovne_not_taken_r32_zero_extends_dest() {
+    // 32-bit CMOVNE EAX, EBX with ZF set keeps EAX but still zero-extends RAX.
+    let code = [
+        0x48, 0x31, 0xc9, // XOR RCX, RCX -> ZF=1
+        0x0f, 0x45, 0xc3, // CMOVNE EAX, EBX
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678_8765_4321;
+    regs.rbx = 0xFFFF_FFFF_FFFF_FFFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        regs.rax, 0x0000_0000_8765_4321,
+        "32-bit CMOV not taken zero-extends the preserved destination"
+    );
+}
+
+#[test]
 fn test_strict_cmov_taken_from_memory() {
     // CMOVE RAX, [RBX] when ZF set loads memory operand.
     let code = [
