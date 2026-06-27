@@ -1517,6 +1517,9 @@ fn input_for_case(case: &Case) -> InCase {
     {
         input.rcx = STRING_REP_COUNT;
     }
+    if case.label.contains("count_zero") {
+        input.rcx = 0;
+    }
     if case.label.contains("_df") {
         input.rsi = input.rsi.wrapping_add(STRING_DF_OFFSET);
         input.rdi = input.rdi.wrapping_add(STRING_DF_OFFSET);
@@ -7962,6 +7965,7 @@ fn irregular_cases() -> Vec<Case> {
         ("rep_movsq_core_string", "rep movsq"),
         ("repne_movsb_core_string", "repne movsb"),
         ("rep_movsb_core_string_df", "rep movsb"),
+        ("rep_movsb_core_string_count_zero", "rep movsb"),
         ("addr32_movsb_core_string", "addr32 movsb"),
         ("addr32_rep_movsb_core_string", "addr32 rep movsb"),
         ("stosb_core_string", "stosb"),
@@ -7973,6 +7977,7 @@ fn irregular_cases() -> Vec<Case> {
         ("rep_stosw_core_string", "rep stosw"),
         ("rep_stosl_core_string", "rep stosl"),
         ("rep_stosq_core_string", "rep stosq"),
+        ("rep_stosq_core_string_count_zero", "rep stosq"),
         ("addr32_rep_stosq_core_string", "addr32 rep stosq"),
         ("lodsb_core_string", "lodsb"),
         ("lodsw_core_string", "lodsw"),
@@ -7981,6 +7986,7 @@ fn irregular_cases() -> Vec<Case> {
         ("lodsb_core_string_df", "lodsb"),
         ("rep_lodsb_core_string", "rep lodsb"),
         ("rep_lodsq_core_string", "rep lodsq"),
+        ("rep_lodsq_core_string_count_zero", "rep lodsq"),
         ("addr32_lodsl_core_string", "addr32 lodsl"),
         ("scasb_core_string", "scasb"),
         ("scasw_core_string", "scasw"),
@@ -7990,6 +7996,7 @@ fn irregular_cases() -> Vec<Case> {
         ("repe_scasb_core_string", "repe scasb"),
         ("repne_scasb_core_string", "repne scasb"),
         ("repne_scasq_core_string", "repne scasq"),
+        ("repne_scasq_core_string_count_zero", "repne scasq"),
         ("addr32_scasl_core_string", "addr32 scasl"),
         ("cmpsb_core_string", "cmpsb"),
         ("cmpsw_core_string", "cmpsw"),
@@ -7999,6 +8006,7 @@ fn irregular_cases() -> Vec<Case> {
         ("repe_cmpsb_core_string", "repe cmpsb"),
         ("repne_cmpsb_core_string", "repne cmpsb"),
         ("repe_cmpsq_core_string", "repe cmpsq"),
+        ("repe_cmpsb_core_string_count_zero", "repe cmpsb"),
         ("addr32_repe_cmpsb_core_string", "addr32 repe cmpsb"),
     ] {
         out.push(Case {
@@ -9179,6 +9187,33 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
         tally.compared, 9,
         "all stack-frame/flag-control cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_core_string_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_string"))
+        .collect();
+    assert_eq!(cases.len(), 54, "unexpected core string corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core string cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core string case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core string corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core string cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 54, "all core string cases should compare");
 }
 
 #[test]
