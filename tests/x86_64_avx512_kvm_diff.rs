@@ -177,6 +177,14 @@ enum Feat {
     Cldemote,
     /// FSGSBASE FS/GS base read/write instructions.
     Fsgsbase,
+    /// Privileged control-register and machine-status-word instructions.
+    ControlReg,
+    /// Descriptor-table load/store instructions.
+    DescriptorTable,
+    /// Model-specific register read/write instructions.
+    Msr,
+    /// Debug-register read/write instructions.
+    DebugReg,
     /// Privileged cache invalidation/writeback instructions without CPUID gates.
     CacheInvd,
     /// WBNOINVD cache writeback without invalidation.
@@ -288,6 +296,10 @@ impl Feat {
             Feat::Clwb => "clwb",
             Feat::Cldemote => "cldemote",
             Feat::Fsgsbase => "fsgsbase",
+            Feat::ControlReg => "control_reg",
+            Feat::DescriptorTable => "descriptor_table",
+            Feat::Msr => "msr",
+            Feat::DebugReg => "debug_reg",
             Feat::CacheInvd => "cache_invd",
             Feat::Wbnoinvd => "wbnoinvd",
             Feat::Invlpg => "invlpg",
@@ -350,6 +362,10 @@ impl Feat {
             Feat::Clwb,
             Feat::Cldemote,
             Feat::Fsgsbase,
+            Feat::ControlReg,
+            Feat::DescriptorTable,
+            Feat::Msr,
+            Feat::DebugReg,
             Feat::CacheInvd,
             Feat::Wbnoinvd,
             Feat::Invlpg,
@@ -541,6 +557,10 @@ impl HostFeatures {
             Feat::Clwb => self.clwb,
             Feat::Cldemote => self.cldemote,
             Feat::Fsgsbase => self.fsgsbase,
+            Feat::ControlReg => true,
+            Feat::DescriptorTable => true,
+            Feat::Msr => true,
+            Feat::DebugReg => true,
             Feat::CacheInvd => true,
             Feat::Wbnoinvd => self.wbnoinvd,
             Feat::Invlpg => true,
@@ -6728,6 +6748,84 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Privileged machine-state instructions. These seed known architectural
+    // state before reading it back, avoiding dependence on different initial
+    // KVM/interpreter CRx, descriptor-table, or MSR setup.
+    for &(label, asm, feat) in &[
+        (
+            "control_cr2_roundtrip",
+            "movabsq $0x0000000000123450, %r8\nmovq %r8, %cr2\nmovq %cr2, %rcx",
+            ControlReg,
+        ),
+        (
+            "control_cr4_roundtrip",
+            "movabsq $0x0000000000050620, %r8\nmovq %r8, %cr4\nmovq %cr4, %rcx",
+            ControlReg,
+        ),
+        (
+            "control_smsw_widths",
+            "movabsq $-1, %r8\nsmsw %r8w\nmovabsq $-1, %r9\nsmsw %r9w",
+            ControlReg,
+        ),
+        (
+            "control_lmsw_clts_observable_msw",
+            "movw $0x000b, 32(%rax)\nlmsw 32(%rax)\nsmsw 40(%rax)\nclts\nsmsw 48(%rax)",
+            ControlReg,
+        ),
+        (
+            "descriptor_lgdt_lidt_store_roundtrip",
+            "movw $0x001f, 32(%rax)\nmovabsq $0x0000000000006000, %r8\nmovq %r8, 34(%rax)\nmovw $0x0037, 48(%rax)\nmovabsq $0x0000000000007000, %r8\nmovq %r8, 50(%rax)\nlgdt 32(%rax)\nlidt 48(%rax)\nsgdt 64(%rax)\nsidt 80(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_addr32_roundtrip",
+            "movw $0x004f, 96(%rax)\nmovabsq $0x0000000000006100, %r8\nmovq %r8, 98(%rax)\nmovw $0x0057, 112(%rax)\nmovabsq $0x0000000000007100, %r8\nmovq %r8, 114(%rax)\naddr32\nlgdt 96(%eax)\naddr32\nlidt 112(%eax)\naddr32\nsgdt 128(%eax)\naddr32\nsidt 144(%eax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_extended_base_roundtrip",
+            "leaq 160(%rax), %r8\nmovw $0x006f, (%r8)\nmovabsq $0x0000000000006200, %r9\nmovq %r9, 2(%r8)\nmovw $0x0077, 16(%r8)\nmovabsq $0x0000000000007200, %r9\nmovq %r9, 18(%r8)\nlgdt (%r8)\nlidt 16(%r8)\nsgdt 32(%r8)\nsidt 48(%r8)",
+            DescriptorTable,
+        ),
+        (
+            "msr_fs_base_roundtrip",
+            "movl $0xc0000100, %ecx\nmovl $0xdead0000, %eax\nmovl $0x00007fff, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "msr_gs_base_roundtrip",
+            "movl $0xc0000101, %ecx\nmovl $0x0badf00d, %eax\nmovl $0, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "msr_kernel_gs_base_roundtrip",
+            "movl $0xc0000102, %ecx\nmovl $0x00001000, %eax\nmovl $0xffff8800, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "debug_dr0_dr1_roundtrip",
+            "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx\nmovabsq $0x0000000000004008, %r8\nmovq %r8, %dr1\nmovq %dr1, %rdx",
+            DebugReg,
+        ),
+        (
+            "debug_dr2_dr3_roundtrip",
+            "movabsq $0x0000000000004010, %r8\nmovq %r8, %dr2\nmovq %dr2, %rcx\nmovabsq $0x0000000000004018, %r8\nmovq %r8, %dr3\nmovq %dr3, %rdx",
+            DebugReg,
+        ),
+        (
+            "debug_dr7_zero_roundtrip",
+            "movabsq $0x400, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9",
+            DebugReg,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // STAC/CLAC are SMAP access-control flag operations. The ordinary status
     // flags are preserved while AC is the visible architectural output.
     for &(label, asm) in &[
@@ -7767,6 +7865,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 | Feat::Clwb
                 | Feat::Cldemote
                 | Feat::Fsgsbase
+                | Feat::ControlReg
+                | Feat::DescriptorTable
+                | Feat::Msr
+                | Feat::DebugReg
                 | Feat::CacheInvd
                 | Feat::Wbnoinvd
                 | Feat::Invlpg
@@ -7918,6 +8020,34 @@ fn avx512_kvm_state_roundtrip() {
 #[test]
 fn avx512_kvm_starter_corpus() {
     run_corpus(&starter_cases());
+}
+
+#[test]
+fn avx512_kvm_privileged_machine_state_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            matches!(
+                case.feat,
+                Feat::ControlReg | Feat::DescriptorTable | Feat::Msr | Feat::DebugReg
+            )
+        })
+        .collect();
+    assert_eq!(cases.len(), 13, "unexpected privileged corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on privileged cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a privileged case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "privileged corpus produced assembler-rejected cases"
+    );
+    assert_eq!(tally.compared, 13, "all privileged cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
