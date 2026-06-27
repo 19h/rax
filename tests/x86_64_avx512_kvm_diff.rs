@@ -5631,6 +5631,154 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat) in &[
+        ("pcmpeqb_sse2_int_order_edge_reg", "pcmpeqb %xmm2, %xmm1", Sse2),
+        ("pcmpgtb_sse2_int_order_edge_reg", "pcmpgtb %xmm2, %xmm1", Sse2),
+        ("pcmpgtw_sse2_int_order_edge_mem", "pcmpgtw 32(%rax), %xmm1", Sse2),
+        ("pcmpgtd_sse2_int_order_edge_reg", "pcmpgtd %xmm2, %xmm1", Sse2),
+        ("pminub_sse2_int_order_edge_reg", "pminub %xmm2, %xmm1", Sse2),
+        ("pminsw_sse2_int_order_edge_mem", "pminsw 32(%rax), %xmm1", Sse2),
+        ("pmaxub_sse2_int_order_edge_reg", "pmaxub %xmm2, %xmm1", Sse2),
+        ("pmaxsw_sse2_int_order_edge_mem", "pmaxsw 32(%rax), %xmm1", Sse2),
+        ("pminsb_sse41_int_order_edge_reg", "pminsb %xmm2, %xmm1", Sse41),
+        ("pminuw_sse41_int_order_edge_mem", "pminuw 32(%rax), %xmm1", Sse41),
+        ("pminud_sse41_int_order_edge_reg", "pminud %xmm2, %xmm1", Sse41),
+        ("pminsd_sse41_int_order_edge_mem", "pminsd 32(%rax), %xmm1", Sse41),
+        ("pmaxsb_sse41_int_order_edge_mem", "pmaxsb 32(%rax), %xmm1", Sse41),
+        ("pmaxuw_sse41_int_order_edge_reg", "pmaxuw %xmm2, %xmm1", Sse41),
+        ("pmaxud_sse41_int_order_edge_mem", "pmaxud 32(%rax), %xmm1", Sse41),
+        ("pmaxsd_sse41_int_order_edge_reg", "pmaxsd %xmm2, %xmm1", Sse41),
+        ("pcmpgtq_sse42_int_order_edge_reg", "pcmpgtq %xmm2, %xmm1", Sse42),
+        ("pcmpgtq_sse42_int_order_edge_mem", "pcmpgtq 32(%rax), %xmm1", Sse42),
+        (
+            "vpcmpgtb_avx2_int_order_edge_reg",
+            "{vex} vpcmpgtb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpcmpgtw_avx2_int_order_edge_mem",
+            "{vex} vpcmpgtw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpcmpgtd_avx2_int_order_edge_reg",
+            "{vex} vpcmpgtd %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpcmpgtq_avx2_int_order_edge_mem",
+            "{vex} vpcmpgtq 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpminsb_avx2_int_order_edge_reg",
+            "{vex} vpminsb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpminsw_avx2_int_order_edge_mem",
+            "{vex} vpminsw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpminsd_avx2_int_order_edge_reg",
+            "{vex} vpminsd %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpminub_avx2_int_order_edge_mem",
+            "{vex} vpminub 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpminuw_avx2_int_order_edge_reg",
+            "{vex} vpminuw %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpminud_avx2_int_order_edge_mem",
+            "{vex} vpminud 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaxsb_avx2_int_order_edge_reg",
+            "{vex} vpmaxsb %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaxsw_avx2_int_order_edge_mem",
+            "{vex} vpmaxsw 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpmaxsd_avx2_int_order_edge_reg",
+            "{vex} vpmaxsd %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpmaxub_avx2_int_order_edge_mem",
+            "{vex} vpmaxub 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpmaxuw_avx2_int_order_edge_reg",
+            "{vex} vpmaxuw %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpmaxud_avx2_int_order_edge_mem",
+            "{vex} vpmaxud 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        ("vpcmpb_avx512_int_order_edge_lt", "vpcmpb $1, %zmm2, %zmm3, %k5", Bw),
+        (
+            "vpcmpub_avx512_int_order_edge_lt",
+            "vpcmpub $1, 64(%rax), %zmm3, %k5",
+            Bw,
+        ),
+        ("vpcmpw_avx512_int_order_edge_lt", "vpcmpw $1, %zmm2, %zmm3, %k5", Bw),
+        (
+            "vpcmpuw_avx512_int_order_edge_lt",
+            "vpcmpuw $1, 64(%rax), %zmm3, %k5",
+            Bw,
+        ),
+        ("vpcmpd_avx512_int_order_edge_lt", "vpcmpd $1, %zmm2, %zmm3, %k5", F),
+        (
+            "vpcmpud_avx512_int_order_edge_lt",
+            "vpcmpud $1, 64(%rax), %zmm3, %k5",
+            F,
+        ),
+        ("vpcmpq_avx512_int_order_edge_lt", "vpcmpq $1, %zmm2, %zmm3, %k5", F),
+        (
+            "vpcmpuq_avx512_int_order_edge_lt",
+            "vpcmpuq $1, 64(%rax), %zmm3, %k5",
+            F,
+        ),
+        ("vpminsb_avx512_int_order_edge_reg", "vpminsb %zmm2, %zmm3, %zmm1", Bw),
+        ("vpminsw_avx512_int_order_edge_mem", "vpminsw 64(%rax), %zmm3, %zmm1", Bw),
+        ("vpminub_avx512_int_order_edge_reg", "vpminub %zmm2, %zmm3, %zmm1", Bw),
+        ("vpminuw_avx512_int_order_edge_mem", "vpminuw 64(%rax), %zmm3, %zmm1", Bw),
+        ("vpmaxsb_avx512_int_order_edge_reg", "vpmaxsb %zmm2, %zmm3, %zmm1", Bw),
+        ("vpmaxsw_avx512_int_order_edge_mem", "vpmaxsw 64(%rax), %zmm3, %zmm1", Bw),
+        ("vpmaxub_avx512_int_order_edge_reg", "vpmaxub %zmm2, %zmm3, %zmm1", Bw),
+        ("vpmaxuw_avx512_int_order_edge_mem", "vpmaxuw 64(%rax), %zmm3, %zmm1", Bw),
+        ("vpminsd_avx512_int_order_edge_reg", "vpminsd %zmm2, %zmm3, %zmm1", F),
+        ("vpminsq_avx512_int_order_edge_mem", "vpminsq 64(%rax), %zmm3, %zmm1", F),
+        ("vpminud_avx512_int_order_edge_reg", "vpminud %zmm2, %zmm3, %zmm1", F),
+        ("vpminuq_avx512_int_order_edge_mem", "vpminuq 64(%rax), %zmm3, %zmm1", F),
+        ("vpmaxsd_avx512_int_order_edge_reg", "vpmaxsd %zmm2, %zmm3, %zmm1", F),
+        ("vpmaxsq_avx512_int_order_edge_mem", "vpmaxsq 64(%rax), %zmm3, %zmm1", F),
+        ("vpmaxud_avx512_int_order_edge_reg", "vpmaxud %zmm2, %zmm3, %zmm1", F),
+        ("vpmaxuq_avx512_int_order_edge_mem", "vpmaxuq 64(%rax), %zmm3, %zmm1", F),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: IntSatEdge,
+        });
+    }
+
     // Legacy SSE4.1 blend forms use implicit XMM0 masks; PTEST exercises
     // status-flag writes in the same legacy 0F38 map.
     for &(label, asm, profile) in &[
@@ -14029,6 +14177,73 @@ fn avx512_kvm_integer_saturation_edge_corpus() {
     assert_eq!(
         tally.compared, 53,
         "all integer saturation edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_integer_order_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_int_order_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        58,
+        "unexpected integer order edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on integer order edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an integer order edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "integer order edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "integer order edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        8,
+        "all SSE2 order edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        8,
+        "all SSE4.1 order edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse42),
+        2,
+        "all SSE4.2 order edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        16,
+        "all AVX2 order edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        12,
+        "all AVX-512BW order edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        12,
+        "all AVX-512F order edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 58,
+        "all integer order edge cases should compare"
     );
 }
 
