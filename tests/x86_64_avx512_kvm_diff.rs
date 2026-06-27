@@ -6689,6 +6689,38 @@ fn irregular_cases() -> Vec<Case> {
         profile: Int,
     });
 
+    // VEX-encoded AVX-512 opmask moves. These exercise all KMOV transfer
+    // classes: k<-mem, k<-k, mem<-k, k<-GPR, and GPR<-k across b/w/d/q widths.
+    for &(label, asm, feat) in &[
+        ("kmovb_kmov_mem_load", "kmovb 16(%rax), %k1", Dq),
+        ("kmovw_kmov_mem_load", "kmovw 18(%rax), %k1", F),
+        ("kmovd_kmov_mem_load", "kmovd 20(%rax), %k1", Dq),
+        ("kmovq_kmov_mem_load", "kmovq 24(%rax), %k1", Bw),
+        ("kmovb_kmov_kreg_copy", "kmovb %k2, %k1", Dq),
+        ("kmovw_kmov_kreg_copy", "kmovw %k2, %k1", F),
+        ("kmovd_kmov_kreg_copy", "kmovd %k2, %k1", Dq),
+        ("kmovq_kmov_kreg_copy", "kmovq %k2, %k1", Bw),
+        ("kmovb_kmov_mem_store", "kmovb %k2, 32(%rax)", Dq),
+        ("kmovw_kmov_mem_store", "kmovw %k2, 34(%rax)", F),
+        ("kmovd_kmov_mem_store", "kmovd %k2, 36(%rax)", Dq),
+        ("kmovq_kmov_mem_store", "kmovq %k2, 40(%rax)", Bw),
+        ("kmovb_kmov_gpr_to_k", "kmovb %r8d, %k1", Dq),
+        ("kmovw_kmov_gpr_to_k", "kmovw %r8d, %k1", F),
+        ("kmovd_kmov_gpr_to_k", "kmovd %r8d, %k1", Dq),
+        ("kmovq_kmov_gpr_to_k", "kmovq %r8, %k1", Bw),
+        ("kmovb_kmov_k_to_gpr", "kmovb %k2, %r8d", Dq),
+        ("kmovw_kmov_k_to_gpr", "kmovw %k2, %r8d", F),
+        ("kmovd_kmov_k_to_gpr", "kmovd %k2, %r8d", Dq),
+        ("kmovq_kmov_k_to_gpr", "kmovq %k2, %r8", Bw),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // F16C VEX half/single-precision conversion forms are distinct from the
     // AVX-512-FP16 EVEX conversion family above.
     for &(label, asm, profile) in &[
@@ -11007,6 +11039,45 @@ fn avx512_kvm_avx2_gather_corpus() {
         "all AVX2 gather cases should run"
     );
     assert_eq!(tally.compared, 16, "all AVX2 gather cases should compare");
+}
+
+#[test]
+fn avx512_kvm_kmov_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_kmov_"))
+        .collect();
+    assert_eq!(cases.len(), 20, "unexpected KMOV corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on KMOV cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a KMOV case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "KMOV corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "KMOV cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        5,
+        "all AVX-512F KMOV word cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Dq),
+        10,
+        "all AVX-512DQ KMOV byte/dword cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bw),
+        5,
+        "all AVX-512BW KMOV qword cases should run"
+    );
+    assert_eq!(tally.compared, 20, "all KMOV cases should compare");
 }
 
 #[test]
