@@ -4069,6 +4069,223 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX-512 sparse memory movement forms. Compress stores compact selected
+    // elements to memory, expand loads compact memory into masked lanes, and
+    // gather/scatter clear their opmask after one safe VSIB lane.
+    for &(label, asm, feat, profile) in &[
+        (
+            "vpcompressd_avx512_sparse_mem_one",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpcompressd %zmm2, 64(%rax) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpcompressq_avx512_sparse_mem_one",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpcompressq %zmm2, 64(%rax) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vcompressps_avx512_sparse_mem_one",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvcompressps %zmm2, 64(%rax) {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vcompresspd_avx512_sparse_mem_one",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvcompresspd %zmm2, 64(%rax) {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vpexpandd_avx512_sparse_mem_one_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpexpandd 64(%rax), %zmm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpexpandd_avx512_sparse_mem_one_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpexpandd 64(%rax), %zmm1 {%k1}{z}",
+            F,
+            Int,
+        ),
+        (
+            "vpexpandq_avx512_sparse_mem_one_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpexpandq 64(%rax), %zmm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpexpandq_avx512_sparse_mem_one_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpexpandq 64(%rax), %zmm1 {%k1}{z}",
+            F,
+            Int,
+        ),
+        (
+            "vexpandps_avx512_sparse_mem_one_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvexpandps 64(%rax), %zmm1 {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vexpandps_avx512_sparse_mem_one_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvexpandps 64(%rax), %zmm1 {%k1}{z}",
+            F,
+            F32,
+        ),
+        (
+            "vexpandpd_avx512_sparse_mem_one_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvexpandpd 64(%rax), %zmm1 {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vexpandpd_avx512_sparse_mem_one_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvexpandpd 64(%rax), %zmm1 {%k1}{z}",
+            F,
+            F64,
+        ),
+        (
+            "vgatherdps_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvgatherdps 64(%rax,%zmm2,4), %zmm1 {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vgatherdpd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvgatherdpd 64(%rax,%ymm2,8), %zmm1 {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vgatherqps_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvgatherqps 64(%rax,%zmm2,4), %ymm1 {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vgatherqpd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvgatherqpd 64(%rax,%zmm2,8), %zmm1 {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vpgatherdd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpgatherdd 64(%rax,%zmm2,4), %zmm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpgatherdq_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpgatherdq 64(%rax,%ymm2,8), %zmm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpgatherqd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpgatherqd 64(%rax,%zmm2,4), %ymm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpgatherqq_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpgatherqq 64(%rax,%zmm2,8), %zmm1 {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vscatterdps_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvscatterdps %zmm3, 64(%rax,%zmm2,4) {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vscatterdpd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvscatterdpd %zmm3, 64(%rax,%ymm2,8) {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vscatterqps_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvscatterqps %ymm3, 64(%rax,%zmm2,4) {%k1}",
+            F,
+            F32,
+        ),
+        (
+            "vscatterqpd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvscatterqpd %zmm3, 64(%rax,%zmm2,8) {%k1}",
+            F,
+            F64,
+        ),
+        (
+            "vpscatterdd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpscatterdd %zmm3, 64(%rax,%zmm2,4) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpscatterdq_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpscatterdq %zmm3, 64(%rax,%ymm2,8) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpscatterqd_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpscatterqd %ymm3, 64(%rax,%zmm2,4) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpscatterqq_avx512_sparse_mem_one",
+            "vpxord %zmm2, %zmm2, %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpscatterqq %zmm3, 64(%rax,%zmm2,8) {%k1}",
+            F,
+            Int,
+        ),
+        (
+            "vpcompressb_vbmi2_sparse_mem_one",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpcompressb %zmm2, 64(%rax) {%k1}",
+            Vbmi2,
+            Int,
+        ),
+        (
+            "vpcompressw_vbmi2_sparse_mem_one",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpcompressw %zmm2, 64(%rax) {%k1}",
+            Vbmi2,
+            Int,
+        ),
+        (
+            "vpexpandb_vbmi2_sparse_mem_one_merge",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpexpandb 64(%rax), %zmm1 {%k1}",
+            Vbmi2,
+            Int,
+        ),
+        (
+            "vpexpandb_vbmi2_sparse_mem_one_zero",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpexpandb 64(%rax), %zmm1 {%k1}{z}",
+            Vbmi2,
+            Int,
+        ),
+        (
+            "vpexpandw_vbmi2_sparse_mem_one_merge",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpexpandw 64(%rax), %zmm1 {%k1}",
+            Vbmi2,
+            Int,
+        ),
+        (
+            "vpexpandw_vbmi2_sparse_mem_one_zero",
+            "kxnorq %k1, %k1, %k1\nkshiftrq $63, %k1, %k1\nvpexpandw 64(%rax), %zmm1 {%k1}{z}",
+            Vbmi2,
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // Selected compare predicates beyond the single baseline immediate in
     // `base_table()`. K-destination compares do not accept {z}, so enumerate
     // no-mask and merge forms explicitly.
@@ -15806,6 +16023,53 @@ fn avx512_kvm_avx2_gather_corpus() {
         "all AVX2 gather cases should run"
     );
     assert_eq!(tally.compared, 16, "all AVX2 gather cases should compare");
+}
+
+#[test]
+fn avx512_kvm_avx512_sparse_memory_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_sparse_mem_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        34,
+        "unexpected AVX-512 sparse memory corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512 sparse memory cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512 sparse memory case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512 sparse memory corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512 sparse memory cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        28,
+        "all AVX-512F sparse memory cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vbmi2),
+        6,
+        "all AVX-512 VBMI2 sparse memory cases should run"
+    );
+    assert_eq!(
+        tally.compared, 34,
+        "all AVX-512 sparse memory cases should compare"
+    );
 }
 
 #[test]

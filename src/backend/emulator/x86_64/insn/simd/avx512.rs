@@ -3936,7 +3936,9 @@ fn decode_evex_vsib(
     vcpu: &X86_64Vcpu,
     ctx: &mut InsnContext,
     evex: &super::super::super::cpu::EvexPrefix,
+    disp8_scale: usize,
 ) -> Result<EvexVsib> {
+    let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let mod_bits = modrm >> 6;
     if mod_bits == 3 {
@@ -3985,6 +3987,7 @@ fn decode_evex_vsib(
         base &= 0xffff_ffff;
     }
     base = base.wrapping_add(vcpu.get_segment_base(ctx.segment_override));
+    base = evex_scaled_disp8_addr(ctx, modrm_start, base, disp8_scale);
 
     Ok(EvexVsib {
         reg: evex_reg_vec(evex, (modrm >> 3) & 0x07),
@@ -4036,9 +4039,9 @@ pub fn evex_gather(
         ));
     }
 
-    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
     let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
         evex_vsib_layout(opcode, evex.w, evex.ll);
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex, data_size)?;
     let index_bytes = read_reg_bytes(vcpu, vsib.index, index_bytes_len.max(16));
     let dest = vsib.reg;
     let mut result = read_reg_bytes(vcpu, dest, reg_bytes);
@@ -4074,9 +4077,9 @@ pub fn evex_scatter(
         ));
     }
 
-    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
     let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
         evex_vsib_layout(opcode, evex.w, evex.ll);
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex, data_size)?;
     let index_bytes = read_reg_bytes(vcpu, vsib.index, index_bytes_len.max(16));
     let src_bytes = read_reg_bytes(vcpu, vsib.reg, reg_bytes);
     let mask = evex_mask(vcpu, evex.aaa, num_elems);
@@ -4111,14 +4114,14 @@ pub fn evex_vsib_prefetch(
         ));
     }
 
-    let vsib = decode_evex_vsib(vcpu, ctx, &evex)?;
+    let (_, data_size, _, _, _) = evex_vsib_layout(opcode, evex.w, evex.ll);
+    let vsib = decode_evex_vsib(vcpu, ctx, &evex, data_size)?;
     if !matches!(vsib.subop, 1 | 2 | 5 | 6) {
         return Err(Error::Emulator(format!(
             "Unsupported EVEX VSIB prefetch /{}",
             vsib.subop
         )));
     }
-    let _ = evex_vsib_layout(opcode, evex.w, evex.ll);
 
     vcpu.regs.k[evex.aaa as usize] = 0;
     vcpu.regs.rip += ctx.cursor as u64;
