@@ -4036,6 +4036,48 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy SSE single-precision data movement, logical, compare, shuffle,
+    // mask extraction, and scalar integer conversion forms.
+    for &(label, asm, profile) in &[
+        ("movaps_sse_reg", "movaps %xmm2, %xmm1", F32),
+        ("movaps_sse_load", "movaps 16(%rax), %xmm1", F32),
+        ("movaps_sse_store", "movaps %xmm1, 16(%rax)", F32),
+        ("movups_sse_load_unaligned", "movups 17(%rax), %xmm1", F32),
+        ("movups_sse_store_unaligned", "movups %xmm1, 17(%rax)", F32),
+        ("movss_sse_reg", "movss %xmm2, %xmm1", F32),
+        ("movss_sse_load", "movss 4(%rax), %xmm1", F32),
+        ("movss_sse_store", "movss %xmm1, 4(%rax)", F32),
+        ("andps_sse_reg", "andps %xmm2, %xmm1", Int),
+        ("andnps_sse_mem", "andnps 16(%rax), %xmm1", Int),
+        ("orps_sse_reg", "orps %xmm2, %xmm1", Int),
+        ("xorps_sse_mem", "xorps 16(%rax), %xmm1", Int),
+        ("cmpeqps_sse_reg", "cmpeqps %xmm2, %xmm1", F32),
+        ("cmpltps_sse_mem", "cmpltps 16(%rax), %xmm1", F32),
+        ("cmpunordps_sse_reg", "cmpunordps %xmm2, %xmm1", F32),
+        ("cmpeqss_sse_reg", "cmpeqss %xmm2, %xmm1", F32),
+        ("cmpnltss_sse_mem", "cmpnltss 16(%rax), %xmm1", F32),
+        ("shufps_sse_reg", "shufps $0x1b, %xmm2, %xmm1", F32),
+        ("shufps_sse_mem", "shufps $0xb1, 16(%rax), %xmm1", F32),
+        ("movmskps_sse_r8d", "movmskps %xmm1, %r8d", F32),
+        ("comiss_sse_reg", "comiss %xmm2, %xmm1", F32),
+        ("comiss_sse_mem", "comiss 16(%rax), %xmm1", F32),
+        ("ucomiss_sse_reg", "ucomiss %xmm2, %xmm1", F32),
+        ("ucomiss_sse_mem", "ucomiss 16(%rax), %xmm1", F32),
+        ("cvtsi2ss_sse_r64", "cvtsi2ss %r8, %xmm1", F32),
+        ("cvtsi2ss_sse_m32", "cvtsi2ss 16(%rax), %xmm1", F32),
+        ("cvtss2si_sse_xmm_r8", "cvtss2si %xmm1, %r8", F32),
+        ("cvtss2si_sse_m32_r8", "cvtss2si 16(%rax), %r8", F32),
+        ("cvttss2si_sse_xmm_r8", "cvttss2si %xmm1, %r8", F32),
+        ("cvttss2si_sse_m32_r8", "cvttss2si 16(%rax), %r8", F32),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse,
+            profile,
+        });
+    }
+
     // Legacy SSE2 double-precision forms cover the operand-size override and
     // F2-prefix variants of the same two-operand XMM execution paths.
     for &(label, asm, profile) in &[
