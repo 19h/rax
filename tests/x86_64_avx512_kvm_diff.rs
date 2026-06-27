@@ -7112,6 +7112,74 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // FS/GS segment-register stack and move forms remain valid in 64-bit mode.
+    // The cases use null selectors and observe them through GPR or scratch state.
+    for &(label, asm) in &[
+        (
+            "push_core_segment_fs_qword",
+            "pushq $0\npopq %fs\npushq %fs\npopq %r8",
+        ),
+        (
+            "push_core_segment_gs_qword",
+            "pushq $0\npopq %gs\npushq %gs\npopq %r8",
+        ),
+        (
+            "push_core_segment_fs_word",
+            "pushw $0\npopw %fs\npushw %fs\npopw %r8w",
+        ),
+        (
+            "push_core_segment_gs_word",
+            "pushw $0\npopw %gs\npushw %gs\npopw %r8w",
+        ),
+        (
+            "pop_core_segment_fs_qword",
+            "pushq $0\npopq %fs\nmovw %fs, %r8w",
+        ),
+        (
+            "pop_core_segment_gs_qword",
+            "pushq $0\npopq %gs\nmovw %gs, %r8w",
+        ),
+        (
+            "pop_core_segment_fs_word",
+            "pushw $0\npopw %fs\nmovw %fs, %r8w",
+        ),
+        (
+            "pop_core_segment_gs_word",
+            "pushw $0\npopw %gs\nmovw %gs, %r8w",
+        ),
+        (
+            "mov_core_segment_fs_to_reg",
+            "pushq $0\npopq %fs\nmovw %fs, %r8w",
+        ),
+        (
+            "mov_core_segment_gs_to_mem",
+            "pushq $0\npopq %gs\nmovw %gs, 32(%rax)",
+        ),
+        (
+            "mov_core_segment_reg_to_fs",
+            "xor %ecx, %ecx\nmovw %cx, %fs\nmovw %fs, %r8w",
+        ),
+        (
+            "mov_core_segment_reg_to_gs",
+            "xor %ecx, %ecx\nmovw %cx, %gs\nmovw %gs, %r8w",
+        ),
+        (
+            "mov_core_segment_mem_to_fs",
+            "movw $0, 32(%rax)\nmovw 32(%rax), %fs\nmovw %fs, %r8w",
+        ),
+        (
+            "mov_core_segment_mem_to_gs",
+            "movw $0, 32(%rax)\nmovw 32(%rax), %gs\nmovw %gs, %r8w",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Port I/O instructions. The KVM and interpreter test runners both satisfy
     // IN/INS exits with zero bytes and ignore OUT/OUTS payloads, so these cases
     // can compare register, pointer, REP-count, and scratch effects directly.
@@ -10560,6 +10628,33 @@ fn avx512_kvm_core_moffs_corpus() {
         "core moffs cases should not feature-skip"
     );
     assert_eq!(tally.compared, 8, "all core moffs cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_segment_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_segment_"))
+        .collect();
+    assert_eq!(cases.len(), 14, "unexpected core segment corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core segment cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core segment case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core segment corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core segment cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 14, "all core segment cases should compare");
 }
 
 #[test]
