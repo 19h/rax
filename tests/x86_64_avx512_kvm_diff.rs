@@ -162,6 +162,8 @@ enum Feat {
     Fxsave,
     /// XGETBV/XSETBV and XSAVE/XRSTOR state-management instructions.
     Xsave,
+    /// XSAVEOPT/XSAVEC/XSAVES/XRSTORS extended state-management instructions.
+    XsaveExt,
     /// x87 FPU stack, arithmetic, and conversion instructions.
     X87,
     /// Legacy MMX packed-integer instructions.
@@ -315,6 +317,7 @@ impl Feat {
             Feat::Fma => "fma",
             Feat::Fxsave => "fxsr",
             Feat::Xsave => "xsave",
+            Feat::XsaveExt => "xsave_ext",
             Feat::X87 => "x87",
             Feat::Mmx => "mmx",
             Feat::StackFrame => "stack_frame",
@@ -394,6 +397,7 @@ impl Feat {
             Feat::Fma,
             Feat::Fxsave,
             Feat::Xsave,
+            Feat::XsaveExt,
             Feat::X87,
             Feat::Mmx,
             Feat::StackFrame,
@@ -477,6 +481,9 @@ struct HostFeatures {
     fma: bool,
     fxsave: bool,
     xsave: bool,
+    xsaveopt: bool,
+    xsavec: bool,
+    xsaves: bool,
     mmx: bool,
     cx8: bool,
     cx16: bool,
@@ -546,6 +553,9 @@ impl HostFeatures {
             fma: is_x86_feature_detected!("fma"),
             fxsave: host_cpu_flag("fxsr"),
             xsave: host_cpu_flag("xsave"),
+            xsaveopt: host_cpu_flag("xsaveopt"),
+            xsavec: host_cpu_flag("xsavec"),
+            xsaves: host_cpu_flag("xsaves"),
             mmx: host_cpu_flag("mmx"),
             cx8: host_cpu_flag("cx8"),
             cx16: host_cpu_flag("cx16"),
@@ -616,6 +626,7 @@ impl HostFeatures {
             Feat::Fma => self.fma,
             Feat::Fxsave => self.fxsave,
             Feat::Xsave => self.xsave,
+            Feat::XsaveExt => self.xsave && self.xsaveopt && self.xsavec && self.xsaves,
             Feat::X87 => true,
             Feat::Mmx => self.mmx,
             Feat::StackFrame => true,
@@ -7287,6 +7298,36 @@ fn irregular_cases() -> Vec<Case> {
             Xsave,
             Int,
         ),
+        (
+            "xsaveopt64_xrstor64_zmm_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsaveopt64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsaveopt64_xrstor64_mxcsr_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x5f80, 48(%rbx)\nldmxcsr 48(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxsaveopt64 240(%rbx)\nmovl $0x1f80, 52(%rbx)\nldmxcsr 52(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)\nstmxcsr 56(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsavec64_xrstors64_zmm_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsavec64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsavec64_xrstors64_xmm_roundtrip",
+            "movdqu 32(%rbx), %xmm2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsavec64 240(%rbx)\npxor %xmm2, %xmm2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)\nmovdqu %xmm2, 64(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsaves64_xrstors64_mxcsr_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x5f80, 48(%rbx)\nldmxcsr 48(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxsaves64 240(%rbx)\nmovl $0x1f80, 52(%rbx)\nldmxcsr 52(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)\nstmxcsr 56(%rbx)",
+            XsaveExt,
+            Int,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -9039,6 +9080,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             Feat::Core
                 | Feat::Fxsave
                 | Feat::Xsave
+                | Feat::XsaveExt
                 | Feat::X87
                 | Feat::Mmx
                 | Feat::StackFrame
@@ -9506,6 +9548,33 @@ fn avx512_kvm_processor_state_management_corpus() {
         tally.compared, 10,
         "all processor state-management cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_extended_xsave_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::XsaveExt)
+        .collect();
+    assert_eq!(cases.len(), 5, "unexpected extended XSAVE corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on extended XSAVE cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an extended XSAVE case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "extended XSAVE corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "extended XSAVE cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 5, "all extended XSAVE cases should compare");
 }
 
 #[test]
