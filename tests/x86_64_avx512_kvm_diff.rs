@@ -14243,6 +14243,28 @@ fn irregular_cases() -> Vec<Case> {
             HintNop,
         ),
         (
+            "nop_rm_negative_sib",
+            "movl $2, %ecx\nnopl -16(%rbx,%rcx,2)",
+            HintNop,
+        ),
+        (
+            "nop_rm_addr32_disp",
+            "addr32 nopl 48(%eax)",
+            HintNop,
+        ),
+        ("endbr64_hint_nop", "endbr64", HintNop),
+        ("endbr32_hint_nop", "endbr32", HintNop),
+        (
+            "endbr64_hint_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nendbr64",
+            HintNop,
+        ),
+        (
+            "endbr32_hint_between_memory_ops",
+            "movq %r8, 88(%rax)\nendbr32\nmovq 88(%rax), %rcx",
+            HintNop,
+        ),
+        (
             "pause_preserves_cmp_flags",
             "cmpq %rcx, %r8\npause",
             HintNop,
@@ -18188,7 +18210,7 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::HintNop | Feat::Prefetchw))
         .collect();
-    assert_eq!(cases.len(), 26, "unexpected hint/prefetch corpus size");
+    assert_eq!(cases.len(), 32, "unexpected hint/prefetch corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Prefetchw) {
@@ -18209,7 +18231,7 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::HintNop),
-        16,
+        22,
         "all NOP/PAUSE/PREFETCHh cases should run"
     );
     if host.supports(Feat::Prefetchw) {
@@ -18222,14 +18244,14 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
             tally.skipped_feature, 0,
             "hint/prefetch cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 26, "all hint/prefetch cases should compare");
+        assert_eq!(tally.compared, 32, "all hint/prefetch cases should compare");
     } else {
         assert_eq!(
             tally.skipped_feature, 10,
             "only PREFETCHW/PREFETCHWT1 cases should feature-skip"
         );
         assert_eq!(
-            tally.compared, 16,
+            tally.compared, 22,
             "all non-PREFETCHW hint cases should compare"
         );
     }
