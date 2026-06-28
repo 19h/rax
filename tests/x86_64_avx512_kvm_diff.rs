@@ -11695,6 +11695,38 @@ fn irregular_cases() -> Vec<Case> {
         ("mov_core_moffs_store_ax", "movabsw %ax, 0x4012"),
         ("mov_core_moffs_store_eax", "movabsl %eax, 0x4014"),
         ("mov_core_moffs_store_rax", "movabsq %rax, 0x4018"),
+        (
+            "mov_core_moffs_edge_addr32_load_al",
+            "addr32 movabsb 0x4001, %al",
+        ),
+        (
+            "mov_core_moffs_edge_addr32_load_ax",
+            "addr32 movabsw 0x4002, %ax",
+        ),
+        (
+            "mov_core_moffs_edge_load_al_preserves_high",
+            "movabsq $0xffff000000000000, %rax\nmovabsb 0x4001, %al",
+        ),
+        (
+            "mov_core_moffs_edge_load_ax_preserves_high",
+            "movabsq $0xffff000000000000, %rax\nmovabsw 0x4002, %ax",
+        ),
+        (
+            "mov_core_moffs_edge_load_eax_zero_ext",
+            "movabsq $0xffff000000000000, %rax\nmovabsl 0x4004, %eax",
+        ),
+        (
+            "mov_core_moffs_edge_store_ax_high_source",
+            "movabsq $0xffff00000000abcd, %rax\nmovabsw %ax, 0x4038",
+        ),
+        (
+            "mov_core_moffs_edge_store_eax_high_source",
+            "movabsq $0xffff000089abcdef, %rax\nmovabsl %eax, 0x403c",
+        ),
+        (
+            "mov_core_moffs_edge_store_rax_high_source",
+            "movabsq $0x1122334455667788, %rax\nmovabsq %rax, 0x4040",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17650,7 +17682,7 @@ fn avx512_kvm_core_moffs_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_moffs_"))
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected core moffs corpus size");
+    assert_eq!(cases.len(), 16, "unexpected core moffs corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17668,7 +17700,37 @@ fn avx512_kvm_core_moffs_corpus() {
         tally.skipped_feature, 0,
         "core moffs cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 8, "all core moffs cases should compare");
+    assert_eq!(tally.compared, 16, "all core moffs cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_moffs_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_moffs_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected core moffs edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core moffs edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core moffs edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core moffs edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core moffs edge cases should not feature-skip"
+    );
+    assert_eq!(tally.compared, 8, "all core moffs edge cases should compare");
 }
 
 #[test]
