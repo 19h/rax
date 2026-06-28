@@ -15036,6 +15036,50 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Group-6 descriptor-register loads. A scratch-local GDT provides a valid
+    // 64-bit available TSS descriptor. LTR marks the TSS descriptor busy on
+    // silicon, so the snippets clear the scratch GDT before comparison after
+    // observing the loaded selector through STR. LLDT uses null-selector loads:
+    // they are architecturally valid and still exercise the LLDT state path
+    // without relying on host/KVM acceptance of a guest-provided LDT descriptor.
+    let descriptor_group6_load_setup = "movq $0, 128(%rax)\nmovq $0, 144(%rax)\nmovabsq $0x0000890040800067, %r8\nmovq %r8, 152(%rax)\nmovq $0, 160(%rax)\nmovw $0x0027, 32(%rax)\nleaq 128(%rax), %r8\nmovq %r8, 34(%rax)\nlgdt 32(%rax)";
+    let descriptor_group6_clear_gdt = "movq $0, 128(%rax)\nmovq $0, 136(%rax)\nmovq $0, 144(%rax)\nmovq $0, 152(%rax)\nmovq $0, 160(%rax)";
+    for &(label, check) in &[
+        (
+            "lldt_descriptor_group6_load_reg_null_selector",
+            "xorw %r8w, %r8w\nlldt %r8w\nsldt %r9w\ntestw %r9w, %r9w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9",
+        ),
+        (
+            "lldt_descriptor_group6_load_mem_null_selector",
+            "movw $0, 48(%rax)\nlldt 48(%rax)\nsldt %r9w\ntestw %r9w, %r9w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r9, %r9",
+        ),
+        (
+            "lldt_descriptor_group6_load_preserves_zf",
+            "xorw %r8w, %r8w\ncmpq %r9, %r9\nlldt %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8",
+        ),
+        (
+            "ltr_descriptor_group6_load_reg_selector_roundtrip",
+            "movw $0x18, %r8w\nltr %r8w\nstr %r9w\ncmpw $0x18, %r9w\nsete %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9",
+        ),
+        (
+            "ltr_descriptor_group6_load_mem_selector_roundtrip",
+            "movw $0x18, 50(%rax)\nltr 50(%rax)\nstr %r9w\ncmpw $0x18, %r9w\nsete %cl\nmovzbl %cl, %ecx\nxorq %r9, %r9",
+        ),
+        (
+            "ltr_descriptor_group6_load_preserves_zf",
+            "movw $0x18, %r10w\ncmpq %r9, %r9\nltr %r10w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r10, %r10",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: format!(
+                "{descriptor_group6_load_setup}\n{check}\n{descriptor_group6_clear_gdt}"
+            ),
+            feat: DescriptorAccess,
+            profile: Int,
+        });
+    }
+
     // STAC/CLAC are SMAP access-control flag operations. The ordinary status
     // flags are preserved while AC is the visible architectural output.
     for &(label, asm) in &[
@@ -17900,7 +17944,7 @@ fn avx512_kvm_descriptor_access_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::DescriptorAccess)
         .collect();
-    assert_eq!(cases.len(), 19, "unexpected descriptor-access corpus size");
+    assert_eq!(cases.len(), 25, "unexpected descriptor-access corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17923,11 +17967,11 @@ fn avx512_kvm_descriptor_access_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::DescriptorAccess),
-        19,
+        25,
         "all descriptor-access cases should run"
     );
     assert_eq!(
-        tally.compared, 19,
+        tally.compared, 25,
         "all descriptor-access cases should compare"
     );
 }
@@ -17974,6 +18018,51 @@ fn avx512_kvm_descriptor_access_edge_corpus() {
     assert_eq!(
         tally.compared, 10,
         "all descriptor-access edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_descriptor_group6_load_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::DescriptorAccess
+                && case.label.contains("_descriptor_group6_load_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected descriptor Group-6 load corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on descriptor Group-6 load cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a descriptor Group-6 load case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "descriptor Group-6 load corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "descriptor Group-6 load cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DescriptorAccess),
+        6,
+        "all descriptor Group-6 load cases should run"
+    );
+    assert_eq!(
+        tally.compared, 6,
+        "all descriptor Group-6 load cases should compare"
     );
 }
 
