@@ -18185,6 +18185,58 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vmovntdqa_register_source_illegal",
             &[0xc4, 0xe2, 0x79, 0x2a, 0xd0],
         ),
+        (
+            "vbroadcastf128_vvvv_illegal",
+            &[0xc4, 0xe2, 0x75, 0x1a, 0x10],
+        ),
+        (
+            "vbroadcastf128_l0_illegal",
+            &[0xc4, 0xe2, 0x79, 0x1a, 0x10],
+        ),
+        (
+            "vbroadcastf128_register_source_illegal",
+            &[0xc4, 0xe2, 0x7d, 0x1a, 0xd0],
+        ),
+        (
+            "vbroadcastss_vvvv_illegal",
+            &[0xc4, 0xe2, 0x71, 0x18, 0x10],
+        ),
+        (
+            "vbroadcastsd_vvvv_illegal",
+            &[0xc4, 0xe2, 0x75, 0x19, 0x10],
+        ),
+        (
+            "vbroadcastsd_l0_illegal",
+            &[0xc4, 0xe2, 0x79, 0x19, 0x10],
+        ),
+        (
+            "vpermilps_imm_vvvv_illegal",
+            &[0xc4, 0xe3, 0x71, 0x04, 0xd1, 0x00],
+        ),
+        (
+            "vpermilpd_imm_vvvv_illegal",
+            &[0xc4, 0xe3, 0x71, 0x05, 0xd1, 0x00],
+        ),
+        (
+            "vpermd_l0_illegal",
+            &[0xc4, 0xe2, 0x69, 0x36, 0xd9],
+        ),
+        (
+            "vpermps_l0_illegal",
+            &[0xc4, 0xe2, 0x69, 0x16, 0xd9],
+        ),
+        (
+            "vpermq_vvvv_illegal",
+            &[0xc4, 0xe3, 0xf5, 0x00, 0xd1, 0x00],
+        ),
+        (
+            "vpermq_l0_illegal",
+            &[0xc4, 0xe3, 0xf9, 0x00, 0xd1, 0x00],
+        ),
+        (
+            "vpermpd_l0_illegal",
+            &[0xc4, 0xe3, 0xf9, 0x01, 0xd1, 0x00],
+        ),
     ]
 }
 
@@ -18743,7 +18795,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        40,
+        53,
     );
 }
 

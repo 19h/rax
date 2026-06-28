@@ -1,7 +1,7 @@
 //! VEX integer instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -84,18 +84,14 @@ impl X86_64Vcpu {
         mnemonic: &str,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(format!(
-                "{mnemonic} requires VEX.vvvv=1111b"
-            )));
+            return self.inject_undefined_instruction();
         }
         if vex_l == 0 {
-            return Err(Error::Emulator(format!("{mnemonic} requires VEX.L=1")));
+            return self.inject_undefined_instruction();
         }
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(format!(
-                "{mnemonic} requires memory operand"
-            )));
+            return self.inject_undefined_instruction();
         }
         let xmm_dst = reg as usize;
 
@@ -119,9 +115,10 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VBROADCASTSS/SD require VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
+        }
+        if opcode == 0x19 && vex_l == 0 {
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;

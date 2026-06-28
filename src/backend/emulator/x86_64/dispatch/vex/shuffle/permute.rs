@@ -1,7 +1,7 @@
 //! VEX integer instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -75,9 +75,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VPERMILPS imm requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -201,9 +199,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VPERMILPD imm requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -252,7 +248,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l == 0 {
-            return Err(Error::Emulator("VPERMD requires VEX.L=1".to_string()));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -283,7 +279,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l == 0 {
-            return Err(Error::Emulator("VPERMPS requires VEX.L=1".to_string()));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -314,14 +310,10 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VPERMQ/VPERMPD requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         if vex_l == 0 {
-            return Err(Error::Emulator(
-                "VPERMQ/VPERMPD requires VEX.L=1".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
