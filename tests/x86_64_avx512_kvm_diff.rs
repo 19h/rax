@@ -9501,6 +9501,59 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX2 gather edge cases with partial vector masks and signed/non-zero VSIB
+    // indices. These verify inactive-lane preservation, gathered-lane mask
+    // clearing, and the narrower q-index forms that zero unused vector lanes.
+    for &(label, asm, profile) in &[
+        (
+            "vgatherdps_avx2_gather_edge_ymm_partial_mask_i32",
+            "movl $-1, 320(%rax)\nmovl $0, 324(%rax)\nmovl $1, 328(%rax)\nmovl $2, 332(%rax)\nmovl $-2, 336(%rax)\nmovl $3, 340(%rax)\nmovl $4, 344(%rax)\nmovl $0, 348(%rax)\nmovl $-2147483648, 384(%rax)\nmovl $0, 388(%rax)\nmovl $-2147483648, 392(%rax)\nmovl $0, 396(%rax)\nmovl $-2147483648, 400(%rax)\nmovl $0, 404(%rax)\nmovl $-2147483648, 408(%rax)\nmovl $0, 412(%rax)\n{vex} vmovdqu 320(%rax), %ymm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vgatherdps %ymm3, 128(%rax,%ymm2,4), %ymm1",
+            F32,
+        ),
+        (
+            "vgatherdpd_avx2_gather_edge_ymm_partial_mask_i32",
+            "movl $-1, 320(%rax)\nmovl $0, 324(%rax)\nmovl $1, 328(%rax)\nmovl $2, 332(%rax)\nmovabsq $0x8000000000000000, %r8\nmovq %r8, 384(%rax)\nmovq $0, 392(%rax)\nmovq %r8, 400(%rax)\nmovq $0, 408(%rax)\n{vex} vmovdqu 320(%rax), %xmm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vgatherdpd %ymm3, 128(%rax,%xmm2,8), %ymm1",
+            F64,
+        ),
+        (
+            "vgatherqps_avx2_gather_edge_xmm_zero_upper_i64",
+            "movq $-1, 320(%rax)\nmovq $2, 328(%rax)\nmovl $-2147483648, 384(%rax)\nmovl $0, 388(%rax)\nmovl $-2147483648, 392(%rax)\nmovl $-2147483648, 396(%rax)\n{vex} vmovdqu 320(%rax), %xmm2\n{vex} vmovdqu 384(%rax), %xmm3\n{vex} vgatherqps %xmm3, 128(%rax,%xmm2,4), %xmm1",
+            F32,
+        ),
+        (
+            "vgatherqpd_avx2_gather_edge_ymm_partial_mask_i64",
+            "movq $-1, 320(%rax)\nmovq $0, 328(%rax)\nmovq $1, 336(%rax)\nmovq $2, 344(%rax)\nmovabsq $0x8000000000000000, %r8\nmovq %r8, 384(%rax)\nmovq $0, 392(%rax)\nmovq $0, 400(%rax)\nmovq %r8, 408(%rax)\n{vex} vmovdqu 320(%rax), %ymm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vgatherqpd %ymm3, 128(%rax,%ymm2,8), %ymm1",
+            F64,
+        ),
+        (
+            "vpgatherdd_avx2_gather_edge_ymm_partial_mask_i32",
+            "movl $-1, 320(%rax)\nmovl $0, 324(%rax)\nmovl $1, 328(%rax)\nmovl $2, 332(%rax)\nmovl $-2, 336(%rax)\nmovl $3, 340(%rax)\nmovl $4, 344(%rax)\nmovl $0, 348(%rax)\nmovl $-2147483648, 384(%rax)\nmovl $0, 388(%rax)\nmovl $0, 392(%rax)\nmovl $-2147483648, 396(%rax)\nmovl $-2147483648, 400(%rax)\nmovl $0, 404(%rax)\nmovl $0, 408(%rax)\nmovl $-2147483648, 412(%rax)\n{vex} vmovdqu 320(%rax), %ymm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vpgatherdd %ymm3, 128(%rax,%ymm2,4), %ymm1",
+            Int,
+        ),
+        (
+            "vpgatherdq_avx2_gather_edge_ymm_partial_mask_i32",
+            "movl $-1, 320(%rax)\nmovl $0, 324(%rax)\nmovl $1, 328(%rax)\nmovl $2, 332(%rax)\nmovabsq $0x8000000000000000, %r8\nmovq $0, 384(%rax)\nmovq %r8, 392(%rax)\nmovq %r8, 400(%rax)\nmovq $0, 408(%rax)\n{vex} vmovdqu 320(%rax), %xmm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vpgatherdq %ymm3, 128(%rax,%xmm2,8), %ymm1",
+            Int,
+        ),
+        (
+            "vpgatherqd_avx2_gather_edge_xmm_zero_upper_i64",
+            "movq $-1, 320(%rax)\nmovq $2, 328(%rax)\nmovl $0, 384(%rax)\nmovl $-2147483648, 388(%rax)\nmovl $-2147483648, 392(%rax)\nmovl $0, 396(%rax)\n{vex} vmovdqu 320(%rax), %xmm2\n{vex} vmovdqu 384(%rax), %xmm3\n{vex} vpgatherqd %xmm3, 128(%rax,%xmm2,4), %xmm1",
+            Int,
+        ),
+        (
+            "vpgatherqq_avx2_gather_edge_ymm_partial_mask_i64",
+            "movq $-1, 320(%rax)\nmovq $0, 328(%rax)\nmovq $1, 336(%rax)\nmovq $2, 344(%rax)\nmovabsq $0x8000000000000000, %r8\nmovq %r8, 384(%rax)\nmovq %r8, 392(%rax)\nmovq $0, 400(%rax)\nmovq %r8, 408(%rax)\n{vex} vmovdqu 320(%rax), %ymm2\n{vex} vmovdqu 384(%rax), %ymm3\n{vex} vpgatherqq %ymm3, 128(%rax,%ymm2,8), %ymm1",
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile,
+        });
+    }
+
     // VEX-encoded FMA and AVX floating-point misc forms cover the packed,
     // scalar, horizontal, rounding, and dot-product paths outside EVEX.
     for &(label, asm, feat, profile) in &[
@@ -17114,6 +17167,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             && op
                 .windows(3)
                 .any(|bytes| bytes[0] == 0x0f && bytes[1] == 0x38 && bytes[2] == 0xf6);
+        let avx2_gather_edge_setup_allowed = case.label.contains("_avx2_gather_edge_")
+            && op
+                .windows(4)
+                .any(|bytes| bytes[0] == 0xc4 && matches!(bytes[3], 0x90..=0x93));
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
@@ -17122,6 +17179,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             || scalar_bit_edge_setup_allowed
             || movdir_edge_setup_allowed
             || adx_edge_setup_allowed
+            || avx2_gather_edge_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -21744,7 +21802,7 @@ fn avx512_kvm_avx2_gather_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_avx2_gather_"))
         .collect();
-    assert_eq!(cases.len(), 16, "unexpected AVX2 gather corpus size");
+    assert_eq!(cases.len(), 24, "unexpected AVX2 gather corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -21764,10 +21822,48 @@ fn avx512_kvm_avx2_gather_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx2),
-        16,
+        24,
         "all AVX2 gather cases should run"
     );
-    assert_eq!(tally.compared, 16, "all AVX2 gather cases should compare");
+    assert_eq!(tally.compared, 24, "all AVX2 gather cases should compare");
+}
+
+#[test]
+fn avx512_kvm_avx2_gather_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_gather_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected AVX2 gather edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX2 gather edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 gather edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 gather edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 gather edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        8,
+        "all AVX2 gather edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all AVX2 gather edge cases should compare"
+    );
 }
 
 #[test]
