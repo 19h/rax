@@ -15173,6 +15173,31 @@ fn irregular_cases() -> Vec<Case> {
             "lfence\nrdtscp\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %rcx",
             Rdtscp,
         ),
+        (
+            "rdtsc_tsc_edge_preserves_rcx",
+            "movabsq $0x1122334455667788, %rcx\nrdtsc\nmovabsq $0x1122334455667788, %r8\ncmpq %r8, %rcx\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+            Tsc,
+        ),
+        (
+            "rdtsc_tsc_edge_preserves_non_query_gprs",
+            "movabsq $0x1122334455667788, %r8\nmovabsq $0x8877665544332211, %r9\nrdtsc\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %r8, %r8",
+            Tsc,
+        ),
+        (
+            "rdtsc_tsc_edge_monotonic_pair",
+            "rdtsc\nshlq $32, %rdx\norq %rdx, %rax\nmovq %rax, %r8\nrdtsc\nshlq $32, %rdx\norq %rdx, %rax\ncmpq %r8, %rax\nsetae %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+            Tsc,
+        ),
+        (
+            "rdtscp_tsc_edge_dirty_rcx_aux_zero",
+            "movq $-1, %rcx\nrdtscp\ntestl %ecx, %ecx\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_tsc_edge_monotonic_pair",
+            "rdtscp\nshlq $32, %rdx\norq %rdx, %rax\nmovq %rax, %r8\nrdtscp\nshlq $32, %rdx\norq %rdx, %rax\ncmpq %r8, %rax\nsetae %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+            Rdtscp,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18593,7 +18618,7 @@ fn avx512_kvm_random_tsc_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Rdrand | Feat::Rdseed | Feat::Tsc | Feat::Rdtscp))
         .collect();
-    assert_eq!(cases.len(), 24, "unexpected random/TSC corpus size");
+    assert_eq!(cases.len(), 29, "unexpected random/TSC corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -18621,13 +18646,13 @@ fn avx512_kvm_random_tsc_corpus() {
         8,
         "all RDSEED cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Tsc), 4, "all RDTSC cases should run");
+    assert_eq!(tally.ran_for(Feat::Tsc), 7, "all RDTSC cases should run");
     assert_eq!(
         tally.ran_for(Feat::Rdtscp),
-        4,
+        6,
         "all RDTSCP cases should run"
     );
-    assert_eq!(tally.compared, 24, "all random/TSC cases should compare");
+    assert_eq!(tally.compared, 29, "all random/TSC cases should compare");
 }
 
 #[test]
@@ -18665,6 +18690,36 @@ fn avx512_kvm_random_edge_corpus() {
         "all RDSEED edge cases should run"
     );
     assert_eq!(tally.compared, 4, "all random edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_tsc_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_tsc_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 5, "unexpected TSC edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on TSC edge cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a TSC edge case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "TSC edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "TSC edge cases should not feature-skip"
+    );
+    assert_eq!(tally.ran_for(Feat::Tsc), 3, "all RDTSC edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Rdtscp),
+        2,
+        "all RDTSCP edge cases should run"
+    );
+    assert_eq!(tally.compared, 5, "all TSC edge cases should compare");
 }
 
 #[test]
