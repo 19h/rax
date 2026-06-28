@@ -41,7 +41,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers, VCpu};
+use common::{
+    run_until_hlt, setup_vm, setup_vm_no_idt, Bytes, GuestAddress, GuestMemoryMmap, Registers, VCpu,
+};
 
 // ---------------------------------------------------------------------------
 // Wire model (mirrors x86_64_evex_qemu_diff.rs so the two corpora are directly
@@ -846,6 +848,14 @@ const PDPTE_ADDR: u64 = 0x2000;
 // interpreter is explicitly redirected here so RIP-relative cases match KVM.
 const CODE_ADDR: u64 = 0x30000;
 const STACK_ADDR: u64 = 0x20000;
+const EXCEPTION_GDT_ADDR: u64 = 0x27000;
+const EXCEPTION_IDT_ADDR: u64 = 0x28000;
+const EXCEPTION_HANDLER_ADDR: u64 = 0x29000;
+const EXCEPTION_CODE_SELECTOR: u16 = 0x8;
+const UD_VECTOR: usize = 6;
+const UD_MARKER_OFFSET: usize = 0xf0;
+const UD_MARKER: u32 = 0x5544_0006;
+const FALLTHROUGH_MARKER: u32 = 0xbaad_0000;
 
 const CR0_PE: u64 = 1 << 0;
 const CR0_MP: u64 = 1 << 1;
@@ -950,6 +960,45 @@ fn install_page_tables(mem: &KvmMem) {
     }
 }
 
+fn idt_gate64(handler: u64, selector: u16) -> [u8; 16] {
+    let mut gate = [0u8; 16];
+    gate[0..2].copy_from_slice(&(handler as u16).to_le_bytes());
+    gate[2..4].copy_from_slice(&selector.to_le_bytes());
+    gate[4] = 0;
+    gate[5] = 0x8e;
+    gate[6..8].copy_from_slice(&((handler >> 16) as u16).to_le_bytes());
+    gate[8..12].copy_from_slice(&((handler >> 32) as u32).to_le_bytes());
+    gate
+}
+
+fn store_marker_code(marker: u32) -> [u8; 11] {
+    let mut code = [0u8; 11];
+    code[0..6].copy_from_slice(&[0xc7, 0x80, UD_MARKER_OFFSET as u8, 0, 0, 0]);
+    code[6..10].copy_from_slice(&marker.to_le_bytes());
+    code[10] = 0xf4;
+    code
+}
+
+fn install_ud_trap_kvm(mem: &KvmMem) {
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0x9a, 0x20, 0x00];
+    mem.write(EXCEPTION_GDT_ADDR, &null_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 8, &code64_descriptor);
+
+    let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
+    mem.write(EXCEPTION_IDT_ADDR + (UD_VECTOR as u64) * 16, &gate);
+    mem.write(EXCEPTION_HANDLER_ADDR, &store_marker_code(UD_MARKER));
+}
+
+fn install_ud_trap_interp(mem: &GuestMemoryMmap) -> Result<(), String> {
+    let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
+    mem.write_slice(&gate, GuestAddress(EXCEPTION_IDT_ADDR + (UD_VECTOR as u64) * 16))
+        .map_err(|e| format!("write #UD IDT gate: {e:?}"))?;
+    mem.write_slice(&store_marker_code(UD_MARKER), GuestAddress(EXCEPTION_HANDLER_ADDR))
+        .map_err(|e| format!("write #UD handler: {e:?}"))?;
+    Ok(())
+}
+
 impl KvmOracle {
     /// Build the shared oracle, or `None` if KVM / XSAVE / AVX-512 is unusable.
     fn try_new() -> Option<KvmOracle> {
@@ -971,6 +1020,19 @@ impl KvmOracle {
 
     /// Run `code` from `input`, returning the final architectural state.
     fn run(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
+        self.run_inner(code, input, false)
+    }
+
+    fn run_with_ud_trap(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
+        self.run_inner(code, input, true)
+    }
+
+    fn run_inner(
+        &self,
+        code: &[u8],
+        input: &InCase,
+        trap_ud: bool,
+    ) -> Result<KvmOutcome, String> {
         use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
 
         let vm = self
@@ -983,6 +1045,9 @@ impl KvmOracle {
         mem.write(CODE_ADDR, code);
         mem.write(SCRATCH_ADDR, &input.scratch);
         mem.write(STACK_WINDOW_ADDR, &input.stack);
+        if trap_ud {
+            install_ud_trap_kvm(&mem);
+        }
 
         let region = kvm_userspace_memory_region {
             slot: 0,
@@ -1033,6 +1098,12 @@ impl KvmOracle {
         sregs.fs = flat_data;
         sregs.gs = flat_data;
         sregs.ss = flat_data;
+        if trap_ud {
+            sregs.gdt.base = EXCEPTION_GDT_ADDR;
+            sregs.gdt.limit = 0x0f;
+            sregs.idt.base = EXCEPTION_IDT_ADDR;
+            sregs.idt.limit = ((UD_VECTOR + 1) * 16 - 1) as u16;
+        }
         vcpu.set_sregs(&sregs)
             .map_err(|e| format!("set_sregs: {e:?}"))?;
 
@@ -1234,6 +1305,80 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     })
 }
 
+fn run_interp_with_ud_trap(code: &[u8], input: &InCase) -> Result<OutCase, String> {
+    let mut regs = Registers {
+        rbx: input.rbx,
+        rcx: input.rcx,
+        rdx: input.rdx,
+        rsi: input.rsi,
+        rdi: input.rdi,
+        rbp: input.rbp,
+        rsp: input.rsp,
+        r8: input.r8,
+        r9: input.r9,
+        rflags: input.rflags,
+        ..Registers::default()
+    };
+    for reg in 0..ZMM_REGS {
+        set_regs_zmm(&mut regs, reg, input.zmm[reg]);
+    }
+    regs.k = input.k;
+
+    let (mut vcpu, mem) = setup_vm_no_idt(&[0xf4], Some(regs));
+    let mut interp_sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("interp get sregs: {e:?}"))?;
+    interp_sregs.cr4 = CR4_VAL;
+    interp_sregs.idt.base = EXCEPTION_IDT_ADDR;
+    interp_sregs.idt.limit = ((UD_VECTOR + 1) * 16 - 1) as u16;
+    vcpu.set_sregs(&interp_sregs)
+        .map_err(|e| format!("interp set sregs: {e:?}"))?;
+    vcpu.set_xgetbv1_value(XCR0_AVX512);
+    install_ud_trap_interp(&mem)?;
+    mem.write_slice(code, GuestAddress(CODE_ADDR))
+        .map_err(|e| format!("write code at diff RIP: {e:?}"))?;
+    let mut live_regs = vcpu
+        .get_regs()
+        .map_err(|e| format!("interp get regs: {e:?}"))?;
+    live_regs.rip = CODE_ADDR;
+    vcpu.set_regs(&live_regs)
+        .map_err(|e| format!("interp set RIP: {e:?}"))?;
+    mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("write scratch: {e:?}"))?;
+    mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("write stack: {e:?}"))?;
+    let out_regs = run_until_hlt(&mut vcpu).map_err(|e| format!("interp run: {e:?}"))?;
+
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("read scratch: {e:?}"))?;
+    let mut stack = [0u8; STACK_BYTES];
+    mem.read_slice(&mut stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("read stack: {e:?}"))?;
+
+    let mut zmm = [[0u64; 8]; ZMM_REGS];
+    for reg in 0..ZMM_REGS {
+        zmm[reg] = get_regs_zmm(&out_regs, reg);
+    }
+    Ok(OutCase {
+        zmm,
+        k: out_regs.k,
+        rax: out_regs.rax,
+        rbx: out_regs.rbx,
+        rcx: out_regs.rcx,
+        rdx: out_regs.rdx,
+        rsi: out_regs.rsi,
+        rdi: out_regs.rdi,
+        rbp: out_regs.rbp,
+        rsp: out_regs.rsp,
+        r8: out_regs.r8,
+        r9: out_regs.r9,
+        rflags: out_regs.rflags,
+        scratch,
+        stack,
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Code emission: the identical `mov rax, scratch; <op>; hlt` both sides run.
 // ---------------------------------------------------------------------------
@@ -1247,6 +1392,24 @@ fn build_code(op: &[u8]) -> Vec<u8> {
     code.extend_from_slice(op);
     code.push(0xf4); // hlt
     code
+}
+
+fn build_fault_probe_code(op: &[u8]) -> Vec<u8> {
+    let mut code = Vec::new();
+    code.push(0x48);
+    code.push(0xb8);
+    code.extend_from_slice(&SCRATCH_ADDR.to_le_bytes());
+    code.extend_from_slice(op);
+    code.extend_from_slice(&store_marker_code(FALLTHROUGH_MARKER));
+    code
+}
+
+fn scratch_marker(scratch: &[u8; SCRATCH_BYTES]) -> u32 {
+    u32::from_le_bytes(
+        scratch[UD_MARKER_OFFSET..UD_MARKER_OFFSET + 4]
+            .try_into()
+            .unwrap(),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -17770,6 +17933,92 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
         failures.join("\n\n")
     );
     Some(tally)
+}
+
+fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("push_es_invalid_long", &[0x06]),
+        ("pop_es_invalid_long", &[0x07]),
+        ("push_cs_invalid_long", &[0x0e]),
+        ("push_ss_invalid_long", &[0x16]),
+        ("pop_ss_invalid_long", &[0x17]),
+        ("push_ds_invalid_long", &[0x1e]),
+        ("pop_ds_invalid_long", &[0x1f]),
+        ("daa_invalid_long", &[0x27]),
+        ("das_invalid_long", &[0x2f]),
+        ("aaa_invalid_long", &[0x37]),
+        ("aas_invalid_long", &[0x3f]),
+        ("pushad_invalid_long", &[0x60]),
+        ("popad_invalid_long", &[0x61]),
+        ("pusha_invalid_long", &[0x66, 0x60]),
+        ("popa_invalid_long", &[0x66, 0x61]),
+        ("into_invalid_long", &[0xce]),
+        ("aam_invalid_long", &[0xd4, 0x0a]),
+    ]
+}
+
+#[test]
+fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = legacy_invalid_long_mode_cases();
+    let case_count = cases.len();
+    assert_eq!(
+        case_count,
+        17,
+        "unexpected invalid-long-mode legacy corpus size"
+    );
+
+    let input = input_for(InputProfile::Int);
+    let mut failures = Vec::new();
+    for (label, op) in cases {
+        let code = build_fault_probe_code(op);
+        let kvm = match oracle.run_with_ud_trap(&code, &input) {
+            Ok(KvmOutcome::Ran(out)) => out,
+            Ok(KvmOutcome::Faulted) => {
+                failures.push(format!("{label}: KVM faulted before reaching the #UD handler"));
+                continue;
+            }
+            Err(e) => panic!("{label}: KVM backend failure: {e}"),
+        };
+        let interp = match run_interp_with_ud_trap(&code, &input) {
+            Ok(out) => out,
+            Err(e) => {
+                failures.push(format!("{label}: rax failed before reaching #UD handler: {e}"));
+                continue;
+            }
+        };
+
+        let kvm_marker = scratch_marker(&kvm.scratch);
+        let interp_marker = scratch_marker(&interp.scratch);
+        if kvm_marker != UD_MARKER {
+            failures.push(format!(
+                "{label}: KVM marker {kvm_marker:#x}, expected #UD marker {UD_MARKER:#x}"
+            ));
+        }
+        if interp_marker != UD_MARKER {
+            failures.push(format!(
+                "{label}: rax marker {interp_marker:#x}, expected #UD marker {UD_MARKER:#x}"
+            ));
+        }
+    }
+
+    eprintln!(
+        "[avx512-kvm-diff] invalid-long-mode legacy #UD compared={}",
+        case_count.saturating_sub(failures.len())
+    );
+    assert!(
+        failures.is_empty(),
+        "legacy invalid-long-mode #UD mismatches vs silicon:\n{}",
+        failures.join("\n")
+    );
 }
 
 /// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
