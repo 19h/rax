@@ -12047,6 +12047,54 @@ fn irregular_cases() -> Vec<Case> {
             "x87_ffree_full_stack_allows_push",
             "fninit\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nffree %st(7)\nfldz\nfstpl 32(%rax)\nfnstsw 40(%rax)",
         ),
+        (
+            "x87_stack_edge_faddp_st1",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xc1\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fmulp_st1",
+            "movabsq $0x4000000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4010000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xc9\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fsubp_st1",
+            "movabsq $0x4020000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xe9\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fsubrp_st1",
+            "movabsq $0x4020000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xe1\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fdivp_st1",
+            "movabsq $0x4020000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xf9\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fdivrp_st1",
+            "movabsq $0x4020000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xf1\nfstpl 48(%rax)\nfnstsw 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fadd_st0_st1_nonpop",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xd8, 0xc1\nfstpl 48(%rax)\nfstpl 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fadd_st1_st0_nonpop",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xdc, 0xc1\nfstpl 48(%rax)\nfstpl 56(%rax)",
+        ),
+        (
+            "x87_stack_edge_fst_st1_no_pop",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xdd, 0xd1\nfstpl 48(%rax)\nfstpl 56(%rax)\nfnstsw 64(%rax)",
+        ),
+        (
+            "x87_stack_edge_fstp_st1_pop",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nmovabsq $0x4010000000000000, %r8\nmovq %r8, 48(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\nfldl 48(%rax)\n.byte 0xdd, 0xd9\nfstpl 56(%rax)\nfstpl 64(%rax)\nfnstsw 72(%rax)",
+        ),
+        (
+            "x87_stack_edge_fld_st1_duplicate",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xd9, 0xc1\nfstpl 48(%rax)\nfstpl 56(%rax)\nfstpl 64(%rax)\nfnstsw 72(%rax)",
+        ),
+        (
+            "x87_stack_edge_fucomi_unordered_flags",
+            "movabsq $0x7ff8000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x3ff0000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\n.byte 0xdb, 0xe9\nsetb 48(%rax)\nsete 49(%rax)\nsetp 50(%rax)\nfstpl 56(%rax)\nfstpl 64(%rax)",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -19348,12 +19396,47 @@ fn avx512_kvm_legacy_streaming_masked_memory_corpus() {
 }
 
 #[test]
+fn avx512_kvm_x87_stack_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("x87_stack_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected x87 stack edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on x87 stack edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an x87 stack edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "x87 stack edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "x87 stack edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::X87),
+        12,
+        "all x87 stack edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all x87 stack edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_x87_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 69, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 81, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -19364,7 +19447,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 69, "all x87 cases should compare");
+    assert_eq!(tally.compared, 81, "all x87 cases should compare");
 }
 
 #[test]
