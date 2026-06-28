@@ -12404,6 +12404,32 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Far-pointer loads update a GPR from m16:16/32/64 and load the paired
+    // segment selector. The snippets install a scratch-local GDT so non-null
+    // selector loads are valid, then make the selector visible through a GPR.
+    let far_ptr_setup = "movq $0, 128(%rax)\nmovabsq $0x00209a0000000000, %r10\nmovq %r10, 136(%rax)\nmovabsq $0x0000920000000000, %r10\nmovq %r10, 144(%rax)\nmovw $0x0017, 32(%rax)\nleaq 128(%rax), %r10\nmovq %r10, 34(%rax)\nlgdt 32(%rax)";
+    for &(label, asm) in &[
+        (
+            "lfs_core_far_pointer_load_edge_m16_64_selector",
+            "movabsq $0x1122334455667788, %r10\nmovq %r10, 176(%rax)\nmovw $0x10, 184(%rax)\nmovabsq $-1, %r8\nlfsq 176(%rax), %r8\nmovw %fs, %r9w\nmovzwq %r9w, %r9",
+        ),
+        (
+            "lgs_core_far_pointer_load_edge_m16_32_zeroext",
+            "movl $0x87654321, 176(%rax)\nmovw $0x10, 180(%rax)\nmovabsq $-1, %r8\nlgsl 176(%rax), %r8d\nmovw %gs, %r9w\nmovzwq %r9w, %r9",
+        ),
+        (
+            "lss_core_far_pointer_load_edge_m16_16_preserve_high",
+            "movw $0x3456, 176(%rax)\nmovw $0x10, 178(%rax)\nmovabsq $0xfeedbeef00000000, %r8\nlssw 176(%rax), %r8w\nmovw %ss, %r9w\nmovzwq %r9w, %r9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: format!("{far_ptr_setup}\n{asm}"),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Port I/O instructions. The KVM and interpreter test runners both satisfy
     // IN/INS exits with zero bytes and ignore OUT/OUTS payloads, so these cases
     // can compare register, pointer, REP-count, and scratch effects directly.
@@ -19553,6 +19579,50 @@ fn avx512_kvm_core_segment_corpus() {
         "core segment cases should not feature-skip"
     );
     assert_eq!(tally.compared, 14, "all core segment cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_far_pointer_load_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Core && case.label.contains("_core_far_pointer_load_edge_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        3,
+        "unexpected core far-pointer load edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core far-pointer load edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core far-pointer load edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core far-pointer load edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core far-pointer load edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        3,
+        "all core far-pointer load edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 3,
+        "all core far-pointer load edge cases should compare"
+    );
 }
 
 #[test]

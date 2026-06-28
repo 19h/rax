@@ -2221,6 +2221,9 @@ impl X86_64Vcpu {
         // Real mode (CR0.PE=0) loads a segment base of selector<<4 directly,
         // with a 64 KiB limit and 16-bit addressing — no descriptor lookup.
         let real_mode = self.sregs.cr0 & 1 == 0;
+        if !real_mode {
+            let _ = self.mark_descriptor_accessed(value);
+        }
         // 64-bit (long) mode keeps flat data segments and MSR-based FS/GS bases,
         // so it does NOT consult the descriptor table here. In 32-bit protected
         // mode a segment load takes its base/limit/attributes from the GDT/LDT
@@ -2298,14 +2301,7 @@ impl X86_64Vcpu {
         }
     }
 
-    /// Read the raw 8-byte segment descriptor selected by `selector` from the
-    /// active descriptor table (GDT, or LDT when the TI bit is set).
-    ///
-    /// Returns `Ok(None)` for a null selector (selector index 0, TI=0). Returns
-    /// `Err` (#GP-style) if the selector lies outside the table limit. Otherwise
-    /// returns the raw little-endian descriptor qword.
-    pub(super) fn read_descriptor(&mut self, selector: u16) -> Result<Option<u64>> {
-        // A null selector (index 0 in the GDT) selects no descriptor.
+    fn descriptor_addr(&self, selector: u16) -> Result<Option<u64>> {
         if selector & 0xFFFC == 0 {
             return Ok(None);
         }
@@ -2318,19 +2314,42 @@ impl X86_64Vcpu {
             (self.sregs.gdt.base, self.sregs.gdt.limit as u64)
         };
 
-        // The descriptor occupies bytes [offset, offset + 7]; it must fit fully
-        // within the table limit (limit is the last valid byte offset).
         let offset = index * 8;
         if offset + 7 > table_limit {
             return Err(Error::Emulator(format!(
-                "load_code_segment: selector {:#x} outside descriptor table limit (#GP)",
+                "descriptor selector {:#x} outside descriptor table limit (#GP)",
                 selector
             )));
         }
 
-        let raw = self
-            .mmu
-            .read_u64_supervisor(table_base + offset, &self.sregs)?;
+        Ok(Some(table_base + offset))
+    }
+
+    fn mark_descriptor_accessed(&mut self, selector: u16) -> Result<()> {
+        let Some(addr) = self.descriptor_addr(selector)? else {
+            return Ok(());
+        };
+        let raw = self.mmu.read_u64_supervisor(addr, &self.sregs)?;
+        let present = (raw >> 47) & 1 != 0;
+        let code_or_data = (raw >> 44) & 1 != 0;
+        if present && code_or_data && raw & (1u64 << 40) == 0 {
+            self.mmu
+                .write_u64_supervisor(addr, raw | (1u64 << 40), &self.sregs)?;
+        }
+        Ok(())
+    }
+
+    /// Read the raw 8-byte segment descriptor selected by `selector` from the
+    /// active descriptor table (GDT, or LDT when the TI bit is set).
+    ///
+    /// Returns `Ok(None)` for a null selector (selector index 0, TI=0). Returns
+    /// `Err` (#GP-style) if the selector lies outside the table limit. Otherwise
+    /// returns the raw little-endian descriptor qword.
+    pub(super) fn read_descriptor(&mut self, selector: u16) -> Result<Option<u64>> {
+        let Some(addr) = self.descriptor_addr(selector)? else {
+            return Ok(None);
+        };
+        let raw = self.mmu.read_u64_supervisor(addr, &self.sregs)?;
         Ok(Some(raw))
     }
 
