@@ -13194,6 +13194,110 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "lfence_cache_tlb_edge_load_store",
+            "movq 32(%rax), %r8\nlfence\nmovq %r8, 88(%rax)",
+            Fence,
+        ),
+        (
+            "mfence_cache_tlb_edge_two_stores",
+            "movq %r8, 32(%rax)\nmovq %rcx, 40(%rax)\nmfence\nmovq 32(%rax), %r9\nmovq 40(%rax), %rcx",
+            Fence,
+        ),
+        (
+            "sfence_cache_tlb_edge_store_preserves_flags",
+            "movq %r8, 48(%rax)\ncmpq %rcx, %r8\nsfence",
+            Fence,
+        ),
+        (
+            "clflush_cache_tlb_edge_unaligned",
+            "movq %r8, 33(%rax)\nclflush 33(%rax)\nmovq 33(%rax), %rcx",
+            Clflush,
+        ),
+        (
+            "clflush_cache_tlb_edge_r8_base",
+            "leaq 64(%rax), %r8\nmovq %rcx, (%r8)\nclflush (%r8)\nmovq (%r8), %r9",
+            Clflush,
+        ),
+        (
+            "clflush_cache_tlb_edge_sib_zero_index",
+            "leaq 96(%rax), %r8\nxorq %r9, %r9\nmovq %rcx, (%r8,%r9,1)\nclflush (%r8,%r9,1)\nmovq (%r8,%r9,1), %rcx",
+            Clflush,
+        ),
+        (
+            "clflushopt_cache_tlb_edge_unaligned",
+            "movq %r8, 41(%rax)\nclflushopt 41(%rax)\nsfence\nmovq 41(%rax), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clflushopt_cache_tlb_edge_r8_base",
+            "leaq 72(%rax), %r8\nmovq %rcx, (%r8)\nclflushopt (%r8)\nsfence\nmovq (%r8), %r9",
+            Clflushopt,
+        ),
+        (
+            "clflushopt_cache_tlb_edge_sib_zero_index",
+            "leaq 104(%rax), %r8\nxorq %r9, %r9\nmovq %rcx, (%r8,%r9,1)\nclflushopt (%r8,%r9,1)\nsfence\nmovq (%r8,%r9,1), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clwb_cache_tlb_edge_unaligned",
+            "movq %r8, 49(%rax)\nclwb 49(%rax)\nsfence\nmovq 49(%rax), %rcx",
+            Clwb,
+        ),
+        (
+            "clwb_cache_tlb_edge_r8_base",
+            "leaq 80(%rax), %r8\nmovq %rcx, (%r8)\nclwb (%r8)\nsfence\nmovq (%r8), %r9",
+            Clwb,
+        ),
+        (
+            "clwb_cache_tlb_edge_sib_zero_index",
+            "leaq 112(%rax), %r8\nxorq %r9, %r9\nmovq %rcx, (%r8,%r9,1)\nclwb (%r8,%r9,1)\nsfence\nmovq (%r8,%r9,1), %rcx",
+            Clwb,
+        ),
+        (
+            "cldemote_cache_tlb_edge_unaligned",
+            "movq %r8, 57(%rax)\ncldemote 57(%rax)\nmovq 57(%rax), %rcx",
+            Cldemote,
+        ),
+        (
+            "cldemote_cache_tlb_edge_r8_base",
+            "leaq 120(%rax), %r8\nmovq %rcx, (%r8)\ncldemote (%r8)\nmovq (%r8), %r9",
+            Cldemote,
+        ),
+        (
+            "cldemote_cache_tlb_edge_sib_zero_index",
+            "leaq 128(%rax), %r8\nxorq %r9, %r9\nmovq %rcx, (%r8,%r9,1)\ncldemote (%r8,%r9,1)\nmovq (%r8,%r9,1), %rcx",
+            Cldemote,
+        ),
+        (
+            "invd_cache_tlb_edge_after_load",
+            "movq 32(%rax), %r8\ncmpq %rcx, %r8\ninvd\nmovq %r8, %rcx",
+            CacheInvd,
+        ),
+        (
+            "wbinvd_cache_tlb_edge_two_stores",
+            "movq %r8, 32(%rax)\nmovq %rcx, 40(%rax)\nwbinvd\nmovq 32(%rax), %r9\nmovq 40(%rax), %rcx",
+            CacheInvd,
+        ),
+        (
+            "wbnoinvd_cache_tlb_edge_after_load",
+            "movq 48(%rax), %r8\ncmpq %rcx, %r8\nwbnoinvd\nmovq %r8, %rcx",
+            Wbnoinvd,
+        ),
+        (
+            "wbnoinvd_cache_tlb_edge_two_stores",
+            "movq %r8, 56(%rax)\nmovq %rcx, 64(%rax)\nwbnoinvd\nmovq 56(%rax), %r9\nmovq 64(%rax), %rcx",
+            Wbnoinvd,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // Hint/no-op instructions must decode addressing forms and preserve all
     // architectural state that is visible to this harness.
@@ -13499,6 +13603,60 @@ fn irregular_cases() -> Vec<Case> {
             label: label.to_string(),
             asm: asm.to_string(),
             feat: Invlpg,
+            profile: Int,
+        });
+    }
+    for &(label, asm, feat) in &[
+        (
+            "invlpg_cache_tlb_edge_unaligned",
+            "movq %r8, 33(%rax)\ncmpq %rcx, %r8\ninvlpg 33(%rax)\nmovq 33(%rax), %rcx",
+            Invlpg,
+        ),
+        (
+            "invlpg_cache_tlb_edge_negative_disp",
+            "movq %r8, -16(%rbx)\ncmpq %rcx, %r8\ninvlpg -16(%rbx)\nmovq -16(%rbx), %rcx",
+            Invlpg,
+        ),
+        (
+            "invlpg_cache_tlb_edge_sib_zero_index",
+            "leaq 128(%rax), %r8\nxorq %r9, %r9\ncmpq %rcx, %r8\ninvlpg (%r8,%r9,1)\nmovq %r8, %rcx",
+            Invlpg,
+        ),
+        (
+            "invlpg_cache_tlb_edge_stack_address",
+            "movq %rsp, %r8\ncmpq %rcx, %r8\ninvlpg 16(%rsp)\nmovq %r8, %rcx",
+            Invlpg,
+        ),
+        (
+            "invpcid_cache_tlb_edge_type0_nonzero_linear",
+            "movq $0, 32(%rax)\nmovq %rax, 40(%rax)\nmovq $0, %r8\ncmpq %rcx, %r9\ninvpcid 32(%rax), %r8\nmovq 40(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_type1_negative_disp",
+            "movq $0, -16(%rbx)\nmovq $0, -8(%rbx)\nmovq $1, %r8\ncmpq %rcx, %r9\ninvpcid -16(%rbx), %r8\nmovq -16(%rbx), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_type2_indexed",
+            "movq $0, 96(%rax)\nmovq $0, 104(%rax)\nleaq 96(%rax), %r9\nmovq $2, %r8\ncmpq %rcx, %r9\ninvpcid (%r9), %r8\nmovq 104(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_type3_addr32",
+            "movq $0, 112(%rax)\nmovq $0, 120(%rax)\nmovq $3, %r8\ncmpq %rcx, %r9\naddr32 invpcid 112(%eax), %r8\nmovq 120(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_type_in_r9",
+            "movq $0, 144(%rax)\nmovq %rax, 152(%rax)\nmovq $0, %r9\ncmpq %rcx, %r8\ninvpcid 144(%rax), %r9\nmovq 152(%rax), %rcx",
+            Invpcid,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
             profile: Int,
         });
     }
@@ -16427,7 +16585,7 @@ fn avx512_kvm_cache_memory_order_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        24,
+        43,
         "unexpected cache/memory-order corpus size"
     );
 
@@ -16450,37 +16608,101 @@ fn avx512_kvm_cache_memory_order_corpus() {
         tally.skipped_feature, 0,
         "cache/memory-order cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Fence), 6, "all fence cases should run");
+    assert_eq!(tally.ran_for(Feat::Fence), 9, "all fence cases should run");
     assert_eq!(
         tally.ran_for(Feat::Clflush),
-        3,
+        6,
         "all CLFLUSH cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Clflushopt),
-        3,
+        6,
         "all CLFLUSHOPT cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Clwb), 3, "all CLWB cases should run");
+    assert_eq!(tally.ran_for(Feat::Clwb), 6, "all CLWB cases should run");
     assert_eq!(
         tally.ran_for(Feat::Cldemote),
-        3,
+        6,
         "all CLDEMOTE cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::CacheInvd),
-        4,
+        6,
         "all INVD/WBINVD cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Wbnoinvd),
-        2,
+        4,
         "all WBNOINVD cases should run"
     );
     assert_eq!(
-        tally.compared, 24,
+        tally.compared, 43,
         "all cache/memory-order cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_cache_tlb_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_cache_tlb_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 28, "unexpected cache/TLB edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on cache/TLB edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a cache/TLB edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "cache/TLB edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "cache/TLB edge cases should not feature-skip"
+    );
+    assert_eq!(tally.ran_for(Feat::Fence), 3, "all fence edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Clflush),
+        3,
+        "all CLFLUSH edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Clflushopt),
+        3,
+        "all CLFLUSHOPT edge cases should run"
+    );
+    assert_eq!(tally.ran_for(Feat::Clwb), 3, "all CLWB edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Cldemote),
+        3,
+        "all CLDEMOTE edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::CacheInvd),
+        2,
+        "all INVD/WBINVD edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Wbnoinvd),
+        2,
+        "all WBNOINVD edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Invlpg),
+        4,
+        "all INVLPG edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Invpcid),
+        5,
+        "all INVPCID edge cases should run"
+    );
+    assert_eq!(tally.compared, 28, "all cache/TLB edge cases should compare");
 }
 
 #[test]
@@ -16889,7 +17111,7 @@ fn avx512_kvm_invpcid_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Invpcid)
         .collect();
-    assert_eq!(cases.len(), 6, "unexpected INVPCID corpus size");
+    assert_eq!(cases.len(), 11, "unexpected INVPCID corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16904,7 +17126,7 @@ fn avx512_kvm_invpcid_corpus() {
         tally.skipped_feature, 0,
         "INVPCID cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 6, "all INVPCID cases should compare");
+    assert_eq!(tally.compared, 11, "all INVPCID cases should compare");
 }
 
 #[test]
