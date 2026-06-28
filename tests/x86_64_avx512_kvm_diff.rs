@@ -14738,6 +14738,36 @@ fn irregular_cases() -> Vec<Case> {
             Msr,
         ),
         (
+            "msr_edge_cstar_roundtrip",
+            "movl $0xc0000083, %ecx\nmovabsq $0x0000000000405678, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi\ncmpq %rbx, %rbx",
+            Msr,
+        ),
+        (
+            "msr_edge_sysenter_cs_roundtrip",
+            "movl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "msr_edge_sysenter_esp_roundtrip",
+            "movl $0x175, %ecx\nmovl $0x20000, %eax\nxorl %edx, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "msr_edge_sysenter_eip_roundtrip",
+            "movl $0x176, %ecx\nmovabsq $0x0000000000301230, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi\ncmpq %rbx, %rbx",
+            Msr,
+        ),
+        (
+            "msr_edge_wrmsr_high_halves_ignored",
+            "movl $0xc0000100, %ecx\nmovabsq $0xffffffff00005000, %rax\nmovabsq $0xffffffff00000000, %rdx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi\ncmpq %rbx, %rbx",
+            Msr,
+        ),
+        (
+            "msr_edge_fmask_second_write_overwrites",
+            "movl $0xc0000084, %ecx\nmovl $0x600, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x200, %eax\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
             "debug_dr0_dr1_roundtrip",
             "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx\nmovabsq $0x0000000000004008, %r8\nmovq %r8, %dr1\nmovq %dr1, %rdx",
             DebugReg,
@@ -17477,7 +17507,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 36, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 42, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17501,13 +17531,42 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         8,
         "all descriptor-table cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Msr), 8, "all MSR cases should run");
+    assert_eq!(tally.ran_for(Feat::Msr), 14, "all MSR cases should run");
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
         12,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 36, "all privileged cases should compare");
+    assert_eq!(tally.compared, 42, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_msr_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Msr && case.label.contains("msr_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 6, "unexpected MSR edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on MSR edge cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an MSR edge case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "MSR edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "MSR edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        6,
+        "all MSR edge cases should run"
+    );
+    assert_eq!(tally.compared, 6, "all MSR edge cases should compare");
 }
 
 #[test]
