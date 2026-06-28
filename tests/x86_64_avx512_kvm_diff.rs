@@ -14658,6 +14658,36 @@ fn irregular_cases() -> Vec<Case> {
             ControlReg,
         ),
         (
+            "control_reg_edge_cr2_second_write_overwrites",
+            "movabsq $0x0000000000123450, %r8\nmovq %r8, %cr2\nmovabsq $0x00000000006789a0, %r8\nmovq %r8, %cr2\nxorq %r9, %r9\nmovq %cr2, %r9\ncmpq %r9, %r9",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_cr2_zero_roundtrip",
+            "xorq %r8, %r8\nmovq %r8, %cr2\nmovq %cr2, %rcx\ncmpq %rcx, %rcx",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_cr2_high_reg_destination",
+            "movabsq $0xffff800000005000, %r8\nmovq %r8, %cr2\nxorq %r9, %r9\nmovq %cr2, %r9\ncmpq %r9, %r9",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_cr4_self_write_preserves",
+            "movq %cr4, %r8\nmovq %r8, %cr4\nmovq %cr4, %r9\nxorq %r9, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_lmsw_memory_high_bits_ignored",
+            "movw $0xfffb, 32(%rax)\nlmsw 32(%rax)\nsmsw %r9w\nclts\nandw $0x0008, %r9w\ncmpw $0x0008, %r9w\nsete %cl\nmovzbl %cl, %ecx\nxorq %r9, %r9\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_clts_idempotent_after_lmsw",
+            "movw $0x000b, %r8w\nlmsw %r8w\nclts\nclts\nsmsw %r9w\nandw $0x0008, %r9w\ncmpw $0, %r9w\nsete %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
             "descriptor_lgdt_lidt_store_roundtrip",
             "movw $0x001f, 32(%rax)\nmovabsq $0x0000000000006000, %r8\nmovq %r8, 34(%rax)\nmovw $0x0037, 48(%rax)\nmovabsq $0x0000000000007000, %r8\nmovq %r8, 50(%rax)\nlgdt 32(%rax)\nlidt 48(%rax)\nsgdt 64(%rax)\nsidt 80(%rax)",
             DescriptorTable,
@@ -17507,7 +17537,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 42, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 48, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17523,7 +17553,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::ControlReg),
-        8,
+        14,
         "all control-register cases should run"
     );
     assert_eq!(
@@ -17537,7 +17567,51 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         12,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 42, "all privileged cases should compare");
+    assert_eq!(tally.compared, 48, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_control_register_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::ControlReg && case.label.contains("control_reg_edge_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected control-register edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on control-register edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a control-register edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "control-register edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "control-register edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::ControlReg),
+        6,
+        "all control-register edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 6,
+        "all control-register edge cases should compare"
+    );
 }
 
 #[test]
