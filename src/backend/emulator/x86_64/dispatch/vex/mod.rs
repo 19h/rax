@@ -456,9 +456,8 @@ impl X86_64Vcpu {
                     if vex_l == 0 {
                         if is_memory {
                             if aligned && addr & 0xF != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPS: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
                             self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
@@ -472,9 +471,8 @@ impl X86_64Vcpu {
                     } else {
                         if is_memory {
                             if aligned && addr & 0x1F != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPS: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
                             self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
@@ -500,9 +498,8 @@ impl X86_64Vcpu {
                     if vex_l == 0 {
                         if is_memory {
                             if aligned && addr & 0xF != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPS: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
                             self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
@@ -516,9 +513,8 @@ impl X86_64Vcpu {
                     } else {
                         if is_memory {
                             if aligned && addr & 0x1F != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPS: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
                             self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
@@ -544,9 +540,8 @@ impl X86_64Vcpu {
                     if vex_l == 0 {
                         if is_memory {
                             if aligned && addr & 0xF != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPD: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
                             self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
@@ -560,9 +555,8 @@ impl X86_64Vcpu {
                     } else {
                         if is_memory {
                             if aligned && addr & 0x1F != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPD: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
                             self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
@@ -587,9 +581,8 @@ impl X86_64Vcpu {
                     if vex_l == 0 {
                         if is_memory {
                             if aligned && addr & 0xF != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPD: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
                             self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
@@ -603,9 +596,8 @@ impl X86_64Vcpu {
                     } else {
                         if is_memory {
                             if aligned && addr & 0x1F != 0 {
-                                return Err(Error::Emulator(format!(
-                                    "VMOVAPD: unaligned memory access at {:#x}", addr
-                                )));
+                                self.inject_exception(13, Some(0))?;
+                                return Ok(None);
                             }
                             self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
                             self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;

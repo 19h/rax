@@ -24,11 +24,10 @@ pub fn vmovdqa_load(
     if vex_l == 0 {
         // 128-bit XMM
         if is_memory {
-            // Real HW raises #GP(0) on an unaligned VMOVDQA; aborting the VM is
-            // wrong and the access itself is well-defined here, so just perform
-            // it (read_mem/write_mem handle any alignment). Avoids killing the VM
-            // on a stray unaligned aligned-move during late init.
-            let _ = addr & 0xF;
+            if addr & 0xF != 0 {
+                vcpu.inject_exception(13, Some(0))?;
+                return Ok(None);
+            }
             vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
             vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr + 8, 8)?;
         } else {
@@ -42,8 +41,10 @@ pub fn vmovdqa_load(
     } else {
         // 256-bit YMM
         if is_memory {
-            // See the 128-bit case: perform the access rather than abort the VM.
-            let _ = addr & 0x1F;
+            if addr & 0x1F != 0 {
+                vcpu.inject_exception(13, Some(0))?;
+                return Ok(None);
+            }
             vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
             vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr + 8, 8)?;
             vcpu.regs.ymm_high[xmm_dst][0] = vcpu.read_mem(addr + 16, 8)?;
@@ -149,11 +150,10 @@ pub fn vmovdqa_store(
     if vex_l == 0 {
         // 128-bit XMM
         if is_memory {
-            // Real HW raises #GP(0) on an unaligned VMOVDQA; aborting the VM is
-            // wrong and the access itself is well-defined here, so just perform
-            // it (read_mem/write_mem handle any alignment). Avoids killing the VM
-            // on a stray unaligned aligned-move during late init.
-            let _ = addr & 0xF;
+            if addr & 0xF != 0 {
+                vcpu.inject_exception(13, Some(0))?;
+                return Ok(None);
+            }
             vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
             vcpu.write_mem(addr + 8, vcpu.regs.xmm[xmm_src][1], 8)?;
         } else {
@@ -166,8 +166,10 @@ pub fn vmovdqa_store(
     } else {
         // 256-bit YMM
         if is_memory {
-            // See the 128-bit case: perform the access rather than abort the VM.
-            let _ = addr & 0x1F;
+            if addr & 0x1F != 0 {
+                vcpu.inject_exception(13, Some(0))?;
+                return Ok(None);
+            }
             vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
             vcpu.write_mem(addr + 8, vcpu.regs.xmm[xmm_src][1], 8)?;
             vcpu.write_mem(addr + 16, vcpu.regs.ymm_high[xmm_src][0], 8)?;
