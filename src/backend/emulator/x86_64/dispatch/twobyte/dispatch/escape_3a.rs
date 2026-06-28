@@ -367,7 +367,7 @@ impl X86_64Vcpu {
             // PEXTRB - Extract Byte (0x14)
             0x14 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PEXTRB requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -395,7 +395,7 @@ impl X86_64Vcpu {
             // PEXTRW - Extract Word (0x15) - note: this is actually in 0F C5, but 0F 3A 15 also exists
             0x15 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PEXTRW requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -421,7 +421,7 @@ impl X86_64Vcpu {
             // PEXTRD/PEXTRQ - Extract Dword/Qword (0x16)
             0x16 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PEXTRD/Q requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -457,7 +457,7 @@ impl X86_64Vcpu {
             // EXTRACTPS - Extract Packed Single Precision Floating-Point (0x17)
             0x17 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("EXTRACTPS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -482,7 +482,7 @@ impl X86_64Vcpu {
             // PINSRB - Insert Byte (0x20)
             0x20 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PINSRB requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -513,7 +513,7 @@ impl X86_64Vcpu {
             // INSERTPS - Insert Packed Single Precision Floating-Point (0x21)
             0x21 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("INSERTPS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -567,7 +567,7 @@ impl X86_64Vcpu {
             // PINSRD/PINSRQ - Insert Dword/Qword (0x22)
             0x22 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PINSRD/Q requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
