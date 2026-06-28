@@ -4246,9 +4246,7 @@ pub fn evex_gpr_or_mem_to_xmm(
     })?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX scalar integer move load has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4283,9 +4281,7 @@ pub fn evex_xmm_to_gpr_or_mem(
     })?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX scalar integer move store has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4324,9 +4320,7 @@ pub fn evex_extract_scalar(
         .ok_or_else(|| Error::Emulator("EVEX scalar extract requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF || evex.ll != 0 {
-        return Err(Error::Emulator(
-            "EVEX scalar extract has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4372,16 +4366,12 @@ pub fn evex_extract_word_rm_src(
         .ok_or_else(|| Error::Emulator("EVEX VPEXTRW requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF || evex.ll != 0 {
-        return Err(Error::Emulator(
-            "EVEX VPEXTRW has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (reg, rm, is_memory, _addr, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(
-            "EVEX VPEXTRW 0F.C5 requires register source".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let imm = ctx.consume_u8()? as usize;
@@ -4409,9 +4399,7 @@ pub fn evex_pinsr(
         .ok_or_else(|| Error::Emulator("EVEX scalar insert requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.ll != 0 {
-        return Err(Error::Emulator(
-            "EVEX scalar insert has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4451,9 +4439,7 @@ pub fn evex_insertps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         .ok_or_else(|| Error::Emulator("EVEX VINSERTPS requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.ll != 0 || evex.w {
-        return Err(Error::Emulator(
-            "EVEX VINSERTPS has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4503,9 +4489,7 @@ pub fn evex_movq_vec_load(
         .ok_or_else(|| Error::Emulator("EVEX VMOVQ requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX VMOVQ load has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4538,9 +4522,7 @@ pub fn evex_movq_vec_store(
         .ok_or_else(|| Error::Emulator("EVEX VMOVQ requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX VMOVQ store has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4576,9 +4558,7 @@ pub fn evex_scalar_fp_move(
         .ok_or_else(|| Error::Emulator("EVEX scalar FP move requires EVEX prefix".to_string()))?;
 
     if evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX scalar FP move does not support embedded broadcast".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4593,14 +4573,10 @@ pub fn evex_scalar_fp_move(
 
     if is_memory && store_form {
         if evex.z {
-            return Err(Error::Emulator(
-                "EVEX scalar FP memory store does not allow EVEX.z".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         if evex.vvvv != 0xF {
-            return Err(Error::Emulator(
-                "EVEX scalar FP memory store requires EVEX.vvvv=1111b".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         if active {
             let value = read_vec_scalar(vcpu, reg_vec, elem_size);
@@ -4616,9 +4592,7 @@ pub fn evex_scalar_fp_move(
 
     if is_memory {
         if evex.vvvv != 0xF {
-            return Err(Error::Emulator(
-                "EVEX scalar FP memory load requires EVEX.vvvv=1111b".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         if active {
             let value = vcpu.read_mem(addr, elem_size as u8)?;
@@ -4657,9 +4631,7 @@ pub fn evex_high_low_move(
         .ok_or_else(|| Error::Emulator("EVEX high/low move requires EVEX prefix".to_string()))?;
 
     if evex.ll != 0 || evex.aaa != 0 || evex.z || evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX high/low move has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -4685,9 +4657,7 @@ pub fn evex_high_low_move(
         }
     } else {
         if !packed_single {
-            return Err(Error::Emulator(
-                "EVEX VMOVLPD/VMOVHPD require memory source".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         let src2 = evex_rm_vec(&evex, rm);
         let src2_bytes = read_reg_bytes(vcpu, src2, 16);
@@ -4717,9 +4687,7 @@ pub fn evex_duplicate_lanes(
         .ok_or_else(|| Error::Emulator("EVEX duplicate move requires EVEX prefix".to_string()))?;
 
     if evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX duplicate move has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;

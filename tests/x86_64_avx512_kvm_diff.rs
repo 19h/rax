@@ -18419,6 +18419,74 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x62, 0xf3, 0x7d, 0xc8, 0x1d, 0x58, 0x02, 0x00],
         ),
         (
+            "evex_vmovd_load_mask_illegal",
+            &[0x62, 0xd1, 0x7d, 0x09, 0x6e, 0xc8],
+        ),
+        (
+            "evex_vmovd_store_zero_illegal",
+            &[0x62, 0xd1, 0x7d, 0x88, 0x7e, 0xc8],
+        ),
+        (
+            "evex_vmovq_vec_load_vvvv_illegal",
+            &[0x62, 0xf1, 0xf6, 0x08, 0x7e, 0xcb],
+        ),
+        (
+            "evex_vmovq_vec_store_mask_illegal",
+            &[0x62, 0xf1, 0xfd, 0x09, 0xd6, 0x48, 0x08],
+        ),
+        (
+            "evex_vpextrb_mask_illegal",
+            &[0x62, 0xd3, 0x7d, 0x09, 0x14, 0xc8, 0x01],
+        ),
+        (
+            "evex_vpextrw_0f_zero_illegal",
+            &[0x62, 0x71, 0x7d, 0x88, 0xc5, 0xc1, 0x01],
+        ),
+        (
+            "evex_vpextrw_0f_memory_source_illegal",
+            &[0x62, 0x71, 0x7d, 0x08, 0xc5, 0x00, 0x01],
+        ),
+        (
+            "evex_vpinsrb_zero_illegal",
+            &[0x62, 0xd3, 0x65, 0x88, 0x20, 0xc8, 0x01],
+        ),
+        (
+            "evex_vpinsrw_l1_illegal",
+            &[0x62, 0xd1, 0x65, 0x28, 0xc4, 0xc8, 0x01],
+        ),
+        (
+            "evex_vinsertps_w_illegal",
+            &[0x62, 0xf3, 0xe5, 0x08, 0x21, 0xca, 0x20],
+        ),
+        (
+            "evex_vmovss_store_zero_illegal",
+            &[0x62, 0xf1, 0x7e, 0x88, 0x11, 0x50, 0x10],
+        ),
+        (
+            "evex_vmovss_store_vvvv_illegal",
+            &[0x62, 0xf1, 0x76, 0x08, 0x11, 0x50, 0x10],
+        ),
+        (
+            "evex_vmovss_load_vvvv_illegal",
+            &[0x62, 0xf1, 0x76, 0x08, 0x10, 0x48, 0x10],
+        ),
+        (
+            "evex_vmovlps_mask_illegal",
+            &[0x62, 0xf1, 0x64, 0x09, 0x12, 0x48, 0x08],
+        ),
+        (
+            "evex_vmovlpd_register_source_illegal",
+            &[0x62, 0xf1, 0xe5, 0x08, 0x12, 0xca],
+        ),
+        (
+            "evex_vmovsldup_broadcast_illegal",
+            &[0x62, 0xf1, 0x7e, 0x58, 0x12, 0xcb],
+        ),
+        (
+            "evex_vmovddup_vvvv_illegal",
+            &[0x62, 0xf1, 0xf7, 0x48, 0x12, 0xcb],
+        ),
+        (
             "vpermd_l0_illegal",
             &[0xc4, 0xe2, 0x69, 0x36, 0xd9],
         ),
@@ -19583,7 +19651,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        223,
+        240,
     );
 }
 
