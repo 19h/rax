@@ -8835,6 +8835,51 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "vmovsldup_avx_data_edge_xmm_self_zero_upper",
+            "{vex} vmovsldup %xmm1, %xmm1",
+            F32,
+        ),
+        (
+            "vmovshdup_avx_data_edge_ymm_high_regs",
+            "{vex} vmovshdup %ymm10, %ymm9",
+            F32,
+        ),
+        (
+            "vmovddup_avx_data_edge_xmm_reg_zero_upper",
+            "{vex} vmovddup %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vmovddup_avx_data_edge_ymm_reg_high_lanes",
+            "{vex} vmovddup %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vmovddup_avx_data_edge_xmm_unaligned_mem",
+            "{vex} vmovddup 7(%rax), %xmm1",
+            F64,
+        ),
+        (
+            "vmovddup_avx_data_edge_ymm_unaligned_mem",
+            "{vex} vmovddup 33(%rax), %ymm1",
+            F64,
+        ),
+        (
+            "vlddqu_avx_data_edge_xmm_boundary_high_dest",
+            "{vex} vlddqu 63(%rax), %xmm15",
+            Int,
+        ),
+        (
+            "vlddqu_avx_data_edge_ymm_unaligned_1",
+            "{vex} vlddqu 1(%rax), %ymm1",
+            Int,
+        ),
+        (
+            "vlddqu_avx_data_edge_ymm_high_dest",
+            "{vex} vlddqu 65(%rax), %ymm15",
+            Int,
+        ),
+        (
             "vmovlps_avx_data_load",
             "{vex} vmovlps 32(%rax), %xmm3, %xmm1",
             F32,
@@ -21508,7 +21553,7 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        28,
+        37,
         "unexpected VEX AVX data-movement corpus size"
     );
 
@@ -21533,12 +21578,50 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        28,
+        37,
         "all VEX AVX data-movement cases should run"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 37,
         "all VEX AVX data-movement cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vex_avx_data_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx_data_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 9, "unexpected VEX AVX data edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VEX AVX data edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VEX AVX data edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX AVX data edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX AVX data edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        9,
+        "all VEX AVX data edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 9,
+        "all VEX AVX data edge cases should compare"
     );
 }
 
