@@ -1856,10 +1856,29 @@ fn input_for_case(case: &Case) -> InCase {
     if case.label.contains("count_zero") {
         input.rcx = 0;
     }
+    if case.label.contains("count_one") {
+        input.rcx = 1;
+    }
     if case.label.contains("_df") {
         input.rsi = input.rsi.wrapping_add(STRING_DF_OFFSET);
         input.rdi = input.rdi.wrapping_add(STRING_DF_OFFSET);
         input.rflags |= RFLAGS_DF;
+    }
+    if case.label.contains("_core_string_edge_same_address") {
+        input.rdi = input.rsi;
+    }
+    if case.label.contains("_core_string_edge_overlap_forward") {
+        input.rsi = SCRATCH_ADDR + 64;
+        input.rdi = SCRATCH_ADDR + 65;
+    }
+    if case.label.contains("_core_string_edge_overlap_backward") {
+        input.rsi = SCRATCH_ADDR + 68;
+        input.rdi = SCRATCH_ADDR + 69;
+        input.rflags |= RFLAGS_DF;
+    }
+    if case.label.contains("_core_string_edge_addr32_high") {
+        input.rsi = 0xffff_0000_0000_4080;
+        input.rdi = 0xffff_0000_0000_4020;
     }
     input
 }
@@ -15342,6 +15361,36 @@ fn irregular_cases() -> Vec<Case> {
         ("repe_cmpsq_core_string", "repe cmpsq"),
         ("repe_cmpsb_core_string_count_zero", "repe cmpsb"),
         ("addr32_repe_cmpsb_core_string", "addr32 repe cmpsb"),
+        (
+            "addr32_movsb_core_string_edge_addr32_high",
+            "addr32 movsb",
+        ),
+        (
+            "addr32_rep_movsq_core_string_edge_addr32_high_count_one",
+            "addr32 rep movsq",
+        ),
+        (
+            "rep_movsb_core_string_edge_overlap_forward",
+            "rep movsb",
+        ),
+        (
+            "rep_movsb_core_string_edge_overlap_backward",
+            "rep movsb",
+        ),
+        ("rep_movsq_core_string_edge_count_one", "rep movsq"),
+        ("rep_stosb_core_string_edge_count_one", "rep stosb"),
+        ("rep_stosq_core_string_edge_count_one", "rep stosq"),
+        ("rep_lodsw_core_string_edge_count_one", "rep lodsw"),
+        (
+            "repe_cmpsb_core_string_edge_same_address",
+            "repe cmpsb",
+        ),
+        (
+            "repne_cmpsb_core_string_edge_same_address_count_one",
+            "repne cmpsb",
+        ),
+        ("repe_scasb_core_string_edge_count_one", "repe scasb"),
+        ("repne_scasq_core_string_edge_count_one", "repne scasq"),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17997,7 +18046,7 @@ fn avx512_kvm_core_string_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_string"))
         .collect();
-    assert_eq!(cases.len(), 54, "unexpected core string corpus size");
+    assert_eq!(cases.len(), 66, "unexpected core string corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -18015,7 +18064,40 @@ fn avx512_kvm_core_string_corpus() {
         tally.skipped_feature, 0,
         "core string cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 54, "all core string cases should compare");
+    assert_eq!(tally.compared, 66, "all core string cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_string_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_string_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected core string edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core string edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core string edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core string edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core string edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all core string edge cases should compare"
+    );
 }
 
 #[test]
