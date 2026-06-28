@@ -10632,6 +10632,76 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat) in &[
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_src0_dst0_reg",
+            "mpsadbw $0x00, %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_src3_dst0_mem",
+            "mpsadbw $0x03, 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_src0_dst4_reg",
+            "mpsadbw $0x04, %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_src3_dst4_mem",
+            "mpsadbw $0x07, 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_ignored_high_bits_reg",
+            "mpsadbw $0xff, %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "mpsadbw_sse41_simd_mpsad_edge_ignored_high_bits_mem",
+            "mpsadbw $0xf8, 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_xmm_src0_dst0_reg",
+            "{vex} vmpsadbw $0x00, %xmm2, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_xmm_src3_dst4_mem",
+            "{vex} vmpsadbw $0x07, 32(%rax), %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_ymm_src0_dst4_reg",
+            "{vex} vmpsadbw $0x04, %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_ymm_src3_dst0_mem",
+            "{vex} vmpsadbw $0x03, 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_ignored_high_bits_reg",
+            "{vex} vmpsadbw $0xff, %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vmpsadbw_avx2_simd_mpsad_edge_ignored_high_bits_mem",
+            "{vex} vmpsadbw $0xf8, 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: IntSatEdge,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -17430,6 +17500,49 @@ fn avx512_kvm_simd_dot_edge_corpus() {
     assert_eq!(
         tally.compared, 21,
         "all SIMD dot edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_mpsad_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_mpsad_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected SIMD MPSADBW edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD MPSADBW edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD MPSADBW edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD MPSADBW edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD MPSADBW edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        6,
+        "all SSE4.1 MPSADBW edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        6,
+        "all AVX2 MPSADBW edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all SIMD MPSADBW edge cases should compare"
     );
 }
 

@@ -645,20 +645,20 @@ impl X86_64Vcpu {
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
         let (dst_lo, dst_hi) =
-            self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07, imm8 & 0x03);
+            self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07);
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
         if vex_l == 1 {
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+            let high_imm = (imm8 >> 3) & 0x07;
             let (dst_hi2, dst_hi3) = self.mpsadbw_lane(
                 src1_hi2,
                 src1_hi3,
                 src2_hi2,
                 src2_hi3,
-                imm8 & 0x07,
-                imm8 & 0x03,
+                high_imm,
             );
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
@@ -677,8 +677,7 @@ impl X86_64Vcpu {
         s1_hi: u64,
         s2_lo: u64,
         s2_hi: u64,
-        blk1_sel: u8,
-        blk2_sel: u8,
+        imm_sel: u8,
     ) -> (u64, u64) {
         let mut src1 = [0u8; 16];
         let mut src2 = [0u8; 16];
@@ -687,8 +686,8 @@ impl X86_64Vcpu {
         src2[0..8].copy_from_slice(&s2_lo.to_le_bytes());
         src2[8..16].copy_from_slice(&s2_hi.to_le_bytes());
 
-        let blk1_offset = ((blk1_sel >> 2) & 1) as usize * 4;
-        let blk2_offset = (blk2_sel & 0x3) as usize * 4;
+        let blk1_offset = ((imm_sel >> 2) & 1) as usize * 4;
+        let blk2_offset = (imm_sel & 0x3) as usize * 4;
 
         let mut results = [0u16; 8];
         for i in 0..8 {
