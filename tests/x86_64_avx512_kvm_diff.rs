@@ -17980,6 +17980,22 @@ fn illegal_lock_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("ud2_explicit", &[0x0f, 0x0b]),
+        ("ud1_reg_explicit", &[0x0f, 0xb9, 0xc0]),
+        ("ud1_mem_explicit", &[0x0f, 0xb9, 0x00]),
+        ("ud0_reg_explicit", &[0x0f, 0xff, 0xc0]),
+        ("ud0_mem_explicit", &[0x0f, 0xff, 0x00]),
+        ("undefined_primary_d6", &[0xd6]),
+        ("undefined_two_byte_04", &[0x0f, 0x04]),
+        ("group4_fe_reg_undefined", &[0xfe, 0xd0]),
+        ("group4_fe_mem_undefined", &[0xfe, 0x10]),
+        ("group5_ff_reg_undefined", &[0xff, 0xf8]),
+        ("group5_ff_mem_undefined", &[0xff, 0x38]),
+    ]
+}
+
 fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
@@ -18046,6 +18062,11 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
 #[test]
 fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
     run_ud_marker_corpus("illegal LOCK prefix", illegal_lock_prefix_cases(), 15);
+}
+
+#[test]
+fn avx512_kvm_undefined_opcode_ud_corpus() {
+    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 11);
 }
 
 /// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
