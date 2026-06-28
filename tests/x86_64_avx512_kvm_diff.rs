@@ -18237,6 +18237,46 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vpermpd_l0_illegal",
             &[0xc4, 0xe3, 0xf9, 0x01, 0xd1, 0x00],
         ),
+        (
+            "vpextrb_l1_illegal",
+            &[0xc4, 0xe3, 0x7d, 0x14, 0xc8, 0x00],
+        ),
+        (
+            "vpextrw_0f_l1_illegal",
+            &[0xc5, 0xfd, 0xc5, 0xc1, 0x00],
+        ),
+        (
+            "vpextrw_0f_memory_source_illegal",
+            &[0xc5, 0xf9, 0xc5, 0x00, 0x00],
+        ),
+        (
+            "vpextrw_0f3a_l1_illegal",
+            &[0xc4, 0xe3, 0x7d, 0x15, 0x08, 0x00],
+        ),
+        (
+            "vpextrd_l1_illegal",
+            &[0xc4, 0xe3, 0x7d, 0x16, 0xc8, 0x00],
+        ),
+        (
+            "vextractps_l1_illegal",
+            &[0xc4, 0xe3, 0x7d, 0x17, 0xc8, 0x00],
+        ),
+        (
+            "vpinsrb_l1_illegal",
+            &[0xc4, 0xe3, 0x75, 0x20, 0xd0, 0x00],
+        ),
+        (
+            "vpinsrw_l1_illegal",
+            &[0xc5, 0xf5, 0xc4, 0xd0, 0x00],
+        ),
+        (
+            "vpinsrd_l1_illegal",
+            &[0xc4, 0xe3, 0x75, 0x22, 0xd0, 0x00],
+        ),
+        (
+            "vinsertps_l1_illegal",
+            &[0xc4, 0xe3, 0x6d, 0x21, 0xd9, 0x00],
+        ),
     ]
 }
 
@@ -18795,7 +18835,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        53,
+        63,
     );
 }
 

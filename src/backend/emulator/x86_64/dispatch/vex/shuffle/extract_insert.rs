@@ -61,7 +61,10 @@ impl X86_64Vcpu {
         vex_l: u8,
         vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 || vex_w != 0 {
+        if vex_l != 0 {
+            return self.inject_undefined_instruction();
+        }
+        if vex_w != 0 {
             return Err(Error::Emulator(
                 "VPEXTRB requires VEX.L=0 and VEX.W=0".to_string(),
             ));
@@ -87,7 +90,10 @@ impl X86_64Vcpu {
         vex_l: u8,
         vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 || vex_w != 0 {
+        if vex_l != 0 {
+            return self.inject_undefined_instruction();
+        }
+        if vex_w != 0 {
             return Err(Error::Emulator(
                 "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
             ));
@@ -95,9 +101,7 @@ impl X86_64Vcpu {
 
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator(
-                "VPEXTRW 0F C5 form does not support memory source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let imm8 = ctx.consume_u8()?;
         let value = xmm_word(self.regs.xmm[rm as usize], (imm8 & 0x07) as usize);
@@ -113,7 +117,10 @@ impl X86_64Vcpu {
         vex_l: u8,
         vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 || vex_w != 0 {
+        if vex_l != 0 {
+            return self.inject_undefined_instruction();
+        }
+        if vex_w != 0 {
             return Err(Error::Emulator(
                 "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
             ));
@@ -140,9 +147,7 @@ impl X86_64Vcpu {
         vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator(
-                "VPEXTRD/Q requires VEX.L=0".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -175,9 +180,7 @@ impl X86_64Vcpu {
         vex_l: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator(
-                "VEXTRACTPS requires VEX.L=0".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -202,7 +205,10 @@ impl X86_64Vcpu {
         vex_w: u8,
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 || vex_w != 0 {
+        if vex_l != 0 {
+            return self.inject_undefined_instruction();
+        }
+        if vex_w != 0 {
             return Err(Error::Emulator(
                 "VPINSRB requires VEX.L=0 and VEX.W=0".to_string(),
             ));
@@ -233,7 +239,10 @@ impl X86_64Vcpu {
         vex_w: u8,
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 || vex_w != 0 {
+        if vex_l != 0 {
+            return self.inject_undefined_instruction();
+        }
+        if vex_w != 0 {
             return Err(Error::Emulator(
                 "VPINSRW requires VEX.L=0 and VEX.W=0".to_string(),
             ));
@@ -265,9 +274,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator(
-                "VPINSRD/Q requires VEX.L=0".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -304,9 +311,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator(
-                "VINSERTPS requires VEX.L=0".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
