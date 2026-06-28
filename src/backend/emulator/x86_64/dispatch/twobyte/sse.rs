@@ -1917,14 +1917,13 @@ impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn restore_xsave_compacted_area(
         &mut self,
         addr: u64,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let rfbm = self.xsave_requested_feature_bitmap();
         let xstate_bv = self.read_mem64(addr + 512)?;
         let xcomp_bv = self.read_mem64(addr + 520)?;
         if xcomp_bv & XSAVE_COMPACTED_FORMAT == 0 {
-            return Err(Error::Emulator(
-                "compacted XRSTOR requires compacted XSAVE area".to_string(),
-            ));
+            self.inject_exception(13, Some(0))?;
+            return Ok(false);
         }
         let format = xcomp_bv & !XSAVE_COMPACTED_FORMAT;
 
@@ -1957,7 +1956,7 @@ impl X86_64Vcpu {
             }
         }
 
-        Ok(())
+        Ok(true)
     }
 
     fn execute_xrstors(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -1966,8 +1965,9 @@ impl X86_64Vcpu {
             return self.inject_undefined_instruction();
         }
 
-        self.restore_xsave_compacted_area(addr)?;
-        self.regs.rip += ctx.cursor as u64;
+        if self.restore_xsave_compacted_area(addr)? {
+            self.regs.rip += ctx.cursor as u64;
+        }
         Ok(None)
     }
 

@@ -501,8 +501,9 @@ impl X86_64Vcpu {
                 5 => {
                     // XRSTOR - restore x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
                     if self.read_mem64(addr + 520)? & (1u64 << 63) != 0 {
-                        self.restore_xsave_compacted_area(addr)?;
-                        self.regs.rip += ctx.cursor as u64;
+                        if self.restore_xsave_compacted_area(addr)? {
+                            self.regs.rip += ctx.cursor as u64;
+                        }
                         return Ok(None);
                     }
 
