@@ -17957,8 +17957,30 @@ fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
-#[test]
-fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
+fn illegal_lock_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("lock_nop_illegal", &[0xf0, 0x90]),
+        ("lock_pause_illegal", &[0xf0, 0xf3, 0x90]),
+        ("lock_mov_reg_illegal", &[0xf0, 0x48, 0x89, 0xc8]),
+        ("lock_lea_mem_illegal", &[0xf0, 0x48, 0x8d, 0x08]),
+        ("lock_add_reg_dest_illegal", &[0xf0, 0x48, 0x01, 0xc8]),
+        ("lock_or_reg_imm_illegal", &[0xf0, 0x48, 0x83, 0xc8, 0x01]),
+        ("lock_cmp_mem_imm_illegal", &[0xf0, 0x83, 0x38, 0x01]),
+        (
+            "lock_test_mem_imm_illegal",
+            &[0xf0, 0xf7, 0x00, 0x01, 0x00, 0x00, 0x00],
+        ),
+        ("lock_imul_mem_illegal", &[0xf0, 0xf7, 0x28]),
+        ("lock_inc_reg_illegal", &[0xf0, 0xff, 0xc0]),
+        ("lock_push_mem_illegal", &[0xf0, 0xff, 0x30]),
+        ("lock_xchg_reg_illegal", &[0xf0, 0x48, 0x87, 0xc8]),
+        ("lock_bt_mem_imm_illegal", &[0xf0, 0x0f, 0xba, 0x20, 0x01]),
+        ("lock_bts_reg_illegal", &[0xf0, 0x0f, 0xab, 0xc8]),
+        ("lock_cmpxchg8b_reg_illegal", &[0xf0, 0x0f, 0xc7, 0xc8]),
+    ]
+}
+
+fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
         return;
@@ -17968,13 +17990,8 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
         return;
     };
 
-    let cases = legacy_invalid_long_mode_cases();
     let case_count = cases.len();
-    assert_eq!(
-        case_count,
-        17,
-        "unexpected invalid-long-mode legacy corpus size"
-    );
+    assert_eq!(case_count, expected, "unexpected {name} corpus size");
 
     let input = input_for(InputProfile::Int);
     let mut failures = Vec::new();
@@ -18011,14 +18028,24 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
     }
 
     eprintln!(
-        "[avx512-kvm-diff] invalid-long-mode legacy #UD compared={}",
+        "[avx512-kvm-diff] {name} #UD compared={}",
         case_count.saturating_sub(failures.len())
     );
     assert!(
         failures.is_empty(),
-        "legacy invalid-long-mode #UD mismatches vs silicon:\n{}",
+        "{name} #UD mismatches vs silicon:\n{}",
         failures.join("\n")
     );
+}
+
+#[test]
+fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
+    run_ud_marker_corpus("invalid-long-mode legacy", legacy_invalid_long_mode_cases(), 17);
+}
+
+#[test]
+fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
+    run_ud_marker_corpus("illegal LOCK prefix", illegal_lock_prefix_cases(), 15);
 }
 
 /// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
