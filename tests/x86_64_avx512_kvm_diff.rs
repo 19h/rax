@@ -17996,6 +17996,41 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        (
+            "movdiri_66_prefix_illegal",
+            &[0x66, 0x0f, 0x38, 0xf9, 0x08],
+        ),
+        ("movdiri_register_dest_illegal", &[0x0f, 0x38, 0xf9, 0xc8]),
+        (
+            "movdir64b_missing_66_illegal",
+            &[0x0f, 0x38, 0xf8, 0x08],
+        ),
+        (
+            "movdir64b_register_source_illegal",
+            &[0x66, 0x0f, 0x38, 0xf8, 0xc3],
+        ),
+        (
+            "rex_before_evex_illegal",
+            &[0x41, 0x62, 0x91, 0x7c, 0x08, 0x28, 0xc0],
+        ),
+        (
+            "rex2_before_evex_illegal",
+            &[0xd5, 0x01, 0x62, 0x91, 0x7c, 0x08, 0x28, 0xc0],
+        ),
+        (
+            "kunpckbw_vvvv_k8_illegal",
+            &[0xc5, 0xbd, 0x4b, 0xc0],
+        ),
+        ("kandw_vvvv_k8_illegal", &[0xc5, 0xbc, 0x41, 0xc0]),
+        (
+            "kmovw_store_reg_k8_illegal",
+            &[0xc5, 0x78, 0x91, 0x00],
+        ),
+    ]
+}
+
 fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
@@ -18067,6 +18102,15 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
     run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 11);
+}
+
+#[test]
+fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
+    run_ud_marker_corpus(
+        "invalid extension encoding",
+        invalid_extension_encoding_cases(),
+        9,
+    );
 }
 
 /// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
