@@ -13565,6 +13565,26 @@ fn irregular_cases() -> Vec<Case> {
             ControlReg,
         ),
         (
+            "control_priv_state_edge_cr2_high_canonical_roundtrip",
+            "movabsq $0xffff800000001230, %r8\nmovq %r8, %cr2\nxorq %r8, %r8\nmovq %cr2, %r8\ncmpq %r8, %r8",
+            ControlReg,
+        ),
+        (
+            "control_priv_state_edge_cr3_self_write_preserves",
+            "movq %cr3, %r8\nmovq %r8, %cr3\nmovq %cr3, %r9\nxorq %r9, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
+            "control_priv_state_edge_smsw_memory_matches_reg",
+            "movw $0xffff, 32(%rax)\nsmsw 32(%rax)\nmovabsq $-1, %r8\nsmsw %r8w\nmovzwl 32(%rax), %ecx\nmovzwl %r8w, %r8d\nxorq %r8, %rcx\nsetz %cl\nmovzbl %cl, %ecx\nmovw $0, 32(%rax)\nxorq %r8, %r8\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
+            "control_priv_state_edge_lmsw_reg_clts_ts_bit",
+            "movw $0x000b, %r8w\nlmsw %r8w\nsmsw %r9w\nclts\nsmsw %r10w\nandw $0x0008, %r9w\nandw $0x0008, %r10w\ncmpw $0x0008, %r9w\nsete %cl\ncmpw $0, %r10w\nsete %r8b\nandb %r8b, %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\ncmpq %rax, %rax",
+            ControlReg,
+        ),
+        (
             "descriptor_lgdt_lidt_store_roundtrip",
             "movw $0x001f, 32(%rax)\nmovabsq $0x0000000000006000, %r8\nmovq %r8, 34(%rax)\nmovw $0x0037, 48(%rax)\nmovabsq $0x0000000000007000, %r8\nmovq %r8, 50(%rax)\nlgdt 32(%rax)\nlidt 48(%rax)\nsgdt 64(%rax)\nsidt 80(%rax)",
             DescriptorTable,
@@ -13577,6 +13597,31 @@ fn irregular_cases() -> Vec<Case> {
         (
             "descriptor_extended_base_roundtrip",
             "leaq 160(%rax), %r8\nmovw $0x006f, (%r8)\nmovabsq $0x0000000000006200, %r9\nmovq %r9, 2(%r8)\nmovw $0x0077, 16(%r8)\nmovabsq $0x0000000000007200, %r9\nmovq %r9, 18(%r8)\nlgdt (%r8)\nlidt 16(%r8)\nsgdt 32(%r8)\nsidt 48(%r8)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_priv_state_edge_unaligned_gdt",
+            "movw $0x0017, 33(%rax)\nmovabsq $0x0000000000006300, %r8\nmovq %r8, 35(%rax)\nlgdt 33(%rax)\nsgdt 64(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_priv_state_edge_unaligned_idt",
+            "movw $0x0027, 49(%rax)\nmovabsq $0x0000000000007300, %r8\nmovq %r8, 51(%rax)\nlidt 49(%rax)\nsidt 80(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_priv_state_edge_indexed_gdt_idt",
+            "leaq 96(%rax), %r9\nmovw $0x003f, (%r9)\nmovabsq $0x0000000000006400, %r8\nmovq %r8, 2(%r9)\nmovw $0x0047, 16(%r9)\nmovabsq $0x0000000000007400, %r8\nmovq %r8, 18(%r9)\nlgdt (%r9)\nlidt 16(%r9)\nsgdt 32(%r9)\nsidt 48(%r9)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_priv_state_edge_negative_disp_store",
+            "movw $0x005f, 96(%rax)\nmovabsq $0x0000000000006500, %r8\nmovq %r8, 98(%rax)\nlgdt 96(%rax)\nsgdt -16(%rbx)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_priv_state_edge_addr32_store",
+            "movw $0x0067, 112(%rax)\nmovabsq $0x0000000000007500, %r8\nmovq %r8, 114(%rax)\naddr32\nlidt 112(%eax)\naddr32\nsidt 144(%eax)",
             DescriptorTable,
         ),
         (
@@ -13595,6 +13640,31 @@ fn irregular_cases() -> Vec<Case> {
             Msr,
         ),
         (
+            "msr_priv_state_edge_star_roundtrip",
+            "movl $0xc0000081, %ecx\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi\ncmpq %rbx, %rbx",
+            Msr,
+        ),
+        (
+            "msr_priv_state_edge_lstar_roundtrip",
+            "movl $0xc0000082, %ecx\nmovabsq $0x0000000000401230, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi\ncmpq %rbx, %rbx",
+            Msr,
+        ),
+        (
+            "msr_priv_state_edge_fmask_roundtrip",
+            "movl $0xc0000084, %ecx\nmovl $0x00047700, %eax\nxorl %edx, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
+            "msr_priv_state_edge_efer_sce_roundtrip",
+            "movl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nrdmsr\nandl $1, %eax\nmovl %eax, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+            Msr,
+        ),
+        (
+            "msr_priv_state_edge_fs_base_high_canonical",
+            "movl $0xc0000100, %ecx\nmovl $0x00004000, %eax\nmovl $0xffff8000, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
+            Msr,
+        ),
+        (
             "debug_dr0_dr1_roundtrip",
             "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx\nmovabsq $0x0000000000004008, %r8\nmovq %r8, %dr1\nmovq %dr1, %rdx",
             DebugReg,
@@ -13607,6 +13677,26 @@ fn irregular_cases() -> Vec<Case> {
         (
             "debug_dr7_zero_roundtrip",
             "movabsq $0x400, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_priv_state_edge_dr0_zero_roundtrip",
+            "xorq %r8, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx",
+            DebugReg,
+        ),
+        (
+            "debug_priv_state_edge_dr1_dr2_high_roundtrip",
+            "movabsq $0x00007fff00004000, %r8\nmovq %r8, %dr1\nmovq %dr1, %rcx\nmovabsq $0x00007fff00004008, %r8\nmovq %r8, %dr2\nmovq %dr2, %rdx",
+            DebugReg,
+        ),
+        (
+            "debug_priv_state_edge_dr7_local_exec_enable",
+            "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovabsq $0x401, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_priv_state_edge_dr7_write_len_fields",
+            "movabsq $0x0000000000004010, %r8\nmovq %r8, %dr0\nmovabsq $0x00000000000d0401, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9",
             DebugReg,
         ),
     ] {
@@ -16142,7 +16232,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 13, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 31, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16156,7 +16246,80 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         tally.skipped_asm, 0,
         "privileged corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 13, "all privileged cases should compare");
+    assert_eq!(
+        tally.ran_for(Feat::ControlReg),
+        8,
+        "all control-register cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DescriptorTable),
+        8,
+        "all descriptor-table cases should run"
+    );
+    assert_eq!(tally.ran_for(Feat::Msr), 8, "all MSR cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::DebugReg),
+        7,
+        "all debug-register cases should run"
+    );
+    assert_eq!(tally.compared, 31, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_privileged_machine_state_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_priv_state_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        18,
+        "unexpected privileged machine-state edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on privileged machine-state edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a privileged machine-state edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "privileged machine-state edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "privileged machine-state edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::ControlReg),
+        4,
+        "all control-register edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DescriptorTable),
+        5,
+        "all descriptor-table edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        5,
+        "all MSR edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DebugReg),
+        4,
+        "all debug-register edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all privileged machine-state edge cases should compare"
+    );
 }
 
 #[test]
