@@ -6468,6 +6468,28 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, profile) in &[
+        ("addsubps_sse3_edge_self", "addsubps %xmm1, %xmm1", F32),
+        ("addsubpd_sse3_edge_self", "addsubpd %xmm1, %xmm1", F64),
+        ("haddps_sse3_edge_self", "haddps %xmm1, %xmm1", F32),
+        ("haddpd_sse3_edge_self", "haddpd %xmm1, %xmm1", F64),
+        ("hsubps_sse3_edge_self", "hsubps %xmm1, %xmm1", F32),
+        ("hsubpd_sse3_edge_self", "hsubpd %xmm1, %xmm1", F64),
+        ("movddup_sse3_edge_self", "movddup %xmm1, %xmm1", F64),
+        ("movddup_sse3_edge_unaligned_mem", "movddup 7(%rax), %xmm1", Int),
+        ("movsldup_sse3_edge_self", "movsldup %xmm1, %xmm1", F32),
+        ("movshdup_sse3_edge_self", "movshdup %xmm1, %xmm1", F32),
+        ("lddqu_sse3_edge_unaligned_1", "lddqu 1(%rax), %xmm1", Int),
+        ("lddqu_sse3_edge_high_dest", "lddqu 63(%rax), %xmm15", Int),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Sse3,
+            profile,
+        });
+    }
+
     // Legacy streaming and masked memory stores. These instructions are mostly
     // memory side effects, so the scratch-page diff directly checks the
     // ordinary-store model used for non-temporal hints and mask-selected bytes.
@@ -19543,7 +19565,7 @@ fn avx512_kvm_sse3_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Sse3)
         .collect();
-    assert_eq!(cases.len(), 20, "unexpected SSE3 corpus size");
+    assert_eq!(cases.len(), 32, "unexpected SSE3 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -19558,7 +19580,39 @@ fn avx512_kvm_sse3_corpus() {
         tally.skipped_feature, 0,
         "SSE3 cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 20, "all SSE3 cases should compare");
+    assert_eq!(tally.compared, 32, "all SSE3 cases should compare");
+}
+
+#[test]
+fn avx512_kvm_sse3_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Sse3 && case.label.contains("_sse3_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected SSE3 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SSE3 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an SSE3 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SSE3 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SSE3 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse3),
+        12,
+        "all SSE3 edge cases should run"
+    );
+    assert_eq!(tally.compared, 12, "all SSE3 edge cases should compare");
 }
 
 #[test]
