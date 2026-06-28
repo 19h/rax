@@ -10342,6 +10342,160 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat, profile) in &[
+        (
+            "roundps_sse41_simd_round_edge_rn_reg",
+            "roundps $0, %xmm3, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundps_sse41_simd_round_edge_rd_mem",
+            "roundps $1, 32(%rax), %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundps_sse41_simd_round_edge_mxcsr_rd_bits",
+            "roundps $5, %xmm3, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundpd_sse41_simd_round_edge_ru_reg",
+            "roundpd $2, %xmm3, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "roundpd_sse41_simd_round_edge_rz_mem",
+            "roundpd $3, 32(%rax), %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "roundpd_sse41_simd_round_edge_mxcsr_ru_bits",
+            "roundpd $6, %xmm3, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "roundss_sse41_simd_round_edge_rz_reg",
+            "roundss $3, %xmm3, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundss_sse41_simd_round_edge_mxcsr_rd_bits_reg",
+            "roundss $5, %xmm3, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundss_sse41_simd_round_edge_mxcsr_ru_bits_mem",
+            "roundss $6, 32(%rax), %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "roundsd_sse41_simd_round_edge_rd_reg",
+            "roundsd $1, %xmm3, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "roundsd_sse41_simd_round_edge_mxcsr_rz_bits_reg",
+            "roundsd $7, %xmm3, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "roundsd_sse41_simd_round_edge_mxcsr_rd_bits_mem",
+            "roundsd $5, 32(%rax), %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundps_avx_simd_round_edge_rn_reg",
+            "{vex} vroundps $0, %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundps_avx_simd_round_edge_mxcsr_rd_bits_reg",
+            "{vex} vroundps $5, %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundps_avx_simd_round_edge_ru_mem",
+            "{vex} vroundps $2, 32(%rax), %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundpd_avx_simd_round_edge_rz_reg",
+            "{vex} vroundpd $3, %ymm3, %ymm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundpd_avx_simd_round_edge_mxcsr_ru_bits_mem",
+            "{vex} vroundpd $6, 32(%rax), %ymm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundpd_avx_simd_round_edge_rd_reg",
+            "{vex} vroundpd $1, %ymm3, %ymm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundss_avx_simd_round_edge_rz_reg",
+            "{vex} vroundss $3, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundss_avx_simd_round_edge_mxcsr_rd_bits_reg",
+            "{vex} vroundss $5, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundss_avx_simd_round_edge_mxcsr_ru_bits_mem",
+            "{vex} vroundss $6, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vroundsd_avx_simd_round_edge_rd_reg",
+            "{vex} vroundsd $1, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundsd_avx_simd_round_edge_mxcsr_rz_bits_reg",
+            "{vex} vroundsd $7, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vroundsd_avx_simd_round_edge_mxcsr_rd_bits_mem",
+            "{vex} vroundsd $5, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -17050,6 +17204,53 @@ fn avx512_kvm_simd_convert_edge_corpus() {
     assert_eq!(
         tally.compared, 38,
         "all SIMD conversion edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_round_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_round_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        24,
+        "unexpected SIMD rounding edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD rounding edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD rounding edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD rounding edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD rounding edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        12,
+        "all SSE4.1 rounding edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        12,
+        "all AVX rounding edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 24,
+        "all SIMD rounding edge cases should compare"
     );
 }
 

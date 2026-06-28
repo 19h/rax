@@ -228,7 +228,7 @@ impl X86_64Vcpu {
 
             let mut dst = [0u32; 8];
             for i in 0..count {
-                dst[i] = round_f32(src[i], imm8).to_bits();
+                dst[i] = round_f32(src[i], imm8, self.mxcsr).to_bits();
             }
             self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
             self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
@@ -259,7 +259,7 @@ impl X86_64Vcpu {
 
             let mut dst = [0u64; 4];
             for i in 0..count {
-                dst[i] = round_f64(src[i], imm8).to_bits();
+                dst[i] = round_f64(src[i], imm8, self.mxcsr).to_bits();
             }
             self.regs.xmm[xmm_dst][0] = dst[0];
             self.regs.xmm[xmm_dst][1] = dst[1];
@@ -294,7 +294,7 @@ impl X86_64Vcpu {
             } else {
                 f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
             };
-            let rounded = round_f32(src, imm8).to_bits() as u64;
+            let rounded = round_f32(src, imm8, self.mxcsr).to_bits() as u64;
             let src1_lo = self.regs.xmm[xmm_src1][0];
             self.regs.xmm[xmm_dst][0] = (src1_lo & !0xFFFF_FFFF) | rounded;
             self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
@@ -305,7 +305,7 @@ impl X86_64Vcpu {
             } else {
                 f64::from_bits(self.regs.xmm[rm as usize][0])
             };
-            let rounded = round_f64(src, imm8).to_bits();
+            let rounded = round_f64(src, imm8, self.mxcsr).to_bits();
             self.regs.xmm[xmm_dst][0] = rounded;
             self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
         }
@@ -438,66 +438,26 @@ impl X86_64Vcpu {
     }
 }
 
-fn round_mode(imm8: u8) -> u8 {
-    if (imm8 & 0x4) != 0 { 0 } else { imm8 & 0x3 }
-}
-
-fn round_ties_even_f32(value: f32) -> f32 {
-    if !value.is_finite() {
-        return value;
-    }
-    let floor = value.floor();
-    let diff = value - floor;
-    if diff < 0.5 {
-        return floor;
-    }
-    if diff > 0.5 {
-        return floor + 1.0;
-    }
-    if floor.abs() > i64::MAX as f32 {
-        return floor;
-    }
-    if (floor as i64) % 2 == 0 {
-        floor
+fn round_mode(imm8: u8, mxcsr: u32) -> u8 {
+    if (imm8 & 0x4) != 0 {
+        ((mxcsr >> 13) & 0x03) as u8
     } else {
-        floor + 1.0
+        imm8 & 0x3
     }
 }
 
-fn round_ties_even_f64(value: f64) -> f64 {
-    if !value.is_finite() {
-        return value;
-    }
-    let floor = value.floor();
-    let diff = value - floor;
-    if diff < 0.5 {
-        return floor;
-    }
-    if diff > 0.5 {
-        return floor + 1.0;
-    }
-    if floor.abs() > i64::MAX as f64 {
-        return floor;
-    }
-    if (floor as i64) % 2 == 0 {
-        floor
-    } else {
-        floor + 1.0
-    }
-}
-
-fn round_f32(value: f32, imm8: u8) -> f32 {
-    match round_mode(imm8) {
-        0 => round_ties_even_f32(value),
+fn round_f32(value: f32, imm8: u8, mxcsr: u32) -> f32 {
+    match round_mode(imm8, mxcsr) {
+        0 => value.round_ties_even(),
         1 => value.floor(),
         2 => value.ceil(),
         _ => value.trunc(),
     }
 }
 
-fn round_f64(value: f64, imm8: u8) -> f64 {
-    match round_mode(imm8) {
-        0 => round_ties_even_f64(value),
+fn round_f64(value: f64, imm8: u8, mxcsr: u32) -> f64 {
+    match round_mode(imm8, mxcsr) {
+        0 => value.round_ties_even(),
         1 => value.floor(),
         2 => value.ceil(),
         _ => value.trunc(),
