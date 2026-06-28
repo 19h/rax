@@ -4162,6 +4162,72 @@ fn irregular_cases() -> Vec<Case> {
     }
 
     for &(label, asm, profile) in &[
+        ("vdpbf16ps_bf16_edge_reg", "vdpbf16ps %zmm2, %zmm3, %zmm1", F32Edge),
+        (
+            "vdpbf16ps_bf16_edge_mem",
+            "vdpbf16ps 64(%rax), %zmm3, %zmm1",
+            F32Edge,
+        ),
+        (
+            "vdpbf16ps_bf16_edge_merge",
+            "vdpbf16ps %zmm2, %zmm3, %zmm1 {%k1}",
+            F32Edge,
+        ),
+        (
+            "vdpbf16ps_bf16_edge_zero",
+            "vdpbf16ps %zmm2, %zmm3, %zmm1 {%k1}{z}",
+            F32Edge,
+        ),
+        (
+            "vcvtneps2bf16_bf16_edge_reg",
+            "vcvtneps2bf16 %zmm3, %ymm1",
+            F32Edge,
+        ),
+        (
+            "vcvtneps2bf16_bf16_edge_mem",
+            "vcvtneps2bf16 64(%rax), %ymm1",
+            F32Edge,
+        ),
+        (
+            "vcvtneps2bf16_bf16_edge_merge",
+            "vcvtneps2bf16 %zmm3, %ymm1 {%k1}",
+            F32Edge,
+        ),
+        (
+            "vcvtneps2bf16_bf16_edge_zero",
+            "vcvtneps2bf16 %zmm3, %ymm1 {%k1}{z}",
+            F32Edge,
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_edge_reg",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1",
+            F32Edge,
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_edge_mem",
+            "vcvtne2ps2bf16 64(%rax), %zmm2, %zmm1",
+            F32Edge,
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_edge_merge",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1 {%k1}",
+            F32Edge,
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_edge_zero",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1 {%k1}{z}",
+            F32Edge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bf16,
+            profile,
+        });
+    }
+
+    for &(label, asm, profile) in &[
         ("vminph_fp16_edge_minmax_reg", "vminph %zmm2, %zmm3, %zmm1", F16Edge),
         ("vminph_fp16_edge_minmax_mem", "vminph 64(%rax), %zmm3, %zmm1", F16Edge),
         ("vmaxph_fp16_edge_minmax_reg", "vmaxph %zmm2, %zmm3, %zmm1", F16Edge),
@@ -20039,6 +20105,44 @@ fn avx512_kvm_f16c_corpus() {
         "all F16C cases should run"
     );
     assert_eq!(tally.compared, 28, "all F16C cases should compare");
+}
+
+#[test]
+fn avx512_kvm_bf16_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_bf16_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected AVX-512-BF16 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512-BF16 edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512-BF16 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512-BF16 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512-BF16 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bf16),
+        12,
+        "all AVX-512-BF16 edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all AVX-512-BF16 edge cases should compare"
+    );
 }
 
 #[test]

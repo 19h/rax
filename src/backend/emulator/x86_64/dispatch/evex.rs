@@ -3334,17 +3334,18 @@ impl X86_64Vcpu {
                 }
                 continue;
             }
-            // Read accumulator as f32
-            let acc = f32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]);
+            let acc_bits =
+                u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]);
+            let acc = f32::from_bits(ftz_f32_bits(acc_bits));
 
-            // Two BF16 values per dword
+            // Two BF16 values per dword.
             let a0 = bf16_to_f32(u16::from_le_bytes([src1[base], src1[base + 1]]));
             let b0 = bf16_to_f32(u16::from_le_bytes([src2[base], src2[base + 1]]));
             let a1 = bf16_to_f32(u16::from_le_bytes([src1[base + 2], src1[base + 3]]));
             let b1 = bf16_to_f32(u16::from_le_bytes([src2[base + 2], src2[base + 3]]));
 
             let result = acc + a0 * b0 + a1 * b1;
-            let bytes = result.to_le_bytes();
+            let bytes = ftz_f32_bits(result.to_bits()).to_le_bytes();
             dst[base..base + 4].copy_from_slice(&bytes);
         }
 
@@ -6615,9 +6616,19 @@ fn f32_to_fp16(f: f32) -> u16 {
     }
 }
 
+fn ftz_f32_bits(bits: u32) -> u32 {
+    let exp = (bits >> 23) & 0xff;
+    let mant = bits & 0x007f_ffff;
+    if exp == 0 && mant != 0 {
+        bits & 0x8000_0000
+    } else {
+        bits
+    }
+}
+
 /// Convert BFloat16 (BF16) to single-precision (f32)
 fn bf16_to_f32(bf: u16) -> f32 {
-    // BF16 is simply the upper 16 bits of f32
+    // BF16 is simply the upper 16 bits of f32.
     f32::from_bits((bf as u32) << 16)
 }
 
