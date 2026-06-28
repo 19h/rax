@@ -1800,10 +1800,7 @@ pub fn maskmovdqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(format!(
-            "MASKMOVDQU requires register operands at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     let xmm_src = reg as usize;
@@ -1837,10 +1834,7 @@ pub fn maskmovdqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 fn maskmovq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(format!(
-            "MASKMOVQ requires register operands at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     let mm_src = (reg & 0x7) as usize;
