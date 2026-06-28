@@ -1,7 +1,7 @@
 //! VEX integer instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -275,12 +275,7 @@ impl X86_64Vcpu {
                     self.regs.ymm_high[xmm_dst][1] = 0;
                 }
             }
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented VEX shuffle pp={}",
-                    vex_pp
-                )));
-            }
+            _ => return self.inject_undefined_instruction(),
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
