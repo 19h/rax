@@ -16533,6 +16533,35 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "rdrand_random_edge_r15w_preserves_upper",
+            "movabsq $0x0123456789abcdef, %r15\n1:\nrdrand %r15w\njnc 1b\nmovw $0, %r15w",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_edge_r15d_zeroext",
+            "movabsq $-1, %r15\n1:\nrdrand %r15d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r15\njz 2f\nmovq $1, %r15\njmp 3f\n2:\nmovq $0, %r15\n3:\naddq $0, %r15",
+            Rdrand,
+        ),
+        (
+            "rdseed_random_edge_r15w_preserves_upper",
+            "movabsq $0xfedcba9876543210, %r15\n1:\nrdseed %r15w\njnc 1b\nmovw $0, %r15w",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_edge_r15d_zeroext",
+            "movabsq $-1, %r15\n1:\nrdseed %r15d\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %r15\njz 2f\nmovq $1, %r15\njmp 3f\n2:\nmovq $0, %r15\n3:\naddq $0, %r15",
+            Rdseed,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
@@ -18067,7 +18096,7 @@ fn avx512_kvm_random_tsc_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Rdrand | Feat::Rdseed | Feat::Tsc | Feat::Rdtscp))
         .collect();
-    assert_eq!(cases.len(), 20, "unexpected random/TSC corpus size");
+    assert_eq!(cases.len(), 24, "unexpected random/TSC corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -18087,12 +18116,12 @@ fn avx512_kvm_random_tsc_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Rdrand),
-        6,
+        8,
         "all RDRAND cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Rdseed),
-        6,
+        8,
         "all RDSEED cases should run"
     );
     assert_eq!(tally.ran_for(Feat::Tsc), 4, "all RDTSC cases should run");
@@ -18101,7 +18130,44 @@ fn avx512_kvm_random_tsc_corpus() {
         4,
         "all RDTSCP cases should run"
     );
-    assert_eq!(tally.compared, 20, "all random/TSC cases should compare");
+    assert_eq!(tally.compared, 24, "all random/TSC cases should compare");
+}
+
+#[test]
+fn avx512_kvm_random_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_random_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 4, "unexpected random edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on random edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a random edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "random edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "random edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdrand),
+        2,
+        "all RDRAND edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdseed),
+        2,
+        "all RDSEED edge cases should run"
+    );
+    assert_eq!(tally.compared, 4, "all random edge cases should compare");
 }
 
 #[test]
