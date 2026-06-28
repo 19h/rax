@@ -12653,6 +12653,22 @@ fn irregular_cases() -> Vec<Case> {
             "rdpmc_rdpmc_edge_preserves_non_query_gprs",
             "movabsq $0x1122334455667788, %r8\nmovabsq $0x8877665544332211, %r9\nmovl $1, %ecx\nrdpmc\nxorq %rax, %rax\nxorq %rcx, %rcx\nxorq %rdx, %rdx\ncmpq %r8, %r8",
         ),
+        (
+            "rdpmc_rdpmc_edge_counter0_preserves_rcx",
+            "xorl %ecx, %ecx\nrdpmc\nmovq %rcx, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+        ),
+        (
+            "rdpmc_rdpmc_edge_counter1_high_ecx_ignored",
+            "movq $-1, %rax\nmovabsq $0xffffffff00000001, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "rdpmc_rdpmc_edge_fixed0_high_ecx_ignored",
+            "movq $-1, %rax\nmovabsq $0xffffffff40000000, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "rdpmc_rdpmc_edge_fixed0_preserves_rcx",
+            "movl $0x40000000, %ecx\nrdpmc\nmovq %rcx, %r8\ncmpl $0x40000000, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18455,7 +18471,7 @@ fn avx512_kvm_processor_query_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
         .collect();
-    assert_eq!(cases.len(), 23, "unexpected processor-query corpus size");
+    assert_eq!(cases.len(), 27, "unexpected processor-query corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Rdpmc) {
@@ -18476,18 +18492,18 @@ fn avx512_kvm_processor_query_corpus() {
     );
     assert_eq!(tally.ran_for(Feat::Cpuid), 15, "all CPUID cases should run");
     if host.supports(Feat::Rdpmc) {
-        assert_eq!(tally.ran_for(Feat::Rdpmc), 8, "all RDPMC cases should run");
+        assert_eq!(tally.ran_for(Feat::Rdpmc), 12, "all RDPMC cases should run");
         assert_eq!(
             tally.skipped_feature, 0,
             "processor-query cases should not feature-skip"
         );
         assert_eq!(
-            tally.compared, 23,
+            tally.compared, 27,
             "all processor-query cases should compare"
         );
     } else {
         assert_eq!(
-            tally.skipped_feature, 8,
+            tally.skipped_feature, 12,
             "only RDPMC cases should feature-skip"
         );
         assert_eq!(tally.compared, 15, "all CPUID cases should compare");
@@ -18500,7 +18516,7 @@ fn avx512_kvm_rdpmc_edge_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Rdpmc && case.label.contains("_rdpmc_edge_"))
         .collect();
-    assert_eq!(cases.len(), 5, "unexpected RDPMC edge corpus size");
+    assert_eq!(cases.len(), 9, "unexpected RDPMC edge corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Rdpmc) {
@@ -18522,17 +18538,17 @@ fn avx512_kvm_rdpmc_edge_corpus() {
     if host.supports(Feat::Rdpmc) {
         assert_eq!(
             tally.ran_for(Feat::Rdpmc),
-            5,
+            9,
             "all RDPMC edge cases should run"
         );
         assert_eq!(
             tally.skipped_feature, 0,
             "RDPMC edge cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 5, "all RDPMC edge cases should compare");
+        assert_eq!(tally.compared, 9, "all RDPMC edge cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 5,
+            tally.skipped_feature, 9,
             "all RDPMC edge cases should feature-skip"
         );
         assert_eq!(tally.compared, 0, "no RDPMC edge cases should compare");
