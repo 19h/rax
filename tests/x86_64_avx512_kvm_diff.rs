@@ -14217,6 +14217,108 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Carry-rotate and double-shift edge cases. These pin down count masking,
+    // rotate-through-carry periods, CL counts, memory destinations, and
+    // SHLD/SHRD boundary counts where OF is undefined but the data result and
+    // other status flags remain observable.
+    for &(label, asm) in &[
+        (
+            "rcl_core_rotate_edge_r8_count8_cf_clear",
+            "clc\nmovb $0x81, %r8b\nrclb $8, %r8b",
+        ),
+        (
+            "rcr_core_rotate_edge_r8_count8_cf_set",
+            "stc\nmovb $0x81, %r8b\nrcrb $8, %r8b",
+        ),
+        (
+            "rcl_core_rotate_edge_r8_full_period",
+            "stc\nmovb $0xa5, %r8b\nrclb $9, %r8b",
+        ),
+        (
+            "rcr_core_rotate_edge_r16_full_period",
+            "clc\nmovw $0x8001, %r8w\nrcrw $17, %r8w",
+        ),
+        (
+            "rcl_core_rotate_edge_r16_count16",
+            "stc\nmovw $0x8001, %r8w\nrclw $16, %r8w",
+        ),
+        (
+            "rcr_core_rotate_edge_r16_count16",
+            "clc\nmovw $0x8001, %r8w\nrcrw $16, %r8w",
+        ),
+        (
+            "rcl_core_rotate_edge_r32_count31",
+            "stc\nmovl $0x80000001, %r8d\nrcll $31, %r8d",
+        ),
+        (
+            "rcr_core_rotate_edge_r32_count31",
+            "clc\nmovl $0x80000001, %r8d\nrcrl $31, %r8d",
+        ),
+        (
+            "rcl_core_rotate_edge_r64_count63",
+            "stc\nmovabsq $0x8000000000000001, %r8\nrclq $63, %r8",
+        ),
+        (
+            "rcr_core_rotate_edge_r64_count63",
+            "clc\nmovabsq $0x8000000000000001, %r8\nrcrq $63, %r8",
+        ),
+        (
+            "rcl_core_rotate_edge_m8_cl_count8",
+            "stc\nmovb $8, %cl\nmovb $0x81, 32(%rax)\nrclb %cl, 32(%rax)",
+        ),
+        (
+            "rcr_core_rotate_edge_m64_cl_count63",
+            "clc\nmovb $63, %cl\nmovabsq $0x8000000000000001, %r8\nmovq %r8, 40(%rax)\nrcrq %cl, 40(%rax)",
+        ),
+        (
+            "shld_core_double_shift_edge_w_imm16",
+            "movw $0x8001, %r8w\nmovw $0x7ffe, %cx\nshldw $16, %cx, %r8w",
+        ),
+        (
+            "shrd_core_double_shift_edge_w_imm16",
+            "movw $0x8001, %r8w\nmovw $0x7ffe, %cx\nshrdw $16, %cx, %r8w",
+        ),
+        (
+            "shld_core_double_shift_edge_l_imm31",
+            "movl $0x80000001, %r8d\nmovl $0x7ffffffe, %ecx\nshldl $31, %ecx, %r8d",
+        ),
+        (
+            "shrd_core_double_shift_edge_l_imm31",
+            "movl $0x80000001, %r8d\nmovl $0x7ffffffe, %ecx\nshrdl $31, %ecx, %r8d",
+        ),
+        (
+            "shld_core_double_shift_edge_q_imm63",
+            "movabsq $0x8000000000000001, %r8\nmovabsq $0x7ffffffffffffffe, %rcx\nshldq $63, %rcx, %r8",
+        ),
+        (
+            "shrd_core_double_shift_edge_q_imm63",
+            "movabsq $0x8000000000000001, %r8\nmovabsq $0x7ffffffffffffffe, %rcx\nshrdq $63, %rcx, %r8",
+        ),
+        (
+            "shld_core_double_shift_edge_m16_imm16",
+            "movw $0x8001, 32(%rax)\nmovw $0x7ffe, %cx\nshldw $16, %cx, 32(%rax)",
+        ),
+        (
+            "shrd_core_double_shift_edge_m64_cl_count63",
+            "movb $63, %cl\nmovabsq $0x8000000000000001, %r8\nmovq %r8, 40(%rax)\nmovabsq $0x7ffffffffffffffe, %rdx\nshrdq %cl, %rdx, 40(%rax)",
+        ),
+        (
+            "shld_core_double_shift_edge_q_zero_count",
+            "movabsq $0x8000000000000001, %r8\nmovabsq $0x7ffffffffffffffe, %rcx\nshldq $64, %rcx, %r8",
+        ),
+        (
+            "shrd_core_double_shift_edge_l_zero_count",
+            "movl $0x80000001, %r8d\nmovl $0x7ffffffe, %ecx\nshrdl $32, %ecx, %r8d",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core integer multiply and divide forms. One-operand MUL/IMUL and
     // DIV/IDIV exercise the implicit RDX:RAX / RAX architectural operands; the
     // explicit IMUL forms cover register, memory, imm8, and imm32 encodings.
@@ -15085,6 +15187,20 @@ fn case_rflags_mask(case: &Case) -> u64 {
         "rol_core_r64_imm5" | "ror_core_r64_imm7" | "rol_core_r64_cl" | "ror_core_r64_cl"
     ) {
         return STATUS_RFLAGS_MASK & !RFLAGS_OF;
+    }
+
+    if case.label.contains("_core_rotate_edge_") {
+        if case.label.contains("_full_period") {
+            return STATUS_RFLAGS_MASK;
+        }
+        return STATUS_RFLAGS_MASK & !RFLAGS_OF;
+    }
+
+    if case.label.contains("_core_double_shift_edge_") {
+        if case.label.contains("_zero_count") {
+            return STATUS_RFLAGS_MASK;
+        }
+        return RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF;
     }
 
     // One-bit shifts define CF/OF/SF/ZF/PF and leave AF undefined.
@@ -16463,6 +16579,52 @@ fn avx512_kvm_core_shift_width_corpus() {
     assert_eq!(
         tally.compared, 28,
         "all core shift-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_rotate_double_shift_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Core
+                && (case.label.contains("_core_rotate_edge_")
+                    || case.label.contains("_core_double_shift_edge_"))
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        22,
+        "unexpected core rotate/double-shift edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core rotate/double-shift edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core rotate/double-shift edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core rotate/double-shift edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core rotate/double-shift edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        22,
+        "all core rotate/double-shift edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 22,
+        "all core rotate/double-shift edge cases should compare"
     );
 }
 
