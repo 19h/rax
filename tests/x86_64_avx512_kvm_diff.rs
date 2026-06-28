@@ -854,6 +854,7 @@ const EXCEPTION_HANDLER_ADDR: u64 = 0x29000;
 const EXCEPTION_CODE_SELECTOR: u16 = 0x8;
 const DE_VECTOR: usize = 0;
 const UD_VECTOR: usize = 6;
+const GP_VECTOR: usize = 13;
 const EXCEPTION_MARKER_OFFSET: usize = 0xf0;
 const FALLTHROUGH_MARKER: u32 = 0xbaad_0000;
 
@@ -18277,6 +18278,65 @@ fn software_interrupt_exception_cases() -> Vec<ExceptionMarkerCase> {
     ]
 }
 
+fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
+    let mut cases = vec![
+        ExceptionMarkerCase {
+            label: "xsetbv_clear_x87_bit",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[0x31, 0xc0, 0x31, 0xd2, 0x31, 0xc9, 0x0f, 0x01, 0xd1],
+        },
+        ExceptionMarkerCase {
+            label: "xsetbv_avx_without_sse",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0xb8, 0x04, 0x00, 0x00, 0x00, 0x31, 0xd2, 0x31, 0xc9, 0x0f, 0x01, 0xd1,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "xsetbv_nonzero_xcr_index",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0xb8, 0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0xb9, 0x01, 0x00, 0x00, 0x00, 0x0f,
+                0x01, 0xd1,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "xsetbv_unsupported_high_bit",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0xb8, 0x01, 0x00, 0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc9, 0x0f,
+                0x01, 0xd1,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "xsetbv_partial_avx512_state",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0xb8, 0x27, 0x00, 0x00, 0x00, 0x31, 0xd2, 0x31, 0xc9, 0x0f, 0x01, 0xd1,
+            ],
+        },
+    ];
+
+    if host_cpu_flag("movdir64b") {
+        cases.push(ExceptionMarkerCase {
+            label: "movdir64b_misaligned_destination",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x48, 0xff, 0xc0, // inc %rax, making the destination 64-byte misaligned
+                0x66, 0x0f, 0x38, 0xf8, 0x03,
+            ],
+        });
+    }
+
+    cases
+}
+
 fn run_exception_marker_cases(name: &str, cases: Vec<ExceptionMarkerCase>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
@@ -18408,6 +18468,16 @@ fn avx512_kvm_software_interrupt_exception_corpus() {
         "software interrupt",
         software_interrupt_exception_cases(),
         22,
+    );
+}
+
+#[test]
+fn avx512_kvm_general_protection_exception_corpus() {
+    let expected = if host_cpu_flag("movdir64b") { 6 } else { 5 };
+    run_exception_marker_cases(
+        "general protection",
+        general_protection_exception_cases(),
+        expected,
     );
 }
 
