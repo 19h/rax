@@ -207,6 +207,10 @@ pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     let reg_op = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
 
+    if reg_op < 4 {
+        return vcpu.inject_undefined_instruction();
+    }
+
     let (value, addr_opt) = if modrm >> 6 == 3 {
         (vcpu.get_reg(rm, op_size), None)
     } else {
