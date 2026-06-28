@@ -771,7 +771,7 @@ impl X86_64Vcpu {
             // PCLMULQDQ - Carry-Less Multiplication Quadword (0x44)
             0x44 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PCLMULQDQ requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -813,7 +813,7 @@ impl X86_64Vcpu {
             // PCMPESTRM - Packed Compare Explicit Length Strings, Return Mask (0x60)
             0x60 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PCMPESTRM requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -842,7 +842,7 @@ impl X86_64Vcpu {
             // PCMPESTRI - Packed Compare Explicit Length Strings, Return Index (0x61)
             0x61 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PCMPESTRI requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -868,7 +868,7 @@ impl X86_64Vcpu {
             // PCMPISTRM - Packed Compare Implicit Length Strings, Return Mask (0x62)
             0x62 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PCMPISTRM requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -896,7 +896,7 @@ impl X86_64Vcpu {
             // PCMPISTRI - Packed Compare Implicit Length Strings, Return Index (0x63)
             0x63 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PCMPISTRI requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -947,9 +947,7 @@ impl X86_64Vcpu {
             // DEST[127:96] := RotWord(SubWord(X3)) XOR RCON
             0xDF => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator(
-                        "AESKEYGENASSIST requires 66 prefix".to_string(),
-                    ));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;

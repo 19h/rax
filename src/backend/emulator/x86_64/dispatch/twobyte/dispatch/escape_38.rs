@@ -96,7 +96,7 @@ impl X86_64Vcpu {
             // INVPCID r64, m128 (66 0F 38 82 /r in 64-bit mode).
             0x82 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("INVPCID requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
 
                 let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;

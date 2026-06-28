@@ -18493,6 +18493,34 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "mpsadbw_missing_66_prefix_illegal",
             &[0x0f, 0x3a, 0x42, 0xc1, 0x00],
         ),
+        (
+            "pclmulqdq_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0x44, 0xc1, 0x00],
+        ),
+        (
+            "pcmpestrm_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0x60, 0xc1, 0x00],
+        ),
+        (
+            "pcmpestri_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0x61, 0xc1, 0x00],
+        ),
+        (
+            "pcmpistrm_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0x62, 0xc1, 0x00],
+        ),
+        (
+            "pcmpistri_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0x63, 0xc1, 0x00],
+        ),
+        (
+            "aeskeygenassist_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0xdf, 0xc1, 0x00],
+        ),
+        (
+            "invpcid_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x82, 0xc0],
+        ),
     ]
 }
 
@@ -19051,7 +19079,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        117,
+        124,
     );
 }
 
