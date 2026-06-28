@@ -86,7 +86,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             };
             (result, new_cf, of)
         }
-        4 => {
+        4 | 6 => {
             // SHL/SAL
             let result = if count >= 8 { 0 } else { val << count };
             let cf = if count > 0 && count <= 8 {
@@ -159,6 +159,9 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
         } else {
             vcpu.regs.rflags &= !of_bit;
         }
+    }
+    if op == 6 {
+        vcpu.regs.rflags &= !flags::bits::AF;
     }
     vcpu.clear_lazy_flags();
 
@@ -270,7 +273,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             };
             (result & mask, new_cf, of)
         }
-        4 => {
+        4 | 6 => {
             // SHL/SAL
             let result = if count as u32 >= bits {
                 0
@@ -357,6 +360,9 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
         } else {
             vcpu.regs.rflags &= !of_bit;
         }
+    }
+    if op == 6 {
+        vcpu.regs.rflags &= !flags::bits::AF;
     }
     vcpu.clear_lazy_flags();
 

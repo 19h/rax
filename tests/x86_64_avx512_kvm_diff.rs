@@ -16403,6 +16403,38 @@ fn irregular_cases() -> Vec<Case> {
         ("shl_core_shift_width_m8_imm3", "shlb $3, 24(%rax)"),
         ("shr_core_shift_width_m16_imm4", "shrw $4, 32(%rax)"),
         ("sar_core_shift_width_m32_imm5", "sarl $5, 40(%rax)"),
+        (
+            "group2_alias_core_shift_width_c0_r8_imm",
+            "movb $0x12, %r8b\n.byte 0x41, 0xc0, 0xf0, 0x03",
+        ),
+        (
+            "group2_alias_core_shift_width_c1_r64_imm",
+            "movabsq $0x0102030405060708, %r8\n.byte 0x49, 0xc1, 0xf0, 0x04",
+        ),
+        (
+            "group2_alias_core_shift_width_d0_r8_one",
+            "movb $0x81, %r8b\n.byte 0x41, 0xd0, 0xf0",
+        ),
+        (
+            "group2_alias_core_shift_width_d1_r32_one",
+            "movl $0x40000001, %r8d\n.byte 0x41, 0xd1, 0xf0",
+        ),
+        (
+            "group2_alias_core_shift_width_d2_r8_cl",
+            "movb $0x23, %r8b\nmovb $3, %cl\n.byte 0x41, 0xd2, 0xf0",
+        ),
+        (
+            "group2_alias_core_shift_width_d3_r64_cl",
+            "movabsq $0x1000000000000001, %r8\nmovb $4, %cl\n.byte 0x49, 0xd3, 0xf0",
+        ),
+        (
+            "group2_alias_core_shift_width_c0_m8_imm",
+            "movb $0x12, (%rax)\n.byte 0xc0, 0x30, 0x03\nmovzbq (%rax), %r8",
+        ),
+        (
+            "group2_alias_core_shift_width_d3_m64_cl",
+            "movabsq $0x1000000000000001, %r10\nmovq %r10, 48(%rax)\nmovb $4, %cl\n.byte 0x48, 0xd3, 0x70, 0x30\nmovq 48(%rax), %r8",
+        ),
         ("shl_core_shift_width_r8_masked_count", "shlb $40, %r8b"),
         ("sar_core_shift_width_r8_saturating_count", "sarb $31, %r8b"),
         ("shl_core_shift_width_r64_zero_count", "shlq $64, %r8"),
@@ -22040,7 +22072,7 @@ fn avx512_kvm_core_shift_width_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_shift_width_"))
         .collect();
-    assert_eq!(cases.len(), 28, "unexpected core shift-width corpus size");
+    assert_eq!(cases.len(), 36, "unexpected core shift-width corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -22062,7 +22094,7 @@ fn avx512_kvm_core_shift_width_corpus() {
         "core shift-width cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 36,
         "all core shift-width cases should compare"
     );
 }
