@@ -10702,6 +10702,88 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        (
+            "vphaddw_avx2_simd_horizontal_edge_xmm_reg",
+            "{vex} vphaddw %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vphaddw_avx2_simd_horizontal_edge_ymm_mem",
+            "{vex} vphaddw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vphaddd_avx2_simd_horizontal_edge_xmm_mem",
+            "{vex} vphaddd 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vphaddd_avx2_simd_horizontal_edge_ymm_reg",
+            "{vex} vphaddd %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vphaddsw_avx2_simd_horizontal_edge_xmm_reg",
+            "{vex} vphaddsw %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vphaddsw_avx2_simd_horizontal_edge_ymm_mem",
+            "{vex} vphaddsw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vphsubw_avx2_simd_horizontal_edge_xmm_mem",
+            "{vex} vphsubw 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vphsubw_avx2_simd_horizontal_edge_ymm_reg",
+            "{vex} vphsubw %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vphsubd_avx2_simd_horizontal_edge_xmm_reg",
+            "{vex} vphsubd %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vphsubd_avx2_simd_horizontal_edge_ymm_mem",
+            "{vex} vphsubd 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vphsubsw_avx2_simd_horizontal_edge_xmm_mem",
+            "{vex} vphsubsw 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vphsubsw_avx2_simd_horizontal_edge_ymm_reg",
+            "{vex} vphsubsw %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpmaddubsw_avx2_simd_horizontal_edge_xmm_reg",
+            "{vex} vpmaddubsw %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpmaddubsw_avx2_simd_horizontal_edge_ymm_mem",
+            "{vex} vpmaddubsw 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpmulhrsw_avx2_simd_horizontal_edge_xmm_mem",
+            "{vex} vpmulhrsw 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpmulhrsw_avx2_simd_horizontal_edge_ymm_reg",
+            "{vex} vpmulhrsw %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vphminposuw_avx2_simd_horizontal_edge_xmm_reg",
+            "{vex} vphminposuw %xmm2, %xmm1",
+        ),
+        (
+            "vphminposuw_avx2_simd_horizontal_edge_xmm_mem",
+            "{vex} vphminposuw 32(%rax), %xmm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: IntSatEdge,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -17543,6 +17625,48 @@ fn avx512_kvm_simd_mpsad_edge_corpus() {
     assert_eq!(
         tally.compared, 12,
         "all SIMD MPSADBW edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_horizontal_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_horizontal_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        18,
+        "unexpected SIMD horizontal edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD horizontal edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD horizontal edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD horizontal edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD horizontal edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        18,
+        "all AVX2 horizontal edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 18,
+        "all SIMD horizontal edge cases should compare"
     );
 }
 
