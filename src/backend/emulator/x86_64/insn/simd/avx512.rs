@@ -490,10 +490,7 @@ pub fn vcompress_evex(
         .ok_or_else(|| Error::Emulator(format!("{} requires EVEX prefix", name)))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(format!(
-            "{} requires EVEX.vvvv=1111b",
-            name
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -530,10 +527,7 @@ pub fn vcompress_evex(
 
     if is_memory {
         if evex.z {
-            return Err(Error::Emulator(format!(
-                "{} memory destination does not allow EVEX.z",
-                name
-            )));
+            return vcpu.inject_undefined_instruction();
         }
         store_mem_bytes(vcpu, addr, elem_size, out_count, &out_bytes)?;
     } else {
@@ -561,10 +555,7 @@ pub fn vexpand_evex(
         .ok_or_else(|| Error::Emulator(format!("{} requires EVEX prefix", name)))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(format!(
-            "{} requires EVEX.vvvv=1111b",
-            name
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -5966,14 +5957,10 @@ pub fn evex_int_narrow(
         .ok_or_else(|| Error::Emulator("EVEX integer narrow requires EVEX prefix".to_string()))?;
 
     if evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX integer narrow does not support embedded broadcast".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX integer narrow requires EVEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -6009,9 +5996,7 @@ pub fn evex_int_narrow(
 
     if is_memory {
         if evex.z {
-            return Err(Error::Emulator(
-                "EVEX integer narrow memory destination does not allow EVEX.z".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         for lane in 0..num_elems {
             if (mask >> lane) & 1 == 0 {
@@ -6061,14 +6046,10 @@ pub fn evex_extract_chunk(
         .ok_or_else(|| Error::Emulator("EVEX extract chunk requires EVEX prefix".to_string()))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX extract chunk requires EVEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     if evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX extract chunk does not support embedded broadcast".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -6101,9 +6082,7 @@ pub fn evex_extract_chunk(
 
     if is_memory {
         if evex.z {
-            return Err(Error::Emulator(
-                "EVEX extract chunk memory destination does not allow EVEX.z".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         for lane in 0..num_elems {
             if (mask >> lane) & 1 == 0 {
@@ -6140,9 +6119,7 @@ pub fn evex_insert_chunk(
         .ok_or_else(|| Error::Emulator("EVEX insert chunk requires EVEX prefix".to_string()))?;
 
     if evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX insert chunk does not support embedded broadcast".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -6189,17 +6166,13 @@ pub fn evex_nt_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     })?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX non-temporal load does not support mask/broadcast/vvvv".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(
-            "EVEX non-temporal load requires memory source".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
@@ -6219,17 +6192,13 @@ pub fn evex_nt_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     })?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast || evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX non-temporal store does not support mask/broadcast/vvvv".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(
-            "EVEX non-temporal store requires memory destination".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let src = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
@@ -6318,16 +6287,12 @@ pub fn evex_mask_to_vec(
         .ok_or_else(|| Error::Emulator("EVEX mask-to-vector requires EVEX prefix".to_string()))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX mask-to-vector requires EVEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(
-            "EVEX mask-to-vector requires mask register source".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
@@ -6359,16 +6324,12 @@ pub fn evex_vec_to_mask(
         .ok_or_else(|| Error::Emulator("EVEX vector-to-mask requires EVEX prefix".to_string()))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX vector-to-mask requires EVEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(
-            "EVEX vector-to-mask requires vector register source".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let dest_mask = (reg & 0x07) as usize;
@@ -6402,16 +6363,12 @@ pub fn evex_broadcast_mask(
         .ok_or_else(|| Error::Emulator("EVEX mask broadcast requires EVEX prefix".to_string()))?;
 
     if evex.vvvv != 0xF {
-        return Err(Error::Emulator(
-            "EVEX mask broadcast requires EVEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(
-            "EVEX mask broadcast requires mask register source".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
@@ -7213,9 +7170,7 @@ pub fn evex_shift_bytes_imm(
         .ok_or_else(|| Error::Emulator("EVEX byte shift requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z || evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX byte shift has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;

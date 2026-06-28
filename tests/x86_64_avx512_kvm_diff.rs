@@ -18487,6 +18487,94 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x62, 0xf1, 0xf7, 0x48, 0x12, 0xcb],
         ),
         (
+            "evex_vcompressps_vvvv_illegal",
+            &[0x62, 0xf2, 0x75, 0x4a, 0x8a, 0xd9],
+        ),
+        (
+            "evex_vcompressps_memory_zero_illegal",
+            &[0x62, 0xf2, 0x7d, 0xca, 0x8a, 0x58, 0x10],
+        ),
+        (
+            "evex_vexpandps_vvvv_illegal",
+            &[0x62, 0xf2, 0x75, 0x4a, 0x88, 0xcb],
+        ),
+        (
+            "evex_vpmovdb_broadcast_illegal",
+            &[0x62, 0xf2, 0x7e, 0x58, 0x31, 0xd9],
+        ),
+        (
+            "evex_vpmovdb_vvvv_illegal",
+            &[0x62, 0xf2, 0x76, 0x48, 0x31, 0xd9],
+        ),
+        (
+            "evex_vpmovdb_memory_zero_illegal",
+            &[0x62, 0xf2, 0x7e, 0xca, 0x31, 0x58, 0x04],
+        ),
+        (
+            "evex_vextracti32x4_vvvv_illegal",
+            &[0x62, 0xf3, 0x75, 0x48, 0x39, 0xd3, 0x02],
+        ),
+        (
+            "evex_vextracti32x4_broadcast_illegal",
+            &[0x62, 0xf3, 0x7d, 0x58, 0x39, 0xd3, 0x02],
+        ),
+        (
+            "evex_vextracti32x4_memory_zero_illegal",
+            &[0x62, 0xf3, 0x7d, 0xca, 0x39, 0x50, 0x04, 0x02],
+        ),
+        (
+            "evex_vinserti32x4_broadcast_illegal",
+            &[0x62, 0xf3, 0x6d, 0x58, 0x38, 0xcb, 0x02],
+        ),
+        (
+            "evex_vmovntdqa_mask_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0x2a, 0x48, 0x01],
+        ),
+        (
+            "evex_vmovntdqa_register_source_illegal",
+            &[0x62, 0xf2, 0x7d, 0x48, 0x2a, 0xcb],
+        ),
+        (
+            "evex_vmovntps_vvvv_illegal",
+            &[0x62, 0xf1, 0x74, 0x48, 0x2b, 0x58, 0x01],
+        ),
+        (
+            "evex_vmovntps_register_dest_illegal",
+            &[0x62, 0xf1, 0x7c, 0x48, 0x2b, 0xd9],
+        ),
+        (
+            "evex_vpmovm2b_vvvv_illegal",
+            &[0x62, 0xf2, 0x76, 0x48, 0x28, 0xca],
+        ),
+        (
+            "evex_vpmovm2b_memory_source_illegal",
+            &[0x62, 0xf2, 0x7e, 0x48, 0x28, 0x08],
+        ),
+        (
+            "evex_vpmovb2m_vvvv_illegal",
+            &[0x62, 0xf2, 0x76, 0x48, 0x29, 0xea],
+        ),
+        (
+            "evex_vpmovb2m_memory_source_illegal",
+            &[0x62, 0xf2, 0x7e, 0x48, 0x29, 0x28],
+        ),
+        (
+            "evex_vpbroadcastmb2q_vvvv_illegal",
+            &[0x62, 0xf2, 0xf6, 0x48, 0x2a, 0xca],
+        ),
+        (
+            "evex_vpbroadcastmb2q_memory_source_illegal",
+            &[0x62, 0xf2, 0xfe, 0x48, 0x2a, 0x08],
+        ),
+        (
+            "evex_vpslldq_mask_illegal",
+            &[0x62, 0xf1, 0x75, 0x49, 0x73, 0xfb, 0x04],
+        ),
+        (
+            "evex_vpsrldq_zero_illegal",
+            &[0x62, 0xf1, 0x75, 0xc8, 0x73, 0xdb, 0x04],
+        ),
+        (
             "vpermd_l0_illegal",
             &[0xc4, 0xe2, 0x69, 0x36, 0xd9],
         ),
@@ -19651,7 +19739,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        240,
+        262,
     );
 }
 
