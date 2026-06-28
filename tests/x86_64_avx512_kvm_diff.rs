@@ -14149,6 +14149,46 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0x123456789abcdef0, %r8\nmovq %r8, 64(%rdi)\nmovabsq $0x0fedcba987654321, %r8\nmovq %r8, 72(%rdi)\nmovabsq $0x123456789abcdef0, %rax\nmovabsq $0x0fedcba987654321, %rdx\nmovabsq $0x55aa55aa55aa55aa, %rbx\nmovabsq $0xaa55aa55aa55aa55, %rcx\nlock cmpxchg16b 64(%rdi)",
             Cx16,
         ),
+        (
+            "cmpxchg8b_cmpxchg_edge_success_dirty_accumulator",
+            "movl $0x89abcdef, -16(%rdi)\nmovl $0x01234567, -12(%rdi)\nmovabsq $0xffff000089abcdef, %rax\nmovabsq $0xeeee000001234567, %rdx\nmovl $0x76543210, %ebx\nmovl $0xfedcba98, %ecx\ncmpxchg8b -16(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg8b_cmpxchg_edge_failure_zero_ext",
+            "movl $0x01020304, 40(%rdi)\nmovl $0x05060708, 44(%rdi)\nmovabsq $0xffff0000deadbeef, %rax\nmovabsq $0xeeee0000badc0ffe, %rdx\nmovl $0xa1a2a3a4, %ebx\nmovl $0xb1b2b3b4, %ecx\ncmpxchg8b 40(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg8b_cmpxchg_edge_lock_success_zero_value",
+            "movl $0, 48(%rdi)\nmovl $0, 52(%rdi)\nmovabsq $0xaaaa000000000000, %rax\nmovabsq $0xbbbb000000000000, %rdx\nmovl $0xffffffff, %ebx\nmovl $0x80000000, %ecx\nlock cmpxchg8b 48(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg8b_cmpxchg_edge_lock_failure_preserves_memory",
+            "movl $0x13579bdf, 56(%rdi)\nmovl $0x2468ace0, 60(%rdi)\nmovabsq $0x11110000aaaaaaaa, %rax\nmovabsq $0x22220000bbbbbbbb, %rdx\nmovl $0xcafebabe, %ebx\nmovl $0x0badf00d, %ecx\nlock cmpxchg8b 56(%rdi)",
+            Cx8,
+        ),
+        (
+            "cmpxchg16b_cmpxchg_edge_success_negative_disp",
+            "movabsq $0x0123456789abcdef, %r8\nmovq %r8, -16(%rdi)\nmovabsq $0xfedcba9876543210, %r8\nmovq %r8, -8(%rdi)\nmovabsq $0x0123456789abcdef, %rax\nmovabsq $0xfedcba9876543210, %rdx\nmovabsq $0x1111222233334444, %rbx\nmovabsq $0x5555666677778888, %rcx\ncmpxchg16b -16(%rdi)",
+            Cx16,
+        ),
+        (
+            "cmpxchg16b_cmpxchg_edge_failure_loads_pair",
+            "movabsq $0x1020304050607080, %r8\nmovq %r8, 80(%rdi)\nmovabsq $0x90a0b0c0d0e0f000, %r8\nmovq %r8, 88(%rdi)\nmovabsq $0xffffeeee11112222, %rax\nmovabsq $0xddddcccc33334444, %rdx\nmovabsq $0x0001020304050607, %rbx\nmovabsq $0x08090a0b0c0d0e0f, %rcx\ncmpxchg16b 80(%rdi)",
+            Cx16,
+        ),
+        (
+            "cmpxchg16b_cmpxchg_edge_lock_success_high_bits",
+            "movabsq $0xaaaaaaaa55555555, %r8\nmovq %r8, 96(%rdi)\nmovabsq $0x123456789abcdef0, %r8\nmovq %r8, 104(%rdi)\nmovabsq $0xaaaaaaaa55555555, %rax\nmovabsq $0x123456789abcdef0, %rdx\nmovabsq $0xffffffffffffffff, %rbx\nmovabsq $0x8000000000000000, %rcx\nlock cmpxchg16b 96(%rdi)",
+            Cx16,
+        ),
+        (
+            "cmpxchg16b_cmpxchg_edge_lock_failure_preserves_memory",
+            "movabsq $0x0f0e0d0c0b0a0908, %r8\nmovq %r8, 112(%rdi)\nmovabsq $0x0706050403020100, %r8\nmovq %r8, 120(%rdi)\nmovabsq $0x9999999999999999, %rax\nmovabsq $0x8888888888888888, %rdx\nmovabsq $0x7777777777777777, %rbx\nmovabsq $0x6666666666666666, %rcx\nlock cmpxchg16b 112(%rdi)",
+            Cx16,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17102,6 +17142,43 @@ fn avx512_kvm_core_atomic_width_corpus() {
         tally.compared, 22,
         "all core atomic-width cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_cmpxchg_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_cmpxchg_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected CMPXCHG edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on CMPXCHG edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a CMPXCHG edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "CMPXCHG edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "CMPXCHG edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cx8),
+        4,
+        "all CMPXCHG8B edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cx16),
+        4,
+        "all CMPXCHG16B edge cases should run"
+    );
+    assert_eq!(tally.compared, 8, "all CMPXCHG edge cases should compare");
 }
 
 #[test]
