@@ -101,9 +101,7 @@ impl X86_64Vcpu {
 
                 let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 if !is_memory {
-                    return Err(Error::Emulator(
-                        "INVPCID requires memory descriptor operand".to_string(),
-                    ));
+                    return self.inject_undefined_instruction();
                 }
 
                 let invpcid_type = self.get_reg(reg, if self.sregs.cs.l { 8 } else { 4 });
@@ -380,7 +378,7 @@ impl X86_64Vcpu {
                     // MOVBE r, m16/32/64 (load with byte swap)
                     let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                     if !is_memory {
-                        return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                        return self.inject_undefined_instruction();
                     }
                     let size = ctx.op_size;
                     let value = self.read_mem(addr, size)?;
@@ -439,7 +437,7 @@ impl X86_64Vcpu {
                     // MOVBE m16/32/64, r (store with byte swap)
                     let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                     if !is_memory {
-                        return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                        return self.inject_undefined_instruction();
                     }
                     let size = ctx.op_size;
                     let value = self.get_reg(reg, size);
