@@ -471,9 +471,7 @@ pub fn movntdqa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     }
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(
-            "MOVNTDQA requires memory operand".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     let xmm_dst = reg as usize;
     // Non-temporal hint ignored in emulation, just load normally

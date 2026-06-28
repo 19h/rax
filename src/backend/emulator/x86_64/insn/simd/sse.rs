@@ -1199,9 +1199,7 @@ fn cmp_gt_dwords(a: u64, b: u64) -> u64 {
 pub fn movntq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(
-            "MOVNTQ requires memory destination".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     let mm_src = (reg & 0x7) as usize;
     vcpu.write_mem(addr, vcpu.regs.mm[mm_src], 8)?;
@@ -1584,10 +1582,7 @@ pub fn movlps_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     if is_memory {
         vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
     } else {
-        return Err(Error::Emulator(format!(
-            "MOVLPS store requires memory operand at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -1618,10 +1613,7 @@ pub fn movhps_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     if is_memory {
         vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][1], 8)?;
     } else {
-        return Err(Error::Emulator(format!(
-            "MOVHPS store requires memory operand at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -1701,10 +1693,7 @@ pub fn movshdup(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 pub fn movnti(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(format!(
-            "MOVNTI requires memory operand at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     let size = if ctx.rex_w() { 8 } else { 4 };
     let value = vcpu.get_reg(reg, size);
@@ -1721,10 +1710,7 @@ pub fn movnti(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 pub fn lddqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(format!(
-            "LDDQU requires memory operand at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     let xmm_dst = reg as usize;
     vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;

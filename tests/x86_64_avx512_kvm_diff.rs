@@ -18323,6 +18323,30 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0xc5, 0xf8, 0xe6, 0xc1],
         ),
         (
+            "movntdqa_register_source_illegal",
+            &[0x66, 0x0f, 0x38, 0x2a, 0xc1],
+        ),
+        (
+            "movntq_register_dest_illegal",
+            &[0x0f, 0xe7, 0xc1],
+        ),
+        (
+            "movlps_store_register_dest_illegal",
+            &[0x0f, 0x13, 0xc8],
+        ),
+        (
+            "movhps_store_register_dest_illegal",
+            &[0x0f, 0x17, 0xc8],
+        ),
+        (
+            "movnti_register_dest_illegal",
+            &[0x0f, 0xc3, 0xc1],
+        ),
+        (
+            "lddqu_register_source_illegal",
+            &[0xf2, 0x0f, 0xf0, 0xc1],
+        ),
+        (
             "vlddqu_vvvv_illegal",
             &[0xc5, 0xf3, 0xf0, 0x57, 0x01],
         ),
@@ -19747,7 +19771,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        264,
+        270,
     );
 }
 
