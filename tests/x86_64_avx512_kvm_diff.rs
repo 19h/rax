@@ -12952,6 +12952,36 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "xsave64_xsave_edge_opmask_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nkxorq %k1, %k1, %k1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_xsave_edge_zmm16_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm16, %zmm16, %zmm16\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_xsave_edge_ymm2_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %ymm2, %ymm2, %ymm2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xrstor64_xsave_edge_sse_only_mask",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0x3, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xrstor64_xsave_edge_missing_opmask_init",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x7, %eax\nxorl %edx, %edx\nxsave64 240(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            Xsave,
+            Int,
+        ),
+        (
             "xsaveopt64_xrstor64_zmm_roundtrip",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsaveopt64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
             XsaveExt,
@@ -12978,6 +13008,30 @@ fn irregular_cases() -> Vec<Case> {
         (
             "xsaves64_xrstors64_mxcsr_roundtrip",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x5f80, 48(%rbx)\nldmxcsr 48(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxsaves64 240(%rbx)\nmovl $0x1f80, 52(%rbx)\nldmxcsr 52(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)\nstmxcsr 56(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsaveopt64_xsave_edge_opmask_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsaveopt64 240(%rbx)\nkxorq %k2, %k2, %k2\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsavec64_xsave_edge_opmask_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsavec64 240(%rbx)\nkxorq %k3, %k3, %k3\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsaves64_xsave_edge_zmm16_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsaves64 240(%rbx)\nvpxord %zmm16, %zmm16, %zmm16\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsavec64_xsave_edge_missing_opmask_init",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $0x7, %eax\nxorl %edx, %edx\nxsavec64 240(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 240(%rbx)",
             XsaveExt,
             Int,
         ),
@@ -16398,7 +16452,7 @@ fn avx512_kvm_processor_state_management_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        18,
+        23,
         "unexpected processor state-management corpus size"
     );
 
@@ -16428,11 +16482,11 @@ fn avx512_kvm_processor_state_management_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Xsave),
-        4,
+        9,
         "all XSAVE/XRSTOR cases should run"
     );
     assert_eq!(
-        tally.compared, 18,
+        tally.compared, 23,
         "all processor state-management cases should compare"
     );
 }
@@ -16470,12 +16524,49 @@ fn avx512_kvm_fxsave_edge_corpus() {
 }
 
 #[test]
+fn avx512_kvm_xsave_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_xsave_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 9, "unexpected XSAVE edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on XSAVE edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an XSAVE edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "XSAVE edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "XSAVE edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Xsave),
+        5,
+        "all base XSAVE edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::XsaveExt),
+        4,
+        "all extended XSAVE edge cases should run"
+    );
+    assert_eq!(tally.compared, 9, "all XSAVE edge cases should compare");
+}
+
+#[test]
 fn avx512_kvm_extended_xsave_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| case.feat == Feat::XsaveExt)
         .collect();
-    assert_eq!(cases.len(), 5, "unexpected extended XSAVE corpus size");
+    assert_eq!(cases.len(), 9, "unexpected extended XSAVE corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16493,7 +16584,7 @@ fn avx512_kvm_extended_xsave_corpus() {
         tally.skipped_feature, 0,
         "extended XSAVE cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 5, "all extended XSAVE cases should compare");
+    assert_eq!(tally.compared, 9, "all extended XSAVE cases should compare");
 }
 
 #[test]
