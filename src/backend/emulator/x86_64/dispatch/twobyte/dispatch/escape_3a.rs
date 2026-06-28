@@ -28,7 +28,7 @@ impl X86_64Vcpu {
             // ROUNDPS - Round Packed Single Precision Floating-Point Values (0x08)
             0x08 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("ROUNDPS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -76,7 +76,7 @@ impl X86_64Vcpu {
             // ROUNDPD - Round Packed Double Precision Floating-Point Values (0x09)
             0x09 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("ROUNDPD requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -114,7 +114,7 @@ impl X86_64Vcpu {
             // ROUNDSS - Round Scalar Single Precision Floating-Point (0x0A)
             0x0A => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("ROUNDSS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -149,7 +149,7 @@ impl X86_64Vcpu {
             // ROUNDSD - Round Scalar Double Precision Floating-Point (0x0B)
             0x0B => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("ROUNDSD requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -183,7 +183,7 @@ impl X86_64Vcpu {
             // BLENDPS - Blend Packed Single Precision Floating-Point Values (0x0C)
             0x0C => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("BLENDPS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -227,7 +227,7 @@ impl X86_64Vcpu {
             // BLENDPD - Blend Packed Double Precision Floating-Point Values (0x0D)
             0x0D => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("BLENDPD requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -250,7 +250,7 @@ impl X86_64Vcpu {
             // PBLENDW - Blend Packed Words (0x0E)
             0x0E => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("PBLENDW requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
