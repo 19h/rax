@@ -11787,6 +11787,69 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "inb_io_edge_dirty_rax_imm8",
+            "movabsq $0x1122334455667788, %rax\ninb $0x80, %al",
+        ),
+        (
+            "inw_io_edge_dirty_rax_imm8",
+            "movabsq $0x1122334455667788, %rax\ninw $0x81, %ax",
+        ),
+        (
+            "inl_io_edge_zeroext_imm8",
+            "movabsq $0x1122334455667788, %rax\ninl $0x82, %eax",
+        ),
+        (
+            "inb_io_edge_dirty_rax_dx",
+            "movabsq $0x8877665544332211, %rax\nmovw $0x0080, %dx\ninb %dx, %al",
+        ),
+        (
+            "inw_io_edge_dirty_rax_dx",
+            "movabsq $0x8877665544332211, %rax\nmovw $0x0081, %dx\ninw %dx, %ax",
+        ),
+        (
+            "inl_io_edge_zeroext_dx",
+            "movabsq $0x8877665544332211, %rax\nmovw $0x0082, %dx\ninl %dx, %eax",
+        ),
+        (
+            "outb_io_edge_preserves_rax_imm8",
+            "movabsq $0x1020304050607080, %rax\ncmpq %rcx, %r8\noutb %al, $0x80",
+        ),
+        (
+            "outw_io_edge_preserves_rax_dx",
+            "movabsq $0x1020304050607080, %rax\nmovw $0x0081, %dx\ncmpq %rcx, %r8\noutw %ax, %dx",
+        ),
+        (
+            "outl_io_edge_preserves_rax_imm8",
+            "movabsq $0x1020304050607080, %rax\ncmpq %rcx, %r8\noutl %eax, $0x82",
+        ),
+        ("rep_insw_io_edge_string", "rep insw"),
+        ("rep_insl_io_edge_string", "rep insl"),
+        ("rep_insb_io_edge_count_zero", "rep insb"),
+        ("rep_insw_io_edge_count_zero", "rep insw"),
+        ("insb_io_edge_df", "insb"),
+        ("insw_io_edge_df", "insw"),
+        ("insl_io_edge_df", "insl"),
+        ("addr32_insw_io_edge_string", "addr32 insw"),
+        ("addr32_insl_io_edge_string", "addr32 insl"),
+        ("rep_outsw_io_edge_string", "rep outsw"),
+        ("rep_outsl_io_edge_string", "rep outsl"),
+        ("rep_outsb_io_edge_count_zero", "rep outsb"),
+        ("rep_outsw_io_edge_count_zero", "rep outsw"),
+        ("outsb_io_edge_df", "outsb"),
+        ("outsw_io_edge_df", "outsw"),
+        ("outsl_io_edge_df", "outsl"),
+        ("addr32_outsw_io_edge_string", "addr32 outsw"),
+        ("addr32_outsl_io_edge_string", "addr32 outsl"),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Io,
+            profile: Int,
+        });
+    }
 
     // Fast system-call transition instructions. The ring-3 return legs do not
     // touch memory; they immediately re-enter ring 0 with SYSCALL so the final
@@ -16800,7 +16863,7 @@ fn avx512_kvm_io_port_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Io)
         .collect();
-    assert_eq!(cases.len(), 22, "unexpected I/O corpus size");
+    assert_eq!(cases.len(), 49, "unexpected I/O corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -16811,7 +16874,32 @@ fn avx512_kvm_io_port_corpus() {
         tally.skipped_asm, 0,
         "I/O corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 22, "all I/O cases should compare");
+    assert_eq!(tally.compared, 49, "all I/O cases should compare");
+}
+
+#[test]
+fn avx512_kvm_io_port_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Io && case.label.contains("_io_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 27, "unexpected I/O edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on I/O edge cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an I/O edge case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "I/O edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "I/O edge cases should not feature-skip"
+    );
+    assert_eq!(tally.ran_for(Feat::Io), 27, "all I/O edge cases should run");
+    assert_eq!(tally.compared, 27, "all I/O edge cases should compare");
 }
 
 #[test]
