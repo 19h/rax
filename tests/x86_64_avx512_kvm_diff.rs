@@ -14900,6 +14900,21 @@ fn irregular_cases() -> Vec<Case> {
             Pku,
         ),
         (
+            "wrpkru_protection_edge_high_rax_ignored",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovabsq $0xffffffff55555550, %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nmovq $-1, %rax\nmovq $-1, %rdx\nrdpkru\ncmpq %rax, %rax",
+            Pku,
+        ),
+        (
+            "rdpkru_protection_edge_preserves_cmp_flags",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x123450, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\ncmpq %r8, %r8\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_zero_second_write",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0xfffffff0, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nxorl %eax, %eax\nwrpkru\nmovq $-1, %rax\nmovq $-1, %rdx\nrdpkru\ncmpq %rax, %rax",
+            Pku,
+        ),
+        (
             "swapgs_roundtrip_rdgsbase",
             "movl $0xc0000102, %ecx\nmovabsq $0x0000000000789000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000123000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nrdgsbase %rbx\nswapgs\nrdgsbase %rcx\nswapgs\nrdgsbase %rdx",
             Swapgs,
@@ -18487,7 +18502,7 @@ fn avx512_kvm_protection_state_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        10,
+        13,
         "unexpected protection-state edge corpus size"
     );
 
@@ -18516,8 +18531,8 @@ fn avx512_kvm_protection_state_edge_corpus() {
     );
 
     let expected_smap = if host.supports(Feat::Smap) { 3 } else { 0 };
-    let expected_pku = if host.supports(Feat::Pku) { 4 } else { 0 };
-    let expected_skips = 7 - expected_smap - expected_pku;
+    let expected_pku = if host.supports(Feat::Pku) { 7 } else { 0 };
+    let expected_skips = 10 - expected_smap - expected_pku;
     assert_eq!(
         tally.ran_for(Feat::Smap),
         expected_smap,
@@ -18542,6 +18557,45 @@ fn avx512_kvm_protection_state_edge_corpus() {
         expected_smap + expected_pku + 3,
         "all supported protection-state edge cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_pkru_protection_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Pku && case.label.contains("_protection_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 7, "unexpected PKRU protection edge corpus size");
+
+    if !HostFeatures::detect().supports(Feat::Pku) {
+        eprintln!("[skip] host lacks PKU support; PKRU edge cases will skip");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on PKRU edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a PKRU edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "PKRU edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "PKRU edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Pku),
+        7,
+        "all PKRU edge cases should run"
+    );
+    assert_eq!(tally.compared, 7, "all PKRU edge cases should compare");
 }
 
 #[test]
