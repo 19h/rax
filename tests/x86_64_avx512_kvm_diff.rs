@@ -852,9 +852,9 @@ const EXCEPTION_GDT_ADDR: u64 = 0x27000;
 const EXCEPTION_IDT_ADDR: u64 = 0x28000;
 const EXCEPTION_HANDLER_ADDR: u64 = 0x29000;
 const EXCEPTION_CODE_SELECTOR: u16 = 0x8;
+const DE_VECTOR: usize = 0;
 const UD_VECTOR: usize = 6;
-const UD_MARKER_OFFSET: usize = 0xf0;
-const UD_MARKER: u32 = 0x5544_0006;
+const EXCEPTION_MARKER_OFFSET: usize = 0xf0;
 const FALLTHROUGH_MARKER: u32 = 0xbaad_0000;
 
 const CR0_PE: u64 = 1 << 0;
@@ -971,31 +971,46 @@ fn idt_gate64(handler: u64, selector: u16) -> [u8; 16] {
     gate
 }
 
-fn store_marker_code(marker: u32) -> [u8; 11] {
-    let mut code = [0u8; 11];
-    code[0..6].copy_from_slice(&[0xc7, 0x80, UD_MARKER_OFFSET as u8, 0, 0, 0]);
-    code[6..10].copy_from_slice(&marker.to_le_bytes());
-    code[10] = 0xf4;
+const fn exception_marker(vector: usize) -> u32 {
+    0x5544_0000 | vector as u32
+}
+
+fn store_marker_code(marker: u32) -> [u8; 18] {
+    let marker_addr = SCRATCH_ADDR + EXCEPTION_MARKER_OFFSET as u64;
+    let mut code = [0u8; 18];
+    code[0..2].copy_from_slice(&[0x49, 0xba]); // movabs r10, marker_addr
+    code[2..10].copy_from_slice(&marker_addr.to_le_bytes());
+    code[10..13].copy_from_slice(&[0x41, 0xc7, 0x02]); // movl marker, (%r10)
+    code[13..17].copy_from_slice(&marker.to_le_bytes());
+    code[17] = 0xf4;
     code
 }
 
-fn install_ud_trap_kvm(mem: &KvmMem) {
+fn install_exception_trap_kvm(mem: &KvmMem, vector: usize) {
+    assert!(vector < 256);
     let null_descriptor = [0u8; 8];
     let code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0x9a, 0x20, 0x00];
     mem.write(EXCEPTION_GDT_ADDR, &null_descriptor);
     mem.write(EXCEPTION_GDT_ADDR + 8, &code64_descriptor);
 
     let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
-    mem.write(EXCEPTION_IDT_ADDR + (UD_VECTOR as u64) * 16, &gate);
-    mem.write(EXCEPTION_HANDLER_ADDR, &store_marker_code(UD_MARKER));
+    mem.write(EXCEPTION_IDT_ADDR + (vector as u64) * 16, &gate);
+    mem.write(EXCEPTION_HANDLER_ADDR, &store_marker_code(exception_marker(vector)));
 }
 
-fn install_ud_trap_interp(mem: &GuestMemoryMmap) -> Result<(), String> {
+fn install_exception_trap_interp(mem: &GuestMemoryMmap, vector: usize) -> Result<(), String> {
+    assert!(vector < 256);
     let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
-    mem.write_slice(&gate, GuestAddress(EXCEPTION_IDT_ADDR + (UD_VECTOR as u64) * 16))
-        .map_err(|e| format!("write #UD IDT gate: {e:?}"))?;
-    mem.write_slice(&store_marker_code(UD_MARKER), GuestAddress(EXCEPTION_HANDLER_ADDR))
-        .map_err(|e| format!("write #UD handler: {e:?}"))?;
+    mem.write_slice(
+        &gate,
+        GuestAddress(EXCEPTION_IDT_ADDR + (vector as u64) * 16),
+    )
+    .map_err(|e| format!("write exception IDT gate {vector}: {e:?}"))?;
+    mem.write_slice(
+        &store_marker_code(exception_marker(vector)),
+        GuestAddress(EXCEPTION_HANDLER_ADDR),
+    )
+    .map_err(|e| format!("write exception handler {vector}: {e:?}"))?;
     Ok(())
 }
 
@@ -1020,18 +1035,27 @@ impl KvmOracle {
 
     /// Run `code` from `input`, returning the final architectural state.
     fn run(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
-        self.run_inner(code, input, false)
+        self.run_inner(code, input, None)
     }
 
     fn run_with_ud_trap(&self, code: &[u8], input: &InCase) -> Result<KvmOutcome, String> {
-        self.run_inner(code, input, true)
+        self.run_with_exception_trap(code, input, UD_VECTOR)
+    }
+
+    fn run_with_exception_trap(
+        &self,
+        code: &[u8],
+        input: &InCase,
+        vector: usize,
+    ) -> Result<KvmOutcome, String> {
+        self.run_inner(code, input, Some(vector))
     }
 
     fn run_inner(
         &self,
         code: &[u8],
         input: &InCase,
-        trap_ud: bool,
+        trap_vector: Option<usize>,
     ) -> Result<KvmOutcome, String> {
         use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
 
@@ -1045,8 +1069,8 @@ impl KvmOracle {
         mem.write(CODE_ADDR, code);
         mem.write(SCRATCH_ADDR, &input.scratch);
         mem.write(STACK_WINDOW_ADDR, &input.stack);
-        if trap_ud {
-            install_ud_trap_kvm(&mem);
+        if let Some(vector) = trap_vector {
+            install_exception_trap_kvm(&mem, vector);
         }
 
         let region = kvm_userspace_memory_region {
@@ -1098,11 +1122,11 @@ impl KvmOracle {
         sregs.fs = flat_data;
         sregs.gs = flat_data;
         sregs.ss = flat_data;
-        if trap_ud {
+        if let Some(vector) = trap_vector {
             sregs.gdt.base = EXCEPTION_GDT_ADDR;
             sregs.gdt.limit = 0x0f;
             sregs.idt.base = EXCEPTION_IDT_ADDR;
-            sregs.idt.limit = ((UD_VECTOR + 1) * 16 - 1) as u16;
+            sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
         }
         vcpu.set_sregs(&sregs)
             .map_err(|e| format!("set_sregs: {e:?}"))?;
@@ -1306,6 +1330,14 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
 }
 
 fn run_interp_with_ud_trap(code: &[u8], input: &InCase) -> Result<OutCase, String> {
+    run_interp_with_exception_trap(code, input, UD_VECTOR)
+}
+
+fn run_interp_with_exception_trap(
+    code: &[u8],
+    input: &InCase,
+    vector: usize,
+) -> Result<OutCase, String> {
     let mut regs = Registers {
         rbx: input.rbx,
         rcx: input.rcx,
@@ -1330,11 +1362,11 @@ fn run_interp_with_ud_trap(code: &[u8], input: &InCase) -> Result<OutCase, Strin
         .map_err(|e| format!("interp get sregs: {e:?}"))?;
     interp_sregs.cr4 = CR4_VAL;
     interp_sregs.idt.base = EXCEPTION_IDT_ADDR;
-    interp_sregs.idt.limit = ((UD_VECTOR + 1) * 16 - 1) as u16;
+    interp_sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
     vcpu.set_sregs(&interp_sregs)
         .map_err(|e| format!("interp set sregs: {e:?}"))?;
     vcpu.set_xgetbv1_value(XCR0_AVX512);
-    install_ud_trap_interp(&mem)?;
+    install_exception_trap_interp(&mem, vector)?;
     mem.write_slice(code, GuestAddress(CODE_ADDR))
         .map_err(|e| format!("write code at diff RIP: {e:?}"))?;
     let mut live_regs = vcpu
@@ -1406,7 +1438,7 @@ fn build_fault_probe_code(op: &[u8]) -> Vec<u8> {
 
 fn scratch_marker(scratch: &[u8; SCRATCH_BYTES]) -> u32 {
     u32::from_le_bytes(
-        scratch[UD_MARKER_OFFSET..UD_MARKER_OFFSET + 4]
+        scratch[EXCEPTION_MARKER_OFFSET..EXCEPTION_MARKER_OFFSET + 4]
             .try_into()
             .unwrap(),
     )
@@ -18031,7 +18063,83 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
-fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
+fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
+        (
+            "divw_zero",
+            &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf1],
+        ),
+        ("divl_zero", &[0x31, 0xc9, 0xf7, 0xf1]),
+        ("divq_zero", &[0x31, 0xc9, 0x48, 0xf7, 0xf1]),
+        (
+            "divb_quotient_overflow",
+            &[0x66, 0xb8, 0x00, 0x01, 0xb1, 0x01, 0xf6, 0xf1],
+        ),
+        (
+            "divw_quotient_overflow",
+            &[
+                0x66, 0xba, 0x01, 0x00, 0x66, 0x31, 0xc0, 0x66, 0xb9, 0x01, 0x00, 0x66, 0xf7,
+                0xf1,
+            ],
+        ),
+        (
+            "divl_quotient_overflow",
+            &[
+                0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc0, 0xb9, 0x01, 0x00, 0x00, 0x00, 0xf7,
+                0xf1,
+            ],
+        ),
+        (
+            "divq_quotient_overflow",
+            &[
+                0x48, 0xc7, 0xc2, 0x01, 0x00, 0x00, 0x00, 0x48, 0x31, 0xc0, 0x48, 0xc7, 0xc1,
+                0x01, 0x00, 0x00, 0x00, 0x48, 0xf7, 0xf1,
+            ],
+        ),
+        ("idivb_zero", &[0x31, 0xc9, 0xf6, 0xf9]),
+        (
+            "idivw_zero",
+            &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf9],
+        ),
+        ("idivl_zero", &[0x31, 0xc9, 0xf7, 0xf9]),
+        (
+            "idivq_zero",
+            &[0x31, 0xd2, 0x31, 0xc9, 0x48, 0xf7, 0xf9],
+        ),
+        (
+            "idivb_min_neg_one_overflow",
+            &[0x66, 0xb8, 0x80, 0xff, 0xb1, 0xff, 0xf6, 0xf9],
+        ),
+        (
+            "idivw_min_neg_one_overflow",
+            &[
+                0x66, 0xb8, 0x00, 0x80, 0x66, 0x99, 0x66, 0xb9, 0xff, 0xff, 0x66, 0xf7, 0xf9,
+            ],
+        ),
+        (
+            "idivl_min_neg_one_overflow",
+            &[
+                0xb8, 0x00, 0x00, 0x00, 0x80, 0x99, 0xb9, 0xff, 0xff, 0xff, 0xff, 0xf7, 0xf9,
+            ],
+        ),
+        (
+            "idivq_min_neg_one_overflow",
+            &[
+                0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x48, 0x99, 0x48,
+                0xc7, 0xc1, 0xff, 0xff, 0xff, 0xff, 0x48, 0xf7, 0xf9,
+            ],
+        ),
+    ]
+}
+
+fn run_exception_marker_corpus(
+    name: &str,
+    vector_name: &str,
+    vector: usize,
+    cases: Vec<(&'static str, &'static [u8])>,
+    expected: usize,
+) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
         return;
@@ -18045,48 +18153,57 @@ fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, e
     assert_eq!(case_count, expected, "unexpected {name} corpus size");
 
     let input = input_for(InputProfile::Int);
+    let expected_marker = exception_marker(vector);
     let mut failures = Vec::new();
     for (label, op) in cases {
         let code = build_fault_probe_code(op);
-        let kvm = match oracle.run_with_ud_trap(&code, &input) {
+        let kvm = match oracle.run_with_exception_trap(&code, &input, vector) {
             Ok(KvmOutcome::Ran(out)) => out,
             Ok(KvmOutcome::Faulted) => {
-                failures.push(format!("{label}: KVM faulted before reaching the #UD handler"));
+                failures.push(format!(
+                    "{label}: KVM faulted before reaching the {vector_name} handler"
+                ));
                 continue;
             }
             Err(e) => panic!("{label}: KVM backend failure: {e}"),
         };
-        let interp = match run_interp_with_ud_trap(&code, &input) {
+        let interp = match run_interp_with_exception_trap(&code, &input, vector) {
             Ok(out) => out,
             Err(e) => {
-                failures.push(format!("{label}: rax failed before reaching #UD handler: {e}"));
+                failures.push(format!(
+                    "{label}: rax failed before reaching {vector_name} handler: {e}"
+                ));
                 continue;
             }
         };
 
         let kvm_marker = scratch_marker(&kvm.scratch);
         let interp_marker = scratch_marker(&interp.scratch);
-        if kvm_marker != UD_MARKER {
+        if kvm_marker != expected_marker {
             failures.push(format!(
-                "{label}: KVM marker {kvm_marker:#x}, expected #UD marker {UD_MARKER:#x}"
+                "{label}: KVM marker {kvm_marker:#x}, expected {vector_name} marker {expected_marker:#x}"
             ));
         }
-        if interp_marker != UD_MARKER {
+        if interp_marker != expected_marker {
             failures.push(format!(
-                "{label}: rax marker {interp_marker:#x}, expected #UD marker {UD_MARKER:#x}"
+                "{label}: rax marker {interp_marker:#x}, expected {vector_name} marker {expected_marker:#x}"
             ));
         }
     }
 
     eprintln!(
-        "[avx512-kvm-diff] {name} #UD compared={}",
+        "[avx512-kvm-diff] {name} {vector_name} compared={}",
         case_count.saturating_sub(failures.len())
     );
     assert!(
         failures.is_empty(),
-        "{name} #UD mismatches vs silicon:\n{}",
+        "{name} {vector_name} mismatches vs silicon:\n{}",
         failures.join("\n")
     );
+}
+
+fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
+    run_exception_marker_corpus(name, "#UD", UD_VECTOR, cases, expected);
 }
 
 #[test]
@@ -18110,6 +18227,17 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
         9,
+    );
+}
+
+#[test]
+fn avx512_kvm_divide_error_exception_corpus() {
+    run_exception_marker_corpus(
+        "integer divide error",
+        "#DE",
+        DE_VECTOR,
+        divide_error_exception_cases(),
+        16,
     );
 }
 
