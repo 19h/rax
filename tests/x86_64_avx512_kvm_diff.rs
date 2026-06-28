@@ -13367,6 +13367,38 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // IRETQ is a control transfer that consumes a privileged return frame. The
+    // snippets build a scratch-local GDT and frame, return to a local label, and
+    // then restore RSP plus scratch/stack bytes before comparison.
+    let iretq_setup = "movq $0, 128(%rax)\nmovabsq $0x00209a0000000000, %r8\nmovq %r8, 136(%rax)\nmovabsq $0x0000920000000000, %r8\nmovq %r8, 144(%rax)\nmovw $0x0017, 32(%rax)\nleaq 128(%rax), %r8\nmovq %r8, 34(%rax)\nlgdt 32(%rax)";
+    let iretq_clear = "movq $0, 128(%rax)\nmovq $0, 136(%rax)\nmovq $0, 144(%rax)\nmovq $0, 176(%rax)\nmovq $0, 184(%rax)\nmovq $0, 192(%rax)\nmovq $0, 200(%rax)\nmovq $0, 208(%rax)";
+    for &(label, flags, body) in &[
+        (
+            "iretq_core_control_iret_edge_target_roundtrip",
+            "0x202",
+            "1:\nmovq $0x2222, %r8\nmovabsq $0x20000, %rsp",
+        ),
+        (
+            "iretq_core_control_iret_edge_restores_status_flags",
+            "0x247",
+            "1:\nmovabsq $0x20000, %rsp\npushfq\npopq %r9\nmovq $0, -8(%rsp)\nandq $0x45, %r9\ncmpq $0x45, %r9\nsete %cl\nmovzbl %cl, %ecx\nxorq %r9, %r9",
+        ),
+        (
+            "iretq_core_control_iret_edge_restored_zf_overrides_stale_flags",
+            "0x242",
+            "cmpq %r8, %r9\n1:\nsetz %cl\nmovzbl %cl, %ecx\nmovabsq $0x20000, %rsp",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: format!(
+                "{iretq_setup}\nleaq 1f(%rip), %r9\nmovq %r9, 176(%rax)\nmovq $0x8, 184(%rax)\nmovq ${flags}, 192(%rax)\nmovabsq $0x20000, %r9\nmovq %r9, 200(%rax)\nmovq $0x10, 208(%rax)\nleaq 176(%rax), %rsp\niretq\nmovq $0xbad, %r8\njmp 2f\n{body}\n{iretq_clear}\n2:\ncmpq %r8, %r8"
+            ),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core near control-transfer and group-5 stack/addressing forms not covered
     // by the direct rel8 starter cases above. These include forced rel32
     // branches, indirect CALL/JMP through registers and memory, RET imm16 stack
@@ -19977,7 +20009,7 @@ fn avx512_kvm_core_control_transfer_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        18,
+        21,
         "unexpected core control-transfer corpus size"
     );
 
@@ -20001,9 +20033,43 @@ fn avx512_kvm_core_control_transfer_corpus() {
         "core control-transfer cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 18,
+        tally.compared, 21,
         "all core control-transfer cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_core_iret_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Core && case.label.contains("_core_control_iret_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 3, "unexpected core IRET edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core IRET edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core IRET edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core IRET edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core IRET edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        3,
+        "all core IRET edge cases should run"
+    );
+    assert_eq!(tally.compared, 3, "all core IRET edge cases should compare");
 }
 
 #[test]
