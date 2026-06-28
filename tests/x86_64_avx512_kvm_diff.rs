@@ -13457,6 +13457,32 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Far JMP/CALL reload CS from a descriptor and mark that code descriptor
+    // accessed. The scratch GDT is intentionally left visible in the final
+    // memory image so the descriptor access-bit write is part of the diff.
+    let far_control_setup = "movq $0, 128(%rax)\nmovabsq $0x00209a0000000000, %r10\nmovq %r10, 136(%rax)\nmovw $0x000f, 32(%rax)\nleaq 128(%rax), %r10\nmovq %r10, 34(%rax)\nlgdt 32(%rax)";
+    for &(label, asm) in &[
+        (
+            "ljmpq_core_far_control_edge_target_roundtrip",
+            "leaq 1f(%rip), %r10\nmovq %r10, 176(%rax)\nmovq $0x8, 184(%rax)\nljmpq *176(%rax)\nmovq $0xbad, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:\ncmpq %r8, %r8",
+        ),
+        (
+            "ljmpq_core_far_control_edge_preserves_status_flags",
+            "cmpq %r8, %r8\nleaq 1f(%rip), %r10\nmovq %r10, 176(%rax)\nmovq $0x8, 184(%rax)\nljmpq *176(%rax)\nmovq $0xbad, %r8\njmp 2f\n1:\nsetz %cl\nmovzbl %cl, %ecx\n2:\ncmpq %r8, %r8",
+        ),
+        (
+            "lcallq_core_far_control_edge_roundtrip",
+            "leaq 1f(%rip), %r10\nmovq %r10, 176(%rax)\nmovq $0x8, 184(%rax)\nlcallq *176(%rax)\nmovq $0, -16(%rsp)\nmovq $0, -8(%rsp)\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x3333, %r9\nlretq\n2:\ncmpq %r8, %r8",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: format!("{far_control_setup}\n{asm}"),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core near control-transfer and group-5 stack/addressing forms not covered
     // by the direct rel8 starter cases above. These include forced rel32
     // branches, indirect CALL/JMP through registers and memory, RET imm16 stack
@@ -20211,6 +20237,50 @@ fn avx512_kvm_core_far_return_edge_corpus() {
     assert_eq!(
         tally.compared, 3,
         "all core far-return edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_far_control_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Core && case.label.contains("_core_far_control_edge_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        3,
+        "unexpected core far-control edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core far-control edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core far-control edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core far-control edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core far-control edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        3,
+        "all core far-control edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 3,
+        "all core far-control edge cases should compare"
     );
 }
 

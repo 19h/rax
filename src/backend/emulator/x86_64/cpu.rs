@@ -2397,6 +2397,7 @@ impl X86_64Vcpu {
                 selector
             )));
         }
+        self.mark_descriptor_accessed(selector)?;
 
         // Apply granularity scaling: G=1 means limit is in 4 KiB units, so the
         // byte limit is (limit << 12) | 0xFFF.
@@ -2407,7 +2408,7 @@ impl X86_64Vcpu {
         self.sregs.cs.selector = selector;
         self.sregs.cs.base = base;
         self.sregs.cs.limit = limit;
-        self.sregs.cs.type_ = type_;
+        self.sregs.cs.type_ = type_ | 1;
         self.sregs.cs.present = true;
         self.sregs.cs.dpl = dpl;
         self.sregs.cs.s = true;
