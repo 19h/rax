@@ -13667,6 +13667,12 @@ fn irregular_cases() -> Vec<Case> {
         ("stac_sets_ac", "stac"),
         ("clac_clears_ac", "stac\nclac"),
         ("stac_clac_repeated", "stac\nstac\nclac\nclac"),
+        ("stac_protection_edge_ac_set_from_clear", "clac\nstac"),
+        ("clac_protection_edge_ac_clear_from_set", "stac\nclac"),
+        (
+            "stac_clac_protection_edge_repeated_idempotent",
+            "clac\nclac\nstac\nstac\nclac",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -13691,6 +13697,26 @@ fn irregular_cases() -> Vec<Case> {
             Pku,
         ),
         (
+            "rdpkru_protection_edge_zero_ext",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nmovq $-1, %rax\nmovq $-1, %rdx\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_all_nonzero_keys",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0xfffffff0, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_high_halves_ignored",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x33333330, %eax\nmovabsq $0xffffffff00000000, %rcx\nmovabsq $0xffffffff00000000, %rdx\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_second_write_overwrites",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x11111110, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nmovl $0x22222220, %eax\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
             "swapgs_roundtrip_rdgsbase",
             "movl $0xc0000102, %ecx\nmovabsq $0x0000000000789000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000123000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nrdgsbase %rbx\nswapgs\nrdgsbase %rcx\nswapgs\nrdgsbase %rdx",
             Swapgs,
@@ -13698,6 +13724,21 @@ fn irregular_cases() -> Vec<Case> {
         (
             "swapgs_extended_rdgsbase",
             "movl $0xc0000102, %ecx\nmovabsq $0x00000000009ab000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000246000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nrdgsbase %r8\nswapgs\nrdgsbase %r9",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_double_swap_restores",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000abc000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000def000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nswapgs\nrdgsbase %r8",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_kernel_gs_visible",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000333000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000444000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nrdgsbase %r8\nswapgs\nrdgsbase %r9",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_gs_memory_base",
+            "movabsq $0x1111222233334444, %r8\nmovq %r8, 32(%rdi)\nmovabsq $0x5555666677778888, %r8\nmovq %r8, 128(%rdi)\nmovl $0xc0000102, %ecx\nmovabsq $0x40a0, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x4040, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nmovq %gs:0, %r8\nswapgs\nmovq %gs:0, %r9",
             Swapgs,
         ),
     ] {
@@ -16649,6 +16690,71 @@ fn avx512_kvm_invpcid_corpus() {
         "INVPCID cases should not feature-skip"
     );
     assert_eq!(tally.compared, 6, "all INVPCID cases should compare");
+}
+
+#[test]
+fn avx512_kvm_protection_state_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_protection_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected protection-state edge corpus size"
+    );
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Smap) {
+        eprintln!("[skip] host lacks SMAP support; SMAP edge cases will skip");
+    }
+    if !host.supports(Feat::Pku) {
+        eprintln!("[skip] host lacks PKU support; PKU edge cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on protection-state edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a protection-state edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "protection-state edge corpus produced assembler-rejected cases"
+    );
+
+    let expected_smap = if host.supports(Feat::Smap) { 3 } else { 0 };
+    let expected_pku = if host.supports(Feat::Pku) { 4 } else { 0 };
+    let expected_skips = 7 - expected_smap - expected_pku;
+    assert_eq!(
+        tally.ran_for(Feat::Smap),
+        expected_smap,
+        "unexpected SMAP edge run count"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Pku),
+        expected_pku,
+        "unexpected PKU edge run count"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Swapgs),
+        3,
+        "all SWAPGS edge cases should run"
+    );
+    assert_eq!(
+        tally.skipped_feature, expected_skips,
+        "unexpected protection-state feature skips"
+    );
+    assert_eq!(
+        tally.compared,
+        expected_smap + expected_pku + 3,
+        "all supported protection-state edge cases should compare"
+    );
 }
 
 #[test]
