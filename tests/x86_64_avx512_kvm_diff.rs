@@ -14376,6 +14376,18 @@ fn irregular_cases() -> Vec<Case> {
             "rdpid_r10_to_rcx_zeroext",
             "movabsq $-1, %r10\nrdpid %r10\nmovq %r10, %rcx",
         ),
+        (
+            "rdpid_rdpid_edge_r15_zeroext",
+            "movabsq $-1, %r15\nrdpid %r15",
+        ),
+        (
+            "rdpid_rdpid_edge_rexw_r15",
+            "movabsq $-1, %r15\n.byte 0xf3, 0x49, 0x0f, 0xc7, 0xff",
+        ),
+        (
+            "rdpid_rdpid_edge_r15_preserves_cmp_flags",
+            "cmpq %r8, %r8\nrdpid %r15",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17851,7 +17863,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        28,
+        31,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -17886,13 +17898,45 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Rdpid),
-        6,
+        9,
         "all RDPID cases should run"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 31,
         "all serialize/WAITPKG/RDPID cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_rdpid_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_rdpid_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 3, "unexpected RDPID edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on RDPID edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an RDPID edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "RDPID edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "RDPID edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdpid),
+        3,
+        "all RDPID edge cases should run"
+    );
+    assert_eq!(tally.compared, 3, "all RDPID edge cases should compare");
 }
 
 #[test]
