@@ -1,7 +1,7 @@
 //! VEX instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
@@ -192,9 +192,7 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VROUNDPS/PD require VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -401,7 +399,7 @@ impl X86_64Vcpu {
         } else {
             // VDPPD
             if vex_l != 0 {
-                return Err(Error::Emulator("VDPPD requires VEX.L=0".to_string()));
+                return self.inject_undefined_instruction();
             }
             let src1_lo = f64::from_bits(self.regs.xmm[xmm_src1][0]);
             let src1_hi = f64::from_bits(self.regs.xmm[xmm_src1][1]);
