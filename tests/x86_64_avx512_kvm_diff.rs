@@ -7805,6 +7805,11 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "pblendvb_sse41_edge_alternating_byte_mask",
+            "pcmpeqb %xmm0, %xmm0\npsllw $8, %xmm0\npblendvb %xmm2, %xmm1",
+            Int,
+        ),
+        (
             "blendvps_sse41_edge_zero_mask",
             "pxor %xmm0, %xmm0\nblendvps %xmm2, %xmm1",
             F32,
@@ -7815,6 +7820,11 @@ fn irregular_cases() -> Vec<Case> {
             F32,
         ),
         (
+            "blendvps_sse41_edge_high_three_lanes_mask",
+            "pcmpeqb %xmm0, %xmm0\npslldq $4, %xmm0\nblendvps %xmm2, %xmm1",
+            F32,
+        ),
+        (
             "blendvpd_sse41_edge_zero_mask",
             "pxor %xmm0, %xmm0\nblendvpd %xmm2, %xmm1",
             F64,
@@ -7822,6 +7832,11 @@ fn irregular_cases() -> Vec<Case> {
         (
             "blendvpd_sse41_edge_allones_mask",
             "pcmpeqb %xmm0, %xmm0\nblendvpd %xmm2, %xmm1",
+            F64,
+        ),
+        (
+            "blendvpd_sse41_edge_high_lane_mask",
+            "pcmpeqb %xmm0, %xmm0\npslldq $8, %xmm0\nblendvpd %xmm2, %xmm1",
             F64,
         ),
         ("blendps_sse41_edge_imm0", "blendps $0x00, %xmm2, %xmm1", F32),
@@ -8833,6 +8848,12 @@ fn irregular_cases() -> Vec<Case> {
             F32,
         ),
         (
+            "vblendvps_vex_perm_blend_edge_high_three_lanes_mask",
+            "{vex} vxorps %xmm4, %xmm4, %xmm4\n{vex} vcmpeqps %xmm4, %xmm4, %xmm4\n{vex} vpslldq $4, %xmm4, %xmm4\n{vex} vblendvps %xmm4, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32,
+        ),
+        (
             "vblendvpd_vex_perm_blend_edge_zero_mask",
             "{vex} vxorpd %ymm4, %ymm4, %ymm4\n{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
             Avx,
@@ -8841,6 +8862,12 @@ fn irregular_cases() -> Vec<Case> {
         (
             "vblendvpd_vex_perm_blend_edge_allones_mask",
             "{vex} vxorpd %ymm4, %ymm4, %ymm4\n{vex} vcmpeqpd %ymm4, %ymm4, %ymm4\n{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64,
+        ),
+        (
+            "vblendvpd_vex_perm_blend_edge_high_lanes_mask",
+            "{vex} vxorpd %ymm4, %ymm4, %ymm4\n{vex} vcmpeqpd %ymm4, %ymm4, %ymm4\n{vex} vpslldq $8, %ymm4, %ymm4\n{vex} vblendvpd %ymm4, 32(%rax), %ymm3, %ymm1",
             Avx,
             F64,
         ),
@@ -23149,7 +23176,7 @@ fn avx512_kvm_sse41_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_sse41_edge_"))
         .collect();
-    assert_eq!(cases.len(), 17, "unexpected SSE4.1 edge corpus size");
+    assert_eq!(cases.len(), 20, "unexpected SSE4.1 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -23169,10 +23196,10 @@ fn avx512_kvm_sse41_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Sse41),
-        17,
+        20,
         "all SSE4.1 edge cases should run"
     );
-    assert_eq!(tally.compared, 17, "all SSE4.1 edge cases should compare");
+    assert_eq!(tally.compared, 20, "all SSE4.1 edge cases should compare");
 }
 
 #[test]
@@ -24406,7 +24433,7 @@ fn avx512_kvm_vex_permute_blend_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        34,
+        36,
         "unexpected VEX permute/blend edge corpus size"
     );
 
@@ -24431,7 +24458,7 @@ fn avx512_kvm_vex_permute_blend_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        15,
+        17,
         "all AVX permute/blend edge cases should run"
     );
     assert_eq!(
@@ -24440,7 +24467,7 @@ fn avx512_kvm_vex_permute_blend_edge_corpus() {
         "all AVX2 permute/blend edge cases should run"
     );
     assert_eq!(
-        tally.compared, 34,
+        tally.compared, 36,
         "all VEX permute/blend edge cases should compare"
     );
 }
