@@ -83,9 +83,7 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VPMOVMSKB requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_src = rm as usize;

@@ -1,7 +1,7 @@
 //! VEX compare instruction implementations.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
@@ -82,7 +82,7 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VTEST requires VEX.vvvv=1111b".to_string()));
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_src1 = reg as usize;

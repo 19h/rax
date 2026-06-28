@@ -1,7 +1,7 @@
 //! VEX integer instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -551,9 +551,10 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "VPHMINPOSUW requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
+        }
+        if vex_l == 1 {
+            return self.inject_undefined_instruction();
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -587,12 +588,6 @@ impl X86_64Vcpu {
         self.regs.xmm[xmm_dst][1] = 0;
         self.regs.ymm_high[xmm_dst][0] = 0;
         self.regs.ymm_high[xmm_dst][1] = 0;
-
-        if vex_l == 1 {
-            return Err(Error::Emulator(
-                "VPHMINPOSUW does not support VEX.256".to_string(),
-            ));
-        }
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
