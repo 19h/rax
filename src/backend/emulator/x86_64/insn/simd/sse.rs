@@ -216,18 +216,11 @@ pub fn xorps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 // Prefetch Hints (PREFETCHNTA/PREFETCHT0/PREFETCHT1/PREFETCHT2)
 // =============================================================================
 
-/// PREFETCHh m8 (0F 18 /0-3) - cache prefetch hints, treated as NOP in emulator
+/// PREFETCHh m8 (0F 18 /r) - cache prefetch hints, treated as NOP in emulator
 pub fn prefetchh(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
-    let hint = (modrm >> 3) & 0x07;
 
-    if hint > 3 {
-        return Err(Error::Emulator(format!(
-            "unimplemented PREFETCHh hint /{} at RIP={:#x}",
-            hint, vcpu.regs.rip
-        )));
-    }
     if modrm >> 6 == 3 {
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
@@ -239,18 +232,11 @@ pub fn prefetchh(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     Ok(None)
 }
 
-/// PREFETCHW/PREFETCHWT1 m8 (0F 0D /1-2) - prefetch with intent to write, treated as NOP
+/// PREFETCHW/PREFETCHWT1 m8 (0F 0D /r) - write-prefetch hints, treated as NOP.
 pub fn prefetchw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
-    let hint = (modrm >> 3) & 0x07;
 
-    if hint != 1 && hint != 2 {
-        return Err(Error::Emulator(format!(
-            "unimplemented PREFETCHW hint /{} at RIP={:#x}",
-            hint, vcpu.regs.rip
-        )));
-    }
     if modrm >> 6 == 3 {
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);

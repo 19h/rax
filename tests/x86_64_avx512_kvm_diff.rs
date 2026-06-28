@@ -19355,6 +19355,24 @@ fn prefetch_register_source_fallthrough_cases() -> Vec<(&'static str, &'static [
     cases
 }
 
+fn prefetch_reserved_hint_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
+    let mut cases: Vec<(&'static str, &'static [u8])> = vec![
+        ("prefetchh_hint4_fallthrough", &[0x0fu8, 0x18, 0x20]),
+        ("prefetchh_hint5_fallthrough", &[0x0fu8, 0x18, 0x28]),
+        ("prefetchh_hint6_fallthrough", &[0x0fu8, 0x18, 0x30]),
+        ("prefetchh_hint7_fallthrough", &[0x0fu8, 0x18, 0x38]),
+    ];
+    if HostFeatures::detect().supports(Feat::Prefetchw) {
+        cases.push(("prefetchw_hint0_fallthrough", &[0x0fu8, 0x0d, 0x00]));
+        cases.push(("prefetchw_hint3_fallthrough", &[0x0fu8, 0x0d, 0x18]));
+        cases.push(("prefetchw_hint4_fallthrough", &[0x0fu8, 0x0d, 0x20]));
+        cases.push(("prefetchw_hint5_fallthrough", &[0x0fu8, 0x0d, 0x28]));
+        cases.push(("prefetchw_hint6_fallthrough", &[0x0fu8, 0x0d, 0x30]));
+        cases.push(("prefetchw_hint7_fallthrough", &[0x0fu8, 0x0d, 0x38]));
+    }
+    cases
+}
+
 fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
@@ -20032,6 +20050,17 @@ fn avx512_kvm_prefetch_register_source_fallthrough_corpus() {
         4
     };
     run_fallthrough_marker_corpus("prefetch register-source", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_prefetch_reserved_hint_fallthrough_corpus() {
+    let cases = prefetch_reserved_hint_fallthrough_cases();
+    let expected = if HostFeatures::detect().supports(Feat::Prefetchw) {
+        10
+    } else {
+        4
+    };
+    run_fallthrough_marker_corpus("prefetch reserved-hint", cases, expected);
 }
 
 #[test]
