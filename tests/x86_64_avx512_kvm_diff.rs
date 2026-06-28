@@ -18983,6 +18983,12 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             ],
         },
         ExceptionMarkerCase {
+            label: "xgetbv_unsupported_xcr_index",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[0xb9, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd0],
+        },
+        ExceptionMarkerCase {
             label: "rdpkru_nonzero_ecx",
             vector_name: "#GP",
             vector: GP_VECTOR,
@@ -19342,7 +19348,7 @@ fn avx512_kvm_software_interrupt_exception_corpus() {
 
 #[test]
 fn avx512_kvm_general_protection_exception_corpus() {
-    let expected = if host_cpu_flag("movdir64b") { 35 } else { 34 };
+    let expected = if host_cpu_flag("movdir64b") { 36 } else { 35 };
     run_exception_marker_cases(
         "general protection",
         general_protection_exception_cases(),

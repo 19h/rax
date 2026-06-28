@@ -53,11 +53,9 @@ impl X86_64Vcpu {
                     let value = match self.regs.rcx as u32 {
                         0 => self.xcr0,
                         1 => self.xgetbv1_value,
-                        ecx => {
-                            return Err(Error::Emulator(format!(
-                                "unsupported XGETBV ECX={} at RIP={:#x}",
-                                ecx, self.regs.rip
-                            )));
+                        _ => {
+                            self.inject_exception(13, Some(0))?;
+                            return Ok(None);
                         }
                     };
                     self.regs.rax = value & 0xFFFF_FFFF;
