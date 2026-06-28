@@ -18428,6 +18428,70 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector: GP_VECTOR,
             op: &[0xc5, 0xfd, 0x7f, 0x40, 0x01],
         },
+        ExceptionMarkerCase {
+            label: "evex_vmovaps_zmm_load_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0x7c, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovaps_zmm_store_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0x7c, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovapd_zmm_load_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0xfd, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovapd_zmm_store_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0xfd, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovdqa32_zmm_load_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0x7d, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovdqa32_zmm_store_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0x7d, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovdqa64_zmm_load_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0xfd, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "evex_vmovdqa64_zmm_store_unaligned",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x62, 0xf1, 0xfd, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00,
+            ],
+        },
     ];
 
     if host_cpu_flag("movdir64b") {
@@ -18581,7 +18645,7 @@ fn avx512_kvm_software_interrupt_exception_corpus() {
 
 #[test]
 fn avx512_kvm_general_protection_exception_corpus() {
-    let expected = if host_cpu_flag("movdir64b") { 24 } else { 23 };
+    let expected = if host_cpu_flag("movdir64b") { 32 } else { 31 };
     run_exception_marker_cases(
         "general protection",
         general_protection_exception_cases(),

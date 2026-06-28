@@ -6989,10 +6989,8 @@ pub fn evex_mov_masked_load(
     };
 
     if is_memory && aligned && (addr % vl_bytes as u64) != 0 {
-        return Err(Error::Emulator(format!(
-            "VMOVDQA: unaligned memory access at {:#x}",
-            addr
-        )));
+        vcpu.inject_exception(13, Some(0))?;
+        return Ok(None);
     }
 
     let src_bytes = if is_memory {
@@ -7048,10 +7046,8 @@ pub fn evex_mov_masked_store(
     };
 
     if is_memory && aligned && (addr % vl_bytes as u64) != 0 {
-        return Err(Error::Emulator(format!(
-            "VMOVDQA: unaligned memory access at {:#x}",
-            addr
-        )));
+        vcpu.inject_exception(13, Some(0))?;
+        return Ok(None);
     }
 
     let src_bytes = read_reg_bytes(vcpu, src, vl_bytes);
