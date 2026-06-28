@@ -18125,6 +18125,66 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vphminposuw_l1_illegal",
             &[0xc4, 0xe2, 0x7d, 0x41, 0xd1],
         ),
+        (
+            "vmovss_load_vvvv_illegal",
+            &[0xc5, 0xf2, 0x10, 0x08],
+        ),
+        (
+            "vmovss_store_vvvv_illegal",
+            &[0xc5, 0xf2, 0x11, 0x08],
+        ),
+        (
+            "vmovlps_l1_illegal",
+            &[0xc5, 0xf4, 0x12, 0x10],
+        ),
+        (
+            "vmovlpd_l1_illegal",
+            &[0xc5, 0xf5, 0x12, 0x10],
+        ),
+        (
+            "vmovlpd_register_source_illegal",
+            &[0xc5, 0xf1, 0x12, 0xd1],
+        ),
+        (
+            "vmovlps_store_l1_illegal",
+            &[0xc5, 0xfc, 0x13, 0x08],
+        ),
+        (
+            "vmovlps_store_vvvv_illegal",
+            &[0xc5, 0xf0, 0x13, 0x08],
+        ),
+        (
+            "vmovlps_store_register_dest_illegal",
+            &[0xc5, 0xf8, 0x13, 0xc8],
+        ),
+        (
+            "vmovsldup_vvvv_illegal",
+            &[0xc5, 0xf2, 0x12, 0xd1],
+        ),
+        (
+            "vmovshdup_vvvv_illegal",
+            &[0xc5, 0xf2, 0x16, 0xd1],
+        ),
+        (
+            "vmovddup_vvvv_illegal",
+            &[0xc5, 0xf3, 0x12, 0xd1],
+        ),
+        (
+            "vmovntps_vvvv_illegal",
+            &[0xc5, 0xf0, 0x2b, 0x08],
+        ),
+        (
+            "vmovntps_register_dest_illegal",
+            &[0xc5, 0xf8, 0x2b, 0xc8],
+        ),
+        (
+            "vmovntdqa_vvvv_illegal",
+            &[0xc4, 0xe2, 0x71, 0x2a, 0x10],
+        ),
+        (
+            "vmovntdqa_register_source_illegal",
+            &[0xc4, 0xe2, 0x79, 0x2a, 0xd0],
+        ),
     ]
 }
 
@@ -18683,7 +18743,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        25,
+        40,
     );
 }
 
