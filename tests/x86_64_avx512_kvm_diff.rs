@@ -14772,6 +14772,31 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0x0000000000004010, %r8\nmovq %r8, %dr0\nmovabsq $0x00000000000d0401, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9",
             DebugReg,
         ),
+        (
+            "debug_reg_edge_dr3_high_reg_destination",
+            "movabsq $0x0000000000004020, %r8\nmovq %r8, %dr3\nxorq %r9, %r9\nmovq %dr3, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr0_second_write_overwrites",
+            "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nxorq %r8, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx\ncmpq %rcx, %rcx",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr6_reset_value_roundtrip",
+            "movabsq $0x00000000ffff0ff0, %r8\nmovq %r8, %dr6\nxorq %r9, %r9\nmovq %dr6, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr7_high_reg_source_roundtrip",
+            "movabsq $0x0000000000000400, %r9\nmovq %r9, %dr7\nxorq %r9, %r9\nmovq %dr7, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr7_second_write_clears_local_enable",
+            "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovabsq $0x401, %r8\nmovq %r8, %dr7\nmovabsq $0x400, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17452,7 +17477,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 31, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 36, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17479,10 +17504,48 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     assert_eq!(tally.ran_for(Feat::Msr), 8, "all MSR cases should run");
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
-        7,
+        12,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 31, "all privileged cases should compare");
+    assert_eq!(tally.compared, 36, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_debug_register_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::DebugReg && case.label.contains("debug_reg_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 5, "unexpected debug-register edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on debug-register edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a debug-register edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "debug-register edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "debug-register edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DebugReg),
+        5,
+        "all debug-register edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 5,
+        "all debug-register edge cases should compare"
+    );
 }
 
 #[test]
