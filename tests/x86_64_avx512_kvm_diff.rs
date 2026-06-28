@@ -12880,6 +12880,54 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "fxsave_fxsave_edge_legacy32_mxcsr_and_mask",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave 256(%rax)\nmovl 280(%rax), %r8d\nmovl %r8d, 36(%rax)\nmovl 284(%rax), %r8d\nmovl %r8d, 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxrstor_fxsave_edge_legacy32_mxcsr_roundtrip",
+            "movl $0x3f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave 256(%rax)\nmovl $0x1f80, 36(%rax)\nldmxcsr 36(%rax)\nfxrstor 256(%rax)\nstmxcsr 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_fxsave_edge_x87_header_fields",
+            "fninit\nfld1\nfldl 32(%rax)\nfxsave64 256(%rax)\nmovw 256(%rax), %r8w\nmovw %r8w, 64(%rax)\nmovw 258(%rax), %r8w\nmovw %r8w, 66(%rax)\nmovw 260(%rax), %r8w\nmovw %r8w, 68(%rax)",
+            Fxsave,
+            F64,
+        ),
+        (
+            "fxrstor64_fxsave_edge_x87_two_deep_order",
+            "fninit\nfld1\nfldl 32(%rax)\nfxsave64 256(%rax)\nfninit\nfldz\nfxrstor64 256(%rax)\nfstpl 64(%rax)\nfstpl 72(%rax)",
+            Fxsave,
+            F64,
+        ),
+        (
+            "fxrstor64_fxsave_edge_xmm0_roundtrip",
+            "movdqu 32(%rax), %xmm0\nfxsave64 256(%rax)\npxor %xmm0, %xmm0\nfxrstor64 256(%rax)\nmovdqu %xmm0, 64(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxrstor64_fxsave_edge_xmm15_roundtrip",
+            "movdqu 32(%rax), %xmm15\nfxsave64 256(%rax)\npxor %xmm15, %xmm15\nfxrstor64 256(%rax)\nmovdqu %xmm15, 64(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_fxsave_edge_mxcsr_round_down",
+            "movl $0x7f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave64 256(%rax)\nmovl 280(%rax), %r8d\nmovl %r8d, 36(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxrstor64_fxsave_edge_mxcsr_round_zero",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nfxsave64 256(%rax)\nmovl $0x1f80, 36(%rax)\nldmxcsr 36(%rax)\nfxrstor64 256(%rax)\nstmxcsr 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
             "xgetbv_xsetbv_xcr0_store",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxgetbv\nmovl %eax, 48(%rbx)\nmovl %edx, 52(%rbx)",
             Xsave,
@@ -16350,7 +16398,7 @@ fn avx512_kvm_processor_state_management_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        10,
+        18,
         "unexpected processor state-management corpus size"
     );
 
@@ -16375,7 +16423,7 @@ fn avx512_kvm_processor_state_management_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Fxsave),
-        6,
+        14,
         "all FXSAVE/MXCSR cases should run"
     );
     assert_eq!(
@@ -16384,9 +16432,41 @@ fn avx512_kvm_processor_state_management_corpus() {
         "all XSAVE/XRSTOR cases should run"
     );
     assert_eq!(
-        tally.compared, 10,
+        tally.compared, 18,
         "all processor state-management cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_fxsave_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Fxsave && case.label.contains("_fxsave_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected FXSAVE edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on FXSAVE edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a FXSAVE edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "FXSAVE edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "FXSAVE edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fxsave),
+        8,
+        "all FXSAVE edge cases should run"
+    );
+    assert_eq!(tally.compared, 8, "all FXSAVE edge cases should compare");
 }
 
 #[test]
