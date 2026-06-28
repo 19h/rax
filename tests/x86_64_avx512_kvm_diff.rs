@@ -13714,6 +13714,66 @@ fn irregular_cases() -> Vec<Case> {
             "xorl %ecx, %ecx\nprefetchw 208(%rax,%rcx,1)",
             Prefetchw,
         ),
+        (
+            "prefetchnta_prefetch_edge_rex_r8_base",
+            "movq %rax, %r8\nprefetchnta (%r8)",
+            HintNop,
+        ),
+        (
+            "prefetcht0_prefetch_edge_negative_disp",
+            "leaq 224(%rax), %rbp\nprefetcht0 -16(%rbp)",
+            HintNop,
+        ),
+        (
+            "addr32_prefetcht1_prefetch_edge_high_rax",
+            "movabsq $0xffff000000004000, %rax\naddr32 prefetcht1 (%eax)",
+            HintNop,
+        ),
+        (
+            "prefetcht2_prefetch_edge_stack_base",
+            "prefetcht2 (%rsp)",
+            HintNop,
+        ),
+        (
+            "prefetcht0_prefetch_edge_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nprefetcht0 200(%rax)",
+            HintNop,
+        ),
+        (
+            "prefetchw_prefetch_edge_rex_r8_base",
+            "movq %rax, %r8\nprefetchw (%r8)",
+            Prefetchw,
+        ),
+        (
+            "addr32_prefetchw_prefetch_edge_high_rax",
+            "movabsq $0xffff000000004000, %rax\naddr32 prefetchw (%eax)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_memory",
+            "prefetchwt1 216(%rax)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nprefetchwt1 224(%rax)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_sib_zero_index",
+            "xorl %ecx, %ecx\nprefetchwt1 232(%rax,%rcx,1)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_rex_r8_base",
+            "movq %rax, %r8\nprefetchwt1 (%r8)",
+            Prefetchw,
+        ),
+        (
+            "addr32_prefetchwt1_prefetch_edge_high_rax",
+            "movabsq $0xffff000000004000, %rax\naddr32 prefetchwt1 (%eax)",
+            Prefetchw,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -16992,11 +17052,11 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::HintNop | Feat::Prefetchw))
         .collect();
-    assert_eq!(cases.len(), 14, "unexpected hint/prefetch corpus size");
+    assert_eq!(cases.len(), 26, "unexpected hint/prefetch corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Prefetchw) {
-        eprintln!("[skip] host lacks PREFETCHW support; PREFETCHW cases will skip");
+        eprintln!("[skip] host lacks PREFETCHW support; PREFETCHW/WT1 cases will skip");
     }
 
     let Some(tally) = run_corpus(&cases) else {
@@ -17013,28 +17073,87 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::HintNop),
-        11,
+        16,
         "all NOP/PAUSE/PREFETCHh cases should run"
     );
     if host.supports(Feat::Prefetchw) {
         assert_eq!(
             tally.ran_for(Feat::Prefetchw),
-            3,
-            "all PREFETCHW cases should run"
+            10,
+            "all PREFETCHW/PREFETCHWT1 cases should run"
         );
         assert_eq!(
             tally.skipped_feature, 0,
             "hint/prefetch cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 14, "all hint/prefetch cases should compare");
+        assert_eq!(tally.compared, 26, "all hint/prefetch cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 3,
-            "only PREFETCHW cases should feature-skip"
+            tally.skipped_feature, 10,
+            "only PREFETCHW/PREFETCHWT1 cases should feature-skip"
         );
         assert_eq!(
-            tally.compared, 11,
+            tally.compared, 16,
             "all non-PREFETCHW hint cases should compare"
+        );
+    }
+}
+
+#[test]
+fn avx512_kvm_prefetch_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_prefetch_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected prefetch edge corpus size");
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Prefetchw) {
+        eprintln!("[skip] host lacks PREFETCHW support; PREFETCHW/WT1 edge cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on prefetch edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a prefetch edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "prefetch edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::HintNop),
+        5,
+        "all PREFETCHh edge cases should run"
+    );
+    if host.supports(Feat::Prefetchw) {
+        assert_eq!(
+            tally.ran_for(Feat::Prefetchw),
+            7,
+            "all PREFETCHW/PREFETCHWT1 edge cases should run"
+        );
+        assert_eq!(
+            tally.skipped_feature, 0,
+            "prefetch edge cases should not feature-skip"
+        );
+        assert_eq!(
+            tally.compared, 12,
+            "all prefetch edge cases should compare"
+        );
+    } else {
+        assert_eq!(
+            tally.skipped_feature, 7,
+            "only PREFETCHW/PREFETCHWT1 edge cases should feature-skip"
+        );
+        assert_eq!(
+            tally.compared, 5,
+            "all PREFETCHh edge cases should compare"
         );
     }
 }
