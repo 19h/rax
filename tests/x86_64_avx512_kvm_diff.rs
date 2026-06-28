@@ -5712,6 +5712,132 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Add/sub/mul/div with edge FP values. These complement the base arithmetic
+    // smoke cases by stressing NaNs, infinities, signed zeros, and denormals
+    // across legacy destructive SSE, VEX three-operand AVX, EVEX AVX-512, and
+    // AVX-512-FP16 forms.
+    for &(label, asm, feat, profile) in &[
+        ("addps_sse_simd_fp_arith_edge_reg", "addps %xmm2, %xmm1", Sse, F32Edge),
+        ("addps_sse_simd_fp_arith_edge_mem", "addps 32(%rax), %xmm1", Sse, F32Edge),
+        ("addss_sse_simd_fp_arith_edge_reg", "addss %xmm2, %xmm1", Sse, F32Edge),
+        ("addss_sse_simd_fp_arith_edge_mem", "addss 32(%rax), %xmm1", Sse, F32Edge),
+        ("subps_sse_simd_fp_arith_edge_reg", "subps %xmm2, %xmm1", Sse, F32Edge),
+        ("subps_sse_simd_fp_arith_edge_mem", "subps 32(%rax), %xmm1", Sse, F32Edge),
+        ("subss_sse_simd_fp_arith_edge_reg", "subss %xmm2, %xmm1", Sse, F32Edge),
+        ("subss_sse_simd_fp_arith_edge_mem", "subss 32(%rax), %xmm1", Sse, F32Edge),
+        ("mulps_sse_simd_fp_arith_edge_reg", "mulps %xmm2, %xmm1", Sse, F32Edge),
+        ("mulps_sse_simd_fp_arith_edge_mem", "mulps 32(%rax), %xmm1", Sse, F32Edge),
+        ("mulss_sse_simd_fp_arith_edge_reg", "mulss %xmm2, %xmm1", Sse, F32Edge),
+        ("mulss_sse_simd_fp_arith_edge_mem", "mulss 32(%rax), %xmm1", Sse, F32Edge),
+        ("divps_sse_simd_fp_arith_edge_reg", "divps %xmm2, %xmm1", Sse, F32Edge),
+        ("divps_sse_simd_fp_arith_edge_mem", "divps 32(%rax), %xmm1", Sse, F32Edge),
+        ("divss_sse_simd_fp_arith_edge_reg", "divss %xmm2, %xmm1", Sse, F32Edge),
+        ("divss_sse_simd_fp_arith_edge_mem", "divss 32(%rax), %xmm1", Sse, F32Edge),
+        ("addpd_sse2_simd_fp_arith_edge_reg", "addpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("addpd_sse2_simd_fp_arith_edge_mem", "addpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("addsd_sse2_simd_fp_arith_edge_reg", "addsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("addsd_sse2_simd_fp_arith_edge_mem", "addsd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("subpd_sse2_simd_fp_arith_edge_reg", "subpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("subpd_sse2_simd_fp_arith_edge_mem", "subpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("subsd_sse2_simd_fp_arith_edge_reg", "subsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("subsd_sse2_simd_fp_arith_edge_mem", "subsd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("mulpd_sse2_simd_fp_arith_edge_reg", "mulpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("mulpd_sse2_simd_fp_arith_edge_mem", "mulpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("mulsd_sse2_simd_fp_arith_edge_reg", "mulsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("mulsd_sse2_simd_fp_arith_edge_mem", "mulsd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("divpd_sse2_simd_fp_arith_edge_reg", "divpd %xmm2, %xmm1", Sse2, F64Edge),
+        ("divpd_sse2_simd_fp_arith_edge_mem", "divpd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("divsd_sse2_simd_fp_arith_edge_reg", "divsd %xmm2, %xmm1", Sse2, F64Edge),
+        ("divsd_sse2_simd_fp_arith_edge_mem", "divsd 32(%rax), %xmm1", Sse2, F64Edge),
+        ("vaddps_avx_simd_fp_arith_edge_reg", "{vex} vaddps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
+        ("vaddps_avx_simd_fp_arith_edge_mem", "{vex} vaddps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vaddss_avx_simd_fp_arith_edge_reg", "{vex} vaddss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
+        ("vaddss_avx_simd_fp_arith_edge_mem", "{vex} vaddss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vsubps_avx_simd_fp_arith_edge_reg", "{vex} vsubps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
+        ("vsubps_avx_simd_fp_arith_edge_mem", "{vex} vsubps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vsubss_avx_simd_fp_arith_edge_reg", "{vex} vsubss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
+        ("vsubss_avx_simd_fp_arith_edge_mem", "{vex} vsubss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vmulps_avx_simd_fp_arith_edge_reg", "{vex} vmulps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
+        ("vmulps_avx_simd_fp_arith_edge_mem", "{vex} vmulps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vmulss_avx_simd_fp_arith_edge_reg", "{vex} vmulss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
+        ("vmulss_avx_simd_fp_arith_edge_mem", "{vex} vmulss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vdivps_avx_simd_fp_arith_edge_reg", "{vex} vdivps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
+        ("vdivps_avx_simd_fp_arith_edge_mem", "{vex} vdivps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
+        ("vdivss_avx_simd_fp_arith_edge_reg", "{vex} vdivss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
+        ("vdivss_avx_simd_fp_arith_edge_mem", "{vex} vdivss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
+        ("vaddpd_avx_simd_fp_arith_edge_reg", "{vex} vaddpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
+        ("vaddpd_avx_simd_fp_arith_edge_mem", "{vex} vaddpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vaddsd_avx_simd_fp_arith_edge_reg", "{vex} vaddsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
+        ("vaddsd_avx_simd_fp_arith_edge_mem", "{vex} vaddsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
+        ("vsubpd_avx_simd_fp_arith_edge_reg", "{vex} vsubpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
+        ("vsubpd_avx_simd_fp_arith_edge_mem", "{vex} vsubpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vsubsd_avx_simd_fp_arith_edge_reg", "{vex} vsubsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
+        ("vsubsd_avx_simd_fp_arith_edge_mem", "{vex} vsubsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
+        ("vmulpd_avx_simd_fp_arith_edge_reg", "{vex} vmulpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
+        ("vmulpd_avx_simd_fp_arith_edge_mem", "{vex} vmulpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vmulsd_avx_simd_fp_arith_edge_reg", "{vex} vmulsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
+        ("vmulsd_avx_simd_fp_arith_edge_mem", "{vex} vmulsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
+        ("vdivpd_avx_simd_fp_arith_edge_reg", "{vex} vdivpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
+        ("vdivpd_avx_simd_fp_arith_edge_mem", "{vex} vdivpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
+        ("vdivsd_avx_simd_fp_arith_edge_reg", "{vex} vdivsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
+        ("vdivsd_avx_simd_fp_arith_edge_mem", "{vex} vdivsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
+        ("vaddps_avx512_simd_fp_arith_edge_reg", "{evex} vaddps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vaddps_avx512_simd_fp_arith_edge_mem", "{evex} vaddps 64(%rax), %zmm3, %zmm1", F, F32Edge),
+        ("vaddss_avx512_simd_fp_arith_edge_reg", "{evex} vaddss %xmm2, %xmm3, %xmm1", F, F32Edge),
+        ("vaddss_avx512_simd_fp_arith_edge_mem", "{evex} vaddss 32(%rax), %xmm3, %xmm1", F, F32Edge),
+        ("vsubps_avx512_simd_fp_arith_edge_reg", "{evex} vsubps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vsubps_avx512_simd_fp_arith_edge_mem", "{evex} vsubps 64(%rax), %zmm3, %zmm1", F, F32Edge),
+        ("vsubss_avx512_simd_fp_arith_edge_reg", "{evex} vsubss %xmm2, %xmm3, %xmm1", F, F32Edge),
+        ("vsubss_avx512_simd_fp_arith_edge_mem", "{evex} vsubss 32(%rax), %xmm3, %xmm1", F, F32Edge),
+        ("vmulps_avx512_simd_fp_arith_edge_reg", "{evex} vmulps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vmulps_avx512_simd_fp_arith_edge_mem", "{evex} vmulps 64(%rax), %zmm3, %zmm1", F, F32Edge),
+        ("vmulss_avx512_simd_fp_arith_edge_reg", "{evex} vmulss %xmm2, %xmm3, %xmm1", F, F32Edge),
+        ("vmulss_avx512_simd_fp_arith_edge_mem", "{evex} vmulss 32(%rax), %xmm3, %xmm1", F, F32Edge),
+        ("vdivps_avx512_simd_fp_arith_edge_reg", "{evex} vdivps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vdivps_avx512_simd_fp_arith_edge_mem", "{evex} vdivps 64(%rax), %zmm3, %zmm1", F, F32Edge),
+        ("vdivss_avx512_simd_fp_arith_edge_reg", "{evex} vdivss %xmm2, %xmm3, %xmm1", F, F32Edge),
+        ("vdivss_avx512_simd_fp_arith_edge_mem", "{evex} vdivss 32(%rax), %xmm3, %xmm1", F, F32Edge),
+        ("vaddpd_avx512_simd_fp_arith_edge_reg", "{evex} vaddpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        ("vaddpd_avx512_simd_fp_arith_edge_mem", "{evex} vaddpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
+        ("vaddsd_avx512_simd_fp_arith_edge_reg", "{evex} vaddsd %xmm2, %xmm3, %xmm1", F, F64Edge),
+        ("vaddsd_avx512_simd_fp_arith_edge_mem", "{evex} vaddsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
+        ("vsubpd_avx512_simd_fp_arith_edge_reg", "{evex} vsubpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        ("vsubpd_avx512_simd_fp_arith_edge_mem", "{evex} vsubpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
+        ("vsubsd_avx512_simd_fp_arith_edge_reg", "{evex} vsubsd %xmm2, %xmm3, %xmm1", F, F64Edge),
+        ("vsubsd_avx512_simd_fp_arith_edge_mem", "{evex} vsubsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
+        ("vmulpd_avx512_simd_fp_arith_edge_reg", "{evex} vmulpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        ("vmulpd_avx512_simd_fp_arith_edge_mem", "{evex} vmulpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
+        ("vmulsd_avx512_simd_fp_arith_edge_reg", "{evex} vmulsd %xmm2, %xmm3, %xmm1", F, F64Edge),
+        ("vmulsd_avx512_simd_fp_arith_edge_mem", "{evex} vmulsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
+        ("vdivpd_avx512_simd_fp_arith_edge_reg", "{evex} vdivpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        ("vdivpd_avx512_simd_fp_arith_edge_mem", "{evex} vdivpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
+        ("vdivsd_avx512_simd_fp_arith_edge_reg", "{evex} vdivsd %xmm2, %xmm3, %xmm1", F, F64Edge),
+        ("vdivsd_avx512_simd_fp_arith_edge_mem", "{evex} vdivsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
+        ("vaddph_fp16_simd_fp_arith_edge_reg", "vaddph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
+        ("vaddph_fp16_simd_fp_arith_edge_mem", "vaddph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
+        ("vaddsh_fp16_simd_fp_arith_edge_reg", "vaddsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
+        ("vaddsh_fp16_simd_fp_arith_edge_mem", "vaddsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
+        ("vsubph_fp16_simd_fp_arith_edge_reg", "vsubph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
+        ("vsubph_fp16_simd_fp_arith_edge_mem", "vsubph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
+        ("vsubsh_fp16_simd_fp_arith_edge_reg", "vsubsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
+        ("vsubsh_fp16_simd_fp_arith_edge_mem", "vsubsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
+        ("vmulph_fp16_simd_fp_arith_edge_reg", "vmulph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
+        ("vmulph_fp16_simd_fp_arith_edge_mem", "vmulph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
+        ("vmulsh_fp16_simd_fp_arith_edge_reg", "vmulsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
+        ("vmulsh_fp16_simd_fp_arith_edge_mem", "vmulsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
+        ("vdivph_fp16_simd_fp_arith_edge_reg", "vdivph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
+        ("vdivph_fp16_simd_fp_arith_edge_mem", "vdivph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
+        ("vdivsh_fp16_simd_fp_arith_edge_reg", "vdivsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
+        ("vdivsh_fp16_simd_fp_arith_edge_mem", "vdivsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // SIMD floating-point edge semantics across legacy SSE/SSE2, VEX AVX, and
     // EVEX AVX-512. Sqrt uses non-NaN inputs so exact comparison is meaningful;
     // min/max and compare intentionally use NaN-capable profiles.
@@ -18469,6 +18595,68 @@ fn avx512_kvm_sse_minmax_edge_corpus() {
     assert_eq!(
         tally.compared, 16,
         "all SSE min/max edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_fp_arith_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_fp_arith_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        112,
+        "unexpected SIMD FP arithmetic edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD FP arithmetic edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD FP arithmetic edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD FP arithmetic edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD FP arithmetic edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        16,
+        "all SSE arithmetic edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        16,
+        "all SSE2 arithmetic edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        32,
+        "all AVX arithmetic edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        32,
+        "all AVX-512 arithmetic edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fp16),
+        16,
+        "all AVX-512-FP16 arithmetic edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 112,
+        "all SIMD FP arithmetic edge cases should compare"
     );
 }
 
