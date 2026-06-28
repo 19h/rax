@@ -109,17 +109,12 @@ pub fn vlddqu_load(
     vvvv: u8,
 ) -> Result<Option<VcpuExit>> {
     if vvvv != 0 {
-        return Err(Error::Emulator(
-            "VLDDQU requires VEX.vvvv=1111b".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(format!(
-            "VLDDQU requires memory operand at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     let xmm_dst = reg as usize;
