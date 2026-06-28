@@ -18133,13 +18133,151 @@ fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
-fn run_exception_marker_corpus(
-    name: &str,
-    vector_name: &str,
+struct ExceptionMarkerCase {
+    label: &'static str,
+    vector_name: &'static str,
     vector: usize,
-    cases: Vec<(&'static str, &'static [u8])>,
-    expected: usize,
-) {
+    op: &'static [u8],
+}
+
+fn software_interrupt_exception_cases() -> Vec<ExceptionMarkerCase> {
+    vec![
+        ExceptionMarkerCase {
+            label: "int3_short_bp",
+            vector_name: "#BP",
+            vector: 3,
+            op: &[0xcc],
+        },
+        ExceptionMarkerCase {
+            label: "int_3_long_bp",
+            vector_name: "#BP",
+            vector: 3,
+            op: &[0xcd, 0x03],
+        },
+        ExceptionMarkerCase {
+            label: "int_0_de",
+            vector_name: "#DE",
+            vector: 0,
+            op: &[0xcd, 0x00],
+        },
+        ExceptionMarkerCase {
+            label: "int_1_db",
+            vector_name: "#DB",
+            vector: 1,
+            op: &[0xcd, 0x01],
+        },
+        ExceptionMarkerCase {
+            label: "icebp_int1_db",
+            vector_name: "#DB",
+            vector: 1,
+            op: &[0xf1],
+        },
+        ExceptionMarkerCase {
+            label: "int_2_nmi_vector",
+            vector_name: "vector 2",
+            vector: 2,
+            op: &[0xcd, 0x02],
+        },
+        ExceptionMarkerCase {
+            label: "int_4_of",
+            vector_name: "#OF",
+            vector: 4,
+            op: &[0xcd, 0x04],
+        },
+        ExceptionMarkerCase {
+            label: "int_5_br",
+            vector_name: "#BR",
+            vector: 5,
+            op: &[0xcd, 0x05],
+        },
+        ExceptionMarkerCase {
+            label: "int_6_ud_vector",
+            vector_name: "#UD",
+            vector: 6,
+            op: &[0xcd, 0x06],
+        },
+        ExceptionMarkerCase {
+            label: "int_7_nm",
+            vector_name: "#NM",
+            vector: 7,
+            op: &[0xcd, 0x07],
+        },
+        ExceptionMarkerCase {
+            label: "int_8_df",
+            vector_name: "#DF",
+            vector: 8,
+            op: &[0xcd, 0x08],
+        },
+        ExceptionMarkerCase {
+            label: "int_10_ts",
+            vector_name: "#TS",
+            vector: 10,
+            op: &[0xcd, 0x0a],
+        },
+        ExceptionMarkerCase {
+            label: "int_11_np",
+            vector_name: "#NP",
+            vector: 11,
+            op: &[0xcd, 0x0b],
+        },
+        ExceptionMarkerCase {
+            label: "int_12_ss",
+            vector_name: "#SS",
+            vector: 12,
+            op: &[0xcd, 0x0c],
+        },
+        ExceptionMarkerCase {
+            label: "int_13_gp",
+            vector_name: "#GP",
+            vector: 13,
+            op: &[0xcd, 0x0d],
+        },
+        ExceptionMarkerCase {
+            label: "int_14_pf",
+            vector_name: "#PF",
+            vector: 14,
+            op: &[0xcd, 0x0e],
+        },
+        ExceptionMarkerCase {
+            label: "int_16_mf",
+            vector_name: "#MF",
+            vector: 16,
+            op: &[0xcd, 0x10],
+        },
+        ExceptionMarkerCase {
+            label: "int_17_ac",
+            vector_name: "#AC",
+            vector: 17,
+            op: &[0xcd, 0x11],
+        },
+        ExceptionMarkerCase {
+            label: "int_19_xm",
+            vector_name: "#XM",
+            vector: 19,
+            op: &[0xcd, 0x13],
+        },
+        ExceptionMarkerCase {
+            label: "int_0x20_user",
+            vector_name: "vector 0x20",
+            vector: 0x20,
+            op: &[0xcd, 0x20],
+        },
+        ExceptionMarkerCase {
+            label: "int_0x80_syscall",
+            vector_name: "vector 0x80",
+            vector: 0x80,
+            op: &[0xcd, 0x80],
+        },
+        ExceptionMarkerCase {
+            label: "int_0xff_max",
+            vector_name: "vector 0xff",
+            vector: 0xff,
+            op: &[0xcd, 0xff],
+        },
+    ]
+}
+
+fn run_exception_marker_cases(name: &str, cases: Vec<ExceptionMarkerCase>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
         return;
@@ -18153,25 +18291,27 @@ fn run_exception_marker_corpus(
     assert_eq!(case_count, expected, "unexpected {name} corpus size");
 
     let input = input_for(InputProfile::Int);
-    let expected_marker = exception_marker(vector);
     let mut failures = Vec::new();
-    for (label, op) in cases {
-        let code = build_fault_probe_code(op);
-        let kvm = match oracle.run_with_exception_trap(&code, &input, vector) {
+    for case in cases {
+        let expected_marker = exception_marker(case.vector);
+        let code = build_fault_probe_code(case.op);
+        let kvm = match oracle.run_with_exception_trap(&code, &input, case.vector) {
             Ok(KvmOutcome::Ran(out)) => out,
             Ok(KvmOutcome::Faulted) => {
                 failures.push(format!(
-                    "{label}: KVM faulted before reaching the {vector_name} handler"
+                    "{}: KVM faulted before reaching the {} handler",
+                    case.label, case.vector_name
                 ));
                 continue;
             }
-            Err(e) => panic!("{label}: KVM backend failure: {e}"),
+            Err(e) => panic!("{}: KVM backend failure: {e}", case.label),
         };
-        let interp = match run_interp_with_exception_trap(&code, &input, vector) {
+        let interp = match run_interp_with_exception_trap(&code, &input, case.vector) {
             Ok(out) => out,
             Err(e) => {
                 failures.push(format!(
-                    "{label}: rax failed before reaching {vector_name} handler: {e}"
+                    "{}: rax failed before reaching {} handler: {e}",
+                    case.label, case.vector_name
                 ));
                 continue;
             }
@@ -18181,25 +18321,46 @@ fn run_exception_marker_corpus(
         let interp_marker = scratch_marker(&interp.scratch);
         if kvm_marker != expected_marker {
             failures.push(format!(
-                "{label}: KVM marker {kvm_marker:#x}, expected {vector_name} marker {expected_marker:#x}"
+                "{}: KVM marker {kvm_marker:#x}, expected {} marker {expected_marker:#x}",
+                case.label, case.vector_name
             ));
         }
         if interp_marker != expected_marker {
             failures.push(format!(
-                "{label}: rax marker {interp_marker:#x}, expected {vector_name} marker {expected_marker:#x}"
+                "{}: rax marker {interp_marker:#x}, expected {} marker {expected_marker:#x}",
+                case.label, case.vector_name
             ));
         }
     }
 
     eprintln!(
-        "[avx512-kvm-diff] {name} {vector_name} compared={}",
+        "[avx512-kvm-diff] {name} exception markers compared={}",
         case_count.saturating_sub(failures.len())
     );
     assert!(
         failures.is_empty(),
-        "{name} {vector_name} mismatches vs silicon:\n{}",
+        "{name} exception marker mismatches vs silicon:\n{}",
         failures.join("\n")
     );
+}
+
+fn run_exception_marker_corpus(
+    name: &str,
+    vector_name: &'static str,
+    vector: usize,
+    cases: Vec<(&'static str, &'static [u8])>,
+    expected: usize,
+) {
+    let marker_cases = cases
+        .into_iter()
+        .map(|(label, op)| ExceptionMarkerCase {
+            label,
+            vector_name,
+            vector,
+            op,
+        })
+        .collect();
+    run_exception_marker_cases(name, marker_cases, expected);
 }
 
 fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, expected: usize) {
@@ -18238,6 +18399,15 @@ fn avx512_kvm_divide_error_exception_corpus() {
         DE_VECTOR,
         divide_error_exception_cases(),
         16,
+    );
+}
+
+#[test]
+fn avx512_kvm_software_interrupt_exception_corpus() {
+    run_exception_marker_cases(
+        "software interrupt",
+        software_interrupt_exception_cases(),
+        22,
     );
 }
 

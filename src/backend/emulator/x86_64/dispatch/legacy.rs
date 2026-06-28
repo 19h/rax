@@ -241,6 +241,7 @@ impl X86_64Vcpu {
             0xCC => insn::control::int3(self, ctx),
             0xCD => insn::control::int_imm8(self, ctx),
             0xCE => insn::control::into(self, ctx),
+            0xF1 => insn::control::icebp(self, ctx),
 
             // Misc
             0x60 => insn::data::pusha(self, ctx),
