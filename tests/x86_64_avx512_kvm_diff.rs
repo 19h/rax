@@ -11729,6 +11729,43 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "adcx_adx_edge_carry_chain_r64",
+            "clc\nmovq $-1, %r8\nmovq $1, %r9\nadcx %r9, %r8\nadcx %r9, %r8",
+        ),
+        (
+            "adcx_adx_edge_initial_carry_in_r64",
+            "stc\nmovq $-1, %r8\nmovq $0, %r9\nadcx %r9, %r8",
+        ),
+        (
+            "adcx_adx_edge_preserves_of_r32",
+            "movl $0x7fffffff, %r8d\naddl $1, %r8d\nclc\nmovl $5, %r8d\nmovl $3, %r9d\nadcx %r9d, %r8d",
+        ),
+        (
+            "adox_adx_edge_overflow_chain_r64",
+            "xorl %r10d, %r10d\nmovq $-1, %r8\nmovq $1, %r9\nadox %r9, %r8\nadox %r9, %r8",
+        ),
+        (
+            "adox_adx_edge_initial_overflow_in_r32",
+            "movl $0x7fffffff, %r10d\naddl $1, %r10d\nmovl $0, %r8d\nmovl $0, %r9d\nadox %r9d, %r8d",
+        ),
+        (
+            "adox_adx_edge_preserves_cf_r64",
+            "xorl %r10d, %r10d\nstc\nmovq $5, %r8\nmovq $3, %r9\nadox %r9, %r8",
+        ),
+        (
+            "adcx_adox_adx_edge_independent_flags_r64",
+            "xorl %r10d, %r10d\nmovq $-1, %r8\nmovq $1, %r9\nadcx %r9, %r8\nmovq $-1, %rcx\nmovq $1, %rdx\nadox %rdx, %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Adx,
+            profile: Int,
+        });
+    }
 
     // MOVBE endian-swapping loads/stores across all operand sizes. Loads are
     // observed through r8; stores are observed through the scratch page diff.
@@ -16909,6 +16946,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 .any(|bytes| {
                     bytes[0] == 0x0f && bytes[1] == 0x38 && matches!(bytes[2], 0xf8 | 0xf9)
                 });
+        let adx_edge_setup_allowed = case.label.contains("_adx_edge_")
+            && op
+                .windows(3)
+                .any(|bytes| bytes[0] == 0x0f && bytes[1] == 0x38 && bytes[2] == 0xf6);
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
@@ -16916,6 +16957,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             || sse42_string_setup_allowed
             || scalar_bit_edge_setup_allowed
             || movdir_edge_setup_allowed
+            || adx_edge_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -20406,6 +20448,67 @@ fn avx512_kvm_movdir_edge_corpus() {
         tally.compared, 10,
         "all MOVDIR edge cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_adx_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Adx)
+        .collect();
+    assert_eq!(cases.len(), 21, "unexpected ADX corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on ADX cases");
+    assert_eq!(tally.interp_err, 0, "rax failed to execute an ADX case");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "ADX corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "ADX cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Adx),
+        21,
+        "all ADX cases should run"
+    );
+    assert_eq!(tally.compared, 21, "all ADX cases should compare");
+}
+
+#[test]
+fn avx512_kvm_adx_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_adx_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 7, "unexpected ADX edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on ADX edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an ADX edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "ADX edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "ADX edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Adx),
+        7,
+        "all ADX edge cases should run"
+    );
+    assert_eq!(tally.compared, 7, "all ADX edge cases should compare");
 }
 
 #[test]
