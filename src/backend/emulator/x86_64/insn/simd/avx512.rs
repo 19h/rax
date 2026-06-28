@@ -2870,17 +2870,13 @@ pub fn evex_comi(
         .ok_or_else(|| Error::Emulator("EVEX COMI requires EVEX prefix".to_string()))?;
 
     if evex.aaa != 0 || evex.z {
-        return Err(Error::Emulator(
-            "EVEX COMI does not support masking or zeroing".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if evex.broadcast && is_memory {
-        return Err(Error::Emulator(
-            "EVEX COMI memory source does not support embedded rounding".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     let addr = if is_memory {
         evex_scaled_disp8_addr(ctx, modrm_start, addr, elem_size)
