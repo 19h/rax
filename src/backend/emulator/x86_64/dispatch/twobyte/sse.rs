@@ -1823,9 +1823,7 @@ impl X86_64Vcpu {
     fn execute_xsave_compacted(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(
-                "XSAVEC/XSAVES requires memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let rfbm = self.xsave_requested_feature_bitmap();
@@ -2013,9 +2011,7 @@ impl X86_64Vcpu {
     fn execute_xrstors(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(
-                "XRSTORS requires memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         self.restore_xsave_compacted_area(addr)?;
@@ -2074,9 +2070,7 @@ impl X86_64Vcpu {
         let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
 
         if is_memory {
-            return Err(Error::Emulator(
-                "RDRAND requires register operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // Determine operand size
@@ -2133,9 +2127,7 @@ impl X86_64Vcpu {
         let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
 
         if is_memory {
-            return Err(Error::Emulator(
-                "RDSEED requires register operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // Determine operand size
@@ -2194,9 +2186,7 @@ impl X86_64Vcpu {
         let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
 
         if is_memory {
-            return Err(Error::Emulator(
-                "RDPID requires register operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // RDPID reads IA32_TSC_AUX MSR which contains the processor ID
@@ -2219,9 +2209,7 @@ impl X86_64Vcpu {
         let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
-            return Err(Error::Emulator(
-                "CMPXCHG8B/16B requires memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // Clear lazy flags before setting ZF directly

@@ -294,10 +294,8 @@ impl X86_64Vcpu {
                 6 => insn::system::mfence(self, ctx), // MFENCE (F0-F7)
                 7 => insn::system::sfence(self, ctx), // SFENCE (F8-FF)
                 _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented 0F AE /{} (mod=3) at RIP={:#x}",
-                        reg_op, self.regs.rip
-                    )));
+                    self.inject_exception(6, None)?;
+                    Ok(None)
                 }
             }
         } else {

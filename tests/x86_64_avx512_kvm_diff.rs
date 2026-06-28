@@ -18533,6 +18533,34 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "invpcid_register_descriptor_illegal",
             &[0x66, 0x0f, 0x38, 0x82, 0xc0],
         ),
+        ("fxsave_register_operand_illegal", &[0x0f, 0xae, 0xc0]),
+        ("fxrstor_register_operand_illegal", &[0x0f, 0xae, 0xc8]),
+        ("ldmxcsr_register_operand_illegal", &[0x0f, 0xae, 0xd0]),
+        ("stmxcsr_register_operand_illegal", &[0x0f, 0xae, 0xd8]),
+        ("xsave_register_operand_illegal", &[0x0f, 0xae, 0xe0]),
+        (
+            "xrstors_register_operand_illegal",
+            &[0x48, 0x0f, 0xc7, 0xd8],
+        ),
+        (
+            "xsavec_register_operand_illegal",
+            &[0x48, 0x0f, 0xc7, 0xe0],
+        ),
+        (
+            "xsaves_register_operand_illegal",
+            &[0x48, 0x0f, 0xc7, 0xe8],
+        ),
+        ("rdrand_memory_operand_illegal", &[0x48, 0x0f, 0xc7, 0x30]),
+        ("rdseed_memory_operand_illegal", &[0x48, 0x0f, 0xc7, 0x38]),
+        (
+            "rdpid_memory_operand_illegal",
+            &[0xf3, 0x48, 0x0f, 0xc7, 0x38],
+        ),
+        ("cmpxchg8b_register_operand_illegal", &[0x0f, 0xc7, 0xc8]),
+        (
+            "cmpxchg16b_register_operand_illegal",
+            &[0x48, 0x0f, 0xc7, 0xc8],
+        ),
     ]
 }
 
@@ -19118,7 +19146,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        127,
+        140,
     );
 }
 
