@@ -13440,6 +13440,75 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "monitor_wait_edge_unaligned_address",
+            "leaq 33(%rax), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\nmovq %rax, %rcx",
+            Monitor,
+        ),
+        (
+            "monitor_wait_edge_stack_address",
+            "movq %rsp, %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\nmovq %rax, %rcx",
+            Monitor,
+        ),
+        (
+            "monitor_wait_edge_addr32_high_rax",
+            "movabsq $0xffff000000004040, %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\naddr32 monitor\nmovq %rax, %rcx",
+            Monitor,
+        ),
+        (
+            "monitor_wait_edge_preserves_cmp_flags",
+            "leaq 96(%rax), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\ncmpq %r8, %r9\nmonitor",
+            Monitor,
+        ),
+        (
+            "umonitor_wait_edge_unaligned_r8",
+            "leaq 33(%rax), %r8\numonitor %r8\nmovq %r8, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umonitor_wait_edge_stack_r10",
+            "leaq 16(%rsp), %r10\numonitor %r10\nmovq %r10, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umonitor_wait_edge_r11d_zeroext_address",
+            "movabsq $0xffff000000004080, %r11\numonitor %r11d\nmovq %r11, %rcx",
+            Waitpkg,
+        ),
+        (
+            "umwait_wait_edge_control1_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nmovl $1, %ecx\numwait %ecx\ncmpq %r8, %r8",
+            Waitpkg,
+        ),
+        (
+            "tpause_wait_edge_control1_zero_deadline",
+            "xorl %edx, %edx\nxorl %eax, %eax\nmovl $1, %ecx\ntpause %ecx\ncmpq %r8, %r8",
+            Waitpkg,
+        ),
+        (
+            "umwait_wait_edge_r10d_control1",
+            "xorl %edx, %edx\nxorl %eax, %eax\nmovl $1, %r10d\numwait %r10d\ncmpq %r8, %r8",
+            Waitpkg,
+        ),
+        (
+            "tpause_wait_edge_r10d_control1",
+            "xorl %edx, %edx\nxorl %eax, %eax\nmovl $1, %r10d\ntpause %r10d\ncmpq %r8, %r8",
+            Waitpkg,
+        ),
+        (
+            "umonitor_umwait_wait_edge_unaligned",
+            "leaq 33(%rax), %r8\numonitor %r8\nxorl %edx, %edx\nxorl %eax, %eax\nxorl %ecx, %ecx\numwait %ecx\nmovq %r8, %rcx\ncmpq %rcx, %rcx",
+            Waitpkg,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // Serialization and user-level wait instructions. Their ordering and
     // monitor/wait side effects are not directly visible, so these snippets
@@ -16774,7 +16843,7 @@ fn avx512_kvm_monitor_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Monitor)
         .collect();
-    assert_eq!(cases.len(), 4, "unexpected MONITOR corpus size");
+    assert_eq!(cases.len(), 8, "unexpected MONITOR corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Monitor) {
@@ -16795,14 +16864,57 @@ fn avx512_kvm_monitor_corpus() {
             tally.skipped_feature, 0,
             "MONITOR cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 4, "all MONITOR cases should compare");
+        assert_eq!(tally.compared, 8, "all MONITOR cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 4,
+            tally.skipped_feature, 8,
             "all MONITOR cases should feature-skip"
         );
         assert_eq!(tally.compared, 0, "MONITOR cases should not run");
     }
+}
+
+#[test]
+fn avx512_kvm_monitor_wait_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_wait_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 12, "unexpected monitor/wait edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on monitor/wait edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a monitor/wait edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "monitor/wait edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "monitor/wait edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Monitor),
+        4,
+        "all MONITOR edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Waitpkg),
+        8,
+        "all WAITPKG edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all monitor/wait edge cases should compare"
+    );
 }
 
 #[test]
@@ -16813,7 +16925,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        20,
+        28,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -16843,7 +16955,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Waitpkg),
-        9,
+        17,
         "all WAITPKG cases should run"
     );
     assert_eq!(
@@ -16852,7 +16964,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         "all RDPID cases should run"
     );
     assert_eq!(
-        tally.compared, 20,
+        tally.compared, 28,
         "all serialize/WAITPKG/RDPID cases should compare"
     );
 }
