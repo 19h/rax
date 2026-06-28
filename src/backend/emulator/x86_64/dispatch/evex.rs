@@ -489,10 +489,7 @@ impl X86_64Vcpu {
                     2 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Srl, es),
                     4 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sra, es),
                     6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, es),
-                    _ => Err(Error::Emulator(format!(
-                        "Unimplemented EVEX 0F 71 /{} at RIP={:#x}",
-                        sub, self.regs.rip
-                    ))),
+                    _ => self.inject_invalid_opcode(),
                 }
             }
             0x72 if evex.pp == 1 => {
@@ -509,10 +506,7 @@ impl X86_64Vcpu {
                         insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sra, es)
                     }
                     6 => insn::simd::evex_shift_imm(self, ctx, insn::simd::ShiftKind::Sll, 4),
-                    _ => Err(Error::Emulator(format!(
-                        "Unimplemented EVEX 0F 72 /{} at RIP={:#x}",
-                        sub, self.regs.rip
-                    ))),
+                    _ => self.inject_invalid_opcode(),
                 }
             }
             0x73 if evex.pp == 1 => {
@@ -530,10 +524,7 @@ impl X86_64Vcpu {
                     7 => {
                         insn::simd::evex_shift_bytes_imm(self, ctx, insn::simd::ByteShiftKind::Left)
                     }
-                    _ => Err(Error::Emulator(format!(
-                        "Unimplemented EVEX 0F 73 /{} at RIP={:#x}",
-                        sub, self.regs.rip
-                    ))),
+                    _ => self.inject_invalid_opcode(),
                 }
             }
             // Packed shift by xmm count: VPSRLW/D/Q (0xD1/0xD2/0xD3),
