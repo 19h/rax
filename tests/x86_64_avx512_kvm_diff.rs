@@ -1836,6 +1836,9 @@ fn input_for_case(case: &Case) -> InCase {
     if case.label.contains("initial_df") {
         input.rflags |= RFLAGS_DF;
     }
+    if case.label.contains("_stack_frame_edge_") {
+        input.rbp = STACK_ADDR + 0x30;
+    }
     if !is_string_mnemonic(asm_mnemonic(&case.asm)) {
         return input;
     }
@@ -13816,6 +13819,36 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        ("enter_stack_frame_edge_alloc0_nesting0", "enter $0x0, $0"),
+        ("enter_stack_frame_edge_alloc0_nesting2", "enter $0x0, $2"),
+        ("enter_stack_frame_edge_alloc16_nesting2", "enter $0x10, $2"),
+        (
+            "enter_leave_stack_frame_edge_nesting2_roundtrip",
+            "enter $0x10, $2\nleave",
+        ),
+        ("enter_stack_frame_edge_nesting_mask_34", "enter $0x0, $34"),
+        (
+            "enter_stack_frame_edge_data16_alloc4",
+            ".byte 0x66, 0xc8, 0x04, 0x00, 0x00\n",
+        ),
+        (
+            "enter_leave_stack_frame_edge_data16_roundtrip",
+            ".byte 0x66, 0xc8, 0x04, 0x00, 0x00\n.byte 0x66, 0xc9",
+        ),
+        (
+            "leave_stack_frame_edge_data16_from_scratch",
+            "leaq 32(%rax), %rbp\nmovw $0x5678, (%rbp)\n.byte 0x66, 0xc9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: StackFrame,
+            profile: Int,
+        });
+    }
+
     // POPFQ/CLI/STI affect RFLAGS and, for POPFQ, implicit stack state. The
     // flag mask below includes IF/DF for this feature so interrupt/direction
     // flag transitions are part of the KVM comparison, not just status flags.
@@ -16489,7 +16522,7 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        16,
+        24,
         "unexpected stack-frame/flag-control corpus size"
     );
 
@@ -16514,7 +16547,7 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::StackFrame),
-        4,
+        12,
         "all stack-frame cases should run"
     );
     assert_eq!(
@@ -16523,8 +16556,48 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
         "all flag-control cases should run"
     );
     assert_eq!(
-        tally.compared, 16,
+        tally.compared, 24,
         "all stack-frame/flag-control cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_stack_frame_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::StackFrame && case.label.contains("_stack_frame_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected stack-frame edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on stack-frame edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a stack-frame edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "stack-frame edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "stack-frame edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::StackFrame),
+        8,
+        "all stack-frame edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all stack-frame edge cases should compare"
     );
 }
 
