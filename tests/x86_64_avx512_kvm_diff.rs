@@ -8750,6 +8750,54 @@ fn irregular_cases() -> Vec<Case> {
             Avx2,
             Int,
         ),
+        (
+            "vpermps_vex_perm_blend_edge_avx2_selector_zero",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpermps %ymm3, %ymm2, %ymm1",
+            Avx2,
+            F32,
+        ),
+        (
+            "vpermps_vex_perm_blend_edge_avx2_selector_allones_mem",
+            "{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vpermps 32(%rax), %ymm2, %ymm1",
+            Avx2,
+            F32,
+        ),
+        (
+            "vpermps_vex_perm_blend_edge_avx2_selector_high_regs",
+            "{vex} vpermps %ymm11, %ymm10, %ymm9",
+            Avx2,
+            F32,
+        ),
+        (
+            "vpermd_vex_perm_blend_edge_avx2_selector_high_regs",
+            "{vex} vpermd %ymm11, %ymm10, %ymm9",
+            Avx2,
+            Int,
+        ),
+        (
+            "vpermpd_vex_perm_blend_edge_avx2_selector_dup0",
+            "{vex} vpermpd $0x00, %ymm3, %ymm1",
+            Avx2,
+            F64,
+        ),
+        (
+            "vpermpd_vex_perm_blend_edge_avx2_selector_dup3_mem",
+            "{vex} vpermpd $0xff, 32(%rax), %ymm1",
+            Avx2,
+            F64,
+        ),
+        (
+            "vpermpd_vex_perm_blend_edge_avx2_selector_cross_lane",
+            "{vex} vpermpd $0x4e, %ymm3, %ymm1",
+            Avx2,
+            F64,
+        ),
+        (
+            "vpermq_vex_perm_blend_edge_avx2_selector_cross_lane",
+            "{vex} vpermq $0x4e, %ymm3, %ymm1",
+            Avx2,
+            Int,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -21564,7 +21612,7 @@ fn avx512_kvm_vex_permute_blend_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        26,
+        34,
         "unexpected VEX permute/blend edge corpus size"
     );
 
@@ -21594,12 +21642,54 @@ fn avx512_kvm_vex_permute_blend_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx2),
-        11,
+        19,
         "all AVX2 permute/blend edge cases should run"
     );
     assert_eq!(
-        tally.compared, 26,
+        tally.compared, 34,
         "all VEX permute/blend edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_vex_avx2_permute_selector_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_vex_perm_blend_edge_avx2_selector_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected VEX AVX2 permute selector edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on VEX AVX2 permute selector edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a VEX AVX2 permute selector edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "VEX AVX2 permute selector edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "VEX AVX2 permute selector edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        8,
+        "all VEX AVX2 permute selector edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all VEX AVX2 permute selector edge cases should compare"
     );
 }
 
