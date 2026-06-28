@@ -12517,6 +12517,22 @@ fn irregular_cases() -> Vec<Case> {
             "sysexit_fast_roundtrip",
             "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $0x20000, %rcx\nleaq 2f(%rip), %rdx\nsysexitq\n2:\nmovq $0x1357, %r8\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\ncmpq $0x1357, %r8\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovq $0x8484, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
         ),
+        (
+            "syscall_fast_syscall_edge_saves_rcx_r11_and_masks_flags",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nmovl $0x600, %eax\nxorl %edx, %edx\nmovl $0xc0000084, %ecx\nwrmsr\nleaq 2f(%rip), %r8\npushq $0x602\npopfq\nsyscall\n2:\nmovq $0xbad, %rbx\njmp 3f\n1:\ncmpq %r8, %rcx\nsete %al\nmovq %r11, %r9\nandq $0x600, %r9\ncmpq $0x600, %r9\nsete %dl\nandb %dl, %al\npushfq\npopq %r9\nandq $0x600, %r9\ncmpq $0, %r9\nsete %dl\nandb %dl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nmovq $0x5152, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "sysret_fast_syscall_edge_restores_r11_flags",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nleaq 2f(%rip), %rcx\nmovq $0x243, %r11\nsysretq\n2:\npushfq\npopq %r8\nandq $0x41, %r8\ncmpq $0x41, %r8\nsete %r9b\nmovzbq %r9b, %r9\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovq %r9, %rcx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nmovq $0x6263, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "sysenter_fast_syscall_edge_clears_if_and_loads_rsp",
+            "movq %rax, %rdi\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x175, %ecx\nmovl $0x20000, %eax\nxorl %edx, %edx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0x176, %ecx\nwrmsr\npushq $0x202\npopfq\nsysenter\nmovq $0xbad, %rbx\njmp 2f\n1:\npushfq\npopq %r8\nandq $0x200, %r8\ncmpq $0, %r8\nsete %al\ncmpq $0x20000, %rsp\nsete %dl\nandb %dl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nmovq $0x7374, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n2:",
+        ),
+        (
+            "sysexit_fast_syscall_edge_rexw_loads_rsp",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $0x20000, %rcx\nleaq 2f(%rip), %rdx\nsysexitq\n2:\ncmpq $0x20000, %rsp\nsete %r9b\nmovzbq %r9b, %r9\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovq %r9, %rcx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nmovq $0x8485, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -17990,7 +18006,7 @@ fn avx512_kvm_fast_syscall_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::FastSyscall)
         .collect();
-    assert_eq!(cases.len(), 4, "unexpected fast syscall corpus size");
+    assert_eq!(cases.len(), 8, "unexpected fast syscall corpus size");
 
     if !HostFeatures::detect().supports(Feat::FastSyscall) {
         eprintln!("[skip] host lacks SYSCALL or SYSENTER support");
@@ -18009,7 +18025,52 @@ fn avx512_kvm_fast_syscall_corpus() {
         tally.skipped_asm, 0,
         "fast syscall corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 4, "all fast syscall cases should compare");
+    assert_eq!(tally.compared, 8, "all fast syscall cases should compare");
+}
+
+#[test]
+fn avx512_kvm_fast_syscall_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::FastSyscall && case.label.contains("_fast_syscall_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 4, "unexpected fast syscall edge corpus size");
+
+    if !HostFeatures::detect().supports(Feat::FastSyscall) {
+        eprintln!("[skip] host lacks SYSCALL or SYSENTER support");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on fast syscall edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a fast syscall edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "fast syscall edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "fast syscall edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::FastSyscall),
+        4,
+        "all fast syscall edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 4,
+        "all fast syscall edge cases should compare"
+    );
 }
 
 #[test]
