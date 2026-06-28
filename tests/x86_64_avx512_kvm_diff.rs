@@ -14728,6 +14728,31 @@ fn irregular_cases() -> Vec<Case> {
             DescriptorTable,
         ),
         (
+            "descriptor_table_edge_lgdt_second_load_overwrites",
+            "movw $0x001f, 32(%rax)\nmovabsq $0x0000000000006000, %r8\nmovq %r8, 34(%rax)\nmovw $0x002f, 48(%rax)\nmovabsq $0x0000000000006800, %r8\nmovq %r8, 50(%rax)\nlgdt 32(%rax)\nlgdt 48(%rax)\nsgdt 64(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_table_edge_lidt_second_load_overwrites",
+            "movw $0x0037, 80(%rax)\nmovabsq $0x0000000000007000, %r8\nmovq %r8, 82(%rax)\nmovw $0x0047, 96(%rax)\nmovabsq $0x0000000000007800, %r8\nmovq %r8, 98(%rax)\nlidt 80(%rax)\nlidt 96(%rax)\nsidt 112(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_table_edge_sgdt_sidt_sib_zero_index_store",
+            "movw $0x0057, 32(%rax)\nmovabsq $0x0000000000006600, %r8\nmovq %r8, 34(%rax)\nmovw $0x0067, 48(%rax)\nmovabsq $0x0000000000007600, %r8\nmovq %r8, 50(%rax)\nlgdt 32(%rax)\nlidt 48(%rax)\nleaq 96(%rax), %r8\nxorq %r9, %r9\nsgdt (%r8,%r9,1)\nsidt 16(%r8,%r9,1)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_table_edge_lgdt_lidt_negative_disp_load",
+            "movw $0x0077, -16(%rbx)\nmovabsq $0x0000000000006700, %r8\nmovq %r8, -14(%rbx)\nmovw $0x0087, (%rbx)\nmovabsq $0x0000000000007700, %r8\nmovq %r8, 2(%rbx)\nlgdt -16(%rbx)\nlidt (%rbx)\nsgdt 64(%rax)\nsidt 80(%rax)",
+            DescriptorTable,
+        ),
+        (
+            "descriptor_table_edge_lgdt_lidt_stack_operand",
+            "movw $0x0097, 16(%rsp)\nmovabsq $0x0000000000006900, %r8\nmovq %r8, 18(%rsp)\nmovw $0x00a7, 32(%rsp)\nmovabsq $0x0000000000007900, %r8\nmovq %r8, 34(%rsp)\nlgdt 16(%rsp)\nlidt 32(%rsp)\nsgdt 96(%rax)\nsidt 112(%rax)",
+            DescriptorTable,
+        ),
+        (
             "msr_fs_base_roundtrip",
             "movl $0xc0000100, %ecx\nmovl $0xdead0000, %eax\nmovl $0x00007fff, %edx\nwrmsr\nrdmsr\nmovq %rax, %rbx\nmovq %rdx, %rsi",
             Msr,
@@ -17537,7 +17562,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 48, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 53, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17558,7 +17583,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::DescriptorTable),
-        8,
+        13,
         "all descriptor-table cases should run"
     );
     assert_eq!(tally.ran_for(Feat::Msr), 14, "all MSR cases should run");
@@ -17567,7 +17592,51 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         12,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 48, "all privileged cases should compare");
+    assert_eq!(tally.compared, 53, "all privileged cases should compare");
+}
+
+#[test]
+fn avx512_kvm_descriptor_table_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::DescriptorTable && case.label.contains("descriptor_table_edge_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        5,
+        "unexpected descriptor-table edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on descriptor-table edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a descriptor-table edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "descriptor-table edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "descriptor-table edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::DescriptorTable),
+        5,
+        "all descriptor-table edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 5,
+        "all descriptor-table edge cases should compare"
+    );
 }
 
 #[test]
