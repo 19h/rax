@@ -61,7 +61,12 @@ impl X86_64Vcpu {
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let _imm = ctx.consume_u8()?;
+        let imm = ctx.consume_u8()?;
+        let rounding = if (imm & 0x04) != 0 {
+            ((self.mxcsr >> 13) & 0x03) as u8
+        } else {
+            imm & 0x03
+        };
         let xmm_src = reg as usize;
         let lanes = if vex_l == 0 { 4 } else { 8 };
         let mut halves = [0u16; 8];
@@ -82,7 +87,7 @@ impl X86_64Vcpu {
                     (qword >> 32) as u32
                 }
             };
-            halves[lane] = f32_to_f16_bits(f32::from_bits(bits));
+            halves[lane] = f32_to_f16_bits(f32::from_bits(bits), rounding);
         }
 
         if is_memory {
@@ -812,14 +817,50 @@ fn f16_to_f32_bits(bits: u16) -> u32 {
                 sign | (((unbiased_exp + 127) as u32) << 23) | (mant << 13)
             }
         }
-        0x1f => sign | 0x7f80_0000 | (frac << 13),
+        0x1f => {
+            if frac == 0 {
+                sign | 0x7f80_0000
+            } else {
+                sign | 0x7f80_0000 | 0x0040_0000 | (frac << 13)
+            }
+        }
         _ => sign | ((((exp as i32) - 15 + 127) as u32) << 23) | (frac << 13),
     }
 }
 
-fn f32_to_f16_bits(value: f32) -> u16 {
+fn f16_round_increment(negative: bool, base: u32, remainder: u32, shift: u32, rounding: u8) -> bool {
+    if remainder == 0 {
+        return false;
+    }
+    match rounding & 0x03 {
+        0 => {
+            let half = 1u32 << (shift - 1);
+            remainder > half || (remainder == half && (base & 1) != 0)
+        }
+        1 => negative,
+        2 => !negative,
+        _ => false,
+    }
+}
+
+fn f16_overflow_bits(sign: u32, negative: bool, rounding: u8) -> u16 {
+    let round_to_infinity = match rounding & 0x03 {
+        0 => true,
+        1 => negative,
+        2 => !negative,
+        _ => false,
+    };
+    if round_to_infinity {
+        (sign | 0x7c00) as u16
+    } else {
+        (sign | 0x7bff) as u16
+    }
+}
+
+fn f32_to_f16_bits(value: f32, rounding: u8) -> u16 {
     let bits = value.to_bits();
     let sign = (bits >> 16) & 0x8000;
+    let negative = sign != 0;
     let abs = bits & 0x7fff_ffff;
     let exp = (abs >> 23) as i32;
     let mant = abs & 0x007f_ffff;
@@ -828,30 +869,39 @@ fn f32_to_f16_bits(value: f32) -> u16 {
         if mant == 0 {
             return (sign | 0x7c00) as u16;
         }
-        let payload = (mant >> 13).max(1);
+        let payload = ((mant >> 13) | 0x0200).max(1);
         return (sign | 0x7c00 | payload) as u16;
     }
 
     if abs < 0x3300_0000 {
+        if abs != 0 && matches!(rounding & 0x03, 1 if negative) {
+            return (sign | 1) as u16;
+        }
+        if abs != 0 && matches!(rounding & 0x03, 2 if !negative) {
+            return (sign | 1) as u16;
+        }
         return sign as u16;
     }
 
     if abs < 0x3880_0000 {
         let mant24 = mant | 0x0080_0000;
         let shift = (126 - exp) as u32;
-        let round = 1u32 << (shift - 1);
-        let half_mant = (mant24 + round - 1 + ((mant24 >> shift) & 1)) >> shift;
+        let mut half_mant = mant24 >> shift;
+        let remainder = mant24 & ((1u32 << shift) - 1);
+        if f16_round_increment(negative, half_mant, remainder, shift, rounding) {
+            half_mant += 1;
+        }
         return (sign | half_mant) as u16;
     }
 
     let mut half = (abs - 0x3800_0000) >> 13;
     let remainder = abs & 0x1fff;
-    if remainder > 0x1000 || (remainder == 0x1000 && (half & 1) != 0) {
+    if f16_round_increment(negative, half, remainder, 13, rounding) {
         half += 1;
     }
 
     if half >= 0x7c00 {
-        (sign | 0x7c00) as u16
+        f16_overflow_bits(sign, negative, rounding)
     } else {
         (sign | half) as u16
     }

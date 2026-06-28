@@ -10104,6 +10104,244 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    for &(label, asm, feat, profile) in &[
+        (
+            "cvtpi2ps_sse_simd_convert_edge_mem_to_xmm",
+            "cvtpi2ps 32(%rax), %xmm1",
+            Sse,
+            IntConvertEdge,
+        ),
+        (
+            "cvtps2pi_sse_simd_convert_edge_xmm_to_mmx_store",
+            "cvtps2pi %xmm3, %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Sse,
+            F32ConvertEdge,
+        ),
+        (
+            "cvttps2pi_sse_simd_convert_edge_mem_to_mmx_store",
+            "cvttps2pi 32(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Sse,
+            F32ConvertEdge,
+        ),
+        (
+            "cvtss2si_sse_simd_convert_edge_reg_r8",
+            "cvtss2si %xmm3, %r8",
+            Sse,
+            F32ConvertEdge,
+        ),
+        (
+            "cvttss2si_sse_simd_convert_edge_mem_r8",
+            "cvttss2si 32(%rax), %r8",
+            Sse,
+            F32ConvertEdge,
+        ),
+        (
+            "cvtsi2ss_sse_simd_convert_edge_m32",
+            "cvtsi2ss 32(%rax), %xmm1",
+            Sse,
+            IntConvertEdge,
+        ),
+        (
+            "cvtpi2pd_sse2_simd_convert_edge_mem_to_xmm",
+            "cvtpi2pd 32(%rax), %xmm1",
+            Sse2,
+            IntConvertEdge,
+        ),
+        (
+            "cvtpd2pi_sse2_simd_convert_edge_xmm_to_mmx_store",
+            "cvtpd2pi %xmm3, %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Sse2,
+            F64ConvertEdge,
+        ),
+        (
+            "cvttpd2pi_sse2_simd_convert_edge_mem_to_mmx_store",
+            "cvttpd2pi 32(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Sse2,
+            F64ConvertEdge,
+        ),
+        (
+            "cvtdq2ps_sse2_simd_convert_edge_reg",
+            "cvtdq2ps %xmm3, %xmm1",
+            Sse2,
+            IntConvertEdge,
+        ),
+        (
+            "cvtdq2ps_sse2_simd_convert_edge_mem",
+            "cvtdq2ps 32(%rax), %xmm1",
+            Sse2,
+            IntConvertEdge,
+        ),
+        (
+            "cvtps2dq_sse2_simd_convert_edge_reg",
+            "cvtps2dq %xmm3, %xmm1",
+            Sse2,
+            F32ConvertEdge,
+        ),
+        (
+            "cvtps2dq_sse2_simd_convert_edge_mem",
+            "cvtps2dq 32(%rax), %xmm1",
+            Sse2,
+            F32ConvertEdge,
+        ),
+        (
+            "cvttps2dq_sse2_simd_convert_edge_reg",
+            "cvttps2dq %xmm3, %xmm1",
+            Sse2,
+            F32ConvertEdge,
+        ),
+        (
+            "cvttps2dq_sse2_simd_convert_edge_mem",
+            "cvttps2dq 32(%rax), %xmm1",
+            Sse2,
+            F32ConvertEdge,
+        ),
+        (
+            "cvtsd2si_sse2_simd_convert_edge_reg_r8",
+            "cvtsd2si %xmm3, %r8",
+            Sse2,
+            F64ConvertEdge,
+        ),
+        (
+            "cvttsd2si_sse2_simd_convert_edge_mem_r8",
+            "cvttsd2si 32(%rax), %r8",
+            Sse2,
+            F64ConvertEdge,
+        ),
+        (
+            "cvtsi2sd_sse2_simd_convert_edge_m32",
+            "cvtsi2sd 32(%rax), %xmm1",
+            Sse2,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtps2dq_avx_simd_convert_edge_ymm_reg",
+            "{vex} vcvtps2dq %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2dq_avx_simd_convert_edge_ymm_mem",
+            "{vex} vcvttps2dq 32(%rax), %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtdq2ps_avx_simd_convert_edge_ymm_reg",
+            "{vex} vcvtdq2ps %ymm3, %ymm1",
+            Avx,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtpd2dq_avx_simd_convert_edge_ymm_reg",
+            "{vex} vcvtpd2dq %ymm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2dq_avx_simd_convert_edge_ymm_reg",
+            "{vex} vcvttpd2dq %ymm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtdq2pd_avx_simd_convert_edge_xmm_reg",
+            "{vex} vcvtdq2pd %xmm3, %ymm1",
+            Avx,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtps2pd_avx_simd_convert_edge_xmm_reg",
+            "{vex} vcvtps2pd %xmm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtpd2ps_avx_simd_convert_edge_ymm_reg",
+            "{vex} vcvtpd2ps %ymm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtss2si_avx_simd_convert_edge_reg_r8",
+            "{vex} vcvtss2si %xmm3, %r8",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttss2si_avx_simd_convert_edge_mem_r8",
+            "{vex} vcvttss2si 32(%rax), %r8",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtsd2si_avx_simd_convert_edge_reg_r8",
+            "{vex} vcvtsd2si %xmm3, %r8",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttsd2si_avx_simd_convert_edge_mem_r8",
+            "{vex} vcvttsd2si 32(%rax), %r8",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtsi2ss_avx_simd_convert_edge_m32",
+            "{vex} vcvtsi2ss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtsi2sd_avx_simd_convert_edge_m32",
+            "{vex} vcvtsi2sd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtph2ps_f16c_simd_convert_edge_xmm_reg",
+            "{vex} vcvtph2ps %xmm3, %xmm1",
+            F16c,
+            F16Edge,
+        ),
+        (
+            "vcvtph2ps_f16c_simd_convert_edge_ymm_mem",
+            "{vex} vcvtph2ps 32(%rax), %ymm1",
+            F16c,
+            F16Edge,
+        ),
+        (
+            "vcvtps2ph_f16c_simd_convert_edge_xmm_rn",
+            "{vex} vcvtps2ph $0, %xmm3, %xmm1",
+            F16c,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2ph_f16c_simd_convert_edge_xmm_rd",
+            "{vex} vcvtps2ph $1, %xmm3, %xmm1",
+            F16c,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2ph_f16c_simd_convert_edge_ymm_ru_mem",
+            "{vex} vcvtps2ph $2, %ymm3, 48(%rax)",
+            F16c,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2ph_f16c_simd_convert_edge_ymm_rz",
+            "{vex} vcvtps2ph $3, %ymm3, %xmm1",
+            F16c,
+            F32ConvertEdge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -16759,6 +16997,63 @@ fn avx512_kvm_scalar_convert_width_corpus() {
 }
 
 #[test]
+fn avx512_kvm_simd_convert_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_convert_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        38,
+        "unexpected SIMD conversion edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD conversion edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD conversion edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD conversion edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD conversion edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        6,
+        "all SSE conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        12,
+        "all SSE2 conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        14,
+        "all AVX conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F16c),
+        6,
+        "all F16C conversion edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 38,
+        "all SIMD conversion edge cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_sse41_operand_form_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -17145,7 +17440,7 @@ fn avx512_kvm_f16c_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::F16c)
         .collect();
-    assert_eq!(cases.len(), 22, "unexpected F16C corpus size");
+    assert_eq!(cases.len(), 28, "unexpected F16C corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17163,10 +17458,10 @@ fn avx512_kvm_f16c_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::F16c),
-        22,
+        28,
         "all F16C cases should run"
     );
-    assert_eq!(tally.compared, 22, "all F16C cases should compare");
+    assert_eq!(tally.compared, 28, "all F16C cases should compare");
 }
 
 #[test]
