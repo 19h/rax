@@ -1393,12 +1393,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm][1] = shift_left_words(self.regs.xmm[xmm][1], shift);
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented 0x0F 0x71 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         } else {
             // MMX version
@@ -1422,12 +1417,7 @@ impl X86_64Vcpu {
                         self.regs.mm[mm] = shift_left_words(self.regs.mm[mm], shift);
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented MMX 0x0F 0x71 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         }
 
@@ -1476,12 +1466,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm][1] = shift_left_dwords(self.regs.xmm[xmm][1], shift);
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented 0x0F 0x72 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         } else {
             // MMX version
@@ -1505,12 +1490,7 @@ impl X86_64Vcpu {
                         self.regs.mm[mm] = shift_left_dwords(self.regs.mm[mm], shift);
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented MMX 0x0F 0x72 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         }
 
@@ -1592,12 +1572,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm][0] = lo << shift_bits;
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented 0x0F 0x73 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         } else {
             // MMX version (only PSRLQ/PSLLQ)
@@ -1618,12 +1593,7 @@ impl X86_64Vcpu {
                         self.regs.mm[mm] <<= shift;
                     }
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented MMX 0x0F 0x73 /r{} at RIP={:#x}",
-                        reg, self.regs.rip
-                    )));
-                }
+                _ => return self.inject_undefined_instruction(),
             }
         }
 
