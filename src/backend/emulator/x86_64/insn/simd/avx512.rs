@@ -2962,9 +2962,7 @@ pub fn evex_fp_cmp(
         .ok_or_else(|| Error::Emulator("EVEX FP compare requires EVEX prefix".to_string()))?;
 
     if evex.z {
-        return Err(Error::Emulator(
-            "EVEX FP compare mask destination does not use zeroing".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -3051,9 +3049,7 @@ pub fn evex_fpclass(
         .ok_or_else(|| Error::Emulator("EVEX FP classify requires EVEX prefix".to_string()))?;
 
     if evex.vvvv != 0xF || evex.z {
-        return Err(Error::Emulator(
-            "EVEX FP classify has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -3127,9 +3123,7 @@ pub fn evex_fp_to_gpr(
     })?;
 
     if evex.aaa != 0 || evex.z || evex.vvvv != 0xF || !evex.v_prime {
-        return Err(Error::Emulator(
-            "EVEX scalar FP-to-GPR conversion has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -3168,9 +3162,7 @@ pub fn evex_gpr_to_fp(
     })?;
 
     if evex.aaa != 0 || evex.z {
-        return Err(Error::Emulator(
-            "EVEX scalar GPR-to-FP conversion has invalid EVEX modifiers".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let modrm_start = ctx.cursor;
@@ -3256,10 +3248,10 @@ pub fn evex_packed_fp_convert(
         Error::Emulator("EVEX packed FP conversion requires EVEX prefix".to_string())
     })?;
 
-    if evex.vvvv != 0xF
-        || !matches!(src_elem_size, 2 | 4 | 8)
-        || !matches!(dst_elem_size, 2 | 4 | 8)
-    {
+    if evex.vvvv != 0xF {
+        return vcpu.inject_undefined_instruction();
+    }
+    if !matches!(src_elem_size, 2 | 4 | 8) || !matches!(dst_elem_size, 2 | 4 | 8) {
         return Err(Error::Emulator(
             "EVEX packed FP conversion has invalid operands".to_string(),
         ));
@@ -3331,10 +3323,10 @@ pub fn evex_packed_int_to_fp(
         Error::Emulator("EVEX packed integer-to-FP conversion requires EVEX prefix".to_string())
     })?;
 
-    if evex.vvvv != 0xF
-        || !matches!(src_elem_size, 2 | 4 | 8)
-        || !matches!(dst_elem_size, 2 | 4 | 8)
-    {
+    if evex.vvvv != 0xF {
+        return vcpu.inject_undefined_instruction();
+    }
+    if !matches!(src_elem_size, 2 | 4 | 8) || !matches!(dst_elem_size, 2 | 4 | 8) {
         return Err(Error::Emulator(
             "EVEX packed integer-to-FP conversion has invalid operands".to_string(),
         ));
@@ -3412,10 +3404,10 @@ pub fn evex_packed_fp_to_int(
         Error::Emulator("EVEX packed FP-to-integer conversion requires EVEX prefix".to_string())
     })?;
 
-    if evex.vvvv != 0xF
-        || !matches!(src_elem_size, 2 | 4 | 8)
-        || !matches!(dst_elem_size, 2 | 4 | 8)
-    {
+    if evex.vvvv != 0xF {
+        return vcpu.inject_undefined_instruction();
+    }
+    if !matches!(src_elem_size, 2 | 4 | 8) || !matches!(dst_elem_size, 2 | 4 | 8) {
         return Err(Error::Emulator(
             "EVEX packed FP-to-integer conversion has invalid operands".to_string(),
         ));
@@ -3487,10 +3479,10 @@ pub fn evex_packed_fp_convert_store(
         Error::Emulator("EVEX packed FP conversion store requires EVEX prefix".to_string())
     })?;
 
-    if evex.vvvv != 0xF
-        || !matches!(src_elem_size, 2 | 4 | 8)
-        || !matches!(dst_elem_size, 2 | 4 | 8)
-    {
+    if evex.vvvv != 0xF {
+        return vcpu.inject_undefined_instruction();
+    }
+    if !matches!(src_elem_size, 2 | 4 | 8) || !matches!(dst_elem_size, 2 | 4 | 8) {
         return Err(Error::Emulator(
             "EVEX packed FP conversion store has invalid operands".to_string(),
         ));
@@ -3526,9 +3518,7 @@ pub fn evex_packed_fp_convert_store(
     let mask = evex_mask(vcpu, evex.aaa, num_elems);
     if is_memory {
         if evex.z {
-            return Err(Error::Emulator(
-                "EVEX packed FP conversion memory store does not allow zeroing".to_string(),
-            ));
+            return vcpu.inject_undefined_instruction();
         }
         for lane in 0..num_elems {
             if (mask >> lane) & 1 != 0 {
