@@ -8,7 +8,7 @@
 //! per qword (AFFINE). Semantics follow the Intel SDM `affine_byte` definition.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -86,7 +86,7 @@ fn write_xmm(vcpu: &mut X86_64Vcpu, idx: usize, b: [u8; 16]) {
 /// GF2P8MULB xmm1, xmm2/m128 (66 0F 38 CF /r): per-byte GF(2^8) multiply.
 pub fn gf2p8mulb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("GF2P8MULB requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dst_idx = reg as usize;
@@ -103,9 +103,7 @@ pub fn gf2p8mulb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 /// GF2P8AFFINEQB xmm1, xmm2/m128, imm8 (66 0F 3A CE /r ib): per-qword affine.
 pub fn gf2p8affineqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator(
-            "GF2P8AFFINEQB requires 66 prefix".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm8 = ctx.consume_u8()?;
@@ -127,9 +125,7 @@ pub fn gf2p8affineqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 /// GF2P8AFFINEINVQB xmm1, xmm2/m128, imm8 (66 0F 3A CF /r ib): GF inverse then affine.
 pub fn gf2p8affineinvqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator(
-            "GF2P8AFFINEINVQB requires 66 prefix".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm8 = ctx.consume_u8()?;

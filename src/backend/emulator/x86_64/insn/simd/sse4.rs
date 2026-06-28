@@ -6,7 +6,7 @@
 //! SSE4.2 (0x0F 0x3A): PCMP*STR* string comparison
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
@@ -18,7 +18,7 @@ use super::super::super::flags;
 /// PBLENDVB - Variable Blend Packed Bytes (0x10)
 pub fn pblendvb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PBLENDVB requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -56,7 +56,7 @@ pub fn pblendvb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// BLENDVPS - Variable Blend Packed Single-FP (0x14)
 pub fn blendvps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("BLENDVPS requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -94,7 +94,7 @@ pub fn blendvps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// BLENDVPD - Variable Blend Packed Double-FP (0x15)
 pub fn blendvpd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("BLENDVPD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -120,7 +120,7 @@ pub fn blendvpd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PTEST - Logical Compare (0x17)
 pub fn ptest(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PTEST requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -161,7 +161,7 @@ pub fn ptest(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 /// PMOVSXBW - Packed Move with Sign Extend Byte to Word (0x20)
 pub fn pmovsxbw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXBW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -190,7 +190,7 @@ pub fn pmovsxbw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVSXBD - Packed Move with Sign Extend Byte to Dword (0x21)
 pub fn pmovsxbd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXBD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -212,7 +212,7 @@ pub fn pmovsxbd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVSXBQ - Packed Move with Sign Extend Byte to Qword (0x22)
 pub fn pmovsxbq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXBQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -232,7 +232,7 @@ pub fn pmovsxbq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVSXWD - Packed Move with Sign Extend Word to Dword (0x23)
 pub fn pmovsxwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXWD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -254,7 +254,7 @@ pub fn pmovsxwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVSXWQ - Packed Move with Sign Extend Word to Qword (0x24)
 pub fn pmovsxwq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXWQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -274,7 +274,7 @@ pub fn pmovsxwq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVSXDQ - Packed Move with Sign Extend Dword to Qword (0x25)
 pub fn pmovsxdq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVSXDQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -294,7 +294,7 @@ pub fn pmovsxdq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXBW - Packed Move with Zero Extend Byte to Word (0x30)
 pub fn pmovzxbw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXBW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -322,7 +322,7 @@ pub fn pmovzxbw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXBD - Packed Move with Zero Extend Byte to Dword (0x31)
 pub fn pmovzxbd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXBD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -344,7 +344,7 @@ pub fn pmovzxbd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXBQ - Packed Move with Zero Extend Byte to Qword (0x32)
 pub fn pmovzxbq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXBQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -362,7 +362,7 @@ pub fn pmovzxbq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXWD - Packed Move with Zero Extend Word to Dword (0x33)
 pub fn pmovzxwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXWD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -384,7 +384,7 @@ pub fn pmovzxwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXWQ - Packed Move with Zero Extend Word to Qword (0x34)
 pub fn pmovzxwq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXWQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -402,7 +402,7 @@ pub fn pmovzxwq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMOVZXDQ - Packed Move with Zero Extend Dword to Qword (0x35)
 pub fn pmovzxdq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMOVZXDQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -424,7 +424,7 @@ pub fn pmovzxdq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMULDQ - Multiply Packed Signed Dword (0x28)
 pub fn pmuldq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMULDQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -447,7 +447,7 @@ pub fn pmuldq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PCMPEQQ - Compare Packed Qword for Equal (0x29)
 pub fn pcmpeqq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PCMPEQQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -467,7 +467,7 @@ pub fn pcmpeqq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// MOVNTDQA - Load Double Quadword Non-Temporal (0x2A)
 pub fn movntdqa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("MOVNTDQA requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
@@ -484,7 +484,7 @@ pub fn movntdqa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PACKUSDW - Pack with Unsigned Saturation (0x2B)
 pub fn packusdw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PACKUSDW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -520,7 +520,7 @@ pub fn packusdw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// PMULLD - Multiply Packed Signed Dword (0x40)
 pub fn pmulld(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMULLD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -546,7 +546,7 @@ pub fn pmulld(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PHMINPOSUW - Packed Horizontal Word Minimum (0x41)
 pub fn phminposuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PHMINPOSUW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -591,7 +591,7 @@ pub fn phminposuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 /// PCMPGTQ - Compare Packed Qword for Greater Than (0x37)
 pub fn pcmpgtq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PCMPGTQ requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -623,7 +623,7 @@ pub fn pcmpgtq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// PMINSB - Minimum of Packed Signed Bytes (0x38)
 pub fn pminsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMINSB requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -656,7 +656,7 @@ pub fn pminsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMINSD - Minimum of Packed Signed Dwords (0x39)
 pub fn pminsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMINSD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -682,7 +682,7 @@ pub fn pminsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMINUW - Minimum of Packed Unsigned Words (0x3A)
 pub fn pminuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMINUW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -715,7 +715,7 @@ pub fn pminuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMINUD - Minimum of Packed Unsigned Dwords (0x3B)
 pub fn pminud(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMINUD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -741,7 +741,7 @@ pub fn pminud(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMAXSB - Maximum of Packed Signed Bytes (0x3C)
 pub fn pmaxsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMAXSB requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -774,7 +774,7 @@ pub fn pmaxsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMAXSD - Maximum of Packed Signed Dwords (0x3D)
 pub fn pmaxsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMAXSD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -800,7 +800,7 @@ pub fn pmaxsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMAXUW - Maximum of Packed Unsigned Words (0x3E)
 pub fn pmaxuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMAXUW requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
@@ -833,7 +833,7 @@ pub fn pmaxuw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// PMAXUD - Maximum of Packed Unsigned Dwords (0x3F)
 pub fn pmaxud(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
-        return Err(Error::Emulator("PMAXUD requires 66 prefix".to_string()));
+        return vcpu.inject_undefined_instruction();
     }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;

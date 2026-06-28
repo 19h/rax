@@ -18963,6 +18963,134 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0xc4, 0xe2, 0x61, 0x92, 0x10],
         ),
         (
+            "pblendvb_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x10, 0xc1],
+        ),
+        (
+            "blendvps_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x14, 0xc1],
+        ),
+        (
+            "blendvpd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x15, 0xc1],
+        ),
+        (
+            "ptest_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x17, 0xc1],
+        ),
+        (
+            "pmovsxbw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x20, 0xc1],
+        ),
+        (
+            "pmovsxbd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x21, 0xc1],
+        ),
+        (
+            "pmovsxbq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x22, 0xc1],
+        ),
+        (
+            "pmovsxwd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x23, 0xc1],
+        ),
+        (
+            "pmovsxwq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x24, 0xc1],
+        ),
+        (
+            "pmovsxdq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x25, 0xc1],
+        ),
+        (
+            "pmuldq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x28, 0xc1],
+        ),
+        (
+            "pcmpeqq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x29, 0xc1],
+        ),
+        (
+            "movntdqa_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x2a, 0xc1],
+        ),
+        (
+            "packusdw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x2b, 0xc1],
+        ),
+        (
+            "pmovzxbw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x30, 0xc1],
+        ),
+        (
+            "pmovzxbd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x31, 0xc1],
+        ),
+        (
+            "pmovzxbq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x32, 0xc1],
+        ),
+        (
+            "pmovzxwd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x33, 0xc1],
+        ),
+        (
+            "pmovzxwq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x34, 0xc1],
+        ),
+        (
+            "pmovzxdq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x35, 0xc1],
+        ),
+        (
+            "pcmpgtq_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x37, 0xc1],
+        ),
+        (
+            "pminsb_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x38, 0xc1],
+        ),
+        (
+            "pminsd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x39, 0xc1],
+        ),
+        (
+            "pminuw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3a, 0xc1],
+        ),
+        (
+            "pminud_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3b, 0xc1],
+        ),
+        (
+            "pmaxsb_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3c, 0xc1],
+        ),
+        (
+            "pmaxsd_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3d, 0xc1],
+        ),
+        (
+            "pmaxuw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3e, 0xc1],
+        ),
+        (
+            "pmaxud_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x3f, 0xc1],
+        ),
+        (
+            "pmulld_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x40, 0xc1],
+        ),
+        (
+            "phminposuw_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0x41, 0xc1],
+        ),
+        (
+            "gf2p8mulb_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xcf, 0xc1],
+        ),
+        (
             "aesimc_missing_66_prefix_illegal",
             &[0x0f, 0x38, 0xdb, 0xc1],
         ),
@@ -19053,6 +19181,14 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "pclmulqdq_missing_66_prefix_illegal",
             &[0x0f, 0x3a, 0x44, 0xc1, 0x00],
+        ),
+        (
+            "gf2p8affineqb_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0xce, 0xc1, 0x00],
+        ),
+        (
+            "gf2p8affineinvqb_missing_66_prefix_illegal",
+            &[0x0f, 0x3a, 0xcf, 0xc1, 0x00],
         ),
         (
             "pcmpestrm_missing_66_prefix_illegal",
@@ -19771,7 +19907,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        270,
+        304,
     );
 }
 
