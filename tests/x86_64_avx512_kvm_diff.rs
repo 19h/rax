@@ -1183,6 +1183,12 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     regs.k = input.k;
 
     let (mut vcpu, mem) = setup_vm(code, Some(regs));
+    let mut interp_sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("interp get sregs: {e:?}"))?;
+    interp_sregs.cr4 = CR4_VAL;
+    vcpu.set_sregs(&interp_sregs)
+        .map_err(|e| format!("interp set sregs: {e:?}"))?;
     vcpu.set_xgetbv1_value(XCR0_AVX512);
     mem.write_slice(code, GuestAddress(CODE_ADDR))
         .map_err(|e| format!("write code at diff RIP: {e:?}"))?;
@@ -12585,6 +12591,26 @@ fn irregular_cases() -> Vec<Case> {
             "cpuid_cpuid_edge_xsave_subleaf_high_ecx_ignored",
             "movl $0xd, %eax\nmovl $1, %ecx\ncpuid\nmovl %eax, %r8d\nmovl %ebx, %r9d\nmovl %ecx, %esi\nmovl %edx, %edi\nmovl $0xd, %eax\nmovabsq $0xffffffff00000001, %rcx\ncpuid\nxorl %r8d, %eax\nxorl %r9d, %ebx\nxorl %esi, %ecx\nxorl %edi, %edx\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %rsi, %rsi\nxorq %rdi, %rdi\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
+        (
+            "cpuid_cpuid_edge_leaf1_xsave_osxsave_avx",
+            "movl $1, %eax\nxorl %ecx, %ecx\ncpuid\nandl $0x1c000000, %ecx\ncmpl $0x1c000000, %ecx\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_edge_leaf7_core_feature_bits",
+            "movl $7, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %ebx, %r8d\nandl $0x100420, %r8d\ncmpl $0x100420, %r8d\nsete %al\nmovl %ecx, %r9d\nandl $0x100, %r9d\ncmpl $0x100, %r9d\nsete %cl\nandb %cl, %al\nmovl %edx, %r9d\nandl $0x4000, %r9d\ncmpl $0x4000, %r9d\nsete %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_edge_xsave_leaf0_avx512_state_bits",
+            "movl $0xd, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %ecx, %r9d\nmovl %eax, %r8d\nandl $0xe7, %r8d\ncmpl $0xe7, %r8d\nsete %al\ntestl %ebx, %ebx\nsetnz %cl\nandb %cl, %al\ncmpl %ebx, %r9d\nsetae %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_edge_xsave_high_subleaf_zero",
+            "movl $0xd, %eax\nmovl $63, %ecx\nmovq $-1, %rbx\nmovq $-1, %rdx\ncpuid\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_edge_extended_address_widths_present",
+            "movl $0x80000008, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %eax, %r9d\nmovl %r9d, %r8d\nandl $0xff, %r8d\ncmpl $36, %r8d\nsetae %al\nshrl $8, %r9d\nandl $0xff, %r9d\ncmpl $48, %r9d\nsetae %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18429,7 +18455,7 @@ fn avx512_kvm_processor_query_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
         .collect();
-    assert_eq!(cases.len(), 18, "unexpected processor-query corpus size");
+    assert_eq!(cases.len(), 23, "unexpected processor-query corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Rdpmc) {
@@ -18448,7 +18474,7 @@ fn avx512_kvm_processor_query_corpus() {
         tally.skipped_asm, 0,
         "processor-query corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.ran_for(Feat::Cpuid), 10, "all CPUID cases should run");
+    assert_eq!(tally.ran_for(Feat::Cpuid), 15, "all CPUID cases should run");
     if host.supports(Feat::Rdpmc) {
         assert_eq!(tally.ran_for(Feat::Rdpmc), 8, "all RDPMC cases should run");
         assert_eq!(
@@ -18456,7 +18482,7 @@ fn avx512_kvm_processor_query_corpus() {
             "processor-query cases should not feature-skip"
         );
         assert_eq!(
-            tally.compared, 18,
+            tally.compared, 23,
             "all processor-query cases should compare"
         );
     } else {
@@ -18464,7 +18490,7 @@ fn avx512_kvm_processor_query_corpus() {
             tally.skipped_feature, 8,
             "only RDPMC cases should feature-skip"
         );
-        assert_eq!(tally.compared, 10, "all CPUID cases should compare");
+        assert_eq!(tally.compared, 15, "all CPUID cases should compare");
     }
 }
 
@@ -18519,7 +18545,7 @@ fn avx512_kvm_cpuid_edge_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Cpuid && case.label.contains("_cpuid_edge_"))
         .collect();
-    assert_eq!(cases.len(), 5, "unexpected CPUID edge corpus size");
+    assert_eq!(cases.len(), 10, "unexpected CPUID edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -18539,10 +18565,10 @@ fn avx512_kvm_cpuid_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Cpuid),
-        5,
+        10,
         "all CPUID edge cases should run"
     );
-    assert_eq!(tally.compared, 5, "all CPUID edge cases should compare");
+    assert_eq!(tally.compared, 10, "all CPUID edge cases should compare");
 }
 
 #[test]
