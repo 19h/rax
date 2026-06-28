@@ -11473,6 +11473,29 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        ("movbe_movbe_edge_r16_unaligned_1", "movbe 1(%rax), %r8w"),
+        ("movbe_movbe_edge_r32_unaligned_3", "movbe 3(%rax), %r8d"),
+        ("movbe_movbe_edge_r64_unaligned_5", "movbe 5(%rax), %r8"),
+        ("movbe_movbe_edge_r16_high_dest", "movbe 2(%rax), %r9w"),
+        ("movbe_movbe_edge_r32_high_dest", "movbe 4(%rax), %r9d"),
+        ("movbe_movbe_edge_r64_high_dest", "movbe 8(%rax), %r15"),
+        ("movbe_movbe_edge_m16_high_src", "movbe %r9w, 57(%rax)"),
+        ("movbe_movbe_edge_m32_high_src", "movbe %r9d, 61(%rax)"),
+        ("movbe_movbe_edge_m64_high_src", "movbe %r9, 65(%rax)"),
+        (
+            "movbe_movbe_edge_r64_roundtrip",
+            "movbe %r8, 80(%rax)\nmovbe 80(%rax), %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Movbe,
+            profile: Int,
+        });
+    }
+
     // Core data movement, effective-address, stack, table-lookup, and direct
     // flag-state instructions. The harness compares RBX/RBP/RSP plus a stack
     // window so implicit stack effects are visible, not only register results.
@@ -18343,6 +18366,38 @@ fn avx512_kvm_scalar_crc_movbe_operand_form_corpus() {
         tally.compared, 14,
         "all scalar CRC/MOVBE operand-form cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_movbe_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Movbe && case.label.contains("_movbe_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 10, "unexpected MOVBE edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on MOVBE edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a MOVBE edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "MOVBE edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "MOVBE edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Movbe),
+        10,
+        "all MOVBE edge cases should run"
+    );
+    assert_eq!(tally.compared, 10, "all MOVBE edge cases should compare");
 }
 
 #[test]
