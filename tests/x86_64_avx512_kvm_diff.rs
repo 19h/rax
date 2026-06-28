@@ -19341,6 +19341,20 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn prefetch_register_source_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
+    let mut cases: Vec<(&'static str, &'static [u8])> = vec![
+        ("prefetchnta_register_source_fallthrough", &[0x0fu8, 0x18, 0xc0]),
+        ("prefetcht0_register_source_fallthrough", &[0x0fu8, 0x18, 0xc8]),
+        ("prefetcht1_register_source_fallthrough", &[0x0fu8, 0x18, 0xd0]),
+        ("prefetcht2_register_source_fallthrough", &[0x0fu8, 0x18, 0xd8]),
+    ];
+    if HostFeatures::detect().supports(Feat::Prefetchw) {
+        cases.push(("prefetchw_register_source_fallthrough", &[0x0fu8, 0x0d, 0xc8]));
+        cases.push(("prefetchwt1_register_source_fallthrough", &[0x0fu8, 0x0d, 0xd0]));
+    }
+    cases
+}
+
 fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
@@ -19921,6 +19935,70 @@ fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, e
     run_exception_marker_corpus(name, "#UD", UD_VECTOR, cases, expected);
 }
 
+fn run_fallthrough_marker_corpus(
+    name: &str,
+    cases: Vec<(&'static str, &'static [u8])>,
+    expected: usize,
+) {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let case_count = cases.len();
+    assert_eq!(case_count, expected, "unexpected {name} corpus size");
+
+    let input = input_for(InputProfile::Int);
+    let mut failures = Vec::new();
+    for (label, op) in cases {
+        let code = build_fault_probe_code(op);
+        let kvm = match oracle.run_with_exception_trap(&code, &input, UD_VECTOR) {
+            Ok(KvmOutcome::Ran(out)) => out,
+            Ok(KvmOutcome::Faulted) => {
+                failures.push(format!("{label}: KVM faulted before reaching fallthrough marker"));
+                continue;
+            }
+            Err(e) => panic!("{label}: KVM backend failure: {e}"),
+        };
+        let interp = match run_interp_with_exception_trap(&code, &input, UD_VECTOR) {
+            Ok(out) => out,
+            Err(e) => {
+                failures.push(format!(
+                    "{label}: rax failed before reaching fallthrough marker: {e}"
+                ));
+                continue;
+            }
+        };
+
+        let kvm_marker = scratch_marker(&kvm.scratch);
+        let interp_marker = scratch_marker(&interp.scratch);
+        if kvm_marker != FALLTHROUGH_MARKER {
+            failures.push(format!(
+                "{label}: KVM marker {kvm_marker:#x}, expected fallthrough marker {FALLTHROUGH_MARKER:#x}"
+            ));
+        }
+        if interp_marker != FALLTHROUGH_MARKER {
+            failures.push(format!(
+                "{label}: rax marker {interp_marker:#x}, expected fallthrough marker {FALLTHROUGH_MARKER:#x}"
+            ));
+        }
+    }
+
+    eprintln!(
+        "[avx512-kvm-diff] {name} fallthrough markers compared={}",
+        case_count.saturating_sub(failures.len())
+    );
+    assert!(
+        failures.is_empty(),
+        "{name} fallthrough marker mismatches vs silicon:\n{}",
+        failures.join("\n")
+    );
+}
+
 #[test]
 fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
     run_ud_marker_corpus("invalid-long-mode legacy", legacy_invalid_long_mode_cases(), 17);
@@ -19943,6 +20021,17 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
         invalid_extension_encoding_cases(),
         316,
     );
+}
+
+#[test]
+fn avx512_kvm_prefetch_register_source_fallthrough_corpus() {
+    let cases = prefetch_register_source_fallthrough_cases();
+    let expected = if HostFeatures::detect().supports(Feat::Prefetchw) {
+        6
+    } else {
+        4
+    };
+    run_fallthrough_marker_corpus("prefetch register-source", cases, expected);
 }
 
 #[test]

@@ -228,6 +228,10 @@ pub fn prefetchh(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             hint, vcpu.regs.rip
         )));
     }
+    if modrm >> 6 == 3 {
+        vcpu.regs.rip += ctx.cursor as u64;
+        return Ok(None);
+    }
 
     let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
     ctx.cursor = modrm_start + 1 + extra;
@@ -246,6 +250,10 @@ pub fn prefetchw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             "unimplemented PREFETCHW hint /{} at RIP={:#x}",
             hint, vcpu.regs.rip
         )));
+    }
+    if modrm >> 6 == 3 {
+        vcpu.regs.rip += ctx.cursor as u64;
+        return Ok(None);
     }
 
     let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
