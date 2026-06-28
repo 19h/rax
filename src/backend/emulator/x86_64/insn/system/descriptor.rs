@@ -95,6 +95,7 @@ fn descriptor_for_lar_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option
 }
 
 fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
+    vcpu.clear_lazy_flags();
     if set {
         vcpu.regs.rflags |= flags::bits::ZF;
     } else {
@@ -252,9 +253,9 @@ pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
         vcpu.set_reg(reg, desc.access_rights(), ctx.op_size);
-        vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
+        set_zf(vcpu, true); // Valid selector
     } else {
-        vcpu.regs.rflags &= !flags::bits::ZF; // Null selector
+        set_zf(vcpu, false); // Null selector
     }
 
     vcpu.regs.rip += ctx.cursor as u64;
@@ -279,9 +280,9 @@ pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
         vcpu.set_reg(reg, desc.limit(), ctx.op_size);
-        vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
+        set_zf(vcpu, true); // Valid selector
     } else {
-        vcpu.regs.rflags &= !flags::bits::ZF; // Null selector
+        set_zf(vcpu, false); // Null selector
     }
 
     vcpu.regs.rip += ctx.cursor as u64;
