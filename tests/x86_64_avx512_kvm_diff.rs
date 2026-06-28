@@ -18061,6 +18061,42 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "kmovw_store_reg_k8_illegal",
             &[0xc5, 0x78, 0x91, 0x00],
         ),
+        (
+            "kortestw_vvvv_illegal",
+            &[0xc5, 0xf0, 0x98, 0xd1],
+        ),
+        (
+            "ktestw_vvvv_illegal",
+            &[0xc5, 0xf0, 0x99, 0xd1],
+        ),
+        (
+            "kshiftlw_vvvv_illegal",
+            &[0xc4, 0xe3, 0xf1, 0x32, 0xd1, 0x03],
+        ),
+        (
+            "kortestw_memory_illegal",
+            &[0xc5, 0xf8, 0x98, 0x10],
+        ),
+        (
+            "ktestw_memory_illegal",
+            &[0xc5, 0xf8, 0x99, 0x10],
+        ),
+        (
+            "kandw_memory_illegal",
+            &[0xc5, 0xec, 0x41, 0x18],
+        ),
+        (
+            "knotw_memory_illegal",
+            &[0xc5, 0xf8, 0x44, 0x10],
+        ),
+        (
+            "kunpckbw_memory_illegal",
+            &[0xc5, 0xed, 0x4b, 0x18],
+        ),
+        (
+            "kshiftlw_memory_illegal",
+            &[0xc4, 0xe3, 0xf9, 0x32, 0x10, 0x03],
+        ),
     ]
 }
 
@@ -18619,7 +18655,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        9,
+        18,
     );
 }
 

@@ -1250,9 +1250,7 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator(
-                "Mask logical op requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // VEX.vvvv selects the first source opmask register. As in execute_kunpck,
@@ -1297,9 +1295,7 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator(
-                "Mask unary op requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let src = self.regs.k[k_src];
@@ -1323,14 +1319,12 @@ impl X86_64Vcpu {
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("KTEST requires VEX.vvvv=1111b".to_string()));
+            return self.inject_undefined_instruction();
         }
 
         let modrm = ctx.consume_u8()?;
         if (modrm >> 6) != 3 {
-            return Err(Error::Emulator(
-                "KTEST requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let k_src1 = ((modrm >> 3) & 0x07) as usize;
@@ -1365,16 +1359,12 @@ impl X86_64Vcpu {
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "KORTEST requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let modrm = ctx.consume_u8()?;
         if (modrm >> 6) != 3 {
-            return Err(Error::Emulator(
-                "KORTEST requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let k_src1 = ((modrm >> 3) & 0x07) as usize;
@@ -1409,9 +1399,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
         if (modrm >> 6) != 3 {
-            return Err(Error::Emulator(
-                "KUNPCK requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // VEX.vvvv selects the first source opmask register, but only k0-k7
@@ -1449,16 +1437,12 @@ impl X86_64Vcpu {
         left: bool,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator(
-                "KSHIFT requires VEX.vvvv=1111b".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let modrm = ctx.consume_u8()?;
         if (modrm >> 6) != 3 {
-            return Err(Error::Emulator(
-                "KSHIFT requires register operands".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let k_dst = ((modrm >> 3) & 0x07) as usize;
