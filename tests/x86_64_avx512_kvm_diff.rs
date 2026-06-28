@@ -10980,6 +10980,66 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, profile) in &[
+        (
+            "vaddsubps_avx_simd_horizontal_edge_xmm_self",
+            "{vex} vaddsubps %xmm1, %xmm1, %xmm1",
+            F32,
+        ),
+        (
+            "vaddsubpd_avx_simd_horizontal_edge_ymm_unaligned_mem",
+            "{vex} vaddsubpd 33(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vaddsubps_avx_simd_horizontal_edge_ymm_high_regs",
+            "{vex} vaddsubps %ymm10, %ymm11, %ymm9",
+            F32,
+        ),
+        (
+            "vaddsubpd_avx_simd_horizontal_edge_xmm_zero_upper",
+            "{vex} vaddsubpd %xmm2, %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vhaddps_avx_simd_horizontal_edge_ymm_self",
+            "{vex} vhaddps %ymm1, %ymm1, %ymm1",
+            F32,
+        ),
+        (
+            "vhaddpd_avx_simd_horizontal_edge_ymm_mem",
+            "{vex} vhaddpd 32(%rax), %ymm3, %ymm1",
+            F64,
+        ),
+        (
+            "vhsubps_avx_simd_horizontal_edge_xmm_self",
+            "{vex} vhsubps %xmm1, %xmm1, %xmm1",
+            F32,
+        ),
+        (
+            "vhsubps_avx_simd_horizontal_edge_ymm_high_regs",
+            "{vex} vhsubps %ymm10, %ymm11, %ymm9",
+            F32,
+        ),
+        (
+            "vhsubpd_avx_simd_horizontal_edge_xmm_unaligned_mem",
+            "{vex} vhsubpd 17(%rax), %xmm3, %xmm1",
+            F64,
+        ),
+        (
+            "vhaddps_avx_simd_horizontal_edge_xmm_zero_upper",
+            "{vex} vhaddps %xmm2, %xmm3, %xmm1",
+            F32,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx,
+            profile,
+        });
+    }
+
     for &(label, asm) in &[
         (
             "vphaddw_avx2_simd_horizontal_edge_xmm_reg",
@@ -20015,7 +20075,7 @@ fn avx512_kvm_simd_horizontal_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        18,
+        28,
         "unexpected SIMD horizontal edge corpus size"
     );
 
@@ -20039,12 +20099,17 @@ fn avx512_kvm_simd_horizontal_edge_corpus() {
         "SIMD horizontal edge cases should not feature-skip"
     );
     assert_eq!(
+        tally.ran_for(Feat::Avx),
+        10,
+        "all AVX horizontal edge cases should run"
+    );
+    assert_eq!(
         tally.ran_for(Feat::Avx2),
         18,
         "all AVX2 horizontal edge cases should run"
     );
     assert_eq!(
-        tally.compared, 18,
+        tally.compared, 28,
         "all SIMD horizontal edge cases should compare"
     );
 }
