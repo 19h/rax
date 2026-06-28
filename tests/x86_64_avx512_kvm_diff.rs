@@ -18405,6 +18405,26 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vgatherdps_no_sib_illegal",
             &[0xc4, 0xe2, 0x61, 0x92, 0x10],
         ),
+        (
+            "aesimc_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xdb, 0xc1],
+        ),
+        (
+            "aesenc_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xdc, 0xc1],
+        ),
+        (
+            "aesenclast_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xdd, 0xc1],
+        ),
+        (
+            "aesdec_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xde, 0xc1],
+        ),
+        (
+            "aesdeclast_missing_66_prefix_illegal",
+            &[0x0f, 0x38, 0xdf, 0xc1],
+        ),
     ]
 }
 
@@ -18963,7 +18983,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        95,
+        100,
     );
 }
 

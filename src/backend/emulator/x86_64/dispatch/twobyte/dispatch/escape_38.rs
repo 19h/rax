@@ -136,7 +136,7 @@ impl X86_64Vcpu {
             // DEST := InvMixColumns(SRC)
             0xDB => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("AESIMC requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let xmm_dst = reg as usize;
@@ -156,7 +156,7 @@ impl X86_64Vcpu {
             // STATE := ShiftRows(SubBytes(STATE)); STATE := MixColumns(STATE); DEST := STATE XOR RoundKey
             0xDC => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("AESENC requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let xmm_dst = reg as usize;
@@ -178,7 +178,7 @@ impl X86_64Vcpu {
             // STATE := ShiftRows(SubBytes(STATE)); DEST := STATE XOR RoundKey (no MixColumns)
             0xDD => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("AESENCLAST requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let xmm_dst = reg as usize;
@@ -200,7 +200,7 @@ impl X86_64Vcpu {
             // STATE := InvShiftRows(InvSubBytes(STATE)); STATE := InvMixColumns(STATE); DEST := STATE XOR RoundKey
             0xDE => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("AESDEC requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let xmm_dst = reg as usize;
@@ -222,7 +222,7 @@ impl X86_64Vcpu {
             // STATE := InvShiftRows(InvSubBytes(STATE)); DEST := STATE XOR RoundKey (no InvMixColumns)
             0xDF => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("AESDECLAST requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let xmm_dst = reg as usize;
