@@ -167,7 +167,8 @@ impl X86_64Vcpu {
                     // RDPKRU (0x0F 0x01 0xEE) - Read PKRU into EAX, clear EDX
                     ctx.consume_u8()?; // consume modrm
                     if (self.regs.rcx as u32) != 0 {
-                        return Err(Error::Emulator("RDPKRU requires ECX=0".to_string()));
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
                     }
                     self.regs.rax = self.pkru as u64;
                     self.regs.rdx = 0;
@@ -178,9 +179,8 @@ impl X86_64Vcpu {
                     // WRPKRU (0x0F 0x01 0xEF) - Write EAX into PKRU
                     ctx.consume_u8()?; // consume modrm
                     if (self.regs.rcx as u32) != 0 || (self.regs.rdx as u32) != 0 {
-                        return Err(Error::Emulator(
-                            "WRPKRU requires ECX=0 and EDX=0".to_string(),
-                        ));
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
                     }
                     self.pkru = self.regs.rax as u32;
                     self.regs.rip += ctx.cursor as u64;
