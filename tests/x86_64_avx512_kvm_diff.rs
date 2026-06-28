@@ -13990,6 +13990,10 @@ fn irregular_cases() -> Vec<Case> {
             "movq 32(%rax), %mm0\npackssdw 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
         ),
         (
+            "mmx_pmovmskb_store",
+            "movabsq $0x80ff007f0182fe03, %r8\nmovq %r8, 32(%rax)\nmovq 32(%rax), %mm1\npmovmskb %mm1, %r8d\nmovl %r8d, 248(%rax)\nemms",
+        ),
+        (
             "mmx_psllw_store",
             "movq 32(%rax), %mm0\npsllw $3, %mm0\nmovq %mm0, 72(%rax)\nemms",
         ),
@@ -19270,6 +19274,11 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "pextrw_sse2_memory_source_illegal",
             &[0x66, 0x0f, 0xc5, 0x00, 0x00],
         ),
+        ("pmovmskb_mmx_memory_source_illegal", &[0x0f, 0xd7, 0x00]),
+        (
+            "pmovmskb_sse2_memory_source_illegal",
+            &[0x66, 0x0f, 0xd7, 0x00],
+        ),
         ("movntps_register_dest_illegal", &[0x0f, 0x2b, 0xc1]),
         (
             "movntpd_register_dest_illegal",
@@ -19907,7 +19916,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        304,
+        306,
     );
 }
 
@@ -25569,7 +25578,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 69, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 70, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25580,7 +25589,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 69, "all MMX cases should compare");
+    assert_eq!(tally.compared, 70, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax

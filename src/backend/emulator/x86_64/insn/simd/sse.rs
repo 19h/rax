@@ -1519,31 +1519,35 @@ fn pminub_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 
 /// PMOVMSKB - Move Byte Mask (0xD7)
 pub fn pmovmskb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    if !ctx.operand_size_override {
-        return Err(Error::Emulator(format!(
-            "PMOVMSKB requires 66 prefix at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+    let (reg, rm, is_memory, _addr, _) = vcpu.decode_modrm(ctx)?;
+    if is_memory {
+        return vcpu.inject_undefined_instruction();
     }
-
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
-    } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
-    };
 
     let mut mask = 0u64;
-    for i in 0..8 {
-        let byte = ((src_lo >> (i * 8)) & 0xFF) as u8;
-        if byte & 0x80 != 0 {
-            mask |= 1u64 << i;
+    if ctx.operand_size_override {
+        let src_lo = vcpu.regs.xmm[rm as usize][0];
+        let src_hi = vcpu.regs.xmm[rm as usize][1];
+
+        for i in 0..8 {
+            let byte = ((src_lo >> (i * 8)) & 0xFF) as u8;
+            if byte & 0x80 != 0 {
+                mask |= 1u64 << i;
+            }
         }
-    }
-    for i in 0..8 {
-        let byte = ((src_hi >> (i * 8)) & 0xFF) as u8;
-        if byte & 0x80 != 0 {
-            mask |= 1u64 << (i + 8);
+        for i in 0..8 {
+            let byte = ((src_hi >> (i * 8)) & 0xFF) as u8;
+            if byte & 0x80 != 0 {
+                mask |= 1u64 << (i + 8);
+            }
+        }
+    } else {
+        let src = vcpu.regs.mm[(rm & 0x7) as usize];
+        for i in 0..8 {
+            let byte = ((src >> (i * 8)) & 0xFF) as u8;
+            if byte & 0x80 != 0 {
+                mask |= 1u64 << i;
+            }
         }
     }
 
