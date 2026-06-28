@@ -1,7 +1,7 @@
 //! VEX instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
@@ -424,12 +424,7 @@ impl X86_64Vcpu {
                     self.regs.ymm_high[xmm_dst][1] = convert(src3);
                 }
             }
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented VEX 0x5B with pp={}",
-                    vex_pp
-                )));
-            }
+            _ => return self.inject_undefined_instruction(),
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -600,12 +595,7 @@ impl X86_64Vcpu {
                     self.regs.ymm_high[xmm_dst][1] = 0;
                 }
             }
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented VEX 0xE6 with pp={}",
-                    vex_pp
-                )));
-            }
+            _ => return self.inject_undefined_instruction(),
         }
 
         self.regs.rip += ctx.cursor as u64;
