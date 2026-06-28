@@ -393,10 +393,7 @@ impl X86_64Vcpu {
                     // 66 0F E6: CVTTPD2DQ xmm1, xmm2/m128
                     insn::simd::cvttpd2dq(self, ctx)
                 } else {
-                    Err(Error::Emulator(format!(
-                        "unimplemented 0x0F 0xE6 opcode variant at RIP={:#x}",
-                        self.regs.rip
-                    )))
+                    self.inject_undefined_instruction()
                 }
             }
 

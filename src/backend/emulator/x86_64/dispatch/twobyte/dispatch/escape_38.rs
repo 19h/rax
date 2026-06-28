@@ -459,9 +459,7 @@ impl X86_64Vcpu {
                 } else if ctx.operand_size_override {
                     insn::arith::adcx_r_rm(self, ctx)
                 } else {
-                    Err(Error::Emulator(
-                        "ADCX/ADOX requires 66 or F3 prefix".to_string(),
-                    ))
+                    self.inject_undefined_instruction()
                 }
             }
             // MOVDIR64B (0xF8)
