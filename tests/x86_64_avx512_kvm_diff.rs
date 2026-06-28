@@ -10496,6 +10496,142 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat, profile) in &[
+        (
+            "dpps_sse41_simd_dot_edge_zero_input",
+            "dpps $0x0f, %xmm2, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "dpps_sse41_simd_dot_edge_no_output",
+            "dpps $0xf0, %xmm2, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "dpps_sse41_simd_dot_edge_all_reg",
+            "dpps $0xff, %xmm2, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "dpps_sse41_simd_dot_edge_alt_reg",
+            "dpps $0x5a, %xmm2, %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "dpps_sse41_simd_dot_edge_alt_mem",
+            "dpps $0xa5, 32(%rax), %xmm1",
+            Sse41,
+            F32ConvertEdge,
+        ),
+        (
+            "dppd_sse41_simd_dot_edge_zero_input",
+            "dppd $0x03, %xmm2, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "dppd_sse41_simd_dot_edge_no_output",
+            "dppd $0x30, %xmm2, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "dppd_sse41_simd_dot_edge_all_reg",
+            "dppd $0x33, %xmm2, %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "dppd_sse41_simd_dot_edge_high_to_high_mem",
+            "dppd $0x22, 32(%rax), %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "dppd_sse41_simd_dot_edge_low_to_low_mem",
+            "dppd $0x11, 32(%rax), %xmm1",
+            Sse41,
+            F64ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_xmm_zero_input",
+            "{vex} vdpps $0x0f, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_xmm_no_output",
+            "{vex} vdpps $0xf0, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_xmm_all_reg",
+            "{vex} vdpps $0xff, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_ymm_all_mem",
+            "{vex} vdpps $0xff, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_ymm_alt_reg",
+            "{vex} vdpps $0x5a, %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_ymm_alt_mem",
+            "{vex} vdpps $0xa5, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F32ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_zero_input",
+            "{vex} vdppd $0x03, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_no_output",
+            "{vex} vdppd $0x30, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_all_reg",
+            "{vex} vdppd $0x33, %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_high_to_high_mem",
+            "{vex} vdppd $0x22, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_low_to_low_mem",
+            "{vex} vdppd $0x11, 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64ConvertEdge,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -17251,6 +17387,49 @@ fn avx512_kvm_simd_round_edge_corpus() {
     assert_eq!(
         tally.compared, 24,
         "all SIMD rounding edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_dot_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_dot_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 21, "unexpected SIMD dot edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD dot edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD dot edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD dot edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD dot edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse41),
+        10,
+        "all SSE4.1 dot edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        11,
+        "all AVX dot edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 21,
+        "all SIMD dot edge cases should compare"
     );
 }
 
