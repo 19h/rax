@@ -10784,6 +10784,48 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm) in &[
+        (
+            "vpshufb_avx2_simd_shuffle_edge_xmm_reg",
+            "{vex} vpshufb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_xmm_mem",
+            "{vex} vpshufb 32(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_ymm_reg",
+            "{vex} vpshufb %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_ymm_mem",
+            "{vex} vpshufb 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_xmm_zero_selector",
+            "{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpshufb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_ymm_zero_selector",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpshufb %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_xmm_all_highbits",
+            "{vex} vpcmpeqb %xmm2, %xmm2, %xmm2\n{vex} vpshufb %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpshufb_avx2_simd_shuffle_edge_ymm_all_highbits",
+            "{vex} vpcmpeqb %ymm2, %ymm2, %ymm2\n{vex} vpshufb %ymm2, %ymm3, %ymm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: IntSatEdge,
+        });
+    }
+
     // AES-NI legacy XMM crypto/key-schedule instructions. These check legacy
     // XMM write semantics alongside register, memory, and high-XMM operands.
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
@@ -17667,6 +17709,48 @@ fn avx512_kvm_simd_horizontal_edge_corpus() {
     assert_eq!(
         tally.compared, 18,
         "all SIMD horizontal edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_simd_shuffle_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_simd_shuffle_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected SIMD shuffle edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD shuffle edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SIMD shuffle edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SIMD shuffle edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SIMD shuffle edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        8,
+        "all AVX2 shuffle edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all SIMD shuffle edge cases should compare"
     );
 }
 
