@@ -206,9 +206,7 @@ fn load_pointer_to_segment(
 
     let (reg, _, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator(
-            "far pointer load requires a memory pointer operand".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let offset = vcpu.read_mem(addr, op_size)?;
