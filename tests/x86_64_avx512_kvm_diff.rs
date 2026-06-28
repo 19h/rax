@@ -18561,6 +18561,56 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "cmpxchg16b_register_operand_illegal",
             &[0x48, 0x0f, 0xc7, 0xc8],
         ),
+        (
+            "punpcklqdq_missing_66_prefix_illegal",
+            &[0x0f, 0x6c, 0xc1],
+        ),
+        (
+            "punpckhqdq_missing_66_prefix_illegal",
+            &[0x0f, 0x6d, 0xc1],
+        ),
+        (
+            "pextrw_mmx_memory_source_illegal",
+            &[0x0f, 0xc5, 0x00, 0x00],
+        ),
+        (
+            "pextrw_sse2_memory_source_illegal",
+            &[0x66, 0x0f, 0xc5, 0x00, 0x00],
+        ),
+        ("movntps_register_dest_illegal", &[0x0f, 0x2b, 0xc1]),
+        (
+            "movntpd_register_dest_illegal",
+            &[0x66, 0x0f, 0x2b, 0xc1],
+        ),
+        ("movmskps_memory_source_illegal", &[0x0f, 0x50, 0x01]),
+        (
+            "movmskpd_memory_source_illegal",
+            &[0x66, 0x0f, 0x50, 0x01],
+        ),
+        (
+            "hadd_missing_mandatory_prefix_illegal",
+            &[0x0f, 0x7c, 0xc1],
+        ),
+        (
+            "hadd_f3_prefix_illegal",
+            &[0xf3, 0x0f, 0x7c, 0xc1],
+        ),
+        (
+            "hsub_missing_mandatory_prefix_illegal",
+            &[0x0f, 0x7d, 0xc1],
+        ),
+        (
+            "hsub_f3_prefix_illegal",
+            &[0xf3, 0x0f, 0x7d, 0xc1],
+        ),
+        (
+            "addsub_missing_mandatory_prefix_illegal",
+            &[0x0f, 0xd0, 0xc1],
+        ),
+        (
+            "addsub_f3_prefix_illegal",
+            &[0xf3, 0x0f, 0xd0, 0xc1],
+        ),
     ]
 }
 
@@ -19146,7 +19196,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        140,
+        154,
     );
 }
 

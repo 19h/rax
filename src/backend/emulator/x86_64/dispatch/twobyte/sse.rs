@@ -655,10 +655,7 @@ impl X86_64Vcpu {
             }
         } else {
             if opcode == 0x6C || opcode == 0x6D {
-                return Err(Error::Emulator(format!(
-                    "unimplemented 0x0F {:#04x} opcode variant at RIP={:#x}",
-                    opcode, self.regs.rip
-                )));
+                return self.inject_undefined_instruction();
             }
 
             let mm_dst = reg as usize & 0x7;
@@ -745,9 +742,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator(
-                "PEXTRW does not support memory source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let imm8 = ctx.consume_u8()?;
 
@@ -1067,9 +1062,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(
-                "MOVNTPS/MOVNTPD requires memory destination".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let xmm_src = reg as usize;
         // Non-temporal hint is ignored in emulator - just store normally
@@ -1149,9 +1142,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator(
-                "MOVMSKPS/MOVMSKPD requires register source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let xmm_src = rm as usize;
 
@@ -1299,10 +1290,7 @@ impl X86_64Vcpu {
             self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
             self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
         } else {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0x0F 0x7C opcode variant at RIP={:#x}",
-                self.regs.rip
-            )));
+            return self.inject_undefined_instruction();
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -1358,10 +1346,7 @@ impl X86_64Vcpu {
             self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
             self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
         } else {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0x0F 0x7D opcode variant at RIP={:#x}",
-                self.regs.rip
-            )));
+            return self.inject_undefined_instruction();
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -1701,10 +1686,7 @@ impl X86_64Vcpu {
             self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
             self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
         } else {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0x0F 0xD0 opcode variant at RIP={:#x}",
-                self.regs.rip
-            )));
+            return self.inject_undefined_instruction();
         }
 
         self.regs.rip += ctx.cursor as u64;
