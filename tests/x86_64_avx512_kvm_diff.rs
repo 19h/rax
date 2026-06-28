@@ -41,7 +41,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
-use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers};
+use common::{run_until_hlt, setup_vm, Bytes, GuestAddress, Registers, VCpu};
 
 // ---------------------------------------------------------------------------
 // Wire model (mirrors x86_64_evex_qemu_diff.rs so the two corpora are directly
@@ -835,7 +835,9 @@ impl XsaveLayout {
 const MEM_SIZE: usize = 8 * 1024 * 1024;
 const PML4_ADDR: u64 = 0x1000;
 const PDPTE_ADDR: u64 = 0x2000;
-const CODE_ADDR: u64 = 0x10000;
+// Keep this away from the shared test helper's GDT page at 0x10000; the
+// interpreter is explicitly redirected here so RIP-relative cases match KVM.
+const CODE_ADDR: u64 = 0x30000;
 const STACK_ADDR: u64 = 0x20000;
 
 const CR0_PE: u64 = 1 << 0;
@@ -1174,6 +1176,14 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     regs.k = input.k;
 
     let (mut vcpu, mem) = setup_vm(code, Some(regs));
+    mem.write_slice(code, GuestAddress(CODE_ADDR))
+        .map_err(|e| format!("write code at diff RIP: {e:?}"))?;
+    let mut live_regs = vcpu
+        .get_regs()
+        .map_err(|e| format!("interp get regs: {e:?}"))?;
+    live_regs.rip = CODE_ADDR;
+    vcpu.set_regs(&live_regs)
+        .map_err(|e| format!("interp set RIP: {e:?}"))?;
     mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
         .map_err(|e| format!("write scratch: {e:?}"))?;
     mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
@@ -11718,6 +11728,11 @@ fn irregular_cases() -> Vec<Case> {
             "lea_core_address_edge_r32_dest_zeroext",
             "movabsq $-1, %r8\nleal -16(%rax,%r9,4), %r8d",
         ),
+        ("lea_core_address_edge_rip_relative", "leaq 0(%rip), %r8"),
+        (
+            "mov_core_address_edge_rip_relative_load",
+            "movq 1f(%rip), %r8\njmp 2f\n1:\n.quad 0x8877665544332211\n2:",
+        ),
         (
             "xlat_core_address_edge_al_ff",
             "movabsq $0x4000, %rbx\nmovb $0xff, %al\nxlatb",
@@ -17920,7 +17935,7 @@ fn avx512_kvm_core_address_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        10,
+        12,
         "unexpected core effective-address edge corpus size"
     );
 
@@ -17944,7 +17959,7 @@ fn avx512_kvm_core_address_edge_corpus() {
         "core effective-address edge cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 10,
+        tally.compared, 12,
         "all core effective-address edge cases should compare"
     );
 }
