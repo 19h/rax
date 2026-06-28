@@ -249,10 +249,7 @@ impl X86_64Vcpu {
                     // 66 0F D6: MOVQ xmm2/m64, xmm1
                     insn::simd::movq_xmm_m64_xmm(self, ctx)
                 } else {
-                    Err(Error::Emulator(format!(
-                        "unimplemented 0x0F 0xD6 opcode variant at RIP={:#x}",
-                        self.regs.rip
-                    )))
+                    self.inject_undefined_instruction()
                 }
             }
             // Packed integer insert/extract

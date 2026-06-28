@@ -2235,10 +2235,7 @@ fn packuswb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 pub fn movq2dq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(format!(
-            "MOVQ2DQ requires register operands at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     let xmm_dst = reg as usize;
     let mm_src = (rm & 0x7) as usize;
@@ -2252,10 +2249,7 @@ pub fn movq2dq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 pub fn movdq2q(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
     if is_memory {
-        return Err(Error::Emulator(format!(
-            "MOVDQ2Q requires register operands at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     let mm_dst = (reg & 0x7) as usize;
     let xmm_src = rm as usize;
