@@ -11501,6 +11501,35 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Direct flag-state edge cases around CF/DF chains and LAHF/SAHF's partial
+    // status-byte transfer. These keep OF preservation and AH bit layout
+    // visible in the architectural diff.
+    for &(label, asm) in &[
+        ("clc_cmc_core_flag_edge_cf_set", "clc\ncmc"),
+        ("stc_cmc_core_flag_edge_cf_clear", "stc\ncmc"),
+        ("std_cld_core_flag_edge_df_clear", "std\ncld"),
+        ("cld_std_core_flag_edge_df_set", "cld\nstd"),
+        (
+            "lahf_core_flag_edge_all_status_bits",
+            "pushq $0x8d7\npopfq\nlahf",
+        ),
+        (
+            "sahf_core_flag_edge_all_status_bits",
+            "movw $0xd500, %ax\nsahf",
+        ),
+        (
+            "sahf_core_flag_edge_clear_status_preserve_of",
+            "movw $0x0200, %ax\nsahf",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core data-movement/addressing width variants. These exercise MOV
     // immediate encodings beyond the starter set, SPL/high-byte byte-register
     // selection, RIP-relative and SIB addressing, and stack-width forms with
@@ -13751,6 +13780,25 @@ fn irregular_cases() -> Vec<Case> {
         ("pushfq_popfq_roundtrip", "pushfq\npopfq"),
         ("sti_sets_interrupt_flag", "sti"),
         ("sti_cli_clears_interrupt_flag", "sti\ncli"),
+        ("cli_sti_flag_control_edge_roundtrip", "cli\nsti"),
+        ("pushfw_flag_control_edge_popw_image", "pushfw\npopw %r8w"),
+        ("pushfq_flag_control_edge_popq_image", "pushfq\npopq %r8"),
+        (
+            "popfw_flag_control_edge_low_status_if_df",
+            "pushw $0x0ed7\npopfw",
+        ),
+        (
+            "popfw_flag_control_edge_clear_low_flags",
+            "pushw $0x0002\npopfw",
+        ),
+        (
+            "popfq_flag_control_edge_all_status_if_df",
+            "pushq $0x0ed7\npopfq",
+        ),
+        (
+            "popfq_flag_control_edge_clear_status_if_df",
+            "pushq $0x0002\npopfq",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -16396,7 +16444,7 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        9,
+        16,
         "unexpected stack-frame/flag-control corpus size"
     );
 
@@ -16426,13 +16474,53 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::FlagControl),
-        5,
+        12,
         "all flag-control cases should run"
     );
     assert_eq!(
-        tally.compared, 9,
+        tally.compared, 16,
         "all stack-frame/flag-control cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_flag_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.label.contains("_core_flag_edge_")
+                || case.label.contains("_flag_control_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 14, "unexpected flag edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on flag edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a flag edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "flag edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "flag edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        7,
+        "all direct core flag edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::FlagControl),
+        7,
+        "all flag-control edge cases should run"
+    );
+    assert_eq!(tally.compared, 14, "all flag edge cases should compare");
 }
 
 #[test]
