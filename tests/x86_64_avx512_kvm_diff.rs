@@ -18277,6 +18277,66 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vinsertps_l1_illegal",
             &[0xc4, 0xe3, 0x6d, 0x21, 0xd9, 0x00],
         ),
+        (
+            "vex_0f71_group0_illegal",
+            &[0xc5, 0xe9, 0x71, 0xc1, 0x01],
+        ),
+        (
+            "vex_0f71_group1_illegal",
+            &[0xc5, 0xe9, 0x71, 0xc9, 0x01],
+        ),
+        (
+            "vex_0f71_group3_illegal",
+            &[0xc5, 0xe9, 0x71, 0xd9, 0x01],
+        ),
+        (
+            "vex_0f71_group5_illegal",
+            &[0xc5, 0xe9, 0x71, 0xe9, 0x01],
+        ),
+        (
+            "vex_0f71_group7_illegal",
+            &[0xc5, 0xe9, 0x71, 0xf9, 0x01],
+        ),
+        (
+            "vex_0f72_group0_illegal",
+            &[0xc5, 0xe9, 0x72, 0xc1, 0x01],
+        ),
+        (
+            "vex_0f72_group1_illegal",
+            &[0xc5, 0xe9, 0x72, 0xc9, 0x01],
+        ),
+        (
+            "vex_0f72_group3_illegal",
+            &[0xc5, 0xe9, 0x72, 0xd9, 0x01],
+        ),
+        (
+            "vex_0f72_group5_illegal",
+            &[0xc5, 0xe9, 0x72, 0xe9, 0x01],
+        ),
+        (
+            "vex_0f72_group7_illegal",
+            &[0xc5, 0xe9, 0x72, 0xf9, 0x01],
+        ),
+        (
+            "vex_0f73_group0_illegal",
+            &[0xc5, 0xe9, 0x73, 0xc1, 0x01],
+        ),
+        (
+            "vex_0f73_group1_illegal",
+            &[0xc5, 0xe9, 0x73, 0xc9, 0x01],
+        ),
+        (
+            "vex_0f73_group4_illegal",
+            &[0xc5, 0xe9, 0x73, 0xe1, 0x01],
+        ),
+        (
+            "vex_0f73_group5_illegal",
+            &[0xc5, 0xe9, 0x73, 0xe9, 0x01],
+        ),
+        (
+            "vpsravq_vex_illegal",
+            &[0xc4, 0xe2, 0xe9, 0x46, 0xd9],
+        ),
     ]
 }
 
@@ -18835,7 +18895,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        63,
+        78,
     );
 }
 

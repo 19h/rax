@@ -1,7 +1,7 @@
 //! VEX instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
@@ -52,10 +52,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm_dst][1] = self.shift_words_left(src_hi, shift);
                     }
                     _ => {
-                        return Err(Error::Emulator(format!(
-                            "unimplemented VEX.0F 71 /{} at RIP={:#x}",
-                            reg_op, self.regs.rip
-                        )));
+                        return self.inject_undefined_instruction();
                     }
                 }
             }
@@ -81,10 +78,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm_dst][1] = self.shift_dwords_left(src_hi, shift);
                     }
                     _ => {
-                        return Err(Error::Emulator(format!(
-                            "unimplemented VEX.0F 72 /{} at RIP={:#x}",
-                            reg_op, self.regs.rip
-                        )));
+                        return self.inject_undefined_instruction();
                     }
                 }
             }
@@ -118,10 +112,7 @@ impl X86_64Vcpu {
                         self.regs.xmm[xmm_dst][1] = new_hi;
                     }
                     _ => {
-                        return Err(Error::Emulator(format!(
-                            "unimplemented VEX.0F 73 /{} at RIP={:#x}",
-                            reg_op, self.regs.rip
-                        )));
+                        return self.inject_undefined_instruction();
                     }
                 }
             }
@@ -551,9 +542,7 @@ impl X86_64Vcpu {
                     self.regs.xmm[xmm_dst][1] = self.variable_shift_qword(src_hi, count_hi, true);
                 }
                 _ => {
-                    return Err(Error::Emulator(format!(
-                        "VPSRAVQ (W1 opcode 0x46) not supported in VEX (AVX2)"
-                    )));
+                    return self.inject_undefined_instruction();
                 }
             }
         }
