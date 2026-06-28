@@ -16236,6 +16236,41 @@ fn irregular_cases() -> Vec<Case> {
             Bmi2,
         ),
         (
+            "mulx_scalar_bit_edge_r64_max_product",
+            "movq $-1, %rdx\nmovq $-1, %r8\nmulxq %r8, %r9, %rcx",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_r32_max_product",
+            "movl $-1, %edx\nmovl $-1, %r8d\nmulxl %r8d, %r9d, %ecx",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_zero_rdx_r64",
+            "xorq %rdx, %rdx\nmulxq %r8, %r9, %rcx",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_same_dest_r32",
+            "movl $-1, %edx\nmovl $-1, %ecx\nmulxl %ecx, %r8d, %r8d",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_memory_max_r64",
+            "movq $-1, %rdx\nmovq $-1, 40(%rax)\nmulxq 40(%rax), %r9, %rcx",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_sequential_r64",
+            "movq $10, %rdx\nmovq $5, %rcx\nmulxq %rcx, %r8, %r9\nmovq %r8, %rdx\nmulxq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "mulx_scalar_bit_edge_preserves_cmp_flags",
+            "cmpq %r8, %r8\nmulxq %r8, %r9, %rcx",
+            Bmi2,
+        ),
+        (
             "rorx_scalar_bit_edge_zero_count_r64",
             "rorxq $0, %rcx, %r8",
             Bmi2,
@@ -20205,7 +20240,7 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        28,
+        35,
         "unexpected scalar bit edge corpus size"
     );
 
@@ -20245,11 +20280,11 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Bmi2),
-        11,
+        18,
         "all BMI2 scalar bit edge cases should run"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 35,
         "all scalar bit edge cases should compare"
     );
 }
