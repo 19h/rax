@@ -52,7 +52,7 @@ impl X86_64Vcpu {
                     // Lenient on CR4.OSXSAVE since the harness reads XCRs directly.
                     let value = match self.regs.rcx as u32 {
                         0 => self.xcr0,
-                        1 => 0, // IA32_XSS defaults to zero in fresh KVM vCPUs.
+                        1 => self.xgetbv1_value,
                         ecx => {
                             return Err(Error::Emulator(format!(
                                 "unsupported XGETBV ECX={} at RIP={:#x}",

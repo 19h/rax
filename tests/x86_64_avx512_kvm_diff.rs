@@ -162,6 +162,8 @@ enum Feat {
     Fxsave,
     /// XGETBV/XSETBV and XSAVE/XRSTOR state-management instructions.
     Xsave,
+    /// XGETBV with ECX=1 for enabled xstate queries.
+    Xgetbv1,
     /// XSAVEOPT/XSAVEC/XSAVES/XRSTORS extended state-management instructions.
     XsaveExt,
     /// x87 FPU stack, arithmetic, and conversion instructions.
@@ -319,6 +321,7 @@ impl Feat {
             Feat::Fma => "fma",
             Feat::Fxsave => "fxsr",
             Feat::Xsave => "xsave",
+            Feat::Xgetbv1 => "xgetbv1",
             Feat::XsaveExt => "xsave_ext",
             Feat::X87 => "x87",
             Feat::Mmx => "mmx",
@@ -400,6 +403,7 @@ impl Feat {
             Feat::Fma,
             Feat::Fxsave,
             Feat::Xsave,
+            Feat::Xgetbv1,
             Feat::XsaveExt,
             Feat::X87,
             Feat::Mmx,
@@ -485,6 +489,7 @@ struct HostFeatures {
     fma: bool,
     fxsave: bool,
     xsave: bool,
+    xgetbv1: bool,
     xsaveopt: bool,
     xsavec: bool,
     xsaves: bool,
@@ -558,6 +563,7 @@ impl HostFeatures {
             fma: is_x86_feature_detected!("fma"),
             fxsave: host_cpu_flag("fxsr"),
             xsave: host_cpu_flag("xsave"),
+            xgetbv1: host_cpu_flag("xgetbv1"),
             xsaveopt: host_cpu_flag("xsaveopt"),
             xsavec: host_cpu_flag("xsavec"),
             xsaves: host_cpu_flag("xsaves"),
@@ -632,6 +638,7 @@ impl HostFeatures {
             Feat::Fma => self.fma,
             Feat::Fxsave => self.fxsave,
             Feat::Xsave => self.xsave,
+            Feat::Xgetbv1 => self.xsave && self.xgetbv1,
             Feat::XsaveExt => self.xsave && self.xsaveopt && self.xsavec && self.xsaves,
             Feat::X87 => true,
             Feat::Mmx => self.mmx,
@@ -1176,6 +1183,7 @@ fn run_interp(code: &[u8], input: &InCase) -> Result<OutCase, String> {
     regs.k = input.k;
 
     let (mut vcpu, mem) = setup_vm(code, Some(regs));
+    vcpu.set_xgetbv1_value(XCR0_AVX512);
     mem.write_slice(code, GuestAddress(CODE_ADDR))
         .map_err(|e| format!("write code at diff RIP: {e:?}"))?;
     let mut live_regs = vcpu
@@ -13348,6 +13356,36 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "xsetbv_xsave_edge_high_halves_ignored",
+            "movabsq $0xffffffff000000e7, %rax\nmovabsq $0xffffffff00000000, %rdx\nxorq %rcx, %rcx\nxsetbv\nmovq $-1, %rax\nmovq $-1, %rdx\nxgetbv",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsetbv_xsave_edge_avx_only_roundtrip",
+            "movl $0x7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxgetbv\nmovl %eax, 48(%rbx)\nmovl %edx, 52(%rbx)\nmovl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxgetbv",
+            Xsave,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_enabled_state_zero_ext",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovq $-1, %rax\nmovl $1, %ecx\nmovq $-1, %rdx\nxgetbv",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_high_rcx_ignored",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovq $-1, %rax\nmovabsq $0xffffffff00000001, %rcx\nmovq $-1, %rdx\nxgetbv",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_flags_preserved",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\ncmpq %r8, %r8\nmovl $1, %ecx\nxgetbv",
+            Xgetbv1,
+            Int,
+        ),
+        (
             "xsave64_xrstor64_zmm_roundtrip",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
             Xsave,
@@ -16738,6 +16776,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             Feat::Core
                 | Feat::Fxsave
                 | Feat::Xsave
+                | Feat::Xgetbv1
                 | Feat::XsaveExt
                 | Feat::X87
                 | Feat::Mmx
@@ -17691,11 +17730,11 @@ fn avx512_kvm_random_tsc_corpus() {
 fn avx512_kvm_processor_state_management_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| matches!(case.feat, Feat::Fxsave | Feat::Xsave))
+        .filter(|case| matches!(case.feat, Feat::Fxsave | Feat::Xsave | Feat::Xgetbv1))
         .collect();
     assert_eq!(
         cases.len(),
-        23,
+        28,
         "unexpected processor state-management corpus size"
     );
 
@@ -17725,11 +17764,16 @@ fn avx512_kvm_processor_state_management_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Xsave),
-        9,
+        11,
         "all XSAVE/XRSTOR cases should run"
     );
     assert_eq!(
-        tally.compared, 23,
+        tally.ran_for(Feat::Xgetbv1),
+        3,
+        "all XGETBV1 cases should run"
+    );
+    assert_eq!(
+        tally.compared, 28,
         "all processor state-management cases should compare"
     );
 }
@@ -17772,7 +17816,7 @@ fn avx512_kvm_xsave_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_xsave_edge_"))
         .collect();
-    assert_eq!(cases.len(), 9, "unexpected XSAVE edge corpus size");
+    assert_eq!(cases.len(), 11, "unexpected XSAVE edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -17792,7 +17836,7 @@ fn avx512_kvm_xsave_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Xsave),
-        5,
+        7,
         "all base XSAVE edge cases should run"
     );
     assert_eq!(
@@ -17800,7 +17844,39 @@ fn avx512_kvm_xsave_edge_corpus() {
         4,
         "all extended XSAVE edge cases should run"
     );
-    assert_eq!(tally.compared, 9, "all XSAVE edge cases should compare");
+    assert_eq!(tally.compared, 11, "all XSAVE edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_xgetbv1_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_xgetbv1_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 3, "unexpected XGETBV1 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on XGETBV1 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an XGETBV1 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "XGETBV1 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "XGETBV1 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Xgetbv1),
+        3,
+        "all XGETBV1 edge cases should run"
+    );
+    assert_eq!(tally.compared, 3, "all XGETBV1 edge cases should compare");
 }
 
 #[test]

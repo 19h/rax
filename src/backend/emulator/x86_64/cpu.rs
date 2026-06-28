@@ -269,6 +269,10 @@ pub struct X86_64Vcpu {
     /// (always 1), bit1 SSE, bit2 AVX (YMM_Hi128). Written by XSETBV, read by
     /// XGETBV, and consulted by XSAVE/XRSTOR and CPUID leaf 0xD.
     pub(super) xcr0: u64,
+    /// Value returned by XGETBV when ECX=1. This defaults to zero (matching
+    /// IA32_XSS on the base KVM harness) but can be configured by harnesses
+    /// that install XCRS state externally before guest execution.
+    pub(super) xgetbv1_value: u64,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -887,6 +891,7 @@ impl X86_64Vcpu {
             pkru: 0,
             mxcsr: 0x1F80,
             xcr0: 1, // x87 state component always enabled
+            xgetbv1_value: 0,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -913,6 +918,14 @@ impl X86_64Vcpu {
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem_trace: None,
         }
+    }
+
+    /// Configure the value returned by `XGETBV` with `ECX=1`.
+    ///
+    /// KVM exposes this as part of externally installed extended-control state;
+    /// regular guests leave it at the architectural zero default.
+    pub fn set_xgetbv1_value(&mut self, value: u64) {
+        self.xgetbv1_value = value;
     }
 
     #[cfg(feature = "debug")]
@@ -2822,6 +2835,7 @@ impl X86_64Vcpu {
         self.kernel_gs_base = 0;
         self.pkru = 0;
         self.xcr0 = 1;
+        self.xgetbv1_value = 0;
         self.decode_cache.iter_mut().for_each(|e| {
             e.rip = 0;
             e.bytes_len = 0;
