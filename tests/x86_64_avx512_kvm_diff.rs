@@ -11568,6 +11568,59 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Effective-address edge cases. LEA observes address-size and destination
+    // width without touching memory, while XLAT uses AL as an unsigned table
+    // index and preserves the rest of RAX.
+    for &(label, asm) in &[
+        (
+            "lea_core_address_edge_addr32_high_base",
+            "movabsq $0xffff000000004000, %rbx\nmovl $0x20, %ecx\naddr32 leaq (%ebx,%ecx,4), %r8",
+        ),
+        (
+            "lea_core_address_edge_addr32_negative_disp",
+            "movabsq $0xffff000000004010, %rbx\naddr32 leaq -32(%ebx), %r8",
+        ),
+        (
+            "lea_core_address_edge_sib_no_base",
+            "leaq 64(,%r9,8), %r8",
+        ),
+        (
+            "lea_core_address_edge_negative_index",
+            "movq $-2, %r10\nleaq 128(%rax,%r10,8), %r8",
+        ),
+        (
+            "lea_core_address_edge_r32_dest_zeroext",
+            "movabsq $-1, %r8\nleal -16(%rax,%r9,4), %r8d",
+        ),
+        (
+            "xlat_core_address_edge_al_ff",
+            "movabsq $0x4000, %rbx\nmovb $0xff, %al\nxlatb",
+        ),
+        (
+            "xlat_core_address_edge_al_zero_preserves_high",
+            "movabsq $0x4000, %rbx\nmovabsq $0xffff000000000000, %rax\nxlatb",
+        ),
+        (
+            "xlat_core_address_edge_shifted_table",
+            "leaq 32(%rax), %rbx\nmovb $0x20, %al\nxlatb",
+        ),
+        (
+            "addr32_xlat_core_address_edge_high_rbx",
+            "movabsq $0xffff000000004000, %rbx\nmovb $0x10, %al\naddr32 xlatb",
+        ),
+        (
+            "addr32_xlat_core_address_edge_al_ff",
+            "movabsq $0xffff000000004000, %rbx\nmovb $0xff, %al\naddr32 xlatb",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Direct flag-state edge cases around CF/DF chains and LAHF/SAHF's partial
     // status-byte transfer. These keep OF preservation and AH bit layout
     // visible in the architectural diff.
@@ -17731,6 +17784,43 @@ fn avx512_kvm_core_moffs_edge_corpus() {
         "core moffs edge cases should not feature-skip"
     );
     assert_eq!(tally.compared, 8, "all core moffs edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_address_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_address_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected core effective-address edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core effective-address edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core effective-address edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core effective-address edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core effective-address edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all core effective-address edge cases should compare"
+    );
 }
 
 #[test]
