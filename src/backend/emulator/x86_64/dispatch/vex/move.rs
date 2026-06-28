@@ -10,13 +10,10 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_pp: u8,
-        vex_l: u8,
+        _vex_l: u8,
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
-        if vex_l != 0 {
-            return Err(Error::Emulator("VMOVSS/VMOVSD require VEX.L=0".to_string()));
-        }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 

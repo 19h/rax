@@ -9180,6 +9180,36 @@ fn irregular_cases() -> Vec<Case> {
             F64,
         ),
         (
+            "vmovss_avx_data_l1_reg_raw",
+            ".byte 0xc5,0xf6,0x10,0xca\n",
+            F32,
+        ),
+        (
+            "vmovsd_avx_data_l1_reg_raw",
+            ".byte 0xc5,0xf7,0x10,0xca\n",
+            F64,
+        ),
+        (
+            "vmovss_avx_data_l1_load_raw",
+            ".byte 0xc5,0xfe,0x10,0x48,0x30\n",
+            F32,
+        ),
+        (
+            "vmovsd_avx_data_l1_load_raw",
+            ".byte 0xc5,0xff,0x10,0x48,0x38\n",
+            F64,
+        ),
+        (
+            "vmovss_avx_data_l1_store_raw",
+            ".byte 0xc5,0xfe,0x11,0x48,0x30\n",
+            F32,
+        ),
+        (
+            "vmovsd_avx_data_l1_store_raw",
+            ".byte 0xc5,0xff,0x11,0x48,0x38\n",
+            F64,
+        ),
+        (
             "vinsertps_avx_data_reg",
             "{vex} vinsertps $0x20, %xmm2, %xmm3, %xmm1",
             F32,
@@ -24381,7 +24411,7 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        37,
+        43,
         "unexpected VEX AVX data-movement corpus size"
     );
 
@@ -24406,11 +24436,11 @@ fn avx512_kvm_vex_avx_data_movement_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        37,
+        43,
         "all VEX AVX data-movement cases should run"
     );
     assert_eq!(
-        tally.compared, 37,
+        tally.compared, 43,
         "all VEX AVX data-movement cases should compare"
     );
 }
