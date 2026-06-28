@@ -1,7 +1,7 @@
 //! VEX gather instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -14,6 +14,11 @@ impl X86_64Vcpu {
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.peek_u8()?;
+        if (modrm >> 6) == 3 || (modrm & 0x07) != 4 {
+            return self.inject_undefined_instruction();
+        }
+
         let (dst_reg, index_reg, base_addr, scale) = self.decode_vsib(ctx)?;
         let mask_reg = vvvv as usize;
         let addr32 = ctx.address_size_override && self.sregs.cs.l;
@@ -99,12 +104,12 @@ impl X86_64Vcpu {
         let modrm = ctx.consume_u8()?;
         let mod_bits = modrm >> 6;
         if mod_bits == 3 {
-            return Err(Error::Emulator("VSIB requires memory operand".to_string()));
+            unreachable!("caller rejects register VSIB operands");
         }
         let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
         let rm_field = modrm & 0x07;
         if rm_field != 4 {
-            return Err(Error::Emulator("VSIB requires SIB byte".to_string()));
+            unreachable!("caller rejects non-SIB VSIB operands");
         }
 
         let sib = ctx.consume_u8()?;

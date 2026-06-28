@@ -18349,6 +18349,62 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vdppd_l1_illegal",
             &[0xc4, 0xe3, 0x6d, 0x41, 0xd9, 0xff],
         ),
+        (
+            "vmovmskps_memory_source_illegal",
+            &[0xc5, 0xf8, 0x50, 0x01],
+        ),
+        (
+            "vmovmskpd_memory_source_illegal",
+            &[0xc5, 0xf9, 0x50, 0x01],
+        ),
+        (
+            "vpmaskmovd_load_register_operand_illegal",
+            &[0xc4, 0xe2, 0x71, 0x8c, 0xd0],
+        ),
+        (
+            "vpmaskmovd_store_register_operand_illegal",
+            &[0xc4, 0xe2, 0x69, 0x8e, 0xc8],
+        ),
+        (
+            "vmaskmovps_load_register_operand_illegal",
+            &[0xc4, 0xe2, 0x71, 0x2c, 0xd0],
+        ),
+        (
+            "vmaskmovps_store_register_operand_illegal",
+            &[0xc4, 0xe2, 0x69, 0x2e, 0xc8],
+        ),
+        (
+            "kmovw_store_register_dest_illegal",
+            &[0xc5, 0xf8, 0x91, 0xc8],
+        ),
+        (
+            "kmovw_from_gpr_memory_source_illegal",
+            &[0xc5, 0xf8, 0x92, 0x08],
+        ),
+        (
+            "kmovw_to_gpr_memory_source_illegal",
+            &[0xc5, 0xf8, 0x93, 0x01],
+        ),
+        (
+            "vldmxcsr_register_operand_illegal",
+            &[0xc5, 0xf8, 0xae, 0xd0],
+        ),
+        (
+            "vstmxcsr_register_operand_illegal",
+            &[0xc5, 0xf8, 0xae, 0xd8],
+        ),
+        (
+            "vex_mxcsr_group0_illegal",
+            &[0xc5, 0xf8, 0xae, 0x00],
+        ),
+        (
+            "vgatherdps_register_operand_illegal",
+            &[0xc4, 0xe2, 0x61, 0x92, 0xd1],
+        ),
+        (
+            "vgatherdps_no_sib_illegal",
+            &[0xc4, 0xe2, 0x61, 0x92, 0x10],
+        ),
     ]
 }
 
@@ -18907,7 +18963,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        81,
+        95,
     );
 }
 

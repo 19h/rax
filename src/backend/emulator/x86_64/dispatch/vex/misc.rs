@@ -26,9 +26,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator(
-                "VMOVMSK* requires XMM/YMM source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let xmm_src = rm as usize;
@@ -138,9 +136,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(
-                "VPMASKMOV requires memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let mask_reg = vvvv as usize;
         let elem_size = if vex_w == 0 { 4 } else { 8 };
@@ -308,9 +304,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator(
-                "VMASKMOV requires memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
         let mask_reg = vvvv as usize;
         let is_ps = opcode == 0x2C || opcode == 0x2E;
@@ -584,9 +578,7 @@ impl X86_64Vcpu {
         let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
-            return Err(Error::Emulator(
-                "VLDMXCSR/VSTMXCSR require memory operand".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         match reg_op {
@@ -599,7 +591,7 @@ impl X86_64Vcpu {
                 self.write_mem(addr, self.mxcsr as u64, 4)?;
             }
             _ => {
-                return Err(Error::Emulator(format!("invalid VEX 0xAE /{}", reg_op)));
+                return self.inject_undefined_instruction();
             }
         }
 
@@ -1145,9 +1137,7 @@ impl X86_64Vcpu {
         let (reg, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
-            return Err(Error::Emulator(
-                "KMOV store requires memory destination".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // ModRM.reg selects the source opmask register. decode_modrm extends reg
@@ -1182,9 +1172,7 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator(
-                "KMOV from GPR requires register source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         // Get the GPR value
@@ -1212,9 +1200,7 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator(
-                "KMOV to GPR requires register source".to_string(),
-            ));
+            return self.inject_undefined_instruction();
         }
 
         let value = self.regs.k[k_src];
