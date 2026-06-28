@@ -1,7 +1,7 @@
 //! VEX integer instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -59,15 +59,10 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
-        vex_w: u8,
+        _vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
             return self.inject_undefined_instruction();
-        }
-        if vex_w != 0 {
-            return Err(Error::Emulator(
-                "VPEXTRB requires VEX.L=0 and VEX.W=0".to_string(),
-            ));
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -88,15 +83,10 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
-        vex_w: u8,
+        _vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
             return self.inject_undefined_instruction();
-        }
-        if vex_w != 0 {
-            return Err(Error::Emulator(
-                "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
-            ));
         }
 
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
@@ -115,15 +105,10 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
-        vex_w: u8,
+        _vex_w: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
             return self.inject_undefined_instruction();
-        }
-        if vex_w != 0 {
-            return Err(Error::Emulator(
-                "VPEXTRW requires VEX.L=0 and VEX.W=0".to_string(),
-            ));
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -202,16 +187,11 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
-        vex_w: u8,
+        _vex_w: u8,
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
             return self.inject_undefined_instruction();
-        }
-        if vex_w != 0 {
-            return Err(Error::Emulator(
-                "VPINSRB requires VEX.L=0 and VEX.W=0".to_string(),
-            ));
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -236,16 +216,11 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
-        vex_w: u8,
+        _vex_w: u8,
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
             return self.inject_undefined_instruction();
-        }
-        if vex_w != 0 {
-            return Err(Error::Emulator(
-                "VPINSRW requires VEX.L=0 and VEX.W=0".to_string(),
-            ));
         }
 
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;

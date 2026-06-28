@@ -9305,6 +9305,42 @@ fn irregular_cases() -> Vec<Case> {
             "vpinsrq_avx_insert_extract_mem",
             "{vex} vpinsrq $0, 24(%rax), %xmm3, %xmm1",
         ),
+        (
+            "vpextrb_avx_insert_extract_w1_r8d_raw",
+            ".byte 0xc4,0xc3,0xf9,0x14,0xc8,0x0a\n",
+        ),
+        (
+            "vpextrb_avx_insert_extract_w1_mem_raw",
+            ".byte 0xc4,0xe3,0xf9,0x14,0x48,0x20,0x05\n",
+        ),
+        (
+            "vpextrw_avx_insert_extract_0f_w1_eax_raw",
+            ".byte 0xc4,0xe1,0xf9,0xc5,0xc1,0x04\n",
+        ),
+        (
+            "vpextrw_avx_insert_extract_0f3a_w1_eax_raw",
+            ".byte 0xc4,0xe3,0xf9,0x15,0xc8,0x04\n",
+        ),
+        (
+            "vpextrw_avx_insert_extract_0f3a_w1_mem_raw",
+            ".byte 0xc4,0xe3,0xf9,0x15,0x48,0x22,0x04\n",
+        ),
+        (
+            "vpinsrb_avx_insert_extract_w1_r8d_raw",
+            ".byte 0xc4,0xc3,0xe1,0x20,0xc8,0x0e\n",
+        ),
+        (
+            "vpinsrb_avx_insert_extract_w1_mem_raw",
+            ".byte 0xc4,0xe3,0xe1,0x20,0x48,0x1f,0x05\n",
+        ),
+        (
+            "vpinsrw_avx_insert_extract_w1_eax_raw",
+            ".byte 0xc4,0xe1,0xe1,0xc4,0xc8,0x03\n",
+        ),
+        (
+            "vpinsrw_avx_insert_extract_w1_mem_raw",
+            ".byte 0xc4,0xe1,0xe1,0xc4,0x48,0x1e,0x06\n",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -24491,7 +24527,7 @@ fn avx512_kvm_vex_insert_extract_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        16,
+        25,
         "unexpected VEX insert/extract corpus size"
     );
 
@@ -24516,11 +24552,11 @@ fn avx512_kvm_vex_insert_extract_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        16,
+        25,
         "all VEX insert/extract cases should run"
     );
     assert_eq!(
-        tally.compared, 16,
+        tally.compared, 25,
         "all VEX insert/extract cases should compare"
     );
 }
