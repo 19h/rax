@@ -1,7 +1,7 @@
 //! SIMD data movement instructions: MOVD, MOVQ, MOVDQA, MOVDQU.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -228,10 +228,8 @@ pub fn movdqa_xmm_xmm_m128(
     if is_memory {
         // MOVDQA requires 16-byte alignment for memory operands
         if addr & 0xF != 0 {
-            return Err(Error::Emulator(format!(
-                "MOVDQA: unaligned memory access at {:#x} (must be 16-byte aligned)",
-                addr
-            )));
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
         }
         // Read 128 bits from memory
         let low = vcpu.read_mem(addr, 8)?;
@@ -288,10 +286,8 @@ pub fn movdqa_xmm_m128_xmm(
     if is_memory {
         // MOVDQA requires 16-byte alignment for memory operands
         if addr & 0xF != 0 {
-            return Err(Error::Emulator(format!(
-                "MOVDQA: unaligned memory access at {:#x} (must be 16-byte aligned)",
-                addr
-            )));
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
         }
         // Write 128 bits to memory
         vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;

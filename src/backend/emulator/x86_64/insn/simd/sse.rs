@@ -113,10 +113,8 @@ pub fn movaps_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 
     if is_memory {
         if addr & 0xF != 0 {
-            return Err(Error::Emulator(format!(
-                "MOVAPS/MOVAPD: unaligned memory access at {:#x}",
-                addr
-            )));
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
         }
         vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
         vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr + 8, 8)?;
@@ -136,10 +134,8 @@ pub fn movaps_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
     if is_memory {
         if addr & 0xF != 0 {
-            return Err(Error::Emulator(format!(
-                "MOVAPS/MOVAPD: unaligned memory access at {:#x}",
-                addr
-            )));
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
         }
         vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
         vcpu.write_mem(addr + 8, vcpu.regs.xmm[xmm_src][1], 8)?;
