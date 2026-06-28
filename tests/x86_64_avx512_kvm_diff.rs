@@ -6774,6 +6774,30 @@ fn irregular_cases() -> Vec<Case> {
             Mmx,
             Int,
         ),
+        (
+            "maskmovdqu_legacy_mask_edge_zero_mask",
+            "movdqu 64(%rax), %xmm1\npxor %xmm2, %xmm2\nmaskmovdqu %xmm2, %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "maskmovdqu_legacy_mask_edge_allones_mask",
+            "movdqu 64(%rax), %xmm1\npcmpeqb %xmm2, %xmm2\nmaskmovdqu %xmm2, %xmm1",
+            Sse2,
+            Int,
+        ),
+        (
+            "maskmovq_legacy_mask_edge_zero_mask",
+            "movq 64(%rax), %mm0\npxor %mm1, %mm1\nmaskmovq %mm1, %mm0\nemms",
+            Mmx,
+            Int,
+        ),
+        (
+            "maskmovq_legacy_mask_edge_allones_mask",
+            "movq 72(%rax), %mm0\npcmpeqb %mm1, %mm1\nmaskmovq %mm1, %mm0\nemms",
+            Mmx,
+            Int,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -21822,7 +21846,7 @@ fn avx512_kvm_legacy_streaming_masked_memory_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        8,
+        12,
         "unexpected legacy streaming/masked memory corpus size"
     );
 
@@ -21852,17 +21876,60 @@ fn avx512_kvm_legacy_streaming_masked_memory_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Sse2),
-        5,
+        7,
         "all SSE2 streaming/masked memory cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Mmx),
-        2,
+        4,
         "all MMX streaming/masked memory cases should run"
     );
     assert_eq!(
-        tally.compared, 8,
+        tally.compared, 12,
         "all legacy streaming/masked memory cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_legacy_mask_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_mask_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 4, "unexpected legacy mask edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy mask edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy mask edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy mask edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy mask edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        2,
+        "all SSE2 legacy mask edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        2,
+        "all MMX legacy mask edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 4,
+        "all legacy mask edge cases should compare"
     );
 }
 
@@ -21927,7 +21994,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 67, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 69, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -21938,7 +22005,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 67, "all MMX cases should compare");
+    assert_eq!(tally.compared, 69, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
