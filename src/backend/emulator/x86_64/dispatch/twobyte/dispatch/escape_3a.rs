@@ -609,7 +609,7 @@ impl X86_64Vcpu {
             // DPPS - Dot Product of Packed Single Precision Floating-Point (0x40)
             0x40 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("DPPS requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -667,7 +667,7 @@ impl X86_64Vcpu {
             // DPPD - Dot Product of Packed Double Precision Floating-Point (0x41)
             0x41 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("DPPD requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
@@ -707,7 +707,7 @@ impl X86_64Vcpu {
             // MPSADBW - Multiple Sum of Absolute Differences (0x42)
             0x42 => {
                 if !ctx.operand_size_override {
-                    return Err(Error::Emulator("MPSADBW requires 66 prefix".to_string()));
+                    return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
