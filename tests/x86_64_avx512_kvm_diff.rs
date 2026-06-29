@@ -6206,6 +6206,36 @@ fn irregular_cases() -> Vec<Case> {
         ("movss_sse_reg", "movss %xmm2, %xmm1", F32),
         ("movss_sse_load", "movss 4(%rax), %xmm1", F32),
         ("movss_sse_store", "movss %xmm1, 4(%rax)", F32),
+        (
+            "movlps_sse_legacy_lane_move_load",
+            "movlps 32(%rax), %xmm1",
+            F32,
+        ),
+        (
+            "movhps_sse_legacy_lane_move_load",
+            "movhps 32(%rax), %xmm1",
+            F32,
+        ),
+        (
+            "movlps_sse_legacy_lane_move_store",
+            "movlps %xmm1, 64(%rax)",
+            F32,
+        ),
+        (
+            "movhps_sse_legacy_lane_move_store",
+            "movhps %xmm1, 72(%rax)",
+            F32,
+        ),
+        (
+            "movhlps_sse_legacy_lane_move_reg",
+            "movhlps %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "movlhps_sse_legacy_lane_move_reg",
+            "movlhps %xmm2, %xmm1",
+            F32,
+        ),
         ("andps_sse_reg", "andps %xmm2, %xmm1", Int),
         ("andnps_sse_mem", "andnps 16(%rax), %xmm1", Int),
         ("orps_sse_reg", "orps %xmm2, %xmm1", Int),
@@ -6278,6 +6308,26 @@ fn irregular_cases() -> Vec<Case> {
         ("movsd_sse2_reg", "movsd %xmm2, %xmm1", F64),
         ("movsd_sse2_load", "movsd 8(%rax), %xmm1", F64),
         ("movsd_sse2_store", "movsd %xmm1, 8(%rax)", F64),
+        (
+            "movlpd_sse2_legacy_lane_move_load",
+            "movlpd 32(%rax), %xmm1",
+            F64,
+        ),
+        (
+            "movhpd_sse2_legacy_lane_move_load",
+            "movhpd 32(%rax), %xmm1",
+            F64,
+        ),
+        (
+            "movlpd_sse2_legacy_lane_move_store",
+            "movlpd %xmm1, 80(%rax)",
+            F64,
+        ),
+        (
+            "movhpd_sse2_legacy_lane_move_store",
+            "movhpd %xmm1, 88(%rax)",
+            F64,
+        ),
         ("andpd_sse2_reg", "andpd %xmm2, %xmm1", Int),
         ("andnpd_sse2_mem", "andnpd 16(%rax), %xmm1", Int),
         ("orpd_sse2_reg", "orpd %xmm2, %xmm1", Int),
@@ -18634,6 +18684,14 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x0f, 0x17, 0xc8],
         ),
         (
+            "movlpd_register_source_illegal",
+            &[0x66, 0x0f, 0x12, 0xc8],
+        ),
+        (
+            "movhpd_register_source_illegal",
+            &[0x66, 0x0f, 0x16, 0xc8],
+        ),
+        (
             "movnti_register_dest_illegal",
             &[0x0f, 0xc3, 0xc1],
         ),
@@ -20319,7 +20377,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        323,
+        325,
     );
 }
 
@@ -23226,6 +23284,49 @@ fn avx512_kvm_sse2_transfer_corpus() {
         "all SSE2 transfer cases should run"
     );
     assert_eq!(tally.compared, 8, "all SSE2 transfer cases should compare");
+}
+
+#[test]
+fn avx512_kvm_legacy_lane_move_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_legacy_lane_move_"))
+        .collect();
+    assert_eq!(cases.len(), 10, "unexpected legacy lane-move corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on legacy lane-move cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a legacy lane-move case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "legacy lane-move corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "legacy lane-move cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        6,
+        "all SSE legacy lane-move cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Sse2),
+        4,
+        "all SSE2 legacy lane-move cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all legacy lane-move cases should compare"
+    );
 }
 
 #[test]

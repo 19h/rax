@@ -1563,6 +1563,9 @@ pub fn movlps_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     if is_memory {
         // MOVLPS: Load 64 bits from memory to low qword
         vcpu.regs.xmm[xmm_dst][0] = vcpu.read_mem(addr, 8)?;
+    } else if ctx.operand_size_override {
+        // MOVLPD has no MOVHLPS-style register source alias.
+        return vcpu.inject_undefined_instruction();
     } else {
         // MOVHLPS: Move high qword to low qword
         let xmm_src = rm as usize;
@@ -1594,6 +1597,9 @@ pub fn movhps_load(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     if is_memory {
         // MOVHPS: Load 64 bits from memory to high qword
         vcpu.regs.xmm[xmm_dst][1] = vcpu.read_mem(addr, 8)?;
+    } else if ctx.operand_size_override {
+        // MOVHPD has no MOVLHPS-style register source alias.
+        return vcpu.inject_undefined_instruction();
     } else {
         // MOVLHPS: Move low qword to high qword
         let xmm_src = rm as usize;
