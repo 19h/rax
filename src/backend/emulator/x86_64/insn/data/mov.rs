@@ -247,11 +247,10 @@ pub fn lgs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)
 pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let has_rex = ctx.rex.is_some();
-    // Check for XABORT (C6 F8 imm8) - ModRM F8 has reg=7
     let modrm = ctx.peek_u8()?;
     let reg = (modrm >> 3) & 0x07;
 
-    if reg == 7 {
+    if modrm == 0xf8 {
         // XABORT - abort transaction with status
         ctx.consume_u8()?; // consume ModRM
         let _status = ctx.consume_u8()?; // status code
@@ -259,6 +258,9 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
                                          // In a real transaction, this would jump to fallback
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
+    }
+    if reg != 0 {
+        return vcpu.inject_undefined_instruction();
     }
 
     ctx.rip_relative_offset = 1;
@@ -276,11 +278,10 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
 /// MOV r/m, imm (0xC7 /0) or XBEGIN (0xC7 F8 rel32)
 pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Check for XBEGIN (C7 F8 rel32) - ModRM F8 has mod=11, reg=7, r/m=0
     let modrm = ctx.peek_u8()?;
     let reg = (modrm >> 3) & 0x07;
 
-    if reg == 7 {
+    if modrm == 0xf8 {
         // XBEGIN - begin transaction
         ctx.consume_u8()?; // consume ModRM
         let rel32 = ctx.consume_u32()? as i32;
@@ -293,6 +294,9 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             .wrapping_add(rel32 as i64) as u64;
         vcpu.regs.rip = fallback;
         return Ok(None);
+    }
+    if reg != 0 {
+        return vcpu.inject_undefined_instruction();
     }
 
     let op_size = ctx.op_size;
