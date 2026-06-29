@@ -47,10 +47,7 @@ impl X86_64Vcpu {
             4 => self.execute_evex_map4_apx(ctx, opcode), // APX GPR instructions
             5 => self.execute_evex_map5(ctx, opcode),
             6 => self.execute_evex_map6(ctx, opcode),
-            _ => Err(Error::Emulator(format!(
-                "Invalid EVEX mm field {} at RIP={:#x}",
-                mm, self.regs.rip
-            ))),
+            _ => self.inject_undefined_instruction(),
         }
     }
 

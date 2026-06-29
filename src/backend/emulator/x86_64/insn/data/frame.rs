@@ -114,10 +114,7 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         // P0 bit 3 is fixed zero for standard EVEX, but APX MAP4 reuses it as B4.
         // P1 bit 2 is fixed one for standard EVEX, but APX MAP4 reuses it as X4.
         if ((p0 & 0x08) != 0 && !apx_mode) || ((p1 & 0x04) == 0 && !apx_mode) {
-            return Err(Error::Emulator(format!(
-                "Invalid EVEX prefix at RIP={:#x}: P0={:#x} P1={:#x}",
-                vcpu.regs.rip, p0, p1
-            )));
+            return vcpu.inject_undefined_instruction();
         }
 
         // Decode P0: R X B R' 0 m m m
