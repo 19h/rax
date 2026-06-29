@@ -20328,6 +20328,28 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn unsupported_system_extension_cases() -> Vec<(&'static str, &'static [u8])> {
+    let mut cases: Vec<(&'static str, &'static [u8])> = Vec::new();
+
+    if !host_cpu_flag("hreset") {
+        cases.push((
+            "hreset_unsupported_imm0",
+            &[0xf3, 0x0f, 0x3a, 0xf0, 0xc0, 0x00],
+        ));
+        cases.push((
+            "hreset_unsupported_immff",
+            &[0xf3, 0x0f, 0x3a, 0xf0, 0xc0, 0xff],
+        ));
+    }
+
+    if !host_cpu_flag("pconfig") {
+        cases.push(("pconfig_unsupported", &[0x0f, 0x01, 0xc5]));
+        cases.push(("pconfig_unsupported_66", &[0x66, 0x0f, 0x01, 0xc5]));
+    }
+
+    cases
+}
+
 fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("movdiri_66_prefix_illegal", &[0x66, 0x0f, 0x38, 0xf9, 0x08]),
@@ -22123,6 +22145,22 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
     run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 57);
+}
+
+#[test]
+fn avx512_kvm_unsupported_system_extension_ud_corpus() {
+    let cases = unsupported_system_extension_cases();
+    let mut expected = 0;
+    if !host_cpu_flag("hreset") {
+        expected += 2;
+    }
+    if !host_cpu_flag("pconfig") {
+        expected += 2;
+    }
+    if expected == 0 {
+        eprintln!("[skip] host exposes HRESET and PCONFIG");
+    }
+    run_ud_marker_corpus("unsupported system extension", cases, expected);
 }
 
 #[test]
