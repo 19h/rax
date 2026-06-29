@@ -15,6 +15,8 @@ pub enum Csr {
     Frm = 0x002,
     /// Unified floating-point control/status (`frm` || `fflags`).
     Fcsr = 0x003,
+    /// Jump vector table base for Zcmt compressed table jumps.
+    Jvt = 0x017,
     /// Cycle counter (low XLEN bits).
     Cycle = 0xC00,
     /// Wall-clock time.
@@ -88,6 +90,7 @@ impl Csr {
             0x001 => Csr::Fflags,
             0x002 => Csr::Frm,
             0x003 => Csr::Fcsr,
+            0x017 => Csr::Jvt,
             0xC00 => Csr::Cycle,
             0xC01 => Csr::Time,
             0xC02 => Csr::Instret,

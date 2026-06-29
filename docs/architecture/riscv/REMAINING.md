@@ -11,7 +11,7 @@ gaps, and additional (mostly optional) extensions.
 - **FP**: full IEEE-754 incl. **Zfh** (half), all 5 rounding modes, integer-significand
   soft-float in `float.rs` generic over `Fmt = {F16, F32, F64}`.
 - **Bit-manip / crypto**: Zba/Zbb/Zbc/Zbs, Zicond, Zfa, Zbkb, Zbkx, Zcb, and full
-  **scalar crypto** (Zknh SHA-256/512, Zksh SM3, Zksed SM4, Zkne/Zknd AES-64).
+  **scalar crypto** (Zknh SHA-256/512, Zksh SM3, Zksed SM4, Zkne/Zknd AES-32/AES-64).
 - **Zicsr + Zifencei**, user-visible counters (cycle/time/instret read paths).
 - **V (RVV 1.0) — the entire data path**: config (`vsetvl*`), all integer/FP
   arithmetic, multiply/divide, FMA, reductions (incl. widening), fixed-point
@@ -43,7 +43,8 @@ Concretely missing:
   `mstatus` SUM/MXR/SPP/SPIE semantics, `mstatus.TVM/TW/TSR`.
 - **Sv39 (and Sv48/Sv57) page-table walk + TLB**: `satp` MODE/ASID/PPN, multi-level
   walk, A/D bit updates, permission checks (R/W/X/U), page-fault causes
-  (12/13/15), `sfence.vma`. Currently every access is a flat physical access.
+  (12/13/15), and real TLB invalidation for `sfence.vma`/Svinval/HINVAL. The
+  invalidation opcodes decode and execute as flat-memory no-ops today.
 - **Interrupt controllers**: CLINT (mtime/mtimecmp/msip) and PLIC (external
   interrupt claim/complete). Timer interrupts (`mip.MTIP/STIP`).
 - **SBI** (Supervisor Binary Interface): `ecall`-from-S handling for console,
@@ -87,25 +88,70 @@ on malformed encodings or fault paths.
 
 ---
 
-## Tier 3 — Additional extensions (optional; not in the current `Isa`)
+## Tier 3 — Additional optional extensions
 
-The `Isa` struct (`mod.rs`) currently has no flags for these. Each is additive and
-oracle-verifiable with the existing qemu-user harness (qemu supports them):
+Recently closed optional slices:
 
-- **Zacas** — atomic compare-and-swap (`amocas.w/d/q`).
-- **Zawrs** — wait-on-reservation (`wrs.nto`/`wrs.sto`).
+- **Zacas** — atomic compare-and-swap (`amocas.w/d/q`), including RV64
+  register-pair `.q`.
+- **Zawrs** — wait-on-reservation (`wrs.nto`/`wrs.sto`) as single-hart no-ops.
 - **Zicboz / Zicbom / Zicbop** — cache-block zero/management/prefetch.
-- **Zihintpause** (`pause`), **Zihintntl**, **Zimop/Zcmop** (may-be-ops).
+- **Zihintpause** (`pause`) and **Zihintntl** (`ntl.*` compressed/uncompressed).
+- **Zbkb RV32 bit shuffles** — `zip`/`unzip` decode/disasm/execute as RV32-only
+  Zbkb overlays.
+- **Zcmp / Zcmt / Zclsd / Zilsd** — compressed push/pop/double-move/table-jump
+  and RV32 register-pair load/store forms. Zcmp/Zcmt/Zclsd are disabled by
+  default because they overlap baseline compressed encodings; enable their
+  `Isa` flags explicitly for those profiles.
+- **Privileged/H decode parity slice** — `uret`, legacy `sfence.vm`,
+  `sfence.vma`, Svinval (`sinval.vma`, `sfence.w.inval`, `sfence.inval.ir`),
+  H fences/invalidation, and H virtual load/store encodings decode/disassemble.
+  In the current flat-memory model, fences/invalidation are no-ops and H
+  virtual loads/stores use ordinary flat memory.
+- **IDA compatibility `sltw`** — Hex-Rays/IDA decodes the non-standard RV64
+  OP-32 `funct7=0, funct3=2` table entry as `sltw`. rax supports it behind the
+  opt-in `xida_sltw` flag; it remains disabled in `rv64gc()` because standard
+  hardware reserves the encoding.
+- **Q decode/disassembly parity** — `flq`/`fsq` and Q-format FP arithmetic,
+  conversions, compare, classify, and FMA encodings decode/disassemble behind
+  `Isa::q`. Execution intentionally traps until binary128 storage/arithmetic
+  exists.
+- **XHazard3** — Hazard3/RP2350 `h3.block`/`h3.unblock` power hints and
+  `h3.bextm`/`h3.bextmi` bit-extract-multiple custom instructions.
+- **XAndesPerf** — Andes GP-relative load/store/add, bit-field, branch,
+  load-effective-address, and byte-scan custom instructions.
+- **XThead scalar/vendor** — T-Head cache/sync/int hints, address-generation,
+  bit-manip, single-bit, conditional-move, MAC, high-word FP move, integer
+  indexed/pair memory, and FP indexed memory custom instructions. The custom-0
+  priority now matches IDA's Soteria -> Andes -> T-Head -> Hazard3 order.
+- **XTheadVdot** — T-Head vector four-byte multiply/add custom instructions.
+  `th.vmaqa*` decode/disasm/execute with SEW=32 and byte-granular masks;
+  IDA-only undocumented packed forms (`th.vpmaqa*`, `th.vpnclip*`,
+  `th.vpwadd*`) decode/disassemble for parity and intentionally trap on
+  execution because the upstream XUANTIE-RV spec does not define semantics.
+
+Remaining optional groups:
+
+- **Zimop/Zcmop** — may-be-ops.
+  The local Hex-Rays/IDA decoder at `/Users/int/hexrays/ida/module/riscv` does
+  not currently decode these; they remain a general optional-ISA gap rather than
+  an IDA-parity gap. The remaining local IDA mnemonic-only deltas are simplify
+  aliases such as `rdcycle`, `csrw`, `beqz`, and RVV aliases; rax keeps canonical
+  instruction disassembly for those encodings.
+- **Q execution** — quad-precision floating point execution. rax now has
+  decode/disassembly parity for the local IDA decoder's Q-format coverage, but
+  the FP register file is still 64-bit and `float.rs` only implements
+  F16/F32/F64. Real Q support needs 128-bit FP register storage plus binary128
+  soft-float.
 - **Vector crypto** (Zvbb, Zvbc, Zvkg, Zvkned, Zvknha/Zvknhb, Zvksed, Zvksh) —
   large family, mirrors the scalar crypto already in `crypto.rs`.
 - **BF16** (Zfbfmin scalar, Zvfbfmin/Zvfbfwma vector) — bfloat16 convert + dot.
-- **Hypervisor (H)** extension — VS/VU modes, two-stage translation (only if
-  nested virtualization is ever a goal; large).
-- **Sstc** (`stimecmp`), **Svnapot/Svpbmt/Svinval**, **Sscofpmf** — S-mode
-  add-ons that pair with Tier 1.
-
-The `v` flag's doc comment in `mod.rs` still reads *"configuration instructions
-only"* — **stale**; the full data path is implemented. (Worth fixing.)
+- **Hypervisor (H)** semantics — VS/VU modes and two-stage translation (only if
+  nested virtualization is ever a goal; large). Basic H opcodes are decoded as
+  described above.
+- **Sstc** (`stimecmp`), **Svnapot/Svpbmt**, **Sscofpmf** — S-mode add-ons that
+  pair with Tier 1. Svinval opcodes decode now, but real address-translation
+  invalidation still depends on the Tier 1 MMU/TLB.
 
 ---
 

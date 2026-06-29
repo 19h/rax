@@ -2561,14 +2561,14 @@ pub enum OpKind {
 
     /// RISC-V scalar bit-manip / crypto op with no clean SMIR primitive:
     /// carry-less multiply (Zbc `clmul`/`clmulh`/`clmulr`), crossbar permute
-    /// (Zbkx `xperm4`/`xperm8`), and the AES-64 / SM4 round and key-schedule
-    /// helpers (Zkn*/Zks*), computed bit-exactly via
+    /// (Zbkx `xperm4`/`xperm8`), RV32 SHA-512 pair helpers, and the AES / SM4
+    /// round and key-schedule helpers (Zkn*/Zks*), computed bit-exactly via
     /// `crate::riscv::crypto::eval_int_crypto` — the same qemu-verified
     /// primitives the `RiscVCpu` interpreter uses (S-box tables, GF(2^8)
     /// MixColumns, crossbar gather), which would need 256-entry table lookups to
     /// express as plain SMIR. `src1`=rs1, `src2`=rs2 (ignored by the unary
-    /// `aes64im`/`aes64ks1i`); `imm` carries the SM4 `bs` or `aes64ks1i` round
-    /// number. `dst` receives the rd value. Self-contained like [`OpKind::RvFp`];
+    /// `aes64im`/`aes64ks1i`); `imm` carries the SM4/AES32 `bs` or
+    /// `aes64ks1i` round number. `dst` receives the rd value. Self-contained like [`OpKind::RvFp`];
     /// NOT JIT-whitelisted.
     RvIntCrypto {
         dst: VReg,
@@ -2576,6 +2576,7 @@ pub enum OpKind {
         src2: VReg,
         op: crate::riscv::Op,
         imm: u8,
+        xlen: u8,
     },
 
     /// RISC-V Vector (RVV 1.0) instruction, executed bit-exactly by the verified

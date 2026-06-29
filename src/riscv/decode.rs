@@ -35,10 +35,12 @@ pub enum Op {
     Lhu,
     Lwu,
     Ld,
+    LdPair,
     Sb,
     Sh,
     Sw,
     Sd,
+    SdPair,
     Addi,
     Slti,
     Sltiu,
@@ -65,17 +67,63 @@ pub enum Op {
     Addw,
     Subw,
     Sllw,
+    Sltw,
     Srlw,
     Sraw,
     Fence,
     FenceI,
+    Pause,
+    NtlP1,
+    NtlPall,
+    NtlS1,
+    NtlAll,
+    CboInval,
+    CboClean,
+    CboFlush,
     CboZero,
+    PrefetchI,
+    PrefetchR,
+    PrefetchW,
     Ecall,
     Ebreak,
+    // ---- Zcmp / Zcmt compressed-only ops ----
+    CmPush,
+    CmPop,
+    CmPopRetz,
+    CmPopRet,
+    CmMvsa01,
+    CmMva01s,
+    CmJt,
+    CmJalt,
     // ---- privileged / system (subset) ----
     Mret,
     Sret,
     Wfi,
+    WrsNto,
+    WrsSto,
+    Uret,
+    SfenceVm,
+    SfenceVma,
+    SinvalVma,
+    SfenceWInval,
+    SfenceInvalIr,
+    HfenceVvma,
+    HfenceGvma,
+    HinvalVvma,
+    HinvalGvma,
+    HlvB,
+    HlvH,
+    HlvW,
+    HlvD,
+    HlvBu,
+    HlvHu,
+    HlvWu,
+    HlvxHu,
+    HlvxWu,
+    HsvB,
+    HsvH,
+    HsvW,
+    HsvD,
     // ---- Zicsr ----
     Csrrw,
     Csrrs,
@@ -109,6 +157,7 @@ pub enum Op {
     AmomaxW,
     AmominuW,
     AmomaxuW,
+    AmocasW,
     // ---- A (double) ----
     LrD,
     ScD,
@@ -121,6 +170,9 @@ pub enum Op {
     AmomaxD,
     AmominuD,
     AmomaxuD,
+    AmocasD,
+    // ---- Zacas (quadword; RV64 register-pair form) ----
+    AmocasQ,
     // ---- F (single precision) ----
     Flw,
     Fsw,
@@ -185,6 +237,41 @@ pub enum Op {
     FcvtDLu,
     FmvXD,
     FmvDX,
+    // ---- Q (quad precision; decode/disassembly parity) ----
+    Flq,
+    Fsq,
+    FmaddQ,
+    FmsubQ,
+    FnmsubQ,
+    FnmaddQ,
+    FaddQ,
+    FsubQ,
+    FmulQ,
+    FdivQ,
+    FsqrtQ,
+    FsgnjQ,
+    FsgnjnQ,
+    FsgnjxQ,
+    FminQ,
+    FmaxQ,
+    FcvtSQ,
+    FcvtQS,
+    FcvtDQ,
+    FcvtQD,
+    FcvtHQ,
+    FcvtQH,
+    FeqQ,
+    FltQ,
+    FleQ,
+    FclassQ,
+    FcvtWQ,
+    FcvtWuQ,
+    FcvtLQ,
+    FcvtLuQ,
+    FcvtQW,
+    FcvtQWu,
+    FcvtQL,
+    FcvtQLu,
     // ---- Zba ----
     Sh1add,
     Sh2add,
@@ -256,6 +343,8 @@ pub enum Op {
     Packh,
     Packw,
     Brev8,
+    Zip,
+    Unzip,
     // ---- Zfh (half precision) ----
     Flh,
     Fsh,
@@ -311,6 +400,12 @@ pub enum Op {
     Sha512Sig1,
     Sha512Sum0,
     Sha512Sum1,
+    Sha512Sig0l,
+    Sha512Sig0h,
+    Sha512Sig1l,
+    Sha512Sig1h,
+    Sha512Sum0r,
+    Sha512Sum1r,
     // ---- Zksh (SM3) ----
     Sm3p0,
     Sm3p1,
@@ -318,6 +413,10 @@ pub enum Op {
     Sm4ed,
     Sm4ks,
     // ---- Zkne / Zknd (AES) ----
+    Aes32esi,
+    Aes32esmi,
+    Aes32dsi,
+    Aes32dsmi,
     Aes64es,
     Aes64esm,
     Aes64ds,
@@ -558,6 +657,170 @@ pub enum Op {
     Fls,
     /// Population count (CUSTOM-0).
     Pcnt,
+    // ---- Andes XAndesPerf vendor extension ----
+    NdsLbgp,
+    NdsLbugp,
+    NdsLhgp,
+    NdsLhugp,
+    NdsLwgp,
+    NdsLwugp,
+    NdsLdgp,
+    NdsSbgp,
+    NdsShgp,
+    NdsSwgp,
+    NdsSdgp,
+    NdsAddigp,
+    NdsBfoz,
+    NdsBfos,
+    NdsBbc,
+    NdsBbs,
+    NdsBeqc,
+    NdsBnec,
+    NdsLeaH,
+    NdsLeaW,
+    NdsLeaD,
+    NdsLeaBZe,
+    NdsLeaHZe,
+    NdsLeaWZe,
+    NdsLeaDZe,
+    NdsFfb,
+    NdsFfmism,
+    NdsFfzmism,
+    NdsFlmism,
+    // ---- T-Head/Xuantie XThead vendor extension ----
+    ThDcacheCall,
+    ThDcacheCiall,
+    ThDcacheIall,
+    ThDcacheCpa,
+    ThDcacheCipa,
+    ThDcacheIpa,
+    ThDcacheCva,
+    ThDcacheCiva,
+    ThDcacheIva,
+    ThDcacheCsw,
+    ThDcacheCisw,
+    ThDcacheIsw,
+    ThDcacheCpal1,
+    ThDcacheCval1,
+    ThIcacheIall,
+    ThIcacheIalls,
+    ThIcacheIpa,
+    ThIcacheIva,
+    ThL2cacheCall,
+    ThL2cacheCiall,
+    ThL2cacheIall,
+    ThSfenceVmas,
+    ThSync,
+    ThSyncS,
+    ThSyncI,
+    ThSyncIS,
+    ThIpush,
+    ThIpop,
+    ThAddsl,
+    ThSrri,
+    ThSrriw,
+    ThExt,
+    ThExtu,
+    ThFf0,
+    ThFf1,
+    ThRev,
+    ThRevw,
+    ThTstNbz,
+    ThTst,
+    ThMveqz,
+    ThMvnez,
+    ThMula,
+    ThMulah,
+    ThMulaw,
+    ThMuls,
+    ThMulsh,
+    ThMulsw,
+    ThFmvHwX,
+    ThFmvXHw,
+    ThAndn,
+    ThOrn,
+    ThXorn,
+    ThPackl,
+    ThPackh,
+    ThPackhl,
+    ThLbia,
+    ThLbib,
+    ThLbuia,
+    ThLbuib,
+    ThLhia,
+    ThLhib,
+    ThLhuia,
+    ThLhuib,
+    ThLwia,
+    ThLwib,
+    ThLwuia,
+    ThLwuib,
+    ThLdia,
+    ThLdib,
+    ThSbia,
+    ThSbib,
+    ThShia,
+    ThShib,
+    ThSwia,
+    ThSwib,
+    ThSdia,
+    ThSdib,
+    ThLrb,
+    ThLrbu,
+    ThLrh,
+    ThLrhu,
+    ThLrw,
+    ThLrwu,
+    ThLrd,
+    ThSrb,
+    ThSrh,
+    ThSrw,
+    ThSrd,
+    ThLurb,
+    ThLurbu,
+    ThLurh,
+    ThLurhu,
+    ThLurw,
+    ThLurwu,
+    ThLurd,
+    ThSurb,
+    ThSurh,
+    ThSurw,
+    ThSurd,
+    ThLdd,
+    ThLwd,
+    ThLwud,
+    ThSdd,
+    ThSwd,
+    ThFlrd,
+    ThFlrw,
+    ThFlurd,
+    ThFlurw,
+    ThFsrd,
+    ThFsrw,
+    ThFsurd,
+    ThFsurw,
+    ThVmaqa,
+    ThVmaqau,
+    ThVmaqasu,
+    ThVmaqaus,
+    ThVpmaqa,
+    ThVpmaqau,
+    ThVpmaqasu,
+    ThVpmaqaus,
+    ThVpnclip,
+    ThVpnclipu,
+    ThVpwadd,
+    ThVpwaddu,
+    // ---- Hazard3 (Xh3power/Xh3bextm vendor extension) ----
+    /// Enter sleep until unblock or interrupt hint (`slt x0, x0, x0`).
+    H3Block,
+    /// Post unblock signal hint (`slt x0, x0, x1`).
+    H3Unblock,
+    /// Bit extract multiple, register shift amount (CUSTOM-0).
+    H3Bextm,
+    /// Bit extract multiple, immediate shift amount (CUSTOM-0).
+    H3Bextmi,
     // ---- sentinel ----
     Illegal,
 }
@@ -630,6 +893,40 @@ impl Op {
                 | FcvtDLu
                 | FmvXD
                 | FmvDX
+                | Flq
+                | Fsq
+                | FmaddQ
+                | FmsubQ
+                | FnmsubQ
+                | FnmaddQ
+                | FaddQ
+                | FsubQ
+                | FmulQ
+                | FdivQ
+                | FsqrtQ
+                | FsgnjQ
+                | FsgnjnQ
+                | FsgnjxQ
+                | FminQ
+                | FmaxQ
+                | FcvtSQ
+                | FcvtQS
+                | FcvtDQ
+                | FcvtQD
+                | FcvtHQ
+                | FcvtQH
+                | FeqQ
+                | FltQ
+                | FleQ
+                | FclassQ
+                | FcvtWQ
+                | FcvtWuQ
+                | FcvtLQ
+                | FcvtLuQ
+                | FcvtQW
+                | FcvtQWu
+                | FcvtQL
+                | FcvtQLu
                 | FliS
                 | FliD
                 | FminmS
@@ -864,25 +1161,622 @@ pub fn decode(w: u32, xlen: Xlen, isa: &Isa) -> Insn {
         0x6f => with_imm(Op::Jal, w, imm_j(w)),
         0x67 if funct3(w) == 0 => with_imm(Op::Jalr, w, imm_i(w)),
         0x63 => decode_branch(w),
-        0x03 => decode_load(w, rv64),
-        0x23 => decode_store(w, rv64),
+        0x03 => decode_load(w, rv64, isa),
+        0x23 => decode_store(w, rv64, isa),
         0x13 => decode_op_imm(w, rv64, isa),
         0x1b if rv64 => decode_op_imm32(w, isa),
-        0x33 => decode_op(w, isa),
+        0x33 => decode_op(w, rv64, isa),
         0x3b if rv64 => decode_op32(w, isa),
         0x0f => decode_fence(w, isa),
-        0x73 => decode_system(w, isa),
-        0x2f if isa.a => decode_amo(w, rv64),
+        0x73 => decode_system(w, rv64, isa),
+        0x2f if isa.a || isa.zacas => decode_amo(w, rv64, isa),
         0x07 if isa.f => decode_load_fp(w, isa),
         0x27 if isa.f => decode_store_fp(w, isa),
         0x53 if isa.f => decode_op_fp(w, rv64, isa),
-        0x43 if isa.f => decode_fma(Op::FmaddS, Op::FmaddD, Op::FmaddH, w, isa),
-        0x47 if isa.f => decode_fma(Op::FmsubS, Op::FmsubD, Op::FmsubH, w, isa),
-        0x4b if isa.f => decode_fma(Op::FnmsubS, Op::FnmsubD, Op::FnmsubH, w, isa),
-        0x4f if isa.f => decode_fma(Op::FnmaddS, Op::FnmaddD, Op::FnmaddH, w, isa),
+        0x43 if isa.f => decode_fma(Op::FmaddS, Op::FmaddD, Op::FmaddH, Op::FmaddQ, w, isa),
+        0x47 if isa.f => decode_fma(Op::FmsubS, Op::FmsubD, Op::FmsubH, Op::FmsubQ, w, isa),
+        0x4b if isa.f => decode_fma(Op::FnmsubS, Op::FnmsubD, Op::FnmsubH, Op::FnmsubQ, w, isa),
+        0x4f if isa.f => decode_fma(Op::FnmaddS, Op::FnmaddD, Op::FnmaddH, Op::FnmaddQ, w, isa),
         0x57 if isa.v => decode_vector(w),
-        0x0b if isa.xsoteria && !rv64 => decode_xsoteria_custom0(w),
-        0x2b if isa.xsoteria && !rv64 => decode_xsoteria_custom1(w),
+        0x0b => decode_custom0(w, rv64, isa),
+        0x2b => decode_custom1(w, rv64, isa),
+        0x5b if isa.xandes => decode_andes_custom2(w, rv64),
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+fn decode_custom0(w: u32, rv64: bool, isa: &Isa) -> Insn {
+    if isa.xsoteria && !rv64 {
+        let i = decode_xsoteria_custom0(w);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    if isa.xandes {
+        let i = decode_andes_custom0(w);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    if isa.xthead {
+        let i = decode_thead_custom0(w);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    if isa.xhazard3 {
+        let i = decode_hazard3_custom0(w);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    Insn::illegal(w, 4)
+}
+
+fn decode_custom1(w: u32, rv64: bool, isa: &Isa) -> Insn {
+    if isa.xsoteria && !rv64 {
+        let i = decode_xsoteria_custom1(w);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    if isa.xandes {
+        let i = decode_andes_custom1(w, rv64);
+        if !i.is_illegal() {
+            return i;
+        }
+    }
+    Insn::illegal(w, 4)
+}
+
+fn thead_bimm6(w: u32) -> u8 {
+    ((w >> 20) & 0x3f) as u8
+}
+
+fn thead_bimm2(w: u32) -> u8 {
+    ((w >> 25) & 0x3) as u8
+}
+
+fn decode_thead_custom0(w: u32) -> Insn {
+    let f3 = funct3(w);
+    let f7 = funct7(w) as u8;
+    match f3 {
+        0b000 => decode_thead_subop0(w, f7),
+        0b001 | 0b010 | 0b011 => decode_thead_arithmetic(w, f3, f7),
+        0b100 | 0b101 => decode_thead_mem(w, f3, f7),
+        0b110 | 0b111 => {
+            let i = decode_thead_mem(w, f3, f7);
+            if i.is_illegal() {
+                decode_thead_vec(w, f3, f7)
+            } else {
+                i
+            }
+        }
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+fn decode_thead_subop0(w: u32, f7: u8) -> Insn {
+    use Op::*;
+
+    let rd = rd(w);
+    let rs1 = rs1(w);
+    let rs2 = rs2(w);
+    if rd != 0 {
+        return Insn::illegal(w, 4);
+    }
+
+    let op = match f7 {
+        0 if rs1 == 0 => match rs2 {
+            0b00001 => ThDcacheCall,
+            0b00011 => ThDcacheCiall,
+            0b00010 => ThDcacheIall,
+            0b10000 => ThIcacheIall,
+            0b10001 => ThIcacheIalls,
+            0b10101 => ThL2cacheCall,
+            0b10111 => ThL2cacheCiall,
+            0b10110 => ThL2cacheIall,
+            0b11000 => ThSync,
+            0b11001 => ThSyncS,
+            0b11010 => ThSyncI,
+            0b11011 => ThSyncIS,
+            0b00100 => ThIpush,
+            0b00101 => ThIpop,
+            _ => return Insn::illegal(w, 4),
+        },
+        1 => match rs2 {
+            0b01001 => ThDcacheCpa,
+            0b01011 => ThDcacheCipa,
+            0b01010 => ThDcacheIpa,
+            0b00101 => ThDcacheCva,
+            0b00111 => ThDcacheCiva,
+            0b00110 => ThDcacheIva,
+            0b00001 => ThDcacheCsw,
+            0b00011 => ThDcacheCisw,
+            0b00010 => ThDcacheIsw,
+            0b01000 => ThDcacheCpal1,
+            0b00100 => ThDcacheCval1,
+            0b11000 => ThIcacheIpa,
+            0b10000 => ThIcacheIva,
+            _ => return Insn::illegal(w, 4),
+        },
+        2 => ThSfenceVmas,
+        _ => return Insn::illegal(w, 4),
+    };
+    base(op, w)
+}
+
+fn decode_thead_arithmetic(w: u32, f3: u8, f7: u8) -> Insn {
+    use Op::*;
+
+    if f3 == 0b010 || f3 == 0b011 {
+        let msb = f7 >> 1;
+        let lsb = thead_bimm6(w);
+        if msb < lsb {
+            return Insn::illegal(w, 4);
+        }
+        let mut i = base(if f3 == 0b011 { ThExtu } else { ThExt }, w);
+        i.rs2 = msb;
+        i.imm = lsb as i64;
+        return i;
+    }
+
+    let op = match f7 {
+        0b0000000..=0b0000011 => ThAddsl,
+        0b0001000 | 0b0001001 => ThSrri,
+        0b0001010 => ThSrriw,
+        0b1000100 | 0b1000101 => ThTst,
+        0b0100000 => ThMveqz,
+        0b0100001 => ThMvnez,
+        0b0010000 => ThMula,
+        0b0010100 => ThMulah,
+        0b0010010 => ThMulaw,
+        0b0010001 => ThMuls,
+        0b0010101 => ThMulsh,
+        0b0010011 => ThMulsw,
+        0b1000010 => ThFf0,
+        0b1000011 => ThFf1,
+        0b1000001 => ThRev,
+        0b1001000 => ThRevw,
+        0b1010000 => ThFmvHwX,
+        0b1100000 => ThFmvXHw,
+        0b1000000 => ThTstNbz,
+        0b0000100 => ThAndn,
+        0b0000101 => ThOrn,
+        0b0000110 => ThXorn,
+        0b0001100 => ThPackl,
+        0b0001101 => ThPackh,
+        0b0001110 => ThPackhl,
+        _ => return Insn::illegal(w, 4),
+    };
+
+    let mut i = base(op, w);
+    match op {
+        ThAddsl => i.imm = thead_bimm2(w) as i64,
+        ThSrri | ThTst => i.imm = thead_bimm6(w) as i64,
+        ThSrriw => i.imm = rs2(w) as i64,
+        _ => {}
+    }
+    i
+}
+
+fn decode_thead_vec(w: u32, f3: u8, f7: u8) -> Insn {
+    use Op::*;
+
+    let key = f7 >> 1;
+    let op = match f3 {
+        0b110 => match key {
+            0x20 | 0x21 => ThVmaqa,
+            0x22 | 0x23 => ThVmaqau,
+            0x24 | 0x25 => ThVmaqasu,
+            0x27 => ThVmaqaus,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b111 => match key {
+            0x20 | 0x21 => ThVpmaqa,
+            0x22 | 0x23 => ThVpmaqau,
+            0x24 | 0x25 => ThVpmaqasu,
+            0x27 => ThVpmaqaus,
+            0x28 | 0x29 => ThVpnclip,
+            0x2a | 0x2b => ThVpnclipu,
+            0x2c | 0x2d => ThVpwadd,
+            0x2e | 0x2f => ThVpwaddu,
+            _ => return Insn::illegal(w, 4),
+        },
+        _ => return Insn::illegal(w, 4),
+    };
+    base(op, w)
+}
+
+fn decode_thead_mem(w: u32, f3: u8, f7: u8) -> Insn {
+    use Op::*;
+
+    let key = f7 & 0b1111100;
+    let op = match f3 {
+        0b100 => match key {
+            0b0001100 => ThLbia,
+            0b0000100 => ThLbib,
+            0b1001100 => ThLbuia,
+            0b1000100 => ThLbuib,
+            0b0011100 => ThLhia,
+            0b0010100 => ThLhib,
+            0b1011100 => ThLhuia,
+            0b1010100 => ThLhuib,
+            0b0101100 => ThLwia,
+            0b0100100 => ThLwib,
+            0b1101100 => ThLwuia,
+            0b1100100 => ThLwuib,
+            0b0111100 => ThLdia,
+            0b0110100 => ThLdib,
+            0b0000000 => ThLrb,
+            0b1000000 => ThLrbu,
+            0b0010000 => ThLrh,
+            0b1010000 => ThLrhu,
+            0b0100000 => ThLrw,
+            0b1100000 => ThLrwu,
+            0b0110000 => ThLrd,
+            0b0001000 => ThLurb,
+            0b1001000 => ThLurbu,
+            0b0011000 => ThLurh,
+            0b1011000 => ThLurhu,
+            0b0101000 => ThLurw,
+            0b1101000 => ThLurwu,
+            0b0111000 => ThLurd,
+            0b1111100 => ThLdd,
+            0b1110000 => ThLwd,
+            0b1111000 => ThLwud,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b101 => match key {
+            0b0001100 => ThSbia,
+            0b0000100 => ThSbib,
+            0b0011100 => ThShia,
+            0b0010100 => ThShib,
+            0b0101100 => ThSwia,
+            0b0100100 => ThSwib,
+            0b0111100 => ThSdia,
+            0b0110100 => ThSdib,
+            0b0000000 => ThSrb,
+            0b0010000 => ThSrh,
+            0b0100000 => ThSrw,
+            0b0110000 => ThSrd,
+            0b0001000 => ThSurb,
+            0b0011000 => ThSurh,
+            0b0101000 => ThSurw,
+            0b0111000 => ThSurd,
+            0b1111100 => ThSdd,
+            0b1110000 => ThSwd,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b110 => match key {
+            0b0110000 => ThFlrd,
+            0b0100000 => ThFlrw,
+            0b0111000 => ThFlurd,
+            0b0101000 => ThFlurw,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b111 => match key {
+            0b0110000 => ThFsrd,
+            0b0100000 => ThFsrw,
+            0b0111000 => ThFsurd,
+            0b0101000 => ThFsurw,
+            _ => return Insn::illegal(w, 4),
+        },
+        _ => return Insn::illegal(w, 4),
+    };
+
+    let mut i = base(op, w);
+    if thead_auto_mem_op(op) {
+        if thead_auto_load_op(op) && i.rd == i.rs1 {
+            return Insn::illegal(w, 4);
+        }
+        i.rs2 = rs2(w);
+        i.imm = thead_bimm2(w) as i64;
+    } else if thead_pair_mem_op(op) {
+        if thead_pair_load_op(op) && i.rd == i.rs2 && i.rd == i.rs1 {
+            return Insn::illegal(w, 4);
+        }
+        let slot_size_shift = if matches!(op, ThLdd | ThSdd) { 4 } else { 3 };
+        i.imm = ((f7 & 0b11) as i64) << slot_size_shift;
+    } else {
+        i.imm = thead_bimm2(w) as i64;
+    }
+    i
+}
+
+fn thead_auto_mem_op(op: Op) -> bool {
+    use Op::*;
+    matches!(
+        op,
+        ThLbia
+            | ThLbib
+            | ThLbuia
+            | ThLbuib
+            | ThLhia
+            | ThLhib
+            | ThLhuia
+            | ThLhuib
+            | ThLwia
+            | ThLwib
+            | ThLwuia
+            | ThLwuib
+            | ThLdia
+            | ThLdib
+            | ThSbia
+            | ThSbib
+            | ThShia
+            | ThShib
+            | ThSwia
+            | ThSwib
+            | ThSdia
+            | ThSdib
+    )
+}
+
+fn thead_auto_load_op(op: Op) -> bool {
+    use Op::*;
+    matches!(
+        op,
+        ThLbia
+            | ThLbib
+            | ThLbuia
+            | ThLbuib
+            | ThLhia
+            | ThLhib
+            | ThLhuia
+            | ThLhuib
+            | ThLwia
+            | ThLwib
+            | ThLwuia
+            | ThLwuib
+            | ThLdia
+            | ThLdib
+    )
+}
+
+fn thead_pair_mem_op(op: Op) -> bool {
+    use Op::*;
+    matches!(op, ThLdd | ThLwd | ThLwud | ThSdd | ThSwd)
+}
+
+fn thead_pair_load_op(op: Op) -> bool {
+    use Op::*;
+    matches!(op, ThLdd | ThLwd | ThLwud)
+}
+
+fn andes_base(op: Op, w: u32, imm: i64) -> Insn {
+    let mut i = with_imm(op, w, imm);
+    i.rs1 = 3; // gp is the implicit base for XAndesPerf GP-relative forms.
+    i
+}
+
+fn sign_flagged(mut imm: i64, w: u32, sign_extend_from_bit: u32) -> i64 {
+    if w & 0x8000_0000 != 0 {
+        imm |= !((1i64 << sign_extend_from_bit) - 1);
+    }
+    imm
+}
+
+fn andes_gp_lb_imm(w: u32) -> i64 {
+    let imm = ((w >> 14) & 0x1)
+        | (((w >> 21) & 0x3ff) << 1)
+        | (((w >> 20) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15);
+    sign_flagged(imm as i64, w, 17)
+}
+
+fn andes_gp_lh_imm(w: u32) -> i64 {
+    let imm = (((w >> 21) & 0x3ff) << 1)
+        | (((w >> 20) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15);
+    sign_flagged(imm as i64, w, 17)
+}
+
+fn andes_gp_lw_imm(w: u32) -> i64 {
+    let imm = (((w >> 22) & 0x1ff) << 2)
+        | (((w >> 20) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15)
+        | (((w >> 21) & 0x1) << 17);
+    sign_flagged(imm as i64, w, 18)
+}
+
+fn andes_gp_ld_imm(w: u32) -> i64 {
+    let imm = (((w >> 23) & 0xff) << 3)
+        | (((w >> 20) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15)
+        | (((w >> 21) & 0x3) << 17);
+    sign_flagged(imm as i64, w, 19)
+}
+
+fn andes_gp_sb_imm(w: u32) -> i64 {
+    let imm = ((w >> 14) & 0x1)
+        | (((w >> 8) & 0xf) << 1)
+        | (((w >> 25) & 0x3f) << 5)
+        | (((w >> 7) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15);
+    sign_flagged(imm as i64, w, 17)
+}
+
+fn andes_gp_sh_imm(w: u32) -> i64 {
+    let imm = (((w >> 8) & 0xf) << 1)
+        | (((w >> 25) & 0x3f) << 5)
+        | (((w >> 7) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15);
+    sign_flagged(imm as i64, w, 17)
+}
+
+fn andes_gp_sw_imm(w: u32) -> i64 {
+    let imm = (((w >> 9) & 0x7) << 2)
+        | (((w >> 25) & 0x3f) << 5)
+        | (((w >> 7) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15)
+        | (((w >> 8) & 0x1) << 17);
+    sign_flagged(imm as i64, w, 18)
+}
+
+fn andes_gp_sd_imm(w: u32) -> i64 {
+    let imm = (((w >> 10) & 0x3) << 3)
+        | (((w >> 25) & 0x3f) << 5)
+        | (((w >> 7) & 0x1) << 11)
+        | (((w >> 17) & 0x7) << 12)
+        | (((w >> 15) & 0x3) << 15)
+        | (((w >> 8) & 0x3) << 17);
+    sign_flagged(imm as i64, w, 19)
+}
+
+fn andes_stype_imm10(w: u32) -> i64 {
+    let imm = (((w >> 8) & 0xf) << 1) | (((w >> 25) & 0x1f) << 5);
+    if w & 0x8000_0000 != 0 {
+        (imm as i64) | !((1i64 << 10) - 1)
+    } else {
+        imm as i64
+    }
+}
+
+fn decode_andes_custom0(w: u32) -> Insn {
+    match (w >> 12) & 0x3 {
+        0b00 => andes_base(Op::NdsLbgp, w, andes_gp_lb_imm(w)),
+        0b01 => andes_base(Op::NdsAddigp, w, andes_gp_lb_imm(w)),
+        0b10 => andes_base(Op::NdsLbugp, w, andes_gp_lb_imm(w)),
+        0b11 => {
+            let mut i = andes_base(Op::NdsSbgp, w, andes_gp_sb_imm(w));
+            i.rs2 = rs2(w);
+            i
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn decode_andes_custom1(w: u32, rv64: bool) -> Insn {
+    match funct3(w) {
+        0b000 => {
+            let mut i = andes_base(Op::NdsShgp, w, andes_gp_sh_imm(w));
+            i.rs2 = rs2(w);
+            i
+        }
+        0b001 => andes_base(Op::NdsLhgp, w, andes_gp_lh_imm(w)),
+        0b010 => andes_base(Op::NdsLwgp, w, andes_gp_lw_imm(w)),
+        0b100 => {
+            let mut i = andes_base(Op::NdsSwgp, w, andes_gp_sw_imm(w));
+            i.rs2 = rs2(w);
+            i
+        }
+        0b101 => andes_base(Op::NdsLhugp, w, andes_gp_lh_imm(w)),
+        0b011 if rv64 => andes_base(Op::NdsLdgp, w, andes_gp_ld_imm(w)),
+        0b110 if rv64 => andes_base(Op::NdsLwugp, w, andes_gp_lw_imm(w)),
+        0b111 if rv64 => {
+            let mut i = andes_base(Op::NdsSdgp, w, andes_gp_sd_imm(w));
+            i.rs2 = rs2(w);
+            i
+        }
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+fn decode_andes_custom2(w: u32, rv64: bool) -> Insn {
+    match funct3(w) {
+        0b000 => {
+            let op = match funct7(w) {
+                0x05 => Op::NdsLeaH,
+                0x06 => Op::NdsLeaW,
+                0x07 => Op::NdsLeaD,
+                0x08 if rv64 => Op::NdsLeaBZe,
+                0x09 if rv64 => Op::NdsLeaHZe,
+                0x0a if rv64 => Op::NdsLeaWZe,
+                0x0b if rv64 => Op::NdsLeaDZe,
+                0x10 => Op::NdsFfb,
+                0x11 => Op::NdsFfzmism,
+                0x12 => Op::NdsFfmism,
+                0x13 => Op::NdsFlmism,
+                _ => return Insn::illegal(w, 4),
+            };
+            base(op, w)
+        }
+        0b010 | 0b011 => {
+            let msb = ((w >> 26) & 0x3f) as u8;
+            let lsb = ((w >> 20) & 0x3f) as u8;
+            if !rv64 && (msb > 0x1f || lsb > 0x1f) {
+                return Insn::illegal(w, 4);
+            }
+            let mut i = base(
+                if funct3(w) == 0b010 {
+                    Op::NdsBfoz
+                } else {
+                    Op::NdsBfos
+                },
+                w,
+            );
+            i.rs2 = msb;
+            i.imm = lsb as i64;
+            i
+        }
+        0b101 | 0b110 => {
+            let imm7 = ((w >> 20) & 0x1f) | (((w >> 7) & 0x1) << 5) | (((w >> 30) & 0x1) << 6);
+            let mut i = with_imm(
+                if funct3(w) == 0b101 {
+                    Op::NdsBeqc
+                } else {
+                    Op::NdsBnec
+                },
+                w,
+                andes_stype_imm10(w),
+            );
+            i.rs2 = imm7 as u8;
+            i
+        }
+        0b111 => {
+            let cimm = ((w >> 20) & 0x1f) | (((w >> 7) & 0x1) << 5);
+            if !rv64 && cimm > 0x1f {
+                return Insn::illegal(w, 4);
+            }
+            let mut i = with_imm(
+                if (w >> 30) & 0x1 != 0 {
+                    Op::NdsBbs
+                } else {
+                    Op::NdsBbc
+                },
+                w,
+                andes_stype_imm10(w),
+            );
+            i.rs2 = cimm as u8;
+            i
+        }
+        _ => Insn::illegal(w, 4),
+    }
+}
+
+/// Hazard3 Xh3bextm CUSTOM-0 (opcode 0x0b).
+///
+/// `h3.bextm rd, rs1, rs2, nbits`: `funct3=0`, `funct7[6:4]=0`,
+/// `funct7[0]=0`, and `nbits = funct7[3:1] + 1`.
+///
+/// `h3.bextmi rd, rs1, shamt, nbits`: `funct3=4`, `imm[11:9]=0`,
+/// `imm[5]=0`, `shamt=imm[4:0]`, and `nbits = imm[8:6] + 1`.
+fn decode_hazard3_custom0(w: u32) -> Insn {
+    match funct3(w) {
+        0b000 => {
+            let f7 = funct7(w);
+            if f7 & 0x71 != 0 {
+                return Insn::illegal(w, 4);
+            }
+            with_imm(Op::H3Bextm, w, (((f7 >> 1) & 0x7) + 1) as i64)
+        }
+        0b100 => {
+            let imm12 = (w >> 20) & 0xfff;
+            if imm12 & 0xe20 != 0 {
+                return Insn::illegal(w, 4);
+            }
+            let mut i = with_imm(Op::H3Bextmi, w, (((imm12 >> 6) & 0x7) + 1) as i64);
+            i.rs2 = (imm12 & 0x1f) as u8;
+            i
+        }
         _ => Insn::illegal(w, 4),
     }
 }
@@ -1197,12 +2091,13 @@ fn decode_branch(w: u32) -> Insn {
     with_imm(op, w, imm_b(w))
 }
 
-fn decode_load(w: u32, rv64: bool) -> Insn {
+fn decode_load(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let op = match funct3(w) {
         0 => Op::Lb,
         1 => Op::Lh,
         2 => Op::Lw,
         3 if rv64 => Op::Ld,
+        3 if isa.zilsd && rd(w) & 1 == 0 => Op::LdPair,
         4 => Op::Lbu,
         5 => Op::Lhu,
         6 if rv64 => Op::Lwu,
@@ -1211,12 +2106,13 @@ fn decode_load(w: u32, rv64: bool) -> Insn {
     with_imm(op, w, imm_i(w))
 }
 
-fn decode_store(w: u32, rv64: bool) -> Insn {
+fn decode_store(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let op = match funct3(w) {
         0 => Op::Sb,
         1 => Op::Sh,
         2 => Op::Sw,
         3 if rv64 => Op::Sd,
+        3 if isa.zilsd && rs2(w) & 1 == 0 => Op::SdPair,
         _ => return Insn::illegal(w, 4),
     };
     with_imm(op, w, imm_s(w))
@@ -1228,6 +2124,19 @@ fn decode_op_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
         2 => with_imm(Op::Slti, w, imm_i(w)),
         3 => with_imm(Op::Sltiu, w, imm_i(w)),
         4 => with_imm(Op::Xori, w, imm_i(w)),
+        6 if isa.zicbop && rd(w) == 0 => {
+            let op = match rs2(w) {
+                0 => Op::PrefetchI,
+                1 => Op::PrefetchR,
+                3 => Op::PrefetchW,
+                _ => Op::Ori,
+            };
+            if matches!(op, Op::Ori) {
+                with_imm(op, w, imm_i(w))
+            } else {
+                with_imm(op, w, imm_i(w) & !0x1f)
+            }
+        }
         6 => with_imm(Op::Ori, w, imm_i(w)),
         7 => with_imm(Op::Andi, w, imm_i(w)),
         1 => decode_shift_left_imm(w, rv64, isa),
@@ -1249,17 +2158,17 @@ fn decode_shift_left_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
             0b00001 if isa.zknh => return base(Op::Sha256Sum1, w),
             0b00010 if isa.zknh => return base(Op::Sha256Sig0, w),
             0b00011 if isa.zknh => return base(Op::Sha256Sig1, w),
-            0b00100 if isa.zknh => return base(Op::Sha512Sum0, w),
-            0b00101 if isa.zknh => return base(Op::Sha512Sum1, w),
-            0b00110 if isa.zknh => return base(Op::Sha512Sig0, w),
-            0b00111 if isa.zknh => return base(Op::Sha512Sig1, w),
+            0b00100 if rv64 && isa.zknh => return base(Op::Sha512Sum0, w),
+            0b00101 if rv64 && isa.zknh => return base(Op::Sha512Sum1, w),
+            0b00110 if rv64 && isa.zknh => return base(Op::Sha512Sig0, w),
+            0b00111 if rv64 && isa.zknh => return base(Op::Sha512Sig1, w),
             0b01000 if isa.zksh => return base(Op::Sm3p0, w),
             0b01001 if isa.zksh => return base(Op::Sm3p1, w),
             _ => {}
         }
     }
     // AES-64 decrypt InvMixColumns / key-schedule step 1 (funct7 = 0b0011000).
-    if funct7 == 0b0011000 {
+    if rv64 && funct7 == 0b0011000 {
         if rs2f == 0 && isa.zknd {
             return base(Op::Aes64im, w);
         }
@@ -1281,6 +2190,10 @@ fn decode_shift_left_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
             _ => return Insn::illegal(w, 4),
         };
         return base(op, w);
+    }
+    // Zbkb zip: RV32-only, funct7=0b0000100, shamt/rs2 field = 15.
+    if isa.zbkb && !rv64 && funct7 == 0b0000100 && rs2f == 0b01111 {
+        return base(Op::Zip, w);
     }
     if isa.zbs {
         match funct6 {
@@ -1317,6 +2230,10 @@ fn decode_shift_right_imm(w: u32, rv64: bool, isa: &Isa) -> Insn {
     // Zbkb brev8: funct7=0b0110100, rs2=0b00111, funct3=5.
     if isa.zbkb && funct7 == 0b0110100 && rs2f == 0b00111 {
         return base(Op::Brev8, w);
+    }
+    // Zbkb unzip: RV32-only, funct7=0b0000100, shamt/rs2 field = 15.
+    if isa.zbkb && !rv64 && funct7 == 0b0000100 && rs2f == 0b01111 {
+        return base(Op::Unzip, w);
     }
     if isa.zbb {
         if funct6 == 0b011000 {
@@ -1377,7 +2294,7 @@ fn decode_op_imm32(w: u32, isa: &Isa) -> Insn {
 }
 
 // OP (R-type): base, M, Zba/Zbb/Zbc/Zbs overlays.
-fn decode_op(w: u32, isa: &Isa) -> Insn {
+fn decode_op(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let f3 = funct3(w);
     let f7 = funct7(w);
     // M extension.
@@ -1460,6 +2377,18 @@ fn decode_op(w: u32, isa: &Isa) -> Insn {
             _ => {}
         }
     }
+    // Zknh SHA-512 RV32 register-pair helpers.
+    if isa.zknh && !rv64 && f3 == 0 {
+        match f7 {
+            0x28 => return base(Op::Sha512Sum0r, w),
+            0x29 => return base(Op::Sha512Sum1r, w),
+            0x2a => return base(Op::Sha512Sig0l, w),
+            0x2b => return base(Op::Sha512Sig1l, w),
+            0x2e => return base(Op::Sha512Sig0h, w),
+            0x2f => return base(Op::Sha512Sig1h, w),
+            _ => {}
+        }
+    }
     // Zbkb pack/packh.
     if isa.zbkb && f7 == 0b0000100 {
         match f3 {
@@ -1477,22 +2406,62 @@ fn decode_op(w: u32, isa: &Isa) -> Insn {
         }
     }
     if f3 == 0 {
-        // AES-64 round / key-schedule (Zkne / Zknd).
-        match f7 {
-            0b0011001 if isa.zkne => return base(Op::Aes64es, w),
-            0b0011011 if isa.zkne => return base(Op::Aes64esm, w),
-            0b0011101 if isa.zknd => return base(Op::Aes64ds, w),
-            0b0011111 if isa.zknd => return base(Op::Aes64dsm, w),
-            0b0111111 if isa.zkne || isa.zknd => return base(Op::Aes64ks2, w),
-            _ => {}
+        // AES-32 round helpers (Zkne / Zknd), RV32-only. funct7[6:5] is `bs`.
+        if !rv64 {
+            let bs = (f7 >> 5) as i64;
+            match f7 {
+                0b0010001 | 0b0110001 | 0b1010001 | 0b1110001 if isa.zkne => {
+                    return with_imm(Op::Aes32esi, w, bs);
+                }
+                0b0010011 | 0b0110011 | 0b1010011 | 0b1110011 if isa.zkne => {
+                    return with_imm(Op::Aes32esmi, w, bs);
+                }
+                0b0010101 | 0b0110101 | 0b1010101 | 0b1110101 if isa.zknd => {
+                    return with_imm(Op::Aes32dsi, w, bs);
+                }
+                0b0010111 | 0b0110111 | 0b1010111 | 0b1110111 if isa.zknd => {
+                    return with_imm(Op::Aes32dsmi, w, bs);
+                }
+                _ => {}
+            }
+        }
+        // AES-64 round / key-schedule (Zkne / Zknd), RV64-only.
+        if rv64 {
+            match f7 {
+                0b0011001 if isa.zkne => return base(Op::Aes64es, w),
+                0b0011011 if isa.zkne => return base(Op::Aes64esm, w),
+                0b0011101 if isa.zknd => return base(Op::Aes64ds, w),
+                0b0011111 if isa.zknd => return base(Op::Aes64dsm, w),
+                0b0111111 if isa.zkne || isa.zknd => return base(Op::Aes64ks2, w),
+                _ => {}
+            }
         }
         // SM4 (Zksed): funct7 low 5 bits select ed/ks, top 2 bits carry `bs`.
         if isa.zksed {
+            let bs = (f7 >> 5) as i64;
             match f7 & 0b0011111 {
-                0b11000 => return base(Op::Sm4ed, w),
-                0b11010 => return base(Op::Sm4ks, w),
+                0b11000 => return with_imm(Op::Sm4ed, w, bs),
+                0b11010 => return with_imm(Op::Sm4ks, w, bs),
                 _ => {}
             }
+        }
+    }
+    // Zihintntl: ADD x0, x0, x2..x5.
+    if isa.zihintntl && f7 == 0 && f3 == 0 && rd(w) == 0 && rs1(w) == 0 {
+        match rs2(w) {
+            2 => return base(Op::NtlP1, w),
+            3 => return base(Op::NtlPall, w),
+            4 => return base(Op::NtlS1, w),
+            5 => return base(Op::NtlAll, w),
+            _ => {}
+        }
+    }
+    // Hazard3 Xh3power hints: SLT x0, x0, x0/x1.
+    if isa.xhazard3 && f7 == 0 && f3 == 2 && rd(w) == 0 && rs1(w) == 0 {
+        match rs2(w) {
+            0 => return base(Op::H3Block, w),
+            1 => return base(Op::H3Unblock, w),
+            _ => {}
         }
     }
     // Base RV32I/RV64I.
@@ -1557,6 +2526,7 @@ fn decode_op32(w: u32, isa: &Isa) -> Insn {
         (0b0000000, 0) => Op::Addw,
         (0b0100000, 0) => Op::Subw,
         (0b0000000, 1) => Op::Sllw,
+        (0b0000000, 2) if isa.xida_sltw => Op::Sltw,
         (0b0000000, 5) => Op::Srlw,
         (0b0100000, 5) => Op::Sraw,
         _ => return Insn::illegal(w, 4),
@@ -1566,28 +2536,61 @@ fn decode_op32(w: u32, isa: &Isa) -> Insn {
 
 fn decode_fence(w: u32, isa: &Isa) -> Insn {
     match funct3(w) {
+        0 if isa.zihintpause
+            && rd(w) == 0
+            && rs1(w) == 0
+            && ((w >> 28) & 0xf) == 0
+            && ((w >> 24) & 0xf) == 1
+            && ((w >> 20) & 0xf) == 0 =>
+        {
+            base(Op::Pause, w)
+        }
         0 => base(Op::Fence, w),
         1 if isa.zifencei => base(Op::FenceI, w),
-        2 if isa.zicboz && rd(w) == 0 && ((w >> 20) & 0xfff) == 0x004 => {
-            base(Op::CboZero, w)
-        }
+        2 if rd(w) == 0 && ((w >> 27) & 0x1f) == 0 => match rs2(w) {
+            0 if isa.zicbom => base(Op::CboInval, w),
+            1 if isa.zicbom => base(Op::CboClean, w),
+            2 if isa.zicbom => base(Op::CboFlush, w),
+            4 if isa.zicboz => base(Op::CboZero, w),
+            _ => Insn::illegal(w, 4),
+        },
         _ => Insn::illegal(w, 4),
     }
 }
 
-fn decode_system(w: u32, isa: &Isa) -> Insn {
+fn decode_system(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let f3 = funct3(w);
     if f3 == 0 {
-        // PRIV: distinguished by the full 12-bit funct12 and rs1/rd == 0.
-        let funct12 = (w >> 20) & 0xfff;
-        return match funct12 {
-            0x000 => base(Op::Ecall, w),
-            0x001 => base(Op::Ebreak, w),
-            0x302 => base(Op::Mret, w),
-            0x102 => base(Op::Sret, w),
-            0x105 => base(Op::Wfi, w),
+        // PRIV: distinguished by funct7/rs2 and requires rd == x0.
+        if rd(w) != 0 {
+            return Insn::illegal(w, 4);
+        }
+        return match funct7(w) {
+            0x00 if rs1(w) == 0 => match rs2(w) {
+                0x00 => base(Op::Ecall, w),
+                0x01 => base(Op::Ebreak, w),
+                0x02 => base(Op::Uret, w),
+                0x0d if isa.zawrs => base(Op::WrsNto, w),
+                0x1d if isa.zawrs => base(Op::WrsSto, w),
+                _ => Insn::illegal(w, 4),
+            },
+            0x08 if rs2(w) == 0x04 => base(Op::SfenceVm, w),
+            0x08 if rs1(w) == 0 && rs2(w) == 0x02 => base(Op::Sret, w),
+            0x08 if rs1(w) == 0 && rs2(w) == 0x05 => base(Op::Wfi, w),
+            0x09 => base(Op::SfenceVma, w),
+            0x0b if isa.svinval => base(Op::SinvalVma, w),
+            0x0c if isa.svinval && rs1(w) == 0 && rs2(w) == 0 => base(Op::SfenceWInval, w),
+            0x0c if isa.svinval && rs1(w) == 0 && rs2(w) == 1 => base(Op::SfenceInvalIr, w),
+            0x11 if isa.h => base(Op::HfenceVvma, w),
+            0x13 if isa.h => base(Op::HinvalVvma, w),
+            0x18 if rs1(w) == 0 && rs2(w) == 0x02 => base(Op::Mret, w),
+            0x31 if isa.h => base(Op::HfenceGvma, w),
+            0x33 if isa.h => base(Op::HinvalGvma, w),
             _ => Insn::illegal(w, 4),
         };
+    }
+    if f3 == 4 && isa.h {
+        return decode_hypervisor_mem(w, rv64);
     }
     if !isa.zicsr {
         return Insn::illegal(w, 4);
@@ -1604,41 +2607,68 @@ fn decode_system(w: u32, isa: &Isa) -> Insn {
     base(op, w)
 }
 
-fn decode_amo(w: u32, rv64: bool) -> Insn {
-    let f3 = funct3(w);
-    let funct5 = (w >> 27) & 0x1f;
-    let is_d = match f3 {
-        0b010 => false, // .W
-        0b011 if rv64 => true,
+fn decode_hypervisor_mem(w: u32, rv64: bool) -> Insn {
+    let op = match (funct7(w), rs2(w), rd(w)) {
+        (0x30, 0, _) => Op::HlvB,
+        (0x30, 1, _) => Op::HlvBu,
+        (0x32, 0, _) => Op::HlvH,
+        (0x32, 1, _) => Op::HlvHu,
+        (0x32, 3, _) => Op::HlvxHu,
+        (0x34, 0, _) => Op::HlvW,
+        (0x34, 1, _) if rv64 => Op::HlvWu,
+        (0x34, 3, _) if rv64 => Op::HlvxWu,
+        (0x36, 0, _) if rv64 => Op::HlvD,
+        (0x31, _, 0) => Op::HsvB,
+        (0x33, _, 0) => Op::HsvH,
+        (0x35, _, 0) => Op::HsvW,
+        (0x37, _, 0) if rv64 => Op::HsvD,
         _ => return Insn::illegal(w, 4),
     };
-    let op = match (funct5, is_d) {
-        (0b00010, false) => Op::LrW,
-        (0b00011, false) => Op::ScW,
-        (0b00001, false) => Op::AmoswapW,
-        (0b00000, false) => Op::AmoaddW,
-        (0b00100, false) => Op::AmoxorW,
-        (0b01100, false) => Op::AmoandW,
-        (0b01000, false) => Op::AmoorW,
-        (0b10000, false) => Op::AmominW,
-        (0b10100, false) => Op::AmomaxW,
-        (0b11000, false) => Op::AmominuW,
-        (0b11100, false) => Op::AmomaxuW,
-        (0b00010, true) => Op::LrD,
-        (0b00011, true) => Op::ScD,
-        (0b00001, true) => Op::AmoswapD,
-        (0b00000, true) => Op::AmoaddD,
-        (0b00100, true) => Op::AmoxorD,
-        (0b01100, true) => Op::AmoandD,
-        (0b01000, true) => Op::AmoorD,
-        (0b10000, true) => Op::AmominD,
-        (0b10100, true) => Op::AmomaxD,
-        (0b11000, true) => Op::AmominuD,
-        (0b11100, true) => Op::AmomaxuD,
+    base(op, w)
+}
+
+fn decode_amo(w: u32, rv64: bool, isa: &Isa) -> Insn {
+    let f3 = funct3(w);
+    let funct5 = (w >> 27) & 0x1f;
+    let width = match f3 {
+        0b010 => 4, // .W
+        0b011 if rv64 => 8,
+        0b100 if rv64 => 16,
+        _ => return Insn::illegal(w, 4),
+    };
+    let op = match (funct5, width) {
+        (0b00010, 4) => Op::LrW,
+        (0b00011, 4) => Op::ScW,
+        (0b00001, 4) => Op::AmoswapW,
+        (0b00000, 4) => Op::AmoaddW,
+        (0b00100, 4) => Op::AmoxorW,
+        (0b01100, 4) => Op::AmoandW,
+        (0b01000, 4) => Op::AmoorW,
+        (0b10000, 4) => Op::AmominW,
+        (0b10100, 4) => Op::AmomaxW,
+        (0b11000, 4) => Op::AmominuW,
+        (0b11100, 4) => Op::AmomaxuW,
+        (0b00101, 4) if isa.zacas => Op::AmocasW,
+        (0b00010, 8) => Op::LrD,
+        (0b00011, 8) => Op::ScD,
+        (0b00001, 8) => Op::AmoswapD,
+        (0b00000, 8) => Op::AmoaddD,
+        (0b00100, 8) => Op::AmoxorD,
+        (0b01100, 8) => Op::AmoandD,
+        (0b01000, 8) => Op::AmoorD,
+        (0b10000, 8) => Op::AmominD,
+        (0b10100, 8) => Op::AmomaxD,
+        (0b11000, 8) => Op::AmominuD,
+        (0b11100, 8) => Op::AmomaxuD,
+        (0b00101, 8) if isa.zacas => Op::AmocasD,
+        (0b00101, 16) if isa.zacas => Op::AmocasQ,
         _ => return Insn::illegal(w, 4),
     };
     // LR requires rs2 == 0.
     if matches!(op, Op::LrW | Op::LrD) && rs2(w) != 0 {
+        return Insn::illegal(w, 4);
+    }
+    if matches!(op, Op::AmocasQ) && (rd(w) & 1 != 0 || rs2(w) & 1 != 0) {
         return Insn::illegal(w, 4);
     }
     base(op, w)
@@ -1671,6 +2701,7 @@ fn decode_load_fp(w: u32, isa: &Isa) -> Insn {
         1 if isa.zfh => Op::Flh,
         2 => Op::Flw,
         3 if isa.d => Op::Fld,
+        4 if isa.q => Op::Flq,
         _ => return Insn::illegal(w, 4),
     };
     with_imm(op, w, imm_i(w))
@@ -1702,16 +2733,18 @@ fn decode_store_fp(w: u32, isa: &Isa) -> Insn {
         1 if isa.zfh => Op::Fsh,
         2 => Op::Fsw,
         3 if isa.d => Op::Fsd,
+        4 if isa.q => Op::Fsq,
         _ => return Insn::illegal(w, 4),
     };
     with_imm(op, w, imm_s(w))
 }
 
-fn decode_fma(single: Op, double: Op, half: Op, w: u32, isa: &Isa) -> Insn {
+fn decode_fma(single: Op, double: Op, half: Op, quad: Op, w: u32, isa: &Isa) -> Insn {
     match funct2(w) {
         0b00 => base(single, w),
         0b01 if isa.d => base(double, w),
         0b10 if isa.zfh => base(half, w),
+        0b11 if isa.q => base(quad, w),
         _ => Insn::illegal(w, 4),
     }
 }
@@ -1759,6 +2792,7 @@ fn decode_zfh(f7: u32, f3: u8, rs2f: u8, rv64: bool, isa: &Isa) -> Option<Op> {
         (0b0100010, _, 0) => Op::FcvtHS,
         (0b0100001, _, 2) if isa.d => Op::FcvtDH,
         (0b0100010, _, 1) if isa.d => Op::FcvtHD,
+        (0b0100010, _, 3) if isa.q => Op::FcvtHQ,
         (0b0100010, _, 4) if zfa => Op::FroundH,
         (0b0100010, _, 5) if zfa => Op::FroundnxH,
         (0b1100010, _, 0) => Op::FcvtWH,
@@ -1800,14 +2834,19 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
     let op = match f7 {
         0b0000000 => Op::FaddS,
         0b0000001 if d => Op::FaddD,
+        0b0000011 if isa.q => Op::FaddQ,
         0b0000100 => Op::FsubS,
         0b0000101 if d => Op::FsubD,
+        0b0000111 if isa.q => Op::FsubQ,
         0b0001000 => Op::FmulS,
         0b0001001 if d => Op::FmulD,
+        0b0001011 if isa.q => Op::FmulQ,
         0b0001100 => Op::FdivS,
         0b0001101 if d => Op::FdivD,
+        0b0001111 if isa.q => Op::FdivQ,
         0b0101100 if rs2f == 0 => Op::FsqrtS,
         0b0101101 if d && rs2f == 0 => Op::FsqrtD,
+        0b0101111 if isa.q && rs2f == 0 => Op::FsqrtQ,
         0b0010000 => match f3 {
             0 => Op::FsgnjS,
             1 => Op::FsgnjnS,
@@ -1820,6 +2859,12 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
             2 => Op::FsgnjxD,
             _ => return Insn::illegal(w, 4),
         },
+        0b0010011 if isa.q => match f3 {
+            0 => Op::FsgnjQ,
+            1 => Op::FsgnjnQ,
+            2 => Op::FsgnjxQ,
+            _ => return Insn::illegal(w, 4),
+        },
         0b0010100 => match f3 {
             0 => Op::FminS,
             1 => Op::FmaxS,
@@ -1830,8 +2875,21 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
             1 => Op::FmaxD,
             _ => return Insn::illegal(w, 4),
         },
+        0b0010111 if isa.q => match f3 {
+            0 => Op::FminQ,
+            1 => Op::FmaxQ,
+            _ => return Insn::illegal(w, 4),
+        },
         0b0100000 if d && rs2f == 1 => Op::FcvtSD,
+        0b0100000 if isa.q && rs2f == 3 => Op::FcvtSQ,
         0b0100001 if d && rs2f == 0 => Op::FcvtDS,
+        0b0100001 if d && isa.q && rs2f == 3 => Op::FcvtDQ,
+        0b0100011 if isa.q => match rs2f {
+            0 => Op::FcvtQS,
+            1 if d => Op::FcvtQD,
+            2 if isa.zfh => Op::FcvtQH,
+            _ => return Insn::illegal(w, 4),
+        },
         0b1100000 => match rs2f {
             0 => Op::FcvtWS,
             1 => Op::FcvtWuS,
@@ -1844,6 +2902,13 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
             1 => Op::FcvtWuD,
             2 if rv64 => Op::FcvtLD,
             3 if rv64 => Op::FcvtLuD,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b1100011 if isa.q => match rs2f {
+            0 => Op::FcvtWQ,
+            1 => Op::FcvtWuQ,
+            2 if rv64 => Op::FcvtLQ,
+            3 if rv64 => Op::FcvtLuQ,
             _ => return Insn::illegal(w, 4),
         },
         0b1101000 => match rs2f {
@@ -1860,6 +2925,13 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
             3 if rv64 => Op::FcvtDLu,
             _ => return Insn::illegal(w, 4),
         },
+        0b1101011 if isa.q => match rs2f {
+            0 => Op::FcvtQW,
+            1 => Op::FcvtQWu,
+            2 if rv64 => Op::FcvtQL,
+            3 if rv64 => Op::FcvtQLu,
+            _ => return Insn::illegal(w, 4),
+        },
         0b1110000 if rs2f == 0 => match f3 {
             0 => Op::FmvXW,
             1 => Op::FclassS,
@@ -1868,6 +2940,10 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
         0b1110001 if d && rs2f == 0 => match f3 {
             0 if rv64 => Op::FmvXD,
             1 => Op::FclassD,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b1110011 if isa.q && rs2f == 0 => match f3 {
+            1 => Op::FclassQ,
             _ => return Insn::illegal(w, 4),
         },
         0b1010000 => match f3 {
@@ -1880,6 +2956,12 @@ fn decode_op_fp(w: u32, rv64: bool, isa: &Isa) -> Insn {
             0 => Op::FleD,
             1 => Op::FltD,
             2 => Op::FeqD,
+            _ => return Insn::illegal(w, 4),
+        },
+        0b1010011 if isa.q => match f3 {
+            0 => Op::FleQ,
+            1 => Op::FltQ,
+            2 => Op::FeqQ,
             _ => return Insn::illegal(w, 4),
         },
         0b1111000 if rs2f == 0 && f3 == 0 => Op::FmvWX,
@@ -1984,10 +3066,269 @@ mod tests {
         assert!(decode(reserved_high_funct12, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
     }
 
+    #[test]
+    fn decode_cbo_management_and_prefetch_hints() {
+        let cbo = |rs2: u32| (rs2 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        assert_eq!(dec(cbo(0)).op, Op::CboInval);
+        assert_eq!(dec(cbo(1)).op, Op::CboClean);
+        assert_eq!(dec(cbo(2)).op, Op::CboFlush);
+        assert_eq!(dec(cbo(4)).op, Op::CboZero);
+
+        let prefetch =
+            |kind: u32, off: u32| (off << 25) | (kind << 20) | (10 << 15) | (6 << 12) | 0x13;
+        let i = dec(prefetch(0, 0x7f));
+        assert_eq!(i.op, Op::PrefetchI);
+        assert_eq!(i.imm, -32);
+        assert_eq!(dec(prefetch(1, 0)).op, Op::PrefetchR);
+        assert_eq!(dec(prefetch(3, 0)).op, Op::PrefetchW);
+    }
+
+    #[test]
+    fn decode_zawrs_zihintpause_zihintntl_and_zacas() {
+        assert_eq!(dec(0x0100_000f).op, Op::Pause);
+        assert_eq!(dec(0x00d0_0073).op, Op::WrsNto);
+        assert_eq!(dec(0x01d0_0073).op, Op::WrsSto);
+        assert_eq!(dec((2 << 20) | 0x33).op, Op::NtlP1);
+        assert_eq!(dec((5 << 20) | 0x33).op, Op::NtlAll);
+
+        let amocas = |funct3: u32, rd: u32, rs2: u32| {
+            (0b00101 << 27) | (rs2 << 20) | (10 << 15) | (funct3 << 12) | (rd << 7) | 0x2f
+        };
+        assert_eq!(dec(amocas(0b010, 5, 6)).op, Op::AmocasW);
+        assert_eq!(dec(amocas(0b011, 6, 8)).op, Op::AmocasD);
+        assert_eq!(dec(amocas(0b100, 6, 8)).op, Op::AmocasQ);
+        assert!(decode(amocas(0b100, 5, 8), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+        assert!(decode(amocas(0b100, 6, 9), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+    }
+
+    #[test]
+    fn decode_rv32_zilsd_load_store_pairs() {
+        let mut isa = Isa::rv64gc();
+        isa.zilsd = true;
+
+        let load_pair = (8u32 << 20) | (10 << 15) | (3 << 12) | (6 << 7) | 0x03;
+        let i = decode(load_pair, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::LdPair);
+        assert_eq!(i.rd, 6);
+        assert_eq!(i.rs1, 10);
+        assert_eq!(i.imm, 8);
+
+        let odd_load_pair = load_pair | (1 << 7);
+        assert!(decode(odd_load_pair, Xlen::Rv32, &isa).is_illegal());
+
+        let store_pair = (6 << 20) | (10 << 15) | (3 << 12) | (8 << 7) | 0x23;
+        let i = decode(store_pair, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::SdPair);
+        assert_eq!(i.rs1, 10);
+        assert_eq!(i.rs2, 6);
+        assert_eq!(i.imm, 8);
+
+        let mut disabled = isa;
+        disabled.zilsd = false;
+        assert!(decode(load_pair, Xlen::Rv32, &disabled).is_illegal());
+        assert!(decode(store_pair, Xlen::Rv32, &disabled).is_illegal());
+    }
+
     // ---- Xsoteria decode edge cases ----
 
     fn enc(funct7: u32, f5: u32, rs1: u32, funct3: u32, rd: u32, opcode: u32) -> u32 {
         (funct7 << 25) | (f5 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode
+    }
+
+    #[test]
+    fn decode_xida_sltw_is_opt_in_rv64_only() {
+        let sltw = enc(0, 6, 5, 0b010, 7, 0x3b);
+        assert!(decode(sltw, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+
+        let mut isa = Isa::rv64gc();
+        isa.xida_sltw = true;
+        let i = decode(sltw, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::Sltw);
+        assert_eq!(i.rd, 7);
+        assert_eq!(i.rs1, 5);
+        assert_eq!(i.rs2, 6);
+        assert!(decode(sltw, Xlen::Rv32, &isa).is_illegal());
+    }
+
+    #[test]
+    fn decode_rv32_aes32_scalar_crypto_is_gated() {
+        let aes32esi = enc(0x11, 7, 6, 0, 5, 0x33);
+        let aes32esmi = enc(0x33, 7, 6, 0, 5, 0x33);
+        let aes32dsi = enc(0x55, 7, 6, 0, 5, 0x33);
+        let aes32dsmi = enc(0x77, 7, 6, 0, 5, 0x33);
+
+        let mut isa = Isa::rv_i();
+        isa.zkne = true;
+        isa.zknd = true;
+
+        let i = decode(aes32esi, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::Aes32esi);
+        assert_eq!(i.imm, 0);
+        assert_eq!(decode(aes32esmi, Xlen::Rv32, &isa).op, Op::Aes32esmi);
+        assert_eq!(decode(aes32esmi, Xlen::Rv32, &isa).imm, 1);
+        assert_eq!(decode(aes32dsi, Xlen::Rv32, &isa).op, Op::Aes32dsi);
+        assert_eq!(decode(aes32dsi, Xlen::Rv32, &isa).imm, 2);
+        assert_eq!(decode(aes32dsmi, Xlen::Rv32, &isa).op, Op::Aes32dsmi);
+        assert_eq!(decode(aes32dsmi, Xlen::Rv32, &isa).imm, 3);
+
+        assert!(decode(aes32esi, Xlen::Rv64, &isa).is_illegal());
+        assert!(decode(aes32dsmi, Xlen::Rv64, &isa).is_illegal());
+
+        let mut no_zkne = isa;
+        no_zkne.zkne = false;
+        assert!(decode(aes32esi, Xlen::Rv32, &no_zkne).is_illegal());
+        assert!(decode(aes32esmi, Xlen::Rv32, &no_zkne).is_illegal());
+
+        let mut no_zknd = isa;
+        no_zknd.zknd = false;
+        assert!(decode(aes32dsi, Xlen::Rv32, &no_zknd).is_illegal());
+        assert!(decode(aes32dsmi, Xlen::Rv32, &no_zknd).is_illegal());
+
+        assert!(decode(enc(0x19, 7, 6, 0, 5, 0x33), Xlen::Rv32, &isa).is_illegal());
+        assert!(decode(enc(0x18, 0, 6, 1, 5, 0x13), Xlen::Rv32, &isa).is_illegal());
+    }
+
+    #[test]
+    fn decode_rv32_sha512_pair_crypto_is_gated() {
+        let mut isa = Isa::rv_i();
+        isa.zknh = true;
+
+        for (f7, op) in [
+            (0x28, Op::Sha512Sum0r),
+            (0x29, Op::Sha512Sum1r),
+            (0x2a, Op::Sha512Sig0l),
+            (0x2b, Op::Sha512Sig1l),
+            (0x2e, Op::Sha512Sig0h),
+            (0x2f, Op::Sha512Sig1h),
+        ] {
+            let w = enc(f7, 7, 6, 0, 5, 0x33);
+            assert_eq!(decode(w, Xlen::Rv32, &isa).op, op);
+            assert!(decode(w, Xlen::Rv64, &isa).is_illegal());
+        }
+
+        let mut disabled = isa;
+        disabled.zknh = false;
+        assert!(decode(enc(0x28, 7, 6, 0, 5, 0x33), Xlen::Rv32, &disabled).is_illegal());
+
+        let sha512sum0 = enc(0x08, 4, 6, 1, 5, 0x13);
+        assert!(decode(sha512sum0, Xlen::Rv32, &isa).is_illegal());
+        assert_eq!(decode(sha512sum0, Xlen::Rv64, &isa).op, Op::Sha512Sum0);
+    }
+
+    #[test]
+    fn decode_q_extension_is_opt_in_and_excludes_q_moves() {
+        let flq = (16u32 << 20) | (10 << 15) | (4 << 12) | (10 << 7) | 0x07;
+        let fsq = (10u32 << 20) | (10 << 15) | (4 << 12) | (16 << 7) | 0x27;
+        let fadd_q = enc(0b0000011, 11, 10, 0, 12, 0x53);
+        let fsqrt_q = enc(0b0101111, 0, 10, 0, 12, 0x53);
+        let fcvt_q_d = enc(0b0100011, 1, 11, 0, 10, 0x53);
+        let fcvt_w_q = enc(0b1100011, 0, 11, 0, 10, 0x53);
+        let fclass_q = enc(0b1110011, 0, 11, 1, 10, 0x53);
+        let fmadd_q = (13u32 << 27) | (0b11 << 25) | (12 << 20) | (11 << 15) | (10 << 7) | 0x43;
+
+        assert!(decode(fadd_q, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+
+        let mut isa = Isa::rv64gc();
+        isa.q = true;
+        assert_eq!(decode(flq, Xlen::Rv64, &isa).op, Op::Flq);
+        assert_eq!(decode(fsq, Xlen::Rv64, &isa).op, Op::Fsq);
+        assert_eq!(decode(fadd_q, Xlen::Rv64, &isa).op, Op::FaddQ);
+        assert_eq!(decode(fsqrt_q, Xlen::Rv64, &isa).op, Op::FsqrtQ);
+        assert_eq!(decode(fcvt_q_d, Xlen::Rv64, &isa).op, Op::FcvtQD);
+        assert_eq!(decode(fcvt_w_q, Xlen::Rv64, &isa).op, Op::FcvtWQ);
+        assert_eq!(decode(fclass_q, Xlen::Rv64, &isa).op, Op::FclassQ);
+        assert_eq!(decode(fmadd_q, Xlen::Rv64, &isa).op, Op::FmaddQ);
+
+        assert!(decode(enc(0b1110011, 0, 11, 0, 10, 0x53), Xlen::Rv64, &isa).is_illegal());
+        assert!(decode(enc(0b1111011, 0, 11, 0, 10, 0x53), Xlen::Rv64, &isa).is_illegal());
+    }
+
+    #[test]
+    fn decode_zbkb_zip_unzip_rv32_only() {
+        let zip = enc(0x04, 15, 10, 0b001, 5, 0x13);
+        let unzip = enc(0x04, 15, 10, 0b101, 5, 0x13);
+        assert_eq!(decode(zip, Xlen::Rv32, &Isa::rv64gc()).op, Op::Zip);
+        assert_eq!(decode(unzip, Xlen::Rv32, &Isa::rv64gc()).op, Op::Unzip);
+        assert!(decode(zip, Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+
+        let mut no_zbkb = Isa::rv64gc();
+        no_zbkb.zbkb = false;
+        assert!(decode(zip, Xlen::Rv32, &no_zbkb).is_illegal());
+        assert!(decode(unzip, Xlen::Rv32, &no_zbkb).is_illegal());
+    }
+
+    #[test]
+    fn decode_privileged_fence_and_hypervisor_tables() {
+        let sys = |funct7: u32, rs2: u32, rs1: u32| enc(funct7, rs2, rs1, 0, 0, 0x73);
+        assert_eq!(
+            decode(sys(0x00, 0x02, 0), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::Uret
+        );
+        assert_eq!(
+            decode(sys(0x08, 0x04, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SfenceVm
+        );
+        assert_eq!(
+            decode(sys(0x09, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SfenceVma
+        );
+        assert_eq!(
+            decode(sys(0x0b, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SinvalVma
+        );
+        assert_eq!(
+            decode(sys(0x0c, 0, 0), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SfenceWInval
+        );
+        assert_eq!(
+            decode(sys(0x0c, 1, 0), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::SfenceInvalIr
+        );
+        assert_eq!(
+            decode(sys(0x11, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HfenceVvma
+        );
+        assert_eq!(
+            decode(sys(0x31, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HfenceGvma
+        );
+        assert_eq!(
+            decode(sys(0x13, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HinvalVvma
+        );
+        assert_eq!(
+            decode(sys(0x33, 11, 10), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HinvalGvma
+        );
+
+        assert_eq!(
+            decode(enc(0x30, 0, 10, 0b100, 5, 0x73), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HlvB
+        );
+        assert_eq!(
+            decode(enc(0x32, 3, 10, 0b100, 5, 0x73), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HlvxHu
+        );
+        assert_eq!(
+            decode(enc(0x34, 1, 10, 0b100, 5, 0x73), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HlvWu
+        );
+        assert_eq!(
+            decode(enc(0x35, 7, 10, 0b100, 0, 0x73), Xlen::Rv64, &Isa::rv64gc()).op,
+            Op::HsvW
+        );
+        assert!(decode(enc(0x35, 7, 10, 0b100, 1, 0x73), Xlen::Rv64, &Isa::rv64gc()).is_illegal());
+
+        let mut no_svinval = Isa::rv64gc();
+        no_svinval.svinval = false;
+        assert!(decode(sys(0x0b, 11, 10), Xlen::Rv64, &no_svinval).is_illegal());
+        assert!(decode(sys(0x0c, 0, 0), Xlen::Rv64, &no_svinval).is_illegal());
+
+        let mut no_h = Isa::rv64gc();
+        no_h.h = false;
+        assert!(decode(sys(0x11, 11, 10), Xlen::Rv64, &no_h).is_illegal());
+        assert!(decode(enc(0x30, 0, 10, 0b100, 5, 0x73), Xlen::Rv64, &no_h).is_illegal());
+        assert!(decode(enc(0x34, 1, 10, 0b100, 5, 0x73), Xlen::Rv32, &Isa::rv64gc()).is_illegal());
     }
 
     #[test]
@@ -2019,5 +3360,233 @@ mod tests {
         assert_eq!(insn.rd, 3);
         assert_eq!(insn.rs1, 1);
         assert_eq!(insn.imm, 24);
+    }
+
+    #[test]
+    fn xthead_decode_scalar_and_memory_tables() {
+        let isa = Isa {
+            xthead: true,
+            ..Isa::rv64gc()
+        };
+
+        assert_eq!(
+            decode(enc(0, 0b11000, 0, 0b000, 0, 0x0b), Xlen::Rv64, &isa).op,
+            Op::ThSync
+        );
+        let dcache_cpa = decode(enc(1, 0b01001, 10, 0b000, 0, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(dcache_cpa.op, Op::ThDcacheCpa);
+        assert_eq!(dcache_cpa.rs1, 10);
+
+        let addsl = decode(enc(2, 6, 5, 0b001, 7, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(addsl.op, Op::ThAddsl);
+        assert_eq!(addsl.imm, 2);
+
+        let srri = decode(enc(0x09, 3, 10, 0b001, 5, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(srri.op, Op::ThSrri);
+        assert_eq!(srri.imm, 35);
+
+        let ext = decode(enc(12 << 1, 4, 10, 0b010, 5, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(ext.op, Op::ThExt);
+        assert_eq!(ext.rs2, 12);
+        assert_eq!(ext.imm, 4);
+        assert!(decode(enc(4 << 1, 12, 10, 0b010, 5, 0x0b), Xlen::Rv64, &isa).is_illegal());
+
+        let lbia = decode(enc(0x0d, 0b11110, 11, 0b100, 10, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(lbia.op, Op::ThLbia);
+        assert_eq!(lbia.rs2, 0b11110);
+        assert_eq!(lbia.imm, 1);
+        assert!(decode(enc(0x0c, 1, 10, 0b100, 10, 0x0b), Xlen::Rv64, &isa).is_illegal());
+
+        let lrw = decode(enc(0x22, 12, 11, 0b100, 10, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(lrw.op, Op::ThLrw);
+        assert_eq!(lrw.imm, 2);
+
+        let lwd = decode(enc(0x72, 12, 11, 0b100, 10, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(lwd.op, Op::ThLwd);
+        assert_eq!(lwd.imm, 16);
+
+        let flrw = decode(enc(0x22, 12, 11, 0b110, 10, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(flrw.op, Op::ThFlrw);
+        assert_eq!(flrw.imm, 2);
+
+        assert!(decode(
+            enc(0, 0b11000, 0, 0b000, 0, 0x0b),
+            Xlen::Rv64,
+            &Isa::rv64gc()
+        )
+        .is_illegal());
+    }
+
+    #[test]
+    fn xthead_decode_vdot_tables_after_fmem() {
+        let isa = Isa {
+            xthead: true,
+            ..Isa::rv64gc()
+        };
+
+        let vmaqa_vv = decode(enc((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(vmaqa_vv.op, Op::ThVmaqa);
+        assert_eq!(vmaqa_vv.rd, 1);
+        assert_eq!(vmaqa_vv.rs1, 2);
+        assert_eq!(vmaqa_vv.rs2, 3);
+
+        let vmaqau_vx = decode(enc((0x23 << 1) | 1, 4, 5, 0b110, 6, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(vmaqau_vx.op, Op::ThVmaqau);
+        assert_eq!(vmaqau_vx.rs1, 5);
+        assert_eq!(vmaqau_vx.rs2, 4);
+
+        let vmaqaus_vx = decode(enc((0x27 << 1) | 1, 4, 5, 0b110, 6, 0x0b), Xlen::Rv64, &isa);
+        assert_eq!(vmaqaus_vx.op, Op::ThVmaqaus);
+
+        // IDA has no vector-vector encoding for th.vmaqaus.
+        assert!(decode(enc((0x26 << 1) | 1, 4, 5, 0b110, 6, 0x0b), Xlen::Rv64, &isa).is_illegal());
+
+        assert_eq!(
+            decode(enc((0x20 << 1) | 1, 3, 2, 0b111, 1, 0x0b), Xlen::Rv64, &isa).op,
+            Op::ThVpmaqa
+        );
+        assert_eq!(
+            decode(enc((0x28 << 1) | 1, 3, 2, 0b111, 1, 0x0b), Xlen::Rv64, &isa).op,
+            Op::ThVpnclip
+        );
+        assert_eq!(
+            decode(enc((0x2d << 1) | 1, 3, 2, 0b111, 1, 0x0b), Xlen::Rv64, &isa).op,
+            Op::ThVpwadd
+        );
+
+        assert!(decode(
+            enc((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b),
+            Xlen::Rv64,
+            &Isa::rv64gc()
+        )
+        .is_illegal());
+    }
+
+    #[test]
+    fn xthead_custom0_priority_matches_ida() {
+        let both = Isa {
+            xthead: true,
+            xhazard3: true,
+            ..Isa::rv_i()
+        };
+        assert_eq!(
+            decode(enc(0, 0b11000, 0, 0b000, 0, 0x0b), Xlen::Rv32, &both).op,
+            Op::ThSync
+        );
+        assert_eq!(
+            decode(enc(0b0000110, 2, 1, 0b000, 3, 0x0b), Xlen::Rv32, &both).op,
+            Op::H3Bextm
+        );
+    }
+
+    #[test]
+    fn hazard3_decode_power_hints_and_custom0() {
+        let isa = Isa {
+            xhazard3: true,
+            ..Isa::rv_i()
+        };
+
+        assert_eq!(
+            decode(enc(0, 0, 0, 0b010, 0, 0x33), Xlen::Rv32, &isa).op,
+            Op::H3Block
+        );
+        assert_eq!(
+            decode(enc(0, 1, 0, 0b010, 0, 0x33), Xlen::Rv32, &isa).op,
+            Op::H3Unblock
+        );
+        assert_eq!(
+            decode(enc(0, 0, 0, 0b010, 0, 0x33), Xlen::Rv32, &Isa::rv_i()).op,
+            Op::Slt
+        );
+
+        let bextm = enc(0b0000110, 5, 1, 0b000, 3, 0x0b);
+        let insn = decode(bextm, Xlen::Rv32, &isa);
+        assert_eq!(insn.op, Op::H3Bextm);
+        assert_eq!(insn.rd, 3);
+        assert_eq!(insn.rs1, 1);
+        assert_eq!(insn.rs2, 5);
+        assert_eq!(insn.imm, 4);
+
+        let bextmi = enc(0, (0b101 << 6) | 17, 1, 0b100, 3, 0x0b);
+        let insn = decode(bextmi, Xlen::Rv32, &isa);
+        assert_eq!(insn.op, Op::H3Bextmi);
+        assert_eq!(insn.rs2, 17);
+        assert_eq!(insn.imm, 6);
+
+        assert!(decode(bextm, Xlen::Rv32, &Isa::rv_i()).is_illegal());
+    }
+
+    #[test]
+    fn hazard3_rejects_reserved_custom0_fields() {
+        let isa = Isa {
+            xhazard3: true,
+            ..Isa::rv_i()
+        };
+        // h3.bextm requires funct7[6:4] == 0 and funct7[0] == 0.
+        assert!(decode(enc(0b0010000, 5, 1, 0b000, 3, 0x0b), Xlen::Rv32, &isa).is_illegal());
+        assert!(decode(enc(0b0000001, 5, 1, 0b000, 3, 0x0b), Xlen::Rv32, &isa).is_illegal());
+
+        // h3.bextmi requires imm[11:9] == 0 and imm[5] == 0.
+        assert!(decode(enc(0, 1 << 9, 1, 0b100, 3, 0x0b), Xlen::Rv32, &isa).is_illegal());
+        assert!(decode(enc(0, 1 << 5, 1, 0b100, 3, 0x0b), Xlen::Rv32, &isa).is_illegal());
+    }
+
+    #[test]
+    fn andes_decode_gp_relative_and_custom2() {
+        let isa = Isa {
+            xandes: true,
+            ..Isa::rv64gc()
+        };
+
+        let lbgp = (3 << 21) | (1 << 14) | (5 << 7) | 0x0b;
+        let insn = decode(lbgp, Xlen::Rv64, &isa);
+        assert_eq!(insn.op, Op::NdsLbgp);
+        assert_eq!(insn.rd, 5);
+        assert_eq!(insn.rs1, 3);
+        assert_eq!(insn.imm, 7);
+
+        let sbgp = (6 << 20) | (0b11 << 12) | 0x0b;
+        let insn = decode(sbgp, Xlen::Rv64, &isa);
+        assert_eq!(insn.op, Op::NdsSbgp);
+        assert_eq!(insn.rs1, 3);
+        assert_eq!(insn.rs2, 6);
+
+        assert_eq!(
+            decode((0b011 << 12) | (5 << 7) | 0x2b, Xlen::Rv64, &isa).op,
+            Op::NdsLdgp
+        );
+        assert_eq!(
+            decode((0b110 << 12) | (5 << 7) | 0x2b, Xlen::Rv64, &isa).op,
+            Op::NdsLwugp
+        );
+        assert!(decode((0b110 << 12) | (5 << 7) | 0x2b, Xlen::Rv32, &isa).is_illegal());
+
+        let bfoz = (12 << 26) | (4 << 20) | (10 << 15) | (0b010 << 12) | (5 << 7) | 0x5b;
+        let insn = decode(bfoz, Xlen::Rv64, &isa);
+        assert_eq!(insn.op, Op::NdsBfoz);
+        assert_eq!(insn.rs1, 10);
+        assert_eq!(insn.rs2, 12);
+        assert_eq!(insn.imm, 4);
+
+        let lea_w = (0x06 << 25) | (5 << 20) | (4 << 15) | (3 << 7) | 0x5b;
+        assert_eq!(decode(lea_w, Xlen::Rv64, &isa).op, Op::NdsLeaW);
+
+        let beqc = (1 << 30) | (5 << 20) | (10 << 15) | (0b101 << 12) | (1 << 7) | 0x5b;
+        let insn = decode(beqc, Xlen::Rv64, &isa);
+        assert_eq!(insn.op, Op::NdsBeqc);
+        assert_eq!(insn.rs2, 0b1100101);
+    }
+
+    #[test]
+    fn andes_takes_custom0_priority_over_hazard3_like_ida() {
+        let isa = Isa {
+            xandes: true,
+            xhazard3: true,
+            ..Isa::rv_i()
+        };
+        assert_eq!(
+            decode(enc(0, 0, 0, 0b000, 2, 0x0b), Xlen::Rv32, &isa).op,
+            Op::NdsLbgp
+        );
     }
 }

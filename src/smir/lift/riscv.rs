@@ -3,9 +3,9 @@
 //! This module lifts RISC-V instructions to SMIR operations.
 //! Supports RV64I base, M (multiply/divide), A (atomics), and C (compressed) extensions.
 
-use crate::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
+use crate::riscv::{decode as rv_decode, Isa as RvIsa, Op as RvOp, Xlen as RvXlen};
 use crate::smir::flags::FlagUpdate;
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+use crate::smir::ir::{SmirBlock, SmirFunction};
 use crate::smir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::types::*;
 
@@ -43,14 +43,28 @@ pub struct RiscVExtensions {
     pub f: bool,
     /// D extension: Double-precision floating-point
     pub d: bool,
+    /// Q extension: Quad-precision floating-point decode/disassembly parity
+    pub q: bool,
     /// C extension: Compressed instructions
     pub c: bool,
     /// Zicsr extension: Control and status register access
     pub zicsr: bool,
     /// Zifencei extension: Instruction-stream fence
     pub zifencei: bool,
+    /// Zihintpause extension: PAUSE hint
+    pub zihintpause: bool,
+    /// Zihintntl extension: non-temporal locality hints
+    pub zihintntl: bool,
+    /// Zacas extension: atomic compare-and-swap
+    pub zacas: bool,
+    /// Zawrs extension: wait-on-reservation-set hints
+    pub zawrs: bool,
+    /// Zicbom extension: cache-block clean/flush/invalidate
+    pub zicbom: bool,
     /// Zicboz extension: Cache-block zero
     pub zicboz: bool,
+    /// Zicbop extension: cache-block prefetch hints
+    pub zicbop: bool,
     /// Zba extension: Address bit manipulation
     pub zba: bool,
     /// Zbb extension: Basic bit manipulation
@@ -81,8 +95,28 @@ pub struct RiscVExtensions {
     pub zknd: bool,
     /// Zcb extension: Additional compressed instructions
     pub zcb: bool,
+    /// Zcmp extension: Compressed PUSH/POP and double-move instructions
+    pub zcmp: bool,
+    /// Zcmt extension: Compressed table-jump instructions
+    pub zcmt: bool,
+    /// Zclsd extension: RV32 compressed load/store register-pair instructions
+    pub zclsd: bool,
+    /// Zilsd extension: RV32 load/store register-pair instructions
+    pub zilsd: bool,
+    /// H extension: Hypervisor privileged instructions
+    pub h: bool,
+    /// Svinval extension: Fine-grained address-translation cache invalidation
+    pub svinval: bool,
     /// V extension: Vector instructions
     pub v: bool,
+    /// XAndesPerf vendor extension: Andes performance custom instructions
+    pub xandes: bool,
+    /// XThead vendor extension: T-Head/Xuantie custom instructions
+    pub xthead: bool,
+    /// XHazard3 vendor extension: Hazard3/RP2350 custom instructions
+    pub xhazard3: bool,
+    /// XidaSltw compatibility decode for Hex-Rays/IDA's non-standard `sltw`.
+    pub xida_sltw: bool,
 }
 
 impl RiscVExtensions {
@@ -93,10 +127,17 @@ impl RiscVExtensions {
             a: true,
             f: true,
             d: true,
+            q: false,
             c: true,
             zicsr: true,
             zifencei: true,
+            zihintpause: true,
+            zihintntl: true,
+            zacas: true,
+            zawrs: true,
+            zicbom: true,
             zicboz: true,
+            zicbop: true,
             zba: true,
             zbb: true,
             zbc: true,
@@ -112,7 +153,17 @@ impl RiscVExtensions {
             zkne: true,
             zknd: true,
             zcb: true,
+            zcmp: false,
+            zcmt: false,
+            zclsd: false,
+            zilsd: false,
+            h: true,
+            svinval: true,
             v: true,
+            xandes: false,
+            xthead: false,
+            xhazard3: false,
+            xida_sltw: false,
         }
     }
 
@@ -189,10 +240,17 @@ impl RiscVLifter {
             a: self.extensions.a,
             f: self.extensions.f,
             d: self.extensions.d,
+            q: self.extensions.q,
             c: self.extensions.c,
             zicsr: self.extensions.zicsr,
             zifencei: self.extensions.zifencei,
+            zihintpause: self.extensions.zihintpause,
+            zihintntl: self.extensions.zihintntl,
+            zacas: self.extensions.zacas,
+            zawrs: self.extensions.zawrs,
+            zicbom: self.extensions.zicbom,
             zicboz: self.extensions.zicboz,
+            zicbop: self.extensions.zicbop,
             zba: self.extensions.zba,
             zbb: self.extensions.zbb,
             zbc: self.extensions.zbc,
@@ -208,10 +266,20 @@ impl RiscVLifter {
             zkne: self.extensions.zkne,
             zknd: self.extensions.zknd,
             zcb: self.extensions.zcb,
+            zcmp: self.extensions.zcmp,
+            zcmt: self.extensions.zcmt,
+            zclsd: self.extensions.zclsd,
+            zilsd: self.extensions.zilsd,
+            h: self.extensions.h,
+            svinval: self.extensions.svinval,
             v: self.extensions.v,
             // The SMIR lifter is the differential-oracle path; it does not lift
-            // the Xsoteria vendor extension.
+            // vendor custom extensions.
             xsoteria: false,
+            xandes: false,
+            xthead: false,
+            xhazard3: false,
+            xida_sltw: self.extensions.xida_sltw,
         }
     }
 
@@ -1106,6 +1174,7 @@ impl RiscVLifter {
                         src2: rs1,
                         op: d.op,
                         imm,
+                        xlen: self.xlen,
                     },
                 ));
             }
@@ -1506,7 +1575,7 @@ impl RiscVLifter {
         let dop = rv_decode(insn, self.rv_xlen(), &self.decoder_isa()).op;
         if !matches!(
             dop,
-            RvOp::Addw | RvOp::Subw | RvOp::Sllw | RvOp::Srlw | RvOp::Sraw
+            RvOp::Addw | RvOp::Subw | RvOp::Sllw | RvOp::Sltw | RvOp::Srlw | RvOp::Sraw
         ) {
             return self.lift_zb_op(insn, addr, ctx);
         }
@@ -1533,6 +1602,23 @@ impl RiscVLifter {
                     width,
                     flags: FlagUpdate::None,
                 },
+                (0x00, 0b010) => {
+                    // IDA compatibility SLTW: signed compare of low 32-bit operands.
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Cmp {
+                            src1: rs1,
+                            src2: SrcOperand::Reg(rs2),
+                            width,
+                        },
+                    ));
+                    OpKind::SetCC {
+                        dst: tmp,
+                        cond: Condition::Slt,
+                        width,
+                    }
+                }
                 // Word shifts: RISC-V masks the shift amount to 5 bits, but the
                 // SMIR shift only zeroes at >= width.bits() (after a 6-bit mask),
                 // so pre-mask rs2 to 0x1F.
@@ -2177,23 +2263,38 @@ impl RiscVLifter {
                     },
                 ));
             }
-            // Carry-less multiply, crossbar permute, AES-64 / SM4 round and key
+            // Carry-less multiply, crossbar permute, AES / SM4 round and key
             // helpers — no clean SMIR primitive; computed bit-exactly by the
-            // RvIntCrypto op. SM4 carries its `bs` field (insn[31:30]).
+            // RvIntCrypto op. SM4/AES32 carry their `bs` field (insn[31:30]).
             RvOp::Clmul
             | RvOp::Clmulh
             | RvOp::Clmulr
             | RvOp::Xperm4
             | RvOp::Xperm8
+            | RvOp::Sha512Sig0l
+            | RvOp::Sha512Sig0h
+            | RvOp::Sha512Sig1l
+            | RvOp::Sha512Sig1h
+            | RvOp::Sha512Sum0r
+            | RvOp::Sha512Sum1r
             | RvOp::Sm4ed
             | RvOp::Sm4ks
+            | RvOp::Aes32esi
+            | RvOp::Aes32esmi
+            | RvOp::Aes32dsi
+            | RvOp::Aes32dsmi
             | RvOp::Aes64es
             | RvOp::Aes64esm
             | RvOp::Aes64ds
             | RvOp::Aes64dsm
             | RvOp::Aes64ks2 => {
                 let imm = match d.op {
-                    RvOp::Sm4ed | RvOp::Sm4ks => ((insn >> 30) & 3) as u8,
+                    RvOp::Sm4ed
+                    | RvOp::Sm4ks
+                    | RvOp::Aes32esi
+                    | RvOp::Aes32esmi
+                    | RvOp::Aes32dsi
+                    | RvOp::Aes32dsmi => ((insn >> 30) & 3) as u8,
                     _ => 0,
                 };
                 ops.push(mk(
@@ -2204,6 +2305,7 @@ impl RiscVLifter {
                         src2: rs2,
                         op: d.op,
                         imm,
+                        xlen: self.xlen,
                     },
                 ));
             }
@@ -3807,9 +3909,10 @@ impl RiscVLifter {
                     },
                 ));
             }
-            0b010 if self.extensions.zicboz
-                && Self::rd(insn) == 0
-                && ((insn >> 20) & 0xfff) == 0x004 =>
+            0b010
+                if self.extensions.zicboz
+                    && Self::rd(insn) == 0
+                    && ((insn >> 20) & 0xfff) == 0x004 =>
             {
                 let base = self.get_x_reg(Self::rs1(insn), ctx);
                 let aligned = ctx.alloc_vreg();
@@ -5583,6 +5686,7 @@ impl SmirLifter for RiscVLifter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::smir::ir::Terminator;
 
     fn test_ctx() -> LiftContext {
         LiftContext::new(SourceArch::RiscV64)
@@ -5716,7 +5820,10 @@ mod tests {
                 )
             })
             .count();
-        assert_eq!(zero_extend_halves, 2, "RV32 pack must use two 16-bit halves");
+        assert_eq!(
+            zero_extend_halves, 2,
+            "RV32 pack must use two 16-bit halves"
+        );
         assert!(result.ops.iter().any(|op| {
             matches!(
                 op.kind,
@@ -5786,7 +5893,13 @@ mod tests {
             result
                 .ops
                 .iter()
-                .filter(|op| matches!(op.kind, OpKind::Store { width: MemWidth::B8, .. }))
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Store {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                ))
                 .count(),
             8
         );
@@ -5849,6 +5962,23 @@ mod tests {
     }
 
     #[test]
+    fn xida_sltw_lifts_signed_low_word_compare() {
+        let sltw = r_type(0, 2, 1, 0b010, 3, 0x3b);
+        let mut ext = RiscVExtensions::rv64gc();
+        ext.xida_sltw = true;
+        let result = execute_lifted_gpr_result(
+            RiscVLifter::new_rv64(ext),
+            SourceArch::RiscV64,
+            sltw,
+            0x0000_0000_8000_0000,
+            0x0000_0000_7fff_ffff,
+            3,
+        );
+
+        assert_eq!(result, 1);
+    }
+
+    #[test]
     fn rv32_div_overflow_returns_i32_min() {
         let div = r_type(0b0000001, 2, 1, 0b100, 3, 0x33);
         let lifter = RiscVLifter::new_rv32(RiscVExtensions {
@@ -5865,6 +5995,44 @@ mod tests {
         );
 
         assert_eq!(result, 0x8000_0000);
+    }
+
+    #[test]
+    fn rv32_aes32_lifts_through_int_crypto_fallback() {
+        let aes32esmi = r_type(0x33, 2, 1, 0, 3, 0x33);
+        let lifter = RiscVLifter::new_rv32(RiscVExtensions {
+            zkne: true,
+            ..RiscVExtensions::rv64i()
+        });
+        let result = execute_lifted_gpr_result(
+            lifter,
+            SourceArch::RiscV32,
+            aes32esmi,
+            0x1020_3040,
+            0x0011_2233,
+            3,
+        );
+
+        assert_eq!(result, 0x83b3_0dee);
+    }
+
+    #[test]
+    fn rv32_sha512_pair_lifts_through_int_crypto_fallback() {
+        let sha512sum1r = r_type(0x29, 2, 1, 0, 3, 0x33);
+        let lifter = RiscVLifter::new_rv32(RiscVExtensions {
+            zknh: true,
+            ..RiscVExtensions::rv64i()
+        });
+        let result = execute_lifted_gpr_result(
+            lifter,
+            SourceArch::RiscV32,
+            sha512sum1r,
+            0x89ab_cdef,
+            0x0123_4567,
+            3,
+        );
+
+        assert_eq!(result, 0x3347_5567);
     }
 
     #[test]

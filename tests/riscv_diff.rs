@@ -387,6 +387,49 @@ fn run_batch(batch: &[(String, u32, RvState)], cmp_fp: bool) {
     run_batch_opts(batch, cmp_fp, false);
 }
 
+fn run_optional_extension_batch(batch: &[(String, u32, RvState)], cmp_fp: bool) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("riscv_diff: oracle/toolchain unavailable; skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, RvState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, if *insn & 3 == 3 { 4 } else { 2 }, *st))
+        .collect();
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            eprintln!("riscv_diff: oracle run failed; skipping");
+            return;
+        }
+    };
+    if outs.iter().all(|oc| oc.trapped != 0) {
+        eprintln!("riscv_diff: optional extension unsupported by qemu; skipping");
+        return;
+    }
+    let mut mismatches = Vec::new();
+    for ((label, insn, st), oc) in batch.iter().zip(outs.iter()) {
+        if oc.trapped != 0 {
+            eprintln!("riscv_diff: optional case {label} trapped under qemu; skipping");
+            continue;
+        }
+        compare_case(label, *insn, st, oc, cmp_fp, false, &mut mismatches);
+    }
+    if !mismatches.is_empty() {
+        let mut msg = format!("\n{} divergence(s) from qemu-riscv64:\n", mismatches.len());
+        for m in mismatches.iter().take(40) {
+            msg += &format!("  [{}] insn={:#010x}: {}\n", m.label, m.insn, m.detail);
+        }
+        if mismatches.len() > 40 {
+            msg += &format!("  ... and {} more\n", mismatches.len() - 40);
+        }
+        panic!("{msg}");
+    }
+}
+
 /// As [`run_batch`], with explicit control over PC-displacement comparison
 /// (for PC-relative control-flow instructions).
 fn run_batch_opts(batch: &[(String, u32, RvState)], cmp_fp: bool, cmp_pc: bool) {
@@ -1678,6 +1721,44 @@ fn diff_atomics() {
         }
     }
     run_batch(&batch, false);
+}
+
+#[test]
+fn diff_zacas() {
+    let mut batch = Vec::new();
+
+    let mut st = rand_state(&mut Rng::new(0xA_CA5_01));
+    st.x[10] = SCRATCH_BASE;
+    st.x[5] = 0x1122_3344;
+    st.x[6] = 0xaabb_ccdd;
+    st.scratch[0] = 0x1122_3344;
+    batch.push(("amocas.w.hit".into(), amo(0b00101, 6, 10, 0b010, 5), st));
+
+    let mut st = rand_state(&mut Rng::new(0xA_CA5_02));
+    st.x[10] = SCRATCH_BASE;
+    st.x[5] = 0x1111_1111;
+    st.x[6] = 0x2222_2222;
+    st.scratch[0] = 0xffff_ffff_8000_0000;
+    batch.push(("amocas.w.miss".into(), amo(0b00101, 6, 10, 0b010, 5), st));
+
+    let mut st = rand_state(&mut Rng::new(0xA_CA5_03));
+    st.x[10] = SCRATCH_BASE;
+    st.x[5] = 0x0123_4567_89ab_cdef;
+    st.x[6] = 0xfedc_ba98_7654_3210;
+    st.scratch[0] = 0x0123_4567_89ab_cdef;
+    batch.push(("amocas.d.hit".into(), amo(0b00101, 6, 10, 0b011, 5), st));
+
+    let mut st = rand_state(&mut Rng::new(0xA_CA5_04));
+    st.x[10] = SCRATCH_BASE;
+    st.x[6] = 0x1111_2222_3333_4444;
+    st.x[7] = 0x5555_6666_7777_8888;
+    st.x[8] = 0x9999_aaaa_bbbb_cccc;
+    st.x[9] = 0xdddd_eeee_ffff_0001;
+    st.scratch[0] = st.x[6];
+    st.scratch[1] = st.x[7];
+    batch.push(("amocas.q.hit".into(), amo(0b00101, 8, 10, 0b100, 6), st));
+
+    run_optional_extension_batch(&batch, false);
 }
 
 // ---------------------------------------------------------------------------

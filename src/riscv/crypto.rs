@@ -2,9 +2,9 @@
 //!
 //! These implement the RISC-V scalar-crypto instruction primitives: crossbar
 //! permutations, the SHA-256/512 and SM3 message-schedule transforms, and the
-//! AES-64 and SM4 round/key-schedule helpers. All semantics follow the RISC-V
-//! scalar cryptography specification and are differentially verified against
-//! qemu-riscv64.
+//! AES-32/AES-64 and SM4 round/key-schedule helpers. All semantics follow the
+//! RISC-V scalar cryptography specification and are differentially verified
+//! against qemu-riscv64 where the oracle supports the encoding.
 
 // ---------------------------------------------------------------------------
 // Zbkx: crossbar permutations.
@@ -88,6 +88,42 @@ pub fn sha512sum1(x: u64) -> u64 {
     ror64(x, 14) ^ ror64(x, 18) ^ ror64(x, 41)
 }
 
+pub fn sha512sig0l(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a >> 1) ^ (a >> 7) ^ (a >> 8) ^ (b << 31) ^ (b << 25) ^ (b << 24))
+}
+
+pub fn sha512sig0h(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a >> 1) ^ (a >> 7) ^ (a >> 8) ^ (b << 31) ^ (b << 24))
+}
+
+pub fn sha512sig1l(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a << 3) ^ (a >> 6) ^ (a >> 19) ^ (b >> 29) ^ (b << 26) ^ (b << 13))
+}
+
+pub fn sha512sig1h(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a << 3) ^ (a >> 6) ^ (a >> 19) ^ (b >> 29) ^ (b << 13))
+}
+
+pub fn sha512sum0r(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a << 25) ^ (a << 30) ^ (a >> 28) ^ (b >> 7) ^ (b >> 2) ^ (b << 4))
+}
+
+pub fn sha512sum1r(rs1: u64, rs2: u64) -> u64 {
+    let a = rs1 as u32;
+    let b = rs2 as u32;
+    sext32((a << 23) ^ (a >> 14) ^ (a >> 18) ^ (b >> 9) ^ (b << 18) ^ (b << 14))
+}
+
 // ---------------------------------------------------------------------------
 // Zksh: SM3 compression-function permutations.
 // ---------------------------------------------------------------------------
@@ -146,7 +182,7 @@ pub fn sm4ks(rs1: u64, rs2: u64, bs: u32) -> u64 {
 }
 
 // ---------------------------------------------------------------------------
-// Zkne / Zknd: AES-64 round and key-schedule helpers.
+// Zkne / Zknd: AES-32/AES-64 round and key-schedule helpers.
 // ---------------------------------------------------------------------------
 
 #[rustfmt::skip]
@@ -261,6 +297,36 @@ fn mixcols_inv(x: u64) -> u64 {
     (lo as u64) | ((hi as u64) << 32)
 }
 
+pub fn aes32esi(rs1: u64, rs2: u64, bs: u32) -> u64 {
+    let shamt = (bs & 3) * 8;
+    let si = ((rs2 as u32 >> shamt) & 0xff) as u8;
+    let so = AES_SBOX[si as usize] as u32;
+    sext32((rs1 as u32) ^ rol32(so, shamt))
+}
+
+pub fn aes32esmi(rs1: u64, rs2: u64, bs: u32) -> u64 {
+    let shamt = (bs & 3) * 8;
+    let si = ((rs2 as u32 >> shamt) & 0xff) as u8;
+    let so = AES_SBOX[si as usize] as u32;
+    let mixed = mixcol_fwd(so);
+    sext32((rs1 as u32) ^ rol32(mixed, shamt))
+}
+
+pub fn aes32dsi(rs1: u64, rs2: u64, bs: u32) -> u64 {
+    let shamt = (bs & 3) * 8;
+    let si = ((rs2 as u32 >> shamt) & 0xff) as u8;
+    let so = AES_INV_SBOX[si as usize] as u32;
+    sext32((rs1 as u32) ^ rol32(so, shamt))
+}
+
+pub fn aes32dsmi(rs1: u64, rs2: u64, bs: u32) -> u64 {
+    let shamt = (bs & 3) * 8;
+    let si = ((rs2 as u32 >> shamt) & 0xff) as u8;
+    let so = AES_INV_SBOX[si as usize] as u32;
+    let mixed = mixcol_inv(so);
+    sext32((rs1 as u32) ^ rol32(mixed, shamt))
+}
+
 /// ShiftRows (forward) on the 128-bit state {rs2:rs1}, low 64 bits.
 fn shiftrows_fwd(rs1: u64, rs2: u64) -> u64 {
     let b = |v: u64, i: u32| (v >> (i * 8)) & 0xff;
@@ -330,60 +396,80 @@ pub fn aes64ks2(rs1: u64, rs2: u64) -> u64 {
 
 // ---------------------------------------------------------------------------
 // Carry-less multiply (Zbc) and the single-source scalar-crypto evaluator
-// shared by the RISC-V SMIR lift (OpKind::RvIntCrypto). RV64 only (xbits = 64).
+// shared by the RISC-V SMIR lift (OpKind::RvIntCrypto). Most users are RV64
+// differential paths; RV32 AES forms are included because their semantics are
+// self-contained in the instruction encoding.
 // ---------------------------------------------------------------------------
 
-/// Carry-less multiply, low XLEN bits (RV64).
-pub fn clmul(a: u64, b: u64) -> u64 {
+#[inline]
+fn mask_xbits(v: u64, xbits: u32) -> u64 {
+    if xbits >= 64 {
+        v
+    } else {
+        v & ((1u64 << xbits) - 1)
+    }
+}
+
+/// Carry-less multiply, low XLEN bits.
+pub fn clmul(a: u64, b: u64, xbits: u32) -> u64 {
     let mut out = 0u64;
-    for i in 0..64 {
+    for i in 0..xbits {
         if (b >> i) & 1 != 0 {
             out ^= a << i;
         }
     }
-    out
+    mask_xbits(out, xbits)
 }
 
-/// Carry-less multiply, high bits [127:64] (RV64).
-pub fn clmulh(a: u64, b: u64) -> u64 {
+/// Carry-less multiply, high bits [2*XLEN-1:XLEN].
+pub fn clmulh(a: u64, b: u64, xbits: u32) -> u64 {
     let mut out = 0u64;
-    for i in 1..64 {
+    for i in 1..xbits {
         if (b >> i) & 1 != 0 {
-            out ^= a >> (64 - i);
+            out ^= a >> (xbits - i);
         }
     }
-    out
+    mask_xbits(out, xbits)
 }
 
-/// Carry-less multiply reversed (RV64).
-pub fn clmulr(a: u64, b: u64) -> u64 {
+/// Carry-less multiply reversed.
+pub fn clmulr(a: u64, b: u64, xbits: u32) -> u64 {
     let mut out = 0u64;
-    for i in 0..64 {
+    for i in 0..xbits {
         if (b >> i) & 1 != 0 {
-            out ^= a >> (64 - i - 1);
+            out ^= a >> (xbits - i - 1);
         }
     }
-    out
+    mask_xbits(out, xbits)
 }
 
 /// Evaluate a scalar bit-manip / crypto R/I-type op that has no clean SMIR
-/// primitive (carry-less multiply, crossbar permute, AES-64 and SM4 round/key
+/// primitive (carry-less multiply, crossbar permute, AES-32/AES-64 and SM4 round/key
 /// helpers), purely from its register operands. `a`=rs1, `b`=rs2 (ignored by
-/// the unary forms), `imm` carries the `bs` field for SM4 (`insn[31:30]`) or the
-/// round number for `aes64ks1i` (`insn[23:20]`). Returns the rd value, or `None`
-/// for an op outside this set. RV64 semantics (xbits = 64); calls the same
-/// qemu-verified primitives used by `RiscVCpu`, so a lifted `RvIntCrypto` op is
-/// bit-identical to the oracle.
-pub fn eval_int_crypto(op: crate::riscv::Op, a: u64, b: u64, imm: u8) -> Option<u64> {
+/// the unary forms), `imm` carries the `bs` field for SM4/AES32 (`insn[31:30]`)
+/// or the round number for `aes64ks1i` (`insn[23:20]`). Returns the rd value, or
+/// `None` for an op outside this set. Calls the same primitives used by
+/// `RiscVCpu`, so a lifted `RvIntCrypto` op is bit-identical to the interpreter.
+pub fn eval_int_crypto(op: crate::riscv::Op, a: u64, b: u64, imm: u8, xbits: u32) -> Option<u64> {
     use crate::riscv::Op::*;
-    Some(match op {
-        Clmul => clmul(a, b),
-        Clmulh => clmulh(a, b),
-        Clmulr => clmulr(a, b),
-        Xperm4 => xperm4(a, b, 64),
-        Xperm8 => xperm8(a, b, 64),
+    let res = match op {
+        Clmul => clmul(a, b, xbits),
+        Clmulh => clmulh(a, b, xbits),
+        Clmulr => clmulr(a, b, xbits),
+        Xperm4 => xperm4(a, b, xbits),
+        Xperm8 => xperm8(a, b, xbits),
+        Sha512Sig0l => sha512sig0l(a, b),
+        Sha512Sig0h => sha512sig0h(a, b),
+        Sha512Sig1l => sha512sig1l(a, b),
+        Sha512Sig1h => sha512sig1h(a, b),
+        Sha512Sum0r => sha512sum0r(a, b),
+        Sha512Sum1r => sha512sum1r(a, b),
         Sm4ed => sm4ed(a, b, imm as u32),
         Sm4ks => sm4ks(a, b, imm as u32),
+        Aes32esi => aes32esi(a, b, imm as u32),
+        Aes32esmi => aes32esmi(a, b, imm as u32),
+        Aes32dsi => aes32dsi(a, b, imm as u32),
+        Aes32dsmi => aes32dsmi(a, b, imm as u32),
         Aes64es => aes64es(a, b),
         Aes64esm => aes64esm(a, b),
         Aes64ds => aes64ds(a, b),
@@ -392,5 +478,6 @@ pub fn eval_int_crypto(op: crate::riscv::Op, a: u64, b: u64, imm: u8) -> Option<
         Aes64ks1i => aes64ks1i(a, imm as u32),
         Aes64ks2 => aes64ks2(a, b),
         _ => return None,
-    })
+    };
+    Some(mask_xbits(res, xbits))
 }

@@ -27,11 +27,15 @@ data path**:
 | Group | Extensions |
 |-------|-----------|
 | Base + GC | RV64I, **M**, **A** (LR/SC + AMO), **F** + **D**, **C** (compressed) |
-| FP | full IEEE-754, all 5 rounding modes; **Zfh** (half); integer-significand soft-float (`float.rs`) generic over `Fmt = {F16,F32,F64}` |
-| Bit-manip | **Zba / Zbb / Zbc / Zbs**, **Zbkb**, **Zbkx**, **Zcb** |
+| FP | full IEEE-754, all 5 rounding modes; **Zfh** (half); integer-significand soft-float (`float.rs`) generic over `Fmt = {F16,F32,F64}`; **Q** decode/disassembly parity behind `Isa::q` with execution still trapping |
+| Bit-manip | **Zba / Zbb / Zbc / Zbs**, **Zbkb** incl. RV32 `zip`/`unzip`, **Zbkx**, **Zcb** |
+| Code-size / compressed adjuncts | **Zcmp / Zcmt / Zclsd / Zilsd** (explicit profile flags for overlap-prone encodings) |
 | Conditional / FP-aux | **Zicond**, **Zfa** |
-| Scalar crypto | **Zknh** (SHA-256/512), **Zksh** (SM3), **Zksed** (SM4), **Zkne/Zknd** (AES-64) — S-box tables + GF(2⁸) |
-| CSR / fence | **Zicsr**, **Zifencei** |
+| Scalar crypto | **Zknh** (SHA-256/512), **Zksh** (SM3), **Zksed** (SM4), **Zkne/Zknd** (AES-32/AES-64) — S-box tables + GF(2⁸) |
+| Atomics / cache / wait / hints | **Zacas**, **Zawrs**, **Zicbom / Zicboz / Zicbop**, **Zihintpause / Zihintntl** |
+| CSR / fence / privileged decode | **Zicsr**, **Zifencei**, **JVT** CSR for Zcmt; `uret`, `sfence.vm`, `sfence.vma`, Svinval, and H fence/virtual-load-store opcodes decode/disassemble with flat-memory no-op or memory-access semantics |
+| IDA compatibility | Opt-in `xida_sltw` flag for Hex-Rays/IDA's non-standard RV64 OP-32 `sltw` decode; disabled in `rv64gc()` because standard hardware reserves the encoding |
+| Vendor custom | **Xsoteria**, **XHazard3** (`h3.block`/`h3.unblock`, `h3.bextm`/`h3.bextmi`), **XAndesPerf**, **XThead scalar**, **XTheadVdot** (`th.vmaqa*` executes; undocumented packed forms decode/disasm-only) |
 | **Vector** | **V (RVV 1.0)** — see below |
 
 ### Vector (RVV 1.0) — the entire data path
@@ -101,8 +105,12 @@ dest-vs-source overlap, EMUL>1 misalignment). A `PROBE` against qemu showed it
 enforces alignment + source-source different-EEW rules *beyond* the written spec,
 so a spec-faithful checker both over- and under-traps; matching qemu is
 implementation reverse-engineering and was deliberately not shipped (affects only
-illegal encodings no compiler emits). Privileged arch / Sv39 MMU: see
+illegal encodings no compiler emits). Privileged arch / Sv39 MMU / real
+translation invalidation semantics: see
 [`REMAINING.md`](REMAINING.md).
+Quad-precision **Q** currently has decode/disassembly parity only. Executing Q
+ops traps because the interpreter still stores FP registers as 64-bit values and
+`float.rs` provides soft-float only for F16/F32/F64.
 
 ---
 
@@ -180,7 +188,7 @@ churned by concurrent agents:
   interp is native `a+b` with no fflags tracking, no NaN canonicalization, no
   dynamic rounding; the harness compares `fcsr`, so lifting these would diverge.
   Needs an FP-with-flags overhaul.
-- **AES (`Aes64*`) / SM4 (`Sm4ks/Sm4ed`)** — need a 256-entry S-box table-lookup op.
+- **AES (`Aes32*`/`Aes64*`) / SM4 (`Sm4ks/Sm4ed`)** — need a 256-entry S-box table-lookup op.
 - **Clmul/Clmulh/Clmulr** — need a carry-less-multiply primitive.
 - **Xperm4/8** — crossbar byte/nibble gather.
 

@@ -51,6 +51,36 @@ fn rvc_reg(r: u32) -> u8 {
     (r as u8 & 0x7) + 8
 }
 
+/// Zcmp compressed s-register field -> s0,s1,s2..s7.
+#[inline]
+fn zcmp_sreg(r: u32) -> u8 {
+    match r & 0x7 {
+        0 => 8,                    // s0/fp
+        1 => 9,                    // s1
+        n => (18 + (n - 2)) as u8, // s2..s7
+    }
+}
+
+#[inline]
+fn zcmp_reg_count(rlist: u32) -> Option<u32> {
+    match rlist {
+        4 => Some(1),              // ra
+        5 => Some(3),              // ra, s0-s1
+        6 => Some(3),              // alternate encoding for ra, s0-s1
+        7..=14 => Some(rlist - 3), // ra, s0-s1, s2..s(rlist-6)
+        15 => Some(13),            // ra, s0-s1, s2-s11
+        _ => None,
+    }
+}
+
+#[inline]
+fn zcmp_stack_adj(rlist: u32, spimm: u32, rv64: bool) -> Option<i64> {
+    let slotsize = if rv64 { 8 } else { 4 };
+    let bytes = zcmp_reg_count(rlist)? * slotsize;
+    let base = ((bytes + 15) / 16) * 16;
+    Some((base + spimm * 16) as i64)
+}
+
 /// Sign-extend the low `n` bits of `v`.
 #[inline]
 fn sext(v: u32, n: u32) -> i64 {
@@ -101,6 +131,11 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
             if rv64 {
                 // C.LD -> ld rd', off(rs1')
                 mk(Op::Ld, rd_, rs1_, 0, off_d as i64, h)
+            } else if isa.zclsd {
+                if rd_ & 1 != 0 {
+                    return ill(h);
+                }
+                mk(Op::LdPair, rd_, rs1_, 0, off_d as i64, h)
             } else {
                 // C.FLW -> flw rd', off(rs1')
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
@@ -122,6 +157,12 @@ fn decode_q0(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
             if rv64 {
                 // C.SD -> sd rs2', off(rs1')
                 mk(Op::Sd, 0, rs1_, rvc_reg(bits(h, 4, 2)), off_d as i64, h)
+            } else if isa.zclsd {
+                let rs2_ = rvc_reg(bits(h, 4, 2));
+                if rs2_ & 1 != 0 {
+                    return ill(h);
+                }
+                mk(Op::SdPair, 0, rs1_, rs2_, off_d as i64, h)
             } else {
                 // C.FSW -> fsw rs2', off(rs1')
                 let off = (bits(h, 12, 10) << 3) | (bit(h, 6) << 2) | (bit(h, 5) << 6);
@@ -293,7 +334,7 @@ fn decode_q1_alu(h: u16, rv64: bool, isa: &Isa) -> Insn {
     }
 }
 
-fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
+fn decode_q2(h: u16, funct3: u32, rv64: bool, isa: &Isa) -> Insn {
     let rd = bits(h, 11, 7) as u8;
     match funct3 {
         0b000 => {
@@ -326,6 +367,12 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
                 }
                 let off = (bit(h, 12) << 5) | (bits(h, 6, 5) << 3) | (bits(h, 4, 2) << 6);
                 mk(Op::Ld, rd, 2, 0, off as i64, h)
+            } else if isa.zclsd {
+                if rd == 0 || rd & 1 != 0 {
+                    return ill(h);
+                }
+                let off = (bit(h, 12) << 5) | (bits(h, 6, 5) << 3) | (bits(h, 4, 2) << 6);
+                mk(Op::LdPair, rd, 2, 0, off as i64, h)
             } else {
                 // C.FLWSP -> flw rd, off(x2)
                 let off = (bit(h, 12) << 5) | (bits(h, 6, 4) << 2) | (bits(h, 3, 2) << 6);
@@ -355,10 +402,23 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
                 }
             } else {
                 // C.ADD -> add rd, rd, rs2
-                mk(Op::Add, rd, rd, rs2, 0, h)
+                if isa.zihintntl && rd == 0 {
+                    match rs2 {
+                        2 => mk(Op::NtlP1, 0, 0, rs2, 0, h),
+                        3 => mk(Op::NtlPall, 0, 0, rs2, 0, h),
+                        4 => mk(Op::NtlS1, 0, 0, rs2, 0, h),
+                        5 => mk(Op::NtlAll, 0, 0, rs2, 0, h),
+                        _ => mk(Op::Add, rd, rd, rs2, 0, h),
+                    }
+                } else {
+                    mk(Op::Add, rd, rd, rs2, 0, h)
+                }
             }
         }
         0b101 => {
+            if isa.zcmp || isa.zcmt {
+                return decode_zcmp_zcmt(h, rv64, isa);
+            }
             // C.FSDSP -> fsd rs2, off(x2)
             let off = (bits(h, 12, 10) << 3) | (bits(h, 9, 7) << 6);
             mk(Op::Fsd, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
@@ -373,6 +433,13 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
                 // C.SDSP -> sd rs2, off(x2)
                 let off = (bits(h, 12, 10) << 3) | (bits(h, 9, 7) << 6);
                 mk(Op::Sd, 0, 2, bits(h, 6, 2) as u8, off as i64, h)
+            } else if isa.zclsd {
+                let rs2 = bits(h, 6, 2) as u8;
+                if rs2 & 1 != 0 {
+                    return ill(h);
+                }
+                let off = (bits(h, 12, 10) << 3) | (bits(h, 9, 7) << 6);
+                mk(Op::SdPair, 0, 2, rs2, off as i64, h)
             } else {
                 // C.FSWSP -> fsw rs2, off(x2)
                 let off = (bits(h, 12, 9) << 2) | (bits(h, 8, 7) << 6);
@@ -381,6 +448,50 @@ fn decode_q2(h: u16, funct3: u32, rv64: bool, _isa: &Isa) -> Insn {
         }
         _ => ill(h),
     }
+}
+
+fn decode_zcmp_zcmt(h: u16, rv64: bool, isa: &Isa) -> Insn {
+    if isa.zcmp {
+        let funct5 = bits(h, 12, 8);
+        if matches!(funct5, 0x18 | 0x1a | 0x1c | 0x1e) {
+            let rlist = bits(h, 7, 4);
+            let spimm = bits(h, 3, 2);
+            let Some(stack_adj) = zcmp_stack_adj(rlist, spimm, rv64) else {
+                return ill(h);
+            };
+            let op = match funct5 {
+                0x18 => Op::CmPush,
+                0x1a => Op::CmPop,
+                0x1c => Op::CmPopRetz,
+                0x1e => Op::CmPopRet,
+                _ => unreachable!(),
+            };
+            return mk(op, rlist as u8, 0, 0, stack_adj, h);
+        }
+
+        if bits(h, 12, 10) == 0x03 {
+            let r1s = zcmp_sreg(bits(h, 9, 7));
+            let r2s = zcmp_sreg(bits(h, 4, 2));
+            match bits(h, 6, 5) {
+                0x01 => {
+                    if r1s == r2s {
+                        return ill(h);
+                    }
+                    return mk(Op::CmMvsa01, r1s, r2s, 0, 0, h);
+                }
+                0x03 => return mk(Op::CmMva01s, r1s, r2s, 0, 0, h),
+                _ => return ill(h),
+            }
+        }
+    }
+
+    if isa.zcmt && bits(h, 12, 10) == 0 {
+        let index = bits(h, 9, 2);
+        let op = if index < 32 { Op::CmJt } else { Op::CmJalt };
+        return mk(op, 0, 0, 0, index as i64, h);
+    }
+
+    ill(h)
 }
 
 /// C.J / C.JAL jump offset (sign-extended, even).
@@ -506,6 +617,102 @@ mod tests {
         assert_eq!(i.rd, 10);
         assert_eq!(i.rs1, 0);
         assert_eq!(i.rs2, 11);
+    }
+
+    #[test]
+    fn c_ntl_hints() {
+        let h = (0b100 << 13) | (1 << 12) | (2 << 2) | 0b10;
+        assert_eq!(dec(h as u16).op, Op::NtlP1);
+
+        let mut isa = Isa::rv64gc();
+        isa.zihintntl = false;
+        assert_eq!(decode_rvc(h as u16, Xlen::Rv64, &isa).op, Op::Add);
+    }
+
+    #[test]
+    fn zclsd_rv32_pair_load_store_overlap_slots() {
+        let mut isa = Isa::rv64gc();
+        isa.zclsd = true;
+
+        let c_ld = ((0b011 << 13) | (2 << 7) | 0b00) as u16; // rd'=x8, rs1'=x10
+        let i = decode_rvc(c_ld, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::LdPair);
+        assert_eq!(i.rd, 8);
+        assert_eq!(i.rs1, 10);
+
+        let c_ld_odd = ((0b011 << 13) | (2 << 7) | (1 << 2) | 0b00) as u16;
+        assert_eq!(decode_rvc(c_ld_odd, Xlen::Rv32, &isa).op, Op::Illegal);
+
+        let c_sd = ((0b111 << 13) | (2 << 7) | 0b00) as u16; // rs2'=x8, rs1'=x10
+        let i = decode_rvc(c_sd, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::SdPair);
+        assert_eq!(i.rs1, 10);
+        assert_eq!(i.rs2, 8);
+
+        let c_ldsp = ((0b011 << 13) | (8 << 7) | 0b10) as u16;
+        let i = decode_rvc(c_ldsp, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::LdPair);
+        assert_eq!(i.rd, 8);
+        assert_eq!(i.rs1, 2);
+
+        let c_sdsp = ((0b111 << 13) | 0b10) as u16;
+        let i = decode_rvc(c_sdsp, Xlen::Rv32, &isa);
+        assert_eq!(i.op, Op::SdPair);
+        assert_eq!(i.rs1, 2);
+        assert_eq!(i.rs2, 0);
+
+        isa.zclsd = false;
+        assert_eq!(decode_rvc(c_ld, Xlen::Rv32, &isa).op, Op::Flw);
+        assert_eq!(decode_rvc(c_sd, Xlen::Rv32, &isa).op, Op::Fsw);
+    }
+
+    #[test]
+    fn zcmp_zcmt_decode_overlap_slot() {
+        let mut isa = Isa::rv64gc();
+        isa.zcmp = true;
+        isa.zcmt = true;
+
+        let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | (1 << 2) | 0b10) as u16;
+        let i = decode_rvc(cm_push, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmPush);
+        assert_eq!(i.rd, 5);
+        assert_eq!(i.imm, 48);
+
+        let cm_popretz = ((0b101 << 13) | (0x1c << 8) | (5 << 4) | 0b10) as u16;
+        let i = decode_rvc(cm_popretz, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmPopRetz);
+        assert_eq!(i.imm, 32);
+
+        let cm_mvsa01 =
+            ((0b101 << 13) | (0b011 << 10) | (0 << 7) | (0b01 << 5) | (2 << 2) | 0b10) as u16;
+        let i = decode_rvc(cm_mvsa01, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmMvsa01);
+        assert_eq!(i.rd, 8);
+        assert_eq!(i.rs1, 18);
+
+        let cm_mva01s =
+            ((0b101 << 13) | (0b011 << 10) | (1 << 7) | (0b11 << 5) | (3 << 2) | 0b10) as u16;
+        let i = decode_rvc(cm_mva01s, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmMva01s);
+        assert_eq!(i.rd, 9);
+        assert_eq!(i.rs1, 19);
+
+        let cm_jt = ((0b101 << 13) | (17 << 2) | 0b10) as u16;
+        let i = decode_rvc(cm_jt, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmJt);
+        assert_eq!(i.imm, 17);
+
+        let cm_jalt = ((0b101 << 13) | (32 << 2) | 0b10) as u16;
+        let i = decode_rvc(cm_jalt, Xlen::Rv64, &isa);
+        assert_eq!(i.op, Op::CmJalt);
+        assert_eq!(i.imm, 32);
+
+        let reserved = ((0b101 << 13) | (0b011 << 10) | 0b10) as u16;
+        assert_eq!(decode_rvc(reserved, Xlen::Rv64, &isa).op, Op::Illegal);
+
+        isa.zcmp = false;
+        isa.zcmt = false;
+        assert_eq!(decode_rvc(cm_push, Xlen::Rv64, &isa).op, Op::Fsd);
     }
 
     #[test]

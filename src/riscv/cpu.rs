@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 use super::crypto;
 use super::csr::Csr;
-use super::decode::{DecodeError, Insn, Op, decode_at};
+use super::decode::{decode_at, DecodeError, Insn, Op};
 use super::float::RoundingMode;
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
@@ -164,6 +164,7 @@ pub struct RiscVCpu {
     mideleg: u64,
     mcounteren: u64,
     mhartid: u64,
+    jvt: u64,
 
     // ---- counters ----
     cycle: u64,
@@ -234,6 +235,7 @@ impl RiscVCpu {
             mideleg: 0,
             mcounteren: 0,
             mhartid: 0,
+            jvt: 0,
             cycle: 0,
             time: 0,
             instret: 0,
@@ -271,6 +273,7 @@ impl RiscVCpu {
         self.medeleg = 0;
         self.mideleg = 0;
         self.mcounteren = 0;
+        self.jvt = 0;
         self.vl = 0;
         self.vtype = 0;
         self.vstart = 0;
@@ -666,6 +669,7 @@ impl RiscVCpu {
             Op::Lh => self.load(rd, a, imm, 2, true)?,
             Op::Lw => self.load(rd, a, imm, 4, true)?,
             Op::Ld => self.load(rd, a, imm, 8, true)?,
+            Op::LdPair => self.load_pair(rd, a, imm)?,
             Op::Lbu => self.load(rd, a, imm, 1, false)?,
             Op::Lhu => self.load(rd, a, imm, 2, false)?,
             Op::Lwu => self.load(rd, a, imm, 4, false)?,
@@ -675,6 +679,7 @@ impl RiscVCpu {
             Op::Sh => self.store(a, imm, b, 2)?,
             Op::Sw => self.store(a, imm, b, 4)?,
             Op::Sd => self.store(a, imm, b, 8)?,
+            Op::SdPair => self.store_pair(a, imm, rs2)?,
 
             // ---- OP-IMM ----
             Op::Addi => self.set_x(rd, a.wrapping_add(imm)),
@@ -709,11 +714,33 @@ impl RiscVCpu {
             Op::Addw => self.set_x(rd, word((a as u32).wrapping_add(b as u32))),
             Op::Subw => self.set_x(rd, word((a as u32).wrapping_sub(b as u32))),
             Op::Sllw => self.set_x(rd, word((a as u32) << (b & 0x1f))),
+            Op::Sltw => self.set_x(rd, ((a as u32 as i32) < (b as u32 as i32)) as u64),
             Op::Srlw => self.set_x(rd, word((a as u32) >> (b & 0x1f))),
             Op::Sraw => self.set_x(rd, word(((a as u32 as i32) >> (b & 0x1f)) as u32)),
 
             // ---- FENCE / system ----
-            Op::Fence | Op::FenceI => {}
+            Op::Fence
+            | Op::FenceI
+            | Op::Pause
+            | Op::NtlP1
+            | Op::NtlPall
+            | Op::NtlS1
+            | Op::NtlAll
+            | Op::CboInval
+            | Op::CboClean
+            | Op::CboFlush
+            | Op::PrefetchI
+            | Op::PrefetchR
+            | Op::PrefetchW
+            | Op::SfenceVm
+            | Op::SfenceVma
+            | Op::SinvalVma
+            | Op::SfenceWInval
+            | Op::SfenceInvalIr
+            | Op::HfenceVvma
+            | Op::HfenceGvma
+            | Op::HinvalVvma
+            | Op::HinvalGvma => {}
             Op::CboZero => {
                 let base = a & !0x3f;
                 self.mem.write(base, &[0; 64]).map_err(|_| Trap {
@@ -738,9 +765,153 @@ impl RiscVCpu {
                 self.pc = pc;
                 return Ok(RiscVExit::Ebreak);
             }
+            Op::CmPush | Op::CmPop | Op::CmPopRetz | Op::CmPopRet => {
+                self.exec_zcmp_stack(insn, pc)?
+            }
+            Op::CmMvsa01 => {
+                self.set_x(rd, self.x(10));
+                self.set_x(rs1, self.x(11));
+            }
+            Op::CmMva01s => {
+                self.set_x(10, self.x(rd));
+                self.set_x(11, self.x(rs1));
+            }
+            Op::CmJt | Op::CmJalt => self.exec_zcmt(insn, pc)?,
+            Op::HlvB => self.load(rd, a, 0, 1, true)?,
+            Op::HlvBu => self.load(rd, a, 0, 1, false)?,
+            Op::HlvH => self.load(rd, a, 0, 2, true)?,
+            Op::HlvHu | Op::HlvxHu => self.load(rd, a, 0, 2, false)?,
+            Op::HlvW => self.load(rd, a, 0, 4, true)?,
+            Op::HlvWu | Op::HlvxWu => self.load(rd, a, 0, 4, false)?,
+            Op::HlvD => self.load(rd, a, 0, 8, true)?,
+            Op::HsvB => self.store(a, 0, b, 1)?,
+            Op::HsvH => self.store(a, 0, b, 2)?,
+            Op::HsvW => self.store(a, 0, b, 4)?,
+            Op::HsvD => self.store(a, 0, b, 8)?,
+            Op::NdsLbgp => self.load(rd, a, imm, 1, true)?,
+            Op::NdsLbugp => self.load(rd, a, imm, 1, false)?,
+            Op::NdsLhgp => self.load(rd, a, imm, 2, true)?,
+            Op::NdsLhugp => self.load(rd, a, imm, 2, false)?,
+            Op::NdsLwgp => self.load(rd, a, imm, 4, true)?,
+            Op::NdsLwugp => self.load(rd, a, imm, 4, false)?,
+            Op::NdsLdgp => self.load(rd, a, imm, 8, true)?,
+            Op::NdsSbgp => self.store(a, imm, b, 1)?,
+            Op::NdsShgp => self.store(a, imm, b, 2)?,
+            Op::NdsSwgp => self.store(a, imm, b, 4)?,
+            Op::NdsSdgp => self.store(a, imm, b, 8)?,
+            Op::NdsAddigp => self.set_x(rd, a.wrapping_add(imm)),
+            Op::NdsBfoz | Op::NdsBfos => {
+                self.set_x(
+                    rd,
+                    andes_bitfield(a, rs2, imm as u8, matches!(insn.op, Op::NdsBfos)),
+                );
+            }
+            Op::NdsBbc => self.branch(((a >> rs2) & 1) == 0, pc, imm),
+            Op::NdsBbs => self.branch(((a >> rs2) & 1) != 0, pc, imm),
+            Op::NdsBeqc => self.branch((a & self.xmask()) == rs2 as u64, pc, imm),
+            Op::NdsBnec => self.branch((a & self.xmask()) != rs2 as u64, pc, imm),
+            Op::NdsLeaH => self.set_x(rd, a.wrapping_add(b << 1)),
+            Op::NdsLeaW => self.set_x(rd, a.wrapping_add(b << 2)),
+            Op::NdsLeaD => self.set_x(rd, a.wrapping_add(b << 3)),
+            Op::NdsLeaBZe => self.set_x(rd, a.wrapping_add(b as u32 as u64)),
+            Op::NdsLeaHZe => self.set_x(rd, a.wrapping_add((b as u32 as u64) << 1)),
+            Op::NdsLeaWZe => self.set_x(rd, a.wrapping_add((b as u32 as u64) << 2)),
+            Op::NdsLeaDZe => self.set_x(rd, a.wrapping_add((b as u32 as u64) << 3)),
+            Op::NdsFfb | Op::NdsFfmism | Op::NdsFfzmism | Op::NdsFlmism => {
+                self.set_x(rd, andes_byte_scan(insn.op, a, b, self.rv32()))
+            }
+            Op::ThDcacheCall
+            | Op::ThDcacheCiall
+            | Op::ThDcacheIall
+            | Op::ThDcacheCpa
+            | Op::ThDcacheCipa
+            | Op::ThDcacheIpa
+            | Op::ThDcacheCva
+            | Op::ThDcacheCiva
+            | Op::ThDcacheIva
+            | Op::ThDcacheCsw
+            | Op::ThDcacheCisw
+            | Op::ThDcacheIsw
+            | Op::ThDcacheCpal1
+            | Op::ThDcacheCval1
+            | Op::ThIcacheIall
+            | Op::ThIcacheIalls
+            | Op::ThIcacheIpa
+            | Op::ThIcacheIva
+            | Op::ThL2cacheCall
+            | Op::ThL2cacheCiall
+            | Op::ThL2cacheIall
+            | Op::ThSfenceVmas
+            | Op::ThSync
+            | Op::ThSyncS
+            | Op::ThSyncI
+            | Op::ThSyncIS
+            | Op::ThIpush
+            | Op::ThIpop => {}
+            Op::ThAddsl => self.set_x(rd, a.wrapping_add(b.wrapping_shl(insn.imm as u32))),
+            Op::ThSrri => self.set_x(rd, self.ror(a, imm)),
+            Op::ThSrriw => self.set_x(rd, word((a as u32).rotate_right((imm & 0x1f) as u32))),
+            Op::ThExt | Op::ThExtu => {
+                self.set_x(
+                    rd,
+                    thead_extract(
+                        a,
+                        rs2,
+                        insn.imm as u8,
+                        self.xbits(),
+                        matches!(insn.op, Op::ThExt),
+                    ),
+                );
+            }
+            Op::ThFf0 => self.set_x(rd, thead_ff(a, self.xbits(), false)),
+            Op::ThFf1 => self.set_x(rd, thead_ff(a, self.xbits(), true)),
+            Op::ThRev => self.set_x(rd, rev8(a, self.rv32())),
+            Op::ThRevw => self.set_x(rd, (a as u32).swap_bytes() as u64),
+            Op::ThTstNbz => self.set_x(rd, thead_tstnbz(a, self.rv32())),
+            Op::ThTst => {
+                let bit = if imm < self.xbits() as u64 {
+                    (a >> imm) & 1
+                } else {
+                    0
+                };
+                self.set_x(rd, bit);
+            }
+            Op::ThMveqz => self.set_x(rd, if b == 0 { a } else { self.x(rd) }),
+            Op::ThMvnez => self.set_x(rd, if b != 0 { a } else { self.x(rd) }),
+            Op::ThMula | Op::ThMuls | Op::ThMulah | Op::ThMulsh | Op::ThMulaw | Op::ThMulsw => {
+                self.set_x(rd, thead_mac(insn.op, self.x(rd), a, b));
+            }
+            Op::ThFmvHwX => {
+                let old = self.f(rd) & 0x0000_0000_ffff_ffff;
+                self.set_f(rd, old | ((a & 0xffff_ffff) << 32));
+            }
+            Op::ThFmvXHw => self.set_x(rd, (self.f(rs1) >> 32) & 0xffff_ffff),
+            Op::ThAndn => self.set_x(rd, a & !b),
+            Op::ThOrn => self.set_x(rd, a | !b),
+            Op::ThXorn => self.set_x(rd, !(a ^ b)),
+            Op::ThPackl => self.set_x(rd, thead_packl(a, b, self.xbits())),
+            Op::ThPackh => self.set_x(rd, ((b & 0xff) << 8) | (a & 0xff)),
+            Op::ThPackhl => self.set_x(rd, thead_packhl(a, b, self.xbits())),
+            op if thead_auto_mem(op).is_some() => self.exec_thead_auto_mem(insn)?,
+            op if thead_reg_mem(op).is_some() => self.exec_thead_reg_mem(insn)?,
+            op if thead_pair_mem(op).is_some() => self.exec_thead_pair_mem(insn)?,
+            op if thead_fmem(op).is_some() => self.exec_thead_fmem(insn)?,
+            Op::H3Block => return Ok(RiscVExit::Wfi),
+            Op::H3Unblock => {}
+            Op::H3Bextm => {
+                let nbits = imm & 0xf;
+                let mask = (1u64 << nbits) - 1;
+                self.set_x(rd, (a >> (b & 0x1f)) & mask);
+            }
+            Op::H3Bextmi => {
+                let nbits = imm & 0xf;
+                let mask = (1u64 << nbits) - 1;
+                self.set_x(rd, (a >> (rs2 as u64)) & mask);
+            }
             Op::Wfi => return Ok(RiscVExit::Wfi),
+            Op::WrsNto | Op::WrsSto => {}
             Op::Mret => self.mret(),
-            Op::Sret => self.mret(), // single-mode model: same restore path
+            Op::Sret | Op::Uret => self.mret(), // single-mode model: same restore path
 
             // ---- Zicsr ----
             Op::Csrrw | Op::Csrrs | Op::Csrrc | Op::Csrrwi | Op::Csrrsi | Op::Csrrci => {
@@ -782,6 +953,7 @@ impl RiscVCpu {
             | Op::AmomaxD
             | Op::AmominuD
             | Op::AmomaxuD => self.exec_amo(insn)?,
+            Op::AmocasW | Op::AmocasD | Op::AmocasQ => self.exec_amocas(insn)?,
 
             // ---- Zba ----
             Op::Sh1add => self.set_x(rd, (a << 1).wrapping_add(b)),
@@ -860,6 +1032,8 @@ impl RiscVCpu {
             Op::Packh => self.set_x(rd, ((b & 0xff) << 8) | (a & 0xff)),
             Op::Packw => self.set_x(rd, word((((b & 0xffff) << 16) | (a & 0xffff)) as u32)),
             Op::Brev8 => self.set_x(rd, brev8(a) & self.xmask()),
+            Op::Zip => self.set_x(rd, zip32(a as u32) as u64),
+            Op::Unzip => self.set_x(rd, unzip32(a as u32) as u64),
 
             // ---- Zbkx ----
             Op::Xperm4 => self.set_x(rd, crypto::xperm4(a, b, self.xbits())),
@@ -874,6 +1048,12 @@ impl RiscVCpu {
             Op::Sha512Sig1 => self.set_x(rd, crypto::sha512sig1(a)),
             Op::Sha512Sum0 => self.set_x(rd, crypto::sha512sum0(a)),
             Op::Sha512Sum1 => self.set_x(rd, crypto::sha512sum1(a)),
+            Op::Sha512Sig0l => self.set_x(rd, crypto::sha512sig0l(a, b)),
+            Op::Sha512Sig0h => self.set_x(rd, crypto::sha512sig0h(a, b)),
+            Op::Sha512Sig1l => self.set_x(rd, crypto::sha512sig1l(a, b)),
+            Op::Sha512Sig1h => self.set_x(rd, crypto::sha512sig1h(a, b)),
+            Op::Sha512Sum0r => self.set_x(rd, crypto::sha512sum0r(a, b)),
+            Op::Sha512Sum1r => self.set_x(rd, crypto::sha512sum1r(a, b)),
 
             // ---- Zksh (SM3) ----
             Op::Sm3p0 => self.set_x(rd, crypto::sm3p0(a)),
@@ -883,7 +1063,11 @@ impl RiscVCpu {
             Op::Sm4ed => self.set_x(rd, crypto::sm4ed(a, b, (insn.raw >> 30) & 3)),
             Op::Sm4ks => self.set_x(rd, crypto::sm4ks(a, b, (insn.raw >> 30) & 3)),
 
-            // ---- Zkne / Zknd (AES-64) ----
+            // ---- Zkne / Zknd (AES) ----
+            Op::Aes32esi => self.set_x(rd, crypto::aes32esi(a, b, (insn.raw >> 30) & 3)),
+            Op::Aes32esmi => self.set_x(rd, crypto::aes32esmi(a, b, (insn.raw >> 30) & 3)),
+            Op::Aes32dsi => self.set_x(rd, crypto::aes32dsi(a, b, (insn.raw >> 30) & 3)),
+            Op::Aes32dsmi => self.set_x(rd, crypto::aes32dsmi(a, b, (insn.raw >> 30) & 3)),
             Op::Aes64es => self.set_x(rd, crypto::aes64es(a, b)),
             Op::Aes64esm => self.set_x(rd, crypto::aes64esm(a, b)),
             Op::Aes64ds => self.set_x(rd, crypto::aes64ds(a, b)),
@@ -895,7 +1079,11 @@ impl RiscVCpu {
             // ---- V: vector configuration ----
             Op::Vsetvli => {
                 let avl = if rs1 == 0 {
-                    if rd == 0 { Avl::Keep } else { Avl::Max }
+                    if rd == 0 {
+                        Avl::Keep
+                    } else {
+                        Avl::Max
+                    }
                 } else {
                     Avl::Reg(a)
                 };
@@ -908,7 +1096,11 @@ impl RiscVCpu {
             }
             Op::Vsetvl => {
                 let avl = if rs1 == 0 {
-                    if rd == 0 { Avl::Keep } else { Avl::Max }
+                    if rd == 0 {
+                        Avl::Keep
+                    } else {
+                        Avl::Max
+                    }
                 } else {
                     Avl::Reg(a)
                 };
@@ -1103,7 +1295,11 @@ impl RiscVCpu {
             | Op::Vfclass
             | Op::Vmvr
             | Op::Vfrsqrt7
-            | Op::Vfrec7 => self.exec_vector(insn)?,
+            | Op::Vfrec7
+            | Op::ThVmaqa
+            | Op::ThVmaqau
+            | Op::ThVmaqasu
+            | Op::ThVmaqaus => self.exec_vector(insn)?,
 
             Op::Illegal => return Err(Trap::illegal(insn.raw)),
 
@@ -1149,6 +1345,114 @@ impl RiscVCpu {
                 cause: cause::STORE_ACCESS_FAULT,
                 tval: addr,
             })
+    }
+
+    fn load_pair(&mut self, rd: u8, base: u64, imm: u64) -> Result<(), Trap> {
+        let addr = base.wrapping_add(imm) & self.xmask();
+        let val = self.mem.read_u64(addr).map_err(|_| Trap {
+            cause: cause::LOAD_ACCESS_FAULT,
+            tval: addr,
+        })?;
+        self.set_x(rd, val as u32 as u64);
+        self.set_x(rd.wrapping_add(1), (val >> 32) as u32 as u64);
+        Ok(())
+    }
+
+    fn store_pair(&mut self, base: u64, imm: u64, rs2: u8) -> Result<(), Trap> {
+        let addr = base.wrapping_add(imm) & self.xmask();
+        let val = (self.x(rs2) as u32 as u64) | ((self.x(rs2.wrapping_add(1)) as u32 as u64) << 32);
+        self.mem.write_u64(addr, val).map_err(|_| Trap {
+            cause: cause::STORE_ACCESS_FAULT,
+            tval: addr,
+        })
+    }
+
+    fn exec_thead_auto_mem(&mut self, insn: &Insn) -> Result<(), Trap> {
+        let kind = thead_auto_mem(insn.op).expect("T-Head auto memory op");
+        let inc = (sext5(insn.rs2) as i64).wrapping_shl(insn.imm as u32) as u64;
+        let old_base = self.x(insn.rs1);
+        let new_base = old_base.wrapping_add(inc) & self.xmask();
+        let addr = if kind.pre { new_base } else { old_base };
+
+        if kind.pre {
+            self.set_x(insn.rs1, new_base);
+        }
+        if kind.load {
+            self.load(insn.rd, addr, 0, kind.size, kind.signed)?;
+        } else {
+            self.store(addr, 0, self.x(insn.rd), kind.size)?;
+        }
+        if !kind.pre {
+            self.set_x(insn.rs1, new_base);
+        }
+        Ok(())
+    }
+
+    fn exec_thead_reg_mem(&mut self, insn: &Insn) -> Result<(), Trap> {
+        let kind = thead_reg_mem(insn.op).expect("T-Head indexed memory op");
+        let offset = self.x(insn.rs2).wrapping_shl(insn.imm as u32);
+        let addr = self.x(insn.rs1).wrapping_add(offset) & self.xmask();
+        if kind.load {
+            self.load(insn.rd, addr, 0, kind.size, kind.signed)
+        } else {
+            self.store(addr, 0, self.x(insn.rd), kind.size)
+        }
+    }
+
+    fn exec_thead_pair_mem(&mut self, insn: &Insn) -> Result<(), Trap> {
+        let kind = thead_pair_mem(insn.op).expect("T-Head pair memory op");
+        let addr = self.x(insn.rs1).wrapping_add(insn.imm as u64) & self.xmask();
+        if kind.load {
+            self.load(insn.rd, addr, 0, kind.size, kind.signed)?;
+            self.load(
+                insn.rs2,
+                addr.wrapping_add(kind.size as u64),
+                0,
+                kind.size,
+                kind.signed,
+            )
+        } else {
+            self.store(addr, 0, self.x(insn.rd), kind.size)?;
+            self.store(
+                addr.wrapping_add(kind.size as u64),
+                0,
+                self.x(insn.rs2),
+                kind.size,
+            )
+        }
+    }
+
+    fn exec_thead_fmem(&mut self, insn: &Insn) -> Result<(), Trap> {
+        let kind = thead_fmem(insn.op).expect("T-Head FP indexed memory op");
+        let offset = self.x(insn.rs2).wrapping_shl(insn.imm as u32);
+        let addr = self.x(insn.rs1).wrapping_add(offset) & self.xmask();
+        match (kind.load, kind.size) {
+            (true, 4) => {
+                let bits = self
+                    .mem
+                    .read_u32(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
+                self.set_f(insn.rd, 0xffff_ffff_0000_0000 | bits as u64);
+                Ok(())
+            }
+            (true, 8) => {
+                let bits = self
+                    .mem
+                    .read_u64(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
+                self.set_f(insn.rd, bits);
+                Ok(())
+            }
+            (false, 4) => self
+                .mem
+                .write_u32(addr, self.f(insn.rd) as u32)
+                .map_err(|_| acc_fault(true, addr)),
+            (false, 8) => self
+                .mem
+                .write_u64(addr, self.f(insn.rd))
+                .map_err(|_| acc_fault(true, addr)),
+            _ => unreachable!(),
+        }
     }
 
     // ---------------------------------------------------------------
@@ -1274,7 +1578,11 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { u32::MAX } else { x / y }) as u64
         } else {
-            if b == 0 { u64::MAX } else { a / b }
+            if b == 0 {
+                u64::MAX
+            } else {
+                a / b
+            }
         }
     }
     fn rem(&self, a: u64, b: u64) -> u64 {
@@ -1305,7 +1613,11 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { x } else { x % y }) as u64
         } else {
-            if b == 0 { a } else { a % b }
+            if b == 0 {
+                a
+            } else {
+                a % b
+            }
         }
     }
 
@@ -1416,6 +1728,153 @@ impl RiscVCpu {
         Ok(())
     }
 
+    fn exec_amocas(&mut self, insn: &Insn) -> Result<(), Trap> {
+        let addr = self.x(insn.rs1) & self.xmask();
+        match insn.op {
+            Op::AmocasW => {
+                if addr % 4 != 0 {
+                    return Err(Trap {
+                        cause: cause::STORE_MISALIGNED,
+                        tval: addr,
+                    });
+                }
+                let old = self
+                    .mem
+                    .read_u32(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
+                if old == self.x(insn.rd) as u32 {
+                    self.mem
+                        .write_u32(addr, self.x(insn.rs2) as u32)
+                        .map_err(|_| acc_fault(true, addr))?;
+                }
+                self.set_x(insn.rd, old as i32 as i64 as u64);
+            }
+            Op::AmocasD => {
+                if addr % 8 != 0 {
+                    return Err(Trap {
+                        cause: cause::STORE_MISALIGNED,
+                        tval: addr,
+                    });
+                }
+                let old = self
+                    .mem
+                    .read_u64(addr)
+                    .map_err(|_| acc_fault(false, addr))?;
+                if old == self.x(insn.rd) {
+                    self.mem
+                        .write_u64(addr, self.x(insn.rs2))
+                        .map_err(|_| acc_fault(true, addr))?;
+                }
+                self.set_x(insn.rd, old);
+            }
+            Op::AmocasQ => {
+                if addr % 16 != 0 {
+                    return Err(Trap {
+                        cause: cause::STORE_MISALIGNED,
+                        tval: addr,
+                    });
+                }
+                let cmp =
+                    (self.x(insn.rd) as u128) | ((self.x(insn.rd.wrapping_add(1)) as u128) << 64);
+                let new =
+                    (self.x(insn.rs2) as u128) | ((self.x(insn.rs2.wrapping_add(1)) as u128) << 64);
+                let mut old_bytes = [0u8; 16];
+                self.mem
+                    .read(addr, &mut old_bytes)
+                    .map_err(|_| acc_fault(false, addr))?;
+                let old = u128::from_le_bytes(old_bytes);
+                if old == cmp {
+                    self.mem
+                        .write(addr, &new.to_le_bytes())
+                        .map_err(|_| acc_fault(true, addr))?;
+                }
+                self.set_x(insn.rd, old as u64);
+                self.set_x(insn.rd.wrapping_add(1), (old >> 64) as u64);
+            }
+            _ => unreachable!(),
+        }
+        Ok(())
+    }
+
+    fn exec_zcmp_stack(&mut self, insn: &Insn, _pc: u64) -> Result<(), Trap> {
+        let Some(count) = zcmp_reg_count(insn.rd) else {
+            return Err(Trap::illegal(insn.raw));
+        };
+        let slotsize = if self.rv32() { 4 } else { 8 };
+        let stack_adj = insn.imm as u64;
+        match insn.op {
+            Op::CmPush => {
+                let old_sp = self.x(2);
+                let new_sp = old_sp.wrapping_sub(stack_adj) & self.xmask();
+                for slot in 0..count {
+                    let reg = zcmp_reg_at(slot).expect("slot checked by zcmp_reg_count");
+                    let off = stack_adj.wrapping_sub(((slot + 1) * slotsize) as u64);
+                    self.store(new_sp, off, self.x(reg), slotsize)?;
+                }
+                self.set_x(2, new_sp);
+            }
+            Op::CmPop | Op::CmPopRetz | Op::CmPopRet => {
+                let sp = self.x(2);
+                let mut restored_ra = self.x(1);
+                for slot in 0..count {
+                    let reg = zcmp_reg_at(slot).expect("slot checked by zcmp_reg_count");
+                    let off = stack_adj.wrapping_sub(((slot + 1) * slotsize) as u64);
+                    let addr = sp.wrapping_add(off) & self.xmask();
+                    let val = if slotsize == 8 {
+                        self.mem.read_u64(addr).map_err(|_| Trap {
+                            cause: cause::LOAD_ACCESS_FAULT,
+                            tval: addr,
+                        })?
+                    } else {
+                        self.mem.read_u32(addr).map_err(|_| Trap {
+                            cause: cause::LOAD_ACCESS_FAULT,
+                            tval: addr,
+                        })? as u64
+                    };
+                    if reg == 1 {
+                        restored_ra = val;
+                    }
+                    self.set_x(reg, val);
+                }
+                self.set_x(2, sp.wrapping_add(stack_adj));
+                if matches!(insn.op, Op::CmPopRetz) {
+                    self.set_x(10, 0);
+                }
+                if matches!(insn.op, Op::CmPopRet | Op::CmPopRetz) {
+                    self.pc = restored_ra & !1 & self.xmask();
+                }
+            }
+            _ => unreachable!(),
+        }
+        Ok(())
+    }
+
+    fn exec_zcmt(&mut self, insn: &Insn, pc: u64) -> Result<(), Trap> {
+        if self.jvt & 0x3f != 0 {
+            return Err(Trap::illegal(insn.raw));
+        }
+        let entry_size = if self.rv32() { 4 } else { 8 };
+        let addr = (self.jvt & !0x3f)
+            .wrapping_add((insn.imm as u64).wrapping_mul(entry_size as u64))
+            & self.xmask();
+        let target = if entry_size == 8 {
+            self.mem.read_u64(addr).map_err(|_| Trap {
+                cause: cause::LOAD_ACCESS_FAULT,
+                tval: addr,
+            })?
+        } else {
+            self.mem.read_u32(addr).map_err(|_| Trap {
+                cause: cause::LOAD_ACCESS_FAULT,
+                tval: addr,
+            })? as u64
+        };
+        if matches!(insn.op, Op::CmJalt) {
+            self.set_x(1, pc.wrapping_add(insn.len as u64));
+        }
+        self.pc = target & self.xmask();
+        Ok(())
+    }
+
     // ---------------------------------------------------------------
     // Zicsr.
     // ---------------------------------------------------------------
@@ -1474,6 +1933,7 @@ impl RiscVCpu {
             Csr::Fflags => (self.fcsr & 0x1f) as u64,
             Csr::Frm => ((self.fcsr >> 5) & 0x7) as u64,
             Csr::Fcsr => (self.fcsr & 0xff) as u64,
+            Csr::Jvt => self.jvt,
             Csr::Cycle => self.cycle & self.xmask(),
             Csr::Time => self.time & self.xmask(),
             Csr::Instret => self.instret & self.xmask(),
@@ -1526,6 +1986,7 @@ impl RiscVCpu {
             Csr::Fflags => self.fcsr = (self.fcsr & !0x1f) | (value as u32 & 0x1f),
             Csr::Frm => self.fcsr = (self.fcsr & !0xe0) | (((value as u32) & 0x7) << 5),
             Csr::Fcsr => self.fcsr = value as u32 & 0xff,
+            Csr::Jvt => self.jvt = value & self.xmask(),
             Csr::Mstatus => self.mstatus = value,
             Csr::Sstatus => {
                 let mask = self.sstatus_mask();
@@ -1847,7 +2308,11 @@ impl RiscVCpu {
                 // 1). Reject encodings whose group exceeds 8 registers per field,
                 // whose NFIELDS*EMUL > 8, or whose group would run past v31.
                 let sew_bits = 8u32 << ((self.vtype >> 3) & 0x7);
-                let eew_bits = if indexed { sew_bits } else { (width as u32) * 8 };
+                let eew_bits = if indexed {
+                    sew_bits
+                } else {
+                    (width as u32) * 8
+                };
                 let (lmul_n, lmul_d): (u32, u32) = match self.vtype & 0x7 {
                     0 => (1, 1),
                     1 => (2, 1),
@@ -2598,7 +3063,11 @@ impl RiscVCpu {
                                 &mut t,
                             );
                             flags |= t;
-                            if t & 1 != 0 { r | 1 } else { r } // NX is fflags bit 0
+                            if t & 1 != 0 {
+                                r | 1
+                            } else {
+                                r
+                            } // NX is fflags bit 0
                         }
                         _ => super::float::fcvt_round(fmt_eb(web), fmt_eb(eb), aw, frm, &mut flags),
                     };
@@ -2894,6 +3363,41 @@ impl RiscVCpu {
                         prod = prod.wrapping_add(self.velem(vd, e, web) as i128);
                     }
                     self.set_velem(vd, e, web, (prod as u64) & wmask);
+                }
+            }
+            Op::ThVmaqa | Op::ThVmaqau | Op::ThVmaqasu | Op::ThVmaqaus => {
+                // XTheadVdot accumulates four 8-bit products into each 32-bit
+                // destination lane. `vl` counts destination lanes, while v0 mask
+                // bits gate the individual 8-bit source products.
+                let eb = self.sew_bytes();
+                if eb != 4 {
+                    return Err(Trap::illegal(insn.raw));
+                }
+                let scalar = ((insn.raw >> 26) & 1) != 0;
+                let (src1_signed, src2_signed) = match insn.op {
+                    Op::ThVmaqa => (true, true),
+                    Op::ThVmaqau => (false, false),
+                    Op::ThVmaqasu => (true, false),
+                    Op::ThVmaqaus => (false, true),
+                    _ => unreachable!(),
+                };
+                for e in vstart..vl {
+                    let a = if scalar {
+                        self.x(insn.rs1) as u32
+                    } else {
+                        self.velem(insn.rs1, e, eb) as u32
+                    };
+                    let b = self.velem(vs2, e, eb) as u32;
+                    let mut sum = 0i64;
+                    for byte in 0..4 {
+                        if vm || self.vmask_bit(e * 4 + byte) {
+                            let av = th_vdot_byte((a >> (byte * 8)) as u8, src1_signed);
+                            let bv = th_vdot_byte((b >> (byte * 8)) as u8, src2_signed);
+                            sum += av * bv;
+                        }
+                    }
+                    let acc = self.velem(vd, e, eb) as u32;
+                    self.set_velem(vd, e, eb, acc.wrapping_add(sum as u32) as u64);
                 }
             }
             Op::Vnsrl | Op::Vnsra | Op::Vnclipu | Op::Vnclip => {
@@ -3615,6 +4119,48 @@ impl RiscVCpu {
         let rs3 = insn.rs3;
         let mut flags = 0u32;
 
+        // Q currently has decode/disassembly parity only; the FP register file
+        // is still 64-bit, so executing binary128 instructions is illegal.
+        if matches!(
+            insn.op,
+            Op::Flq
+                | Op::Fsq
+                | Op::FmaddQ
+                | Op::FmsubQ
+                | Op::FnmsubQ
+                | Op::FnmaddQ
+                | Op::FaddQ
+                | Op::FsubQ
+                | Op::FmulQ
+                | Op::FdivQ
+                | Op::FsqrtQ
+                | Op::FsgnjQ
+                | Op::FsgnjnQ
+                | Op::FsgnjxQ
+                | Op::FminQ
+                | Op::FmaxQ
+                | Op::FcvtSQ
+                | Op::FcvtQS
+                | Op::FcvtDQ
+                | Op::FcvtQD
+                | Op::FcvtHQ
+                | Op::FcvtQH
+                | Op::FeqQ
+                | Op::FltQ
+                | Op::FleQ
+                | Op::FclassQ
+                | Op::FcvtWQ
+                | Op::FcvtWuQ
+                | Op::FcvtLQ
+                | Op::FcvtLuQ
+                | Op::FcvtQW
+                | Op::FcvtQWu
+                | Op::FcvtQL
+                | Op::FcvtQLu
+        ) {
+            return Err(Trap::illegal(insn.raw));
+        }
+
         // Operations whose funct3 encodes a rounding mode.
         let needs_rm = !matches!(
             insn.op,
@@ -4229,6 +4775,260 @@ fn sign_extend(raw: u64, size: usize) -> u64 {
     }
 }
 
+fn andes_bitfield(a: u64, msb: u8, lsb: u8, signed: bool) -> u64 {
+    if msb < lsb {
+        return 0;
+    }
+    let width = (msb - lsb + 1) as u32;
+    let mask = if width >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << width) - 1
+    };
+    let v = (a >> lsb) & mask;
+    if signed && width > 0 && width < 64 && (v & (1u64 << (width - 1))) != 0 {
+        v | !mask
+    } else {
+        v
+    }
+}
+
+fn andes_byte_scan(op: Op, a: u64, b: u64, rv32: bool) -> u64 {
+    let n = if rv32 { 4 } else { 8 };
+    let byte = |v: u64, i: usize| ((v >> (i * 8)) & 0xff) as u8;
+    let no_match = n as u64;
+    match op {
+        Op::NdsFfb => {
+            let needle = (b & 0xff) as u8;
+            (0..n)
+                .find(|&i| byte(a, i) == needle)
+                .map(|i| i as u64)
+                .unwrap_or(no_match)
+        }
+        Op::NdsFfmism => (0..n)
+            .find(|&i| byte(a, i) != byte(b, i))
+            .map(|i| i as u64)
+            .unwrap_or(no_match),
+        Op::NdsFfzmism => (0..n)
+            .find(|&i| {
+                let ax = byte(a, i);
+                let bx = byte(b, i);
+                ax == 0 || bx == 0 || ax != bx
+            })
+            .map(|i| i as u64)
+            .unwrap_or(no_match),
+        Op::NdsFlmism => (0..n)
+            .rev()
+            .find(|&i| byte(a, i) != byte(b, i))
+            .map(|i| i as u64)
+            .unwrap_or(no_match),
+        _ => unreachable!(),
+    }
+}
+
+#[derive(Clone, Copy)]
+struct TheadMemKind {
+    load: bool,
+    size: usize,
+    signed: bool,
+    pre: bool,
+}
+
+impl TheadMemKind {
+    const fn load(size: usize, signed: bool) -> Self {
+        Self {
+            load: true,
+            size,
+            signed,
+            pre: false,
+        }
+    }
+
+    const fn store(size: usize) -> Self {
+        Self {
+            load: false,
+            size,
+            signed: false,
+            pre: false,
+        }
+    }
+
+    const fn auto_load(size: usize, signed: bool, pre: bool) -> Self {
+        Self {
+            load: true,
+            size,
+            signed,
+            pre,
+        }
+    }
+
+    const fn auto_store(size: usize, pre: bool) -> Self {
+        Self {
+            load: false,
+            size,
+            signed: false,
+            pre,
+        }
+    }
+}
+
+fn thead_auto_mem(op: Op) -> Option<TheadMemKind> {
+    use Op::*;
+    Some(match op {
+        ThLbia => TheadMemKind::auto_load(1, true, false),
+        ThLbib => TheadMemKind::auto_load(1, true, true),
+        ThLbuia => TheadMemKind::auto_load(1, false, false),
+        ThLbuib => TheadMemKind::auto_load(1, false, true),
+        ThLhia => TheadMemKind::auto_load(2, true, false),
+        ThLhib => TheadMemKind::auto_load(2, true, true),
+        ThLhuia => TheadMemKind::auto_load(2, false, false),
+        ThLhuib => TheadMemKind::auto_load(2, false, true),
+        ThLwia => TheadMemKind::auto_load(4, true, false),
+        ThLwib => TheadMemKind::auto_load(4, true, true),
+        ThLwuia => TheadMemKind::auto_load(4, false, false),
+        ThLwuib => TheadMemKind::auto_load(4, false, true),
+        ThLdia => TheadMemKind::auto_load(8, false, false),
+        ThLdib => TheadMemKind::auto_load(8, false, true),
+        ThSbia => TheadMemKind::auto_store(1, false),
+        ThSbib => TheadMemKind::auto_store(1, true),
+        ThShia => TheadMemKind::auto_store(2, false),
+        ThShib => TheadMemKind::auto_store(2, true),
+        ThSwia => TheadMemKind::auto_store(4, false),
+        ThSwib => TheadMemKind::auto_store(4, true),
+        ThSdia => TheadMemKind::auto_store(8, false),
+        ThSdib => TheadMemKind::auto_store(8, true),
+        _ => return None,
+    })
+}
+
+fn thead_reg_mem(op: Op) -> Option<TheadMemKind> {
+    use Op::*;
+    Some(match op {
+        ThLrb | ThLurb => TheadMemKind::load(1, true),
+        ThLrbu | ThLurbu => TheadMemKind::load(1, false),
+        ThLrh | ThLurh => TheadMemKind::load(2, true),
+        ThLrhu | ThLurhu => TheadMemKind::load(2, false),
+        ThLrw | ThLurw => TheadMemKind::load(4, true),
+        ThLrwu | ThLurwu => TheadMemKind::load(4, false),
+        ThLrd | ThLurd => TheadMemKind::load(8, false),
+        ThSrb | ThSurb => TheadMemKind::store(1),
+        ThSrh | ThSurh => TheadMemKind::store(2),
+        ThSrw | ThSurw => TheadMemKind::store(4),
+        ThSrd | ThSurd => TheadMemKind::store(8),
+        _ => return None,
+    })
+}
+
+fn thead_pair_mem(op: Op) -> Option<TheadMemKind> {
+    use Op::*;
+    Some(match op {
+        ThLdd => TheadMemKind::load(8, false),
+        ThLwd => TheadMemKind::load(4, true),
+        ThLwud => TheadMemKind::load(4, false),
+        ThSdd => TheadMemKind::store(8),
+        ThSwd => TheadMemKind::store(4),
+        _ => return None,
+    })
+}
+
+fn thead_fmem(op: Op) -> Option<TheadMemKind> {
+    use Op::*;
+    Some(match op {
+        ThFlrd | ThFlurd => TheadMemKind::load(8, false),
+        ThFlrw | ThFlurw => TheadMemKind::load(4, false),
+        ThFsrd | ThFsurd => TheadMemKind::store(8),
+        ThFsrw | ThFsurw => TheadMemKind::store(4),
+        _ => return None,
+    })
+}
+
+fn thead_extract(a: u64, msb: u8, lsb: u8, xbits: u32, signed: bool) -> u64 {
+    if msb < lsb || lsb as u32 >= xbits {
+        return 0;
+    }
+    let hi = (msb as u32).min(xbits - 1);
+    let lo = lsb as u32;
+    let width = hi - lo + 1;
+    let mask = if width >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << width) - 1
+    };
+    let v = (a >> lo) & mask;
+    if signed && width < 64 && (v & (1u64 << (width - 1))) != 0 {
+        v | !mask
+    } else {
+        v
+    }
+}
+
+fn thead_ff(a: u64, xbits: u32, one: bool) -> u64 {
+    if xbits == 32 {
+        let v = a as u32;
+        if one {
+            v.leading_zeros() as u64
+        } else {
+            (!v).leading_zeros() as u64
+        }
+    } else if one {
+        a.leading_zeros() as u64
+    } else {
+        (!a).leading_zeros() as u64
+    }
+}
+
+fn thead_tstnbz(a: u64, rv32: bool) -> u64 {
+    let n = if rv32 { 4 } else { 8 };
+    let mut out = 0u64;
+    for i in 0..n {
+        if ((a >> (i * 8)) & 0xff) == 0 {
+            out |= 0xffu64 << (i * 8);
+        }
+    }
+    out
+}
+
+fn thead_mac(op: Op, rd: u64, a: u64, b: u64) -> u64 {
+    match op {
+        Op::ThMula => rd.wrapping_add(a.wrapping_mul(b)),
+        Op::ThMuls => rd.wrapping_sub(a.wrapping_mul(b)),
+        Op::ThMulah => {
+            let p = (a as i16 as i32).wrapping_mul(b as i16 as i32) as u32;
+            word((rd as u32).wrapping_add(p))
+        }
+        Op::ThMulsh => {
+            let p = (a as i16 as i32).wrapping_mul(b as i16 as i32) as u32;
+            word((rd as u32).wrapping_sub(p))
+        }
+        Op::ThMulaw => {
+            let p = (a as i32 as i64).wrapping_mul(b as i32 as i64) as u32;
+            word((rd as u32).wrapping_add(p))
+        }
+        Op::ThMulsw => {
+            let p = (a as i32 as i64).wrapping_mul(b as i32 as i64) as u32;
+            word((rd as u32).wrapping_sub(p))
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn thead_packl(a: u64, b: u64, xbits: u32) -> u64 {
+    let half = xbits / 2;
+    let mask = if half >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << half) - 1
+    };
+    ((b & mask) << half) | (a & mask)
+}
+
+fn thead_packhl(a: u64, b: u64, xbits: u32) -> u64 {
+    let half = xbits / 2;
+    let q = half / 2;
+    let mask = if q >= 64 { u64::MAX } else { (1u64 << q) - 1 };
+    ((b & mask) << q) | ((a >> half) & mask)
+}
+
 #[inline]
 fn mask_bytes(size: usize) -> u64 {
     if size >= 8 {
@@ -4256,6 +5056,26 @@ fn acc_fault(store: bool, addr: u64) -> Trap {
     }
 }
 
+fn zcmp_reg_count(rlist: u8) -> Option<usize> {
+    match rlist {
+        4 => Some(1),
+        5 | 6 => Some(3),
+        7..=14 => Some((rlist - 3) as usize),
+        15 => Some(13),
+        _ => None,
+    }
+}
+
+fn zcmp_reg_at(slot: usize) -> Option<u8> {
+    match slot {
+        0 => Some(1),                          // ra
+        1 => Some(8),                          // s0/fp
+        2 => Some(9),                          // s1
+        3..=12 => Some(18 + (slot as u8 - 3)), // s2..s11
+        _ => None,
+    }
+}
+
 /// 32-bit word division/remainder (RV64 DIVW/DIVUW/REMW/REMUW), sign-extended.
 fn divw(a: u32, b: u32, signed: bool, rem: bool) -> u64 {
     if signed {
@@ -4278,7 +5098,11 @@ fn divw(a: u32, b: u32, signed: bool, rem: bool) -> u64 {
         r as i64 as u64
     } else {
         let r = if rem {
-            if b == 0 { a } else { a % b }
+            if b == 0 {
+                a
+            } else {
+                a % b
+            }
         } else if b == 0 {
             u32::MAX
         } else {
@@ -4395,6 +5219,15 @@ fn sext_sew(val: u64, eb: usize) -> i64 {
     }
 }
 
+#[inline]
+fn th_vdot_byte(v: u8, signed: bool) -> i64 {
+    if signed {
+        (v as i8) as i64
+    } else {
+        v as i64
+    }
+}
+
 /// Fixed-point rounding increment for a right shift by `d`, per `vxrm`
 /// (0=rnu, 1=rne, 2=rdn, 3=rod). `bits` are the low bits of the value being
 /// shifted (sign is irrelevant — only the discarded low bits matter).
@@ -4434,9 +5267,17 @@ fn vdiv_sew(a: u64, b: u64, eb: usize, bits: u32, rem: bool) -> u64 {
     let (sa, sb) = (sext_sew(a, eb), sext_sew(b, eb));
     let min = -1i64 << (bits - 1);
     if sb == 0 {
-        if rem { sa as u64 } else { -1i64 as u64 }
+        if rem {
+            sa as u64
+        } else {
+            -1i64 as u64
+        }
     } else if sa == min && sb == -1 {
-        if rem { 0 } else { min as u64 }
+        if rem {
+            0
+        } else {
+            min as u64
+        }
     } else if rem {
         (sa % sb) as u64
     } else {
@@ -4585,6 +5426,27 @@ fn brev8(a: u64) -> u64 {
     out
 }
 
+/// Zbkb `zip` for RV32: lower-half bits go to even positions, upper-half bits
+/// go to odd positions.
+fn zip32(a: u32) -> u32 {
+    let mut out = 0u32;
+    for i in 0..16 {
+        out |= ((a >> i) & 1) << (i * 2);
+        out |= ((a >> (i + 16)) & 1) << (i * 2 + 1);
+    }
+    out
+}
+
+/// Zbkb `unzip`, the inverse of [`zip32`].
+fn unzip32(a: u32) -> u32 {
+    let mut out = 0u32;
+    for i in 0..16 {
+        out |= ((a >> (i * 2)) & 1) << i;
+        out |= ((a >> (i * 2 + 1)) & 1) << (i + 16);
+    }
+    out
+}
+
 /// Carry-less multiply (low XLEN bits).
 fn clmul(a: u64, b: u64, xbits: u32) -> u64 {
     let mut out: u64 = 0;
@@ -4649,6 +5511,11 @@ mod tests {
         c.step()
     }
 
+    fn run_half(c: &mut RiscVCpu, h: u16) -> RiscVExit {
+        c.write_memory(c.pc(), &h.to_le_bytes()).unwrap();
+        c.step()
+    }
+
     #[test]
     fn addi_and_add() {
         let mut c = cpu();
@@ -4665,6 +5532,38 @@ mod tests {
         // addw x3, x1, x2 -> (5+7) sign-extended = 12
         run_one(&mut c, r_type(0, 2, 1, 0, 3, 0x3b));
         assert_eq!(c.x(3), 12);
+    }
+
+    #[test]
+    fn xida_sltw_compares_low_words_signed() {
+        let mut cfg = RiscVConfig::rv64gc();
+        cfg.isa.xida_sltw = true;
+        let mut c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+        c.set_x(1, 0x0000_0000_8000_0000);
+        c.set_x(2, 0x0000_0000_7fff_ffff);
+        run_one(&mut c, r_type(0, 2, 1, 2, 3, 0x3b));
+        assert_eq!(c.x(3), 1);
+
+        c.set_x(1, 0x0000_0001_0000_0000);
+        c.set_x(2, 0xffff_ffff_ffff_ffff);
+        run_one(&mut c, r_type(0, 2, 1, 2, 4, 0x3b));
+        assert_eq!(c.x(4), 0);
+    }
+
+    #[test]
+    fn q_decode_only_ops_trap_on_execute() {
+        let mut cfg = RiscVConfig::rv64gc();
+        cfg.isa.q = true;
+        let mut c = RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)));
+        let fadd_q = r_type(0b0000011, 11, 10, 0, 12, 0x53);
+
+        match run_one(&mut c, fadd_q) {
+            RiscVExit::Trap(trap) => {
+                assert_eq!(trap.cause, cause::ILLEGAL_INSTR);
+                assert_eq!(trap.tval, fadd_q as u64);
+            }
+            other => panic!("expected illegal-instruction trap, got {other:?}"),
+        }
     }
 
     #[test]
@@ -4862,6 +5761,73 @@ mod tests {
     }
 
     #[test]
+    fn privileged_fences_are_flat_memory_noops() {
+        let mut c = cpu();
+        c.set_pc(0x300);
+        c.set_x(10, 0x4000);
+        c.set_x(11, 0x22);
+        let sys =
+            |funct7: u32, rs2: u32, rs1: u32| (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | 0x73;
+        for w in [
+            sys(0x08, 0x04, 10), // sfence.vm a0
+            sys(0x09, 11, 10),   // sfence.vma a0, a1
+            sys(0x0b, 11, 10),   // sinval.vma a0, a1
+            sys(0x0c, 0, 0),     // sfence.w.inval
+            sys(0x0c, 1, 0),     // sfence.inval.ir
+            sys(0x11, 11, 10),   // hfence.vvma a0, a1
+            sys(0x13, 11, 10),   // hinval.vvma a0, a1
+            sys(0x31, 11, 10),   // hfence.gvma a0, a1
+            sys(0x33, 11, 10),   // hinval.gvma a0, a1
+        ] {
+            assert_eq!(run_one(&mut c, w), RiscVExit::Continue);
+        }
+        assert_eq!(c.x(10), 0x4000);
+        assert_eq!(c.x(11), 0x22);
+        assert_eq!(c.pc(), 0x300 + 9 * 4);
+    }
+
+    #[test]
+    fn hypervisor_virtual_load_store_use_flat_memory() {
+        let mut c = cpu();
+        c.set_x(1, 0x3000);
+        c.write_memory(0x3000, &[0x80, 0x7f, 0x34, 0x12, 0, 0, 0, 0])
+            .unwrap();
+
+        // hlv.b x3, (x1)
+        assert_eq!(
+            run_one(
+                &mut c,
+                (0x30 << 25) | (1 << 15) | (4 << 12) | (3 << 7) | 0x73
+            ),
+            RiscVExit::Continue
+        );
+        assert_eq!(c.x(3), (-128i64) as u64);
+
+        // hlvx.hu x4, (x1)
+        assert_eq!(
+            run_one(
+                &mut c,
+                (0x32 << 25) | (3 << 20) | (1 << 15) | (4 << 12) | (4 << 7) | 0x73
+            ),
+            RiscVExit::Continue
+        );
+        assert_eq!(c.x(4), 0x7f80);
+
+        // hsv.w x5, (x1)
+        c.set_x(5, 0xaabb_ccdd);
+        assert_eq!(
+            run_one(
+                &mut c,
+                (0x35 << 25) | (5 << 20) | (1 << 15) | (4 << 12) | 0x73
+            ),
+            RiscVExit::Continue
+        );
+        let mut buf = [0u8; 4];
+        c.read_memory(0x3000, &mut buf).unwrap();
+        assert_eq!(u32::from_le_bytes(buf), 0xaabb_ccdd);
+    }
+
+    #[test]
     fn cbo_zero_zeroes_aligned_cache_block() {
         let mut c = cpu();
         let pattern = [0xa5; 0xc0];
@@ -4882,6 +5848,75 @@ mod tests {
         assert_eq!(before, [0xa5; 0x40]);
         assert_eq!(zeroed, [0; 0x40]);
         assert_eq!(after, [0xa5; 0x40]);
+    }
+
+    #[test]
+    fn cache_and_wait_hints_retire_without_state_changes() {
+        let mut c = cpu();
+        let pattern = [0xa5; 0x80];
+        c.write_memory(0x4000, &pattern).unwrap();
+        c.set_x(10, 0x4040);
+        c.set_pc(0x200);
+
+        let enc_cbo = |rs2: u32| (rs2 << 20) | (10 << 15) | (2 << 12) | 0x0f;
+        for w in [
+            0x0100_000f,                               // pause
+            0x00d0_0073,                               // wrs.nto
+            0x01d0_0073,                               // wrs.sto
+            (2 << 20) | 0x33,                          // ntl.p1
+            enc_cbo(0),                                // cbo.inval
+            enc_cbo(1),                                // cbo.clean
+            enc_cbo(2),                                // cbo.flush
+            (1 << 20) | (10 << 15) | (6 << 12) | 0x13, // prefetch.r
+        ] {
+            assert_eq!(run_one(&mut c, w), RiscVExit::Continue);
+        }
+
+        let mut out = [0u8; 0x80];
+        c.read_memory(0x4000, &mut out).unwrap();
+        assert_eq!(out, pattern);
+    }
+
+    #[test]
+    fn amocas_word_double_and_quad() {
+        let mut c = cpu();
+        c.set_x(10, 0x5000);
+        c.write_memory(0x5000, &0x1122_3344u32.to_le_bytes())
+            .unwrap();
+        c.set_x(5, 0x1122_3344);
+        c.set_x(6, 0xaabb_ccdd);
+        let amocas_w = (0b00101 << 27) | (6 << 20) | (10 << 15) | (0b010 << 12) | (5 << 7) | 0x2f;
+        assert_eq!(run_one(&mut c, amocas_w), RiscVExit::Continue);
+        assert_eq!(c.x(5), 0x1122_3344);
+        assert_eq!(c.mem_read_u64(0x5000).unwrap() as u32, 0xaabb_ccdd);
+
+        c.write_memory(0x5008, &0x0123_4567_89ab_cdefu64.to_le_bytes())
+            .unwrap();
+        c.set_x(10, 0x5008);
+        c.set_x(5, 0); // compare mismatch
+        c.set_x(6, 0xfedc_ba98_7654_3210);
+        let amocas_d = (0b00101 << 27) | (6 << 20) | (10 << 15) | (0b011 << 12) | (5 << 7) | 0x2f;
+        assert_eq!(run_one(&mut c, amocas_d), RiscVExit::Continue);
+        assert_eq!(c.x(5), 0x0123_4567_89ab_cdef);
+        assert_eq!(c.mem_read_u64(0x5008).unwrap(), 0x0123_4567_89ab_cdef);
+
+        let old_lo = 0x1111_2222_3333_4444u64;
+        let old_hi = 0x5555_6666_7777_8888u64;
+        let new_lo = 0x9999_aaaa_bbbb_ccccu64;
+        let new_hi = 0xdddd_eeee_ffff_0001u64;
+        c.write_memory(0x5010, &old_lo.to_le_bytes()).unwrap();
+        c.write_memory(0x5018, &old_hi.to_le_bytes()).unwrap();
+        c.set_x(10, 0x5010);
+        c.set_x(6, old_lo);
+        c.set_x(7, old_hi);
+        c.set_x(8, new_lo);
+        c.set_x(9, new_hi);
+        let amocas_q = (0b00101 << 27) | (8 << 20) | (10 << 15) | (0b100 << 12) | (6 << 7) | 0x2f;
+        assert_eq!(run_one(&mut c, amocas_q), RiscVExit::Continue);
+        assert_eq!(c.x(6), old_lo);
+        assert_eq!(c.x(7), old_hi);
+        assert_eq!(c.mem_read_u64(0x5010).unwrap(), new_lo);
+        assert_eq!(c.mem_read_u64(0x5018).unwrap(), new_hi);
     }
 
     #[test]
@@ -4959,7 +5994,10 @@ mod tests {
         assert_eq!(c.csr_read(0x144).unwrap(), ssip | stip);
         c.csr_write(0x144, 0).unwrap();
         assert_eq!(c.csr_read(0x344).unwrap() & ssip, 0);
-        assert_eq!(c.csr_read(0x344).unwrap() & (msip | mtip | stip), msip | mtip | stip);
+        assert_eq!(
+            c.csr_read(0x344).unwrap() & (msip | mtip | stip),
+            msip | mtip | stip
+        );
     }
 
     #[test]
@@ -5049,6 +6087,62 @@ mod tests {
     }
 
     #[test]
+    fn rv32_zbkb_zip_unzip_interleave_bits() {
+        let mut c = rv32();
+        c.set_x(1, 0x0001_0002);
+        run_one(
+            &mut c,
+            (0x04 << 25) | (15 << 20) | (1 << 15) | (1 << 12) | (3 << 7) | 0x13,
+        );
+        assert_eq!(c.x(3), 0x0000_0006);
+
+        c.set_x(4, c.x(3));
+        run_one(
+            &mut c,
+            (0x04 << 25) | (15 << 20) | (4 << 15) | (5 << 12) | (5 << 7) | 0x13,
+        );
+        assert_eq!(c.x(5), 0x0001_0002);
+    }
+
+    #[test]
+    fn rv32_aes32_scalar_crypto() {
+        let mut c = rv32();
+        c.set_x(1, 0x1020_3040);
+        c.set_x(2, 0x0011_2233);
+
+        run_one(&mut c, r_type(0x11, 2, 1, 0, 3, 0x33)); // aes32esi bs=0
+        run_one(&mut c, r_type(0x33, 2, 1, 0, 4, 0x33)); // aes32esmi bs=1
+        run_one(&mut c, r_type(0x55, 2, 1, 0, 5, 0x33)); // aes32dsi bs=2
+        run_one(&mut c, r_type(0x77, 2, 1, 0, 6, 0x33)); // aes32dsmi bs=3
+
+        assert_eq!(c.x(3), 0x1020_3083);
+        assert_eq!(c.x(4), 0x83b3_0dee);
+        assert_eq!(c.x(5), 0x10c3_3040);
+        assert_eq!(c.x(6), 0x4170_97b4);
+    }
+
+    #[test]
+    fn rv32_sha512_pair_crypto() {
+        let mut c = rv32();
+        c.set_x(1, 0x89ab_cdef);
+        c.set_x(2, 0x0123_4567);
+
+        run_one(&mut c, r_type(0x2a, 2, 1, 0, 3, 0x33)); // sha512sig0l
+        run_one(&mut c, r_type(0x2e, 2, 1, 0, 4, 0x33)); // sha512sig0h
+        run_one(&mut c, r_type(0x2b, 2, 1, 0, 5, 0x33)); // sha512sig1l
+        run_one(&mut c, r_type(0x2f, 2, 1, 0, 6, 0x33)); // sha512sig1h
+        run_one(&mut c, r_type(0x28, 2, 1, 0, 7, 0x33)); // sha512sum0r
+        run_one(&mut c, r_type(0x29, 2, 1, 0, 8, 0x33)); // sha512sum1r
+
+        assert_eq!(c.x(3), 0x6c4f_1aa1);
+        assert_eq!(c.x(4), 0xa24f_1aa1);
+        assert_eq!(c.x(5), 0xbbd4_317a);
+        assert_eq!(c.x(6), 0x27d4_317a);
+        assert_eq!(c.x(7), 0x0c7e_c1ab);
+        assert_eq!(c.x(8), 0x3347_5567);
+    }
+
+    #[test]
     fn rv32_sra_signed_32() {
         let mut c = rv32();
         c.set_x(1, 0xffff_0000); // negative i32
@@ -5074,7 +6168,7 @@ mod tests {
         c.set_x(1, 0x8000_0000); // i32::MIN
         c.set_x(2, 2);
         run_one(&mut c, r_type(1, 2, 1, 1, 3, 0x33)); // mulh (signed high 32)
-        // (-2^31) * 2 = -2^32; high 32 bits = 0xffffffff
+                                                      // (-2^31) * 2 = -2^32; high 32 bits = 0xffffffff
         assert_eq!(c.x(3), 0xffff_ffff);
         // div overflow: i32::MIN / -1 = i32::MIN
         c.set_x(2, 0xffff_ffff);
@@ -5107,6 +6201,134 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn rv32_zilsd_pair_load_store() {
+        let mut isa = Isa::rv64gc();
+        isa.zilsd = true;
+        let mut c = RiscVCpu::new(
+            RiscVConfig::rv32(isa),
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+        c.set_x(10, 0x200);
+        c.write_memory(0x208, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
+            .unwrap();
+
+        let load_pair = (8u32 << 20) | (10 << 15) | (3 << 12) | (6 << 7) | 0x03;
+        run_one(&mut c, load_pair);
+        assert_eq!(c.x(6), 0x1122_3344);
+        assert_eq!(c.x(7), 0xaabb_ccdd);
+
+        c.set_x(6, 0x5566_7788);
+        c.set_x(7, 0x99aa_bbcc);
+        let store_pair = (6 << 20) | (10 << 15) | (3 << 12) | (8 << 7) | 0x23;
+        run_one(&mut c, store_pair);
+        assert_eq!(c.mem_read_u64(0x208).unwrap(), 0x99aa_bbcc_5566_7788);
+    }
+
+    #[test]
+    fn rv32_zclsd_compressed_pair_load() {
+        let mut isa = Isa::rv64gc();
+        isa.zclsd = true;
+        let mut c = RiscVCpu::new(
+            RiscVConfig::rv32(isa),
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+        c.set_x(2, 0x300);
+        c.write_memory(0x300, &0x8877_6655_4433_2211u64.to_le_bytes())
+            .unwrap();
+
+        let c_ldsp = ((0b011 << 13) | (8 << 7) | 0b10) as u16;
+        run_half(&mut c, c_ldsp);
+        assert_eq!(c.x(8), 0x4433_2211);
+        assert_eq!(c.x(9), 0x8877_6655);
+    }
+
+    #[test]
+    fn zcmp_push_pop_and_return() {
+        let mut isa = Isa::rv64gc();
+        isa.zcmp = true;
+        let mut c = RiscVCpu::new(
+            RiscVConfig {
+                xlen: Xlen::Rv64,
+                isa,
+            },
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+        c.set_x(2, 0x8000);
+        c.set_x(1, 0x1235);
+        c.set_x(8, 0x8888);
+        c.set_x(9, 0x9999);
+
+        let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | 0b10) as u16;
+        run_half(&mut c, cm_push);
+        assert_eq!(c.x(2), 0x7fe0);
+        assert_eq!(c.mem_read_u64(0x7ff8).unwrap(), 0x1235);
+        assert_eq!(c.mem_read_u64(0x7ff0).unwrap(), 0x8888);
+        assert_eq!(c.mem_read_u64(0x7fe8).unwrap(), 0x9999);
+
+        c.set_x(1, 0);
+        c.set_x(8, 0);
+        c.set_x(9, 0);
+        c.set_x(10, 0xffff);
+        let cm_popretz = ((0b101 << 13) | (0x1c << 8) | (5 << 4) | 0b10) as u16;
+        run_half(&mut c, cm_popretz);
+        assert_eq!(c.x(2), 0x8000);
+        assert_eq!(c.x(1), 0x1235);
+        assert_eq!(c.x(8), 0x8888);
+        assert_eq!(c.x(9), 0x9999);
+        assert_eq!(c.x(10), 0);
+        assert_eq!(c.pc(), 0x1234);
+    }
+
+    #[test]
+    fn zcmp_register_moves_and_zcmt_table_jumps() {
+        let mut isa = Isa::rv64gc();
+        isa.zcmp = true;
+        isa.zcmt = true;
+        let mut c = RiscVCpu::new(
+            RiscVConfig {
+                xlen: Xlen::Rv64,
+                isa,
+            },
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+
+        c.set_x(10, 0xaaaa);
+        c.set_x(11, 0xbbbb);
+        let cm_mvsa01 =
+            ((0b101 << 13) | (0b011 << 10) | (0 << 7) | (0b01 << 5) | (2 << 2) | 0b10) as u16;
+        run_half(&mut c, cm_mvsa01);
+        assert_eq!(c.x(8), 0xaaaa);
+        assert_eq!(c.x(18), 0xbbbb);
+
+        c.set_x(9, 0x9999);
+        c.set_x(19, 0x1919);
+        let cm_mva01s =
+            ((0b101 << 13) | (0b011 << 10) | (1 << 7) | (0b11 << 5) | (3 << 2) | 0b10) as u16;
+        run_half(&mut c, cm_mva01s);
+        assert_eq!(c.x(10), 0x9999);
+        assert_eq!(c.x(11), 0x1919);
+
+        c.csr_write(0x017, 0x4000).unwrap();
+        c.write_memory(0x4000 + 17 * 8, &0x5000u64.to_le_bytes())
+            .unwrap();
+        let cm_jt = ((0b101 << 13) | (17 << 2) | 0b10) as u16;
+        run_half(&mut c, cm_jt);
+        assert_eq!(c.pc(), 0x5000);
+
+        c.set_pc(0x200);
+        c.write_memory(0x4000 + 32 * 8, &0x6000u64.to_le_bytes())
+            .unwrap();
+        let cm_jalt = ((0b101 << 13) | (32 << 2) | 0b10) as u16;
+        run_half(&mut c, cm_jalt);
+        assert_eq!(c.pc(), 0x6000);
+        assert_eq!(c.x(1), 0x202);
+
+        c.set_pc(0x300);
+        c.csr_write(0x017, 0x4001).unwrap();
+        assert!(matches!(run_half(&mut c, cm_jt), RiscVExit::Trap(_)));
+    }
+
     /// Encode an OP-V vector instruction (funct6/vm/vs2/vs1|rs1/funct3/vd).
     fn op_v(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
         (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
@@ -5116,7 +6338,10 @@ mod tests {
     fn cpu_e8m1() -> RiscVCpu {
         let mut c = cpu();
         // vsetvli x1, x0, e8, m1 (rs1=x0 keeps AVL=VLMAX).
-        run_one(&mut c, (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57);
+        run_one(
+            &mut c,
+            (0u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57,
+        );
         c
     }
 
@@ -5173,7 +6398,10 @@ mod tests {
         // This reserved register-group size must trap before any access.
         let mut c = cpu();
         // vsetvli x1, x0, e8, m8 (vtype = vlmul=011, vsew=000 => 0b00011).
-        run_one(&mut c, (0b00011u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57);
+        run_one(
+            &mut c,
+            (0b00011u32 << 20) | (0 << 15) | (7 << 12) | (1 << 7) | 0x57,
+        );
         // vlseg2e8.v v8, (x10): nf field=1, mop=00, lumop=0, width=0, vd=8.
         let vlseg = (1u32 << 29) | (1 << 25) | (10 << 15) | (0 << 12) | (8 << 7) | 0x07;
         assert!(matches!(run_one(&mut c, vlseg), RiscVExit::Trap(_)));
@@ -5282,7 +6510,12 @@ mod tests {
         // {1,2,4,8} (simm 0/1/3/7), unmasked, with vd/vs2 aligned to nr are
         // defined. Reserved simm, masked, or misaligned forms must trap.
         let op_mvr = |vm: u32, vs2: u32, simm: u32, vd: u32| -> u32 {
-            (0b100111u32 << 26) | (vm << 25) | (vs2 << 20) | (simm << 15) | (0b011 << 12) | (vd << 7)
+            (0b100111u32 << 26)
+                | (vm << 25)
+                | (vs2 << 20)
+                | (simm << 15)
+                | (0b011 << 12)
+                | (vd << 7)
                 | 0x57
         };
         let setup = || {
@@ -5401,6 +6634,39 @@ mod tests {
         RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)))
     }
 
+    fn rv32_hazard3() -> RiscVCpu {
+        let cfg = RiscVConfig {
+            xlen: Xlen::Rv32,
+            isa: Isa {
+                xhazard3: true,
+                ..Isa::rv_i()
+            },
+        };
+        RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)))
+    }
+
+    fn rv64_andes() -> RiscVCpu {
+        let cfg = RiscVConfig {
+            xlen: Xlen::Rv64,
+            isa: Isa {
+                xandes: true,
+                ..Isa::rv64gc()
+            },
+        };
+        RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)))
+    }
+
+    fn rv64_thead() -> RiscVCpu {
+        let cfg = RiscVConfig {
+            xlen: Xlen::Rv64,
+            isa: Isa {
+                xthead: true,
+                ..Isa::rv64gc()
+            },
+        };
+        RiscVCpu::new(cfg, Box::new(FlatMemory::new(0, 0x1_0000)))
+    }
+
     // CUSTOM-1 (0x2b) register form: r_type(funct7, rs2, rs1, funct3, rd, 0x2b).
     // CUSTOM-0 (0x0b) immediate form: r_type(funct7, imm5, rs1, funct3, rd, 0x0b).
 
@@ -5511,7 +6777,10 @@ mod tests {
     fn xsoteria_csr_scratch_permissive_only_when_enabled() {
         // On a ti50 hart, unmodeled/vendor CSRs are store-only scratch.
         let mut c = rv32_ti50();
-        for addr in [0x7c0u16, 0x7c1, 0x7d0, 0x3a0 /* pmpcfg0 */, 0x3b0 /* pmpaddr0 */] {
+        for addr in [
+            0x7c0u16, 0x7c1, 0x7d0, 0x3a0, /* pmpcfg0 */
+            0x3b0, /* pmpaddr0 */
+        ] {
             c.csr_write(addr, 0xdead_beef).unwrap();
             assert_eq!(c.csr_read(addr).unwrap(), 0xdead_beef);
         }
@@ -5521,6 +6790,317 @@ mod tests {
         let mut g = cpu();
         assert!(g.csr_write(0x7c0, 1).is_err());
         assert!(g.csr_read(0x7c0).is_err());
+    }
+
+    #[test]
+    fn xthead_scalar_arithmetic_and_fmv() {
+        let mut c = rv64_thead();
+
+        // th.addsl x3, x1, x2, 2 -> x1 + (x2 << 2).
+        c.set_x(1, 5);
+        c.set_x(2, 3);
+        run_one(&mut c, r_type(0x02, 2, 1, 0b001, 3, 0x0b));
+        assert_eq!(c.x(3), 17);
+
+        // th.srri x4, x5, 9.
+        c.set_x(5, 0x8000_0000_0000_0001);
+        run_one(&mut c, r_type(0x08, 9, 5, 0b001, 4, 0x0b));
+        assert_eq!(c.x(4), 0x00c0_0000_0000_0000);
+
+        // th.ext sign-extends the extracted field; th.extu zero-extends it.
+        c.set_x(10, 0xf0);
+        run_one(&mut c, r_type(7 << 1, 4, 10, 0b010, 6, 0x0b));
+        assert_eq!(c.x(6), u64::MAX);
+        run_one(&mut c, r_type(7 << 1, 4, 10, 0b011, 7, 0x0b));
+        assert_eq!(c.x(7), 0xf);
+
+        c.set_x(10, 0x0000_00ff_0000_0000);
+        run_one(&mut c, r_type(0x40, 0, 10, 0b001, 8, 0x0b));
+        assert_eq!(c.x(8), 0xffff_ff00_ffff_ffff);
+
+        c.set_x(9, 0x11);
+        c.set_x(10, 0);
+        run_one(&mut c, r_type(0x20, 10, 9, 0b001, 11, 0x0b));
+        assert_eq!(c.x(11), 0x11);
+        c.set_x(11, 0x55);
+        c.set_x(10, 1);
+        run_one(&mut c, r_type(0x20, 10, 9, 0b001, 11, 0x0b));
+        assert_eq!(c.x(11), 0x55);
+
+        c.set_x(12, 7);
+        c.set_x(13, 6);
+        c.set_x(14, 100);
+        run_one(&mut c, r_type(0x10, 13, 12, 0b001, 14, 0x0b));
+        assert_eq!(c.x(14), 142);
+
+        c.set_f(5, 0x1111_2222_3333_4444);
+        c.set_x(6, 0xaabb_ccdd);
+        run_one(&mut c, r_type(0x50, 0, 6, 0b001, 5, 0x0b));
+        assert_eq!(c.f(5), 0xaabb_ccdd_3333_4444);
+        run_one(&mut c, r_type(0x60, 0, 5, 0b001, 7, 0x0b));
+        assert_eq!(c.x(7), 0xaabb_ccdd);
+    }
+
+    #[test]
+    fn xthead_indexed_integer_and_fp_memory() {
+        let mut c = rv64_thead();
+
+        c.set_x(10, 0x100);
+        c.write_memory(0x100, &[0xfe]).unwrap();
+        run_one(&mut c, r_type(0x0c, 2, 10, 0b100, 5, 0x0b)); // th.lbia x5,(x10),2,0
+        assert_eq!(c.x(5), (-2i64) as u64);
+        assert_eq!(c.x(10), 0x102);
+
+        c.set_x(10, 0x120);
+        c.set_x(6, 0x1122_3344);
+        run_one(&mut c, r_type(0x25, 1, 10, 0b101, 6, 0x0b)); // th.swib x6,(x10),1,1
+        assert_eq!(c.x(10), 0x122);
+        let mut word = [0u8; 4];
+        c.read_memory(0x122, &mut word).unwrap();
+        assert_eq!(u32::from_le_bytes(word), 0x1122_3344);
+
+        c.set_x(10, 0x200);
+        c.set_x(11, 3);
+        c.write_memory(0x20c, &0x8000_0000u32.to_le_bytes())
+            .unwrap();
+        run_one(&mut c, r_type(0x22, 11, 10, 0b100, 7, 0x0b)); // th.lrw x7,x10,x11,2
+        assert_eq!(c.x(7), 0xffff_ffff_8000_0000);
+
+        c.set_x(10, 0x300);
+        c.set_x(5, 0xffff_ffff_89ab_cdef);
+        c.set_x(6, 0x1122_3344);
+        run_one(&mut c, r_type(0x70, 6, 10, 0b101, 5, 0x0b)); // th.swd x5,x6,0(x10)
+        run_one(&mut c, r_type(0x78, 8, 10, 0b100, 7, 0x0b)); // th.lwud x7,x8,0(x10)
+        assert_eq!(c.x(7), 0x89ab_cdef);
+        assert_eq!(c.x(8), 0x1122_3344);
+
+        c.set_x(10, 0x400);
+        c.set_x(11, 4);
+        c.set_f(5, 0xffff_ffff_aabb_ccdd);
+        run_one(&mut c, r_type(0x20, 11, 10, 0b111, 5, 0x0b)); // th.fsrw f5,x10,x11,0
+        let mut fp_word = [0u8; 4];
+        c.read_memory(0x404, &mut fp_word).unwrap();
+        assert_eq!(u32::from_le_bytes(fp_word), 0xaabb_ccdd);
+        run_one(&mut c, r_type(0x20, 11, 10, 0b110, 6, 0x0b)); // th.flrw f6,x10,x11,0
+        assert_eq!(c.f(6), 0xffff_ffff_aabb_ccdd);
+    }
+
+    #[test]
+    fn xthead_vdot_documented_vmaqa_executes() {
+        let mut c = rv64_thead();
+        c.set_vl_vtype(2, 2 << 3); // e32,m1
+
+        let mut vd = [0u8; VLENB as usize];
+        vd[0..4].copy_from_slice(&10u32.to_le_bytes());
+        vd[4..8].copy_from_slice(&0xffff_ff00u32.to_le_bytes());
+        c.set_vreg(1, &vd);
+
+        let mut vs1 = [0u8; VLENB as usize];
+        vs1[0..4].copy_from_slice(&[1, 2, 0xff, 0x80]);
+        vs1[4..8].copy_from_slice(&[0xff, 0, 1, 2]);
+        c.set_vreg(2, &vs1);
+
+        let mut vs2 = [0u8; VLENB as usize];
+        vs2[0..4].copy_from_slice(&[3, 4, 5, 0xff]);
+        vs2[4..8].copy_from_slice(&[1, 2, 3, 4]);
+        c.set_vreg(3, &vs2);
+
+        assert_eq!(
+            run_one(&mut c, r_type((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b)),
+            RiscVExit::Continue
+        );
+
+        let out = c.vreg(1);
+        assert_eq!(u32::from_le_bytes(out[0..4].try_into().unwrap()), 144);
+        assert_eq!(
+            u32::from_le_bytes(out[4..8].try_into().unwrap()),
+            0xffff_ff0a
+        );
+    }
+
+    #[test]
+    fn xthead_vdot_mask_is_byte_granular() {
+        let mut c = rv64_thead();
+        c.set_vl_vtype(1, 2 << 3); // e32,m1
+
+        let mut vd = [0u8; VLENB as usize];
+        vd[0..4].copy_from_slice(&100u32.to_le_bytes());
+        c.set_vreg(1, &vd);
+
+        let mut vs2 = [0u8; VLENB as usize];
+        vs2[0..4].copy_from_slice(&[5, 6, 7, 8]);
+        c.set_vreg(3, &vs2);
+
+        let mut mask = [0u8; VLENB as usize];
+        mask[0] = 0b0000_0101; // include source bytes 0 and 2 only.
+        c.set_vreg(0, &mask);
+        c.set_x(5, 0xfc03_fe01); // signed bytes: 1, -2, 3, -4.
+
+        assert_eq!(
+            run_one(&mut c, r_type(0x25 << 1, 3, 5, 0b110, 1, 0x0b)),
+            RiscVExit::Continue
+        );
+
+        let out = c.vreg(1);
+        assert_eq!(u32::from_le_bytes(out[0..4].try_into().unwrap()), 126);
+    }
+
+    #[test]
+    fn xthead_vdot_rejects_bad_sew_and_undocumented_packed_exec() {
+        let mut bad_sew = rv64_thead();
+        bad_sew.set_vl_vtype(1, 0); // e8,m1 is illegal for documented vmaqa*.
+        assert!(matches!(
+            run_one(&mut bad_sew, r_type((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b)),
+            RiscVExit::Trap(_)
+        ));
+
+        let mut packed = rv64_thead();
+        packed.set_vl_vtype(1, 2 << 3);
+        assert!(matches!(
+            run_one(&mut packed, r_type((0x20 << 1) | 1, 3, 2, 0b111, 1, 0x0b)),
+            RiscVExit::Trap(_)
+        ));
+    }
+
+    #[test]
+    fn hazard3_bextm_and_bextmi_extract_multiple_bits() {
+        let mut c = rv32_hazard3();
+
+        // h3.bextm x3, x1, x2, 4 extracts bits [rs2 +: 4].
+        c.set_x(1, 0b1101_0110_1001);
+        c.set_x(2, 4);
+        run_one(&mut c, r_type(0b0000110, 2, 1, 0b000, 3, 0x0b));
+        assert_eq!(c.x(3), 0b0110);
+
+        // h3.bextmi x4, x1, 8, 6 extracts an immediate-position field.
+        let imm12 = (0b101 << 6) | 8;
+        run_one(
+            &mut c,
+            (imm12 << 20) | (1 << 15) | (0b100 << 12) | (4 << 7) | 0x0b,
+        );
+        assert_eq!(c.x(4), 0b1101);
+
+        // Register shift amounts use the RV32 low 5 bits.
+        c.set_x(2, 36);
+        run_one(&mut c, r_type(0b0000010, 2, 1, 0b000, 5, 0x0b));
+        assert_eq!(c.x(5), 0b10);
+    }
+
+    #[test]
+    fn hazard3_power_hints_are_gated() {
+        let mut h3 = rv32_hazard3();
+        assert_eq!(
+            run_one(&mut h3, r_type(0, 0, 0, 0b010, 0, 0x33)),
+            RiscVExit::Wfi
+        );
+
+        let mut h3_unblock = rv32_hazard3();
+        assert_eq!(
+            run_one(&mut h3_unblock, r_type(0, 1, 0, 0b010, 0, 0x33)),
+            RiscVExit::Continue
+        );
+
+        let mut plain = RiscVCpu::new(
+            RiscVConfig::rv32(Isa::rv_i()),
+            Box::new(FlatMemory::new(0, 0x1_0000)),
+        );
+        assert_eq!(
+            run_one(&mut plain, r_type(0, 0, 0, 0b010, 0, 0x33)),
+            RiscVExit::Continue
+        );
+    }
+
+    #[test]
+    fn andes_gp_relative_load_store_and_addigp() {
+        let mut c = rv64_andes();
+        c.set_x(3, 0x200);
+        c.write_memory(0x200, &[0x80, 0x34, 0x12, 0xef, 0xcd, 0xab, 0x89, 0x67])
+            .unwrap();
+
+        run_one(&mut c, (5 << 7) | 0x0b); // nds.lbgp t0, 0
+        assert_eq!(c.x(5), 0xffff_ffff_ffff_ff80);
+        run_one(&mut c, (0b10 << 12) | (6 << 7) | 0x0b); // nds.lbugp t1, 0
+        assert_eq!(c.x(6), 0x80);
+        run_one(&mut c, (0b001 << 12) | (7 << 7) | 0x2b); // nds.lhgp t2, 0
+        assert_eq!(c.x(7), 0x3480);
+        run_one(&mut c, (0b010 << 12) | (28 << 7) | 0x2b); // nds.lwgp t3, 0
+        assert_eq!(c.x(28), 0xffff_ffff_ef12_3480);
+        run_one(&mut c, (0b011 << 12) | (29 << 7) | 0x2b); // nds.ldgp t4, 0
+        assert_eq!(c.x(29), 0x6789_abcd_ef12_3480);
+
+        c.set_x(30, 0xaa);
+        run_one(&mut c, (30 << 20) | (0b11 << 12) | 0x0b); // nds.sbgp t5, 0
+        let mut one = [0u8; 1];
+        c.read_memory(0x200, &mut one).unwrap();
+        assert_eq!(one[0], 0xaa);
+
+        run_one(&mut c, (31 << 7) | (0b01 << 12) | 0x0b); // nds.addigp t6, 0
+        assert_eq!(c.x(31), 0x200);
+    }
+
+    #[test]
+    fn andes_bitfield_lea_branch_and_byte_scans() {
+        let mut c = rv64_andes();
+
+        c.set_x(10, 0b1011_0100);
+        run_one(
+            &mut c,
+            (7 << 26) | (4 << 20) | (10 << 15) | (0b010 << 12) | (5 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(5), 0b1011);
+        run_one(
+            &mut c,
+            (7 << 26) | (4 << 20) | (10 << 15) | (0b011 << 12) | (6 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(6), 0xffff_ffff_ffff_fffb);
+
+        c.set_x(4, 0x1000);
+        c.set_x(5, 3);
+        run_one(
+            &mut c,
+            (0x06 << 25) | (5 << 20) | (4 << 15) | (7 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(7), 0x100c);
+        c.set_x(5, 0xffff_ffff_0000_0003);
+        run_one(
+            &mut c,
+            (0x0a << 25) | (5 << 20) | (4 << 15) | (28 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(28), 0x100c);
+
+        c.set_x(10, 0);
+        let pc = c.pc();
+        run_one(
+            &mut c,
+            (4 << 8) | (1 << 20) | (10 << 15) | (0b111 << 12) | 0x5b,
+        );
+        assert_eq!(c.pc(), pc + 8);
+
+        c.set_x(1, 0x4433_2211);
+        c.set_x(2, 0x33);
+        run_one(
+            &mut c,
+            (0x10 << 25) | (2 << 20) | (1 << 15) | (3 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(3), 2);
+
+        c.set_x(1, 0x1122_3344);
+        c.set_x(2, 0x1122_0044);
+        run_one(
+            &mut c,
+            (0x12 << 25) | (2 << 20) | (1 << 15) | (4 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(4), 1);
+        run_one(
+            &mut c,
+            (0x11 << 25) | (2 << 20) | (1 << 15) | (5 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(5), 1);
+        run_one(
+            &mut c,
+            (0x13 << 25) | (2 << 20) | (1 << 15) | (6 << 7) | 0x5b,
+        );
+        assert_eq!(c.x(6), 1);
     }
 
     #[test]

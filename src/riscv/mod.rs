@@ -37,8 +37,8 @@ pub mod memory;
 pub mod rvc;
 
 pub use cpu::{RiscVConfig, RiscVCpu, RiscVExit, Trap};
-pub use csr::{Csr, csr_name};
-pub use decode::{DecodeError, Insn, Op, decode, decode_at};
+pub use csr::{csr_name, Csr};
+pub use decode::{decode, decode_at, DecodeError, Insn, Op};
 pub use float::RoundingMode;
 pub use memory::{FlatMemory, MemError, MemResult, Memory};
 
@@ -83,14 +83,28 @@ pub struct Isa {
     pub f: bool,
     /// D: double-precision floating point (implies F).
     pub d: bool,
+    /// Q: quad-precision floating point (decode/disassembly parity only today).
+    pub q: bool,
     /// C: compressed instructions.
     pub c: bool,
     /// Zicsr: control and status register access.
     pub zicsr: bool,
     /// Zifencei: instruction-stream fence.
     pub zifencei: bool,
+    /// Zihintpause: PAUSE hint.
+    pub zihintpause: bool,
+    /// Zihintntl: non-temporal locality hints.
+    pub zihintntl: bool,
+    /// Zacas: atomic compare-and-swap.
+    pub zacas: bool,
+    /// Zawrs: wait-on-reservation-set hints.
+    pub zawrs: bool,
+    /// Zicbom: cache-block clean/flush/invalidate.
+    pub zicbom: bool,
     /// Zicboz: cache-block zero.
     pub zicboz: bool,
+    /// Zicbop: cache-block prefetch hints.
+    pub zicbop: bool,
     /// Zba: address generation.
     pub zba: bool,
     /// Zbb: basic bit manipulation.
@@ -121,6 +135,18 @@ pub struct Isa {
     pub zknd: bool,
     /// Zcb: additional compressed instructions.
     pub zcb: bool,
+    /// Zcmp: compressed PUSH/POP and double-move instructions.
+    pub zcmp: bool,
+    /// Zcmt: compressed table-jump instructions.
+    pub zcmt: bool,
+    /// Zclsd: RV32 compressed load/store register-pair instructions.
+    pub zclsd: bool,
+    /// Zilsd: RV32 load/store register-pair instructions.
+    pub zilsd: bool,
+    /// H: hypervisor privileged instructions.
+    pub h: bool,
+    /// Svinval: fine-grained address-translation cache invalidation.
+    pub svinval: bool,
     /// V: vector extension (RVV 1.0 — full data path: arithmetic, fixed-point,
     /// FP, reductions, permutes, conversions, and all load/store modes).
     pub v: bool,
@@ -128,6 +154,17 @@ pub struct Isa {
     /// extension. Two custom opcodes (CUSTOM-0 = 0x0b, CUSTOM-1 = 0x2b), RV32
     /// only. See [`crate::backend::emulator::gsc`].
     pub xsoteria: bool,
+    /// XAndesPerf: Andes performance extension custom instructions.
+    pub xandes: bool,
+    /// XThead: T-Head/Xuantie vendor scalar custom instructions.
+    pub xthead: bool,
+    /// XHazard3: Hazard3/RP2350 vendor power hints and bit-extract-multiple
+    /// instructions.
+    pub xhazard3: bool,
+    /// XidaSltw: Hex-Rays/IDA compatibility decode for the non-standard
+    /// OP-32 `sltw` table entry. Disabled by default because standard
+    /// hardware treats the encoding as reserved.
+    pub xida_sltw: bool,
 }
 
 impl Isa {
@@ -138,10 +175,17 @@ impl Isa {
             a: true,
             f: true,
             d: true,
+            q: false,
             c: true,
             zicsr: true,
             zifencei: true,
+            zihintpause: true,
+            zihintntl: true,
+            zacas: true,
+            zawrs: true,
+            zicbom: true,
             zicboz: true,
+            zicbop: true,
             zba: true,
             zbb: true,
             zbc: true,
@@ -157,8 +201,18 @@ impl Isa {
             zkne: true,
             zknd: true,
             zcb: true,
+            zcmp: false,
+            zcmt: false,
+            zclsd: false,
+            zilsd: false,
+            h: true,
+            svinval: true,
             v: true,
             xsoteria: false,
+            xandes: false,
+            xthead: false,
+            xhazard3: false,
+            xida_sltw: false,
         }
     }
 
@@ -169,10 +223,17 @@ impl Isa {
             a: false,
             f: false,
             d: false,
+            q: false,
             c: false,
             zicsr: false,
             zifencei: false,
+            zihintpause: false,
+            zihintntl: false,
+            zacas: false,
+            zawrs: false,
+            zicbom: false,
             zicboz: false,
+            zicbop: false,
             zba: false,
             zbb: false,
             zbc: false,
@@ -188,8 +249,18 @@ impl Isa {
             zkne: false,
             zknd: false,
             zcb: false,
+            zcmp: false,
+            zcmt: false,
+            zclsd: false,
+            zilsd: false,
+            h: false,
+            svinval: false,
             v: false,
             xsoteria: false,
+            xandes: false,
+            xthead: false,
+            xhazard3: false,
+            xida_sltw: false,
         }
     }
 
