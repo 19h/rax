@@ -2016,10 +2016,7 @@ impl X86_64Vcpu {
                 // XSAVES - Save processor extended states supervisor.
                 self.execute_xsave_compacted(ctx)
             }
-            _ => Err(Error::Emulator(format!(
-                "unimplemented 0x0F 0xC7 /{} at RIP={:#x}",
-                reg, self.regs.rip
-            ))),
+            _ => self.inject_undefined_instruction(),
         }
     }
 
