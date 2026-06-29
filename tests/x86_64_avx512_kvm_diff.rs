@@ -16270,6 +16270,10 @@ fn irregular_cases() -> Vec<Case> {
         ("cmp_core_group_width_r16_imm8", "cmpw $-1, %r8w"),
         ("cmp_core_group_width_m32_imm32", "cmpl $0x4000, 44(%rax)"),
         ("test_core_group_width_r8_imm8", "testb $0xf0, %r8b"),
+        (
+            "test_core_group_width_f6_group1_r8_imm8_alias",
+            "movb $0x3c, %al\n.byte 0xf6, 0xc8, 0x0c",
+        ),
         ("test_core_group_width_m8_imm8", "testb $0x0f, 48(%rax)"),
         ("test_core_group_width_r16_imm16", "testw $0xff0, %r8w"),
         ("test_core_group_width_m16_imm16", "testw $0x101, 50(%rax)"),
@@ -16277,6 +16281,10 @@ fn irregular_cases() -> Vec<Case> {
         (
             "test_core_group_width_m32_imm32",
             "testl $0x7f00ff00, 52(%rax)",
+        ),
+        (
+            "test_core_group_width_f7_group1_r64_imm32_alias",
+            "movabsq $0xffff0000000055aa, %rax\n.byte 0x48, 0xf7, 0xc8, 0xaa, 0x55, 0x00, 0x00",
         ),
         ("not_core_group_width_r8", "notb %r8b"),
         ("not_core_group_width_m8", "notb 56(%rax)"),
@@ -22283,7 +22291,7 @@ fn avx512_kvm_core_group_width_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_group_width_"))
         .collect();
-    assert_eq!(cases.len(), 54, "unexpected core group-width corpus size");
+    assert_eq!(cases.len(), 56, "unexpected core group-width corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -22305,7 +22313,7 @@ fn avx512_kvm_core_group_width_corpus() {
         "core group-width cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 54,
+        tally.compared, 56,
         "all core group-width cases should compare"
     );
 }
