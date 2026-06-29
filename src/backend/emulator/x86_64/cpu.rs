@@ -157,8 +157,9 @@ impl FpuState {
         let dst = self.top.wrapping_sub(1) & 7;
         let dst_tag = (self.tag_word >> ((dst as u16) * 2)) & 3;
         if dst_tag != 3 {
-            // IE (bit 0) | SF (bit 6) | ES (bit 7) | C1 (bit 9, overflow direction)
-            self.status_word |= 0x0001 | 0x0040 | 0x0080 | 0x0200;
+            // IE (bit 0) | SF (bit 6) | C1 (bit 9, overflow direction).
+            // With the default masked invalid-operation exception, ES remains clear.
+            self.status_word |= 0x0001 | 0x0040 | 0x0200;
         }
         self.top = dst;
         self.st[self.top as usize] = value;
@@ -179,14 +180,18 @@ impl FpuState {
         // UNDERFLOW: raise invalid-operation (IE), stack-fault (SF), and clear
         // C1 to flag the underflow direction.
         let tag_shift = (self.top as u16) * 2;
-        if (self.tag_word >> tag_shift) & 3 == 3 {
-            // Set IE (bit 0) | SF (bit 6) | ES (bit 7); clear C1 (bit 9) for
-            // underflow. Keep the data payload intact: x87 tags describe stack
-            // occupancy, but instructions such as FFREE/FINCSTP/FDECSTP do not
-            // destroy the physical register contents.
-            self.status_word = (self.status_word | 0x0001 | 0x0040 | 0x0080) & !0x0200;
+        let underflow = (self.tag_word >> tag_shift) & 3 == 3;
+        if underflow {
+            // Set IE (bit 0) | SF (bit 6); clear C1 (bit 9) for underflow.
+            // Masked invalid-operation exceptions return the x87 indefinite
+            // value without setting ES.
+            self.status_word = (self.status_word | 0x0001 | 0x0040) & !0x0200;
         }
-        let value = self.st[self.top as usize];
+        let value = if underflow {
+            f64::from_bits(0xfff8_0000_0000_0000)
+        } else {
+            self.st[self.top as usize]
+        };
         // Mark register as empty
         self.tag_word |= 3 << tag_shift;
         self.top = self.top.wrapping_add(1) & 7;

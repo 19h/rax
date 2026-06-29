@@ -15209,6 +15209,10 @@ fn irregular_cases() -> Vec<Case> {
             "fninit\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nfld1\nffree %st(7)\nfldz\nfstpl 32(%rax)\nfnstsw 40(%rax)",
         ),
         (
+            "x87_stack_edge_empty_fstp_indefinite_status",
+            "fninit\nfstpl 32(%rax)\nfnstsw 40(%rax)",
+        ),
+        (
             "x87_stack_edge_faddp_st1",
             "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xc1\nfstpl 48(%rax)\nfnstsw 56(%rax)",
         ),
@@ -20196,6 +20200,10 @@ fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
             "ljmp_ptr_invalid_long",
             &[0xea, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00],
         ),
+        (
+            "ljmp_ptr16_invalid_long",
+            &[0x66, 0xea, 0x00, 0x00, 0x08, 0x00],
+        ),
         ("into_invalid_long", &[0xce]),
         ("aam_invalid_long", &[0xd4, 0x0a]),
     ]
@@ -21921,7 +21929,7 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
     run_ud_marker_corpus(
         "invalid-long-mode legacy",
         legacy_invalid_long_mode_cases(),
-        20,
+        21,
     );
 }
 
@@ -27533,7 +27541,7 @@ fn avx512_kvm_x87_stack_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("x87_stack_edge_"))
         .collect();
-    assert_eq!(cases.len(), 19, "unexpected x87 stack edge corpus size");
+    assert_eq!(cases.len(), 20, "unexpected x87 stack edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -27553,11 +27561,11 @@ fn avx512_kvm_x87_stack_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::X87),
-        19,
+        20,
         "all x87 stack edge cases should run"
     );
     assert_eq!(
-        tally.compared, 19,
+        tally.compared, 20,
         "all x87 stack edge cases should compare"
     );
 }
@@ -27568,7 +27576,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 92, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 93, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -27579,7 +27587,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 92, "all x87 cases should compare");
+    assert_eq!(tally.compared, 93, "all x87 cases should compare");
 }
 
 #[test]
