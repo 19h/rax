@@ -7089,6 +7089,58 @@ fn irregular_cases() -> Vec<Case> {
             "palignr_ssse3_edge_mmx_imm7_store",
             "movq 32(%rax), %mm0\npalignr $7, 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
         ),
+        (
+            "phaddw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphaddw %mm1, %mm0\nmovq %mm0, 88(%rax)\nemms",
+        ),
+        (
+            "phaddd_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphaddd %mm1, %mm0\nmovq %mm0, 96(%rax)\nemms",
+        ),
+        (
+            "phaddsw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphaddsw %mm1, %mm0\nmovq %mm0, 104(%rax)\nemms",
+        ),
+        (
+            "phsubw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphsubw %mm1, %mm0\nmovq %mm0, 112(%rax)\nemms",
+        ),
+        (
+            "phsubd_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphsubd %mm1, %mm0\nmovq %mm0, 120(%rax)\nemms",
+        ),
+        (
+            "phsubsw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\nphsubsw %mm1, %mm0\nmovq %mm0, 128(%rax)\nemms",
+        ),
+        (
+            "psignb_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\npsignb %mm1, %mm0\nmovq %mm0, 136(%rax)\nemms",
+        ),
+        (
+            "psignw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\npsignw %mm1, %mm0\nmovq %mm0, 144(%rax)\nemms",
+        ),
+        (
+            "psignd_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\npsignd %mm1, %mm0\nmovq %mm0, 152(%rax)\nemms",
+        ),
+        (
+            "pmulhrsw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm0\nmovq 40(%rax), %mm1\npmulhrsw %mm1, %mm0\nmovq %mm0, 160(%rax)\nemms",
+        ),
+        (
+            "pabsb_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm1\npabsb %mm1, %mm0\nmovq %mm0, 168(%rax)\nemms",
+        ),
+        (
+            "pabsw_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm1\npabsw %mm1, %mm0\nmovq %mm0, 176(%rax)\nemms",
+        ),
+        (
+            "pabsd_ssse3_edge_mmx_store",
+            "movq 32(%rax), %mm1\npabsd %mm1, %mm0\nmovq %mm0, 184(%rax)\nemms",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -25774,7 +25826,7 @@ fn avx512_kvm_ssse3_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_ssse3_edge_"))
         .collect();
-    assert_eq!(cases.len(), 16, "unexpected SSSE3 edge corpus size");
+    assert_eq!(cases.len(), 29, "unexpected SSSE3 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25794,10 +25846,10 @@ fn avx512_kvm_ssse3_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Ssse3),
-        16,
+        29,
         "all SSSE3 edge cases should run"
     );
-    assert_eq!(tally.compared, 16, "all SSSE3 edge cases should compare");
+    assert_eq!(tally.compared, 29, "all SSSE3 edge cases should compare");
 }
 
 #[test]
