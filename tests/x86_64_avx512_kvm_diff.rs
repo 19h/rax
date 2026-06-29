@@ -20657,6 +20657,14 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x62, 0xf2, 0x7d, 0x59, 0x92, 0x4c, 0x90, 0x10],
         ),
         (
+            "evex_vgatherdps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0x92, 0xd1],
+        ),
+        (
+            "evex_vgatherdps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0x92, 0x10],
+        ),
+        (
             "evex_vscatterdps_k0_illegal",
             &[0x62, 0xf2, 0x7d, 0x48, 0xa2, 0x5c, 0x90, 0x10],
         ),
@@ -20667,6 +20675,66 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "evex_vscatterdps_broadcast_illegal",
             &[0x62, 0xf2, 0x7d, 0x59, 0xa2, 0x5c, 0x90, 0x10],
+        ),
+        (
+            "evex_vscatterdps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xa2, 0xd9],
+        ),
+        (
+            "evex_vscatterdps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xa2, 0x18],
+        ),
+        (
+            "evex_vgatherpf0dps_k0_illegal",
+            &[0x62, 0xf2, 0x7d, 0x48, 0xc6, 0x4c, 0x90, 0x04],
+        ),
+        (
+            "evex_vgatherpf0dps_zero_illegal",
+            &[0x62, 0xf2, 0x7d, 0xc9, 0xc6, 0x4c, 0x90, 0x04],
+        ),
+        (
+            "evex_vgatherpf0dps_broadcast_illegal",
+            &[0x62, 0xf2, 0x7d, 0x59, 0xc6, 0x4c, 0x90, 0x04],
+        ),
+        (
+            "evex_vgatherpf0dps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0xc9],
+        ),
+        (
+            "evex_vgatherpf0dps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x08],
+        ),
+        (
+            "evex_vgatherpf0dps_subop0_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x44, 0x90, 0x04],
+        ),
+        (
+            "evex_vscatterpf0dps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0xe9],
+        ),
+        (
+            "evex_vscatterpf0dps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x28],
+        ),
+        (
+            "evex_vgatherpf0qps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0xc9],
+        ),
+        (
+            "evex_vgatherpf0qps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x08],
+        ),
+        (
+            "evex_vgatherpf0qps_subop0_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x44, 0x90, 0x02],
+        ),
+        (
+            "evex_vscatterpf1qps_register_operand_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0xf1],
+        ),
+        (
+            "evex_vscatterpf1qps_no_sib_illegal",
+            &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x30],
         ),
         (
             "evex_vmovntdqa_mask_illegal",
@@ -21948,7 +22016,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        331,
+        348,
     );
 }
 

@@ -4126,6 +4126,18 @@ fn decode_evex_vsib(
     })
 }
 
+fn invalid_evex_vsib_encoding(
+    ctx: &InsnContext,
+    evex: &super::super::super::cpu::EvexPrefix,
+) -> Result<bool> {
+    if evex.aaa == 0 || evex.z || evex.broadcast {
+        return Ok(true);
+    }
+
+    let modrm = ctx.peek_u8()?;
+    Ok((modrm >> 6) == 3 || (modrm & 0x07) != 4)
+}
+
 fn evex_vsib_layout(opcode: u8, evex_w: bool, ll: u8) -> (usize, usize, usize, usize, usize) {
     let vl_bytes = vl_bytes_of(ll);
     let index_size = if opcode & 1 == 0 { 4 } else { 8 };
@@ -4161,7 +4173,7 @@ pub fn evex_gather(
     let evex = ctx
         .evex
         .ok_or_else(|| Error::Emulator("EVEX gather requires EVEX prefix".to_string()))?;
-    if evex.aaa == 0 || evex.z || evex.broadcast {
+    if invalid_evex_vsib_encoding(ctx, &evex)? {
         return vcpu.inject_undefined_instruction();
     }
 
@@ -4197,7 +4209,7 @@ pub fn evex_scatter(
     let evex = ctx
         .evex
         .ok_or_else(|| Error::Emulator("EVEX scatter requires EVEX prefix".to_string()))?;
-    if evex.aaa == 0 || evex.z || evex.broadcast {
+    if invalid_evex_vsib_encoding(ctx, &evex)? {
         return vcpu.inject_undefined_instruction();
     }
 
@@ -4232,19 +4244,14 @@ pub fn evex_vsib_prefetch(
     let evex = ctx
         .evex
         .ok_or_else(|| Error::Emulator("EVEX VSIB prefetch requires EVEX prefix".to_string()))?;
-    if evex.aaa == 0 || evex.z || evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX VSIB prefetch requires a nonzero merge mask and no broadcast/zeroing".to_string(),
-        ));
+    if invalid_evex_vsib_encoding(ctx, &evex)? {
+        return vcpu.inject_undefined_instruction();
     }
 
     let (_, data_size, _, _, _) = evex_vsib_layout(opcode, evex.w, evex.ll);
     let vsib = decode_evex_vsib(vcpu, ctx, &evex, data_size)?;
     if !matches!(vsib.subop, 1 | 2 | 5 | 6) {
-        return Err(Error::Emulator(format!(
-            "Unsupported EVEX VSIB prefetch /{}",
-            vsib.subop
-        )));
+        return vcpu.inject_undefined_instruction();
     }
 
     vcpu.regs.k[evex.aaa as usize] = 0;
