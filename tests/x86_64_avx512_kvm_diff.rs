@@ -19053,6 +19053,30 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x62, 0xf3, 0x6d, 0x58, 0x38, 0xcb, 0x02],
         ),
         (
+            "evex_vgatherdps_k0_illegal",
+            &[0x62, 0xf2, 0x7d, 0x48, 0x92, 0x4c, 0x90, 0x10],
+        ),
+        (
+            "evex_vgatherdps_zero_illegal",
+            &[0x62, 0xf2, 0x7d, 0xc9, 0x92, 0x4c, 0x90, 0x10],
+        ),
+        (
+            "evex_vgatherdps_broadcast_illegal",
+            &[0x62, 0xf2, 0x7d, 0x59, 0x92, 0x4c, 0x90, 0x10],
+        ),
+        (
+            "evex_vscatterdps_k0_illegal",
+            &[0x62, 0xf2, 0x7d, 0x48, 0xa2, 0x5c, 0x90, 0x10],
+        ),
+        (
+            "evex_vscatterdps_zero_illegal",
+            &[0x62, 0xf2, 0x7d, 0xc9, 0xa2, 0x5c, 0x90, 0x10],
+        ),
+        (
+            "evex_vscatterdps_broadcast_illegal",
+            &[0x62, 0xf2, 0x7d, 0x59, 0xa2, 0x5c, 0x90, 0x10],
+        ),
+        (
             "evex_vmovntdqa_mask_illegal",
             &[0x62, 0xf2, 0x7d, 0x49, 0x2a, 0x48, 0x01],
         ),
@@ -20518,7 +20542,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        325,
+        331,
     );
 }
 

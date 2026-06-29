@@ -4162,9 +4162,7 @@ pub fn evex_gather(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX gather requires EVEX prefix".to_string()))?;
     if evex.aaa == 0 || evex.z || evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX gather requires a nonzero merge mask and no broadcast/zeroing".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
@@ -4200,9 +4198,7 @@ pub fn evex_scatter(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX scatter requires EVEX prefix".to_string()))?;
     if evex.aaa == 0 || evex.z || evex.broadcast {
-        return Err(Error::Emulator(
-            "EVEX scatter requires a nonzero merge mask and no broadcast/zeroing".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let (index_size, data_size, num_elems, index_bytes_len, reg_bytes) =
