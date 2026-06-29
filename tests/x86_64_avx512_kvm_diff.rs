@@ -1177,6 +1177,8 @@ impl KvmOracle {
                 kvm_ioctls::VcpuExit::Hlt => break,
                 kvm_ioctls::VcpuExit::IoIn(_, data) => data.iter_mut().for_each(|b| *b = 0),
                 kvm_ioctls::VcpuExit::IoOut(..) => {}
+                // MOV to CR8 updates the task-priority register and then resumes.
+                kvm_ioctls::VcpuExit::SetTpr => {}
                 // A faulting EVEX op with no usable IDT triple-faults the guest.
                 kvm_ioctls::VcpuExit::Shutdown
                 | kvm_ioctls::VcpuExit::FailEntry(..)
@@ -15167,6 +15169,16 @@ fn irregular_cases() -> Vec<Case> {
             ControlReg,
         ),
         (
+            "control_reg_edge_cr8_zero_roundtrip",
+            "xorq %r8, %r8\nmovq %r8, %cr8\nmovq %cr8, %rcx\ncmpq %rcx, %rcx",
+            ControlReg,
+        ),
+        (
+            "control_reg_edge_cr8_priority_roundtrip",
+            "movq %cr8, %r11\nmovq $0xf, %r8\nmovq %r8, %cr8\nxorq %r9, %r9\nmovq %cr8, %r9\nmovq %r11, %cr8\ncmpq %r9, %r9",
+            ControlReg,
+        ),
+        (
             "control_reg_edge_lmsw_memory_high_bits_ignored",
             "movw $0xfffb, 32(%rax)\nlmsw 32(%rax)\nsmsw %r9w\nclts\nandw $0x0008, %r9w\ncmpw $0x0008, %r9w\nsete %cl\nmovzbl %cl, %ecx\nxorq %r9, %r9\ncmpq %rax, %rax",
             ControlReg,
@@ -15369,6 +15381,26 @@ fn irregular_cases() -> Vec<Case> {
         (
             "debug_reg_edge_dr7_second_write_clears_local_enable",
             "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovabsq $0x401, %r8\nmovq %r8, %dr7\nmovabsq $0x400, %r8\nmovq %r8, %dr7\nmovq %dr7, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr4_alias_dr6_read",
+            "movabsq $0x00000000ffff0ff0, %r8\nmovq %r8, %dr6\nxorq %r9, %r9\nmovq %dr4, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr4_alias_dr6_write",
+            "movabsq $0x00000000ffff0ff0, %r8\nmovq %r8, %dr4\nxorq %r9, %r9\nmovq %dr6, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr5_alias_dr7_read",
+            "movabsq $0x0000000000000400, %r8\nmovq %r8, %dr7\nxorq %r9, %r9\nmovq %dr5, %r9\ncmpq %r9, %r9",
+            DebugReg,
+        ),
+        (
+            "debug_reg_edge_dr5_alias_dr7_write",
+            "movabsq $0x0000000000000400, %r8\nmovq %r8, %dr5\nxorq %r9, %r9\nmovq %dr7, %r9\ncmpq %r9, %r9",
             DebugReg,
         ),
     ] {
@@ -18171,6 +18203,24 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("group4_fe_mem_undefined", &[0xfe, 0x10]),
         ("group5_ff_reg_undefined", &[0xff, 0xf8]),
         ("group5_ff_mem_undefined", &[0xff, 0x38]),
+        ("control_reg_cr1_read_undefined", &[0x0f, 0x20, 0xc8]),
+        ("control_reg_cr1_write_undefined", &[0x0f, 0x22, 0xc8]),
+        ("control_reg_cr5_read_undefined", &[0x0f, 0x20, 0xe8]),
+        ("control_reg_cr7_write_undefined", &[0x0f, 0x22, 0xf8]),
+        (
+            "debug_reg_dr4_de_read_undefined",
+            &[
+                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x21,
+                0xe0,
+            ],
+        ),
+        (
+            "debug_reg_dr5_de_write_undefined",
+            &[
+                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x23,
+                0xe8,
+            ],
+        ),
         ("group6_0f00_group6_reg_undefined", &[0x0f, 0x00, 0xf0]),
         ("group6_0f00_group7_mem_undefined", &[0x0f, 0x00, 0x38]),
         ("group7_0f01_sgdt_reg_undefined", &[0x0f, 0x01, 0xc0]),
@@ -20114,7 +20164,7 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
-    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 42);
+    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 48);
 }
 
 #[test]
@@ -20243,7 +20293,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 53, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 59, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -20259,7 +20309,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::ControlReg),
-        14,
+        16,
         "all control-register cases should run"
     );
     assert_eq!(
@@ -20270,10 +20320,10 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     assert_eq!(tally.ran_for(Feat::Msr), 14, "all MSR cases should run");
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
-        12,
+        16,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 53, "all privileged cases should compare");
+    assert_eq!(tally.compared, 59, "all privileged cases should compare");
 }
 
 #[test]
@@ -20330,7 +20380,7 @@ fn avx512_kvm_control_register_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        6,
+        8,
         "unexpected control-register edge corpus size"
     );
 
@@ -20355,11 +20405,11 @@ fn avx512_kvm_control_register_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::ControlReg),
-        6,
+        8,
         "all control-register edge cases should run"
     );
     assert_eq!(
-        tally.compared, 6,
+        tally.compared, 8,
         "all control-register edge cases should compare"
     );
 }
@@ -20399,7 +20449,7 @@ fn avx512_kvm_debug_register_edge_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::DebugReg && case.label.contains("debug_reg_edge_"))
         .collect();
-    assert_eq!(cases.len(), 5, "unexpected debug-register edge corpus size");
+    assert_eq!(cases.len(), 9, "unexpected debug-register edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -20422,11 +20472,11 @@ fn avx512_kvm_debug_register_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
-        5,
+        9,
         "all debug-register edge cases should run"
     );
     assert_eq!(
-        tally.compared, 5,
+        tally.compared, 9,
         "all debug-register edge cases should compare"
     );
 }

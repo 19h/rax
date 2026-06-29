@@ -1,7 +1,7 @@
 //! Control register instructions: MOV r, CRn, MOV CRn, r, and Group 7.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -180,14 +180,15 @@ pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         return raise_gp0(vcpu);
     }
     let modrm = ctx.consume_u8()?;
-    let cr = (modrm >> 3) & 0x07;
+    let cr = ((modrm >> 3) & 0x07) | ctx.rex_r();
     let rm = (modrm & 0x07) | ctx.rex_b();
     let value = match cr {
         0 => vcpu.sregs.cr0,
         2 => vcpu.sregs.cr2,
         3 => vcpu.sregs.cr3,
         4 => vcpu.sregs.cr4,
-        _ => return Err(Error::Emulator(format!("MOV r, CR{}: unsupported", cr))),
+        8 => vcpu.sregs.cr8,
+        _ => return vcpu.inject_undefined_instruction(),
     };
     vcpu.set_reg(rm, value, 8);
     vcpu.regs.rip += ctx.cursor as u64;
@@ -211,10 +212,7 @@ pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         4 | 5 => {
             // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
             if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return Err(Error::Emulator(format!(
-                    "MOV r, DR{}: #UD when CR4.DE=1",
-                    dr
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             if dr == 4 {
                 vcpu.sregs.dr6
@@ -224,7 +222,7 @@ pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         }
         6 => vcpu.sregs.dr6,
         7 => vcpu.sregs.dr7,
-        _ => return Err(Error::Emulator(format!("MOV r, DR{}: unsupported", dr))),
+        _ => return vcpu.inject_undefined_instruction(),
     };
     vcpu.set_reg(rm, value, 8);
     vcpu.regs.rip += ctx.cursor as u64;
@@ -249,10 +247,7 @@ pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         4 | 5 => {
             // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
             if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return Err(Error::Emulator(format!(
-                    "MOV DR{}, r: #UD when CR4.DE=1",
-                    dr
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             if dr == 4 {
                 vcpu.sregs.dr6 = value;
@@ -262,7 +257,7 @@ pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         }
         6 => vcpu.sregs.dr6 = value,
         7 => vcpu.sregs.dr7 = value,
-        _ => return Err(Error::Emulator(format!("MOV DR{}, r: unsupported", dr))),
+        _ => return vcpu.inject_undefined_instruction(),
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -275,7 +270,7 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         return raise_gp0(vcpu);
     }
     let modrm = ctx.consume_u8()?;
-    let cr = (modrm >> 3) & 0x07;
+    let cr = ((modrm >> 3) & 0x07) | ctx.rex_r();
     let rm = (modrm & 0x07) | ctx.rex_b();
     let value = vcpu.get_reg(rm, 8);
 
@@ -325,7 +320,8 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
             // CR4 changes can affect paging (PAE, PSE, PGE, etc.), flush TLB
             vcpu.mmu.flush_tlb();
         }
-        _ => return Err(Error::Emulator(format!("MOV CR{}, r: unsupported", cr))),
+        8 => vcpu.sregs.cr8 = value & 0xF,
+        _ => return vcpu.inject_undefined_instruction(),
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
