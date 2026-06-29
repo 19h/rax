@@ -18226,6 +18226,15 @@ fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("popad_invalid_long", &[0x61]),
         ("pusha_invalid_long", &[0x66, 0x60]),
         ("popa_invalid_long", &[0x66, 0x61]),
+        ("group1_82_invalid_long", &[0x82, 0xc0, 0x01]),
+        (
+            "lcall_ptr_invalid_long",
+            &[0x9a, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00],
+        ),
+        (
+            "ljmp_ptr_invalid_long",
+            &[0xea, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00],
+        ),
         ("into_invalid_long", &[0xce]),
         ("aam_invalid_long", &[0xd4, 0x0a]),
     ]
@@ -20240,7 +20249,7 @@ fn run_fallthrough_marker_corpus(
 
 #[test]
 fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
-    run_ud_marker_corpus("invalid-long-mode legacy", legacy_invalid_long_mode_cases(), 17);
+    run_ud_marker_corpus("invalid-long-mode legacy", legacy_invalid_long_mode_cases(), 20);
 }
 
 #[test]

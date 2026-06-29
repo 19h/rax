@@ -85,8 +85,13 @@ pub fn jcc_rel32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, cc: u8) -> Result
 
 /// JMP FAR ptr16:16/ptr16:32 (0xEA)
 /// Far jump with immediate pointer - loads segment:offset from instruction.
-/// Note: This opcode is invalid in 64-bit mode, but we emulate it for compatibility.
+/// Note: This opcode is invalid in 64-bit mode.
 pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if vcpu.sregs.cs.l {
+        vcpu.inject_exception(6, None)?;
+        return Ok(None);
+    }
+
     let offset = match ctx.op_size {
         2 => ctx.consume_u16()? as u64,
         4 => ctx.consume_u32()? as u64,
