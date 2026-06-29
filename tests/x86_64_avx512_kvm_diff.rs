@@ -1450,6 +1450,24 @@ fn scratch_marker(scratch: &[u8; SCRATCH_BYTES]) -> u32 {
     )
 }
 
+fn kvm_reaches_fallthrough_marker(oracle: &KvmOracle, op: &[u8]) -> bool {
+    let input = input_for(InputProfile::Int);
+    let code = build_fault_probe_code(op);
+    match oracle.run_with_exception_trap(&code, &input, UD_VECTOR) {
+        Ok(KvmOutcome::Ran(out)) => scratch_marker(&out.scratch) == FALLTHROUGH_MARKER,
+        Ok(KvmOutcome::Faulted) | Err(_) => false,
+    }
+}
+
+fn kvm_reaches_exception_marker(oracle: &KvmOracle, op: &[u8], vector: usize) -> bool {
+    let input = input_for(InputProfile::Int);
+    let code = build_fault_probe_code(op);
+    match oracle.run_with_exception_trap(&code, &input, vector) {
+        Ok(KvmOutcome::Ran(out)) => scratch_marker(&out.scratch) == exception_marker(vector),
+        Ok(KvmOutcome::Faulted) | Err(_) => false,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Comparison.
 // ---------------------------------------------------------------------------
@@ -19515,6 +19533,10 @@ fn case_status(case: &Case) -> Status {
 fn case_rflags_mask(case: &Case) -> u64 {
     let mnem = asm_mnemonic(&case.asm);
 
+    if case.label == "tsx_xtest_outside_transaction_zf" {
+        return RFLAGS_ZF;
+    }
+
     if case.label.contains("_core_muldiv_edge_") {
         if case.label.starts_with("div_") || case.label.starts_with("idiv_") {
             return 0;
@@ -20345,6 +20367,47 @@ fn unsupported_system_extension_cases() -> Vec<(&'static str, &'static [u8])> {
     if !host_cpu_flag("pconfig") {
         cases.push(("pconfig_unsupported", &[0x0f, 0x01, 0xc5]));
         cases.push(("pconfig_unsupported_66", &[0x66, 0x0f, 0x01, 0xc5]));
+    }
+
+    cases
+}
+
+fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
+    let c = |label: &str, asm: &str| Case {
+        label: label.to_string(),
+        asm: asm.to_string(),
+        feat: Feat::Core,
+        profile: InputProfile::Int,
+    };
+
+    let mut cases = Vec::new();
+    if run_xbegin {
+        cases.push(c(
+            "tsx_xbegin_forced_abort",
+            "movq $0, %rbx\n\
+             xbegin 1f\n\
+             movq $1, %rbx\n\
+             xend\n\
+             jmp 2f\n\
+             1:\n\
+             movq $2, %rbx\n\
+             2:",
+        ));
+    }
+    if run_xabort {
+        cases.push(c(
+            "tsx_xabort_outside_transaction_noop",
+            "movq $0x1234, %rax\n\
+             xabort $0x42\n\
+             movq $0x5678, %rbx",
+        ));
+    }
+    if run_xtest {
+        cases.push(c(
+            "tsx_xtest_outside_transaction_zf",
+            "movq $0x42, %rax\n\
+             xtest",
+        ));
     }
 
     cases
@@ -22208,6 +22271,63 @@ fn avx512_kvm_cldemote_fallthrough_corpus() {
 #[test]
 fn avx512_kvm_endbr_hint_fallthrough_corpus() {
     run_fallthrough_marker_corpus("endbr hint", endbr_hint_fallthrough_cases(), 7);
+}
+
+#[test]
+fn avx512_kvm_tsx_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let run_xbegin =
+        kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
+    let run_xabort = kvm_reaches_fallthrough_marker(oracle, &[0xc6, 0xf8, 0x42]);
+    let run_xtest = kvm_reaches_fallthrough_marker(oracle, &[0x0f, 0x01, 0xd6]);
+    let cases = tsx_cases(run_xbegin, run_xabort, run_xtest);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not execute TSX probes");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.compared, expected, "unexpected TSX compare count");
+    assert_eq!(tally.faulted, 0, "TSX corpus should not fault");
+    assert_eq!(tally.interp_err, 0, "TSX corpus should be implemented");
+}
+
+#[test]
+fn avx512_kvm_tsx_exception_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+    if !kvm_reaches_exception_marker(oracle, &[0x0f, 0x01, 0xd5], GP_VECTOR) {
+        eprintln!("[skip] KVM guest XEND outside transaction is not #GP");
+        return;
+    }
+
+    run_exception_marker_cases(
+        "tsx general protection",
+        vec![ExceptionMarkerCase {
+            label: "xend_outside_transaction",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[0x0f, 0x01, 0xd5],
+        }],
+        1,
+    );
 }
 
 #[test]

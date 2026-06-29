@@ -251,11 +251,10 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     let reg = (modrm >> 3) & 0x07;
 
     if modrm == 0xf8 {
-        // XABORT - abort transaction with status
+        // XABORT aborts a transaction; outside a transaction it has no effect.
+        // The emulator has no transactional state, so every XABORT is outside.
         ctx.consume_u8()?; // consume ModRM
         let _status = ctx.consume_u8()?; // status code
-                                         // TSX not supported - XABORT has no effect outside transaction
-                                         // In a real transaction, this would jump to fallback
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }
@@ -282,13 +281,11 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let reg = (modrm >> 3) & 0x07;
 
     if modrm == 0xf8 {
-        // XBEGIN - begin transaction
+        // XBEGIN starts a transaction. The emulator has no transactional state,
+        // so model the guest-visible forced-abort path and jump to fallback.
         ctx.consume_u8()?; // consume ModRM
         let rel32 = ctx.consume_u32()? as i32;
-        // TSX not supported - always abort immediately (this is valid behavior)
-        // Set EAX to abort status code: we use 0 (capacity abort, retry may help)
         vcpu.regs.rax = 0;
-        // Jump to fallback address
         let fallback = (vcpu.regs.rip as i64)
             .wrapping_add(ctx.cursor as i64)
             .wrapping_add(rel32 as i64) as u64;

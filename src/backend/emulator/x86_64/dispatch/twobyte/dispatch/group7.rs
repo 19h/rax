@@ -102,10 +102,11 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xD5 => {
-                    // XEND (0x0F 0x01 0xD5) - End transaction
+                    // XEND outside an active transaction raises #GP(0). The
+                    // emulator has no transactional state, so every XEND is
+                    // outside a transaction.
                     ctx.consume_u8()?; // consume modrm
-                                       // TSX not supported, treat as NOP
-                    self.regs.rip += ctx.cursor as u64;
+                    self.inject_exception(13, Some(0))?;
                     Ok(None)
                 }
                 0xD9 => {
@@ -116,10 +117,9 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xD6 => {
-                    // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
+                    // XTEST sets ZF=1 when not in transactional execution. The
+                    // emulator has no transactional state, so it is never in one.
                     ctx.consume_u8()?; // consume modrm
-                                       // TSX not supported, ZF=1 (not in transaction)
-                                       // Clear lazy flags before setting ZF directly
                     self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
