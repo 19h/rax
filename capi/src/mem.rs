@@ -13,7 +13,7 @@ use rax_engine::cpu::MemAccess;
 use rax_engine::memory::vm::{Bytes, GuestAddress, GuestMemoryMmap, GuestRegionMmap, MmapRegion};
 
 use crate::arch::build_vcpu;
-use crate::engine::{Engine, PAGE, engine_mut, engine_ref};
+use crate::engine::{engine_mut, engine_ref, Engine, PAGE};
 use crate::guard;
 use crate::status::RaxStatus;
 
@@ -129,7 +129,11 @@ impl Engine {
         if buf.is_empty() {
             return RaxStatus::Ok;
         }
-        let access = if write { MemAccess::Write } else { MemAccess::Read };
+        let access = if write {
+            MemAccess::Write
+        } else {
+            MemAccess::Read
+        };
         let len = buf.len() as u64;
         let mut done: u64 = 0;
         while done < len {
@@ -196,7 +200,9 @@ impl Engine {
             } else {
                 let backing = match alloc_backing(b, s) {
                     Ok(x) => x,
-                    Err(_) => return self.fail(RaxStatus::NoMem, "failed to allocate region backing"),
+                    Err(_) => {
+                        return self.fail(RaxStatus::NoMem, "failed to allocate region backing")
+                    }
                 };
                 new_regions.push(Region {
                     base: b,
@@ -243,7 +249,7 @@ impl Engine {
             Err(e) => return self.fail_engine(&e),
         };
         let es = self.vcpu.get_emulator_state();
-        let mut v = match build_vcpu(self.arch, self.mode, new_mem.clone()) {
+        let mut v = match build_vcpu(self.arch, self.mode, new_mem.clone(), self.riscv_config) {
             Ok(v) => v,
             Err(e) => return self.fail_engine(&e),
         };
@@ -263,7 +269,10 @@ impl Engine {
     /// Maps a new region.
     fn do_map(&mut self, addr: u64, size: u64, perms: u32) -> RaxStatus {
         if size == 0 || addr % PAGE != 0 || size % PAGE != 0 {
-            return self.fail(RaxStatus::Arg, "address and size must be page-aligned, size > 0");
+            return self.fail(
+                RaxStatus::Arg,
+                "address and size must be page-aligned, size > 0",
+            );
         }
         if addr.checked_add(size).is_none() {
             return self.fail(RaxStatus::Bounds, "region end overflows address space");
@@ -276,7 +285,10 @@ impl Engine {
     /// Unmaps an address range, trimming/splitting affected regions.
     fn do_unmap(&mut self, addr: u64, size: u64) -> RaxStatus {
         if size == 0 || addr % PAGE != 0 || size % PAGE != 0 {
-            return self.fail(RaxStatus::Arg, "address and size must be page-aligned, size > 0");
+            return self.fail(
+                RaxStatus::Arg,
+                "address and size must be page-aligned, size > 0",
+            );
         }
         if !self.range_mapped(addr, size) {
             return self.fail(RaxStatus::Map, "unmap range is not fully mapped");
@@ -306,7 +318,10 @@ impl Engine {
     /// Changes permissions over an address range, splitting regions as needed.
     fn do_protect(&mut self, addr: u64, size: u64, perms: u32) -> RaxStatus {
         if size == 0 || addr % PAGE != 0 || size % PAGE != 0 {
-            return self.fail(RaxStatus::Arg, "address and size must be page-aligned, size > 0");
+            return self.fail(
+                RaxStatus::Arg,
+                "address and size must be page-aligned, size > 0",
+            );
         }
         if !self.range_mapped(addr, size) {
             return self.fail(RaxStatus::Map, "protect range is not fully mapped");
@@ -348,7 +363,10 @@ pub extern "C" fn rax_mem_map(engine: *mut Engine, addr: u64, size: u64, perms: 
             None => return RaxStatus::Handle,
         };
         if e.running {
-            return e.fail(RaxStatus::State, "cannot modify the memory map while running");
+            return e.fail(
+                RaxStatus::State,
+                "cannot modify the memory map while running",
+            );
         }
         e.clear_err();
         e.do_map(addr, size, perms)
@@ -365,7 +383,10 @@ pub extern "C" fn rax_mem_unmap(engine: *mut Engine, addr: u64, size: u64) -> Ra
             None => return RaxStatus::Handle,
         };
         if e.running {
-            return e.fail(RaxStatus::State, "cannot modify the memory map while running");
+            return e.fail(
+                RaxStatus::State,
+                "cannot modify the memory map while running",
+            );
         }
         e.clear_err();
         e.do_unmap(addr, size)
@@ -386,7 +407,10 @@ pub extern "C" fn rax_mem_protect(
             None => return RaxStatus::Handle,
         };
         if e.running {
-            return e.fail(RaxStatus::State, "cannot modify the memory map while running");
+            return e.fail(
+                RaxStatus::State,
+                "cannot modify the memory map while running",
+            );
         }
         e.clear_err();
         e.do_protect(addr, size, perms)

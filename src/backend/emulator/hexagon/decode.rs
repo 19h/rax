@@ -760,7 +760,11 @@ fn width_shift(width: MemWidth) -> u8 {
 }
 
 fn subreg(code: u8) -> u8 {
-    if code < 8 { code } else { code + 8 }
+    if code < 8 {
+        code
+    } else {
+        code + 8
+    }
 }
 
 fn subreg_pair(code: u8) -> u8 {

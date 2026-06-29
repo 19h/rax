@@ -23,7 +23,7 @@
 //! Verified against the qemu-hexagon oracle (tests/hexagon_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 /// Accumulate mode for the 16x16 multiply matrix.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -50,7 +50,11 @@ fn get_word(src: u64, n: u32) -> i64 {
 fn cmpy_terms(rss: u64, rtt: u64, w0: u32, w1: u32, w2: u32, w3: u32, add: bool) -> i128 {
     let tmp = (get_word(rss, w0) as i128) * (get_word(rtt, w1) as i128);
     let acc = (get_word(rss, w2) as i128) * (get_word(rtt, w3) as i128);
-    if add { tmp + acc } else { tmp - acc }
+    if add {
+        tmp + acc
+    } else {
+        tmp - acc
+    }
 }
 
 /// fGETHALF(n, src): signed 16-bit lane, sign-extended to i64.

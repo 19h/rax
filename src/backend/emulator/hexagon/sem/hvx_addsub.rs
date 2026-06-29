@@ -15,7 +15,7 @@
 //! the qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 
@@ -165,9 +165,9 @@ fn dv_w(
 fn clb(x: u64, nbits: u32) -> u32 {
     let shift = 64 - nbits;
     let xj = x << shift; // left-justify the element into the top `nbits`
-    // Leading-zero/one runs of the full 64-bit value, but the run can never
-    // exceed the element width (the low `shift` bits are zero padding, which
-    // would otherwise inflate the leading-zero count for an all-zero element).
+                         // Leading-zero/one runs of the full 64-bit value, but the run can never
+                         // exceed the element width (the low `shift` bits are zero padding, which
+                         // would otherwise inflate the leading-zero count for an all-zero element).
     let zeros = xj.leading_zeros().min(nbits);
     let ones = xj.leading_ones().min(nbits);
     zeros.max(ones)
@@ -320,7 +320,13 @@ fn widen_hw(
     };
     let mut o0 = if acc { to_bytes(&acc0) } else { [0u8; 128] };
     let mut o1 = if acc { to_bytes(&acc1) } else { [0u8; 128] };
-    let ext = |h: u16| -> i64 { if unsigned { h as i64 } else { h as i16 as i64 } };
+    let ext = |h: u16| -> i64 {
+        if unsigned {
+            h as i64
+        } else {
+            h as i16 as i64
+        }
+    };
     for i in 0..32 {
         let lo = f(ext(get_h(&vu, i * 2)), ext(get_h(&vv, i * 2)));
         let hi = f(ext(get_h(&vu, i * 2 + 1)), ext(get_h(&vv, i * 2 + 1)));

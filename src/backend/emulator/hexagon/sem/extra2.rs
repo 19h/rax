@@ -9,7 +9,7 @@
 //! the `qemu-hexagon` reference oracle (`tests/hexagon_diff.rs`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 // --- H.264 / Hexagon CABAC decode tables (S2_cabacdecbin) ------------------
 //

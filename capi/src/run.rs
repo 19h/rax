@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use rax_engine::cpu::{MemAccess, MemRecord, VcpuExit};
 
-use crate::engine::{Engine, engine_mut};
+use crate::engine::{engine_mut, Engine};
 use crate::guard;
 use crate::hook::{
     MemHook, SimpleHook, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, RAX_MEM_FETCH,
@@ -530,7 +530,15 @@ pub extern "C" fn rax_emu_start(
             return unsafe { (*engine).fail(RaxStatus::State, "engine is already running") };
         }
         let has_until = until != RAX_NO_ADDR;
-        run_emulation(engine, Some(begin), until, has_until, count, timeout_us, None)
+        run_emulation(
+            engine,
+            Some(begin),
+            until,
+            has_until,
+            count,
+            timeout_us,
+            None,
+        )
     })
 }
 
@@ -538,11 +546,7 @@ pub extern "C" fn rax_emu_start(
 /// writing the number actually executed to `*executed` if non-NULL. `count==0`
 /// is treated as 1.
 #[unsafe(no_mangle)]
-pub extern "C" fn rax_emu_step(
-    engine: *mut Engine,
-    count: u64,
-    executed: *mut u64,
-) -> RaxStatus {
+pub extern "C" fn rax_emu_step(engine: *mut Engine, count: u64, executed: *mut u64) -> RaxStatus {
     guard(|| {
         let valid = unsafe { engine_mut(engine) }.is_some();
         if !valid {
@@ -553,7 +557,10 @@ pub extern "C" fn rax_emu_step(
         }
         if !unsafe { (*engine).vcpu.supports_stepping() } {
             return unsafe {
-                (*engine).fail(RaxStatus::Unsupported, "this backend does not support stepping")
+                (*engine).fail(
+                    RaxStatus::Unsupported,
+                    "this backend does not support stepping",
+                )
             };
         }
         let n = if count == 0 { 1 } else { count };

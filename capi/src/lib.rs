@@ -27,7 +27,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 use std::os::raw::{c_char, c_int};
-use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::panic::{catch_unwind, AssertUnwindSafe};
 
 mod arch;
 mod context;
@@ -49,6 +49,9 @@ pub use status::RaxStatus;
 pub use arch::{
     RaxArch, RAX_BACKEND_DEFAULT, RAX_BACKEND_EMULATOR, RAX_MODE_16, RAX_MODE_32, RAX_MODE_64,
     RAX_MODE_ARM, RAX_MODE_BIG_ENDIAN, RAX_MODE_LITTLE_ENDIAN, RAX_MODE_THUMB,
+    RAX_RISCV_EXT_SUPPORTED, RAX_RISCV_EXT_XANDES, RAX_RISCV_EXT_XHAZARD3, RAX_RISCV_EXT_XIDA_SLTW,
+    RAX_RISCV_EXT_XTHEAD, RAX_RISCV_EXT_ZCLSD, RAX_RISCV_EXT_ZCMP, RAX_RISCV_EXT_ZCMT,
+    RAX_RISCV_EXT_ZILSD,
 };
 pub use engine::{Engine, RaxEngineConfig, DEFAULT_MEM_SIZE, RAX_OPEN_NO_DEFAULT_STATE};
 pub use hook::{
@@ -68,7 +71,7 @@ pub use run::{
 /// ABI major version. Incremented only on a breaking ABI change.
 pub const RAX_API_MAJOR: u32 = 1;
 /// ABI minor version. Incremented when backward-compatible additions are made.
-pub const RAX_API_MINOR: u32 = 0;
+pub const RAX_API_MINOR: u32 = 1;
 /// ABI patch version.
 pub const RAX_API_PATCH: u32 = 0;
 
@@ -110,11 +113,7 @@ where
 ///
 /// If `major`/`minor`/`patch` are non-NULL they receive the components.
 #[unsafe(no_mangle)]
-pub extern "C" fn rax_version(
-    major: *mut u32,
-    minor: *mut u32,
-    patch: *mut u32,
-) -> u32 {
+pub extern "C" fn rax_version(major: *mut u32, minor: *mut u32, patch: *mut u32) -> u32 {
     guard_val(0, || {
         unsafe {
             if !major.is_null() {
@@ -135,13 +134,7 @@ pub extern "C" fn rax_version(
 #[unsafe(no_mangle)]
 pub extern "C" fn rax_version_string() -> *const c_char {
     // Static NUL-terminated string with embedded version.
-    concat!(
-        env!("CARGO_PKG_VERSION"),
-        " (rax-capi ABI ",
-        "1.0.0",
-        ")\0"
-    )
-    .as_ptr() as *const c_char
+    concat!(env!("CARGO_PKG_VERSION"), " (rax-capi ABI ", "1.1.0", ")\0").as_ptr() as *const c_char
 }
 
 /// Returns a static, NUL-terminated description for a [`RaxStatus`] code.

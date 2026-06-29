@@ -5,6 +5,7 @@ use rax_engine::cpu::{
     Aarch32Registers, Aarch64Registers, CortexMRegisters, CpuState, HexagonRegisters, Registers,
     RiscVRegisters, SystemRegisters,
 };
+use rax_engine::riscv::RiscVConfig;
 
 /// Architecture selector, ABI-stable. Mirrors `rax_arch` in `rax.h`.
 #[repr(i32)]
@@ -57,6 +58,24 @@ pub const RAX_MODE_THUMB: u32 = 1 << 4;
 pub const RAX_MODE_BIG_ENDIAN: u32 = 1 << 5;
 pub const RAX_MODE_LITTLE_ENDIAN: u32 = 1 << 6;
 
+// RISC-V extension flags. Mirror `RAX_RISCV_EXT_*` in `rax.h`.
+pub const RAX_RISCV_EXT_ZCMP: u64 = 1 << 0;
+pub const RAX_RISCV_EXT_ZCMT: u64 = 1 << 1;
+pub const RAX_RISCV_EXT_ZCLSD: u64 = 1 << 2;
+pub const RAX_RISCV_EXT_ZILSD: u64 = 1 << 3;
+pub const RAX_RISCV_EXT_XHAZARD3: u64 = 1 << 4;
+pub const RAX_RISCV_EXT_XANDES: u64 = 1 << 5;
+pub const RAX_RISCV_EXT_XTHEAD: u64 = 1 << 6;
+pub const RAX_RISCV_EXT_XIDA_SLTW: u64 = 1 << 7;
+pub const RAX_RISCV_EXT_SUPPORTED: u64 = RAX_RISCV_EXT_ZCMP
+    | RAX_RISCV_EXT_ZCMT
+    | RAX_RISCV_EXT_ZCLSD
+    | RAX_RISCV_EXT_ZILSD
+    | RAX_RISCV_EXT_XHAZARD3
+    | RAX_RISCV_EXT_XANDES
+    | RAX_RISCV_EXT_XTHEAD
+    | RAX_RISCV_EXT_XIDA_SLTW;
+
 /// Validates a mode bitmask against an architecture, returning the normalized
 /// mode (defaults filled in) or `None` if invalid.
 pub fn normalize_mode(arch: RaxArch, mode: u32) -> Option<u32> {
@@ -99,18 +118,62 @@ pub fn endianness(mode: u32) -> Endianness {
     }
 }
 
+/// Builds the RV64GC C-API default plus any requested opt-in runtime
+/// extensions. These bits only add to the default profile; they do not disable
+/// extensions that are already part of the default RV64GC emulator config.
+pub fn riscv_config_from_ext(ext: u64) -> Option<RiscVConfig> {
+    if ext & !RAX_RISCV_EXT_SUPPORTED != 0 {
+        return None;
+    }
+    let mut cfg = RiscVConfig::rv64gc();
+    if ext & RAX_RISCV_EXT_ZCMP != 0 {
+        cfg.isa.zcmp = true;
+    }
+    if ext & RAX_RISCV_EXT_ZCMT != 0 {
+        cfg.isa.zcmt = true;
+    }
+    if ext & RAX_RISCV_EXT_ZCLSD != 0 {
+        cfg.isa.zclsd = true;
+    }
+    if ext & RAX_RISCV_EXT_ZILSD != 0 {
+        cfg.isa.zilsd = true;
+    }
+    if ext & RAX_RISCV_EXT_XHAZARD3 != 0 {
+        cfg.isa.xhazard3 = true;
+    }
+    if ext & RAX_RISCV_EXT_XANDES != 0 {
+        cfg.isa.xandes = true;
+    }
+    if ext & RAX_RISCV_EXT_XTHEAD != 0 {
+        cfg.isa.xthead = true;
+    }
+    if ext & RAX_RISCV_EXT_XIDA_SLTW != 0 {
+        cfg.isa.xida_sltw = true;
+    }
+    Some(cfg)
+}
+
 /// Builds a fresh, self-contained emulator vCPU for `arch` over `mem`.
 pub fn build_vcpu(
     arch: RaxArch,
     mode: u32,
     mem: std::sync::Arc<rax_engine::memory::vm::GuestMemoryMmap>,
+    riscv_config: Option<RiscVConfig>,
 ) -> rax_engine::Result<Box<dyn rax_engine::cpu::VCpu>> {
     use rax_engine::backend::Backend;
-    let backend = rax_engine::backend::emulator::EmulatorBackend::new(
-        arch.to_kind(),
-        HexagonIsa::default(),
-        endianness(mode),
-    );
+    let backend = match riscv_config {
+        Some(cfg) => rax_engine::backend::emulator::EmulatorBackend::with_riscv_config(
+            arch.to_kind(),
+            HexagonIsa::default(),
+            endianness(mode),
+            cfg,
+        ),
+        None => rax_engine::backend::emulator::EmulatorBackend::new(
+            arch.to_kind(),
+            HexagonIsa::default(),
+            endianness(mode),
+        ),
+    };
     let vm = backend.create_vm()?;
     vm.create_vcpu(0, mem)
 }
@@ -124,13 +187,9 @@ pub fn build_vcpu(
 pub fn default_state(arch: RaxArch, mode: u32) -> CpuState {
     match arch {
         RaxArch::X86 => CpuState::x86_64(Registers::default(), default_x86_sregs(mode)),
-        RaxArch::Arm64 => {
-            CpuState::aarch64(Aarch64Registers::default(), Default::default())
-        }
+        RaxArch::Arm64 => CpuState::aarch64(Aarch64Registers::default(), Default::default()),
         RaxArch::Arm => CpuState::aarch32(default_aarch32_regs(mode), Default::default()),
-        RaxArch::CortexM => {
-            CpuState::cortex_m(CortexMRegisters::default(), Default::default())
-        }
+        RaxArch::CortexM => CpuState::cortex_m(CortexMRegisters::default(), Default::default()),
         RaxArch::Riscv64 => CpuState::riscv(RiscVRegisters::default()),
         RaxArch::Hexagon => CpuState::hexagon(HexagonRegisters::default()),
     }

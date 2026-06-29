@@ -814,7 +814,13 @@ fn f16_to_f32_bits(bits: u16) -> u32 {
     }
 }
 
-fn f16_round_increment(negative: bool, base: u32, remainder: u32, shift: u32, rounding: u8) -> bool {
+fn f16_round_increment(
+    negative: bool,
+    base: u32,
+    remainder: u32,
+    shift: u32,
+    rounding: u8,
+) -> bool {
     if remainder == 0 {
         return false;
     }

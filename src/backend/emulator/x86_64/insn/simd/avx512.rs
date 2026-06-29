@@ -1440,8 +1440,12 @@ pub fn evex_fma(
                 );
                 fma_result_f32(kind, lane, a, b, c).to_bits() as u64
             } else {
-                let (a, b, c) =
-                    fma_operands_f64(order, f64::from_bits(s1), f64::from_bits(s2), f64::from_bits(s3));
+                let (a, b, c) = fma_operands_f64(
+                    order,
+                    f64::from_bits(s1),
+                    f64::from_bits(s2),
+                    f64::from_bits(s3),
+                );
                 fma_result_f64(kind, lane, a, b, c).to_bits()
             };
             if fp_is_nan(computed, elem_size) {
@@ -1555,7 +1559,11 @@ fn fixup_token_f32(bits: u32) -> usize {
     let sign = (bits >> 31) != 0;
 
     if exp == 0xff && frac != 0 {
-        if (frac & 0x0040_0000) != 0 { 0 } else { 1 }
+        if (frac & 0x0040_0000) != 0 {
+            0
+        } else {
+            1
+        }
     } else if exp == 0 && frac == 0 {
         2
     } else if bits == 0x3f80_0000 {
@@ -2540,10 +2548,7 @@ fn evex_rounding_mode(
     }
 }
 
-fn evex_conversion_vl_bytes(
-    evex: &super::super::super::cpu::EvexPrefix,
-    is_memory: bool,
-) -> usize {
+fn evex_conversion_vl_bytes(evex: &super::super::super::cpu::EvexPrefix, is_memory: bool) -> usize {
     if !is_memory && evex.broadcast {
         64
     } else {
@@ -2776,14 +2781,26 @@ fn fpclass_match_u16(bits: u16, imm: u8) -> bool {
     let quiet_bit = 0x0200;
 
     let class_bit = if exp == 0x1f && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
+        if (frac & quiet_bit) != 0 {
+            0
+        } else {
+            7
+        }
     } else if exp == 0 && frac != 0 {
         let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
         return (imm & mask) != 0;
     } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
+        if sign {
+            2
+        } else {
+            1
+        }
     } else if exp == 0x1f {
-        if sign { 4 } else { 3 }
+        if sign {
+            4
+        } else {
+            3
+        }
     } else if sign {
         6
     } else {
@@ -2800,14 +2817,26 @@ fn fpclass_match_u32(bits: u32, imm: u8) -> bool {
     let quiet_bit = 0x0040_0000;
 
     let class_bit = if exp == 0xff && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
+        if (frac & quiet_bit) != 0 {
+            0
+        } else {
+            7
+        }
     } else if exp == 0 && frac != 0 {
         let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
         return (imm & mask) != 0;
     } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
+        if sign {
+            2
+        } else {
+            1
+        }
     } else if exp == 0xff {
-        if sign { 4 } else { 3 }
+        if sign {
+            4
+        } else {
+            3
+        }
     } else if sign {
         6
     } else {
@@ -2824,14 +2853,26 @@ fn fpclass_match_u64(bits: u64, imm: u8) -> bool {
     let quiet_bit = 0x0008_0000_0000_0000;
 
     let class_bit = if exp == 0x7ff && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
+        if (frac & quiet_bit) != 0 {
+            0
+        } else {
+            7
+        }
     } else if exp == 0 && frac != 0 {
         let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
         return (imm & mask) != 0;
     } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
+        if sign {
+            2
+        } else {
+            1
+        }
     } else if exp == 0x7ff {
-        if sign { 4 } else { 3 }
+        if sign {
+            4
+        } else {
+            3
+        }
     } else if sign {
         6
     } else {
@@ -3665,11 +3706,7 @@ fn fp_getmant_bits(bits: u64, elem_size: usize, imm: u8) -> u64 {
             }
         }
     } as u64;
-    let dst_sign = if sign_control & 0x01 != 0 {
-        0
-    } else {
-        sign
-    };
+    let dst_sign = if sign_control & 0x01 != 0 { 0 } else { sign };
 
     dst_sign | (normalized_exp << frac_bits) | dst_frac
 }
@@ -3700,13 +3737,7 @@ fn fp_unary_math_result(op: FpUnaryMathOp, value: f64, imm: u8, mxcsr: u32) -> f
     }
 }
 
-fn fp_unary_math_bits(
-    op: FpUnaryMathOp,
-    bits: u64,
-    elem_size: usize,
-    imm: u8,
-    mxcsr: u32,
-) -> u64 {
+fn fp_unary_math_bits(op: FpUnaryMathOp, bits: u64, elem_size: usize, imm: u8, mxcsr: u32) -> u64 {
     match (op, elem_size) {
         (FpUnaryMathOp::Rcp14, 4) => rcp14_f32_bits(bits as u32) as u64,
         (FpUnaryMathOp::Rsqrt14, 4) => rsqrt14_f32_bits(bits as u32) as u64,
@@ -7634,11 +7665,7 @@ pub fn evex_rotate_per_elem(
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
     let addr = if is_memory {
-        let scale = if evex.broadcast {
-            elem_size
-        } else {
-            vl_bytes
-        };
+        let scale = if evex.broadcast { elem_size } else { vl_bytes };
         evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
     } else {
         addr
@@ -7704,11 +7731,7 @@ pub fn evex_valign(
     let vl_bytes = vl_bytes_of(evex.ll);
     let num_elems = vl_bytes / elem_size;
     let addr = if is_memory {
-        let scale = if evex.broadcast {
-            elem_size
-        } else {
-            vl_bytes
-        };
+        let scale = if evex.broadcast { elem_size } else { vl_bytes };
         evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
     } else {
         addr

@@ -10,7 +10,7 @@
 //! `oddhalf` bit is `(sel >> 1) & 1`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_u, fld};
+use super::{fimm_u, fld, SemCtx};
 
 type Bytes = [u8; 128];
 

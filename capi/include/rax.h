@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 0u
+#define RAX_API_MINOR 1u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -83,7 +83,7 @@ typedef enum rax_arch {
     RAX_ARCH_X86     = 1, /* x86 / x86-64 (bitness via RAX_MODE_16/32/64) */
     RAX_ARCH_ARM64   = 2, /* AArch64 (ARMv8-A 64-bit) */
     RAX_ARCH_ARM     = 3, /* AArch32 / ARMv7-A (ARM or Thumb) */
-    RAX_ARCH_RISCV64 = 4, /* RV64GC */
+    RAX_ARCH_RISCV64 = 4, /* RV64GC; optional extensions via rax_engine_config.riscv_ext */
     RAX_ARCH_HEXAGON = 5, /* Qualcomm Hexagon */
     RAX_ARCH_CORTEXM = 6  /* ARM Cortex-M (Thumb-only) */
 } rax_arch;
@@ -103,6 +103,22 @@ typedef enum rax_arch {
 
 /* Open flags. */
 #define RAX_OPEN_NO_DEFAULT_STATE (1u << 0) /* do not install a default state */
+
+/* RISC-V extension flags for rax_engine_config.riscv_ext.
+ * These opt into runtime extensions not enabled by the default RV64GC profile.
+ */
+#define RAX_RISCV_EXT_ZCMP      (1ull << 0) /* Zcmp compressed push/pop/move */
+#define RAX_RISCV_EXT_ZCMT      (1ull << 1) /* Zcmt compressed table jumps */
+#define RAX_RISCV_EXT_ZCLSD     (1ull << 2) /* Zclsd compressed load/store pairs */
+#define RAX_RISCV_EXT_ZILSD     (1ull << 3) /* Zilsd load/store pairs */
+#define RAX_RISCV_EXT_XHAZARD3  (1ull << 4) /* Hazard3/RP2350 custom hints/ops */
+#define RAX_RISCV_EXT_XANDES    (1ull << 5) /* Andes custom instructions */
+#define RAX_RISCV_EXT_XTHEAD    (1ull << 6) /* T-Head/Xuantie custom instructions */
+#define RAX_RISCV_EXT_XIDA_SLTW (1ull << 7) /* IDA-compatible non-standard sltw */
+#define RAX_RISCV_EXT_SUPPORTED \
+    (RAX_RISCV_EXT_ZCMP | RAX_RISCV_EXT_ZCMT | RAX_RISCV_EXT_ZCLSD | \
+     RAX_RISCV_EXT_ZILSD | RAX_RISCV_EXT_XHAZARD3 | RAX_RISCV_EXT_XANDES | \
+     RAX_RISCV_EXT_XTHEAD | RAX_RISCV_EXT_XIDA_SLTW)
 
 /* Memory protection flags (bitmask). */
 #define RAX_PROT_NONE  0u
@@ -173,6 +189,7 @@ typedef struct rax_engine_config {
     uint64_t mem_size;  /* initial region size (page-aligned; 0 = default) */
     uint32_t mem_perms; /* RAX_PROT_* for the initial region */
     uint32_t flags;     /* RAX_OPEN_* */
+    uint64_t riscv_ext; /* RAX_RISCV_EXT_* for RAX_ARCH_RISCV64 */
 } rax_engine_config;
 
 /* A mapped memory region (rax_mem_regions). */

@@ -8,16 +8,17 @@ use std::os::raw::c_void;
 use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::arch::{RaxArch, RAX_MODE_64};
-use crate::engine::{rax_engine_close, rax_engine_open, rax_engine_reset, Engine};
+use crate::arch::{RaxArch, RAX_MODE_64, RAX_RISCV_EXT_XIDA_SLTW};
+use crate::engine::{
+    rax_engine_close, rax_engine_open, rax_engine_open_config, rax_engine_reset, Engine,
+    RaxEngineConfig,
+};
 use crate::hook::rax_hook_add_code;
 use crate::mem::{
     rax_mem_map, rax_mem_protect, rax_mem_read, rax_mem_regions, rax_mem_unmap, rax_mem_write,
     RaxMemRegion, RAX_PROT_ALL, RAX_PROT_READ,
 };
-use crate::reg::{
-    rax_reg_read, rax_reg_read_u64, rax_reg_size, rax_reg_write, rax_reg_write_u64,
-};
+use crate::reg::{rax_reg_read, rax_reg_read_u64, rax_reg_size, rax_reg_write, rax_reg_write_u64};
 use crate::run::{
     rax_can_interrupt, rax_emu_icount, rax_emu_last_exit, rax_emu_start, rax_emu_step,
     rax_interrupt, ExitInfo, RAX_NO_ADDR, RAX_STOP_COUNT, RAX_STOP_HLT, RAX_STOP_UNTIL,
@@ -31,10 +32,31 @@ const RCX: i32 = 0x0101;
 const EAX: i32 = 0x0200;
 const AH: i32 = 0x0500;
 const XMM0: i32 = 0x0B00;
+const RISCV_PC: i32 = 0x0011;
+const RISCV_X0: i32 = 0x0100;
 
 fn open_x86() -> *mut Engine {
     let mut e: *mut Engine = ptr::null_mut();
     let st = rax_engine_open(RaxArch::X86 as i32, RAX_MODE_64, &mut e);
+    assert_eq!(st, RaxStatus::Ok);
+    assert!(!e.is_null());
+    e
+}
+
+fn open_riscv_with_ext(ext: u64) -> *mut Engine {
+    let cfg = RaxEngineConfig {
+        size: std::mem::size_of::<RaxEngineConfig>() as u32,
+        arch: RaxArch::Riscv64 as i32,
+        mode: 0,
+        backend: crate::arch::RAX_BACKEND_DEFAULT,
+        mem_base: 0,
+        mem_size: 0,
+        mem_perms: RAX_PROT_ALL,
+        flags: 0,
+        riscv_ext: ext,
+    };
+    let mut e: *mut Engine = ptr::null_mut();
+    let st = rax_engine_open_config(&cfg, &mut e);
     assert_eq!(st, RaxStatus::Ok);
     assert!(!e.is_null());
     e
@@ -90,7 +112,10 @@ fn null_handle_rejected() {
             rax_mem_write(ptr::null_mut(), 0, [0u8].as_ptr(), 1),
             RaxStatus::Handle
         );
-        assert_eq!(rax_reg_write_u64(ptr::null_mut(), RAX, 0), RaxStatus::Handle);
+        assert_eq!(
+            rax_reg_write_u64(ptr::null_mut(), RAX, 0),
+            RaxStatus::Handle
+        );
     }
 }
 
@@ -116,29 +141,49 @@ fn sparse_map_unmap_protect_regions() {
     unsafe {
         let e = open_x86();
         // Map a high region and use it.
-        assert_eq!(rax_mem_map(e, 0x4000_0000, 0x2000, RAX_PROT_ALL), RaxStatus::Ok);
+        assert_eq!(
+            rax_mem_map(e, 0x4000_0000, 0x2000, RAX_PROT_ALL),
+            RaxStatus::Ok
+        );
         let payload = [0xDEu8, 0xAD, 0xBE, 0xEF];
         write(e, 0x4000_0000, &payload);
         let mut back = [0u8; 4];
-        assert_eq!(rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4), RaxStatus::Ok);
+        assert_eq!(
+            rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4),
+            RaxStatus::Ok
+        );
         assert_eq!(back, payload);
 
         // Region count is now 2 (default + new).
         let mut n: usize = 0;
         assert_eq!(rax_mem_regions(e, ptr::null_mut(), &mut n), RaxStatus::Ok);
         assert_eq!(n, 2);
-        let mut regs = [RaxMemRegion { base: 0, size: 0, perms: 0, _reserved: 0 }; 8];
+        let mut regs = [RaxMemRegion {
+            base: 0,
+            size: 0,
+            perms: 0,
+            _reserved: 0,
+        }; 8];
         let mut cap = regs.len();
-        assert_eq!(rax_mem_regions(e, regs.as_mut_ptr(), &mut cap), RaxStatus::Ok);
+        assert_eq!(
+            rax_mem_regions(e, regs.as_mut_ptr(), &mut cap),
+            RaxStatus::Ok
+        );
         assert_eq!(cap, 2);
 
         // Protect the first page of the high region read-only (splits it → 3 regions).
-        assert_eq!(rax_mem_protect(e, 0x4000_0000, 0x1000, RAX_PROT_READ), RaxStatus::Ok);
+        assert_eq!(
+            rax_mem_protect(e, 0x4000_0000, 0x1000, RAX_PROT_READ),
+            RaxStatus::Ok
+        );
         let mut n2: usize = 0;
         rax_mem_regions(e, ptr::null_mut(), &mut n2);
         assert_eq!(n2, 3);
         // Contents preserved across the split.
-        assert_eq!(rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4), RaxStatus::Ok);
+        assert_eq!(
+            rax_mem_read(e, 0x4000_0000, back.as_mut_ptr(), 4),
+            RaxStatus::Ok
+        );
         assert_eq!(back, payload);
 
         // Unmap the high region entirely.
@@ -171,9 +216,15 @@ fn register_widths_and_subregisters() {
         assert_eq!(rax_reg_size(RaxArch::X86 as i32, 0x7FFF), 0); // invalid
 
         // EAX write zero-extends RAX.
-        assert_eq!(rax_reg_write_u64(e, RAX, 0xAAAA_BBBB_CCCC_DDDD), RaxStatus::Ok);
+        assert_eq!(
+            rax_reg_write_u64(e, RAX, 0xAAAA_BBBB_CCCC_DDDD),
+            RaxStatus::Ok
+        );
         let eax: u32 = 0x1122_3344;
-        assert_eq!(rax_reg_write(e, EAX, &eax as *const u32 as *const u8), RaxStatus::Ok);
+        assert_eq!(
+            rax_reg_write(e, EAX, &eax as *const u32 as *const u8),
+            RaxStatus::Ok
+        );
         assert_eq!(rd_u64(e, RAX), 0x1122_3344);
 
         // AH writes bits 15:8.
@@ -187,7 +238,10 @@ fn register_widths_and_subregisters() {
         assert_eq!(rax_reg_write(e, XMM0, xin.as_ptr()), RaxStatus::Ok);
         let mut xout = [0u8; 16];
         let mut sz: usize = 0;
-        assert_eq!(rax_reg_read(e, XMM0, xout.as_mut_ptr(), &mut sz), RaxStatus::Ok);
+        assert_eq!(
+            rax_reg_read(e, XMM0, xout.as_mut_ptr(), &mut sz),
+            RaxStatus::Ok
+        );
         assert_eq!(sz, 16);
         assert_eq!(xout, xin);
 
@@ -235,7 +289,7 @@ fn count_and_until_stops() {
     unsafe {
         let e = open_x86();
         write(e, 0x1000, &[0x90, 0x90, 0x90, 0xF4]); // nop;nop;nop;hlt
-        // count = 2
+                                                     // count = 2
         set_rip(e, 0x1000);
         assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 2), RaxStatus::Ok);
         let mut ex = ExitInfo::none();
@@ -267,7 +321,14 @@ fn code_hook_counts_instructions() {
         let mut id = 0u32;
         // begin > end => match all addresses.
         assert_eq!(
-            rax_hook_add_code(e, 1, 0, Some(count_cb), &counter as *const _ as *mut c_void, &mut id),
+            rax_hook_add_code(
+                e,
+                1,
+                0,
+                Some(count_cb),
+                &counter as *const _ as *mut c_void,
+                &mut id
+            ),
             RaxStatus::Ok
         );
         assert!(id > 0);
@@ -343,7 +404,10 @@ fn reset_restores_default_state() {
 fn arm64_registers() {
     unsafe {
         let mut e: *mut Engine = ptr::null_mut();
-        assert_eq!(rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e), RaxStatus::Ok);
+        assert_eq!(
+            rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
         // X0 id = 0x0100, PC = 0x0011.
         assert_eq!(rax_reg_write_u64(e, 0x0100, 0xABCD), RaxStatus::Ok);
         assert_eq!(rd_u64(e, 0x0100), 0xABCD);
@@ -359,7 +423,10 @@ fn arm64_registers() {
 fn arm64_step_advances_pc() {
     unsafe {
         let mut e: *mut Engine = ptr::null_mut();
-        assert_eq!(rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e), RaxStatus::Ok);
+        assert_eq!(
+            rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
         assert_eq!(crate::engine::rax_engine_supports_stepping(e), 1);
         // Two AArch64 NOPs (0xD503201F, little-endian).
         write(e, 0x1000, &[0x1F, 0x20, 0x03, 0xD5, 0x1F, 0x20, 0x03, 0xD5]);
@@ -385,7 +452,14 @@ struct MemObs {
     last_read_val: u64,
 }
 
-extern "C" fn mem_cb(_e: *mut Engine, kind: i32, addr: u64, _size: u32, value: u64, user: *mut c_void) {
+extern "C" fn mem_cb(
+    _e: *mut Engine,
+    kind: i32,
+    addr: u64,
+    _size: u32,
+    value: u64,
+    user: *mut c_void,
+) {
     let o = unsafe { &mut *(user as *mut MemObs) };
     match kind {
         0 => {
@@ -458,15 +532,49 @@ fn mem_hook_observes_load_store_fetch() {
 fn riscv_step_advances_pc() {
     unsafe {
         let mut e: *mut Engine = ptr::null_mut();
-        assert_eq!(rax_engine_open(RaxArch::Riscv64 as i32, 0, &mut e), RaxStatus::Ok);
+        assert_eq!(
+            rax_engine_open(RaxArch::Riscv64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
         assert_eq!(crate::engine::rax_engine_supports_stepping(e), 1);
         // Two RISC-V NOPs (addi x0,x0,0 = 0x00000013, little-endian).
         write(e, 0x1000, &[0x13, 0x00, 0x00, 0x00, 0x13, 0x00, 0x00, 0x00]);
-        assert_eq!(rax_reg_write_u64(e, 0x0011, 0x1000), RaxStatus::Ok); // PC
+        assert_eq!(rax_reg_write_u64(e, RISCV_PC, 0x1000), RaxStatus::Ok);
         let mut executed = 0u64;
         assert_eq!(rax_emu_step(e, 1, &mut executed), RaxStatus::Ok);
         assert_eq!(executed, 1);
-        assert_eq!(rd_u64(e, 0x0011), 0x1004);
+        assert_eq!(rd_u64(e, RISCV_PC), 0x1004);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn riscv_open_config_ext_survives_reset() {
+    unsafe {
+        let e = open_riscv_with_ext(RAX_RISCV_EXT_XIDA_SLTW);
+
+        // sltw x5, x6, x7: signed compare of the low 32-bit words.
+        let sltw = ((7u32 << 20) | (6u32 << 15) | (2u32 << 12) | (5u32 << 7) | 0x3b).to_le_bytes();
+        write(e, 0x1000, &sltw);
+
+        for _ in 0..2 {
+            assert_eq!(rax_reg_write_u64(e, RISCV_PC, 0x1000), RaxStatus::Ok);
+            assert_eq!(rax_reg_write_u64(e, RISCV_X0 + 5, 0), RaxStatus::Ok);
+            assert_eq!(
+                rax_reg_write_u64(e, RISCV_X0 + 6, 0xffff_ffff),
+                RaxStatus::Ok
+            );
+            assert_eq!(rax_reg_write_u64(e, RISCV_X0 + 7, 0), RaxStatus::Ok);
+
+            let mut executed = 0u64;
+            assert_eq!(rax_emu_step(e, 1, &mut executed), RaxStatus::Ok);
+            assert_eq!(executed, 1);
+            assert_eq!(rd_u64(e, RISCV_X0 + 5), 1);
+            assert_eq!(rd_u64(e, RISCV_PC), 0x1004);
+
+            assert_eq!(rax_engine_reset(e), RaxStatus::Ok);
+        }
+
         rax_engine_close(e);
     }
 }

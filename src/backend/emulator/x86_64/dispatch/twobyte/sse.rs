@@ -19,19 +19,35 @@ const XSAVE_EXTENDED_COMPONENTS: [u8; 5] = [2, 5, 6, 7, 19];
 // follows the SDM, so we must too.
 #[inline(always)]
 fn x86_min_f32(dst: f32, src: f32) -> f32 {
-    if dst < src { dst } else { src }
+    if dst < src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn x86_max_f32(dst: f32, src: f32) -> f32 {
-    if dst > src { dst } else { src }
+    if dst > src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn x86_min_f64(dst: f64, src: f64) -> f64 {
-    if dst < src { dst } else { src }
+    if dst < src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn x86_max_f64(dst: f64, src: f64) -> f64 {
-    if dst > src { dst } else { src }
+    if dst > src {
+        dst
+    } else {
+        src
+    }
 }
 
 impl X86_64Vcpu {
@@ -1706,19 +1722,12 @@ impl X86_64Vcpu {
         self.write_mem32(area_addr + 28, 0xFFFF)?;
         for i in 0..16 {
             self.write_mem64(area_addr + 160 + (i as u64) * 16, self.regs.xmm[i][0])?;
-            self.write_mem64(
-                area_addr + 160 + (i as u64) * 16 + 8,
-                self.regs.xmm[i][1],
-            )?;
+            self.write_mem64(area_addr + 160 + (i as u64) * 16 + 8, self.regs.xmm[i][1])?;
         }
         Ok(())
     }
 
-    fn save_xsave_extended_component(
-        &mut self,
-        component: u8,
-        component_addr: u64,
-    ) -> Result<()> {
+    fn save_xsave_extended_component(&mut self, component: u8, component_addr: u64) -> Result<()> {
         match component {
             2 => {
                 for i in 0..16 {
@@ -1843,8 +1852,7 @@ impl X86_64Vcpu {
         match component {
             2 => {
                 for i in 0..16 {
-                    self.regs.ymm_high[i][0] =
-                        self.read_mem64(component_addr + (i as u64) * 16)?;
+                    self.regs.ymm_high[i][0] = self.read_mem64(component_addr + (i as u64) * 16)?;
                     self.regs.ymm_high[i][1] =
                         self.read_mem64(component_addr + (i as u64) * 16 + 8)?;
                 }
@@ -1857,18 +1865,16 @@ impl X86_64Vcpu {
             6 => {
                 for i in 0..16 {
                     for lane in 0..4 {
-                        self.regs.zmm_high[i][lane] = self.read_mem64(
-                            component_addr + (i as u64) * 32 + (lane as u64) * 8,
-                        )?;
+                        self.regs.zmm_high[i][lane] =
+                            self.read_mem64(component_addr + (i as u64) * 32 + (lane as u64) * 8)?;
                     }
                 }
             }
             7 => {
                 for i in 0..16 {
                     for lane in 0..8 {
-                        self.regs.zmm_ext[i][lane] = self.read_mem64(
-                            component_addr + (i as u64) * 64 + (lane as u64) * 8,
-                        )?;
+                        self.regs.zmm_ext[i][lane] =
+                            self.read_mem64(component_addr + (i as u64) * 64 + (lane as u64) * 8)?;
                     }
                 }
             }

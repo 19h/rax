@@ -434,9 +434,9 @@ mod tests {
         let mut vcpu = make_vcpu_64();
         vcpu.regs.rax = 0x1234_5678_9000; // base RAX
         vcpu.regs.rdx = 0x10; // index RDX
-        // [RAX + RDX*8 + 0x20]: ModRM mod=01 reg=000 rm=100 = 0x44
-        //   SIB scale=11(*8) index=010(RDX) base=000(RAX) = (3<<6)|(2<<3)|0 = 0xD0
-        //   disp8 = 0x20
+                              // [RAX + RDX*8 + 0x20]: ModRM mod=01 reg=000 rm=100 = 0x44
+                              //   SIB scale=11(*8) index=010(RDX) base=000(RAX) = (3<<6)|(2<<3)|0 = 0xD0
+                              //   disp8 = 0x20
         let got = ea(&vcpu, &[], &[0x44, 0xD0, 0x20]);
         assert_eq!(got, 0x1234_5678_9000u64 + 0x10 * 8 + 0x20);
     }
@@ -559,7 +559,7 @@ impl X86_64Vcpu {
     /// instruction may proceed.
     #[inline(always)]
     #[allow(dead_code)] // retained for non-cache callers / documentation; the hot
-    // path now caches the LOCK verdict and calls `enforce_lock_prefix_cold` directly.
+                        // path now caches the LOCK verdict and calls `enforce_lock_prefix_cold` directly.
     pub(super) fn enforce_lock_prefix(
         &mut self,
         ctx: &InsnContext,

@@ -107,7 +107,11 @@ impl X86_64Vcpu {
             let matrix = &matrix_bytes[base..base + 8];
             for byte in 0..8 {
                 let lane = base + byte;
-                let input = if inverse { gf_inv(src1[lane]) } else { src1[lane] };
+                let input = if inverse {
+                    gf_inv(src1[lane])
+                } else {
+                    src1[lane]
+                };
                 result[lane] = gf_affine_byte(matrix, input, imm8);
             }
         }

@@ -105,10 +105,10 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 24)  // FXSR - REQUIRED
                                   | (1 << 25)  // SSE - REQUIRED
                                   | (1 << 26); // SSE2 - REQUIRED
-            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
-            // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
-            // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
-            // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
+                                               // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
+                                               // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
+                                               // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
+                                               // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
             let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 9)   // SSSE3
@@ -147,11 +147,11 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 10) // INVPCID
                         | (1u32 << 5); // AVX2
                 let ecx = 1u32 << 8; // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
-                // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
-                // the emulator does not enforce it (ENDBR is a NOP, indirect
-                // CALL/JMP/RET are unchecked), so claiming it would mislead a
-                // guest into believing hardware-enforced CFI is active and
-                // silently weaken intra-guest control-flow protections.
+                                     // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
+                                     // the emulator does not enforce it (ENDBR is a NOP, indirect
+                                     // CALL/JMP/RET are unchecked), so claiming it would mislead a
+                                     // guest into believing hardware-enforced CFI is active and
+                                     // silently weaken intra-guest control-flow protections.
                 let edx = 1u32 << 14; // SERIALIZE
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {

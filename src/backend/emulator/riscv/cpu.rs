@@ -113,6 +113,10 @@ pub struct RiscVVcpu {
 
 impl RiscVVcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
+        Self::new_with_config(id, mem, RiscVConfig::rv64gc())
+    }
+
+    pub fn new_with_config(id: u32, mem: Arc<GuestMemoryMmap>, cfg: RiscVConfig) -> Self {
         let pending: MmioSink = Arc::new(Mutex::new(None));
         let pending_exit: ExitSink = Arc::new(Mutex::new(None));
         let tohost_addr = Arc::new(Mutex::new(None));
@@ -122,7 +126,7 @@ impl RiscVVcpu {
             pending_exit: pending_exit.clone(),
             tohost_addr: tohost_addr.clone(),
         };
-        let cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(bridge));
+        let cpu = RiscVCpu::new(cfg, Box::new(bridge));
         RiscVVcpu {
             id,
             cpu,

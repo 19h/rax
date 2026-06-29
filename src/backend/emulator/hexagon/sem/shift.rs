@@ -6,7 +6,7 @@
 //! of `imported/shift.idef` + `imported/macros.def`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_s, fimm_u, fld};
+use super::{fimm_s, fimm_u, fld, SemCtx};
 
 // ---- core shift primitives (mirror the spec f-macros) ---------------------
 

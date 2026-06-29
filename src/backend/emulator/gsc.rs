@@ -245,10 +245,7 @@ fn parse_tpm_cmds_env() -> Vec<Vec<u8>> {
     };
     raw.split([',', ';'])
         .filter_map(|part| {
-            let hex: String = part
-                .chars()
-                .filter(|c| c.is_ascii_hexdigit())
-                .collect();
+            let hex: String = part.chars().filter(|c| c.is_ascii_hexdigit()).collect();
             if hex.len() < 2 {
                 return None;
             }
@@ -1502,8 +1499,10 @@ impl Memory for GscBridge {
             // status (`+0x78`) always reads "ready" (0). Other timer registers
             // (enable/prescale/masks) fall through to the persistent store,
             // which already holds the values the init routine wrote.
-            if matches!(addr, TIMER_COUNT_LO | TIMER_COUNT_HI | TIMER2_COUNT_LO | TIMER2_COUNT_HI)
-            {
+            if matches!(
+                addr,
+                TIMER_COUNT_LO | TIMER_COUNT_HI | TIMER2_COUNT_LO | TIMER2_COUNT_HI
+            ) {
                 let ticks = self.timer_ticks();
                 let v = if addr == TIMER_COUNT_LO || addr == TIMER2_COUNT_LO {
                     ticks as u32
@@ -2011,8 +2010,7 @@ impl GscVcpu {
         // has reached the alarm compare. The firmware's cause-7 ISR re-arms or
         // disarms the compare, which clears MTIP on the next sync.
         let counter = self.cpu.instret() / self.cfg.timer_div.max(1);
-        self.cpu
-            .set_interrupt_pending(MIP_MTIP, counter >= compare);
+        self.cpu.set_interrupt_pending(MIP_MTIP, counter >= compare);
     }
 
     #[inline]
@@ -2176,7 +2174,9 @@ impl GscVcpu {
             .cpu
             .write_memory(TPM_GLOBAL_LEN, &(cmd.len() as u32).to_le_bytes());
         let _ = self.cpu.write_memory(TPM_GLOBAL_CAP, &cap.to_le_bytes());
-        let _ = self.cpu.write_memory(TPM_GLOBAL_PENDING, &1u32.to_le_bytes());
+        let _ = self
+            .cpu
+            .write_memory(TPM_GLOBAL_PENDING, &1u32.to_le_bytes());
         self.tpm.awaiting = true;
         self.shared.lock().unwrap().tpm_active = true;
         if std::env::var("RAX_GSC_TPM_TRACE").is_ok() {
@@ -2389,7 +2389,10 @@ impl VCpu for GscVcpu {
                         self.halted = true;
                         return Ok(VcpuExit::Shutdown);
                     }
-                    if self.cpu.instret().saturating_sub(self.tpm.call_start_instret)
+                    if self
+                        .cpu
+                        .instret()
+                        .saturating_sub(self.tpm.call_start_instret)
                         > TPM_CALL_MAX_INSNS
                     {
                         eprintln!(
@@ -2892,7 +2895,10 @@ mod tests {
         assert_eq!(b.shared.lock().unwrap().timer_compare, u64::MAX);
         wr32(&mut b, TIMER_COMPARE_LO, 0xdead_beef);
         wr32(&mut b, TIMER_COMPARE_HI, 0x0000_1234);
-        assert_eq!(b.shared.lock().unwrap().timer_compare, 0x0000_1234_dead_beef);
+        assert_eq!(
+            b.shared.lock().unwrap().timer_compare,
+            0x0000_1234_dead_beef
+        );
     }
 
     #[test]
@@ -2915,7 +2921,10 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(cmds.len(), 2);
-        assert_eq!(cmds[0], vec![0x80, 0x01, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x01, 0x44, 0x00, 0x00]);
+        assert_eq!(
+            cmds[0],
+            vec![0x80, 0x01, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x01, 0x44, 0x00, 0x00]
+        );
         assert_eq!(cmds[1], vec![0x80, 0x01, 0x00, 0x00]);
     }
 

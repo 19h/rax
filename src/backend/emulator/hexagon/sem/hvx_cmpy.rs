@@ -8,7 +8,7 @@
 //!   odd  (vmpyo): prod = Vu.w[i](signed) * Vv.h[1](signed high half)
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 

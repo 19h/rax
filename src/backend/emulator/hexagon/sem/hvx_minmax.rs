@@ -4,7 +4,7 @@
 //! fVNAVGS=(a-b)>>1, fABS, fVSAT*.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 

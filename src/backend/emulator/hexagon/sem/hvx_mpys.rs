@@ -5,7 +5,7 @@
 //! and the SemCtx vector API.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 

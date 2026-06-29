@@ -8,7 +8,7 @@
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
-use super::cpu::{DECODE_CACHE_MASK, InsnContext, X86_64Vcpu};
+use super::cpu::{InsnContext, X86_64Vcpu, DECODE_CACHE_MASK};
 use super::decoder::Decoder;
 
 /// Batch size for threaded execution before checking for exits
@@ -124,7 +124,11 @@ impl X86_64Vcpu {
         } else {
             let default_16bit = !self.sregs.cs.db;
             let is_16bit = default_16bit ^ ctx.operand_size_override;
-            if is_16bit { 2 } else { 4 }
+            if is_16bit {
+                2
+            } else {
+                4
+            }
         };
 
         let opcode_cursor = ctx.cursor;

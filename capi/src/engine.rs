@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use rax_engine::cpu::VCpu;
 use rax_engine::memory::vm::GuestMemoryMmap;
+use rax_engine::riscv::RiscVConfig;
 
 use crate::arch::{self, RaxArch};
 use crate::guard;
@@ -33,6 +34,7 @@ pub struct Engine {
     magic: u64,
     pub(crate) arch: RaxArch,
     pub(crate) mode: u32,
+    pub(crate) riscv_config: Option<RiscVConfig>,
     /// Mapped regions, kept sorted by base address and non-overlapping. The
     /// engine maintains the invariant that at least one region is always
     /// mapped (so the backing `GuestMemoryMmap` is never empty).
@@ -100,6 +102,7 @@ pub(crate) unsafe fn engine_ref<'a>(p: *const Engine) -> Option<&'a Engine> {
 fn open_internal(
     arch: RaxArch,
     mode: u32,
+    riscv_config: Option<RiscVConfig>,
     mem_base: u64,
     mem_size: u64,
     mem_perms: u32,
@@ -130,7 +133,8 @@ fn open_internal(
             .map_err(|_| RaxStatus::Map)?,
     );
 
-    let mut vcpu = arch::build_vcpu(arch, mode, mem.clone()).map_err(|_| RaxStatus::Backend)?;
+    let mut vcpu =
+        arch::build_vcpu(arch, mode, mem.clone(), riscv_config).map_err(|_| RaxStatus::Backend)?;
 
     if flags & RAX_OPEN_NO_DEFAULT_STATE == 0 {
         let st = arch::default_state(arch, mode);
@@ -141,6 +145,7 @@ fn open_internal(
         magic: ENGINE_MAGIC,
         arch,
         mode,
+        riscv_config,
         regions: vec![region],
         mem,
         vcpu,
@@ -166,6 +171,34 @@ pub struct RaxEngineConfig {
     pub mem_size: u64,
     pub mem_perms: u32,
     pub flags: u32,
+    pub riscv_ext: u64,
+}
+
+#[repr(C)]
+struct RaxEngineConfigBase {
+    size: u32,
+    arch: i32,
+    mode: u32,
+    backend: i32,
+    mem_base: u64,
+    mem_size: u64,
+    mem_perms: u32,
+    flags: u32,
+}
+
+const RAX_ENGINE_CONFIG_BASE_SIZE: usize = core::mem::size_of::<RaxEngineConfigBase>();
+const RAX_ENGINE_CONFIG_RISCV_EXT_OFFSET: usize = RAX_ENGINE_CONFIG_BASE_SIZE;
+
+fn read_config_riscv_ext(cfg: *const RaxEngineConfig, size: usize) -> u64 {
+    if size < RAX_ENGINE_CONFIG_RISCV_EXT_OFFSET + core::mem::size_of::<u64>() {
+        return 0;
+    }
+    unsafe {
+        (cfg as *const u8)
+            .add(RAX_ENGINE_CONFIG_RISCV_EXT_OFFSET)
+            .cast::<u64>()
+            .read_unaligned()
+    }
 }
 
 // ===========================================================================
@@ -188,7 +221,15 @@ pub extern "C" fn rax_engine_open(arch: c_int, mode: u32, out: *mut *mut Engine)
             Some(a) => a,
             None => return RaxStatus::Arch,
         };
-        match open_internal(a, mode, 0, DEFAULT_MEM_SIZE, crate::mem::RAX_PROT_ALL, 0) {
+        match open_internal(
+            a,
+            mode,
+            None,
+            0,
+            DEFAULT_MEM_SIZE,
+            crate::mem::RAX_PROT_ALL,
+            0,
+        ) {
             Ok(e) => {
                 unsafe {
                     *out = Box::into_raw(e);
@@ -215,27 +256,47 @@ pub extern "C" fn rax_engine_open_config(
         }
         // Read the caller-provided struct defensively: only fields covered by
         // the caller's declared `size` are trusted; the rest take defaults.
-        let cfg = unsafe { &*cfg };
-        if (cfg.size as usize) < core::mem::size_of::<u32>() * 2 {
+        let cfg_size = unsafe { (cfg as *const u32).read_unaligned() as usize };
+        if cfg_size < RAX_ENGINE_CONFIG_BASE_SIZE {
             return RaxStatus::Arg;
         }
-        let a = match RaxArch::from_i32(cfg.arch) {
+        let base = unsafe { &*(cfg.cast::<RaxEngineConfigBase>()) };
+        let riscv_ext = read_config_riscv_ext(cfg, cfg_size);
+        let a = match RaxArch::from_i32(base.arch) {
             Some(a) => a,
             None => return RaxStatus::Arch,
         };
         // Backend selection: only the software emulator is exposed via the C
         // API for portable, fully deterministic embedding; 0 == default/auto.
-        if cfg.backend != crate::arch::RAX_BACKEND_DEFAULT
-            && cfg.backend != crate::arch::RAX_BACKEND_EMULATOR
+        if base.backend != crate::arch::RAX_BACKEND_DEFAULT
+            && base.backend != crate::arch::RAX_BACKEND_EMULATOR
         {
             return RaxStatus::Backend;
         }
-        let mem_size = if cfg.mem_size == 0 {
+        let riscv_config = if riscv_ext == 0 {
+            None
+        } else if a == RaxArch::Riscv64 {
+            match arch::riscv_config_from_ext(riscv_ext) {
+                Some(cfg) => Some(cfg),
+                None => return RaxStatus::Arg,
+            }
+        } else {
+            return RaxStatus::Arg;
+        };
+        let mem_size = if base.mem_size == 0 {
             DEFAULT_MEM_SIZE
         } else {
-            cfg.mem_size
+            base.mem_size
         };
-        match open_internal(a, cfg.mode, cfg.mem_base, mem_size, cfg.mem_perms, cfg.flags) {
+        match open_internal(
+            a,
+            base.mode,
+            riscv_config,
+            base.mem_base,
+            mem_size,
+            base.mem_perms,
+            base.flags,
+        ) {
             Ok(e) => {
                 unsafe {
                     *out = Box::into_raw(e);
@@ -282,7 +343,7 @@ pub extern "C" fn rax_engine_reset(engine: *mut Engine) -> RaxStatus {
         }
         e.clear_err();
         // A fresh vCPU guarantees pristine transient state (halt flags, caches).
-        let mut vcpu = match arch::build_vcpu(e.arch, e.mode, e.mem.clone()) {
+        let mut vcpu = match arch::build_vcpu(e.arch, e.mode, e.mem.clone(), e.riscv_config) {
             Ok(v) => v,
             Err(err) => return e.fail_engine(&err),
         };

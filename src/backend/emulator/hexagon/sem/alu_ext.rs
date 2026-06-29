@@ -15,7 +15,7 @@
 //! See `sem/alu.rs` and `sem/mpy.rs` for the established pattern.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_s, fimm_u, fld};
+use super::{fimm_s, fimm_u, fld, SemCtx};
 
 // --- macro-equivalent lane helpers (mirror imported/macros.def) -------------
 //   fGETHALF(N,SRC)  = (size2s_t)((SRC>>(N*16))&0xffff)   signed 16
@@ -70,7 +70,11 @@ fn set_byte(dst: u64, n: u32, val: i64) -> u64 {
 /// f8BITSOF(VAL) = VAL ? 0xff : 0x00.
 #[inline]
 fn bits8of(cond: bool) -> u8 {
-    if cond { 0xff } else { 0x00 }
+    if cond {
+        0xff
+    } else {
+        0x00
+    }
 }
 
 /// `conv_round(a, n)` — convergent (".5 rounds toward even") rounding to a

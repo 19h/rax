@@ -8,7 +8,7 @@
 //! See `sem/alu.rs` for the established style. Verified against `qemu-hexagon`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_u, fld};
+use super::{fimm_u, fld, SemCtx};
 
 // --- macro helpers ----------------------------------------------------------
 
@@ -46,7 +46,11 @@ fn bidir_lshiftl_one(shamt: i64) -> u64 {
     if shamt < 0 {
         let s = (-shamt) - 1;
         // (1u64 >> s) >> 1 ; any positive shift of 1 yields 0
-        if s >= 63 { 0 } else { (1u64 >> s) >> 1 }
+        if s >= 63 {
+            0
+        } else {
+            (1u64 >> s) >> 1
+        }
     } else if shamt >= 64 {
         0
     } else {

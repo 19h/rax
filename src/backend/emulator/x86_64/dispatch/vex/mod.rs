@@ -94,8 +94,7 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let xmm_before = self.regs.xmm;
         let ymm_before = self.regs.ymm_high;
-        let result =
-            self.execute_vex_common_inner(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode);
+        let result = self.execute_vex_common_inner(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode);
         if result.is_ok() {
             for r in 0..16 {
                 if self.regs.xmm[r] != xmm_before[r] || self.regs.ymm_high[r] != ymm_before[r] {

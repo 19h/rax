@@ -19,7 +19,7 @@ use rax_engine::memory::vm::GuestAddress;
 use rax_engine::snapshot::EmulatorState;
 
 use crate::arch::RaxArch;
-use crate::engine::{Engine, engine_mut};
+use crate::engine::{engine_mut, Engine};
 use crate::guard;
 use crate::status::RaxStatus;
 
@@ -118,7 +118,11 @@ impl Engine {
             let mut bytes = vec![0u8; r.size as usize];
             // Read region contents from the backing store.
             use rax_engine::memory::vm::Bytes;
-            if self.mem.read_slice(&mut bytes, GuestAddress(r.base)).is_err() {
+            if self
+                .mem
+                .read_slice(&mut bytes, GuestAddress(r.base))
+                .is_err()
+            {
                 return Err(RaxStatus::Map);
             }
             w.bytes(&bytes);
@@ -235,10 +239,11 @@ impl Engine {
         }
 
         // Reconstruct the vCPU over the restored memory and load CPU state.
-        let mut vcpu = match crate::arch::build_vcpu(self.arch, mode, new_mem.clone()) {
-            Ok(v) => v,
-            Err(err) => return self.fail_engine(&err),
-        };
+        let mut vcpu =
+            match crate::arch::build_vcpu(self.arch, mode, new_mem.clone(), self.riscv_config) {
+                Ok(v) => v,
+                Err(err) => return self.fail_engine(&err),
+            };
         if let Err(err) = vcpu.set_state(&cpu) {
             return self.fail_engine(&err);
         }

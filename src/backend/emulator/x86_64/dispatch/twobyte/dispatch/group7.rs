@@ -23,33 +23,33 @@ impl X86_64Vcpu {
                 0xC1 => {
                     // VMCALL (0x0F 0x01 0xC1) - VMX hypercall
                     ctx.consume_u8()?; // consume modrm
-                    // In a real hypervisor, this would cause a VM exit.
-                    // When running without VMX, this should generate #UD.
-                    // For our emulator, treat as NOP - kernel uses this for
-                    // paravirtualized hints in delay loops.
+                                       // In a real hypervisor, this would cause a VM exit.
+                                       // When running without VMX, this should generate #UD.
+                                       // For our emulator, treat as NOP - kernel uses this for
+                                       // paravirtualized hints in delay loops.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC8 => {
                     // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
                     ctx.consume_u8()?; // consume modrm
-                    // MONITOR sets up an address range for monitoring using RAX/EAX
-                    // For emulation, treat as NOP - no actual hardware monitoring
+                                       // MONITOR sets up an address range for monitoring using RAX/EAX
+                                       // For emulation, treat as NOP - no actual hardware monitoring
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC9 => {
                     // MWAIT (0x0F 0x01 0xC9) - Monitor wait
                     ctx.consume_u8()?; // consume modrm
-                    // MWAIT hints processor to enter optimized state while waiting
-                    // For emulation, treat as NOP - no power management
+                                       // MWAIT hints processor to enter optimized state while waiting
+                                       // For emulation, treat as NOP - no power management
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD0 => {
                     // XGETBV (0F 01 D0) - read extended control register XCR[ECX].
                     ctx.consume_u8()?; // consume modrm
-                    // Lenient on CR4.OSXSAVE since the harness reads XCRs directly.
+                                       // Lenient on CR4.OSXSAVE since the harness reads XCRs directly.
                     let value = match self.regs.rcx as u32 {
                         0 => self.xcr0,
                         1 => self.xgetbv1_value,
@@ -66,7 +66,7 @@ impl X86_64Vcpu {
                 0xD1 => {
                     // XSETBV (0F 01 D1) - write XCR[ECX] from EDX:EAX (privileged).
                     ctx.consume_u8()?; // consume modrm
-                    // #GP(0) if CPL != 0.
+                                       // #GP(0) if CPL != 0.
                     if self.sregs.cr0 & 1 != 0 && (self.sregs.cs.selector & 3) != 0 {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
@@ -97,29 +97,29 @@ impl X86_64Vcpu {
                 0xD4 => {
                     // VMFUNC (0x0F 0x01 0xD4) - VMX function
                     ctx.consume_u8()?; // consume modrm
-                    // Treat as NOP in emulator
+                                       // Treat as NOP in emulator
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD5 => {
                     // XEND (0x0F 0x01 0xD5) - End transaction
                     ctx.consume_u8()?; // consume modrm
-                    // TSX not supported, treat as NOP
+                                       // TSX not supported, treat as NOP
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD9 => {
                     // VMMCALL (0x0F 0x01 0xD9) - AMD SVM hypercall
                     ctx.consume_u8()?; // consume modrm
-                    // Treat as NOP like VMCALL
+                                       // Treat as NOP like VMCALL
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD6 => {
                     // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
                     ctx.consume_u8()?; // consume modrm
-                    // TSX not supported, ZF=1 (not in transaction)
-                    // Clear lazy flags before setting ZF directly
+                                       // TSX not supported, ZF=1 (not in transaction)
+                                       // Clear lazy flags before setting ZF directly
                     self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
@@ -128,9 +128,9 @@ impl X86_64Vcpu {
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
-                    // Materialize (don't discard) pending lazy flags - CLAC must
-                    // only clear AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                                       // Note: AC is not a lazy flag, but clear for consistency
+                                       // Materialize (don't discard) pending lazy flags - CLAC must
+                                       // only clear AC, leaving ZF/SF/CF/etc. from prior ops intact.
                     self.materialize_flags();
                     self.regs.rflags &= !flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
@@ -139,9 +139,9 @@ impl X86_64Vcpu {
                 0xCB => {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
-                    // Materialize (don't discard) pending lazy flags - STAC must
-                    // only set AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                                       // Note: AC is not a lazy flag, but clear for consistency
+                                       // Materialize (don't discard) pending lazy flags - STAC must
+                                       // only set AC, leaving ZF/SF/CF/etc. from prior ops intact.
                     self.materialize_flags();
                     self.regs.rflags |= flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
@@ -150,14 +150,14 @@ impl X86_64Vcpu {
                 0xE8 => {
                     // SERIALIZE (0x0F 0x01 0xE8) - Serialize instruction execution
                     ctx.consume_u8()?; // consume modrm
-                    // Serializing instruction - no architectural state changes in emulation.
+                                       // Serializing instruction - no architectural state changes in emulation.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xEA if ctx.rep_prefix == Some(0xF3) => {
                     // SAVEPREVSSP (F3 0F 01 EA) - Save previous shadow stack pointer
                     ctx.consume_u8()?; // consume modrm
-                    // CET shadow stack instruction - treat as NOP in emulation
+                                       // CET shadow stack instruction - treat as NOP in emulation
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

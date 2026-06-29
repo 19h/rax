@@ -27,9 +27,9 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0xC0000100 => vcpu.sregs.fs.base = value, // FS.base (TLS)
         0xC0000101 => {
             vcpu.sregs.gs.base = value; // GS.base (per-CPU data)
-            // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
-            // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
-            // written before per-CPU was set up, and the shadow was copied with garbage.
+                                        // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
+                                        // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
+                                        // written before per-CPU was set up, and the shadow was copied with garbage.
             if value != 0 {
                 let percpu_offset = 0xffffffff836ee018u64;
                 let instance_addr = value.wrapping_add(percpu_offset);

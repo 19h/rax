@@ -7,7 +7,7 @@
 //! (tests/hexagon_hvx_diff.rs).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 

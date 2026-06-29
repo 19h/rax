@@ -7,7 +7,7 @@
 
 use std::os::raw::{c_int, c_void};
 
-use crate::engine::{Engine, engine_mut};
+use crate::engine::{engine_mut, Engine};
 use crate::guard;
 use crate::status::RaxStatus;
 
@@ -191,10 +191,19 @@ pub extern "C" fn rax_hook_add_code(
             None => return e.fail(RaxStatus::Arg, "null callback"),
         };
         if !e.vcpu.supports_stepping() {
-            return e.fail(RaxStatus::Unsupported, "code hooks require a stepping-capable backend");
+            return e.fail(
+                RaxStatus::Unsupported,
+                "code hooks require a stepping-capable backend",
+            );
         }
         let id = e.hooks.alloc_id();
-        e.hooks.code.push(RangeHook { id, begin, end, cb, user });
+        e.hooks.code.push(RangeHook {
+            id,
+            begin,
+            end,
+            cb,
+            user,
+        });
         finish_id(out_id, id)
     })
 }
@@ -216,10 +225,19 @@ pub extern "C" fn rax_hook_add_block(
             None => return e.fail(RaxStatus::Arg, "null callback"),
         };
         if !e.vcpu.supports_stepping() {
-            return e.fail(RaxStatus::Unsupported, "block hooks require a stepping-capable backend");
+            return e.fail(
+                RaxStatus::Unsupported,
+                "block hooks require a stepping-capable backend",
+            );
         }
         let id = e.hooks.alloc_id();
-        e.hooks.block.push(RangeHook { id, begin, end, cb, user });
+        e.hooks.block.push(RangeHook {
+            id,
+            begin,
+            end,
+            cb,
+            user,
+        });
         finish_id(out_id, id)
     })
 }

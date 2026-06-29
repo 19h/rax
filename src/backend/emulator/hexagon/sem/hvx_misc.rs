@@ -13,7 +13,7 @@
 //! qemu-hexagon vector oracle (tests/hexagon_hvx_diff.rs, `diff_hvx_misc`).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];

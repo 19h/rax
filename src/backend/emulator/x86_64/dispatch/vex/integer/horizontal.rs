@@ -639,8 +639,7 @@ impl X86_64Vcpu {
         let src1_lo = self.regs.xmm[xmm_src1][0];
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
-        let (dst_lo, dst_hi) =
-            self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07);
+        let (dst_lo, dst_hi) = self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07);
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
@@ -648,13 +647,8 @@ impl X86_64Vcpu {
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
             let high_imm = (imm8 >> 3) & 0x07;
-            let (dst_hi2, dst_hi3) = self.mpsadbw_lane(
-                src1_hi2,
-                src1_hi3,
-                src2_hi2,
-                src2_hi3,
-                high_imm,
-            );
+            let (dst_hi2, dst_hi3) =
+                self.mpsadbw_lane(src1_hi2, src1_hi3, src2_hi2, src2_hi3, high_imm);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {

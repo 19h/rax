@@ -1,8 +1,8 @@
 //! x86_64 CPU state and core execution loop.
 
-use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicUsize};
+use std::sync::Arc;
 
 #[cfg(feature = "trace")]
 use crate::trace;
@@ -685,9 +685,17 @@ impl InsnContext {
             // For APX, P0[3] is the non-inverted B4 bit; for vector EVEX,
             // X is the inverted high extension bit used by some encodings.
             let high_ext = if evex.apx_mode {
-                if evex.b4 { 16 } else { 0 }
+                if evex.b4 {
+                    16
+                } else {
+                    0
+                }
             } else {
-                if evex.x { 0 } else { 16 }
+                if evex.x {
+                    0
+                } else {
+                    16
+                }
             };
             b_ext | high_ext
         } else {
@@ -1560,7 +1568,11 @@ impl X86_64Vcpu {
         } else {
             let default_16bit = !self.sregs.cs.db;
             let is_16bit = default_16bit ^ ctx.operand_size_override;
-            if is_16bit { 2 } else { 4 }
+            if is_16bit {
+                2
+            } else {
+                4
+            }
         };
 
         // Save cursor before consuming opcode (for cache)
@@ -3880,11 +3892,11 @@ impl X86_64Vcpu {
         use crate::smir::ir::Terminator;
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
-        use crate::smir::lower::SmirLowerer;
-        use crate::smir::lower::runtime::{ExecMem, is_native_clobber_safe_excluding};
+        use crate::smir::lower::runtime::{is_native_clobber_safe_excluding, ExecMem};
         use crate::smir::lower::x86_64::X86_64Lowerer;
+        use crate::smir::lower::SmirLowerer;
         use crate::smir::memory::MemoryError;
-        use crate::smir::opt::{OptLevel, optimize_function};
+        use crate::smir::opt::{optimize_function, OptLevel};
         use crate::smir::types::SourceArch;
         use std::collections::HashMap;
 
@@ -4121,8 +4133,8 @@ impl X86_64Vcpu {
         // exact guest region. Opt-in, so default runs are untouched.
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         {
-            use std::sync::OnceLock;
             use std::sync::atomic::Ordering;
+            use std::sync::OnceLock;
             static TRACE: OnceLock<bool> = OnceLock::new();
             if *TRACE.get_or_init(|| std::env::var_os("RAX_JIT_TRACE").is_some()) {
                 jit_install_crash_handler();
@@ -4453,7 +4465,10 @@ impl X86_64Vcpu {
             }
             for i in 0..8 {
                 if self.regs.k[i] != jit.k[i] {
-                    diffs.push(format!("k{i}: interp={:#x} jit={:#x}", self.regs.k[i], jit.k[i]));
+                    diffs.push(format!(
+                        "k{i}: interp={:#x} jit={:#x}",
+                        self.regs.k[i], jit.k[i]
+                    ));
                 }
             }
             // A flags-ONLY divergence (registers + memory all match) is a benign
@@ -4551,7 +4566,7 @@ impl X86_64Vcpu {
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::memory::MemoryError;
-        use crate::smir::opt::{OptLevel, optimize_function};
+        use crate::smir::opt::{optimize_function, OptLevel};
         use crate::smir::types::SourceArch;
 
         let bytes = match self.read_bytes(entry, 512) {

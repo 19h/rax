@@ -17,7 +17,7 @@
 //! here for completeness but cannot be differentially verified at v68.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 type Bytes = [u8; 128];
 

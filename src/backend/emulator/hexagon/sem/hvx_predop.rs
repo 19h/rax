@@ -18,7 +18,7 @@
 //!   untouched. `vccombine` writes the pair `Vdd.v[0] = Vv`, `Vdd.v[1] = Vu`.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];

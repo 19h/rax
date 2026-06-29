@@ -12,19 +12,35 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
 #[inline(always)]
 fn min32(dst: f32, src: f32) -> f32 {
-    if dst < src { dst } else { src }
+    if dst < src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn max32(dst: f32, src: f32) -> f32 {
-    if dst > src { dst } else { src }
+    if dst > src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn min64(dst: f64, src: f64) -> f64 {
-    if dst < src { dst } else { src }
+    if dst < src {
+        dst
+    } else {
+        src
+    }
 }
 #[inline(always)]
 fn max64(dst: f64, src: f64) -> f64 {
-    if dst > src { dst } else { src }
+    if dst > src {
+        dst
+    } else {
+        src
+    }
 }
 
 /// SSE packed single/double min (0x5D)

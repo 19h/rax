@@ -15,7 +15,7 @@ use std::os::raw::c_int;
 use rax_engine::cpu::{CpuState, Registers, Segment, SystemRegisters};
 
 use crate::arch::RaxArch;
-use crate::engine::{Engine, engine_mut, engine_ref};
+use crate::engine::{engine_mut, engine_ref, Engine};
 use crate::guard;
 use crate::status::RaxStatus;
 
@@ -84,40 +84,98 @@ const X86_TR_LIMIT: i32 = 0x1109;
 
 fn x86_gpr_get(r: &Registers, idx: usize) -> u64 {
     match idx {
-        0 => r.rax, 1 => r.rcx, 2 => r.rdx, 3 => r.rbx,
-        4 => r.rsp, 5 => r.rbp, 6 => r.rsi, 7 => r.rdi,
-        8 => r.r8, 9 => r.r9, 10 => r.r10, 11 => r.r11,
-        12 => r.r12, 13 => r.r13, 14 => r.r14, 15 => r.r15,
-        16 => r.r16, 17 => r.r17, 18 => r.r18, 19 => r.r19,
-        20 => r.r20, 21 => r.r21, 22 => r.r22, 23 => r.r23,
-        24 => r.r24, 25 => r.r25, 26 => r.r26, 27 => r.r27,
-        28 => r.r28, 29 => r.r29, 30 => r.r30, 31 => r.r31,
+        0 => r.rax,
+        1 => r.rcx,
+        2 => r.rdx,
+        3 => r.rbx,
+        4 => r.rsp,
+        5 => r.rbp,
+        6 => r.rsi,
+        7 => r.rdi,
+        8 => r.r8,
+        9 => r.r9,
+        10 => r.r10,
+        11 => r.r11,
+        12 => r.r12,
+        13 => r.r13,
+        14 => r.r14,
+        15 => r.r15,
+        16 => r.r16,
+        17 => r.r17,
+        18 => r.r18,
+        19 => r.r19,
+        20 => r.r20,
+        21 => r.r21,
+        22 => r.r22,
+        23 => r.r23,
+        24 => r.r24,
+        25 => r.r25,
+        26 => r.r26,
+        27 => r.r27,
+        28 => r.r28,
+        29 => r.r29,
+        30 => r.r30,
+        31 => r.r31,
         _ => 0,
     }
 }
 fn x86_gpr_set(r: &mut Registers, idx: usize, v: u64) {
     match idx {
-        0 => r.rax = v, 1 => r.rcx = v, 2 => r.rdx = v, 3 => r.rbx = v,
-        4 => r.rsp = v, 5 => r.rbp = v, 6 => r.rsi = v, 7 => r.rdi = v,
-        8 => r.r8 = v, 9 => r.r9 = v, 10 => r.r10 = v, 11 => r.r11 = v,
-        12 => r.r12 = v, 13 => r.r13 = v, 14 => r.r14 = v, 15 => r.r15 = v,
-        16 => r.r16 = v, 17 => r.r17 = v, 18 => r.r18 = v, 19 => r.r19 = v,
-        20 => r.r20 = v, 21 => r.r21 = v, 22 => r.r22 = v, 23 => r.r23 = v,
-        24 => r.r24 = v, 25 => r.r25 = v, 26 => r.r26 = v, 27 => r.r27 = v,
-        28 => r.r28 = v, 29 => r.r29 = v, 30 => r.r30 = v, 31 => r.r31 = v,
+        0 => r.rax = v,
+        1 => r.rcx = v,
+        2 => r.rdx = v,
+        3 => r.rbx = v,
+        4 => r.rsp = v,
+        5 => r.rbp = v,
+        6 => r.rsi = v,
+        7 => r.rdi = v,
+        8 => r.r8 = v,
+        9 => r.r9 = v,
+        10 => r.r10 = v,
+        11 => r.r11 = v,
+        12 => r.r12 = v,
+        13 => r.r13 = v,
+        14 => r.r14 = v,
+        15 => r.r15 = v,
+        16 => r.r16 = v,
+        17 => r.r17 = v,
+        18 => r.r18 = v,
+        19 => r.r19 = v,
+        20 => r.r20 = v,
+        21 => r.r21 = v,
+        22 => r.r22 = v,
+        23 => r.r23 = v,
+        24 => r.r24 = v,
+        25 => r.r25 = v,
+        26 => r.r26 = v,
+        27 => r.r27 = v,
+        28 => r.r28 = v,
+        29 => r.r29 = v,
+        30 => r.r30 = v,
+        31 => r.r31 = v,
         _ => {}
     }
 }
 
 fn x86_seg<'a>(s: &'a SystemRegisters, idx: usize) -> Option<&'a Segment> {
     Some(match idx {
-        0 => &s.es, 1 => &s.cs, 2 => &s.ss, 3 => &s.ds, 4 => &s.fs, 5 => &s.gs,
+        0 => &s.es,
+        1 => &s.cs,
+        2 => &s.ss,
+        3 => &s.ds,
+        4 => &s.fs,
+        5 => &s.gs,
         _ => return None,
     })
 }
 fn x86_seg_mut<'a>(s: &'a mut SystemRegisters, idx: usize) -> Option<&'a mut Segment> {
     Some(match idx {
-        0 => &mut s.es, 1 => &mut s.cs, 2 => &mut s.ss, 3 => &mut s.ds, 4 => &mut s.fs, 5 => &mut s.gs,
+        0 => &mut s.es,
+        1 => &mut s.cs,
+        2 => &mut s.ss,
+        3 => &mut s.ds,
+        4 => &mut s.fs,
+        5 => &mut s.gs,
         _ => return None,
     })
 }
@@ -133,12 +191,11 @@ fn x86_size(id: i32) -> Option<usize> {
         X86_EFER | X86_STAR | X86_LSTAR | X86_CSTAR | X86_FMASK | X86_SYSENTER_CS
         | X86_SYSENTER_ESP | X86_SYSENTER_EIP | X86_FS_BASE | X86_GS_BASE | X86_GDT_BASE
         | X86_IDT_BASE | X86_LDTR_BASE | X86_TR_BASE => 8,
-        X86_GDT_LIMIT | X86_IDT_LIMIT | X86_LDTR_LIMIT | X86_TR_LIMIT | X86_LDTR_SEL | X86_TR_SEL => {
-            match id {
-                X86_GDT_LIMIT | X86_IDT_LIMIT | X86_LDTR_LIMIT | X86_TR_LIMIT => 2,
-                _ => 2,
-            }
-        }
+        X86_GDT_LIMIT | X86_IDT_LIMIT | X86_LDTR_LIMIT | X86_TR_LIMIT | X86_LDTR_SEL
+        | X86_TR_SEL => match id {
+            X86_GDT_LIMIT | X86_IDT_LIMIT | X86_LDTR_LIMIT | X86_TR_LIMIT => 2,
+            _ => 2,
+        },
         _ => match fam {
             X86_GPR64 if idx < 32 => 8,
             X86_GPR32 if idx < 32 => 4,
@@ -252,7 +309,11 @@ fn x86_read(st: &CpuState, id: i32, out: &mut [u8]) -> Option<usize> {
             X86_CR => put_uint(
                 out,
                 match idx {
-                    0 => s.cr0, 2 => s.cr2, 3 => s.cr3, 4 => s.cr4, 8 => s.cr8,
+                    0 => s.cr0,
+                    2 => s.cr2,
+                    3 => s.cr3,
+                    4 => s.cr4,
+                    8 => s.cr8,
                     _ => return None,
                 },
                 8,
@@ -260,7 +321,12 @@ fn x86_read(st: &CpuState, id: i32, out: &mut [u8]) -> Option<usize> {
             X86_DR => put_uint(
                 out,
                 match idx {
-                    0 => s.dr0, 1 => s.dr1, 2 => s.dr2, 3 => s.dr3, 6 => s.dr6, 7 => s.dr7,
+                    0 => s.dr0,
+                    1 => s.dr1,
+                    2 => s.dr2,
+                    3 => s.dr3,
+                    6 => s.dr6,
+                    7 => s.dr7,
                     _ => return None,
                 },
                 8,
@@ -330,12 +396,20 @@ fn x86_write(st: &mut CpuState, id: i32, inp: &[u8]) -> Option<usize> {
             X86_SEG_BASE => x86_seg_mut(s, idx)?.base = v,
             X86_SEG_LIMIT => x86_seg_mut(s, idx)?.limit = v as u32,
             X86_CR => match idx {
-                0 => s.cr0 = v, 2 => s.cr2 = v, 3 => s.cr3 = v, 4 => s.cr4 = v, 8 => s.cr8 = v,
+                0 => s.cr0 = v,
+                2 => s.cr2 = v,
+                3 => s.cr3 = v,
+                4 => s.cr4 = v,
+                8 => s.cr8 = v,
                 _ => return None,
             },
             X86_DR => match idx {
-                0 => s.dr0 = v, 1 => s.dr1 = v, 2 => s.dr2 = v, 3 => s.dr3 = v,
-                6 => s.dr6 = v, 7 => s.dr7 = v,
+                0 => s.dr0 = v,
+                1 => s.dr1 = v,
+                2 => s.dr2 = v,
+                3 => s.dr3 = v,
+                6 => s.dr6 = v,
+                7 => s.dr7 = v,
                 _ => return None,
             },
             X86_XMM => x86_zmm_set(r, idx, inp, 16),
@@ -808,11 +882,7 @@ pub extern "C" fn rax_reg_read(
 /// Writes register `regid` from `value` (caller buffer of at least
 /// `rax_reg_size(arch, regid)` bytes).
 #[unsafe(no_mangle)]
-pub extern "C" fn rax_reg_write(
-    engine: *mut Engine,
-    regid: c_int,
-    value: *const u8,
-) -> RaxStatus {
+pub extern "C" fn rax_reg_write(engine: *mut Engine, regid: c_int, value: *const u8) -> RaxStatus {
     guard(|| {
         let e = match unsafe { engine_mut(engine) } {
             Some(e) => e,

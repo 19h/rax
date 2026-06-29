@@ -8,7 +8,7 @@
 //! `imported/macros.def`. Verified against the qemu-hexagon oracle.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fimm_s, fimm_u, fld};
+use super::{fimm_s, fimm_u, fld, SemCtx};
 
 // --- macro-equivalent field/extension helpers ------------------------------
 //

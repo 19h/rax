@@ -3,8 +3,9 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use super::decode::{
-    AddrMode, CmpKind, CombineOperand, DecodedInsn, DecodedSub, ExtendKind, MemOpKind, MemOpSrc,
-    MemSign, MemWidth, PredCond, ShiftKind, SpliceAmount, decode, decode_duplex, isa_supports_insn,
+    decode, decode_duplex, isa_supports_insn, AddrMode, CmpKind, CombineOperand, DecodedInsn,
+    DecodedSub, ExtendKind, MemOpKind, MemOpSrc, MemSign, MemWidth, PredCond, ShiftKind,
+    SpliceAmount,
 };
 use super::opcode::Opcode;
 use crate::config::{Endianness, HexagonIsa};
@@ -668,7 +669,11 @@ impl HexagonVcpu {
         };
         // Conditional execution tests only the least-significant bit.
         let lsb = val & 1 != 0;
-        if cond.sense { lsb } else { !lsb }
+        if cond.sense {
+            lsb
+        } else {
+            !lsb
+        }
     }
 
     fn read_reg_with_new(&self, reg: u8, new_r: &[Option<u32>; 32]) -> u32 {
@@ -2042,8 +2047,7 @@ impl HexagonVcpu {
                             None => true,
                         };
                         if do_load {
-                            let mut ea =
-                                self.regs.r[base as usize].wrapping_add(offset as u32);
+                            let mut ea = self.regs.r[base as usize].wrapping_add(offset as u32);
                             if aligned {
                                 ea &= !127;
                             }

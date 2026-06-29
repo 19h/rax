@@ -257,8 +257,8 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         // XABORT - abort transaction with status
         ctx.consume_u8()?; // consume ModRM
         let _status = ctx.consume_u8()?; // status code
-        // TSX not supported - XABORT has no effect outside transaction
-        // In a real transaction, this would jump to fallback
+                                         // TSX not supported - XABORT has no effect outside transaction
+                                         // In a real transaction, this would jump to fallback
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }

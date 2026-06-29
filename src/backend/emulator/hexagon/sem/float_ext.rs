@@ -30,7 +30,7 @@
 //! exponent + the IEEE specials; result, Pe predicate, AND USR flags bit-exact).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 const USR_FPINVF: u32 = 1 << 1; // invalid operation sticky flag
 const USR_FPDBZF: u32 = 1 << 2; // divide-by-zero sticky flag
@@ -269,8 +269,24 @@ fn add_scaled(
     let sa = if neg_a { -ka } else { ka };
     let sb = if neg_b { -kb } else { kb };
     // Signed residual contributions below ce (magnitude < 2^ce each).
-    let res_a = if ra { if neg_a { -1i32 } else { 1 } } else { 0 };
-    let res_b = if rb { if neg_b { -1i32 } else { 1 } } else { 0 };
+    let res_a = if ra {
+        if neg_a {
+            -1i32
+        } else {
+            1
+        }
+    } else {
+        0
+    };
+    let res_b = if rb {
+        if neg_b {
+            -1i32
+        } else {
+            1
+        }
+    } else {
+        0
+    };
     let res_sign = res_a + res_b; // -2..=2; sign tells net direction below ce
 
     let mut sum = sa + sb;
@@ -838,7 +854,11 @@ fn f32_getexp(b: u32) -> i32 {
 }
 #[inline]
 fn infinite_f32(neg: bool) -> u32 {
-    if neg { 0xff80_0000 } else { 0x7f80_0000 }
+    if neg {
+        0xff80_0000
+    } else {
+        0x7f80_0000
+    }
 }
 
 /// softfloat `float32_scalbn(f, n)` for finite, *nonzero* `f` (the only kind

@@ -27,7 +27,7 @@
 //! regression guard for everyone.
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 const USR_FPINVF: u32 = 1 << 1; // invalid operation sticky flag
 const USR_FPOVFF: u32 = 1 << 3; // overflow sticky flag
@@ -195,7 +195,11 @@ fn sf_minmax(a: u32, b: u32, is_min: bool, ctx: &mut SemCtx) -> u32 {
     } else {
         fa > fb
     };
-    if pick_a { a } else { b }
+    if pick_a {
+        a
+    } else {
+        b
+    }
 }
 
 fn df_minmax(a: u64, b: u64, is_min: bool, ctx: &mut SemCtx) -> u64 {
@@ -231,7 +235,11 @@ fn df_minmax(a: u64, b: u64, is_min: bool, ctx: &mut SemCtx) -> u64 {
     } else {
         fa > fb
     };
-    if pick_a { a } else { b }
+    if pick_a {
+        a
+    } else {
+        b
+    }
 }
 
 fn class_match(class: &FpClass, imm: u32) -> u8 {
@@ -241,7 +249,11 @@ fn class_match(class: &FpClass, imm: u32) -> u8 {
         || (bit(2) && *class == FpClass::Subnormal)
         || (bit(3) && *class == FpClass::Infinite)
         || (bit(4) && *class == FpClass::Nan);
-    if hit { 0xff } else { 0x00 }
+    if hit {
+        0xff
+    } else {
+        0x00
+    }
 }
 
 // ---- integer -> float conversions -----------------------------------------
@@ -296,11 +308,19 @@ fn i_to_df(value_mag: u128, result: f64, ctx: &mut SemCtx) -> u64 {
 
 #[inline]
 fn round_for(f: f64, chop: bool) -> f64 {
-    if chop { f.trunc() } else { f.round_ties_even() }
+    if chop {
+        f.trunc()
+    } else {
+        f.round_ties_even()
+    }
 }
 #[inline]
 fn round_for_f32(f: f32, chop: bool) -> f32 {
-    if chop { f.trunc() } else { f.round_ties_even() }
+    if chop {
+        f.trunc()
+    } else {
+        f.round_ties_even()
+    }
 }
 
 /// Convert a (non-NaN) integer-valued rounded float `ri` plus the inexact
@@ -310,7 +330,11 @@ fn float_to_sint(ri: f64, inexact: bool, min: i128, max: i128, ctx: &mut SemCtx)
     let v = ri as i128; // exact for integer-valued finite |ri| < 2^127; inf saturates
     if v < min || v > max || !ri.is_finite() {
         ctx.usr_or |= USR_FPINVF;
-        if ri.is_sign_negative() { min } else { max }
+        if ri.is_sign_negative() {
+            min
+        } else {
+            max
+        }
     } else {
         if inexact {
             ctx.usr_or |= USR_FPINPF;

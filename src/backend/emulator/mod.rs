@@ -18,6 +18,7 @@ use vm_memory::GuestMemoryMmap;
 use crate::config::{ArchKind, Endianness, HexagonIsa};
 use crate::cpu::VCpu;
 use crate::error::{Error, Result};
+use crate::riscv::RiscVConfig;
 
 use super::{Backend, Vm};
 
@@ -26,6 +27,7 @@ pub struct EmulatorBackend {
     arch: ArchKind,
     hexagon_isa: HexagonIsa,
     hexagon_endian: Endianness,
+    riscv_config: Option<RiscVConfig>,
 }
 
 impl EmulatorBackend {
@@ -34,6 +36,21 @@ impl EmulatorBackend {
             arch,
             hexagon_isa,
             hexagon_endian,
+            riscv_config: None,
+        }
+    }
+
+    pub fn with_riscv_config(
+        arch: ArchKind,
+        hexagon_isa: HexagonIsa,
+        hexagon_endian: Endianness,
+        riscv_config: RiscVConfig,
+    ) -> Self {
+        EmulatorBackend {
+            arch,
+            hexagon_isa,
+            hexagon_endian,
+            riscv_config: Some(riscv_config),
         }
     }
 }
@@ -48,6 +65,7 @@ impl Backend for EmulatorBackend {
             self.arch,
             self.hexagon_isa,
             self.hexagon_endian,
+            self.riscv_config,
         )))
     }
 }
@@ -58,15 +76,22 @@ pub struct EmulatorVm {
     arch: ArchKind,
     hexagon_isa: HexagonIsa,
     hexagon_endian: Endianness,
+    riscv_config: Option<RiscVConfig>,
 }
 
 impl EmulatorVm {
-    pub fn new(arch: ArchKind, hexagon_isa: HexagonIsa, hexagon_endian: Endianness) -> Self {
+    pub fn new(
+        arch: ArchKind,
+        hexagon_isa: HexagonIsa,
+        hexagon_endian: Endianness,
+        riscv_config: Option<RiscVConfig>,
+    ) -> Self {
         EmulatorVm {
             irq_pending: std::sync::Mutex::new(Vec::new()),
             arch,
             hexagon_isa,
             hexagon_endian,
+            riscv_config,
         }
     }
 }
@@ -85,7 +110,11 @@ impl Vm for EmulatorVm {
                 if std::env::var("RAX_MACHINE").as_deref() == Ok("gsc") {
                     Ok(Box::new(gsc::GscVcpu::new(id, mem)))
                 } else {
-                    Ok(Box::new(riscv::RiscVVcpu::new(id, mem)))
+                    Ok(Box::new(riscv::RiscVVcpu::new_with_config(
+                        id,
+                        mem,
+                        self.riscv_config.unwrap_or_else(RiscVConfig::rv64gc),
+                    )))
                 }
             }
             ArchKind::Aarch64 => Ok(Box::new(aarch64::Aarch64Vcpu::new(id, mem))),

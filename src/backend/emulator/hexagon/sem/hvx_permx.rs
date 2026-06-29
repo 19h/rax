@@ -17,7 +17,7 @@
 //! each u32 word. `fVELEM(8)=128`, the full-vector byte count (VWIDTH).
 
 use super::super::opcode::{DecodedOp, Opcode};
-use super::{SemCtx, fld};
+use super::{fld, SemCtx};
 
 /// 128-byte vector viewed as raw bytes (little-endian within each u32 word).
 type Bytes = [u8; 128];
