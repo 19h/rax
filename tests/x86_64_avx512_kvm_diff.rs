@@ -18171,6 +18171,11 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("group4_fe_mem_undefined", &[0xfe, 0x10]),
         ("group5_ff_reg_undefined", &[0xff, 0xf8]),
         ("group5_ff_mem_undefined", &[0xff, 0x38]),
+        ("group6_0f00_group6_reg_undefined", &[0x0f, 0x00, 0xf0]),
+        ("group6_0f00_group7_mem_undefined", &[0x0f, 0x00, 0x38]),
+        ("group7_0f01_sgdt_reg_undefined", &[0x0f, 0x01, 0xc0]),
+        ("group7_0f01_sidt_reg_undefined", &[0x0f, 0x01, 0xcc]),
+        ("group7_0f01_group5_mem_undefined", &[0x0f, 0x01, 0x28]),
         ("group8_0fba_group0_undefined", &[0x0f, 0xba, 0xc0, 0x00]),
         ("group8_0fba_group1_undefined", &[0x0f, 0xba, 0xc8, 0x00]),
         ("group8_0fba_group2_undefined", &[0x0f, 0xba, 0xd0, 0x00]),
@@ -20109,7 +20114,7 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
-    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 37);
+    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 42);
 }
 
 #[test]

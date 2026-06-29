@@ -49,10 +49,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // SGDT m16&64 - Store Global Descriptor Table
         0 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(format!(
-                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -66,10 +63,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // SIDT m16&64 - Store Interrupt Descriptor Table
         1 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(format!(
-                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -87,10 +81,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 return raise_gp0(vcpu);
             }
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(format!(
-                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -108,10 +99,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 return raise_gp0(vcpu);
             }
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(format!(
-                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -163,10 +151,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // Note: SWAPGS (F8) and RDTSCP (F9) are handled in twobyte.rs
         7 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(format!(
-                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                return vcpu.inject_undefined_instruction();
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -175,10 +160,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.regs.rip += ctx.cursor as u64;
         }
         _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0F 01 /{} at RIP={:#x}",
-                reg_op, vcpu.regs.rip
-            )));
+            return vcpu.inject_undefined_instruction();
         }
     }
     Ok(None)

@@ -1,7 +1,7 @@
 //! Descriptor table instructions: LAR, LSL, Group 6.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
@@ -225,10 +225,7 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             set_zf(vcpu, writable);
         }
         _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0F 00 /{} at RIP={:#x}",
-                reg_op, vcpu.regs.rip
-            )));
+            return vcpu.inject_undefined_instruction();
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
