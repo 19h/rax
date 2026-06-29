@@ -176,12 +176,15 @@ impl FpuState {
     /// Pop a value from the FPU stack
     pub fn pop(&mut self) -> f64 {
         // If the current TOP register is empty (tag == 3) the pop is a stack
-        // UNDERFLOW: raise invalid-operation (IE), stack-fault (SF) and the
-        // error-summary (ES) bit, and clear C1 to flag the underflow direction.
+        // UNDERFLOW: raise invalid-operation (IE), stack-fault (SF), and clear
+        // C1 to flag the underflow direction.
         let tag_shift = (self.top as u16) * 2;
         if (self.tag_word >> tag_shift) & 3 == 3 {
-            // Set IE (bit 0) | SF (bit 6) | ES (bit 7); clear C1 (bit 9).
-            self.status_word = (self.status_word | 0x0001 | 0x0040 | 0x0080) & !0x0200;
+            // Set IE (bit 0) | SF (bit 6); clear C1 (bit 9) for underflow.
+            // With the default masked exceptions, hardware stores the x87
+            // indefinite value and leaves ES clear.
+            self.status_word = (self.status_word | 0x0001 | 0x0040) & !0x0280;
+            self.st[self.top as usize] = f64::from_bits(0xfff8_0000_0000_0000);
         }
         let value = self.st[self.top as usize];
         // Mark register as empty

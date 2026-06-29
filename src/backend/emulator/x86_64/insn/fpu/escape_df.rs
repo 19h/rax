@@ -1,7 +1,7 @@
 //! DF escape - FILD, FIST, FISTP (word/qword), FBLD, FBSTP, FNSTSW AX
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::{bcd_to_f64, f64_to_bcd, fpu_round, set_fcomi_flags};
@@ -72,6 +72,11 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.status_word =
                     (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
             }
+            0xD0..=0xD7 => {
+                // Legacy FSTP ST(i) alias.
+                let st0 = vcpu.fpu.pop();
+                vcpu.fpu.set_st(rm.wrapping_sub(1) & 7, st0);
+            }
             0xE0 => {
                 // FNSTSW AX
                 vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | vcpu.fpu.status_word as u64;
@@ -91,10 +96,8 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.pop();
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DF opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     }

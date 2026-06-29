@@ -13293,6 +13293,22 @@ fn irregular_cases() -> Vec<Case> {
             "x87_stack_edge_fucomi_unordered_flags",
             "movabsq $0x7ff8000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x3ff0000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 40(%rax)\nfldl 32(%rax)\n.byte 0xdb, 0xe9\nsetb 48(%rax)\nsete 49(%rax)\nsetp 50(%rax)\nfstpl 56(%rax)\nfstpl 64(%rax)",
         ),
+        (
+            "x87_obsolete_db_control_noops",
+            "fninit\nfld1\n.byte 0xdb, 0xe0\n.byte 0xdb, 0xe1\n.byte 0xdb, 0xe4\nfnstsw 32(%rax)\nfstpl 40(%rax)\nfnstcw 48(%rax)",
+        ),
+        (
+            "x87_legacy_dd_c8_cf_fxch_aliases",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xdd, 0xc8\n.byte 0xdd, 0xc9\n.byte 0xdd, 0xcf\nfstpl 48(%rax)\nfstpl 56(%rax)\nfnstsw 64(%rax)",
+        ),
+        (
+            "x87_legacy_de_d0_d7_fcomp_aliases",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xde, 0xd0\n.byte 0xde, 0xd1\n.byte 0xde, 0xd7\nfstpl 48(%rax)\nfstpl 56(%rax)\nfnstsw 64(%rax)",
+        ),
+        (
+            "x87_legacy_df_d0_d7_fstp_aliases",
+            "movabsq $0x3ff0000000000000, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x4000000000000000, %r8\nmovq %r8, 40(%rax)\nfninit\nfldl 32(%rax)\nfldl 40(%rax)\n.byte 0xdf, 0xd0\n.byte 0xdf, 0xd1\n.byte 0xdf, 0xd7\nfstpl 48(%rax)\nfstpl 56(%rax)\nfnstsw 64(%rax)",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18159,6 +18175,24 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("group8_0fba_group1_undefined", &[0x0f, 0xba, 0xc8, 0x00]),
         ("group8_0fba_group2_undefined", &[0x0f, 0xba, 0xd0, 0x00]),
         ("group8_0fba_group3_undefined", &[0x0f, 0xba, 0xd8, 0x00]),
+        ("x87_reserved_d9_mem_group1", &[0xd9, 0x08]),
+        ("x87_reserved_d9_reg_d1", &[0xd9, 0xd1]),
+        ("x87_reserved_d9_reg_e2", &[0xd9, 0xe2]),
+        ("x87_reserved_d9_reg_e3", &[0xd9, 0xe3]),
+        ("x87_reserved_d9_reg_e6", &[0xd9, 0xe6]),
+        ("x87_reserved_da_reg_e0", &[0xda, 0xe0]),
+        ("x87_reserved_da_reg_e8", &[0xda, 0xe8]),
+        ("x87_reserved_da_reg_f0", &[0xda, 0xf0]),
+        ("x87_reserved_db_mem_group4", &[0xdb, 0x20]),
+        ("x87_reserved_db_mem_group6", &[0xdb, 0x30]),
+        ("x87_reserved_db_reg_e5", &[0xdb, 0xe5]),
+        ("x87_reserved_db_reg_e6", &[0xdb, 0xe6]),
+        ("x87_reserved_db_reg_e7", &[0xdb, 0xe7]),
+        ("x87_reserved_dd_mem_group5", &[0xdd, 0x28]),
+        ("x87_reserved_dd_reg_f0", &[0xdd, 0xf0]),
+        ("x87_reserved_de_reg_d8", &[0xde, 0xd8]),
+        ("x87_reserved_de_reg_da", &[0xde, 0xda]),
+        ("x87_reserved_df_reg_e1", &[0xdf, 0xe1]),
     ]
 }
 
@@ -20065,7 +20099,7 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
-    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 15);
+    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 33);
 }
 
 #[test]
@@ -25737,7 +25771,7 @@ fn avx512_kvm_x87_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::X87)
         .collect();
-    assert_eq!(cases.len(), 81, "unexpected x87 corpus size");
+    assert_eq!(cases.len(), 85, "unexpected x87 corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25748,7 +25782,7 @@ fn avx512_kvm_x87_corpus() {
         tally.skipped_asm, 0,
         "x87 corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 81, "all x87 cases should compare");
+    assert_eq!(tally.compared, 85, "all x87 cases should compare");
 }
 
 #[test]

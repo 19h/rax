@@ -1,10 +1,20 @@
 //! DE escape - FADDP, FMULP, FCOMP, FSUBP, FSUBRP, FDIVP, FDIVRP
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::set_fpu_compare_flags;
+
+fn st_empty(vcpu: &X86_64Vcpu, i: u8) -> bool {
+    let idx = vcpu.fpu.st_index(i);
+    ((vcpu.fpu.tag_word >> ((idx as u16) * 2)) & 3) == 3
+}
+
+fn set_stack_compare_invalid(vcpu: &mut X86_64Vcpu) {
+    vcpu.fpu.status_word &= !0x4780;
+    vcpu.fpu.status_word |= 0x0001 | 0x0040 | 0x0100 | 0x0400 | 0x4000;
+}
 
 /// DE escape - FADDP, FMULP, FCOMP, FSUBP, FSUBRP, FDIVP, FDIVRP
 pub fn escape_de(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -48,6 +58,15 @@ pub fn escape_de(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.set_st(rm, sti * st0);
                 vcpu.fpu.pop();
             }
+            0xD0..=0xD7 => {
+                // Legacy FCOMP ST(i) alias.
+                if st_empty(vcpu, 0) || st_empty(vcpu, rm) {
+                    set_stack_compare_invalid(vcpu);
+                } else {
+                    set_fpu_compare_flags(vcpu, st0, sti);
+                }
+                vcpu.fpu.pop();
+            }
             0xD9 => {
                 // FCOMPP
                 set_fpu_compare_flags(vcpu, st0, sti);
@@ -75,10 +94,8 @@ pub fn escape_de(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.pop();
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DE opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     }

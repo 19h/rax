@@ -1,7 +1,7 @@
 //! DB escape - FILD, FIST, FISTP, FCLEX, FINIT, etc.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::{f64_to_f80, f80_to_f64, fpu_round, set_fcomi_flags};
@@ -49,10 +49,8 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.write_bytes(addr, &bytes)?;
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DB memory opcode reg={} at RIP={:#x}",
-                    reg, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     } else {
@@ -97,6 +95,9 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 // FNINIT - initialize FPU
                 vcpu.fpu.init();
             }
+            0xE0 | 0xE1 | 0xE4 => {
+                // Obsolete x87 control opcodes: FENI, FDISI, FSETPM.
+            }
             0xE8..=0xEF => {
                 // FUCOMI ST(0), ST(i)
                 let st0 = vcpu.fpu.get_st(0);
@@ -110,10 +111,8 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 set_fcomi_flags(vcpu, st0, sti);
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DB opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     }

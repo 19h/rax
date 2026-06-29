@@ -39,7 +39,7 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         set_fpu_compare_flags(vcpu, st0, st1);
         vcpu.fpu.pop();
         vcpu.fpu.pop();
-    } else {
+    } else if (0xC0..=0xDF).contains(&modrm) {
         // Register forms - FCMOV
         vcpu.materialize_flags();
         let st0 = vcpu.fpu.get_st(0);
@@ -56,6 +56,9 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             3 if pf => vcpu.fpu.set_st(0, sti),       // FCMOVU
             _ => {}                                   // condition not met
         }
+    } else {
+        vcpu.inject_exception(6, None)?;
+        return Ok(None);
     }
 
     vcpu.regs.rip += ctx.cursor as u64;

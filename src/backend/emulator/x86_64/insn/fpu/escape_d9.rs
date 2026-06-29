@@ -1,7 +1,7 @@
 //! D9 escape - FLD, FST, FSTP, FLDENV, FLDCW, FNSTENV, FNSTCW, etc.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::{fldenv, fnstenv, fpu_round, fxam, round_nearest_even, set_fpu_compare_flags};
@@ -49,10 +49,8 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.write_mem16(addr, vcpu.fpu.control_word)?;
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented D9 memory opcode reg={} at RIP={:#x}",
-                    reg, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     } else {
@@ -264,10 +262,8 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.set_st(0, st0.cos());
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented D9 opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     }

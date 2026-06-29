@@ -1,7 +1,7 @@
 //! DD escape - FLD, FST, FSTP, FRSTOR, FNSAVE, FUCOM, FUCOMP, FFREE
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::{fnsave, frstor, set_fpu_compare_flags};
@@ -49,10 +49,8 @@ pub fn escape_dd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.write_mem16(addr, vcpu.fpu.status_word)?;
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DD memory opcode reg={} at RIP={:#x}",
-                    reg, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     } else {
@@ -61,6 +59,19 @@ pub fn escape_dd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 // FFREE ST(i)
                 let tag_shift = (vcpu.fpu.st_index(rm) as u16) * 2;
                 vcpu.fpu.tag_word |= 3 << tag_shift; // Mark as empty
+            }
+            0xC8..=0xCF => {
+                // Legacy FXCH alias.
+                let st0_idx = vcpu.fpu.st_index(0);
+                let sti_idx = vcpu.fpu.st_index(rm);
+                vcpu.fpu.st.swap(st0_idx, sti_idx);
+                let st0_shift = (st0_idx as u16) * 2;
+                let sti_shift = (sti_idx as u16) * 2;
+                let st0_tag = (vcpu.fpu.tag_word >> st0_shift) & 3;
+                let sti_tag = (vcpu.fpu.tag_word >> sti_shift) & 3;
+                vcpu.fpu.tag_word &= !((3 << st0_shift) | (3 << sti_shift));
+                vcpu.fpu.tag_word |= st0_tag << sti_shift;
+                vcpu.fpu.tag_word |= sti_tag << st0_shift;
             }
             0xD0..=0xD7 => {
                 // FST ST(i)
@@ -86,10 +97,8 @@ pub fn escape_dd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.pop();
             }
             _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DD opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
         }
     }
