@@ -21373,6 +21373,44 @@ fn prefetch_reserved_hint_fallthrough_cases() -> Vec<(&'static str, &'static [u8
     cases
 }
 
+fn cldemote_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
+    if !HostFeatures::detect().supports(Feat::Cldemote) {
+        return Vec::new();
+    }
+
+    vec![
+        ("cldemote_register_source_fallthrough", &[0x0fu8, 0x1c, 0xc0]),
+        (
+            "cldemote_register_source_reg3_fallthrough",
+            &[0x0fu8, 0x1c, 0xd8],
+        ),
+        (
+            "cldemote_register_source_reg7_fallthrough",
+            &[0x0fu8, 0x1c, 0xf8],
+        ),
+        (
+            "cldemote_memory_reg1_fallthrough",
+            &[0x0fu8, 0x1c, 0x08],
+        ),
+        (
+            "cldemote_memory_reg7_fallthrough",
+            &[0x0fu8, 0x1c, 0x38],
+        ),
+        (
+            "cldemote_66_register_source_fallthrough",
+            &[0x66, 0x0f, 0x1c, 0xc0],
+        ),
+        (
+            "cldemote_f2_register_source_fallthrough",
+            &[0xf2, 0x0f, 0x1c, 0xc0],
+        ),
+        (
+            "cldemote_f3_memory_fallthrough",
+            &[0xf3, 0x0f, 0x1c, 0x00],
+        ),
+    ]
+}
+
 fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
@@ -22040,6 +22078,17 @@ fn avx512_kvm_prefetch_reserved_hint_fallthrough_corpus() {
         4
     };
     run_fallthrough_marker_corpus("prefetch reserved-hint", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_cldemote_fallthrough_corpus() {
+    let host = HostFeatures::detect();
+    let cases = cldemote_fallthrough_cases();
+    let expected = if host.supports(Feat::Cldemote) { 8 } else { 0 };
+    if expected == 0 {
+        eprintln!("[skip] host lacks CLDEMOTE support");
+    }
+    run_fallthrough_marker_corpus("cldemote", cases, expected);
 }
 
 #[test]
