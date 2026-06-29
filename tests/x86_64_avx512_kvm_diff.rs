@@ -7971,6 +7971,15 @@ fn irregular_cases() -> Vec<Case> {
         ("pblendw_sse41_edge_immff", "pblendw $0xff, %xmm2, %xmm1", Int),
         ("insertps_sse41_edge_lane0", "insertps $0x00, %xmm2, %xmm1", F32),
         ("insertps_sse41_edge_zero_all", "insertps $0xff, %xmm2, %xmm1", F32),
+        ("pextrb_sse41_edge_imm1f_gpr", "pextrb $0x1f, %xmm1, %r8d", Int),
+        ("pextrw_sse41_edge_imm0f_mem", "pextrw $0x0f, %xmm1, 34(%rax)", Int),
+        ("pextrd_sse41_edge_imm07_gpr", "pextrd $0x07, %xmm1, %r8d", Int),
+        ("pextrq_sse41_edge_imm03_mem", "pextrq $0x03, %xmm1, 48(%rax)", Int),
+        ("extractps_sse41_edge_imm07_gpr", "extractps $0x07, %xmm1, %r8d", F32),
+        ("pinsrb_sse41_edge_imm1f_gpr", "pinsrb $0x1f, %r8d, %xmm1", Int),
+        ("pinsrd_sse41_edge_imm07_mem", "pinsrd $0x07, 28(%rax), %xmm1", Int),
+        ("pinsrq_sse41_edge_imm03_gpr", "pinsrq $0x03, %r8, %xmm1", Int),
+        ("insertps_sse41_edge_mem_high_dest", "insertps $0xf0, 12(%rax), %xmm1", F32),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -9455,6 +9464,46 @@ fn irregular_cases() -> Vec<Case> {
         (
             "vpinsrq_avx_insert_extract_mem",
             "{vex} vpinsrq $0, 24(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpextrb_avx_insert_extract_imm1f_r8d",
+            "{vex} vpextrb $0x1f, %xmm1, %r8d",
+        ),
+        (
+            "vpextrw_avx_insert_extract_imm0f_mem",
+            "{vex} vpextrw $0x0f, %xmm1, 34(%rax)",
+        ),
+        (
+            "vpextrd_avx_insert_extract_imm07_r8d",
+            "{vex} vpextrd $0x07, %xmm1, %r8d",
+        ),
+        (
+            "vpextrq_avx_insert_extract_imm03_mem",
+            "{vex} vpextrq $0x03, %xmm1, 48(%rax)",
+        ),
+        (
+            "vextractps_avx_insert_extract_imm07_r8d",
+            "{vex} vextractps $0x07, %xmm1, %r8d",
+        ),
+        (
+            "vpinsrb_avx_insert_extract_imm1f_r8d",
+            "{vex} vpinsrb $0x1f, %r8d, %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrw_avx_insert_extract_imm0f_mem",
+            "{vex} vpinsrw $0x0f, 30(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrd_avx_insert_extract_imm07_mem",
+            "{vex} vpinsrd $0x07, 28(%rax), %xmm3, %xmm1",
+        ),
+        (
+            "vpinsrq_avx_insert_extract_imm03_r8",
+            "{vex} vpinsrq $0x03, %r8, %xmm3, %xmm1",
+        ),
+        (
+            "vinsertps_avx_insert_extract_mem_high_dest",
+            "{vex} vinsertps $0xf0, 12(%rax), %xmm3, %xmm1",
         ),
         (
             "vpextrb_avx_insert_extract_w1_r8d_raw",
@@ -24156,7 +24205,7 @@ fn avx512_kvm_sse41_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_sse41_edge_"))
         .collect();
-    assert_eq!(cases.len(), 20, "unexpected SSE4.1 edge corpus size");
+    assert_eq!(cases.len(), 29, "unexpected SSE4.1 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -24176,10 +24225,10 @@ fn avx512_kvm_sse41_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Sse41),
-        20,
+        29,
         "all SSE4.1 edge cases should run"
     );
-    assert_eq!(tally.compared, 20, "all SSE4.1 edge cases should compare");
+    assert_eq!(tally.compared, 29, "all SSE4.1 edge cases should compare");
 }
 
 #[test]
@@ -25582,7 +25631,7 @@ fn avx512_kvm_vex_insert_extract_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        25,
+        35,
         "unexpected VEX insert/extract corpus size"
     );
 
@@ -25607,11 +25656,11 @@ fn avx512_kvm_vex_insert_extract_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        25,
+        35,
         "all VEX insert/extract cases should run"
     );
     assert_eq!(
-        tally.compared, 25,
+        tally.compared, 35,
         "all VEX insert/extract cases should compare"
     );
 }
