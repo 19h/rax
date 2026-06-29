@@ -159,8 +159,9 @@ fn group5_call_far(
         }
     }
 
-    // Load new CS:IP
-    vcpu.set_sreg(1, selector);
+    // Load new CS:IP. Far JMP cannot lower CPL; use the same lenient,
+    // CPL-preserving CS load as the immediate far-JMP path.
+    vcpu.load_code_segment_far_jmp(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }

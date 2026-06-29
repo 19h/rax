@@ -180,11 +180,11 @@ impl FpuState {
         // C1 to flag the underflow direction.
         let tag_shift = (self.top as u16) * 2;
         if (self.tag_word >> tag_shift) & 3 == 3 {
-            // Set IE (bit 0) | SF (bit 6); clear C1 (bit 9) for underflow.
-            // With the default masked exceptions, hardware stores the x87
-            // indefinite value and leaves ES clear.
-            self.status_word = (self.status_word | 0x0001 | 0x0040) & !0x0280;
-            self.st[self.top as usize] = f64::from_bits(0xfff8_0000_0000_0000);
+            // Set IE (bit 0) | SF (bit 6) | ES (bit 7); clear C1 (bit 9) for
+            // underflow. Keep the data payload intact: x87 tags describe stack
+            // occupancy, but instructions such as FFREE/FINCSTP/FDECSTP do not
+            // destroy the physical register contents.
+            self.status_word = (self.status_word | 0x0001 | 0x0040 | 0x0080) & !0x0200;
         }
         let value = self.st[self.top as usize];
         // Mark register as empty
@@ -206,6 +206,11 @@ impl FpuState {
     pub fn set_st(&mut self, i: u8, value: f64) {
         let idx = self.st_index(i);
         self.st[idx] = value;
+        let tag_shift = (idx as u16) * 2;
+        self.tag_word &= !(3 << tag_shift);
+        if value == 0.0 {
+            self.tag_word |= 1 << tag_shift;
+        }
     }
 }
 
