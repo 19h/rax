@@ -7294,6 +7294,26 @@ fn irregular_cases() -> Vec<Case> {
     }
 
     for &(label, asm, feat) in &[
+        (
+            "pminub_mmx_int_order_edge_store",
+            "movabsq $0x7f00ff0080000001, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x800100fe7fffffff, %r8\nmovq %r8, 40(%rax)\nmovq 32(%rax), %mm0\npminub 40(%rax), %mm0\nmovq %mm0, 64(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pmaxub_mmx_int_order_edge_store",
+            "movabsq $0x7f00ff0080000001, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x800100fe7fffffff, %r8\nmovq %r8, 40(%rax)\nmovq 32(%rax), %mm0\npmaxub 40(%rax), %mm0\nmovq %mm0, 72(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pminsw_mmx_int_order_edge_store",
+            "movabsq $0x7fff80000001ffff, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x80017fff0000fffe, %r8\nmovq %r8, 40(%rax)\nmovq 32(%rax), %mm0\npminsw 40(%rax), %mm0\nmovq %mm0, 80(%rax)\nemms",
+            Mmx,
+        ),
+        (
+            "pmaxsw_mmx_int_order_edge_store",
+            "movabsq $0x7fff80000001ffff, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x80017fff0000fffe, %r8\nmovq %r8, 40(%rax)\nmovq 32(%rax), %mm0\npmaxsw 40(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
+            Mmx,
+        ),
         ("pcmpeqb_sse2_int_order_edge_reg", "pcmpeqb %xmm2, %xmm1", Sse2),
         ("pcmpgtb_sse2_int_order_edge_reg", "pcmpgtb %xmm2, %xmm1", Sse2),
         ("pcmpgtw_sse2_int_order_edge_mem", "pcmpgtw 32(%rax), %xmm1", Sse2),
@@ -14024,12 +14044,20 @@ fn irregular_cases() -> Vec<Case> {
             "movq 32(%rax), %mm0\npcmpgtw 40(%rax), %mm0\nmovq %mm0, 224(%rax)\nemms",
         ),
         (
+            "mmx_pcmpeqd_store",
+            "movq 32(%rax), %mm0\npcmpeqd 32(%rax), %mm0\nmovq %mm0, 228(%rax)\nemms",
+        ),
+        (
+            "mmx_pcmpgtd_store",
+            "movq 32(%rax), %mm0\npcmpgtd 40(%rax), %mm0\nmovq %mm0, 232(%rax)\nemms",
+        ),
+        (
             "mmx_packsswb_store",
-            "movq 32(%rax), %mm0\npacksswb 40(%rax), %mm0\nmovq %mm0, 232(%rax)\nemms",
+            "movq 32(%rax), %mm0\npacksswb 40(%rax), %mm0\nmovq %mm0, 236(%rax)\nemms",
         ),
         (
             "mmx_packuswb_store",
-            "movq 32(%rax), %mm0\npackuswb 40(%rax), %mm0\nmovq %mm0, 240(%rax)\nemms",
+            "movq 32(%rax), %mm0\npackuswb 40(%rax), %mm0\nmovq %mm0, 244(%rax)\nemms",
         ),
         (
             "mmx_packssdw_store",
@@ -23326,7 +23354,7 @@ fn avx512_kvm_integer_order_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        58,
+        62,
         "unexpected integer order edge corpus size"
     );
 
@@ -23348,6 +23376,11 @@ fn avx512_kvm_integer_order_edge_corpus() {
     assert_eq!(
         tally.skipped_feature, 0,
         "integer order edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Mmx),
+        4,
+        "all MMX order edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Sse2),
@@ -23380,7 +23413,7 @@ fn avx512_kvm_integer_order_edge_corpus() {
         "all AVX-512F order edge cases should run"
     );
     assert_eq!(
-        tally.compared, 58,
+        tally.compared, 62,
         "all integer order edge cases should compare"
     );
 }
@@ -25914,7 +25947,7 @@ fn avx512_kvm_mmx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Mmx)
         .collect();
-    assert_eq!(cases.len(), 70, "unexpected MMX corpus size");
+    assert_eq!(cases.len(), 76, "unexpected MMX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25925,7 +25958,7 @@ fn avx512_kvm_mmx_corpus() {
         tally.skipped_asm, 0,
         "MMX corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 70, "all MMX cases should compare");
+    assert_eq!(tally.compared, 76, "all MMX cases should compare");
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
