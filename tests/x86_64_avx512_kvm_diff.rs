@@ -21411,6 +21411,39 @@ fn cldemote_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn endbr_hint_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        (
+            "endbr_hint_memory_disp32_fallthrough",
+            &[0x0fu8, 0x1e, 0x80, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_f3_memory_disp32_fallthrough",
+            &[0xf3, 0x0f, 0x1e, 0x80, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_f2_memory_disp32_fallthrough",
+            &[0xf2, 0x0f, 0x1e, 0x80, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_66_memory_disp32_fallthrough",
+            &[0x66, 0x0f, 0x1e, 0x80, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_reg7_memory_disp32_fallthrough",
+            &[0x0f, 0x1e, 0xb8, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_sib_disp32_fallthrough",
+            &[0x0f, 0x1e, 0x84, 0x08, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+        (
+            "endbr_hint_addr32_disp32_fallthrough",
+            &[0x67, 0x0f, 0x1e, 0x80, 0x0f, 0x0b, 0xcc, 0xcc],
+        ),
+    ]
+}
+
 fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
@@ -22089,6 +22122,11 @@ fn avx512_kvm_cldemote_fallthrough_corpus() {
         eprintln!("[skip] host lacks CLDEMOTE support");
     }
     run_fallthrough_marker_corpus("cldemote", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_endbr_hint_fallthrough_corpus() {
+    run_fallthrough_marker_corpus("endbr hint", endbr_hint_fallthrough_cases(), 7);
 }
 
 #[test]
