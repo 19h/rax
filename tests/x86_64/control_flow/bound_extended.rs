@@ -1,5 +1,78 @@
-use crate::common::{run_until_hlt, setup_vm, setup_vm_compat, write_mem_at_u16, write_mem_at_u32};
-use rax::cpu::Registers;
+use crate::common::{
+    run_until_hlt, setup_vm, setup_vm_compat, write_mem_at_u16, write_mem_at_u32, Bytes,
+    GuestAddress, GuestMemoryMmap, IDT_BASE, INT_HANDLER_ADDR,
+};
+
+const BOUND_EXCEPTION_MARKER: u64 = 0x4252_0005;
+const UD_EXCEPTION_MARKER: u64 = 0x5544_0006;
+const UNEXPECTED_EXCEPTION_MARKER: u64 = 0xbad0_0000;
+const UNEXPECTED_EXCEPTION_ADDR: u64 = INT_HANDLER_ADDR + 0x100;
+
+fn marker_handler(marker: u64) -> [u8; 11] {
+    let mut handler = [0u8; 11];
+    handler[0] = 0x48; // REX.W
+    handler[1] = 0xb8; // MOV RAX, imm64
+    handler[2..10].copy_from_slice(&marker.to_le_bytes());
+    handler[10] = 0xf4; // HLT
+    handler
+}
+
+fn idt_entry(handler_addr: u64) -> [u8; 16] {
+    let mut entry = [0u8; 16];
+    entry[0] = (handler_addr & 0xff) as u8;
+    entry[1] = ((handler_addr >> 8) & 0xff) as u8;
+    entry[2] = 0x08;
+    entry[5] = 0x8e;
+    entry[6] = ((handler_addr >> 16) & 0xff) as u8;
+    entry[7] = ((handler_addr >> 24) & 0xff) as u8;
+    entry[8] = ((handler_addr >> 32) & 0xff) as u8;
+    entry[9] = ((handler_addr >> 40) & 0xff) as u8;
+    entry[10] = ((handler_addr >> 48) & 0xff) as u8;
+    entry[11] = ((handler_addr >> 56) & 0xff) as u8;
+    entry
+}
+
+fn install_idt_handler(mem: &GuestMemoryMmap, vector: u8, handler_addr: u64) {
+    let entry = idt_entry(handler_addr);
+    let entry_addr = IDT_BASE + u64::from(vector) * 16;
+    mem.write_slice(&entry, GuestAddress(entry_addr)).unwrap();
+}
+
+fn install_expected_exception_handler(
+    mem: &GuestMemoryMmap,
+    expected_vector: u8,
+    expected_marker: u64,
+) {
+    let unexpected_handler = marker_handler(UNEXPECTED_EXCEPTION_MARKER);
+    mem.write_slice(&unexpected_handler, GuestAddress(UNEXPECTED_EXCEPTION_ADDR))
+        .unwrap();
+    let expected_handler = marker_handler(expected_marker);
+    mem.write_slice(&expected_handler, GuestAddress(INT_HANDLER_ADDR))
+        .unwrap();
+
+    for vector in 0u8..=255 {
+        install_idt_handler(mem, vector, UNEXPECTED_EXCEPTION_ADDR);
+    }
+    install_idt_handler(mem, expected_vector, INT_HANDLER_ADDR);
+}
+
+fn assert_compat_exception_marker(
+    code: &[u8],
+    expected_vector: u8,
+    expected_marker: u64,
+    init_memory: impl FnOnce(&GuestMemoryMmap),
+) {
+    let (mut vcpu, mem) = setup_vm_compat(code, None);
+    init_memory(&mem);
+    install_expected_exception_handler(&mem, expected_vector, expected_marker);
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, expected_marker);
+}
+
+fn assert_bound_range_exception(code: &[u8], init_memory: impl FnOnce(&GuestMemoryMmap)) {
+    assert_compat_exception_marker(code, 5, BOUND_EXCEPTION_MARKER, init_memory);
+}
 
 // Comprehensive tests for BOUND instruction
 // BOUND r16, m16&16 (62 /r) - Check array bounds (16-bit)
@@ -74,13 +147,10 @@ fn test_bound_16bit_below_lower_bound() {
         0x48, 0xc7, 0xc3, 0x04, 0x00, 0x00, 0x00, // MOV RBX, 4 (should not reach)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
-
-    write_mem_at_u16(&mem, 0x2000, 0);
-    write_mem_at_u16(&mem, 0x2002, 10);
-
-    // Should trigger interrupt 5 (BOUND exception)
-    // Without handler, may fault or skip
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u16(mem, 0x2000, 0);
+        write_mem_at_u16(mem, 0x2002, 10);
+    });
 }
 
 #[test]
@@ -92,12 +162,21 @@ fn test_bound_16bit_above_upper_bound() {
         0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u16(mem, 0x2000, 0);
+        write_mem_at_u16(mem, 0x2002, 10);
+    });
+}
 
-    write_mem_at_u16(&mem, 0x2000, 0);
-    write_mem_at_u16(&mem, 0x2002, 10);
+#[test]
+fn test_bound_register_operand_raises_ud() {
+    let code = [
+        0xb8, 0x05, 0x00, // MOV AX, 5
+        0x62, 0xc0, // BOUND AX, AX (register operand is invalid)
+        0xf4,
+    ];
 
-    // Should trigger interrupt 5
+    assert_compat_exception_marker(&code, 6, UD_EXCEPTION_MARKER, |_| {});
 }
 
 // ============================================================================
@@ -164,12 +243,10 @@ fn test_bound_32bit_below_lower_bound() {
         0x48, 0xc7, 0xc3, 0x04, 0x00, 0x00, 0x00, // MOV RBX, 4
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
-
-    write_mem_at_u32(&mem, 0x2000, 0);
-    write_mem_at_u32(&mem, 0x2004, 1000);
-
-    // Should trigger interrupt 5
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u32(mem, 0x2000, 0);
+        write_mem_at_u32(mem, 0x2004, 1000);
+    });
 }
 
 #[test]
@@ -180,12 +257,10 @@ fn test_bound_32bit_above_upper_bound() {
         0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
-
-    write_mem_at_u32(&mem, 0x2000, 0);
-    write_mem_at_u32(&mem, 0x2004, 1000);
-
-    // Should trigger interrupt 5
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u32(mem, 0x2000, 0);
+        write_mem_at_u32(mem, 0x2004, 1000);
+    });
 }
 
 // ============================================================================
@@ -374,12 +449,10 @@ fn test_bound_invalid_zero_length() {
         0x48, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV RBX, 2
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
-
-    write_mem_at_u16(&mem, 0x2000, 5);
-    write_mem_at_u16(&mem, 0x2002, 5);
-
-    // Should trigger exception
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u16(mem, 0x2000, 5);
+        write_mem_at_u16(mem, 0x2002, 5);
+    });
 }
 
 // ============================================================================
@@ -395,12 +468,10 @@ fn test_bound_inverted_bounds() {
         0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm_compat(&code, None);
-
-    write_mem_at_u16(&mem, 0x2000, 10); // lower = 10
-    write_mem_at_u16(&mem, 0x2002, 0); // upper = 0 (inverted!)
-
-    // Behavior is undefined/implementation-specific
+    assert_bound_range_exception(&code, |mem| {
+        write_mem_at_u16(mem, 0x2000, 10); // lower = 10
+        write_mem_at_u16(mem, 0x2002, 0); // upper = 0 (inverted!)
+    });
 }
 
 // ============================================================================

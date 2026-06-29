@@ -1,7 +1,7 @@
 //! Stack frame instructions: ENTER, LEAVE, BOUND, and EVEX dispatch.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{EvexPrefix, InsnContext, X86_64Vcpu};
 
@@ -199,10 +199,7 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
         // BOUND requires memory operand (mod != 11)
         if modrm >> 6 == 3 {
-            return Err(Error::Emulator(format!(
-                "BOUND requires memory operand at RIP={:#x}",
-                vcpu.regs.rip
-            )));
+            return vcpu.inject_undefined_instruction();
         }
 
         let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
@@ -222,11 +219,8 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
             // Check: lower <= index <= upper
             if index < lower || index > upper {
-                // #BR exception - for now just return error
-                return Err(Error::Emulator(format!(
-                    "BOUND range exceeded: index {} not in [{}, {}] at RIP={:#x}",
-                    index, lower, upper, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(5, None)?;
+                return Ok(None);
             }
         } else {
             let index = vcpu.get_reg(reg, 4) as i32;
@@ -235,11 +229,8 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
             // Check: lower <= index <= upper
             if index < lower || index > upper {
-                // #BR exception - for now just return error
-                return Err(Error::Emulator(format!(
-                    "BOUND range exceeded: index {} not in [{}, {}] at RIP={:#x}",
-                    index, lower, upper, vcpu.regs.rip
-                )));
+                vcpu.inject_exception(5, None)?;
+                return Ok(None);
             }
         }
 
