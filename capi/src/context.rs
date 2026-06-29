@@ -19,7 +19,7 @@ use rax_engine::memory::vm::GuestAddress;
 use rax_engine::snapshot::EmulatorState;
 
 use crate::arch::RaxArch;
-use crate::engine::{engine_mut, Engine};
+use crate::engine::{Engine, engine_mut};
 use crate::guard;
 use crate::status::RaxStatus;
 

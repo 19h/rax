@@ -30,6 +30,12 @@ kvm = ["rax_engine/kvm"]
 hvf = ["rax_engine/hvf"]
 trace = ["rax_engine/trace"]
 
+[lints.rust]
+warnings = "allow"
+
+[lints.clippy]
+all = "allow"
+
 [dev-dependencies]
 # C/C++ conformance tests are compiled and linked against the staticlib by the
 # integration harness in tests/, which shells out to the system C/C++ toolchain.

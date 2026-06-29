@@ -4280,9 +4280,7 @@ impl Aarch64Lowerer {
         // behavior, rather than emitting an unpredictable native instruction. (#10)
         if rs == rt || rs == rn {
             return Err(LowerError::UnsupportedOp {
-                op: format!(
-                    "AArch64 STXR status register overlap (Rs={rs}, Rt={rt}, Rn={rn})"
-                ),
+                op: format!("AArch64 STXR status register overlap (Rs={rs}, Rt={rt}, Rn={rn})"),
             });
         }
         let size = Self::mem_size(width)?;
@@ -5316,8 +5314,7 @@ impl Aarch64Lowerer {
                     // (Rn = 31 is XZR in the shifted-register encoding).
                     self.emit_zero_base_extended(dst, rm, option, amount, width)?;
                     if subtract || set_flags {
-                        return self
-                            .emit_addsub_reg(dst, 31, dst, subtract, set_flags, width);
+                        return self.emit_addsub_reg(dst, 31, dst, subtract, set_flags, width);
                     }
                     return Ok(());
                 }
@@ -6935,12 +6932,12 @@ impl Aarch64Lowerer {
         mode: FpRoundMode,
     ) -> Result<(), LowerError> {
         let opcode = match mode {
-            FpRoundMode::RoundNearest => 0b01000,     // FRINTN
-            FpRoundMode::RoundUp => 0b01001,          // FRINTP
-            FpRoundMode::RoundDown => 0b01010,        // FRINTM
-            FpRoundMode::RoundTowardZero => 0b01011,  // FRINTZ
+            FpRoundMode::RoundNearest => 0b01000,         // FRINTN
+            FpRoundMode::RoundUp => 0b01001,              // FRINTP
+            FpRoundMode::RoundDown => 0b01010,            // FRINTM
+            FpRoundMode::RoundTowardZero => 0b01011,      // FRINTZ
             FpRoundMode::RoundNearestTiesAway => 0b01100, // FRINTA
-            FpRoundMode::Dynamic => 0b01111,          // FRINTI
+            FpRoundMode::Dynamic => 0b01111,              // FRINTI
         };
         self.lower_fp_unary(dst, src, precision, opcode)
     }
@@ -7791,9 +7788,8 @@ impl Aarch64Lowerer {
                         }
                         SrcOperand::Extended { .. } => {
                             let (src, option, amount) = Self::addsub_ext_src2(src2)?;
-                            return self.emit_zero_base_extended_flags(
-                                src, option, amount, false, width,
-                            );
+                            return self
+                                .emit_zero_base_extended_flags(src, option, amount, false, width);
                         }
                         _ => {}
                     }
@@ -14625,7 +14621,7 @@ impl Aarch64Lowerer {
                     },
                 ..
             },
-            ..
+            ..,
         ] = ops
         else {
             return Ok(None);
@@ -14695,13 +14691,14 @@ impl Aarch64Lowerer {
                 ..
             },
             next,
-            ..
+            ..,
         ] = ops
         else {
             return Ok(None);
         };
 
-        if !matches!(inverted, VReg::Virtual(_)) || !matches!(not_width, OpWidth::W32 | OpWidth::W64)
+        if !matches!(inverted, VReg::Virtual(_))
+            || !matches!(not_width, OpWidth::W32 | OpWidth::W64)
         {
             return Ok(None);
         }
@@ -15801,9 +15798,7 @@ impl Aarch64Lowerer {
                 count,
                 width,
             } => self.lower_rep_stos(*dst, *src, *count, *width),
-            OpKind::RepMovs {
-                ..
-            } => Err(LowerError::UnsupportedOp {
+            OpKind::RepMovs { .. } => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native RepMovs depends on the x86 direction flag".into(),
             }),
             OpKind::Leave => self.lower_leave(),
@@ -18384,7 +18379,10 @@ mod tests {
             },
         ]);
         let (regs, _, _) = run_aarch64_code(&code, &[(1, 0x123), (2, 0xDEAD)], 0);
-        assert_eq!(regs[2], 0x23, "Bfx must write x2 (UBFIZ fusion must not drop it)");
+        assert_eq!(
+            regs[2], 0x23,
+            "Bfx must write x2 (UBFIZ fusion must not drop it)"
+        );
         assert_eq!(regs[0], 0x230, "final Shl result");
     }
 
@@ -18411,7 +18409,10 @@ mod tests {
             },
         ]);
         let (regs, _, _) = run_aarch64_code(&code, &[(1, 0xAB0), (2, 0xDEAD), (0, 0xFF00)], 0);
-        assert_eq!(regs[2], 0xAB, "Bfx must write x2 (BFXIL fusion must not drop it)");
+        assert_eq!(
+            regs[2], 0xAB,
+            "Bfx must write x2 (BFXIL fusion must not drop it)"
+        );
         assert_eq!(regs[0], 0xFFAB, "final Bfi result: low byte replaced");
     }
 
@@ -18448,8 +18449,11 @@ mod tests {
                 flags: FlagUpdate::None,
             },
         ]);
-        let (regs, _, _) =
-            run_aarch64_code(&code, &[(1, 0xFF), (2, 0xDEAD), (3, 0xDEAD), (4, 0xDEAD)], 0);
+        let (regs, _, _) = run_aarch64_code(
+            &code,
+            &[(1, 0xFF), (2, 0xDEAD), (3, 0xDEAD), (4, 0xDEAD)],
+            0,
+        );
         assert_eq!(regs[2], 0, "asr result (sign_mask) must be written");
         assert_eq!(regs[3], 0xFF, "eor result (normalized) must be written");
         assert_eq!(regs[4], 56, "clz result (leading) must be written");
@@ -18484,7 +18488,10 @@ mod tests {
             0xCAFE,
             MemWidth::B8,
         );
-        assert_eq!(regs[0], 0x140, "Add must write x0 (mem-offset fusion must not drop it)");
+        assert_eq!(
+            regs[0], 0x140,
+            "Add must write x0 (mem-offset fusion must not drop it)"
+        );
         assert_eq!(regs[3], 0xCAFE, "loaded value");
     }
 
@@ -21826,11 +21833,7 @@ mod tests {
         let uxtw = x10 & 0xFFFF_FFFF; // 0x2345_6789
         let sxtb = ((x10 as u8) as i8 as i64) as u64; // sign-extend low byte
 
-        let ext = |reg, extend, shift| SrcOperand::Extended {
-            reg,
-            extend,
-            shift,
-        };
+        let ext = |reg, extend, shift| SrcOperand::Extended { reg, extend, shift };
         let code = lower_ops(vec![
             // 036: 0 + (uxtw(x10) << 2)  -> UBFIZ, no SP.
             OpKind::Add {
@@ -27364,35 +27367,60 @@ mod tests {
         // Scalar: a lone NaN must lose to the finite operand, both orderings.
         assert_fp_binary_f32(
             "fmax_s_nan_lhs",
-            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            OpKind::FMax {
+                dst: v(0),
+                src1: v(1),
+                src2: v(2),
+                precision: FpPrecision::F32,
+            },
             n32,
             2.5,
             n32.max(2.5),
         );
         assert_fp_binary_f32(
             "fmax_s_nan_rhs",
-            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            OpKind::FMax {
+                dst: v(0),
+                src1: v(1),
+                src2: v(2),
+                precision: FpPrecision::F32,
+            },
             2.5,
             n32,
             2.5_f32.max(n32),
         );
         assert_fp_binary_f32(
             "fmin_s_nan_lhs",
-            OpKind::FMin { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F32 },
+            OpKind::FMin {
+                dst: v(0),
+                src1: v(1),
+                src2: v(2),
+                precision: FpPrecision::F32,
+            },
             n32,
             2.5,
             n32.min(2.5),
         );
         assert_fp_binary_f64(
             "fmax_d_nan_lhs",
-            OpKind::FMax { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F64 },
+            OpKind::FMax {
+                dst: v(0),
+                src1: v(1),
+                src2: v(2),
+                precision: FpPrecision::F64,
+            },
             n64,
             -3.0,
             n64.max(-3.0),
         );
         assert_fp_binary_f64(
             "fmin_d_nan_rhs",
-            OpKind::FMin { dst: v(0), src1: v(1), src2: v(2), precision: FpPrecision::F64 },
+            OpKind::FMin {
+                dst: v(0),
+                src1: v(1),
+                src2: v(2),
+                precision: FpPrecision::F64,
+            },
             -3.0,
             n64,
             (-3.0_f64).min(n64),
@@ -27400,12 +27428,33 @@ mod tests {
 
         // Vector: VMax/VMin PROPAGATE a NaN lane; VFMinMaxNm is numeric.
         fn apply_f32<F: Fn(f32, f32) -> f32>(a: [f32; 4], b: [f32; 4], op: F) -> (u64, u64) {
-            simd_pair_from_f32([op(a[0], b[0]), op(a[1], b[1]), op(a[2], b[2]), op(a[3], b[3])])
+            simd_pair_from_f32([
+                op(a[0], b[0]),
+                op(a[1], b[1]),
+                op(a[2], b[2]),
+                op(a[3], b[3]),
+            ])
         }
         // NaN-propagating max/min (architectural FMAX/FMIN): a lone quiet NaN
         // wins. Matches hardware FMAX/FMIN for quiet-NaN inputs.
-        let fmax_prop = |a: f32, b: f32| if a.is_nan() { a } else if b.is_nan() { b } else { a.max(b) };
-        let fmin_prop = |a: f32, b: f32| if a.is_nan() { a } else if b.is_nan() { b } else { a.min(b) };
+        let fmax_prop = |a: f32, b: f32| {
+            if a.is_nan() {
+                a
+            } else if b.is_nan() {
+                b
+            } else {
+                a.max(b)
+            }
+        };
+        let fmin_prop = |a: f32, b: f32| {
+            if a.is_nan() {
+                a
+            } else if b.is_nan() {
+                b
+            } else {
+                a.min(b)
+            }
+        };
         let a32 = [f32::NAN, -2.25, 8.0, -0.5];
         let b32 = [2.25, f32::NAN, -1.5, 4.0];
         let code = lower_ops(vec![
@@ -27443,10 +27492,22 @@ mod tests {
             ],
         );
         // VMax/VMin propagate the NaN lanes (lanes 0,1 are NaN in the inputs).
-        assert_eq!(simd[5], apply_f32(a32, b32, fmax_prop), "vmax f32 propagates NaN");
-        assert_eq!(simd[6], apply_f32(a32, b32, fmin_prop), "vmin f32 propagates NaN");
+        assert_eq!(
+            simd[5],
+            apply_f32(a32, b32, fmax_prop),
+            "vmax f32 propagates NaN"
+        );
+        assert_eq!(
+            simd[6],
+            apply_f32(a32, b32, fmin_prop),
+            "vmin f32 propagates NaN"
+        );
         // VFMinMaxNm stays numeric: the NaN lane loses to the finite lane.
-        assert_eq!(simd[7], apply_f32(a32, b32, f32::max), "vfminmaxnm f32 numeric NaN");
+        assert_eq!(
+            simd[7],
+            apply_f32(a32, b32, f32::max),
+            "vfminmaxnm f32 numeric NaN"
+        );
     }
 
     #[test]
@@ -33830,7 +33891,10 @@ mod tests {
         }
 
         assert!(
-            matches!(lower_with_fp16(false), Err(LowerError::UnsupportedOp { .. })),
+            matches!(
+                lower_with_fp16(false),
+                Err(LowerError::UnsupportedOp { .. })
+            ),
             "FP16 arithmetic must bail to the interpreter when the host lacks FEAT_FP16"
         );
         assert!(
@@ -34666,7 +34730,11 @@ mod tests {
         // SP = 0x8000 in the harness; the buggy stack spill targets [SP-16] = 0x7ff0.
         let (regs, _, sp, below_sp) =
             run_aarch64_code_with_memory(&code, &[(1, 0x1000)], 0, 0x7ff0, sentinel, MemWidth::B8);
-        assert_eq!(regs[0], 0x1000 + 0x1_2345, "LEA result must be base + displacement");
+        assert_eq!(
+            regs[0],
+            0x1000 + 0x1_2345,
+            "LEA result must be base + displacement"
+        );
         assert_eq!(sp, 0x8000, "LEA must not modify SP");
         assert_eq!(below_sp, sentinel, "LEA must not write the word below SP");
     }
@@ -43512,10 +43580,7 @@ mod tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
-                vec![
-                    enc_bitfield_regs(1, 0b10, 0, 31, 2, 0),
-                    0xd65f_03c0u32,
-                ],
+                vec![enc_bitfield_regs(1, 0b10, 0, 31, 2, 0), 0xd65f_03c0u32],
             ),
             (
                 OpKind::Xor {
@@ -43529,10 +43594,7 @@ mod tests {
                     width: OpWidth::W32,
                     flags: FlagUpdate::None,
                 },
-                vec![
-                    enc_bitfield_regs(0, 0b10, 31, 7, 2, 0),
-                    0xd65f_03c0u32,
-                ],
+                vec![enc_bitfield_regs(0, 0b10, 31, 7, 2, 0), 0xd65f_03c0u32],
             ),
             (
                 OpKind::Or {
@@ -47294,8 +47356,7 @@ mod tests {
         );
 
         for nzcv in 0_u8..16 {
-            let (out, out_nzcv, sp) =
-                run_aarch64_code(&code, &[(16, 0x1616_1616_1616_1616)], nzcv);
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &[(16, 0x1616_1616_1616_1616)], nzcv);
             assert_eq!(out_nzcv, nzcv ^ 0b0010, "NZCV {nzcv:#06b}");
             assert_eq!(out[16], 0x1616_1616_1616_1616, "x16 preserved");
             assert_eq!(sp, 0x8000, "stack restored");
@@ -47308,8 +47369,7 @@ mod tests {
 
         assert!(!code_has_flagm(&code, 0b000));
         for nzcv in 0_u8..16 {
-            let (out, out_nzcv, sp) =
-                run_aarch64_code(&code, &[(16, 0x1616_1616_1616_1616)], nzcv);
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &[(16, 0x1616_1616_1616_1616)], nzcv);
             assert_eq!(out_nzcv, nzcv ^ 0b0010, "NZCV {nzcv:#06b}");
             assert_eq!(out[16], 0x1616_1616_1616_1616, "x16 preserved");
             assert_eq!(sp, 0x8000, "stack restored");
@@ -47328,11 +47388,7 @@ mod tests {
                 (15, 0x1515_1515_1515_1515),
             ];
             let (out, out_nzcv, sp) = run_aarch64_code(&code, &sentinels, nzcv);
-            assert_eq!(
-                out_nzcv,
-                expected_axflag_nzcv(nzcv),
-                "NZCV {nzcv:#06b}"
-            );
+            assert_eq!(out_nzcv, expected_axflag_nzcv(nzcv), "NZCV {nzcv:#06b}");
             assert_eq!(sp, 0x8000, "stack restored");
             for (reg, value) in sentinels {
                 assert_eq!(out[reg as usize], value, "x{reg} preserved");
@@ -47353,11 +47409,7 @@ mod tests {
                 (14, 0x1414_1414_1414_1414),
             ];
             let (out, out_nzcv, sp) = run_aarch64_code(&code, &sentinels, nzcv);
-            assert_eq!(
-                out_nzcv,
-                expected_xaflag_nzcv(nzcv),
-                "NZCV {nzcv:#06b}"
-            );
+            assert_eq!(out_nzcv, expected_xaflag_nzcv(nzcv), "NZCV {nzcv:#06b}");
             assert_eq!(sp, 0x8000, "stack restored");
             for (reg, value) in sentinels {
                 assert_eq!(out[reg as usize], value, "x{reg} preserved");
@@ -47632,9 +47684,21 @@ mod tests {
         }
 
         let sentinel = 0b1011u8;
-        assert_eq!(run_switch(0, sentinel), (0xAA, sentinel), "index 0 -> case 0");
-        assert_eq!(run_switch(1, sentinel), (0xBB, sentinel), "index 1 -> case 1");
-        assert_eq!(run_switch(5, sentinel), (0xCC, sentinel), "out-of-range -> default");
+        assert_eq!(
+            run_switch(0, sentinel),
+            (0xAA, sentinel),
+            "index 0 -> case 0"
+        );
+        assert_eq!(
+            run_switch(1, sentinel),
+            (0xBB, sentinel),
+            "index 1 -> case 1"
+        );
+        assert_eq!(
+            run_switch(5, sentinel),
+            (0xCC, sentinel),
+            "out-of-range -> default"
+        );
     }
 
     #[test]

@@ -3,7 +3,7 @@
 //! This module lifts RISC-V instructions to SMIR operations.
 //! Supports RV64I base, M (multiply/divide), A (atomics), and C (compressed) extensions.
 
-use crate::riscv::{decode as rv_decode, Isa as RvIsa, Op as RvOp, Xlen as RvXlen};
+use crate::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
 use crate::smir::flags::FlagUpdate;
 use crate::smir::ir::{SmirBlock, SmirFunction};
 use crate::smir::ops::{OpKind, RvVectorState, SmirOp};

@@ -1,6 +1,6 @@
 use rax::isa_oracle::{
-    ArmState, MAX_ORACLE_SEED_MEMORY_SIZE, OracleIsa, OracleMemorySeed, OracleOptions,
-    OracleSeed, RiscVIsaProfile, decode_to_json, decode_to_json_with_seed, parse_hex_bytes,
+    ArmState, MAX_ORACLE_SEED_MEMORY_SIZE, OracleIsa, OracleMemorySeed, OracleOptions, OracleSeed,
+    RiscVIsaProfile, decode_to_json, decode_to_json_with_seed, parse_hex_bytes,
 };
 use rax::riscv::Xlen;
 

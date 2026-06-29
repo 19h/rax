@@ -25,7 +25,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_sf_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -41,7 +47,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_sf_1_max_0_8a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -57,7 +69,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_opc_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -73,7 +91,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_opc_1_poweroftwo_0_2a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -89,7 +113,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_opc_2_poweroftwo_0_4a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -105,7 +135,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_opc_3_max_0_6a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -121,7 +157,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_shift_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -137,7 +179,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_shift_1_poweroftwo_0_0a400000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -153,7 +201,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_shift_2_poweroftwo_0_0a800000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -169,7 +223,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_shift_3_max_0_0ac00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -185,7 +245,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_n_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -201,7 +267,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_n_1_max_0_0a200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -217,7 +289,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rm_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -233,7 +311,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rm_1_poweroftwo_0_0a010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -249,7 +333,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rm_30_poweroftwominusone_0_0a1e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -265,7 +355,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rm_31_max_0_0a1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -281,7 +377,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_0_zero_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -297,7 +399,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_1_poweroftwo_0_0a000400() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -313,7 +421,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_3_poweroftwominusone_0_0a0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -329,7 +443,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_4_poweroftwo_0_0a001000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -345,7 +465,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_7_poweroftwominusone_0_0a0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -361,7 +487,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_8_poweroftwo_0_0a002000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -377,7 +509,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_15_poweroftwominusone_0_0a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -393,7 +531,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_16_poweroftwo_0_0a004000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -409,7 +553,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_31_poweroftwominusone_0_0a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -425,7 +575,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_32_poweroftwo_0_0a008000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -441,7 +597,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_imm6_63_max_0_0a00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -457,7 +619,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rn_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -473,7 +641,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rn_1_poweroftwo_0_0a000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -489,7 +663,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rn_30_poweroftwominusone_0_0a00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -505,7 +685,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rn_31_max_0_0a0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -521,7 +707,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rd_0_min_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -537,7 +729,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rd_1_poweroftwo_0_0a000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -553,7 +751,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rd_30_poweroftwominusone_0_0a00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -569,7 +773,13 @@ fn test_aarch64_integer_logical_shiftedreg_field_rd_31_max_0_0a00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -585,7 +795,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_0_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -601,7 +817,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_1_0_8a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -617,7 +839,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_2_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -633,7 +861,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_3_0_2a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -649,7 +883,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_4_0_4a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -665,7 +905,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_5_0_6a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -681,7 +927,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_6_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -697,7 +949,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_7_0_0a400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -713,7 +971,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_8_0_0a800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -729,7 +993,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_9_0_0ac00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -745,7 +1015,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_10_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -761,7 +1037,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_11_0_0a200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -777,7 +1059,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_12_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -793,7 +1081,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_13_0_0a010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -809,7 +1103,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_14_0_0a1e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -825,7 +1125,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_15_0_0a1f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -841,7 +1147,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_16_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -857,7 +1169,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_17_0_0a000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -873,7 +1191,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_18_0_0a000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -889,7 +1213,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_19_0_0a001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -905,7 +1235,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_20_0_0a001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -921,7 +1257,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_21_0_0a002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -937,7 +1279,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_22_0_0a003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -953,7 +1301,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_23_0_0a004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -969,7 +1323,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_24_0_0a007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -985,7 +1345,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_25_0_0a008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1001,7 +1367,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_26_0_0a00fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1017,7 +1389,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_27_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1033,7 +1411,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_28_0_0a000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1049,7 +1433,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_29_0_0a0003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1065,7 +1455,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_30_0_0a0003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1081,7 +1477,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_31_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1097,7 +1499,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_32_0_0a000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1113,7 +1521,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_33_0_0a00001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1129,7 +1543,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_34_0_0a00001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1145,7 +1565,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_35_0_0a010020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1161,7 +1587,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_36_0_0a1f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1177,7 +1609,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_37_0_0a010001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1193,7 +1631,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_38_0_0a1f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1209,7 +1653,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_39_0_0a000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1225,7 +1675,13 @@ fn test_aarch64_integer_logical_shiftedreg_combo_40_0_0a0003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1241,7 +1697,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_sf_0_size_variant_0_0_0a00040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1257,7 +1719,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_sf_1_size_variant_1_0_8a00040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1273,7 +1741,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_opc_0_size_variant_0_0_0a0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1289,7 +1763,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_opc_1_size_variant_1_0_2a0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1305,7 +1785,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_opc_2_size_variant_2_0_4a0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1321,7 +1807,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_opc_3_size_variant_3_0_6a0004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1337,7 +1829,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_shift_0_shift_type_lsl_0_0a00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1353,7 +1851,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_shift_1_shift_type_lsr_0_0a40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1369,7 +1873,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_shift_2_shift_type_asr_0_0a80
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1385,7 +1895,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_shift_3_shift_type_ror_0_0ac0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1393,7 +1909,8 @@ fn test_aarch64_integer_logical_shiftedreg_special_shift_3_shift_type_ror_0_0ac0
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_logical_shiftedreg_special_rn_31_stack_pointer_sp_may_require_alignment_0_0a0007e0() {
+fn test_aarch64_integer_logical_shiftedreg_special_rn_31_stack_pointer_sp_may_require_alignment_0_0a0007e0()
+ {
     // Encoding: 0x0A0007E0
     // Test aarch64_integer_logical_shiftedreg special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, imm6=1, shift=0, opc=0, sf=0, Rd=0, Rn=31, N=0
@@ -1401,7 +1918,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_rn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1409,7 +1932,8 @@ fn test_aarch64_integer_logical_shiftedreg_special_rn_31_stack_pointer_sp_may_re
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_logical_shiftedreg_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0a00041f() {
+fn test_aarch64_integer_logical_shiftedreg_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0a00041f()
+ {
     // Encoding: 0x0A00041F
     // Test aarch64_integer_logical_shiftedreg special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, shift=0, N=0, sf=0, opc=0, Rm=0, imm6=1, Rn=0
@@ -1417,7 +1941,13 @@ fn test_aarch64_integer_logical_shiftedreg_special_rd_31_zero_register_xzr_wzr_r
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1433,7 +1963,13 @@ fn test_aarch64_integer_logical_shiftedreg_invalid_0_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1449,7 +1985,13 @@ fn test_aarch64_integer_logical_shiftedreg_invalid_1_0_0a000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_shiftedreg
@@ -1863,7 +2405,13 @@ fn test_aarch64_integer_logical_immediate_field_sf_0_min_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1879,7 +2427,13 @@ fn test_aarch64_integer_logical_immediate_field_sf_1_max_0_92000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1895,7 +2449,13 @@ fn test_aarch64_integer_logical_immediate_field_opc_0_min_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1911,7 +2471,13 @@ fn test_aarch64_integer_logical_immediate_field_opc_1_poweroftwo_0_32000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1927,7 +2493,13 @@ fn test_aarch64_integer_logical_immediate_field_opc_2_poweroftwo_0_52000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1943,7 +2515,13 @@ fn test_aarch64_integer_logical_immediate_field_opc_3_max_0_72000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1959,7 +2537,13 @@ fn test_aarch64_integer_logical_immediate_field_n_0_min_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1975,7 +2559,13 @@ fn test_aarch64_integer_logical_immediate_field_n_1_max_0_12400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -1991,7 +2581,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_0_zero_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2007,7 +2603,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_1_poweroftwo_0_12010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2023,7 +2625,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_3_poweroftwominusone_0_1203
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2039,7 +2647,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_4_poweroftwo_0_12040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2055,7 +2669,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_7_poweroftwominusone_0_1207
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2071,7 +2691,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_8_poweroftwo_0_12080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2087,7 +2713,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_15_poweroftwominusone_0_120
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2103,7 +2735,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_16_poweroftwo_0_12100000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2119,7 +2757,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_31_poweroftwominusone_0_121
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2135,7 +2779,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_32_poweroftwo_0_12200000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2151,7 +2801,13 @@ fn test_aarch64_integer_logical_immediate_field_immr_63_max_0_123f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2167,7 +2823,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_0_zero_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2183,7 +2845,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_1_poweroftwo_0_12000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2199,7 +2867,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_3_poweroftwominusone_0_1200
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2215,7 +2889,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_4_poweroftwo_0_12001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2231,7 +2911,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_7_poweroftwominusone_0_1200
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2247,7 +2933,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_8_poweroftwo_0_12002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2263,7 +2955,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_15_poweroftwominusone_0_120
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2279,7 +2977,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_16_poweroftwo_0_12004000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2295,7 +2999,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_31_poweroftwominusone_0_120
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2311,7 +3021,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_32_poweroftwo_0_12008000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2327,7 +3043,13 @@ fn test_aarch64_integer_logical_immediate_field_imms_63_max_0_1200fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2343,7 +3065,13 @@ fn test_aarch64_integer_logical_immediate_field_rn_0_min_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2359,7 +3087,13 @@ fn test_aarch64_integer_logical_immediate_field_rn_1_poweroftwo_0_12000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2375,7 +3109,13 @@ fn test_aarch64_integer_logical_immediate_field_rn_30_poweroftwominusone_0_12000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2391,7 +3131,13 @@ fn test_aarch64_integer_logical_immediate_field_rn_31_max_0_120003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2407,7 +3153,13 @@ fn test_aarch64_integer_logical_immediate_field_rd_0_min_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2423,7 +3175,13 @@ fn test_aarch64_integer_logical_immediate_field_rd_1_poweroftwo_0_12000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2439,7 +3197,13 @@ fn test_aarch64_integer_logical_immediate_field_rd_30_poweroftwominusone_0_12000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2455,7 +3219,13 @@ fn test_aarch64_integer_logical_immediate_field_rd_31_max_0_1200001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2471,7 +3241,13 @@ fn test_aarch64_integer_logical_immediate_combo_0_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2487,7 +3263,13 @@ fn test_aarch64_integer_logical_immediate_combo_1_0_92000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2503,7 +3285,13 @@ fn test_aarch64_integer_logical_immediate_combo_2_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2519,7 +3307,13 @@ fn test_aarch64_integer_logical_immediate_combo_3_0_32000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2535,7 +3329,13 @@ fn test_aarch64_integer_logical_immediate_combo_4_0_52000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2551,7 +3351,13 @@ fn test_aarch64_integer_logical_immediate_combo_5_0_72000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2567,7 +3373,13 @@ fn test_aarch64_integer_logical_immediate_combo_6_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2583,7 +3395,13 @@ fn test_aarch64_integer_logical_immediate_combo_7_0_12400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2599,7 +3417,13 @@ fn test_aarch64_integer_logical_immediate_combo_8_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2615,7 +3439,13 @@ fn test_aarch64_integer_logical_immediate_combo_9_0_12010000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2631,7 +3461,13 @@ fn test_aarch64_integer_logical_immediate_combo_10_0_12030000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2647,7 +3483,13 @@ fn test_aarch64_integer_logical_immediate_combo_11_0_12040000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2663,7 +3505,13 @@ fn test_aarch64_integer_logical_immediate_combo_12_0_12070000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2679,7 +3527,13 @@ fn test_aarch64_integer_logical_immediate_combo_13_0_12080000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2695,7 +3549,13 @@ fn test_aarch64_integer_logical_immediate_combo_14_0_120f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2711,7 +3571,13 @@ fn test_aarch64_integer_logical_immediate_combo_15_0_12100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2727,7 +3593,13 @@ fn test_aarch64_integer_logical_immediate_combo_16_0_121f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2743,7 +3615,13 @@ fn test_aarch64_integer_logical_immediate_combo_17_0_12200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2759,7 +3637,13 @@ fn test_aarch64_integer_logical_immediate_combo_18_0_123f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2775,7 +3659,13 @@ fn test_aarch64_integer_logical_immediate_combo_19_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2791,7 +3681,13 @@ fn test_aarch64_integer_logical_immediate_combo_20_0_12000400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2807,7 +3703,13 @@ fn test_aarch64_integer_logical_immediate_combo_21_0_12000c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2823,7 +3725,13 @@ fn test_aarch64_integer_logical_immediate_combo_22_0_12001000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2839,7 +3747,13 @@ fn test_aarch64_integer_logical_immediate_combo_23_0_12001c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2855,7 +3769,13 @@ fn test_aarch64_integer_logical_immediate_combo_24_0_12002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2871,7 +3791,13 @@ fn test_aarch64_integer_logical_immediate_combo_25_0_12003c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2887,7 +3813,13 @@ fn test_aarch64_integer_logical_immediate_combo_26_0_12004000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2903,7 +3835,13 @@ fn test_aarch64_integer_logical_immediate_combo_27_0_12007c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2919,7 +3857,13 @@ fn test_aarch64_integer_logical_immediate_combo_28_0_12008000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2935,7 +3879,13 @@ fn test_aarch64_integer_logical_immediate_combo_29_0_1200fc00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2951,7 +3901,13 @@ fn test_aarch64_integer_logical_immediate_combo_30_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2967,7 +3923,13 @@ fn test_aarch64_integer_logical_immediate_combo_31_0_12000020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2983,7 +3945,13 @@ fn test_aarch64_integer_logical_immediate_combo_32_0_120003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -2999,7 +3967,13 @@ fn test_aarch64_integer_logical_immediate_combo_33_0_120003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3015,7 +3989,13 @@ fn test_aarch64_integer_logical_immediate_combo_34_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3031,7 +4011,13 @@ fn test_aarch64_integer_logical_immediate_combo_35_0_12000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3047,7 +4033,13 @@ fn test_aarch64_integer_logical_immediate_combo_36_0_1200001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3063,7 +4055,13 @@ fn test_aarch64_integer_logical_immediate_combo_37_0_1200001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3079,7 +4077,13 @@ fn test_aarch64_integer_logical_immediate_combo_38_0_12000021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3095,7 +4099,13 @@ fn test_aarch64_integer_logical_immediate_combo_39_0_120003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3111,7 +4121,13 @@ fn test_aarch64_integer_logical_immediate_special_sf_0_size_variant_0_0_12010400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3127,7 +4143,13 @@ fn test_aarch64_integer_logical_immediate_special_sf_1_size_variant_1_0_92010400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3143,7 +4165,13 @@ fn test_aarch64_integer_logical_immediate_special_opc_0_size_variant_0_0_1201040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3159,7 +4187,13 @@ fn test_aarch64_integer_logical_immediate_special_opc_1_size_variant_1_0_3201040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3175,7 +4209,13 @@ fn test_aarch64_integer_logical_immediate_special_opc_2_size_variant_2_0_5201040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3191,7 +4231,13 @@ fn test_aarch64_integer_logical_immediate_special_opc_3_size_variant_3_0_7201040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3199,7 +4245,8 @@ fn test_aarch64_integer_logical_immediate_special_opc_3_size_variant_3_0_7201040
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_logical_immediate_special_rn_31_stack_pointer_sp_may_require_alignment_0_120107e0() {
+fn test_aarch64_integer_logical_immediate_special_rn_31_stack_pointer_sp_may_require_alignment_0_120107e0()
+ {
     // Encoding: 0x120107E0
     // Test aarch64_integer_logical_immediate special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: immr=1, opc=0, sf=0, N=0, imms=1, Rn=31, Rd=0
@@ -3207,7 +4254,13 @@ fn test_aarch64_integer_logical_immediate_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3215,7 +4268,8 @@ fn test_aarch64_integer_logical_immediate_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_logical_immediate_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1201041f() {
+fn test_aarch64_integer_logical_immediate_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1201041f()
+ {
     // Encoding: 0x1201041F
     // Test aarch64_integer_logical_immediate special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: immr=1, Rn=0, N=0, imms=1, Rd=31, sf=0, opc=0
@@ -3223,7 +4277,13 @@ fn test_aarch64_integer_logical_immediate_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3239,7 +4299,13 @@ fn test_aarch64_integer_logical_immediate_invalid_0_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3255,7 +4321,13 @@ fn test_aarch64_integer_logical_immediate_invalid_1_0_12000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3306,7 +4378,11 @@ fn test_aarch64_integer_logical_immediate_and_oracle_64_2_92407c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFF,
+        "X0 should be 0x00000000FFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3340,7 +4416,11 @@ fn test_aarch64_integer_logical_immediate_and_oracle_64_4_9240f820() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x2AAAAAAAAAAAAAAA, "X0 should be 0x2AAAAAAAAAAAAAAA");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0x2AAAAAAAAAAAAAAA,
+        "X0 should be 0x2AAAAAAAAAAAAAAA"
+    );
 }
 
 /// Provenance: aarch64_integer_logical_immediate
@@ -3622,4 +4702,3 @@ fn test_aarch64_integer_logical_immediate_flags_positiveresult_7_92000020() {
     assert_eq!(cpu.get_pstate().c, false, "C should be false");
     assert_eq!(cpu.get_pstate().v, false, "V should be false");
 }
-

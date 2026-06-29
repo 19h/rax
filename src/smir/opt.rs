@@ -3079,9 +3079,7 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ops::OpKind;
-    use crate::smir::types::{
-        Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType,
-    };
+    use crate::smir::types::{Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType};
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
         SmirOp::new(OpId(id), 0x1000, kind)

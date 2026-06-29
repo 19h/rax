@@ -780,7 +780,8 @@ fn hexagon_memop_on_mmio_does_not_touch_backing_ram() {
     }
 
     let mut after = [0u8; 4];
-    mem.read_slice(&mut after, GuestAddress(MMIO as u64)).unwrap();
+    mem.read_slice(&mut after, GuestAddress(MMIO as u64))
+        .unwrap();
     assert_eq!(
         u32::from_le_bytes(after),
         SENTINEL,

@@ -77,11 +77,7 @@ fn parse_uses_value(line: &str) -> Option<&str> {
         .trim()
         .trim_matches(|ch| ch == '"' || ch == '\'');
 
-    if value.is_empty() {
-        None
-    } else {
-        Some(value)
-    }
+    if value.is_empty() { None } else { Some(value) }
 }
 
 fn is_local_action(action_ref: &str) -> bool {

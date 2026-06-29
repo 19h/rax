@@ -11,11 +11,11 @@ use std::time::Instant;
 
 use rax_engine::cpu::{MemAccess, MemRecord, VcpuExit};
 
-use crate::engine::{engine_mut, Engine};
+use crate::engine::{Engine, engine_mut};
 use crate::guard;
 use crate::hook::{
-    MemHook, SimpleHook, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, RAX_MEM_FETCH,
-    RAX_MEM_READ, RAX_MEM_WRITE,
+    MemHook, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, RAX_MEM_FETCH,
+    RAX_MEM_READ, RAX_MEM_WRITE, SimpleHook,
 };
 use crate::reg;
 use crate::status::RaxStatus;

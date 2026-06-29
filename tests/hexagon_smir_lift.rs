@@ -794,8 +794,8 @@ fn postinc_alias_fixture() -> (State, Vec<u8>) {
 
     let mut data = vec![0u8; DATA_LEN];
     data[..16].copy_from_slice(&[
-        0x78, 0x56, 0x34, 0x12, 0xef, 0xcd, 0xab, 0x90, 0x80, 0x7f, 0xfe, 0x01, 0x22,
-        0x33, 0x44, 0x55,
+        0x78, 0x56, 0x34, 0x12, 0xef, 0xcd, 0xab, 0x90, 0x80, 0x7f, 0xfe, 0x01, 0x22, 0x33, 0x44,
+        0x55,
     ]);
     (st, data)
 }
@@ -3761,8 +3761,8 @@ fn hist_requires_tmp_load_and_respects_predicate() {
     // #146: a false-predicated `.tmp` load is cancelled and must NOT seed the
     //       histogram scratch, so the consumer also faults.
     let cases = [
-        "{ v0.tmp = vmem(r0+#0); vhist }",     // valid -> executes
-        "{ vhist }",                            // bare -> faults (#160)
+        "{ v0.tmp = vmem(r0+#0); vhist }",          // valid -> executes
+        "{ vhist }",                                // bare -> faults (#160)
         "{ if (!p0) v0.tmp = vmem(r0+#0); vhist }", // cancelled load -> faults (#146)
     ];
     let asms: Vec<String> = cases.iter().map(|a| a.to_string()).collect();

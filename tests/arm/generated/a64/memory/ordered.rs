@@ -25,7 +25,13 @@ fn test_aarch64_memory_ordered_field_size_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -41,7 +47,13 @@ fn test_aarch64_memory_ordered_field_size_1_poweroftwo_0_48800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -57,7 +69,13 @@ fn test_aarch64_memory_ordered_field_size_2_poweroftwo_0_88800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -73,7 +91,13 @@ fn test_aarch64_memory_ordered_field_size_3_max_0_c8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -89,7 +113,13 @@ fn test_aarch64_memory_ordered_field_l_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -105,7 +135,13 @@ fn test_aarch64_memory_ordered_field_l_1_max_0_08c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -121,7 +157,13 @@ fn test_aarch64_memory_ordered_field_rs_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -137,7 +179,13 @@ fn test_aarch64_memory_ordered_field_rs_1_poweroftwo_0_08810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -153,7 +201,13 @@ fn test_aarch64_memory_ordered_field_rs_30_poweroftwominusone_0_089e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -169,7 +223,13 @@ fn test_aarch64_memory_ordered_field_rs_31_max_0_089f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -185,7 +245,13 @@ fn test_aarch64_memory_ordered_field_o0_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -201,7 +267,13 @@ fn test_aarch64_memory_ordered_field_o0_1_max_0_08808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -217,7 +289,13 @@ fn test_aarch64_memory_ordered_field_rt2_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -233,7 +311,13 @@ fn test_aarch64_memory_ordered_field_rt2_1_poweroftwo_0_08800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -249,7 +333,13 @@ fn test_aarch64_memory_ordered_field_rt2_30_poweroftwominusone_0_08807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -265,7 +355,13 @@ fn test_aarch64_memory_ordered_field_rt2_31_max_0_08807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -281,7 +377,13 @@ fn test_aarch64_memory_ordered_field_rn_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -297,7 +399,13 @@ fn test_aarch64_memory_ordered_field_rn_1_poweroftwo_0_08800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -313,7 +421,13 @@ fn test_aarch64_memory_ordered_field_rn_30_poweroftwominusone_0_088003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -329,7 +443,13 @@ fn test_aarch64_memory_ordered_field_rn_31_max_0_088003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -345,7 +465,13 @@ fn test_aarch64_memory_ordered_field_rt_0_min_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -361,7 +487,13 @@ fn test_aarch64_memory_ordered_field_rt_1_poweroftwo_0_08800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -377,7 +509,13 @@ fn test_aarch64_memory_ordered_field_rt_30_poweroftwominusone_0_0880001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -393,7 +531,13 @@ fn test_aarch64_memory_ordered_field_rt_31_max_0_0880001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -409,7 +553,13 @@ fn test_aarch64_memory_ordered_combo_0_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -425,7 +575,13 @@ fn test_aarch64_memory_ordered_combo_1_0_48800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -441,7 +597,13 @@ fn test_aarch64_memory_ordered_combo_2_0_88800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -457,7 +619,13 @@ fn test_aarch64_memory_ordered_combo_3_0_c8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -473,7 +641,13 @@ fn test_aarch64_memory_ordered_combo_4_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -489,7 +663,13 @@ fn test_aarch64_memory_ordered_combo_5_0_08c00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -505,7 +685,13 @@ fn test_aarch64_memory_ordered_combo_6_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -521,7 +707,13 @@ fn test_aarch64_memory_ordered_combo_7_0_08810000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -537,7 +729,13 @@ fn test_aarch64_memory_ordered_combo_8_0_089e0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -553,7 +751,13 @@ fn test_aarch64_memory_ordered_combo_9_0_089f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -569,7 +773,13 @@ fn test_aarch64_memory_ordered_combo_10_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -585,7 +795,13 @@ fn test_aarch64_memory_ordered_combo_11_0_08808000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -601,7 +817,13 @@ fn test_aarch64_memory_ordered_combo_12_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -617,7 +839,13 @@ fn test_aarch64_memory_ordered_combo_13_0_08800400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -633,7 +861,13 @@ fn test_aarch64_memory_ordered_combo_14_0_08807800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -649,7 +883,13 @@ fn test_aarch64_memory_ordered_combo_15_0_08807c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -665,7 +905,13 @@ fn test_aarch64_memory_ordered_combo_16_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -681,7 +927,13 @@ fn test_aarch64_memory_ordered_combo_17_0_08800020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -697,7 +949,13 @@ fn test_aarch64_memory_ordered_combo_18_0_088003c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -713,7 +971,13 @@ fn test_aarch64_memory_ordered_combo_19_0_088003e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -729,7 +993,13 @@ fn test_aarch64_memory_ordered_combo_20_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -745,7 +1015,13 @@ fn test_aarch64_memory_ordered_combo_21_0_08800001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -761,7 +1037,13 @@ fn test_aarch64_memory_ordered_combo_22_0_0880001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -777,7 +1059,13 @@ fn test_aarch64_memory_ordered_combo_23_0_0880001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -793,7 +1081,13 @@ fn test_aarch64_memory_ordered_combo_24_0_08810400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -809,7 +1103,13 @@ fn test_aarch64_memory_ordered_combo_25_0_089f7c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -825,7 +1125,13 @@ fn test_aarch64_memory_ordered_combo_26_0_08810020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -841,7 +1147,13 @@ fn test_aarch64_memory_ordered_combo_27_0_089f03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -857,7 +1169,13 @@ fn test_aarch64_memory_ordered_combo_28_0_08810001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -873,7 +1191,13 @@ fn test_aarch64_memory_ordered_combo_29_0_089f001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -889,7 +1213,13 @@ fn test_aarch64_memory_ordered_combo_30_0_08800420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -905,7 +1235,13 @@ fn test_aarch64_memory_ordered_combo_31_0_08807fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -921,7 +1257,13 @@ fn test_aarch64_memory_ordered_combo_32_0_08800401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -937,7 +1279,13 @@ fn test_aarch64_memory_ordered_combo_33_0_08807c1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -953,7 +1301,13 @@ fn test_aarch64_memory_ordered_combo_34_0_08800021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -969,7 +1323,13 @@ fn test_aarch64_memory_ordered_combo_35_0_088003ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -985,7 +1345,13 @@ fn test_aarch64_memory_ordered_special_size_0_size_variant_0_0_08800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1001,7 +1367,13 @@ fn test_aarch64_memory_ordered_special_size_1_size_variant_1_0_48800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1017,7 +1389,13 @@ fn test_aarch64_memory_ordered_special_size_2_size_variant_2_0_88800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1033,7 +1411,13 @@ fn test_aarch64_memory_ordered_special_size_3_size_variant_3_0_c8800000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1049,7 +1433,13 @@ fn test_aarch64_memory_ordered_special_rn_31_stack_pointer_sp_may_require_alignm
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1057,7 +1447,8 @@ fn test_aarch64_memory_ordered_special_rn_31_stack_pointer_sp_may_require_alignm
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_ordered_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_4880001f() {
+fn test_aarch64_memory_ordered_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_4880001f()
+ {
     // Encoding: 0x4880001F
     // Test aarch64_memory_ordered special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rt2=0, Rn=0, Rt=31, L=0, size=1, o0=0, Rs=0
@@ -1065,7 +1456,13 @@ fn test_aarch64_memory_ordered_special_rt_31_zero_register_xzr_wzr_reads_as_0_wr
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -1128,7 +1525,13 @@ fn test_aarch64_memory_ordered_store_0_08800020() {
     let encoding: u32 = 0x08800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 // ============================================================================
@@ -1148,7 +1551,13 @@ fn test_aarch64_memory_ordered_rcpc_field_size_0_min_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1164,7 +1573,13 @@ fn test_aarch64_memory_ordered_rcpc_field_size_1_poweroftwo_c000_78a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1180,7 +1595,13 @@ fn test_aarch64_memory_ordered_rcpc_field_size_2_poweroftwo_c000_b8a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1196,7 +1617,13 @@ fn test_aarch64_memory_ordered_rcpc_field_size_3_max_c000_f8a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1212,7 +1639,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_0_min_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1228,7 +1661,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_1_poweroftwo_c000_38a1c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1244,7 +1683,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_30_poweroftwominusone_c000_38bec000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1260,7 +1705,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_31_max_c000_38bfc000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1276,7 +1727,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_0_min_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1292,7 +1749,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_1_poweroftwo_c000_38a0c020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1308,7 +1771,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_30_poweroftwominusone_c000_38a0c3c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1324,7 +1793,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_31_max_c000_38a0c3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1340,7 +1815,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_0_min_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1356,7 +1837,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_1_poweroftwo_c000_38a0c001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1372,7 +1859,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_30_poweroftwominusone_c000_38a0c01e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1388,7 +1881,13 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_31_max_c000_38a0c01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1404,7 +1903,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_0_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1420,7 +1925,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_1_c000_78a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1436,7 +1947,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_2_c000_b8a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1452,7 +1969,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_3_c000_f8a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1468,7 +1991,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_4_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1484,7 +2013,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_5_c000_38a1c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1500,7 +2035,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_6_c000_38bec000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1516,7 +2057,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_7_c000_38bfc000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1532,7 +2079,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_8_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1548,7 +2101,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_9_c000_38a0c020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1564,7 +2123,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_10_c000_38a0c3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1580,7 +2145,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_11_c000_38a0c3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1596,7 +2167,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_12_c000_38a0c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1612,7 +2189,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_13_c000_38a0c001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1628,7 +2211,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_14_c000_38a0c01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1644,7 +2233,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_15_c000_38a0c01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1660,7 +2255,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_16_c000_38a1c020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1676,7 +2277,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_17_c000_38bfc3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1692,7 +2299,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_18_c000_38a1c001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1708,7 +2321,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_19_c000_38bfc01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1724,7 +2343,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_20_c000_38a0c021() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1740,7 +2365,13 @@ fn test_aarch64_memory_ordered_rcpc_combo_21_c000_38a0c3ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1756,7 +2387,13 @@ fn test_aarch64_memory_ordered_rcpc_special_size_0_size_variant_0_49152_38a0c000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1772,7 +2409,13 @@ fn test_aarch64_memory_ordered_rcpc_special_size_1_size_variant_1_49152_78a0c000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1788,7 +2431,13 @@ fn test_aarch64_memory_ordered_rcpc_special_size_2_size_variant_2_49152_b8a0c000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1804,7 +2453,13 @@ fn test_aarch64_memory_ordered_rcpc_special_size_3_size_variant_3_49152_f8a0c000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1812,7 +2467,8 @@ fn test_aarch64_memory_ordered_rcpc_special_size_3_size_variant_3_49152_f8a0c000
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_alignment_49152_78a0c3e0() {
+fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_alignment_49152_78a0c3e0()
+ {
     // Encoding: 0x78A0C3E0
     // Test aarch64_memory_ordered_rcpc special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: size=1, Rs=0, Rt=0, Rn=31
@@ -1820,7 +2476,13 @@ fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1828,7 +2490,8 @@ fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_a
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_78a0c01f() {
+fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_78a0c01f()
+ {
     // Encoding: 0x78A0C01F
     // Test aarch64_memory_ordered_rcpc special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: size=1, Rn=0, Rt=31, Rs=0
@@ -1836,7 +2499,13 @@ fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1851,7 +2520,13 @@ fn test_aarch64_memory_ordered_rcpc_reg_write_0_38a0c000() {
     let encoding: u32 = 0x38A0C000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1866,7 +2541,13 @@ fn test_aarch64_memory_ordered_rcpc_sp_rn_38a0c3e0() {
     let encoding: u32 = 0x38A0C3E0;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -1881,6 +2562,11 @@ fn test_aarch64_memory_ordered_rcpc_zr_rt_38a0c01f() {
     let encoding: u32 = 0x38A0C01F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(matches!(exit, Ok(CpuExit::Undefined(_))) || matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected unallocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        matches!(exit, Ok(CpuExit::Undefined(_)))
+            || matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected unallocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
-

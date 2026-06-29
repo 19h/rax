@@ -25,7 +25,13 @@ fn test_aarch64_system_register_system_field_l_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -41,7 +47,13 @@ fn test_aarch64_system_register_system_field_l_1_max_0_d5300000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -57,7 +69,13 @@ fn test_aarch64_system_register_system_field_o0_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -73,7 +91,13 @@ fn test_aarch64_system_register_system_field_o0_1_max_0_d5180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -89,7 +113,13 @@ fn test_aarch64_system_register_system_field_op1_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -105,7 +135,13 @@ fn test_aarch64_system_register_system_field_op1_1_poweroftwo_0_d5110000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -121,7 +157,13 @@ fn test_aarch64_system_register_system_field_op1_7_max_0_d5170000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -137,7 +179,13 @@ fn test_aarch64_system_register_system_field_crn_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -153,7 +201,13 @@ fn test_aarch64_system_register_system_field_crn_1_poweroftwo_0_d5101000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -169,7 +223,13 @@ fn test_aarch64_system_register_system_field_crn_7_poweroftwominusone_0_d5107000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -185,7 +245,13 @@ fn test_aarch64_system_register_system_field_crn_15_max_0_d510f000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -201,7 +267,13 @@ fn test_aarch64_system_register_system_field_crm_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -217,7 +289,13 @@ fn test_aarch64_system_register_system_field_crm_1_poweroftwo_0_d5100100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -233,7 +311,13 @@ fn test_aarch64_system_register_system_field_crm_7_poweroftwominusone_0_d5100700
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -249,7 +333,13 @@ fn test_aarch64_system_register_system_field_crm_15_max_0_d5100f00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -265,7 +355,13 @@ fn test_aarch64_system_register_system_field_op2_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -281,7 +377,13 @@ fn test_aarch64_system_register_system_field_op2_1_poweroftwo_0_d5100020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -297,7 +399,13 @@ fn test_aarch64_system_register_system_field_op2_7_max_0_d51000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -313,7 +421,13 @@ fn test_aarch64_system_register_system_field_rt_0_min_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -329,7 +443,13 @@ fn test_aarch64_system_register_system_field_rt_1_poweroftwo_0_d5100001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -345,7 +465,13 @@ fn test_aarch64_system_register_system_field_rt_30_poweroftwominusone_0_d510001e
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -361,7 +487,13 @@ fn test_aarch64_system_register_system_field_rt_31_max_0_d510001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -377,7 +509,13 @@ fn test_aarch64_system_register_system_combo_0_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -393,7 +531,13 @@ fn test_aarch64_system_register_system_combo_1_0_d5300000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -409,7 +553,13 @@ fn test_aarch64_system_register_system_combo_2_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -425,7 +575,13 @@ fn test_aarch64_system_register_system_combo_3_0_d5180000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -441,7 +597,13 @@ fn test_aarch64_system_register_system_combo_4_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -457,7 +619,13 @@ fn test_aarch64_system_register_system_combo_5_0_d5110000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -473,7 +641,13 @@ fn test_aarch64_system_register_system_combo_6_0_d5170000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -489,7 +663,13 @@ fn test_aarch64_system_register_system_combo_7_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -505,7 +685,13 @@ fn test_aarch64_system_register_system_combo_8_0_d5101000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -521,7 +707,13 @@ fn test_aarch64_system_register_system_combo_9_0_d5107000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -537,7 +729,13 @@ fn test_aarch64_system_register_system_combo_10_0_d510f000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -553,7 +751,13 @@ fn test_aarch64_system_register_system_combo_11_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -569,7 +773,13 @@ fn test_aarch64_system_register_system_combo_12_0_d5100100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -585,7 +795,13 @@ fn test_aarch64_system_register_system_combo_13_0_d5100700() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -601,7 +817,13 @@ fn test_aarch64_system_register_system_combo_14_0_d5100f00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -617,7 +839,13 @@ fn test_aarch64_system_register_system_combo_15_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -633,7 +861,13 @@ fn test_aarch64_system_register_system_combo_16_0_d5100020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -649,7 +883,13 @@ fn test_aarch64_system_register_system_combo_17_0_d51000e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -665,7 +905,13 @@ fn test_aarch64_system_register_system_combo_18_0_d5100000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -681,7 +927,13 @@ fn test_aarch64_system_register_system_combo_19_0_d5100001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -697,7 +949,13 @@ fn test_aarch64_system_register_system_combo_20_0_d510001e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -713,7 +971,13 @@ fn test_aarch64_system_register_system_combo_21_0_d510001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -721,7 +985,8 @@ fn test_aarch64_system_register_system_combo_21_0_d510001f() {
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_system_register_system_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_d510001f() {
+fn test_aarch64_system_register_system_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_d510001f()
+ {
     // Encoding: 0xD510001F
     // Test aarch64_system_register_system special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: o0=0, L=0, CRn=0, CRm=0, op1=0, op2=0, Rt=31
@@ -729,7 +994,13 @@ fn test_aarch64_system_register_system_special_rt_31_zero_register_xzr_wzr_reads
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -780,7 +1051,13 @@ fn test_aarch64_system_register_cpsr_field_op1_0_min_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -796,7 +1073,13 @@ fn test_aarch64_system_register_cpsr_field_op1_1_poweroftwo_401f_d501401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -812,7 +1095,13 @@ fn test_aarch64_system_register_cpsr_field_op1_7_max_401f_d507401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -828,7 +1117,13 @@ fn test_aarch64_system_register_cpsr_field_crm_0_min_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -844,7 +1139,13 @@ fn test_aarch64_system_register_cpsr_field_crm_1_poweroftwo_401f_d500411f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -860,7 +1161,13 @@ fn test_aarch64_system_register_cpsr_field_crm_7_poweroftwominusone_401f_d500471
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -876,7 +1183,13 @@ fn test_aarch64_system_register_cpsr_field_crm_15_max_401f_d5004f1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -892,7 +1205,13 @@ fn test_aarch64_system_register_cpsr_field_op2_0_min_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -908,7 +1227,13 @@ fn test_aarch64_system_register_cpsr_field_op2_1_poweroftwo_401f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -924,7 +1249,13 @@ fn test_aarch64_system_register_cpsr_field_op2_7_max_401f_d50040ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -940,7 +1271,13 @@ fn test_aarch64_system_register_cpsr_combo_0_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -956,7 +1293,13 @@ fn test_aarch64_system_register_cpsr_combo_1_401f_d501401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -972,7 +1315,13 @@ fn test_aarch64_system_register_cpsr_combo_2_401f_d507401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -988,7 +1337,13 @@ fn test_aarch64_system_register_cpsr_combo_3_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1004,7 +1359,13 @@ fn test_aarch64_system_register_cpsr_combo_4_401f_d500411f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1020,7 +1381,13 @@ fn test_aarch64_system_register_cpsr_combo_5_401f_d500471f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1036,7 +1403,13 @@ fn test_aarch64_system_register_cpsr_combo_6_401f_d5004f1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1052,7 +1425,13 @@ fn test_aarch64_system_register_cpsr_combo_7_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1068,7 +1447,13 @@ fn test_aarch64_system_register_cpsr_combo_8_401f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1084,7 +1469,13 @@ fn test_aarch64_system_register_cpsr_combo_9_401f_d50040ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1100,7 +1491,13 @@ fn test_aarch64_system_register_cpsr_invalid_0_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1116,7 +1513,13 @@ fn test_aarch64_system_register_cpsr_invalid_1_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1132,7 +1535,13 @@ fn test_aarch64_system_register_cpsr_invalid_2_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1148,7 +1557,13 @@ fn test_aarch64_system_register_cpsr_invalid_3_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1164,7 +1579,13 @@ fn test_aarch64_system_register_cpsr_invalid_4_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1180,7 +1601,13 @@ fn test_aarch64_system_register_cpsr_invalid_5_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1196,7 +1623,13 @@ fn test_aarch64_system_register_cpsr_invalid_6_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1212,7 +1645,13 @@ fn test_aarch64_system_register_cpsr_invalid_7_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -1228,6 +1667,11 @@ fn test_aarch64_system_register_cpsr_invalid_8_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
-

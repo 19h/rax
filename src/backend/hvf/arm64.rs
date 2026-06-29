@@ -197,8 +197,7 @@ impl HvfArm64Vm {
         let region_len = region.len();
         let (_ram_end, host_offset, map_size) =
             checked_arm_ram_mapping(region.start_addr().0, region_len, ram_base, ram_size)?;
-        let host_addr =
-            unsafe { (region.as_ptr() as *mut std::ffi::c_void).add(host_offset) };
+        let host_addr = unsafe { (region.as_ptr() as *mut std::ffi::c_void).add(host_offset) };
 
         debug!(
             guest_addr = format!("{:#x}", ram_base),

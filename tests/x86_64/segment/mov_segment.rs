@@ -850,11 +850,7 @@ fn test_lsl_valid_selector() {
     regs.rflags = 0x2; // ZF clear initially
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(
-        regs.rbx & 0xFFFF_FFFF,
-        0,
-        "LSL loads segment limit"
-    );
+    assert_eq!(regs.rbx & 0xFFFF_FFFF, 0, "LSL loads segment limit");
     assert!(
         zf_set(regs.rflags),
         "LSL sets ZF for a valid (non-null) selector"

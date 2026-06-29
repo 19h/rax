@@ -8,20 +8,20 @@ use std::os::raw::c_void;
 use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::arch::{RaxArch, RAX_MODE_64, RAX_RISCV_EXT_XIDA_SLTW};
+use crate::arch::{RAX_MODE_64, RAX_RISCV_EXT_XIDA_SLTW, RaxArch};
 use crate::engine::{
-    rax_engine_close, rax_engine_open, rax_engine_open_config, rax_engine_reset, Engine,
-    RaxEngineConfig,
+    Engine, RaxEngineConfig, rax_engine_close, rax_engine_open, rax_engine_open_config,
+    rax_engine_reset,
 };
 use crate::hook::rax_hook_add_code;
 use crate::mem::{
-    rax_mem_map, rax_mem_protect, rax_mem_read, rax_mem_regions, rax_mem_unmap, rax_mem_write,
-    RaxMemRegion, RAX_PROT_ALL, RAX_PROT_READ,
+    RAX_PROT_ALL, RAX_PROT_READ, RaxMemRegion, rax_mem_map, rax_mem_protect, rax_mem_read,
+    rax_mem_regions, rax_mem_unmap, rax_mem_write,
 };
 use crate::reg::{rax_reg_read, rax_reg_read_u64, rax_reg_size, rax_reg_write, rax_reg_write_u64};
 use crate::run::{
-    rax_can_interrupt, rax_emu_icount, rax_emu_last_exit, rax_emu_start, rax_emu_step,
-    rax_interrupt, ExitInfo, RAX_NO_ADDR, RAX_STOP_COUNT, RAX_STOP_HLT, RAX_STOP_UNTIL,
+    ExitInfo, RAX_NO_ADDR, RAX_STOP_COUNT, RAX_STOP_HLT, RAX_STOP_UNTIL, rax_can_interrupt,
+    rax_emu_icount, rax_emu_last_exit, rax_emu_start, rax_emu_step, rax_interrupt,
 };
 use crate::status::RaxStatus;
 
@@ -289,7 +289,7 @@ fn count_and_until_stops() {
     unsafe {
         let e = open_x86();
         write(e, 0x1000, &[0x90, 0x90, 0x90, 0xF4]); // nop;nop;nop;hlt
-                                                     // count = 2
+        // count = 2
         set_rip(e, 0x1000);
         assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 2), RaxStatus::Ok);
         let mut ex = ExitInfo::none();
@@ -480,7 +480,7 @@ extern "C" fn mem_cb(
 #[test]
 fn mem_hook_observes_load_store_fetch() {
     use crate::hook::{
-        rax_hook_add_mem, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE,
+        RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, rax_hook_add_mem,
     };
     unsafe {
         let e = open_x86();

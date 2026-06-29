@@ -289,7 +289,10 @@ fn native_el0_oracle_smoke_runs_on_aarch64_host() {
     st.x[2] = 2;
     let outs = run_oracle(&oracle, &[(0x8b02_0020, NOP, st)]).expect("native EL0 oracle run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid output");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid output"
+    );
     assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on add");
     assert_eq!(outs[0].st.x[0], 42, "native EL0 oracle add result");
 }
@@ -330,10 +333,20 @@ fn native_el0_oracle_captures_sve_predicates_and_ffr() {
     )
     .expect("native EL0 oracle SVE predicate run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid SVE output");
-    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on SVE predicate capture");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid SVE output"
+    );
+    assert_eq!(
+        outs[0].trapped, 0,
+        "native EL0 oracle trapped on SVE predicate capture"
+    );
     assert_eq!(outs[0].st.preg(0), 0xffff, "native EL0 oracle captured P0");
-    assert_eq!(outs[0].st.preg(2), 0xffff, "native EL0 oracle captured RDFFR into P2");
+    assert_eq!(
+        outs[0].st.preg(2),
+        0xffff,
+        "native EL0 oracle captured RDFFR into P2"
+    );
     assert_eq!(outs[0].st.ffr(), 0xffff, "native EL0 oracle captured FFR");
 }
 
@@ -350,8 +363,14 @@ fn native_el0_oracle_captures_instruction_faults() {
     let outs = run_oracle(&oracle, &[(0x0000_0000, NOP, ArmState::zeroed())])
         .expect("native EL0 oracle UDF run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid UDF output");
-    assert_ne!(outs[0].trapped, 0, "native EL0 oracle did not report UDF trap");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid UDF output"
+    );
+    assert_ne!(
+        outs[0].trapped, 0,
+        "native EL0 oracle did not report UDF trap"
+    );
 }
 
 #[cfg(target_arch = "aarch64")]
@@ -367,9 +386,15 @@ fn native_el0_oracle_pins_sve_vl_128() {
     let outs = run_oracle(&oracle, &[(0x0420_e3e0, NOP, ArmState::zeroed())])
         .expect("native EL0 oracle CNTB run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid CNTB output");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid CNTB output"
+    );
     assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on CNTB");
-    assert_eq!(outs[0].st.x[0], 16, "native EL0 oracle did not pin SVE VL=128");
+    assert_eq!(
+        outs[0].st.x[0], 16,
+        "native EL0 oracle did not pin SVE VL=128"
+    );
 }
 
 #[cfg(target_arch = "aarch64")]
@@ -388,11 +413,16 @@ fn native_el0_oracle_captures_scratch_memory_writes() {
     let outs = run_oracle(&oracle, &[(0xf900_0041, NOP, st)])
         .expect("native EL0 oracle scratch store run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid store output");
-    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on scratch store");
     assert_eq!(
-        outs[0].st.scratch[8],
-        0x0123_4567_89ab_cdef,
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid store output"
+    );
+    assert_eq!(
+        outs[0].trapped, 0,
+        "native EL0 oracle trapped on scratch store"
+    );
+    assert_eq!(
+        outs[0].st.scratch[8], 0x0123_4567_89ab_cdef,
         "native EL0 oracle did not capture scratch store"
     );
 }
@@ -423,17 +453,32 @@ fn native_el0_oracle_captures_fpsimd_and_fp_status() {
     )
     .expect("native EL0 oracle FP/SIMD run");
     assert_eq!(outs.len(), 1);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid FP output");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid FP output"
+    );
     assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on FADD");
     assert_eq!(
         outs[0].st.vreg(0).0,
         (6.5_f64).to_bits(),
         "native EL0 oracle did not capture V0 after FADD"
     );
-    assert_eq!(outs[0].st.x[3] as u32, 0x00c0_0000, "native EL0 oracle MRS FPCR");
-    assert_eq!(outs[0].st.x[4] as u32, 0x0800_0000, "native EL0 oracle MRS FPSR");
-    assert_eq!(outs[0].st.fpcr as u32, 0x00c0_0000, "native EL0 oracle captured FPCR");
-    assert_eq!(outs[0].st.fpsr as u32, 0x0800_0000, "native EL0 oracle captured FPSR");
+    assert_eq!(
+        outs[0].st.x[3] as u32, 0x00c0_0000,
+        "native EL0 oracle MRS FPCR"
+    );
+    assert_eq!(
+        outs[0].st.x[4] as u32, 0x0800_0000,
+        "native EL0 oracle MRS FPSR"
+    );
+    assert_eq!(
+        outs[0].st.fpcr as u32, 0x00c0_0000,
+        "native EL0 oracle captured FPCR"
+    );
+    assert_eq!(
+        outs[0].st.fpsr as u32, 0x0800_0000,
+        "native EL0 oracle captured FPSR"
+    );
 }
 
 #[cfg(target_arch = "aarch64")]
@@ -471,12 +516,30 @@ fn native_el0_oracle_executes_control_flow_slots() {
     )
     .expect("native EL0 oracle control-flow run");
     assert_eq!(outs.len(), 2);
-    assert_eq!(outs[0].valid, 1, "native EL0 oracle produced invalid taken output");
-    assert_eq!(outs[0].trapped, 0, "native EL0 oracle trapped on taken branch");
-    assert_eq!(outs[0].st.x[0], 0, "native EL0 oracle failed to skip slot on taken branch");
-    assert_eq!(outs[1].valid, 1, "native EL0 oracle produced invalid fallthrough output");
-    assert_eq!(outs[1].trapped, 0, "native EL0 oracle trapped on fallthrough branch");
-    assert_eq!(outs[1].st.x[0], 17, "native EL0 oracle failed to execute fallthrough slot");
+    assert_eq!(
+        outs[0].valid, 1,
+        "native EL0 oracle produced invalid taken output"
+    );
+    assert_eq!(
+        outs[0].trapped, 0,
+        "native EL0 oracle trapped on taken branch"
+    );
+    assert_eq!(
+        outs[0].st.x[0], 0,
+        "native EL0 oracle failed to skip slot on taken branch"
+    );
+    assert_eq!(
+        outs[1].valid, 1,
+        "native EL0 oracle produced invalid fallthrough output"
+    );
+    assert_eq!(
+        outs[1].trapped, 0,
+        "native EL0 oracle trapped on fallthrough branch"
+    );
+    assert_eq!(
+        outs[1].st.x[0], 17,
+        "native EL0 oracle failed to execute fallthrough slot"
+    );
 }
 
 #[derive(Debug)]
@@ -773,7 +836,8 @@ fn run_rax_sequence_with_trailing_at_el(
     }
     for (i, insn) in trailing.iter().enumerate() {
         let slot = insns.len() + i;
-        cpu.write_memory((slot as u64) * 4, &insn.to_le_bytes()).ok()?;
+        cpu.write_memory((slot as u64) * 4, &insn.to_le_bytes())
+            .ok()?;
     }
     cpu.set_pc(0);
 
@@ -1006,10 +1070,7 @@ fn compare_state_diffs(rax: &ArmState, hw: &ArmState) -> Vec<String> {
     let mut diffs = Vec::new();
     for i in 0..31 {
         if rax.x[i] != hw.x[i] {
-            diffs.push(format!(
-                "x{i}: rax={:#018x} hw={:#018x}",
-                rax.x[i], hw.x[i]
-            ));
+            diffs.push(format!("x{i}: rax={:#018x} hw={:#018x}", rax.x[i], hw.x[i]));
         }
     }
     if rax.sp != hw.sp {
@@ -1021,16 +1082,10 @@ fn compare_state_diffs(rax: &ArmState, hw: &ArmState) -> Vec<String> {
         diffs.push(format!("nzcv: rax={:#x} hw={:#x}", rax_nzcv, hw_nzcv));
     }
     if rax.fpcr != hw.fpcr {
-        diffs.push(format!(
-            "fpcr: rax={:#010x} hw={:#010x}",
-            rax.fpcr, hw.fpcr
-        ));
+        diffs.push(format!("fpcr: rax={:#010x} hw={:#010x}", rax.fpcr, hw.fpcr));
     }
     if rax.fpsr != hw.fpsr {
-        diffs.push(format!(
-            "fpsr: rax={:#010x} hw={:#010x}",
-            rax.fpsr, hw.fpsr
-        ));
+        diffs.push(format!("fpsr: rax={:#010x} hw={:#010x}", rax.fpsr, hw.fpsr));
     }
     for r in 0..32 {
         let (rlo, rhi) = rax.vreg(r);
@@ -1726,17 +1781,16 @@ fn parse_generated_a64_encodings_with_asm(family: &str, source: &str) -> Vec<(St
             format!("{asm} [{family} {insn:#010x}]")
         } else {
             let provenance_lower = provenance.to_ascii_lowercase();
-            let mnemonic = if let Some(rest) =
-                provenance_lower.strip_prefix("aarch64_vector_crypto_")
-            {
-                rest.split('_').next().unwrap_or(family).to_string()
-            } else {
-                provenance
-                    .split('_')
-                    .next()
-                    .unwrap_or(family)
-                    .to_ascii_lowercase()
-            };
+            let mnemonic =
+                if let Some(rest) = provenance_lower.strip_prefix("aarch64_vector_crypto_") {
+                    rest.split('_').next().unwrap_or(family).to_string()
+                } else {
+                    provenance
+                        .split('_')
+                        .next()
+                        .unwrap_or(family)
+                        .to_ascii_lowercase()
+                };
             let suffix = size_field_suffix(&fields).unwrap_or("");
             format!("{mnemonic}{suffix} [{family} {insn:#010x}]")
         };
@@ -1837,17 +1891,16 @@ fn parse_generated_a64_cases_with_fields_and_asm(
             format!("{asm} [{family} {insn:#010x}]")
         } else {
             let provenance_lower = provenance.to_ascii_lowercase();
-            let mnemonic = if let Some(rest) =
-                provenance_lower.strip_prefix("aarch64_vector_crypto_")
-            {
-                rest.split('_').next().unwrap_or(family).to_string()
-            } else {
-                provenance
-                    .split('_')
-                    .next()
-                    .unwrap_or(family)
-                    .to_ascii_lowercase()
-            };
+            let mnemonic =
+                if let Some(rest) = provenance_lower.strip_prefix("aarch64_vector_crypto_") {
+                    rest.split('_').next().unwrap_or(family).to_string()
+                } else {
+                    provenance
+                        .split('_')
+                        .next()
+                        .unwrap_or(family)
+                        .to_ascii_lowercase()
+                };
             let suffix = size_field_suffix(&fields).unwrap_or("");
             format!("{mnemonic}{suffix} [{family} {insn:#010x}]")
         };
@@ -2004,7 +2057,10 @@ fn generated_integer_dp_cases() -> Vec<(String, u32)> {
             "integer/conditional",
             include_str!("arm/generated/a64/integer/conditional.rs"),
         ),
-        ("integer/flags", include_str!("arm/generated/a64/integer/flags.rs")),
+        (
+            "integer/flags",
+            include_str!("arm/generated/a64/integer/flags.rs"),
+        ),
         (
             "integer/logical",
             include_str!("arm/generated/a64/integer/logical.rs"),
@@ -2013,8 +2069,14 @@ fn generated_integer_dp_cases() -> Vec<(String, u32)> {
             "integer/mul_div",
             include_str!("arm/generated/a64/integer/mul_div.rs"),
         ),
-        ("integer/other", include_str!("arm/generated/a64/integer/other.rs")),
-        ("integer/shift", include_str!("arm/generated/a64/integer/shift.rs")),
+        (
+            "integer/other",
+            include_str!("arm/generated/a64/integer/other.rs"),
+        ),
+        (
+            "integer/shift",
+            include_str!("arm/generated/a64/integer/shift.rs"),
+        ),
     ];
 
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2108,7 +2170,10 @@ fn generated_branch_register_cases() -> Vec<(String, u32, u32)> {
         if !branch_register_in_tiny_program(&fields) {
             continue;
         }
-        let rn = fields.get("Rn").copied().unwrap_or_else(|| ((insn >> 5) & 0x1f) as i32);
+        let rn = fields
+            .get("Rn")
+            .copied()
+            .unwrap_or_else(|| ((insn >> 5) & 0x1f) as i32);
         by_encoding.entry(insn).or_insert((label, rn as u32));
     }
     by_encoding
@@ -2138,9 +2203,18 @@ fn generated_float_cases() -> Vec<(String, u32)> {
             "float/arithmetic",
             include_str!("arm/generated/a64/float/arithmetic.rs"),
         ),
-        ("float/compare", include_str!("arm/generated/a64/float/compare.rs")),
-        ("float/convert", include_str!("arm/generated/a64/float/convert.rs")),
-        ("float/move", include_str!("arm/generated/a64/float/move_.rs")),
+        (
+            "float/compare",
+            include_str!("arm/generated/a64/float/compare.rs"),
+        ),
+        (
+            "float/convert",
+            include_str!("arm/generated/a64/float/convert.rs"),
+        ),
+        (
+            "float/move",
+            include_str!("arm/generated/a64/float/move_.rs"),
+        ),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
     for (family, source) in sources {
@@ -2155,7 +2229,10 @@ fn generated_float_cases() -> Vec<(String, u32)> {
 }
 
 fn generated_vector_dotprod_cases() -> Vec<(String, u32)> {
-    let sources = [("vector/mul", include_str!("arm/generated/a64/vector/mul.rs"))];
+    let sources = [(
+        "vector/mul",
+        include_str!("arm/generated/a64/vector/mul.rs"),
+    )];
     let mut by_encoding = std::collections::BTreeMap::new();
     for (family, source) in sources {
         for (label, insn) in parse_generated_a64_encodings(family, source) {
@@ -2359,7 +2436,10 @@ fn generated_vector_noncrypto_cases() -> Vec<(String, u32)> {
             "vector/compare",
             include_str!("arm/generated/a64/vector/compare.rs"),
         ),
-        ("vector/mul", include_str!("arm/generated/a64/vector/mul.rs")),
+        (
+            "vector/mul",
+            include_str!("arm/generated/a64/vector/mul.rs"),
+        ),
         (
             "vector/other",
             include_str!("arm/generated/a64/vector/other.rs"),
@@ -2454,10 +2534,7 @@ fn generated_sve_logical_immediate_cases() -> Vec<(String, u32)> {
     let source = include_str!("arm/generated/a64/sve/logical.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
     for (label, insn) in parse_generated_a64_encodings("sve/logical", source) {
-        if (insn >> 24) & 0xFF != 0x05
-            || (insn >> 18) & 0xF != 0
-            || (insn >> 22) & 0x3 == 0b11
-        {
+        if (insn >> 24) & 0xFF != 0x05 || (insn >> 18) & 0xF != 0 || (insn >> 22) & 0x3 == 0b11 {
             continue;
         }
         by_encoding.entry(insn).or_insert(label);
@@ -2568,8 +2645,7 @@ fn generated_sve_base_imm_memory_cases() -> Vec<(String, u32)> {
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
     for (family, source) in sources {
-        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source)
-        {
+        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source) {
             if !sve_base_imm_memory_in_scratch_window(&fields) {
                 continue;
             }
@@ -2589,8 +2665,7 @@ fn generated_sve_contiguous_base_imm_memory_cases() -> Vec<(String, u32)> {
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
     for (family, source) in sources {
-        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source)
-        {
+        for (label, insn, fields) in parse_generated_a64_cases_with_fields_and_asm(family, source) {
             if !sve_contiguous_base_imm_memory_in_scratch_window(&label, &fields) {
                 continue;
             }
@@ -3006,10 +3081,9 @@ fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
             by_encoding.entry(insn).or_insert(label);
         }
     }
-    for (label, insn) in parse_generated_a64_encodings(
-        "misc/udf",
-        include_str!("arm/generated/a64/misc/other.rs"),
-    ) {
+    for (label, insn) in
+        parse_generated_a64_encodings("misc/udf", include_str!("arm/generated/a64/misc/other.rs"))
+    {
         by_encoding.entry(insn).or_insert(label);
     }
     // The generated hints corpus only samples boundary CRm/op2 values. Keep
@@ -3025,9 +3099,7 @@ fn generated_system_hints_udf_cases() -> Vec<(String, u32)> {
         ("system/hints bti_j", 0xd503_249f),
         ("system/hints bti_jc", 0xd503_24df),
     ] {
-        by_encoding
-            .entry(insn)
-            .or_insert_with(|| label.to_string());
+        by_encoding.entry(insn).or_insert_with(|| label.to_string());
     }
     by_encoding
         .into_iter()
@@ -3156,8 +3228,7 @@ fn generated_system_sysop_el0_trap_cases() -> Vec<(String, u32)> {
             .get("Rt")
             .copied()
             .unwrap_or_else(|| (insn & 0x1f) as i32);
-        let label =
-            format!("sysop l={l} op1={op1} crn={crn} crm={crm} op2={op2} rt={rt}");
+        let label = format!("sysop l={l} op1={op1} crn={crn} crm={crm} op2={op2} rt={rt}");
         by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
@@ -3397,7 +3468,10 @@ fn generated_memory_exclusive_store_cases() -> Vec<(String, u32)> {
 #[test]
 fn generated_a64_case_selectors_are_non_empty() {
     let selectors = [
-        ("generated_integer_dp_cases", generated_integer_dp_cases().len()),
+        (
+            "generated_integer_dp_cases",
+            generated_integer_dp_cases().len(),
+        ),
         (
             "generated_integer_address_pc_cases",
             generated_integer_address_pc_cases().len(),
@@ -3471,7 +3545,10 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_vector_compare_cases",
             generated_vector_compare_cases().len(),
         ),
-        ("generated_vector_mul_cases", generated_vector_mul_cases().len()),
+        (
+            "generated_vector_mul_cases",
+            generated_vector_mul_cases().len(),
+        ),
         (
             "generated_vector_noncrypto_cases",
             generated_vector_noncrypto_cases().len(),
@@ -3496,19 +3573,34 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_sve_logical_immediate_cases",
             generated_sve_logical_immediate_cases().len(),
         ),
-        ("generated_sve_logical_cases", generated_sve_logical_cases().len()),
+        (
+            "generated_sve_logical_cases",
+            generated_sve_logical_cases().len(),
+        ),
         (
             "generated_sve_integer_compare_zw_cases",
             generated_sve_integer_compare_zw_cases().len(),
         ),
-        ("generated_sve_compare_cases", generated_sve_compare_cases().len()),
+        (
+            "generated_sve_compare_cases",
+            generated_sve_compare_cases().len(),
+        ),
         (
             "generated_sve_predicate_cases",
             generated_sve_predicate_cases().len(),
         ),
-        ("generated_sve_scalar_cases", generated_sve_scalar_cases().len()),
-        ("generated_sve_other_cases", generated_sve_other_cases().len()),
-        ("generated_sve_prefetch_cases", generated_sve_prefetch_cases().len()),
+        (
+            "generated_sve_scalar_cases",
+            generated_sve_scalar_cases().len(),
+        ),
+        (
+            "generated_sve_other_cases",
+            generated_sve_other_cases().len(),
+        ),
+        (
+            "generated_sve_prefetch_cases",
+            generated_sve_prefetch_cases().len(),
+        ),
         (
             "generated_sve_base_imm_memory_cases",
             generated_sve_base_imm_memory_cases().len(),
@@ -3553,7 +3645,10 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_sve_int_to_fp16_convert_cases",
             generated_sve_int_to_fp16_convert_cases().len(),
         ),
-        ("generated_sve_convert_cases", generated_sve_convert_cases().len()),
+        (
+            "generated_sve_convert_cases",
+            generated_sve_convert_cases().len(),
+        ),
         (
             "generated_sve_fp_unpredicated_vector_arithmetic_cases",
             generated_sve_fp_unpredicated_vector_arithmetic_cases().len(),
@@ -3574,11 +3669,26 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_sve_fp_estimate_cases",
             generated_sve_fp_estimate_cases().len(),
         ),
-        ("generated_sve_fcvt_d2h_cases", generated_sve_fcvt_d2h_cases().len()),
-        ("generated_sve_fscale_cases", generated_sve_fscale_cases().len()),
-        ("generated_sve_ftsmul_cases", generated_sve_ftsmul_cases().len()),
-        ("generated_sve_ftmad_cases", generated_sve_ftmad_cases().len()),
-        ("generated_sve_float_cases", generated_sve_float_cases().len()),
+        (
+            "generated_sve_fcvt_d2h_cases",
+            generated_sve_fcvt_d2h_cases().len(),
+        ),
+        (
+            "generated_sve_fscale_cases",
+            generated_sve_fscale_cases().len(),
+        ),
+        (
+            "generated_sve_ftsmul_cases",
+            generated_sve_ftsmul_cases().len(),
+        ),
+        (
+            "generated_sve_ftmad_cases",
+            generated_sve_ftmad_cases().len(),
+        ),
+        (
+            "generated_sve_float_cases",
+            generated_sve_float_cases().len(),
+        ),
         (
             "generated_sve_fp_compare_zero_cases",
             generated_sve_fp_compare_zero_cases().len(),
@@ -3623,7 +3733,10 @@ fn generated_a64_case_selectors_are_non_empty() {
             "generated_memory_single_cases",
             generated_memory_single_cases().len(),
         ),
-        ("generated_memory_pair_cases", generated_memory_pair_cases().len()),
+        (
+            "generated_memory_pair_cases",
+            generated_memory_pair_cases().len(),
+        ),
         (
             "generated_memory_atomic_cases",
             generated_memory_atomic_cases().len(),
@@ -3736,7 +3849,10 @@ fn generated_a64_case_selectors_are_non_empty() {
     );
 }
 
-fn memory_single_in_scratch_window(insn: u32, fields: &std::collections::BTreeMap<String, i32>) -> bool {
+fn memory_single_in_scratch_window(
+    insn: u32,
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
     if fields.contains_key("M") {
         return false;
     }
@@ -3762,7 +3878,10 @@ fn memory_single_in_scratch_window(insn: u32, fields: &std::collections::BTreeMa
     true
 }
 
-fn memory_pair_in_scratch_window(insn: u32, fields: &std::collections::BTreeMap<String, i32>) -> bool {
+fn memory_pair_in_scratch_window(
+    insn: u32,
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
     if (insn >> 26) & 1 == 0 && (insn >> 30) & 0x3 == 0b11 {
         return false;
     }
@@ -3808,7 +3927,9 @@ fn memory_literal_in_code_window(fields: &std::collections::BTreeMap<String, i32
     matches!(fields.get("imm19").copied(), Some(0 | 1))
 }
 
-fn memory_exclusive_load_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+fn memory_exclusive_load_in_scratch_window(
+    fields: &std::collections::BTreeMap<String, i32>,
+) -> bool {
     if fields.get("L").copied() != Some(1) {
         return false;
     }
@@ -3838,9 +3959,7 @@ fn memory_exclusive_store_in_scratch_window(
     }
 }
 
-fn sve_base_imm_memory_in_scratch_window(
-    fields: &std::collections::BTreeMap<String, i32>,
-) -> bool {
+fn sve_base_imm_memory_in_scratch_window(fields: &std::collections::BTreeMap<String, i32>) -> bool {
     if fields.contains_key("Pg")
         || fields.contains_key("Rm")
         || fields.contains_key("Zm")
@@ -3872,14 +3991,41 @@ fn sve_contiguous_base_imm_memory_in_scratch_window(
     let mnemonic = label.split_whitespace().next().unwrap_or("");
     if !matches!(
         mnemonic,
-        "ld1b" | "ld1h" | "ld1w" | "ld1d" | "ld1sb" | "ld1sh" | "ld1sw"
-            | "ld2b" | "ld2h" | "ld2w" | "ld2d"
-            | "ld3b" | "ld3h" | "ld3w" | "ld3d"
-            | "ld4b" | "ld4h" | "ld4w" | "ld4d"
-            | "st1b" | "st1h" | "st1w" | "st1d"
-            | "st2b" | "st2h" | "st2w" | "st2d"
-            | "st3b" | "st3h" | "st3w" | "st3d"
-            | "st4b" | "st4h" | "st4w" | "st4d"
+        "ld1b"
+            | "ld1h"
+            | "ld1w"
+            | "ld1d"
+            | "ld1sb"
+            | "ld1sh"
+            | "ld1sw"
+            | "ld2b"
+            | "ld2h"
+            | "ld2w"
+            | "ld2d"
+            | "ld3b"
+            | "ld3h"
+            | "ld3w"
+            | "ld3d"
+            | "ld4b"
+            | "ld4h"
+            | "ld4w"
+            | "ld4d"
+            | "st1b"
+            | "st1h"
+            | "st1w"
+            | "st1d"
+            | "st2b"
+            | "st2h"
+            | "st2w"
+            | "st2d"
+            | "st3b"
+            | "st3h"
+            | "st3w"
+            | "st3d"
+            | "st4b"
+            | "st4h"
+            | "st4w"
+            | "st4d"
     ) {
         return false;
     }
@@ -3908,8 +4054,7 @@ fn sve_ldnf1_memory_in_scratch_window(
     let mnemonic = label.split_whitespace().next().unwrap_or("");
     if !matches!(
         mnemonic,
-        "ldnf1b" | "ldnf1h" | "ldnf1w" | "ldnf1d"
-            | "ldnf1sb" | "ldnf1sh" | "ldnf1sw"
+        "ldnf1b" | "ldnf1h" | "ldnf1w" | "ldnf1d" | "ldnf1sb" | "ldnf1sh" | "ldnf1sw"
     ) {
         return false;
     }
@@ -3982,8 +4127,7 @@ fn sve_non_temporal_imm_memory_in_scratch_window(
     let mnemonic = label.split_whitespace().next().unwrap_or("");
     if !matches!(
         mnemonic,
-        "ldnt1b" | "ldnt1h" | "ldnt1w" | "ldnt1d"
-            | "stnt1b" | "stnt1h" | "stnt1w" | "stnt1d"
+        "ldnt1b" | "ldnt1h" | "ldnt1w" | "ldnt1d" | "stnt1b" | "stnt1h" | "stnt1w" | "stnt1d"
     ) {
         return false;
     }
@@ -4014,8 +4158,7 @@ fn sve_non_temporal_reg_memory_in_scratch_window(
     let mnemonic = label.split_whitespace().next().unwrap_or("");
     if !matches!(
         mnemonic,
-        "ldnt1b" | "ldnt1h" | "ldnt1w" | "ldnt1d"
-            | "stnt1b" | "stnt1h" | "stnt1w" | "stnt1d"
+        "ldnt1b" | "ldnt1h" | "ldnt1w" | "ldnt1d" | "stnt1b" | "stnt1h" | "stnt1w" | "stnt1d"
     ) {
         return false;
     }
@@ -4037,12 +4180,30 @@ fn sve_multi_reg_reg_memory_in_scratch_window(
     let mnemonic = label.split_whitespace().next().unwrap_or("");
     if !matches!(
         mnemonic,
-        "ld2b" | "ld2h" | "ld2w" | "ld2d"
-            | "ld3b" | "ld3h" | "ld3w" | "ld3d"
-            | "ld4b" | "ld4h" | "ld4w" | "ld4d"
-            | "st2b" | "st2h" | "st2w" | "st2d"
-            | "st3b" | "st3h" | "st3w" | "st3d"
-            | "st4b" | "st4h" | "st4w" | "st4d"
+        "ld2b"
+            | "ld2h"
+            | "ld2w"
+            | "ld2d"
+            | "ld3b"
+            | "ld3h"
+            | "ld3w"
+            | "ld3d"
+            | "ld4b"
+            | "ld4h"
+            | "ld4w"
+            | "ld4d"
+            | "st2b"
+            | "st2h"
+            | "st2w"
+            | "st2d"
+            | "st3b"
+            | "st3h"
+            | "st3w"
+            | "st3d"
+            | "st4b"
+            | "st4h"
+            | "st4w"
+            | "st4d"
     ) {
         return false;
     }
@@ -4065,11 +4226,24 @@ fn sve_ldst_reg_memory_in_scratch_window(
     let mnemonic = mnemonic.split('.').next().unwrap_or(mnemonic);
     if !matches!(
         mnemonic,
-        "ld1b" | "ld1h" | "ld1w" | "ld1d"
-            | "ld1sb" | "ld1sh" | "ld1sw"
-            | "ldff1b" | "ldff1h" | "ldff1w" | "ldff1d"
-            | "ldff1sb" | "ldff1sh" | "ldff1sw"
-            | "st1b" | "st1h" | "st1w" | "st1d"
+        "ld1b"
+            | "ld1h"
+            | "ld1w"
+            | "ld1d"
+            | "ld1sb"
+            | "ld1sh"
+            | "ld1sw"
+            | "ldff1b"
+            | "ldff1h"
+            | "ldff1w"
+            | "ldff1d"
+            | "ldff1sb"
+            | "ldff1sh"
+            | "ldff1sw"
+            | "st1b"
+            | "st1h"
+            | "st1w"
+            | "st1d"
     ) {
         return false;
     }
@@ -4092,11 +4266,24 @@ fn sve_vector_offset_memory_in_scratch_window(
     let mnemonic = mnemonic.split('.').next().unwrap_or(mnemonic);
     if !matches!(
         mnemonic,
-        "ld1b" | "ld1h" | "ld1w" | "ld1d"
-            | "ld1sb" | "ld1sh" | "ld1sw"
-            | "ldff1b" | "ldff1h" | "ldff1w" | "ldff1d"
-            | "ldff1sb" | "ldff1sh" | "ldff1sw"
-            | "st1b" | "st1h" | "st1w" | "st1d"
+        "ld1b"
+            | "ld1h"
+            | "ld1w"
+            | "ld1d"
+            | "ld1sb"
+            | "ld1sh"
+            | "ld1sw"
+            | "ldff1b"
+            | "ldff1h"
+            | "ldff1w"
+            | "ldff1d"
+            | "ldff1sb"
+            | "ldff1sh"
+            | "ldff1sw"
+            | "st1b"
+            | "st1h"
+            | "st1w"
+            | "st1d"
     ) {
         return false;
     }
@@ -4117,11 +4304,24 @@ fn sve_vector_base_imm_memory_in_scratch_window(
     let mnemonic = mnemonic.split('.').next().unwrap_or(mnemonic);
     if !matches!(
         mnemonic,
-        "ld1b" | "ld1h" | "ld1w" | "ld1d"
-            | "ld1sb" | "ld1sh" | "ld1sw"
-            | "ldff1b" | "ldff1h" | "ldff1w" | "ldff1d"
-            | "ldff1sb" | "ldff1sh" | "ldff1sw"
-            | "st1b" | "st1h" | "st1w" | "st1d"
+        "ld1b"
+            | "ld1h"
+            | "ld1w"
+            | "ld1d"
+            | "ld1sb"
+            | "ld1sh"
+            | "ld1sw"
+            | "ldff1b"
+            | "ldff1h"
+            | "ldff1w"
+            | "ldff1d"
+            | "ldff1sb"
+            | "ldff1sh"
+            | "ldff1sw"
+            | "st1b"
+            | "st1h"
+            | "st1w"
+            | "st1d"
     ) {
         return false;
     }
@@ -4132,7 +4332,11 @@ fn sve_vector_base_imm_memory_in_scratch_window(
 }
 
 fn branch_immediate_in_tiny_program(fields: &std::collections::BTreeMap<String, i32>) -> bool {
-    fields.get("imm26").or_else(|| fields.get("imm19")).or_else(|| fields.get("imm14")) == Some(&3)
+    fields
+        .get("imm26")
+        .or_else(|| fields.get("imm19"))
+        .or_else(|| fields.get("imm14"))
+        == Some(&3)
 }
 
 fn branch_register_in_tiny_program(fields: &std::collections::BTreeMap<String, i32>) -> bool {
@@ -4157,14 +4361,26 @@ fn branch_register_unallocated(
     {
         return false;
     }
-    let z = fields.get("Z").copied().unwrap_or_else(|| ((insn >> 24) & 1) as i32);
+    let z = fields
+        .get("Z")
+        .copied()
+        .unwrap_or_else(|| ((insn >> 24) & 1) as i32);
     let op = fields
         .get("op")
         .copied()
         .unwrap_or_else(|| ((insn >> 21) & 0x3) as i32);
-    let a = fields.get("A").copied().unwrap_or_else(|| ((insn >> 11) & 1) as i32);
-    let m = fields.get("M").copied().unwrap_or_else(|| ((insn >> 10) & 1) as i32);
-    let rm = fields.get("Rm").copied().unwrap_or_else(|| (insn & 0x1f) as i32);
+    let a = fields
+        .get("A")
+        .copied()
+        .unwrap_or_else(|| ((insn >> 11) & 1) as i32);
+    let m = fields
+        .get("M")
+        .copied()
+        .unwrap_or_else(|| ((insn >> 10) & 1) as i32);
+    let rm = fields
+        .get("Rm")
+        .copied()
+        .unwrap_or_else(|| (insn & 0x1f) as i32);
     !(z == 0 && a == 0 && m == 0 && rm == 0 && matches!(op, 0 | 1 | 2))
 }
 
@@ -4216,9 +4432,7 @@ enum GeneratedExceptionExit {
 impl GeneratedExceptionExit {
     fn matches(self, actual: Option<CpuExit>) -> bool {
         match (self, actual) {
-            (GeneratedExceptionExit::Breakpoint(imm), Some(CpuExit::Breakpoint(got))) => {
-                got == imm
-            }
+            (GeneratedExceptionExit::Breakpoint(imm), Some(CpuExit::Breakpoint(got))) => got == imm,
             (GeneratedExceptionExit::Hvc(imm), Some(CpuExit::Hvc(got))) => got == imm,
             (GeneratedExceptionExit::Smc(imm), Some(CpuExit::Smc(got))) => got == imm,
             (GeneratedExceptionExit::Halt, Some(CpuExit::Halt)) => true,
@@ -4531,7 +4745,10 @@ fn run_batch_el0_legality(name: &str, batch: Vec<(String, u32, ArmState)>) {
             (false, true) => mismatches.push(Mismatch {
                 label: batch[i].0.clone(),
                 insn: *insn,
-                detail: format!("hardware faulted with signal {} but rax executed", out.trapped),
+                detail: format!(
+                    "hardware faulted with signal {} but rax executed",
+                    out.trapped
+                ),
             }),
         }
     }
@@ -25917,15 +26134,7 @@ fn diff_addsub_shifted_edge_patterns() {
     run_batch("addsub_shifted_edge_patterns", batch);
 }
 
-fn enc_addsub_imm_plain(
-    sf: u32,
-    op: u32,
-    s: u32,
-    shift: u32,
-    imm12: u32,
-    rd: u32,
-    rn: u32,
-) -> u32 {
+fn enc_addsub_imm_plain(sf: u32, op: u32, s: u32, shift: u32, imm12: u32, rd: u32, rn: u32) -> u32 {
     (sf << 31)
         | (op << 30)
         | (s << 29)
@@ -25944,11 +26153,9 @@ fn diff_addsub_imm_sp_source_dest() {
             for s in 0..=1 {
                 for shift in 0..=1 {
                     for imm12 in 0..=0xfff {
-                        for (alias, rd, rn) in [
-                            ("rn_sp", 0u32, 31u32),
-                            ("rd31", 31, 1),
-                            ("rn_rd31", 31, 31),
-                        ] {
+                        for (alias, rd, rn) in
+                            [("rn_sp", 0u32, 31u32), ("rd31", 31, 1), ("rn_rd31", 31, 31)]
+                        {
                             let mut st = ArmState::zeroed();
                             st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2);
                             st.x[1] = st.sp;
@@ -26145,7 +26352,11 @@ fn diff_addsub_ext_edge_patterns() {
     let patterns: &[(&str, u64, u64)] = &[
         ("zero_zero", 0, 0),
         ("ones_one", u64::MAX, 1),
-        ("low_sign_bits", 0x7fff_ffff_ffff_ffff, 0x0000_0000_8000_8080),
+        (
+            "low_sign_bits",
+            0x7fff_ffff_ffff_ffff,
+            0x0000_0000_8000_8080,
+        ),
         ("word_sign", 0x8000_0000_0000_0000, 0xffff_ffff_8000_0001),
         ("byte_ramp", 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210),
     ];
@@ -27063,15 +27274,7 @@ fn diff_bitfield_extract_edge_patterns() {
 
 #[test]
 fn diff_csel_zero_registers() {
-    fn enc_csel_plain(
-        sf: u32,
-        op: u32,
-        op2: u32,
-        rn: u32,
-        rm: u32,
-        cond: u32,
-        rd: u32,
-    ) -> u32 {
+    fn enc_csel_plain(sf: u32, op: u32, op2: u32, rn: u32, rm: u32, cond: u32, rd: u32) -> u32 {
         (sf << 31)
             | (op << 30)
             | (0b11010100 << 21)
@@ -27119,15 +27322,7 @@ fn diff_csel_zero_registers() {
 
 #[test]
 fn diff_csel_edge_patterns() {
-    fn enc_csel_plain(
-        sf: u32,
-        op: u32,
-        op2: u32,
-        rn: u32,
-        rm: u32,
-        cond: u32,
-        rd: u32,
-    ) -> u32 {
+    fn enc_csel_plain(sf: u32, op: u32, op2: u32, rn: u32, rm: u32, cond: u32, rd: u32) -> u32 {
         (sf << 31)
             | (op << 30)
             | (0b11010100 << 21)
@@ -27238,22 +27433,14 @@ fn diff_addsub_carry_flag_edges() {
         } else {
             0x8000_0000_0000_0000
         };
-        let low_mask = if sf == 0 {
-            0xffff_ffff
-        } else {
-            u64::MAX
-        };
+        let low_mask = if sf == 0 { 0xffff_ffff } else { u64::MAX };
         let patterns = [
             ("zero_zero", 0, 0),
             ("zero_one", 0, 1),
             ("max_one", low_mask, 1),
             ("sign_max_one", sign_bit - 1, 1),
             ("sign_min_neg1", sign_bit, low_mask),
-            (
-                "upper_noise",
-                0xffff_ffff_8000_0001,
-                0xffff_ffff_7fff_ffff,
-            ),
+            ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_7fff_ffff),
         ];
 
         for op in 0..=1 {
@@ -27315,12 +27502,11 @@ fn diff_condcmp_zero_registers() {
                     for live_nzcv in 0..16 {
                         let pstate = (live_nzcv as u64) << 28;
 
-                        for (alias, rn, rm) in [
-                            ("rn_xzr", 31, 2),
-                            ("rm_xzr", 1, 31),
-                            ("rn_rm_xzr", 31, 31),
-                        ] {
-                            let insn = enc_condcmp_plain(sf, op, false, rm, cond, fallback_nzcv, rn);
+                        for (alias, rn, rm) in
+                            [("rn_xzr", 31, 2), ("rm_xzr", 1, 31), ("rn_rm_xzr", 31, 31)]
+                        {
+                            let insn =
+                                enc_condcmp_plain(sf, op, false, rm, cond, fallback_nzcv, rn);
                             let mut st = gen_input(&mut rng);
                             st.x[1] = 0x0123_4567_89ab_cdef;
                             st.x[2] = 0xfedc_ba98_7654_3210;
@@ -27383,11 +27569,7 @@ fn diff_condcmp_flag_edges() {
         } else {
             0x8000_0000_0000_0000
         };
-        let low_mask = if sf == 0 {
-            0xffff_ffff
-        } else {
-            u64::MAX
-        };
+        let low_mask = if sf == 0 { 0xffff_ffff } else { u64::MAX };
         let patterns = [
             ("equal_zero", 0, 0, 0),
             ("rn_less", 1, 2, 2),
@@ -27437,7 +27619,11 @@ fn diff_condcmp_flag_edges() {
 #[test]
 fn diff_dp1_zero_registers() {
     fn enc_dp1_plain(sf: u32, opcode: u32, rn: u32, rd: u32) -> u32 {
-        (sf << 31) | (0b1011010110 << 21) | ((opcode & 0x3f) << 10) | ((rn & 0x1f) << 5) | (rd & 0x1f)
+        (sf << 31)
+            | (0b1011010110 << 21)
+            | ((opcode & 0x3f) << 10)
+            | ((rn & 0x1f) << 5)
+            | (rd & 0x1f)
     }
 
     let mut rng = Rng::new(0x1_0071);
@@ -27547,11 +27733,7 @@ fn diff_dp2_arithmetic_edges() {
         } else {
             0x8000_0000_0000_0000
         };
-        let low_mask = if sf == 0 {
-            0xffff_ffff
-        } else {
-            u64::MAX
-        };
+        let low_mask = if sf == 0 { 0xffff_ffff } else { u64::MAX };
         let patterns = [
             ("zero_zero", 0, 0),
             ("one_zero", 1, 0),
@@ -27562,11 +27744,7 @@ fn diff_dp2_arithmetic_edges() {
             ("max_width", low_mask, width),
             ("max_width_plus1", low_mask, width + 1),
             ("byte_ramp_large_shift", 0x0123_4567_89ab_cdef, 255),
-            (
-                "upper_noise",
-                0xffff_ffff_8000_0001,
-                0xffff_ffff_0000_001f,
-            ),
+            ("upper_noise", 0xffff_ffff_8000_0001, 0xffff_ffff_0000_001f),
         ];
 
         for &(opcode, opname) in ops {
@@ -27730,8 +27908,18 @@ fn diff_dp3_multiply_edges() {
     let patterns: &[(&str, u64, u64, u64)] = &[
         ("zero", 0, 0, 0),
         ("one", 1, 1, 1),
-        ("w_all_ones", 0xffff_ffff, 0xffff_ffff, 0x0123_4567_89ab_cdef),
-        ("w_sign_min_neg1", 0x8000_0000, 0xffff_ffff, 0xfedc_ba98_7654_3210),
+        (
+            "w_all_ones",
+            0xffff_ffff,
+            0xffff_ffff,
+            0x0123_4567_89ab_cdef,
+        ),
+        (
+            "w_sign_min_neg1",
+            0x8000_0000,
+            0xffff_ffff,
+            0xfedc_ba98_7654_3210,
+        ),
         (
             "x_sign_min_neg1",
             0x8000_0000_0000_0000,
@@ -27848,7 +28036,11 @@ fn diff_generated_integer_address_pc_sweep() {
     for (label, insn, op) in generated_integer_address_pc_cases() {
         for _ in 0..4 {
             let mut st = gen_input(&mut rng);
-            st.pc = if op == 0 { PCREL_MAGIC } else { PCREL_PAGE_MAGIC };
+            st.pc = if op == 0 {
+                PCREL_MAGIC
+            } else {
+                PCREL_PAGE_MAGIC
+            };
             batch.push((label.clone(), insn, st));
         }
     }
@@ -28154,7 +28346,9 @@ fn diff_load_literal_negative_q_offset() {
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] load_literal_negative_q_offset: native/qemu oracle unavailable -> skipping");
+            eprintln!(
+                "[arm_diff] load_literal_negative_q_offset: native/qemu oracle unavailable -> skipping"
+            );
             return;
         }
     };
@@ -28324,10 +28518,7 @@ fn diff_branch_control_flow_el0() {
         for op in 0..=1 {
             let st = branch_input(&mut rng);
             batch.push((
-                format!(
-                    "cb{} sf{sf} rt31",
-                    if op == 0 { "z" } else { "nz" }
-                ),
+                format!("cb{} sf{sf} rt31", if op == 0 { "z" } else { "nz" }),
                 cbz_cbnz(sf, op, 31, 12),
                 st,
             ));
@@ -28355,10 +28546,7 @@ fn diff_branch_control_flow_el0() {
         for bit in [0, 31, 63] {
             let st = branch_input(&mut rng);
             batch.push((
-                format!(
-                    "tb{} bit{bit} rt31",
-                    if op == 0 { "z" } else { "nz" }
-                ),
+                format!("tb{} bit{bit} rt31", if op == 0 { "z" } else { "nz" }),
                 tbz_tbnz(op, bit, 31, 12),
                 st,
             ));
@@ -28447,7 +28635,10 @@ fn diff_generated_branch_register_sweep() {
             batch.push((label.clone(), insn, st));
         }
     }
-    assert!(!batch.is_empty(), "expected generated branch register cases");
+    assert!(
+        !batch.is_empty(),
+        "expected generated branch register cases"
+    );
     run_batch_branch("generated_branch_register_sweep", batch);
 }
 
@@ -28489,7 +28680,11 @@ fn diff_branch_register_fixed_field_legality_grid() {
         if op == 2 {
             st.x[30] = pcrel_marker(12);
         }
-        batch.push((format!("branch_reg_valid_op{op}"), branch_reg(0, op, 0, 0, 0, RN), st));
+        batch.push((
+            format!("branch_reg_valid_op{op}"),
+            branch_reg(0, op, 0, 0, 0, RN),
+            st,
+        ));
     }
 
     for (label, z, op, a, m, rm) in [
@@ -28596,7 +28791,12 @@ fn diff_branch_system_wait_hint_structured_exits() {
         ("sevl_then_wfe", hint(0b0000, 0b101)),
     ] {
         for _ in 0..4 {
-            batch.push((label.to_string(), first, hint(0b0000, 0b010), gen_input(&mut rng)));
+            batch.push((
+                label.to_string(),
+                first,
+                hint(0b0000, 0b010),
+                gen_input(&mut rng),
+            ));
         }
     }
     run_batch_pair("branch_system_wait_hint_event_wfe", batch);
@@ -28631,12 +28831,7 @@ fn diff_pauth_hint_roundtrip_el0() {
     let mut rng = Rng::new(0xa64_9a17);
     let mut batch = Vec::new();
     for (label, pac, aut, reg) in pairs {
-        for value in [
-            0,
-            1,
-            0x0000_7fff_ffff_fff0,
-            0xffff_8000_0000_0010,
-        ] {
+        for value in [0, 1, 0x0000_7fff_ffff_fff0, 0xffff_8000_0000_0010] {
             let mut st = gen_input(&mut rng);
             st.x[16] = rng.next();
             st.x[reg] = value;
@@ -28674,12 +28869,7 @@ fn diff_pauth_dp1_roundtrip_el0() {
     let mut rng = Rng::new(0xa64_9a18);
     let mut batch = Vec::new();
     for (label, pac, aut, rn) in pairs {
-        for value in [
-            0,
-            1,
-            0x0000_7fff_ffff_fff0,
-            0xffff_8000_0000_0010,
-        ] {
+        for value in [0, 1, 0x0000_7fff_ffff_fff0, 0xffff_8000_0000_0010] {
             let mut st = gen_input(&mut rng);
             st.x[0] = value;
             st.x[1] = rng.next();
@@ -28758,11 +28948,7 @@ fn diff_pauth_xpac_strip_el0() {
                 if rd < 31 {
                     st.x[rd as usize] = value;
                 }
-                batch.push((
-                    format!("{opname}_x{rd}_{value:#x}"),
-                    xpac(opcode, rd),
-                    st,
-                ));
+                batch.push((format!("{opname}_x{rd}_{value:#x}"), xpac(opcode, rd), st));
             }
         }
     }
@@ -28984,15 +29170,14 @@ fn diff_generated_system_exception_sweep() {
             batch.push((label.clone(), insn, expected, gen_input(&mut rng)));
         }
     }
-    assert!(
-        !batch.is_empty(),
-        "expected generated EL0 exception cases"
-    );
+    assert!(!batch.is_empty(), "expected generated EL0 exception cases");
 
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] generated_system_exception_sweep: oracle unavailable -> skipping");
+            eprintln!(
+                "[arm_diff] generated_system_exception_sweep: oracle unavailable -> skipping"
+            );
             return;
         }
     };
@@ -29199,7 +29384,9 @@ fn diff_system_l1_op0_0_unallocated_legality_grid() {
                 for op2 in [0u32, 1, 7] {
                     for rt in [0u32, 30] {
                         batch.push((
-                            format!("system_l1_op0_0_op1{op1}_crn{crn:x}_crm{crm:x}_op2{op2}_rt{rt}"),
+                            format!(
+                                "system_l1_op0_0_op1{op1}_crn{crn:x}_crm{crm:x}_op2{op2}_rt{rt}"
+                            ),
                             system_l1_op0_0(op1, crn, crm, op2, rt),
                             gen_input(&mut rng),
                         ));
@@ -29258,7 +29445,10 @@ fn diff_generated_system_sysop_el0_trap_sweep() {
             batch.push((label.clone(), insn, gen_input(&mut rng)));
         }
     }
-    assert!(!batch.is_empty(), "expected generated SYS/SYSL EL0 trap cases");
+    assert!(
+        !batch.is_empty(),
+        "expected generated SYS/SYSL EL0 trap cases"
+    );
     run_batch_el0_trap("generated_system_sysop_el0_trap_sweep", batch);
 }
 
@@ -29691,7 +29881,11 @@ fn diff_integer_flagm_rmif_setf() {
             for value in [0, 1, 0xf, 0x8000_0000_0000_0000, u64::MAX, rng.next()] {
                 let mut st = gen_input(&mut rng);
                 st.x[RN as usize] = value;
-                batch.push((format!("rmif imm{imm6} mask{mask:x}"), rmif(RN, imm6, mask), st));
+                batch.push((
+                    format!("rmif imm{imm6} mask{mask:x}"),
+                    rmif(RN, imm6, mask),
+                    st,
+                ));
             }
         }
     }
@@ -29764,7 +29958,12 @@ fn diff_system_dit_el0() {
     for imm in 0..=1 {
         let mut st = gen_input(&mut rng);
         st.x[RD as usize] = 0xdead_beef_dead_beef;
-        batch.push((format!("dit imm{imm} readback"), msr_dit_imm(imm), mrs_dit(RD), st));
+        batch.push((
+            format!("dit imm{imm} readback"),
+            msr_dit_imm(imm),
+            mrs_dit(RD),
+            st,
+        ));
     }
 
     for value in [0u64, 1, 2, 1 << 24, 1 << 25, u64::MAX] {
@@ -29781,7 +29980,12 @@ fn diff_system_dit_el0() {
 
     let mut st = gen_input(&mut rng);
     st.x[RD as usize] = 0xdead_beef_dead_beef;
-    batch.push(("dit reg xzr readback".to_string(), msr_dit_reg(31), mrs_dit(RD), st));
+    batch.push((
+        "dit reg xzr readback".to_string(),
+        msr_dit_reg(31),
+        mrs_dit(RD),
+        st,
+    ));
 
     run_batch_el0_pair("system_dit_el0", batch);
 }
@@ -29815,7 +30019,11 @@ fn diff_system_cpuid_xzr_el0() {
         ("cpuid id_aa64mmfr1", 0, 7, 1),
         ("cpuid id_aa64mmfr2", 0, 7, 2),
     ] {
-        batch.push((label.to_string(), mrs_id_xzr(op1, crm, op2), gen_input(&mut rng)));
+        batch.push((
+            label.to_string(),
+            mrs_id_xzr(op1, crm, op2),
+            gen_input(&mut rng),
+        ));
     }
 
     run_batch_el0("system_cpuid_xzr_el0", batch);
@@ -29878,7 +30086,11 @@ fn diff_system_modern_cpuid_xzr_el0() {
     let mut batch = Vec::new();
     for (label, op1, crm, op2) in regs {
         for _ in 0..4 {
-            batch.push((label.to_string(), mrs_id_xzr(op1, crm, op2), gen_input(&mut rng)));
+            batch.push((
+                label.to_string(),
+                mrs_id_xzr(op1, crm, op2),
+                gen_input(&mut rng),
+            ));
         }
     }
 
@@ -30069,11 +30281,7 @@ fn diff_system_debug_id_el0_visible_edges() {
             if rt != 31 {
                 st.x[rt as usize] = rng.next();
             }
-            batch.push((
-                format!("{name}_x{rt}"),
-                (insn & !0x1f) | rt,
-                st,
-            ));
+            batch.push((format!("{name}_x{rt}"), (insn & !0x1f) | rt, st));
         }
     }
 
@@ -30497,7 +30705,10 @@ fn diff_system_user_cache_maintenance_other_invalid_va_edges() {
         }
     }
 
-    run_batch_el0("system_user_cache_maintenance_other_invalid_va_edges", batch);
+    run_batch_el0(
+        "system_user_cache_maintenance_other_invalid_va_edges",
+        batch,
+    );
 }
 
 #[test]
@@ -31028,8 +31239,10 @@ fn diff_system_rng_sysreg_el0_legality() {
         .into_iter()
         .map(|(label, insn)| (label.to_string(), insn, gen_input(&mut rng)))
         .collect();
-    let oracle_cases: Vec<(u32, u32, ArmState)> =
-        batch.iter().map(|(_, insn, st)| (*insn, NOP, *st)).collect();
+    let oracle_cases: Vec<(u32, u32, ArmState)> = batch
+        .iter()
+        .map(|(_, insn, st)| (*insn, NOP, *st))
+        .collect();
     let outs = match run_oracle(&oracle, &oracle_cases) {
         Some(o) => o,
         None => {
@@ -31236,7 +31449,9 @@ fn diff_system_pstate_ssbs_tco_register_roundtrip() {
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] system_pstate_ssbs_tco_register_roundtrip: oracle unavailable -> skipping");
+            eprintln!(
+                "[arm_diff] system_pstate_ssbs_tco_register_roundtrip: oracle unavailable -> skipping"
+            );
             return;
         }
     };
@@ -31374,7 +31589,11 @@ fn diff_system_dczid_el0_xzr_edges() {
         st.sp = sp;
         st.x[RD as usize] = 0xfeed_face_cafe_beef;
         st.x[RN as usize] = 0x0123_4567_89ab_cdef;
-        batch.push((format!("mrs_dczid_el0_xzr_sp_{sp:#x}"), mrs_dczid_el0(31), st));
+        batch.push((
+            format!("mrs_dczid_el0_xzr_sp_{sp:#x}"),
+            mrs_dczid_el0(31),
+            st,
+        ));
     }
 
     run_batch_el0("system_dczid_el0_xzr_edges", batch);
@@ -31961,18 +32180,42 @@ fn diff_fpcr_ah_fmlal_nan_status() {
     let mut batch = Vec::new();
 
     for &(label, insn) in &[
-        ("neon_fmlal_ah_nan_status", enc_three_same(1, 0, 0b00, 0b11101)),
-        ("neon_fmlsl_ah_nan_status", enc_three_same(1, 0, 0b10, 0b11101)),
-        ("neon_fmlal2_ah_nan_status", enc_three_same(1, 1, 0b00, 0b11001)),
-        ("neon_fmlsl2_ah_nan_status", enc_three_same(1, 1, 0b10, 0b11001)),
+        (
+            "neon_fmlal_ah_nan_status",
+            enc_three_same(1, 0, 0b00, 0b11101),
+        ),
+        (
+            "neon_fmlsl_ah_nan_status",
+            enc_three_same(1, 0, 0b10, 0b11101),
+        ),
+        (
+            "neon_fmlal2_ah_nan_status",
+            enc_three_same(1, 1, 0b00, 0b11001),
+        ),
+        (
+            "neon_fmlsl2_ah_nan_status",
+            enc_three_same(1, 1, 0b10, 0b11001),
+        ),
         ("sve_fmlalb_ah_nan_status", enc_sve2_fmlal(0, 0)),
         ("sve_fmlalt_ah_nan_status", enc_sve2_fmlal(0, 1)),
         ("sve_fmlslb_ah_nan_status", enc_sve2_fmlal(1, 0)),
         ("sve_fmlslt_ah_nan_status", enc_sve2_fmlal(1, 1)),
-        ("sve_fmlalb_idx_ah_nan_status", enc_sve2_fmlal_idx(0, 0, 3, RM)),
-        ("sve_fmlalt_idx_ah_nan_status", enc_sve2_fmlal_idx(0, 1, 3, RM)),
-        ("sve_fmlslb_idx_ah_nan_status", enc_sve2_fmlal_idx(1, 0, 3, RM)),
-        ("sve_fmlslt_idx_ah_nan_status", enc_sve2_fmlal_idx(1, 1, 3, RM)),
+        (
+            "sve_fmlalb_idx_ah_nan_status",
+            enc_sve2_fmlal_idx(0, 0, 3, RM),
+        ),
+        (
+            "sve_fmlalt_idx_ah_nan_status",
+            enc_sve2_fmlal_idx(0, 1, 3, RM),
+        ),
+        (
+            "sve_fmlslb_idx_ah_nan_status",
+            enc_sve2_fmlal_idx(1, 0, 3, RM),
+        ),
+        (
+            "sve_fmlslt_idx_ah_nan_status",
+            enc_sve2_fmlal_idx(1, 1, 3, RM),
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -32059,8 +32302,8 @@ fn diff_fpcr_ah_fmlal_indexed_nan_status() {
 #[test]
 fn diff_fmlal_indexed() {
     let half_values: &[u16] = &[
-        0x0000, 0x8000, 0x0001, 0x03ff, 0x8001, 0x83ff, 0x3c00, 0xbc00, 0x4000, 0xc000,
-        0x3800, 0xb800, 0x4400, 0xc400,
+        0x0000, 0x8000, 0x0001, 0x03ff, 0x8001, 0x83ff, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800,
+        0xb800, 0x4400, 0xc400,
     ];
     let mut rng = Rng::new(0x1_0026);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -32090,11 +32333,7 @@ fn diff_fmlal_indexed() {
 
                         let op = if sub == 0 { "fmlal" } else { "fmlsl" };
                         let suffix = if top == 0 { "" } else { "2" };
-                        batch.push((
-                            format!("{op}{suffix}_idx_q{q}_i{index}"),
-                            insn,
-                            st,
-                        ));
+                        batch.push((format!("{op}{suffix}_idx_q{q}_i{index}"), insn, st));
                     }
                 }
             }
@@ -32162,15 +32401,7 @@ fn enc_single(esz: u32, selem: u32, index: u32, l: u32, post: u32) -> u32 {
 }
 
 /// Replicating load LD1R-LD4R for element-log2-size `esz`, structure `selem`, Q.
-fn enc_single_rep_regs(
-    esz: u32,
-    selem: u32,
-    q: u32,
-    post: u32,
-    rm: u32,
-    rt: u32,
-    rn: u32,
-) -> u32 {
+fn enc_single_rep_regs(esz: u32, selem: u32, q: u32, post: u32, rm: u32, rt: u32, rn: u32) -> u32 {
     let lsb = ((selem - 1) >> 1) & 1;
     let r = (selem - 1) & 1;
     let opcode = (0b11 << 1) | lsb;
@@ -32286,11 +32517,7 @@ fn diff_mem_ldst_single_encoding_legality_grid() {
 #[test]
 fn diff_mem_ldst_single_lane_edges() {
     let patterns: &[(&str, [u64; 4], [(u64, u64); 4])] = &[
-        (
-            "zero",
-            [0, 0, 0, 0],
-            [(0, 0), (0, 0), (0, 0), (0, 0)],
-        ),
+        ("zero", [0, 0, 0, 0], [(0, 0), (0, 0), (0, 0), (0, 0)]),
         (
             "ones",
             [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
@@ -33027,10 +33254,7 @@ fn diff_simd_fp16_recps_rsqrts_fpcr_rounding() {
 
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for rmode in 0..4u64 {
-        for &(u, a, opcode, name) in &[
-            (0, 0, 0b111, "frecps"),
-            (0, 1, 0b111, "frsqrts"),
-        ] {
+        for &(u, a, opcode, name) in &[(0, 0, 0b111, "frecps"), (0, 1, 0b111, "frsqrts")] {
             let mut st = ArmState::zeroed();
             st.fpcr = rmode << 22;
             let (lo, hi) = pack_h(0x3c01);
@@ -33138,7 +33362,11 @@ fn diff_fp16_fma_fpcr_rounding() {
             st.set_vreg(RA as usize, acc as u64, 0);
             st.set_vreg(RN as usize, n as u64, 0);
             st.set_vreg(RM as usize, 0x3c00, 0);
-            batch.push((format!("scalar_{name}_rmode{rmode}"), enc_fp3(0b11, o1, o0), st));
+            batch.push((
+                format!("scalar_{name}_rmode{rmode}"),
+                enc_fp3(0b11, o1, o0),
+                st,
+            ));
         }
 
         for &(a, name, acc, n) in &[
@@ -33647,10 +33875,7 @@ fn diff_simd_cvtf_fpcr_rounding() {
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
-        let d_lanes = [
-            9_007_199_254_740_993u64,
-            (-9_007_199_254_740_993i64) as u64,
-        ];
+        let d_lanes = [9_007_199_254_740_993u64, (-9_007_199_254_740_993i64) as u64];
         let mut packed = 0u128;
         for (lane, value) in d_lanes.iter().enumerate() {
             packed |= (*value as u128) << (64 * lane);
@@ -33884,12 +34109,36 @@ fn diff_fpcr_ah_frecpe_frsqrte_status() {
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
-        ("simd_frecpe_h_ah_status", enc_fp16_2r(1, 0, 1, 0b11101), h_pattern),
-        ("simd_frsqrte_h_ah_status", enc_fp16_2r(1, 1, 1, 0b11101), h_pattern),
-        ("simd_frecpe_s_ah_status", enc_two_reg(1, 0, 0b10, 0b11101), s_pattern),
-        ("simd_frsqrte_s_ah_status", enc_two_reg(1, 1, 0b10, 0b11101), s_pattern),
-        ("simd_frecpe_d_ah_status", enc_two_reg(1, 0, 0b11, 0b11101), d_pattern),
-        ("simd_frsqrte_d_ah_status", enc_two_reg(1, 1, 0b11, 0b11101), d_pattern),
+        (
+            "simd_frecpe_h_ah_status",
+            enc_fp16_2r(1, 0, 1, 0b11101),
+            h_pattern,
+        ),
+        (
+            "simd_frsqrte_h_ah_status",
+            enc_fp16_2r(1, 1, 1, 0b11101),
+            h_pattern,
+        ),
+        (
+            "simd_frecpe_s_ah_status",
+            enc_two_reg(1, 0, 0b10, 0b11101),
+            s_pattern,
+        ),
+        (
+            "simd_frsqrte_s_ah_status",
+            enc_two_reg(1, 1, 0b10, 0b11101),
+            s_pattern,
+        ),
+        (
+            "simd_frecpe_d_ah_status",
+            enc_two_reg(1, 0, 0b11, 0b11101),
+            d_pattern,
+        ),
+        (
+            "simd_frsqrte_d_ah_status",
+            enc_two_reg(1, 1, 0b11, 0b11101),
+            d_pattern,
+        ),
         ("sve_frecpe_h_ah_status", enc_sve_frecpe(1, 0), h_pattern),
         ("sve_frsqrte_h_ah_status", enc_sve_frecpe(1, 1), h_pattern),
         ("sve_frecpe_s_ah_status", enc_sve_frecpe(2, 0), s_pattern),
@@ -33931,11 +34180,7 @@ fn diff_crypto_aes_edges() {
     ];
     let patterns: &[(&str, (u64, u64), (u64, u64))] = &[
         ("zero", (0, 0), (0, 0)),
-        (
-            "ones",
-            (u64::MAX, u64::MAX),
-            (u64::MAX, u64::MAX),
-        ),
+        ("ones", (u64::MAX, u64::MAX), (u64::MAX, u64::MAX)),
         (
             "ascending",
             (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
@@ -34066,12 +34311,7 @@ fn enc_xar(imm6: u32) -> u32 {
 }
 
 fn enc_crypto_ce(grp: u32, rm: u32, o: u32) -> u32 {
-    0xCE00_0000
-        | ((grp & 0x7) << 21)
-        | ((rm & 0x1F) << 16)
-        | ((o & 0x3F) << 10)
-        | (RN << 5)
-        | RD
+    0xCE00_0000 | ((grp & 0x7) << 21) | ((rm & 0x1F) << 16) | ((o & 0x3F) << 10) | (RN << 5) | RD
 }
 
 #[test]
@@ -34163,13 +34403,31 @@ fn diff_crypto_unallocated_edges() {
         ("reserved_sha2_opcode7".to_string(), enc_sha2(0b00111)),
         ("reserved_sha2_opcode31".to_string(), enc_sha2(0b11111)),
         ("reserved_sha3_opcode7".to_string(), enc_sha3(0b111)),
-        ("reserved_ce_grp0_o32".to_string(), enc_crypto_ce(0b000, RM, 0b100000)),
-        ("reserved_ce_grp1_o32".to_string(), enc_crypto_ce(0b001, RM, 0b100000)),
-        ("reserved_ce_grp2_o48".to_string(), enc_crypto_ce(0b010, RM, 0b110000)),
-        ("reserved_ce_grp3_o36".to_string(), enc_crypto_ce(0b011, RM, 0b100100)),
-        ("reserved_ce_grp3_o51".to_string(), enc_crypto_ce(0b011, RM, 0b110011)),
+        (
+            "reserved_ce_grp0_o32".to_string(),
+            enc_crypto_ce(0b000, RM, 0b100000),
+        ),
+        (
+            "reserved_ce_grp1_o32".to_string(),
+            enc_crypto_ce(0b001, RM, 0b100000),
+        ),
+        (
+            "reserved_ce_grp2_o48".to_string(),
+            enc_crypto_ce(0b010, RM, 0b110000),
+        ),
+        (
+            "reserved_ce_grp3_o36".to_string(),
+            enc_crypto_ce(0b011, RM, 0b100100),
+        ),
+        (
+            "reserved_ce_grp3_o51".to_string(),
+            enc_crypto_ce(0b011, RM, 0b110011),
+        ),
         ("reserved_ce_grp5".to_string(), enc_crypto_ce(0b101, RM, 0)),
-        ("reserved_ce_grp6_o34".to_string(), enc_crypto_ce(0b110, 0, 0b100010)),
+        (
+            "reserved_ce_grp6_o34".to_string(),
+            enc_crypto_ce(0b110, 0, 0b100010),
+        ),
     ];
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for (label, insn) in cases {
@@ -34598,7 +34856,9 @@ fn diff_simd_fcmla_f16_invalid_products() {
     for q in 0..=1u32 {
         for rot in 0..4u32 {
             for (case_name, inf) in [("pos_inf", 0x7c00u16), ("neg_inf", 0xfc00)] {
-                let rn = [0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000];
+                let rn = [
+                    0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+                ];
                 let rm = [inf; 8];
                 let rd = [0x3c00u16; 8];
 
@@ -34654,7 +34914,11 @@ fn diff_fcmla_fpcr_ah_nan_priority_status() {
         st.set_vreg(RD as usize, lo, hi);
         st.set_vreg(RN as usize, lo, hi);
         st.set_vreg(RM as usize, lo, hi);
-        batch.push((format!("simd_fcmla_{label}_ah_nan_priority"), enc_fcmla(1, simd_size, 0), st));
+        batch.push((
+            format!("simd_fcmla_{label}_ah_nan_priority"),
+            enc_fcmla(1, simd_size, 0),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -34662,7 +34926,11 @@ fn diff_fcmla_fpcr_ah_nan_priority_status() {
         st.set_vreg(RD as usize, lo, hi);
         st.set_vreg(RN as usize, lo, hi);
         st.set_vreg(RM as usize, lo, hi);
-        batch.push((format!("sve_fcmla_{label}_ah_nan_priority"), enc_sve_fcmla(sve_size, 0), st));
+        batch.push((
+            format!("sve_fcmla_{label}_ah_nan_priority"),
+            enc_sve_fcmla(sve_size, 0),
+            st,
+        ));
     }
 
     for &(label, simd_size, sve_size, esz, qnan, snan) in &[
@@ -34715,7 +34983,11 @@ fn diff_fcmla_fpcr_ah_nan_priority_status() {
         st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
-        batch.push((format!("simd_fcmla_{label}_ah_subnormal_status"), enc_fcmla(1, simd_size, 0), st));
+        batch.push((
+            format!("simd_fcmla_{label}_ah_subnormal_status"),
+            enc_fcmla(1, simd_size, 0),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -34723,7 +34995,11 @@ fn diff_fcmla_fpcr_ah_nan_priority_status() {
         st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
-        batch.push((format!("sve_fcmla_{label}_ah_subnormal_status"), enc_sve_fcmla(sve_size, 0), st));
+        batch.push((
+            format!("sve_fcmla_{label}_ah_subnormal_status"),
+            enc_sve_fcmla(sve_size, 0),
+            st,
+        ));
 
         if esz == 4 {
             let mut st = ArmState::zeroed();
@@ -34829,20 +35105,8 @@ fn diff_simd_fcadd_fpcr_rounding() {
         let fpcr = rmode << 22;
 
         for &(name, a_re, a_im, b_re, b_im) in &[
-            (
-                "pos",
-                16_777_216.0f32,
-                16_777_216.0f32,
-                1.0f32,
-                -1.0f32,
-            ),
-            (
-                "neg",
-                -16_777_216.0f32,
-                -16_777_216.0f32,
-                -1.0f32,
-                1.0f32,
-            ),
+            ("pos", 16_777_216.0f32, 16_777_216.0f32, 1.0f32, -1.0f32),
+            ("neg", -16_777_216.0f32, -16_777_216.0f32, -1.0f32, 1.0f32),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -34931,20 +35195,8 @@ fn diff_simd_fcmla_fpcr_rounding() {
         }
 
         for &(name, acc, a_re, b_re, b_im) in &[
-            (
-                "pos",
-                9_007_199_254_740_992.0f64,
-                1.0f64,
-                1.0f64,
-                1.0f64,
-            ),
-            (
-                "neg",
-                -9_007_199_254_740_992.0f64,
-                -1.0f64,
-                1.0f64,
-                1.0f64,
-            ),
+            ("pos", 9_007_199_254_740_992.0f64, 1.0f64, 1.0f64, 1.0f64),
+            ("neg", -9_007_199_254_740_992.0f64, -1.0f64, 1.0f64, 1.0f64),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -35115,14 +35367,38 @@ fn diff_simd_complex_indexed() {
 #[test]
 fn diff_simd_complex_indexed_unallocated_edges() {
     let cases = vec![
-        ("fcmla_idx_bit31_q0".into(), enc_fcmla_idx(0, 0b01, 0, 0) | (1 << 31)),
-        ("fcmla_idx_bit31_q1".into(), enc_fcmla_idx(1, 0b01, 0, 0) | (1 << 31)),
-        ("fcmla_idx_size0".into(), enc_fcmla_idx_raw(1, 0b00, 0, 0, 0)),
-        ("fcmla_idx_size3".into(), enc_fcmla_idx_raw(1, 0b11, 0, 0, 0)),
-        ("fcmla_idx_f16_q0_h1_l0".into(), enc_fcmla_idx_raw(0, 0b01, 0, 1, 0)),
-        ("fcmla_idx_f16_q0_h1_l1".into(), enc_fcmla_idx_raw(0, 0b01, 0, 1, 1)),
-        ("fcmla_idx_f32_q0".into(), enc_fcmla_idx_raw(0, 0b10, 0, 0, 0)),
-        ("fcmla_idx_f32_l1".into(), enc_fcmla_idx_raw(1, 0b10, 0, 0, 1)),
+        (
+            "fcmla_idx_bit31_q0".into(),
+            enc_fcmla_idx(0, 0b01, 0, 0) | (1 << 31),
+        ),
+        (
+            "fcmla_idx_bit31_q1".into(),
+            enc_fcmla_idx(1, 0b01, 0, 0) | (1 << 31),
+        ),
+        (
+            "fcmla_idx_size0".into(),
+            enc_fcmla_idx_raw(1, 0b00, 0, 0, 0),
+        ),
+        (
+            "fcmla_idx_size3".into(),
+            enc_fcmla_idx_raw(1, 0b11, 0, 0, 0),
+        ),
+        (
+            "fcmla_idx_f16_q0_h1_l0".into(),
+            enc_fcmla_idx_raw(0, 0b01, 0, 1, 0),
+        ),
+        (
+            "fcmla_idx_f16_q0_h1_l1".into(),
+            enc_fcmla_idx_raw(0, 0b01, 0, 1, 1),
+        ),
+        (
+            "fcmla_idx_f32_q0".into(),
+            enc_fcmla_idx_raw(0, 0b10, 0, 0, 0),
+        ),
+        (
+            "fcmla_idx_f32_l1".into(),
+            enc_fcmla_idx_raw(1, 0b10, 0, 0, 1),
+        ),
     ];
     let mut rng = Rng::new(0x1_001e);
     let mut batch = Vec::new();
@@ -35721,22 +35997,12 @@ fn enc_sve_sat_addsub_imm(size: u32, op6: u32, sh: u32, imm8: u32) -> u32 {
 /// SVE SMAX/UMAX/SMIN/UMIN immediate:
 /// `00100101 size op6 110 imm8 Zdn`, op6=101000..101011.
 fn enc_sve_minmax_imm(size: u32, op6: u32, imm8: u32) -> u32 {
-    (0x25 << 24)
-        | (size << 22)
-        | (op6 << 16)
-        | (0b110 << 13)
-        | ((imm8 & 0xFF) << 5)
-        | RD
+    (0x25 << 24) | (size << 22) | (op6 << 16) | (0b110 << 13) | ((imm8 & 0xFF) << 5) | RD
 }
 
 /// SVE MUL immediate: `00100101 size 110000 110 imm8 Zdn`.
 fn enc_sve_mul_imm(size: u32, imm8: u32) -> u32 {
-    (0x25 << 24)
-        | (size << 22)
-        | (0b110000 << 16)
-        | (0b110 << 13)
-        | ((imm8 & 0xFF) << 5)
-        | RD
+    (0x25 << 24) | (size << 22) | (0b110000 << 16) | (0b110 << 13) | ((imm8 & 0xFF) << 5) | RD
 }
 
 /// SVE DUP immediate: `00100101 size 111000 11 sh imm8 Zd`.
@@ -35783,12 +36049,7 @@ fn enc_sve_dupm(n: u32, immr: u32, imms: u32) -> u32 {
 /// SVE logical immediate: `00000101 opc 0000 N immr imms Zd`.
 /// opc: 0=ORR, 1=EOR, 2=AND.
 fn enc_sve_logical_imm(opc: u32, n: u32, immr: u32, imms: u32) -> u32 {
-    (0x05 << 24)
-        | (opc << 22)
-        | (n << 17)
-        | ((immr & 0x3F) << 11)
-        | ((imms & 0x3F) << 5)
-        | RD
+    (0x05 << 24) | (opc << 22) | (n << 17) | ((immr & 0x3F) << 11) | ((imms & 0x3F) << 5) | RD
 }
 
 /// SVE FRECPE/FRSQRTE: `01100101 size 00111 r 001100 Zn Zd`. r=bit16. Zn=z1(RN),
@@ -36399,11 +36660,7 @@ fn enc_ld1rq_i(msz: u32, imm4: i32) -> u32 {
     enc_ld1rq_i_regs(msz, imm4, RN)
 }
 fn enc_ld1rq_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
-    (0b1010010 << 25)
-        | (msz << 23)
-        | ((rm & 0x1F) << 16)
-        | ((rn & 0x1F) << 5)
-        | RD
+    (0b1010010 << 25) | (msz << 23) | ((rm & 0x1F) << 16) | ((rn & 0x1F) << 5) | RD
 }
 fn enc_ld1rq_r(msz: u32) -> u32 {
     enc_ld1rq_r_regs(msz, RM, RN)
@@ -36426,20 +36683,10 @@ fn enc_stnt1(msz: u32, imm4: i32) -> u32 {
 
 /// SVE LDNT1/STNT1 (scalar+scalar): Rn, Rm explicit for SP/Rm edge tests.
 fn enc_ldnt1_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
-    (0b1010010 << 25)
-        | (msz << 23)
-        | ((rm & 0x1F) << 16)
-        | (0b110 << 13)
-        | ((rn & 0x1F) << 5)
-        | RD
+    (0b1010010 << 25) | (msz << 23) | ((rm & 0x1F) << 16) | (0b110 << 13) | ((rn & 0x1F) << 5) | RD
 }
 fn enc_stnt1_r_regs(msz: u32, rm: u32, rn: u32) -> u32 {
-    (0b1110010 << 25)
-        | (msz << 23)
-        | ((rm & 0x1F) << 16)
-        | (0b011 << 13)
-        | ((rn & 0x1F) << 5)
-        | RD
+    (0b1110010 << 25) | (msz << 23) | ((rm & 0x1F) << 16) | (0b011 << 13) | ((rn & 0x1F) << 5) | RD
 }
 
 /// SVE LD2/3/4 (de-interleaving): `1010010 msz opc 0 imm4 111 Pg Rn Zt`.
@@ -36873,8 +37120,14 @@ fn diff_sve_index() {
                     enc_index_ii(sz, imm_step, imm_base),
                 ));
             }
-            cases.push((format!("index_ri sz{sz} s{imm_step}"), enc_index_ri(sz, imm_step)));
-            cases.push((format!("index_ir sz{sz} b{imm_step}"), enc_index_ir(sz, imm_step)));
+            cases.push((
+                format!("index_ri sz{sz} s{imm_step}"),
+                enc_index_ri(sz, imm_step),
+            ));
+            cases.push((
+                format!("index_ir sz{sz} b{imm_step}"),
+                enc_index_ir(sz, imm_step),
+            ));
         }
         cases.push((format!("index_rr sz{sz}"), enc_index_rr(sz)));
     }
@@ -37033,10 +37286,7 @@ fn diff_sve_rev() {
         let sign = 1u64 << (bits - 1);
         let edges = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
         vec![
-            (
-                "identity",
-                (0..lanes).map(|lane| lane as u64).collect(),
-            ),
+            ("identity", (0..lanes).map(|lane| lane as u64).collect()),
             (
                 "edges",
                 (0..lanes).map(|lane| edges[lane % edges.len()]).collect(),
@@ -37118,7 +37368,10 @@ fn diff_sve_pred_true_false_fixed_field_legality() {
     let invalids = [
         ("ptrue_fuzz_wrong_fields", 0x25ee_e1fb),
         ("ptrue_bit4_set", enc_ptrue(0, 0, 0) | (1 << 4)),
-        ("ptrue_wrong_op", (0x25 << 24) | (3 << 22) | (0b10111 << 17) | (0b111000 << 10)),
+        (
+            "ptrue_wrong_op",
+            (0x25 << 24) | (3 << 22) | (0b10111 << 17) | (0b111000 << 10),
+        ),
         ("pfalse_bit16_set", PFALSE | (1 << 16)),
         ("pfalse_pattern_bit_set", PFALSE | (1 << 5)),
         ("pfalse_bit4_set", PFALSE | (1 << 4)),
@@ -37321,13 +37574,21 @@ fn diff_sve_cmp() {
         [
             (
                 "edges",
-                (0..lanes).map(|lane| zn_edges[lane % zn_edges.len()]).collect(),
-                (0..lanes).map(|lane| zm_edges[lane % zm_edges.len()]).collect(),
+                (0..lanes)
+                    .map(|lane| zn_edges[lane % zn_edges.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| zm_edges[lane % zm_edges.len()])
+                    .collect(),
             ),
             (
                 "bitmix",
-                (0..lanes).map(|lane| zn_bits[lane % zn_bits.len()]).collect(),
-                (0..lanes).map(|lane| zm_bits[lane % zm_bits.len()]).collect(),
+                (0..lanes)
+                    .map(|lane| zn_bits[lane % zn_bits.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| zm_bits[lane % zm_bits.len()])
+                    .collect(),
             ),
         ]
     }
@@ -37380,7 +37641,11 @@ fn diff_sve_cmp() {
                     let (lo, hi) = pack_lanes(sz, &zm);
                     st.set_vreg(2, lo, hi);
                     st.set_preg(1, pg);
-                    batch.push((format!("cmp{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("cmp{name}_sz{sz}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -37433,7 +37698,14 @@ fn diff_sve_shift_pred() {
         };
         let sign = 1u64 << (bits - 1);
         let values = [1, sign - 1, sign, sign + 1, mask - 1, mask];
-        let shifts = [0, 1, bits as u64 - 1, bits as u64, bits as u64 + 1, 2 * bits as u64 - 1];
+        let shifts = [
+            0,
+            1,
+            bits as u64 - 1,
+            bits as u64,
+            bits as u64 + 1,
+            2 * bits as u64 - 1,
+        ];
         (
             (0..lanes).map(|lane| values[lane % values.len()]).collect(),
             (0..lanes).map(|lane| shifts[lane % shifts.len()]).collect(),
@@ -37699,13 +37971,8 @@ fn diff_sve_pcount_xzr_dest() {
     let mut rng = Rng::new(0x1_0078);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for sz in 0..4u32 {
-        let cntp = (0x25 << 24)
-            | (sz << 22)
-            | (0b100000 << 16)
-            | (0b10 << 14)
-            | (1 << 10)
-            | (2 << 5)
-            | 31;
+        let cntp =
+            (0x25 << 24) | (sz << 22) | (0b100000 << 16) | (0b10 << 14) | (1 << 10) | (2 << 5) | 31;
         let incp_r = (0x25 << 24)
             | (sz << 22)
             | (0b101100 << 16)
@@ -37720,11 +37987,14 @@ fn diff_sve_pcount_xzr_dest() {
             | (1 << 11)
             | (1 << 5)
             | 31;
-        for (name, insn) in [("cntp_xzr", cntp), ("incpr_xzr", incp_r), ("decpr_xzr", decp_r)] {
+        for (name, insn) in [
+            ("cntp_xzr", cntp),
+            ("incpr_xzr", incp_r),
+            ("decpr_xzr", decp_r),
+        ] {
             for i in 0..8 {
                 let mut st = ArmState::zeroed();
-                st.sp =
-                    GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x12000 + ((i as u64) << 4);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x12000 + ((i as u64) << 4);
                 st.set_preg(1, rng.next() as u16);
                 st.set_preg(2, rng.next() as u16);
                 batch.push((format!("{name} sz{sz}"), insn, st));
@@ -37787,10 +38057,8 @@ fn diff_sve_lastx_xzr_dest() {
     }
 
     for size in 0..4u32 {
-        let lasta =
-            (0x05 << 24) | (size << 22) | (0b100000 << 16) | (0b101 << 13) | (RN << 5) | 31;
-        let lastb =
-            (0x05 << 24) | (size << 22) | (0b100001 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        let lasta = (0x05 << 24) | (size << 22) | (0b100000 << 16) | (0b101 << 13) | (RN << 5) | 31;
+        let lastb = (0x05 << 24) | (size << 22) | (0b100001 << 16) | (0b101 << 13) | (RN << 5) | 31;
         let clasta =
             (0x05 << 24) | (size << 22) | (0b110000 << 16) | (0b101 << 13) | (RN << 5) | 31;
         let clastb =
@@ -37803,8 +38071,7 @@ fn diff_sve_lastx_xzr_dest() {
         ] {
             for (i, pred) in [0xffffu16, 0x5555, 0x0001, 0x0000].into_iter().enumerate() {
                 let mut st = ArmState::zeroed();
-                st.sp =
-                    GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x13000 + ((i as u64) << 4);
+                st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x13000 + ((i as u64) << 4);
                 st.set_vreg(RN as usize, rng.next(), rng.next());
                 st.set_preg(0, pred);
                 batch.push((format!("{name} sz{size}"), insn, st));
@@ -37931,16 +38198,11 @@ fn diff_sve_sincdecp_xzr_dest() {
                         st.sp =
                             GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x11000 + ((i as u64) << 4);
                         st.set_preg(1, pred);
-                        batch.push((
-                            format!("sincdecp_xzr e{esz} d{d} u{u} s{sf64}"),
-                            insn,
-                            st,
-                        ));
+                        batch.push((format!("sincdecp_xzr e{esz} d{d} u{u} s{sf64}"), insn, st));
                     }
-                    for (case_name, pred, sp_delta) in [
-                        ("last", last, 0x80u64),
-                        ("endpoints", endpoints, 0x90),
-                    ] {
+                    for (case_name, pred, sp_delta) in
+                        [("last", last, 0x80u64), ("endpoints", endpoints, 0x90)]
+                    {
                         let mut st = ArmState::zeroed();
                         st.sp = GUEST_STACK_ADDR
                             + (GUEST_STACK_SIZE / 2)
@@ -38147,7 +38409,11 @@ fn diff_fpcr_fz_fp_compare_subnormal_inputs() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         st.set_vreg(RN as usize, bits, 0);
-        batch.push((format!("fcmp_zero_{name}_min_subnorm"), enc_fcmp_zero(ft), st));
+        batch.push((
+            format!("fcmp_zero_{name}_min_subnorm"),
+            enc_fcmp_zero(ft),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
@@ -38446,12 +38712,7 @@ fn diff_sve2_cdot_indexed() {
             batch.push((format!("cdoti{k}"), insn, st));
         }
         for (case_name, zda, zn, zm) in [
-            (
-                "zero",
-                (0u64, 0u64),
-                (0u64, 0u64),
-                (0u64, 0u64),
-            ),
+            ("zero", (0u64, 0u64), (0u64, 0u64), (0u64, 0u64)),
             (
                 "ones",
                 (u64::MAX, u64::MAX),
@@ -39145,7 +39406,11 @@ fn diff_sve_shift_imm() {
     for &esize in &[1usize, 2, 4, 8] {
         let ebits = esize * 8;
         for &(opc, name) in &ops {
-            let amounts = if opc == 0b011 { 0..ebits } else { 1..(ebits + 1) };
+            let amounts = if opc == 0b011 {
+                0..ebits
+            } else {
+                1..(ebits + 1)
+            };
             for amount in amounts {
                 let tszimm = if opc == 0b011 {
                     ebits + amount
@@ -39243,11 +39508,7 @@ fn diff_sve_cpy() {
                     let mut st = ArmState::zeroed();
                     st.set_vreg(0, rng.next(), rng.next());
                     st.set_preg(0, rng.next() as u16);
-                    batch.push((
-                        format!("cpyi sz{sz} m{m} sh{sh} imm{imm8:#04x}"),
-                        insn,
-                        st,
-                    ));
+                    batch.push((format!("cpyi sz{sz} m{m} sh{sh} imm{imm8:#04x}"), insn, st));
                 }
             }
         }
@@ -39363,11 +39624,8 @@ fn diff_sve_cpy_sp_source() {
             ("inactive", 0x0000, 0x30),
         ] {
             let mut st = ArmState::zeroed();
-            st.sp = GUEST_STACK_ADDR
-                + (GUEST_STACK_SIZE / 2)
-                + 0x18000
-                + ((sz as u64) << 8)
-                + sp_delta;
+            st.sp =
+                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x18000 + ((sz as u64) << 8) + sp_delta;
             st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
             st.set_preg(0, pg);
             batch.push((format!("cpyr_sp_sz{sz}_{case_name}"), insn, st));
@@ -39400,18 +39658,11 @@ fn diff_sve_dup_sp_source() {
                 0x20,
                 (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
             ),
-            (
-                "sign",
-                0x30,
-                (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
-            ),
+            ("sign", 0x30, (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001)),
         ] {
             let mut st = ArmState::zeroed();
-            st.sp = GUEST_STACK_ADDR
-                + (GUEST_STACK_SIZE / 2)
-                + 0xe800
-                + ((sz as u64) << 8)
-                + sp_delta;
+            st.sp =
+                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0xe800 + ((sz as u64) << 8) + sp_delta;
             st.set_vreg(0, z0.0, z0.1);
             batch.push((format!("dup_sp_sz{sz}_{case_name}"), insn, st));
         }
@@ -39469,11 +39720,15 @@ fn diff_sve_fp_unary() {
                 1 => vec![
                     (
                         "specials",
-                        vec![0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x0001, 0x8001],
+                        vec![
+                            0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x0001, 0x8001,
+                        ],
                     ),
                     (
                         "finite",
-                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200],
+                        vec![
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200,
+                        ],
                     ),
                 ],
                 2 => vec![
@@ -39512,12 +39767,14 @@ fn diff_sve_fp_unary() {
                     ),
                     (
                         "nan_subnorm",
-                        vec![0x7ff8_0000_0000_0000, 0x7ff0_0000_0000_0001, 1, (1u64 << 63) | 1],
+                        vec![
+                            0x7ff8_0000_0000_0000,
+                            0x7ff0_0000_0000_0001,
+                            1,
+                            (1u64 << 63) | 1,
+                        ],
                     ),
-                    (
-                        "finite",
-                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
-                    ),
+                    ("finite", vec![1.0f64.to_bits(), (-1.0f64).to_bits()]),
                 ],
             };
             let mixed = match sz {
@@ -39546,11 +39803,7 @@ fn diff_sve_fp_unary() {
 
 #[test]
 fn diff_sve_fp_unary_unallocated_edges() {
-    let invalid_ops = [
-        (0b000101u32, "op5"),
-        (0b001110, "op14"),
-        (0b001111, "op15"),
-    ];
+    let invalid_ops = [(0b000101u32, "op5"), (0b001110, "op14"), (0b001111, "op15")];
     let mut rng = Rng::new(0x1_002b_1);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
@@ -39723,10 +39976,7 @@ fn diff_fpcr_fiz_sve_fsqrt_subnormal_inputs() {
 #[test]
 fn diff_sve_recps_rsqrts_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    let ops = [
-        ("frecps", 0),
-        ("frsqrts", 1),
-    ];
+    let ops = [("frecps", 0), ("frsqrts", 1)];
     for rmode in 0..4u64 {
         for (name, rsqrt) in ops {
             let mut st = ArmState::zeroed();
@@ -39738,7 +39988,11 @@ fn diff_sve_recps_rsqrts_fpcr_rounding() {
             }
             st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
             st.set_vreg(RM as usize, packed as u64, (packed >> 64) as u64);
-            batch.push((format!("{name}_h_rmode{rmode}"), enc_sve_recps(1, rsqrt), st));
+            batch.push((
+                format!("{name}_h_rmode{rmode}"),
+                enc_sve_recps(1, rsqrt),
+                st,
+            ));
 
             let mut st = ArmState::zeroed();
             st.fpcr = rmode << 22;
@@ -39749,7 +40003,11 @@ fn diff_sve_recps_rsqrts_fpcr_rounding() {
             }
             st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
             st.set_vreg(RM as usize, packed as u64, (packed >> 64) as u64);
-            batch.push((format!("{name}_s_rmode{rmode}"), enc_sve_recps(2, rsqrt), st));
+            batch.push((
+                format!("{name}_s_rmode{rmode}"),
+                enc_sve_recps(2, rsqrt),
+                st,
+            ));
 
             let mut st = ArmState::zeroed();
             st.fpcr = rmode << 22;
@@ -39757,7 +40015,11 @@ fn diff_sve_recps_rsqrts_fpcr_rounding() {
             let packed = (d.to_bits() as u128) | ((d.to_bits() as u128) << 64);
             st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
             st.set_vreg(RM as usize, packed as u64, (packed >> 64) as u64);
-            batch.push((format!("{name}_d_rmode{rmode}"), enc_sve_recps(3, rsqrt), st));
+            batch.push((
+                format!("{name}_d_rmode{rmode}"),
+                enc_sve_recps(3, rsqrt),
+                st,
+            ));
         }
     }
     run_batch("sve_recps_rsqrts_fpcr_rounding", batch);
@@ -39856,56 +40118,85 @@ fn diff_sve_fp_reduce() {
     }
 
     for &(sz, esize) in &[(1u32, 16u32), (2, 32), (3, 64)] {
-        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match sz {
-            1 => (
-                0xffff,
-                0x1111,
-                vec![
-                    (
-                        "h_zeros",
-                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
-                        vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                    ),
-                    (
-                        "h_lane_mix",
-                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200],
-                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    ),
-                ],
-            ),
-            2 => (
-                0xffff,
-                0x0101,
-                vec![
-                    (
-                        "s_zeros",
-                        vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
-                        vec![0x0000_0000, 0x8000_0000, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
-                    ),
-                    (
-                        "s_lane_mix",
-                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
-                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
-                    ),
-                ],
-            ),
-            _ => (
-                0xffff,
-                0x0001,
-                vec![
-                    (
-                        "d_zeros",
-                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
-                        vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
-                    ),
-                    (
-                        "d_lane_mix",
-                        vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
-                        vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
-                    ),
-                ],
-            ),
-        };
+        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) =
+            match sz {
+                1 => (
+                    0xffff,
+                    0x1111,
+                    vec![
+                        (
+                            "h_zeros",
+                            vec![
+                                0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                            ],
+                            vec![
+                                0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                            ],
+                        ),
+                        (
+                            "h_lane_mix",
+                            vec![
+                                0x3c00, 0xbc00, 0x4000, 0xc000, 0x3e00, 0xbe00, 0x4200, 0xc200,
+                            ],
+                            vec![
+                                0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
+                        ),
+                    ],
+                ),
+                2 => (
+                    0xffff,
+                    0x0101,
+                    vec![
+                        (
+                            "s_zeros",
+                            vec![
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                            ],
+                            vec![
+                                0x0000_0000,
+                                0x8000_0000,
+                                0.5f32.to_bits() as u64,
+                                (-0.5f32).to_bits() as u64,
+                            ],
+                        ),
+                        (
+                            "s_lane_mix",
+                            vec![
+                                16.0f32.to_bits() as u64,
+                                (-16.0f32).to_bits() as u64,
+                                0.25f32.to_bits() as u64,
+                                (-0.25f32).to_bits() as u64,
+                            ],
+                            vec![
+                                1.5f32.to_bits() as u64,
+                                (-2.5f32).to_bits() as u64,
+                                3.5f32.to_bits() as u64,
+                                (-4.5f32).to_bits() as u64,
+                            ],
+                        ),
+                    ],
+                ),
+                _ => (
+                    0xffff,
+                    0x0001,
+                    vec![
+                        (
+                            "d_zeros",
+                            vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                            vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                        ),
+                        (
+                            "d_lane_mix",
+                            vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                            vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                        ),
+                    ],
+                ),
+            };
         for &(opc6, name) in ops {
             let insn = (0x65 << 24) | (sz << 22) | (opc6 << 16) | (0b001 << 13) | (RN << 5) | RD;
             for (pattern_name, acc, zn) in &patterns {
@@ -39929,13 +40220,21 @@ fn diff_sve_fp_reduce() {
                 1 => vec![
                     (
                         "h_nan_inf",
-                        vec![0x3c00, 0xbc00, 0x7e00, 0x7c01, 0x0000, 0x8000, 0x7c00, 0xfc00],
-                        vec![0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x3c00, 0xbc00],
+                        vec![
+                            0x3c00, 0xbc00, 0x7e00, 0x7c01, 0x0000, 0x8000, 0x7c00, 0xfc00,
+                        ],
+                        vec![
+                            0x0000, 0x8000, 0x7c00, 0xfc00, 0x7e00, 0x7c01, 0x3c00, 0xbc00,
+                        ],
                     ),
                     (
                         "h_signed_zero",
-                        vec![0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000],
-                        vec![0x8000, 0x0000, 0x8000, 0x0000, 0xbc00, 0x3c00, 0xc000, 0x4000],
+                        vec![
+                            0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000,
+                        ],
+                        vec![
+                            0x8000, 0x0000, 0x8000, 0x0000, 0xbc00, 0x3c00, 0xc000, 0x4000,
+                        ],
                     ),
                 ],
                 2 => vec![
@@ -40067,7 +40366,11 @@ fn diff_fpcr_fiz_sve_faddv_subnormal_status() {
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FIZ;
     st.set_preg(0, 0x0101);
-    st.set_vreg(RN as usize, 9_007_199_254_740_992.0f64.to_bits(), 0x0000_0000_0000_0001);
+    st.set_vreg(
+        RN as usize,
+        9_007_199_254_740_992.0f64.to_bits(),
+        0x0000_0000_0000_0001,
+    );
     let insn = (0x65 << 24) | (3 << 22) | (0b000000 << 16) | (0b001 << 13) | (RN << 5) | RD;
     batch.push(("sve_faddv_d_fiz_min_subnorm_status".to_string(), insn, st));
 
@@ -40133,8 +40436,14 @@ fn diff_sve_reduce() {
         ];
         [
             ("zeros", vec![0; lanes]),
-            ("signed_extremes", (0..lanes).map(|lane| signed[lane % signed.len()]).collect()),
-            ("bitmix", (0..lanes).map(|lane| bitmix[lane % bitmix.len()]).collect()),
+            (
+                "signed_extremes",
+                (0..lanes).map(|lane| signed[lane % signed.len()]).collect(),
+            ),
+            (
+                "bitmix",
+                (0..lanes).map(|lane| bitmix[lane % bitmix.len()]).collect(),
+            ),
         ]
     }
 
@@ -40178,7 +40487,11 @@ fn diff_sve_reduce() {
                     let (lo, hi) = pack_lanes(sz, &values);
                     st.set_vreg(1, lo, hi);
                     st.set_preg(0, pg);
-                    batch.push((format!("{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("{name}_sz{sz}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -40305,19 +40618,9 @@ fn diff_sve_fp_arith_fpcr_rounding() {
 
         for &(opc, name, lhs, rhs) in &[
             (0b00, "fadd_pos", 9_007_199_254_740_992.0f64, 1.0f64),
-            (
-                0b00,
-                "fadd_neg",
-                -9_007_199_254_740_992.0f64,
-                -1.0f64,
-            ),
+            (0b00, "fadd_neg", -9_007_199_254_740_992.0f64, -1.0f64),
             (0b01, "fsub_pos", 9_007_199_254_740_992.0f64, -1.0f64),
-            (
-                0b01,
-                "fsub_neg",
-                -9_007_199_254_740_992.0f64,
-                1.0f64,
-            ),
+            (0b01, "fsub_neg", -9_007_199_254_740_992.0f64, 1.0f64),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -40492,11 +40795,7 @@ fn diff_sve_fp_pred_fpcr_rounding() {
             }
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-            batch.push((
-                format!("{name}_s_rmode{rmode}"),
-                enc_sve_fpp(2, opc5),
-                st,
-            ));
+            batch.push((format!("{name}_s_rmode{rmode}"), enc_sve_fpp(2, opc5), st));
         }
 
         let mut st = ArmState::zeroed();
@@ -40512,11 +40811,7 @@ fn diff_sve_fp_pred_fpcr_rounding() {
         }
         st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-        batch.push((
-            format!("fmul_s_rmode{rmode}"),
-            enc_sve_fpp(2, 0b00010),
-            st,
-        ));
+        batch.push((format!("fmul_s_rmode{rmode}"), enc_sve_fpp(2, 0b00010), st));
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
@@ -40531,34 +40826,15 @@ fn diff_sve_fp_pred_fpcr_rounding() {
         }
         st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-        batch.push((
-            format!("fmulx_s_rmode{rmode}"),
-            enc_sve_fpp(2, 0b01010),
-            st,
-        ));
+        batch.push((format!("fmulx_s_rmode{rmode}"), enc_sve_fpp(2, 0b01010), st));
 
         for &(opc5, name, lhs, rhs) in &[
             (0b00000, "fadd_pos", 9_007_199_254_740_992.0f64, 1.0f64),
-            (
-                0b00000,
-                "fadd_neg",
-                -9_007_199_254_740_992.0f64,
-                -1.0f64,
-            ),
+            (0b00000, "fadd_neg", -9_007_199_254_740_992.0f64, -1.0f64),
             (0b00001, "fsub_pos", 9_007_199_254_740_992.0f64, -1.0f64),
-            (
-                0b00001,
-                "fsub_neg",
-                -9_007_199_254_740_992.0f64,
-                1.0f64,
-            ),
+            (0b00001, "fsub_neg", -9_007_199_254_740_992.0f64, 1.0f64),
             (0b00011, "fsubr_pos", -1.0f64, 9_007_199_254_740_992.0f64),
-            (
-                0b00011,
-                "fsubr_neg",
-                1.0f64,
-                -9_007_199_254_740_992.0f64,
-            ),
+            (0b00011, "fsubr_neg", 1.0f64, -9_007_199_254_740_992.0f64),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -40571,11 +40847,7 @@ fn diff_sve_fp_pred_fpcr_rounding() {
             }
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-            batch.push((
-                format!("{name}_d_rmode{rmode}"),
-                enc_sve_fpp(3, opc5),
-                st,
-            ));
+            batch.push((format!("{name}_d_rmode{rmode}"), enc_sve_fpp(3, opc5), st));
         }
 
         let mut st = ArmState::zeroed();
@@ -40591,11 +40863,7 @@ fn diff_sve_fp_pred_fpcr_rounding() {
         }
         st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-        batch.push((
-            format!("fmul_d_rmode{rmode}"),
-            enc_sve_fpp(3, 0b00010),
-            st,
-        ));
+        batch.push((format!("fmul_d_rmode{rmode}"), enc_sve_fpp(3, 0b00010), st));
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
@@ -40610,11 +40878,7 @@ fn diff_sve_fp_pred_fpcr_rounding() {
         }
         st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-        batch.push((
-            format!("fmulx_d_rmode{rmode}"),
-            enc_sve_fpp(3, 0b01010),
-            st,
-        ));
+        batch.push((format!("fmulx_d_rmode{rmode}"), enc_sve_fpp(3, 0b01010), st));
     }
 
     run_batch("sve_fp_pred_fpcr_rounding", batch);
@@ -40894,16 +41158,8 @@ fn diff_fpcr_ah_sve_fp_compare_status() {
     let mut batch = Vec::new();
 
     for &(label, size, pattern) in &[
-        (
-            "s",
-            2,
-            0x3f80_0000_0000_0000_7f80_0000_0000_0001u128,
-        ),
-        (
-            "d",
-            3,
-            0x0000_0000_0000_0001_7ff8_0000_0000_2000u128,
-        ),
+        ("s", 2, 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128),
+        ("d", 3, 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128),
     ] {
         for &(name, insn) in &[
             ("fcmge", enc_sve_fp_cmp(size, 0b010, 0)),
@@ -41010,13 +41266,21 @@ fn diff_sve_fp_pred() {
                 vec![
                     (
                         "h_basic",
-                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                        vec![
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        vec![
+                            0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                        ],
                     ),
                     (
                         "h_lane_mix",
-                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                        vec![
+                            0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        vec![
+                            0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                        ],
                     ),
                 ],
             ),
@@ -41025,13 +41289,33 @@ fn diff_sve_fp_pred() {
                 vec![
                     (
                         "s_basic",
-                        vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
-                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                        vec![
+                            1.0f32.to_bits() as u64,
+                            (-1.0f32).to_bits() as u64,
+                            2.0f32.to_bits() as u64,
+                            (-2.0f32).to_bits() as u64,
+                        ],
+                        vec![
+                            1.5f32.to_bits() as u64,
+                            (-2.5f32).to_bits() as u64,
+                            3.5f32.to_bits() as u64,
+                            (-4.5f32).to_bits() as u64,
+                        ],
                     ),
                     (
                         "s_lane_mix",
-                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
-                        vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                        vec![
+                            16.0f32.to_bits() as u64,
+                            (-16.0f32).to_bits() as u64,
+                            0.25f32.to_bits() as u64,
+                            (-0.25f32).to_bits() as u64,
+                        ],
+                        vec![
+                            0.5f32.to_bits() as u64,
+                            (-0.75f32).to_bits() as u64,
+                            4.0f32.to_bits() as u64,
+                            (-8.0f32).to_bits() as u64,
+                        ],
                     ),
                 ],
             ),
@@ -41073,13 +41357,21 @@ fn diff_sve_fp_pred() {
                 vec![
                     (
                         "h_nan_inf",
-                        vec![0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000],
-                        vec![0x3c00, 0xfc00, 0x7e00, 0x0000, 0xbc00, 0x7c00, 0xfc01, 0x8000],
+                        vec![
+                            0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000,
+                        ],
+                        vec![
+                            0x3c00, 0xfc00, 0x7e00, 0x0000, 0xbc00, 0x7c00, 0xfc01, 0x8000,
+                        ],
                     ),
                     (
                         "h_inactive_snan",
-                        vec![0x3c00, 0x7c01, 0xbc00, 0xfc01, 0x7c00, 0x0000, 0xfc00, 0x8000],
-                        vec![0x4000, 0x7e00, 0xc000, 0xfe00, 0xfc00, 0x8000, 0x7c00, 0x0000],
+                        vec![
+                            0x3c00, 0x7c01, 0xbc00, 0xfc01, 0x7c00, 0x0000, 0xfc00, 0x8000,
+                        ],
+                        vec![
+                            0x4000, 0x7e00, 0xc000, 0xfe00, 0xfc00, 0x8000, 0x7c00, 0x0000,
+                        ],
                     ),
                 ],
             ),
@@ -41093,7 +41385,12 @@ fn diff_sve_fp_pred() {
                     ),
                     (
                         "s_inactive_snan",
-                        vec![3.0f32.to_bits() as u64, 0x7f80_0001, (-4.0f32).to_bits() as u64, 0xff80_0001],
+                        vec![
+                            3.0f32.to_bits() as u64,
+                            0x7f80_0001,
+                            (-4.0f32).to_bits() as u64,
+                            0xff80_0001,
+                        ],
                         vec![0x4000_0000, 0x7fc0_0000, 0xc000_0000, 0xffc0_0000],
                     ),
                 ],
@@ -41188,16 +41485,15 @@ fn diff_sve_fp_pred_imm() {
         let (mixed, values): (u16, Vec<u64>) = match sz {
             1 => (
                 0x1111,
-                vec![0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000],
+                vec![
+                    0x7c01, 0x7e00, 0x7c00, 0x8000, 0xfc01, 0xfe00, 0xfc00, 0x0000,
+                ],
             ),
             2 => (
                 0x0101,
                 vec![0x7f80_0001, 0x7fc0_0000, 0x7f80_0000, 0x8000_0000],
             ),
-            _ => (
-                0x0001,
-                vec![0x7ff0_0000_0000_0001, 0x7ff8_0000_0000_0000],
-            ),
+            _ => (0x0001, vec![0x7ff0_0000_0000_0001, 0x7ff8_0000_0000_0000]),
         };
         for &(opc5, name) in ops {
             for imm1 in 0..=1 {
@@ -41221,7 +41517,9 @@ fn diff_sve_fp_pred_imm() {
             "h",
             1u32,
             16u32,
-            vec![0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000],
+            vec![
+                0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000,
+            ],
         ),
         ("s", 2, 32, vec![0x8000_0000, 0, 0x8000_0000, 0]),
         ("d", 3, 64, vec![0x8000_0000_0000_0000, 0]),
@@ -41264,14 +41562,23 @@ fn diff_fpcr_ah_sve_fabd_nan_sign() {
     for &(label, size, lo, hi) in &[
         ("h", 1, pack_h(0xfe01).0, pack_h(0xfe01).1),
         ("s", 2, pack_s(0xffc0_2000).0, pack_s(0xffc0_2000).1),
-        ("d", 3, pack_d(0xfff8_0000_0000_2000).0, pack_d(0xfff8_0000_0000_2000).1),
+        (
+            "d",
+            3,
+            pack_d(0xfff8_0000_0000_2000).0,
+            pack_d(0xfff8_0000_0000_2000).1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_preg(0, 0xffff);
         st.set_vreg(RD as usize, lo, hi);
         st.set_vreg(RN as usize, lo, hi);
-        batch.push((format!("sve_fabd_{label}_ah_negative_qnan"), enc_sve_fpp(size, 0b01000), st));
+        batch.push((
+            format!("sve_fabd_{label}_ah_negative_qnan"),
+            enc_sve_fpp(size, 0b01000),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_sve_fabd_nan_sign", batch);
@@ -41280,9 +41587,8 @@ fn diff_fpcr_ah_sve_fabd_nan_sign() {
 #[test]
 fn diff_fpcr_ah_sve_fmin_zero_immediate_sign() {
     const FPCR_AH: u64 = 1 << 1;
-    let enc_fmin_zero = |size: u32| -> u32 {
-        (0x65 << 24) | (size << 22) | (0b11111 << 16) | (0b100 << 13) | RD
-    };
+    let enc_fmin_zero =
+        |size: u32| -> u32 { (0x65 << 24) | (size << 22) | (0b11111 << 16) | (0b100 << 13) | RD };
     let pack_h = |value: u16| -> (u64, u64) {
         let mut packed = 0u128;
         for lane in 0..8 {
@@ -41303,13 +41609,22 @@ fn diff_fpcr_ah_sve_fmin_zero_immediate_sign() {
     for &(label, size, lo, hi) in &[
         ("h", 1, pack_h(0x8000).0, pack_h(0x8000).1),
         ("s", 2, pack_s(0x8000_0000).0, pack_s(0x8000_0000).1),
-        ("d", 3, pack_d(0x8000_0000_0000_0000).0, pack_d(0x8000_0000_0000_0000).1),
+        (
+            "d",
+            3,
+            pack_d(0x8000_0000_0000_0000).0,
+            pack_d(0x8000_0000_0000_0000).1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_preg(0, 0xffff);
         st.set_vreg(RD as usize, lo, hi);
-        batch.push((format!("sve_fmin_{label}_ah_zero_immediate"), enc_fmin_zero(size), st));
+        batch.push((
+            format!("sve_fmin_{label}_ah_zero_immediate"),
+            enc_fmin_zero(size),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_sve_fmin_zero_immediate_sign", batch);
@@ -41357,13 +41672,21 @@ fn diff_sve_palu() {
         [
             (
                 "signed_safe",
-                (0..lanes).map(|lane| lhs_safe[lane % lhs_safe.len()]).collect(),
-                (0..lanes).map(|lane| rhs_safe[lane % rhs_safe.len()]).collect(),
+                (0..lanes)
+                    .map(|lane| lhs_safe[lane % lhs_safe.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| rhs_safe[lane % rhs_safe.len()])
+                    .collect(),
             ),
             (
                 "bitmix",
-                (0..lanes).map(|lane| lhs_bits[lane % lhs_bits.len()]).collect(),
-                (0..lanes).map(|lane| rhs_bits[lane % rhs_bits.len()]).collect(),
+                (0..lanes)
+                    .map(|lane| lhs_bits[lane % lhs_bits.len()])
+                    .collect(),
+                (0..lanes)
+                    .map(|lane| rhs_bits[lane % rhs_bits.len()])
+                    .collect(),
             ),
         ]
     }
@@ -41428,7 +41751,11 @@ fn diff_sve_palu() {
                     let (lo, hi) = pack_lanes(sz, &zm);
                     st.set_vreg(1, lo, hi);
                     st.set_preg(0, pg);
-                    batch.push((format!("p{name}_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("p{name}_sz{sz}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -41438,12 +41765,7 @@ fn diff_sve_palu() {
 
 #[test]
 fn diff_sve_palu_div_unallocated_edges() {
-    let ops = [
-        (4u32, "sdiv"),
-        (5, "udiv"),
-        (6, "sdivr"),
-        (7, "udivr"),
-    ];
+    let ops = [(4u32, "sdiv"), (5, "udiv"), (6, "sdivr"), (7, "udivr")];
     let mut rng = Rng::new(0x1_0025);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
@@ -41629,23 +41951,23 @@ fn diff_sve_ext() {
         (
             "identity",
             [
-                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
-                0x0d, 0x0e, 0x0f,
+                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+                0x0e, 0x0f,
             ],
             [
-                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c,
-                0x8d, 0x8e, 0x8f,
+                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d,
+                0x8e, 0x8f,
             ],
         ),
         (
             "edges",
             [
-                0x00, 0xff, 0x01, 0xfe, 0x7f, 0x80, 0x55, 0xaa, 0x10, 0xef, 0x20, 0xdf, 0x40,
-                0xbf, 0x08, 0xf7,
+                0x00, 0xff, 0x01, 0xfe, 0x7f, 0x80, 0x55, 0xaa, 0x10, 0xef, 0x20, 0xdf, 0x40, 0xbf,
+                0x08, 0xf7,
             ],
             [
-                0xf0, 0x0f, 0xe0, 0x1f, 0xc0, 0x3f, 0x80, 0x7f, 0xaa, 0x55, 0x99, 0x66, 0x33,
-                0xcc, 0x5a, 0xa5,
+                0xf0, 0x0f, 0xe0, 0x1f, 0xc0, 0x3f, 0x80, 0x7f, 0xaa, 0x55, 0x99, 0x66, 0x33, 0xcc,
+                0x5a, 0xa5,
             ],
         ),
     ];
@@ -41804,13 +42126,7 @@ fn diff_sve_fcvt() {
             ],
             _ => vec![
                 ("basic", vec![1.0f64.to_bits(), (-1.0f64).to_bits()]),
-                (
-                    "lane_mix",
-                    vec![
-                        0.5f64.to_bits(),
-                        (-16.0f64).to_bits(),
-                    ],
-                ),
+                ("lane_mix", vec![0.5f64.to_bits(), (-16.0f64).to_bits()]),
             ],
         };
         patterns
@@ -42217,8 +42533,12 @@ fn diff_sve2_fmlal() {
     }
     for &(sub, top, name) in &variants {
         let insn = enc_sve2_fmlal(sub, top);
-        let zn_lanes = [0x7c01u16, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00];
-        let zm_lanes = [0x3c00u16, 0xbc00, 0x0000, 0x8000, 0x7c01, 0x7e00, 0x4000, 0xc000];
+        let zn_lanes = [
+            0x7c01u16, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00,
+        ];
+        let zm_lanes = [
+            0x3c00u16, 0xbc00, 0x0000, 0x8000, 0x7c01, 0x7e00, 0x4000, 0xc000,
+        ];
         let zd_lanes = [0u32, 0x7fa0_0001, 0x7fc0_1234, 0xff80_0000];
         let mut zn = 0u128;
         let mut zm = 0u128;
@@ -42243,28 +42563,48 @@ fn diff_sve2_fmlal() {
 fn diff_sve2_fmlal_fpcr_rounding() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     let variants = [
-        ("fmlalb_pos", enc_sve2_fmlal(0, 0), 16_777_216.0f32, 0x3c00u16),
+        (
+            "fmlalb_pos",
+            enc_sve2_fmlal(0, 0),
+            16_777_216.0f32,
+            0x3c00u16,
+        ),
         (
             "fmlalb_neg",
             enc_sve2_fmlal(0, 0),
             -16_777_216.0f32,
             0xbc00u16,
         ),
-        ("fmlalt_pos", enc_sve2_fmlal(0, 1), 16_777_216.0f32, 0x3c00u16),
+        (
+            "fmlalt_pos",
+            enc_sve2_fmlal(0, 1),
+            16_777_216.0f32,
+            0x3c00u16,
+        ),
         (
             "fmlalt_neg",
             enc_sve2_fmlal(0, 1),
             -16_777_216.0f32,
             0xbc00u16,
         ),
-        ("fmlslb_pos", enc_sve2_fmlal(1, 0), 16_777_216.0f32, 0xbc00u16),
+        (
+            "fmlslb_pos",
+            enc_sve2_fmlal(1, 0),
+            16_777_216.0f32,
+            0xbc00u16,
+        ),
         (
             "fmlslb_neg",
             enc_sve2_fmlal(1, 0),
             -16_777_216.0f32,
             0x3c00u16,
         ),
-        ("fmlslt_pos", enc_sve2_fmlal(1, 1), 16_777_216.0f32, 0xbc00u16),
+        (
+            "fmlslt_pos",
+            enc_sve2_fmlal(1, 1),
+            16_777_216.0f32,
+            0xbc00u16,
+        ),
         (
             "fmlslt_neg",
             enc_sve2_fmlal(1, 1),
@@ -42401,11 +42741,7 @@ fn diff_sve2_fmlsl_fpcr_ah_nan_sign() {
 
     run_batch(
         "sve2_fmlsl_fpcr_ah_nan_sign",
-        vec![(
-            "sve_fmlslb_ah_qnan".to_string(),
-            enc_sve2_fmlal(1, 0),
-            st,
-        )],
+        vec![("sve_fmlslb_ah_qnan".to_string(), enc_sve2_fmlal(1, 0), st)],
     );
 }
 
@@ -42460,26 +42796,40 @@ fn diff_sve_bfdot() {
         (
             "zeros",
             [0.0, -0.0, 0.0, -0.0],
-            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [
+                0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+            ],
             [0x3f80; 8],
         ),
         (
             "ones",
             [1.0, -1.0, 2.0, -2.0],
-            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
-            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+            [
+                0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080,
+            ],
+            [
+                0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00,
+            ],
         ),
         (
             "lane_mix",
             [16.0, -16.0, 0.5, -0.5],
-            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
-            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+            [
+                0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080,
+            ],
+            [
+                0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060,
+            ],
         ),
         (
             "small_normals",
             [0.0, 1.0, -1.0, 8.0],
-            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
-            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+            [
+                0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000,
+            ],
+            [
+                0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000,
+            ],
         ),
         (
             "nan_inf",
@@ -42489,8 +42839,12 @@ fn diff_sve_bfdot() {
                 f32::from_bits(0x7fa0_0001),
                 f32::NEG_INFINITY,
             ],
-            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
-            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
+            [
+                0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80,
+            ],
+            [
+                0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0,
+            ],
         ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {
@@ -42574,26 +42928,40 @@ fn diff_sve_bfmlal() {
         (
             "zeros",
             [0.0, -0.0, 0.0, -0.0],
-            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [
+                0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+            ],
             [0x3f80; 8],
         ),
         (
             "ones",
             [1.0, -1.0, 2.0, -2.0],
-            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
-            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+            [
+                0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080,
+            ],
+            [
+                0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00,
+            ],
         ),
         (
             "lane_mix",
             [16.0, -16.0, 0.5, -0.5],
-            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
-            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+            [
+                0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080,
+            ],
+            [
+                0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060,
+            ],
         ),
         (
             "small_normals",
             [0.0, 1.0, -1.0, 8.0],
-            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
-            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+            [
+                0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000,
+            ],
+            [
+                0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000,
+            ],
         ),
         (
             "nan_inf",
@@ -42603,8 +42971,12 @@ fn diff_sve_bfmlal() {
                 f32::from_bits(0x7fa0_0001),
                 f32::NEG_INFINITY,
             ],
-            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
-            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
+            [
+                0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80,
+            ],
+            [
+                0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0,
+            ],
         ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {
@@ -43098,24 +43470,56 @@ fn diff_sve_fscale() {
             1 => vec![
                 (
                     "h_basic",
-                    vec![0x3c00, 0xbc00, 0x3800, 0xb800, 0x4000, 0xc000, 0x4200, 0xc200],
-                    vec![0, 1, (-1i64) as u64, 2, (-2i64) as u64, 4, (-4i64) as u64, 8],
+                    vec![
+                        0x3c00, 0xbc00, 0x3800, 0xb800, 0x4000, 0xc000, 0x4200, 0xc200,
+                    ],
+                    vec![
+                        0,
+                        1,
+                        (-1i64) as u64,
+                        2,
+                        (-2i64) as u64,
+                        4,
+                        (-4i64) as u64,
+                        8,
+                    ],
                 ),
                 (
                     "h_lane_mix",
-                    vec![0x3555, 0xb555, 0x3e00, 0xbe00, 0x4100, 0xc100, 0x4480, 0xc480],
-                    vec![(-8i64) as u64, 6, (-6i64) as u64, 3, (-3i64) as u64, 0, 1, (-1i64) as u64],
+                    vec![
+                        0x3555, 0xb555, 0x3e00, 0xbe00, 0x4100, 0xc100, 0x4480, 0xc480,
+                    ],
+                    vec![
+                        (-8i64) as u64,
+                        6,
+                        (-6i64) as u64,
+                        3,
+                        (-3i64) as u64,
+                        0,
+                        1,
+                        (-1i64) as u64,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_basic",
-                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        0.5f32.to_bits() as u64,
+                        (-0.5f32).to_bits() as u64,
+                    ],
                     vec![0, 1, (-1i64) as u64, 8],
                 ),
                 (
                     "s_lane_mix",
-                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![
+                        1.5f32.to_bits() as u64,
+                        (-2.5f32).to_bits() as u64,
+                        4.0f32.to_bits() as u64,
+                        (-8.0f32).to_bits() as u64,
+                    ],
                     vec![(-8i64) as u64, 5, (-5i64) as u64, 0],
                 ),
             ],
@@ -43171,7 +43575,11 @@ fn diff_sve_fscale() {
                 let (lo, hi) = pack_lanes(size, &zm);
                 st.set_vreg(1, lo, hi);
                 st.set_preg(0, pg);
-                batch.push((format!("fscale_s{size}_{pattern_name}_{mask_name}"), insn, st));
+                batch.push((
+                    format!("fscale_s{size}_{pattern_name}_{mask_name}"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
@@ -43184,7 +43592,12 @@ fn diff_sve_fscale_fpcr_rounding() {
     for rmode in 0..4u64 {
         for &(name, h, s, d) in &[
             ("pos", 0x7bffu16, f32::MAX.to_bits(), f64::MAX.to_bits()),
-            ("neg", 0xfbffu16, (-f32::MAX).to_bits(), (-f64::MAX).to_bits()),
+            (
+                "neg",
+                0xfbffu16,
+                (-f32::MAX).to_bits(),
+                (-f64::MAX).to_bits(),
+            ),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = rmode << 22;
@@ -43235,8 +43648,18 @@ fn diff_sve_fscale_fpcr_rounding() {
         }
 
         for &(name, h, s, d) in &[
-            ("tiny_pos", 0x0001u16, 0x0000_0001u32, 0x0000_0000_0000_0001u64),
-            ("tiny_neg", 0x8001u16, 0x8000_0001u32, 0x8000_0000_0000_0001u64),
+            (
+                "tiny_pos",
+                0x0001u16,
+                0x0000_0001u32,
+                0x0000_0000_0000_0001u64,
+            ),
+            (
+                "tiny_neg",
+                0x8001u16,
+                0x8000_0001u32,
+                0x8000_0000_0000_0001u64,
+            ),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = rmode << 22;
@@ -43330,31 +43753,29 @@ fn diff_fpcr_ah_sve_scale_input_status() {
     let mut batch = Vec::new();
 
     for &(name, size, packed, rm) in &[
-        (
-            "s",
-            2,
-            0x3f80_0000_0000_0000_7f80_0000_0000_0001u128,
-            0u128,
-        ),
-        (
-            "d",
-            3,
-            0x3ff0_0000_0000_0000_0000_0000_0000_0001u128,
-            0u128,
-        ),
+        ("s", 2, 0x3f80_0000_0000_0000_7f80_0000_0000_0001u128, 0u128),
+        ("d", 3, 0x3ff0_0000_0000_0000_0000_0000_0000_0001u128, 0u128),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_preg(0, 0xffff);
         st.set_vreg(RD as usize, packed as u64, (packed >> 64) as u64);
         st.set_vreg(RN as usize, rm as u64, (rm >> 64) as u64);
-        batch.push((format!("fscale_{name}_ah_subnormal_status"), enc_sve_fscale(size), st));
+        batch.push((
+            format!("fscale_{name}_ah_subnormal_status"),
+            enc_sve_fscale(size),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
         st.set_vreg(RM as usize, 0, 0);
-        batch.push((format!("ftsmul_{name}_ah_subnormal_status"), enc_sve_ftsmul(size), st));
+        batch.push((
+            format!("ftsmul_{name}_ah_subnormal_status"),
+            enc_sve_ftsmul(size),
+            st,
+        ));
     }
 
     let mut st = ArmState::zeroed();
@@ -43363,7 +43784,11 @@ fn diff_fpcr_ah_sve_scale_input_status() {
     let mixed_s = 0x0000_0000_0000_0001_7ff8_0000_0000_2000u128;
     st.set_vreg(RD as usize, mixed_s as u64, (mixed_s >> 64) as u64);
     st.set_vreg(RN as usize, mixed_s as u64, (mixed_s >> 64) as u64);
-    batch.push(("fscale_s_ah_mixed_nan_subnormal_status".to_string(), enc_sve_fscale(2), st));
+    batch.push((
+        "fscale_s_ah_mixed_nan_subnormal_status".to_string(),
+        enc_sve_fscale(2),
+        st,
+    ));
 
     run_batch("fpcr_ah_sve_scale_input_status", batch);
 }
@@ -43482,29 +43907,71 @@ fn diff_sve_fp_indexed() {
             1 => vec![
                 (
                     "h_basic",
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                    vec![
+                        0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
                 ),
                 (
                     "h_lane_mix",
-                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                    vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                    ],
+                    vec![
+                        0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                    vec![
+                        0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_basic",
-                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
-                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
-                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        2.0f32.to_bits() as u64,
+                        (-2.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        1.5f32.to_bits() as u64,
+                        (-2.5f32).to_bits() as u64,
+                        3.5f32.to_bits() as u64,
+                        (-4.5f32).to_bits() as u64,
+                    ],
+                    vec![
+                        0.5f32.to_bits() as u64,
+                        (-0.75f32).to_bits() as u64,
+                        4.0f32.to_bits() as u64,
+                        (-8.0f32).to_bits() as u64,
+                    ],
                 ),
                 (
                     "s_lane_mix",
-                    vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
-                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
-                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    vec![
+                        16.0f32.to_bits() as u64,
+                        (-16.0f32).to_bits() as u64,
+                        0.25f32.to_bits() as u64,
+                        (-0.25f32).to_bits() as u64,
+                    ],
+                    vec![
+                        0.5f32.to_bits() as u64,
+                        (-0.75f32).to_bits() as u64,
+                        4.0f32.to_bits() as u64,
+                        (-8.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        1.5f32.to_bits() as u64,
+                        (-2.5f32).to_bits() as u64,
+                        3.5f32.to_bits() as u64,
+                        (-4.5f32).to_bits() as u64,
+                    ],
                 ),
             ],
             _ => vec![
@@ -43529,22 +43996,39 @@ fn diff_sve_fp_indexed() {
             1 => vec![
                 (
                     "h_nan_inf",
-                    vec![0x0000, 0x7c01, 0x7e00, 0xfc00, 0x7c00, 0x8000, 0x3c00, 0xbc00],
-                    vec![0x3c00, 0xbc00, 0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000],
-                    vec![0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00],
+                    vec![
+                        0x0000, 0x7c01, 0x7e00, 0xfc00, 0x7c00, 0x8000, 0x3c00, 0xbc00,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000,
+                    ],
+                    vec![
+                        0x7c01, 0x7e00, 0x7c00, 0xfc00, 0x0000, 0x8000, 0x3c00, 0xbc00,
+                    ],
                 ),
                 (
                     "h_signed_zero",
-                    vec![0x8000, 0x0000, 0x8000, 0x0000, 0x3c00, 0xbc00, 0x4000, 0xc000],
-                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x0001, 0x8001, 0x7c00, 0xfc00],
-                    vec![0x8000, 0x0000, 0x7e00, 0xfe00, 0x3c00, 0xbc00, 0x4000, 0xc000],
+                    vec![
+                        0x8000, 0x0000, 0x8000, 0x0000, 0x3c00, 0xbc00, 0x4000, 0xc000,
+                    ],
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x0001, 0x8001, 0x7c00, 0xfc00,
+                    ],
+                    vec![
+                        0x8000, 0x0000, 0x7e00, 0xfe00, 0x3c00, 0xbc00, 0x4000, 0xc000,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_nan_inf",
                     vec![0, 0x7f80_0001, 0x7fc0_0000, 0xff80_0000],
-                    vec![1.0f32.to_bits() as u64, 0xbf80_0000, 0x7f80_0001, 0x7fc0_0000],
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        0xbf80_0000,
+                        0x7f80_0001,
+                        0x7fc0_0000,
+                    ],
                     vec![0x7f80_0001, 0x7fc0_0000, 0x7f80_0000, 0xff80_0000],
                 ),
                 (
@@ -43601,7 +44085,11 @@ fn diff_sve_fp_indexed() {
                     st.set_vreg(1, lo, hi);
                     let (lo, hi) = pack_fp(size, &zm);
                     st.set_vreg(2, lo, hi);
-                    batch.push((format!("{name}_idx_s{size}_i{index}_{pattern_name}"), insn, st));
+                    batch.push((
+                        format!("{name}_idx_s{size}_i{index}_{pattern_name}"),
+                        insn,
+                        st,
+                    ));
                 }
                 for (pattern_name, zd, zn, zm) in indexed_special_patterns(size) {
                     let mut st = ArmState::zeroed();
@@ -43611,7 +44099,11 @@ fn diff_sve_fp_indexed() {
                     st.set_vreg(1, lo, hi);
                     let (lo, hi) = pack_fp(size, &zm);
                     st.set_vreg(2, lo, hi);
-                    batch.push((format!("{name}_idx_s{size}_i{index}_{pattern_name}"), insn, st));
+                    batch.push((
+                        format!("{name}_idx_s{size}_i{index}_{pattern_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -43995,25 +44487,48 @@ fn diff_sve_recps() {
             1 => vec![
                 (
                     "h_zero_inf",
-                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000],
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x0000, 0x8000, 0x7c00, 0xfc00],
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x0000, 0x8000, 0x7c00, 0xfc00,
+                    ],
                 ),
                 (
                     "h_nan_mix",
-                    vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000],
-                    vec![0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000],
+                    vec![
+                        0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_zero_inf",
-                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
-                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 0x7f80_0000, 0xff80_0000],
+                    vec![
+                        0x0000_0000,
+                        0x8000_0000,
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        0x7f80_0000,
+                        0xff80_0000,
+                    ],
                 ),
                 (
                     "s_nan_mix",
                     vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001],
-                    vec![0xff80_0000, 0x7f80_0000, 1.0f32.to_bits() as u64, 0x7fc0_0001],
+                    vec![
+                        0xff80_0000,
+                        0x7f80_0000,
+                        1.0f32.to_bits() as u64,
+                        0x7fc0_0001,
+                    ],
                 ),
             ],
             _ => vec![
@@ -44117,7 +44632,11 @@ fn diff_sve_dot() {
         batch.push(("usdot_v".to_string(), insn, setup(&mut rng)));
     }
     for (pattern_name, acc, zn, zm) in patterns {
-        batch.push((format!("usdot_v_{pattern_name}"), insn, setup_raw(acc, zn, zm)));
+        batch.push((
+            format!("usdot_v_{pattern_name}"),
+            insn,
+            setup_raw(acc, zn, zm),
+        ));
     }
     let idxops = [
         (0u32, 0b000000u32, "sdot"),
@@ -44167,29 +44686,71 @@ fn diff_sve_fp_fma() {
             1 => vec![
                 (
                     "h_basic",
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                    vec![
+                        0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                    vec![
+                        0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                    ],
                 ),
                 (
                     "h_lane_mix",
-                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                    vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                    ],
+                    vec![
+                        0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_basic",
-                    vec![1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64, 2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64],
-                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
-                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
+                    vec![
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                        2.0f32.to_bits() as u64,
+                        (-2.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        1.5f32.to_bits() as u64,
+                        (-2.5f32).to_bits() as u64,
+                        3.5f32.to_bits() as u64,
+                        (-4.5f32).to_bits() as u64,
+                    ],
+                    vec![
+                        0.5f32.to_bits() as u64,
+                        (-0.75f32).to_bits() as u64,
+                        4.0f32.to_bits() as u64,
+                        (-8.0f32).to_bits() as u64,
+                    ],
                 ),
                 (
                     "s_lane_mix",
-                    vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
-                    vec![0.5f32.to_bits() as u64, (-0.75f32).to_bits() as u64, 4.0f32.to_bits() as u64, (-8.0f32).to_bits() as u64],
-                    vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
+                    vec![
+                        16.0f32.to_bits() as u64,
+                        (-16.0f32).to_bits() as u64,
+                        0.25f32.to_bits() as u64,
+                        (-0.25f32).to_bits() as u64,
+                    ],
+                    vec![
+                        0.5f32.to_bits() as u64,
+                        (-0.75f32).to_bits() as u64,
+                        4.0f32.to_bits() as u64,
+                        (-8.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        1.5f32.to_bits() as u64,
+                        (-2.5f32).to_bits() as u64,
+                        3.5f32.to_bits() as u64,
+                        (-4.5f32).to_bits() as u64,
+                    ],
                 ),
             ],
             _ => vec![
@@ -44242,7 +44803,11 @@ fn diff_sve_fp_fma() {
                     let (lo, hi) = pack_fp(size, &zm);
                     st.set_vreg(2, lo, hi);
                     st.set_preg(0, pg);
-                    batch.push((format!("fma_s{size}_op{op3}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("fma_s{size}_op{op3}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -44279,11 +44844,7 @@ fn diff_sve_fp_fma_fpcr_rounding() {
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
             st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-            batch.push((
-                format!("{name}_s_rmode{rmode}"),
-                enc_sve_fp_fma(2, op3),
-                st,
-            ));
+            batch.push((format!("{name}_s_rmode{rmode}"), enc_sve_fp_fma(2, op3), st));
         }
 
         for &(op3, name, acc_sign, n_sign) in &[
@@ -44309,11 +44870,7 @@ fn diff_sve_fp_fma_fpcr_rounding() {
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
             st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-            batch.push((
-                format!("{name}_d_rmode{rmode}"),
-                enc_sve_fp_fma(3, op3),
-                st,
-            ));
+            batch.push((format!("{name}_d_rmode{rmode}"), enc_sve_fp_fma(3, op3), st));
         }
     }
 
@@ -44348,7 +44905,11 @@ fn diff_sve_fp_fma_fpcr_ah_nan_sign() {
             st.set_vreg(RD as usize, a as u64, (a >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
             st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-            batch.push((format!("{name}_s{size}_ah_qnan"), enc_sve_fp_fma(size, op3), st));
+            batch.push((
+                format!("{name}_s{size}_ah_qnan"),
+                enc_sve_fp_fma(size, op3),
+                st,
+            ));
         }
     }
 
@@ -44377,7 +44938,11 @@ fn diff_fpcr_ah_sve_fp_fma_status() {
         st.set_vreg(RD as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RN as usize, pattern as u64, (pattern >> 64) as u64);
         st.set_vreg(RM as usize, pattern as u64, (pattern >> 64) as u64);
-        batch.push((format!("sve_{name}_s_ah_status"), enc_sve_fp_fma(2, op3), st));
+        batch.push((
+            format!("sve_{name}_s_ah_status"),
+            enc_sve_fp_fma(2, op3),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_sve_fp_fma_status", batch);
@@ -45050,7 +45615,15 @@ fn diff_sve2_pred_alu() {
         };
         let sign = 1u64 << (bits - 1);
         let lhs = [0, 1, sign - 1, sign, sign + 1, mask - 1, mask];
-        let rhs = [0, 1, bits as u64 - 1, bits as u64, bits as u64 + 1, sign - 1, mask];
+        let rhs = [
+            0,
+            1,
+            bits as u64 - 1,
+            bits as u64,
+            bits as u64 + 1,
+            sign - 1,
+            mask,
+        ];
         (
             (0..lanes).map(|lane| lhs[lane % lhs.len()]).collect(),
             (0..lanes).map(|lane| rhs[lane % rhs.len()]).collect(),
@@ -45264,25 +45837,48 @@ fn diff_sve_fp_cmp() {
             1 => vec![
                 (
                     "h_zero_inf",
-                    vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000],
-                    vec![0x0000, 0x0000, 0xbc00, 0x3c00, 0xfc00, 0x7c00, 0x3c00, 0xbc00],
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000,
+                    ],
+                    vec![
+                        0x0000, 0x0000, 0xbc00, 0x3c00, 0xfc00, 0x7c00, 0x3c00, 0xbc00,
+                    ],
                 ),
                 (
                     "h_nan_mix",
-                    vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000],
-                    vec![0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000],
+                    vec![
+                        0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000,
+                    ],
+                    vec![
+                        0x3c00, 0xbc00, 0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x0000, 0x8000,
+                    ],
                 ),
             ],
             2 => vec![
                 (
                     "s_zero_inf",
-                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
-                    vec![0x0000_0000, 0x0000_0000, (-1.0f32).to_bits() as u64, 1.0f32.to_bits() as u64],
+                    vec![
+                        0x0000_0000,
+                        0x8000_0000,
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                    ],
+                    vec![
+                        0x0000_0000,
+                        0x0000_0000,
+                        (-1.0f32).to_bits() as u64,
+                        1.0f32.to_bits() as u64,
+                    ],
                 ),
                 (
                     "s_nan_mix",
                     vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001],
-                    vec![0xff80_0000, 0x7f80_0000, 1.0f32.to_bits() as u64, 0x7fc0_0001],
+                    vec![
+                        0xff80_0000,
+                        0x7f80_0000,
+                        1.0f32.to_bits() as u64,
+                        0x7fc0_0001,
+                    ],
                 ),
             ],
             _ => vec![
@@ -45357,7 +45953,11 @@ fn diff_sve_fp_cmp() {
                     let (lo, hi) = pack_fp_lanes(size, &zm);
                     st.set_vreg(2, lo, hi);
                     st.set_preg(1, pg);
-                    batch.push((format!("fcmp_s{size}_c{cc13}{bit4}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("fcmp_s{size}_c{cc13}{bit4}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
             for (sub, bit4) in zeroconds {
@@ -45368,7 +45968,11 @@ fn diff_sve_fp_cmp() {
                     let (lo, hi) = pack_fp_lanes(size, &zn);
                     st.set_vreg(1, lo, hi);
                     st.set_preg(1, pg);
-                    batch.push((format!("fcmp0_s{size}_c{sub}{bit4}_{pattern_name}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("fcmp0_s{size}_c{sub}{bit4}_{pattern_name}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -45519,7 +46123,11 @@ fn diff_sve_cmp_imm() {
                     let (lo, hi) = pack_lanes(size, &values);
                     st.set_vreg(1, lo, hi);
                     st.set_preg(1, pg);
-                    batch.push((format!("cmps_s{size}_c{cc13}{bit4}_i{imm5}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("cmps_s{size}_c{cc13}{bit4}_i{imm5}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -45532,7 +46140,11 @@ fn diff_sve_cmp_imm() {
                     let (lo, hi) = pack_lanes(size, &values);
                     st.set_vreg(1, lo, hi);
                     st.set_preg(1, pg);
-                    batch.push((format!("cmpu_s{size}_{lo_bit}{hi_bit}_i{imm7}_{mask_name}"), insn, st));
+                    batch.push((
+                        format!("cmpu_s{size}_{lo_bit}{hi_bit}_i{imm7}_{mask_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -45736,49 +46348,65 @@ fn diff_sve_bfcvt() {
         (
             "zeros",
             [0x0000_0000, 0x8000_0000, 0x0000_0000, 0x8000_0000],
-            [0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555],
+            [
+                0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555,
+            ],
             0x1111,
         ),
         (
             "round_edges",
             [0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000],
-            [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888],
+            [
+                0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+            ],
             0x1111,
         ),
         (
             "mixed_pred",
             [0x3fc0_0000, 0xc020_0000, 0x3f00_0000, 0xbe80_0000],
-            [0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210],
+            [
+                0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210,
+            ],
             0x0101,
         ),
         (
             "inactive_merge",
             [0x40a0_0000, 0xc0a0_0000, 0x4120_0000, 0xc120_0000],
-            [0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531],
+            [
+                0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531,
+            ],
             0x0000,
         ),
         (
             "small_normals",
             [0x0080_0000, 0x8080_0000, 0x0100_0000, 0x8100_0000],
-            [0xdead, 0xbeef, 0xcafe, 0xbabe, 0x5eed, 0x600d, 0xf00d, 0xface],
+            [
+                0xdead, 0xbeef, 0xcafe, 0xbabe, 0x5eed, 0x600d, 0xf00d, 0xface,
+            ],
             0x1111,
         ),
         (
             "nan_inf",
             [0x7fa0_0001, 0x7fc0_1234, 0x7f80_0000, 0xff80_0000],
-            [0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888],
+            [
+                0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+            ],
             0x1111,
         ),
         (
             "nan_mixed_pred",
             [0x7fa0_0001, 0x7fc0_1234, 0x3f80_0001, 0xff80_0000],
-            [0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210],
+            [
+                0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210,
+            ],
             0x0101,
         ),
         (
             "nan_inactive_merge",
             [0x7fa0_0001, 0x7fc0_1234, 0x7f80_0000, 0xff80_0000],
-            [0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531],
+            [
+                0x1357, 0x2468, 0x9bdf, 0xace0, 0x0ace, 0xfdb9, 0x8642, 0x7531,
+            ],
             0x0000,
         ),
     ];
@@ -46089,19 +46717,40 @@ fn diff_sve_frecpe() {
     fn estimate_patterns(size: u32) -> Vec<(&'static str, Vec<u64>)> {
         match size {
             1 => vec![
-                ("h_zero_inf", vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000]),
-                ("h_nan_mix", vec![0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000]),
+                (
+                    "h_zero_inf",
+                    vec![
+                        0x0000, 0x8000, 0x3c00, 0xbc00, 0x7c00, 0xfc00, 0x4000, 0xc000,
+                    ],
+                ),
+                (
+                    "h_nan_mix",
+                    vec![
+                        0x7e00, 0xfe00, 0x7d00, 0xfd00, 0x3c00, 0xbc00, 0x0000, 0x8000,
+                    ],
+                ),
             ],
             2 => vec![
                 (
                     "s_zero_inf",
-                    vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
+                    vec![
+                        0x0000_0000,
+                        0x8000_0000,
+                        1.0f32.to_bits() as u64,
+                        (-1.0f32).to_bits() as u64,
+                    ],
                 ),
-                ("s_nan_mix", vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001]),
+                (
+                    "s_nan_mix",
+                    vec![0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f80_0001],
+                ),
             ],
             _ => vec![
                 ("d_zero_inf", vec![0.0f64.to_bits(), (-0.0f64).to_bits()]),
-                ("d_nan_mix", vec![0x7ff0_0000_0000_0000, 0x7ff8_0000_0000_0001]),
+                (
+                    "d_nan_mix",
+                    vec![0x7ff0_0000_0000_0000, 0x7ff8_0000_0000_0001],
+                ),
             ],
         }
     }
@@ -46171,7 +46820,11 @@ fn diff_sve_shift_pred_v() {
         let esize = 1usize << size;
         let bits = esize * 8;
         let elements = 16 / esize;
-        let mask = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+        let mask = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
         let mut packed = 0u128;
         for lane in 0..elements {
             let value = values[lane % values.len()] & mask;
@@ -46184,7 +46837,11 @@ fn diff_sve_shift_pred_v() {
     let preds = [0x0000u16, 0x0001, 0x00ff, 0x5555, 0xaaaa, 0xffff];
     for size in 0..4u32 {
         let bits = 8u64 << size;
-        let max = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+        let max = if bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << bits) - 1
+        };
         let sign = 1u64 << (bits - 1);
         let values = pack_lanes(size, &[0, 1, sign, max, max >> 1]);
         let shifts = pack_lanes(size, &[0, 1, bits - 1, bits, bits + 1]);
@@ -46298,18 +46955,8 @@ fn diff_sve_insr() {
         for f in 0..2u32 {
             let insn = enc_sve_insr(size, f);
             for (case_name, z0, z1, x1) in [
-                (
-                    "zero",
-                    (0u64, 0u64),
-                    (0u64, 0u64),
-                    0u64,
-                ),
-                (
-                    "ones",
-                    (u64::MAX, u64::MAX),
-                    (u64::MAX, u64::MAX),
-                    u64::MAX,
-                ),
+                ("zero", (0u64, 0u64), (0u64, 0u64), 0u64),
+                ("ones", (u64::MAX, u64::MAX), (u64::MAX, u64::MAX), u64::MAX),
                 (
                     "sign",
                     (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
@@ -46352,8 +46999,7 @@ fn diff_sve_insr_zero_register() {
         let insn = insr_gpr(size, 31);
         for i in 0..10 {
             let mut st = ArmState::zeroed();
-            st.sp =
-                GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x16000 + ((i as u64) << 4);
+            st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x16000 + ((i as u64) << 4);
             st.set_vreg(0, rng.next(), rng.next());
             batch.push((format!("insr_xzr s{size}"), insn, st));
         }
@@ -46365,11 +47011,7 @@ fn diff_sve_insr_zero_register() {
                 (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908),
                 0x20,
             ),
-            (
-                "sign",
-                (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001),
-                0x30,
-            ),
+            ("sign", (0x8000_0000_7fff_ffff, 0xffff_0000_0000_0001), 0x30),
         ] {
             let mut st = ArmState::zeroed();
             st.sp = GUEST_STACK_ADDR
@@ -46419,7 +47061,11 @@ fn diff_sve_clast_dst() {
                     st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
                     st.set_vreg(1, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908);
                     st.set_preg(0, pg);
-                    batch.push((format!("clast_s{size}_sc{scalar}_b{before}_{case_name}"), insn, st));
+                    batch.push((
+                        format!("clast_s{size}_sc{scalar}_b{before}_{case_name}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -46508,7 +47154,11 @@ fn diff_sve_cterm() {
             for (case_name, rn, rm) in [
                 ("equal_zero", 0u64, 0u64),
                 ("equal_sign", 0x8000_0000_8000_0000, 0x8000_0000_8000_0000),
-                ("high_diff_low_equal", 0xaaaa_0000_1234_5678, 0xbbbb_0000_1234_5678),
+                (
+                    "high_diff_low_equal",
+                    0xaaaa_0000_1234_5678,
+                    0xbbbb_0000_1234_5678,
+                ),
                 ("low_diff", 0x0000_0000_1234_5678, 0x0000_0000_1234_5679),
             ] {
                 for nzcv in [0x0u64, 0x5, 0xa, 0xf] {
@@ -46516,7 +47166,11 @@ fn diff_sve_cterm() {
                     st.x[RN as usize] = rn;
                     st.x[RM as usize] = rm;
                     st.pstate = nzcv << 28;
-                    batch.push((format!("cterm_sf{sf}_ne{ne}_{case_name}_nzcv{nzcv:x}"), insn, st));
+                    batch.push((
+                        format!("cterm_sf{sf}_ne{ne}_{case_name}_nzcv{nzcv:x}"),
+                        insn,
+                        st,
+                    ));
                 }
             }
         }
@@ -46548,8 +47202,7 @@ fn diff_sve_cterm_zero_registers() {
             ] {
                 for nzcv in 0..16u64 {
                     let mut st = ArmState::zeroed();
-                    st.sp =
-                        GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x14000 + (nzcv << 4);
+                    st.sp = GUEST_STACK_ADDR + (GUEST_STACK_SIZE / 2) + 0x14000 + (nzcv << 4);
                     st.x[RN as usize] = rng.next();
                     st.x[RM as usize] = rng.next();
                     st.pstate = nzcv << 28;
@@ -46678,19 +47331,33 @@ fn diff_sve_fcmla_indexed() {
                             "signed_zero",
                             [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
                             [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
-                            [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                            [
+                                0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
                         ),
                         (
                             "mixed",
-                            [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                            [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
-                            [0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                            [
+                                0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
+                            [
+                                0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00,
+                            ],
+                            [
+                                0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
                         ),
                         (
                             "cancel",
-                            [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                            [0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00],
-                            [0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000],
+                            [
+                                0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                            ],
+                            [
+                                0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00,
+                            ],
+                            [
+                                0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000,
+                            ],
                         ),
                     ]
                 } else {
@@ -46992,12 +47659,7 @@ fn diff_sve2_cdot() {
                 batch.push((format!("cdot s{size} r{rot}"), insn, st));
             }
             for (case_name, zda, zn, zm) in [
-                (
-                    "zero",
-                    (0u64, 0u64),
-                    (0u64, 0u64),
-                    (0u64, 0u64),
-                ),
+                ("zero", (0u64, 0u64), (0u64, 0u64), (0u64, 0u64)),
                 (
                     "ones",
                     (u64::MAX, u64::MAX),
@@ -47065,13 +47727,21 @@ fn diff_sve_fcadd() {
                     ),
                     (
                         "mixed",
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        [
+                            0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00,
+                        ],
                     ),
                     (
                         "cancel",
-                        [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                        [0xbc00, 0xbc00, 0x3c00, 0x3c00, 0xc000, 0x4000, 0xb800, 0x3800],
+                        [
+                            0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                        ],
+                        [
+                            0xbc00, 0xbc00, 0x3c00, 0x3c00, 0xc000, 0x4000, 0xb800, 0x3800,
+                        ],
                     ),
                 ],
                 4 => [
@@ -47150,72 +47820,18 @@ fn diff_sve_fcadd() {
                     ("zero", [0u64; 8], [0u64; 8]),
                     (
                         "signed_zero",
-                        [
-                            (-0.0f64).to_bits(),
-                            0.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            0.0f64.to_bits(),
-                            (-0.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [(-0.0f64).to_bits(), 0.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
+                        [0.0f64.to_bits(), (-0.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "mixed",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.5f64.to_bits(),
-                            (-1.5f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.5f64.to_bits(), (-1.5f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "cancel",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            (-1.0f64).to_bits(),
-                            1.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [(-1.0f64).to_bits(), 1.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                 ],
             };
@@ -47251,20 +47867,8 @@ fn diff_sve_fcadd_fpcr_rounding() {
         let fpcr = rmode << 22;
 
         for &(name, a_re, a_im, b_re, b_im) in &[
-            (
-                "pos",
-                16_777_216.0f32,
-                16_777_216.0f32,
-                1.0f32,
-                -1.0f32,
-            ),
-            (
-                "neg",
-                -16_777_216.0f32,
-                -16_777_216.0f32,
-                -1.0f32,
-                1.0f32,
-            ),
+            ("pos", 16_777_216.0f32, 16_777_216.0f32, 1.0f32, -1.0f32),
+            ("neg", -16_777_216.0f32, -16_777_216.0f32, -1.0f32, 1.0f32),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -47279,11 +47883,7 @@ fn diff_sve_fcadd_fpcr_rounding() {
                 | ((b_im.to_bits() as u128) << 96);
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-            batch.push((
-                format!("f32_{name}_rmode{rmode}"),
-                enc_sve_fcadd(2, 0),
-                st,
-            ));
+            batch.push((format!("f32_{name}_rmode{rmode}"), enc_sve_fcadd(2, 0), st));
         }
 
         for &(name, a_re, a_im, b_re, b_im) in &[
@@ -47309,11 +47909,7 @@ fn diff_sve_fcadd_fpcr_rounding() {
             let n = (b_re.to_bits() as u128) | ((b_im.to_bits() as u128) << 64);
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
-            batch.push((
-                format!("f64_{name}_rmode{rmode}"),
-                enc_sve_fcadd(3, 0),
-                st,
-            ));
+            batch.push((format!("f64_{name}_rmode{rmode}"), enc_sve_fcadd(3, 0), st));
         }
     }
 
@@ -47453,19 +48049,33 @@ fn diff_sve_fcmla() {
                         "signed_zero",
                         [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0],
                         [0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000],
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
                     ),
                     (
                         "mixed",
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        [0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00],
-                        [0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        [
+                            0x3e00, 0xbe00, 0x3400, 0xb400, 0x4400, 0xc400, 0x3a00, 0xba00,
+                        ],
+                        [
+                            0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
                     ),
                     (
                         "cancel",
-                        [0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800],
-                        [0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00],
-                        [0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000],
+                        [
+                            0x3c00, 0x3c00, 0xbc00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800,
+                        ],
+                        [
+                            0x4000, 0xc000, 0x4000, 0xc000, 0x3c00, 0xbc00, 0x3c00, 0xbc00,
+                        ],
+                        [
+                            0x3c00, 0xbc00, 0xbc00, 0x3c00, 0x4000, 0xc000, 0xc000, 0x4000,
+                        ],
                     ),
                 ],
                 4 => [
@@ -47574,102 +48184,21 @@ fn diff_sve_fcmla() {
                     ("zero", [0u64; 8], [0u64; 8], [0u64; 8]),
                     (
                         "signed_zero",
-                        [
-                            (-0.0f64).to_bits(),
-                            0.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            0.0f64.to_bits(),
-                            (-0.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [(-0.0f64).to_bits(), 0.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
+                        [0.0f64.to_bits(), (-0.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "mixed",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.5f64.to_bits(),
-                            (-1.5f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.0f64.to_bits(),
-                            2.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.5f64.to_bits(), (-1.5f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.0f64.to_bits(), 2.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "cancel",
-                        [
-                            1.0f64.to_bits(),
-                            1.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            2.0f64.to_bits(),
-                            (-2.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), 1.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
+                        [2.0f64.to_bits(), (-2.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                 ],
             };
@@ -47728,28 +48257,12 @@ fn diff_sve_fcmla_fpcr_rounding() {
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
             st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-            batch.push((
-                format!("f32_{name}_rmode{rmode}"),
-                enc_sve_fcmla(2, 0),
-                st,
-            ));
+            batch.push((format!("f32_{name}_rmode{rmode}"), enc_sve_fcmla(2, 0), st));
         }
 
         for &(name, acc, a_re, b_re, b_im) in &[
-            (
-                "pos",
-                9_007_199_254_740_992.0f64,
-                1.0f64,
-                1.0f64,
-                1.0f64,
-            ),
-            (
-                "neg",
-                -9_007_199_254_740_992.0f64,
-                -1.0f64,
-                1.0f64,
-                1.0f64,
-            ),
+            ("pos", 9_007_199_254_740_992.0f64, 1.0f64, 1.0f64, 1.0f64),
+            ("neg", -9_007_199_254_740_992.0f64, -1.0f64, 1.0f64, 1.0f64),
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
@@ -47760,11 +48273,7 @@ fn diff_sve_fcmla_fpcr_rounding() {
             st.set_vreg(RD as usize, d as u64, (d >> 64) as u64);
             st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
             st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-            batch.push((
-                format!("f64_{name}_rmode{rmode}"),
-                enc_sve_fcmla(3, 0),
-                st,
-            ));
+            batch.push((format!("f64_{name}_rmode{rmode}"), enc_sve_fcmla(3, 0), st));
         }
     }
 
@@ -47821,7 +48330,9 @@ fn diff_sve_fcmla_f16_invalid_products() {
         (packed as u64, (packed >> 64) as u64)
     }
 
-    let rn = [0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000];
+    let rn = [
+        0x0000u16, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+    ];
     let rd = [0x3c00u16; 8];
     let mut batch = Vec::new();
     for rot in 0..4u32 {
@@ -47949,7 +48460,12 @@ fn diff_sve_ftsmul() {
             2 => [
                 ("zero", [0u64; 8]),
                 ("signed_zero", [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0]),
-                ("mixed", [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200]),
+                (
+                    "mixed",
+                    [
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                ),
             ],
             4 => [
                 ("zero", [0u64; 8]),
@@ -47984,29 +48500,11 @@ fn diff_sve_ftsmul() {
                 ("zero", [0u64; 8]),
                 (
                     "signed_zero",
-                    [
-                        (-0.0f64).to_bits(),
-                        0.0f64.to_bits(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
+                    [(-0.0f64).to_bits(), 0.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
                 ),
                 (
                     "mixed",
-                    [
-                        1.0f64.to_bits(),
-                        (-1.0f64).to_bits(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
+                    [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                 ),
             ],
         };
@@ -48070,7 +48568,12 @@ fn diff_fpcr_fiz_sve_ftsmul_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x007f_ffffu32, 0x807f_ffffu32];
+    let s_lanes = [
+        0x0000_0001u32,
+        0x8000_0001u32,
+        0x007f_ffffu32,
+        0x807f_ffffu32,
+    ];
     let mut packed_s = 0u128;
     for (lane, bits) in s_lanes.iter().enumerate() {
         packed_s |= (*bits as u128) << (32 * lane);
@@ -48101,22 +48604,18 @@ fn diff_fpcr_ah_sve_ftsmul_nan_status() {
     let mut batch = Vec::new();
 
     for &(label, size, packed) in &[
-        (
-            "h",
-            1,
-            0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128,
-        ),
-        (
-            "s",
-            2,
-            0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128,
-        ),
+        ("h", 1, 0x3c00_0001_7d01_7e00_3c00_0001_7d01_7e00u128),
+        ("s", 2, 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000u128),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, packed as u64, (packed >> 64) as u64);
         st.set_vreg(RM as usize, packed as u64, (packed >> 64) as u64);
-        batch.push((format!("ftsmul_{label}_ah_nan_status"), enc_sve_ftsmul(size), st));
+        batch.push((
+            format!("ftsmul_{label}_ah_nan_status"),
+            enc_sve_ftsmul(size),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_sve_ftsmul_nan_status", batch);
@@ -48150,7 +48649,12 @@ fn diff_sve_ftssel() {
             2 => [
                 ("zero", [0u64; 8]),
                 ("signed_zero", [0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0]),
-                ("mixed", [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200]),
+                (
+                    "mixed",
+                    [
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                    ],
+                ),
             ],
             4 => [
                 ("zero", [0u64; 8]),
@@ -48185,29 +48689,11 @@ fn diff_sve_ftssel() {
                 ("zero", [0u64; 8]),
                 (
                     "signed_zero",
-                    [
-                        (-0.0f64).to_bits(),
-                        0.0f64.to_bits(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
+                    [(-0.0f64).to_bits(), 0.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
                 ),
                 (
                     "mixed",
-                    [
-                        1.0f64.to_bits(),
-                        (-1.0f64).to_bits(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
+                    [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                 ),
             ],
         };
@@ -48269,18 +48755,30 @@ fn diff_sve_ftmad() {
                     ),
                     (
                         "mixed_pos",
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        [0x3c00, 0x4000, 0x3800, 0x4200, 0x3e00, 0x4400, 0x3a00, 0x4100],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        [
+                            0x3c00, 0x4000, 0x3800, 0x4200, 0x3e00, 0x4400, 0x3a00, 0x4100,
+                        ],
                     ),
                     (
                         "mixed_neg",
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        [0xbc00, 0xc000, 0xb800, 0xc200, 0xbe00, 0xc400, 0xba00, 0xc100],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        [
+                            0xbc00, 0xc000, 0xb800, 0xc200, 0xbe00, 0xc400, 0xba00, 0xc100,
+                        ],
                     ),
                     (
                         "mixed_alt",
-                        [0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                        [0x3c00, 0xc000, 0x3800, 0xc200, 0x3e00, 0xc400, 0x3a00, 0xc100],
+                        [
+                            0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                        ],
+                        [
+                            0x3c00, 0xc000, 0x3800, 0xc200, 0x3e00, 0xc400, 0x3a00, 0xc100,
+                        ],
                     ),
                 ],
                 4 => [
@@ -48382,95 +48880,23 @@ fn diff_sve_ftmad() {
                     ("zero", [0u64; 8], [0u64; 8]),
                     (
                         "signed_zero",
-                        [
-                            (-0.0f64).to_bits(),
-                            0.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            0.0f64.to_bits(),
-                            (-0.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [(-0.0f64).to_bits(), 0.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
+                        [0.0f64.to_bits(), (-0.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "mixed_pos",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.0f64.to_bits(),
-                            2.0f64.to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.0f64.to_bits(), 2.0f64.to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "mixed_neg",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            (-1.0f64).to_bits(),
-                            (-2.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [(-1.0f64).to_bits(), (-2.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                     (
                         "mixed_alt",
-                        [
-                            1.0f64.to_bits(),
-                            (-1.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                        [
-                            1.0f64.to_bits(),
-                            (-2.0f64).to_bits(),
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
+                        [1.0f64.to_bits(), (-1.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
+                        [1.0f64.to_bits(), (-2.0f64).to_bits(), 0, 0, 0, 0, 0, 0],
                     ),
                 ],
             };
@@ -48543,8 +48969,16 @@ fn diff_fpcr_fiz_sve_ftmad_subnormal_inputs() {
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
-        st.set_vreg(RD as usize, pack32(zdn_s) as u64, (pack32(zdn_s) >> 64) as u64);
-        st.set_vreg(RN as usize, pack32(zm_s) as u64, (pack32(zm_s) >> 64) as u64);
+        st.set_vreg(
+            RD as usize,
+            pack32(zdn_s) as u64,
+            (pack32(zdn_s) >> 64) as u64,
+        );
+        st.set_vreg(
+            RN as usize,
+            pack32(zm_s) as u64,
+            (pack32(zm_s) >> 64) as u64,
+        );
         batch.push((
             format!("ftmad_s_{label}_min_subnorm"),
             enc_sve_ftmad(2, 0),
@@ -48558,8 +48992,16 @@ fn diff_fpcr_fiz_sve_ftmad_subnormal_inputs() {
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
-        st.set_vreg(RD as usize, pack64(zdn_d) as u64, (pack64(zdn_d) >> 64) as u64);
-        st.set_vreg(RN as usize, pack64(zm_d) as u64, (pack64(zm_d) >> 64) as u64);
+        st.set_vreg(
+            RD as usize,
+            pack64(zdn_d) as u64,
+            (pack64(zdn_d) >> 64) as u64,
+        );
+        st.set_vreg(
+            RN as usize,
+            pack64(zm_d) as u64,
+            (pack64(zm_d) >> 64) as u64,
+        );
         batch.push((
             format!("ftmad_d_{label}_min_subnorm"),
             enc_sve_ftmad(3, 0),
@@ -48620,8 +49062,18 @@ fn diff_sve_fmmla() {
         (
             "small_normals",
             [0.0, 1.0, -1.0, 8.0],
-            [f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000), 1.0, -1.0],
-            [1.0, -1.0, f32::from_bits(0x0080_0000), f32::from_bits(0x8080_0000)],
+            [
+                f32::from_bits(0x0080_0000),
+                f32::from_bits(0x8080_0000),
+                1.0,
+                -1.0,
+            ],
+            [
+                1.0,
+                -1.0,
+                f32::from_bits(0x0080_0000),
+                f32::from_bits(0x8080_0000),
+            ],
         ),
         (
             "nan_inf",
@@ -48666,9 +49118,7 @@ fn diff_sve_fmmla() {
 fn diff_sve_f32mm_feature_legality_edges() {
     let caps = native_host_caps();
     if caps.has("f32mm") || caps.has("svef32mm") {
-        eprintln!(
-            "[arm_diff] sve_f32mm_feature_legality_edges: host supports F32MM -> skipping"
-        );
+        eprintln!("[arm_diff] sve_f32mm_feature_legality_edges: host supports F32MM -> skipping");
         return;
     }
 
@@ -48759,26 +49209,40 @@ fn diff_sve_bfmmla() {
         (
             "zeros",
             [0.0, -0.0, 0.0, -0.0],
-            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [
+                0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+            ],
             [0x3f80; 8],
         ),
         (
             "ones",
             [1.0, -1.0, 2.0, -2.0],
-            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
-            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+            [
+                0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080,
+            ],
+            [
+                0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00,
+            ],
         ),
         (
             "lane_mix",
             [16.0, -16.0, 0.5, -0.5],
-            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
-            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+            [
+                0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080,
+            ],
+            [
+                0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060,
+            ],
         ),
         (
             "small_normals",
             [0.0, 1.0, -1.0, 8.0],
-            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
-            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+            [
+                0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000,
+            ],
+            [
+                0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000,
+            ],
         ),
         (
             "nan_inf",
@@ -48788,8 +49252,12 @@ fn diff_sve_bfmmla() {
                 f32::from_bits(0x7fa0_0001),
                 f32::NEG_INFINITY,
             ],
-            [0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80],
-            [0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0],
+            [
+                0x7f81, 0x7fc0, 0x0000, 0x0000, 0x7f80, 0xff80, 0x3f80, 0xbf80,
+            ],
+            [
+                0x3f80, 0xbf80, 0x7f80, 0x7f80, 0x0000, 0x8000, 0x7f81, 0x7fc0,
+            ],
         ),
     ];
     for (pattern_name, acc, zn, zm) in patterns {
@@ -48939,7 +49407,11 @@ fn diff_sve_fcvtx() {
         ("zeroes", 0.0f64, -0.0f64),
         ("exact", 1.0, -2.0),
         ("half_ulp", 1.0 + 2.0f64.powi(-24), -1.0 - 2.0f64.powi(-24)),
-        ("quarter_ulp", 1.0 + 2.0f64.powi(-25), -1.0 - 2.0f64.powi(-25)),
+        (
+            "quarter_ulp",
+            1.0 + 2.0f64.powi(-25),
+            -1.0 - 2.0f64.powi(-25),
+        ),
         (
             "subnorm",
             f64::from_bits(0x0000_0000_0000_0001),
@@ -48996,9 +49468,7 @@ fn diff_sve2_adcl() {
                             st.set_vreg(1, zn_lo, zn_hi);
                             st.set_vreg(2, carry_lo, carry_hi);
                             batch.push((
-                                format!(
-                                    "{nm}_d{d_form}_t{top}_{acc_name}_{zn_name}_{carry_name}"
-                                ),
+                                format!("{nm}_d{d_form}_t{top}_{acc_name}_{zn_name}_{carry_name}"),
                                 insn,
                                 st,
                             ));
@@ -49145,14 +49615,38 @@ fn diff_sve2_crypto_unallocated_edges() {
         ),
         ("sve2_aes_reserved_third21".into(), enc_sve2_aes(0x21, 0)),
         ("sve2_sm4e_inverse_reserved".into(), enc_sve2_aes(0x23, 1)),
-        ("sve2_key_reserved_third00".into(), enc_sve2_sm4ekey_raw(0x00, 0)),
-        ("sve2_rax1_reserved_third00".into(), enc_sve2_sm4ekey_raw(0x00, 1)),
-        ("sve2_key_reserved_third40".into(), enc_sve2_sm4ekey_raw(0x40, 0)),
-        ("sve2_rax1_reserved_third40".into(), enc_sve2_sm4ekey_raw(0x40, 1)),
-        ("sve2_key_reserved_third60".into(), enc_sve2_sm4ekey_raw(0x60, 0)),
-        ("sve2_rax1_reserved_third60".into(), enc_sve2_sm4ekey_raw(0x60, 1)),
-        ("sve2_key_reserved_thirdA0".into(), enc_sve2_sm4ekey_raw(0xA0, 0)),
-        ("sve2_rax1_reserved_thirdA0".into(), enc_sve2_sm4ekey_raw(0xA0, 1)),
+        (
+            "sve2_key_reserved_third00".into(),
+            enc_sve2_sm4ekey_raw(0x00, 0),
+        ),
+        (
+            "sve2_rax1_reserved_third00".into(),
+            enc_sve2_sm4ekey_raw(0x00, 1),
+        ),
+        (
+            "sve2_key_reserved_third40".into(),
+            enc_sve2_sm4ekey_raw(0x40, 0),
+        ),
+        (
+            "sve2_rax1_reserved_third40".into(),
+            enc_sve2_sm4ekey_raw(0x40, 1),
+        ),
+        (
+            "sve2_key_reserved_third60".into(),
+            enc_sve2_sm4ekey_raw(0x60, 0),
+        ),
+        (
+            "sve2_rax1_reserved_third60".into(),
+            enc_sve2_sm4ekey_raw(0x60, 1),
+        ),
+        (
+            "sve2_key_reserved_thirdA0".into(),
+            enc_sve2_sm4ekey_raw(0xA0, 0),
+        ),
+        (
+            "sve2_rax1_reserved_thirdA0".into(),
+            enc_sve2_sm4ekey_raw(0xA0, 1),
+        ),
     ];
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for (label, insn) in cases {
@@ -49241,13 +49735,7 @@ fn diff_sve2p1_feature_legality_edges() {
         ),
         (
             "sve21_case_bfmlsl",
-            (0x64 << 24)
-                | (0b11 << 22)
-                | (1 << 21)
-                | (RM << 16)
-                | (0b10100 << 11)
-                | (RN << 5)
-                | RD,
+            (0x64 << 24) | (0b11 << 22) | (1 << 21) | (RM << 16) | (0b10100 << 11) | (RN << 5) | RD,
         ),
         (
             "sve21_case_bfmlsl_indexed",
@@ -49358,11 +49846,7 @@ fn diff_sve2_histcnt() {
         };
         let insn = enc_sve2_histcnt(size);
         let patterns: [(&str, Vec<u64>, Vec<u64>); 5] = [
-            (
-                "all_equal",
-                vec![0x11; elements],
-                vec![0x11; elements],
-            ),
+            ("all_equal", vec![0x11; elements], vec![0x11; elements]),
             (
                 "no_match",
                 (0..elements).map(|lane| lane as u64 + 1).collect(),
@@ -49371,12 +49855,18 @@ fn diff_sve2_histcnt() {
             (
                 "prefix_dups",
                 (0..elements).map(|lane| (lane & 1) as u64 + 3).collect(),
-                (0..elements).map(|lane| ((lane + 1) & 1) as u64 + 3).collect(),
+                (0..elements)
+                    .map(|lane| ((lane + 1) & 1) as u64 + 3)
+                    .collect(),
             ),
             (
                 "edge_values",
-                (0..elements).map(|lane| if lane & 1 == 0 { 0 } else { max }).collect(),
-                (0..elements).map(|lane| if lane & 1 == 0 { max } else { 0 }).collect(),
+                (0..elements)
+                    .map(|lane| if lane & 1 == 0 { 0 } else { max })
+                    .collect(),
+                (0..elements)
+                    .map(|lane| if lane & 1 == 0 { max } else { 0 })
+                    .collect(),
             ),
             (
                 "mixed",
@@ -49437,11 +49927,7 @@ fn diff_sve2_histseg() {
     }
 
     let patterns = [
-        (
-            "all_zero",
-            [0u8; 16],
-            [0u8; 16],
-        ),
+        ("all_zero", [0u8; 16], [0u8; 16]),
         (
             "ramp",
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -49456,8 +49942,8 @@ fn diff_sve2_histseg() {
             "no_match",
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             [
-                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c,
-                0x8d, 0x8e, 0x8f,
+                0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d,
+                0x8e, 0x8f,
             ],
         ),
         (
@@ -49468,12 +49954,12 @@ fn diff_sve2_histseg() {
         (
             "boundary_bytes",
             [
-                0x00, 0xff, 0x7f, 0x80, 0x00, 0xff, 0x55, 0xaa, 0x10, 0xef, 0x7f, 0x80, 0x55,
-                0xaa, 0x00, 0xff,
+                0x00, 0xff, 0x7f, 0x80, 0x00, 0xff, 0x55, 0xaa, 0x10, 0xef, 0x7f, 0x80, 0x55, 0xaa,
+                0x00, 0xff,
             ],
             [
-                0xff, 0x00, 0x80, 0x7f, 0x55, 0xaa, 0x10, 0xef, 0xff, 0x00, 0x80, 0x7f, 0x55,
-                0xaa, 0x10, 0xef,
+                0xff, 0x00, 0x80, 0x7f, 0x55, 0xaa, 0x10, 0xef, 0xff, 0x00, 0x80, 0x7f, 0x55, 0xaa,
+                0x10, 0xef,
             ],
         ),
     ];
@@ -49508,7 +49994,10 @@ fn diff_sve2_hist_pmull_unallocated_edges() {
     let mut cases: Vec<(String, u32)> = Vec::new();
 
     for size in 0..2u32 {
-        cases.push((format!("histcnt_reserved_size{size}"), enc_sve2_histcnt(size)));
+        cases.push((
+            format!("histcnt_reserved_size{size}"),
+            enc_sve2_histcnt(size),
+        ));
     }
     for size in 1..4u32 {
         cases.push((
@@ -49517,10 +50006,22 @@ fn diff_sve2_hist_pmull_unallocated_edges() {
         ));
     }
     for top in 0..2u32 {
-        cases.push((format!("pmull_reserved_size2_t{top}"), enc_sve2_pmull(2, top)));
-        cases.push((format!("smull_reserved_size0_t{top}"), enc_sve2_mull(0, 1, 0, top)));
-        cases.push((format!("umull_reserved_size0_t{top}"), enc_sve2_mull(0, 1, 1, top)));
-        cases.push((format!("sqdmull_reserved_size0_t{top}"), enc_sve2_mull(0, 0, 0, top)));
+        cases.push((
+            format!("pmull_reserved_size2_t{top}"),
+            enc_sve2_pmull(2, top),
+        ));
+        cases.push((
+            format!("smull_reserved_size0_t{top}"),
+            enc_sve2_mull(0, 1, 0, top),
+        ));
+        cases.push((
+            format!("umull_reserved_size0_t{top}"),
+            enc_sve2_mull(0, 1, 1, top),
+        ));
+        cases.push((
+            format!("sqdmull_reserved_size0_t{top}"),
+            enc_sve2_mull(0, 0, 0, top),
+        ));
     }
 
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -49593,11 +50094,7 @@ fn diff_sve2_match() {
             let alt_pred = pred_lanes(size, &(0..elements).step_by(2).collect::<Vec<_>>());
             let tail_pred = pred_lanes(size, &(1..elements).collect::<Vec<_>>());
             let patterns: [(&str, Vec<u64>, Vec<u64>); 5] = [
-                (
-                    "all_equal",
-                    vec![0x11; elements],
-                    vec![0x11; elements],
-                ),
+                ("all_equal", vec![0x11; elements], vec![0x11; elements]),
                 (
                     "no_match",
                     (0..elements).map(|lane| lane as u64 + 1).collect(),
@@ -49610,8 +50107,12 @@ fn diff_sve2_match() {
                 ),
                 (
                     "edges",
-                    (0..elements).map(|lane| if lane & 1 == 0 { 0 } else { max }).collect(),
-                    (0..elements).map(|lane| if lane & 1 == 0 { max } else { 0 }).collect(),
+                    (0..elements)
+                        .map(|lane| if lane & 1 == 0 { 0 } else { max })
+                        .collect(),
+                    (0..elements)
+                        .map(|lane| if lane & 1 == 0 { max } else { 0 })
+                        .collect(),
                 ),
                 (
                     "single_value_in_zm",
@@ -49799,11 +50300,7 @@ fn diff_sve2_mull_indexed() {
                         st.set_vreg(0, acc_lo, acc_hi);
                         st.set_vreg(1, zn_lo, zn_hi);
                         st.set_vreg(2, zm_lo, zm_hi);
-                        batch.push((
-                            format!("{name}_s{size}_i{index}_t{top}_{case}"),
-                            insn,
-                            st,
-                        ));
+                        batch.push((format!("{name}_s{size}_i{index}_t{top}_{case}"), insn, st));
                     }
                     if sat {
                         let m_elem = 1u128 << (s_esize * 8 - 1);
@@ -50042,11 +50539,15 @@ fn diff_sve2_flogb() {
                 ("specials", specials.clone()),
                 (
                     "finite_exponents",
-                    vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4400, 0xc400],
+                    vec![
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4400, 0xc400,
+                    ],
                 ),
                 (
                     "normal_subnormal_edges",
-                    vec![0x0001, 0x8001, 0x03ff, 0x83ff, 0x0400, 0x8400, 0x7bff, 0xfbff],
+                    vec![
+                        0x0001, 0x8001, 0x03ff, 0x83ff, 0x0400, 0x8400, 0x7bff, 0xfbff,
+                    ],
                 ),
             ],
             4 => vec![
@@ -50117,7 +50618,12 @@ fn diff_fpcr_fiz_sve2_flogb_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x007f_ffffu32, 0x807f_ffffu32];
+    let s_lanes = [
+        0x0000_0001u32,
+        0x8000_0001u32,
+        0x007f_ffffu32,
+        0x807f_ffffu32,
+    ];
     let mut packed_s = 0u128;
     for (lane, bits) in s_lanes.iter().enumerate() {
         packed_s |= (*bits as u128) << (32 * lane);
@@ -50147,7 +50653,12 @@ fn diff_fpcr_fz_sve2_flogb_subnormal_inputs() {
     const FPCR_FZ: u64 = 1 << 24;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x007f_ffffu32, 0x807f_ffffu32];
+    let s_lanes = [
+        0x0000_0001u32,
+        0x8000_0001u32,
+        0x007f_ffffu32,
+        0x807f_ffffu32,
+    ];
     let mut packed_s = 0u128;
     for (lane, bits) in s_lanes.iter().enumerate() {
         packed_s |= (*bits as u128) << (32 * lane);
@@ -50375,15 +50886,30 @@ fn diff_sve_ldnf1_invalid_base_edges() {
 #[test]
 fn diff_sve_ldff1_ldnf1_sp_alignment_edges() {
     let cases: Vec<(String, u32, u32, Option<u64>)> = vec![
-        ("ldff1b_sp".into(), enc_setffr(), enc_ldff1_regs(0, RM, 31), Some(0)),
+        (
+            "ldff1b_sp".into(),
+            enc_setffr(),
+            enc_ldff1_regs(0, RM, 31),
+            Some(0),
+        ),
         (
             "ldff1d_sp".into(),
             enc_setffr(),
             enc_ldff1_regs(7, RM, 31),
             Some(0),
         ),
-        ("ldnf1b_sp".into(), enc_setffr(), enc_ldnf1_regs(0, 0, 31), None),
-        ("ldnf1d_sp".into(), enc_setffr(), enc_ldnf1_regs(7, 0, 31), None),
+        (
+            "ldnf1b_sp".into(),
+            enc_setffr(),
+            enc_ldnf1_regs(0, 0, 31),
+            None,
+        ),
+        (
+            "ldnf1d_sp".into(),
+            enc_setffr(),
+            enc_ldnf1_regs(7, 0, 31),
+            None,
+        ),
     ];
     let mut rng = Rng::new(0x4_E013);
     let mut batch = Vec::new();
@@ -50713,7 +51239,11 @@ fn diff_sve_ffr_direct_state() {
     for &initial in &[0x0000, 0x1234, 0xffff] {
         let mut st = ArmState::zeroed();
         st.set_ffr(initial);
-        batch.push((format!("setffr initial ffr={initial:#06x}"), enc_setffr(), st));
+        batch.push((
+            format!("setffr initial ffr={initial:#06x}"),
+            enc_setffr(),
+            st,
+        ));
     }
     for &pred in &[0x0000, 0x0001, 0x5555, 0x8000, 0xffff] {
         let mut st = ArmState::zeroed();
@@ -50929,12 +51459,25 @@ fn diff_sve_ldnt1_vector_base_scalar_offset() {
             }
             let name = if unsigned { "u" } else { "s" };
             let insn = enc_ldnt1_vs_d(msz, unsigned, 24, 6, 2, 1);
-            for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("second", 0x0100), ("inactive", 0)] {
-                batch.push((format!("ldnt1_vbase_{name}_m{msz}_{mask_name}"), insn, input(3, pg)));
+            for (mask_name, pg) in [
+                ("all", 0xffff),
+                ("first", 0x0001),
+                ("second", 0x0100),
+                ("inactive", 0),
+            ] {
+                batch.push((
+                    format!("ldnt1_vbase_{name}_m{msz}_{mask_name}"),
+                    insn,
+                    input(3, pg),
+                ));
             }
         }
     }
-    batch.push(("ldnt1sb_fuzz_c4189841".into(), 0xc418_9841, input(3, 0xffff)));
+    batch.push((
+        "ldnt1sb_fuzz_c4189841".into(),
+        0xc418_9841,
+        input(3, 0xffff),
+    ));
     batch.push((
         "ldnt1sb_rm31_zero_offset".into(),
         enc_ldnt1_vs_d(0, false, 31, 6, 2, 1),
@@ -51285,7 +51828,9 @@ fn diff_sve_gather_x32() {
                         continue;
                     }
                     let insn = enc_gather_x32(msz, xs, scaled, u);
-                    for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    for (mask_name, pg) in
+                        [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)]
+                    {
                         batch.push((
                             format!("gx_m{msz}_x{xs}_sc{}_u{u}_{mask_name}", scaled as u32),
                             insn,
@@ -51415,7 +51960,9 @@ fn diff_sve_gather_s() {
                         continue;
                     }
                     let insn = enc_gather_s(msz, xs, scaled, u);
-                    for (mask_name, pg) in [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)] {
+                    for (mask_name, pg) in
+                        [("all", 0xffff), ("first", 0x0001), ("inactive", 0x0000)]
+                    {
                         batch.push((
                             format!("gs_m{msz}_x{xs}_sc{}_u{u}_{mask_name}", scaled as u32),
                             insn,
@@ -51899,8 +52446,7 @@ fn diff_sve_ldr_str() {
         st.set_vreg(0, 0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210);
         st.set_preg(0, 0xa55a);
         for (idx, word) in st.scratch.iter_mut().enumerate() {
-            *word =
-                0x1020_3040_5060_7080u64 ^ (idx as u64).wrapping_mul(0x1111_1111_1111_1111);
+            *word = 0x1020_3040_5060_7080u64 ^ (idx as u64).wrapping_mul(0x1111_1111_1111_1111);
         }
         st
     }
@@ -52025,14 +52571,8 @@ fn diff_sve_gather_scatter_sp_alignment_edges() {
             "st1g_x32_sp".into(),
             set_rn(enc_scatter_x32(1, 0, false), 31),
         ),
-        (
-            "ld1g_s_sp".into(),
-            set_rn(enc_gather_s(1, 0, false, 1), 31),
-        ),
-        (
-            "st1g_s_sp".into(),
-            set_rn(enc_scatter_s(1, 0, false), 31),
-        ),
+        ("ld1g_s_sp".into(), set_rn(enc_gather_s(1, 0, false, 1), 31)),
+        ("st1g_s_sp".into(), set_rn(enc_scatter_s(1, 0, false), 31)),
     ];
     let mut rng = Rng::new(0x3_4012);
     let mut batch = Vec::new();
@@ -52092,8 +52632,14 @@ fn diff_sve_nt_multi_reg_rm31_edges() {
     ];
     for msz in [0u32, 3] {
         for nreg in 2..=4u32 {
-            cases.push((format!("ld{nreg}_m{msz}_rm31"), enc_ldn_r_regs(msz, nreg, 31, RN)));
-            cases.push((format!("st{nreg}_m{msz}_rm31"), enc_stn_r_regs(msz, nreg, 31, RN)));
+            cases.push((
+                format!("ld{nreg}_m{msz}_rm31"),
+                enc_ldn_r_regs(msz, nreg, 31, RN),
+            ));
+            cases.push((
+                format!("st{nreg}_m{msz}_rm31"),
+                enc_stn_r_regs(msz, nreg, 31, RN),
+            ));
         }
     }
 
@@ -52137,7 +52683,9 @@ fn diff_sve_cvt() {
     ) -> Vec<(&'static str, usize, Vec<u64>)> {
         let values = if to_int {
             match fp_sz {
-                2 => vec![0x0000, 0x8000, 0x3c00, 0xbc00, 0x3e00, 0xbe00, 0x4200, 0xc200],
+                2 => vec![
+                    0x0000, 0x8000, 0x3c00, 0xbc00, 0x3e00, 0xbe00, 0x4200, 0xc200,
+                ],
                 4 => vec![
                     0.0f32.to_bits() as u64,
                     (-0.0f32).to_bits() as u64,
@@ -52162,7 +52710,15 @@ fn diff_sve_cvt() {
         } else if unsigned {
             vec![0, 1, 2, 42, 127, 255]
         } else {
-            vec![0, 1, (-1i64) as u64, 42, (-42i64) as u64, 127, (-128i64) as u64]
+            vec![
+                0,
+                1,
+                (-1i64) as u64,
+                42,
+                (-42i64) as u64,
+                127,
+                (-128i64) as u64,
+            ]
         };
         vec![(
             "basic",
@@ -52229,7 +52785,8 @@ fn diff_sve_cvt() {
                 for (pattern_name, src_sz, zn) in
                     cvt_source_patterns(to_int, u == 1, fp_sz, int_sz, elements)
                 {
-                    for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)] {
+                    for (mask_name, pg) in [("all", 0xffff), ("mixed", mixed), ("inactive", 0x0000)]
+                    {
                         let mut st = ArmState::zeroed();
                         st.set_vreg(0, 0xdead_beef_dead_beef, 0xfeed_face_feed_face);
                         let (lo, hi) = pack_src_containers(src_sz, cont, &zn);
@@ -52250,13 +52807,7 @@ fn diff_sve_dup_idx() {
     // end broadcasts zero. Cover every representable index for each element
     // size so the full imm2:tsz encoding is checked.
     let mut cases: Vec<(String, u32)> = Vec::new();
-    for (elog, name) in [
-        (0u32, "b"),
-        (1, "h"),
-        (2, "s"),
-        (3, "d"),
-        (4, "q"),
-    ] {
+    for (elog, name) in [(0u32, "b"), (1, "h"), (2, "s"), (3, "d"), (4, "q")] {
         let encoded_indexes = 1u32 << (6 - elog);
         for index in 0..encoded_indexes {
             cases.push((format!("dup_idx {name}[{index}]"), enc_dup_idx(elog, index)));
@@ -52297,22 +52848,17 @@ fn diff_sve_dup_idx() {
         let identity: Vec<u64> = (0..lanes)
             .map(|lane| 0x10u64.wrapping_add(lane as u64) & mask)
             .collect();
-        let edge_values: Vec<u64> = (0..lanes)
-            .map(|lane| edges[lane % edges.len()])
-            .collect();
+        let edge_values: Vec<u64> = (0..lanes).map(|lane| edges[lane % edges.len()]).collect();
         let (identity_lo, identity_hi) = pack_lanes(elog, &identity);
         let (edges_lo, edges_hi) = pack_lanes(elog, &edge_values);
-        vec![("identity", identity_lo, identity_hi), ("edges", edges_lo, edges_hi)]
+        vec![
+            ("identity", identity_lo, identity_hi),
+            ("edges", edges_lo, edges_hi),
+        ]
     }
 
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
-    for (elog, name) in [
-        (0u32, "b"),
-        (1, "h"),
-        (2, "s"),
-        (3, "d"),
-        (4, "q"),
-    ] {
+    for (elog, name) in [(0u32, "b"), (1, "h"), (2, "s"), (3, "d"), (4, "q")] {
         let encoded_indexes = 1u32 << (6 - elog);
         for index in 0..encoded_indexes {
             let insn = enc_dup_idx(elog, index);
@@ -52410,7 +52956,11 @@ fn diff_sve_compact() {
                 let (lo, hi) = pack_lanes(sz, &zn);
                 st.set_vreg(1, lo, hi);
                 st.set_preg(0, pg);
-                batch.push((format!("compact_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                batch.push((
+                    format!("compact_sz{sz}_{pattern_name}_{mask_name}"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
@@ -52497,7 +53047,9 @@ fn diff_sve_splice() {
             (
                 "identity",
                 (0..lanes).map(|lane| 0x10u64 + lane as u64).collect(),
-                (0..lanes).map(|lane| 0x80u64.wrapping_add(lane as u64) & mask).collect(),
+                (0..lanes)
+                    .map(|lane| 0x80u64.wrapping_add(lane as u64) & mask)
+                    .collect(),
             ),
             (
                 "edges",
@@ -52541,7 +53093,11 @@ fn diff_sve_splice() {
                 let (lo, hi) = pack_lanes(sz, &zm);
                 st.set_vreg(1, lo, hi);
                 st.set_preg(0, pg);
-                batch.push((format!("splice_sz{sz}_{pattern_name}_{mask_name}"), insn, st));
+                batch.push((
+                    format!("splice_sz{sz}_{pattern_name}_{mask_name}"),
+                    insn,
+                    st,
+                ));
             }
         }
     }
@@ -52588,11 +53144,7 @@ fn diff_sve_pfirst() {
                 if pg != pdn {
                     st.set_preg(pg as usize, pg_val);
                 }
-                batch.push((
-                    format!("pfirst_{regs}_{pred_case}_nzcv{nzcv:x}"),
-                    insn,
-                    st,
-                ));
+                batch.push((format!("pfirst_{regs}_{pred_case}_nzcv{nzcv:x}"), insn, st));
             }
         }
     }
@@ -52795,11 +53347,7 @@ fn diff_sve_brkn() {
                 st.set_preg(pdm as usize, pdm_val);
                 st.set_preg(pg as usize, pg_val);
                 st.set_preg(pn as usize, pn_val);
-                batch.push((
-                    format!("brkn_{regs}_{pred_case}_nzcv{nzcv:x}"),
-                    insn,
-                    st,
-                ));
+                batch.push((format!("brkn_{regs}_{pred_case}_nzcv{nzcv:x}"), insn, st));
             }
         }
     }
@@ -52902,11 +53450,7 @@ fn diff_sve_brkp() {
                     st.set_preg(pm as usize, pm_val);
                     st.set_preg(pg as usize, pg_val);
                     st.set_preg(pn as usize, pn_val);
-                    batch.push((
-                        format!("{op}_{regs}_{pred_case}_nzcv{nzcv:x}"),
-                        insn,
-                        st,
-                    ));
+                    batch.push((format!("{op}_{regs}_{pred_case}_nzcv{nzcv:x}"), insn, st));
                 }
             }
         }
@@ -53462,12 +54006,12 @@ fn diff_sve2_mull() {
         (
             "poly_edges",
             [
-                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44,
-                0x88, 0xf0, 0x0f,
+                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44, 0x88,
+                0xf0, 0x0f,
             ],
             [
-                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22,
-                0x11, 0xaa, 0x55,
+                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22, 0x11,
+                0xaa, 0x55,
             ],
         ),
     ];
@@ -53725,16 +54269,28 @@ fn diff_sve2_long_narrow_unallocated_edges() {
     for s in 0..2u32 {
         for u in 0..2u32 {
             for t in 0..2u32 {
-                cases.push((format!("addl_reserved_size0_s{s}_u{u}_t{t}"), enc_sve2_addl(0, s, u, t)));
-                cases.push((format!("addw_reserved_size0_s{s}_u{u}_t{t}"), enc_sve2_addw(0, s, u, t)));
-                cases.push((format!("mlal_reserved_size0_s{s}_u{u}_t{t}"), enc_sve2_mlal(0, s, u, t)));
+                cases.push((
+                    format!("addl_reserved_size0_s{s}_u{u}_t{t}"),
+                    enc_sve2_addl(0, s, u, t),
+                ));
+                cases.push((
+                    format!("addw_reserved_size0_s{s}_u{u}_t{t}"),
+                    enc_sve2_addw(0, s, u, t),
+                ));
+                cases.push((
+                    format!("mlal_reserved_size0_s{s}_u{u}_t{t}"),
+                    enc_sve2_mlal(0, s, u, t),
+                ));
             }
         }
     }
 
     for u in 0..2u32 {
         for t in 0..2u32 {
-            cases.push((format!("abdl_reserved_size0_u{u}_t{t}"), enc_sve2_abdl(0, u, t)));
+            cases.push((
+                format!("abdl_reserved_size0_u{u}_t{t}"),
+                enc_sve2_abdl(0, u, t),
+            ));
             for size in 1..4u32 {
                 cases.push((
                     format!("abdl_reserved_s0_sz{size}_u{u}_t{t}"),
@@ -53747,14 +54303,20 @@ fn diff_sve2_long_narrow_unallocated_edges() {
     for s in 0..2u32 {
         for r in 0..2u32 {
             for t in 0..2u32 {
-                cases.push((format!("addhn_reserved_size0_s{s}_r{r}_t{t}"), enc_sve2_addhn(0, s, r, t)));
+                cases.push((
+                    format!("addhn_reserved_size0_s{s}_r{r}_t{t}"),
+                    enc_sve2_addhn(0, s, r, t),
+                ));
             }
         }
     }
 
     for s in 0..2u32 {
         for t in 0..2u32 {
-            cases.push((format!("sqdmlal_reserved_size0_s{s}_t{t}"), enc_sve2_sqdmlal(0, s, t)));
+            cases.push((
+                format!("sqdmlal_reserved_size0_s{s}_t{t}"),
+                enc_sve2_sqdmlal(0, s, t),
+            ));
         }
     }
 
@@ -53836,7 +54398,13 @@ fn diff_sve2_xtn() {
             (
                 "alternating",
                 (0..src_lanes)
-                    .map(|lane| if lane & 1 == 0 { dst_mask + 1 } else { signed_lo_src })
+                    .map(|lane| {
+                        if lane & 1 == 0 {
+                            dst_mask + 1
+                        } else {
+                            signed_lo_src
+                        }
+                    })
                     .collect(),
             ),
         ];
@@ -54113,14 +54681,18 @@ fn diff_sve2_shrn() {
             let (tsz, imm3) = shrn_tsz_imm(db, amt);
             let round_bit = 1u64 << (amt - 1);
             let patterns: [(&str, Vec<u64>); 4] = [
-                (
-                    "small",
-                    (0..lanes).map(|lane| lane as u64 + 1).collect(),
-                ),
+                ("small", (0..lanes).map(|lane| lane as u64 + 1).collect()),
                 (
                     "rounding",
                     (0..lanes)
-                        .map(|lane| [round_bit - 1, round_bit, round_bit + 1, (round_bit << 1) - 1][lane % 4])
+                        .map(|lane| {
+                            [
+                                round_bit - 1,
+                                round_bit,
+                                round_bit + 1,
+                                (round_bit << 1) - 1,
+                            ][lane % 4]
+                        })
                         .collect(),
                 ),
                 (
@@ -54132,7 +54704,9 @@ fn diff_sve2_shrn() {
                 (
                     "signed_sat",
                     (0..lanes)
-                        .map(|lane| [signed_hi, signed_hi + 1, signed_lo_src, src_sign, src_mask][lane % 5])
+                        .map(|lane| {
+                            [signed_hi, signed_hi + 1, signed_lo_src, src_sign, src_mask][lane % 5]
+                        })
                         .collect(),
                 ),
             ];
@@ -54146,7 +54720,9 @@ fn diff_sve2_shrn() {
                                 st.set_vreg(0, 0xaaaa_5555_ffff_0000, 0x0123_4567_89ab_cdef);
                                 st.set_vreg(1, zn_lo, zn_hi);
                                 batch.push((
-                                    format!("shrn_d{db}_a{amt}_op{op}_u{u}_r{r}_t{t}_{pattern_name}"),
+                                    format!(
+                                        "shrn_d{db}_a{amt}_op{op}_u{u}_r{r}_t{t}_{pattern_name}"
+                                    ),
                                     enc_sve2_shrn(tsz, imm3, op, u, r, t),
                                     st,
                                 ));
@@ -54383,10 +54959,7 @@ fn diff_sve2_shll() {
         let s_sign = 1u64 << (sb - 1);
         let lanes = 16 / src_esize;
         let patterns: [(&str, Vec<u64>); 3] = [
-            (
-                "small",
-                (0..lanes).map(|lane| lane as u64 + 1).collect(),
-            ),
+            ("small", (0..lanes).map(|lane| lane as u64 + 1).collect()),
             (
                 "signed_edges",
                 (0..lanes)
@@ -54529,7 +55102,13 @@ fn diff_sve2_bperm() {
                     .map(|lane| [0, mask, alt_a, alt_5][lane % 4])
                     .collect(),
                 (0..lanes)
-                    .map(|lane| if lane & 1 == 0 { sparse } else { !sparse & mask })
+                    .map(|lane| {
+                        if lane & 1 == 0 {
+                            sparse
+                        } else {
+                            !sparse & mask
+                        }
+                    })
                     .collect(),
             ),
         ];
@@ -54938,7 +55517,10 @@ fn diff_sve2_accumulate_pairwise_unallocated_edges() {
 
     for u in 0..2u32 {
         for t in 0..2u32 {
-            cases.push((format!("abal_reserved_size0_u{u}_t{t}"), enc_sve2_abal(0, u, t)));
+            cases.push((
+                format!("abal_reserved_size0_u{u}_t{t}"),
+                enc_sve2_abal(0, u, t),
+            ));
         }
         cases.push((format!("adalp_reserved_size0_u{u}"), enc_sve2_adalp(0, u)));
     }
@@ -55008,11 +55590,7 @@ fn diff_sve2_ssra() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     for eb in [8u32, 16, 32, 64] {
         let esize = (eb / 8) as usize;
-        let mask = if eb >= 64 {
-            u64::MAX
-        } else {
-            (1u64 << eb) - 1
-        };
+        let mask = if eb >= 64 { u64::MAX } else { (1u64 << eb) - 1 };
         let sign = 1u64 << (eb - 1);
         let hi = sign - 1;
         let lanes = 16 / esize;
@@ -55131,56 +55709,85 @@ fn diff_sve2_fpairwise() {
 
     for size in 1..4u32 {
         let eb = 8 << size;
-        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) = match size {
-            1 => (
-                0xffff,
-                0x1111,
-                vec![
-                    (
-                        "h_zeros",
-                        vec![0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000],
-                        vec![0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    ),
-                    (
-                        "h_lane_mix",
-                        vec![0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480],
-                        vec![0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200],
-                    ),
-                ],
-            ),
-            2 => (
-                0xffff,
-                0x0101,
-                vec![
-                    (
-                        "s_zeros",
-                        vec![0x0000_0000, 0x8000_0000, 1.0f32.to_bits() as u64, (-1.0f32).to_bits() as u64],
-                        vec![2.0f32.to_bits() as u64, (-2.0f32).to_bits() as u64, 0.5f32.to_bits() as u64, (-0.5f32).to_bits() as u64],
-                    ),
-                    (
-                        "s_lane_mix",
-                        vec![16.0f32.to_bits() as u64, (-16.0f32).to_bits() as u64, 0.25f32.to_bits() as u64, (-0.25f32).to_bits() as u64],
-                        vec![1.5f32.to_bits() as u64, (-2.5f32).to_bits() as u64, 3.5f32.to_bits() as u64, (-4.5f32).to_bits() as u64],
-                    ),
-                ],
-            ),
-            _ => (
-                0xffff,
-                0x0001,
-                vec![
-                    (
-                        "d_zeros",
-                        vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
-                        vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
-                    ),
-                    (
-                        "d_lane_mix",
-                        vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
-                        vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
-                    ),
-                ],
-            ),
-        };
+        let (all_active, mixed_active, patterns): (u16, u16, Vec<(&str, Vec<u64>, Vec<u64>)>) =
+            match size {
+                1 => (
+                    0xffff,
+                    0x1111,
+                    vec![
+                        (
+                            "h_zeros",
+                            vec![
+                                0x0000, 0x8000, 0x0000, 0x8000, 0x3c00, 0xbc00, 0x4000, 0xc000,
+                            ],
+                            vec![
+                                0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
+                        ),
+                        (
+                            "h_lane_mix",
+                            vec![
+                                0x3e00, 0xbe00, 0x4100, 0xc100, 0x3555, 0xb555, 0x4480, 0xc480,
+                            ],
+                            vec![
+                                0x3c00, 0x4000, 0xbc00, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                            ],
+                        ),
+                    ],
+                ),
+                2 => (
+                    0xffff,
+                    0x0101,
+                    vec![
+                        (
+                            "s_zeros",
+                            vec![
+                                0x0000_0000,
+                                0x8000_0000,
+                                1.0f32.to_bits() as u64,
+                                (-1.0f32).to_bits() as u64,
+                            ],
+                            vec![
+                                2.0f32.to_bits() as u64,
+                                (-2.0f32).to_bits() as u64,
+                                0.5f32.to_bits() as u64,
+                                (-0.5f32).to_bits() as u64,
+                            ],
+                        ),
+                        (
+                            "s_lane_mix",
+                            vec![
+                                16.0f32.to_bits() as u64,
+                                (-16.0f32).to_bits() as u64,
+                                0.25f32.to_bits() as u64,
+                                (-0.25f32).to_bits() as u64,
+                            ],
+                            vec![
+                                1.5f32.to_bits() as u64,
+                                (-2.5f32).to_bits() as u64,
+                                3.5f32.to_bits() as u64,
+                                (-4.5f32).to_bits() as u64,
+                            ],
+                        ),
+                    ],
+                ),
+                _ => (
+                    0xffff,
+                    0x0001,
+                    vec![
+                        (
+                            "d_zeros",
+                            vec![0.0f64.to_bits(), (-0.0f64).to_bits()],
+                            vec![1.0f64.to_bits(), (-1.0f64).to_bits()],
+                        ),
+                        (
+                            "d_lane_mix",
+                            vec![16.0f64.to_bits(), (-16.0f64).to_bits()],
+                            vec![0.25f64.to_bits(), (-0.75f64).to_bits()],
+                        ),
+                    ],
+                ),
+            };
         for &(opc, name) in ops {
             let insn = enc_sve2_fpairwise(size, opc);
             for (pattern_name, zd, zn) in &patterns {
@@ -55268,7 +55875,11 @@ fn diff_fpcr_fiz_sve2_faddp_subnormal_inputs() {
     }
     st.set_vreg(RD as usize, v as u64, (v >> 64) as u64);
     st.set_vreg(RN as usize, v as u64, (v >> 64) as u64);
-    batch.push(("sve2_faddp_s_min_subnorm".to_string(), enc_sve2_fpairwise(2, 0b000), st));
+    batch.push((
+        "sve2_faddp_s_min_subnorm".to_string(),
+        enc_sve2_fpairwise(2, 0b000),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FIZ;
@@ -55277,7 +55888,11 @@ fn diff_fpcr_fiz_sve2_faddp_subnormal_inputs() {
     let v = v | (v << 64);
     st.set_vreg(RD as usize, v as u64, (v >> 64) as u64);
     st.set_vreg(RN as usize, v as u64, (v >> 64) as u64);
-    batch.push(("sve2_faddp_d_min_subnorm".to_string(), enc_sve2_fpairwise(3, 0b000), st));
+    batch.push((
+        "sve2_faddp_d_min_subnorm".to_string(),
+        enc_sve2_fpairwise(3, 0b000),
+        st,
+    ));
 
     run_batch("fpcr_fiz_sve2_faddp_subnormal_inputs", batch);
 }
@@ -55375,12 +55990,12 @@ fn diff_sve_mul() {
         (
             "poly_edges",
             vec![
-                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44,
-                0x88, 0xf0, 0x0f,
+                0x00, 0x01, 0x02, 0x03, 0x7f, 0x80, 0xfe, 0xff, 0x55, 0xaa, 0x11, 0x22, 0x44, 0x88,
+                0xf0, 0x0f,
             ],
             vec![
-                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22,
-                0x11, 0xaa, 0x55,
+                0xff, 0xfe, 0x80, 0x7f, 0x03, 0x02, 0x01, 0x00, 0x0f, 0xf0, 0x88, 0x44, 0x22, 0x11,
+                0xaa, 0x55,
             ],
         ),
     ];
@@ -55391,11 +56006,7 @@ fn diff_sve_mul() {
         st.set_vreg(0, 0x5555_aaaa_0000_ffff, 0xfedc_ba98_7654_3210);
         st.set_vreg(1, zn_lo, zn_hi);
         st.set_vreg(2, zm_lo, zm_hi);
-        batch.push((
-            format!("pmul_{pattern_name}"),
-            enc_sve_mul(0, 0b01),
-            st,
-        ));
+        batch.push((format!("pmul_{pattern_name}"), enc_sve_mul(0, 0b01), st));
     }
     run_batch("sve_mul_edges", batch);
 }
@@ -55796,8 +56407,18 @@ fn diff_fpcr_fz_widening_fma_subnormal_inputs() {
     batch.push(("bfcvtn_fz_min_subnorm".to_string(), bfcvtn, st));
 
     for &(name, insn, n_val, m_val) in &[
-        ("bfmlalb_lhs_min_subnorm", enc_bfmlal(0), 0x0001u16, 0x3f80u16),
-        ("bfmlalb_rhs_min_subnorm", enc_bfmlal(0), 0x3f80u16, 0x0001u16),
+        (
+            "bfmlalb_lhs_min_subnorm",
+            enc_bfmlal(0),
+            0x0001u16,
+            0x3f80u16,
+        ),
+        (
+            "bfmlalb_rhs_min_subnorm",
+            enc_bfmlal(0),
+            0x3f80u16,
+            0x0001u16,
+        ),
         (
             "bfmlalb_idx_lhs_min_subnorm",
             enc_bfmlal_idx(0, 0),
@@ -55840,12 +56461,7 @@ fn diff_simd_i8mm_mmla_edges() {
     ];
     let patterns = [
         ("zero", 0u128, 0u128, 0u128),
-        (
-            "all_ff",
-            u128::MAX,
-            u128::MAX,
-            0u128,
-        ),
+        ("all_ff", u128::MAX, u128::MAX, 0u128),
         (
             "signed_min_max",
             0x8080_8080_8080_8080_8080_8080_8080_8080u128,
@@ -55941,26 +56557,40 @@ fn diff_simd_bf16() {
         (
             "zeros",
             [0.0, -0.0, 0.0, -0.0],
-            [0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000],
+            [
+                0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000, 0x0000, 0x8000,
+            ],
             [0x3f80; 8],
         ),
         (
             "ones",
             [1.0, -1.0, 2.0, -2.0],
-            [0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080],
-            [0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00],
+            [
+                0x3f80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00, 0x4080, 0xc080,
+            ],
+            [
+                0x3f80, 0x3f80, 0xbf80, 0xbf80, 0x4000, 0xc000, 0x3f00, 0xbf00,
+            ],
         ),
         (
             "lane_mix",
             [16.0, -16.0, 0.5, -0.5],
-            [0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080],
-            [0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060],
+            [
+                0x3f80, 0x4000, 0x4040, 0x4080, 0xbf80, 0xc000, 0xc040, 0xc080,
+            ],
+            [
+                0x3f00, 0xbf00, 0x3fc0, 0xbfc0, 0x4020, 0xc020, 0x4060, 0xc060,
+            ],
         ),
         (
             "small_normals",
             [0.0, 1.0, -1.0, 8.0],
-            [0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000],
-            [0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000],
+            [
+                0x0080, 0x8080, 0x0100, 0x8100, 0x3f80, 0xbf80, 0x4000, 0xc000,
+            ],
+            [
+                0x3f80, 0xbf80, 0x0080, 0x8080, 0x3f00, 0xbf00, 0x4000, 0xc000,
+            ],
         ),
     ];
     for (label, insn) in &cases {
@@ -56153,7 +56783,11 @@ fn diff_fpcr_fiz_simd_bfmlal_subnormal_inputs() {
         acc_state.set_vreg(RD as usize, acc as u64, (acc >> 64) as u64);
         acc_state.set_vreg(RN as usize, 0, 0);
         acc_state.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
-        batch.push((format!("bfmlal_q{q}_acc_min_subnorm"), enc_bfmlal(q), acc_state));
+        batch.push((
+            format!("bfmlal_q{q}_acc_min_subnorm"),
+            enc_bfmlal(q),
+            acc_state,
+        ));
 
         for index in 0..8u32 {
             let mut product = ArmState::zeroed();
@@ -56206,7 +56840,11 @@ fn diff_fpcr_ah_bfmlal_subnormal_inputs() {
             st.set_vreg(RD as usize, rd as u64, (rd >> 64) as u64);
             st.set_vreg(RN as usize, rn as u64, (rn >> 64) as u64);
             st.set_vreg(RM as usize, zm as u64, (zm >> 64) as u64);
-            batch.push((format!("neon_bfmlal_q{q}_{label}_min_subnorm"), enc_bfmlal(q), st));
+            batch.push((
+                format!("neon_bfmlal_q{q}_{label}_min_subnorm"),
+                enc_bfmlal(q),
+                st,
+            ));
         }
 
         let mut st = ArmState::zeroed();
@@ -56250,8 +56888,16 @@ fn diff_fpcr_ah_bfmlal_nan_status() {
     for &(label, insn, pattern) in &[
         ("neon_bfmlalb_ah_status", enc_bfmlal(0), status_pattern),
         ("neon_bfmlalt_ah_status", enc_bfmlal(1), status_pattern),
-        ("sve_bfmlalb_ah_status", enc_sve_bfmlal(0, RM), status_pattern),
-        ("sve_bfmlalt_ah_status", enc_sve_bfmlal(1, RM), status_pattern),
+        (
+            "sve_bfmlalb_ah_status",
+            enc_sve_bfmlal(0, RM),
+            status_pattern,
+        ),
+        (
+            "sve_bfmlalt_ah_status",
+            enc_sve_bfmlal(1, RM),
+            status_pattern,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -56283,9 +56929,21 @@ fn diff_fpcr_ah_bfmlal_nan_status() {
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
-        st.set_vreg(RD as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
-        st.set_vreg(RN as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
-        st.set_vreg(RM as usize, inf_zero_pattern as u64, (inf_zero_pattern >> 64) as u64);
+        st.set_vreg(
+            RD as usize,
+            inf_zero_pattern as u64,
+            (inf_zero_pattern >> 64) as u64,
+        );
+        st.set_vreg(
+            RN as usize,
+            inf_zero_pattern as u64,
+            (inf_zero_pattern >> 64) as u64,
+        );
+        st.set_vreg(
+            RM as usize,
+            inf_zero_pattern as u64,
+            (inf_zero_pattern >> 64) as u64,
+        );
         batch.push((label.to_string(), insn, st));
     }
 
@@ -56307,7 +56965,11 @@ fn diff_fpcr_ah_fnmul_qnan_sign() {
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, nan, 0);
         st.set_vreg(RM as usize, nan, 0);
-        batch.push((format!("scalar_fnmul_{label}_ah_qnan_sign"), enc_fp2(fp_type, 0b1000), st));
+        batch.push((
+            format!("scalar_fnmul_{label}_ah_qnan_sign"),
+            enc_fp2(fp_type, 0b1000),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_fnmul_qnan_sign", batch);
@@ -56325,7 +56987,11 @@ fn diff_fpcr_ah_fsqrt_subnormal_status() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, subnormal, 0);
-        batch.push((format!("scalar_fsqrt_{label}_ah_input_subnorm"), enc_fp1(fp_type, 0b00011), st));
+        batch.push((
+            format!("scalar_fsqrt_{label}_ah_input_subnorm"),
+            enc_fp1(fp_type, 0b00011),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_fsqrt_subnormal_status", batch);
@@ -56362,7 +57028,11 @@ fn diff_fpcr_ah_fsqrt_negative_subnormal_status() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, bits, 0);
-        batch.push((format!("{label}_fsqrt_ah_negative_subnormal"), enc_fp1(fp_type, 0b00011), st));
+        batch.push((
+            format!("{label}_fsqrt_ah_negative_subnormal"),
+            enc_fp1(fp_type, 0b00011),
+            st,
+        ));
     }
 
     for &(label, insn, lo, hi) in &[
@@ -56407,7 +57077,11 @@ fn diff_fpcr_ah_fsqrt_negative_subnormal_status() {
         st.fpcr = FPCR_AH;
         st.set_preg(0, 0xffff);
         st.set_vreg(RN as usize, lo, hi);
-        batch.push((format!("{label}_fsqrt_ah_invalid_subnormal"), enc_sve_fsqrt(size), st));
+        batch.push((
+            format!("{label}_fsqrt_ah_invalid_subnormal"),
+            enc_sve_fsqrt(size),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_fsqrt_negative_subnormal_status", batch);
@@ -56449,39 +57123,73 @@ fn diff_fpcr_ah_fsqrt_frsqrte_invalid_nan_sign() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, bits, 0);
-        batch.push((format!("scalar_fsqrt_{label}_ah_invalid_nan_sign"), enc_fp1(fp_type, 0b00011), st));
+        batch.push((
+            format!("scalar_fsqrt_{label}_ah_invalid_nan_sign"),
+            enc_fp1(fp_type, 0b00011),
+            st,
+        ));
     }
 
     for &(label, insn, bits) in &[
         ("h", enc_fp16_2r_scalar(1, 1, 0b11101), 0xbc00u64),
         ("s", enc_scalar_two_reg(1, 0b10, 0b11101), 0xbf80_0000u64),
-        ("d", enc_scalar_two_reg(1, 0b11, 0b11101), 0xbff0_0000_0000_0000u64),
+        (
+            "d",
+            enc_scalar_two_reg(1, 0b11, 0b11101),
+            0xbff0_0000_0000_0000u64,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, bits, 0);
-        batch.push((format!("scalar_frsqrte_{label}_ah_invalid_nan_sign"), insn, st));
+        batch.push((
+            format!("scalar_frsqrte_{label}_ah_invalid_nan_sign"),
+            insn,
+            st,
+        ));
     }
 
     for &(label, fsqrt, frsqrte, lo, hi) in &[
         {
             let (lo, hi) = pack_h(0xbc00);
-            ("h", enc_fp16_2r(1, 1, 1, 0b11111), enc_fp16_2r(1, 1, 1, 0b11101), lo, hi)
+            (
+                "h",
+                enc_fp16_2r(1, 1, 1, 0b11111),
+                enc_fp16_2r(1, 1, 1, 0b11101),
+                lo,
+                hi,
+            )
         },
         {
             let (lo, hi) = pack_s(0xbf80_0000);
-            ("s", enc_two_reg(1, 1, 0b10, 0b11111), enc_two_reg(1, 1, 0b10, 0b11101), lo, hi)
+            (
+                "s",
+                enc_two_reg(1, 1, 0b10, 0b11111),
+                enc_two_reg(1, 1, 0b10, 0b11101),
+                lo,
+                hi,
+            )
         },
         {
             let (lo, hi) = pack_d(0xbff0_0000_0000_0000);
-            ("d", enc_two_reg(1, 1, 0b11, 0b11111), enc_two_reg(1, 1, 0b11, 0b11101), lo, hi)
+            (
+                "d",
+                enc_two_reg(1, 1, 0b11, 0b11111),
+                enc_two_reg(1, 1, 0b11, 0b11101),
+                lo,
+                hi,
+            )
         },
     ] {
         for &(opname, insn) in &[("fsqrt", fsqrt), ("frsqrte", frsqrte)] {
             let mut st = ArmState::zeroed();
             st.fpcr = FPCR_AH;
             st.set_vreg(RN as usize, lo, hi);
-            batch.push((format!("simd_{opname}_{label}_ah_invalid_nan_sign"), insn, st));
+            batch.push((
+                format!("simd_{opname}_{label}_ah_invalid_nan_sign"),
+                insn,
+                st,
+            ));
         }
     }
 
@@ -56499,12 +57207,19 @@ fn diff_fpcr_ah_fsqrt_frsqrte_invalid_nan_sign() {
             ("d", 3, lo, hi)
         },
     ] {
-        for &(opname, insn) in &[("fsqrt", enc_sve_fsqrt(size)), ("frsqrte", enc_sve_frecpe(size, 1))] {
+        for &(opname, insn) in &[
+            ("fsqrt", enc_sve_fsqrt(size)),
+            ("frsqrte", enc_sve_frecpe(size, 1)),
+        ] {
             let mut st = ArmState::zeroed();
             st.fpcr = FPCR_AH;
             st.set_preg(0, 0xffff);
             st.set_vreg(RN as usize, lo, hi);
-            batch.push((format!("sve_{opname}_{label}_ah_invalid_nan_sign"), insn, st));
+            batch.push((
+                format!("sve_{opname}_{label}_ah_invalid_nan_sign"),
+                insn,
+                st,
+            ));
         }
     }
 
@@ -56577,7 +57292,11 @@ fn diff_fpcr_ah_sve_indexed_fma_subnormal_status() {
         st.set_vreg(RD as usize, 0, 0);
         st.set_vreg(RN as usize, ones as u64, (ones >> 64) as u64);
         st.set_vreg(RM as usize, subnorms as u64, (subnorms >> 64) as u64);
-        batch.push((format!("sve_idx_{name}_s_ah_index_subnorm"), enc_sve_fp_idx(op, 2, 0, RM), st));
+        batch.push((
+            format!("sve_idx_{name}_s_ah_index_subnorm"),
+            enc_sve_fp_idx(op, 2, 0, RM),
+            st,
+        ));
     }
 
     run_batch("fpcr_ah_sve_indexed_fma_subnormal_status", batch);
@@ -56596,7 +57315,10 @@ fn diff_fpcr_ah_sve_indexed_fma_nan_suppresses_denorm_status() {
         batch.push((format!("sve_idx_{name}_s_ah_nan_with_subnorm"), insn, st));
     }
 
-    run_batch("fpcr_ah_sve_indexed_fma_nan_suppresses_denorm_status", batch);
+    run_batch(
+        "fpcr_ah_sve_indexed_fma_nan_suppresses_denorm_status",
+        batch,
+    );
 }
 
 /// USDOT (vector): `0 Q 0 01110 10 0 Rm 100111 Rn Rd`. Rd=v0, Rn=v1, Rm=v2.
@@ -57424,7 +58146,10 @@ fn diff_excl_stxp_unarmed() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for &sz64 in &[false, true] {
         for o0 in 0..2 {
-            cases.push((format!("stxp_unarmed sz64{sz64} o0{o0}"), enc_stxp(sz64, o0)));
+            cases.push((
+                format!("stxp_unarmed sz64{sz64} o0{o0}"),
+                enc_stxp(sz64, o0),
+            ));
         }
     }
 
@@ -58014,16 +58739,7 @@ fn diff_mem_casp_alignment_edges() {
 }
 
 /// Atomic memory op: `size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt`. Rs=x2, Rn=x1, Rt=x0.
-fn enc_atomic_regs(
-    size: u32,
-    a: u32,
-    r: u32,
-    o3: u32,
-    opc: u32,
-    rs: u32,
-    rn: u32,
-    rt: u32,
-) -> u32 {
+fn enc_atomic_regs(size: u32, a: u32, r: u32, o3: u32, opc: u32, rs: u32, rn: u32, rt: u32) -> u32 {
     (size << 30)
         | (0b111 << 27)
         | (a << 23)
@@ -58728,9 +59444,7 @@ fn diff_mem_ldst_struct_encoding_legality_grid() {
                 for opcode in 0..16u32 {
                     for size in 0..4u32 {
                         batch.push((
-                            format!(
-                                "ldst_struct_q{q}_post{post}_l{l}_op{opcode}_size{size}"
-                            ),
+                            format!("ldst_struct_q{q}_post{post}_l{l}_op{opcode}_size{size}"),
                             enc_ldst_struct_regs(q, post, l, rm, opcode, size, RD, RN),
                             mem_input(&mut rng),
                         ));
@@ -59403,9 +60117,21 @@ fn diff_mem_mte_tag_memory_edges() {
         ("stzg signed_zero", tag_mem(0b01, 0, 0b10, RN, RD), false),
         ("st2g pre_pos", tag_mem(0b10, 1, 0b11, RN, RD), false),
         ("stz2g sp_post_neg", tag_mem(0b11, -1, 0b01, 31, RD), true),
-        ("stgp signed_neg", enc_ldp_regs(0b01, 0, 0b10, 0, 0x7f, RD, RM, RN), false),
-        ("stgp sp_pre_pos", enc_ldp_regs(0b01, 0, 0b11, 0, 1, RD, RM, 31), true),
-        ("stgp noalloc_undef", enc_ldp_regs(0b01, 0, 0b00, 0, 0, RD, RM, RN), false),
+        (
+            "stgp signed_neg",
+            enc_ldp_regs(0b01, 0, 0b10, 0, 0x7f, RD, RM, RN),
+            false,
+        ),
+        (
+            "stgp sp_pre_pos",
+            enc_ldp_regs(0b01, 0, 0b11, 0, 1, RD, RM, 31),
+            true,
+        ),
+        (
+            "stgp noalloc_undef",
+            enc_ldp_regs(0b01, 0, 0b00, 0, 0, RD, RM, RN),
+            false,
+        ),
     ] {
         batch.push((name.to_string(), insn, state(RN, use_sp)));
     }
@@ -59434,8 +60160,7 @@ fn diff_mem_mte_tag_array_flat_memory_edges() {
         "MCSETTAGARRAY writes back one flat tag granule"
     );
     assert_eq!(
-        out.x[RD as usize],
-        set.x[RD as usize],
+        out.x[RD as usize], set.x[RD as usize],
         "MCSETTAGARRAY leaves the source data register unchanged"
     );
     assert_eq!(
@@ -59448,8 +60173,7 @@ fn diff_mem_mte_tag_array_flat_memory_edges() {
     get.x[RD as usize] = 0x1234_5678_9abc_def0;
     let out = run_rax(tag_array(true, RN, RD), &get).expect("MCGETTAGARRAY executes");
     assert_eq!(
-        out.x[RD as usize],
-        0,
+        out.x[RD as usize], 0,
         "MCGETTAGARRAY reads zero tag data from flat memory"
     );
     assert_eq!(
@@ -59462,8 +60186,7 @@ fn diff_mem_mte_tag_array_flat_memory_edges() {
     overlap.x[RN as usize] = SCRATCH_BASE + 48;
     let out = run_rax(tag_array(true, RN, RN), &overlap).expect("overlap MCGETTAGARRAY executes");
     assert_eq!(
-        out.x[RN as usize],
-        0,
+        out.x[RN as usize], 0,
         "overlap MCGETTAGARRAY chooses writeback suppression"
     );
 }
@@ -59475,28 +60198,19 @@ fn diff_mte_runtime_supported_legality_edges() {
     }
 
     fn dp2_mte(s: u32, opcode: u32) -> u32 {
-        (1 << 31)
-            | (s << 29)
-            | (0b0011010110 << 21)
-            | (RM << 16)
-            | (opcode << 10)
-            | (RN << 5)
-            | RD
+        (1 << 31) | (s << 29) | (0b0011010110 << 21) | (RM << 16) | (opcode << 10) | (RN << 5) | RD
     }
 
     fn tag_mem(opc: u32, op2: u32) -> u32 {
-        (0xD9 << 24)
-            | ((opc & 0x3) << 22)
-            | (1 << 21)
-            | ((op2 & 0x3) << 10)
-            | (RN << 5)
-            | RD
+        (0xD9 << 24) | ((opc & 0x3) << 22) | (1 << 21) | ((op2 & 0x3) << 10) | (RN << 5) | RD
     }
 
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
-            eprintln!("[arm_diff] mte_runtime_supported_legality_edges: oracle unavailable -> skipping");
+            eprintln!(
+                "[arm_diff] mte_runtime_supported_legality_edges: oracle unavailable -> skipping"
+            );
             return;
         }
     };
@@ -59507,12 +60221,16 @@ fn diff_mte_runtime_supported_legality_edges() {
     let probe_out = match run_oracle(&oracle, &probe_cases) {
         Some(o) => o,
         None => {
-            eprintln!("[arm_diff] mte_runtime_supported_legality_edges: oracle probe failed -> skipping");
+            eprintln!(
+                "[arm_diff] mte_runtime_supported_legality_edges: oracle probe failed -> skipping"
+            );
             return;
         }
     };
     if probe_out[0].trapped != 0 {
-        eprintln!("[arm_diff] mte_runtime_supported_legality_edges: native MTE instructions trap -> skipping");
+        eprintln!(
+            "[arm_diff] mte_runtime_supported_legality_edges: native MTE instructions trap -> skipping"
+        );
         return;
     }
 
@@ -60104,10 +60822,7 @@ fn diff_mem_ldst_single_register_encoding_legality_grid() {
                 } else {
                     enc_ldst_reg_simdfp_regs(size, opc, RM, 0b011, 0, RD, RN)
                 };
-                push(
-                    format!("ldst_single_reg_v{v}_size{size}_opc{opc}"),
-                    insn,
-                );
+                push(format!("ldst_single_reg_v{v}_size{size}_opc{opc}"), insn);
             }
         }
     }
@@ -60882,7 +61597,11 @@ fn diff_mem_loregion_fixed_field_legality() {
 
     for size in 0..4u32 {
         for &(load, mnemonic, rt) in &[(true, "ldlar", RD), (false, "stllr", 3)] {
-            for &(rs, rt2, field) in &[(0u32, 31u32, "rs0"), (31, 0, "rt2_0"), (7, 30, "rs7_rt2_30")] {
+            for &(rs, rt2, field) in &[
+                (0u32, 31u32, "rs0"),
+                (31, 0, "rt2_0"),
+                (7, 30, "rs7_rt2_30"),
+            ] {
                 let mut st = ArmState::zeroed();
                 st.x[RN as usize] = SCRATCH_BASE;
                 st.x[3] = 0x1122_3344_5566_7788;
@@ -61156,7 +61875,12 @@ fn diff_mem_ldst_reg_offset_matrix() {
         (3, 0, "str_x"),
         (3, 1, "ldr_x"),
     ];
-    let options: &[(u32, &str)] = &[(0b010, "uxtw"), (0b011, "lsl"), (0b110, "sxtw"), (0b111, "sxtx")];
+    let options: &[(u32, &str)] = &[
+        (0b010, "uxtw"),
+        (0b011, "lsl"),
+        (0b110, "sxtw"),
+        (0b111, "sxtx"),
+    ];
 
     let mut cases: Vec<(String, u32, u64)> = Vec::new();
     for &(size, opc, op_name) in ops {
@@ -61207,7 +61931,12 @@ fn diff_mem_ldst_simdfp_reg_offset_matrix() {
         (0, 2, 4, "str_q"),
         (0, 3, 4, "ldr_q"),
     ];
-    let options: &[(u32, &str)] = &[(0b010, "uxtw"), (0b011, "lsl"), (0b110, "sxtw"), (0b111, "sxtx")];
+    let options: &[(u32, &str)] = &[
+        (0b010, "uxtw"),
+        (0b011, "lsl"),
+        (0b110, "sxtw"),
+        (0b111, "sxtx"),
+    ];
 
     let mut cases: Vec<(String, u32, u64)> = Vec::new();
     for &(size, opc, scale, op_name) in ops {
@@ -61432,12 +62161,7 @@ fn diff_mem_ldst_unprivileged_edges() {
         (0, 3, "ldtrsb_w"),
         (1, 3, "ldtrsh_w"),
     ];
-    let store_ops: &[(u32, &str)] = &[
-        (0, "sttrb"),
-        (1, "sttrh"),
-        (2, "sttr_w"),
-        (3, "sttr_x"),
-    ];
+    let store_ops: &[(u32, &str)] = &[(0, "sttrb"), (1, "sttrh"), (2, "sttr_w"), (3, "sttr_x")];
     let mut batch = Vec::new();
 
     for &(size, opc, name) in load_ops {
@@ -61619,14 +62343,7 @@ fn enc_fp_to_gpr(sf: u32, fp_type: u32, rmode: u32, opcode: u32) -> u32 {
     enc_fp_to_gpr_regs(sf, fp_type, rmode, opcode, RN, RD)
 }
 
-fn enc_fp_to_gpr_regs(
-    sf: u32,
-    fp_type: u32,
-    rmode: u32,
-    opcode: u32,
-    rn: u32,
-    rd: u32,
-) -> u32 {
+fn enc_fp_to_gpr_regs(sf: u32, fp_type: u32, rmode: u32, opcode: u32, rn: u32, rd: u32) -> u32 {
     (sf << 31)
         | (0b0011110 << 24)
         | (fp_type << 22)
@@ -61639,12 +62356,7 @@ fn enc_fp_to_gpr_regs(
 
 /// Scalar FCMP <Fn>, #0.0.
 fn enc_fcmp_zero(fp_type: u32) -> u32 {
-    (0b00011110 << 24)
-        | (fp_type << 22)
-        | (1 << 21)
-        | (0b1000 << 10)
-        | (RN << 5)
-        | (1 << 3)
+    (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (0b1000 << 10) | (RN << 5) | (1 << 3)
 }
 
 /// Scalar FCMP <Fn>, <Fm>.
@@ -61822,8 +62534,14 @@ fn diff_fp_scalar_unallocated_edges() {
             enc_fccmp_reg(0b10, false, 0b1110, 0),
         ),
         ("fcsel_reserved_ptype".into(), enc_fcsel(0b10, 0b1110)),
-        ("fcmp_reg_reserved_bit2".into(), enc_fcmp_reg(0b00) | (1 << 2)),
-        ("fcmp_zero_reserved_bit2".into(), enc_fcmp_zero(0b01) | (1 << 2)),
+        (
+            "fcmp_reg_reserved_bit2".into(),
+            enc_fcmp_reg(0b00) | (1 << 2),
+        ),
+        (
+            "fcmp_zero_reserved_bit2".into(),
+            enc_fcmp_zero(0b01) | (1 << 2),
+        ),
     ];
     let mut rng = Rng::new(0xF10A_00FF);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -62222,7 +62940,11 @@ fn diff_generated_sve_contiguous_base_imm_memory_sweep() {
     let mut batch = Vec::new();
     for (label, insn) in generated_sve_contiguous_base_imm_memory_cases() {
         for _ in 0..3 {
-            batch.push((label.clone(), insn, gen_sve_contiguous_memory_input(&mut rng)));
+            batch.push((
+                label.clone(),
+                insn,
+                gen_sve_contiguous_memory_input(&mut rng),
+            ));
         }
     }
     run_batch("generated_sve_contiguous_base_imm_memory_sweep", batch);
@@ -62234,10 +62956,17 @@ fn diff_generated_sve_ldnf1_memory_sweep() {
     let mut batch = Vec::new();
     for (label, insn) in generated_sve_ldnf1_memory_cases() {
         for _ in 0..3 {
-            batch.push((label.clone(), insn, gen_sve_contiguous_memory_input(&mut rng)));
+            batch.push((
+                label.clone(),
+                insn,
+                gen_sve_contiguous_memory_input(&mut rng),
+            ));
         }
     }
-    assert!(!batch.is_empty(), "expected generated SVE LDNF1 memory cases");
+    assert!(
+        !batch.is_empty(),
+        "expected generated SVE LDNF1 memory cases"
+    );
     run_batch("generated_sve_ldnf1_memory_sweep", batch);
 }
 
@@ -62267,7 +62996,11 @@ fn diff_generated_sve_non_temporal_imm_memory_sweep() {
     let mut batch = Vec::new();
     for (label, insn) in generated_sve_non_temporal_imm_memory_cases() {
         for _ in 0..3 {
-            batch.push((label.clone(), insn, gen_sve_contiguous_memory_input(&mut rng)));
+            batch.push((
+                label.clone(),
+                insn,
+                gen_sve_contiguous_memory_input(&mut rng),
+            ));
         }
     }
     assert!(
@@ -62452,10 +63185,7 @@ fn diff_sve_cvtf_fpcr_rounding() {
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
         st.set_preg(0, 0xffff);
-        let d_lanes = [
-            9_007_199_254_740_993u64,
-            (-9_007_199_254_740_993i64) as u64,
-        ];
+        let d_lanes = [9_007_199_254_740_993u64, (-9_007_199_254_740_993i64) as u64];
         let mut packed = 0u128;
         for (lane, value) in d_lanes.iter().enumerate() {
             packed |= (*value as u128) << (64 * lane);
@@ -62497,7 +63227,10 @@ fn diff_generated_sve_fp_unpredicated_vector_arithmetic_sweep() {
             batch.push((label.clone(), insn, gen_sve_input(&mut rng)));
         }
     }
-    run_batch("generated_sve_fp_unpredicated_vector_arithmetic_sweep", batch);
+    run_batch(
+        "generated_sve_fp_unpredicated_vector_arithmetic_sweep",
+        batch,
+    );
 }
 
 #[test]
@@ -62633,20 +63366,12 @@ fn diff_fp_scalar_sqrt_fpcr_rounding() {
         let mut st = ArmState::zeroed();
         st.fpcr = rmode << 22;
         st.set_vreg(RN as usize, 2.0f32.to_bits() as u64, 0);
-        batch.push((
-            format!("fsqrt_s_rmode{rmode}"),
-            enc_fp1(0, 0b000011),
-            st,
-        ));
+        batch.push((format!("fsqrt_s_rmode{rmode}"), enc_fp1(0, 0b000011), st));
 
         let mut st = ArmState::zeroed();
         st.fpcr = rmode << 22;
         st.set_vreg(RN as usize, 2.0f64.to_bits(), 0);
-        batch.push((
-            format!("fsqrt_d_rmode{rmode}"),
-            enc_fp1(1, 0b000011),
-            st,
-        ));
+        batch.push((format!("fsqrt_d_rmode{rmode}"), enc_fp1(1, 0b000011), st));
     }
     run_batch("fp_scalar_sqrt_fpcr_rounding", batch);
 }
@@ -62944,19 +63669,9 @@ fn diff_fp_scalar_f64_arith_fpcr_rounding() {
 
         for &(opcode, name, lhs, rhs) in &[
             (0b0010, "fadd_pos", 9_007_199_254_740_992.0f64, 1.0f64),
-            (
-                0b0010,
-                "fadd_neg",
-                -9_007_199_254_740_992.0f64,
-                -1.0f64,
-            ),
+            (0b0010, "fadd_neg", -9_007_199_254_740_992.0f64, -1.0f64),
             (0b0011, "fsub_pos", 9_007_199_254_740_992.0f64, -1.0f64),
-            (
-                0b0011,
-                "fsub_neg",
-                -9_007_199_254_740_992.0f64,
-                1.0f64,
-            ),
+            (0b0011, "fsub_neg", -9_007_199_254_740_992.0f64, 1.0f64),
             (
                 0b0000,
                 "fmul_pos",
@@ -63170,7 +63885,11 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     st.fpcr = FPCR_FZ16;
     st.set_vreg(RN as usize, 0x0001, 0);
     st.set_vreg(RM as usize, 0x0001, 0);
-    batch.push(("scalar_fadd_h_fz16_min_subnorm".to_string(), enc_fp2(0b11, 0b0010), st));
+    batch.push((
+        "scalar_fadd_h_fz16_min_subnorm".to_string(),
+        enc_fp2(0b11, 0b0010),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
@@ -63236,7 +63955,11 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
     st.set_vreg(RN as usize, 0x0001, 0);
-    batch.push(("scalar_fsqrt_h_fz16_min_subnorm".to_string(), enc_fp1(0b11, 0b000011), st));
+    batch.push((
+        "scalar_fsqrt_h_fz16_min_subnorm".to_string(),
+        enc_fp1(0b11, 0b000011),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
@@ -63250,13 +63973,21 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
     st.set_vreg(RN as usize, 0x0001, 0);
-    batch.push(("scalar_fcmp_zero_h_fz16_min_subnorm".to_string(), enc_fcmp_zero(0b11), st));
+    batch.push((
+        "scalar_fcmp_zero_h_fz16_min_subnorm".to_string(),
+        enc_fcmp_zero(0b11),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
     st.set_vreg(RN as usize, 0x0001, 0);
     st.set_vreg(RM as usize, 0, 0);
-    batch.push(("scalar_fcmp_reg_h_fz16_min_subnorm".to_string(), enc_fcmp_reg(0b11), st));
+    batch.push((
+        "scalar_fcmp_reg_h_fz16_min_subnorm".to_string(),
+        enc_fcmp_reg(0b11),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FZ16;
@@ -63370,8 +64101,14 @@ fn diff_fpcr_fz16_fp16_subnormal_inputs() {
     ));
 
     for &(name, insn) in &[
-        ("simd_fmul_h_idx_fz16_tiny_output", enc_fp16_idx(1, 0, 0b1001, 0)),
-        ("simd_fmulx_h_idx_fz16_tiny_output", enc_fp16_idx(1, 1, 0b1001, 0)),
+        (
+            "simd_fmul_h_idx_fz16_tiny_output",
+            enc_fp16_idx(1, 0, 0b1001, 0),
+        ),
+        (
+            "simd_fmulx_h_idx_fz16_tiny_output",
+            enc_fp16_idx(1, 1, 0b1001, 0),
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ16;
@@ -63689,7 +64426,14 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
     for &(name, opcode, s_n, s_m, d_n, d_m) in &[
-        ("fmax", 0b0100, 0x0000_0001u32, 0, 0x0000_0000_0000_0001u64, 0),
+        (
+            "fmax",
+            0b0100,
+            0x0000_0001u32,
+            0,
+            0x0000_0000_0000_0001u64,
+            0,
+        ),
         (
             "fmin",
             0b0101,
@@ -63712,13 +64456,21 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
         st.fpcr = FPCR_FIZ;
         st.set_vreg(RN as usize, s_n as u64, 0);
         st.set_vreg(RM as usize, s_m as u64, 0);
-        batch.push((format!("scalar_{name}_s_min_subnorm"), enc_fp2(0, opcode), st));
+        batch.push((
+            format!("scalar_{name}_s_min_subnorm"),
+            enc_fp2(0, opcode),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
         st.set_vreg(RN as usize, d_n, 0);
         st.set_vreg(RM as usize, d_m, 0);
-        batch.push((format!("scalar_{name}_d_min_subnorm"), enc_fp2(1, opcode), st));
+        batch.push((
+            format!("scalar_{name}_d_min_subnorm"),
+            enc_fp2(1, opcode),
+            st,
+        ));
     }
 
     let pack32 = |x: u32| -> u128 {
@@ -63727,7 +64479,16 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
     let pack64 = |x: u64| -> u128 { (x as u128) | ((x as u128) << 64) };
 
     for &(name, u, a, opcode, s_n, s_m, d_n, d_m) in &[
-        ("fmax", 0, 0, 0b11110, 0x0000_0001u32, 0, 0x0000_0000_0000_0001u64, 0),
+        (
+            "fmax",
+            0,
+            0,
+            0b11110,
+            0x0000_0001u32,
+            0,
+            0x0000_0000_0000_0001u64,
+            0,
+        ),
         (
             "fmin",
             0,
@@ -63738,7 +64499,16 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
             0x0000_0000_0000_0001,
             1.0f64.to_bits(),
         ),
-        ("fmaxnm", 0, 0, 0b11000, 0x0000_0001, 0, 0x0000_0000_0000_0001, 0),
+        (
+            "fmaxnm",
+            0,
+            0,
+            0b11000,
+            0x0000_0001,
+            0,
+            0x0000_0000_0000_0001,
+            0,
+        ),
         (
             "fminnm",
             0,
@@ -63749,7 +64519,16 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
             0x0000_0000_0000_0001,
             1.0f64.to_bits(),
         ),
-        ("fabd", 1, 1, 0b11010, 0x0000_0001, 0, 0x0000_0000_0000_0001, 0),
+        (
+            "fabd",
+            1,
+            1,
+            0b11010,
+            0x0000_0001,
+            0,
+            0x0000_0000_0000_0001,
+            0,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
@@ -63777,7 +64556,14 @@ fn diff_fpcr_fiz_fp_extrema_abd_subnormal_inputs() {
     }
 
     for &(name, opc5, s_d, s_n, d_d, d_n) in &[
-        ("fmax", 0b00110, 0x0000_0001u32, 0, 0x0000_0000_0000_0001u64, 0),
+        (
+            "fmax",
+            0b00110,
+            0x0000_0001u32,
+            0,
+            0x0000_0000_0000_0001u64,
+            0,
+        ),
         (
             "fmin",
             0b00111,
@@ -63903,10 +64689,7 @@ fn diff_fpcr_fiz_fp_pairwise_extrema_subnormal_inputs() {
 fn diff_simd_fp_ordered_compare_qnan_status() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    for &(name, u, a, opcode) in &[
-        ("fcmge", 1, 0, 0b11100),
-        ("fcmgt", 1, 1, 0b11100),
-    ] {
+    for &(name, u, a, opcode) in &[("fcmge", 1, 0, 0b11100), ("fcmgt", 1, 1, 0b11100)] {
         let mut st = ArmState::zeroed();
         let qnan = 0x7fc0_0001u32;
         let one = 1.0f32.to_bits();
@@ -63914,10 +64697,8 @@ fn diff_simd_fp_ordered_compare_qnan_status() {
             | ((qnan as u128) << 32)
             | ((qnan as u128) << 64)
             | ((qnan as u128) << 96);
-        let m = (one as u128)
-            | ((one as u128) << 32)
-            | ((one as u128) << 64)
-            | ((one as u128) << 96);
+        let m =
+            (one as u128) | ((one as u128) << 32) | ((one as u128) << 64) | ((one as u128) << 96);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
         st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
         batch.push((
@@ -63984,11 +64765,7 @@ fn diff_simd_fp_maxmin_snan_status() {
         let (mlo, mhi) = pack_s(1.0f32.to_bits());
         st.set_vreg(RN as usize, nlo, nhi);
         st.set_vreg(RM as usize, mlo, mhi);
-        batch.push((
-            name.to_string(),
-            enc_three_same(q, u, a << 1, opcode),
-            st,
-        ));
+        batch.push((name.to_string(), enc_three_same(q, u, a << 1, opcode), st));
     }
 
     for &(name, q, u, size, opcode, bits) in &[
@@ -64096,13 +64873,7 @@ fn diff_fpcr_fz_fma_subnormal_inputs() {
     };
 
     for &(name, fp_type, min_sub, min_norm, half) in &[
-        (
-            "s",
-            0,
-            0x0000_0001u64,
-            0x0080_0000u64,
-            0x3f00_0000u64,
-        ),
+        ("s", 0, 0x0000_0001u64, 0x0080_0000u64, 0x3f00_0000u64),
         (
             "d",
             1,
@@ -64475,14 +65246,23 @@ fn diff_fpcr_ah_fma_qnan_snan_priority() {
     let mut batch = Vec::new();
     for &(label, ft, qnan, snan) in &[
         ("s", 0u32, 0x7fc0_2000u64, 0x7fa0_0001u64),
-        ("d", 1u32, 0x7ff8_0000_0000_2000u64, 0x7ff0_0000_0000_0001u64),
+        (
+            "d",
+            1u32,
+            0x7ff8_0000_0000_2000u64,
+            0x7ff0_0000_0000_0001u64,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RA as usize, 0, 0);
         st.set_vreg(RN as usize, qnan, 0);
         st.set_vreg(RM as usize, snan, 0);
-        batch.push((format!("scalar_fmadd_{label}_ah_qnan_snan"), enc_fp3(ft, 0, 0), st));
+        batch.push((
+            format!("scalar_fmadd_{label}_ah_qnan_snan"),
+            enc_fp3(ft, 0, 0),
+            st,
+        ));
     }
 
     for &(label, qnan, snan, insn) in &[
@@ -64530,7 +65310,12 @@ fn diff_fpcr_ah_binary_qnan_snan_priority() {
     let mut batch = Vec::new();
     for &(label, fp_type, qnan, snan) in &[
         ("s", 0b00, 0x7fc0_2000u64, 0x7fa0_0001u64),
-        ("d", 0b01, 0x7ff8_0000_0000_2000u64, 0x7ff0_0000_0000_0001u64),
+        (
+            "d",
+            0b01,
+            0x7ff8_0000_0000_2000u64,
+            0x7ff0_0000_0000_0001u64,
+        ),
     ] {
         for &(name, insn) in &[
             ("fadd", enc_fp2(fp_type, 0b0010)),
@@ -64629,7 +65414,11 @@ fn diff_fpcr_ah_maxmin_qnan_number() {
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, nan, 0);
         st.set_vreg(RM as usize, one, 0);
-        batch.push((format!("{label}_ah_qnan_number"), enc_fp2(fp_type, opcode), st));
+        batch.push((
+            format!("{label}_ah_qnan_number"),
+            enc_fp2(fp_type, opcode),
+            st,
+        ));
     }
 
     let (nan_lo, nan_hi) = pack_h(0x7e01);
@@ -64802,11 +65591,7 @@ fn diff_fpcr_ah_fmaxv_h_nan_zero_tie() {
     const FPCR_AH: u64 = 1 << 1;
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_AH;
-    st.set_vreg(
-        RN as usize,
-        0xff80_0000_7f80_0000,
-        0x8000_0000_0000_0000,
-    );
+    st.set_vreg(RN as usize, 0xff80_0000_7f80_0000, 0x8000_0000_0000_0000);
 
     run_batch(
         "fpcr_ah_fmaxv_h_nan_zero_tie",
@@ -64837,7 +65622,9 @@ fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
     };
 
     let mut batch = Vec::new();
-    let (h_lo, h_hi) = pack_h(&[0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001]);
+    let (h_lo, h_hi) = pack_h(&[
+        0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001,
+    ]);
     let (s_lo, s_hi) = pack_s(&[0x7fc0_2000, 0x7fa0_0001, 0x3f80_0000, 0x0000_0001]);
     let d_both_nan = (0x7ff8_0000_0000_2000, 0x7ff0_0000_0000_0001);
     let d_nan_number = (0x7ff8_0000_0000_2000, 0x0000_0000_0000_0001);
@@ -64847,8 +65634,18 @@ fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
         ("simd_fmin_h", enc_fp16_3s(1, 0, 1, 0b110), h_lo, h_hi),
         ("simd_fmax_s", enc_three_same(1, 0, 0, 0b11110), s_lo, s_hi),
         ("simd_fmin_s", enc_three_same(1, 0, 2, 0b11110), s_lo, s_hi),
-        ("simd_fmax_d", enc_three_same(1, 0, 1, 0b11110), d_both_nan.0, d_both_nan.1),
-        ("simd_fmin_d", enc_three_same(1, 0, 3, 0b11110), d_both_nan.0, d_both_nan.1),
+        (
+            "simd_fmax_d",
+            enc_three_same(1, 0, 1, 0b11110),
+            d_both_nan.0,
+            d_both_nan.1,
+        ),
+        (
+            "simd_fmin_d",
+            enc_three_same(1, 0, 3, 0b11110),
+            d_both_nan.0,
+            d_both_nan.1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -64862,8 +65659,18 @@ fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
         ("simd_fminp_h", enc_fp16_3s(1, 1, 1, 0b110), h_lo, h_hi),
         ("simd_fmaxp_s", enc_three_same(1, 1, 0, 0b11110), s_lo, s_hi),
         ("simd_fminp_s", enc_three_same(1, 1, 2, 0b11110), s_lo, s_hi),
-        ("simd_fmaxp_d", enc_three_same(1, 1, 1, 0b11110), d_nan_number.0, d_nan_number.1),
-        ("simd_fminp_d", enc_three_same(1, 1, 3, 0b11110), d_nan_number.0, d_nan_number.1),
+        (
+            "simd_fmaxp_d",
+            enc_three_same(1, 1, 1, 0b11110),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
+        (
+            "simd_fminp_d",
+            enc_three_same(1, 1, 3, 0b11110),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -64877,8 +65684,18 @@ fn diff_fpcr_ah_maxmin_both_nan_pairwise() {
         ("sve_fminp_h", enc_sve2_fpairwise(1, 0b111), h_lo, h_hi),
         ("sve_fmaxp_s", enc_sve2_fpairwise(2, 0b110), s_lo, s_hi),
         ("sve_fminp_s", enc_sve2_fpairwise(2, 0b111), s_lo, s_hi),
-        ("sve_fmaxp_d", enc_sve2_fpairwise(3, 0b110), d_nan_number.0, d_nan_number.1),
-        ("sve_fminp_d", enc_sve2_fpairwise(3, 0b111), d_nan_number.0, d_nan_number.1),
+        (
+            "sve_fmaxp_d",
+            enc_sve2_fpairwise(3, 0b110),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
+        (
+            "sve_fminp_d",
+            enc_sve2_fpairwise(3, 0b111),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -64910,17 +65727,39 @@ fn diff_fpcr_ah_maxnm_pairwise_nan_priority() {
     };
 
     let mut batch = Vec::new();
-    let (h_lo, h_hi) = pack_h(&[0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001]);
+    let (h_lo, h_hi) = pack_h(&[
+        0x7e00, 0x7d01, 0x3c00, 0x0001, 0x7e00, 0x7d01, 0x3c00, 0x0001,
+    ]);
     let (s_lo, s_hi) = pack_s(&[0x7fc0_2000, 0x7fa0_0001, 0x3f80_0000, 0x0000_0001]);
     let d_nan_number = (0x7ff8_0000_0000_2000, 0x0000_0000_0000_0001);
 
     for &(label, insn, lo, hi) in &[
         ("simd_fmaxnmp_h", enc_fp16_3s(1, 1, 0, 0b000), h_lo, h_hi),
         ("simd_fminnmp_h", enc_fp16_3s(1, 1, 1, 0b000), h_lo, h_hi),
-        ("simd_fmaxnmp_s", enc_three_same(1, 1, 0, 0b11000), s_lo, s_hi),
-        ("simd_fminnmp_s", enc_three_same(1, 1, 2, 0b11000), s_lo, s_hi),
-        ("simd_fmaxnmp_d", enc_three_same(1, 1, 1, 0b11000), d_nan_number.0, d_nan_number.1),
-        ("simd_fminnmp_d", enc_three_same(1, 1, 3, 0b11000), d_nan_number.0, d_nan_number.1),
+        (
+            "simd_fmaxnmp_s",
+            enc_three_same(1, 1, 0, 0b11000),
+            s_lo,
+            s_hi,
+        ),
+        (
+            "simd_fminnmp_s",
+            enc_three_same(1, 1, 2, 0b11000),
+            s_lo,
+            s_hi,
+        ),
+        (
+            "simd_fmaxnmp_d",
+            enc_three_same(1, 1, 1, 0b11000),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
+        (
+            "simd_fminnmp_d",
+            enc_three_same(1, 1, 3, 0b11000),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -64934,8 +65773,18 @@ fn diff_fpcr_ah_maxnm_pairwise_nan_priority() {
         ("sve_fminnmp_h", enc_sve2_fpairwise(1, 0b101), h_lo, h_hi),
         ("sve_fmaxnmp_s", enc_sve2_fpairwise(2, 0b100), s_lo, s_hi),
         ("sve_fminnmp_s", enc_sve2_fpairwise(2, 0b101), s_lo, s_hi),
-        ("sve_fmaxnmp_d", enc_sve2_fpairwise(3, 0b100), d_nan_number.0, d_nan_number.1),
-        ("sve_fminnmp_d", enc_sve2_fpairwise(3, 0b101), d_nan_number.0, d_nan_number.1),
+        (
+            "sve_fmaxnmp_d",
+            enc_sve2_fpairwise(3, 0b100),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
+        (
+            "sve_fminnmp_d",
+            enc_sve2_fpairwise(3, 0b101),
+            d_nan_number.0,
+            d_nan_number.1,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -65040,7 +65889,11 @@ fn diff_fpcr_ah_fabs_qnan_sign() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
         st.set_vreg(RN as usize, nan, 0);
-        batch.push((format!("{label}_ah_negative_qnan"), enc_fp1(fp_type, 0b000001), st));
+        batch.push((
+            format!("{label}_ah_negative_qnan"),
+            enc_fp1(fp_type, 0b000001),
+            st,
+        ));
     }
 
     let (lo, hi) = pack_h(0xfe01);
@@ -65074,8 +65927,18 @@ fn diff_fpcr_ah_fabs_qnan_sign() {
     ));
 
     for &(label, insn, lo, hi) in &[
-        ("sve_fabs_h", enc_sve_pred_unary(1, 0b011100), pack_h(0xfe01).0, pack_h(0xfe01).1),
-        ("sve_fabs_s", enc_sve_pred_unary(2, 0b011100), pack_s(0xffc0_2000).0, pack_s(0xffc0_2000).1),
+        (
+            "sve_fabs_h",
+            enc_sve_pred_unary(1, 0b011100),
+            pack_h(0xfe01).0,
+            pack_h(0xfe01).1,
+        ),
+        (
+            "sve_fabs_s",
+            enc_sve_pred_unary(2, 0b011100),
+            pack_s(0xffc0_2000).0,
+            pack_s(0xffc0_2000).1,
+        ),
         (
             "sve_fabs_d",
             enc_sve_pred_unary(3, 0b011100),
@@ -65102,7 +65965,11 @@ fn diff_fpcr_ah_fp32_subnormal_input_status() {
     st.fpcr = FPCR_AH;
     st.set_vreg(RN as usize, 0x0000_2000, 0);
     st.set_vreg(RM as usize, 0, 0);
-    batch.push(("scalar_fadd_s_ah_input_subnorm".to_string(), enc_fp2(0b00, 0b0010), st));
+    batch.push((
+        "scalar_fadd_s_ah_input_subnorm".to_string(),
+        enc_fp2(0b00, 0b0010),
+        st,
+    ));
 
     let mut packed = 0u128;
     for lane in 0..4 {
@@ -65121,7 +65988,11 @@ fn diff_fpcr_ah_fp32_subnormal_input_status() {
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_AH;
     st.set_vreg(RN as usize, 0x0000_2000, 0);
-    batch.push(("scalar_fcmp_s_ah_input_subnorm".to_string(), enc_fcmp_zero(0b00), st));
+    batch.push((
+        "scalar_fcmp_s_ah_input_subnorm".to_string(),
+        enc_fcmp_zero(0b00),
+        st,
+    ));
 
     for &(name, nan) in &[("qnan", 0x7fc0_2000u32), ("snan", 0x7fa0_0001)] {
         let mut st = ArmState::zeroed();
@@ -65174,7 +66045,11 @@ fn diff_fpcr_ah_fma_fp32_subnormal_input_status() {
     st.set_vreg(RA as usize, 0, 0);
     st.set_vreg(RN as usize, 0x0000_2000, 0);
     st.set_vreg(RM as usize, 0x3f80_0000, 0);
-    batch.push(("scalar_fmadd_s_ah_input_subnorm".to_string(), enc_fp3(0, 0, 0), st));
+    batch.push((
+        "scalar_fmadd_s_ah_input_subnorm".to_string(),
+        enc_fp3(0, 0, 0),
+        st,
+    ));
 
     let mut packed_sub = 0u128;
     let mut packed_one = 0u128;
@@ -65183,8 +66058,14 @@ fn diff_fpcr_ah_fma_fp32_subnormal_input_status() {
         packed_one |= (0x3f80_0000u128) << (32 * lane);
     }
     for &(label, insn) in &[
-        ("simd_fmla_s_ah_input_subnorm", enc_three_same(1, 0, 0, 0b11001)),
-        ("simd_fmls_s_ah_input_subnorm", enc_three_same(1, 0, 2, 0b11001)),
+        (
+            "simd_fmla_s_ah_input_subnorm",
+            enc_three_same(1, 0, 0, 0b11001),
+        ),
+        (
+            "simd_fmls_s_ah_input_subnorm",
+            enc_three_same(1, 0, 2, 0b11001),
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -65385,13 +66266,7 @@ fn diff_fp_scalar_cvtf_fpcr_rounding() {
     push("ucvtf_s_w_pos_2p24p1", 0, 0b00, 0b011, 16_777_217);
     push("ucvtf_s_w_umax", 0, 0b00, 0b011, u32::MAX as u64);
 
-    push(
-        "scvtf_s_x_pos_2p24p1",
-        1,
-        0b00,
-        0b010,
-        16_777_217,
-    );
+    push("scvtf_s_x_pos_2p24p1", 1, 0b00, 0b010, 16_777_217);
     push(
         "scvtf_s_x_neg_2p24p1",
         1,
@@ -65403,13 +66278,7 @@ fn diff_fp_scalar_cvtf_fpcr_rounding() {
     push("ucvtf_s_x_umax", 1, 0b00, 0b011, u64::MAX);
 
     push("scvtf_h_x_pos_2p11p1", 1, 0b11, 0b010, 2_049);
-    push(
-        "scvtf_h_x_neg_2p11p1",
-        1,
-        0b11,
-        0b010,
-        (-2_049i64) as u64,
-    );
+    push("scvtf_h_x_neg_2p11p1", 1, 0b11, 0b010, (-2_049i64) as u64);
     push("ucvtf_h_x_pos_2p11p1", 1, 0b11, 0b011, 2_049);
     push("ucvtf_h_x_overflow", 1, 0b11, 0b011, 65_520);
 
@@ -65466,11 +66335,7 @@ fn diff_fp_scalar_gpr_conversion_zero_registers() {
         (
             0b11,
             "h",
-            &[
-                ("pos", 0x3e00),
-                ("neg", 0xc100),
-                ("tie", 0x4100),
-            ],
+            &[("pos", 0x3e00), ("neg", 0xc100), ("tie", 0x4100)],
         ),
     ];
 
@@ -65560,7 +66425,13 @@ fn diff_fp_scalar_gpr_conversion_unallocated_edges() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
     for &(sf, fp_type, opcode, rmode, name) in &[
-        (0u32, 0b00u32, 0b010u32, 0b01u32, "scvtf_w_s_reserved_rmode1"),
+        (
+            0u32,
+            0b00u32,
+            0b010u32,
+            0b01u32,
+            "scvtf_w_s_reserved_rmode1",
+        ),
         (1, 0b01, 0b011, 0b11, "ucvtf_x_d_reserved_rmode3"),
         (0, 0b11, 0b010, 0b10, "scvtf_w_h_reserved_rmode2"),
     ] {
@@ -65574,7 +66445,13 @@ fn diff_fp_scalar_gpr_conversion_unallocated_edges() {
     }
 
     for &(sf, fp_type, rmode, opcode, name) in &[
-        (0u32, 0b00u32, 0b01u32, 0b100u32, "fcvtas_s_w_reserved_rmode1"),
+        (
+            0u32,
+            0b00u32,
+            0b01u32,
+            0b100u32,
+            "fcvtas_s_w_reserved_rmode1",
+        ),
         (1, 0b01, 0b10, 0b101, "fcvtau_d_x_reserved_rmode2"),
         (0, 0b11, 0b11, 0b100, "fcvtas_h_w_reserved_rmode3"),
     ] {
@@ -65616,13 +66493,7 @@ fn diff_fp_scalar_fmov_general_zero_registers() {
     for &(label, sf, fp_type, rmode, src_bits) in &[
         ("fmov_wzr_s", 0, 0b00, 0b00, (3.25f32).to_bits() as u64),
         ("fmov_xzr_d", 1, 0b01, 0b00, (-7.5f64).to_bits()),
-        (
-            "fmov_xzr_vd1",
-            1,
-            0b10,
-            0b01,
-            0x0123_4567_89ab_cdef,
-        ),
+        ("fmov_xzr_vd1", 1, 0b10, 0b01, 0x0123_4567_89ab_cdef),
         ("fmov_wzr_h", 0, 0b11, 0b00, 0x3e00),
         ("fmov_xzr_h", 1, 0b11, 0b00, 0xbe00),
     ] {
@@ -66161,11 +67032,7 @@ fn diff_fp_scalar_fixed_gpr_conversion_zero_registers() {
         (
             0b11,
             "h",
-            &[
-                ("pos", 0x3c00),
-                ("neg", 0xbe00),
-                ("tie", 0x3e00),
-            ],
+            &[("pos", 0x3c00), ("neg", 0xbe00), ("tie", 0x3e00)],
         ),
     ];
 
@@ -66360,7 +67227,10 @@ fn diff_fpcr_fz16_fp_scalar_fixed_fp16_to_int_subnormal_inputs() {
         ));
     }
 
-    run_batch("fpcr_fz16_fp_scalar_fixed_fp16_to_int_subnormal_inputs", batch);
+    run_batch(
+        "fpcr_fz16_fp_scalar_fixed_fp16_to_int_subnormal_inputs",
+        batch,
+    );
 }
 
 #[test]
@@ -66757,11 +67627,7 @@ fn diff_simd_scalar_shift_fixedpoint() {
             for u in 0..2u32 {
                 for &fbits in &[1u32, 4] {
                     let mut st = ArmState::zeroed();
-                    st.set_vreg(
-                        RN as usize,
-                        fixed_input_bits(bits, opcode, u == 1),
-                        0,
-                    );
+                    st.set_vreg(RN as usize, fixed_input_bits(bits, opcode, u == 1), 0);
                     batch.push((
                         format!("scalar_{opname}_u{u}_b{bits}_f{fbits}"),
                         enc_scalar_shift_imm(u, opcode, 2 * bits - fbits),
@@ -66898,10 +67764,7 @@ fn diff_simd_fixed_cvtf_fpcr_rounding() {
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
-        let d_lanes = [
-            9_007_199_254_740_993u64,
-            (-9_007_199_254_740_993i64) as u64,
-        ];
+        let d_lanes = [9_007_199_254_740_993u64, (-9_007_199_254_740_993i64) as u64];
         let mut packed = 0u128;
         for (lane, value) in d_lanes.iter().enumerate() {
             packed |= (*value as u128) << (64 * lane);
@@ -67182,7 +68045,11 @@ fn diff_simd_three_diff_unallocated_edges() {
         }
     }
 
-    for &(opcode, name) in &[(0b1001, "sqdmlal"), (0b1011, "sqdmlsl"), (0b1101, "sqdmull")] {
+    for &(opcode, name) in &[
+        (0b1001, "sqdmlal"),
+        (0b1011, "sqdmlsl"),
+        (0b1101, "sqdmull"),
+    ] {
         for q in 0..2u32 {
             batch.push((
                 format!("{name}_size0_q{q}"),
@@ -67584,11 +68451,7 @@ fn diff_simd_recps_rsqrts_fpcr_rounding() {
             let d = f64::from_bits(0x3ff0_0000_0000_0001);
             st.set_vreg(RN as usize, d.to_bits(), d.to_bits());
             st.set_vreg(RM as usize, d.to_bits(), d.to_bits());
-            batch.push((
-                format!("{name}_d_rmode{rmode}"),
-                insn | 1 << 22,
-                st,
-            ));
+            batch.push((format!("{name}_d_rmode{rmode}"), insn | 1 << 22, st));
         }
     }
     run_batch("simd_recps_rsqrts_fpcr_rounding", batch);
@@ -67603,18 +68466,54 @@ fn diff_fpcr_ah_recps_rsqrts_nan_status() {
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
-        ("simd_frecps_h_ah_nan_status", enc_fp16_3s(1, 0, 0, 0b111), h_pattern),
-        ("simd_frsqrts_h_ah_nan_status", enc_fp16_3s(1, 0, 1, 0b111), h_pattern),
-        ("simd_frecps_s_ah_nan_status", enc_three_same(1, 0, 0, 0b11111), s_pattern),
-        ("simd_frsqrts_s_ah_nan_status", enc_three_same(1, 0, 2, 0b11111), s_pattern),
-        ("simd_frecps_d_ah_nan_status", enc_three_same(1, 0, 1, 0b11111), d_pattern),
-        ("simd_frsqrts_d_ah_nan_status", enc_three_same(1, 0, 3, 0b11111), d_pattern),
+        (
+            "simd_frecps_h_ah_nan_status",
+            enc_fp16_3s(1, 0, 0, 0b111),
+            h_pattern,
+        ),
+        (
+            "simd_frsqrts_h_ah_nan_status",
+            enc_fp16_3s(1, 0, 1, 0b111),
+            h_pattern,
+        ),
+        (
+            "simd_frecps_s_ah_nan_status",
+            enc_three_same(1, 0, 0, 0b11111),
+            s_pattern,
+        ),
+        (
+            "simd_frsqrts_s_ah_nan_status",
+            enc_three_same(1, 0, 2, 0b11111),
+            s_pattern,
+        ),
+        (
+            "simd_frecps_d_ah_nan_status",
+            enc_three_same(1, 0, 1, 0b11111),
+            d_pattern,
+        ),
+        (
+            "simd_frsqrts_d_ah_nan_status",
+            enc_three_same(1, 0, 3, 0b11111),
+            d_pattern,
+        ),
         ("sve_frecps_h_ah_nan_status", enc_sve_recps(1, 0), h_pattern),
-        ("sve_frsqrts_h_ah_nan_status", enc_sve_recps(1, 1), h_pattern),
+        (
+            "sve_frsqrts_h_ah_nan_status",
+            enc_sve_recps(1, 1),
+            h_pattern,
+        ),
         ("sve_frecps_s_ah_nan_status", enc_sve_recps(2, 0), s_pattern),
-        ("sve_frsqrts_s_ah_nan_status", enc_sve_recps(2, 1), s_pattern),
+        (
+            "sve_frsqrts_s_ah_nan_status",
+            enc_sve_recps(2, 1),
+            s_pattern,
+        ),
         ("sve_frecps_d_ah_nan_status", enc_sve_recps(3, 0), d_pattern),
-        ("sve_frsqrts_d_ah_nan_status", enc_sve_recps(3, 1), d_pattern),
+        (
+            "sve_frsqrts_d_ah_nan_status",
+            enc_sve_recps(3, 1),
+            d_pattern,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -67637,18 +68536,66 @@ fn diff_fpcr_ah_invalid_default_nan_sign() {
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
-        ("scalar_fdiv_h_ah_invalid_nan", enc_fp2(0b11, 0b0001), h_inf_pattern),
-        ("scalar_fdiv_d_ah_invalid_nan", enc_fp2(0b01, 0b0001), d_inf_pattern),
-        ("simd_fsub_s_ah_invalid_nan", enc_three_same(1, 0, 2, 0b11010), s_inf_zero_pattern),
-        ("simd_fabd_s_ah_invalid_nan", enc_three_same(1, 1, 2, 0b11010), s_inf_zero_pattern),
-        ("simd_fdiv_h_ah_invalid_nan", enc_fp16_3s(1, 1, 0, 0b111), h_pattern),
-        ("simd_fdiv_h_ah_inf_inf", enc_fp16_3s(1, 1, 0, 0b111), h_inf_pattern),
-        ("simd_fdiv_s_ah_invalid_nan", enc_three_same(1, 1, 0, 0b11111), s_inf_zero_pattern),
-        ("simd_fdiv_d_ah_invalid_nan", enc_three_same(1, 1, 1, 0b11111), d_pattern),
-        ("simd_fdiv_d_ah_inf_inf", enc_three_same(1, 1, 1, 0b11111), d_inf_pattern),
-        ("simd_fmul_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b1001, RM, 2), s_inf_zero_pattern),
-        ("simd_fmla_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0001, RM, 2), s_inf_zero_pattern),
-        ("simd_fmls_idx_s_ah_invalid_nan", enc_indexed(1, 0, 0b10, 0b0101, RM, 2), s_inf_zero_pattern),
+        (
+            "scalar_fdiv_h_ah_invalid_nan",
+            enc_fp2(0b11, 0b0001),
+            h_inf_pattern,
+        ),
+        (
+            "scalar_fdiv_d_ah_invalid_nan",
+            enc_fp2(0b01, 0b0001),
+            d_inf_pattern,
+        ),
+        (
+            "simd_fsub_s_ah_invalid_nan",
+            enc_three_same(1, 0, 2, 0b11010),
+            s_inf_zero_pattern,
+        ),
+        (
+            "simd_fabd_s_ah_invalid_nan",
+            enc_three_same(1, 1, 2, 0b11010),
+            s_inf_zero_pattern,
+        ),
+        (
+            "simd_fdiv_h_ah_invalid_nan",
+            enc_fp16_3s(1, 1, 0, 0b111),
+            h_pattern,
+        ),
+        (
+            "simd_fdiv_h_ah_inf_inf",
+            enc_fp16_3s(1, 1, 0, 0b111),
+            h_inf_pattern,
+        ),
+        (
+            "simd_fdiv_s_ah_invalid_nan",
+            enc_three_same(1, 1, 0, 0b11111),
+            s_inf_zero_pattern,
+        ),
+        (
+            "simd_fdiv_d_ah_invalid_nan",
+            enc_three_same(1, 1, 1, 0b11111),
+            d_pattern,
+        ),
+        (
+            "simd_fdiv_d_ah_inf_inf",
+            enc_three_same(1, 1, 1, 0b11111),
+            d_inf_pattern,
+        ),
+        (
+            "simd_fmul_idx_s_ah_invalid_nan",
+            enc_indexed(1, 0, 0b10, 0b1001, RM, 2),
+            s_inf_zero_pattern,
+        ),
+        (
+            "simd_fmla_idx_s_ah_invalid_nan",
+            enc_indexed(1, 0, 0b10, 0b0001, RM, 2),
+            s_inf_zero_pattern,
+        ),
+        (
+            "simd_fmls_idx_s_ah_invalid_nan",
+            enc_indexed(1, 0, 0b10, 0b0101, RM, 2),
+            s_inf_zero_pattern,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -67669,12 +68616,36 @@ fn diff_fpcr_ah_fmulx_input_status() {
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
-        ("simd_fmulx_s_ah_input_status", enc_three_same(1, 0, 0, 0b11011), s_pattern),
-        ("simd_fmulx_d_ah_input_status", enc_three_same(1, 0, 1, 0b11011), d_pattern),
-        ("scalar_fmulx_s_ah_input_status", enc_scalar_3same(0, 0, 0b11011), s_pattern),
-        ("scalar_fmulx_d_ah_input_status", enc_scalar_3same(0, 1, 0b11011), d_pattern),
-        ("indexed_fmulx_s_ah_input_status", enc_indexed(1, 1, 0b10, 0b1001, RM, 2), s_pattern),
-        ("indexed_fmulx_d_ah_input_status", enc_indexed(1, 1, 0b11, 0b1001, RM, 1), d_pattern),
+        (
+            "simd_fmulx_s_ah_input_status",
+            enc_three_same(1, 0, 0, 0b11011),
+            s_pattern,
+        ),
+        (
+            "simd_fmulx_d_ah_input_status",
+            enc_three_same(1, 0, 1, 0b11011),
+            d_pattern,
+        ),
+        (
+            "scalar_fmulx_s_ah_input_status",
+            enc_scalar_3same(0, 0, 0b11011),
+            s_pattern,
+        ),
+        (
+            "scalar_fmulx_d_ah_input_status",
+            enc_scalar_3same(0, 1, 0b11011),
+            d_pattern,
+        ),
+        (
+            "indexed_fmulx_s_ah_input_status",
+            enc_indexed(1, 1, 0b10, 0b1001, RM, 2),
+            s_pattern,
+        ),
+        (
+            "indexed_fmulx_d_ah_input_status",
+            enc_indexed(1, 1, 0b11, 0b1001, RM, 1),
+            d_pattern,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -67694,8 +68665,16 @@ fn diff_fpcr_ah_frecpx_status() {
     let mut batch = Vec::new();
 
     for &(label, insn, pattern) in &[
-        ("scalar_frecpx_s_ah_status", enc_scalar_two_reg(0, 0b10, 0b11111), s_pattern),
-        ("scalar_frecpx_d_ah_status", enc_scalar_two_reg(0, 0b11, 0b11111), d_pattern),
+        (
+            "scalar_frecpx_s_ah_status",
+            enc_scalar_two_reg(0, 0b10, 0b11111),
+            s_pattern,
+        ),
+        (
+            "scalar_frecpx_d_ah_status",
+            enc_scalar_two_reg(0, 0b11, 0b11111),
+            d_pattern,
+        ),
     ] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_AH;
@@ -67730,11 +68709,7 @@ fn diff_fpcr_fiz_simd_recps_rsqrts_subnormal_inputs() {
         st.fpcr = FPCR_FIZ;
         st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0x0000_0000_0000_0001);
         st.set_vreg(RM as usize, f64::MAX.to_bits(), f64::MAX.to_bits());
-        batch.push((
-            format!("simd_{name}_d_fiz_min_subnorm"),
-            insn | 1 << 22,
-            st,
-        ));
+        batch.push((format!("simd_{name}_d_fiz_min_subnorm"), insn | 1 << 22, st));
     }
 
     run_batch("fpcr_fiz_simd_recps_rsqrts_subnormal_inputs", batch);
@@ -68032,12 +69007,7 @@ fn diff_simd_faddp_fpcr_rounding() {
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
-        let f32_lanes = [
-            16_777_216.0f32,
-            1.0f32,
-            -16_777_216.0f32,
-            -1.0f32,
-        ];
+        let f32_lanes = [16_777_216.0f32, 1.0f32, -16_777_216.0f32, -1.0f32];
         let mut packed = 0u128;
         for (lane, value) in f32_lanes.iter().enumerate() {
             packed |= (value.to_bits() as u128) << (32 * lane);
@@ -68052,8 +69022,7 @@ fn diff_simd_faddp_fpcr_rounding() {
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
-        let n = (9_007_199_254_740_992.0f64.to_bits() as u128)
-            | ((1.0f64.to_bits() as u128) << 64);
+        let n = (9_007_199_254_740_992.0f64.to_bits() as u128) | ((1.0f64.to_bits() as u128) << 64);
         let m = ((-9_007_199_254_740_992.0f64).to_bits() as u128)
             | (((-1.0f64).to_bits() as u128) << 64);
         st.set_vreg(RN as usize, n as u64, (n >> 64) as u64);
@@ -68096,7 +69065,11 @@ fn diff_simd_scalar_faddp_fpcr_rounding() {
         ] {
             let mut st = ArmState::zeroed();
             st.fpcr = fpcr;
-            st.set_vreg(RN as usize, (a.to_bits() as u64) | ((b.to_bits() as u64) << 32), 0);
+            st.set_vreg(
+                RN as usize,
+                (a.to_bits() as u64) | ((b.to_bits() as u64) << 32),
+                0,
+            );
             batch.push((format!("{name}_rmode{rmode}"), enc_simd_scalar_faddp(0), st));
         }
 
@@ -68124,14 +69097,22 @@ fn diff_fpcr_fiz_simd_scalar_faddp_subnormal_inputs() {
     st.fpcr = FPCR_FIZ;
     let s = (0x0000_0001u64) | (0x0000_0001u64 << 32);
     st.set_vreg(RN as usize, s, 0);
-    batch.push(("simd_scalar_faddp_s_min_subnorm".to_string(), enc_simd_scalar_faddp(0), st));
+    batch.push((
+        "simd_scalar_faddp_s_min_subnorm".to_string(),
+        enc_simd_scalar_faddp(0),
+        st,
+    ));
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FIZ;
     let d = 0x0000_0000_0000_0001u128;
     let d = d | (d << 64);
     st.set_vreg(RN as usize, d as u64, (d >> 64) as u64);
-    batch.push(("simd_scalar_faddp_d_min_subnorm".to_string(), enc_simd_scalar_faddp(1), st));
+    batch.push((
+        "simd_scalar_faddp_d_min_subnorm".to_string(),
+        enc_simd_scalar_faddp(1),
+        st,
+    ));
 
     run_batch("fpcr_fiz_simd_scalar_faddp_subnormal_inputs", batch);
 }
@@ -68380,11 +69361,7 @@ fn diff_simd_scalar_fp_three_same_unallocated() {
     let mut batch = Vec::new();
     let invalid: &[(u32, &[u32], &[u32])] = &[
         (0, &[0, 1, 2, 3], &[0b11000, 0b11001, 0b11010, 0b11110]),
-        (
-            1,
-            &[0, 1],
-            &[0b11000, 0b11010, 0b11011, 0b11110, 0b11111],
-        ),
+        (1, &[0, 1], &[0b11000, 0b11010, 0b11011, 0b11110, 0b11111]),
         (1, &[2, 3], &[0b11000, 0b11110]),
     ];
     for &(u, sizes, opcodes) in invalid {
@@ -68462,8 +69439,16 @@ fn diff_simd_scalar_fmulx_fpcr_rounding() {
 
         let mut st = ArmState::zeroed();
         st.fpcr = fpcr;
-        st.set_vreg(RN as usize, f64::from_bits(0x3ff0_0000_0000_0001).to_bits(), 0);
-        st.set_vreg(RM as usize, f64::from_bits(0x3ff0_0000_0000_0001).to_bits(), 0);
+        st.set_vreg(
+            RN as usize,
+            f64::from_bits(0x3ff0_0000_0000_0001).to_bits(),
+            0,
+        );
+        st.set_vreg(
+            RM as usize,
+            f64::from_bits(0x3ff0_0000_0000_0001).to_bits(),
+            0,
+        );
         batch.push((
             format!("scalar_fmulx_d_rmode{rmode}"),
             enc_scalar_3same(0, 1, 0b11011),
@@ -68863,8 +69848,7 @@ fn diff_simd_copy_unallocated_edges() {
     }
 
     for &imm4 in &[
-        0b0010, 0b0100, 0b0110, 0b1000, 0b1001, 0b1010, 0b1011, 0b1100, 0b1101, 0b1110,
-        0b1111,
+        0b0010, 0b0100, 0b0110, 0b1000, 0b1001, 0b1010, 0b1011, 0b1100, 0b1101, 0b1110, 0b1111,
     ] {
         for size in 0..4u32 {
             for q in 0..2u32 {
@@ -69266,7 +70250,11 @@ fn diff_fpcr_fiz_simd_fp_to_int_subnormal_inputs() {
         (1, 1, 0b11010, "fcvtpu", true),
         (1, 1, 0b11011, "fcvtzu", true),
     ] {
-        let s_bits = if positive { 0x0000_0001u32 } else { 0x8000_0001u32 };
+        let s_bits = if positive {
+            0x0000_0001u32
+        } else {
+            0x8000_0001u32
+        };
         let packed_s = (s_bits as u64) | ((s_bits as u64) << 32);
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
@@ -69307,7 +70295,12 @@ fn diff_fpcr_fiz_simd_fp_cmp_zero_subnormal_inputs() {
         (1, 1, 0b01101, "fcmle0"),
         (0, 1, 0b01110, "fcmlt0"),
     ] {
-        let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x0000_0001u32, 0x8000_0001u32];
+        let s_lanes = [
+            0x0000_0001u32,
+            0x8000_0001u32,
+            0x0000_0001u32,
+            0x8000_0001u32,
+        ];
         let mut packed_s = 0u128;
         for (lane, bits) in s_lanes.iter().enumerate() {
             packed_s |= (*bits as u128) << (32 * lane);
@@ -69385,10 +70378,7 @@ fn diff_fpcr_fiz_simd_frint_subnormal_inputs() {
     const FPCR_FIZ: u64 = 1;
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
-    for &(u, sz_hi, opcode, name) in &[
-        (0, 1, 0b11000, "frintp"),
-        (1, 0, 0b11001, "frintx"),
-    ] {
+    for &(u, sz_hi, opcode, name) in &[(0, 1, 0b11000, "frintp"), (1, 0, 0b11001, "frintx")] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FIZ;
         let s = 0x0000_0001u32;
@@ -69419,7 +70409,12 @@ fn diff_fpcr_fiz_simd_frintts_subnormal_inputs() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
 
     for &(u, suffix) in &[(0u32, "z"), (1, "x")] {
-        let s_lanes = [0x0000_0001u32, 0x8000_0001u32, 0x0000_0001u32, 0x8000_0001u32];
+        let s_lanes = [
+            0x0000_0001u32,
+            0x8000_0001u32,
+            0x0000_0001u32,
+            0x8000_0001u32,
+        ];
         let mut packed_s = 0u128;
         for (lane, bits) in s_lanes.iter().enumerate() {
             packed_s |= (*bits as u128) << (32 * lane);
@@ -69620,30 +70615,43 @@ fn diff_fpcr_fz_fp_unary_subnormal_inputs() {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         st.set_vreg(RN as usize, 0x0000_0001, 0);
-        batch.push((format!("fp_scalar_{name}_s_fz_min_subnorm"), enc_fp1(0, opcode), st));
+        batch.push((
+            format!("fp_scalar_{name}_s_fz_min_subnorm"),
+            enc_fp1(0, opcode),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
-        batch.push((format!("fp_scalar_{name}_d_fz_min_subnorm"), enc_fp1(1, opcode), st));
+        batch.push((
+            format!("fp_scalar_{name}_d_fz_min_subnorm"),
+            enc_fp1(1, opcode),
+            st,
+        ));
     }
 
     for &(name, opcode) in &[("frint32z", 0b10000), ("frint32x", 0b10001)] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         st.set_vreg(RN as usize, 0x0000_0001, 0);
-        batch.push((format!("fp_scalar_{name}_s_fz_min_subnorm"), enc_fp1(0, opcode), st));
+        batch.push((
+            format!("fp_scalar_{name}_s_fz_min_subnorm"),
+            enc_fp1(0, opcode),
+            st,
+        ));
 
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         st.set_vreg(RN as usize, 0x0000_0000_0000_0001, 0);
-        batch.push((format!("fp_scalar_{name}_d_fz_min_subnorm"), enc_fp1(1, opcode), st));
+        batch.push((
+            format!("fp_scalar_{name}_d_fz_min_subnorm"),
+            enc_fp1(1, opcode),
+            st,
+        ));
     }
 
-    for &(name, u, size_hi, opcode) in &[
-        ("frintp", 0, 1, 0b11000),
-        ("fsqrt", 1, 1, 0b11111),
-    ] {
+    for &(name, u, size_hi, opcode) in &[("frintp", 0, 1, 0b11000), ("fsqrt", 1, 1, 0b11111)] {
         let mut st = ArmState::zeroed();
         st.fpcr = FPCR_FZ;
         let (lo, hi) = pack_s(0x0000_0001);
@@ -69978,7 +70986,11 @@ fn diff_simd_indexed_integer_unallocated_edges() {
         }
     }
 
-    for &(opcode, name) in &[(0b0011u32, "sqdmlal"), (0b0111, "sqdmlsl"), (0b1011, "sqdmull")] {
+    for &(opcode, name) in &[
+        (0b0011u32, "sqdmlal"),
+        (0b0111, "sqdmlsl"),
+        (0b1011, "sqdmull"),
+    ] {
         for &size in &[0b01u32, 0b10] {
             for q in 0..2u32 {
                 batch.push((
@@ -70091,11 +71103,7 @@ fn diff_simd_scalar_indexed_fp() {
                         st.set_vreg(RN as usize, n, 0);
                     }
                     st.set_vreg(RM as usize, m as u64, (m >> 64) as u64);
-                    batch.push((
-                        format!("{name}_scalar_size{size}_idx{index}"),
-                        insn,
-                        st,
-                    ));
+                    batch.push((format!("{name}_scalar_size{size}_idx{index}"), insn, st));
                 }
             }
         }
@@ -70400,7 +71408,11 @@ fn diff_fpcr_fiz_simd_indexed_fmulx_subnormal_inputs() {
 
     let mut st = ArmState::zeroed();
     st.fpcr = FPCR_FIZ;
-    st.set_vreg(RN as usize, pack32(0x0000_0001) as u64, (pack32(0x0000_0001) >> 64) as u64);
+    st.set_vreg(
+        RN as usize,
+        pack32(0x0000_0001) as u64,
+        (pack32(0x0000_0001) >> 64) as u64,
+    );
     st.set_vreg(
         RM as usize,
         pack32(1.0f32.to_bits()) as u64,
@@ -70449,7 +71461,11 @@ fn diff_simd_indexed_fmls_fpcr_ah_nan_sign() {
     h.set_vreg(0, 0, 0);
     h.set_vreg(1, hn as u64, (hn >> 64) as u64);
     h.set_vreg(2, hm as u64, (hm >> 64) as u64);
-    batch.push(("fmls_h_idx_ah_qnan".to_string(), enc_fp16_idx(1, 0, 0b0101, 0), h));
+    batch.push((
+        "fmls_h_idx_ah_qnan".to_string(),
+        enc_fp16_idx(1, 0, 0b0101, 0),
+        h,
+    ));
 
     for (label, size, qnan, one, lanes) in [
         (
@@ -70479,7 +71495,11 @@ fn diff_simd_indexed_fmls_fpcr_ah_nan_sign() {
         st.set_vreg(0, 0, 0);
         st.set_vreg(1, n as u64, (n >> 64) as u64);
         st.set_vreg(2, m as u64, (m >> 64) as u64);
-        batch.push((label.to_string(), enc_indexed(1, 0, size, 0b0101, RM, 0), st));
+        batch.push((
+            label.to_string(),
+            enc_indexed(1, 0, size, 0b0101, RM, 0),
+            st,
+        ));
     }
 
     run_batch("simd_indexed_fmls_fpcr_ah_nan_sign", batch);
@@ -70816,7 +71836,11 @@ fn diff_fp_scalar_native_oracle_fpsr() {
             let mut st = ArmState::zeroed();
             st.fpsr = fpsr;
             st.set_vreg(RN as usize, src, 0);
-            batch.push((format!("{label}_t{ft}_fpsr{fpsr:#x}"), enc_fp1(ft, opcode), st));
+            batch.push((
+                format!("{label}_t{ft}_fpsr{fpsr:#x}"),
+                enc_fp1(ft, opcode),
+                st,
+            ));
         };
         // f32
         let s_neg1 = (-1.0f32).to_bits() as u64; // FSQRT(neg) -> IOC
@@ -71073,9 +72097,7 @@ fn diff_fp_scalar_conversion_fpsr() {
                         st.fpcr = 0;
                         st.set_vreg(RN as usize, bits, 0);
                         batch.push((
-                            format!(
-                                "fcvt{rname}{sname}_{fname}_{wname}_ixc_fpsr{initial_fpsr:#x}"
-                            ),
+                            format!("fcvt{rname}{sname}_{fname}_{wname}_ixc_fpsr{initial_fpsr:#x}"),
                             enc_fp_to_gpr(sf, fp_type, rmode, opcode),
                             st,
                         ));
@@ -71086,9 +72108,7 @@ fn diff_fp_scalar_conversion_fpsr() {
                         st.fpcr = 0;
                         st.set_vreg(RN as usize, bits, 0);
                         batch.push((
-                            format!(
-                                "fcvt{rname}{sname}_{fname}_{wname}_ioc_fpsr{initial_fpsr:#x}"
-                            ),
+                            format!("fcvt{rname}{sname}_{fname}_{wname}_ioc_fpsr{initial_fpsr:#x}"),
                             enc_fp_to_gpr(sf, fp_type, rmode, opcode),
                             st,
                         ));
@@ -71183,9 +72203,9 @@ fn diff_fp_scalar_fcmp_qnan_invalid_fpsr() {
         // bit[4] (the E variant). For a *quiet* NaN this diverges on
         // FCMPE Fn,Fm (pre-fix no IOC) and FCMP Fn,#0.0 (pre-fix spurious IOC).
         let forms: [(u32, &str, bool); 4] = [
-            (enc_fcmp_reg(ft), "fcmp_reg", true),                // qNaN in Rm
-            (enc_fcmp_reg(ft) | (1 << 4), "fcmpe_reg", true),    // qNaN in Rm, signaling
-            (enc_fcmp_zero(ft), "fcmp_zero", false),             // FCMP Fn,#0.0
+            (enc_fcmp_reg(ft), "fcmp_reg", true),             // qNaN in Rm
+            (enc_fcmp_reg(ft) | (1 << 4), "fcmpe_reg", true), // qNaN in Rm, signaling
+            (enc_fcmp_zero(ft), "fcmp_zero", false),          // FCMP Fn,#0.0
             (enc_fcmp_zero(ft) | (1 << 4), "fcmpe_zero", false), // FCMPE Fn,#0.0, signaling
         ];
         for (insn, fname, has_rm) in forms {
@@ -71234,11 +72254,7 @@ fn diff_fp_scalar_fmul_fpsr_inexact() {
             st.fpcr = 0;
             st.set_vreg(RN as usize, a.to_bits(), 0);
             st.set_vreg(RM as usize, b.to_bits(), 0);
-            batch.push((
-                format!("fmul_d_ixc_p{idx}_fpsr{initial_fpsr:#x}"),
-                insn,
-                st,
-            ));
+            batch.push((format!("fmul_d_ixc_p{idx}_fpsr{initial_fpsr:#x}"), insn, st));
         }
     }
 
@@ -71258,7 +72274,11 @@ fn diff_sve_fp_unary_fpsr_exceptions() {
     // Broadcast `value` (esize bytes) across all 128 bits.
     let pack = |value: u64, esize: usize| -> (u64, u64) {
         let bits = esize * 8;
-        let mask: u128 = if bits == 128 { u128::MAX } else { (1u128 << bits) - 1 };
+        let mask: u128 = if bits == 128 {
+            u128::MAX
+        } else {
+            (1u128 << bits) - 1
+        };
         let mut packed = 0u128;
         let lanes = 16 / esize;
         for lane in 0..lanes {
@@ -71324,13 +72344,29 @@ fn diff_sve_frsqrte_fpsr_invalid_negative() {
     // (size, esz_bytes, negative-finite bits, negative-inf bits, positive-finite bits)
     let cases: &[(u32, usize, u64, u64, u64)] = &[
         (1, 2, 0xbc00, 0xfc00, 0x3c00), // half: -1.0, -inf, +1.0
-        (2, 4, (-1.0f32).to_bits() as u64, 0xff80_0000, 1.0f32.to_bits() as u64), // single
-        (3, 8, (-1.0f64).to_bits(), 0xfff0_0000_0000_0000, 1.0f64.to_bits()), // double
+        (
+            2,
+            4,
+            (-1.0f32).to_bits() as u64,
+            0xff80_0000,
+            1.0f32.to_bits() as u64,
+        ), // single
+        (
+            3,
+            8,
+            (-1.0f64).to_bits(),
+            0xfff0_0000_0000_0000,
+            1.0f64.to_bits(),
+        ), // double
     ];
     for &(size, esz, neg, neginf, pos) in cases {
         let insn = enc_sve_frecpe(size, 1); // FRSQRTE (rsqrt=1), unpredicated
         let bits = (esz * 8) as u32;
-        let mask: u128 = if bits == 64 { u128::from(u64::MAX) } else { (1u128 << bits) - 1 };
+        let mask: u128 = if bits == 64 {
+            u128::from(u64::MAX)
+        } else {
+            (1u128 << bits) - 1
+        };
         let lanes = 16 / esz;
         for initial_fpsr in [0u64, 0x10] {
             // All-negative-finite vector: every active lane raises IOC.
@@ -71342,7 +72378,11 @@ fn diff_sve_frsqrte_fpsr_invalid_negative() {
             st.fpsr = initial_fpsr;
             st.fpcr = 0;
             st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
-            batch.push((format!("frsqrte_neg_s{size}_fpsr{initial_fpsr:#x}"), insn, st));
+            batch.push((
+                format!("frsqrte_neg_s{size}_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
 
             // Mixed: negative-inf, positive-finite alternating -> only neg lanes flag.
             let mut zn = 0u128;
@@ -71354,7 +72394,11 @@ fn diff_sve_frsqrte_fpsr_invalid_negative() {
             st.fpsr = initial_fpsr;
             st.fpcr = 0;
             st.set_vreg(RN as usize, zn as u64, (zn >> 64) as u64);
-            batch.push((format!("frsqrte_mix_s{size}_fpsr{initial_fpsr:#x}"), insn, st));
+            batch.push((
+                format!("frsqrte_mix_s{size}_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
         }
     }
     run_fpsr_batch("sve_frsqrte_fpsr_invalid_negative", batch);
@@ -71388,34 +72432,48 @@ fn diff_sve_fp_pred_binop_fpsr() {
                 (0b00000, "fadd_ixc", 0x3c00, 0x0001),
             ],
             4 => vec![
-                (0b00000, "fadd_ioc",
+                (
+                    0b00000,
+                    "fadd_ioc",
                     f32::INFINITY.to_bits() as u64,
-                    f32::NEG_INFINITY.to_bits() as u64),
-                (0b01101, "fdiv_dzc",
+                    f32::NEG_INFINITY.to_bits() as u64,
+                ),
+                (
+                    0b01101,
+                    "fdiv_dzc",
                     (1.0f32).to_bits() as u64,
-                    (0.0f32).to_bits() as u64),
-                (0b00010, "fmul_ofc",
+                    (0.0f32).to_bits() as u64,
+                ),
+                (
+                    0b00010,
+                    "fmul_ofc",
                     f32::MAX.to_bits() as u64,
-                    (2.0f32).to_bits() as u64),
+                    (2.0f32).to_bits() as u64,
+                ),
                 // 1.0 + 2^-24 is not representable in f32 => IXC.
-                (0b00000, "fadd_ixc",
+                (
+                    0b00000,
+                    "fadd_ixc",
                     (1.0f32).to_bits() as u64,
-                    (2.0f32.powi(-24)).to_bits() as u64),
+                    (2.0f32.powi(-24)).to_bits() as u64,
+                ),
             ],
             _ => vec![
-                (0b00000, "fadd_ioc",
+                (
+                    0b00000,
+                    "fadd_ioc",
                     f64::INFINITY.to_bits(),
-                    f64::NEG_INFINITY.to_bits()),
-                (0b01101, "fdiv_dzc",
-                    (1.0f64).to_bits(),
-                    (0.0f64).to_bits()),
-                (0b00010, "fmul_ofc",
-                    f64::MAX.to_bits(),
-                    (2.0f64).to_bits()),
+                    f64::NEG_INFINITY.to_bits(),
+                ),
+                (0b01101, "fdiv_dzc", (1.0f64).to_bits(), (0.0f64).to_bits()),
+                (0b00010, "fmul_ofc", f64::MAX.to_bits(), (2.0f64).to_bits()),
                 // 1.0 + 2^-53 is not representable in f64 => IXC.
-                (0b00000, "fadd_ixc",
+                (
+                    0b00000,
+                    "fadd_ixc",
                     (1.0f64).to_bits(),
-                    (2.0f64.powi(-53)).to_bits()),
+                    (2.0f64.powi(-53)).to_bits(),
+                ),
             ],
         };
 
@@ -71460,13 +72518,17 @@ fn diff_sve_fscale_fpsr() {
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     // (size, esz_bytes, big_normal_bits, smallest_normal_bits, over_exp, under_exp)
     let cases: &[(u32, usize, u64, u64, i64, i64)] = &[
-        (1, 2, 0x7bff, 0x0400, 40, -40),                                  // half
-        (2, 4, f32::MAX.to_bits() as u64, 0x0080_0000, 200, -200),        // single
-        (3, 8, f64::MAX.to_bits(), 0x0010_0000_0000_0000, 1023, -1023),   // double
+        (1, 2, 0x7bff, 0x0400, 40, -40),                           // half
+        (2, 4, f32::MAX.to_bits() as u64, 0x0080_0000, 200, -200), // single
+        (3, 8, f64::MAX.to_bits(), 0x0010_0000_0000_0000, 1023, -1023), // double
     ];
     for &(size, esz, big, small, over_exp, under_exp) in cases {
         let insn = enc_sve_fscale(size);
-        let emask: u64 = if esz == 8 { u64::MAX } else { (1u64 << (esz * 8)) - 1 };
+        let emask: u64 = if esz == 8 {
+            u64::MAX
+        } else {
+            (1u64 << (esz * 8)) - 1
+        };
         let lanes = 16 / esz;
         for &(tag, val, exp) in &[("ofc", big, over_exp), ("ufc", small, under_exp)] {
             for initial_fpsr in [0u64, 0x10] {
@@ -71759,9 +72821,15 @@ fn diff_sve_pred_fp_fma_fpsr() {
     // size: 1=half(esz 2), 2=single(esz 4), 3=double(esz 8). size==0 is #UD.
     // (size, snan_bits, inf_bits, one_bits, lane_bytes)
     let cases: [(u32, u64, u64, u64, usize); 3] = [
-        (1, 0x7D00, 0x7C00, 0x3C00, 2),                          // half
-        (2, 0x7FA0_0000, 0x7F80_0000, 0x3F80_0000, 4),           // single
-        (3, 0x7FF4_0000_0000_0000, 0x7FF0_0000_0000_0000, 0x3FF0_0000_0000_0000, 8), // double
+        (1, 0x7D00, 0x7C00, 0x3C00, 2),                // half
+        (2, 0x7FA0_0000, 0x7F80_0000, 0x3F80_0000, 4), // single
+        (
+            3,
+            0x7FF4_0000_0000_0000,
+            0x7FF0_0000_0000_0000,
+            0x3FF0_0000_0000_0000,
+            8,
+        ), // double
     ];
 
     for &(size, snan, inf, one, lanebytes) in &cases {
@@ -71903,7 +72971,7 @@ fn diff_sve_fp_int_cvt_fpsr_excs() {
         let elements = 16 / cont;
         // FP source: +Inf in the fp_sz field -> fp_to_int_status returns IOC.
         let inf_bits: u64 = match fp_sz {
-            2 => 0x7C00,                      // fp16 +Inf
+            2 => 0x7C00, // fp16 +Inf
             4 => f32::INFINITY.to_bits() as u64,
             _ => f64::INFINITY.to_bits(),
         };
@@ -71911,9 +72979,9 @@ fn diff_sve_fp_int_cvt_fpsr_excs() {
         // destination FP precision (11/24/53 bits) -> fp_status_int_to_fp_scaled
         // returns IXC. Each value fits the signed range of int_sz.
         let inexact_int: u64 = match fp_sz {
-            2 => 2_049,                       // 2^11 + 1 (fits i16)
-            4 => 16_777_217,                  // 2^24 + 1 (fits i32)
-            _ => 9_007_199_254_740_993,       // 2^53 + 1 (fits i64)
+            2 => 2_049,                 // 2^11 + 1 (fits i16)
+            4 => 16_777_217,            // 2^24 + 1 (fits i32)
+            _ => 9_007_199_254_740_993, // 2^53 + 1 (fits i64)
         };
 
         // FCVTZ direction (ig1=0b011): FP -> int, expect IOC from +Inf.
@@ -72097,11 +73165,17 @@ fn diff_sve_bfcvt_fpsr_exceptions() {
         // Plain inexact: 1.0 with extra low mantissa bits that don't fit bf16 -> IXC.
         ("ixc", [0x3F80_8001, 0x3F80_8001, 0x3F80_8001, 0x3F80_8001]),
         // sNaN inputs (exp all-ones, MSB of mantissa clear, nonzero) -> IOC.
-        ("ioc_snan", [0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001]),
+        (
+            "ioc_snan",
+            [0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001, 0x7FA0_0001],
+        ),
         // Max finite f32 rounds up to bf16 infinity -> OFC|IXC.
         ("ofc", [0x7F7F_FFFF, 0xFF7F_FFFF, 0x7F7F_FFFF, 0xFF7F_FFFF]),
         // Mixed: snan, inexact-normal, overflow, finite-exact for cross coverage.
-        ("mixed", [0x7FA0_0001, 0x3F80_8001, 0x7F7F_FFFF, 0x3F80_0000]),
+        (
+            "mixed",
+            [0x7FA0_0001, 0x3F80_8001, 0x7F7F_FFFF, 0x3F80_0000],
+        ),
     ];
 
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
@@ -72159,11 +73233,7 @@ fn diff_simd_bfcvt_fpsr() {
                 st.set_vreg(RN as usize, lo, hi);
                 // Preset Vd so BFCVTN2's preserved low half is observable.
                 st.set_vreg(RD as usize, 0xDEAD_BEEF_CAFE_F00D, 0x0123_4567_89AB_CDEF);
-                batch.push((
-                    format!("{vname}_{name}_fpsr{initial_fpsr:#x}"),
-                    insn,
-                    st,
-                ));
+                batch.push((format!("{vname}_{name}_fpsr{initial_fpsr:#x}"), insn, st));
             }
         }
     }
@@ -72248,10 +73318,10 @@ fn diff_sve2_fcvt_narrow_fpsr() {
 
     // (opc, opc2, src_sz, dst_sz, bf, name)
     let convs: &[(u32, u32, usize, usize, bool, &str)] = &[
-        (0b10, 0b00, 4, 2, false, "fcvtnt_s2h"),   // f32 -> f16 (top)
-        (0b11, 0b10, 8, 4, false, "fcvtnt_d2s"),   // f64 -> f32 (top)
-        (0b00, 0b10, 8, 4, false, "fcvtxnt_d2s"),  // f64 -> f32 round-to-odd (top)
-        (0b10, 0b10, 4, 2, true, "bfcvtnt_s2bf16"),// f32 -> bf16 (top)
+        (0b10, 0b00, 4, 2, false, "fcvtnt_s2h"),  // f32 -> f16 (top)
+        (0b11, 0b10, 8, 4, false, "fcvtnt_d2s"),  // f64 -> f32 (top)
+        (0b00, 0b10, 8, 4, false, "fcvtxnt_d2s"), // f64 -> f32 round-to-odd (top)
+        (0b10, 0b10, 4, 2, true, "bfcvtnt_s2bf16"), // f32 -> bf16 (top)
     ];
 
     for &(opc, opc2, src_sz, dst_sz, bf, name) in convs {
@@ -72268,16 +73338,16 @@ fn diff_sve2_fcvt_narrow_fpsr() {
         } else {
             match src_sz {
                 4 => &[
-                    (2049.0f32).to_bits() as u64,   // not representable in f16 -> IXC
-                    (70000.0f32).to_bits() as u64,  // > f16 max -> OFC | IXC
-                    0x7fa0_0001,                    // sNaN f32 -> IOC
-                    (3.14159f32).to_bits() as u64,  // inexact -> IXC
+                    (2049.0f32).to_bits() as u64,  // not representable in f16 -> IXC
+                    (70000.0f32).to_bits() as u64, // > f16 max -> OFC | IXC
+                    0x7fa0_0001,                   // sNaN f32 -> IOC
+                    (3.14159f32).to_bits() as u64, // inexact -> IXC
                 ],
                 _ => &[
-                    (16_777_217.0f64).to_bits(),    // not representable in f32 -> IXC
-                    (1.0e300f64).to_bits(),         // > f32 max -> OFC | IXC
-                    0x7ff0_0000_0000_0001,          // sNaN f64 -> IOC
-                    (2.718281828f64).to_bits(),     // inexact -> IXC
+                    (16_777_217.0f64).to_bits(), // not representable in f32 -> IXC
+                    (1.0e300f64).to_bits(),      // > f32 max -> OFC | IXC
+                    0x7ff0_0000_0000_0001,       // sNaN f64 -> IOC
+                    (2.718281828f64).to_bits(),  // inexact -> IXC
                 ],
             }
         };
@@ -72412,9 +73482,19 @@ fn diff_sve_fcadd_fpsr() {
         // H: +inf=0x7C00 (IXC row skipped, big/small unused).
         (1, 0x7C00, 0, 0),
         // S: +inf; 1.0 + 2^-25 not representable in f32 => IXC.
-        (2, 0x7F80_0000, (1.0f32).to_bits() as u64, (2.0f32.powi(-25)).to_bits() as u64),
+        (
+            2,
+            0x7F80_0000,
+            (1.0f32).to_bits() as u64,
+            (2.0f32.powi(-25)).to_bits() as u64,
+        ),
         // D: +inf; 1.0 + 2^-54 not representable in f64 => IXC.
-        (3, 0x7FF0_0000_0000_0000, (1.0f64).to_bits(), (2.0f64.powi(-54)).to_bits()),
+        (
+            3,
+            0x7FF0_0000_0000_0000,
+            (1.0f64).to_bits(),
+            (2.0f64.powi(-54)).to_bits(),
+        ),
     ];
     for &(size, inf, big, small) in &cfgs {
         for rot in 0..2u32 {
@@ -72492,7 +73572,14 @@ fn diff_sve_fcmla_fpsr() {
                                 zn |= (inf as u128) << (l * 16);
                                 acc |= (one as u128) << (l * 16);
                             }
-                            (zn as u64, (zn >> 64) as u64, 0, 0, acc as u64, (acc >> 64) as u64)
+                            (
+                                zn as u64,
+                                (zn >> 64) as u64,
+                                0,
+                                0,
+                                acc as u64,
+                                (acc >> 64) as u64,
+                            )
                         }
                         2 => {
                             // single: 4 lanes
@@ -72504,7 +73591,14 @@ fn diff_sve_fcmla_fpsr() {
                                 zn |= (inf as u128) << (l * 32);
                                 acc |= (one as u128) << (l * 32);
                             }
-                            (zn as u64, (zn >> 64) as u64, 0, 0, acc as u64, (acc >> 64) as u64)
+                            (
+                                zn as u64,
+                                (zn >> 64) as u64,
+                                0,
+                                0,
+                                acc as u64,
+                                (acc >> 64) as u64,
+                            )
                         }
                         _ => {
                             // double: 2 lanes
@@ -72792,10 +73886,10 @@ fn diff_simd_fdiv_fpsr_exceptions() {
 
         // (numerator_bits, denominator_bits, cause) per exception class.
         let s_cases: [(u32, u32, &str); 4] = [
-            (1.0f32.to_bits(), 0.0f32.to_bits(), "dzc"),       // 1/0 -> DZC
-            (0.0f32.to_bits(), 0.0f32.to_bits(), "ioc"),       // 0/0 -> IOC
+            (1.0f32.to_bits(), 0.0f32.to_bits(), "dzc"), // 1/0 -> DZC
+            (0.0f32.to_bits(), 0.0f32.to_bits(), "ioc"), // 0/0 -> IOC
             (f32::MAX.to_bits(), (1e-30f32).to_bits(), "ofc"), // MAX/tiny -> OFC|IXC
-            (1.0f32.to_bits(), (3.0f32).to_bits(), "ixc"),     // 1/3 -> IXC
+            (1.0f32.to_bits(), (3.0f32).to_bits(), "ixc"), // 1/3 -> IXC
         ];
         let d_cases: [(u64, u64, &str); 4] = [
             (1.0f64.to_bits(), 0.0f64.to_bits(), "dzc"),
@@ -73026,11 +74120,7 @@ fn diff_simd_fp_to_int_fpsr_exceptions() {
                         st.fpsr = initial_fpsr;
                         st.fpcr = 0;
                         st.set_vreg(RN as usize, lo, hi);
-                        batch.push((
-                            format!("{kname}_s_{iname}_fpsr{initial_fpsr:#x}"),
-                            insn,
-                            st,
-                        ));
+                        batch.push((format!("{kname}_s_{iname}_fpsr{initial_fpsr:#x}"), insn, st));
                     }
                 } else {
                     for &(iname, bits) in f64_inputs {
@@ -73039,11 +74129,7 @@ fn diff_simd_fp_to_int_fpsr_exceptions() {
                         st.fpsr = initial_fpsr;
                         st.fpcr = 0;
                         st.set_vreg(RN as usize, lo, hi);
-                        batch.push((
-                            format!("{kname}_d_{iname}_fpsr{initial_fpsr:#x}"),
-                            insn,
-                            st,
-                        ));
+                        batch.push((format!("{kname}_d_{iname}_fpsr{initial_fpsr:#x}"), insn, st));
                     }
                 }
             }
@@ -73192,9 +74278,7 @@ fn diff_simd_fcmla_indexed_fpsr_exceptions() {
                     st.set_vreg(RM as usize, mlo, mhi);
                     st.set_vreg(RD as usize, mlo, mhi);
                     batch.push((
-                        format!(
-                            "fcmla_idx_snan_e{esize}_r{rot}_i{index}_fpsr{initial_fpsr:#x}"
-                        ),
+                        format!("fcmla_idx_snan_e{esize}_r{rot}_i{index}_fpsr{initial_fpsr:#x}"),
                         insn,
                         st,
                     ));
@@ -73224,11 +74308,7 @@ fn diff_simd_fcmla_indexed_fpsr_exceptions() {
                     st.set_vreg(RM as usize, mlo, mhi);
                     // Zero accumulator so result is the (overflowing) product.
                     st.set_vreg(RD as usize, 0, 0);
-                    batch.push((
-                        format!("fcmla_idx_ovf_e{esize}_r{rot}_i{index}"),
-                        insn,
-                        st,
-                    ));
+                    batch.push((format!("fcmla_idx_ovf_e{esize}_r{rot}_i{index}"), insn, st));
                 }
             }
         }
@@ -73286,11 +74366,7 @@ fn diff_simd_indexed_fp_fpsr_exceptions() {
                             }
                         } else if f64op {
                             // big * big overflows to +inf (FMLA/FMLS use addend 0).
-                            (
-                                (1.0e308f64).to_bits(),
-                                (1.0e3f64).to_bits(),
-                                0u64,
-                            )
+                            ((1.0e308f64).to_bits(), (1.0e3f64).to_bits(), 0u64)
                         } else {
                             (
                                 (3.0e38f32).to_bits() as u64,
@@ -73401,11 +74477,7 @@ fn diff_simd_fp16_three_same_fpsr() {
                 st.set_vreg(RN as usize, nlo, nhi);
                 st.set_vreg(RM as usize, mlo, mhi);
                 st.set_vreg(RD as usize, alo, ahi);
-                batch.push((
-                    format!("{label}_q{q}_fpsr{initial_fpsr:#x}"),
-                    insn,
-                    st,
-                ));
+                batch.push((format!("{label}_q{q}_fpsr{initial_fpsr:#x}"), insn, st));
             }
         }
     }
@@ -73423,12 +74495,12 @@ fn diff_simd_fp16_two_reg_fpsr() {
     // FP16 constants: -4.0=0xC400, 2.0=0x4000, +0.0=0x0000, -2.0=0xC000,
     // 2.5=0x4100, +inf=0x7C00 (out-of-range for FCVTZS).
     let cases: &[(u32, u32, u32, u16, &str)] = &[
-        (1, 1, 0b11111, 0xC400, "fsqrt_neg_ioc"),   // FSQRT(-4.0) -> IOC
-        (1, 1, 0b11111, 0x4000, "fsqrt_irr_ixc"),   // FSQRT(2.0) inexact -> IXC
+        (1, 1, 0b11111, 0xC400, "fsqrt_neg_ioc"), // FSQRT(-4.0) -> IOC
+        (1, 1, 0b11111, 0x4000, "fsqrt_irr_ixc"), // FSQRT(2.0) inexact -> IXC
         (0, 1, 0b11101, 0x0000, "frecpe_zero_dzc"), // FRECPE(+0.0) -> DZC
         (1, 1, 0b11101, 0xC000, "frsqrte_neg_ioc"), // FRSQRTE(-2.0) -> IOC
         (0, 1, 0b11011, 0x4100, "fcvtzs_frac_ixc"), // FCVTZS(2.5) -> IXC
-        (0, 1, 0b11011, 0x7C00, "fcvtzs_inf_ioc"),  // FCVTZS(+inf) -> IOC
+        (0, 1, 0b11011, 0x7C00, "fcvtzs_inf_ioc"), // FCVTZS(+inf) -> IOC
         // SCVTF of an integer not representable in FP16's 11-bit mantissa:
         // 16385 (0x4001 as i16) rounds -> IXC.
         (0, 0, 0b11101, 0x4001, "scvtf_inexact_ixc"),
@@ -73495,7 +74567,11 @@ fn diff_simd_three_same_fp_special_fpsr() {
             st.fpcr = 0;
             st.set_vreg(RN as usize, snan(ft), snan(ft));
             st.set_vreg(RM as usize, two(ft), two(ft));
-            batch.push((format!("fmulx_t{ft}_snan_ioc_fpsr{initial_fpsr:#x}"), insn, st));
+            batch.push((
+                format!("fmulx_t{ft}_snan_ioc_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
         }
     }
 
@@ -73613,7 +74689,11 @@ fn diff_fp_scalar_fpsr_fma_exact_zero() {
             st.set_vreg(RN as usize, (2.0f64).to_bits(), 0); // op1
             st.set_vreg(RM as usize, (3.0f64).to_bits(), 0); // op2
             st.set_vreg(RA as usize, (-6.0f64).to_bits(), 0); // addend
-            batch.push((format!("fmadd_d_exact_zero_fpsr{initial_fpsr:#x}"), insn, st));
+            batch.push((
+                format!("fmadd_d_exact_zero_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
         }
     }
 
@@ -73641,7 +74721,11 @@ fn diff_fp_scalar_fpsr_fma_exact_zero() {
             st.set_vreg(RN as usize, (2.0f64).to_bits(), 0); // op1 (negated internally)
             st.set_vreg(RM as usize, (3.0f64).to_bits(), 0); // op2
             st.set_vreg(RA as usize, (6.0f64).to_bits(), 0); // addend
-            batch.push((format!("fmsub_d_exact_zero_fpsr{initial_fpsr:#x}"), insn, st));
+            batch.push((
+                format!("fmsub_d_exact_zero_fpsr{initial_fpsr:#x}"),
+                insn,
+                st,
+            ));
         }
     }
 

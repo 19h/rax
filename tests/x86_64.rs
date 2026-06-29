@@ -812,10 +812,10 @@ mod x86_64_simd_avx2_vptest;
 mod x86_64_simd_avx2_vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq;
 #[path = "x86_64/simd/avx2/vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq.rs"]
 mod x86_64_simd_avx2_vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq;
-#[path = "x86_64/simd/avx512/evex_rm_reg_ext.rs"]
-mod x86_64_simd_avx512_evex_rm_reg_ext;
 #[path = "x86_64/simd/avx512/evex_rex_prefix_ud.rs"]
 mod x86_64_simd_avx512_evex_rex_prefix_ud;
+#[path = "x86_64/simd/avx512/evex_rm_reg_ext.rs"]
+mod x86_64_simd_avx512_evex_rm_reg_ext;
 #[path = "x86_64/simd/avx512_extended.rs"]
 mod x86_64_simd_avx512_extended;
 #[path = "x86_64/simd/avx512/kadd_mask.rs"]
@@ -828,10 +828,10 @@ mod x86_64_simd_avx512_kandn_knot_mask;
 mod x86_64_simd_avx512_kmov;
 #[path = "x86_64/simd/avx512/ktest_kunpck_kshift.rs"]
 mod x86_64_simd_avx512_ktest_kunpck_kshift;
-#[path = "x86_64/simd/avx512/opmask_oob_ud.rs"]
-mod x86_64_simd_avx512_opmask_oob_ud;
 #[path = "x86_64/simd/avx512_mask_ops.rs"]
 mod x86_64_simd_avx512_mask_ops;
+#[path = "x86_64/simd/avx512/opmask_oob_ud.rs"]
+mod x86_64_simd_avx512_opmask_oob_ud;
 #[path = "x86_64/simd/avx512/vaddph_vsubph_vmulph_vdivph.rs"]
 mod x86_64_simd_avx512_vaddph_vsubph_vmulph_vdivph;
 #[path = "x86_64/simd/avx512/vaddps_zmm.rs"]

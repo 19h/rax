@@ -3409,12 +3409,14 @@ mod tests {
         assert_eq!(flrw.op, Op::ThFlrw);
         assert_eq!(flrw.imm, 2);
 
-        assert!(decode(
-            enc(0, 0b11000, 0, 0b000, 0, 0x0b),
-            Xlen::Rv64,
-            &Isa::rv64gc()
-        )
-        .is_illegal());
+        assert!(
+            decode(
+                enc(0, 0b11000, 0, 0b000, 0, 0x0b),
+                Xlen::Rv64,
+                &Isa::rv64gc()
+            )
+            .is_illegal()
+        );
     }
 
     #[test]
@@ -3454,12 +3456,14 @@ mod tests {
             Op::ThVpwadd
         );
 
-        assert!(decode(
-            enc((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b),
-            Xlen::Rv64,
-            &Isa::rv64gc()
-        )
-        .is_illegal());
+        assert!(
+            decode(
+                enc((0x20 << 1) | 1, 3, 2, 0b110, 1, 0x0b),
+                Xlen::Rv64,
+                &Isa::rv64gc()
+            )
+            .is_illegal()
+        );
     }
 
     #[test]

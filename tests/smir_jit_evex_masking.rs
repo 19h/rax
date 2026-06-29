@@ -26,8 +26,8 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap, GuestRegionMmap, MmapRegio
 
 use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
-use rax::smir::lift::SmirLifter;
 use rax::smir::lift::LiftContext;
+use rax::smir::lift::SmirLifter;
 use rax::smir::lift::x86_64::X86_64Lifter;
 use rax::smir::types::SourceArch;
 

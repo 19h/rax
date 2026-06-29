@@ -7,7 +7,7 @@
 
 use std::os::raw::{c_int, c_void};
 
-use crate::engine::{engine_mut, Engine};
+use crate::engine::{Engine, engine_mut};
 use crate::guard;
 use crate::status::RaxStatus;
 

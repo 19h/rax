@@ -25,7 +25,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_pg_0_min_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -41,7 +47,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_pg_1_poweroftwo_a000_6553a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -57,7 +69,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zn_0_min_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -73,7 +91,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zn_1_poweroftwo_a000_6553a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -89,7 +113,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zn_30_poweroftwominusone_a000_6553a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -105,7 +135,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zn_31_max_a000_6553a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -121,7 +157,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zd_0_min_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -137,7 +179,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zd_1_poweroftwo_a000_6553a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -153,7 +201,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zd_30_poweroftwominusone_a000_6553a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -169,7 +223,13 @@ fn test_ucvtf_z_p_z_h2fp16_field_zd_31_max_a000_6553a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -185,7 +245,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_0_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -201,7 +267,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_1_a000_6553a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -217,7 +289,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_2_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -233,7 +311,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_3_a000_6553a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -249,7 +333,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_4_a000_6553a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -265,7 +355,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_5_a000_6553a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -281,7 +377,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_6_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -297,7 +399,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_7_a000_6553a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -313,7 +421,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_8_a000_6553a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -329,7 +443,13 @@ fn test_ucvtf_z_p_z_h2fp16_combo_9_a000_6553a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -345,7 +465,13 @@ fn test_ucvtf_z_p_z_h2fp16_invalid_0_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_H2FP16
@@ -361,7 +487,13 @@ fn test_ucvtf_z_p_z_h2fp16_invalid_1_a000_6553a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -377,7 +509,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_pg_0_min_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -393,7 +531,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_pg_1_poweroftwo_a000_6555a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -409,7 +553,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zn_0_min_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -425,7 +575,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zn_1_poweroftwo_a000_6555a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -441,7 +597,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zn_30_poweroftwominusone_a000_6555a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -457,7 +619,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zn_31_max_a000_6555a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -473,7 +641,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zd_0_min_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -489,7 +663,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zd_1_poweroftwo_a000_6555a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -505,7 +685,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zd_30_poweroftwominusone_a000_6555a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -521,7 +707,13 @@ fn test_ucvtf_z_p_z_w2fp16_field_zd_31_max_a000_6555a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -537,7 +729,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_0_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -553,7 +751,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_1_a000_6555a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -569,7 +773,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_2_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -585,7 +795,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_3_a000_6555a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -601,7 +817,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_4_a000_6555a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -617,7 +839,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_5_a000_6555a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -633,7 +861,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_6_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -649,7 +883,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_7_a000_6555a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -665,7 +905,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_8_a000_6555a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -681,7 +927,13 @@ fn test_ucvtf_z_p_z_w2fp16_combo_9_a000_6555a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -697,7 +949,13 @@ fn test_ucvtf_z_p_z_w2fp16_invalid_0_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2FP16
@@ -713,7 +971,13 @@ fn test_ucvtf_z_p_z_w2fp16_invalid_1_a000_6555a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -729,7 +993,13 @@ fn test_ucvtf_z_p_z_w2s_field_pg_0_min_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -745,7 +1015,13 @@ fn test_ucvtf_z_p_z_w2s_field_pg_1_poweroftwo_a000_6595a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -761,7 +1037,13 @@ fn test_ucvtf_z_p_z_w2s_field_zn_0_min_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -777,7 +1059,13 @@ fn test_ucvtf_z_p_z_w2s_field_zn_1_poweroftwo_a000_6595a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -793,7 +1081,13 @@ fn test_ucvtf_z_p_z_w2s_field_zn_30_poweroftwominusone_a000_6595a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -809,7 +1103,13 @@ fn test_ucvtf_z_p_z_w2s_field_zn_31_max_a000_6595a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -825,7 +1125,13 @@ fn test_ucvtf_z_p_z_w2s_field_zd_0_min_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -841,7 +1147,13 @@ fn test_ucvtf_z_p_z_w2s_field_zd_1_poweroftwo_a000_6595a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -857,7 +1169,13 @@ fn test_ucvtf_z_p_z_w2s_field_zd_30_poweroftwominusone_a000_6595a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -873,7 +1191,13 @@ fn test_ucvtf_z_p_z_w2s_field_zd_31_max_a000_6595a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -889,7 +1213,13 @@ fn test_ucvtf_z_p_z_w2s_combo_0_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -905,7 +1235,13 @@ fn test_ucvtf_z_p_z_w2s_combo_1_a000_6595a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -921,7 +1257,13 @@ fn test_ucvtf_z_p_z_w2s_combo_2_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -937,7 +1279,13 @@ fn test_ucvtf_z_p_z_w2s_combo_3_a000_6595a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -953,7 +1301,13 @@ fn test_ucvtf_z_p_z_w2s_combo_4_a000_6595a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -969,7 +1323,13 @@ fn test_ucvtf_z_p_z_w2s_combo_5_a000_6595a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -985,7 +1345,13 @@ fn test_ucvtf_z_p_z_w2s_combo_6_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -1001,7 +1367,13 @@ fn test_ucvtf_z_p_z_w2s_combo_7_a000_6595a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -1017,7 +1389,13 @@ fn test_ucvtf_z_p_z_w2s_combo_8_a000_6595a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -1033,7 +1411,13 @@ fn test_ucvtf_z_p_z_w2s_combo_9_a000_6595a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -1049,7 +1433,13 @@ fn test_ucvtf_z_p_z_w2s_invalid_0_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2S
@@ -1065,7 +1455,13 @@ fn test_ucvtf_z_p_z_w2s_invalid_1_a000_6595a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1081,7 +1477,13 @@ fn test_ucvtf_z_p_z_w2d_field_pg_0_min_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1097,7 +1499,13 @@ fn test_ucvtf_z_p_z_w2d_field_pg_1_poweroftwo_a000_65d1a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1113,7 +1521,13 @@ fn test_ucvtf_z_p_z_w2d_field_zn_0_min_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1129,7 +1543,13 @@ fn test_ucvtf_z_p_z_w2d_field_zn_1_poweroftwo_a000_65d1a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1145,7 +1565,13 @@ fn test_ucvtf_z_p_z_w2d_field_zn_30_poweroftwominusone_a000_65d1a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1161,7 +1587,13 @@ fn test_ucvtf_z_p_z_w2d_field_zn_31_max_a000_65d1a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1177,7 +1609,13 @@ fn test_ucvtf_z_p_z_w2d_field_zd_0_min_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1193,7 +1631,13 @@ fn test_ucvtf_z_p_z_w2d_field_zd_1_poweroftwo_a000_65d1a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1209,7 +1653,13 @@ fn test_ucvtf_z_p_z_w2d_field_zd_30_poweroftwominusone_a000_65d1a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1225,7 +1675,13 @@ fn test_ucvtf_z_p_z_w2d_field_zd_31_max_a000_65d1a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1241,7 +1697,13 @@ fn test_ucvtf_z_p_z_w2d_combo_0_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1257,7 +1719,13 @@ fn test_ucvtf_z_p_z_w2d_combo_1_a000_65d1a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1273,7 +1741,13 @@ fn test_ucvtf_z_p_z_w2d_combo_2_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1289,7 +1763,13 @@ fn test_ucvtf_z_p_z_w2d_combo_3_a000_65d1a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1305,7 +1785,13 @@ fn test_ucvtf_z_p_z_w2d_combo_4_a000_65d1a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1321,7 +1807,13 @@ fn test_ucvtf_z_p_z_w2d_combo_5_a000_65d1a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1337,7 +1829,13 @@ fn test_ucvtf_z_p_z_w2d_combo_6_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1353,7 +1851,13 @@ fn test_ucvtf_z_p_z_w2d_combo_7_a000_65d1a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1369,7 +1873,13 @@ fn test_ucvtf_z_p_z_w2d_combo_8_a000_65d1a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1385,7 +1895,13 @@ fn test_ucvtf_z_p_z_w2d_combo_9_a000_65d1a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1401,7 +1917,13 @@ fn test_ucvtf_z_p_z_w2d_invalid_0_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_W2D
@@ -1417,7 +1939,13 @@ fn test_ucvtf_z_p_z_w2d_invalid_1_a000_65d1a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1433,7 +1961,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_pg_0_min_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1449,7 +1983,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_pg_1_poweroftwo_a000_6557a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1465,7 +2005,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zn_0_min_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1481,7 +2027,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zn_1_poweroftwo_a000_6557a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1497,7 +2049,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zn_30_poweroftwominusone_a000_6557a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1513,7 +2071,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zn_31_max_a000_6557a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1529,7 +2093,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zd_0_min_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1545,7 +2115,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zd_1_poweroftwo_a000_6557a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1561,7 +2137,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zd_30_poweroftwominusone_a000_6557a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1577,7 +2159,13 @@ fn test_ucvtf_z_p_z_x2fp16_field_zd_31_max_a000_6557a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1593,7 +2181,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_0_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1609,7 +2203,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_1_a000_6557a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1625,7 +2225,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_2_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1641,7 +2247,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_3_a000_6557a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1657,7 +2269,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_4_a000_6557a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1673,7 +2291,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_5_a000_6557a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1689,7 +2313,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_6_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1705,7 +2335,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_7_a000_6557a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1721,7 +2357,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_8_a000_6557a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1737,7 +2379,13 @@ fn test_ucvtf_z_p_z_x2fp16_combo_9_a000_6557a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1753,7 +2401,13 @@ fn test_ucvtf_z_p_z_x2fp16_invalid_0_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2FP16
@@ -1769,7 +2423,13 @@ fn test_ucvtf_z_p_z_x2fp16_invalid_1_a000_6557a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1785,7 +2445,13 @@ fn test_ucvtf_z_p_z_x2s_field_pg_0_min_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1801,7 +2467,13 @@ fn test_ucvtf_z_p_z_x2s_field_pg_1_poweroftwo_a000_65d5a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1817,7 +2489,13 @@ fn test_ucvtf_z_p_z_x2s_field_zn_0_min_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1833,7 +2511,13 @@ fn test_ucvtf_z_p_z_x2s_field_zn_1_poweroftwo_a000_65d5a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1849,7 +2533,13 @@ fn test_ucvtf_z_p_z_x2s_field_zn_30_poweroftwominusone_a000_65d5a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1865,7 +2555,13 @@ fn test_ucvtf_z_p_z_x2s_field_zn_31_max_a000_65d5a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1881,7 +2577,13 @@ fn test_ucvtf_z_p_z_x2s_field_zd_0_min_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1897,7 +2599,13 @@ fn test_ucvtf_z_p_z_x2s_field_zd_1_poweroftwo_a000_65d5a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1913,7 +2621,13 @@ fn test_ucvtf_z_p_z_x2s_field_zd_30_poweroftwominusone_a000_65d5a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1929,7 +2643,13 @@ fn test_ucvtf_z_p_z_x2s_field_zd_31_max_a000_65d5a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1945,7 +2665,13 @@ fn test_ucvtf_z_p_z_x2s_combo_0_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1961,7 +2687,13 @@ fn test_ucvtf_z_p_z_x2s_combo_1_a000_65d5a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1977,7 +2709,13 @@ fn test_ucvtf_z_p_z_x2s_combo_2_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -1993,7 +2731,13 @@ fn test_ucvtf_z_p_z_x2s_combo_3_a000_65d5a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2009,7 +2753,13 @@ fn test_ucvtf_z_p_z_x2s_combo_4_a000_65d5a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2025,7 +2775,13 @@ fn test_ucvtf_z_p_z_x2s_combo_5_a000_65d5a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2041,7 +2797,13 @@ fn test_ucvtf_z_p_z_x2s_combo_6_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2057,7 +2819,13 @@ fn test_ucvtf_z_p_z_x2s_combo_7_a000_65d5a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2073,7 +2841,13 @@ fn test_ucvtf_z_p_z_x2s_combo_8_a000_65d5a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2089,7 +2863,13 @@ fn test_ucvtf_z_p_z_x2s_combo_9_a000_65d5a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2105,7 +2885,13 @@ fn test_ucvtf_z_p_z_x2s_invalid_0_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2S
@@ -2121,7 +2907,13 @@ fn test_ucvtf_z_p_z_x2s_invalid_1_a000_65d5a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2137,7 +2929,13 @@ fn test_ucvtf_z_p_z_x2d_field_pg_0_min_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2153,7 +2951,13 @@ fn test_ucvtf_z_p_z_x2d_field_pg_1_poweroftwo_a000_65d7a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2169,7 +2973,13 @@ fn test_ucvtf_z_p_z_x2d_field_zn_0_min_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2185,7 +2995,13 @@ fn test_ucvtf_z_p_z_x2d_field_zn_1_poweroftwo_a000_65d7a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2201,7 +3017,13 @@ fn test_ucvtf_z_p_z_x2d_field_zn_30_poweroftwominusone_a000_65d7a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2217,7 +3039,13 @@ fn test_ucvtf_z_p_z_x2d_field_zn_31_max_a000_65d7a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2233,7 +3061,13 @@ fn test_ucvtf_z_p_z_x2d_field_zd_0_min_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2249,7 +3083,13 @@ fn test_ucvtf_z_p_z_x2d_field_zd_1_poweroftwo_a000_65d7a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2265,7 +3105,13 @@ fn test_ucvtf_z_p_z_x2d_field_zd_30_poweroftwominusone_a000_65d7a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2281,7 +3127,13 @@ fn test_ucvtf_z_p_z_x2d_field_zd_31_max_a000_65d7a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2297,7 +3149,13 @@ fn test_ucvtf_z_p_z_x2d_combo_0_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2313,7 +3171,13 @@ fn test_ucvtf_z_p_z_x2d_combo_1_a000_65d7a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2329,7 +3193,13 @@ fn test_ucvtf_z_p_z_x2d_combo_2_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2345,7 +3215,13 @@ fn test_ucvtf_z_p_z_x2d_combo_3_a000_65d7a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2361,7 +3237,13 @@ fn test_ucvtf_z_p_z_x2d_combo_4_a000_65d7a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2377,7 +3259,13 @@ fn test_ucvtf_z_p_z_x2d_combo_5_a000_65d7a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2393,7 +3281,13 @@ fn test_ucvtf_z_p_z_x2d_combo_6_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2409,7 +3303,13 @@ fn test_ucvtf_z_p_z_x2d_combo_7_a000_65d7a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2425,7 +3325,13 @@ fn test_ucvtf_z_p_z_x2d_combo_8_a000_65d7a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2441,7 +3347,13 @@ fn test_ucvtf_z_p_z_x2d_combo_9_a000_65d7a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2457,7 +3369,13 @@ fn test_ucvtf_z_p_z_x2d_invalid_0_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: UCVTF_Z.P.Z_X2D
@@ -2473,7 +3391,13 @@ fn test_ucvtf_z_p_z_x2d_invalid_1_a000_65d7a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 // ============================================================================
@@ -2493,7 +3417,13 @@ fn test_scvtf_z_p_z_h2fp16_field_pg_0_min_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2509,7 +3439,13 @@ fn test_scvtf_z_p_z_h2fp16_field_pg_1_poweroftwo_a000_6552a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2525,7 +3461,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zn_0_min_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2541,7 +3483,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zn_1_poweroftwo_a000_6552a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2557,7 +3505,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zn_30_poweroftwominusone_a000_6552a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2573,7 +3527,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zn_31_max_a000_6552a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2589,7 +3549,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zd_0_min_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2605,7 +3571,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zd_1_poweroftwo_a000_6552a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2621,7 +3593,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zd_30_poweroftwominusone_a000_6552a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2637,7 +3615,13 @@ fn test_scvtf_z_p_z_h2fp16_field_zd_31_max_a000_6552a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2653,7 +3637,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_0_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2669,7 +3659,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_1_a000_6552a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2685,7 +3681,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_2_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2701,7 +3703,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_3_a000_6552a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2717,7 +3725,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_4_a000_6552a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2733,7 +3747,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_5_a000_6552a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2749,7 +3769,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_6_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2765,7 +3791,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_7_a000_6552a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2781,7 +3813,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_8_a000_6552a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2797,7 +3835,13 @@ fn test_scvtf_z_p_z_h2fp16_combo_9_a000_6552a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2813,7 +3857,13 @@ fn test_scvtf_z_p_z_h2fp16_invalid_0_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_H2FP16
@@ -2829,7 +3879,13 @@ fn test_scvtf_z_p_z_h2fp16_invalid_1_a000_6552a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2845,7 +3901,13 @@ fn test_scvtf_z_p_z_w2fp16_field_pg_0_min_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2861,7 +3923,13 @@ fn test_scvtf_z_p_z_w2fp16_field_pg_1_poweroftwo_a000_6554a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2877,7 +3945,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zn_0_min_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2893,7 +3967,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zn_1_poweroftwo_a000_6554a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2909,7 +3989,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zn_30_poweroftwominusone_a000_6554a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2925,7 +4011,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zn_31_max_a000_6554a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2941,7 +4033,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zd_0_min_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2957,7 +4055,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zd_1_poweroftwo_a000_6554a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2973,7 +4077,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zd_30_poweroftwominusone_a000_6554a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -2989,7 +4099,13 @@ fn test_scvtf_z_p_z_w2fp16_field_zd_31_max_a000_6554a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3005,7 +4121,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_0_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3021,7 +4143,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_1_a000_6554a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3037,7 +4165,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_2_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3053,7 +4187,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_3_a000_6554a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3069,7 +4209,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_4_a000_6554a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3085,7 +4231,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_5_a000_6554a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3101,7 +4253,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_6_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3117,7 +4275,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_7_a000_6554a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3133,7 +4297,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_8_a000_6554a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3149,7 +4319,13 @@ fn test_scvtf_z_p_z_w2fp16_combo_9_a000_6554a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3165,7 +4341,13 @@ fn test_scvtf_z_p_z_w2fp16_invalid_0_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2FP16
@@ -3181,7 +4363,13 @@ fn test_scvtf_z_p_z_w2fp16_invalid_1_a000_6554a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3197,7 +4385,13 @@ fn test_scvtf_z_p_z_w2s_field_pg_0_min_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3213,7 +4407,13 @@ fn test_scvtf_z_p_z_w2s_field_pg_1_poweroftwo_a000_6594a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3229,7 +4429,13 @@ fn test_scvtf_z_p_z_w2s_field_zn_0_min_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3245,7 +4451,13 @@ fn test_scvtf_z_p_z_w2s_field_zn_1_poweroftwo_a000_6594a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3261,7 +4473,13 @@ fn test_scvtf_z_p_z_w2s_field_zn_30_poweroftwominusone_a000_6594a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3277,7 +4495,13 @@ fn test_scvtf_z_p_z_w2s_field_zn_31_max_a000_6594a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3293,7 +4517,13 @@ fn test_scvtf_z_p_z_w2s_field_zd_0_min_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3309,7 +4539,13 @@ fn test_scvtf_z_p_z_w2s_field_zd_1_poweroftwo_a000_6594a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3325,7 +4561,13 @@ fn test_scvtf_z_p_z_w2s_field_zd_30_poweroftwominusone_a000_6594a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3341,7 +4583,13 @@ fn test_scvtf_z_p_z_w2s_field_zd_31_max_a000_6594a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3357,7 +4605,13 @@ fn test_scvtf_z_p_z_w2s_combo_0_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3373,7 +4627,13 @@ fn test_scvtf_z_p_z_w2s_combo_1_a000_6594a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3389,7 +4649,13 @@ fn test_scvtf_z_p_z_w2s_combo_2_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3405,7 +4671,13 @@ fn test_scvtf_z_p_z_w2s_combo_3_a000_6594a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3421,7 +4693,13 @@ fn test_scvtf_z_p_z_w2s_combo_4_a000_6594a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3437,7 +4715,13 @@ fn test_scvtf_z_p_z_w2s_combo_5_a000_6594a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3453,7 +4737,13 @@ fn test_scvtf_z_p_z_w2s_combo_6_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3469,7 +4759,13 @@ fn test_scvtf_z_p_z_w2s_combo_7_a000_6594a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3485,7 +4781,13 @@ fn test_scvtf_z_p_z_w2s_combo_8_a000_6594a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3501,7 +4803,13 @@ fn test_scvtf_z_p_z_w2s_combo_9_a000_6594a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3517,7 +4825,13 @@ fn test_scvtf_z_p_z_w2s_invalid_0_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2S
@@ -3533,7 +4847,13 @@ fn test_scvtf_z_p_z_w2s_invalid_1_a000_6594a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3549,7 +4869,13 @@ fn test_scvtf_z_p_z_w2d_field_pg_0_min_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3565,7 +4891,13 @@ fn test_scvtf_z_p_z_w2d_field_pg_1_poweroftwo_a000_65d0a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3581,7 +4913,13 @@ fn test_scvtf_z_p_z_w2d_field_zn_0_min_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3597,7 +4935,13 @@ fn test_scvtf_z_p_z_w2d_field_zn_1_poweroftwo_a000_65d0a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3613,7 +4957,13 @@ fn test_scvtf_z_p_z_w2d_field_zn_30_poweroftwominusone_a000_65d0a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3629,7 +4979,13 @@ fn test_scvtf_z_p_z_w2d_field_zn_31_max_a000_65d0a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3645,7 +5001,13 @@ fn test_scvtf_z_p_z_w2d_field_zd_0_min_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3661,7 +5023,13 @@ fn test_scvtf_z_p_z_w2d_field_zd_1_poweroftwo_a000_65d0a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3677,7 +5045,13 @@ fn test_scvtf_z_p_z_w2d_field_zd_30_poweroftwominusone_a000_65d0a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3693,7 +5067,13 @@ fn test_scvtf_z_p_z_w2d_field_zd_31_max_a000_65d0a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3709,7 +5089,13 @@ fn test_scvtf_z_p_z_w2d_combo_0_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3725,7 +5111,13 @@ fn test_scvtf_z_p_z_w2d_combo_1_a000_65d0a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3741,7 +5133,13 @@ fn test_scvtf_z_p_z_w2d_combo_2_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3757,7 +5155,13 @@ fn test_scvtf_z_p_z_w2d_combo_3_a000_65d0a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3773,7 +5177,13 @@ fn test_scvtf_z_p_z_w2d_combo_4_a000_65d0a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3789,7 +5199,13 @@ fn test_scvtf_z_p_z_w2d_combo_5_a000_65d0a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3805,7 +5221,13 @@ fn test_scvtf_z_p_z_w2d_combo_6_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3821,7 +5243,13 @@ fn test_scvtf_z_p_z_w2d_combo_7_a000_65d0a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3837,7 +5265,13 @@ fn test_scvtf_z_p_z_w2d_combo_8_a000_65d0a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3853,7 +5287,13 @@ fn test_scvtf_z_p_z_w2d_combo_9_a000_65d0a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3869,7 +5309,13 @@ fn test_scvtf_z_p_z_w2d_invalid_0_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_W2D
@@ -3885,7 +5331,13 @@ fn test_scvtf_z_p_z_w2d_invalid_1_a000_65d0a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3901,7 +5353,13 @@ fn test_scvtf_z_p_z_x2fp16_field_pg_0_min_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3917,7 +5375,13 @@ fn test_scvtf_z_p_z_x2fp16_field_pg_1_poweroftwo_a000_6556a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3933,7 +5397,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zn_0_min_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3949,7 +5419,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zn_1_poweroftwo_a000_6556a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3965,7 +5441,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zn_30_poweroftwominusone_a000_6556a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3981,7 +5463,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zn_31_max_a000_6556a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -3997,7 +5485,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zd_0_min_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4013,7 +5507,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zd_1_poweroftwo_a000_6556a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4029,7 +5529,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zd_30_poweroftwominusone_a000_6556a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4045,7 +5551,13 @@ fn test_scvtf_z_p_z_x2fp16_field_zd_31_max_a000_6556a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4061,7 +5573,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_0_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4077,7 +5595,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_1_a000_6556a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4093,7 +5617,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_2_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4109,7 +5639,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_3_a000_6556a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4125,7 +5661,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_4_a000_6556a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4141,7 +5683,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_5_a000_6556a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4157,7 +5705,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_6_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4173,7 +5727,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_7_a000_6556a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4189,7 +5749,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_8_a000_6556a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4205,7 +5771,13 @@ fn test_scvtf_z_p_z_x2fp16_combo_9_a000_6556a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4221,7 +5793,13 @@ fn test_scvtf_z_p_z_x2fp16_invalid_0_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2FP16
@@ -4237,7 +5815,13 @@ fn test_scvtf_z_p_z_x2fp16_invalid_1_a000_6556a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4253,7 +5837,13 @@ fn test_scvtf_z_p_z_x2s_field_pg_0_min_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4269,7 +5859,13 @@ fn test_scvtf_z_p_z_x2s_field_pg_1_poweroftwo_a000_65d4a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4285,7 +5881,13 @@ fn test_scvtf_z_p_z_x2s_field_zn_0_min_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4301,7 +5903,13 @@ fn test_scvtf_z_p_z_x2s_field_zn_1_poweroftwo_a000_65d4a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4317,7 +5925,13 @@ fn test_scvtf_z_p_z_x2s_field_zn_30_poweroftwominusone_a000_65d4a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4333,7 +5947,13 @@ fn test_scvtf_z_p_z_x2s_field_zn_31_max_a000_65d4a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4349,7 +5969,13 @@ fn test_scvtf_z_p_z_x2s_field_zd_0_min_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4365,7 +5991,13 @@ fn test_scvtf_z_p_z_x2s_field_zd_1_poweroftwo_a000_65d4a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4381,7 +6013,13 @@ fn test_scvtf_z_p_z_x2s_field_zd_30_poweroftwominusone_a000_65d4a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4397,7 +6035,13 @@ fn test_scvtf_z_p_z_x2s_field_zd_31_max_a000_65d4a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4413,7 +6057,13 @@ fn test_scvtf_z_p_z_x2s_combo_0_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4429,7 +6079,13 @@ fn test_scvtf_z_p_z_x2s_combo_1_a000_65d4a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4445,7 +6101,13 @@ fn test_scvtf_z_p_z_x2s_combo_2_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4461,7 +6123,13 @@ fn test_scvtf_z_p_z_x2s_combo_3_a000_65d4a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4477,7 +6145,13 @@ fn test_scvtf_z_p_z_x2s_combo_4_a000_65d4a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4493,7 +6167,13 @@ fn test_scvtf_z_p_z_x2s_combo_5_a000_65d4a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4509,7 +6189,13 @@ fn test_scvtf_z_p_z_x2s_combo_6_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4525,7 +6211,13 @@ fn test_scvtf_z_p_z_x2s_combo_7_a000_65d4a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4541,7 +6233,13 @@ fn test_scvtf_z_p_z_x2s_combo_8_a000_65d4a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4557,7 +6255,13 @@ fn test_scvtf_z_p_z_x2s_combo_9_a000_65d4a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4573,7 +6277,13 @@ fn test_scvtf_z_p_z_x2s_invalid_0_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2S
@@ -4589,7 +6299,13 @@ fn test_scvtf_z_p_z_x2s_invalid_1_a000_65d4a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4605,7 +6321,13 @@ fn test_scvtf_z_p_z_x2d_field_pg_0_min_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4621,7 +6343,13 @@ fn test_scvtf_z_p_z_x2d_field_pg_1_poweroftwo_a000_65d6a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4637,7 +6365,13 @@ fn test_scvtf_z_p_z_x2d_field_zn_0_min_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4653,7 +6387,13 @@ fn test_scvtf_z_p_z_x2d_field_zn_1_poweroftwo_a000_65d6a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4669,7 +6409,13 @@ fn test_scvtf_z_p_z_x2d_field_zn_30_poweroftwominusone_a000_65d6a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4685,7 +6431,13 @@ fn test_scvtf_z_p_z_x2d_field_zn_31_max_a000_65d6a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4701,7 +6453,13 @@ fn test_scvtf_z_p_z_x2d_field_zd_0_min_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4717,7 +6475,13 @@ fn test_scvtf_z_p_z_x2d_field_zd_1_poweroftwo_a000_65d6a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4733,7 +6497,13 @@ fn test_scvtf_z_p_z_x2d_field_zd_30_poweroftwominusone_a000_65d6a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4749,7 +6519,13 @@ fn test_scvtf_z_p_z_x2d_field_zd_31_max_a000_65d6a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4765,7 +6541,13 @@ fn test_scvtf_z_p_z_x2d_combo_0_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4781,7 +6563,13 @@ fn test_scvtf_z_p_z_x2d_combo_1_a000_65d6a400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4797,7 +6585,13 @@ fn test_scvtf_z_p_z_x2d_combo_2_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4813,7 +6607,13 @@ fn test_scvtf_z_p_z_x2d_combo_3_a000_65d6a020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4829,7 +6629,13 @@ fn test_scvtf_z_p_z_x2d_combo_4_a000_65d6a3c0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4845,7 +6651,13 @@ fn test_scvtf_z_p_z_x2d_combo_5_a000_65d6a3e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4861,7 +6673,13 @@ fn test_scvtf_z_p_z_x2d_combo_6_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4877,7 +6695,13 @@ fn test_scvtf_z_p_z_x2d_combo_7_a000_65d6a001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4893,7 +6717,13 @@ fn test_scvtf_z_p_z_x2d_combo_8_a000_65d6a01e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4909,7 +6739,13 @@ fn test_scvtf_z_p_z_x2d_combo_9_a000_65d6a01f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4925,7 +6761,13 @@ fn test_scvtf_z_p_z_x2d_invalid_0_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
 
 /// Provenance: SCVTF_Z.P.Z_X2D
@@ -4941,6 +6783,11 @@ fn test_scvtf_z_p_z_x2d_invalid_1_a000_65d6a000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(!matches!(exit, Ok(CpuExit::Undefined(_))) && !matches!(exit, Err(ArmError::UndefinedInstruction(_))), "expected allocated encoding for 0x{:08X}: {:?}", encoding, exit);
+    assert!(
+        !matches!(exit, Ok(CpuExit::Undefined(_)))
+            && !matches!(exit, Err(ArmError::UndefinedInstruction(_))),
+        "expected allocated encoding for 0x{:08X}: {:?}",
+        encoding,
+        exit
+    );
 }
-

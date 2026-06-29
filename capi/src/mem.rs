@@ -13,7 +13,7 @@ use rax_engine::cpu::MemAccess;
 use rax_engine::memory::vm::{Bytes, GuestAddress, GuestMemoryMmap, GuestRegionMmap, MmapRegion};
 
 use crate::arch::build_vcpu;
-use crate::engine::{engine_mut, engine_ref, Engine, PAGE};
+use crate::engine::{Engine, PAGE, engine_mut, engine_ref};
 use crate::guard;
 use crate::status::RaxStatus;
 
@@ -201,7 +201,7 @@ impl Engine {
                 let backing = match alloc_backing(b, s) {
                     Ok(x) => x,
                     Err(_) => {
-                        return self.fail(RaxStatus::NoMem, "failed to allocate region backing")
+                        return self.fail(RaxStatus::NoMem, "failed to allocate region backing");
                     }
                 };
                 new_regions.push(Region {

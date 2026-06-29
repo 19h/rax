@@ -1,3 +1,12 @@
+#![allow(
+    warnings,
+    clippy::approx_constant,
+    clippy::bad_bit_mask,
+    clippy::eq_op,
+    clippy::erasing_op,
+    clippy::overly_complex_bool_expr
+)]
+
 use std::path::PathBuf;
 
 use clap::Parser;

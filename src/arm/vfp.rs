@@ -1719,11 +1719,11 @@ mod tests {
     fn test_vfp_state_d_registers() {
         let mut vfp = VfpState::new();
 
-        vfp.write_d(0, 3.14159);
-        assert_eq!(vfp.read_d(0), 3.14159);
+        vfp.write_d(0, std::f64::consts::PI);
+        assert_eq!(vfp.read_d(0), std::f64::consts::PI);
 
-        vfp.write_d(15, -2.71828);
-        assert_eq!(vfp.read_d(15), -2.71828);
+        vfp.write_d(15, -std::f64::consts::E);
+        assert_eq!(vfp.read_d(15), -std::f64::consts::E);
     }
 
     #[test]

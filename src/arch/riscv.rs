@@ -335,7 +335,8 @@ mod gsc_loader_tests {
         assert_eq!(info.image_size, buf.len() as u64);
         // The image is mapped verbatim at ro_base (VA = file_off + ro_base).
         let mut word = [0u8; 4];
-        mem.read_slice(&mut word, GuestAddress(0xa_0000 + 0x400)).unwrap();
+        mem.read_slice(&mut word, GuestAddress(0xa_0000 + 0x400))
+            .unwrap();
         assert_eq!(u32::from_le_bytes(word), 0xdead_beef);
     }
 

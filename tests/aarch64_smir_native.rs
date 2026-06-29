@@ -105,7 +105,8 @@ fn raw_interp_run(insns: &[u32], setup: impl FnOnce(&mut Aarch64GuestRegs)) -> A
 
     let mut cpu = fresh_cpu();
     cpu.set_jit_enabled(false);
-    cpu.write_memory(PROG_BASE, &code_bytes_with_ret(insns)).unwrap();
+    cpu.write_memory(PROG_BASE, &code_bytes_with_ret(insns))
+        .unwrap();
     cpu.set_sp(seed.sp);
     for i in 0..30u8 {
         cpu.set_x(i, seed.x[i as usize]);
@@ -967,7 +968,10 @@ fn raw_el0_advsimd_three_diff_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h8([0x0001, 0xffff, 0x7fff, 0x8000, 0, 0, 0, 0])),
+            (
+                1usize,
+                pack_h8([0x0001, 0xffff, 0x7fff, 0x8000, 0, 0, 0, 0]),
+            ),
             (2, pack_h8([0x0002, 0x0003, 0x8000, 0x7fff, 0, 0, 0, 0])),
             (4, pack_h8([1, 2, 3, 4, 0xfff0, 0x8000, 0x7fff, 0x0008])),
             (5, pack_h8([5, 6, 7, 8, 0x0004, 0x7fff, 0x8001, 0xfff8])),
@@ -975,11 +979,28 @@ fn raw_el0_advsimd_three_diff_oracle_matches_interpreter() {
             (8, pack_h8([1, 2, 3, 4, 0, 0, 0, 0])),
             (10, pack_s4([100, 200, 300, 400])),
             (11, pack_h8([0, 0, 0, 0, 0xffff, 0x0002, 0x8000, 0x7fff])),
-            (13, pack_s4([0x0001_0000, 0x8000_0000, 0xffff_0000, 0x7fff_ffff])),
-            (14, pack_s4([0x0000_0001, 0x7fff_ffff, 0x0000_ffff, 0x8000_0000])),
-            (15, pack_h8([0xaaaa, 0xbbbb, 0xcccc, 0xdddd, 0x1111, 0x2222, 0x3333, 0x4444])),
-            (16, pack_s4([0x0001_0000, 0x0002_0000, 0x7fff_0000, 0x8000_0000])),
-            (17, pack_s4([0x0000_ffff, 0x0002_ffff, 0x8000_0000, 0x7fff_ffff])),
+            (
+                13,
+                pack_s4([0x0001_0000, 0x8000_0000, 0xffff_0000, 0x7fff_ffff]),
+            ),
+            (
+                14,
+                pack_s4([0x0000_0001, 0x7fff_ffff, 0x0000_ffff, 0x8000_0000]),
+            ),
+            (
+                15,
+                pack_h8([
+                    0xaaaa, 0xbbbb, 0xcccc, 0xdddd, 0x1111, 0x2222, 0x3333, 0x4444,
+                ]),
+            ),
+            (
+                16,
+                pack_s4([0x0001_0000, 0x0002_0000, 0x7fff_0000, 0x8000_0000]),
+            ),
+            (
+                17,
+                pack_s4([0x0000_ffff, 0x0002_ffff, 0x8000_0000, 0x7fff_ffff]),
+            ),
             (19, pack_h8([0x0001, 0xffff, 0x7fff, 0x8000, 0, 0, 0, 0])),
             (20, pack_h8([0xffff, 0x0001, 0x8000, 0x7fff, 0, 0, 0, 0])),
             (24, pack_s4([10, 20, 30, 40])),
@@ -1214,10 +1235,26 @@ fn raw_el0_advsimd_indexed_integer_oracle_matches_interpreter() {
             (6, pack_s4([1000, 2000, 3000, 4000])),
             (7, pack_s4([2, 4, 6, 8])),
             (8, pack_s4([3, 5, 7, 9])),
-            (10, pack_h8([0x4000, 0xc000, 0x2000, 0xe000, 0x1000, 0xf000, 0x3000, 0xd000])),
-            (11, pack_h8([0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000, 0x1000, 0x0800])),
-            (13, pack_s4([0x4000_0000, 0xc000_0000, 0x2000_0000, 0xe000_0000])),
-            (14, pack_s4([0x2000_0000, 0x4000_0000, 0x6000_0000, 0x1000_0000])),
+            (
+                10,
+                pack_h8([
+                    0x4000, 0xc000, 0x2000, 0xe000, 0x1000, 0xf000, 0x3000, 0xd000,
+                ]),
+            ),
+            (
+                11,
+                pack_h8([
+                    0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000, 0x1000, 0x0800,
+                ]),
+            ),
+            (
+                13,
+                pack_s4([0x4000_0000, 0xc000_0000, 0x2000_0000, 0xe000_0000]),
+            ),
+            (
+                14,
+                pack_s4([0x2000_0000, 0x4000_0000, 0x6000_0000, 0x1000_0000]),
+            ),
             (15, pack_s4([10, 20, 30, 40])),
             (16, pack_h8([1, 2, 3, 4, 5, 6, 7, 8])),
             (18, pack_s4([50, 60, 70, 80])),
@@ -1278,10 +1315,19 @@ fn raw_el0_advsimd_scalar_indexed_integer_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h8([0x4000, 0x2000, 0x1000, 0x0800, 0, 0, 0, 0])),
+            (
+                1usize,
+                pack_h8([0x4000, 0x2000, 0x1000, 0x0800, 0, 0, 0, 0]),
+            ),
             (2, pack_h8([0x1000, 0x2000, 0x3000, 0x4000, 0, 0, 0, 0])),
-            (5, pack_s4([0x2000_0000, 0x4000_0000, 0x6000_0000, 0x1000_0000])),
-            (8, pack_s4([0x4000_0000, 0x2000_0000, 0x1000_0000, 0x0800_0000])),
+            (
+                5,
+                pack_s4([0x2000_0000, 0x4000_0000, 0x6000_0000, 0x1000_0000]),
+            ),
+            (
+                8,
+                pack_s4([0x4000_0000, 0x2000_0000, 0x1000_0000, 0x0800_0000]),
+            ),
             (11, pack_h8([0x1000, 0x2000, 0x3000, 0x4000, 0, 0, 0, 0])),
             (14, pack_h8([0x1000, 0x2000, 0x3000, 0x4000, 0, 0, 0, 0])),
         ] {
@@ -1391,9 +1437,17 @@ fn raw_el0_advsimd_shift_accumulate_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
             (0usize, pack_h8([1, 2, 3, 4, 5, 6, 7, 8])),
-            (1, pack_h8([0x0008, 0xfff8, 0x7fff, 0x8000, 0x0010, 0xfff0, 0x0100, 0xff00])),
+            (
+                1,
+                pack_h8([
+                    0x0008, 0xfff8, 0x7fff, 0x8000, 0x0010, 0xfff0, 0x0100, 0xff00,
+                ]),
+            ),
             (2, pack_s4([10, 20, 30, 40])),
-            (3, pack_s4([0x0000_0020, 0xffff_ffe0, 0x8000_0000, 0x7fff_ffff])),
+            (
+                3,
+                pack_s4([0x0000_0020, 0xffff_ffe0, 0x8000_0000, 0x7fff_ffff]),
+            ),
             (4, (100, 200)),
             (5, (0x0000_0000_0000_2000, (-0x2000i64) as u64)),
             (6, (0x0102_0304_0506_0708, 0xf0e0_d0c0_b0a0_9080)),
@@ -1660,18 +1714,62 @@ fn raw_el0_advsimd_fp_maxmin_snan_status_oracle_matches_interpreter() {
     let neg_snan_d = 0xfff0_0000_0000_0002u64;
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()])),
-            (2, pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s])),
+            (
+                1usize,
+                pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()]),
+            ),
+            (
+                2,
+                pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s]),
+            ),
             (4, pack_d_bits([snan_d, (-4.0_f64).to_bits()])),
             (5, pack_d_bits([3.0_f64.to_bits(), neg_snan_d])),
-            (7, pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()])),
-            (8, pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s])),
+            (
+                7,
+                pack_s_bits([snan_s, 1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits()]),
+            ),
+            (
+                8,
+                pack_s_bits([2.0_f32.to_bits(), snan_s, (-3.0_f32).to_bits(), neg_snan_s]),
+            ),
             (10, pack_d_bits([snan_d, (-4.0_f64).to_bits()])),
             (11, pack_d_bits([3.0_f64.to_bits(), neg_snan_d])),
-            (13, pack_s_bits([1.0_f32.to_bits(), snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
-            (15, pack_s_bits([1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
-            (17, pack_s_bits([1.0_f32.to_bits(), snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
-            (19, pack_s_bits([1.0_f32.to_bits(), neg_snan_s, (-2.0_f32).to_bits(), 3.0_f32.to_bits()])),
+            (
+                13,
+                pack_s_bits([
+                    1.0_f32.to_bits(),
+                    snan_s,
+                    (-2.0_f32).to_bits(),
+                    3.0_f32.to_bits(),
+                ]),
+            ),
+            (
+                15,
+                pack_s_bits([
+                    1.0_f32.to_bits(),
+                    neg_snan_s,
+                    (-2.0_f32).to_bits(),
+                    3.0_f32.to_bits(),
+                ]),
+            ),
+            (
+                17,
+                pack_s_bits([
+                    1.0_f32.to_bits(),
+                    snan_s,
+                    (-2.0_f32).to_bits(),
+                    3.0_f32.to_bits(),
+                ]),
+            ),
+            (
+                19,
+                pack_s_bits([
+                    1.0_f32.to_bits(),
+                    neg_snan_s,
+                    (-2.0_f32).to_bits(),
+                    3.0_f32.to_bits(),
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -2023,8 +2121,7 @@ fn raw_el0_advsimd_scalar_pairwise_exact_zero_fpcr_rounding_oracle_matches_inter
     for rmode in 0..4u64 {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
-            g.v[2 * 3] =
-                u64::from((-1.5_f32).to_bits()) | (u64::from(1.5_f32.to_bits()) << 32);
+            g.v[2 * 3] = u64::from((-1.5_f32).to_bits()) | (u64::from(1.5_f32.to_bits()) << 32);
             g.v[2 * 5] = (-1.5_f64).to_bits();
             g.v[2 * 5 + 1] = 1.5_f64.to_bits();
         };
@@ -2056,9 +2153,8 @@ fn raw_el0_advsimd_scalar_pairwise_extrema_oracle_matches_interpreter() {
         0x7e30_c8e6, // fmaxnmp s6, v7.2s
         0x7ef0_c928, // fminnmp d8, v9.2d
     ];
-    let pack_s2 = |a: f32, b: f32| -> u64 {
-        u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32)
-    };
+    let pack_s2 =
+        |a: f32, b: f32| -> u64 { u64::from(a.to_bits()) | (u64::from(b.to_bits()) << 32) };
     let setup = |g: &mut Aarch64GuestRegs| {
         g.v[2] = 0x0000_0001_0000_0002; // v1.2d
         g.v[3] = 0xffff_ffff_ffff_ffff;
@@ -2218,10 +2314,22 @@ fn raw_el0_advsimd_fp_ordered_compare_qnan_status_oracle_matches_interpreter() {
     let neg_qnan_d = 0xfff8_0000_0000_0002u64;
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_s_bits([qnan_s, neg_qnan_s, qnan_s, neg_qnan_s])),
-            (2, pack_s_bits([1.0_f32.to_bits(), 1.0_f32.to_bits(), qnan_s, neg_qnan_s])),
-            (4, pack_s_bits([1.0_f32.to_bits(), qnan_s, neg_qnan_s, (-2.0_f32).to_bits()])),
-            (5, pack_s_bits([qnan_s, 1.0_f32.to_bits(), neg_qnan_s, qnan_s])),
+            (
+                1usize,
+                pack_s_bits([qnan_s, neg_qnan_s, qnan_s, neg_qnan_s]),
+            ),
+            (
+                2,
+                pack_s_bits([1.0_f32.to_bits(), 1.0_f32.to_bits(), qnan_s, neg_qnan_s]),
+            ),
+            (
+                4,
+                pack_s_bits([1.0_f32.to_bits(), qnan_s, neg_qnan_s, (-2.0_f32).to_bits()]),
+            ),
+            (
+                5,
+                pack_s_bits([qnan_s, 1.0_f32.to_bits(), neg_qnan_s, qnan_s]),
+            ),
             (7, pack_d_bits([qnan_d, neg_qnan_d])),
             (8, pack_d_bits([1.0_f64.to_bits(), qnan_d])),
             (10, pack_d_bits([1.0_f64.to_bits(), neg_qnan_d])),
@@ -2675,10 +2783,7 @@ fn raw_el0_advsimd_bf16_dot_ah_qnan_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     const QNAN_BF16: u128 = 0x7fc0_7fc0_7fc0_7fc0_7fc0_7fc0_7fc0_7fc0;
-    let cases = [
-        ("bfdot", 0x6e42_fc20),
-        ("bfmmla", 0x6e42_ec20),
-    ];
+    let cases = [("bfdot", 0x6e42_fc20), ("bfmmla", 0x6e42_ec20)];
 
     for (label, insn) in cases {
         let setup = |g: &mut Aarch64GuestRegs| {
@@ -2794,12 +2899,7 @@ fn raw_el0_advsimd_bfcvt_oracle_matches_interpreter() {
             g.fpcr = rmode << 22;
             g.v[2] = u64::from(tie_inputs[rmode as usize]); // s1
             (g.v[6], g.v[7]) = pack_s4(tie_inputs); // v3.4s
-            (g.v[8], g.v[9]) = pack_s4([
-                0x3fc0_8000,
-                0xc020_8000,
-                0x0080_0000,
-                0x7f7f_ffff,
-            ]); // v4.4s
+            (g.v[8], g.v[9]) = pack_s4([0x3fc0_8000, 0xc020_8000, 0x0080_0000, 0x7f7f_ffff]); // v4.4s
             g.fpsr = 0;
         };
 
@@ -3014,12 +3114,38 @@ fn raw_el0_advsimd_bf16_fmlal_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (4usize, pack_h8([0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80])),
-                (5, pack_h8([0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80])),
-                (15, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (16, pack_h8([0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80])),
-                (18, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (19, pack_h8([0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80])),
+                (
+                    4usize,
+                    pack_h8([
+                        0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_h8([
+                        0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80,
+                    ]),
+                ),
+                (
+                    15,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    16,
+                    pack_h8([
+                        0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80,
+                    ]),
+                ),
+                (
+                    18,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    19,
+                    pack_h8([
+                        0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -3168,10 +3294,7 @@ fn raw_el0_scalar_frecpx_ah_status_oracle_matches_interpreter() {
         hw.v[0] as u32, interp.v[0] as u32,
         "raw EL0 scalar AH frecpx s0 mismatch"
     );
-    assert_eq!(
-        hw.v[4], interp.v[4],
-        "raw EL0 scalar AH frecpx d2 mismatch"
-    );
+    assert_eq!(hw.v[4], interp.v[4], "raw EL0 scalar AH frecpx d2 mismatch");
     assert_eq!(
         hw.fpsr as u32, interp.fpsr as u32,
         "raw EL0 scalar AH frecpx FPSR mismatch"
@@ -3890,7 +4013,12 @@ fn raw_el0_scalar_fp_frintts_status_oracle_matches_interpreter() {
     let inf_d = 0x7ff0_0000_0000_0000u64;
     let large_d = 0x43e0_0000_0000_0000u64;
     let cases = [
-        ("frint32z_s_inexact", 0x1e28_4020u32, true, u64::from(1.5_f32.to_bits())),
+        (
+            "frint32z_s_inexact",
+            0x1e28_4020u32,
+            true,
+            u64::from(1.5_f32.to_bits()),
+        ),
         ("frint32x_s_qnan", 0x1e28_c020, true, qnan_s),
         ("frint64z_s_large", 0x1e29_4020, true, large_s),
         ("frint64x_s_inf", 0x1e29_c020, true, inf_s),
@@ -4067,10 +4195,30 @@ fn raw_el0_scalar_fp_compare_ah_nan_subnormal_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     let cases = [
-        ("fcmp_s_qnan", 0x1e22_2020u32, u64::from(0x7fc0_2000u32), u64::from(0x0000_2000u32)),
-        ("fcmp_s_snan", 0x1e22_2020, u64::from(0x7fa0_0001u32), u64::from(0x0000_2000u32)),
-        ("fcmpe_s_qnan", 0x1e22_2030, u64::from(0x7fc0_2000u32), u64::from(0x0000_2000u32)),
-        ("fcmpe_s_snan", 0x1e22_2030, u64::from(0x7fa0_0001u32), u64::from(0x0000_2000u32)),
+        (
+            "fcmp_s_qnan",
+            0x1e22_2020u32,
+            u64::from(0x7fc0_2000u32),
+            u64::from(0x0000_2000u32),
+        ),
+        (
+            "fcmp_s_snan",
+            0x1e22_2020,
+            u64::from(0x7fa0_0001u32),
+            u64::from(0x0000_2000u32),
+        ),
+        (
+            "fcmpe_s_qnan",
+            0x1e22_2030,
+            u64::from(0x7fc0_2000u32),
+            u64::from(0x0000_2000u32),
+        ),
+        (
+            "fcmpe_s_snan",
+            0x1e22_2030,
+            u64::from(0x7fa0_0001u32),
+            u64::from(0x0000_2000u32),
+        ),
         (
             "fcmp_d_qnan",
             0x1e62_2020,
@@ -4343,12 +4491,7 @@ fn raw_el0_scalar_fsqrt_ah_subnormal_status_oracle_matches_interpreter() {
     const FPCR_AH: u64 = 1 << 1;
     let cases = [
         ("s", 0x1e21_c020, 0x0000_2000u64, CompareKind::Single),
-        (
-            "d",
-            0x1e61_c020,
-            0x0000_0000_0000_2000,
-            CompareKind::Double,
-        ),
+        ("d", 0x1e61_c020, 0x0000_0000_0000_2000, CompareKind::Double),
     ];
 
     for (label, insn, bits, compare_kind) in cases {
@@ -4395,12 +4538,7 @@ fn raw_el0_scalar_fsqrt_ah_negative_subnormal_oracle_matches_interpreter() {
     let cases = [
         ("h", 0x1ee1_c020, 0x8001u64, CompareKind::Half),
         ("s", 0x1e21_c020, 0x8000_0001, CompareKind::Single),
-        (
-            "d",
-            0x1e61_c020,
-            0x8000_0000_0000_0001,
-            CompareKind::Double,
-        ),
+        ("d", 0x1e61_c020, 0x8000_0000_0000_0001, CompareKind::Double),
     ];
 
     for (label, insn, bits, compare_kind) in cases {
@@ -4567,8 +4705,16 @@ fn raw_el0_scalar_fp_fixed_convert_oracle_matches_interpreter() {
             "raw EL0 scalar FP fixed-point convert s{reg} mismatch"
         );
     }
-    assert_eq!(hw.x[12] >> 32, 0, "raw EL0 fixed fcvtzs w12 was not zero-extended");
-    assert_eq!(hw.x[14] >> 32, 0, "raw EL0 fixed fcvtzu w14 was not zero-extended");
+    assert_eq!(
+        hw.x[12] >> 32,
+        0,
+        "raw EL0 fixed fcvtzs w12 was not zero-extended"
+    );
+    assert_eq!(
+        hw.x[14] >> 32,
+        0,
+        "raw EL0 fixed fcvtzu w14 was not zero-extended"
+    );
     assert_eq!(
         hw.fpsr as u32, interp.fpsr as u32,
         "raw EL0 scalar FP fixed-point convert FPSR mismatch"
@@ -4659,10 +4805,7 @@ fn raw_el0_fp_to_int_ah_subnormal_status_oracle_matches_interpreter() {
         let hw = raw_native_run_fp(&[insn], setup);
         let interp = raw_interp_run(&[insn], setup);
         match compare_kind {
-            CompareKind::Gpr => assert_eq!(
-                hw.x[0], interp.x[0],
-                "raw EL0 AH {label} x0 mismatch"
-            ),
+            CompareKind::Gpr => assert_eq!(hw.x[0], interp.x[0], "raw EL0 AH {label} x0 mismatch"),
             CompareKind::Vector => assert_eq!(
                 (hw.v[0], hw.v[1]),
                 (interp.v[0], interp.v[1]),
@@ -5087,18 +5230,8 @@ fn raw_el0_fmulx_ah_input_status_oracle_matches_interpreter() {
     const S_PATTERN: u128 = 0x3f80_0000_0000_0000_7f80_0000_0000_0001;
     const D_PATTERN: u128 = 0x0000_0000_0000_0001_7ff8_0000_0000_2000;
     let cases = [
-        (
-            "simd_fmulx_s",
-            0x4e22_dc20,
-            S_PATTERN,
-            CompareKind::Vector,
-        ),
-        (
-            "simd_fmulx_d",
-            0x4e62_dc20,
-            D_PATTERN,
-            CompareKind::Vector,
-        ),
+        ("simd_fmulx_s", 0x4e22_dc20, S_PATTERN, CompareKind::Vector),
+        ("simd_fmulx_d", 0x4e62_dc20, D_PATTERN, CompareKind::Vector),
         (
             "scalar_fmulx_s",
             0x5e22_dc20,
@@ -5142,10 +5275,9 @@ fn raw_el0_fmulx_ah_input_status_oracle_matches_interpreter() {
                 hw.v[0] as u32, interp.v[0] as u32,
                 "raw EL0 AH {label} s0 mismatch"
             ),
-            CompareKind::ScalarD => assert_eq!(
-                hw.v[0], interp.v[0],
-                "raw EL0 AH {label} d0 mismatch"
-            ),
+            CompareKind::ScalarD => {
+                assert_eq!(hw.v[0], interp.v[0], "raw EL0 AH {label} d0 mismatch")
+            }
             CompareKind::Vector => assert_eq!(
                 (hw.v[0], hw.v[1]),
                 (interp.v[0], interp.v[1]),
@@ -5274,10 +5406,9 @@ fn raw_el0_fp_ah_invalid_default_nan_oracle_matches_interpreter() {
                 hw.v[0] as u16, interp.v[0] as u16,
                 "raw EL0 AH {label} h0 mismatch"
             ),
-            CompareKind::ScalarD => assert_eq!(
-                hw.v[0], interp.v[0],
-                "raw EL0 AH {label} d0 mismatch"
-            ),
+            CompareKind::ScalarD => {
+                assert_eq!(hw.v[0], interp.v[0], "raw EL0 AH {label} d0 mismatch")
+            }
             CompareKind::Vector => assert_eq!(
                 (hw.v[0], hw.v[1]),
                 (interp.v[0], interp.v[1]),
@@ -5488,12 +5619,14 @@ fn raw_el0_advsimd_fp_to_int_status_oracle_matches_interpreter() {
         for (reg, (lo, hi)) in [
             (
                 1usize,
-                pack_s4(f32::INFINITY, f32::NEG_INFINITY, 2_147_483_904.0, -2_147_483_904.0),
+                pack_s4(
+                    f32::INFINITY,
+                    f32::NEG_INFINITY,
+                    2_147_483_904.0,
+                    -2_147_483_904.0,
+                ),
             ),
-            (
-                3,
-                pack_s4(-1.0, f32::INFINITY, 4_294_967_296.0, 1.0),
-            ),
+            (3, pack_s4(-1.0, f32::INFINITY, 4_294_967_296.0, 1.0)),
             (5, (f64::INFINITY.to_bits(), f64::NEG_INFINITY.to_bits())),
             (7, ((-1.0_f64).to_bits(), f64::INFINITY.to_bits())),
         ] {
@@ -5535,7 +5668,10 @@ fn raw_el0_advsimd_int_to_fp_convert_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_u32([1, (-2i32) as u32, 16_777_217, (-16_777_217i32) as u32])),
+            (
+                1usize,
+                pack_u32([1, (-2i32) as u32, 16_777_217, (-16_777_217i32) as u32]),
+            ),
             (3, pack_u32([1, 2, 16_777_217, u32::MAX])),
             (5, (1, (-2i64) as u64)),
             (7, (1, 9_007_199_254_740_993)),
@@ -5818,12 +5954,42 @@ fn raw_el0_advsimd_fp16_reciprocal_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h([0x4000, 0xc400, 0x3800, 0x4800, 0x3c00, 0xbc00, 0x4200, 0xc200])),
-            (3, pack_h([0x4400, 0x4880, 0x3400, 0x4c00, 0x3c00, 0x4000, 0x4200, 0x4500])),
-            (5, pack_h([0x3800, 0x4000, 0xbc00, 0xc000, 0x3c00, 0x4200, 0xc200, 0x4400])),
-            (6, pack_h([0x4000, 0x3400, 0xb800, 0xc400, 0x3800, 0x3c00, 0x4200, 0xc000])),
-            (8, pack_h([0x3800, 0x4000, 0x4400, 0x4800, 0x3c00, 0x4200, 0x4500, 0x4c00])),
-            (9, pack_h([0x4000, 0x3400, 0x3800, 0x3000, 0x3c00, 0x4000, 0x4200, 0x4400])),
+            (
+                1usize,
+                pack_h([
+                    0x4000, 0xc400, 0x3800, 0x4800, 0x3c00, 0xbc00, 0x4200, 0xc200,
+                ]),
+            ),
+            (
+                3,
+                pack_h([
+                    0x4400, 0x4880, 0x3400, 0x4c00, 0x3c00, 0x4000, 0x4200, 0x4500,
+                ]),
+            ),
+            (
+                5,
+                pack_h([
+                    0x3800, 0x4000, 0xbc00, 0xc000, 0x3c00, 0x4200, 0xc200, 0x4400,
+                ]),
+            ),
+            (
+                6,
+                pack_h([
+                    0x4000, 0x3400, 0xb800, 0xc400, 0x3800, 0x3c00, 0x4200, 0xc000,
+                ]),
+            ),
+            (
+                8,
+                pack_h([
+                    0x3800, 0x4000, 0x4400, 0x4800, 0x3c00, 0x4200, 0x4500, 0x4c00,
+                ]),
+            ),
+            (
+                9,
+                pack_h([
+                    0x4000, 0x3400, 0x3800, 0x3000, 0x3c00, 0x4000, 0x4200, 0x4400,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -5875,10 +6041,30 @@ fn raw_el0_advsimd_fp16_fixed_convert_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h([0xffe0, 0x0010, 0xfff9, 0x0009, 0x0000, 0x0100, 0x8000, 0x7fff])),
-            (3, pack_h([0x0001, 0x0020, 0x0100, 0x1000, 0x7fff, 0x8000, 0x00ff, 0x0000])),
-            (5, pack_h([0xbc00, 0x3c00, 0xc000, 0x4000, 0x3800, 0xb800, 0x4400, 0xc400])),
-            (7, pack_h([0x0000, 0x3800, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4800, 0x3555])),
+            (
+                1usize,
+                pack_h([
+                    0xffe0, 0x0010, 0xfff9, 0x0009, 0x0000, 0x0100, 0x8000, 0x7fff,
+                ]),
+            ),
+            (
+                3,
+                pack_h([
+                    0x0001, 0x0020, 0x0100, 0x1000, 0x7fff, 0x8000, 0x00ff, 0x0000,
+                ]),
+            ),
+            (
+                5,
+                pack_h([
+                    0xbc00, 0x3c00, 0xc000, 0x4000, 0x3800, 0xb800, 0x4400, 0xc400,
+                ]),
+            ),
+            (
+                7,
+                pack_h([
+                    0x0000, 0x3800, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4800, 0x3555,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -5985,15 +6171,27 @@ fn raw_el0_advsimd_fpcr_fiz_subnormal_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         g.fpcr = FPCR_FIZ;
         for (reg, (lo, hi)) in [
-            (1usize, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (
+                1usize,
+                pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm]),
+            ),
             (2, pack([pos_zero, neg_zero, one, one])),
-            (4, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (
+                4,
+                pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm]),
+            ),
             (5, pack([one, one, one, one])),
             (6, pack([one, one, one, one])),
-            (7, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (
+                7,
+                pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm]),
+            ),
             (8, pack([one, one, one, one])),
             (9, pack([one, one, one, one])),
-            (10, pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm])),
+            (
+                10,
+                pack([min_subnorm, neg_min_subnorm, min_subnorm, neg_min_subnorm]),
+            ),
             (11, pack([one, one, one, one])),
         ] {
             g.v[2 * reg] = lo;
@@ -6051,17 +6249,72 @@ fn raw_el0_advsimd_fp16_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (1usize, pack_h8([0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00])),
-                (2, pack_h8([0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00])),
-                (4, pack_h8([0x3c01, 0xbc01, 0x4001, 0xc001, 0x3555, 0xb555, 0x2e66, 0xae66])),
-                (5, pack_h8([0x3555, 0xb555, 0x2e66, 0xae66, 0x3001, 0xb001, 0x3c00, 0xbc00])),
-                (7, pack_h8([0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00])),
-                (8, pack_h8([0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00])),
-                (10, pack_h8([0x3c00, 0xbc00, 0x4001, 0xc001, 0x3555, 0xb555, 0x3e00, 0xbe00])),
-                (11, pack_h8([0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00])),
-                (13, pack_h8([0x3c01, 0x4001, 0x4201, 0x4401, 0x3555, 0x2e66, 0x3e00, 0x4100])),
-                (15, pack_h8([0xb555, 0xae66, 0xbc01, 0xb001, 0xc001, 0xbe00, 0x8000, 0x3555])),
-                (17, pack_h8([0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00])),
+                (
+                    1usize,
+                    pack_h8([
+                        0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    2,
+                    pack_h8([
+                        0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00,
+                    ]),
+                ),
+                (
+                    4,
+                    pack_h8([
+                        0x3c01, 0xbc01, 0x4001, 0xc001, 0x3555, 0xb555, 0x2e66, 0xae66,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_h8([
+                        0x3555, 0xb555, 0x2e66, 0xae66, 0x3001, 0xb001, 0x3c00, 0xbc00,
+                    ]),
+                ),
+                (
+                    7,
+                    pack_h8([
+                        0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    8,
+                    pack_h8([
+                        0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00,
+                    ]),
+                ),
+                (
+                    10,
+                    pack_h8([
+                        0x3c00, 0xbc00, 0x4001, 0xc001, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    11,
+                    pack_h8([
+                        0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00,
+                    ]),
+                ),
+                (
+                    13,
+                    pack_h8([
+                        0x3c01, 0x4001, 0x4201, 0x4401, 0x3555, 0x2e66, 0x3e00, 0x4100,
+                    ]),
+                ),
+                (
+                    15,
+                    pack_h8([
+                        0xb555, 0xae66, 0xbc01, 0xb001, 0xc001, 0xbe00, 0x8000, 0x3555,
+                    ]),
+                ),
+                (
+                    17,
+                    pack_h8([
+                        0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -6118,8 +6371,12 @@ fn raw_el0_advsimd_fp16_ah_add_max_finite_oracle_matches_interpreter() {
         (
             "faddp",
             0x6e42_1420,
-            pack_h8([0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400]),
-            pack_h8([0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400]),
+            pack_h8([
+                0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400,
+            ]),
+            pack_h8([
+                0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400, 0x7bff, 0x0400,
+            ]),
         ),
     ];
 
@@ -6178,20 +6435,90 @@ fn raw_el0_advsimd_fp16_misc_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (0usize, pack_h8([0x3c01, 0xbc01, 0x4001, 0xc001, 0x3555, 0xb555, 0x3e00, 0xbe00])),
-                (1, pack_h8([0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00])),
-                (2, pack_h8([0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00])),
-                (3, pack_h8([0x4001, 0xc001, 0x3c01, 0xbc01, 0x3555, 0xb555, 0x3e00, 0xbe00])),
-                (4, pack_h8([0xb555, 0x3555, 0xbc01, 0x3c01, 0xc001, 0x4001, 0xbe00, 0x3e00])),
-                (5, pack_h8([0x3001, 0xb001, 0x2e66, 0xae66, 0x3c00, 0xbc00, 0x3555, 0xb555])),
-                (7, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e01, 0x4100])),
-                (8, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4100, 0x7e02])),
-                (10, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e03, 0xc100])),
-                (11, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0xc100, 0x7e04])),
-                (13, pack_h8([0x7e01, 0x3c00, 0xbc00, 0x7e02, 0x3555, 0xb555, 0x4000, 0xc000])),
-                (14, pack_h8([0x4000, 0x7e03, 0xc000, 0xbc00, 0x7e04, 0x3555, 0xc100, 0x3c00])),
-                (16, pack_h8([0x7e05, 0x3c00, 0xbc00, 0x7e06, 0x3555, 0xb555, 0x4000, 0xc000])),
-                (17, pack_h8([0x4000, 0x7e07, 0xc000, 0xbc00, 0x7e08, 0x3555, 0xc100, 0x3c00])),
+                (
+                    0usize,
+                    pack_h8([
+                        0x3c01, 0xbc01, 0x4001, 0xc001, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    1,
+                    pack_h8([
+                        0x3555, 0xb555, 0x3c01, 0xbc01, 0x4001, 0xc001, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    2,
+                    pack_h8([
+                        0x2e66, 0xae66, 0x3001, 0xb001, 0x3555, 0xb555, 0x3c00, 0xbc00,
+                    ]),
+                ),
+                (
+                    3,
+                    pack_h8([
+                        0x4001, 0xc001, 0x3c01, 0xbc01, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                    ]),
+                ),
+                (
+                    4,
+                    pack_h8([
+                        0xb555, 0x3555, 0xbc01, 0x3c01, 0xc001, 0x4001, 0xbe00, 0x3e00,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_h8([
+                        0x3001, 0xb001, 0x2e66, 0xae66, 0x3c00, 0xbc00, 0x3555, 0xb555,
+                    ]),
+                ),
+                (
+                    7,
+                    pack_h8([
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e01, 0x4100,
+                    ]),
+                ),
+                (
+                    8,
+                    pack_h8([
+                        0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4100, 0x7e02,
+                    ]),
+                ),
+                (
+                    10,
+                    pack_h8([
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e03, 0xc100,
+                    ]),
+                ),
+                (
+                    11,
+                    pack_h8([
+                        0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0xc100, 0x7e04,
+                    ]),
+                ),
+                (
+                    13,
+                    pack_h8([
+                        0x7e01, 0x3c00, 0xbc00, 0x7e02, 0x3555, 0xb555, 0x4000, 0xc000,
+                    ]),
+                ),
+                (
+                    14,
+                    pack_h8([
+                        0x4000, 0x7e03, 0xc000, 0xbc00, 0x7e04, 0x3555, 0xc100, 0x3c00,
+                    ]),
+                ),
+                (
+                    16,
+                    pack_h8([
+                        0x7e05, 0x3c00, 0xbc00, 0x7e06, 0x3555, 0xb555, 0x4000, 0xc000,
+                    ]),
+                ),
+                (
+                    17,
+                    pack_h8([
+                        0x4000, 0x7e07, 0xc000, 0xbc00, 0x7e08, 0x3555, 0xc100, 0x3c00,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -6246,16 +6573,66 @@ fn raw_el0_advsimd_fp16_pairwise_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (1usize, pack_h8([0x3555, 0x2e66, 0xb555, 0xae66, 0x3c01, 0xbc01, 0x4001, 0xc001])),
-                (2, pack_h8([0x3001, 0xb001, 0x3e00, 0xbe00, 0x3555, 0xb555, 0x2e66, 0xae66])),
-                (4, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e01, 0x4100])),
-                (5, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4100, 0x7e02])),
-                (7, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e03, 0xc100])),
-                (8, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0xc100, 0x7e04])),
-                (10, pack_h8([0x7e01, 0x3c00, 0xbc00, 0x7e02, 0x3555, 0xb555, 0x4000, 0xc000])),
-                (11, pack_h8([0x4000, 0x7e03, 0xc000, 0xbc00, 0x7e04, 0x3555, 0xc100, 0x3c00])),
-                (13, pack_h8([0x7e05, 0x3c00, 0xbc00, 0x7e06, 0x3555, 0xb555, 0x4000, 0xc000])),
-                (14, pack_h8([0x4000, 0x7e07, 0xc000, 0xbc00, 0x7e08, 0x3555, 0xc100, 0x3c00])),
+                (
+                    1usize,
+                    pack_h8([
+                        0x3555, 0x2e66, 0xb555, 0xae66, 0x3c01, 0xbc01, 0x4001, 0xc001,
+                    ]),
+                ),
+                (
+                    2,
+                    pack_h8([
+                        0x3001, 0xb001, 0x3e00, 0xbe00, 0x3555, 0xb555, 0x2e66, 0xae66,
+                    ]),
+                ),
+                (
+                    4,
+                    pack_h8([
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e01, 0x4100,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_h8([
+                        0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4100, 0x7e02,
+                    ]),
+                ),
+                (
+                    7,
+                    pack_h8([
+                        0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x7e03, 0xc100,
+                    ]),
+                ),
+                (
+                    8,
+                    pack_h8([
+                        0x4000, 0xc000, 0x3c00, 0xbc00, 0x2e66, 0xae66, 0xc100, 0x7e04,
+                    ]),
+                ),
+                (
+                    10,
+                    pack_h8([
+                        0x7e01, 0x3c00, 0xbc00, 0x7e02, 0x3555, 0xb555, 0x4000, 0xc000,
+                    ]),
+                ),
+                (
+                    11,
+                    pack_h8([
+                        0x4000, 0x7e03, 0xc000, 0xbc00, 0x7e04, 0x3555, 0xc100, 0x3c00,
+                    ]),
+                ),
+                (
+                    13,
+                    pack_h8([
+                        0x7e05, 0x3c00, 0xbc00, 0x7e06, 0x3555, 0xb555, 0x4000, 0xc000,
+                    ]),
+                ),
+                (
+                    14,
+                    pack_h8([
+                        0x4000, 0x7e07, 0xc000, 0xbc00, 0x7e08, 0x3555, 0xc100, 0x3c00,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -6314,17 +6691,72 @@ fn raw_el0_advsimd_fp16_compare_convert_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h8([0x3c00, 0x4000, 0xbc00, 0xc000, 0x0000, 0x8000, 0x3555, 0xb555])),
-            (2, pack_h8([0x3c00, 0xbc00, 0xbc00, 0x4000, 0x8000, 0x0000, 0xb555, 0x3555])),
-            (4, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x3555, 0xb555, 0x3e00, 0xbe00])),
-            (5, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x2e66, 0xae66, 0x3e00, 0xbe00])),
-            (7, pack_h8([0x4000, 0xc000, 0x3c00, 0xbc00, 0x3555, 0xb555, 0x3e00, 0xbe00])),
-            (8, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x2e66, 0xae66, 0x3e00, 0xbe00])),
-            (10, pack_h8([0x3c00, 0xc000, 0x3555, 0xb555, 0x4000, 0xbc00, 0x0000, 0x8000])),
-            (11, pack_h8([0x4000, 0xbc00, 0x2e66, 0xae66, 0x3c00, 0xc000, 0x8000, 0x0000])),
-            (13, pack_h8([0x4000, 0xc000, 0x3555, 0xb555, 0x3c00, 0xbc00, 0x0000, 0x8000])),
-            (14, pack_h8([0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4000, 0xc000, 0x8000, 0x0000])),
-            (16, pack_h8([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x3e00, 0xbe00])),
+            (
+                1usize,
+                pack_h8([
+                    0x3c00, 0x4000, 0xbc00, 0xc000, 0x0000, 0x8000, 0x3555, 0xb555,
+                ]),
+            ),
+            (
+                2,
+                pack_h8([
+                    0x3c00, 0xbc00, 0xbc00, 0x4000, 0x8000, 0x0000, 0xb555, 0x3555,
+                ]),
+            ),
+            (
+                4,
+                pack_h8([
+                    0x4000, 0xc000, 0x3c00, 0xbc00, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                ]),
+            ),
+            (
+                5,
+                pack_h8([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x2e66, 0xae66, 0x3e00, 0xbe00,
+                ]),
+            ),
+            (
+                7,
+                pack_h8([
+                    0x4000, 0xc000, 0x3c00, 0xbc00, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                ]),
+            ),
+            (
+                8,
+                pack_h8([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x2e66, 0xae66, 0x3e00, 0xbe00,
+                ]),
+            ),
+            (
+                10,
+                pack_h8([
+                    0x3c00, 0xc000, 0x3555, 0xb555, 0x4000, 0xbc00, 0x0000, 0x8000,
+                ]),
+            ),
+            (
+                11,
+                pack_h8([
+                    0x4000, 0xbc00, 0x2e66, 0xae66, 0x3c00, 0xc000, 0x8000, 0x0000,
+                ]),
+            ),
+            (
+                13,
+                pack_h8([
+                    0x4000, 0xc000, 0x3555, 0xb555, 0x3c00, 0xbc00, 0x0000, 0x8000,
+                ]),
+            ),
+            (
+                14,
+                pack_h8([
+                    0x3c00, 0xbc00, 0x2e66, 0xae66, 0x4000, 0xc000, 0x8000, 0x0000,
+                ]),
+            ),
+            (
+                16,
+                pack_h8([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x3555, 0xb555, 0x3e00, 0xbe00,
+                ]),
+            ),
             (18, pack_s4(1.0, -2.0, 0.33333334, -0.10000001)),
         ] {
             g.v[2 * reg] = lo;
@@ -6372,8 +6804,18 @@ fn raw_el0_advsimd_fp16_fabd_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h8([0x3c00, 0xc000, 0x4200, 0xc400, 0x3800, 0xb800, 0x4000, 0xbc00])),
-            (2, pack_h8([0x4000, 0xbc00, 0xc000, 0x4200, 0x3400, 0xb400, 0x3800, 0xc000])),
+            (
+                1usize,
+                pack_h8([
+                    0x3c00, 0xc000, 0x4200, 0xc400, 0x3800, 0xb800, 0x4000, 0xbc00,
+                ]),
+            ),
+            (
+                2,
+                pack_h8([
+                    0x4000, 0xbc00, 0xc000, 0x4200, 0x3400, 0xb400, 0x3800, 0xc000,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -6547,26 +6989,126 @@ fn raw_el0_advsimd_fp16_fhm_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         let h_regs = [
-            (1, pack_h8([0x3c00, 0xc000, 0x4200, 0xc400, 0x3800, 0xb800, 0x4000, 0xbc00])),
-            (2, pack_h8([0x3800, 0x3c00, 0xbc00, 0x4000, 0x3c00, 0x4000, 0xc000, 0xb800])),
-            (4, pack_h8([0x4400, 0xc200, 0x4000, 0xbc00, 0x3c00, 0xc000, 0x4200, 0xb800])),
-            (5, pack_h8([0x3c00, 0x4000, 0xc000, 0xb800, 0x3800, 0xbc00, 0x3c00, 0x4000])),
-            (7, pack_h8([0x4000, 0xc200, 0x4400, 0xc400, 0x3c00, 0xbc00, 0x3800, 0xb800])),
-            (8, pack_h8([0x3800, 0x4000, 0xbc00, 0xc000, 0x3c00, 0x4200, 0x4000, 0x3800])),
-            (9, pack_h8([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (10, pack_h8([0x4000, 0xc000, 0x4200, 0xc200, 0x3c00, 0xbc00, 0x3800, 0xb800])),
-            (11, pack_h8([0x3800, 0x3c00, 0xbc00, 0x4000, 0x4000, 0x3800, 0xb800, 0xbc00])),
-            (12, pack_h8([0x4400, 0xc400, 0x4200, 0xc200, 0x4000, 0xc000, 0x3c00, 0xbc00])),
-            (13, pack_h8([0x4000, 0xc000, 0x4200, 0xc200, 0x3c00, 0xbc00, 0x3800, 0xb800])),
-            (14, pack_h8([0x3800, 0x3c00, 0xbc00, 0x4000, 0x4000, 0x3800, 0xb800, 0xbc00])),
-            (16, pack_h8([0x3c00, 0x4000, 0x4200, 0x4400, 0x3800, 0x3c00, 0x4000, 0x4200])),
-            (17, pack_h8([0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200])),
-            (19, pack_h8([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (20, pack_h8([0x3800, 0x3c00, 0x4000, 0x4200, 0x3c00, 0x3800, 0xb800, 0xbc00])),
-            (22, pack_h8([0x3c00, 0x4000, 0x4200, 0x4400, 0x3800, 0x3c00, 0x4000, 0x4200])),
-            (23, pack_h8([0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200])),
-            (25, pack_h8([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (26, pack_h8([0x3800, 0x3c00, 0x4000, 0x4200, 0x3c00, 0x3800, 0xb800, 0xbc00])),
+            (
+                1,
+                pack_h8([
+                    0x3c00, 0xc000, 0x4200, 0xc400, 0x3800, 0xb800, 0x4000, 0xbc00,
+                ]),
+            ),
+            (
+                2,
+                pack_h8([
+                    0x3800, 0x3c00, 0xbc00, 0x4000, 0x3c00, 0x4000, 0xc000, 0xb800,
+                ]),
+            ),
+            (
+                4,
+                pack_h8([
+                    0x4400, 0xc200, 0x4000, 0xbc00, 0x3c00, 0xc000, 0x4200, 0xb800,
+                ]),
+            ),
+            (
+                5,
+                pack_h8([
+                    0x3c00, 0x4000, 0xc000, 0xb800, 0x3800, 0xbc00, 0x3c00, 0x4000,
+                ]),
+            ),
+            (
+                7,
+                pack_h8([
+                    0x4000, 0xc200, 0x4400, 0xc400, 0x3c00, 0xbc00, 0x3800, 0xb800,
+                ]),
+            ),
+            (
+                8,
+                pack_h8([
+                    0x3800, 0x4000, 0xbc00, 0xc000, 0x3c00, 0x4200, 0x4000, 0x3800,
+                ]),
+            ),
+            (
+                9,
+                pack_h8([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                10,
+                pack_h8([
+                    0x4000, 0xc000, 0x4200, 0xc200, 0x3c00, 0xbc00, 0x3800, 0xb800,
+                ]),
+            ),
+            (
+                11,
+                pack_h8([
+                    0x3800, 0x3c00, 0xbc00, 0x4000, 0x4000, 0x3800, 0xb800, 0xbc00,
+                ]),
+            ),
+            (
+                12,
+                pack_h8([
+                    0x4400, 0xc400, 0x4200, 0xc200, 0x4000, 0xc000, 0x3c00, 0xbc00,
+                ]),
+            ),
+            (
+                13,
+                pack_h8([
+                    0x4000, 0xc000, 0x4200, 0xc200, 0x3c00, 0xbc00, 0x3800, 0xb800,
+                ]),
+            ),
+            (
+                14,
+                pack_h8([
+                    0x3800, 0x3c00, 0xbc00, 0x4000, 0x4000, 0x3800, 0xb800, 0xbc00,
+                ]),
+            ),
+            (
+                16,
+                pack_h8([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0x3800, 0x3c00, 0x4000, 0x4200,
+                ]),
+            ),
+            (
+                17,
+                pack_h8([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200,
+                ]),
+            ),
+            (
+                19,
+                pack_h8([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                20,
+                pack_h8([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0x3c00, 0x3800, 0xb800, 0xbc00,
+                ]),
+            ),
+            (
+                22,
+                pack_h8([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0x3800, 0x3c00, 0x4000, 0x4200,
+                ]),
+            ),
+            (
+                23,
+                pack_h8([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200,
+                ]),
+            ),
+            (
+                25,
+                pack_h8([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                26,
+                pack_h8([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0x3c00, 0x3800, 0xb800, 0xbc00,
+                ]),
+            ),
         ];
         for (reg, (lo, hi)) in h_regs {
             g.v[2 * reg] = lo;
@@ -6723,18 +7265,70 @@ fn raw_el0_advsimd_fp16_fhm_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (15usize, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (16, pack_h8([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (17, pack_h8([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (18, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (19, pack_h8([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (20, pack_h8([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (21, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (22, pack_h8([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (23, pack_h8([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (24, pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (25, pack_h8([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (26, pack_h8([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
+                (
+                    15usize,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    16,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    17,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    18,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    19,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    20,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    21,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    22,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    23,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    24,
+                    pack_s4(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    25,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    26,
+                    pack_h8([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -6999,8 +7593,12 @@ fn raw_el0_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
-    interp.write_memory(IN64, &native_u64.to_le_bytes()).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
+    interp
+        .write_memory(IN64, &native_u64.to_le_bytes())
+        .unwrap();
     interp.write_memory(IN32, &native_i32).unwrap();
     interp.write_memory(IN8, &[native_byte]).unwrap();
     interp.set_x(1, IN64);
@@ -7013,8 +7611,16 @@ fn raw_el0_memory_oracle_matches_interpreter() {
     assert_eq!(hw.x[0], interp.get_x(0), "raw EL0 ldr x0");
     assert_eq!(hw.x[2], interp.get_x(2), "raw EL0 ldrsw x2");
     assert_eq!(u64::from(hw.x[5] as u8), interp.get_x(5), "raw EL0 ldrb w5");
-    assert_eq!(native_out64, interp.mem_read_u64(OUT64).unwrap(), "raw EL0 str x0");
-    assert_eq!(native_out8, interp.mem_read_u8(OUT8).unwrap(), "raw EL0 strb w5");
+    assert_eq!(
+        native_out64,
+        interp.mem_read_u64(OUT64).unwrap(),
+        "raw EL0 str x0"
+    );
+    assert_eq!(
+        native_out8,
+        interp.mem_read_u8(OUT8).unwrap(),
+        "raw EL0 strb w5"
+    );
 }
 
 #[test]
@@ -7060,13 +7666,23 @@ fn raw_el0_signed_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(BYTE_W, &[native_byte_w]).unwrap();
     interp.write_memory(BYTE_X, &[native_byte_x]).unwrap();
-    interp.write_memory(HALF_W, &native_half_w.to_le_bytes()).unwrap();
-    interp.write_memory(HALF_X, &native_half_x.to_le_bytes()).unwrap();
-    interp.write_memory(WORD_X, &native_word_x.to_le_bytes()).unwrap();
-    interp.write_memory(UNSCALED_BYTE, &native_unscaled_byte).unwrap();
+    interp
+        .write_memory(HALF_W, &native_half_w.to_le_bytes())
+        .unwrap();
+    interp
+        .write_memory(HALF_X, &native_half_x.to_le_bytes())
+        .unwrap();
+    interp
+        .write_memory(WORD_X, &native_word_x.to_le_bytes())
+        .unwrap();
+    interp
+        .write_memory(UNSCALED_BYTE, &native_unscaled_byte)
+        .unwrap();
     for (addr, value) in [
         (UNSCALED_HALF, native_unscaled_half[0]),
         (UNSCALED_HALF + 2, native_unscaled_half[1]),
@@ -7151,7 +7767,9 @@ fn raw_el0_memory_addressing_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (REG64, native_reg64_in[0]),
         (REG64 + 8, native_reg64_in[1]),
@@ -7243,10 +7861,16 @@ fn raw_el0_unprivileged_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
-    interp.write_memory(IN64, &native_in64.to_le_bytes()).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
+    interp
+        .write_memory(IN64, &native_in64.to_le_bytes())
+        .unwrap();
     interp.write_memory(IN8, &[native_in8]).unwrap();
-    interp.write_memory(IN16, &native_in16.to_le_bytes()).unwrap();
+    interp
+        .write_memory(IN16, &native_in16.to_le_bytes())
+        .unwrap();
     interp.set_x(1, IN64);
     interp.set_x(3, IN8);
     interp.set_x(5, IN16);
@@ -7324,10 +7948,16 @@ fn raw_el0_ordered_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
-    interp.write_memory(LDAR, &native_ldar.to_le_bytes()).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
+    interp
+        .write_memory(LDAR, &native_ldar.to_le_bytes())
+        .unwrap();
     interp.write_memory(LDARB, &[native_ldarb]).unwrap();
-    interp.write_memory(LDAPR, &native_ldapr.to_le_bytes()).unwrap();
+    interp
+        .write_memory(LDAPR, &native_ldapr.to_le_bytes())
+        .unwrap();
     interp.write_memory(LDAPRB, &[native_ldaprb]).unwrap();
     interp.set_x(1, LDAR);
     interp.set_x(3, LDARB);
@@ -7397,7 +8027,9 @@ fn raw_el0_pair_writeback_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (PAIR_IN, native_pair_in[0]),
         (PAIR_IN + 8, native_pair_in[1]),
@@ -7432,13 +8064,21 @@ fn raw_el0_pair_writeback_memory_oracle_matches_interpreter() {
         native_post_in.as_ptr() as u64 + 8,
         "raw EL0 ldr post-index native writeback"
     );
-    assert_eq!(interp.get_x(7), POST_IN + 8, "raw EL0 ldr post-index interp writeback");
+    assert_eq!(
+        interp.get_x(7),
+        POST_IN + 8,
+        "raw EL0 ldr post-index interp writeback"
+    );
     assert_eq!(
         hw.x[9],
         native_pre_out.as_ptr() as u64 + 8,
         "raw EL0 str pre-index native writeback"
     );
-    assert_eq!(interp.get_x(9), PRE_OUT + 8, "raw EL0 str pre-index interp writeback");
+    assert_eq!(
+        interp.get_x(9),
+        PRE_OUT + 8,
+        "raw EL0 str pre-index interp writeback"
+    );
     assert_eq!(
         native_pair_out[0],
         interp.mem_read_u64(PAIR_OUT).unwrap(),
@@ -7486,7 +8126,9 @@ fn raw_el0_pair_width_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (SIGNED, native_signed[0]),
         (SIGNED + 4, native_signed[1]),
@@ -7563,7 +8205,9 @@ fn raw_el0_vector_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (Q_IN, native_q_in[0]),
         (Q_IN + 8, native_q_in[1]),
@@ -7585,8 +8229,8 @@ fn raw_el0_vector_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 3, 6, 7] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -7646,7 +8290,9 @@ fn raw_el0_advsimd_structure_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(LD2_IN, &native_ld2_in).unwrap();
     interp.write_memory(LD3_IN, &native_ld3_in).unwrap();
     interp.write_memory(LD4_IN, &native_ld4_in).unwrap();
@@ -7659,8 +8305,8 @@ fn raw_el0_advsimd_structure_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 1, 4, 5, 6, 9, 10, 11, 12] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -7716,7 +8362,9 @@ fn raw_el0_sve_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp
         .write_memory(D_IN, &native_d_in[0].to_le_bytes())
         .unwrap();
@@ -7731,8 +8379,8 @@ fn raw_el0_sve_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 3] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -7794,7 +8442,9 @@ fn raw_el0_sve_scalar_imm_memory_offset_oracle_matches_interpreter() {
     native_load_in[8] = 0xaa;
     native_load_in[16] = 0xbb;
     let mut native_store_out = [0xccu8; 32];
-    let store_values = pack_h([0x0011, 0x0022, 0x0033, 0x0044, 0x0055, 0x0066, 0x0077, 0x0088]);
+    let store_values = pack_h([
+        0x0011, 0x0022, 0x0033, 0x0044, 0x0055, 0x0066, 0x0077, 0x0088,
+    ]);
     let hw = raw_native_run_fp(&insns, |g| {
         g.x[1] = native_load_in.as_ptr() as u64;
         g.x[3] = native_store_out.as_mut_ptr() as u64;
@@ -7806,12 +8456,16 @@ fn raw_el0_sve_scalar_imm_memory_offset_oracle_matches_interpreter() {
     const STORE_OUT: u64 = 0xf500;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(LOAD_IN, &native_load_in).unwrap();
     interp.write_memory(STORE_OUT, &[0xccu8; 32]).unwrap();
     interp.set_x(1, LOAD_IN);
     interp.set_x(3, STORE_OUT);
-    interp.set_simd_reg(2, store_values.0, store_values.1).unwrap();
+    interp
+        .set_simd_reg(2, store_values.0, store_values.1)
+        .unwrap();
     drive_to_done(&mut interp);
 
     let hw_z0 = u128::from(hw.v[0]) | (u128::from(hw.v[1]) << 64);
@@ -7853,7 +8507,9 @@ fn raw_el0_sve_whole_reg_imm_memory_offset_oracle_matches_interpreter() {
     const Z_OUT: u64 = 0xf700;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(Z_IN, &native_in).unwrap();
     interp.write_memory(Z_OUT, &[0xccu8; 32]).unwrap();
     interp.set_x(1, Z_IN);
@@ -7930,7 +8586,9 @@ fn raw_el0_sve_memory_extra_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_w_in.iter().copied().enumerate() {
         interp
             .write_memory(W_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -7970,8 +8628,8 @@ fn raw_el0_sve_memory_extra_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 3, 6, 8] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8050,7 +8708,9 @@ fn raw_el0_sve_ld1r_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(B_IN, &native_b_in).unwrap();
     interp
         .write_memory(H_IN, &native_h_in[0].to_le_bytes())
@@ -8068,8 +8728,8 @@ fn raw_el0_sve_ld1r_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 2, 4, 6] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8106,7 +8766,9 @@ fn raw_el0_sve_ld1rq_reg_offset_oracle_matches_interpreter() {
     const LD1RQ_IN: u64 = 0x4c_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_in.iter().copied().enumerate() {
         interp
             .write_memory(LD1RQ_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -8198,7 +8860,9 @@ fn raw_el0_sve_indexed_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_ld1d_in.iter().copied().enumerate() {
         interp
             .write_memory(LD1D_IN + (i * 8) as u64, &v.to_le_bytes())
@@ -8250,8 +8914,8 @@ fn raw_el0_sve_indexed_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 5, 11] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8342,7 +9006,9 @@ fn raw_el0_sve_vector_base_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_load_direct.iter().copied().enumerate() {
         interp
             .write_memory(LOAD_DIRECT + (i * 4) as u64, &v.to_le_bytes())
@@ -8376,8 +9042,8 @@ fn raw_el0_sve_vector_base_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 4] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8437,7 +9103,9 @@ fn raw_el0_sve_first_fault_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_ff_w.iter().copied().enumerate() {
         interp
             .write_memory(FF_W + (i * 4) as u64, &v.to_le_bytes())
@@ -8467,8 +9135,8 @@ fn raw_el0_sve_first_fault_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 3, 5, 8] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8502,7 +9170,9 @@ fn raw_el0_sve_ldnf1_imm_memory_offset_oracle_matches_interpreter() {
     const NEG_IN: u64 = 0x55_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_pos.iter().copied().enumerate() {
         interp
             .write_memory(POS_IN + (i * 2) as u64, &v.to_le_bytes())
@@ -8518,8 +9188,8 @@ fn raw_el0_sve_ldnf1_imm_memory_offset_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 2] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8542,12 +9212,7 @@ fn raw_el0_sve_ldff1_vector_offset_memory_oracle_matches_interpreter() {
     ];
     let pack_d = |a: u64, b: u64| -> (u64, u64) { (a, b) };
 
-    let native_in = [
-        0x1111_2222u32,
-        0xcccc_cccc,
-        0x3333_4444,
-        0xdddd_dddd,
-    ];
+    let native_in = [0x1111_2222u32, 0xcccc_cccc, 0x3333_4444, 0xdddd_dddd];
     let hw = raw_native_run_fp(&insns, |g| {
         g.x[2] = native_in.as_ptr() as u64;
         let (lo, hi) = pack_d(0, 2);
@@ -8558,7 +9223,9 @@ fn raw_el0_sve_ldff1_vector_offset_memory_oracle_matches_interpreter() {
     const LDFF1_IN: u64 = 0x58_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_in.iter().copied().enumerate() {
         interp
             .write_memory(LDFF1_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -8594,10 +9261,7 @@ fn raw_el0_sve_ldff1_vector_base_memory_oracle_matches_interpreter() {
     let native_a = [0x1111_2222u32];
     let native_b = [0x3333_4444u32];
     let hw = raw_native_run_fp(&insns, |g| {
-        let (lo, hi) = pack_d(
-            native_a.as_ptr() as u64,
-            native_b.as_ptr() as u64,
-        );
+        let (lo, hi) = pack_d(native_a.as_ptr() as u64, native_b.as_ptr() as u64);
         g.v[6] = lo; // z3.d bases
         g.v[7] = hi;
     });
@@ -8606,7 +9270,9 @@ fn raw_el0_sve_ldff1_vector_base_memory_oracle_matches_interpreter() {
     const LDFF1_B: u64 = 0x59_100;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp
         .write_memory(LDFF1_A, &native_a[0].to_le_bytes())
         .unwrap();
@@ -8665,7 +9331,9 @@ fn raw_el0_sve_prefetch_oracle_matches_interpreter() {
     const PREF_B: u64 = 0x5b_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(PREF_A, &[0u8; 64]).unwrap();
     interp.write_memory(PREF_B, &[0u8; 64]).unwrap();
     interp.set_x(1, PREF_A);
@@ -8722,7 +9390,9 @@ fn raw_el0_sve_ldst_reg_memory_oracle_matches_interpreter() {
     const STORE_OUT: u64 = 0x57_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(LOAD_IN, &native_load_in).unwrap();
     interp.write_memory(STORE_OUT, &native_store_out).unwrap();
     interp.set_x(1, LOAD_IN);
@@ -8791,7 +9461,9 @@ fn raw_el0_sve_structure_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_ld2w_in.iter().copied().enumerate() {
         interp
             .write_memory(LD2W_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -8823,8 +9495,8 @@ fn raw_el0_sve_structure_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 1, 3, 4, 5, 8, 9, 10, 11] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8888,7 +9560,9 @@ fn raw_el0_sve_structure_reg_offset_memory_oracle_matches_interpreter() {
     const STRUCT_OUT: u64 = 0x4f_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_in.iter().copied().enumerate() {
         interp
             .write_memory(STRUCT_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -8906,8 +9580,8 @@ fn raw_el0_sve_structure_reg_offset_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 1] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -8966,7 +9640,9 @@ fn raw_el0_sve_nontemporal_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_nt_w_in.iter().copied().enumerate() {
         interp
             .write_memory(NT_W_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -9006,8 +9682,8 @@ fn raw_el0_sve_nontemporal_memory_oracle_matches_interpreter() {
     drive_to_done(&mut interp);
 
     for reg in [0u8, 3, 5, 8] {
-        let hw_value = u128::from(hw.v[(2 * reg) as usize])
-            | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
+        let hw_value =
+            u128::from(hw.v[(2 * reg) as usize]) | (u128::from(hw.v[(2 * reg + 1) as usize]) << 64);
         assert_eq!(
             hw_value,
             interp.get_simd(reg),
@@ -9057,7 +9733,9 @@ fn raw_el0_sve_nontemporal_reg_offset_memory_oracle_matches_interpreter() {
     const NT_OUT: u64 = 0x4d_000;
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (i, v) in native_in.iter().copied().enumerate() {
         interp
             .write_memory(NT_IN + (i * 4) as u64, &v.to_le_bytes())
@@ -9118,12 +9796,16 @@ fn raw_el0_exclusive_acquire_release_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp
         .write_memory(EXCL_X, &0x0102_0304_0506_0708u64.to_le_bytes())
         .unwrap();
     interp.write_memory(EXCL_B, &[0xa5]).unwrap();
-    interp.write_memory(EXCL_H, &0xbeefu16.to_le_bytes()).unwrap();
+    interp
+        .write_memory(EXCL_H, &0xbeefu16.to_le_bytes())
+        .unwrap();
     interp.set_x(1, EXCL_X);
     interp.set_x(3, 0x8877_6655_4433_2211);
     interp.set_x(5, EXCL_B);
@@ -9194,7 +9876,9 @@ fn raw_el0_atomic_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp
         .write_memory(EXCL, &0x0102_0304_0506_0708u64.to_le_bytes())
         .unwrap();
@@ -9225,14 +9909,26 @@ fn raw_el0_atomic_memory_oracle_matches_interpreter() {
             "raw EL0 atomic oracle x{reg} mismatch"
         );
     }
-    assert_eq!(native_excl, interp.mem_read_u64(EXCL).unwrap(), "raw EL0 stxr memory");
+    assert_eq!(
+        native_excl,
+        interp.mem_read_u64(EXCL).unwrap(),
+        "raw EL0 stxr memory"
+    );
     assert_eq!(
         native_ldadd,
         interp.mem_read_u64(LDADD).unwrap(),
         "raw EL0 ldadd memory"
     );
-    assert_eq!(native_cas, interp.mem_read_u64(CAS).unwrap(), "raw EL0 cas memory");
-    assert_eq!(native_swp, interp.mem_read_u64(SWP).unwrap(), "raw EL0 swp memory");
+    assert_eq!(
+        native_cas,
+        interp.mem_read_u64(CAS).unwrap(),
+        "raw EL0 cas memory"
+    );
+    assert_eq!(
+        native_swp,
+        interp.mem_read_u64(SWP).unwrap(),
+        "raw EL0 swp memory"
+    );
 }
 
 #[test]
@@ -9275,7 +9971,9 @@ fn raw_el0_atomic_pair_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (CASP_SUCCESS, initial_success[0]),
         (CASP_SUCCESS + 8, initial_success[1]),
@@ -9364,9 +10062,13 @@ fn raw_el0_atomic_variant_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     interp.write_memory(LDCLRB, &[0b1111_0011]).unwrap();
-    interp.write_memory(LDEORH, &0x55aau16.to_le_bytes()).unwrap();
+    interp
+        .write_memory(LDEORH, &0x55aau16.to_le_bytes())
+        .unwrap();
     interp
         .write_memory(LDSET, &0x0000_ffff_0000_3333u64.to_le_bytes())
         .unwrap();
@@ -9456,7 +10158,9 @@ fn raw_el0_atomic_minmax_memory_oracle_matches_interpreter() {
 
     let mut interp = fresh_cpu();
     interp.set_jit_enabled(false);
-    interp.write_memory(PROG_BASE, &code_bytes_with_ret(&insns)).unwrap();
+    interp
+        .write_memory(PROG_BASE, &code_bytes_with_ret(&insns))
+        .unwrap();
     for (addr, value) in [
         (SMAX, (-16i64) as u64),
         (SMIN, 16u64),
@@ -9482,10 +10186,26 @@ fn raw_el0_atomic_minmax_memory_oracle_matches_interpreter() {
             "raw EL0 atomic min/max x{reg} mismatch"
         );
     }
-    assert_eq!(native_smax, interp.mem_read_u64(SMAX).unwrap(), "raw EL0 ldsmax memory");
-    assert_eq!(native_smin, interp.mem_read_u64(SMIN).unwrap(), "raw EL0 ldsmin memory");
-    assert_eq!(native_umax, interp.mem_read_u64(UMAX).unwrap(), "raw EL0 ldumax memory");
-    assert_eq!(native_umin, interp.mem_read_u64(UMIN).unwrap(), "raw EL0 ldumin memory");
+    assert_eq!(
+        native_smax,
+        interp.mem_read_u64(SMAX).unwrap(),
+        "raw EL0 ldsmax memory"
+    );
+    assert_eq!(
+        native_smin,
+        interp.mem_read_u64(SMIN).unwrap(),
+        "raw EL0 ldsmin memory"
+    );
+    assert_eq!(
+        native_umax,
+        interp.mem_read_u64(UMAX).unwrap(),
+        "raw EL0 ldumax memory"
+    );
+    assert_eq!(
+        native_umin,
+        interp.mem_read_u64(UMIN).unwrap(),
+        "raw EL0 ldumin memory"
+    );
 }
 
 #[test]
@@ -9641,17 +10361,25 @@ fn raw_el0_sve_immediate_integer_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_h([0, 1, 0xfffe, 0x7fff, 0x8000, 0x1234, 0xffff, 42])),
+            (
+                0usize,
+                pack_h([0, 1, 0xfffe, 0x7fff, 0x8000, 0x1234, 0xffff, 42]),
+            ),
             (1, pack_s(0, 7, 0x8000_0000, 0xffff_ffff)),
             (2, (0, 11)),
-            (3, pack_s(0x7fff_ffff, 0x4000_0000, 0x8000_0000, 0xffff_ffff)),
-            (4, pack_h([0xfffe, 0xffff, 0x7fff, 0, 1, 0x8000, 0x1234, 0xfffd])),
+            (
+                3,
+                pack_s(0x7fff_ffff, 0x4000_0000, 0x8000_0000, 0xffff_ffff),
+            ),
+            (
+                4,
+                pack_h([0xfffe, 0xffff, 0x7fff, 0, 1, 0x8000, 0x1234, 0xfffd]),
+            ),
             (5, (0x8000_0000_0000_0000, 0x7fff_ffff_ffff_ffff)),
             (
                 6,
                 pack_b([
-                    0, 1, 2, 3, 4, 0x7f, 0x80, 0xff, 0xfe, 0x10, 0x20, 0x30, 0x40,
-                    0x50, 0x60, 0x70,
+                    0, 1, 2, 3, 4, 0x7f, 0x80, 0xff, 0xfe, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70,
                 ]),
             ),
             (7, pack_s(0xffff_fffd, 0xffff_fffe, 0xffff_ffff, 0)),
@@ -9659,14 +10387,21 @@ fn raw_el0_sve_immediate_integer_oracle_matches_interpreter() {
             (9, pack_s(0xffff_ffff, 0, 7, 8)),
             (
                 10,
-                pack_b([
-                    0, 1, 126, 127, 128, 129, 0xfe, 0xff, 2, 3, 4, 5, 6, 7, 8, 9,
-                ]),
+                pack_b([0, 1, 126, 127, 128, 129, 0xfe, 0xff, 2, 3, 4, 5, 6, 7, 8, 9]),
             ),
-            (11, pack_h([0xffff, 0xfffe, 1, 2, 0x7fff, 0x8000, 0x1234, 0xedcc])),
-            (12, pack_h([0, 1, 0xff00, 0x7f00, 0x8000, 0x1234, 0xffff, 42])),
+            (
+                11,
+                pack_h([0xffff, 0xfffe, 1, 2, 0x7fff, 0x8000, 0x1234, 0xedcc]),
+            ),
+            (
+                12,
+                pack_h([0, 1, 0xff00, 0x7f00, 0x8000, 0x1234, 0xffff, 42]),
+            ),
             (13, pack_s(0, 512, 0x8000_0000, 0xffff_ffff)),
-            (14, pack_h([0x7fff, 0x7f00, 0x8000, 0xff00, 1, 0, 0xffff, 0x1234])),
+            (
+                14,
+                pack_h([0x7fff, 0x7f00, 0x8000, 0xff00, 1, 0, 0xffff, 0x1234]),
+            ),
             (15, pack_s(0, 1, 255, 256)),
         ] {
             g.v[2 * reg] = lo;
@@ -9795,8 +10530,16 @@ fn raw_el0_sve_dup_indexed_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
             (1usize, (0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908)),
-            (3, pack_h([0x0000, 0x0001, 0x7fff, 0x8000, 0xfffe, 0xffff, 0x1234, 0xabcd])),
-            (5, pack_s([0x0000_0001, 0x7fff_ffff, 0x8000_0000, 0x8765_4321])),
+            (
+                3,
+                pack_h([
+                    0x0000, 0x0001, 0x7fff, 0x8000, 0xfffe, 0xffff, 0x1234, 0xabcd,
+                ]),
+            ),
+            (
+                5,
+                pack_s([0x0000_0001, 0x7fff_ffff, 0x8000_0000, 0x8765_4321]),
+            ),
             (7, (0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210)),
             (9, (0x8899_aabb_ccdd_eeff, 0x0011_2233_4455_6677)),
         ] {
@@ -10325,10 +11068,7 @@ fn raw_el0_sve_ffr_oracle_matches_interpreter() {
     let hw = raw_native_run_fp(&insns, |_| {});
     let interp = raw_interp_run(&insns, |_| {});
     for reg in 0usize..=3 {
-        assert_eq!(
-            hw.x[reg], interp.x[reg],
-            "raw EL0 SVE FFR x{reg} mismatch"
-        );
+        assert_eq!(hw.x[reg], interp.x[reg], "raw EL0 SVE FFR x{reg} mismatch");
     }
     assert_eq!(
         hw.nzcv & 0xf000_0000,
@@ -10377,9 +11117,7 @@ fn raw_el0_sve_predicate_flag_oracle_matches_interpreter() {
 
     let hw = raw_native_run_fp(&insns, setup);
     let interp = raw_interp_run(&insns, setup);
-    for reg in [
-        0usize, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17,
-    ] {
+    for reg in [0usize, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17] {
         assert_eq!(
             hw.x[reg], interp.x[reg],
             "raw EL0 SVE predicate-flag x{reg} mismatch"
@@ -10499,8 +11237,7 @@ fn raw_el0_sve2_while_hazard_oracle_matches_interpreter() {
     let hw = raw_native_run_fp(&insns, setup);
     let interp = raw_interp_run(&insns, setup);
     for reg in [
-        0usize, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23,
-        24, 25, 26,
+        0usize, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26,
     ] {
         assert_eq!(
             hw.x[reg], interp.x[reg],
@@ -10596,7 +11333,10 @@ fn raw_el0_sve_adr_oracle_matches_interpreter() {
             g.v[2 * reg + 1] = hi;
         }
         for (reg, (lo, hi)) in [
-            (10usize, pack_s(0x1000, 0xffff_ff00, 0x8000_0000, 0x7fff_fff0)),
+            (
+                10usize,
+                pack_s(0x1000, 0xffff_ff00, 0x8000_0000, 0x7fff_fff0),
+            ),
             (11, pack_s(1, 0x10, 0x4000_0000, 0xffff_fffe)),
         ] {
             g.v[2 * reg] = lo;
@@ -10688,8 +11428,7 @@ fn raw_el0_sve_shift_oracle_matches_interpreter() {
     let hw = raw_native_run_fp(&insns, setup);
     let interp = raw_interp_run(&insns, setup);
     for reg in [
-        0usize, 1, 2, 3, 4, 5, 6, 10, 11, 12, 16, 17, 18, 22, 23, 24, 28, 29,
-        30,
+        0usize, 1, 2, 3, 4, 5, 6, 10, 11, 12, 16, 17, 18, 22, 23, 24, 28, 29, 30,
     ] {
         let lo = 2 * reg;
         let hi = lo + 1;
@@ -10778,24 +11517,60 @@ fn raw_el0_sve_predicated_unary_integer_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_s([0xaaaa_0000, 0xaaaa_0001, 0xaaaa_0002, 0xaaaa_0003])),
-            (1, pack_s([0x0000_0080, 0x0000_007f, 0x0000_00ff, 0x0000_0001])),
-            (2, pack_s([0xbbbb_0000, 0xbbbb_0001, 0xbbbb_0002, 0xbbbb_0003])),
-            (3, pack_s([0x0000_0080, 0x0000_00ff, 0x0000_007f, 0x0000_0001])),
-            (4, pack_s([0xcccc_0000, 0xcccc_0001, 0xcccc_0002, 0xcccc_0003])),
-            (5, pack_s([0x0000_8000, 0x0000_7fff, 0x0000_ffff, 0x0000_0001])),
+            (
+                0usize,
+                pack_s([0xaaaa_0000, 0xaaaa_0001, 0xaaaa_0002, 0xaaaa_0003]),
+            ),
+            (
+                1,
+                pack_s([0x0000_0080, 0x0000_007f, 0x0000_00ff, 0x0000_0001]),
+            ),
+            (
+                2,
+                pack_s([0xbbbb_0000, 0xbbbb_0001, 0xbbbb_0002, 0xbbbb_0003]),
+            ),
+            (
+                3,
+                pack_s([0x0000_0080, 0x0000_00ff, 0x0000_007f, 0x0000_0001]),
+            ),
+            (
+                4,
+                pack_s([0xcccc_0000, 0xcccc_0001, 0xcccc_0002, 0xcccc_0003]),
+            ),
+            (
+                5,
+                pack_s([0x0000_8000, 0x0000_7fff, 0x0000_ffff, 0x0000_0001]),
+            ),
             (6, (0x6666_0000_6666_0001, 0x6666_0002_6666_0003)),
             (7, (0x0000_0000_0000_ffff, 0x0000_0000_0000_8000)),
             (8, (0x8888_0000_8888_0001, 0x8888_0002_8888_0003)),
             (9, (0x0000_0000_8000_0000, 0x0000_0000_7fff_ffff)),
             (10, (0xaaaa_0000_aaaa_0001, 0xaaaa_0002_aaaa_0003)),
             (11, (0x0000_0000_8000_0000, 0x0000_0000_ffff_ffff)),
-            (12, pack_s([0x1212_0000, 0x1212_0001, 0x1212_0002, 0x1212_0003])),
-            (13, pack_s([0x0000_0000, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff])),
-            (14, pack_s([0x1414_0000, 0x1414_0001, 0x1414_0002, 0x1414_0003])),
-            (15, pack_s([0x0000_0000, 0x0000_0001, 0x8000_0000, 0xffff_ffff])),
-            (16, pack_s([0x1616_0000, 0x1616_0001, 0x1616_0002, 0x1616_0003])),
-            (17, pack_s([0x0000_0000, 0xffff_ffff, 0x1234_5678, 0x8000_0001])),
+            (
+                12,
+                pack_s([0x1212_0000, 0x1212_0001, 0x1212_0002, 0x1212_0003]),
+            ),
+            (
+                13,
+                pack_s([0x0000_0000, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff]),
+            ),
+            (
+                14,
+                pack_s([0x1414_0000, 0x1414_0001, 0x1414_0002, 0x1414_0003]),
+            ),
+            (
+                15,
+                pack_s([0x0000_0000, 0x0000_0001, 0x8000_0000, 0xffff_ffff]),
+            ),
+            (
+                16,
+                pack_s([0x1616_0000, 0x1616_0001, 0x1616_0002, 0x1616_0003]),
+            ),
+            (
+                17,
+                pack_s([0x0000_0000, 0xffff_ffff, 0x1234_5678, 0x8000_0001]),
+            ),
             (18, (0x1818_0000_1818_0001, 0x1818_0002_1818_0003)),
             (19, (0x0000_0000_0000_0000, 0xffff_ffff_ffff_ffff)),
             (20, (0x2021_2223_2425_2627, 0x2829_2a2b_2c2d_2e2f)),
@@ -10921,9 +11696,15 @@ fn raw_el0_sve_predicated_alu_extra_oracle_matches_interpreter() {
             (11, pack_s(2, 0, 200, 0xcccc_cccc)),
             (12, pack_s(0x4000_0000, 3, 0xffff_ffff, 0xdddd_dddd)),
             (13, pack_s(4, 0x8000_0000, 5, 0xeeee_eeee)),
-            (14, pack_s(sx(-2), sx(0x4000_0000), sx(-123_456_789), 0x1357_9bdf)),
+            (
+                14,
+                pack_s(sx(-2), sx(0x4000_0000), sx(-123_456_789), 0x1357_9bdf),
+            ),
             (15, pack_s(sx(3), sx(4), sx(987_654_321), 0x2468_ace0)),
-            (16, pack_s(0xffff_ffff, 0x8000_0000, 0x1234_5678, 0x1122_3344)),
+            (
+                16,
+                pack_s(0xffff_ffff, 0x8000_0000, 0x1234_5678, 0x1122_3344),
+            ),
             (17, pack_s(2, 4, 0x9abc_def0, 0x5566_7788)),
             (18, pack_s(sx(-9), sx(42), sx(-2_147_483_648), 0x1111_2222)),
             (19, pack_s(sx(2), sx(0), sx(-1), 0x3333_4444)),
@@ -11027,20 +11808,53 @@ fn raw_el0_sve_data_movement_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         g.x[5] = 0x1234_5678;
         for (reg, (lo, hi)) in [
-            (0usize, pack_s(0xaaaa_0000, 0xaaaa_0001, 0xaaaa_0002, 0xaaaa_0003)),
-            (1, pack_s(0x1111_0000, 0x1111_0001, 0x1111_0002, 0x1111_0003)),
-            (2, pack_s(0x2222_0000, 0x2222_0001, 0x2222_0002, 0x2222_0003)),
-            (3, pack_s(0x3333_0000, 0x3333_0001, 0x3333_0002, 0x3333_0003)),
-            (4, pack_s(0x4444_0000, 0x4444_0001, 0x4444_0002, 0x4444_0003)),
-            (6, pack_s(0x6666_0000, 0x6666_0001, 0x6666_0002, 0x6666_0003)),
+            (
+                0usize,
+                pack_s(0xaaaa_0000, 0xaaaa_0001, 0xaaaa_0002, 0xaaaa_0003),
+            ),
+            (
+                1,
+                pack_s(0x1111_0000, 0x1111_0001, 0x1111_0002, 0x1111_0003),
+            ),
+            (
+                2,
+                pack_s(0x2222_0000, 0x2222_0001, 0x2222_0002, 0x2222_0003),
+            ),
+            (
+                3,
+                pack_s(0x3333_0000, 0x3333_0001, 0x3333_0002, 0x3333_0003),
+            ),
+            (
+                4,
+                pack_s(0x4444_0000, 0x4444_0001, 0x4444_0002, 0x4444_0003),
+            ),
+            (
+                6,
+                pack_s(0x6666_0000, 0x6666_0001, 0x6666_0002, 0x6666_0003),
+            ),
             (7, pack_s(0x7777_1234, 0, 0, 0)),
-            (8, pack_s(0x8888_0000, 0x8888_0001, 0x8888_0002, 0x8888_0003)),
-            (10, pack_s(0x1010_0000, 0x1010_0001, 0x1010_0002, 0x1010_0003)),
-            (12, pack_s(0x1212_0000, 0x1212_0001, 0x1212_0002, 0x1212_0003)),
+            (
+                8,
+                pack_s(0x8888_0000, 0x8888_0001, 0x8888_0002, 0x8888_0003),
+            ),
+            (
+                10,
+                pack_s(0x1010_0000, 0x1010_0001, 0x1010_0002, 0x1010_0003),
+            ),
+            (
+                12,
+                pack_s(0x1212_0000, 0x1212_0001, 0x1212_0002, 0x1212_0003),
+            ),
             (13, pack_s(0xdddd_0000, 0, 0, 0)),
-            (14, pack_s(0x1414_0000, 0x1414_0001, 0x1414_0002, 0x1414_0003)),
+            (
+                14,
+                pack_s(0x1414_0000, 0x1414_0001, 0x1414_0002, 0x1414_0003),
+            ),
             (15, pack_s(0xffff_0000, 0, 0, 0)),
-            (16, pack_s(0x1616_0000, 0x1616_0001, 0x1616_0002, 0x1616_0003)),
+            (
+                16,
+                pack_s(0x1616_0000, 0x1616_0001, 0x1616_0002, 0x1616_0003),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -11209,10 +12023,26 @@ fn raw_el0_sve_unpk_oracle_matches_interpreter() {
         for (reg, (lo, hi)) in [
             (1usize, (0x807f_00ff_8001_7ffe, 0x8000_7fff_ffff_0001)),
             (3, (0x55aa_aa55_0f0f_f0f0, 0x33cc_cc33_ff00_00ff)),
-            (5, pack_h([0x0000, 0xffff, 0x8000, 0x7fff, 0x0001, 0x00ff, 0xff00, 0x1234])),
-            (7, pack_h([0xabcd, 0x0102, 0xfedc, 0x8001, 0x7ffe, 0xffff, 0x0000, 0x1357])),
-            (9, pack_s([0x8000_0000, 0x7fff_ffff, 0xffff_ffff, 0x0000_0001])),
-            (11, pack_s([0x1234_5678, 0xffff_0000, 0x0000_ffff, 0x8765_4321])),
+            (
+                5,
+                pack_h([
+                    0x0000, 0xffff, 0x8000, 0x7fff, 0x0001, 0x00ff, 0xff00, 0x1234,
+                ]),
+            ),
+            (
+                7,
+                pack_h([
+                    0xabcd, 0x0102, 0xfedc, 0x8001, 0x7ffe, 0xffff, 0x0000, 0x1357,
+                ]),
+            ),
+            (
+                9,
+                pack_s([0x8000_0000, 0x7fff_ffff, 0xffff_ffff, 0x0000_0001]),
+            ),
+            (
+                11,
+                pack_s([0x1234_5678, 0xffff_0000, 0x0000_ffff, 0x8765_4321]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -11261,14 +12091,32 @@ fn raw_el0_sve_clast_oracle_matches_interpreter() {
         g.x[4] = 0x5555_6666_7777_8888;
         g.x[6] = 0x9999_aaaa_bbbb_cccc;
         for (reg, (lo, hi)) in [
-            (1usize, pack_s(0x1010_0000, 0x1010_0001, 0x1010_0002, 0x1010_0003)),
-            (3, pack_s(0x3030_0000, 0x3030_0001, 0x3030_0002, 0x3030_0003)),
-            (5, pack_s(0x5050_0000, 0x5050_0001, 0x5050_0002, 0x5050_0003)),
-            (7, pack_s(0x7070_0000, 0x7070_0001, 0x7070_0002, 0x7070_0003)),
+            (
+                1usize,
+                pack_s(0x1010_0000, 0x1010_0001, 0x1010_0002, 0x1010_0003),
+            ),
+            (
+                3,
+                pack_s(0x3030_0000, 0x3030_0001, 0x3030_0002, 0x3030_0003),
+            ),
+            (
+                5,
+                pack_s(0x5050_0000, 0x5050_0001, 0x5050_0002, 0x5050_0003),
+            ),
+            (
+                7,
+                pack_s(0x7070_0000, 0x7070_0001, 0x7070_0002, 0x7070_0003),
+            ),
             (8, (0x8888_0000, 0x8888_1111_8888_2222)),
-            (9, pack_s(0x9090_0000, 0x9090_0001, 0x9090_0002, 0x9090_0003)),
+            (
+                9,
+                pack_s(0x9090_0000, 0x9090_0001, 0x9090_0002, 0x9090_0003),
+            ),
             (10, (0xaaaa_0000, 0xaaaa_1111_aaaa_2222)),
-            (11, pack_s(0xb0b0_0000, 0xb0b0_0001, 0xb0b0_0002, 0xb0b0_0003)),
+            (
+                11,
+                pack_s(0xb0b0_0000, 0xb0b0_0001, 0xb0b0_0002, 0xb0b0_0003),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -11402,8 +12250,14 @@ fn raw_el0_sve_compare_register_widths_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (2usize, pack_b([5, 4, 3, 2, 1, 0, 255, 128, 127, 1, 2, 3, 4, 5, 6, 7])),
-            (3, pack_b([4, 4, 4, 1, 2, 0, 254, 129, 126, 2, 1, 3, 5, 4, 6, 8])),
+            (
+                2usize,
+                pack_b([5, 4, 3, 2, 1, 0, 255, 128, 127, 1, 2, 3, 4, 5, 6, 7]),
+            ),
+            (
+                3,
+                pack_b([4, 4, 4, 1, 2, 0, 254, 129, 126, 2, 1, 3, 5, 4, 6, 8]),
+            ),
             (4, pack_h([5, 4, 0x8000, 0x7fff, 1, 0xffff, 0, 100])),
             (5, pack_h([4, 4, 0x7fff, 0x8000, 2, 1, 0xffff, 99])),
             (6, pack_s(5, 0x8000_0000, 0x7fff_ffff, 0xffff_ffff)),
@@ -12002,9 +12856,22 @@ fn raw_el0_sve2_fp16_fcvt_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (2usize, pack_h([0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888])),
-                (3, pack_s_bits([0x3f80_0fff, 0x3f80_1000, 0x3f80_1001, 0xbf80_1000])),
-                (10, pack_h([0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555])),
+                (
+                    2usize,
+                    pack_h([
+                        0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+                    ]),
+                ),
+                (
+                    3,
+                    pack_s_bits([0x3f80_0fff, 0x3f80_1000, 0x3f80_1001, 0xbf80_1000]),
+                ),
+                (
+                    10,
+                    pack_h([
+                        0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555,
+                    ]),
+                ),
                 (11, pack_d(1.00048828125, -1.00048828125)),
                 (14, (0xaaaa_aaaa_1111_1111, 0xbbbb_bbbb_2222_2222)),
                 (15, pack_d(16_777_217.0, -16_777_217.0)),
@@ -12151,8 +13018,18 @@ fn raw_el0_sve2_fp_precision_convert_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
             (0usize, pack_s(100.0, 200.0, 300.0, 400.0)),
-            (1, pack_h([0x3c00, 0x7bff, 0xc000, 0x7bff, 0x4200, 0x4400, 0x4600, 0x4800])),
-            (2, pack_h([0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff])),
+            (
+                1,
+                pack_h([
+                    0x3c00, 0x7bff, 0xc000, 0x7bff, 0x4200, 0x4400, 0x4600, 0x4800,
+                ]),
+            ),
+            (
+                2,
+                pack_h([
+                    0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff,
+                ]),
+            ),
             (3, pack_s(1.5, -2.5, 300.0, 400.0)),
             (4, pack_d(1000.0, 2000.0)),
             (5, pack_s(1.25, -2.25, 300.0, 400.0)),
@@ -12160,7 +13037,12 @@ fn raw_el0_sve2_fp_precision_convert_oracle_matches_interpreter() {
             (7, pack_d(1.5, -2.5)),
             (8, pack_s(102.0, 202.0, 302.0, 402.0)),
             (9, pack_d(1.25, -2.25)),
-            (10, pack_h([0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff])),
+            (
+                10,
+                pack_h([
+                    0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff, 0x7bff,
+                ]),
+            ),
             (11, pack_d(1.0, -2.0)),
             (14, (0xaaaa_aaaa_1111_1111, 0xbbbb_bbbb_2222_2222)),
             (15, pack_d(1.5, -2.5)),
@@ -12223,25 +13105,85 @@ fn raw_el0_sve2_fmlal_oracle_matches_interpreter() {
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
             (0usize, pack_s(1.0, -2.0, 4.0, -8.0)),
-            (1, pack_h([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (2, pack_h([0x4000, 0x3c00, 0x4400, 0x4200, 0xc000, 0xbc00, 0xc400, 0xc200])),
+            (
+                1,
+                pack_h([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                2,
+                pack_h([
+                    0x4000, 0x3c00, 0x4400, 0x4200, 0xc000, 0xbc00, 0xc400, 0xc200,
+                ]),
+            ),
             (3, pack_s(2.0, -4.0, 8.0, -16.0)),
-            (4, pack_h([0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200])),
-            (5, pack_h([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
+            (
+                4,
+                pack_h([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200,
+                ]),
+            ),
+            (
+                5,
+                pack_h([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
             (6, pack_s(3.0, -6.0, 12.0, -24.0)),
-            (7, pack_h([0x4400, 0x4200, 0x4000, 0x3c00, 0xc400, 0xc200, 0xc000, 0xbc00])),
-            (8, pack_h([0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200])),
+            (
+                7,
+                pack_h([
+                    0x4400, 0x4200, 0x4000, 0x3c00, 0xc400, 0xc200, 0xc000, 0xbc00,
+                ]),
+            ),
+            (
+                8,
+                pack_h([
+                    0x3800, 0x3c00, 0x4000, 0x4200, 0xb800, 0xbc00, 0xc000, 0xc200,
+                ]),
+            ),
             (9, pack_s(4.0, -8.0, 16.0, -32.0)),
-            (10, pack_h([0x3c00, 0x3800, 0x4000, 0x4200, 0xbc00, 0xb800, 0xc000, 0xc200])),
-            (11, pack_h([0x4400, 0x4200, 0x4000, 0x3c00, 0xc400, 0xc200, 0xc000, 0xbc00])),
+            (
+                10,
+                pack_h([
+                    0x3c00, 0x3800, 0x4000, 0x4200, 0xbc00, 0xb800, 0xc000, 0xc200,
+                ]),
+            ),
+            (
+                11,
+                pack_h([
+                    0x4400, 0x4200, 0x4000, 0x3c00, 0xc400, 0xc200, 0xc000, 0xbc00,
+                ]),
+            ),
             (12, pack_s(5.0, -10.0, 20.0, -40.0)),
-            (13, pack_h([0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400])),
+            (
+                13,
+                pack_h([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400,
+                ]),
+            ),
             (15, pack_s(6.0, -12.0, 24.0, -48.0)),
-            (16, pack_h([0x3800, 0xb800, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200])),
+            (
+                16,
+                pack_h([
+                    0x3800, 0xb800, 0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200,
+                ]),
+            ),
             (18, pack_s(7.0, -14.0, 28.0, -56.0)),
-            (19, pack_h([0x3c00, 0x4000, 0xbc00, 0xc000, 0x4200, 0x4400, 0xc200, 0xc400])),
+            (
+                19,
+                pack_h([
+                    0x3c00, 0x4000, 0xbc00, 0xc000, 0x4200, 0x4400, 0xc200, 0xc400,
+                ]),
+            ),
             (21, pack_s(8.0, -16.0, 32.0, -64.0)),
-            (22, pack_h([0x4400, 0xc400, 0x4200, 0xc200, 0x4000, 0xc000, 0x3c00, 0xbc00])),
+            (
+                22,
+                pack_h([
+                    0x4400, 0xc400, 0x4200, 0xc200, 0x4000, 0xc000, 0x3c00, 0xbc00,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -12443,18 +13385,70 @@ fn raw_el0_sve2_fmlal_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (0usize, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (1, pack_h([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (2, pack_h([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (3, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (4, pack_h([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (5, pack_h([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (6, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (7, pack_h([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (8, pack_h([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
-                (9, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (10, pack_h([0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00])),
-                (11, pack_h([0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00])),
+                (
+                    0usize,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    1,
+                    pack_h([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    2,
+                    pack_h([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    3,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    4,
+                    pack_h([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_h([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    6,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    7,
+                    pack_h([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    8,
+                    pack_h([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
+                (
+                    9,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    10,
+                    pack_h([
+                        0x3c00, 0x3c00, 0xbc00, 0x3c00, 0x3c00, 0x3c00, 0xbc00, 0x3c00,
+                    ]),
+                ),
+                (
+                    11,
+                    pack_h([
+                        0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0x3c00,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -12646,14 +13640,20 @@ fn raw_el0_sve_int_to_fp_fpcr_rounding_oracle_matches_interpreter() {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
                 (4usize, pack_s(100.0, 200.0, 300.0, 400.0)),
-                (5, pack_s_bits([
-                    16_777_217,
-                    (-16_777_217i32) as u32,
-                    i32::MAX as u32,
-                    i32::MIN as u32,
-                ])),
+                (
+                    5,
+                    pack_s_bits([
+                        16_777_217,
+                        (-16_777_217i32) as u32,
+                        i32::MAX as u32,
+                        i32::MIN as u32,
+                    ]),
+                ),
                 (6, pack_s(101.0, 201.0, 301.0, 401.0)),
-                (7, pack_s_bits([16_777_217, 16_777_219, u32::MAX - 1, u32::MAX])),
+                (
+                    7,
+                    pack_s_bits([16_777_217, 16_777_219, u32::MAX - 1, u32::MAX]),
+                ),
                 (12, pack_d(1000.0, 2000.0)),
                 (13, ((1u64 << 53) + 1, (-((1i64 << 53) + 1)) as u64)),
                 (14, pack_d(1001.0, 2001.0)),
@@ -12708,16 +13708,52 @@ fn raw_el0_sve_fp_to_int_status_oracle_matches_interpreter() {
 
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_s_bits([0x1111_1111, 0x2222_2222, 0x3333_3333, 0x4444_4444])),
-            (1, pack_s_bits([1.5f32.to_bits(), (-2.75f32).to_bits(), f32::INFINITY.to_bits(), 0x7fc0_0001])),
-            (2, pack_s_bits([0x5555_5555, 0x6666_6666, 0x7777_7777, 0x8888_8888])),
-            (3, pack_s_bits([1.5f32.to_bits(), (-2.75f32).to_bits(), 4_294_967_296.0f32.to_bits(), 0x7fc0_0001])),
+            (
+                0usize,
+                pack_s_bits([0x1111_1111, 0x2222_2222, 0x3333_3333, 0x4444_4444]),
+            ),
+            (
+                1,
+                pack_s_bits([
+                    1.5f32.to_bits(),
+                    (-2.75f32).to_bits(),
+                    f32::INFINITY.to_bits(),
+                    0x7fc0_0001,
+                ]),
+            ),
+            (
+                2,
+                pack_s_bits([0x5555_5555, 0x6666_6666, 0x7777_7777, 0x8888_8888]),
+            ),
+            (
+                3,
+                pack_s_bits([
+                    1.5f32.to_bits(),
+                    (-2.75f32).to_bits(),
+                    4_294_967_296.0f32.to_bits(),
+                    0x7fc0_0001,
+                ]),
+            ),
             (8, pack_d_bits(0x1111_1111_1111_1111, 0x2222_2222_2222_2222)),
             (9, pack_d_bits(3.75f64.to_bits(), f64::INFINITY.to_bits())),
-            (10, pack_d_bits(0x3333_3333_3333_3333, 0x4444_4444_4444_4444)),
+            (
+                10,
+                pack_d_bits(0x3333_3333_3333_3333, 0x4444_4444_4444_4444),
+            ),
             (11, pack_d_bits(3.75f64.to_bits(), (-4.5f64).to_bits())),
-            (16, pack_d_bits(0x5555_5555_5555_5555, 0x6666_6666_6666_6666)),
-            (17, pack_s_bits([6.75f32.to_bits(), (-7.25f32).to_bits(), f32::INFINITY.to_bits(), 0x7fc0_0001])),
+            (
+                16,
+                pack_d_bits(0x5555_5555_5555_5555, 0x6666_6666_6666_6666),
+            ),
+            (
+                17,
+                pack_s_bits([
+                    6.75f32.to_bits(),
+                    (-7.25f32).to_bits(),
+                    f32::INFINITY.to_bits(),
+                    0x7fc0_0001,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -12778,17 +13814,60 @@ fn raw_el0_sve_fp16_int_convert_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_h([0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007])),
-            (1, pack_h([0x0000, 0x3c00, 0xc000, 0x4200, 0x4400, 0xc400, 0x4800, 0xc800])),
-            (2, pack_s([0x2000_0000, 0x2000_0001, 0x2000_0002, 0x2000_0003])),
-            (3, pack_h([0x0000, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4500, 0x4600, 0x4700])),
+            (
+                0usize,
+                pack_h([
+                    0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007,
+                ]),
+            ),
+            (
+                1,
+                pack_h([
+                    0x0000, 0x3c00, 0xc000, 0x4200, 0x4400, 0xc400, 0x4800, 0xc800,
+                ]),
+            ),
+            (
+                2,
+                pack_s([0x2000_0000, 0x2000_0001, 0x2000_0002, 0x2000_0003]),
+            ),
+            (
+                3,
+                pack_h([
+                    0x0000, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4500, 0x4600, 0x4700,
+                ]),
+            ),
             (4, (0x4000_0000_0000_0000, 0x4000_0000_0000_0001)),
-            (5, pack_h([0xc000, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4500, 0x4600, 0x4700])),
-            (6, pack_h([0x6000, 0x6001, 0x6002, 0x6003, 0x6004, 0x6005, 0x6006, 0x6007])),
-            (7, pack_h([0xfffd, 0x0005, 0x002a, 0xffd6, 0x0001, 0x0002, 0x0003, 0x0004])),
-            (8, pack_h([0x8000, 0x8001, 0x8002, 0x8003, 0x8004, 0x8005, 0x8006, 0x8007])),
+            (
+                5,
+                pack_h([
+                    0xc000, 0x3c00, 0x4000, 0x4200, 0x4400, 0x4500, 0x4600, 0x4700,
+                ]),
+            ),
+            (
+                6,
+                pack_h([
+                    0x6000, 0x6001, 0x6002, 0x6003, 0x6004, 0x6005, 0x6006, 0x6007,
+                ]),
+            ),
+            (
+                7,
+                pack_h([
+                    0xfffd, 0x0005, 0x002a, 0xffd6, 0x0001, 0x0002, 0x0003, 0x0004,
+                ]),
+            ),
+            (
+                8,
+                pack_h([
+                    0x8000, 0x8001, 0x8002, 0x8003, 0x8004, 0x8005, 0x8006, 0x8007,
+                ]),
+            ),
             (9, pack_s([0, 1, 42, 127])),
-            (10, pack_h([0xa000, 0xa001, 0xa002, 0xa003, 0xa004, 0xa005, 0xa006, 0xa007])),
+            (
+                10,
+                pack_h([
+                    0xa000, 0xa001, 0xa002, 0xa003, 0xa004, 0xa005, 0xa006, 0xa007,
+                ]),
+            ),
             (11, ((-7_i64) as u64, 8)),
         ] {
             g.v[2 * reg] = lo;
@@ -12839,17 +13918,34 @@ fn raw_el0_sve_fp_int_cross_width_oracle_matches_interpreter() {
     let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_s([0x1000_0000, 0x1000_0001, 0x1000_0002, 0x1000_0003])),
+            (
+                0usize,
+                pack_s([0x1000_0000, 0x1000_0001, 0x1000_0002, 0x1000_0003]),
+            ),
             (1, pack_d(-7.0, 8.0)),
-            (2, pack_s([0x2000_0000, 0x2000_0001, 0x2000_0002, 0x2000_0003])),
+            (
+                2,
+                pack_s([0x2000_0000, 0x2000_0001, 0x2000_0002, 0x2000_0003]),
+            ),
             (3, pack_d(7.0, 8.0)),
             (4, (0x4000_0000_0000_0000, 0x4000_0000_0000_0001)),
             (5, pack_s([(-7_i32) as u32, 8, 9, 10])),
             (6, (0x6000_0000_0000_0000, 0x6000_0000_0000_0001)),
             (7, pack_s([7, 8, 9, 10])),
             (8, (0x8000_0000_0000_0000, 0x8000_0000_0000_0001)),
-            (9, pack_s([7.0_f32.to_bits(), 8.0_f32.to_bits(), 9.0_f32.to_bits(), 10.0_f32.to_bits()])),
-            (10, pack_s([0xa000_0000, 0xa000_0001, 0xa000_0002, 0xa000_0003])),
+            (
+                9,
+                pack_s([
+                    7.0_f32.to_bits(),
+                    8.0_f32.to_bits(),
+                    9.0_f32.to_bits(),
+                    10.0_f32.to_bits(),
+                ]),
+            ),
+            (
+                10,
+                pack_s([0xa000_0000, 0xa000_0001, 0xa000_0002, 0xa000_0003]),
+            ),
             (11, (7, 8)),
         ] {
             g.v[2 * reg] = lo;
@@ -13338,7 +14434,9 @@ fn raw_el0_sve_fexpa_oracle_matches_interpreter() {
         (lo, hi)
     };
     let setup = |g: &mut Aarch64GuestRegs| {
-        let h_src = pack_h([0x0000, 0x0001, 0x001f, 0x0020, 0x3fff, 0x4000, 0x4001, 0xffff]);
+        let h_src = pack_h([
+            0x0000, 0x0001, 0x001f, 0x0020, 0x3fff, 0x4000, 0x4001, 0xffff,
+        ]);
         let s_src = pack_s_bits([0x0000_0000, 0x0000_0001, 0x0000_003f, 0xffff_ffff]);
         for (reg, (lo, hi)) in [
             (0usize, (0xdead_beef_dead_beef, 0xfeed_face_feed_face)),
@@ -13667,7 +14765,12 @@ fn raw_el0_sve_ftssel_oracle_matches_interpreter() {
     let pack_d = |a: f64, b: f64| -> (u64, u64) { (a.to_bits(), b.to_bits()) };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (1usize, pack_h([0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200])),
+            (
+                1usize,
+                pack_h([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x3800, 0xb800, 0x4200, 0xc200,
+                ]),
+            ),
             (2, pack_h([0, 1, 2, 3, 0, 1, 2, 3])),
             (4, pack_s(1.0, -1.0, 2.0, -2.0)),
             (5, pack_s_bits([0, 1, 2, 3])),
@@ -13785,11 +14888,15 @@ fn raw_el0_sve2_fp16_pairwise_fpcr_rounding_oracle_matches_interpreter() {
             for (reg, (lo, hi)) in [
                 (
                     0usize,
-                    pack_h8([0xbe00, 0x3e00, 0x0000, 0x8000, 0x3555, 0x3001, 0xb555, 0xb001]),
+                    pack_h8([
+                        0xbe00, 0x3e00, 0x0000, 0x8000, 0x3555, 0x3001, 0xb555, 0xb001,
+                    ]),
                 ),
                 (
                     1,
-                    pack_h8([0xc000, 0x4000, 0x8000, 0x8000, 0x3c01, 0x2e66, 0xbc01, 0xae66]),
+                    pack_h8([
+                        0xc000, 0x4000, 0x8000, 0x8000, 0x3c01, 0x2e66, 0xbc01, 0xae66,
+                    ]),
                 ),
             ] {
                 g.v[2 * reg] = lo;
@@ -14072,8 +15179,18 @@ fn raw_el0_sve_fabd_ah_qnan_sign_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     let cases = [
-        ("h", 0x6548_8020, 0xfe01_fe01_fe01_fe01, 0xfe01_fe01_fe01_fe01),
-        ("s", 0x6588_8020, 0xffc0_2000_ffc0_2000, 0xffc0_2000_ffc0_2000),
+        (
+            "h",
+            0x6548_8020,
+            0xfe01_fe01_fe01_fe01,
+            0xfe01_fe01_fe01_fe01,
+        ),
+        (
+            "s",
+            0x6588_8020,
+            0xffc0_2000_ffc0_2000,
+            0xffc0_2000_ffc0_2000,
+        ),
         (
             "d",
             0x65c8_8020,
@@ -14117,8 +15234,18 @@ fn raw_el0_sve_fmin_zero_ah_sign_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     let cases = [
-        ("h", 0x655f_8000, 0x8000_8000_8000_8000, 0x8000_8000_8000_8000),
-        ("s", 0x659f_8000, 0x8000_0000_8000_0000, 0x8000_0000_8000_0000),
+        (
+            "h",
+            0x655f_8000,
+            0x8000_8000_8000_8000,
+            0x8000_8000_8000_8000,
+        ),
+        (
+            "s",
+            0x659f_8000,
+            0x8000_0000_8000_0000,
+            0x8000_0000_8000_0000,
+        ),
         (
             "d",
             0x65df_8000,
@@ -14195,7 +15322,12 @@ fn raw_el0_sve_fp_indexed_oracle_matches_interpreter() {
             (3, pack_s(1.0, 2.0, 3.0, 4.0)),
             (4, pack_s(0.5, -1.0, 1.5, -2.0)),
             (5, pack_s(2.0, 3.0, -4.0, -5.0)),
-            (6, pack_h([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
+            (
+                6,
+                pack_h([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
             (7, pack_s(8.0, -8.0, 4.0, -4.0)),
             (9, pack_d(1.0, -2.0)),
             (10, pack_d(2.0, -3.0)),
@@ -14205,12 +15337,42 @@ fn raw_el0_sve_fp_indexed_oracle_matches_interpreter() {
             (14, pack_d(2.0, -3.0)),
             (15, pack_d(4.0, -5.0)),
             (16, pack_d(1.5, -2.0)),
-            (18, pack_h([0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400])),
-            (19, pack_h([0x4000, 0x4200, 0x4400, 0x4500, 0xc000, 0xc200, 0xc400, 0xc500])),
-            (21, pack_h([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (22, pack_h([0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400])),
-            (24, pack_h([0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400])),
-            (25, pack_h([0x4000, 0x4200, 0x4400, 0x4500, 0xc000, 0xc200, 0xc400, 0xc500])),
+            (
+                18,
+                pack_h([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400,
+                ]),
+            ),
+            (
+                19,
+                pack_h([
+                    0x4000, 0x4200, 0x4400, 0x4500, 0xc000, 0xc200, 0xc400, 0xc500,
+                ]),
+            ),
+            (
+                21,
+                pack_h([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                22,
+                pack_h([
+                    0x3c00, 0xbc00, 0x4000, 0xc000, 0x4200, 0xc200, 0x4400, 0xc400,
+                ]),
+            ),
+            (
+                24,
+                pack_h([
+                    0x3c00, 0x4000, 0x4200, 0x4400, 0xbc00, 0xc000, 0xc200, 0xc400,
+                ]),
+            ),
+            (
+                25,
+                pack_h([
+                    0x4000, 0x4200, 0x4400, 0x4500, 0xc000, 0xc200, 0xc400, 0xc500,
+                ]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -14241,10 +15403,7 @@ fn raw_el0_sve_indexed_fma_ah_subnormal_oracle_matches_interpreter() {
     const FPCR_AH: u64 = 1 << 1;
     const ONES: u128 = 0x3f80_0000_3f80_0000_3f80_0000_3f80_0000;
     const SUBNORMALS: u128 = 0x0000_2000_0000_2000_0000_2000_0000_2000;
-    let cases = [
-        ("fmla", 0x64a2_0020),
-        ("fmls", 0x64a2_0420),
-    ];
+    let cases = [("fmla", 0x64a2_0020), ("fmls", 0x64a2_0420)];
 
     for (label, insn) in cases {
         let setup = |g: &mut Aarch64GuestRegs| {
@@ -14282,10 +15441,7 @@ fn raw_el0_sve_indexed_fma_ah_nan_status_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     const V0: u128 = 0x3f80_0000_0000_0001_7fa0_0001_7fc0_2000;
-    let cases = [
-        ("fmla", 0x64a0_0000),
-        ("fmls", 0x64a0_0400),
-    ];
+    let cases = [("fmla", 0x64a0_0000), ("fmls", 0x64a0_0400)];
 
     for (label, insn) in cases {
         let setup = |g: &mut Aarch64GuestRegs| {
@@ -14408,15 +15564,7 @@ fn raw_el0_sve_reduction_extra_oracle_matches_interpreter() {
             (3, ((-5_i64) as u64, 10)),
             (5, ((-5_i64) as u64, (-100_i64) as u64)),
             (7, (100, 3)),
-            (
-                9,
-                pack_s_bits([
-                    (-3_i32) as u32,
-                    5,
-                    (-7_i32) as u32,
-                    100,
-                ]),
-            ),
+            (9, pack_s_bits([(-3_i32) as u32, 5, (-7_i32) as u32, 100])),
             (11, pack_s_bits([1, 2, 3, 100])),
             (13, pack_s(1.0, 2.0, 3.0, 100.0)),
             (15, pack_s(1.0, -9.0, 5.0, 100.0)),
@@ -14487,7 +15635,10 @@ fn raw_el0_sve_fp_trig_helper_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (1usize, pack_s(1.0000001, -1.0000001, 0.33333334, -0.33333334)),
+                (
+                    1usize,
+                    pack_s(1.0000001, -1.0000001, 0.33333334, -0.33333334),
+                ),
                 (2, pack_s_bits([0, 1, 0, 1])),
                 (4, pack_d(1.0000000000000002, -1.0000000000000002)),
                 (5, (0, 1)),
@@ -16421,12 +17572,36 @@ fn raw_el0_sve_bfcvt_oracle_matches_interpreter() {
     };
     let setup = |g: &mut Aarch64GuestRegs| {
         for (reg, (lo, hi)) in [
-            (0usize, pack_h([0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888])),
-            (1, pack_s_bits([0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000])),
-            (2, pack_h([0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555])),
-            (3, pack_s_bits([0x0000_0000, 0x8000_0000, 0x7f80_0000, 0xff80_0000])),
-            (4, pack_h([0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210])),
-            (5, pack_s_bits([0x3fc0_0000, 0xc020_0000, 0x0080_0000, 0x8080_0000])),
+            (
+                0usize,
+                pack_h([
+                    0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+                ]),
+            ),
+            (
+                1,
+                pack_s_bits([0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000]),
+            ),
+            (
+                2,
+                pack_h([
+                    0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555,
+                ]),
+            ),
+            (
+                3,
+                pack_s_bits([0x0000_0000, 0x8000_0000, 0x7f80_0000, 0xff80_0000]),
+            ),
+            (
+                4,
+                pack_h([
+                    0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210,
+                ]),
+            ),
+            (
+                5,
+                pack_s_bits([0x3fc0_0000, 0xc020_0000, 0x0080_0000, 0x8080_0000]),
+            ),
         ] {
             g.v[2 * reg] = lo;
             g.v[2 * reg + 1] = hi;
@@ -16469,7 +17644,7 @@ fn raw_el0_sve_bfcvt_ah_status_oracle_matches_interpreter() {
         | (u128::from(0x7f7f_ffffu32) << 96);
 
     for (label, insns) in [
-        ("bfcvt", [0x2598_e3e0, 0x658a_a020]),   // ptrue p0.s; bfcvt   z0.h, p0/m, z1.s
+        ("bfcvt", [0x2598_e3e0, 0x658a_a020]), // ptrue p0.s; bfcvt   z0.h, p0/m, z1.s
         ("bfcvtnt", [0x2598_e3e0, 0x648a_a020]), // ptrue p0.s; bfcvtnt z0.h, p0/m, z1.s
     ] {
         let setup = |g: &mut Aarch64GuestRegs| {
@@ -16534,10 +17709,26 @@ fn raw_el0_sve_bfcvt_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (0usize, pack_h([0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888])),
-                (1, pack_s_bits([0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000])),
-                (4, pack_h([0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210])),
-                (5, pack_s_bits([0x3fc0_7fff, 0x3fc0_8000, 0x3fc0_8001, 0xbfc0_8000])),
+                (
+                    0usize,
+                    pack_h([
+                        0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+                    ]),
+                ),
+                (
+                    1,
+                    pack_s_bits([0x3f80_7fff, 0x3f80_8000, 0x3f80_8001, 0xbf80_8000]),
+                ),
+                (
+                    4,
+                    pack_h([
+                        0x0123, 0x4567, 0x89ab, 0xcdef, 0xfedc, 0xba98, 0x7654, 0x3210,
+                    ]),
+                ),
+                (
+                    5,
+                    pack_s_bits([0x3fc0_7fff, 0x3fc0_8000, 0x3fc0_8001, 0xbfc0_8000]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -16639,10 +17830,7 @@ fn raw_el0_sve_bf16_dot_ah_qnan_oracle_matches_interpreter() {
 
     const FPCR_AH: u64 = 1 << 1;
     const QNAN_BF16: u128 = 0x7fc0_7fc0_7fc0_7fc0_7fc0_7fc0_7fc0_7fc0;
-    let cases = [
-        ("bfdot", 0x6462_8020),
-        ("bfmmla", 0x6462_e420),
-    ];
+    let cases = [("bfdot", 0x6462_8020), ("bfmmla", 0x6462_e420)];
 
     for (label, insn) in cases {
         let setup = |g: &mut Aarch64GuestRegs| {
@@ -16794,12 +17982,38 @@ fn raw_el0_sve_bf16_fmlal_fpcr_rounding_oracle_matches_interpreter() {
         let setup = |g: &mut Aarch64GuestRegs| {
             g.fpcr = rmode << 22;
             for (reg, (lo, hi)) in [
-                (6usize, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (7, pack_h([0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80])),
-                (8, pack_h([0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80])),
-                (9, pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0)),
-                (10, pack_h([0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80])),
-                (11, pack_h([0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80])),
+                (
+                    6usize,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    7,
+                    pack_h([
+                        0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80,
+                    ]),
+                ),
+                (
+                    8,
+                    pack_h([
+                        0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80,
+                    ]),
+                ),
+                (
+                    9,
+                    pack_s(16_777_216.0, -16_777_216.0, 16_777_216.0, -16_777_216.0),
+                ),
+                (
+                    10,
+                    pack_h([
+                        0x3f80, 0x3f80, 0xbf80, 0x3f80, 0x3f80, 0x3f80, 0xbf80, 0x3f80,
+                    ]),
+                ),
+                (
+                    11,
+                    pack_h([
+                        0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80, 0x3f80,
+                    ]),
+                ),
             ] {
                 g.v[2 * reg] = lo;
                 g.v[2 * reg + 1] = hi;
@@ -17026,7 +18240,10 @@ fn shifted_neg_and_mvn_aliases_execute_natively() {
     assert_eq!(r.x[4], !(0xf000_0000_0000_0000u64 >> 4));
     assert_eq!(r.x[6], 0x8000_0000_0000_0000);
     assert_eq!(r.x[11], 0x80 | !(0x10u64 << 2));
-    assert_eq!(r.x[14], 0x1234_5678_9abc_def0u64 ^ !(0xffff_0000_0000_0000u64 >> 5));
+    assert_eq!(
+        r.x[14],
+        0x1234_5678_9abc_def0u64 ^ !(0xffff_0000_0000_0000u64 >> 5)
+    );
     assert_eq!(r.nzcv & 0xf000_0000, 0x9000_0000, "N and V set");
 }
 

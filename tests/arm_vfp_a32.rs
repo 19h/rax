@@ -5944,7 +5944,10 @@ fn neon_fp16_recip_estimate_does_not_mutate_fpscr() {
         // narrowing would otherwise set IOC. Start with all flags clear.
         cpu.vfp.write_d_bits(1, 0x0000_0000_0000_7E00);
         cpu.vfp.fpscr = rax::arm::vfp::Fpscr::from_bits(0);
-        assert!(matches!(exec_one(&mut cpu, &mut mem, insn), ExecResult::Continue));
+        assert!(matches!(
+            exec_one(&mut cpu, &mut mem, insn),
+            ExecResult::Continue
+        ));
         assert!(
             !cpu.vfp.fpscr.ioc()
                 && !cpu.vfp.fpscr.ofc()

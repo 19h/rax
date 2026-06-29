@@ -1019,10 +1019,7 @@ impl Aarch64Decoder {
         let bit26 = (raw >> 26) & 1;
         let bit24 = (raw >> 24) & 1;
 
-        if op_cat == 0b011
-            && bit26 == 0
-            && bit24 == 1
-            && matches!((raw >> 21) & 0x7, 0 | 2 | 4 | 6)
+        if op_cat == 0b011 && bit26 == 0 && bit24 == 1 && matches!((raw >> 21) & 0x7, 0 | 2 | 4 | 6)
         {
             return Self::decode_ordered_unscaled(raw);
         }
@@ -1069,12 +1066,14 @@ impl Aarch64Decoder {
                     4,
                 ));
             }
-            return Ok(DecodedInsn::new(Mnemonic::LDG, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Reg(Register::with_zr(rt, true)))
-                .with_operand(Operand::Mem(MemOperand::imm_offset(
-                    Register::with_sp(rn, true),
-                    offset,
-                ))));
+            return Ok(
+                DecodedInsn::new(Mnemonic::LDG, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::Reg(Register::with_zr(rt, true)))
+                    .with_operand(Operand::Mem(MemOperand::imm_offset(
+                        Register::with_sp(rn, true),
+                        offset,
+                    ))),
+            );
         }
 
         let mnemonic = match opc {
@@ -1735,20 +1734,16 @@ impl Aarch64Decoder {
         // MOV is ORR with Rn = XZR/WZR and shift = 0
         // MVN is ORN with Rn = XZR/WZR
         // TST is ANDS with Rd = XZR/WZR
-        let (mnemonic, skip_rn, skip_rd) = if opc == 0b01
-            && n == 0
-            && rn == 31
-            && shift == ShiftType::LSL
-            && imm6 == 0
-        {
-            (Mnemonic::MOV, true, false)
-        } else if opc == 0b01 && n == 1 && rn == 31 {
-            (Mnemonic::MVN, true, false)
-        } else if opc == 0b11 && n == 0 && rd == 31 {
-            (Mnemonic::TST, false, true)
-        } else {
-            (mnemonic, false, false)
-        };
+        let (mnemonic, skip_rn, skip_rd) =
+            if opc == 0b01 && n == 0 && rn == 31 && shift == ShiftType::LSL && imm6 == 0 {
+                (Mnemonic::MOV, true, false)
+            } else if opc == 0b01 && n == 1 && rn == 31 {
+                (Mnemonic::MVN, true, false)
+            } else if opc == 0b11 && n == 0 && rd == 31 {
+                (Mnemonic::TST, false, true)
+            } else {
+                (mnemonic, false, false)
+            };
 
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
 
@@ -2513,11 +2508,11 @@ impl Aarch64Decoder {
             (0, 0b00001) => Mnemonic::UNKNOWN, // SQADD
             (0, 0b00010) => Mnemonic::UNKNOWN, // SRHADD
             (0, 0b00100) => Mnemonic::UNKNOWN, // SHSUB
-            (0, 0b00110) => Mnemonic::VMAX, // SMAX
-            (0, 0b00111) => Mnemonic::VMIN, // SMIN
-            (0, 0b10000) => Mnemonic::VADD, // ADD
+            (0, 0b00110) => Mnemonic::VMAX,    // SMAX
+            (0, 0b00111) => Mnemonic::VMIN,    // SMIN
+            (0, 0b10000) => Mnemonic::VADD,    // ADD
             (0, 0b10001) => Mnemonic::UNKNOWN, // CMTST
-            (0, 0b10011) => Mnemonic::VMUL, // MUL
+            (0, 0b10011) => Mnemonic::VMUL,    // MUL
             (0, 0b10100) => Mnemonic::UNKNOWN, // SMAXP
             (0, 0b10101) => Mnemonic::UNKNOWN, // SMINP
             (0, 0b10111) => Mnemonic::UNKNOWN, // ADDP
@@ -2526,10 +2521,10 @@ impl Aarch64Decoder {
             (1, 0b00001) => Mnemonic::UNKNOWN, // UQADD
             (1, 0b00010) => Mnemonic::UNKNOWN, // URHADD
             (1, 0b00100) => Mnemonic::UNKNOWN, // UHSUB
-            (1, 0b00110) => Mnemonic::VMAX, // UMAX
-            (1, 0b00111) => Mnemonic::VMIN, // UMIN
-            (1, 0b10000) => Mnemonic::VSUB, // SUB
-            (1, 0b10001) => Mnemonic::VCMP, // CMEQ
+            (1, 0b00110) => Mnemonic::VMAX,    // UMAX
+            (1, 0b00111) => Mnemonic::VMIN,    // UMIN
+            (1, 0b10000) => Mnemonic::VSUB,    // SUB
+            (1, 0b10001) => Mnemonic::VCMP,    // CMEQ
             (1, 0b10100) => Mnemonic::UNKNOWN, // UMAXP
             (1, 0b10101) => Mnemonic::UNKNOWN, // UMINP
 
@@ -3176,6 +3171,7 @@ impl Aarch64Decoder {
     ///
     /// SVE encoding space: bits[28:25] = 0010
     /// Further classification by bits[24:21] and other fields.
+    #[allow(clippy::bad_bit_mask)]
     fn decode_sve(raw: u32) -> Result<DecodedInsn, DecodeError> {
         // Extract primary classification bits
         let op0 = (raw >> 29) & 0x7; // bits[31:29]
@@ -3345,15 +3341,19 @@ impl Aarch64Decoder {
                     && (raw >> 4) & 1 == 0 =>
             {
                 let pd = (raw & 0xF) as u8;
-                Ok(DecodedInsn::new(Mnemonic::SVE_PTRUE, ExecutionState::Aarch64, raw, 4)
-                    .with_operand(sve_p(pd)))
+                Ok(
+                    DecodedInsn::new(Mnemonic::SVE_PTRUE, ExecutionState::Aarch64, raw, 4)
+                        .with_operand(sve_p(pd)),
+                )
             }
 
             // PFALSE
             0b001 if raw & 0xFFFF_FFF0 == 0x2518_E400 => {
                 let pd = (raw & 0xF) as u8;
-                Ok(DecodedInsn::new(Mnemonic::SVE_PFALSE, ExecutionState::Aarch64, raw, 4)
-                    .with_operand(sve_p(pd)))
+                Ok(
+                    DecodedInsn::new(Mnemonic::SVE_PFALSE, ExecutionState::Aarch64, raw, 4)
+                        .with_operand(sve_p(pd)),
+                )
             }
 
             // DUP/SEL/MOV
@@ -3642,12 +3642,8 @@ mod tests {
             let insn = decode_bytes(&bytes).unwrap();
             assert_eq!(insn.mnemonic, Mnemonic::MOV);
             assert_eq!(insn.operands.len(), 2);
-            assert!(
-                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
-            );
-            assert!(
-                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src)
-            );
+            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst));
+            assert!(matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src));
         }
 
         let add = decode_bytes(&[0x20, 0x00, 0x00, 0x91]).unwrap();
@@ -3696,9 +3692,7 @@ mod tests {
             let insn = decode_bytes(&bytes).unwrap();
             assert_eq!(insn.mnemonic, Mnemonic::MOV);
             assert_eq!(insn.operands.len(), 2);
-            assert!(
-                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
-            );
+            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst));
         }
     }
 
@@ -4188,30 +4182,52 @@ mod tests {
         let subp = Aarch64Decoder::decode(mte_dp2(0, 0b000000, 31, 31, 0)).unwrap();
         assert_eq!(subp.mnemonic, Mnemonic::SUBP);
         assert!(!subp.sets_flags);
-        assert!(matches!(subp.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp));
-        assert!(matches!(subp.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
-        assert!(matches!(subp.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
+        assert!(
+            matches!(subp.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp)
+        );
+        assert!(
+            matches!(subp.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
+        assert!(
+            matches!(subp.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
 
         let subps = Aarch64Decoder::decode(mte_dp2(1, 0b000000, 1, 31, 0)).unwrap();
         assert_eq!(subps.mnemonic, Mnemonic::SUBPS);
         assert!(subps.sets_flags);
-        assert!(matches!(subps.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 1 && !reg.is_sp));
-        assert!(matches!(subps.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
+        assert!(
+            matches!(subps.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 1 && !reg.is_sp)
+        );
+        assert!(
+            matches!(subps.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
 
         let invalid_s_bit = Aarch64Decoder::decode(mte_dp2(1, 0b001000, 1, 2, 0)).unwrap();
         assert_eq!(invalid_s_bit.mnemonic, Mnemonic::UNDEFINED);
 
         let irg = Aarch64Decoder::decode(mte_dp2(0, 0b000100, 31, 2, 31)).unwrap();
         assert_eq!(irg.mnemonic, Mnemonic::IRG);
-        assert!(matches!(irg.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
-        assert!(matches!(irg.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
-        assert!(matches!(irg.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 2 && !reg.is_sp));
+        assert!(
+            matches!(irg.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
+        assert!(
+            matches!(irg.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
+        assert!(
+            matches!(irg.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 2 && !reg.is_sp)
+        );
 
         let gmi = Aarch64Decoder::decode(mte_dp2(0, 0b000101, 31, 31, 0)).unwrap();
         assert_eq!(gmi.mnemonic, Mnemonic::GMI);
-        assert!(matches!(gmi.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp));
-        assert!(matches!(gmi.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
-        assert!(matches!(gmi.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+        assert!(
+            matches!(gmi.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp)
+        );
+        assert!(
+            matches!(gmi.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
+        assert!(
+            matches!(gmi.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+        );
     }
 
     #[test]
@@ -4228,7 +4244,9 @@ mod tests {
 
         let ldg = Aarch64Decoder::decode(tag_mem(0b01, -1, 0b00, 31, 31)).unwrap();
         assert_eq!(ldg.mnemonic, Mnemonic::LDG);
-        assert!(matches!(ldg.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+        assert!(
+            matches!(ldg.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+        );
         assert!(matches!(
             ldg.operands.get(1),
             Some(Operand::Mem(mem))
@@ -4247,7 +4265,9 @@ mod tests {
         for (opc, op2, mnemonic, mode) in cases {
             let insn = Aarch64Decoder::decode(tag_mem(opc, -1, op2, 31, 31)).unwrap();
             assert_eq!(insn.mnemonic, mnemonic);
-            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+            );
             assert!(matches!(
                 insn.operands.get(1),
                 Some(Operand::Mem(mem))
@@ -4275,15 +4295,27 @@ mod tests {
 
         let dst_src_xzr = Aarch64Decoder::decode(pacga(31, 2, 31)).unwrap();
         assert_eq!(dst_src_xzr.mnemonic, Mnemonic::PACGA);
-        assert!(matches!(dst_src_xzr.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
-        assert!(matches!(dst_src_xzr.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
-        assert!(matches!(dst_src_xzr.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 2 && !reg.is_sp));
+        assert!(
+            matches!(dst_src_xzr.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+        );
+        assert!(
+            matches!(dst_src_xzr.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+        );
+        assert!(
+            matches!(dst_src_xzr.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 2 && !reg.is_sp)
+        );
 
         let sp_modifier = Aarch64Decoder::decode(pacga(1, 31, 0)).unwrap();
         assert_eq!(sp_modifier.mnemonic, Mnemonic::PACGA);
-        assert!(matches!(sp_modifier.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp));
-        assert!(matches!(sp_modifier.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 1 && !reg.is_sp));
-        assert!(matches!(sp_modifier.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
+        assert!(
+            matches!(sp_modifier.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp)
+        );
+        assert!(
+            matches!(sp_modifier.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 1 && !reg.is_sp)
+        );
+        assert!(
+            matches!(sp_modifier.operands.get(2), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+        );
     }
 
     #[test]
@@ -4311,8 +4343,12 @@ mod tests {
             let insn = Aarch64Decoder::decode(pauth_dp1(opcode, 31, 0)).unwrap();
             assert_eq!(insn.mnemonic, mnemonic);
             assert_eq!(insn.operands.len(), 2);
-            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp));
-            assert!(matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp));
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 0 && !reg.is_sp)
+            );
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 31 && reg.is_sp)
+            );
         }
 
         let zero_modifier_forms = [
@@ -4331,7 +4367,9 @@ mod tests {
             let insn = Aarch64Decoder::decode(pauth_dp1(opcode, 31, 31)).unwrap();
             assert_eq!(insn.mnemonic, mnemonic);
             assert_eq!(insn.operands.len(), 1);
-            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+            );
 
             let invalid_rn = Aarch64Decoder::decode(pauth_dp1(opcode, 1, 0)).unwrap();
             assert_eq!(invalid_rn.mnemonic, Mnemonic::UNDEFINED);
@@ -4395,12 +4433,8 @@ mod tests {
             let insn = decode_bytes(&bytes).unwrap();
             assert_eq!(insn.mnemonic, mnemonic);
             assert_eq!(insn.operands.len(), 2);
-            assert!(
-                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst)
-            );
-            assert!(
-                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src)
-            );
+            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == dst));
+            assert!(matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == src));
         }
     }
 
@@ -4488,8 +4522,12 @@ mod tests {
         for (mode_bits, mode) in cases {
             let insn = Aarch64Decoder::decode(pair(0b01, mode_bits, 0, -1, 30, 31, 31)).unwrap();
             assert_eq!(insn.mnemonic, Mnemonic::STGP);
-            assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp));
-            assert!(matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 30 && !reg.is_sp));
+            assert!(
+                matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if reg.num == 31 && !reg.is_sp)
+            );
+            assert!(
+                matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if reg.num == 30 && !reg.is_sp)
+            );
             assert!(matches!(
                 insn.operands.get(2),
                 Some(Operand::Mem(mem))
@@ -4638,11 +4676,9 @@ mod tests {
             ));
         }
 
-        let invalid_signed_x =
-            Aarch64Decoder::decode(unprivileged(0b11, 0b10, 0, 1, 0)).unwrap();
+        let invalid_signed_x = Aarch64Decoder::decode(unprivileged(0b11, 0b10, 0, 1, 0)).unwrap();
         assert_eq!(invalid_signed_x.mnemonic, Mnemonic::UNDEFINED);
-        let invalid_signed_w =
-            Aarch64Decoder::decode(unprivileged(0b10, 0b11, 0, 1, 0)).unwrap();
+        let invalid_signed_w = Aarch64Decoder::decode(unprivileged(0b10, 0b11, 0, 1, 0)).unwrap();
         assert_eq!(invalid_signed_w.mnemonic, Mnemonic::UNDEFINED);
     }
 
@@ -4708,9 +4744,7 @@ mod tests {
         let insn = decode_bytes(&[0xe0, 0x07, 0x41, 0xb3]).unwrap();
 
         assert_eq!(insn.mnemonic, Mnemonic::BFXIL);
-        assert!(
-            matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0))
-        );
+        assert!(matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0)));
         assert!(
             matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
         );
@@ -4908,23 +4942,15 @@ mod tests {
         let sbc = Aarch64Decoder::decode(addsub_carry(1, 1, 0, 31)).unwrap();
         assert_eq!(sbc.mnemonic, Mnemonic::NGC);
         assert_eq!(sbc.operands.len(), 2);
-        assert!(
-            matches!(sbc.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0))
-        );
-        assert!(
-            matches!(sbc.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(2))
-        );
+        assert!(matches!(sbc.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::x(0)));
+        assert!(matches!(sbc.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(2)));
 
         let sbcs = Aarch64Decoder::decode(addsub_carry(0, 1, 1, 31)).unwrap();
         assert_eq!(sbcs.mnemonic, Mnemonic::NGCS);
         assert!(sbcs.sets_flags);
         assert_eq!(sbcs.operands.len(), 2);
-        assert!(
-            matches!(sbcs.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::w(0))
-        );
-        assert!(
-            matches!(sbcs.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::w(2))
-        );
+        assert!(matches!(sbcs.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::w(0)));
+        assert!(matches!(sbcs.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::w(2)));
     }
 
     #[test]
@@ -5123,9 +5149,7 @@ mod tests {
         assert!(
             matches!(insn.operands.get(0), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
         );
-        assert!(
-            matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(1))
-        );
+        assert!(matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::x(1)));
     }
 
     #[test]

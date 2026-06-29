@@ -1720,13 +1720,7 @@ impl HexagonLifter {
                             signed: SignExtend::Zero,
                         });
                         self.emit_gated_postinc_imm(
-                            &mut ops,
-                            &mut op_id,
-                            addr,
-                            ctx,
-                            base,
-                            inc,
-                            cond,
+                            &mut ops, &mut op_id, addr, ctx, base, inc, cond,
                         );
                         push_op!(OpKind::Select {
                             dst: self.hex_reg(even),
@@ -1773,13 +1767,7 @@ impl HexagonLifter {
                             signed: sign_ext,
                         });
                         self.emit_gated_postinc_imm(
-                            &mut ops,
-                            &mut op_id,
-                            addr,
-                            ctx,
-                            base,
-                            inc,
-                            cond,
+                            &mut ops, &mut op_id, addr, ctx, base, inc, cond,
                         );
                         push_op!(OpKind::Select {
                             dst: self.hex_reg(*dst),
@@ -1909,12 +1897,7 @@ impl HexagonLifter {
                             addr: smir_addr,
                             width: MemWidth::B4,
                         });
-                        self.emit_commit_postinc_update(
-                            &mut ops,
-                            &mut op_id,
-                            addr,
-                            staged_update,
-                        );
+                        self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
                         push_op!(OpKind::Mov {
                             dst: self.hex_reg(even),
                             src: SrcOperand::Reg(lo),
@@ -1942,12 +1925,7 @@ impl HexagonLifter {
                             width: mem_width,
                             sign: sign_ext,
                         });
-                        self.emit_commit_postinc_update(
-                            &mut ops,
-                            &mut op_id,
-                            addr,
-                            staged_update,
-                        );
+                        self.emit_commit_postinc_update(&mut ops, &mut op_id, addr, staged_update);
                         push_op!(OpKind::Mov {
                             dst: self.hex_reg(*dst),
                             src: SrcOperand::Reg(loaded),
@@ -20968,7 +20946,11 @@ mod tests {
                 let mut lifter = HexagonLifter::default_isa();
                 let mut ctx = LiftContext::new(SourceArch::Hexagon);
                 let base = lifter.lift_insn(0x1000, &word, &mut ctx).unwrap();
-                assert_eq!(mask_imm(&base.ops), Some(0xF), "baseline S2_mask mask value");
+                assert_eq!(
+                    mask_imm(&base.ops),
+                    Some(0xF),
+                    "baseline S2_mask mask value"
+                );
 
                 // With a pending maximum-width extender: the result must be
                 // UNCHANGED and, critically, the lift must not panic on an
@@ -21173,7 +21155,10 @@ mod tests {
             }
             other => panic!("expected memory fault, got {other:?}"),
         }
-        assert_eq!(ctx.read_arch_reg(ArchReg::Hexagon(HexagonReg::R(0))), 0x2000);
+        assert_eq!(
+            ctx.read_arch_reg(ArchReg::Hexagon(HexagonReg::R(0))),
+            0x2000
+        );
     }
 
     #[test]

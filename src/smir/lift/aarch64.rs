@@ -806,26 +806,23 @@ impl Aarch64Lifter {
             }
 
             Mnemonic::SBC | Mnemonic::SBCS | Mnemonic::NGC | Mnemonic::NGCS => {
-                let (dst, src1, src2, width) = if matches!(
-                    insn.mnemonic,
-                    Mnemonic::NGC | Mnemonic::NGCS
-                ) {
-                    if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rm))) = (
-                        insn.operands.get(0),
-                        insn.operands.get(1),
-                    ) {
-                        (
-                            self.dst_reg(rd, ctx),
-                            VReg::Imm(0),
-                            SrcOperand::Reg(self.arm_reg(rm)),
-                            self.reg_width(rd),
-                        )
+                let (dst, src1, src2, width) =
+                    if matches!(insn.mnemonic, Mnemonic::NGC | Mnemonic::NGCS) {
+                        if let (Some(Operand::Reg(rd)), Some(Operand::Reg(rm))) =
+                            (insn.operands.get(0), insn.operands.get(1))
+                        {
+                            (
+                                self.dst_reg(rd, ctx),
+                                VReg::Imm(0),
+                                SrcOperand::Reg(self.arm_reg(rm)),
+                                self.reg_width(rd),
+                            )
+                        } else {
+                            return Err(LiftError::Internal("invalid ngc operands".to_string()));
+                        }
                     } else {
-                        return Err(LiftError::Internal("invalid ngc operands".to_string()));
-                    }
-                } else {
-                    self.parse_arith_operands(insn, ctx)?
-                };
+                        self.parse_arith_operands(insn, ctx)?
+                    };
                 let flags = if insn.sets_flags {
                     FlagUpdate::All
                 } else {
@@ -1000,8 +997,7 @@ impl Aarch64Lifter {
                             flags: FlagUpdate::None,
                         });
                     } else {
-                        let acc = if matches!(insn.mnemonic, Mnemonic::SMNEGL | Mnemonic::UMNEGL)
-                        {
+                        let acc = if matches!(insn.mnemonic, Mnemonic::SMNEGL | Mnemonic::UMNEGL) {
                             VReg::Imm(0)
                         } else {
                             let Some(Operand::Reg(ra)) = insn.operands.get(3) else {
@@ -4308,81 +4304,80 @@ impl Aarch64Lifter {
 
         // Canonical CS* mnemonics transform the false operand. Alias mnemonics
         // carry the user-visible inverted condition, so they transform on true.
-        let (rd, src_true_base, transform_base, transform_op, cond, transform_on_true) =
-            match insn.mnemonic {
-                Mnemonic::CSEL | Mnemonic::CSINC | Mnemonic::CSINV | Mnemonic::CSNEG => {
-                    let (rd, rn, rm, cond) = match (
-                        insn.operands.get(0),
-                        insn.operands.get(1),
-                        insn.operands.get(2),
-                        insn.operands.get(3),
-                    ) {
-                        (
-                            Some(Operand::Reg(rd)),
-                            Some(Operand::Reg(rn)),
-                            Some(Operand::Reg(rm)),
-                            Some(Operand::Cond(cond)),
-                        ) => (*rd, *rn, *rm, *cond),
-                        _ => return Err(invalid()),
-                    };
-                    let false_op = match insn.mnemonic {
-                        Mnemonic::CSEL => CondSelectFalseOp::Identity,
-                        Mnemonic::CSINC => CondSelectFalseOp::Increment,
-                        Mnemonic::CSINV => CondSelectFalseOp::Invert,
-                        Mnemonic::CSNEG => CondSelectFalseOp::Negate,
-                        _ => unreachable!(),
-                    };
+        let (rd, src_true_base, transform_base, transform_op, cond, transform_on_true) = match insn
+            .mnemonic
+        {
+            Mnemonic::CSEL | Mnemonic::CSINC | Mnemonic::CSINV | Mnemonic::CSNEG => {
+                let (rd, rn, rm, cond) = match (
+                    insn.operands.get(0),
+                    insn.operands.get(1),
+                    insn.operands.get(2),
+                    insn.operands.get(3),
+                ) {
                     (
-                        rd,
-                        self.arm_reg(&rn),
-                        self.arm_reg(&rm),
-                        false_op,
-                        cond,
-                        false,
-                    )
-                }
-                Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG => {
-                    let (rd, rn, cond) = match (
-                        insn.operands.get(0),
-                        insn.operands.get(1),
-                        insn.operands.get(2),
-                    ) {
-                        (
-                            Some(Operand::Reg(rd)),
-                            Some(Operand::Reg(rn)),
-                            Some(Operand::Cond(cond)),
-                        ) => (*rd, *rn, *cond),
-                        _ => return Err(invalid()),
-                    };
-                    let false_op = match insn.mnemonic {
-                        Mnemonic::CINC => CondSelectFalseOp::Increment,
-                        Mnemonic::CINV => CondSelectFalseOp::Invert,
-                        Mnemonic::CNEG => CondSelectFalseOp::Negate,
-                        _ => unreachable!(),
-                    };
-                    (
-                        rd,
-                        self.arm_reg(&rn),
-                        self.arm_reg(&rn),
-                        false_op,
-                        cond,
-                        true,
-                    )
-                }
-                Mnemonic::CSET | Mnemonic::CSETM => {
-                    let (rd, cond) = match (insn.operands.get(0), insn.operands.get(1)) {
-                        (Some(Operand::Reg(rd)), Some(Operand::Cond(cond))) => (*rd, *cond),
-                        _ => return Err(invalid()),
-                    };
-                    let false_op = if insn.mnemonic == Mnemonic::CSET {
-                        CondSelectFalseOp::Increment
-                    } else {
-                        CondSelectFalseOp::Invert
-                    };
-                    (rd, VReg::Imm(0), VReg::Imm(0), false_op, cond, true)
-                }
-                _ => return Err(invalid()),
-            };
+                        Some(Operand::Reg(rd)),
+                        Some(Operand::Reg(rn)),
+                        Some(Operand::Reg(rm)),
+                        Some(Operand::Cond(cond)),
+                    ) => (*rd, *rn, *rm, *cond),
+                    _ => return Err(invalid()),
+                };
+                let false_op = match insn.mnemonic {
+                    Mnemonic::CSEL => CondSelectFalseOp::Identity,
+                    Mnemonic::CSINC => CondSelectFalseOp::Increment,
+                    Mnemonic::CSINV => CondSelectFalseOp::Invert,
+                    Mnemonic::CSNEG => CondSelectFalseOp::Negate,
+                    _ => unreachable!(),
+                };
+                (
+                    rd,
+                    self.arm_reg(&rn),
+                    self.arm_reg(&rm),
+                    false_op,
+                    cond,
+                    false,
+                )
+            }
+            Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG => {
+                let (rd, rn, cond) = match (
+                    insn.operands.get(0),
+                    insn.operands.get(1),
+                    insn.operands.get(2),
+                ) {
+                    (Some(Operand::Reg(rd)), Some(Operand::Reg(rn)), Some(Operand::Cond(cond))) => {
+                        (*rd, *rn, *cond)
+                    }
+                    _ => return Err(invalid()),
+                };
+                let false_op = match insn.mnemonic {
+                    Mnemonic::CINC => CondSelectFalseOp::Increment,
+                    Mnemonic::CINV => CondSelectFalseOp::Invert,
+                    Mnemonic::CNEG => CondSelectFalseOp::Negate,
+                    _ => unreachable!(),
+                };
+                (
+                    rd,
+                    self.arm_reg(&rn),
+                    self.arm_reg(&rn),
+                    false_op,
+                    cond,
+                    true,
+                )
+            }
+            Mnemonic::CSET | Mnemonic::CSETM => {
+                let (rd, cond) = match (insn.operands.get(0), insn.operands.get(1)) {
+                    (Some(Operand::Reg(rd)), Some(Operand::Cond(cond))) => (*rd, *cond),
+                    _ => return Err(invalid()),
+                };
+                let false_op = if insn.mnemonic == Mnemonic::CSET {
+                    CondSelectFalseOp::Increment
+                } else {
+                    CondSelectFalseOp::Invert
+                };
+                (rd, VReg::Imm(0), VReg::Imm(0), false_op, cond, true)
+            }
+            _ => return Err(invalid()),
+        };
 
         let dst = self.dst_reg(&rd, ctx);
         let width = self.reg_width(&rd);
@@ -5538,8 +5533,7 @@ mod tests {
     #[test]
     fn test_lift_unprivileged_load_store_forms() {
         fn unprivileged(size: u32, opc: u32) -> [u8; 4] {
-            ((size << 30) | (0b111 << 27) | (opc << 22) | (0b10 << 10) | (1 << 5))
-                .to_le_bytes()
+            ((size << 30) | (0b111 << 27) | (opc << 22) | (0b10 << 10) | (1 << 5)).to_le_bytes()
         }
 
         let (ops, _) = lift_single(unprivileged(0b11, 0b01));
@@ -5904,7 +5898,12 @@ mod tests {
 
     #[test]
     fn issue_44_rejects_tag_generation_lifts() {
-        for mnemonic in [Mnemonic::SUBP, Mnemonic::SUBPS, Mnemonic::IRG, Mnemonic::GMI] {
+        for mnemonic in [
+            Mnemonic::SUBP,
+            Mnemonic::SUBPS,
+            Mnemonic::IRG,
+            Mnemonic::GMI,
+        ] {
             assert_mnemonic_unsupported(mnemonic);
         }
     }
@@ -5920,7 +5919,7 @@ mod tests {
                 | (0b11111 << 10)
                 | (1 << 5)
                 | 4)
-                .to_le_bytes()
+            .to_le_bytes()
         }
 
         for (l, o0) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
@@ -6043,10 +6042,7 @@ mod tests {
                 num: 1,
                 size: FpRegSize::S,
             }));
-        let ops = lifter
-            .lift_insn_inner(&insn, 0x1000, &mut ctx)
-            .unwrap()
-            .0;
+        let ops = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap().0;
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FpToInt {
@@ -6078,10 +6074,7 @@ mod tests {
                 num: 1,
                 size: FpRegSize::D,
             }));
-        let ops = lifter
-            .lift_insn_inner(&insn, 0x1000, &mut ctx)
-            .unwrap()
-            .0;
+        let ops = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap().0;
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
             OpKind::FpToInt {

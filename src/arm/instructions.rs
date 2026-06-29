@@ -370,9 +370,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::DGH
             | Mnemonic::BTI
             | Mnemonic::WFET
-            | Mnemonic::WFIT => {
-                ExecResult::Continue
-            }
+            | Mnemonic::WFIT => ExecResult::Continue,
             Mnemonic::WFI | Mnemonic::WFE => ExecResult::Halt,
             Mnemonic::CPS => self.exec_cps(insn),
             Mnemonic::SRS => self.exec_srs(insn),
@@ -383,9 +381,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::MRS => self.exec_mrs(insn),
             Mnemonic::MSR => self.exec_msr(insn),
             // Memory barriers
-            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB | Mnemonic::SB => {
-                ExecResult::Continue
-            },
+            Mnemonic::DMB | Mnemonic::DSB | Mnemonic::ISB | Mnemonic::SB => ExecResult::Continue,
             Mnemonic::IT => self.exec_it(insn),
 
             // Coprocessor
@@ -10285,11 +10281,7 @@ mod tests {
         cpu.regs[0] = 0xffff_ffff;
         let original_sctlr = cpu.cp15.sctlr.bits();
 
-        let insn = make_insn(
-            Mnemonic::MCR,
-            cp15_transfer_raw(0, 1, 0, 0, 0),
-            false,
-        );
+        let insn = make_insn(Mnemonic::MCR, cp15_transfer_raw(0, 1, 0, 0, 0), false);
         let mut exec = Executor::new(&mut cpu, &mut mem);
         let result = exec.execute(&insn);
 
@@ -10306,11 +10298,7 @@ mod tests {
         cpu.cp15.ttbr0 = 0x1234_5000;
         cpu.regs[1] = 0xdead_beef;
 
-        let insn = make_insn(
-            Mnemonic::MRC,
-            cp15_transfer_raw(1, 2, 0, 0, 0),
-            false,
-        );
+        let insn = make_insn(Mnemonic::MRC, cp15_transfer_raw(1, 2, 0, 0, 0), false);
         let mut exec = Executor::new(&mut cpu, &mut mem);
         let result = exec.execute(&insn);
 
@@ -10326,20 +10314,12 @@ mod tests {
         cpu.cpsr.mode = ProcessorMode::Supervisor as u8;
         cpu.regs[0] = 0x1;
 
-        let write_sctlr = make_insn(
-            Mnemonic::MCR,
-            cp15_transfer_raw(0, 1, 0, 0, 0),
-            false,
-        );
+        let write_sctlr = make_insn(Mnemonic::MCR, cp15_transfer_raw(0, 1, 0, 0, 0), false);
         let mut exec = Executor::new(&mut cpu, &mut mem);
         let result = exec.execute(&write_sctlr);
         assert!(matches!(result, ExecResult::Continue));
 
-        let read_sctlr = make_insn(
-            Mnemonic::MRC,
-            cp15_transfer_raw(1, 1, 0, 0, 0),
-            false,
-        );
+        let read_sctlr = make_insn(Mnemonic::MRC, cp15_transfer_raw(1, 1, 0, 0, 0), false);
         let result = exec.execute(&read_sctlr);
 
         assert!(matches!(result, ExecResult::Continue));

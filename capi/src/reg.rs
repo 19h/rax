@@ -15,7 +15,7 @@ use std::os::raw::c_int;
 use rax_engine::cpu::{CpuState, Registers, Segment, SystemRegisters};
 
 use crate::arch::RaxArch;
-use crate::engine::{engine_mut, engine_ref, Engine};
+use crate::engine::{Engine, engine_mut, engine_ref};
 use crate::guard;
 use crate::status::RaxStatus;
 

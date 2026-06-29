@@ -1002,10 +1002,7 @@ pub fn is_aarch64_native_clobber_safe_excluding(
     excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
-    let blocks = func
-        .blocks
-        .iter()
-        .filter(|b| !excluded.contains_key(&b.id));
+    let blocks = func.blocks.iter().filter(|b| !excluded.contains_key(&b.id));
     let mut uses_fp_trampoline = false;
     let mut uses_mem_helper = false;
     for block in blocks {
@@ -1052,9 +1049,7 @@ fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ops::OpKind) -> bool {
     use crate::smir::ops::OpKind;
 
     let touches_raw_fp_sysreg = match op {
-        OpKind::ReadSysReg { reg, .. } | OpKind::WriteSysReg { reg, .. } => {
-            aarch64_fp_sysreg(*reg)
-        }
+        OpKind::ReadSysReg { reg, .. } | OpKind::WriteSysReg { reg, .. } => aarch64_fp_sysreg(*reg),
         _ => false,
     };
 
@@ -1468,7 +1463,10 @@ mod jit_gate_tests {
                 flags: FlagUpdate::All,
             },
         ] {
-            assert!(!gate(op), "ADC/SBB with dst==src2 must deopt to the interpreter");
+            assert!(
+                !gate(op),
+                "ADC/SBB with dst==src2 must deopt to the interpreter"
+            );
         }
 
         // A non-aliased ADC (dst != src2) stays native-eligible.

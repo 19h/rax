@@ -1543,8 +1543,7 @@ impl Vmm {
                 {
                     if !data.is_empty() {
                         if let Some(vcpu) = self.vcpus.get_mut(0) {
-                            let end =
-                                addr.saturating_add(data.len().saturating_sub(1) as u64);
+                            let end = addr.saturating_add(data.len().saturating_sub(1) as u64);
                             let end_page = end & !0xFFF;
                             let mut page = addr & !0xFFF;
                             loop {

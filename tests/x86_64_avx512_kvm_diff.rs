@@ -35,8 +35,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
 
 #[path = "x86_64/common/mod.rs"]
 mod common;
@@ -996,7 +996,10 @@ fn install_exception_trap_kvm(mem: &KvmMem, vector: usize) {
 
     let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
     mem.write(EXCEPTION_IDT_ADDR + (vector as u64) * 16, &gate);
-    mem.write(EXCEPTION_HANDLER_ADDR, &store_marker_code(exception_marker(vector)));
+    mem.write(
+        EXCEPTION_HANDLER_ADDR,
+        &store_marker_code(exception_marker(vector)),
+    );
 }
 
 fn install_exception_trap_interp(mem: &GuestMemoryMmap, vector: usize) -> Result<(), String> {
@@ -1706,7 +1709,9 @@ const INT_SAT_EDGES: [u32; 16] = [
     0x8000_0000,
 ];
 
-const INT_SHIFT_COUNTS: [u32; 16] = [0, 1, 7, 8, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 255];
+const INT_SHIFT_COUNTS: [u32; 16] = [
+    0, 1, 7, 8, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 255,
+];
 const INT_PREDICATE_EDGE_BASE: [u32; 16] = [
     0x0000_0000,
     0x0000_0000,
@@ -4374,7 +4379,11 @@ fn irregular_cases() -> Vec<Case> {
     }
 
     for &(label, asm, profile) in &[
-        ("vdpbf16ps_bf16_edge_reg", "vdpbf16ps %zmm2, %zmm3, %zmm1", F32Edge),
+        (
+            "vdpbf16ps_bf16_edge_reg",
+            "vdpbf16ps %zmm2, %zmm3, %zmm1",
+            F32Edge,
+        ),
         (
             "vdpbf16ps_bf16_edge_mem",
             "vdpbf16ps 64(%rax), %zmm3, %zmm1",
@@ -4440,28 +4449,116 @@ fn irregular_cases() -> Vec<Case> {
     }
 
     for &(label, asm, profile) in &[
-        ("vminph_fp16_edge_minmax_reg", "vminph %zmm2, %zmm3, %zmm1", F16Edge),
-        ("vminph_fp16_edge_minmax_mem", "vminph 64(%rax), %zmm3, %zmm1", F16Edge),
-        ("vmaxph_fp16_edge_minmax_reg", "vmaxph %zmm2, %zmm3, %zmm1", F16Edge),
-        ("vmaxph_fp16_edge_minmax_mem", "vmaxph 64(%rax), %zmm3, %zmm1", F16Edge),
-        ("vminsh_fp16_edge_minmax_reg", "vminsh %xmm2, %xmm3, %xmm1", F16Edge),
-        ("vminsh_fp16_edge_minmax_mem", "vminsh 22(%rax), %xmm3, %xmm1", F16Edge),
-        ("vmaxsh_fp16_edge_minmax_reg", "vmaxsh %xmm2, %xmm3, %xmm1", F16Edge),
-        ("vmaxsh_fp16_edge_minmax_mem", "vmaxsh 22(%rax), %xmm3, %xmm1", F16Edge),
-        ("vsqrtph_fp16_edge_sqrt_reg", "vsqrtph %zmm3, %zmm1", F16SqrtEdge),
-        ("vsqrtph_fp16_edge_sqrt_mem", "vsqrtph 64(%rax), %zmm1", F16SqrtEdge),
-        ("vsqrtsh_fp16_edge_sqrt_reg", "vsqrtsh %xmm2, %xmm3, %xmm1", F16SqrtEdge),
-        ("vsqrtsh_fp16_edge_sqrt_mem", "vsqrtsh 32(%rax), %xmm3, %xmm1", F16SqrtEdge),
-        ("vcomish_fp16_edge_compare_qnan_mem", "vcomish 22(%rax), %xmm1", F16Edge),
-        ("vucomish_fp16_edge_compare_qnan_mem", "vucomish 22(%rax), %xmm1", F16Edge),
-        ("vcmpph_fp16_edge_compare_unord_reg", "vcmpph $0x03, %zmm2, %zmm3, %k5", F16Edge),
-        ("vcmpph_fp16_edge_compare_ord_mem", "vcmpph $0x07, 64(%rax), %zmm3, %k5", F16Edge),
-        ("vcmpsh_fp16_edge_compare_unord_reg", "vcmpsh $0x03, %xmm2, %xmm3, %k5", F16Edge),
-        ("vcmpsh_fp16_edge_compare_ord_mem", "vcmpsh $0x07, 22(%rax), %xmm3, %k5", F16Edge),
-        ("vfpclassph_fp16_edge_class_reg", "vfpclassph $0x7f, %zmm3, %k5", F16Edge),
-        ("vfpclassph_fp16_edge_class_merge", "vfpclassph $0x7f, %zmm3, %k5 {%k1}", F16Edge),
-        ("vfpclasssh_fp16_edge_class_reg", "vfpclasssh $0x7f, %xmm2, %k5", F16Edge),
-        ("vfpclasssh_fp16_edge_class_mem", "vfpclasssh $0x7f, 22(%rax), %k5", F16Edge),
+        (
+            "vminph_fp16_edge_minmax_reg",
+            "vminph %zmm2, %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vminph_fp16_edge_minmax_mem",
+            "vminph 64(%rax), %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vmaxph_fp16_edge_minmax_reg",
+            "vmaxph %zmm2, %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vmaxph_fp16_edge_minmax_mem",
+            "vmaxph 64(%rax), %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vminsh_fp16_edge_minmax_reg",
+            "vminsh %xmm2, %xmm3, %xmm1",
+            F16Edge,
+        ),
+        (
+            "vminsh_fp16_edge_minmax_mem",
+            "vminsh 22(%rax), %xmm3, %xmm1",
+            F16Edge,
+        ),
+        (
+            "vmaxsh_fp16_edge_minmax_reg",
+            "vmaxsh %xmm2, %xmm3, %xmm1",
+            F16Edge,
+        ),
+        (
+            "vmaxsh_fp16_edge_minmax_mem",
+            "vmaxsh 22(%rax), %xmm3, %xmm1",
+            F16Edge,
+        ),
+        (
+            "vsqrtph_fp16_edge_sqrt_reg",
+            "vsqrtph %zmm3, %zmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vsqrtph_fp16_edge_sqrt_mem",
+            "vsqrtph 64(%rax), %zmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vsqrtsh_fp16_edge_sqrt_reg",
+            "vsqrtsh %xmm2, %xmm3, %xmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vsqrtsh_fp16_edge_sqrt_mem",
+            "vsqrtsh 32(%rax), %xmm3, %xmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vcomish_fp16_edge_compare_qnan_mem",
+            "vcomish 22(%rax), %xmm1",
+            F16Edge,
+        ),
+        (
+            "vucomish_fp16_edge_compare_qnan_mem",
+            "vucomish 22(%rax), %xmm1",
+            F16Edge,
+        ),
+        (
+            "vcmpph_fp16_edge_compare_unord_reg",
+            "vcmpph $0x03, %zmm2, %zmm3, %k5",
+            F16Edge,
+        ),
+        (
+            "vcmpph_fp16_edge_compare_ord_mem",
+            "vcmpph $0x07, 64(%rax), %zmm3, %k5",
+            F16Edge,
+        ),
+        (
+            "vcmpsh_fp16_edge_compare_unord_reg",
+            "vcmpsh $0x03, %xmm2, %xmm3, %k5",
+            F16Edge,
+        ),
+        (
+            "vcmpsh_fp16_edge_compare_ord_mem",
+            "vcmpsh $0x07, 22(%rax), %xmm3, %k5",
+            F16Edge,
+        ),
+        (
+            "vfpclassph_fp16_edge_class_reg",
+            "vfpclassph $0x7f, %zmm3, %k5",
+            F16Edge,
+        ),
+        (
+            "vfpclassph_fp16_edge_class_merge",
+            "vfpclassph $0x7f, %zmm3, %k5 {%k1}",
+            F16Edge,
+        ),
+        (
+            "vfpclasssh_fp16_edge_class_reg",
+            "vfpclasssh $0x7f, %xmm2, %k5",
+            F16Edge,
+        ),
+        (
+            "vfpclasssh_fp16_edge_class_mem",
+            "vfpclasssh $0x7f, 22(%rax), %k5",
+            F16Edge,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -6047,22 +6144,102 @@ fn irregular_cases() -> Vec<Case> {
     }
 
     for &(label, asm, feat, profile) in &[
-        ("minps_sse_minmax_edge_reg", "minps %xmm2, %xmm1", Sse, F32Edge),
-        ("minps_sse_minmax_edge_mem", "minps 32(%rax), %xmm1", Sse, F32Edge),
-        ("minss_sse_minmax_edge_reg", "minss %xmm2, %xmm1", Sse, F32Edge),
-        ("minss_sse_minmax_edge_mem", "minss 32(%rax), %xmm1", Sse, F32Edge),
-        ("maxps_sse_minmax_edge_reg", "maxps %xmm2, %xmm1", Sse, F32Edge),
-        ("maxps_sse_minmax_edge_mem", "maxps 32(%rax), %xmm1", Sse, F32Edge),
-        ("maxss_sse_minmax_edge_reg", "maxss %xmm2, %xmm1", Sse, F32Edge),
-        ("maxss_sse_minmax_edge_mem", "maxss 32(%rax), %xmm1", Sse, F32Edge),
-        ("minpd_sse_minmax_edge_reg", "minpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("minpd_sse_minmax_edge_mem", "minpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("minsd_sse_minmax_edge_reg", "minsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("minsd_sse_minmax_edge_mem", "minsd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("maxpd_sse_minmax_edge_reg", "maxpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("maxpd_sse_minmax_edge_mem", "maxpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("maxsd_sse_minmax_edge_reg", "maxsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("maxsd_sse_minmax_edge_mem", "maxsd 32(%rax), %xmm1", Sse2, F64Edge),
+        (
+            "minps_sse_minmax_edge_reg",
+            "minps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "minps_sse_minmax_edge_mem",
+            "minps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "minss_sse_minmax_edge_reg",
+            "minss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "minss_sse_minmax_edge_mem",
+            "minss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "maxps_sse_minmax_edge_reg",
+            "maxps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "maxps_sse_minmax_edge_mem",
+            "maxps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "maxss_sse_minmax_edge_reg",
+            "maxss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "maxss_sse_minmax_edge_mem",
+            "maxss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "minpd_sse_minmax_edge_reg",
+            "minpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "minpd_sse_minmax_edge_mem",
+            "minpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "minsd_sse_minmax_edge_reg",
+            "minsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "minsd_sse_minmax_edge_mem",
+            "minsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "maxpd_sse_minmax_edge_reg",
+            "maxpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "maxpd_sse_minmax_edge_mem",
+            "maxpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "maxsd_sse_minmax_edge_reg",
+            "maxsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "maxsd_sse_minmax_edge_mem",
+            "maxsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -6077,118 +6254,678 @@ fn irregular_cases() -> Vec<Case> {
     // across legacy destructive SSE, VEX three-operand AVX, EVEX AVX-512, and
     // AVX-512-FP16 forms.
     for &(label, asm, feat, profile) in &[
-        ("addps_sse_simd_fp_arith_edge_reg", "addps %xmm2, %xmm1", Sse, F32Edge),
-        ("addps_sse_simd_fp_arith_edge_mem", "addps 32(%rax), %xmm1", Sse, F32Edge),
-        ("addss_sse_simd_fp_arith_edge_reg", "addss %xmm2, %xmm1", Sse, F32Edge),
-        ("addss_sse_simd_fp_arith_edge_mem", "addss 32(%rax), %xmm1", Sse, F32Edge),
-        ("subps_sse_simd_fp_arith_edge_reg", "subps %xmm2, %xmm1", Sse, F32Edge),
-        ("subps_sse_simd_fp_arith_edge_mem", "subps 32(%rax), %xmm1", Sse, F32Edge),
-        ("subss_sse_simd_fp_arith_edge_reg", "subss %xmm2, %xmm1", Sse, F32Edge),
-        ("subss_sse_simd_fp_arith_edge_mem", "subss 32(%rax), %xmm1", Sse, F32Edge),
-        ("mulps_sse_simd_fp_arith_edge_reg", "mulps %xmm2, %xmm1", Sse, F32Edge),
-        ("mulps_sse_simd_fp_arith_edge_mem", "mulps 32(%rax), %xmm1", Sse, F32Edge),
-        ("mulss_sse_simd_fp_arith_edge_reg", "mulss %xmm2, %xmm1", Sse, F32Edge),
-        ("mulss_sse_simd_fp_arith_edge_mem", "mulss 32(%rax), %xmm1", Sse, F32Edge),
-        ("divps_sse_simd_fp_arith_edge_reg", "divps %xmm2, %xmm1", Sse, F32Edge),
-        ("divps_sse_simd_fp_arith_edge_mem", "divps 32(%rax), %xmm1", Sse, F32Edge),
-        ("divss_sse_simd_fp_arith_edge_reg", "divss %xmm2, %xmm1", Sse, F32Edge),
-        ("divss_sse_simd_fp_arith_edge_mem", "divss 32(%rax), %xmm1", Sse, F32Edge),
-        ("addpd_sse2_simd_fp_arith_edge_reg", "addpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("addpd_sse2_simd_fp_arith_edge_mem", "addpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("addsd_sse2_simd_fp_arith_edge_reg", "addsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("addsd_sse2_simd_fp_arith_edge_mem", "addsd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("subpd_sse2_simd_fp_arith_edge_reg", "subpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("subpd_sse2_simd_fp_arith_edge_mem", "subpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("subsd_sse2_simd_fp_arith_edge_reg", "subsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("subsd_sse2_simd_fp_arith_edge_mem", "subsd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("mulpd_sse2_simd_fp_arith_edge_reg", "mulpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("mulpd_sse2_simd_fp_arith_edge_mem", "mulpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("mulsd_sse2_simd_fp_arith_edge_reg", "mulsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("mulsd_sse2_simd_fp_arith_edge_mem", "mulsd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("divpd_sse2_simd_fp_arith_edge_reg", "divpd %xmm2, %xmm1", Sse2, F64Edge),
-        ("divpd_sse2_simd_fp_arith_edge_mem", "divpd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("divsd_sse2_simd_fp_arith_edge_reg", "divsd %xmm2, %xmm1", Sse2, F64Edge),
-        ("divsd_sse2_simd_fp_arith_edge_mem", "divsd 32(%rax), %xmm1", Sse2, F64Edge),
-        ("vaddps_avx_simd_fp_arith_edge_reg", "{vex} vaddps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
-        ("vaddps_avx_simd_fp_arith_edge_mem", "{vex} vaddps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vaddss_avx_simd_fp_arith_edge_reg", "{vex} vaddss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
-        ("vaddss_avx_simd_fp_arith_edge_mem", "{vex} vaddss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vsubps_avx_simd_fp_arith_edge_reg", "{vex} vsubps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
-        ("vsubps_avx_simd_fp_arith_edge_mem", "{vex} vsubps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vsubss_avx_simd_fp_arith_edge_reg", "{vex} vsubss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
-        ("vsubss_avx_simd_fp_arith_edge_mem", "{vex} vsubss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vmulps_avx_simd_fp_arith_edge_reg", "{vex} vmulps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
-        ("vmulps_avx_simd_fp_arith_edge_mem", "{vex} vmulps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vmulss_avx_simd_fp_arith_edge_reg", "{vex} vmulss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
-        ("vmulss_avx_simd_fp_arith_edge_mem", "{vex} vmulss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vdivps_avx_simd_fp_arith_edge_reg", "{vex} vdivps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
-        ("vdivps_avx_simd_fp_arith_edge_mem", "{vex} vdivps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vdivss_avx_simd_fp_arith_edge_reg", "{vex} vdivss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
-        ("vdivss_avx_simd_fp_arith_edge_mem", "{vex} vdivss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vaddpd_avx_simd_fp_arith_edge_reg", "{vex} vaddpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
-        ("vaddpd_avx_simd_fp_arith_edge_mem", "{vex} vaddpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vaddsd_avx_simd_fp_arith_edge_reg", "{vex} vaddsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
-        ("vaddsd_avx_simd_fp_arith_edge_mem", "{vex} vaddsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vsubpd_avx_simd_fp_arith_edge_reg", "{vex} vsubpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
-        ("vsubpd_avx_simd_fp_arith_edge_mem", "{vex} vsubpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vsubsd_avx_simd_fp_arith_edge_reg", "{vex} vsubsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
-        ("vsubsd_avx_simd_fp_arith_edge_mem", "{vex} vsubsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vmulpd_avx_simd_fp_arith_edge_reg", "{vex} vmulpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
-        ("vmulpd_avx_simd_fp_arith_edge_mem", "{vex} vmulpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vmulsd_avx_simd_fp_arith_edge_reg", "{vex} vmulsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
-        ("vmulsd_avx_simd_fp_arith_edge_mem", "{vex} vmulsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vdivpd_avx_simd_fp_arith_edge_reg", "{vex} vdivpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
-        ("vdivpd_avx_simd_fp_arith_edge_mem", "{vex} vdivpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vdivsd_avx_simd_fp_arith_edge_reg", "{vex} vdivsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
-        ("vdivsd_avx_simd_fp_arith_edge_mem", "{vex} vdivsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vaddps_avx512_simd_fp_arith_edge_reg", "{evex} vaddps %zmm2, %zmm3, %zmm1", F, F32Edge),
-        ("vaddps_avx512_simd_fp_arith_edge_mem", "{evex} vaddps 64(%rax), %zmm3, %zmm1", F, F32Edge),
-        ("vaddss_avx512_simd_fp_arith_edge_reg", "{evex} vaddss %xmm2, %xmm3, %xmm1", F, F32Edge),
-        ("vaddss_avx512_simd_fp_arith_edge_mem", "{evex} vaddss 32(%rax), %xmm3, %xmm1", F, F32Edge),
-        ("vsubps_avx512_simd_fp_arith_edge_reg", "{evex} vsubps %zmm2, %zmm3, %zmm1", F, F32Edge),
-        ("vsubps_avx512_simd_fp_arith_edge_mem", "{evex} vsubps 64(%rax), %zmm3, %zmm1", F, F32Edge),
-        ("vsubss_avx512_simd_fp_arith_edge_reg", "{evex} vsubss %xmm2, %xmm3, %xmm1", F, F32Edge),
-        ("vsubss_avx512_simd_fp_arith_edge_mem", "{evex} vsubss 32(%rax), %xmm3, %xmm1", F, F32Edge),
-        ("vmulps_avx512_simd_fp_arith_edge_reg", "{evex} vmulps %zmm2, %zmm3, %zmm1", F, F32Edge),
-        ("vmulps_avx512_simd_fp_arith_edge_mem", "{evex} vmulps 64(%rax), %zmm3, %zmm1", F, F32Edge),
-        ("vmulss_avx512_simd_fp_arith_edge_reg", "{evex} vmulss %xmm2, %xmm3, %xmm1", F, F32Edge),
-        ("vmulss_avx512_simd_fp_arith_edge_mem", "{evex} vmulss 32(%rax), %xmm3, %xmm1", F, F32Edge),
-        ("vdivps_avx512_simd_fp_arith_edge_reg", "{evex} vdivps %zmm2, %zmm3, %zmm1", F, F32Edge),
-        ("vdivps_avx512_simd_fp_arith_edge_mem", "{evex} vdivps 64(%rax), %zmm3, %zmm1", F, F32Edge),
-        ("vdivss_avx512_simd_fp_arith_edge_reg", "{evex} vdivss %xmm2, %xmm3, %xmm1", F, F32Edge),
-        ("vdivss_avx512_simd_fp_arith_edge_mem", "{evex} vdivss 32(%rax), %xmm3, %xmm1", F, F32Edge),
-        ("vaddpd_avx512_simd_fp_arith_edge_reg", "{evex} vaddpd %zmm2, %zmm3, %zmm1", F, F64Edge),
-        ("vaddpd_avx512_simd_fp_arith_edge_mem", "{evex} vaddpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
-        ("vaddsd_avx512_simd_fp_arith_edge_reg", "{evex} vaddsd %xmm2, %xmm3, %xmm1", F, F64Edge),
-        ("vaddsd_avx512_simd_fp_arith_edge_mem", "{evex} vaddsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
-        ("vsubpd_avx512_simd_fp_arith_edge_reg", "{evex} vsubpd %zmm2, %zmm3, %zmm1", F, F64Edge),
-        ("vsubpd_avx512_simd_fp_arith_edge_mem", "{evex} vsubpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
-        ("vsubsd_avx512_simd_fp_arith_edge_reg", "{evex} vsubsd %xmm2, %xmm3, %xmm1", F, F64Edge),
-        ("vsubsd_avx512_simd_fp_arith_edge_mem", "{evex} vsubsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
-        ("vmulpd_avx512_simd_fp_arith_edge_reg", "{evex} vmulpd %zmm2, %zmm3, %zmm1", F, F64Edge),
-        ("vmulpd_avx512_simd_fp_arith_edge_mem", "{evex} vmulpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
-        ("vmulsd_avx512_simd_fp_arith_edge_reg", "{evex} vmulsd %xmm2, %xmm3, %xmm1", F, F64Edge),
-        ("vmulsd_avx512_simd_fp_arith_edge_mem", "{evex} vmulsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
-        ("vdivpd_avx512_simd_fp_arith_edge_reg", "{evex} vdivpd %zmm2, %zmm3, %zmm1", F, F64Edge),
-        ("vdivpd_avx512_simd_fp_arith_edge_mem", "{evex} vdivpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
-        ("vdivsd_avx512_simd_fp_arith_edge_reg", "{evex} vdivsd %xmm2, %xmm3, %xmm1", F, F64Edge),
-        ("vdivsd_avx512_simd_fp_arith_edge_mem", "{evex} vdivsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
-        ("vaddph_fp16_simd_fp_arith_edge_reg", "vaddph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
-        ("vaddph_fp16_simd_fp_arith_edge_mem", "vaddph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
-        ("vaddsh_fp16_simd_fp_arith_edge_reg", "vaddsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
-        ("vaddsh_fp16_simd_fp_arith_edge_mem", "vaddsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
-        ("vsubph_fp16_simd_fp_arith_edge_reg", "vsubph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
-        ("vsubph_fp16_simd_fp_arith_edge_mem", "vsubph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
-        ("vsubsh_fp16_simd_fp_arith_edge_reg", "vsubsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
-        ("vsubsh_fp16_simd_fp_arith_edge_mem", "vsubsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
-        ("vmulph_fp16_simd_fp_arith_edge_reg", "vmulph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
-        ("vmulph_fp16_simd_fp_arith_edge_mem", "vmulph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
-        ("vmulsh_fp16_simd_fp_arith_edge_reg", "vmulsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
-        ("vmulsh_fp16_simd_fp_arith_edge_mem", "vmulsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
-        ("vdivph_fp16_simd_fp_arith_edge_reg", "vdivph %zmm2, %zmm3, %zmm1", Fp16, F16Edge),
-        ("vdivph_fp16_simd_fp_arith_edge_mem", "vdivph 64(%rax), %zmm3, %zmm1", Fp16, F16Edge),
-        ("vdivsh_fp16_simd_fp_arith_edge_reg", "vdivsh %xmm2, %xmm3, %xmm1", Fp16, F16Edge),
-        ("vdivsh_fp16_simd_fp_arith_edge_mem", "vdivsh 22(%rax), %xmm3, %xmm1", Fp16, F16Edge),
+        (
+            "addps_sse_simd_fp_arith_edge_reg",
+            "addps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "addps_sse_simd_fp_arith_edge_mem",
+            "addps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "addss_sse_simd_fp_arith_edge_reg",
+            "addss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "addss_sse_simd_fp_arith_edge_mem",
+            "addss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "subps_sse_simd_fp_arith_edge_reg",
+            "subps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "subps_sse_simd_fp_arith_edge_mem",
+            "subps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "subss_sse_simd_fp_arith_edge_reg",
+            "subss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "subss_sse_simd_fp_arith_edge_mem",
+            "subss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "mulps_sse_simd_fp_arith_edge_reg",
+            "mulps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "mulps_sse_simd_fp_arith_edge_mem",
+            "mulps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "mulss_sse_simd_fp_arith_edge_reg",
+            "mulss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "mulss_sse_simd_fp_arith_edge_mem",
+            "mulss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "divps_sse_simd_fp_arith_edge_reg",
+            "divps %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "divps_sse_simd_fp_arith_edge_mem",
+            "divps 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "divss_sse_simd_fp_arith_edge_reg",
+            "divss %xmm2, %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "divss_sse_simd_fp_arith_edge_mem",
+            "divss 32(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "addpd_sse2_simd_fp_arith_edge_reg",
+            "addpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "addpd_sse2_simd_fp_arith_edge_mem",
+            "addpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "addsd_sse2_simd_fp_arith_edge_reg",
+            "addsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "addsd_sse2_simd_fp_arith_edge_mem",
+            "addsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "subpd_sse2_simd_fp_arith_edge_reg",
+            "subpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "subpd_sse2_simd_fp_arith_edge_mem",
+            "subpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "subsd_sse2_simd_fp_arith_edge_reg",
+            "subsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "subsd_sse2_simd_fp_arith_edge_mem",
+            "subsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "mulpd_sse2_simd_fp_arith_edge_reg",
+            "mulpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "mulpd_sse2_simd_fp_arith_edge_mem",
+            "mulpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "mulsd_sse2_simd_fp_arith_edge_reg",
+            "mulsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "mulsd_sse2_simd_fp_arith_edge_mem",
+            "mulsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "divpd_sse2_simd_fp_arith_edge_reg",
+            "divpd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "divpd_sse2_simd_fp_arith_edge_mem",
+            "divpd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "divsd_sse2_simd_fp_arith_edge_reg",
+            "divsd %xmm2, %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "divsd_sse2_simd_fp_arith_edge_mem",
+            "divsd 32(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "vaddps_avx_simd_fp_arith_edge_reg",
+            "{vex} vaddps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vaddps_avx_simd_fp_arith_edge_mem",
+            "{vex} vaddps 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vaddss_avx_simd_fp_arith_edge_reg",
+            "{vex} vaddss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vaddss_avx_simd_fp_arith_edge_mem",
+            "{vex} vaddss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vsubps_avx_simd_fp_arith_edge_reg",
+            "{vex} vsubps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vsubps_avx_simd_fp_arith_edge_mem",
+            "{vex} vsubps 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vsubss_avx_simd_fp_arith_edge_reg",
+            "{vex} vsubss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vsubss_avx_simd_fp_arith_edge_mem",
+            "{vex} vsubss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmulps_avx_simd_fp_arith_edge_reg",
+            "{vex} vmulps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmulps_avx_simd_fp_arith_edge_mem",
+            "{vex} vmulps 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmulss_avx_simd_fp_arith_edge_reg",
+            "{vex} vmulss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmulss_avx_simd_fp_arith_edge_mem",
+            "{vex} vmulss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vdivps_avx_simd_fp_arith_edge_reg",
+            "{vex} vdivps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vdivps_avx_simd_fp_arith_edge_mem",
+            "{vex} vdivps 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vdivss_avx_simd_fp_arith_edge_reg",
+            "{vex} vdivss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vdivss_avx_simd_fp_arith_edge_mem",
+            "{vex} vdivss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vaddpd_avx_simd_fp_arith_edge_reg",
+            "{vex} vaddpd %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vaddpd_avx_simd_fp_arith_edge_mem",
+            "{vex} vaddpd 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vaddsd_avx_simd_fp_arith_edge_reg",
+            "{vex} vaddsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vaddsd_avx_simd_fp_arith_edge_mem",
+            "{vex} vaddsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vsubpd_avx_simd_fp_arith_edge_reg",
+            "{vex} vsubpd %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vsubpd_avx_simd_fp_arith_edge_mem",
+            "{vex} vsubpd 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vsubsd_avx_simd_fp_arith_edge_reg",
+            "{vex} vsubsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vsubsd_avx_simd_fp_arith_edge_mem",
+            "{vex} vsubsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmulpd_avx_simd_fp_arith_edge_reg",
+            "{vex} vmulpd %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmulpd_avx_simd_fp_arith_edge_mem",
+            "{vex} vmulpd 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmulsd_avx_simd_fp_arith_edge_reg",
+            "{vex} vmulsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmulsd_avx_simd_fp_arith_edge_mem",
+            "{vex} vmulsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vdivpd_avx_simd_fp_arith_edge_reg",
+            "{vex} vdivpd %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vdivpd_avx_simd_fp_arith_edge_mem",
+            "{vex} vdivpd 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vdivsd_avx_simd_fp_arith_edge_reg",
+            "{vex} vdivsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vdivsd_avx_simd_fp_arith_edge_mem",
+            "{vex} vdivsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vaddps_avx512_simd_fp_arith_edge_reg",
+            "{evex} vaddps %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vaddps_avx512_simd_fp_arith_edge_mem",
+            "{evex} vaddps 64(%rax), %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vaddss_avx512_simd_fp_arith_edge_reg",
+            "{evex} vaddss %xmm2, %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vaddss_avx512_simd_fp_arith_edge_mem",
+            "{evex} vaddss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vsubps_avx512_simd_fp_arith_edge_reg",
+            "{evex} vsubps %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vsubps_avx512_simd_fp_arith_edge_mem",
+            "{evex} vsubps 64(%rax), %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vsubss_avx512_simd_fp_arith_edge_reg",
+            "{evex} vsubss %xmm2, %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vsubss_avx512_simd_fp_arith_edge_mem",
+            "{evex} vsubss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmulps_avx512_simd_fp_arith_edge_reg",
+            "{evex} vmulps %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmulps_avx512_simd_fp_arith_edge_mem",
+            "{evex} vmulps 64(%rax), %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmulss_avx512_simd_fp_arith_edge_reg",
+            "{evex} vmulss %xmm2, %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmulss_avx512_simd_fp_arith_edge_mem",
+            "{evex} vmulss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vdivps_avx512_simd_fp_arith_edge_reg",
+            "{evex} vdivps %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vdivps_avx512_simd_fp_arith_edge_mem",
+            "{evex} vdivps 64(%rax), %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vdivss_avx512_simd_fp_arith_edge_reg",
+            "{evex} vdivss %xmm2, %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vdivss_avx512_simd_fp_arith_edge_mem",
+            "{evex} vdivss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vaddpd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vaddpd %zmm2, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vaddpd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vaddpd 64(%rax), %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vaddsd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vaddsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vaddsd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vaddsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vsubpd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vsubpd %zmm2, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vsubpd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vsubpd 64(%rax), %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vsubsd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vsubsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vsubsd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vsubsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmulpd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vmulpd %zmm2, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmulpd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vmulpd 64(%rax), %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmulsd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vmulsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmulsd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vmulsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vdivpd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vdivpd %zmm2, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vdivpd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vdivpd 64(%rax), %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vdivsd_avx512_simd_fp_arith_edge_reg",
+            "{evex} vdivsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vdivsd_avx512_simd_fp_arith_edge_mem",
+            "{evex} vdivsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vaddph_fp16_simd_fp_arith_edge_reg",
+            "vaddph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vaddph_fp16_simd_fp_arith_edge_mem",
+            "vaddph 64(%rax), %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vaddsh_fp16_simd_fp_arith_edge_reg",
+            "vaddsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vaddsh_fp16_simd_fp_arith_edge_mem",
+            "vaddsh 22(%rax), %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vsubph_fp16_simd_fp_arith_edge_reg",
+            "vsubph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vsubph_fp16_simd_fp_arith_edge_mem",
+            "vsubph 64(%rax), %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vsubsh_fp16_simd_fp_arith_edge_reg",
+            "vsubsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vsubsh_fp16_simd_fp_arith_edge_mem",
+            "vsubsh 22(%rax), %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vmulph_fp16_simd_fp_arith_edge_reg",
+            "vmulph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vmulph_fp16_simd_fp_arith_edge_mem",
+            "vmulph 64(%rax), %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vmulsh_fp16_simd_fp_arith_edge_reg",
+            "vmulsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vmulsh_fp16_simd_fp_arith_edge_mem",
+            "vmulsh 22(%rax), %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vdivph_fp16_simd_fp_arith_edge_reg",
+            "vdivph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vdivph_fp16_simd_fp_arith_edge_mem",
+            "vdivph 64(%rax), %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vdivsh_fp16_simd_fp_arith_edge_reg",
+            "vdivsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vdivsh_fp16_simd_fp_arith_edge_mem",
+            "vdivsh 22(%rax), %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -6202,62 +6939,342 @@ fn irregular_cases() -> Vec<Case> {
     // EVEX AVX-512. Sqrt uses non-NaN inputs so exact comparison is meaningful;
     // min/max and compare intentionally use NaN-capable profiles.
     for &(label, asm, feat, profile) in &[
-        ("sqrtps_sse_simd_fp_sqrt_edge_reg", "sqrtps %xmm3, %xmm1", Sse, F32SqrtEdge),
-        ("sqrtps_sse_simd_fp_sqrt_edge_mem", "sqrtps 64(%rax), %xmm1", Sse, F32SqrtEdge),
-        ("sqrtss_sse_simd_fp_sqrt_edge_reg", "sqrtss %xmm2, %xmm1", Sse, F32SqrtEdge),
-        ("sqrtss_sse_simd_fp_sqrt_edge_mem", "sqrtss 32(%rax), %xmm1", Sse, F32SqrtEdge),
-        ("sqrtpd_sse2_simd_fp_sqrt_edge_reg", "sqrtpd %xmm3, %xmm1", Sse2, F64SqrtEdge),
-        ("sqrtpd_sse2_simd_fp_sqrt_edge_mem", "sqrtpd 64(%rax), %xmm1", Sse2, F64SqrtEdge),
-        ("sqrtsd_sse2_simd_fp_sqrt_edge_reg", "sqrtsd %xmm2, %xmm1", Sse2, F64SqrtEdge),
-        ("sqrtsd_sse2_simd_fp_sqrt_edge_mem", "sqrtsd 32(%rax), %xmm1", Sse2, F64SqrtEdge),
-        ("vsqrtps_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtps %ymm3, %ymm1", Avx, F32SqrtEdge),
-        ("vsqrtps_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtps 64(%rax), %ymm1", Avx, F32SqrtEdge),
-        ("vsqrtss_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtss %xmm2, %xmm3, %xmm1", Avx, F32SqrtEdge),
-        ("vsqrtss_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtss 32(%rax), %xmm3, %xmm1", Avx, F32SqrtEdge),
-        ("vsqrtpd_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtpd %ymm3, %ymm1", Avx, F64SqrtEdge),
-        ("vsqrtpd_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtpd 64(%rax), %ymm1", Avx, F64SqrtEdge),
-        ("vsqrtsd_avx_simd_fp_sqrt_edge_reg", "{vex} vsqrtsd %xmm2, %xmm3, %xmm1", Avx, F64SqrtEdge),
-        ("vsqrtsd_avx_simd_fp_sqrt_edge_mem", "{vex} vsqrtsd 32(%rax), %xmm3, %xmm1", Avx, F64SqrtEdge),
-        ("vsqrtps_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtps %zmm3, %zmm1", F, F32SqrtEdge),
-        ("vsqrtps_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtps 64(%rax), %zmm1", F, F32SqrtEdge),
-        ("vsqrtss_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtss %xmm2, %xmm3, %xmm1", F, F32SqrtEdge),
-        ("vsqrtss_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtss 32(%rax), %xmm3, %xmm1", F, F32SqrtEdge),
-        ("vsqrtpd_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtpd %zmm3, %zmm1", F, F64SqrtEdge),
-        ("vsqrtpd_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtpd 64(%rax), %zmm1", F, F64SqrtEdge),
-        ("vsqrtsd_avx512_simd_fp_sqrt_edge_reg", "{evex} vsqrtsd %xmm2, %xmm3, %xmm1", F, F64SqrtEdge),
-        ("vsqrtsd_avx512_simd_fp_sqrt_edge_mem", "{evex} vsqrtsd 32(%rax), %xmm3, %xmm1", F, F64SqrtEdge),
-        ("vminps_avx_simd_fp_minmax_edge_reg", "{vex} vminps %ymm2, %ymm3, %ymm1", Avx, F32Edge),
-        ("vmaxps_avx_simd_fp_minmax_edge_mem", "{vex} vmaxps 64(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vminss_avx_simd_fp_minmax_edge_reg", "{vex} vminss %xmm2, %xmm3, %xmm1", Avx, F32Edge),
-        ("vmaxss_avx_simd_fp_minmax_edge_mem", "{vex} vmaxss 32(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vminpd_avx_simd_fp_minmax_edge_reg", "{vex} vminpd %ymm2, %ymm3, %ymm1", Avx, F64Edge),
-        ("vmaxpd_avx_simd_fp_minmax_edge_mem", "{vex} vmaxpd 64(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vminsd_avx_simd_fp_minmax_edge_reg", "{vex} vminsd %xmm2, %xmm3, %xmm1", Avx, F64Edge),
-        ("vmaxsd_avx_simd_fp_minmax_edge_mem", "{vex} vmaxsd 32(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vminps_avx512_simd_fp_minmax_edge_reg", "{evex} vminps %zmm2, %zmm3, %zmm1", F, F32Edge),
-        ("vmaxps_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxps 64(%rax), %zmm3, %zmm1", F, F32Edge),
-        ("vminss_avx512_simd_fp_minmax_edge_reg", "{evex} vminss %xmm2, %xmm3, %xmm1", F, F32Edge),
-        ("vmaxss_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxss 32(%rax), %xmm3, %xmm1", F, F32Edge),
-        ("vminpd_avx512_simd_fp_minmax_edge_reg", "{evex} vminpd %zmm2, %zmm3, %zmm1", F, F64Edge),
-        ("vmaxpd_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxpd 64(%rax), %zmm3, %zmm1", F, F64Edge),
-        ("vminsd_avx512_simd_fp_minmax_edge_reg", "{evex} vminsd %xmm2, %xmm3, %xmm1", F, F64Edge),
-        ("vmaxsd_avx512_simd_fp_minmax_edge_mem", "{evex} vmaxsd 32(%rax), %xmm3, %xmm1", F, F64Edge),
-        ("comiss_sse_simd_fp_compare_edge_qnan_mem", "comiss 44(%rax), %xmm1", Sse, F32Edge),
-        ("ucomiss_sse_simd_fp_compare_edge_qnan_mem", "ucomiss 44(%rax), %xmm1", Sse, F32Edge),
-        ("comisd_sse2_simd_fp_compare_edge_qnan_mem", "comisd 8(%rax), %xmm1", Sse2, F64Edge),
-        ("ucomisd_sse2_simd_fp_compare_edge_qnan_mem", "ucomisd 8(%rax), %xmm1", Sse2, F64Edge),
-        ("vcomiss_avx_simd_fp_compare_edge_qnan_mem", "{vex} vcomiss 44(%rax), %xmm1", Avx, F32Edge),
-        ("vucomiss_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomiss 44(%rax), %xmm1", Avx, F32Edge),
-        ("vcomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vcomisd 8(%rax), %xmm1", Avx, F64Edge),
-        ("vucomisd_avx_simd_fp_compare_edge_qnan_mem", "{vex} vucomisd 8(%rax), %xmm1", Avx, F64Edge),
-        ("vcmpps_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpps $0x1e, 32(%rax), %ymm3, %ymm1", Avx, F32Edge),
-        ("vcmppd_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmppd $0x1e, 32(%rax), %ymm3, %ymm1", Avx, F64Edge),
-        ("vcmpss_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpss $0x1e, 44(%rax), %xmm3, %xmm1", Avx, F32Edge),
-        ("vcmpsd_avx_simd_fp_compare_edge_gt_oq_qnan_mem", "{vex} vcmpsd $0x1e, 8(%rax), %xmm3, %xmm1", Avx, F64Edge),
-        ("vcomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomiss 44(%rax), %xmm1", F, F32Edge),
-        ("vucomiss_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vucomiss 44(%rax), %xmm1", F, F32Edge),
-        ("vcomisd_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vcomisd 8(%rax), %xmm1", F, F64Edge),
-        ("vucomisd_avx512_simd_fp_compare_edge_qnan_mem", "{evex} vucomisd 8(%rax), %xmm1", F, F64Edge),
+        (
+            "sqrtps_sse_simd_fp_sqrt_edge_reg",
+            "sqrtps %xmm3, %xmm1",
+            Sse,
+            F32SqrtEdge,
+        ),
+        (
+            "sqrtps_sse_simd_fp_sqrt_edge_mem",
+            "sqrtps 64(%rax), %xmm1",
+            Sse,
+            F32SqrtEdge,
+        ),
+        (
+            "sqrtss_sse_simd_fp_sqrt_edge_reg",
+            "sqrtss %xmm2, %xmm1",
+            Sse,
+            F32SqrtEdge,
+        ),
+        (
+            "sqrtss_sse_simd_fp_sqrt_edge_mem",
+            "sqrtss 32(%rax), %xmm1",
+            Sse,
+            F32SqrtEdge,
+        ),
+        (
+            "sqrtpd_sse2_simd_fp_sqrt_edge_reg",
+            "sqrtpd %xmm3, %xmm1",
+            Sse2,
+            F64SqrtEdge,
+        ),
+        (
+            "sqrtpd_sse2_simd_fp_sqrt_edge_mem",
+            "sqrtpd 64(%rax), %xmm1",
+            Sse2,
+            F64SqrtEdge,
+        ),
+        (
+            "sqrtsd_sse2_simd_fp_sqrt_edge_reg",
+            "sqrtsd %xmm2, %xmm1",
+            Sse2,
+            F64SqrtEdge,
+        ),
+        (
+            "sqrtsd_sse2_simd_fp_sqrt_edge_mem",
+            "sqrtsd 32(%rax), %xmm1",
+            Sse2,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtps_avx_simd_fp_sqrt_edge_reg",
+            "{vex} vsqrtps %ymm3, %ymm1",
+            Avx,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtps_avx_simd_fp_sqrt_edge_mem",
+            "{vex} vsqrtps 64(%rax), %ymm1",
+            Avx,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtss_avx_simd_fp_sqrt_edge_reg",
+            "{vex} vsqrtss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtss_avx_simd_fp_sqrt_edge_mem",
+            "{vex} vsqrtss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtpd_avx_simd_fp_sqrt_edge_reg",
+            "{vex} vsqrtpd %ymm3, %ymm1",
+            Avx,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtpd_avx_simd_fp_sqrt_edge_mem",
+            "{vex} vsqrtpd 64(%rax), %ymm1",
+            Avx,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtsd_avx_simd_fp_sqrt_edge_reg",
+            "{vex} vsqrtsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtsd_avx_simd_fp_sqrt_edge_mem",
+            "{vex} vsqrtsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtps_avx512_simd_fp_sqrt_edge_reg",
+            "{evex} vsqrtps %zmm3, %zmm1",
+            F,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtps_avx512_simd_fp_sqrt_edge_mem",
+            "{evex} vsqrtps 64(%rax), %zmm1",
+            F,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtss_avx512_simd_fp_sqrt_edge_reg",
+            "{evex} vsqrtss %xmm2, %xmm3, %xmm1",
+            F,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtss_avx512_simd_fp_sqrt_edge_mem",
+            "{evex} vsqrtss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32SqrtEdge,
+        ),
+        (
+            "vsqrtpd_avx512_simd_fp_sqrt_edge_reg",
+            "{evex} vsqrtpd %zmm3, %zmm1",
+            F,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtpd_avx512_simd_fp_sqrt_edge_mem",
+            "{evex} vsqrtpd 64(%rax), %zmm1",
+            F,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtsd_avx512_simd_fp_sqrt_edge_reg",
+            "{evex} vsqrtsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64SqrtEdge,
+        ),
+        (
+            "vsqrtsd_avx512_simd_fp_sqrt_edge_mem",
+            "{evex} vsqrtsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64SqrtEdge,
+        ),
+        (
+            "vminps_avx_simd_fp_minmax_edge_reg",
+            "{vex} vminps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmaxps_avx_simd_fp_minmax_edge_mem",
+            "{vex} vmaxps 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vminss_avx_simd_fp_minmax_edge_reg",
+            "{vex} vminss %xmm2, %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vmaxss_avx_simd_fp_minmax_edge_mem",
+            "{vex} vmaxss 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vminpd_avx_simd_fp_minmax_edge_reg",
+            "{vex} vminpd %ymm2, %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmaxpd_avx_simd_fp_minmax_edge_mem",
+            "{vex} vmaxpd 64(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vminsd_avx_simd_fp_minmax_edge_reg",
+            "{vex} vminsd %xmm2, %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vmaxsd_avx_simd_fp_minmax_edge_mem",
+            "{vex} vmaxsd 32(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vminps_avx512_simd_fp_minmax_edge_reg",
+            "{evex} vminps %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmaxps_avx512_simd_fp_minmax_edge_mem",
+            "{evex} vmaxps 64(%rax), %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vminss_avx512_simd_fp_minmax_edge_reg",
+            "{evex} vminss %xmm2, %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vmaxss_avx512_simd_fp_minmax_edge_mem",
+            "{evex} vmaxss 32(%rax), %xmm3, %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vminpd_avx512_simd_fp_minmax_edge_reg",
+            "{evex} vminpd %zmm2, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmaxpd_avx512_simd_fp_minmax_edge_mem",
+            "{evex} vmaxpd 64(%rax), %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vminsd_avx512_simd_fp_minmax_edge_reg",
+            "{evex} vminsd %xmm2, %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vmaxsd_avx512_simd_fp_minmax_edge_mem",
+            "{evex} vmaxsd 32(%rax), %xmm3, %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "comiss_sse_simd_fp_compare_edge_qnan_mem",
+            "comiss 44(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "ucomiss_sse_simd_fp_compare_edge_qnan_mem",
+            "ucomiss 44(%rax), %xmm1",
+            Sse,
+            F32Edge,
+        ),
+        (
+            "comisd_sse2_simd_fp_compare_edge_qnan_mem",
+            "comisd 8(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "ucomisd_sse2_simd_fp_compare_edge_qnan_mem",
+            "ucomisd 8(%rax), %xmm1",
+            Sse2,
+            F64Edge,
+        ),
+        (
+            "vcomiss_avx_simd_fp_compare_edge_qnan_mem",
+            "{vex} vcomiss 44(%rax), %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vucomiss_avx_simd_fp_compare_edge_qnan_mem",
+            "{vex} vucomiss 44(%rax), %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vcomisd_avx_simd_fp_compare_edge_qnan_mem",
+            "{vex} vcomisd 8(%rax), %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vucomisd_avx_simd_fp_compare_edge_qnan_mem",
+            "{vex} vucomisd 8(%rax), %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vcmpps_avx_simd_fp_compare_edge_gt_oq_qnan_mem",
+            "{vex} vcmpps $0x1e, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vcmppd_avx_simd_fp_compare_edge_gt_oq_qnan_mem",
+            "{vex} vcmppd $0x1e, 32(%rax), %ymm3, %ymm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vcmpss_avx_simd_fp_compare_edge_gt_oq_qnan_mem",
+            "{vex} vcmpss $0x1e, 44(%rax), %xmm3, %xmm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vcmpsd_avx_simd_fp_compare_edge_gt_oq_qnan_mem",
+            "{vex} vcmpsd $0x1e, 8(%rax), %xmm3, %xmm1",
+            Avx,
+            F64Edge,
+        ),
+        (
+            "vcomiss_avx512_simd_fp_compare_edge_qnan_mem",
+            "{evex} vcomiss 44(%rax), %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vucomiss_avx512_simd_fp_compare_edge_qnan_mem",
+            "{evex} vucomiss 44(%rax), %xmm1",
+            F,
+            F32Edge,
+        ),
+        (
+            "vcomisd_avx512_simd_fp_compare_edge_qnan_mem",
+            "{evex} vcomisd 8(%rax), %xmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vucomisd_avx512_simd_fp_compare_edge_qnan_mem",
+            "{evex} vucomisd 8(%rax), %xmm1",
+            F,
+            F64Edge,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -7034,7 +8051,11 @@ fn irregular_cases() -> Vec<Case> {
         ("hsubps_sse3_edge_self", "hsubps %xmm1, %xmm1", F32),
         ("hsubpd_sse3_edge_self", "hsubpd %xmm1, %xmm1", F64),
         ("movddup_sse3_edge_self", "movddup %xmm1, %xmm1", F64),
-        ("movddup_sse3_edge_unaligned_mem", "movddup 7(%rax), %xmm1", Int),
+        (
+            "movddup_sse3_edge_unaligned_mem",
+            "movddup 7(%rax), %xmm1",
+            Int,
+        ),
         ("movsldup_sse3_edge_self", "movsldup %xmm1, %xmm1", F32),
         ("movshdup_sse3_edge_self", "movshdup %xmm1, %xmm1", F32),
         ("lddqu_sse3_edge_unaligned_1", "lddqu 1(%rax), %xmm1", Int),
@@ -7304,21 +8325,77 @@ fn irregular_cases() -> Vec<Case> {
             Mmx,
         ),
         ("paddsb_sse2_int_sat_edge_reg", "paddsb %xmm2, %xmm1", Sse2),
-        ("paddsw_sse2_int_sat_edge_mem", "paddsw 32(%rax), %xmm1", Sse2),
-        ("paddusb_sse2_int_sat_edge_reg", "paddusb %xmm2, %xmm1", Sse2),
-        ("paddusw_sse2_int_sat_edge_mem", "paddusw 32(%rax), %xmm1", Sse2),
+        (
+            "paddsw_sse2_int_sat_edge_mem",
+            "paddsw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "paddusb_sse2_int_sat_edge_reg",
+            "paddusb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "paddusw_sse2_int_sat_edge_mem",
+            "paddusw 32(%rax), %xmm1",
+            Sse2,
+        ),
         ("psubsb_sse2_int_sat_edge_reg", "psubsb %xmm2, %xmm1", Sse2),
-        ("psubsw_sse2_int_sat_edge_mem", "psubsw 32(%rax), %xmm1", Sse2),
-        ("psubusb_sse2_int_sat_edge_reg", "psubusb %xmm2, %xmm1", Sse2),
-        ("psubusw_sse2_int_sat_edge_mem", "psubusw 32(%rax), %xmm1", Sse2),
-        ("packsswb_sse2_int_sat_edge_reg", "packsswb %xmm2, %xmm1", Sse2),
-        ("packssdw_sse2_int_sat_edge_mem", "packssdw 32(%rax), %xmm1", Sse2),
-        ("packuswb_sse2_int_sat_edge_reg", "packuswb %xmm2, %xmm1", Sse2),
-        ("packuswb_sse2_int_sat_edge_mem", "packuswb 32(%rax), %xmm1", Sse2),
-        ("phaddsw_ssse3_int_sat_edge_reg", "phaddsw %xmm2, %xmm1", Ssse3),
-        ("phaddsw_ssse3_int_sat_edge_mem", "phaddsw 32(%rax), %xmm1", Ssse3),
-        ("phsubsw_ssse3_int_sat_edge_reg", "phsubsw %xmm2, %xmm1", Ssse3),
-        ("phsubsw_ssse3_int_sat_edge_mem", "phsubsw 32(%rax), %xmm1", Ssse3),
+        (
+            "psubsw_sse2_int_sat_edge_mem",
+            "psubsw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "psubusb_sse2_int_sat_edge_reg",
+            "psubusb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "psubusw_sse2_int_sat_edge_mem",
+            "psubusw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "packsswb_sse2_int_sat_edge_reg",
+            "packsswb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "packssdw_sse2_int_sat_edge_mem",
+            "packssdw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "packuswb_sse2_int_sat_edge_reg",
+            "packuswb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "packuswb_sse2_int_sat_edge_mem",
+            "packuswb 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "phaddsw_ssse3_int_sat_edge_reg",
+            "phaddsw %xmm2, %xmm1",
+            Ssse3,
+        ),
+        (
+            "phaddsw_ssse3_int_sat_edge_mem",
+            "phaddsw 32(%rax), %xmm1",
+            Ssse3,
+        ),
+        (
+            "phsubsw_ssse3_int_sat_edge_reg",
+            "phsubsw %xmm2, %xmm1",
+            Ssse3,
+        ),
+        (
+            "phsubsw_ssse3_int_sat_edge_mem",
+            "phsubsw 32(%rax), %xmm1",
+            Ssse3,
+        ),
         (
             "pmaddubsw_ssse3_int_sat_edge_reg",
             "pmaddubsw %xmm2, %xmm1",
@@ -7329,8 +8406,16 @@ fn irregular_cases() -> Vec<Case> {
             "pmaddubsw 32(%rax), %xmm1",
             Ssse3,
         ),
-        ("packusdw_sse41_int_sat_edge_reg", "packusdw %xmm2, %xmm1", Sse41),
-        ("packusdw_sse41_int_sat_edge_mem", "packusdw 32(%rax), %xmm1", Sse41),
+        (
+            "packusdw_sse41_int_sat_edge_reg",
+            "packusdw %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "packusdw_sse41_int_sat_edge_mem",
+            "packusdw 32(%rax), %xmm1",
+            Sse41,
+        ),
         (
             "vpaddsb_avx2_int_sat_edge_reg",
             "{vex} vpaddsb %xmm2, %xmm3, %xmm1",
@@ -7406,7 +8491,11 @@ fn irregular_cases() -> Vec<Case> {
             "{vex} vpmaddubsw 32(%rax), %ymm3, %ymm1",
             Avx2,
         ),
-        ("vpaddsb_avx512_int_sat_edge_reg", "vpaddsb %zmm2, %zmm3, %zmm1", Bw),
+        (
+            "vpaddsb_avx512_int_sat_edge_reg",
+            "vpaddsb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
         (
             "vpaddsw_avx512_int_sat_edge_mem",
             "vpaddsw 64(%rax), %zmm3, %zmm1",
@@ -7422,7 +8511,11 @@ fn irregular_cases() -> Vec<Case> {
             "vpaddusw 64(%rax), %zmm3, %zmm1",
             Bw,
         ),
-        ("vpsubsb_avx512_int_sat_edge_reg", "vpsubsb %zmm2, %zmm3, %zmm1", Bw),
+        (
+            "vpsubsb_avx512_int_sat_edge_reg",
+            "vpsubsb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
         (
             "vpsubsw_avx512_int_sat_edge_mem",
             "vpsubsw 64(%rax), %zmm3, %zmm1",
@@ -7586,46 +8679,126 @@ fn irregular_cases() -> Vec<Case> {
             "{vex} vpmaxud 32(%rax), %xmm3, %xmm1",
             Avx2,
         ),
-        ("vpcmpb_avx512_int_order_edge_lt", "vpcmpb $1, %zmm2, %zmm3, %k5", Bw),
+        (
+            "vpcmpb_avx512_int_order_edge_lt",
+            "vpcmpb $1, %zmm2, %zmm3, %k5",
+            Bw,
+        ),
         (
             "vpcmpub_avx512_int_order_edge_lt",
             "vpcmpub $1, 64(%rax), %zmm3, %k5",
             Bw,
         ),
-        ("vpcmpw_avx512_int_order_edge_lt", "vpcmpw $1, %zmm2, %zmm3, %k5", Bw),
+        (
+            "vpcmpw_avx512_int_order_edge_lt",
+            "vpcmpw $1, %zmm2, %zmm3, %k5",
+            Bw,
+        ),
         (
             "vpcmpuw_avx512_int_order_edge_lt",
             "vpcmpuw $1, 64(%rax), %zmm3, %k5",
             Bw,
         ),
-        ("vpcmpd_avx512_int_order_edge_lt", "vpcmpd $1, %zmm2, %zmm3, %k5", F),
+        (
+            "vpcmpd_avx512_int_order_edge_lt",
+            "vpcmpd $1, %zmm2, %zmm3, %k5",
+            F,
+        ),
         (
             "vpcmpud_avx512_int_order_edge_lt",
             "vpcmpud $1, 64(%rax), %zmm3, %k5",
             F,
         ),
-        ("vpcmpq_avx512_int_order_edge_lt", "vpcmpq $1, %zmm2, %zmm3, %k5", F),
+        (
+            "vpcmpq_avx512_int_order_edge_lt",
+            "vpcmpq $1, %zmm2, %zmm3, %k5",
+            F,
+        ),
         (
             "vpcmpuq_avx512_int_order_edge_lt",
             "vpcmpuq $1, 64(%rax), %zmm3, %k5",
             F,
         ),
-        ("vpminsb_avx512_int_order_edge_reg", "vpminsb %zmm2, %zmm3, %zmm1", Bw),
-        ("vpminsw_avx512_int_order_edge_mem", "vpminsw 64(%rax), %zmm3, %zmm1", Bw),
-        ("vpminub_avx512_int_order_edge_reg", "vpminub %zmm2, %zmm3, %zmm1", Bw),
-        ("vpminuw_avx512_int_order_edge_mem", "vpminuw 64(%rax), %zmm3, %zmm1", Bw),
-        ("vpmaxsb_avx512_int_order_edge_reg", "vpmaxsb %zmm2, %zmm3, %zmm1", Bw),
-        ("vpmaxsw_avx512_int_order_edge_mem", "vpmaxsw 64(%rax), %zmm3, %zmm1", Bw),
-        ("vpmaxub_avx512_int_order_edge_reg", "vpmaxub %zmm2, %zmm3, %zmm1", Bw),
-        ("vpmaxuw_avx512_int_order_edge_mem", "vpmaxuw 64(%rax), %zmm3, %zmm1", Bw),
-        ("vpminsd_avx512_int_order_edge_reg", "vpminsd %zmm2, %zmm3, %zmm1", F),
-        ("vpminsq_avx512_int_order_edge_mem", "vpminsq 64(%rax), %zmm3, %zmm1", F),
-        ("vpminud_avx512_int_order_edge_reg", "vpminud %zmm2, %zmm3, %zmm1", F),
-        ("vpminuq_avx512_int_order_edge_mem", "vpminuq 64(%rax), %zmm3, %zmm1", F),
-        ("vpmaxsd_avx512_int_order_edge_reg", "vpmaxsd %zmm2, %zmm3, %zmm1", F),
-        ("vpmaxsq_avx512_int_order_edge_mem", "vpmaxsq 64(%rax), %zmm3, %zmm1", F),
-        ("vpmaxud_avx512_int_order_edge_reg", "vpmaxud %zmm2, %zmm3, %zmm1", F),
-        ("vpmaxuq_avx512_int_order_edge_mem", "vpmaxuq 64(%rax), %zmm3, %zmm1", F),
+        (
+            "vpminsb_avx512_int_order_edge_reg",
+            "vpminsb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpminsw_avx512_int_order_edge_mem",
+            "vpminsw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpminub_avx512_int_order_edge_reg",
+            "vpminub %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpminuw_avx512_int_order_edge_mem",
+            "vpminuw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpmaxsb_avx512_int_order_edge_reg",
+            "vpmaxsb %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpmaxsw_avx512_int_order_edge_mem",
+            "vpmaxsw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpmaxub_avx512_int_order_edge_reg",
+            "vpmaxub %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpmaxuw_avx512_int_order_edge_mem",
+            "vpmaxuw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpminsd_avx512_int_order_edge_reg",
+            "vpminsd %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpminsq_avx512_int_order_edge_mem",
+            "vpminsq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpminud_avx512_int_order_edge_reg",
+            "vpminud %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpminuq_avx512_int_order_edge_mem",
+            "vpminuq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpmaxsd_avx512_int_order_edge_reg",
+            "vpmaxsd %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpmaxsq_avx512_int_order_edge_mem",
+            "vpmaxsq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpmaxud_avx512_int_order_edge_reg",
+            "vpmaxud %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpmaxuq_avx512_int_order_edge_mem",
+            "vpmaxuq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -7717,91 +8890,427 @@ fn irregular_cases() -> Vec<Case> {
             Mmx,
         ),
         ("pslldq_sse2_int_shift_edge_imm0", "pslldq $0, %xmm1", Sse2),
-        ("pslldq_sse2_int_shift_edge_imm15", "pslldq $15, %xmm1", Sse2),
-        ("pslldq_sse2_int_shift_edge_imm16", "pslldq $16, %xmm1", Sse2),
-        ("pslldq_sse2_int_shift_edge_imm31", "pslldq $31, %xmm1", Sse2),
+        (
+            "pslldq_sse2_int_shift_edge_imm15",
+            "pslldq $15, %xmm1",
+            Sse2,
+        ),
+        (
+            "pslldq_sse2_int_shift_edge_imm16",
+            "pslldq $16, %xmm1",
+            Sse2,
+        ),
+        (
+            "pslldq_sse2_int_shift_edge_imm31",
+            "pslldq $31, %xmm1",
+            Sse2,
+        ),
         ("psrldq_sse2_int_shift_edge_imm0", "psrldq $0, %xmm1", Sse2),
-        ("psrldq_sse2_int_shift_edge_imm15", "psrldq $15, %xmm1", Sse2),
-        ("psrldq_sse2_int_shift_edge_imm16", "psrldq $16, %xmm1", Sse2),
-        ("psrldq_sse2_int_shift_edge_imm31", "psrldq $31, %xmm1", Sse2),
-        ("psllw_sse2_int_shift_edge_xmm_count", "psllw %xmm2, %xmm1", Sse2),
-        ("psrlw_sse2_int_shift_edge_xmm_count", "psrlw %xmm2, %xmm1", Sse2),
-        ("psraw_sse2_int_shift_edge_xmm_count", "psraw %xmm2, %xmm1", Sse2),
-        ("pslld_sse2_int_shift_edge_xmm_count", "pslld %xmm2, %xmm1", Sse2),
-        ("psrld_sse2_int_shift_edge_xmm_count", "psrld %xmm2, %xmm1", Sse2),
-        ("psrad_sse2_int_shift_edge_xmm_count", "psrad %xmm2, %xmm1", Sse2),
-        ("vpsllw_avx2_int_shift_edge_imm15", "{vex} vpsllw $15, %xmm3, %xmm1", Avx2),
-        ("vpsllw_avx2_int_shift_edge_imm16", "{vex} vpsllw $16, %xmm3, %xmm1", Avx2),
-        ("vpsrlw_avx2_int_shift_edge_imm15", "{vex} vpsrlw $15, %ymm3, %ymm1", Avx2),
-        ("vpsrlw_avx2_int_shift_edge_imm16", "{vex} vpsrlw $16, %ymm3, %ymm1", Avx2),
-        ("vpsraw_avx2_int_shift_edge_imm15", "{vex} vpsraw $15, %xmm3, %xmm1", Avx2),
-        ("vpsraw_avx2_int_shift_edge_imm16", "{vex} vpsraw $16, %ymm3, %ymm1", Avx2),
-        ("vpslld_avx2_int_shift_edge_imm31", "{vex} vpslld $31, %ymm3, %ymm1", Avx2),
-        ("vpslld_avx2_int_shift_edge_imm32", "{vex} vpslld $32, %xmm3, %xmm1", Avx2),
-        ("vpsrld_avx2_int_shift_edge_imm31", "{vex} vpsrld $31, %ymm3, %ymm1", Avx2),
-        ("vpsrld_avx2_int_shift_edge_imm32", "{vex} vpsrld $32, %xmm3, %xmm1", Avx2),
-        ("vpsrad_avx2_int_shift_edge_imm31", "{vex} vpsrad $31, %ymm3, %ymm1", Avx2),
-        ("vpsrad_avx2_int_shift_edge_imm32", "{vex} vpsrad $32, %xmm3, %xmm1", Avx2),
-        ("vpsllq_avx2_int_shift_edge_imm63", "{vex} vpsllq $63, %ymm3, %ymm1", Avx2),
-        ("vpsllq_avx2_int_shift_edge_imm64", "{vex} vpsllq $64, %xmm3, %xmm1", Avx2),
-        ("vpsrlq_avx2_int_shift_edge_imm63", "{vex} vpsrlq $63, %ymm3, %ymm1", Avx2),
-        ("vpsrlq_avx2_int_shift_edge_imm64", "{vex} vpsrlq $64, %xmm3, %xmm1", Avx2),
-        ("vpsllvd_avx2_int_shift_edge_reg", "{vex} vpsllvd %ymm2, %ymm3, %ymm1", Avx2),
-        ("vpsrlvd_avx2_int_shift_edge_mem", "{vex} vpsrlvd 32(%rax), %ymm3, %ymm1", Avx2),
-        ("vpsravd_avx2_int_shift_edge_reg", "{vex} vpsravd %ymm2, %ymm3, %ymm1", Avx2),
-        ("vpsllvq_avx2_int_shift_edge_mem", "{vex} vpsllvq 32(%rax), %ymm3, %ymm1", Avx2),
-        ("vpsrlvq_avx2_int_shift_edge_reg", "{vex} vpsrlvq %ymm2, %ymm3, %ymm1", Avx2),
-        ("vpsllw_avx512_int_shift_edge_imm15", "vpsllw $15, %zmm3, %zmm1", Bw),
-        ("vpsllw_avx512_int_shift_edge_imm16", "vpsllw $16, %zmm3, %zmm1", Bw),
-        ("vpsrlw_avx512_int_shift_edge_imm15", "vpsrlw $15, %zmm3, %zmm1", Bw),
-        ("vpsrlw_avx512_int_shift_edge_imm16", "vpsrlw $16, %zmm3, %zmm1", Bw),
-        ("vpsraw_avx512_int_shift_edge_imm15", "vpsraw $15, %zmm3, %zmm1", Bw),
-        ("vpsraw_avx512_int_shift_edge_imm16", "vpsraw $16, %zmm3, %zmm1", Bw),
-        ("vpsllvw_avx512_int_shift_edge_reg", "vpsllvw %zmm2, %zmm3, %zmm1", Bw),
-        ("vpsrlvw_avx512_int_shift_edge_mem", "vpsrlvw 64(%rax), %zmm3, %zmm1", Bw),
-        ("vpsravw_avx512_int_shift_edge_reg", "vpsravw %zmm2, %zmm3, %zmm1", Bw),
-        ("vpslld_avx512_int_shift_edge_imm31", "vpslld $31, %zmm3, %zmm1", F),
-        ("vpslld_avx512_int_shift_edge_imm32", "vpslld $32, %zmm3, %zmm1", F),
-        ("vpsrld_avx512_int_shift_edge_imm31", "vpsrld $31, %zmm3, %zmm1", F),
-        ("vpsrld_avx512_int_shift_edge_imm32", "vpsrld $32, %zmm3, %zmm1", F),
-        ("vpsrad_avx512_int_shift_edge_imm31", "vpsrad $31, %zmm3, %zmm1", F),
-        ("vpsrad_avx512_int_shift_edge_imm32", "vpsrad $32, %zmm3, %zmm1", F),
-        ("vpsllq_avx512_int_shift_edge_imm63", "vpsllq $63, %zmm3, %zmm1", F),
-        ("vpsllq_avx512_int_shift_edge_imm64", "vpsllq $64, %zmm3, %zmm1", F),
-        ("vpsrlq_avx512_int_shift_edge_imm63", "vpsrlq $63, %zmm3, %zmm1", F),
-        ("vpsrlq_avx512_int_shift_edge_imm64", "vpsrlq $64, %zmm3, %zmm1", F),
-        ("vpsraq_avx512_int_shift_edge_imm63", "vpsraq $63, %zmm3, %zmm1", F),
-        ("vpsraq_avx512_int_shift_edge_imm64", "vpsraq $64, %zmm3, %zmm1", F),
-        ("vpsllvd_avx512_int_shift_edge_reg", "vpsllvd %zmm2, %zmm3, %zmm1", F),
-        ("vpsrlvd_avx512_int_shift_edge_mem", "vpsrlvd 64(%rax), %zmm3, %zmm1", F),
-        ("vpsravd_avx512_int_shift_edge_reg", "vpsravd %zmm2, %zmm3, %zmm1", F),
-        ("vpsllvq_avx512_int_shift_edge_mem", "vpsllvq 64(%rax), %zmm3, %zmm1", F),
-        ("vpsrlvq_avx512_int_shift_edge_reg", "vpsrlvq %zmm2, %zmm3, %zmm1", F),
-        ("vpsravq_avx512_int_shift_edge_mem", "vpsravq 64(%rax), %zmm3, %zmm1", F),
-        ("vprold_avx512_int_shift_edge_imm31", "vprold $31, %zmm3, %zmm1", F),
-        ("vprold_avx512_int_shift_edge_imm32", "vprold $32, %zmm3, %zmm1", F),
-        ("vprord_avx512_int_shift_edge_imm31", "vprord $31, %zmm3, %zmm1", F),
-        ("vprord_avx512_int_shift_edge_imm32", "vprord $32, %zmm3, %zmm1", F),
-        ("vprolq_avx512_int_shift_edge_imm63", "vprolq $63, %zmm3, %zmm1", F),
-        ("vprolq_avx512_int_shift_edge_imm64", "vprolq $64, %zmm3, %zmm1", F),
-        ("vprorq_avx512_int_shift_edge_imm63", "vprorq $63, %zmm3, %zmm1", F),
-        ("vprorq_avx512_int_shift_edge_imm64", "vprorq $64, %zmm3, %zmm1", F),
-        ("vprolvd_avx512_int_shift_edge_reg", "vprolvd %zmm2, %zmm3, %zmm1", F),
-        ("vprorvd_avx512_int_shift_edge_mem", "vprorvd 64(%rax), %zmm3, %zmm1", F),
-        ("vprolvq_avx512_int_shift_edge_reg", "vprolvq %zmm2, %zmm3, %zmm1", F),
-        ("vprorvq_avx512_int_shift_edge_mem", "vprorvq 64(%rax), %zmm3, %zmm1", F),
-        ("vpshldw_vbmi2_int_shift_edge_imm15", "vpshldw $15, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshldw_vbmi2_int_shift_edge_imm16", "vpshldw $16, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdw_vbmi2_int_shift_edge_imm15", "vpshrdw $15, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdw_vbmi2_int_shift_edge_imm16", "vpshrdw $16, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshldd_vbmi2_int_shift_edge_imm31", "vpshldd $31, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshldd_vbmi2_int_shift_edge_imm32", "vpshldd $32, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdd_vbmi2_int_shift_edge_imm31", "vpshrdd $31, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdd_vbmi2_int_shift_edge_imm32", "vpshrdd $32, %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshldvw_vbmi2_int_shift_edge_reg", "vpshldvw %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdvw_vbmi2_int_shift_edge_mem", "vpshrdvw 64(%rax), %zmm3, %zmm1", Vbmi2),
-        ("vpshldvd_vbmi2_int_shift_edge_reg", "vpshldvd %zmm2, %zmm3, %zmm1", Vbmi2),
-        ("vpshrdvq_vbmi2_int_shift_edge_mem", "vpshrdvq 64(%rax), %zmm3, %zmm1", Vbmi2),
+        (
+            "psrldq_sse2_int_shift_edge_imm15",
+            "psrldq $15, %xmm1",
+            Sse2,
+        ),
+        (
+            "psrldq_sse2_int_shift_edge_imm16",
+            "psrldq $16, %xmm1",
+            Sse2,
+        ),
+        (
+            "psrldq_sse2_int_shift_edge_imm31",
+            "psrldq $31, %xmm1",
+            Sse2,
+        ),
+        (
+            "psllw_sse2_int_shift_edge_xmm_count",
+            "psllw %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "psrlw_sse2_int_shift_edge_xmm_count",
+            "psrlw %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "psraw_sse2_int_shift_edge_xmm_count",
+            "psraw %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pslld_sse2_int_shift_edge_xmm_count",
+            "pslld %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "psrld_sse2_int_shift_edge_xmm_count",
+            "psrld %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "psrad_sse2_int_shift_edge_xmm_count",
+            "psrad %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "vpsllw_avx2_int_shift_edge_imm15",
+            "{vex} vpsllw $15, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsllw_avx2_int_shift_edge_imm16",
+            "{vex} vpsllw $16, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrlw_avx2_int_shift_edge_imm15",
+            "{vex} vpsrlw $15, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrlw_avx2_int_shift_edge_imm16",
+            "{vex} vpsrlw $16, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsraw_avx2_int_shift_edge_imm15",
+            "{vex} vpsraw $15, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsraw_avx2_int_shift_edge_imm16",
+            "{vex} vpsraw $16, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpslld_avx2_int_shift_edge_imm31",
+            "{vex} vpslld $31, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpslld_avx2_int_shift_edge_imm32",
+            "{vex} vpslld $32, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrld_avx2_int_shift_edge_imm31",
+            "{vex} vpsrld $31, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrld_avx2_int_shift_edge_imm32",
+            "{vex} vpsrld $32, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrad_avx2_int_shift_edge_imm31",
+            "{vex} vpsrad $31, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrad_avx2_int_shift_edge_imm32",
+            "{vex} vpsrad $32, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsllq_avx2_int_shift_edge_imm63",
+            "{vex} vpsllq $63, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsllq_avx2_int_shift_edge_imm64",
+            "{vex} vpsllq $64, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrlq_avx2_int_shift_edge_imm63",
+            "{vex} vpsrlq $63, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrlq_avx2_int_shift_edge_imm64",
+            "{vex} vpsrlq $64, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsllvd_avx2_int_shift_edge_reg",
+            "{vex} vpsllvd %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrlvd_avx2_int_shift_edge_mem",
+            "{vex} vpsrlvd 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsravd_avx2_int_shift_edge_reg",
+            "{vex} vpsravd %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsllvq_avx2_int_shift_edge_mem",
+            "{vex} vpsllvq 32(%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrlvq_avx2_int_shift_edge_reg",
+            "{vex} vpsrlvq %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsllw_avx512_int_shift_edge_imm15",
+            "vpsllw $15, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsllw_avx512_int_shift_edge_imm16",
+            "vpsllw $16, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsrlw_avx512_int_shift_edge_imm15",
+            "vpsrlw $15, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsrlw_avx512_int_shift_edge_imm16",
+            "vpsrlw $16, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsraw_avx512_int_shift_edge_imm15",
+            "vpsraw $15, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsraw_avx512_int_shift_edge_imm16",
+            "vpsraw $16, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsllvw_avx512_int_shift_edge_reg",
+            "vpsllvw %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsrlvw_avx512_int_shift_edge_mem",
+            "vpsrlvw 64(%rax), %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpsravw_avx512_int_shift_edge_reg",
+            "vpsravw %zmm2, %zmm3, %zmm1",
+            Bw,
+        ),
+        (
+            "vpslld_avx512_int_shift_edge_imm31",
+            "vpslld $31, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpslld_avx512_int_shift_edge_imm32",
+            "vpslld $32, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrld_avx512_int_shift_edge_imm31",
+            "vpsrld $31, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrld_avx512_int_shift_edge_imm32",
+            "vpsrld $32, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrad_avx512_int_shift_edge_imm31",
+            "vpsrad $31, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrad_avx512_int_shift_edge_imm32",
+            "vpsrad $32, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsllq_avx512_int_shift_edge_imm63",
+            "vpsllq $63, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsllq_avx512_int_shift_edge_imm64",
+            "vpsllq $64, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrlq_avx512_int_shift_edge_imm63",
+            "vpsrlq $63, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrlq_avx512_int_shift_edge_imm64",
+            "vpsrlq $64, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsraq_avx512_int_shift_edge_imm63",
+            "vpsraq $63, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsraq_avx512_int_shift_edge_imm64",
+            "vpsraq $64, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsllvd_avx512_int_shift_edge_reg",
+            "vpsllvd %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrlvd_avx512_int_shift_edge_mem",
+            "vpsrlvd 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsravd_avx512_int_shift_edge_reg",
+            "vpsravd %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsllvq_avx512_int_shift_edge_mem",
+            "vpsllvq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsrlvq_avx512_int_shift_edge_reg",
+            "vpsrlvq %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpsravq_avx512_int_shift_edge_mem",
+            "vpsravq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprold_avx512_int_shift_edge_imm31",
+            "vprold $31, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprold_avx512_int_shift_edge_imm32",
+            "vprold $32, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprord_avx512_int_shift_edge_imm31",
+            "vprord $31, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprord_avx512_int_shift_edge_imm32",
+            "vprord $32, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprolq_avx512_int_shift_edge_imm63",
+            "vprolq $63, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprolq_avx512_int_shift_edge_imm64",
+            "vprolq $64, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprorq_avx512_int_shift_edge_imm63",
+            "vprorq $63, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprorq_avx512_int_shift_edge_imm64",
+            "vprorq $64, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprolvd_avx512_int_shift_edge_reg",
+            "vprolvd %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprorvd_avx512_int_shift_edge_mem",
+            "vprorvd 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprolvq_avx512_int_shift_edge_reg",
+            "vprolvq %zmm2, %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vprorvq_avx512_int_shift_edge_mem",
+            "vprorvq 64(%rax), %zmm3, %zmm1",
+            F,
+        ),
+        (
+            "vpshldw_vbmi2_int_shift_edge_imm15",
+            "vpshldw $15, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldw_vbmi2_int_shift_edge_imm16",
+            "vpshldw $16, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdw_vbmi2_int_shift_edge_imm15",
+            "vpshrdw $15, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdw_vbmi2_int_shift_edge_imm16",
+            "vpshrdw $16, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldd_vbmi2_int_shift_edge_imm31",
+            "vpshldd $31, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldd_vbmi2_int_shift_edge_imm32",
+            "vpshldd $32, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdd_vbmi2_int_shift_edge_imm31",
+            "vpshrdd $31, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdd_vbmi2_int_shift_edge_imm32",
+            "vpshrdd $32, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldvw_vbmi2_int_shift_edge_reg",
+            "vpshldvw %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdvw_vbmi2_int_shift_edge_mem",
+            "vpshrdvw 64(%rax), %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshldvd_vbmi2_int_shift_edge_reg",
+            "vpshldvd %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+        ),
+        (
+            "vpshrdvq_vbmi2_int_shift_edge_mem",
+            "vpshrdvq 64(%rax), %zmm3, %zmm1",
+            Vbmi2,
+        ),
         ("kshiftlb_int_shift_edge_imm7", "kshiftlb $7, %k2, %k5", Dq),
         ("kshiftlb_int_shift_edge_imm8", "kshiftlb $8, %k2, %k5", Dq),
         ("kshiftrb_int_shift_edge_imm7", "kshiftrb $7, %k2, %k5", Dq),
@@ -7810,14 +9319,46 @@ fn irregular_cases() -> Vec<Case> {
         ("kshiftlw_int_shift_edge_imm16", "kshiftlw $16, %k2, %k5", F),
         ("kshiftrw_int_shift_edge_imm15", "kshiftrw $15, %k2, %k5", F),
         ("kshiftrw_int_shift_edge_imm16", "kshiftrw $16, %k2, %k5", F),
-        ("kshiftld_int_shift_edge_imm31", "kshiftld $31, %k2, %k5", Dq),
-        ("kshiftld_int_shift_edge_imm32", "kshiftld $32, %k2, %k5", Dq),
-        ("kshiftrd_int_shift_edge_imm31", "kshiftrd $31, %k2, %k5", Dq),
-        ("kshiftrd_int_shift_edge_imm32", "kshiftrd $32, %k2, %k5", Dq),
-        ("kshiftlq_int_shift_edge_imm63", "kshiftlq $63, %k2, %k5", Bw),
-        ("kshiftlq_int_shift_edge_imm64", "kshiftlq $64, %k2, %k5", Bw),
-        ("kshiftrq_int_shift_edge_imm63", "kshiftrq $63, %k2, %k5", Bw),
-        ("kshiftrq_int_shift_edge_imm64", "kshiftrq $64, %k2, %k5", Bw),
+        (
+            "kshiftld_int_shift_edge_imm31",
+            "kshiftld $31, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kshiftld_int_shift_edge_imm32",
+            "kshiftld $32, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kshiftrd_int_shift_edge_imm31",
+            "kshiftrd $31, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kshiftrd_int_shift_edge_imm32",
+            "kshiftrd $32, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kshiftlq_int_shift_edge_imm63",
+            "kshiftlq $63, %k2, %k5",
+            Bw,
+        ),
+        (
+            "kshiftlq_int_shift_edge_imm64",
+            "kshiftlq $64, %k2, %k5",
+            Bw,
+        ),
+        (
+            "kshiftrq_int_shift_edge_imm63",
+            "kshiftrq $63, %k2, %k5",
+            Bw,
+        ),
+        (
+            "kshiftrq_int_shift_edge_imm64",
+            "kshiftrq $64, %k2, %k5",
+            Bw,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -8035,23 +9576,83 @@ fn irregular_cases() -> Vec<Case> {
             "pcmpeqb %xmm0, %xmm0\npslldq $8, %xmm0\nblendvpd %xmm2, %xmm1",
             F64,
         ),
-        ("blendps_sse41_edge_imm0", "blendps $0x00, %xmm2, %xmm1", F32),
-        ("blendps_sse41_edge_immf", "blendps $0x0f, %xmm2, %xmm1", F32),
+        (
+            "blendps_sse41_edge_imm0",
+            "blendps $0x00, %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "blendps_sse41_edge_immf",
+            "blendps $0x0f, %xmm2, %xmm1",
+            F32,
+        ),
         ("blendpd_sse41_edge_imm0", "blendpd $0x0, %xmm2, %xmm1", F64),
         ("blendpd_sse41_edge_imm3", "blendpd $0x3, %xmm2, %xmm1", F64),
-        ("pblendw_sse41_edge_imm0", "pblendw $0x00, %xmm2, %xmm1", Int),
-        ("pblendw_sse41_edge_immff", "pblendw $0xff, %xmm2, %xmm1", Int),
-        ("insertps_sse41_edge_lane0", "insertps $0x00, %xmm2, %xmm1", F32),
-        ("insertps_sse41_edge_zero_all", "insertps $0xff, %xmm2, %xmm1", F32),
-        ("pextrb_sse41_edge_imm1f_gpr", "pextrb $0x1f, %xmm1, %r8d", Int),
-        ("pextrw_sse41_edge_imm0f_mem", "pextrw $0x0f, %xmm1, 34(%rax)", Int),
-        ("pextrd_sse41_edge_imm07_gpr", "pextrd $0x07, %xmm1, %r8d", Int),
-        ("pextrq_sse41_edge_imm03_mem", "pextrq $0x03, %xmm1, 48(%rax)", Int),
-        ("extractps_sse41_edge_imm07_gpr", "extractps $0x07, %xmm1, %r8d", F32),
-        ("pinsrb_sse41_edge_imm1f_gpr", "pinsrb $0x1f, %r8d, %xmm1", Int),
-        ("pinsrd_sse41_edge_imm07_mem", "pinsrd $0x07, 28(%rax), %xmm1", Int),
-        ("pinsrq_sse41_edge_imm03_gpr", "pinsrq $0x03, %r8, %xmm1", Int),
-        ("insertps_sse41_edge_mem_high_dest", "insertps $0xf0, 12(%rax), %xmm1", F32),
+        (
+            "pblendw_sse41_edge_imm0",
+            "pblendw $0x00, %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "pblendw_sse41_edge_immff",
+            "pblendw $0xff, %xmm2, %xmm1",
+            Int,
+        ),
+        (
+            "insertps_sse41_edge_lane0",
+            "insertps $0x00, %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "insertps_sse41_edge_zero_all",
+            "insertps $0xff, %xmm2, %xmm1",
+            F32,
+        ),
+        (
+            "pextrb_sse41_edge_imm1f_gpr",
+            "pextrb $0x1f, %xmm1, %r8d",
+            Int,
+        ),
+        (
+            "pextrw_sse41_edge_imm0f_mem",
+            "pextrw $0x0f, %xmm1, 34(%rax)",
+            Int,
+        ),
+        (
+            "pextrd_sse41_edge_imm07_gpr",
+            "pextrd $0x07, %xmm1, %r8d",
+            Int,
+        ),
+        (
+            "pextrq_sse41_edge_imm03_mem",
+            "pextrq $0x03, %xmm1, 48(%rax)",
+            Int,
+        ),
+        (
+            "extractps_sse41_edge_imm07_gpr",
+            "extractps $0x07, %xmm1, %r8d",
+            F32,
+        ),
+        (
+            "pinsrb_sse41_edge_imm1f_gpr",
+            "pinsrb $0x1f, %r8d, %xmm1",
+            Int,
+        ),
+        (
+            "pinsrd_sse41_edge_imm07_mem",
+            "pinsrd $0x07, 28(%rax), %xmm1",
+            Int,
+        ),
+        (
+            "pinsrq_sse41_edge_imm03_gpr",
+            "pinsrq $0x03, %r8, %xmm1",
+            Int,
+        ),
+        (
+            "insertps_sse41_edge_mem_high_dest",
+            "insertps $0xf0, 12(%rax), %xmm1",
+            F32,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -10748,9 +12349,7 @@ fn irregular_cases() -> Vec<Case> {
         for class in ["xmm", "ymm"] {
             out.push(Case {
                 label: format!("vpclmulqdq_vex_crypto_addr_{class}_{tag}_indexed"),
-                asm: format!(
-                    "{{vex}} vpclmulqdq ${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"
-                ),
+                asm: format!("{{vex}} vpclmulqdq ${imm:#x}, -32(%rbx,%r9,1), %{class}3, %{class}1"),
                 feat: Vpclmulqdq,
                 profile: Int,
             });
@@ -10911,44 +12510,196 @@ fn irregular_cases() -> Vec<Case> {
     // width truncation for b/w/d/q masks, carry-discarding KADD behavior,
     // KTEST/KORTEST status flags, and KUNPCK packing boundaries.
     for &(label, asm, feat) in &[
-        ("kandw_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkandw %k1, %k2, %k5", F),
-        ("kandnw_opmask_edge_allones_zero", "kxnorw %k1, %k1, %k1\nkxorw %k2, %k2, %k2\nkandnw %k1, %k2, %k5", F),
-        ("korw_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkorw %k1, %k2, %k5", F),
-        ("kxorw_opmask_edge_self_zero", "kxnorw %k1, %k1, %k1\nkxorw %k1, %k1, %k5", F),
-        ("kxnorw_opmask_edge_self_allones", "kxnorw %k1, %k1, %k1\nkxnorw %k1, %k1, %k5", F),
-        ("knotw_opmask_edge_width", "kxnorw %k1, %k1, %k1\nknotw %k1, %k5", F),
-        ("ktestw_opmask_edge_zero_zero_flags", "kxorw %k1, %k1, %k1\nktestw %k1, %k1", F),
-        ("ktestw_opmask_edge_allones_flags", "kxnorw %k1, %k1, %k1\nktestw %k1, %k1", F),
-        ("kortestw_opmask_edge_zero_zero_flags", "kxorw %k1, %k1, %k1\nkortestw %k1, %k1", F),
-        ("kortestw_opmask_edge_allones_flags", "kxnorw %k1, %k1, %k1\nkortestw %k1, %k1", F),
-        ("kunpckbw_opmask_edge_zero_allones", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkunpckbw %k1, %k2, %k5", F),
-        ("kunpckwd_opmask_edge_zero_allones", "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkunpckwd %k1, %k2, %k5", F),
-        ("kandb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nkandb %k2, %k1, %k5", Dq),
-        ("kandd_opmask_edge_width", "kxnord %k1, %k1, %k1\nkandd %k2, %k1, %k5", Dq),
-        ("kandnb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nkandnb %k2, %k1, %k5", Dq),
-        ("kandnd_opmask_edge_width", "kxnord %k1, %k1, %k1\nkandnd %k2, %k1, %k5", Dq),
-        ("korb_opmask_edge_zero_allones", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkorb %k1, %k2, %k5", Dq),
-        ("kord_opmask_edge_zero_allones", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkord %k1, %k2, %k5", Dq),
-        ("kxorb_opmask_edge_self_zero", "kxnorb %k1, %k1, %k1\nkxorb %k1, %k1, %k5", Dq),
-        ("kxord_opmask_edge_self_zero", "kxnord %k1, %k1, %k1\nkxord %k1, %k1, %k5", Dq),
-        ("kxnorb_opmask_edge_self_allones", "kxnorb %k1, %k1, %k1\nkxnorb %k1, %k1, %k5", Dq),
-        ("kxnord_opmask_edge_self_allones", "kxnord %k1, %k1, %k1\nkxnord %k1, %k1, %k5", Dq),
-        ("kaddb_opmask_edge_discard_carry", "kxnorb %k1, %k1, %k1\nkaddb %k1, %k1, %k5", Dq),
-        ("kaddd_opmask_edge_discard_carry", "kxnord %k1, %k1, %k1\nkaddd %k1, %k1, %k5", Dq),
-        ("knotb_opmask_edge_width", "kxnorb %k1, %k1, %k1\nknotb %k1, %k5", Dq),
-        ("knotd_opmask_edge_width", "kxnord %k1, %k1, %k1\nknotd %k1, %k5", Dq),
-        ("ktestb_opmask_edge_zero_allones_flags", "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nktestb %k1, %k2", Dq),
-        ("kortestd_opmask_edge_zero_allones_flags", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkortestd %k1, %k2", Dq),
-        ("kandq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nkandq %k2, %k1, %k5", Bw),
-        ("kandnq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nkandnq %k2, %k1, %k5", Bw),
-        ("korq_opmask_edge_zero_allones", "kxorq %k1, %k1, %k1\nkxnorq %k2, %k2, %k2\nkorq %k1, %k2, %k5", Bw),
-        ("kxorq_opmask_edge_self_zero", "kxnorq %k1, %k1, %k1\nkxorq %k1, %k1, %k5", Bw),
-        ("kxnorq_opmask_edge_self_allones", "kxnorq %k1, %k1, %k1\nkxnorq %k1, %k1, %k5", Bw),
-        ("kaddq_opmask_edge_discard_carry", "kxnorq %k1, %k1, %k1\nkaddq %k1, %k1, %k5", Bw),
-        ("knotq_opmask_edge_width", "kxnorq %k1, %k1, %k1\nknotq %k1, %k5", Bw),
-        ("ktestq_opmask_edge_allones_flags", "kxnorq %k1, %k1, %k1\nktestq %k1, %k1", Bw),
-        ("kortestq_opmask_edge_zero_zero_flags", "kxorq %k1, %k1, %k1\nkortestq %k1, %k1", Bw),
-        ("kunpckdq_opmask_edge_zero_allones", "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkunpckdq %k1, %k2, %k5", Bw),
+        (
+            "kandw_opmask_edge_zero_allones",
+            "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkandw %k1, %k2, %k5",
+            F,
+        ),
+        (
+            "kandnw_opmask_edge_allones_zero",
+            "kxnorw %k1, %k1, %k1\nkxorw %k2, %k2, %k2\nkandnw %k1, %k2, %k5",
+            F,
+        ),
+        (
+            "korw_opmask_edge_zero_allones",
+            "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkorw %k1, %k2, %k5",
+            F,
+        ),
+        (
+            "kxorw_opmask_edge_self_zero",
+            "kxnorw %k1, %k1, %k1\nkxorw %k1, %k1, %k5",
+            F,
+        ),
+        (
+            "kxnorw_opmask_edge_self_allones",
+            "kxnorw %k1, %k1, %k1\nkxnorw %k1, %k1, %k5",
+            F,
+        ),
+        (
+            "knotw_opmask_edge_width",
+            "kxnorw %k1, %k1, %k1\nknotw %k1, %k5",
+            F,
+        ),
+        (
+            "ktestw_opmask_edge_zero_zero_flags",
+            "kxorw %k1, %k1, %k1\nktestw %k1, %k1",
+            F,
+        ),
+        (
+            "ktestw_opmask_edge_allones_flags",
+            "kxnorw %k1, %k1, %k1\nktestw %k1, %k1",
+            F,
+        ),
+        (
+            "kortestw_opmask_edge_zero_zero_flags",
+            "kxorw %k1, %k1, %k1\nkortestw %k1, %k1",
+            F,
+        ),
+        (
+            "kortestw_opmask_edge_allones_flags",
+            "kxnorw %k1, %k1, %k1\nkortestw %k1, %k1",
+            F,
+        ),
+        (
+            "kunpckbw_opmask_edge_zero_allones",
+            "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkunpckbw %k1, %k2, %k5",
+            F,
+        ),
+        (
+            "kunpckwd_opmask_edge_zero_allones",
+            "kxorw %k1, %k1, %k1\nkxnorw %k2, %k2, %k2\nkunpckwd %k1, %k2, %k5",
+            F,
+        ),
+        (
+            "kandb_opmask_edge_width",
+            "kxnorb %k1, %k1, %k1\nkandb %k2, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kandd_opmask_edge_width",
+            "kxnord %k1, %k1, %k1\nkandd %k2, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kandnb_opmask_edge_width",
+            "kxnorb %k1, %k1, %k1\nkandnb %k2, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kandnd_opmask_edge_width",
+            "kxnord %k1, %k1, %k1\nkandnd %k2, %k1, %k5",
+            Dq,
+        ),
+        (
+            "korb_opmask_edge_zero_allones",
+            "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nkorb %k1, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kord_opmask_edge_zero_allones",
+            "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkord %k1, %k2, %k5",
+            Dq,
+        ),
+        (
+            "kxorb_opmask_edge_self_zero",
+            "kxnorb %k1, %k1, %k1\nkxorb %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kxord_opmask_edge_self_zero",
+            "kxnord %k1, %k1, %k1\nkxord %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kxnorb_opmask_edge_self_allones",
+            "kxnorb %k1, %k1, %k1\nkxnorb %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kxnord_opmask_edge_self_allones",
+            "kxnord %k1, %k1, %k1\nkxnord %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kaddb_opmask_edge_discard_carry",
+            "kxnorb %k1, %k1, %k1\nkaddb %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "kaddd_opmask_edge_discard_carry",
+            "kxnord %k1, %k1, %k1\nkaddd %k1, %k1, %k5",
+            Dq,
+        ),
+        (
+            "knotb_opmask_edge_width",
+            "kxnorb %k1, %k1, %k1\nknotb %k1, %k5",
+            Dq,
+        ),
+        (
+            "knotd_opmask_edge_width",
+            "kxnord %k1, %k1, %k1\nknotd %k1, %k5",
+            Dq,
+        ),
+        (
+            "ktestb_opmask_edge_zero_allones_flags",
+            "kxorb %k1, %k1, %k1\nkxnorb %k2, %k2, %k2\nktestb %k1, %k2",
+            Dq,
+        ),
+        (
+            "kortestd_opmask_edge_zero_allones_flags",
+            "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkortestd %k1, %k2",
+            Dq,
+        ),
+        (
+            "kandq_opmask_edge_width",
+            "kxnorq %k1, %k1, %k1\nkandq %k2, %k1, %k5",
+            Bw,
+        ),
+        (
+            "kandnq_opmask_edge_width",
+            "kxnorq %k1, %k1, %k1\nkandnq %k2, %k1, %k5",
+            Bw,
+        ),
+        (
+            "korq_opmask_edge_zero_allones",
+            "kxorq %k1, %k1, %k1\nkxnorq %k2, %k2, %k2\nkorq %k1, %k2, %k5",
+            Bw,
+        ),
+        (
+            "kxorq_opmask_edge_self_zero",
+            "kxnorq %k1, %k1, %k1\nkxorq %k1, %k1, %k5",
+            Bw,
+        ),
+        (
+            "kxnorq_opmask_edge_self_allones",
+            "kxnorq %k1, %k1, %k1\nkxnorq %k1, %k1, %k5",
+            Bw,
+        ),
+        (
+            "kaddq_opmask_edge_discard_carry",
+            "kxnorq %k1, %k1, %k1\nkaddq %k1, %k1, %k5",
+            Bw,
+        ),
+        (
+            "knotq_opmask_edge_width",
+            "kxnorq %k1, %k1, %k1\nknotq %k1, %k5",
+            Bw,
+        ),
+        (
+            "ktestq_opmask_edge_allones_flags",
+            "kxnorq %k1, %k1, %k1\nktestq %k1, %k1",
+            Bw,
+        ),
+        (
+            "kortestq_opmask_edge_zero_zero_flags",
+            "kxorq %k1, %k1, %k1\nkortestq %k1, %k1",
+            Bw,
+        ),
+        (
+            "kunpckdq_opmask_edge_zero_allones",
+            "kxord %k1, %k1, %k1\nkxnord %k2, %k2, %k2\nkunpckdq %k1, %k2, %k5",
+            Bw,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -11899,18 +13650,9 @@ fn irregular_cases() -> Vec<Case> {
     }
     for mnem in ["aesenc", "aesenclast", "aesdec", "aesdeclast"] {
         for (tag, asm) in [
-            (
-                "disp",
-                format!("{mnem} -16(%rbx), %xmm1"),
-            ),
-            (
-                "addr32_disp",
-                format!("addr32 {mnem} -16(%ebx), %xmm1"),
-            ),
-            (
-                "high_disp",
-                format!("{mnem} -16(%rbx), %xmm9"),
-            ),
+            ("disp", format!("{mnem} -16(%rbx), %xmm1")),
+            ("addr32_disp", format!("addr32 {mnem} -16(%ebx), %xmm1")),
+            ("high_disp", format!("{mnem} -16(%rbx), %xmm9")),
         ] {
             out.push(Case {
                 label: format!("{mnem}_legacy_aes_addr_{tag}"),
@@ -11921,10 +13663,7 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
     for &(label, asm) in &[
-        (
-            "aesimc_legacy_aes_addr_disp",
-            "aesimc -16(%rbx), %xmm1",
-        ),
+        ("aesimc_legacy_aes_addr_disp", "aesimc -16(%rbx), %xmm1"),
         (
             "aesimc_legacy_aes_addr_addr32_disp",
             "addr32 aesimc -16(%ebx), %xmm1",
@@ -11978,10 +13717,7 @@ fn irregular_cases() -> Vec<Case> {
     });
     for &(imm, tag) in &[(0x00, "ll"), (0x01, "hl"), (0x10, "lh"), (0x11, "hh")] {
         for (form, asm) in [
-            (
-                "disp",
-                format!("pclmulqdq ${imm:#x}, -16(%rbx), %xmm1"),
-            ),
+            ("disp", format!("pclmulqdq ${imm:#x}, -16(%rbx), %xmm1")),
             (
                 "addr32_disp",
                 format!("addr32 pclmulqdq ${imm:#x}, -16(%ebx), %xmm1"),
@@ -12182,18 +13918,9 @@ fn irregular_cases() -> Vec<Case> {
         "sha256msg2",
     ] {
         for (tag, asm) in [
-            (
-                "disp",
-                format!("{mnem} -16(%rbx), %xmm1"),
-            ),
-            (
-                "addr32_disp",
-                format!("addr32 {mnem} -16(%ebx), %xmm1"),
-            ),
-            (
-                "high_disp",
-                format!("{mnem} -16(%rbx), %xmm9"),
-            ),
+            ("disp", format!("{mnem} -16(%rbx), %xmm1")),
+            ("addr32_disp", format!("addr32 {mnem} -16(%ebx), %xmm1")),
+            ("high_disp", format!("{mnem} -16(%rbx), %xmm9")),
         ] {
             out.push(Case {
                 label: format!("{mnem}_sha_ni_addr_{tag}"),
@@ -12205,18 +13932,12 @@ fn irregular_cases() -> Vec<Case> {
     }
     for imm in 0..=3 {
         for (tag, asm) in [
-            (
-                "disp",
-                format!("sha1rnds4 ${imm}, -16(%rbx), %xmm1"),
-            ),
+            ("disp", format!("sha1rnds4 ${imm}, -16(%rbx), %xmm1")),
             (
                 "addr32_disp",
                 format!("addr32 sha1rnds4 ${imm}, -16(%ebx), %xmm1"),
             ),
-            (
-                "high_disp",
-                format!("sha1rnds4 ${imm}, -16(%rbx), %xmm9"),
-            ),
+            ("high_disp", format!("sha1rnds4 ${imm}, -16(%rbx), %xmm9")),
         ] {
             out.push(Case {
                 label: format!("sha1rnds4_imm{imm}_sha_ni_addr_{tag}"),
@@ -12656,10 +14377,7 @@ fn irregular_cases() -> Vec<Case> {
             "lea_core_address_edge_addr32_negative_disp",
             "movabsq $0xffff000000004010, %rbx\naddr32 leaq -32(%ebx), %r8",
         ),
-        (
-            "lea_core_address_edge_sib_no_base",
-            "leaq 64(,%r9,8), %r8",
-        ),
+        ("lea_core_address_edge_sib_no_base", "leaq 64(,%r9,8), %r8"),
         (
             "lea_core_address_edge_negative_index",
             "movq $-2, %r10\nleaq 128(%rax,%r10,8), %r8",
@@ -14670,9 +16388,21 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
     for &(label, asm, feat) in &[
-        ("lfence_preserves_cmp_flags", "cmpq %rcx, %r8\nlfence", Fence),
-        ("mfence_preserves_cmp_flags", "cmpq %rcx, %r8\nmfence", Fence),
-        ("sfence_preserves_cmp_flags", "cmpq %rcx, %r8\nsfence", Fence),
+        (
+            "lfence_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nlfence",
+            Fence,
+        ),
+        (
+            "mfence_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nmfence",
+            Fence,
+        ),
+        (
+            "sfence_preserves_cmp_flags",
+            "cmpq %rcx, %r8\nsfence",
+            Fence,
+        ),
         (
             "clflush_cache_line_disp",
             "movq %r8, -16(%rbx)\nclflush -16(%rbx)\nmovq -16(%rbx), %rcx",
@@ -14857,11 +16587,7 @@ fn irregular_cases() -> Vec<Case> {
             "movl $2, %ecx\nnopl -16(%rbx,%rcx,2)",
             HintNop,
         ),
-        (
-            "nop_rm_addr32_disp",
-            "addr32 nopl 48(%eax)",
-            HintNop,
-        ),
+        ("nop_rm_addr32_disp", "addr32 nopl 48(%eax)", HintNop),
         ("endbr64_hint_nop", "endbr64", HintNop),
         ("endbr32_hint_nop", "endbr32", HintNop),
         (
@@ -15850,9 +17576,7 @@ fn irregular_cases() -> Vec<Case> {
     ] {
         out.push(Case {
             label: label.to_string(),
-            asm: format!(
-                "{descriptor_group6_load_setup}\n{check}\n{descriptor_group6_clear_gdt}"
-            ),
+            asm: format!("{descriptor_group6_load_setup}\n{check}\n{descriptor_group6_clear_gdt}"),
             feat: DescriptorAccess,
             profile: Int,
         });
@@ -17219,30 +18943,18 @@ fn irregular_cases() -> Vec<Case> {
         ("repe_cmpsq_core_string", "repe cmpsq"),
         ("repe_cmpsb_core_string_count_zero", "repe cmpsb"),
         ("addr32_repe_cmpsb_core_string", "addr32 repe cmpsb"),
-        (
-            "addr32_movsb_core_string_edge_addr32_high",
-            "addr32 movsb",
-        ),
+        ("addr32_movsb_core_string_edge_addr32_high", "addr32 movsb"),
         (
             "addr32_rep_movsq_core_string_edge_addr32_high_count_one",
             "addr32 rep movsq",
         ),
-        (
-            "rep_movsb_core_string_edge_overlap_forward",
-            "rep movsb",
-        ),
-        (
-            "rep_movsb_core_string_edge_overlap_backward",
-            "rep movsb",
-        ),
+        ("rep_movsb_core_string_edge_overlap_forward", "rep movsb"),
+        ("rep_movsb_core_string_edge_overlap_backward", "rep movsb"),
         ("rep_movsq_core_string_edge_count_one", "rep movsq"),
         ("rep_stosb_core_string_edge_count_one", "rep stosb"),
         ("rep_stosq_core_string_edge_count_one", "rep stosq"),
         ("rep_lodsw_core_string_edge_count_one", "rep lodsw"),
-        (
-            "repe_cmpsb_core_string_edge_same_address",
-            "repe cmpsb",
-        ),
+        ("repe_cmpsb_core_string_edge_same_address", "repe cmpsb"),
         (
             "repne_cmpsb_core_string_edge_same_address_count_one",
             "repne cmpsb",
@@ -18052,7 +19764,11 @@ fn parse_encoding(text: &str) -> Option<Vec<u8>> {
         }
         rest = &rest[end + 1..];
     }
-    if bytes.is_empty() { None } else { Some(bytes) }
+    if bytes.is_empty() {
+        None
+    } else {
+        Some(bytes)
+    }
 }
 
 #[test]
@@ -18125,7 +19841,11 @@ fn assemble_object_text(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
             return None;
         }
         let bytes = std::fs::read(&bin_path).ok()?;
-        if bytes.is_empty() { None } else { Some(bytes) }
+        if bytes.is_empty() {
+            None
+        } else {
+            Some(bytes)
+        }
     })();
 
     let _ = std::fs::remove_file(&obj_path);
@@ -18357,11 +20077,9 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             && (op.windows(2).any(|bytes| bytes[0] == 0x0f)
                 || op.iter().any(|byte| matches!(byte, 0xc4 | 0xc5)));
         let movdir_edge_setup_allowed = case.label.contains("_movdir_edge_")
-            && op
-                .windows(3)
-                .any(|bytes| {
-                    bytes[0] == 0x0f && bytes[1] == 0x38 && matches!(bytes[2], 0xf8 | 0xf9)
-                });
+            && op.windows(3).any(|bytes| {
+                bytes[0] == 0x0f && bytes[1] == 0x38 && matches!(bytes[2], 0xf8 | 0xf9)
+            });
         let adx_edge_setup_allowed = case.label.contains("_adx_edge_")
             && op
                 .windows(3)
@@ -18526,15 +20244,13 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "debug_reg_dr4_de_read_undefined",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x21,
-                0xe0,
+                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x21, 0xe0,
             ],
         ),
         (
             "debug_reg_dr5_de_write_undefined",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x23,
-                0xe8,
+                0x0f, 0x20, 0xe0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xe0, 0x0f, 0x23, 0xe8,
             ],
         ),
         ("group6_0f00_group6_reg_undefined", &[0x0f, 0x00, 0xf0]),
@@ -18579,15 +20295,9 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
 
 fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
-        (
-            "movdiri_66_prefix_illegal",
-            &[0x66, 0x0f, 0x38, 0xf9, 0x08],
-        ),
+        ("movdiri_66_prefix_illegal", &[0x66, 0x0f, 0x38, 0xf9, 0x08]),
         ("movdiri_register_dest_illegal", &[0x0f, 0x38, 0xf9, 0xc8]),
-        (
-            "movdir64b_missing_66_illegal",
-            &[0x0f, 0x38, 0xf8, 0x08],
-        ),
+        ("movdir64b_missing_66_illegal", &[0x0f, 0x38, 0xf8, 0x08]),
         (
             "movdir64b_register_source_illegal",
             &[0x66, 0x0f, 0x38, 0xf8, 0xc3],
@@ -18600,135 +20310,51 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "rex2_before_evex_illegal",
             &[0xd5, 0x01, 0x62, 0x91, 0x7c, 0x08, 0x28, 0xc0],
         ),
-        (
-            "kunpckbw_vvvv_k8_illegal",
-            &[0xc5, 0xbd, 0x4b, 0xc0],
-        ),
+        ("kunpckbw_vvvv_k8_illegal", &[0xc5, 0xbd, 0x4b, 0xc0]),
         ("kandw_vvvv_k8_illegal", &[0xc5, 0xbc, 0x41, 0xc0]),
-        (
-            "kmovw_store_reg_k8_illegal",
-            &[0xc5, 0x78, 0x91, 0x00],
-        ),
-        (
-            "kortestw_vvvv_illegal",
-            &[0xc5, 0xf0, 0x98, 0xd1],
-        ),
-        (
-            "ktestw_vvvv_illegal",
-            &[0xc5, 0xf0, 0x99, 0xd1],
-        ),
+        ("kmovw_store_reg_k8_illegal", &[0xc5, 0x78, 0x91, 0x00]),
+        ("kortestw_vvvv_illegal", &[0xc5, 0xf0, 0x98, 0xd1]),
+        ("ktestw_vvvv_illegal", &[0xc5, 0xf0, 0x99, 0xd1]),
         (
             "kshiftlw_vvvv_illegal",
             &[0xc4, 0xe3, 0xf1, 0x32, 0xd1, 0x03],
         ),
-        (
-            "kortestw_memory_illegal",
-            &[0xc5, 0xf8, 0x98, 0x10],
-        ),
-        (
-            "ktestw_memory_illegal",
-            &[0xc5, 0xf8, 0x99, 0x10],
-        ),
-        (
-            "kandw_memory_illegal",
-            &[0xc5, 0xec, 0x41, 0x18],
-        ),
-        (
-            "knotw_memory_illegal",
-            &[0xc5, 0xf8, 0x44, 0x10],
-        ),
-        (
-            "kunpckbw_memory_illegal",
-            &[0xc5, 0xed, 0x4b, 0x18],
-        ),
+        ("kortestw_memory_illegal", &[0xc5, 0xf8, 0x98, 0x10]),
+        ("ktestw_memory_illegal", &[0xc5, 0xf8, 0x99, 0x10]),
+        ("kandw_memory_illegal", &[0xc5, 0xec, 0x41, 0x18]),
+        ("knotw_memory_illegal", &[0xc5, 0xf8, 0x44, 0x10]),
+        ("kunpckbw_memory_illegal", &[0xc5, 0xed, 0x4b, 0x18]),
         (
             "kshiftlw_memory_illegal",
             &[0xc4, 0xe3, 0xf9, 0x32, 0x10, 0x03],
         ),
-        (
-            "vtestps_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x0e, 0xd1],
-        ),
-        (
-            "vptest_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x17, 0xd1],
-        ),
-        (
-            "vpmovmskb_vvvv_illegal",
-            &[0xc5, 0xf1, 0xd7, 0xc1],
-        ),
-        (
-            "vcvtph2ps_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x13, 0xd1],
-        ),
+        ("vtestps_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x0e, 0xd1]),
+        ("vptest_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x17, 0xd1]),
+        ("vpmovmskb_vvvv_illegal", &[0xc5, 0xf1, 0xd7, 0xc1]),
+        ("vcvtph2ps_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x13, 0xd1]),
         (
             "vcvtps2ph_vvvv_illegal",
             &[0xc4, 0xe3, 0x71, 0x1d, 0xca, 0x00],
         ),
-        (
-            "vphminposuw_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x41, 0xd1],
-        ),
-        (
-            "vphminposuw_l1_illegal",
-            &[0xc4, 0xe2, 0x7d, 0x41, 0xd1],
-        ),
-        (
-            "vmovss_load_vvvv_illegal",
-            &[0xc5, 0xf2, 0x10, 0x08],
-        ),
-        (
-            "vmovss_store_vvvv_illegal",
-            &[0xc5, 0xf2, 0x11, 0x08],
-        ),
-        (
-            "vmovlps_l1_illegal",
-            &[0xc5, 0xf4, 0x12, 0x10],
-        ),
-        (
-            "vmovlpd_l1_illegal",
-            &[0xc5, 0xf5, 0x12, 0x10],
-        ),
-        (
-            "vmovlpd_register_source_illegal",
-            &[0xc5, 0xf1, 0x12, 0xd1],
-        ),
-        (
-            "vmovlps_store_l1_illegal",
-            &[0xc5, 0xfc, 0x13, 0x08],
-        ),
-        (
-            "vmovlps_store_vvvv_illegal",
-            &[0xc5, 0xf0, 0x13, 0x08],
-        ),
+        ("vphminposuw_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x41, 0xd1]),
+        ("vphminposuw_l1_illegal", &[0xc4, 0xe2, 0x7d, 0x41, 0xd1]),
+        ("vmovss_load_vvvv_illegal", &[0xc5, 0xf2, 0x10, 0x08]),
+        ("vmovss_store_vvvv_illegal", &[0xc5, 0xf2, 0x11, 0x08]),
+        ("vmovlps_l1_illegal", &[0xc5, 0xf4, 0x12, 0x10]),
+        ("vmovlpd_l1_illegal", &[0xc5, 0xf5, 0x12, 0x10]),
+        ("vmovlpd_register_source_illegal", &[0xc5, 0xf1, 0x12, 0xd1]),
+        ("vmovlps_store_l1_illegal", &[0xc5, 0xfc, 0x13, 0x08]),
+        ("vmovlps_store_vvvv_illegal", &[0xc5, 0xf0, 0x13, 0x08]),
         (
             "vmovlps_store_register_dest_illegal",
             &[0xc5, 0xf8, 0x13, 0xc8],
         ),
-        (
-            "vmovsldup_vvvv_illegal",
-            &[0xc5, 0xf2, 0x12, 0xd1],
-        ),
-        (
-            "vmovshdup_vvvv_illegal",
-            &[0xc5, 0xf2, 0x16, 0xd1],
-        ),
-        (
-            "vmovddup_vvvv_illegal",
-            &[0xc5, 0xf3, 0x12, 0xd1],
-        ),
-        (
-            "vmovntps_vvvv_illegal",
-            &[0xc5, 0xf0, 0x2b, 0x08],
-        ),
-        (
-            "vmovntps_register_dest_illegal",
-            &[0xc5, 0xf8, 0x2b, 0xc8],
-        ),
-        (
-            "vmovntdqa_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x2a, 0x10],
-        ),
+        ("vmovsldup_vvvv_illegal", &[0xc5, 0xf2, 0x12, 0xd1]),
+        ("vmovshdup_vvvv_illegal", &[0xc5, 0xf2, 0x16, 0xd1]),
+        ("vmovddup_vvvv_illegal", &[0xc5, 0xf3, 0x12, 0xd1]),
+        ("vmovntps_vvvv_illegal", &[0xc5, 0xf0, 0x2b, 0x08]),
+        ("vmovntps_register_dest_illegal", &[0xc5, 0xf8, 0x2b, 0xc8]),
+        ("vmovntdqa_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x2a, 0x10]),
         (
             "vmovntdqa_register_source_illegal",
             &[0xc4, 0xe2, 0x79, 0x2a, 0xd0],
@@ -18737,26 +20363,14 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vbroadcastf128_vvvv_illegal",
             &[0xc4, 0xe2, 0x75, 0x1a, 0x10],
         ),
-        (
-            "vbroadcastf128_l0_illegal",
-            &[0xc4, 0xe2, 0x79, 0x1a, 0x10],
-        ),
+        ("vbroadcastf128_l0_illegal", &[0xc4, 0xe2, 0x79, 0x1a, 0x10]),
         (
             "vbroadcastf128_register_source_illegal",
             &[0xc4, 0xe2, 0x7d, 0x1a, 0xd0],
         ),
-        (
-            "vbroadcastss_vvvv_illegal",
-            &[0xc4, 0xe2, 0x71, 0x18, 0x10],
-        ),
-        (
-            "vbroadcastsd_vvvv_illegal",
-            &[0xc4, 0xe2, 0x75, 0x19, 0x10],
-        ),
-        (
-            "vbroadcastsd_l0_illegal",
-            &[0xc4, 0xe2, 0x79, 0x19, 0x10],
-        ),
+        ("vbroadcastss_vvvv_illegal", &[0xc4, 0xe2, 0x71, 0x18, 0x10]),
+        ("vbroadcastsd_vvvv_illegal", &[0xc4, 0xe2, 0x75, 0x19, 0x10]),
+        ("vbroadcastsd_l0_illegal", &[0xc4, 0xe2, 0x79, 0x19, 0x10]),
         (
             "vpermilps_imm_vvvv_illegal",
             &[0xc4, 0xe3, 0x71, 0x04, 0xd1, 0x00],
@@ -18769,10 +20383,7 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vex_0f70_missing_mandatory_prefix_illegal",
             &[0xc5, 0xf8, 0x70, 0xc1, 0x00],
         ),
-        (
-            "vcvtps2dq_f2_prefix_illegal",
-            &[0xc5, 0xfb, 0x5b, 0xc1],
-        ),
+        ("vcvtps2dq_f2_prefix_illegal", &[0xc5, 0xfb, 0x5b, 0xc1]),
         (
             "vcvttpd2dq_missing_mandatory_prefix_illegal",
             &[0xc5, 0xf8, 0xe6, 0xc1],
@@ -18812,42 +20423,15 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "movntdqa_register_source_illegal",
             &[0x66, 0x0f, 0x38, 0x2a, 0xc1],
         ),
-        (
-            "movntq_register_dest_illegal",
-            &[0x0f, 0xe7, 0xc1],
-        ),
-        (
-            "movlps_store_register_dest_illegal",
-            &[0x0f, 0x13, 0xc8],
-        ),
-        (
-            "movhps_store_register_dest_illegal",
-            &[0x0f, 0x17, 0xc8],
-        ),
-        (
-            "movlpd_register_source_illegal",
-            &[0x66, 0x0f, 0x12, 0xc8],
-        ),
-        (
-            "movhpd_register_source_illegal",
-            &[0x66, 0x0f, 0x16, 0xc8],
-        ),
-        (
-            "movnti_register_dest_illegal",
-            &[0x0f, 0xc3, 0xc1],
-        ),
-        (
-            "lddqu_register_source_illegal",
-            &[0xf2, 0x0f, 0xf0, 0xc1],
-        ),
-        (
-            "vlddqu_vvvv_illegal",
-            &[0xc5, 0xf3, 0xf0, 0x57, 0x01],
-        ),
-        (
-            "vlddqu_register_source_illegal",
-            &[0xc5, 0xfb, 0xf0, 0xd1],
-        ),
+        ("movntq_register_dest_illegal", &[0x0f, 0xe7, 0xc1]),
+        ("movlps_store_register_dest_illegal", &[0x0f, 0x13, 0xc8]),
+        ("movhps_store_register_dest_illegal", &[0x0f, 0x17, 0xc8]),
+        ("movlpd_register_source_illegal", &[0x66, 0x0f, 0x12, 0xc8]),
+        ("movhpd_register_source_illegal", &[0x66, 0x0f, 0x16, 0xc8]),
+        ("movnti_register_dest_illegal", &[0x0f, 0xc3, 0xc1]),
+        ("lddqu_register_source_illegal", &[0xf2, 0x0f, 0xf0, 0xc1]),
+        ("vlddqu_vvvv_illegal", &[0xc5, 0xf3, 0xf0, 0x57, 0x01]),
+        ("vlddqu_register_source_illegal", &[0xc5, 0xfb, 0xf0, 0xd1]),
         (
             "vcomiss_evex_mask_illegal",
             &[0x62, 0xf1, 0x7c, 0x09, 0x2f, 0xca],
@@ -19124,34 +20708,13 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "evex_vpsrldq_zero_illegal",
             &[0x62, 0xf1, 0x75, 0xc8, 0x73, 0xdb, 0x04],
         ),
-        (
-            "vpermd_l0_illegal",
-            &[0xc4, 0xe2, 0x69, 0x36, 0xd9],
-        ),
-        (
-            "vpermps_l0_illegal",
-            &[0xc4, 0xe2, 0x69, 0x16, 0xd9],
-        ),
-        (
-            "vpermq_vvvv_illegal",
-            &[0xc4, 0xe3, 0xf5, 0x00, 0xd1, 0x00],
-        ),
-        (
-            "vpermq_l0_illegal",
-            &[0xc4, 0xe3, 0xf9, 0x00, 0xd1, 0x00],
-        ),
-        (
-            "vpermpd_l0_illegal",
-            &[0xc4, 0xe3, 0xf9, 0x01, 0xd1, 0x00],
-        ),
-        (
-            "vpextrb_l1_illegal",
-            &[0xc4, 0xe3, 0x7d, 0x14, 0xc8, 0x00],
-        ),
-        (
-            "vpextrw_0f_l1_illegal",
-            &[0xc5, 0xfd, 0xc5, 0xc1, 0x00],
-        ),
+        ("vpermd_l0_illegal", &[0xc4, 0xe2, 0x69, 0x36, 0xd9]),
+        ("vpermps_l0_illegal", &[0xc4, 0xe2, 0x69, 0x16, 0xd9]),
+        ("vpermq_vvvv_illegal", &[0xc4, 0xe3, 0xf5, 0x00, 0xd1, 0x00]),
+        ("vpermq_l0_illegal", &[0xc4, 0xe3, 0xf9, 0x00, 0xd1, 0x00]),
+        ("vpermpd_l0_illegal", &[0xc4, 0xe3, 0xf9, 0x01, 0xd1, 0x00]),
+        ("vpextrb_l1_illegal", &[0xc4, 0xe3, 0x7d, 0x14, 0xc8, 0x00]),
+        ("vpextrw_0f_l1_illegal", &[0xc5, 0xfd, 0xc5, 0xc1, 0x00]),
         (
             "vpextrw_0f_memory_source_illegal",
             &[0xc5, 0xf9, 0xc5, 0x00, 0x00],
@@ -19160,86 +20723,32 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vpextrw_0f3a_l1_illegal",
             &[0xc4, 0xe3, 0x7d, 0x15, 0x08, 0x00],
         ),
-        (
-            "vpextrd_l1_illegal",
-            &[0xc4, 0xe3, 0x7d, 0x16, 0xc8, 0x00],
-        ),
+        ("vpextrd_l1_illegal", &[0xc4, 0xe3, 0x7d, 0x16, 0xc8, 0x00]),
         (
             "vextractps_l1_illegal",
             &[0xc4, 0xe3, 0x7d, 0x17, 0xc8, 0x00],
         ),
-        (
-            "vpinsrb_l1_illegal",
-            &[0xc4, 0xe3, 0x75, 0x20, 0xd0, 0x00],
-        ),
-        (
-            "vpinsrw_l1_illegal",
-            &[0xc5, 0xf5, 0xc4, 0xd0, 0x00],
-        ),
-        (
-            "vpinsrd_l1_illegal",
-            &[0xc4, 0xe3, 0x75, 0x22, 0xd0, 0x00],
-        ),
+        ("vpinsrb_l1_illegal", &[0xc4, 0xe3, 0x75, 0x20, 0xd0, 0x00]),
+        ("vpinsrw_l1_illegal", &[0xc5, 0xf5, 0xc4, 0xd0, 0x00]),
+        ("vpinsrd_l1_illegal", &[0xc4, 0xe3, 0x75, 0x22, 0xd0, 0x00]),
         (
             "vinsertps_l1_illegal",
             &[0xc4, 0xe3, 0x6d, 0x21, 0xd9, 0x00],
         ),
-        (
-            "vex_0f71_group0_illegal",
-            &[0xc5, 0xe9, 0x71, 0xc1, 0x01],
-        ),
-        (
-            "vex_0f71_group1_illegal",
-            &[0xc5, 0xe9, 0x71, 0xc9, 0x01],
-        ),
-        (
-            "vex_0f71_group3_illegal",
-            &[0xc5, 0xe9, 0x71, 0xd9, 0x01],
-        ),
-        (
-            "vex_0f71_group5_illegal",
-            &[0xc5, 0xe9, 0x71, 0xe9, 0x01],
-        ),
-        (
-            "vex_0f71_group7_illegal",
-            &[0xc5, 0xe9, 0x71, 0xf9, 0x01],
-        ),
-        (
-            "vex_0f72_group0_illegal",
-            &[0xc5, 0xe9, 0x72, 0xc1, 0x01],
-        ),
-        (
-            "vex_0f72_group1_illegal",
-            &[0xc5, 0xe9, 0x72, 0xc9, 0x01],
-        ),
-        (
-            "vex_0f72_group3_illegal",
-            &[0xc5, 0xe9, 0x72, 0xd9, 0x01],
-        ),
-        (
-            "vex_0f72_group5_illegal",
-            &[0xc5, 0xe9, 0x72, 0xe9, 0x01],
-        ),
-        (
-            "vex_0f72_group7_illegal",
-            &[0xc5, 0xe9, 0x72, 0xf9, 0x01],
-        ),
-        (
-            "vex_0f73_group0_illegal",
-            &[0xc5, 0xe9, 0x73, 0xc1, 0x01],
-        ),
-        (
-            "vex_0f73_group1_illegal",
-            &[0xc5, 0xe9, 0x73, 0xc9, 0x01],
-        ),
-        (
-            "vex_0f73_group4_illegal",
-            &[0xc5, 0xe9, 0x73, 0xe1, 0x01],
-        ),
-        (
-            "vex_0f73_group5_illegal",
-            &[0xc5, 0xe9, 0x73, 0xe9, 0x01],
-        ),
+        ("vex_0f71_group0_illegal", &[0xc5, 0xe9, 0x71, 0xc1, 0x01]),
+        ("vex_0f71_group1_illegal", &[0xc5, 0xe9, 0x71, 0xc9, 0x01]),
+        ("vex_0f71_group3_illegal", &[0xc5, 0xe9, 0x71, 0xd9, 0x01]),
+        ("vex_0f71_group5_illegal", &[0xc5, 0xe9, 0x71, 0xe9, 0x01]),
+        ("vex_0f71_group7_illegal", &[0xc5, 0xe9, 0x71, 0xf9, 0x01]),
+        ("vex_0f72_group0_illegal", &[0xc5, 0xe9, 0x72, 0xc1, 0x01]),
+        ("vex_0f72_group1_illegal", &[0xc5, 0xe9, 0x72, 0xc9, 0x01]),
+        ("vex_0f72_group3_illegal", &[0xc5, 0xe9, 0x72, 0xd9, 0x01]),
+        ("vex_0f72_group5_illegal", &[0xc5, 0xe9, 0x72, 0xe9, 0x01]),
+        ("vex_0f72_group7_illegal", &[0xc5, 0xe9, 0x72, 0xf9, 0x01]),
+        ("vex_0f73_group0_illegal", &[0xc5, 0xe9, 0x73, 0xc1, 0x01]),
+        ("vex_0f73_group1_illegal", &[0xc5, 0xe9, 0x73, 0xc9, 0x01]),
+        ("vex_0f73_group4_illegal", &[0xc5, 0xe9, 0x73, 0xe1, 0x01]),
+        ("vex_0f73_group5_illegal", &[0xc5, 0xe9, 0x73, 0xe9, 0x01]),
         (
             "evex_0f71_group0_illegal",
             &[0x62, 0xf1, 0x6d, 0x48, 0x71, 0xc1, 0x01],
@@ -19308,26 +20817,11 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "legacy_0f71_sse2_group7_illegal",
             &[0x66, 0x0f, 0x71, 0xf9, 0x01],
         ),
-        (
-            "legacy_0f71_mmx_group0_illegal",
-            &[0x0f, 0x71, 0xc1, 0x01],
-        ),
-        (
-            "legacy_0f71_mmx_group1_illegal",
-            &[0x0f, 0x71, 0xc9, 0x01],
-        ),
-        (
-            "legacy_0f71_mmx_group3_illegal",
-            &[0x0f, 0x71, 0xd9, 0x01],
-        ),
-        (
-            "legacy_0f71_mmx_group5_illegal",
-            &[0x0f, 0x71, 0xe9, 0x01],
-        ),
-        (
-            "legacy_0f71_mmx_group7_illegal",
-            &[0x0f, 0x71, 0xf9, 0x01],
-        ),
+        ("legacy_0f71_mmx_group0_illegal", &[0x0f, 0x71, 0xc1, 0x01]),
+        ("legacy_0f71_mmx_group1_illegal", &[0x0f, 0x71, 0xc9, 0x01]),
+        ("legacy_0f71_mmx_group3_illegal", &[0x0f, 0x71, 0xd9, 0x01]),
+        ("legacy_0f71_mmx_group5_illegal", &[0x0f, 0x71, 0xe9, 0x01]),
+        ("legacy_0f71_mmx_group7_illegal", &[0x0f, 0x71, 0xf9, 0x01]),
         (
             "legacy_0f72_sse2_group0_illegal",
             &[0x66, 0x0f, 0x72, 0xc1, 0x01],
@@ -19348,26 +20842,11 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "legacy_0f72_sse2_group7_illegal",
             &[0x66, 0x0f, 0x72, 0xf9, 0x01],
         ),
-        (
-            "legacy_0f72_mmx_group0_illegal",
-            &[0x0f, 0x72, 0xc1, 0x01],
-        ),
-        (
-            "legacy_0f72_mmx_group1_illegal",
-            &[0x0f, 0x72, 0xc9, 0x01],
-        ),
-        (
-            "legacy_0f72_mmx_group3_illegal",
-            &[0x0f, 0x72, 0xd9, 0x01],
-        ),
-        (
-            "legacy_0f72_mmx_group5_illegal",
-            &[0x0f, 0x72, 0xe9, 0x01],
-        ),
-        (
-            "legacy_0f72_mmx_group7_illegal",
-            &[0x0f, 0x72, 0xf9, 0x01],
-        ),
+        ("legacy_0f72_mmx_group0_illegal", &[0x0f, 0x72, 0xc1, 0x01]),
+        ("legacy_0f72_mmx_group1_illegal", &[0x0f, 0x72, 0xc9, 0x01]),
+        ("legacy_0f72_mmx_group3_illegal", &[0x0f, 0x72, 0xd9, 0x01]),
+        ("legacy_0f72_mmx_group5_illegal", &[0x0f, 0x72, 0xe9, 0x01]),
+        ("legacy_0f72_mmx_group7_illegal", &[0x0f, 0x72, 0xf9, 0x01]),
         (
             "legacy_0f73_sse2_group0_illegal",
             &[0x66, 0x0f, 0x73, 0xc1, 0x01],
@@ -19384,34 +20863,13 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "legacy_0f73_sse2_group5_illegal",
             &[0x66, 0x0f, 0x73, 0xe9, 0x01],
         ),
-        (
-            "legacy_0f73_mmx_group0_illegal",
-            &[0x0f, 0x73, 0xc1, 0x01],
-        ),
-        (
-            "legacy_0f73_mmx_group1_illegal",
-            &[0x0f, 0x73, 0xc9, 0x01],
-        ),
-        (
-            "legacy_0f73_mmx_group3_illegal",
-            &[0x0f, 0x73, 0xd9, 0x01],
-        ),
-        (
-            "legacy_0f73_mmx_group4_illegal",
-            &[0x0f, 0x73, 0xe1, 0x01],
-        ),
-        (
-            "legacy_0f73_mmx_group5_illegal",
-            &[0x0f, 0x73, 0xe9, 0x01],
-        ),
-        (
-            "legacy_0f73_mmx_group7_illegal",
-            &[0x0f, 0x73, 0xf9, 0x01],
-        ),
-        (
-            "vpsravq_vex_illegal",
-            &[0xc4, 0xe2, 0xe9, 0x46, 0xd9],
-        ),
+        ("legacy_0f73_mmx_group0_illegal", &[0x0f, 0x73, 0xc1, 0x01]),
+        ("legacy_0f73_mmx_group1_illegal", &[0x0f, 0x73, 0xc9, 0x01]),
+        ("legacy_0f73_mmx_group3_illegal", &[0x0f, 0x73, 0xd9, 0x01]),
+        ("legacy_0f73_mmx_group4_illegal", &[0x0f, 0x73, 0xe1, 0x01]),
+        ("legacy_0f73_mmx_group5_illegal", &[0x0f, 0x73, 0xe9, 0x01]),
+        ("legacy_0f73_mmx_group7_illegal", &[0x0f, 0x73, 0xf9, 0x01]),
+        ("vpsravq_vex_illegal", &[0xc4, 0xe2, 0xe9, 0x46, 0xd9]),
         (
             "vroundps_vvvv_illegal",
             &[0xc4, 0xe3, 0x71, 0x08, 0xd1, 0x00],
@@ -19420,18 +20878,9 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vroundpd_vvvv_illegal",
             &[0xc4, 0xe3, 0x71, 0x09, 0xd1, 0x00],
         ),
-        (
-            "vdppd_l1_illegal",
-            &[0xc4, 0xe3, 0x6d, 0x41, 0xd9, 0xff],
-        ),
-        (
-            "vmovmskps_memory_source_illegal",
-            &[0xc5, 0xf8, 0x50, 0x01],
-        ),
-        (
-            "vmovmskpd_memory_source_illegal",
-            &[0xc5, 0xf9, 0x50, 0x01],
-        ),
+        ("vdppd_l1_illegal", &[0xc4, 0xe3, 0x6d, 0x41, 0xd9, 0xff]),
+        ("vmovmskps_memory_source_illegal", &[0xc5, 0xf8, 0x50, 0x01]),
+        ("vmovmskpd_memory_source_illegal", &[0xc5, 0xf9, 0x50, 0x01]),
         (
             "vpmaskmovd_load_register_operand_illegal",
             &[0xc4, 0xe2, 0x71, 0x8c, 0xd0],
@@ -19468,18 +20917,12 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "vstmxcsr_register_operand_illegal",
             &[0xc5, 0xf8, 0xae, 0xd8],
         ),
-        (
-            "vex_mxcsr_group0_illegal",
-            &[0xc5, 0xf8, 0xae, 0x00],
-        ),
+        ("vex_mxcsr_group0_illegal", &[0xc5, 0xf8, 0xae, 0x00]),
         (
             "vgatherdps_register_operand_illegal",
             &[0xc4, 0xe2, 0x61, 0x92, 0xd1],
         ),
-        (
-            "vgatherdps_no_sib_illegal",
-            &[0xc4, 0xe2, 0x61, 0x92, 0x10],
-        ),
+        ("vgatherdps_no_sib_illegal", &[0xc4, 0xe2, 0x61, 0x92, 0x10]),
         (
             "pblendvb_missing_66_prefix_illegal",
             &[0x0f, 0x38, 0x10, 0xc1],
@@ -19492,10 +20935,7 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "blendvpd_missing_66_prefix_illegal",
             &[0x0f, 0x38, 0x15, 0xc1],
         ),
-        (
-            "ptest_missing_66_prefix_illegal",
-            &[0x0f, 0x38, 0x17, 0xc1],
-        ),
+        ("ptest_missing_66_prefix_illegal", &[0x0f, 0x38, 0x17, 0xc1]),
         (
             "pmovsxbw_missing_66_prefix_illegal",
             &[0x0f, 0x38, 0x20, 0xc1],
@@ -19753,14 +21193,8 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "xrstors_register_operand_illegal",
             &[0x48, 0x0f, 0xc7, 0xd8],
         ),
-        (
-            "xsavec_register_operand_illegal",
-            &[0x48, 0x0f, 0xc7, 0xe0],
-        ),
-        (
-            "xsaves_register_operand_illegal",
-            &[0x48, 0x0f, 0xc7, 0xe8],
-        ),
+        ("xsavec_register_operand_illegal", &[0x48, 0x0f, 0xc7, 0xe0]),
+        ("xsaves_register_operand_illegal", &[0x48, 0x0f, 0xc7, 0xe8]),
         ("group9_0fc7_group0_undefined", &[0x0f, 0xc7, 0xc0]),
         ("group9_0fc7_group2_undefined", &[0x0f, 0xc7, 0xd0]),
         ("rdrand_memory_operand_illegal", &[0x48, 0x0f, 0xc7, 0x30]),
@@ -19774,14 +21208,8 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "cmpxchg16b_register_operand_illegal",
             &[0x48, 0x0f, 0xc7, 0xc8],
         ),
-        (
-            "punpcklqdq_missing_66_prefix_illegal",
-            &[0x0f, 0x6c, 0xc1],
-        ),
-        (
-            "punpckhqdq_missing_66_prefix_illegal",
-            &[0x0f, 0x6d, 0xc1],
-        ),
+        ("punpcklqdq_missing_66_prefix_illegal", &[0x0f, 0x6c, 0xc1]),
+        ("punpckhqdq_missing_66_prefix_illegal", &[0x0f, 0x6d, 0xc1]),
         (
             "pextrw_mmx_memory_source_illegal",
             &[0x0f, 0xc5, 0x00, 0x00],
@@ -19796,66 +21224,57 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             &[0x66, 0x0f, 0xd7, 0x00],
         ),
         ("movq_0fd6_missing_prefix_illegal", &[0x0f, 0xd6, 0xc1]),
-        (
-            "movq2dq_memory_source_illegal",
-            &[0xf3, 0x0f, 0xd6, 0x00],
-        ),
-        (
-            "movdq2q_memory_source_illegal",
-            &[0xf2, 0x0f, 0xd6, 0x00],
-        ),
+        ("movq2dq_memory_source_illegal", &[0xf3, 0x0f, 0xd6, 0x00]),
+        ("movdq2q_memory_source_illegal", &[0xf2, 0x0f, 0xd6, 0x00]),
         ("maskmovq_memory_source_illegal", &[0x0f, 0xf7, 0x00]),
         (
             "maskmovdqu_memory_source_illegal",
             &[0x66, 0x0f, 0xf7, 0x00],
         ),
         ("movntps_register_dest_illegal", &[0x0f, 0x2b, 0xc1]),
-        (
-            "movntpd_register_dest_illegal",
-            &[0x66, 0x0f, 0x2b, 0xc1],
-        ),
+        ("movntpd_register_dest_illegal", &[0x66, 0x0f, 0x2b, 0xc1]),
         ("movmskps_memory_source_illegal", &[0x0f, 0x50, 0x01]),
-        (
-            "movmskpd_memory_source_illegal",
-            &[0x66, 0x0f, 0x50, 0x01],
-        ),
-        (
-            "hadd_missing_mandatory_prefix_illegal",
-            &[0x0f, 0x7c, 0xc1],
-        ),
-        (
-            "hadd_f3_prefix_illegal",
-            &[0xf3, 0x0f, 0x7c, 0xc1],
-        ),
-        (
-            "hsub_missing_mandatory_prefix_illegal",
-            &[0x0f, 0x7d, 0xc1],
-        ),
-        (
-            "hsub_f3_prefix_illegal",
-            &[0xf3, 0x0f, 0x7d, 0xc1],
-        ),
+        ("movmskpd_memory_source_illegal", &[0x66, 0x0f, 0x50, 0x01]),
+        ("hadd_missing_mandatory_prefix_illegal", &[0x0f, 0x7c, 0xc1]),
+        ("hadd_f3_prefix_illegal", &[0xf3, 0x0f, 0x7c, 0xc1]),
+        ("hsub_missing_mandatory_prefix_illegal", &[0x0f, 0x7d, 0xc1]),
+        ("hsub_f3_prefix_illegal", &[0xf3, 0x0f, 0x7d, 0xc1]),
         (
             "addsub_missing_mandatory_prefix_illegal",
             &[0x0f, 0xd0, 0xc1],
         ),
-        (
-            "addsub_f3_prefix_illegal",
-            &[0xf3, 0x0f, 0xd0, 0xc1],
-        ),
+        ("addsub_f3_prefix_illegal", &[0xf3, 0x0f, 0xd0, 0xc1]),
     ]
 }
 
 fn prefetch_register_source_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
     let mut cases: Vec<(&'static str, &'static [u8])> = vec![
-        ("prefetchnta_register_source_fallthrough", &[0x0fu8, 0x18, 0xc0]),
-        ("prefetcht0_register_source_fallthrough", &[0x0fu8, 0x18, 0xc8]),
-        ("prefetcht1_register_source_fallthrough", &[0x0fu8, 0x18, 0xd0]),
-        ("prefetcht2_register_source_fallthrough", &[0x0fu8, 0x18, 0xd8]),
+        (
+            "prefetchnta_register_source_fallthrough",
+            &[0x0fu8, 0x18, 0xc0],
+        ),
+        (
+            "prefetcht0_register_source_fallthrough",
+            &[0x0fu8, 0x18, 0xc8],
+        ),
+        (
+            "prefetcht1_register_source_fallthrough",
+            &[0x0fu8, 0x18, 0xd0],
+        ),
+        (
+            "prefetcht2_register_source_fallthrough",
+            &[0x0fu8, 0x18, 0xd8],
+        ),
     ];
     if HostFeatures::detect().supports(Feat::Prefetchw) {
-        cases.push(("prefetchw_register_source_fallthrough", &[0x0fu8, 0x0d, 0xc8]));
-        cases.push(("prefetchwt1_register_source_fallthrough", &[0x0fu8, 0x0d, 0xd0]));
+        cases.push((
+            "prefetchw_register_source_fallthrough",
+            &[0x0fu8, 0x0d, 0xc8],
+        ));
+        cases.push((
+            "prefetchwt1_register_source_fallthrough",
+            &[0x0fu8, 0x0d, 0xd0],
+        ));
     }
     cases
 }
@@ -19881,10 +21300,7 @@ fn prefetch_reserved_hint_fallthrough_cases() -> Vec<(&'static str, &'static [u8
 fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("divb_zero", &[0x31, 0xc9, 0xf6, 0xf1]),
-        (
-            "divw_zero",
-            &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf1],
-        ),
+        ("divw_zero", &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf1]),
         ("divl_zero", &[0x31, 0xc9, 0xf7, 0xf1]),
         ("divq_zero", &[0x31, 0xc9, 0x48, 0xf7, 0xf1]),
         (
@@ -19894,34 +21310,26 @@ fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "divw_quotient_overflow",
             &[
-                0x66, 0xba, 0x01, 0x00, 0x66, 0x31, 0xc0, 0x66, 0xb9, 0x01, 0x00, 0x66, 0xf7,
-                0xf1,
+                0x66, 0xba, 0x01, 0x00, 0x66, 0x31, 0xc0, 0x66, 0xb9, 0x01, 0x00, 0x66, 0xf7, 0xf1,
             ],
         ),
         (
             "divl_quotient_overflow",
             &[
-                0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc0, 0xb9, 0x01, 0x00, 0x00, 0x00, 0xf7,
-                0xf1,
+                0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc0, 0xb9, 0x01, 0x00, 0x00, 0x00, 0xf7, 0xf1,
             ],
         ),
         (
             "divq_quotient_overflow",
             &[
-                0x48, 0xc7, 0xc2, 0x01, 0x00, 0x00, 0x00, 0x48, 0x31, 0xc0, 0x48, 0xc7, 0xc1,
-                0x01, 0x00, 0x00, 0x00, 0x48, 0xf7, 0xf1,
+                0x48, 0xc7, 0xc2, 0x01, 0x00, 0x00, 0x00, 0x48, 0x31, 0xc0, 0x48, 0xc7, 0xc1, 0x01,
+                0x00, 0x00, 0x00, 0x48, 0xf7, 0xf1,
             ],
         ),
         ("idivb_zero", &[0x31, 0xc9, 0xf6, 0xf9]),
-        (
-            "idivw_zero",
-            &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf9],
-        ),
+        ("idivw_zero", &[0x66, 0x31, 0xc9, 0x66, 0xf7, 0xf9]),
         ("idivl_zero", &[0x31, 0xc9, 0xf7, 0xf9]),
-        (
-            "idivq_zero",
-            &[0x31, 0xd2, 0x31, 0xc9, 0x48, 0xf7, 0xf9],
-        ),
+        ("idivq_zero", &[0x31, 0xd2, 0x31, 0xc9, 0x48, 0xf7, 0xf9]),
         (
             "idivb_min_neg_one_overflow",
             &[0x66, 0xb8, 0x80, 0xff, 0xb1, 0xff, 0xf6, 0xf9],
@@ -19941,8 +21349,8 @@ fn divide_error_exception_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "idivq_min_neg_one_overflow",
             &[
-                0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x48, 0x99, 0x48,
-                0xc7, 0xc1, 0xff, 0xff, 0xff, 0xff, 0x48, 0xf7, 0xf9,
+                0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x48, 0x99, 0x48, 0xc7,
+                0xc1, 0xff, 0xff, 0xff, 0xff, 0x48, 0xf7, 0xf9,
             ],
         ),
     ]
@@ -20113,8 +21521,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0xb8, 0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0xb9, 0x01, 0x00, 0x00, 0x00, 0x0f,
-                0x01, 0xd1,
+                0xb8, 0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0xb9, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01,
+                0xd1,
             ],
         },
         ExceptionMarkerCase {
@@ -20122,8 +21530,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0xb8, 0x01, 0x00, 0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc9, 0x0f,
-                0x01, 0xd1,
+                0xb8, 0x01, 0x00, 0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x31, 0xc9, 0x0f, 0x01,
+                0xd1,
             ],
         },
         ExceptionMarkerCase {
@@ -20137,8 +21545,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0xb9,
-                0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xee,
+                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0xb9, 0x01,
+                0x00, 0x00, 0x00, 0x0f, 0x01, 0xee,
             ],
         },
         ExceptionMarkerCase {
@@ -20146,8 +21554,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0xb9, 0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0x0f, 0x01, 0xef,
+                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0xb9, 0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0x0f, 0x01, 0xef,
             ],
         },
         ExceptionMarkerCase {
@@ -20155,8 +21563,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xc9, 0xba, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xef,
+                0x0f, 0x20, 0xe0, 0x48, 0x0d, 0x00, 0x00, 0x40, 0x00, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xc9, 0xba, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xef,
             ],
         },
         ExceptionMarkerCase {
@@ -20279,65 +21687,49 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             label: "evex_vmovaps_zmm_load_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0x7c, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0x7c, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovaps_zmm_store_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0x7c, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0x7c, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovapd_zmm_load_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0xfd, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0xfd, 0x48, 0x28, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovapd_zmm_store_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0xfd, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0xfd, 0x48, 0x29, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovdqa32_zmm_load_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0x7d, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0x7d, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovdqa32_zmm_store_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0x7d, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0x7d, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovdqa64_zmm_load_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0xfd, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0xfd, 0x48, 0x6f, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
         ExceptionMarkerCase {
             label: "evex_vmovdqa64_zmm_store_unaligned",
             vector_name: "#GP",
             vector: GP_VECTOR,
-            op: &[
-                0x62, 0xf1, 0xfd, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00,
-            ],
+            op: &[0x62, 0xf1, 0xfd, 0x48, 0x7f, 0x80, 0x01, 0x00, 0x00, 0x00],
         },
     ];
 
@@ -20358,9 +21750,9 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x48, 0xc7, 0x83, 0xf0, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x48, 0xc7,
-                0x83, 0xf8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb8, 0xe7, 0x00, 0x00,
-                0x00, 0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x9b, 0xf0, 0x00, 0x00, 0x00,
+                0x48, 0xc7, 0x83, 0xf0, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x48, 0xc7, 0x83,
+                0xf8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb8, 0xe7, 0x00, 0x00, 0x00, 0x31,
+                0xd2, 0x48, 0x0f, 0xc7, 0x9b, 0xf0, 0x00, 0x00, 0x00,
             ],
         });
     }
@@ -20482,7 +21874,9 @@ fn run_fallthrough_marker_corpus(
         let kvm = match oracle.run_with_exception_trap(&code, &input, UD_VECTOR) {
             Ok(KvmOutcome::Ran(out)) => out,
             Ok(KvmOutcome::Faulted) => {
-                failures.push(format!("{label}: KVM faulted before reaching fallthrough marker"));
+                failures.push(format!(
+                    "{label}: KVM faulted before reaching fallthrough marker"
+                ));
                 continue;
             }
             Err(e) => panic!("{label}: KVM backend failure: {e}"),
@@ -20524,7 +21918,11 @@ fn run_fallthrough_marker_corpus(
 
 #[test]
 fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
-    run_ud_marker_corpus("invalid-long-mode legacy", legacy_invalid_long_mode_cases(), 20);
+    run_ud_marker_corpus(
+        "invalid-long-mode legacy",
+        legacy_invalid_long_mode_cases(),
+        20,
+    );
 }
 
 #[test]
@@ -20744,9 +22142,7 @@ fn avx512_kvm_descriptor_table_edge_corpus() {
 fn avx512_kvm_control_register_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::ControlReg && case.label.contains("control_reg_edge_")
-        })
+        .filter(|case| case.feat == Feat::ControlReg && case.label.contains("control_reg_edge_"))
         .collect();
     assert_eq!(
         cases.len(),
@@ -20796,7 +22192,10 @@ fn avx512_kvm_msr_edge_corpus() {
         return;
     };
     assert_eq!(tally.faulted, 0, "silicon faulted on MSR edge cases");
-    assert_eq!(tally.interp_err, 0, "rax failed to execute an MSR edge case");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an MSR edge case"
+    );
     assert_eq!(
         tally.skipped_asm, 0,
         "MSR edge corpus produced assembler-rejected cases"
@@ -20805,11 +22204,7 @@ fn avx512_kvm_msr_edge_corpus() {
         tally.skipped_feature, 0,
         "MSR edge cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Msr),
-        6,
-        "all MSR edge cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Msr), 6, "all MSR edge cases should run");
     assert_eq!(tally.compared, 6, "all MSR edge cases should compare");
 }
 
@@ -20892,11 +22287,7 @@ fn avx512_kvm_privileged_machine_state_edge_corpus() {
         5,
         "all descriptor-table edge cases should run"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Msr),
-        5,
-        "all MSR edge cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Msr), 5, "all MSR edge cases should run");
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
         4,
@@ -20951,8 +22342,7 @@ fn avx512_kvm_descriptor_access_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| {
-            case.feat == Feat::DescriptorAccess
-                && case.label.contains("_descriptor_access_edge_")
+            case.feat == Feat::DescriptorAccess && case.label.contains("_descriptor_access_edge_")
         })
         .collect();
     assert_eq!(
@@ -20996,8 +22386,7 @@ fn avx512_kvm_descriptor_group6_load_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| {
-            case.feat == Feat::DescriptorAccess
-                && case.label.contains("_descriptor_group6_load_")
+            case.feat == Feat::DescriptorAccess && case.label.contains("_descriptor_group6_load_")
         })
         .collect();
     assert_eq!(
@@ -21105,10 +22494,7 @@ fn avx512_kvm_prefetch_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on prefetch edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on prefetch edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a prefetch edge case"
@@ -21132,19 +22518,13 @@ fn avx512_kvm_prefetch_edge_corpus() {
             tally.skipped_feature, 0,
             "prefetch edge cases should not feature-skip"
         );
-        assert_eq!(
-            tally.compared, 12,
-            "all prefetch edge cases should compare"
-        );
+        assert_eq!(tally.compared, 12, "all prefetch edge cases should compare");
     } else {
         assert_eq!(
             tally.skipped_feature, 7,
             "only PREFETCHW/PREFETCHWT1 edge cases should feature-skip"
         );
-        assert_eq!(
-            tally.compared, 5,
-            "all PREFETCHh edge cases should compare"
-        );
+        assert_eq!(tally.compared, 5, "all PREFETCHh edge cases should compare");
     }
 }
 
@@ -21165,11 +22545,7 @@ fn avx512_kvm_cache_memory_order_corpus() {
             )
         })
         .collect();
-    assert_eq!(
-        cases.len(),
-        43,
-        "unexpected cache/memory-order corpus size"
-    );
+    assert_eq!(cases.len(), 43, "unexpected cache/memory-order corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -21247,7 +22623,11 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
         tally.skipped_feature, 0,
         "cache/TLB edge cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Fence), 3, "all fence edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Fence),
+        3,
+        "all fence edge cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::Clflush),
         3,
@@ -21258,7 +22638,11 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
         3,
         "all CLFLUSHOPT edge cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Clwb), 3, "all CLWB edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Clwb),
+        3,
+        "all CLWB edge cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::Cldemote),
         3,
@@ -21284,7 +22668,10 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
         5,
         "all INVPCID edge cases should run"
     );
-    assert_eq!(tally.compared, 28, "all cache/TLB edge cases should compare");
+    assert_eq!(
+        tally.compared, 28,
+        "all cache/TLB edge cases should compare"
+    );
 }
 
 #[test]
@@ -21408,11 +22795,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         17,
         "all WAITPKG cases should run"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Rdpid),
-        9,
-        "all RDPID cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Rdpid), 9, "all RDPID cases should run");
     assert_eq!(
         tally.compared, 31,
         "all serialize/WAITPKG/RDPID cases should compare"
@@ -21483,7 +22866,10 @@ fn avx512_kvm_io_port_edge_corpus() {
         return;
     };
     assert_eq!(tally.faulted, 0, "silicon faulted on I/O edge cases");
-    assert_eq!(tally.interp_err, 0, "rax failed to execute an I/O edge case");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an I/O edge case"
+    );
     assert_eq!(
         tally.skipped_asm, 0,
         "I/O edge corpus produced assembler-rejected cases"
@@ -21528,9 +22914,7 @@ fn avx512_kvm_fast_syscall_corpus() {
 fn avx512_kvm_fast_syscall_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::FastSyscall && case.label.contains("_fast_syscall_edge_")
-        })
+        .filter(|case| case.feat == Feat::FastSyscall && case.label.contains("_fast_syscall_edge_"))
         .collect();
     assert_eq!(cases.len(), 4, "unexpected fast syscall edge corpus size");
 
@@ -21695,7 +23079,12 @@ fn avx512_kvm_cpuid_edge_corpus() {
 fn avx512_kvm_random_tsc_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| matches!(case.feat, Feat::Rdrand | Feat::Rdseed | Feat::Tsc | Feat::Rdtscp))
+        .filter(|case| {
+            matches!(
+                case.feat,
+                Feat::Rdrand | Feat::Rdseed | Feat::Tsc | Feat::Rdtscp
+            )
+        })
         .collect();
     assert_eq!(cases.len(), 29, "unexpected random/TSC corpus size");
 
@@ -21792,7 +23181,11 @@ fn avx512_kvm_tsc_edge_corpus() {
         tally.skipped_feature, 0,
         "TSC edge cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Tsc), 3, "all RDTSC edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Tsc),
+        3,
+        "all RDTSC edge cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::Rdtscp),
         2,
@@ -22074,11 +23467,13 @@ fn avx512_kvm_protection_state_edge_corpus() {
 fn avx512_kvm_pkru_protection_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::Pku && case.label.contains("_protection_edge_")
-        })
+        .filter(|case| case.feat == Feat::Pku && case.label.contains("_protection_edge_"))
         .collect();
-    assert_eq!(cases.len(), 7, "unexpected PKRU protection edge corpus size");
+    assert_eq!(
+        cases.len(),
+        7,
+        "unexpected PKRU protection edge corpus size"
+    );
 
     if !HostFeatures::detect().supports(Feat::Pku) {
         eprintln!("[skip] host lacks PKU support; PKRU edge cases will skip");
@@ -22234,9 +23629,7 @@ fn avx512_kvm_stack_frame_flag_control_corpus() {
 fn avx512_kvm_stack_frame_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::StackFrame && case.label.contains("_stack_frame_edge_")
-        })
+        .filter(|case| case.feat == Feat::StackFrame && case.label.contains("_stack_frame_edge_"))
         .collect();
     assert_eq!(cases.len(), 8, "unexpected stack-frame edge corpus size");
 
@@ -22275,8 +23668,7 @@ fn avx512_kvm_flag_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| {
-            case.label.contains("_core_flag_edge_")
-                || case.label.contains("_flag_control_edge_")
+            case.label.contains("_core_flag_edge_") || case.label.contains("_flag_control_edge_")
         })
         .collect();
     assert_eq!(cases.len(), 14, "unexpected flag edge corpus size");
@@ -22348,10 +23740,7 @@ fn avx512_kvm_core_moffs_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on core moffs edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on core moffs edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a core moffs edge case"
@@ -22364,7 +23753,10 @@ fn avx512_kvm_core_moffs_edge_corpus() {
         tally.skipped_feature, 0,
         "core moffs edge cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 8, "all core moffs edge cases should compare");
+    assert_eq!(
+        tally.compared, 8,
+        "all core moffs edge cases should compare"
+    );
 }
 
 #[test]
@@ -23024,9 +24416,7 @@ fn avx512_kvm_core_control_transfer_corpus() {
 fn avx512_kvm_core_iret_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::Core && case.label.contains("_core_control_iret_edge_")
-        })
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_control_iret_edge_"))
         .collect();
     assert_eq!(cases.len(), 3, "unexpected core IRET edge corpus size");
 
@@ -23058,11 +24448,13 @@ fn avx512_kvm_core_iret_edge_corpus() {
 fn avx512_kvm_core_far_return_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::Core && case.label.contains("_core_far_return_edge_")
-        })
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_far_return_edge_"))
         .collect();
-    assert_eq!(cases.len(), 3, "unexpected core far-return edge corpus size");
+    assert_eq!(
+        cases.len(),
+        3,
+        "unexpected core far-return edge corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -23098,9 +24490,7 @@ fn avx512_kvm_core_far_return_edge_corpus() {
 fn avx512_kvm_core_far_control_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::Core && case.label.contains("_core_far_control_edge_")
-        })
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_far_control_edge_"))
         .collect();
     assert_eq!(
         cases.len(),
@@ -23186,7 +24576,10 @@ fn avx512_kvm_sse_minmax_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(tally.faulted, 0, "silicon faulted on SSE min/max edge cases");
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SSE min/max edge cases"
+    );
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute an SSE min/max edge case"
@@ -23288,7 +24681,10 @@ fn avx512_kvm_simd_fp_sqrt_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(tally.faulted, 0, "silicon faulted on SIMD FP sqrt edge cases");
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SIMD FP sqrt edge cases"
+    );
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a SIMD FP sqrt edge case"
@@ -23301,13 +24697,21 @@ fn avx512_kvm_simd_fp_sqrt_edge_corpus() {
         tally.skipped_feature, 0,
         "SIMD FP sqrt edge cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Sse), 4, "all SSE sqrt edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Sse),
+        4,
+        "all SSE sqrt edge cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::Sse2),
         4,
         "all SSE2 sqrt edge cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Avx), 8, "all AVX sqrt edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Avx),
+        8,
+        "all AVX sqrt edge cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::F),
         8,
@@ -23325,7 +24729,11 @@ fn avx512_kvm_simd_fp_minmax_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_simd_fp_minmax_edge_"))
         .collect();
-    assert_eq!(cases.len(), 16, "unexpected SIMD FP min/max edge corpus size");
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected SIMD FP min/max edge corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -23679,11 +25087,7 @@ fn avx512_kvm_integer_order_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_int_order_edge_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        62,
-        "unexpected integer order edge corpus size"
-    );
+    assert_eq!(cases.len(), 62, "unexpected integer order edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -24037,11 +25441,7 @@ fn avx512_kvm_simd_round_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_simd_round_edge_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        24,
-        "unexpected SIMD rounding edge corpus size"
-    );
+    assert_eq!(cases.len(), 24, "unexpected SIMD rounding edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -24089,10 +25489,7 @@ fn avx512_kvm_simd_dot_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on SIMD dot edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on SIMD dot edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a SIMD dot edge case"
@@ -24115,10 +25512,7 @@ fn avx512_kvm_simd_dot_edge_corpus() {
         11,
         "all AVX dot edge cases should run"
     );
-    assert_eq!(
-        tally.compared, 21,
-        "all SIMD dot edge cases should compare"
-    );
+    assert_eq!(tally.compared, 21, "all SIMD dot edge cases should compare");
 }
 
 #[test]
@@ -24217,11 +25611,7 @@ fn avx512_kvm_simd_shuffle_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_simd_shuffle_edge_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        8,
-        "unexpected SIMD shuffle edge corpus size"
-    );
+    assert_eq!(cases.len(), 8, "unexpected SIMD shuffle edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -24356,10 +25746,7 @@ fn avx512_kvm_sse42_string_width_corpus() {
         24,
         "all SSE4.2 string cases should run"
     );
-    assert_eq!(
-        tally.compared, 24,
-        "all SSE4.2 string cases should compare"
-    );
+    assert_eq!(tally.compared, 24, "all SSE4.2 string cases should compare");
 }
 
 #[test]
@@ -24424,19 +25811,12 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_scalar_bit_edge_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        35,
-        "unexpected scalar bit edge corpus size"
-    );
+    assert_eq!(cases.len(), 35, "unexpected scalar bit edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on scalar bit edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on scalar bit edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a scalar bit edge case"
@@ -24585,10 +25965,7 @@ fn avx512_kvm_crc32_edge_corpus() {
         12,
         "all CRC32 edge cases should run"
     );
-    assert_eq!(
-        tally.compared, 12,
-        "all CRC32 edge cases should compare"
-    );
+    assert_eq!(tally.compared, 12, "all CRC32 edge cases should compare");
 }
 
 #[test]
@@ -24603,10 +25980,7 @@ fn avx512_kvm_movdir_corpus() {
         return;
     };
     assert_eq!(tally.faulted, 0, "silicon faulted on MOVDIR cases");
-    assert_eq!(
-        tally.interp_err, 0,
-        "rax failed to execute a MOVDIR case"
-    );
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a MOVDIR case");
     assert_eq!(
         tally.skipped_asm, 0,
         "MOVDIR corpus produced assembler-rejected cases"
@@ -24639,10 +26013,7 @@ fn avx512_kvm_movdir_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on MOVDIR edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on MOVDIR edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a MOVDIR edge case"
@@ -24665,10 +26036,7 @@ fn avx512_kvm_movdir_edge_corpus() {
         5,
         "all MOVDIR64B edge cases should run"
     );
-    assert_eq!(
-        tally.compared, 10,
-        "all MOVDIR edge cases should compare"
-    );
+    assert_eq!(tally.compared, 10, "all MOVDIR edge cases should compare");
 }
 
 #[test]
@@ -24692,11 +26060,7 @@ fn avx512_kvm_adx_corpus() {
         tally.skipped_feature, 0,
         "ADX cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Adx),
-        21,
-        "all ADX cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Adx), 21, "all ADX cases should run");
     assert_eq!(tally.compared, 21, "all ADX cases should compare");
 }
 
@@ -24724,11 +26088,7 @@ fn avx512_kvm_adx_edge_corpus() {
         tally.skipped_feature, 0,
         "ADX edge cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Adx),
-        7,
-        "all ADX edge cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Adx), 7, "all ADX edge cases should run");
     assert_eq!(tally.compared, 7, "all ADX edge cases should compare");
 }
 
@@ -24784,19 +26144,14 @@ fn avx512_kvm_f16c_corpus() {
     assert_eq!(tally.faulted, 0, "silicon faulted on F16C cases");
     assert_eq!(tally.interp_err, 0, "rax failed to execute an F16C case");
     assert_eq!(
-        tally.skipped_asm,
-        0,
+        tally.skipped_asm, 0,
         "F16C corpus produced assembler-rejected cases"
     );
     assert_eq!(
         tally.skipped_feature, 0,
         "F16C cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::F16c),
-        28,
-        "all F16C cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::F16c), 28, "all F16C cases should run");
     assert_eq!(tally.compared, 28, "all F16C cases should compare");
 }
 
@@ -25075,10 +26430,7 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on VNNI/IFMA edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on VNNI/IFMA edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a VNNI/IFMA edge case"
@@ -25101,10 +26453,7 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
         4,
         "all AVX-512 IFMA edge cases should run"
     );
-    assert_eq!(
-        tally.compared, 8,
-        "all VNNI/IFMA edge cases should compare"
-    );
+    assert_eq!(tally.compared, 8, "all VNNI/IFMA edge cases should compare");
 }
 
 #[test]
@@ -25218,11 +26567,7 @@ fn avx512_kvm_gfni_crypto_corpus() {
         tally.skipped_feature, 0,
         "GFNI cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Gfni),
-        96,
-        "all GFNI cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Gfni), 96, "all GFNI cases should run");
     assert_eq!(tally.compared, 96, "all GFNI cases should compare");
 }
 
@@ -25247,11 +26592,7 @@ fn avx512_kvm_vaes_crypto_corpus() {
         tally.skipped_feature, 0,
         "VAES cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Vaes),
-        80,
-        "all VAES cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Vaes), 80, "all VAES cases should run");
     assert_eq!(tally.compared, 80, "all VAES cases should compare");
 }
 
@@ -25266,10 +26607,7 @@ fn avx512_kvm_vpclmulqdq_crypto_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on VPCLMULQDQ cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on VPCLMULQDQ cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a VPCLMULQDQ case"
@@ -25287,10 +26625,7 @@ fn avx512_kvm_vpclmulqdq_crypto_corpus() {
         53,
         "all VPCLMULQDQ cases should run"
     );
-    assert_eq!(
-        tally.compared, 53,
-        "all VPCLMULQDQ cases should compare"
-    );
+    assert_eq!(tally.compared, 53, "all VPCLMULQDQ cases should compare");
 }
 
 #[test]
@@ -25464,10 +26799,7 @@ fn avx512_kvm_aes_legacy_crypto_corpus() {
         46,
         "all AES legacy cases should run"
     );
-    assert_eq!(
-        tally.compared, 46,
-        "all AES legacy cases should compare"
-    );
+    assert_eq!(tally.compared, 46, "all AES legacy cases should compare");
 }
 
 #[test]
@@ -25476,11 +26808,7 @@ fn avx512_kvm_pclmulqdq_legacy_crypto_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Pclmulqdq)
         .collect();
-    assert_eq!(
-        cases.len(),
-        25,
-        "unexpected PCLMULQDQ legacy corpus size"
-    );
+    assert_eq!(cases.len(), 25, "unexpected PCLMULQDQ legacy corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25523,10 +26851,7 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on SHA-NI legacy cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on SHA-NI legacy cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a SHA-NI legacy case"
@@ -25544,10 +26869,7 @@ fn avx512_kvm_sha_ni_legacy_crypto_corpus() {
         74,
         "all SHA-NI legacy cases should run"
     );
-    assert_eq!(
-        tally.compared, 74,
-        "all SHA-NI legacy cases should compare"
-    );
+    assert_eq!(tally.compared, 74, "all SHA-NI legacy cases should compare");
 }
 
 #[test]
@@ -25725,11 +27047,7 @@ fn avx512_kvm_vex_insert_extract_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_avx_insert_extract_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        35,
-        "unexpected VEX insert/extract corpus size"
-    );
+    assert_eq!(cases.len(), 35, "unexpected VEX insert/extract corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -25782,11 +27100,7 @@ fn avx512_kvm_vex_fma_corpus() {
         tally.skipped_feature, 0,
         "VEX FMA cases should not feature-skip"
     );
-    assert_eq!(
-        tally.ran_for(Feat::Fma),
-        59,
-        "all VEX FMA cases should run"
-    );
+    assert_eq!(tally.ran_for(Feat::Fma), 59, "all VEX FMA cases should run");
     assert_eq!(tally.compared, 59, "all VEX FMA cases should compare");
 }
 

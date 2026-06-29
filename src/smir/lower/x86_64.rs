@@ -6523,11 +6523,8 @@ impl X86_64Lowerer {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_jcc_rel32(taken, 0); // Placeholder
                     }
-                    self.pending_jumps.push((
-                        jnz_offset + 2,
-                        *true_target,
-                        RelocKind::PcRel32,
-                    ));
+                    self.pending_jumps
+                        .push((jnz_offset + 2, *true_target, RelocKind::PcRel32));
                 }
 
                 if let Some(&resume_pc) = self.native_exit_edges.get(&(source, *false_target)) {
@@ -6539,11 +6536,8 @@ impl X86_64Lowerer {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_jmp_rel32(0); // Placeholder
                     }
-                    self.pending_jumps.push((
-                        jmp_offset + 1,
-                        *false_target,
-                        RelocKind::PcRel32,
-                    ));
+                    self.pending_jumps
+                        .push((jmp_offset + 1, *false_target, RelocKind::PcRel32));
                 }
             }
 

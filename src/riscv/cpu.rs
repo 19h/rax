@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 use super::crypto;
 use super::csr::Csr;
-use super::decode::{decode_at, DecodeError, Insn, Op};
+use super::decode::{DecodeError, Insn, Op, decode_at};
 use super::float::RoundingMode;
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
@@ -1079,11 +1079,7 @@ impl RiscVCpu {
             // ---- V: vector configuration ----
             Op::Vsetvli => {
                 let avl = if rs1 == 0 {
-                    if rd == 0 {
-                        Avl::Keep
-                    } else {
-                        Avl::Max
-                    }
+                    if rd == 0 { Avl::Keep } else { Avl::Max }
                 } else {
                     Avl::Reg(a)
                 };
@@ -1096,11 +1092,7 @@ impl RiscVCpu {
             }
             Op::Vsetvl => {
                 let avl = if rs1 == 0 {
-                    if rd == 0 {
-                        Avl::Keep
-                    } else {
-                        Avl::Max
-                    }
+                    if rd == 0 { Avl::Keep } else { Avl::Max }
                 } else {
                     Avl::Reg(a)
                 };
@@ -1578,11 +1570,7 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { u32::MAX } else { x / y }) as u64
         } else {
-            if b == 0 {
-                u64::MAX
-            } else {
-                a / b
-            }
+            if b == 0 { u64::MAX } else { a / b }
         }
     }
     fn rem(&self, a: u64, b: u64) -> u64 {
@@ -1613,11 +1601,7 @@ impl RiscVCpu {
             let (x, y) = (a as u32, b as u32);
             (if y == 0 { x } else { x % y }) as u64
         } else {
-            if b == 0 {
-                a
-            } else {
-                a % b
-            }
+            if b == 0 { a } else { a % b }
         }
     }
 
@@ -3063,11 +3047,7 @@ impl RiscVCpu {
                                 &mut t,
                             );
                             flags |= t;
-                            if t & 1 != 0 {
-                                r | 1
-                            } else {
-                                r
-                            } // NX is fflags bit 0
+                            if t & 1 != 0 { r | 1 } else { r } // NX is fflags bit 0
                         }
                         _ => super::float::fcvt_round(fmt_eb(web), fmt_eb(eb), aw, frm, &mut flags),
                     };
@@ -5098,11 +5078,7 @@ fn divw(a: u32, b: u32, signed: bool, rem: bool) -> u64 {
         r as i64 as u64
     } else {
         let r = if rem {
-            if b == 0 {
-                a
-            } else {
-                a % b
-            }
+            if b == 0 { a } else { a % b }
         } else if b == 0 {
             u32::MAX
         } else {
@@ -5221,11 +5197,7 @@ fn sext_sew(val: u64, eb: usize) -> i64 {
 
 #[inline]
 fn th_vdot_byte(v: u8, signed: bool) -> i64 {
-    if signed {
-        (v as i8) as i64
-    } else {
-        v as i64
-    }
+    if signed { (v as i8) as i64 } else { v as i64 }
 }
 
 /// Fixed-point rounding increment for a right shift by `d`, per `vxrm`
@@ -5267,17 +5239,9 @@ fn vdiv_sew(a: u64, b: u64, eb: usize, bits: u32, rem: bool) -> u64 {
     let (sa, sb) = (sext_sew(a, eb), sext_sew(b, eb));
     let min = -1i64 << (bits - 1);
     if sb == 0 {
-        if rem {
-            sa as u64
-        } else {
-            -1i64 as u64
-        }
+        if rem { sa as u64 } else { -1i64 as u64 }
     } else if sa == min && sb == -1 {
-        if rem {
-            0
-        } else {
-            min as u64
-        }
+        if rem { 0 } else { min as u64 }
     } else if rem {
         (sa % sb) as u64
     } else {
@@ -6168,7 +6132,7 @@ mod tests {
         c.set_x(1, 0x8000_0000); // i32::MIN
         c.set_x(2, 2);
         run_one(&mut c, r_type(1, 2, 1, 1, 3, 0x33)); // mulh (signed high 32)
-                                                      // (-2^31) * 2 = -2^32; high 32 bits = 0xffffffff
+        // (-2^31) * 2 = -2^32; high 32 bits = 0xffffffff
         assert_eq!(c.x(3), 0xffff_ffff);
         // div overflow: i32::MIN / -1 = i32::MIN
         c.set_x(2, 0xffff_ffff);

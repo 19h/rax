@@ -710,9 +710,7 @@ impl Aarch64X86_64Lowerer {
         width: MemWidth,
     ) -> Result<(), LowerError> {
         Err(LowerError::UnsupportedOp {
-            op: format!(
-                "AArch64 AtomicRmw {op:?} {width:?} requires an atomic memory helper"
-            ),
+            op: format!("AArch64 AtomicRmw {op:?} {width:?} requires an atomic memory helper"),
         })
     }
 

@@ -18,9 +18,7 @@ use std::sync::Arc;
 
 use vm_memory::GuestMemoryMmap;
 
-#[cfg(all(feature = "kvm", target_os = "linux", target_arch = "x86_64"))]
-use crate::config::ArchKind;
-use crate::config::{BackendKind, VmConfig};
+use crate::config::{ArchKind, BackendKind, VmConfig};
 use crate::cpu::VCpu;
 use crate::error::{Error, Result};
 

@@ -1918,14 +1918,26 @@ fn map_last_canonical_page(mem: &GuestMemoryMmap, code_paddr: u64) {
     const PDPT_HI: u64 = 0x70000;
     const PD_HI: u64 = 0x71000;
     const PT_HI: u64 = 0x72000;
-    mem.write_slice(&(PDPT_HI | flags).to_le_bytes(), GuestAddress(PML4_ADDR + 255 * 8))
-        .unwrap();
-    mem.write_slice(&(PD_HI | flags).to_le_bytes(), GuestAddress(PDPT_HI + 511 * 8))
-        .unwrap();
-    mem.write_slice(&(PT_HI | flags).to_le_bytes(), GuestAddress(PD_HI + 511 * 8))
-        .unwrap();
-    mem.write_slice(&(code_paddr | flags).to_le_bytes(), GuestAddress(PT_HI + 511 * 8))
-        .unwrap();
+    mem.write_slice(
+        &(PDPT_HI | flags).to_le_bytes(),
+        GuestAddress(PML4_ADDR + 255 * 8),
+    )
+    .unwrap();
+    mem.write_slice(
+        &(PD_HI | flags).to_le_bytes(),
+        GuestAddress(PDPT_HI + 511 * 8),
+    )
+    .unwrap();
+    mem.write_slice(
+        &(PT_HI | flags).to_le_bytes(),
+        GuestAddress(PD_HI + 511 * 8),
+    )
+    .unwrap();
+    mem.write_slice(
+        &(code_paddr | flags).to_le_bytes(),
+        GuestAddress(PT_HI + 511 * 8),
+    )
+    .unwrap();
 }
 
 #[test]
