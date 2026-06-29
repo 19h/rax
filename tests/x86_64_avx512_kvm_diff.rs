@@ -14011,6 +14011,26 @@ fn irregular_cases() -> Vec<Case> {
             "addr32_jrcxz_core_control_ecx_taken",
             "movabsq $0x0000000100000000, %rcx\naddr32 jrcxz 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
         ),
+        (
+            "addr32_jrcxz_core_control_ecx_not_taken",
+            "movabsq $0x0000000000000001, %rcx\naddr32 jrcxz 1f\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "addr32_loop_core_control_ecx_taken_high_rcx_ignored",
+            "movabsq $0x0000000100000002, %rcx\naddr32 loop 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "addr32_loop_core_control_ecx_zero_not_taken",
+            "movabsq $0x0000000100000001, %rcx\naddr32 loop 1f\nmovq $0x2222, %r8\njmp 2f\n1:\nmovq $0x1111, %r8\n2:",
+        ),
+        (
+            "addr32_loopne_core_control_ecx_taken_zf_clear",
+            "movabsq $0x0000000100000002, %rcx\ncmpq %r8, %r9\naddr32 loopne 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
+        (
+            "addr32_loope_core_control_ecx_taken_zf_set",
+            "movabsq $0x0000000100000002, %rcx\ncmpq %r8, %r8\naddr32 loope 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -22826,7 +22846,7 @@ fn avx512_kvm_core_control_transfer_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        21,
+        26,
         "unexpected core control-transfer corpus size"
     );
 
@@ -22850,7 +22870,7 @@ fn avx512_kvm_core_control_transfer_corpus() {
         "core control-transfer cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 21,
+        tally.compared, 26,
         "all core control-transfer cases should compare"
     );
 }
