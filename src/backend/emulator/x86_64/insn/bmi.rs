@@ -76,12 +76,7 @@ pub fn blsi_blsmsk_blsr(
         1 => src & src.wrapping_sub(1), // BLSR: src & (src - 1)
         2 => src ^ src.wrapping_sub(1), // BLSMSK: src ^ (src - 1)
         3 => src.wrapping_neg() & src,  // BLSI: (-src) & src
-        _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented VEX.0F38.F3 /{}",
-                reg_op
-            )));
-        }
+        _ => return vcpu.inject_undefined_instruction(),
     };
     vcpu.set_reg(vvvv, result & mask, ctx.op_size);
     // Set flags

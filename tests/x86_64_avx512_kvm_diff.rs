@@ -18505,6 +18505,26 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "adcx_adox_missing_mandatory_prefix_illegal",
             &[0x0f, 0x38, 0xf6, 0xc1],
         ),
+        (
+            "bmi1_bls_group0_selector_illegal",
+            &[0xc4, 0xe2, 0xb8, 0xf3, 0xc1],
+        ),
+        (
+            "bmi1_bls_group4_selector_illegal",
+            &[0xc4, 0xe2, 0xb8, 0xf3, 0xe1],
+        ),
+        (
+            "bmi1_bls_group5_selector_illegal",
+            &[0xc4, 0xe2, 0xb8, 0xf3, 0xe9],
+        ),
+        (
+            "bmi1_bls_group6_selector_illegal",
+            &[0xc4, 0xe2, 0xb8, 0xf3, 0xf1],
+        ),
+        (
+            "bmi1_bls_group7_selector_illegal",
+            &[0xc4, 0xe2, 0xb8, 0xf3, 0xf9],
+        ),
         ("lss_register_source_illegal", &[0x0f, 0xb2, 0xc0]),
         ("lfs_register_source_illegal", &[0x0f, 0xb4, 0xc0]),
         ("lgs_register_source_illegal", &[0x0f, 0xb5, 0xc0]),
@@ -20210,7 +20230,7 @@ fn avx512_kvm_invalid_extension_encoding_ud_corpus() {
     run_ud_marker_corpus(
         "invalid extension encoding",
         invalid_extension_encoding_cases(),
-        318,
+        323,
     );
 }
 
