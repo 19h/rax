@@ -1,11 +1,10 @@
 //! Two-byte opcode instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
-use super::super::super::super::flags;
 use super::super::super::super::insn;
 use super::super::super::super::sha;
 
@@ -467,10 +466,7 @@ impl X86_64Vcpu {
             // MOVDIRI (0xF9)
             0xF9 => insn::data::movdiri(self, ctx),
 
-            _ => Err(Error::Emulator(format!(
-                "unimplemented 0x0F 0x38 opcode: {:#04x} at RIP={:#x}",
-                opcode3, self.regs.rip
-            ))),
+            _ => self.inject_undefined_instruction(),
         }
     }
 }

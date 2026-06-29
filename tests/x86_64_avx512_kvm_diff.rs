@@ -18175,6 +18175,16 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("group8_0fba_group1_undefined", &[0x0f, 0xba, 0xc8, 0x00]),
         ("group8_0fba_group2_undefined", &[0x0f, 0xba, 0xd0, 0x00]),
         ("group8_0fba_group3_undefined", &[0x0f, 0xba, 0xd8, 0x00]),
+        ("three_byte_0f38_reserved_12", &[0x0f, 0x38, 0x12, 0xc0]),
+        ("three_byte_0f38_reserved_42", &[0x0f, 0x38, 0x42, 0xc0]),
+        (
+            "three_byte_0f3a_reserved_10",
+            &[0x0f, 0x3a, 0x10, 0xc0, 0x00],
+        ),
+        (
+            "three_byte_0f3a_reserved_43",
+            &[0x0f, 0x3a, 0x43, 0xc0, 0x00],
+        ),
         ("x87_reserved_d9_mem_group1", &[0xd9, 0x08]),
         ("x87_reserved_d9_reg_d1", &[0xd9, 0xd1]),
         ("x87_reserved_d9_reg_e2", &[0xd9, 0xe2]),
@@ -20099,7 +20109,7 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 
 #[test]
 fn avx512_kvm_undefined_opcode_ud_corpus() {
-    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 33);
+    run_ud_marker_corpus("undefined opcode", undefined_opcode_cases(), 37);
 }
 
 #[test]
