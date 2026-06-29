@@ -1,7 +1,7 @@
 use crate::common::*;
-use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::backend::emulator::x86_64::flags;
 use rax::backend::emulator::x86_64::flags::bits;
+use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::cpu::Registers;
 
 // Comprehensive tests for SYSENTER/SYSEXIT instructions
@@ -12,6 +12,9 @@ use rax::cpu::Registers;
 const SYSENTER_CS: u64 = 0x8;
 const SYSENTER_HANDLER_ADDR: u64 = 0x13000;
 const SYSENTER_STACK_ADDR: u64 = 0x9000;
+const GP_EXCEPTION_MARKER: u64 = 0x4750_000d;
+const UNEXPECTED_EXCEPTION_MARKER: u64 = 0xbad0_0000;
+const UNEXPECTED_EXCEPTION_ADDR: u64 = INT_HANDLER_ADDR + 0x100;
 
 fn set_sysenter_msrs(vcpu: &mut X86_64Vcpu, cs: u64, esp: u64, eip: u64) {
     let mut sregs = vcpu.get_sregs().unwrap();
@@ -28,6 +31,66 @@ fn install_sysenter_hlt(mem: &GuestMemoryMmap, addr: u64) {
 fn install_sysenter_sysexit(mem: &GuestMemoryMmap, addr: u64) {
     mem.write_slice(&[0x48, 0x0f, 0x35, 0xf4], GuestAddress(addr))
         .unwrap();
+}
+
+fn marker_handler(marker: u64) -> [u8; 11] {
+    let mut handler = [0u8; 11];
+    handler[0] = 0x48; // REX.W
+    handler[1] = 0xb8; // MOV RAX, imm64
+    handler[2..10].copy_from_slice(&marker.to_le_bytes());
+    handler[10] = 0xf4; // HLT
+    handler
+}
+
+fn idt_entry(handler_addr: u64) -> [u8; 16] {
+    let mut entry = [0u8; 16];
+    entry[0] = (handler_addr & 0xff) as u8;
+    entry[1] = ((handler_addr >> 8) & 0xff) as u8;
+    entry[2] = 0x08;
+    entry[5] = 0x8e;
+    entry[6] = ((handler_addr >> 16) & 0xff) as u8;
+    entry[7] = ((handler_addr >> 24) & 0xff) as u8;
+    entry[8] = ((handler_addr >> 32) & 0xff) as u8;
+    entry[9] = ((handler_addr >> 40) & 0xff) as u8;
+    entry[10] = ((handler_addr >> 48) & 0xff) as u8;
+    entry[11] = ((handler_addr >> 56) & 0xff) as u8;
+    entry
+}
+
+fn install_idt_handler(mem: &GuestMemoryMmap, vector: u8, handler_addr: u64) {
+    let entry = idt_entry(handler_addr);
+    let entry_addr = IDT_BASE + u64::from(vector) * 16;
+    mem.write_slice(&entry, GuestAddress(entry_addr)).unwrap();
+}
+
+fn install_expected_exception_handler(
+    mem: &GuestMemoryMmap,
+    expected_vector: u8,
+    expected_marker: u64,
+) {
+    let unexpected_handler = marker_handler(UNEXPECTED_EXCEPTION_MARKER);
+    mem.write_slice(&unexpected_handler, GuestAddress(UNEXPECTED_EXCEPTION_ADDR))
+        .unwrap();
+    let expected_handler = marker_handler(expected_marker);
+    mem.write_slice(&expected_handler, GuestAddress(INT_HANDLER_ADDR))
+        .unwrap();
+
+    for vector in 0u8..=255 {
+        install_idt_handler(mem, vector, UNEXPECTED_EXCEPTION_ADDR);
+    }
+    install_idt_handler(mem, expected_vector, INT_HANDLER_ADDR);
+}
+
+fn assert_sysenter_general_protection(
+    code: &[u8],
+    configure: impl FnOnce(&mut X86_64Vcpu, &GuestMemoryMmap),
+) {
+    let (mut vcpu, mem) = setup_vm(code, None);
+    configure(&mut vcpu, &mem);
+    install_expected_exception_handler(&mem, 13, GP_EXCEPTION_MARKER);
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, GP_EXCEPTION_MARKER);
 }
 
 // ============================================================================
@@ -484,18 +547,17 @@ fn test_sysexit_invalid_in_user_mode() {
         0x48, 0xc7, 0xc0, 0xfd, 0x00, 0x00, 0x00, // MOV RAX, 0xFD
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    set_sysenter_msrs(
-        &mut vcpu,
-        SYSENTER_CS,
-        SYSENTER_STACK_ADDR,
-        SYSENTER_HANDLER_ADDR,
-    );
-    let mut sregs = vcpu.get_sregs().unwrap();
-    sregs.cs.selector = 0x3;
-    vcpu.set_sregs(&sregs).unwrap();
-
-    assert!(run_until_hlt(&mut vcpu).is_err());
+    assert_sysenter_general_protection(&code, |vcpu, _mem| {
+        set_sysenter_msrs(
+            vcpu,
+            SYSENTER_CS,
+            SYSENTER_STACK_ADDR,
+            SYSENTER_HANDLER_ADDR,
+        );
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cs.selector = 0x3;
+        vcpu.set_sregs(&sregs).unwrap();
+    });
 }
 
 #[test]
@@ -506,10 +568,23 @@ fn test_sysenter_with_null_cs_msr() {
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    set_sysenter_msrs(&mut vcpu, 0, SYSENTER_STACK_ADDR, SYSENTER_HANDLER_ADDR);
+    assert_sysenter_general_protection(&code, |vcpu, _mem| {
+        set_sysenter_msrs(vcpu, 0, SYSENTER_STACK_ADDR, SYSENTER_HANDLER_ADDR);
+    });
+}
 
-    assert!(run_until_hlt(&mut vcpu).is_err());
+#[test]
+fn test_sysexit_with_null_cs_msr() {
+    // SYSEXIT with null SYSENTER_CS MSR should fault before loading user state.
+    let code = [
+        0x48, 0xc7, 0xc1, 0x00, 0x80, 0x00, 0x00, // MOV RCX, 0x8000
+        0x48, 0xc7, 0xc2, 0x00, 0x20, 0x00, 0x00, // MOV RDX, 0x2000
+        0x0f, 0x35, // SYSEXIT
+        0xf4,
+    ];
+    assert_sysenter_general_protection(&code, |vcpu, _mem| {
+        set_sysenter_msrs(vcpu, 0, SYSENTER_STACK_ADDR, SYSENTER_HANDLER_ADDR);
+    });
 }
 
 // ============================================================================

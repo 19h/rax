@@ -9,6 +9,11 @@ use super::super::super::flags;
 const CR0_PE: u64 = 1 << 0;
 const EFER_LMA: u64 = 1 << 10;
 
+fn inject_general_protection(vcpu: &mut X86_64Vcpu) -> Result<Option<VcpuExit>> {
+    vcpu.inject_exception(13, Some(0))?;
+    Ok(None)
+}
+
 fn build_cs(selector: u16, dpl: u8, l: bool, db: bool) -> Segment {
     Segment {
         base: 0,
@@ -52,9 +57,7 @@ pub fn sysenter(vcpu: &mut X86_64Vcpu, _ctx: &mut InsnContext) -> Result<Option<
     let cs_msr = vcpu.sregs.sysenter_cs as u16;
     let cs_selector = cs_msr & 0xFFFC;
     if cs_selector == 0 {
-        return Err(Error::Emulator(
-            "SYSENTER requires IA32_SYSENTER_CS[15:2] != 0".to_string(),
-        ));
+        return inject_general_protection(vcpu);
     }
 
     // Clear VM and IF.
@@ -84,14 +87,12 @@ pub fn sysexit(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
     let cs_base = (vcpu.sregs.sysenter_cs as u16) & 0xFFFC;
     if cs_base == 0 {
-        return Err(Error::Emulator(
-            "SYSEXIT requires IA32_SYSENTER_CS[15:2] != 0".to_string(),
-        ));
+        return inject_general_protection(vcpu);
     }
 
     let cpl = (vcpu.sregs.cs.selector & 0x3) as u8;
     if cpl != 0 {
-        return Err(Error::Emulator("SYSEXIT requires CPL=0".to_string()));
+        return inject_general_protection(vcpu);
     }
 
     let is_64 = ctx.rex_w();
