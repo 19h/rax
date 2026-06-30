@@ -21734,6 +21734,49 @@ fn compat_modrm16_addressing_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_fpu_modrm16_float_input() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.scratch[0x10..0x14].copy_from_slice(&1.5f32.to_le_bytes());
+    input
+}
+
+fn compat_fpu_modrm16_int_input() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.scratch[0x15..0x17].copy_from_slice(&0x1234u16.to_le_bytes());
+    input
+}
+
+fn compat_fpu_modrm16_control_word_input() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.scratch[0x90..0x92].copy_from_slice(&0x027fu16.to_le_bytes());
+    input
+}
+
+fn compat_fpu_modrm16_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "fpu_modrm16_compat_fld_fstp_bx_si_to_bx_di",
+            op: vec![0xd9, 0x00, 0xd9, 0x19],
+            input: compat_fpu_modrm16_float_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "fpu_modrm16_compat_fild_fistp_bp_si_to_bp_di",
+            op: vec![0xdf, 0x42, 0x05, 0xdf, 0x5b, 0x07],
+            input: compat_fpu_modrm16_int_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "fpu_modrm16_compat_fldcw_disp16_fnstcw_bx",
+            op: vec![0xd9, 0x2e, 0x90, 0x40, 0xd9, 0x3f],
+            input: compat_fpu_modrm16_control_word_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25128,6 +25171,17 @@ fn avx512_kvm_modrm16_addressing_compat_corpus() {
         "unexpected compatibility ModRM16 addressing corpus size"
     );
     let _ = run_compat_state_cases("ModRM16 addressing", &cases);
+}
+
+#[test]
+fn avx512_kvm_fpu_modrm16_compat_corpus() {
+    let cases = compat_fpu_modrm16_cases();
+    assert_eq!(
+        cases.len(),
+        3,
+        "unexpected compatibility FPU ModRM16 corpus size"
+    );
+    let _ = run_compat_state_cases("FPU ModRM16", &cases);
 }
 
 #[test]

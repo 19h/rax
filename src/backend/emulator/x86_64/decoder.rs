@@ -774,6 +774,45 @@ impl X86_64Vcpu {
         Ok((addr & 0xffff, extra, default_ss))
     }
 
+    #[inline]
+    fn decode_fpu_modrm_addr16(
+        &self,
+        ctx: &mut InsnContext,
+        mod_bits: u8,
+        rm_field: u8,
+    ) -> Result<(u64, bool)> {
+        let (mut addr, default_ss) = match rm_field {
+            0 => (self.reg16(3).wrapping_add(self.reg16(6)), false), // BX + SI
+            1 => (self.reg16(3).wrapping_add(self.reg16(7)), false), // BX + DI
+            2 => (self.reg16(5).wrapping_add(self.reg16(6)), true),  // BP + SI
+            3 => (self.reg16(5).wrapping_add(self.reg16(7)), true),  // BP + DI
+            4 => (self.reg16(6), false),                             // SI
+            5 => (self.reg16(7), false),                             // DI
+            6 if mod_bits == 0 => {
+                let disp = ctx.consume_u16()?;
+                return Ok((u64::from(disp), false));
+            }
+            6 => (self.reg16(5), true),  // BP
+            7 => (self.reg16(3), false), // BX
+            _ => unreachable!(),
+        };
+
+        match mod_bits {
+            0 => {}
+            1 => {
+                let disp = ctx.consume_u8()? as i8 as i64;
+                addr = (addr as i64).wrapping_add(disp) as u64;
+            }
+            2 => {
+                let disp = ctx.consume_u16()? as i16 as i64;
+                addr = (addr as i64).wrapping_add(disp) as u64;
+            }
+            _ => unreachable!(),
+        }
+
+        Ok((addr & 0xffff, default_ss))
+    }
+
     /// Decode ModR/M byte to get effective address.
     /// Returns (address, bytes_consumed_after_modrm).
     #[inline]
@@ -1098,7 +1137,14 @@ impl X86_64Vcpu {
             ));
         }
 
-        let addr_size_32 = ctx.address_size_override && self.sregs.cs.l;
+        let addr_size = self.modrm_address_size(ctx);
+        if addr_size == ModrmAddressSize::Addr16 {
+            let (addr, default_ss) = self.decode_fpu_modrm_addr16(ctx, mod_bits, rm_field)?;
+            let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
+            return Ok(addr.wrapping_add(seg_base));
+        }
+
+        let addr_size_32 = addr_size == ModrmAddressSize::Addr32;
         let reg_size: u8 = if addr_size_32 { 4 } else { 8 };
 
         let mut addr: u64;
