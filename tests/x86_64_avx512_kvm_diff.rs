@@ -15014,6 +15014,38 @@ fn irregular_cases() -> Vec<Case> {
             "adcx_adox_adx_edge_independent_flags_r64",
             "xorl %r10d, %r10d\nmovq $-1, %r8\nmovq $1, %r9\nadcx %r9, %r8\nmovq $-1, %rcx\nmovq $1, %rdx\nadox %rdx, %rcx",
         ),
+        (
+            "adcx_adx_edge_adx_carry_matrix_same_dest_r64",
+            "clc\nmovq $-1, %r8\nadcx %r8, %r8",
+        ),
+        (
+            "adcx_adx_edge_adx_carry_matrix_r32_zeroext",
+            "stc\nmovq $-1, %r8\nmovl $0, %r9d\nadcx %r9d, %r8d",
+        ),
+        (
+            "adcx_adx_edge_adx_carry_matrix_mem_carry_out_r64",
+            "clc\nmovq $-1, %r8\nmovq $1, 32(%rax)\nadcx 32(%rax), %r8",
+        ),
+        (
+            "adcx_adox_adx_edge_adx_carry_matrix_interleaved_r64",
+            "clc\nxorl %r10d, %r10d\nmovq $-1, %r8\nmovq $1, %r9\nadcx %r9, %r8\nmovq $-1, %rcx\nmovq $1, %rdx\nadox %rdx, %rcx\nadcx %r9, %r8\nadox %rdx, %rcx",
+        ),
+        (
+            "adox_adx_edge_adx_carry_matrix_same_dest_r64",
+            "xorl %r10d, %r10d\nmovq $-1, %r8\nadox %r8, %r8",
+        ),
+        (
+            "adox_adx_edge_adx_carry_matrix_r32_zeroext",
+            "movl $0x7fffffff, %r10d\naddl $1, %r10d\nmovq $-1, %r8\nmovl $0, %r9d\nadox %r9d, %r8d",
+        ),
+        (
+            "adox_adx_edge_adx_carry_matrix_mem_overflow_in_r64",
+            "movl $0x7fffffff, %r10d\naddl $1, %r10d\nmovq $-1, %r8\nmovq $0, 32(%rax)\nadox 32(%rax), %r8",
+        ),
+        (
+            "adox_adx_edge_adx_carry_matrix_preserves_cf_same_dest",
+            "xorl %r10d, %r10d\nstc\nmovq $-1, %r8\nadox %r8, %r8",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -35698,7 +35730,7 @@ fn avx512_kvm_adx_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Adx)
         .collect();
-    assert_eq!(cases.len(), 21, "unexpected ADX corpus size");
+    assert_eq!(cases.len(), 29, "unexpected ADX corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35713,8 +35745,8 @@ fn avx512_kvm_adx_corpus() {
         tally.skipped_feature, 0,
         "ADX cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Adx), 21, "all ADX cases should run");
-    assert_eq!(tally.compared, 21, "all ADX cases should compare");
+    assert_eq!(tally.ran_for(Feat::Adx), 29, "all ADX cases should run");
+    assert_eq!(tally.compared, 29, "all ADX cases should compare");
 }
 
 #[test]
@@ -35723,7 +35755,7 @@ fn avx512_kvm_adx_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_adx_edge_"))
         .collect();
-    assert_eq!(cases.len(), 7, "unexpected ADX edge corpus size");
+    assert_eq!(cases.len(), 15, "unexpected ADX edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35741,8 +35773,44 @@ fn avx512_kvm_adx_edge_corpus() {
         tally.skipped_feature, 0,
         "ADX edge cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Adx), 7, "all ADX edge cases should run");
-    assert_eq!(tally.compared, 7, "all ADX edge cases should compare");
+    assert_eq!(tally.ran_for(Feat::Adx), 15, "all ADX edge cases should run");
+    assert_eq!(tally.compared, 15, "all ADX edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_adx_carry_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_adx_carry_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected ADX carry-matrix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on ADX carry-matrix cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an ADX carry-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "ADX carry-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "ADX carry-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Adx),
+        8,
+        "all ADX carry-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared,
+        8,
+        "all ADX carry-matrix cases should compare"
+    );
 }
 
 #[test]
