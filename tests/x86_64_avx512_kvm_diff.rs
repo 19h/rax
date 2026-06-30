@@ -15779,6 +15779,38 @@ fn irregular_cases() -> Vec<Case> {
             "cpuid_cpuid_edge_extended_address_widths_present",
             "movl $0x80000008, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %eax, %r9d\nmovl %r9d, %r8d\nandl $0xff, %r8d\ncmpl $36, %r8d\nsetae %al\nshrl $8, %r9d\nandl $0xff, %r9d\ncmpl $48, %r9d\nsetae %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
+        (
+            "cpuid_cpuid_matrix_max_basic_leaf_covers_xsave",
+            "xorl %eax, %eax\nxorl %ecx, %ecx\ncpuid\ncmpl $0xd, %eax\nsetae %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_max_ext_leaf_covers_addr_width",
+            "movl $0x80000000, %eax\nxorl %ecx, %ecx\ncpuid\ncmpl $0x80000008, %eax\nsetae %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_leaf7_subleaf2_upper_ignored",
+            "movl $7, %eax\nmovl $2, %ecx\ncpuid\nmovl %eax, %r8d\nmovl %ebx, %r9d\nmovl %ecx, %esi\nmovl %edx, %edi\nmovl $7, %eax\nmovabsq $0xffffffff00000002, %rcx\ncpuid\nxorl %r8d, %eax\nxorl %r9d, %ebx\nxorl %esi, %ecx\nxorl %edi, %edx\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %rsi, %rsi\nxorq %rdi, %rdi\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_leaf7_subleaf_high_zero",
+            "movl $7, %eax\nmovl $63, %ecx\nmovq $-1, %rbx\nmovq $-1, %rdx\ncpuid\norl %ebx, %eax\norl %ecx, %eax\norl %edx, %eax\ntestl %eax, %eax\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_ymm_subleaf_present",
+            "movl $0xd, %eax\nmovl $2, %ecx\ncpuid\ntestl %eax, %eax\nsetnz %al\ntestl %ebx, %ebx\nsetnz %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_opmask_subleaf_present",
+            "movl $0xd, %eax\nmovl $5, %ecx\ncpuid\ntestl %eax, %eax\nsetnz %al\ntestl %ebx, %ebx\nsetnz %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_hi16_subleaf_present",
+            "movl $0xd, %eax\nmovl $7, %ecx\ncpuid\ntestl %eax, %eax\nsetnz %al\ntestl %ebx, %ebx\nsetnz %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_component_offsets_ordered",
+            "movl $0xd, %eax\nmovl $5, %ecx\ncpuid\nmovl %ebx, %r8d\nmovl $0xd, %eax\nmovl $6, %ecx\ncpuid\nmovl %ebx, %r9d\nmovl $0xd, %eax\nmovl $7, %ecx\ncpuid\ncmpl %r9d, %r8d\nsetb %al\ncmpl %ebx, %r9d\nsetb %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -32875,7 +32907,7 @@ fn avx512_kvm_processor_query_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
         .collect();
-    assert_eq!(cases.len(), 27, "unexpected processor-query corpus size");
+    assert_eq!(cases.len(), 35, "unexpected processor-query corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Rdpmc) {
@@ -32894,7 +32926,7 @@ fn avx512_kvm_processor_query_corpus() {
         tally.skipped_asm, 0,
         "processor-query corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.ran_for(Feat::Cpuid), 15, "all CPUID cases should run");
+    assert_eq!(tally.ran_for(Feat::Cpuid), 23, "all CPUID cases should run");
     if host.supports(Feat::Rdpmc) {
         assert_eq!(tally.ran_for(Feat::Rdpmc), 12, "all RDPMC cases should run");
         assert_eq!(
@@ -32902,7 +32934,7 @@ fn avx512_kvm_processor_query_corpus() {
             "processor-query cases should not feature-skip"
         );
         assert_eq!(
-            tally.compared, 27,
+            tally.compared, 35,
             "all processor-query cases should compare"
         );
     } else {
@@ -32910,7 +32942,7 @@ fn avx512_kvm_processor_query_corpus() {
             tally.skipped_feature, 12,
             "only RDPMC cases should feature-skip"
         );
-        assert_eq!(tally.compared, 15, "all CPUID cases should compare");
+        assert_eq!(tally.compared, 23, "all CPUID cases should compare");
     }
 }
 
@@ -32989,6 +33021,44 @@ fn avx512_kvm_cpuid_edge_corpus() {
         "all CPUID edge cases should run"
     );
     assert_eq!(tally.compared, 10, "all CPUID edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_cpuid_query_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_cpuid_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected CPUID query-matrix size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on CPUID query-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a CPUID query-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "CPUID query-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "CPUID query-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cpuid),
+        8,
+        "all CPUID query-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all CPUID query-matrix cases should compare"
+    );
 }
 
 #[test]
