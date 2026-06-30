@@ -20188,6 +20188,46 @@ fn irregular_cases() -> Vec<Case> {
             Bmi2,
         ),
         (
+            "pdep_scalar_bit_edge_bmi2_deposit_extract_edge_allones_selector_r64",
+            "movq $-1, %rcx\npdepq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_bmi2_deposit_extract_edge_allones_selector_r64",
+            "movq $-1, %rcx\npextq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pdep_scalar_bit_edge_bmi2_deposit_extract_edge_highbit_selector_r64",
+            "movabsq $0x8000000000000000, %rcx\nmovq $1, %r8\npdepq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_bmi2_deposit_extract_edge_highbit_selector_r64",
+            "movabsq $0x8000000000000000, %rcx\nmovabsq $0x8000000000000000, %r8\npextq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pdep_scalar_bit_edge_bmi2_deposit_extract_edge_alternating_selector_r64",
+            "movabsq $0xaaaaaaaaaaaaaaaa, %rcx\nmovabsq $0xffff, %r8\npdepq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_bmi2_deposit_extract_edge_alternating_selector_r64",
+            "movabsq $0xaaaaaaaaaaaaaaaa, %rcx\nmovabsq $0xaaaaaaaaaaaaaaaa, %r8\npextq %rcx, %r8, %r9",
+            Bmi2,
+        ),
+        (
+            "pdep_scalar_bit_edge_bmi2_deposit_extract_edge_highbit_selector_r32_zeroext",
+            "movq $-1, %r9\nmovl $0x80000000, %ecx\nmovl $1, %r8d\npdepl %ecx, %r8d, %r9d",
+            Bmi2,
+        ),
+        (
+            "pext_scalar_bit_edge_bmi2_deposit_extract_edge_highbit_selector_r32_zeroext",
+            "movq $-1, %r9\nmovl $0x80000000, %ecx\nmovl $0x80000000, %r8d\npextl %ecx, %r8d, %r9d",
+            Bmi2,
+        ),
+        (
             "mulx_scalar_bit_edge_r64_max_product",
             "movq $-1, %rdx\nmovq $-1, %r8\nmulxq %r8, %r9, %rcx",
             Bmi2,
@@ -35382,7 +35422,7 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_scalar_bit_edge_"))
         .collect();
-    assert_eq!(cases.len(), 35, "unexpected scalar bit edge corpus size");
+    assert_eq!(cases.len(), 43, "unexpected scalar bit edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35417,12 +35457,54 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Bmi2),
-        18,
+        26,
         "all BMI2 scalar bit edge cases should run"
     );
     assert_eq!(
-        tally.compared, 35,
+        tally.compared, 43,
         "all scalar bit edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_bmi2_deposit_extract_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_bmi2_deposit_extract_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected BMI2 deposit/extract edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on BMI2 deposit/extract edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a BMI2 deposit/extract edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "BMI2 deposit/extract edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "BMI2 deposit/extract edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi2),
+        8,
+        "all BMI2 deposit/extract edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all BMI2 deposit/extract edge cases should compare"
     );
 }
 
