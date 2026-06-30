@@ -20645,6 +20645,47 @@ fn unsupported_virtualization_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'
         .collect()
 }
 
+const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
+    ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
+    (
+        "mpx_bndcl_bnd0_rax_rexw_disabled",
+        &[0xf3, 0x48, 0x0f, 0x1a, 0x00],
+    ),
+    ("mpx_bndcu_bnd0_rax_disabled", &[0xf2, 0x0f, 0x1a, 0x00]),
+    (
+        "mpx_bndcu_bnd0_rax_rexw_disabled",
+        &[0xf2, 0x48, 0x0f, 0x1a, 0x00],
+    ),
+    ("mpx_bndmk_bnd0_mem_disabled", &[0xf3, 0x0f, 0x1b, 0x00]),
+    (
+        "mpx_bndmk_bnd0_mem_rexw_disabled",
+        &[0xf3, 0x48, 0x0f, 0x1b, 0x00],
+    ),
+    ("mpx_bndmov_bnd0_bnd1_disabled", &[0x66, 0x0f, 0x1a, 0xc1]),
+    ("mpx_bndmov_bnd0_mem_disabled", &[0x66, 0x0f, 0x1a, 0x00]),
+    ("mpx_bndmov_mem_bnd0_disabled", &[0x66, 0x0f, 0x1b, 0x00]),
+    (
+        "mpx_bndmov_bnd0_mem_rexw_disabled",
+        &[0x66, 0x48, 0x0f, 0x1a, 0x00],
+    ),
+    (
+        "mpx_bndmov_mem_bnd0_rexw_disabled",
+        &[0x66, 0x48, 0x0f, 0x1b, 0x00],
+    ),
+    ("mpx_bndldx_bnd0_disabled", &[0x0f, 0x1a, 0x00]),
+    ("mpx_bndldx_bnd0_sib_disabled", &[0x0f, 0x1a, 0x04, 0x18]),
+    ("mpx_bndstx_bnd0_disabled", &[0x0f, 0x1b, 0x00]),
+    ("mpx_bndstx_bnd0_sib_disabled", &[0x0f, 0x1b, 0x04, 0x18]),
+];
+
+fn mpx_disabled_fallthrough_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    MPX_DISABLED_FALLTHROUGH_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_fallthrough_marker(oracle, op))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22597,6 +22638,26 @@ fn avx512_kvm_virtualization_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported virtualization", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_mpx_disabled_fallthrough_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = mpx_disabled_fallthrough_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not fall through disabled MPX probes");
+        return;
+    }
+    run_fallthrough_marker_corpus("disabled MPX", cases, expected);
 }
 
 #[test]
