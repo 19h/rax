@@ -12051,6 +12051,68 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX2 VEX sign/zero-extension coverage across byte, word, and dword
+    // source widths. The baseline operand-form block has a few representative
+    // PMOVSX/PMOVZX cases; this closes out the source-width matrix with both
+    // register and memory operands.
+    for &(label, asm) in &[
+        (
+            "vpmovsxbw_avx2_int_extend_xmm_mem",
+            "{vex} vpmovsxbw 32(%rax), %xmm1",
+        ),
+        (
+            "vpmovsxbd_avx2_int_extend_xmm_reg",
+            "{vex} vpmovsxbd %xmm2, %xmm1",
+        ),
+        (
+            "vpmovsxbq_avx2_int_extend_ymm_mem",
+            "{vex} vpmovsxbq 32(%rax), %ymm1",
+        ),
+        (
+            "vpmovsxwd_avx2_int_extend_xmm_mem",
+            "{vex} vpmovsxwd 32(%rax), %xmm1",
+        ),
+        (
+            "vpmovsxwq_avx2_int_extend_ymm_reg",
+            "{vex} vpmovsxwq %xmm2, %ymm1",
+        ),
+        (
+            "vpmovsxdq_avx2_int_extend_xmm_mem",
+            "{vex} vpmovsxdq 32(%rax), %xmm1",
+        ),
+        (
+            "vpmovzxbw_avx2_int_extend_xmm_mem",
+            "{vex} vpmovzxbw 32(%rax), %xmm1",
+        ),
+        (
+            "vpmovzxbd_avx2_int_extend_ymm_mem",
+            "{vex} vpmovzxbd 32(%rax), %ymm1",
+        ),
+        (
+            "vpmovzxbq_avx2_int_extend_xmm_reg",
+            "{vex} vpmovzxbq %xmm2, %xmm1",
+        ),
+        (
+            "vpmovzxwd_avx2_int_extend_ymm_reg",
+            "{vex} vpmovzxwd %xmm2, %ymm1",
+        ),
+        (
+            "vpmovzxwq_avx2_int_extend_ymm_mem",
+            "{vex} vpmovzxwq 32(%rax), %ymm1",
+        ),
+        (
+            "vpmovzxdq_avx2_int_extend_xmm_reg",
+            "{vex} vpmovzxdq %xmm2, %xmm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: Int,
+        });
+    }
+
     // VEX AVX2 gathers are VSIB memory operations with an architecturally
     // cleared mask register. Each case creates all-zero indices and an all-one
     // mask, then gathers from a fixed scratch displacement so both destination
@@ -36027,6 +36089,48 @@ fn avx512_kvm_avx2_integer_operand_corpus() {
     assert_eq!(
         tally.compared, 24,
         "all AVX2 integer operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx2_integer_extend_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_int_extend_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected AVX2 integer sign/zero-extension corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX2 integer sign/zero-extension cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 integer sign/zero-extension case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 integer sign/zero-extension corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 integer sign/zero-extension cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        12,
+        "all AVX2 integer sign/zero-extension cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all AVX2 integer sign/zero-extension cases should compare"
     );
 }
 
