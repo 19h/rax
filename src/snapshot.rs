@@ -8,7 +8,7 @@
 //!     so `rax --checkpoint file.rxc` can rebuild the machine with no other
 //!     flags (and the user may override any of it),
 //!   - the full CPU register file + emulator-specific state (lazy flags, FPU,
-//!     kernel_gs_base, IA32_TSC_AUX, PKRU, halted),
+//!     kernel_gs_base, IA32_TSC_ADJUST, IA32_TSC_AUX, PKRU, halted),
 //!   - the complete writable guest RAM (zstd compressed) — which also contains
 //!     the kernel/initrd that were loaded into it, so read-only images need not
 //!     be shipped separately,
@@ -105,6 +105,8 @@ pub struct EmulatorState {
     pub lazy_flags: LazyFlagsSnapshot,
     pub kernel_gs_base: u64,
     #[serde(default)]
+    pub tsc_adjust: u64,
+    #[serde(default)]
     pub tsc_aux: u32,
     pub pkru: u32,
     #[serde(default = "default_mxcsr")]
@@ -122,6 +124,7 @@ impl Default for EmulatorState {
             fpu: FpuSnapshot::default(),
             lazy_flags: LazyFlagsSnapshot::default(),
             kernel_gs_base: 0,
+            tsc_adjust: 0,
             tsc_aux: 0,
             pkru: 0,
             mxcsr: default_mxcsr(),

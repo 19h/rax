@@ -273,6 +273,8 @@ pub struct X86_64Vcpu {
     io_pending: Option<IoPending>,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
     pub(super) kernel_gs_base: u64,
+    /// IA32_TSC_ADJUST MSR (0x3B).
+    pub(super) tsc_adjust: u64,
     /// IA32_TSC_AUX MSR (0xC0000103), consumed by RDPID and RDTSCP.
     pub(super) tsc_aux: u32,
     /// Protection Key Rights Register (PKRU).
@@ -937,6 +939,7 @@ impl X86_64Vcpu {
             halted: false,
             io_pending: None,
             kernel_gs_base: 0,
+            tsc_adjust: 0,
             tsc_aux: 0,
             pkru: 0,
             mxcsr: 0x1F80,
@@ -3062,6 +3065,7 @@ impl X86_64Vcpu {
         self.halted = false;
         self.io_pending = None;
         self.kernel_gs_base = 0;
+        self.tsc_adjust = 0;
         self.tsc_aux = 0;
         self.pkru = 0;
         self.xcr0 = 1;
@@ -3482,6 +3486,7 @@ impl VCpu for X86_64Vcpu {
                 size: lf.size,
             },
             kernel_gs_base: self.kernel_gs_base,
+            tsc_adjust: self.tsc_adjust,
             tsc_aux: self.tsc_aux,
             pkru: self.pkru,
             mxcsr: self.mxcsr,
@@ -3520,6 +3525,7 @@ impl VCpu for X86_64Vcpu {
 
         // Restore other state
         self.kernel_gs_base = state.kernel_gs_base;
+        self.tsc_adjust = state.tsc_adjust;
         self.tsc_aux = state.tsc_aux;
         self.pkru = state.pkru;
         self.mxcsr = state.mxcsr;

@@ -16,6 +16,8 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let value = ((vcpu.regs.rdx & 0xFFFF_FFFF) << 32) | (vcpu.regs.rax & 0xFFFF_FFFF);
 
     match ecx {
+        0x3B => vcpu.tsc_adjust = value, // IA32_TSC_ADJUST
+        0x6E0 => {}, // IA32_TSC_DEADLINE, not latched in the base profile
         0xC0000080 => vcpu.sregs.efer = value,    // EFER
         0xC0000081 => vcpu.sregs.star = value,    // STAR
         0xC0000082 => vcpu.sregs.lstar = value,   // LSTAR
@@ -65,6 +67,7 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // which disagreed with RDTSC and made boots nondeterministic.
             vcpu.tsc()
         }
+        0x3B => vcpu.tsc_adjust, // IA32_TSC_ADJUST
         0x1B => {
             // IA32_APIC_BASE - APIC base address
             // Bit 8: BSP flag (this is the bootstrap processor)
@@ -80,6 +83,7 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0x174 => vcpu.sregs.sysenter_cs,   // IA32_SYSENTER_CS
         0x175 => vcpu.sregs.sysenter_esp,  // IA32_SYSENTER_ESP
         0x176 => vcpu.sregs.sysenter_eip,  // IA32_SYSENTER_EIP
+        0x6E0 => 0,                        // IA32_TSC_DEADLINE
         0xC0000100 => vcpu.sregs.fs.base,  // FS.base
         0xC0000101 => vcpu.sregs.gs.base,  // GS.base
         0xC0000102 => vcpu.kernel_gs_base, // KernelGSbase

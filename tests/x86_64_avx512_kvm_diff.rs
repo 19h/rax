@@ -19042,6 +19042,54 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    if host_cpu_flag("tsc_adjust") {
+        for &(label, asm) in &[
+            (
+                "tsc_adjust_modern_msr_state_roundtrip_low64",
+                "movl $0x3b, %ecx\nmovl $0x00004000, %eax\nxorl %edx, %edx\nwrmsr\nrdmsr\ncmpl $0x00004000, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+            (
+                "tsc_adjust_modern_msr_state_second_write_overwrites",
+                "movl $0x3b, %ecx\nmovl $0x00004000, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x00008000, %eax\nwrmsr\nrdmsr\ncmpl $0x00008000, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+            (
+                "tsc_adjust_modern_msr_state_high_halves_ignored",
+                "movl $0x3b, %ecx\nmovabsq $0xffffffff00001000, %rax\nmovabsq $0xffffffff00000000, %rdx\nwrmsr\nrdmsr\ncmpl $0x00001000, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+        ] {
+            out.push(Case {
+                label: label.to_string(),
+                asm: asm.to_string(),
+                feat: Msr,
+                profile: Int,
+            });
+        }
+    }
+
+    if host_cpu_flag("tsc_deadline_timer") {
+        for &(label, asm) in &[
+            (
+                "tsc_deadline_modern_msr_state_write_reads_zero",
+                "movl $0x6e0, %ecx\nmovl $0x55667788, %eax\nmovl $0x7fffffff, %edx\nwrmsr\nrdmsr\ntestl %eax, %eax\nsetz %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+            (
+                "tsc_deadline_modern_msr_state_second_write_reads_zero",
+                "movl $0x6e0, %ecx\nmovl $0x11111111, %eax\nmovl $0x7ffffffe, %edx\nwrmsr\nmovl $0x22222222, %eax\nmovl $0x7fffffff, %edx\nwrmsr\nrdmsr\ntestl %eax, %eax\nsetz %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+            (
+                "tsc_deadline_modern_msr_state_high_halves_read_zero",
+                "movl $0x6e0, %ecx\nmovabsq $0xffffffff00001000, %rax\nmovabsq $0xffffffff7fffffff, %rdx\nwrmsr\nrdmsr\ntestl %eax, %eax\nsetz %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+        ] {
+            out.push(Case {
+                label: label.to_string(),
+                asm: asm.to_string(),
+                feat: Msr,
+                profile: Int,
+            });
+        }
+    }
+
     // Descriptor access checks. Each case installs a tiny local GDT with one
     // present writable data descriptor, then observes LAR/LSL/VERR/VERW through
     // stable GPR booleans or the architecturally loaded segment limit.
@@ -33023,6 +33071,17 @@ fn avx512_kvm_starter_corpus() {
     run_corpus(&starter_cases());
 }
 
+fn modern_msr_state_expected_cases() -> usize {
+    let mut expected = 0;
+    if host_cpu_flag("tsc_adjust") {
+        expected += 3;
+    }
+    if host_cpu_flag("tsc_deadline_timer") {
+        expected += 3;
+    }
+    expected
+}
+
 #[test]
 fn avx512_kvm_privileged_machine_state_corpus() {
     let cases: Vec<_> = generated_cases()
@@ -33034,7 +33093,12 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 61, "unexpected privileged corpus size");
+    let modern_msr_cases = modern_msr_state_expected_cases();
+    assert_eq!(
+        cases.len(),
+        61 + modern_msr_cases,
+        "unexpected privileged corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -33058,13 +33122,21 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         13,
         "all descriptor-table cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Msr), 16, "all MSR cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        16 + modern_msr_cases,
+        "all MSR cases should run"
+    );
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
         16,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 61, "all privileged cases should compare");
+    assert_eq!(
+        tally.compared,
+        61 + modern_msr_cases,
+        "all privileged cases should compare"
+    );
 }
 
 #[test]
@@ -33221,6 +33293,46 @@ fn avx512_kvm_tsc_aux_msr_corpus() {
         "all RDTSCP TSC_AUX MSR cases should run"
     );
     assert_eq!(tally.compared, 8, "all TSC_AUX MSR cases should compare");
+}
+
+#[test]
+fn avx512_kvm_modern_msr_state_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Msr && case.label.contains("_modern_msr_state_"))
+        .collect();
+    let expected = modern_msr_state_expected_cases();
+    if expected == 0 {
+        eprintln!("[skip] host lacks TSC_ADJUST and TSC_DEADLINE MSR support");
+        return;
+    }
+    assert_eq!(cases.len(), expected, "unexpected modern MSR corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on modern MSR cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a modern MSR case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "modern MSR corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "modern MSR cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        expected,
+        "all modern MSR cases should run"
+    );
+    assert_eq!(
+        tally.compared, expected,
+        "all modern MSR cases should compare"
+    );
 }
 
 #[test]
