@@ -19090,6 +19090,36 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    for &(label, asm) in &[
+        (
+            "apic_base_msr_default_base_and_enable_bits",
+            "movl $0x1b, %ecx\nrdmsr\nandl $0xfffff900, %eax\ncmpl $0xfee00900, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "apic_base_msr_ecx_high_half_ignored",
+            "movabsq $0xffffffff0000001b, %rcx\nrdmsr\nandl $0xfffff900, %eax\ncmpl $0xfee00900, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "apic_base_msr_rdmsr_zero_extends_outputs",
+            "movq $-1, %rax\nmovq $-1, %rdx\nmovl $0x1b, %ecx\nrdmsr\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "apic_base_msr_same_value_wrmsr_preserves",
+            "movl $0x1b, %ecx\nrdmsr\nmovl %eax, %r10d\nmovl %edx, %r11d\nwrmsr\nrdmsr\nxorl %eax, %r10d\nxorl %edx, %r11d\norl %r11d, %r10d\ntestl %r10d, %r10d\nsetz %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+        ),
+        (
+            "apic_base_msr_wrmsr_high_halves_ignored",
+            "movl $0x1b, %ecx\nrdmsr\nmovl %eax, %r10d\nmovl %edx, %r11d\nmovabsq $0xffffffff00000000, %r9\norq %r9, %rax\norq %r9, %rdx\nwrmsr\nrdmsr\nxorl %eax, %r10d\nxorl %edx, %r11d\norl %r11d, %r10d\ntestl %r10d, %r10d\nsetz %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Msr,
+            profile: Int,
+        });
+    }
+
     // Descriptor access checks. Each case installs a tiny local GDT with one
     // present writable data descriptor, then observes LAR/LSL/VERR/VERW through
     // stable GPR booleans or the architecturally loaded segment limit.
@@ -33082,6 +33112,8 @@ fn modern_msr_state_expected_cases() -> usize {
     expected
 }
 
+const APIC_BASE_MSR_CASES: usize = 5;
+
 #[test]
 fn avx512_kvm_privileged_machine_state_corpus() {
     let cases: Vec<_> = generated_cases()
@@ -33096,7 +33128,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     let modern_msr_cases = modern_msr_state_expected_cases();
     assert_eq!(
         cases.len(),
-        61 + modern_msr_cases,
+        61 + modern_msr_cases + APIC_BASE_MSR_CASES,
         "unexpected privileged corpus size"
     );
 
@@ -33124,7 +33156,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Msr),
-        16 + modern_msr_cases,
+        16 + modern_msr_cases + APIC_BASE_MSR_CASES,
         "all MSR cases should run"
     );
     assert_eq!(
@@ -33134,7 +33166,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.compared,
-        61 + modern_msr_cases,
+        61 + modern_msr_cases + APIC_BASE_MSR_CASES,
         "all privileged cases should compare"
     );
 }
@@ -33332,6 +33364,45 @@ fn avx512_kvm_modern_msr_state_corpus() {
     assert_eq!(
         tally.compared, expected,
         "all modern MSR cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_apic_base_msr_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Msr && case.label.contains("apic_base_msr_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        APIC_BASE_MSR_CASES,
+        "unexpected APIC-base MSR corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on APIC-base MSR cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an APIC-base MSR case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "APIC-base MSR corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "APIC-base MSR cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        APIC_BASE_MSR_CASES,
+        "all APIC-base MSR cases should run"
+    );
+    assert_eq!(
+        tally.compared, APIC_BASE_MSR_CASES,
+        "all APIC-base MSR cases should compare"
     );
 }
 
