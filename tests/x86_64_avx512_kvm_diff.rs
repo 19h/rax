@@ -20532,6 +20532,37 @@ fn unsupported_amd_legacy_multimedia_cases(
         .collect()
 }
 
+const XOP_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "xop_vfrczps_unsupported",
+        &[0x8f, 0xe9, 0x78, 0x80, 0xc8],
+    ),
+    (
+        "xop_vfrczsd_unsupported",
+        &[0x8f, 0xe9, 0x78, 0x83, 0xc8],
+    ),
+    (
+        "xop_vphaddbd_unsupported",
+        &[0x8f, 0xe9, 0x78, 0xc2, 0xc8],
+    ),
+    (
+        "xop_vpcmov_unsupported",
+        &[0x8f, 0xe8, 0x68, 0xa2, 0xd9, 0x00],
+    ),
+    (
+        "xop_vpmacsswd_unsupported",
+        &[0x8f, 0xe8, 0x68, 0x86, 0xd9, 0x00],
+    ),
+];
+
+fn unsupported_xop_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    XOP_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "sgx_encls_ecreate_unsupported",
@@ -22639,6 +22670,26 @@ fn avx512_kvm_amd_legacy_multimedia_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AMD legacy multimedia", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_xop_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_xop_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD XOP probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported XOP", cases, expected);
 }
 
 #[test]

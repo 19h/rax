@@ -224,6 +224,12 @@ pub fn pop_r64(
 pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = stack_op_size(vcpu, ctx);
 
+    let modrm = ctx.peek_u8()?;
+    if ((modrm >> 3) & 0x07) != 0 {
+        ctx.consume_u8()?;
+        return vcpu.inject_undefined_instruction();
+    }
+
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     // Pop value based on operand size
