@@ -28818,6 +28818,27 @@ const AMX_DISABLED_CANDIDATES: &[(&str, &[u8])] = &[
     ("tdpbusd_tmm5_disabled", &[0xc4, 0xe2, 0x41, 0x5e, 0xee]),
     ("tdpbuud_tmm3_disabled", &[0xc4, 0xe2, 0x70, 0x5e, 0xda]),
     ("tdpbuud_tmm5_disabled", &[0xc4, 0xe2, 0x40, 0x5e, 0xee]),
+    (
+        "ldtilecfg_rdx_disp32_disabled",
+        &[0xc4, 0xe2, 0x78, 0x49, 0x82, 0x00, 0x04, 0x00, 0x00],
+    ),
+    ("sttilecfg_rbx_disabled", &[0xc4, 0xe2, 0x78, 0x49, 0x0b]),
+    (
+        "tilestored_tmm1_rbx_disp32_disabled",
+        &[0xc4, 0xe2, 0x7b, 0x4b, 0x8b, 0x00, 0x10, 0x00, 0x00],
+    ),
+    ("tileloadd_tmm1_disabled", &[0xc4, 0xe2, 0x7a, 0x4b, 0x08]),
+    ("tileloadd_tmm6_disabled", &[0xc4, 0xe2, 0x7a, 0x4b, 0x30]),
+    ("tileloaddt1_tmm1_rcx_disabled", &[0xc4, 0xe2, 0x79, 0x4b, 0x09]),
+    ("tilezero_tmm1_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xc8]),
+    ("tilezero_tmm2_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xd0]),
+    ("tilezero_tmm5_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xe8]),
+    ("tilezero_tmm6_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xf0]),
+    ("tdpbf16ps_tmm0_disabled", &[0xc4, 0xe2, 0x7b, 0x5c, 0xc8]),
+    ("tdpbssd_tmm0_disabled", &[0xc4, 0xe2, 0x7a, 0x5e, 0xc8]),
+    ("tdpbsud_tmm1_disabled", &[0xc4, 0xe2, 0x7b, 0x5e, 0xd0]),
+    ("tdpbusd_tmm2_disabled", &[0xc4, 0xe2, 0x79, 0x5e, 0xe0]),
+    ("tdpbuud_tmm3_disabled", &[0xc4, 0xe2, 0x7a, 0x5e, 0xf0]),
 ];
 
 fn amx_disabled_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
@@ -32399,6 +32420,13 @@ fn avx512_kvm_amx_disabled_ud_corpus() {
     if expected == 0 {
         eprintln!("[skip] KVM guest does not #UD disabled AMX probes");
         return;
+    }
+    if host_cpu_flag("amx_tile") || host_cpu_flag("amx_int8") || host_cpu_flag("amx_bf16") {
+        assert_eq!(
+            expected,
+            AMX_DISABLED_CANDIDATES.len(),
+            "AMX-capable host with tile state disabled should #UD every AMX probe"
+        );
     }
     run_ud_marker_corpus("disabled AMX", cases, expected);
 }
