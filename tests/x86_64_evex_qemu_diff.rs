@@ -352,6 +352,7 @@ fn try_run_rax(case: &DiffCase) -> Result<OutCase, String> {
     vcpu.set_vp2intersect_enabled(true);
     vcpu.set_avx10_media_enabled(true);
     vcpu.set_avx10_vminmax_enabled(true);
+    vcpu.set_avx10_sat_convert_enabled(true);
     mem.write_slice(&case.input.scratch, GuestAddress(SCRATCH_ADDR))
         .unwrap();
     let regs = run_until_hlt(&mut vcpu).map_err(|error| error.to_string())?;

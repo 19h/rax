@@ -2431,6 +2431,7 @@ impl X86_64Vcpu {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+        let avx10_sat_convert_disabled = !self.avx10_sat_convert_enabled();
 
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
@@ -2510,6 +2511,12 @@ impl X86_64Vcpu {
             }
             0x7D if evex.pp == 3 && !evex.w => {
                 insn::simd::evex_packed_int_to_fp(self, ctx, 2, 2, false)
+            }
+            0x68 | 0x6A if evex.pp == 1 && !evex.w && avx10_sat_convert_disabled => {
+                self.inject_undefined_instruction()
+            }
+            0x6C | 0x6D if evex.pp == 1 && evex.w && avx10_sat_convert_disabled => {
+                self.inject_undefined_instruction()
             }
             // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
             0x68 if evex.pp == 1 && !evex.w => self.execute_vcvttps2ibs(ctx),

@@ -21257,6 +21257,35 @@ fn unsupported_avx10_vminmax_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'s
         .collect()
 }
 
+const AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx10_vcvttps2ibs_xmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x68, 0xc1],
+    ),
+    (
+        "avx10_vcvttps2iubs_xmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x6a, 0xc1],
+    ),
+    (
+        "avx10_vcvttpd2qqs_xmm_unsupported",
+        &[0x62, 0xf5, 0xfd, 0x08, 0x6d, 0xc1],
+    ),
+    (
+        "avx10_vcvttpd2uqqs_xmm_unsupported",
+        &[0x62, 0xf5, 0xfd, 0x08, 0x6c, 0xc1],
+    ),
+];
+
+fn unsupported_avx10_sat_convert_cases(
+    oracle: &KvmOracle,
+) -> Vec<(&'static str, &'static [u8])> {
+    AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -23450,6 +23479,26 @@ fn avx512_kvm_avx10_vminmax_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AVX10 VMINMAX", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx10_sat_convert_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx10_sat_convert_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX10 saturation conversion probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AVX10 saturation conversions", cases, expected);
 }
 
 #[test]

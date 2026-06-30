@@ -304,6 +304,10 @@ pub struct X86_64Vcpu {
     /// emulated CPUID profile does not advertise this extension, so its opcodes
     /// must #UD unless a semantic harness opts in explicitly.
     pub(super) avx10_vminmax: bool,
+    /// Enable AVX10.2 saturation conversion instructions. The base emulated
+    /// CPUID profile does not advertise this extension, so its opcodes must #UD
+    /// unless a semantic harness opts in explicitly.
+    pub(super) avx10_sat_convert: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -935,6 +939,7 @@ impl X86_64Vcpu {
             vp2intersect: false,
             avx10_media: false,
             avx10_vminmax: false,
+            avx10_sat_convert: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -1009,6 +1014,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn avx10_vminmax_enabled(&self) -> bool {
         self.avx10_vminmax
+    }
+
+    /// Enable or disable AVX10.2 saturation conversion instructions for semantic harnesses.
+    pub fn set_avx10_sat_convert_enabled(&mut self, enabled: bool) {
+        self.avx10_sat_convert = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn avx10_sat_convert_enabled(&self) -> bool {
+        self.avx10_sat_convert
     }
 
     #[cfg(feature = "debug")]
