@@ -17697,6 +17697,47 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "rdpid_rdpid_reg_matrix_rcx_zeroext",
+            "movabsq $-1, %rcx\nrdpid %rcx",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_rdx_zeroext",
+            "movabsq $-1, %rdx\nrdpid %rdx",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_rsi_zeroext",
+            "movabsq $-1, %rsi\nrdpid %rsi",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_rdi_zeroext",
+            "movabsq $-1, %rdi\nrdpid %rdi",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_rbp_zeroext",
+            "movabsq $-1, %rbp\nrdpid %rbp",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_r8_zeroext",
+            "movabsq $-1, %r8\nrdpid %r8",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_r9_zeroext",
+            "movabsq $-1, %r9\nrdpid %r9",
+        ),
+        (
+            "rdpid_rdpid_reg_matrix_rdx_preserves_cmp_flags",
+            "cmpq %r8, %r8\nrdpid %rdx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Rdpid,
+            profile: Int,
+        });
+    }
 
     // RDRAND/RDSEED produce non-deterministic data, so these cases retry until
     // success and then normalize the destination with flag-preserving MOVs.
@@ -32045,7 +32086,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        31,
+        39,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -32078,9 +32119,9 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         17,
         "all WAITPKG cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Rdpid), 9, "all RDPID cases should run");
+    assert_eq!(tally.ran_for(Feat::Rdpid), 17, "all RDPID cases should run");
     assert_eq!(
-        tally.compared, 31,
+        tally.compared, 39,
         "all serialize/WAITPKG/RDPID cases should compare"
     );
 }
@@ -32115,6 +32156,44 @@ fn avx512_kvm_rdpid_edge_corpus() {
         "all RDPID edge cases should run"
     );
     assert_eq!(tally.compared, 3, "all RDPID edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_rdpid_register_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_rdpid_reg_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected RDPID register-matrix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on RDPID register-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an RDPID register-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "RDPID register-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "RDPID register-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdpid),
+        8,
+        "all RDPID register-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all RDPID register-matrix cases should compare"
+    );
 }
 
 #[test]
