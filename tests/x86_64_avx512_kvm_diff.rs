@@ -21222,6 +21222,41 @@ fn unsupported_avx10_media_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'sta
         .collect()
 }
 
+const AVX10_VMINMAX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx10_vminmaxps_xmm_unsupported",
+        &[0x62, 0xf3, 0x75, 0x08, 0x52, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxpd_xmm_unsupported",
+        &[0x62, 0xf3, 0xf5, 0x08, 0x52, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxph_xmm_unsupported",
+        &[0x62, 0xf3, 0x7c, 0x08, 0x52, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxss_xmm_unsupported",
+        &[0x62, 0xf3, 0x75, 0x08, 0x53, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxsd_xmm_unsupported",
+        &[0x62, 0xf3, 0xf5, 0x08, 0x53, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxsh_xmm_unsupported",
+        &[0x62, 0xf3, 0x7c, 0x08, 0x53, 0xc2, 0x00],
+    ),
+];
+
+fn unsupported_avx10_vminmax_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AVX10_VMINMAX_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -23395,6 +23430,26 @@ fn avx512_kvm_avx10_media_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AVX10 media", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx10_vminmax_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx10_vminmax_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX10 VMINMAX probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AVX10 VMINMAX", cases, expected);
 }
 
 #[test]

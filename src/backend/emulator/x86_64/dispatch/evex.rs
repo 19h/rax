@@ -2064,6 +2064,7 @@ impl X86_64Vcpu {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+        let avx10_vminmax_disabled = !self.avx10_vminmax_enabled();
 
         match opcode {
             // ============================================================================
@@ -2406,6 +2407,9 @@ impl X86_64Vcpu {
             // AVX10.2 VMINMAX Instructions
             // ============================================================================
 
+            0x52 | 0x53 if matches!(evex.pp, 0 | 1) && avx10_vminmax_disabled => {
+                self.inject_undefined_instruction()
+            }
             // VMINMAXPS (0x52) - Minimum/Maximum of Packed Single-Precision Floats
             0x52 if evex.pp == 1 && !evex.w => self.execute_vminmax_ps(ctx),
             // VMINMAXPD (0x52) - Minimum/Maximum of Packed Double-Precision Floats

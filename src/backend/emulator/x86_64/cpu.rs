@@ -300,6 +300,10 @@ pub struct X86_64Vcpu {
     /// advertise these extensions, so their opcodes must #UD unless a semantic
     /// harness opts in explicitly.
     pub(super) avx10_media: bool,
+    /// Enable AVX10.2 VMINMAX floating-point min/max instructions. The base
+    /// emulated CPUID profile does not advertise this extension, so its opcodes
+    /// must #UD unless a semantic harness opts in explicitly.
+    pub(super) avx10_vminmax: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -930,6 +934,7 @@ impl X86_64Vcpu {
             xeon_phi_avx512: false,
             vp2intersect: false,
             avx10_media: false,
+            avx10_vminmax: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -994,6 +999,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn avx10_media_enabled(&self) -> bool {
         self.avx10_media
+    }
+
+    /// Enable or disable AVX10.2 VMINMAX instructions for semantic harnesses.
+    pub fn set_avx10_vminmax_enabled(&mut self, enabled: bool) {
+        self.avx10_vminmax = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn avx10_vminmax_enabled(&self) -> bool {
+        self.avx10_vminmax
     }
 
     #[cfg(feature = "debug")]
