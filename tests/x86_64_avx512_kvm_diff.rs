@@ -21766,6 +21766,156 @@ fn compat_alu_modrm_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_shift_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF;
+    input
+}
+
+fn compat_shift_mem8_input(offset: usize, value: u8) -> CompatStateIn {
+    let mut input = compat_shift_seed();
+    input.scratch[offset] = value;
+    input
+}
+
+fn compat_shift_mem16_input(offset: usize, value: u16) -> CompatStateIn {
+    let mut input = compat_shift_seed();
+    input.scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_shift_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_shift_seed();
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_shift_addr32_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_shift_mem32_input(offset, value);
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input
+}
+
+fn compat_shift_rotate_cases() -> Vec<CompatStateCase> {
+    const ROTATE_FLAGS: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    const ROTATE_MULTI_FLAGS: u64 = (STATUS_RFLAGS_MASK & !RFLAGS_OF) | RFLAGS_IF | RFLAGS_DF;
+    const SHIFT1_FLAGS: u64 =
+        RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF | RFLAGS_IF | RFLAGS_DF;
+    const SHIFT_FLAGS: u64 = RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "rol8_compat_imm_full_width_updates_cf",
+            op: vec![0xc0, 0x00, 0x08],
+            input: compat_shift_mem8_input(0x10, 0x80),
+            rflags_mask: ROTATE_MULTI_FLAGS,
+        },
+        CompatStateCase {
+            label: "ror16_compat_imm_full_width_updates_cf",
+            op: vec![0xc1, 0x08, 0x10],
+            input: compat_shift_mem16_input(0x10, 0x0001),
+            rflags_mask: ROTATE_MULTI_FLAGS,
+        },
+        CompatStateCase {
+            label: "rcl8_compat_one_uses_carry",
+            op: vec![0xd0, 0x10],
+            input: compat_shift_mem8_input(0x10, 0x80),
+            rflags_mask: ROTATE_FLAGS,
+        },
+        CompatStateCase {
+            label: "rcr16_compat_one_uses_carry",
+            op: vec![0xd1, 0x18],
+            input: compat_shift_mem16_input(0x10, 0x0001),
+            rflags_mask: ROTATE_FLAGS,
+        },
+        CompatStateCase {
+            label: "shl8_compat_one_sets_overflow",
+            op: vec![0xd0, 0x20],
+            input: compat_shift_mem8_input(0x10, 0x7f),
+            rflags_mask: SHIFT1_FLAGS,
+        },
+        CompatStateCase {
+            label: "shr16_compat_imm5_status_flags",
+            op: vec![0xc1, 0x28, 0x05],
+            input: compat_shift_mem16_input(0x10, 0x8001),
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "sal16_compat_imm3_alias_status_flags",
+            op: vec![0xc1, 0x30, 0x03],
+            input: compat_shift_mem16_input(0x10, 0x1001),
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "sar16_compat_cl_status_flags",
+            op: vec![0xd3, 0x38],
+            input: {
+                let mut input = compat_shift_mem16_input(0x10, 0x8001);
+                input.rcx = (input.rcx & !0xff) | 0x07;
+                input
+            },
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "shl32_compat_addr32_cl_memory_flags",
+            op: vec![0x67, 0x66, 0xd3, 0x24, 0x33],
+            input: {
+                let mut input = compat_shift_addr32_mem32_input(0x20, 0x4000_0001);
+                input.rcx = (input.rcx & !0xff) | 0x01;
+                input
+            },
+            rflags_mask: SHIFT1_FLAGS,
+        },
+        CompatStateCase {
+            label: "shld16_compat_imm4_mem_source_cx",
+            op: vec![0x0f, 0xa4, 0x08, 0x04],
+            input: {
+                let mut input = compat_shift_mem16_input(0x10, 0x1234);
+                input.rcx = (input.rcx & !0xffff) | 0xabcd;
+                input
+            },
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "shrd16_compat_cl_mem_source_dx",
+            op: vec![0x0f, 0xad, 0x10],
+            input: {
+                let mut input = compat_shift_mem16_input(0x10, 0x1234);
+                input.rcx = (input.rcx & !0xff) | 0x03;
+                input.rdx = (input.rdx & !0xffff) | 0xabcd;
+                input
+            },
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "shld32_compat_addr32_imm5_mem_source_ecx",
+            op: vec![0x67, 0x66, 0x0f, 0xa4, 0x0c, 0x33, 0x05],
+            input: {
+                let mut input = compat_shift_addr32_mem32_input(0x20, 0x1234_5678);
+                input.rcx = (input.rcx & !0xffff_ffff) | 0xabcd_ef01;
+                input
+            },
+            rflags_mask: SHIFT_FLAGS,
+        },
+        CompatStateCase {
+            label: "shrd32_compat_reg_cl_zeroes_high_rax",
+            op: vec![0x66, 0x0f, 0xad, 0xd0],
+            input: {
+                let mut input = compat_shift_seed();
+                input.rax = 0xaaaa_bbbb_1234_5678;
+                input.rcx = (input.rcx & !0xff) | 0x04;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0xabcd_ef01;
+                input
+            },
+            rflags_mask: SHIFT_FLAGS,
+        },
+    ]
+}
+
 fn compat_xlat_input(rbx: u64, al: u8, table_index: usize, table_value: u8) -> CompatStateIn {
     let mut input = compat_state_seed();
     input.rax = 0xaaaa_bbbb_cccc_0000 | u64::from(al);
@@ -26153,6 +26303,17 @@ fn avx512_kvm_alu_modrm_compat_corpus() {
         "unexpected compatibility ALU ModRM corpus size"
     );
     let _ = run_compat_state_cases("ALU ModRM", &cases);
+}
+
+#[test]
+fn avx512_kvm_shift_rotate_compat_corpus() {
+    let cases = compat_shift_rotate_cases();
+    assert_eq!(
+        cases.len(),
+        13,
+        "unexpected compatibility shift/rotate corpus size"
+    );
+    let _ = run_compat_state_cases("shift/rotate", &cases);
 }
 
 #[test]
