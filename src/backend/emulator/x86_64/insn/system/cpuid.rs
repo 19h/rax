@@ -143,7 +143,8 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Structured extended feature flags.
             if subleaf == 0 {
                 // AVX2 IS advertised now that XSAVE/XCR0 are implemented.
-                let mut ebx = (1u32 << 20) // SMAP
+                let mut ebx = (1u32 << 29) // SHA-NI
+                        | (1u32 << 20) // SMAP
                         | (1u32 << 10) // INVPCID
                         | (1u32 << 5); // AVX2
                 if vcpu.xeon_phi_avx512 {
