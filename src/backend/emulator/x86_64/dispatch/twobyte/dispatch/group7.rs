@@ -147,6 +147,12 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xE8 if ctx.rep_prefix == Some(0xF3) => {
+                    // SETSSBSY is a CET shadow-stack instruction. The emulator
+                    // does not expose CET shadow stacks, so this form is #UD.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xE8 => {
                     // SERIALIZE (0x0F 0x01 0xE8) - Serialize instruction execution
                     ctx.consume_u8()?; // consume modrm
@@ -155,11 +161,17 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xEA if ctx.rep_prefix == Some(0xF3) => {
-                    // SAVEPREVSSP (F3 0F 01 EA) - Save previous shadow stack pointer
+                    // SAVEPREVSSP is a CET shadow-stack instruction. The emulator
+                    // does not expose CET shadow stacks, so this form is #UD.
                     ctx.consume_u8()?; // consume modrm
-                                       // CET shadow stack instruction - treat as NOP in emulation
-                    self.regs.rip += ctx.cursor as u64;
-                    Ok(None)
+                    self.inject_undefined_instruction()
+                }
+                0xEC..=0xEF if ctx.rep_prefix == Some(0xF3) => {
+                    // UIRET/TESTUI/CLUI/STUI require User Interrupts, which the
+                    // emulator does not expose. Without this prefix-sensitive
+                    // guard, CLUI/STUI aliases would be decoded as RDPKRU/WRPKRU.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
                 }
                 0xEE => {
                     // RDPKRU (0x0F 0x01 0xEE) - Read PKRU into EAX, clear EDX
@@ -288,6 +300,12 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                5 if ctx.rep_prefix == Some(0xF3) => {
+                    // INCSSPD/INCSSPQ are CET shadow-stack instructions. The
+                    // emulator does not expose CET shadow stacks, so these
+                    // F3-prefixed register forms are #UD instead of LFENCE.
+                    self.inject_undefined_instruction()
+                }
                 5 => insn::system::lfence(self, ctx), // LFENCE (E8-EF)
                 6 => insn::system::mfence(self, ctx), // MFENCE (F0-F7)
                 7 => insn::system::sfence(self, ctx), // SFENCE (F8-FF)
@@ -297,6 +315,14 @@ impl X86_64Vcpu {
                 }
             }
         } else {
+            if reg_op == 6 && ctx.rep_prefix == Some(0xF3) {
+                // CLRSSBSY is a CET shadow-stack instruction. The emulator does
+                // not expose CET shadow stacks, so this F3-prefixed memory form
+                // is #UD instead of CLWB.
+                self.inject_undefined_instruction()?;
+                return Ok(None);
+            }
+
             // Memory operand forms (FXSAVE, FXRSTOR, LDMXCSR, STMXCSR, XSAVE, XRSTOR, CLFLUSH)
             let modrm_start = ctx.cursor - 1;
             let (addr, extra) = self.decode_modrm_addr(ctx, modrm_start)?;

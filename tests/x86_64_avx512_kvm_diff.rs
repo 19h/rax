@@ -20447,6 +20447,70 @@ fn amx_disabled_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> 
         .collect()
 }
 
+const MODERN_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("uintr_uiret_unsupported", &[0xf3, 0x0f, 0x01, 0xec]),
+    ("uintr_testui_unsupported", &[0xf3, 0x0f, 0x01, 0xed]),
+    ("uintr_clui_unsupported", &[0xf3, 0x0f, 0x01, 0xee]),
+    ("uintr_stui_unsupported", &[0xf3, 0x0f, 0x01, 0xef]),
+    ("uintr_senduipi_rax_unsupported", &[0xf3, 0x0f, 0xc7, 0xf0]),
+    ("uintr_senduipi_rbx_unsupported", &[0xf3, 0x0f, 0xc7, 0xf3]),
+    ("ptwrite_r32_unsupported", &[0xf3, 0x0f, 0xae, 0xe0]),
+    (
+        "ptwrite_r64_unsupported",
+        &[0xf3, 0x48, 0x0f, 0xae, 0xe0],
+    ),
+    ("ptwrite_mem32_unsupported", &[0xf3, 0x0f, 0xae, 0x20]),
+    (
+        "enqcmd_unsupported",
+        &[0xf2, 0x0f, 0x38, 0xf8, 0x00],
+    ),
+    (
+        "enqcmd_rexw_unsupported",
+        &[0xf2, 0x48, 0x0f, 0x38, 0xf8, 0x00],
+    ),
+    (
+        "enqcmds_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xf8, 0x00],
+    ),
+    (
+        "enqcmds_rexw_unsupported",
+        &[0xf3, 0x48, 0x0f, 0x38, 0xf8, 0x00],
+    ),
+    ("cet_incsspd_unsupported", &[0xf3, 0x0f, 0xae, 0xe8]),
+    (
+        "cet_incsspq_unsupported",
+        &[0xf3, 0x48, 0x0f, 0xae, 0xe8],
+    ),
+    ("cet_clrssbsy_unsupported", &[0xf3, 0x0f, 0xae, 0x30]),
+    ("cet_rstorssp_unsupported", &[0xf3, 0x0f, 0x01, 0x28]),
+    ("cet_saveprevssp_unsupported", &[0xf3, 0x0f, 0x01, 0xea]),
+    ("cet_setssbsy_unsupported", &[0xf3, 0x0f, 0x01, 0xe8]),
+    (
+        "cet_wrussd_unsupported",
+        &[0x66, 0x0f, 0x38, 0xf5, 0x18],
+    ),
+    (
+        "cet_wrussq_unsupported",
+        &[0x66, 0x48, 0x0f, 0x38, 0xf5, 0x18],
+    ),
+    (
+        "getsec_smctrl_unsupported",
+        &[
+            0xb8, 0x07, 0x00, 0x00, 0x00, // mov eax, 7
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+];
+
+fn unsupported_modern_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    MODERN_SYSTEM_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22339,6 +22403,26 @@ fn avx512_kvm_amx_disabled_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("disabled AMX", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_modern_system_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_modern_system_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD modern system probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported modern system", cases, expected);
 }
 
 #[test]

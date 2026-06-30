@@ -1988,6 +1988,12 @@ impl X86_64Vcpu {
         let reg = (modrm >> 3) & 0x7;
 
         match reg {
+            6 if ctx.rep_prefix == Some(0xF3) => {
+                // SENDUIPI requires User Interrupts. The emulator does not
+                // expose UINTR, so this F3-prefixed /6 form is #UD rather than
+                // RDRAND.
+                self.inject_undefined_instruction()
+            }
             6 => {
                 // RDRAND - Read random number
                 self.execute_rdrand(ctx)
