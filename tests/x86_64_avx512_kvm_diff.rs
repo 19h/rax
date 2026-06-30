@@ -29026,6 +29026,110 @@ fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
              2:",
         ));
     }
+    if run_xbegin && run_xabort {
+        cases.push(c(
+            "tsx_matrix_xabort_status_imm42",
+            "movq %rax, %r10\n\
+             movq $0x1234, %rbx\n\
+             xbegin 1f\n\
+             movq $0x5678, %rbx\n\
+             xabort $0x42\n\
+             xend\n\
+             jmp 2f\n\
+             1:\n\
+             movl %eax, %r8d\n\
+             shrl $24, %r8d\n\
+             cmpl $0x42, %r8d\n\
+             sete %cl\n\
+             testl $1, %eax\n\
+             setnz %dl\n\
+             andb %dl, %cl\n\
+             cmpq $0x1234, %rbx\n\
+             sete %dl\n\
+             andb %dl, %cl\n\
+             movzbl %cl, %ecx\n\
+             xorq %rax, %rax\n\
+             xorq %rdx, %rdx\n\
+             xorq %r8, %r8\n\
+             cmpq %rax, %rax\n\
+             2:",
+        ));
+        cases.push(c(
+            "tsx_matrix_register_rollback",
+            "movq $0x1111, %rbx\n\
+             movq $0x2222, %r8\n\
+             movq $0x3333, %r9\n\
+             xbegin 1f\n\
+             movq $0xaaaa, %rbx\n\
+             movq $0xbbbb, %r8\n\
+             movq $0xcccc, %r9\n\
+             xabort $0x5a\n\
+             xend\n\
+             jmp 2f\n\
+             1:\n\
+             cmpq $0x1111, %rbx\n\
+             sete %cl\n\
+             cmpq $0x2222, %r8\n\
+             sete %dl\n\
+             andb %dl, %cl\n\
+             cmpq $0x3333, %r9\n\
+             sete %dl\n\
+             andb %dl, %cl\n\
+             movzbl %cl, %ecx\n\
+             xorq %rax, %rax\n\
+             xorq %rdx, %rdx\n\
+             cmpq %rax, %rax\n\
+             2:",
+        ));
+        cases.push(c(
+            "tsx_matrix_memory_rollback",
+            "movq %rax, %r10\n\
+             movabsq $0x1111222233334444, %r11\n\
+             movq %r11, 32(%r10)\n\
+             xbegin 1f\n\
+             movabsq $0x5555666677778888, %r11\n\
+             movq %r11, 32(%r10)\n\
+             xabort $0x11\n\
+             xend\n\
+             jmp 2f\n\
+             1:\n\
+             movq 32(%r10), %r8\n\
+             movabsq $0x1111222233334444, %r9\n\
+             cmpq %r9, %r8\n\
+             sete %cl\n\
+             movzbl %cl, %ecx\n\
+             xorq %rax, %rax\n\
+             xorq %r8, %r8\n\
+             xorq %r9, %r9\n\
+             cmpq %rax, %rax\n\
+             2:",
+        ));
+        cases.push(c(
+            "tsx_matrix_commit_writes_visible",
+            "movq %rax, %r10\n\
+             movq $0, 40(%r10)\n\
+             movq $0, %rbx\n\
+             xbegin 1f\n\
+             movq $0x2468, %rbx\n\
+             movq $0x13579bdf, 40(%r10)\n\
+             xend\n\
+             jmp 2f\n\
+             1:\n\
+             movq $0xbad, %rbx\n\
+             2:\n\
+             movq 40(%r10), %r8\n\
+             cmpq $0x13579bdf, %r8\n\
+             sete %cl\n\
+             cmpq $0x2468, %rbx\n\
+             sete %dl\n\
+             andb %dl, %cl\n\
+             movzbl %cl, %ecx\n\
+             xorq %rax, %rax\n\
+             xorq %rdx, %rdx\n\
+             xorq %r8, %r8\n\
+             cmpq %rax, %rax",
+        ));
+    }
     if run_xabort {
         cases.push(c(
             "tsx_xabort_outside_transaction_noop",
@@ -29039,6 +29143,38 @@ fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
             "tsx_xtest_outside_transaction_zf",
             "movq $0x42, %rax\n\
              xtest",
+        ));
+    }
+    if run_xbegin && run_xabort && run_xtest {
+        cases.push(c(
+            "tsx_matrix_xtest_inside_transaction",
+            "xbegin 1f\n\
+             xtest\n\
+             jz 2f\n\
+             xabort $0x33\n\
+             2:\n\
+             xabort $0x44\n\
+             xend\n\
+             jmp 3f\n\
+             1:\n\
+             movl %eax, %r8d\n\
+             shrl $24, %r8d\n\
+             cmpl $0x33, %r8d\n\
+             sete %cl\n\
+             movzbl %cl, %ecx\n\
+             xorq %rax, %rax\n\
+             xorq %r8, %r8\n\
+             cmpq %rax, %rax\n\
+             3:",
+        ));
+    }
+    if run_xtest {
+        cases.push(c(
+            "tsx_matrix_xtest_outside_sets_zf",
+            "xtest\n\
+             setz %cl\n\
+             movzbl %cl, %ecx\n\
+             cmpq %rax, %rax",
         ));
     }
 
@@ -31692,6 +31828,43 @@ fn avx512_kvm_tsx_corpus() {
     assert_eq!(tally.compared, expected, "unexpected TSX compare count");
     assert_eq!(tally.faulted, 0, "TSX corpus should not fault");
     assert_eq!(tally.interp_err, 0, "TSX corpus should be implemented");
+}
+
+#[test]
+fn avx512_kvm_tsx_transaction_matrix_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let run_xbegin =
+        kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
+    let run_xabort = kvm_reaches_fallthrough_marker(oracle, &[0xc6, 0xf8, 0x42]);
+    let run_xtest = kvm_reaches_fallthrough_marker(oracle, &[0x0f, 0x01, 0xd6]);
+    let cases: Vec<_> = tsx_cases(run_xbegin, run_xabort, run_xtest)
+        .into_iter()
+        .filter(|case| case.label.contains("tsx_matrix_"))
+        .collect();
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not execute TSX matrix probes");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.compared, expected, "unexpected TSX matrix compare count");
+    assert_eq!(tally.faulted, 0, "TSX matrix corpus should not fault");
+    assert_eq!(tally.interp_err, 0, "TSX matrix corpus should be implemented");
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "TSX matrix corpus produced assembler-rejected cases"
+    );
 }
 
 #[test]
