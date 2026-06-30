@@ -21187,6 +21187,145 @@ fn compat_far_pointer_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_segment_data_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF;
+    input
+}
+
+fn compat_far_pointer_modrm16_input(offset: u32, selector: u16, operand32: bool) -> CompatStateIn {
+    let mut input = compat_segment_data_seed();
+    if operand32 {
+        input.scratch[0x10..0x14].copy_from_slice(&offset.to_le_bytes());
+        input.scratch[0x14..0x16].copy_from_slice(&selector.to_le_bytes());
+    } else {
+        input.scratch[0x10..0x12].copy_from_slice(&(offset as u16).to_le_bytes());
+        input.scratch[0x12..0x14].copy_from_slice(&selector.to_le_bytes());
+    }
+    input
+}
+
+fn compat_far_pointer_addr32_input(offset: u32, selector: u16) -> CompatStateIn {
+    let mut input = compat_segment_data_seed();
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input.scratch[0x20..0x24].copy_from_slice(&offset.to_le_bytes());
+    input.scratch[0x24..0x26].copy_from_slice(&selector.to_le_bytes());
+    input
+}
+
+fn compat_segment_mem16_input(offset: usize, selector: u16) -> CompatStateIn {
+    let mut input = compat_segment_data_seed();
+    input.scratch[offset..offset + 2].copy_from_slice(&selector.to_le_bytes());
+    input
+}
+
+fn compat_segment_data_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "mov_es_to_ax_compat_preserves_high_rax",
+            op: vec![0x8c, 0xc0],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_ds_to_eax_compat_operand32_zeroes_high",
+            op: vec![0x66, 0x8c, 0xd8],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_fs_to_modrm16_mem_compat",
+            op: vec![0x8c, 0x20],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_ds_from_ax_null_compat_then_capture",
+            op: vec![0x8e, 0xd8, 0x8c, 0xd9],
+            input: {
+                let mut input = compat_segment_data_seed();
+                input.rax &= !0xffff;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_fs_from_modrm16_mem_null_compat_then_capture",
+            op: vec![0x8e, 0x20, 0x8c, 0xe1],
+            input: compat_segment_mem16_input(0x10, 0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_fs_compat_selector",
+            op: vec![0x0f, 0xa0],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_gs_compat_selector",
+            op: vec![0x0f, 0xa8],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_fs_compat_null_selector_then_capture",
+            op: vec![0x0f, 0xa1, 0x8c, 0xe1],
+            input: compat_pop_sreg_input(0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_gs_compat_operand32_null_selector_then_capture",
+            op: vec![0x66, 0x0f, 0xa9, 0x8c, 0xe9],
+            input: compat_pop_sreg_input(0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lfs16_compat_modrm16_offset_selector",
+            op: vec![0x0f, 0xb4, 0x00, 0x8c, 0xe1],
+            input: compat_far_pointer_modrm16_input(0x2468, 0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lgs32_compat_addr32_offset_selector_zeroes_high",
+            op: vec![0x67, 0x66, 0x0f, 0xb5, 0x04, 0x33, 0x8c, 0xe9],
+            input: compat_far_pointer_addr32_input(0x89ab_cdef, 0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
+fn compat_segment_data_exception_cases() -> Vec<CompatExceptionMarkerCase> {
+    vec![
+        CompatExceptionMarkerCase {
+            label: "lss_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x0f, 0xb2, 0xc0],
+            input: compat_segment_data_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "lfs_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x0f, 0xb4, 0xc0],
+            input: compat_segment_data_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "lgs_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x0f, 0xb5, 0xc0],
+            input: compat_segment_data_seed(),
+        },
+    ]
+}
+
 fn compat_pop_sreg_input(selector: u16, operand32: bool) -> CompatStateIn {
     let mut input = compat_state_seed();
     let stack_offset = (input.rsp - STACK_WINDOW_ADDR) as usize;
@@ -27174,6 +27313,25 @@ fn avx512_kvm_far_pointer_compat_corpus() {
         "unexpected compatibility far-pointer exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("far-pointer", &exception_cases);
+}
+
+#[test]
+fn avx512_kvm_segment_data_compat_corpus() {
+    let cases = compat_segment_data_cases();
+    assert_eq!(
+        cases.len(),
+        11,
+        "unexpected compatibility segment-data corpus size"
+    );
+    let _ = run_compat_state_cases("segment-data", &cases);
+
+    let exception_cases = compat_segment_data_exception_cases();
+    assert_eq!(
+        exception_cases.len(),
+        3,
+        "unexpected compatibility segment-data exception corpus size"
+    );
+    let _ = run_compat_exception_marker_cases("segment-data", &exception_cases);
 }
 
 #[test]
