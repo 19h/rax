@@ -21615,6 +21615,125 @@ fn compat_string_address_size_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_modrm16_reg(seed: u64, low: u16) -> u64 {
+    (seed & !0xffff) | u64::from(low)
+}
+
+fn compat_modrm16_seed() -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = 0xaaaa_bbbb_cccc_0000;
+    input.rbx = compat_modrm16_reg(0x1111_2222_3333_0000, SCRATCH_ADDR as u16);
+    input.rsi = compat_modrm16_reg(0x2222_3333_4444_0000, 0x0010);
+    input.rdi = compat_modrm16_reg(0x3333_4444_5555_0000, 0x0020);
+    input.rbp = compat_modrm16_reg(0x4444_5555_6666_0000, SCRATCH_ADDR as u16);
+    input
+}
+
+fn compat_modrm16_read_input(index: usize, value: u8) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.scratch[index] = value;
+    input
+}
+
+fn compat_modrm16_write_input(reg: u8, value: u8) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    match reg {
+        0 => input.rax = (input.rax & !0xff) | u64::from(value),
+        1 => input.rcx = (input.rcx & !0xff) | u64::from(value),
+        2 => input.rdx = (input.rdx & !0xff) | u64::from(value),
+        3 => input.rbx = (input.rbx & !0xff) | u64::from(value),
+        _ => unreachable!(),
+    }
+    input
+}
+
+fn compat_modrm16_addressing_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "modrm16_compat_read_bx_si",
+            op: vec![0x8a, 0x00],
+            input: compat_modrm16_read_input(0x10, 0xa0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_bx_di_disp8",
+            op: vec![0x8a, 0x41, 0x05],
+            input: compat_modrm16_read_input(0x25, 0xa1),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_bp_si_disp8",
+            op: vec![0x8a, 0x42, 0x06],
+            input: compat_modrm16_read_input(0x16, 0xa2),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_bp_di_disp16",
+            op: vec![0x8a, 0x83, 0x08, 0x00],
+            input: compat_modrm16_read_input(0x28, 0xa3),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_si",
+            op: vec![0x8a, 0x04],
+            input: {
+                let mut input = compat_modrm16_read_input(0x10, 0xa4);
+                input.rsi = compat_modrm16_reg(0x2222_3333_4444_0000, 0x4010);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_di",
+            op: vec![0x8a, 0x05],
+            input: {
+                let mut input = compat_modrm16_read_input(0x20, 0xa5);
+                input.rdi = compat_modrm16_reg(0x3333_4444_5555_0000, 0x4020);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_disp16",
+            op: vec![0x8a, 0x06, 0x80, 0x40],
+            input: compat_modrm16_read_input(0x80, 0xa6),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_read_bx",
+            op: vec![0x8a, 0x07],
+            input: compat_modrm16_read_input(0x00, 0xa7),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_write_bx_si",
+            op: vec![0x88, 0x00],
+            input: compat_modrm16_write_input(0, 0xb0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_write_bp_di_disp8",
+            op: vec![0x88, 0x4b, 0x09],
+            input: compat_modrm16_write_input(1, 0xb1),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_write_disp16",
+            op: vec![0x88, 0x16, 0x90, 0x40],
+            input: compat_modrm16_write_input(2, 0xb2),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "modrm16_compat_write_bx",
+            op: vec![0x88, 0x1f],
+            input: compat_modrm16_write_input(3, 0xb3),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -24998,6 +25117,17 @@ fn avx512_kvm_string_address_size_compat_corpus() {
         "unexpected compatibility string address-size corpus size"
     );
     let _ = run_compat_state_cases("string address-size", &cases);
+}
+
+#[test]
+fn avx512_kvm_modrm16_addressing_compat_corpus() {
+    let cases = compat_modrm16_addressing_cases();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected compatibility ModRM16 addressing corpus size"
+    );
+    let _ = run_compat_state_cases("ModRM16 addressing", &cases);
 }
 
 #[test]

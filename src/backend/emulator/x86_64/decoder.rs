@@ -45,6 +45,13 @@ static PREFIX_LUT: [u8; 256] = {
 
 pub struct Decoder;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ModrmAddressSize {
+    Addr16,
+    Addr32,
+    Addr64,
+}
+
 impl Decoder {
     /// Check if byte is a prefix using LUT (faster than match).
     #[inline(always)]
@@ -692,6 +699,81 @@ impl X86_64Vcpu {
         matches!(base_reg & 0x07, 4 | 5)
     }
 
+    #[inline]
+    fn modrm_address_size(&self, ctx: &InsnContext) -> ModrmAddressSize {
+        if self.sregs.cs.l {
+            if ctx.address_size_override {
+                ModrmAddressSize::Addr32
+            } else {
+                ModrmAddressSize::Addr64
+            }
+        } else {
+            let default_16bit = !self.sregs.cs.db;
+            let is_16bit = default_16bit ^ ctx.address_size_override;
+            if is_16bit {
+                ModrmAddressSize::Addr16
+            } else {
+                ModrmAddressSize::Addr32
+            }
+        }
+    }
+
+    #[inline]
+    fn reg16(&self, reg: u8) -> u64 {
+        self.get_reg(reg, 2) & 0xffff
+    }
+
+    #[inline]
+    fn decode_modrm_addr16(
+        &self,
+        ctx: &InsnContext,
+        bytes: &[u8],
+        mod_bits: u8,
+        rm_field: u8,
+    ) -> Result<(u64, usize, bool)> {
+        let (mut addr, default_ss) = match rm_field {
+            0 => (self.reg16(3).wrapping_add(self.reg16(6)), false), // BX + SI
+            1 => (self.reg16(3).wrapping_add(self.reg16(7)), false), // BX + DI
+            2 => (self.reg16(5).wrapping_add(self.reg16(6)), true),  // BP + SI
+            3 => (self.reg16(5).wrapping_add(self.reg16(7)), true),  // BP + DI
+            4 => (self.reg16(6), false),                             // SI
+            5 => (self.reg16(7), false),                             // DI
+            6 if mod_bits == 0 => {
+                if bytes.len() < 3 {
+                    return Err(ctx.out_of_bytes());
+                }
+                let disp = u16::from_le_bytes([bytes[1], bytes[2]]);
+                return Ok((u64::from(disp), 2, false));
+            }
+            6 => (self.reg16(5), true),  // BP
+            7 => (self.reg16(3), false), // BX
+            _ => unreachable!(),
+        };
+
+        let extra = match mod_bits {
+            0 => 0,
+            1 => {
+                if bytes.len() < 2 {
+                    return Err(ctx.out_of_bytes());
+                }
+                let disp = bytes[1] as i8 as i64;
+                addr = (addr as i64).wrapping_add(disp) as u64;
+                1
+            }
+            2 => {
+                if bytes.len() < 3 {
+                    return Err(ctx.out_of_bytes());
+                }
+                let disp = i16::from_le_bytes([bytes[1], bytes[2]]) as i64;
+                addr = (addr as i64).wrapping_add(disp) as u64;
+                2
+            }
+            _ => unreachable!(),
+        };
+
+        Ok((addr & 0xffff, extra, default_ss))
+    }
+
     /// Decode ModR/M byte to get effective address.
     /// Returns (address, bytes_consumed_after_modrm).
     #[inline]
@@ -740,6 +822,8 @@ impl X86_64Vcpu {
             ));
         }
 
+        let addr_size = self.modrm_address_size(ctx);
+
         // FAST PATH for the overwhelmingly common memory forms: [reg],
         // [reg+disp8], [reg+disp32] with no SIB (rm!=4), not RIP-relative /
         // disp32-absolute (rm==5 && mod==0), no address-size override, and no
@@ -751,14 +835,16 @@ impl X86_64Vcpu {
         if rm_field != 4
             && !(rm_field == 5 && mod_bits == 0)
             && !ctx.address_size_override
+            && addr_size == ModrmAddressSize::Addr64
             && ctx.segment_override.is_none()
             && (self.sregs.cr0 & 0x1) != 0
             && self.sregs.ds.base == 0
             && self.sregs.ss.base == 0
-        // protected/long mode only: real mode (PE=0) needs the segment base
-        // (selector<<4) folded in, which only the general path below does. Also
-        // requires flat DS/SS: a based data segment (e.g. TempleOS in protected
-        // mode) must fold ds.base/ss.base in, which only the general path does.
+        // protected 64-bit flat mode only: real mode (PE=0) needs the segment
+        // base (selector<<4) folded in, and compatibility/protected 16/32-bit
+        // modes have different address-size semantics. Also requires flat DS/SS:
+        // a based data segment (e.g. TempleOS in protected mode) must fold
+        // ds.base/ss.base in, which only the general path does.
         {
             let base = self.get_reg(rm, 8);
             return match mod_bits {
@@ -784,20 +870,15 @@ impl X86_64Vcpu {
             };
         }
 
-        // Address-size override (0x67) handling.
-        //
-        // In 64-bit mode (CS.L=1), the default address size is 64-bit and 0x67
-        // selects 32-bit addressing: base/index registers are read as 32-bit
-        // values and the final effective address is truncated to 32 bits before
-        // the segment base is applied. With no override, behavior is unchanged
-        // (64-bit register reads, no truncation).
-        //
-        // The 16-bit addressing case (legacy/compat 32-bit mode with 0x67) uses a
-        // different ModR/M encoding entirely and is DEFERRED; in that mode we fall
-        // back to the existing 32-bit ModR/M interpretation.
-        let addr_size_32 = ctx.address_size_override && self.sregs.cs.l;
-        // Register size to use for base/index reads: 4 (32-bit) when overridden in
-        // 64-bit mode, otherwise 8 (64-bit, the default).
+        if addr_size == ModrmAddressSize::Addr16 {
+            let (addr, extra, default_ss) =
+                self.decode_modrm_addr16(ctx, bytes, mod_bits, rm_field)?;
+            let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
+            let final_addr = addr.wrapping_add(seg_base);
+            return Ok((final_addr, extra, seg_base));
+        }
+
+        let addr_size_32 = addr_size == ModrmAddressSize::Addr32;
         let reg_size: u8 = if addr_size_32 { 4 } else { 8 };
 
         let mut addr: u64;
