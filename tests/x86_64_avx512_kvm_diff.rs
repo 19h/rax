@@ -20546,6 +20546,55 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "popcnt_popcnt_flag_matrix_r16_zero_reg",
+            "xorw %cx, %cx\npopcnt %cx, %r8w",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r16_allones_mem",
+            "movw $-1, 64(%rax)\npopcnt 64(%rax), %r8w",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r16_highbit_reg",
+            "movw $0x8000, %cx\npopcnt %cx, %r8w",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r32_zero_dest_zeroext",
+            "movq $-1, %r9\nxorl %ecx, %ecx\npopcnt %ecx, %r9d",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r32_allones_mem",
+            "movl $-1, 68(%rax)\npopcnt 68(%rax), %r9d",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r32_alternating_reg",
+            "movl $0xaaaaaaaa, %ecx\npopcnt %ecx, %r8d",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r64_zero_reg",
+            "xorq %rcx, %rcx\npopcnt %rcx, %r8",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r64_allones_mem",
+            "movq $-1, 72(%rax)\npopcnt 72(%rax), %r8",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r64_highbit_reg",
+            "movabsq $0x8000000000000000, %rcx\npopcnt %rcx, %r9",
+        ),
+        (
+            "popcnt_popcnt_flag_matrix_r64_alternating_mem",
+            "movabsq $0xaaaaaaaaaaaaaaaa, %r10\nmovq %r10, 80(%rax)\npopcnt 80(%rax), %r9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Popcnt,
+            profile: Int,
+        });
+    }
 
     // BMI1 scalar bit-manipulation forms. These cover VEX register and memory
     // operands plus flag-producing extract/count behavior with undefined flags
@@ -21726,6 +21775,8 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
                 .any(|bytes| bytes[0] == 0xc4 && matches!(bytes[3], 0x90..=0x93));
         let f16c_mxcsr_round_setup_allowed = case.label.contains("_f16c_mxcsr_round_")
             && op.iter().any(|byte| matches!(byte, 0xc4 | 0xc5));
+        let popcnt_flag_matrix_setup_allowed = case.label.contains("_popcnt_flag_matrix_")
+            && op.windows(2).any(|bytes| bytes == [0x0f, 0xb8]);
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
@@ -21736,6 +21787,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             || adx_edge_setup_allowed
             || avx2_gather_edge_setup_allowed
             || f16c_mxcsr_round_setup_allowed
+            || popcnt_flag_matrix_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -36614,6 +36666,44 @@ fn avx512_kvm_scalar_bit_edge_corpus() {
     assert_eq!(
         tally.compared, 43,
         "all scalar bit edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_popcnt_flag_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_popcnt_flag_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 10, "unexpected POPCNT flag-matrix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on POPCNT flag-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a POPCNT flag-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "POPCNT flag-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "POPCNT flag-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Popcnt),
+        10,
+        "all POPCNT flag-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all POPCNT flag-matrix cases should compare"
     );
 }
 
