@@ -22130,6 +22130,115 @@ fn compat_lea_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_bit_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF;
+    input
+}
+
+fn compat_bit_addr32_seed() -> CompatStateIn {
+    let mut input = compat_bit_seed();
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input
+}
+
+fn compat_bit_word_input(offset: usize, value: u16, cx: u16) -> CompatStateIn {
+    let mut input = compat_bit_seed();
+    input.rcx = (input.rcx & !0xffff) | u64::from(cx);
+    input.scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_bit_dword_input(offset: usize, value: u32, ecx: u32) -> CompatStateIn {
+    let mut input = compat_bit_seed();
+    input.rcx = (input.rcx & !0xffff_ffff) | u64::from(ecx);
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_bit_addr32_dword_input(offset: usize, value: u32, ecx: u32) -> CompatStateIn {
+    let mut input = compat_bit_addr32_seed();
+    input.rcx = (input.rcx & !0xffff_ffff) | u64::from(ecx);
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_bit_manip_cases() -> Vec<CompatStateCase> {
+    const BIT_TEST_FLAGS: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "bt16_compat_mem_reg_negative_offset_sets_cf",
+            op: vec![0x0f, 0xa3, 0x08],
+            input: compat_bit_word_input(0x0e, 0x8000, 0xffff),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "bts16_compat_mem_reg_negative_offset_sets_target_bit",
+            op: vec![0x0f, 0xab, 0x08],
+            input: compat_bit_word_input(0x0e, 0x0000, 0xffff),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "btr32_compat_mem_reg_negative_offset_resets_target_bit",
+            op: vec![0x66, 0x0f, 0xb3, 0x08],
+            input: compat_bit_dword_input(0x0c, 0x8000_0000, 0xffff_ffff),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "btc32_compat_addr32_mem_reg_negative_offset_toggles_target_bit",
+            op: vec![0x67, 0x66, 0x0f, 0xbb, 0x0c, 0x33],
+            input: compat_bit_addr32_dword_input(0x1c, 0x0000_0000, 0xffff_ffff),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "bts16_compat_mem_imm_sets_target_bit",
+            op: vec![0x0f, 0xba, 0x28, 0x03],
+            input: compat_bit_word_input(0x10, 0x0000, 0x0000),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "btr32_compat_addr32_mem_imm_resets_target_bit",
+            op: vec![0x67, 0x66, 0x0f, 0xba, 0x34, 0x33, 0x1f],
+            input: compat_bit_addr32_dword_input(0x20, 0x8000_0000, 0x0000_0000),
+            rflags_mask: BIT_TEST_FLAGS,
+        },
+        CompatStateCase {
+            label: "bsf16_compat_mem_nonzero_preserves_high_rax",
+            op: vec![0x0f, 0xbc, 0x00],
+            input: compat_bit_word_input(0x10, 0x0100, 0x0000),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "bsr32_compat_addr32_mem_nonzero_zeroes_high_rax",
+            op: vec![0x67, 0x66, 0x0f, 0xbd, 0x04, 0x33],
+            input: compat_bit_addr32_dword_input(0x20, 0x0080_0000, 0x0000_0000),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "popcnt16_compat_mem_counts_bits_and_defines_status",
+            op: vec![0xf3, 0x0f, 0xb8, 0x00],
+            input: compat_bit_word_input(0x10, 0xa55a, 0x0000),
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "tzcnt32_compat_addr32_zero_sets_cf_result_width",
+            op: vec![0x67, 0x66, 0xf3, 0x0f, 0xbc, 0x04, 0x33],
+            input: compat_bit_addr32_dword_input(0x20, 0x0000_0000, 0x0000_0000),
+            rflags_mask: RFLAGS_CF | RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "lzcnt32_compat_addr32_high_bit_sets_zf",
+            op: vec![0x67, 0x66, 0xf3, 0x0f, 0xbd, 0x04, 0x33],
+            input: compat_bit_addr32_dword_input(0x20, 0x8000_0000, 0x0000_0000),
+            rflags_mask: RFLAGS_CF | RFLAGS_ZF,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25575,6 +25684,13 @@ fn avx512_kvm_lea_compat_corpus() {
     let cases = compat_lea_cases();
     assert_eq!(cases.len(), 9, "unexpected compatibility LEA corpus size");
     let _ = run_compat_state_cases("LEA", &cases);
+}
+
+#[test]
+fn avx512_kvm_bit_manip_compat_corpus() {
+    let cases = compat_bit_manip_cases();
+    assert_eq!(cases.len(), 11, "unexpected compatibility bit-manip corpus size");
+    let _ = run_compat_state_cases("bit-manip", &cases);
 }
 
 #[test]

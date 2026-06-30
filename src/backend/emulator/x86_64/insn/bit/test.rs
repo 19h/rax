@@ -6,6 +6,16 @@ use crate::error::{Error, Result};
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
 
+#[inline]
+fn signed_bit_offset(vcpu: &X86_64Vcpu, reg: u8, op_size: u8) -> i64 {
+    match op_size {
+        2 => (vcpu.get_reg(reg, 2) as u16 as i16) as i64,
+        4 => (vcpu.get_reg(reg, 4) as u32 as i32) as i64,
+        8 => vcpu.get_reg(reg, 8) as i64,
+        _ => vcpu.get_reg(reg, op_size) as i64,
+    }
+}
+
 /// BT r/m, r (0x0F 0xA3)
 /// For memory operands, the bit offset can extend beyond the operand size,
 /// causing the effective address to be adjusted.
@@ -17,7 +27,7 @@ pub fn bt_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
     vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let bit_offset = vcpu.get_reg(reg, op_size) as i64; // Signed for negative offsets
+    let bit_offset = signed_bit_offset(vcpu, reg, op_size);
 
     let (value, bit_pos) = if is_memory {
         // For memory operands, adjust address based on bit offset
@@ -59,7 +69,7 @@ pub fn bts_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let bit_offset = vcpu.get_reg(reg, op_size) as i64;
+    let bit_offset = signed_bit_offset(vcpu, reg, op_size);
 
     if is_memory {
         let op_bits = (op_size * 8) as i64;
@@ -107,7 +117,7 @@ pub fn btr_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let bit_offset = vcpu.get_reg(reg, op_size) as i64;
+    let bit_offset = signed_bit_offset(vcpu, reg, op_size);
 
     if is_memory {
         let op_bits = (op_size * 8) as i64;
@@ -155,7 +165,7 @@ pub fn btc_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     vcpu.materialize_flags();
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let bit_offset = vcpu.get_reg(reg, op_size) as i64;
+    let bit_offset = signed_bit_offset(vcpu, reg, op_size);
 
     if is_memory {
         let op_bits = (op_size * 8) as i64;
