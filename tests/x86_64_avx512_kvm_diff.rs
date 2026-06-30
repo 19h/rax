@@ -16930,6 +16930,81 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    let overflow_set = "movb $0x7f, %r8b\naddb $1, %r8b";
+    let overflow_clear = "xorl %r8d, %r8d\naddl $0, %r8d";
+    let carry_set = "movq $1, %r8\nmovq $2, %r9\ncmpq %r9, %r8";
+    let carry_clear = "movq $2, %r8\nmovq $1, %r9\ncmpq %r9, %r8";
+    let zf_set = "cmpq %r8, %r8";
+    let zf_clear = "movq $2, %r8\nmovq $1, %r9\ncmpq %r9, %r8";
+    let unsigned_greater = "movq $2, %r8\nmovq $1, %r9\ncmpq %r9, %r8";
+    let sign_set = "movq $-1, %r8\ntestq %r8, %r8";
+    let sign_clear = "xorq %r8, %r8\ntestq %r8, %r8";
+    let parity_set = "xorl %r8d, %r8d\ntestb %r8b, %r8b";
+    let parity_clear = "movb $1, %r8b\ntestb %r8b, %r8b";
+    let signed_less = "movl $0x80000000, %r8d\ncmpl $1, %r8d";
+    let signed_greater_equal = "movl $5, %r8d\ncmpl $3, %r8d";
+    let signed_greater = signed_greater_equal;
+
+    for &(mnem, taken_setup, not_taken_setup) in &[
+        ("jo", overflow_set, overflow_clear),
+        ("jno", overflow_clear, overflow_set),
+        ("jb", carry_set, carry_clear),
+        ("jae", carry_clear, carry_set),
+        ("je", zf_set, zf_clear),
+        ("jne", zf_clear, zf_set),
+        ("jbe", carry_set, unsigned_greater),
+        ("ja", unsigned_greater, carry_set),
+        ("js", sign_set, sign_clear),
+        ("jns", sign_clear, sign_set),
+        ("jp", parity_set, parity_clear),
+        ("jnp", parity_clear, parity_set),
+        ("jl", signed_less, signed_greater_equal),
+        ("jge", signed_greater_equal, signed_less),
+        ("jle", zf_set, signed_greater),
+        ("jg", signed_greater, zf_set),
+    ] {
+        for &(tag, setup) in &[("taken", taken_setup), ("not_taken", not_taken_setup)] {
+            out.push(Case {
+                label: format!("{mnem}_core_jcc_matrix_{tag}"),
+                asm: format!(
+                    "{setup}\n{mnem} 1f\nmovq $0x1111, %r8\njmp 2f\n1:\nmovq $0x2222, %r8\n2:\ncmpq %r8, %r8"
+                ),
+                feat: Core,
+                profile: Int,
+            });
+        }
+    }
+
+    for &(mnem, taken_setup, not_taken_setup) in &[
+        ("jo", overflow_set, overflow_clear),
+        ("jno", overflow_clear, overflow_set),
+        ("jb", carry_set, carry_clear),
+        ("jae", carry_clear, carry_set),
+        ("je", zf_set, zf_clear),
+        ("jne", zf_clear, zf_set),
+        ("jbe", carry_set, unsigned_greater),
+        ("ja", unsigned_greater, carry_set),
+        ("js", sign_set, sign_clear),
+        ("jns", sign_clear, sign_set),
+        ("jp", parity_set, parity_clear),
+        ("jnp", parity_clear, parity_set),
+        ("jl", signed_less, signed_greater_equal),
+        ("jge", signed_greater_equal, signed_less),
+        ("jle", zf_set, signed_greater),
+        ("jg", signed_greater, zf_set),
+    ] {
+        for &(tag, setup) in &[("taken", taken_setup), ("not_taken", not_taken_setup)] {
+            out.push(Case {
+                label: format!("{mnem}_core_jcc_matrix_near_{tag}"),
+                asm: format!(
+                    "{setup}\n{mnem} 1f\nmovq $0x1111, %r8\njmp 2f\n.rept 140\nnop\n.endr\n1:\nmovq $0x2222, %r8\n2:\ncmpq %r8, %r8"
+                ),
+                feat: Core,
+                profile: Int,
+            });
+        }
+    }
+
     // Core direct control-flow. Multi-instruction snippets make the taken and
     // fallthrough paths visibly different in r8 while preserving the seeded
     // status flags for comparison.
@@ -35324,6 +35399,38 @@ fn avx512_kvm_core_condition_width_corpus() {
         tally.compared, 28,
         "all core condition-width cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_core_jcc_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_jcc_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 64, "unexpected core Jcc matrix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on core Jcc matrix cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core Jcc matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core Jcc matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core Jcc matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        64,
+        "all core Jcc matrix cases should run"
+    );
+    assert_eq!(tally.compared, 64, "all core Jcc matrix cases should compare");
 }
 
 #[test]
