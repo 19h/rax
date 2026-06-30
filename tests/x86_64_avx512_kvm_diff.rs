@@ -19318,6 +19318,47 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Hardware lock elision hint prefixes are ignored architecturally when
+    // elision is not active, but the F2/F3 prefixes still need to decode and
+    // preserve the underlying LOCK/XCHG/store semantics.
+    for &(label, asm) in &[
+        (
+            "xacquire_core_hle_lock_add_m64_r8",
+            "xacquire lock addq %r8, 8(%rax)",
+        ),
+        (
+            "xrelease_core_hle_lock_sub_m32_imm8",
+            "xrelease lock subl $0x11, 16(%rax)",
+        ),
+        (
+            "xacquire_core_hle_xchg_m64_r8",
+            "xacquire xchgq %r8, 80(%rax)",
+        ),
+        (
+            "xrelease_core_hle_lock_xadd_m64_r8",
+            "xrelease lock xaddq %r8, 88(%rax)",
+        ),
+        (
+            "xacquire_core_hle_lock_cmpxchg_m64_success",
+            "movq %rax, 96(%rax)\nxacquire lock cmpxchgq %r8, 96(%rax)",
+        ),
+        (
+            "xrelease_core_hle_lock_bts_m64_imm",
+            "xrelease lock btsq $9, 104(%rax)",
+        ),
+        (
+            "xrelease_core_hle_mov_m64_r8",
+            "xrelease movq %r8, 120(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Double-width atomic compare/exchange. These explicitly seed the memory
     // operand plus accumulator/new-value registers, then check success, failure,
     // and LOCK-prefixed memory forms through the scratch/GPR/RFLAGS diff.
@@ -34587,6 +34628,44 @@ fn avx512_kvm_core_lock_corpus() {
         "core LOCK cases should not feature-skip"
     );
     assert_eq!(tally.compared, 16, "all core LOCK cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_hle_prefix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_hle_"))
+        .collect();
+    assert_eq!(cases.len(), 7, "unexpected core HLE prefix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core HLE prefix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core HLE prefix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core HLE prefix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core HLE prefix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        7,
+        "all core HLE prefix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 7,
+        "all core HLE prefix cases should compare"
+    );
 }
 
 #[test]
