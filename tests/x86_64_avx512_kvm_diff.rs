@@ -16378,6 +16378,43 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // BSF/BSR zero-source cases only define ZF; the destination is
+    // architecturally undefined, so these snippets capture ZF and clear the
+    // destination before the final state comparison.
+    for &(label, asm) in &[
+        (
+            "bsf_core_bit_scan_zero_r16_reg",
+            "xorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovw $0x7777, %r8w\nbsfw %r9w, %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "bsr_core_bit_scan_zero_r16_mem",
+            "movw $0, 100(%rax)\nxorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovw $0x7777, %r8w\nbsrw 100(%rax), %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "bsf_core_bit_scan_zero_r32_reg",
+            "xorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovl $0x77777777, %r8d\nbsfl %r9d, %r8d\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "bsr_core_bit_scan_zero_r32_mem",
+            "movl $0, 104(%rax)\nxorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovl $0x77777777, %r8d\nbsrl 104(%rax), %r8d\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "bsf_core_bit_scan_zero_r64_reg",
+            "xorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovq $0x7777777777777777, %r8\nbsfq %r9, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "bsr_core_bit_scan_zero_r64_mem",
+            "movq $0, 112(%rax)\nxorq %r9, %r9\nmovq $1, %r10\ncmpq %r10, %r9\nmovq $0x7777777777777777, %r8\nbsrq 112(%rax), %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core conditional moves and byte condition writes. INITIAL_RFLAGS has all
     // six status flags set, so the all-condition tables cover both true and
     // false destinations without needing a multi-instruction setup sequence.
@@ -34572,6 +34609,48 @@ fn avx512_kvm_core_bit_width_corpus() {
     assert_eq!(
         tally.compared, 26,
         "all core bit-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_bit_scan_zero_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_bit_scan_zero_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected core bit-scan zero-source corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core bit-scan zero-source cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core bit-scan zero-source case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core bit-scan zero-source corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core bit-scan zero-source cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        6,
+        "all core bit-scan zero-source cases should run"
+    );
+    assert_eq!(
+        tally.compared, 6,
+        "all core bit-scan zero-source cases should compare"
     );
 }
 
