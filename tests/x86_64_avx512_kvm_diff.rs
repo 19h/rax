@@ -20511,6 +20511,27 @@ fn unsupported_modern_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'s
         .collect()
 }
 
+const AMD_LEGACY_MULTIMEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("amd_femms_unsupported", &[0x0f, 0x0e]),
+    ("amd_3dnow_pi2fd_unsupported", &[0x0f, 0x0f, 0xc0, 0x0d]),
+    ("amd_3dnow_pf2id_unsupported", &[0x0f, 0x0f, 0xc0, 0x1d]),
+    ("amd_3dnow_pfrcp_unsupported", &[0x0f, 0x0f, 0xc0, 0x96]),
+    ("amd_3dnow_pfadd_unsupported", &[0x0f, 0x0f, 0xc0, 0x9e]),
+    ("amd_3dnow_pmulhrw_unsupported", &[0x0f, 0x0f, 0xc0, 0xb7]),
+    ("amd_3dnow_pavgusb_unsupported", &[0x0f, 0x0f, 0xc0, 0xbf]),
+    ("amd_3dnow_pswapd_unsupported", &[0x0f, 0x0f, 0xc0, 0xbb]),
+];
+
+fn unsupported_amd_legacy_multimedia_cases(
+    oracle: &KvmOracle,
+) -> Vec<(&'static str, &'static [u8])> {
+    AMD_LEGACY_MULTIMEDIA_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "sgx_encls_ecreate_unsupported",
@@ -22598,6 +22619,26 @@ fn avx512_kvm_modern_system_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported modern system", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_amd_legacy_multimedia_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_amd_legacy_multimedia_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AMD legacy multimedia probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AMD legacy multimedia", cases, expected);
 }
 
 #[test]
