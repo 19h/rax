@@ -6560,6 +6560,31 @@ mod tests {
             "{err:?}"
         );
     }
+
+    #[test]
+    fn f32_to_bf16_matches_vcvtne_rounding_edges() {
+        let cases = [
+            (0x3f80_7fff, 0x3f80),
+            (0x3f80_8000, 0x3f80),
+            (0x3f80_8001, 0x3f81),
+            (0x3f81_8000, 0x3f82),
+            (0xbf80_7fff, 0xbf80),
+            (0xbf80_8000, 0xbf80),
+            (0xbf80_8001, 0xbf81),
+            (0xbf81_8000, 0xbf82),
+            (0x007f_7fff, 0x0000),
+            (0x807f_7fff, 0x8000),
+            (0x0080_0000, 0x0080),
+            (0x8080_0000, 0x8080),
+            (0x7f7f_8000, 0x7f80),
+            (0xff7f_8000, 0xff80),
+            (0x7f80_0001, 0x7fc0),
+        ];
+
+        for (input, expected) in cases {
+            assert_eq!(f32_to_bf16(f32::from_bits(input)), expected, "{input:#010x}");
+        }
+    }
 }
 
 /// APX ALU operation types
@@ -6671,16 +6696,23 @@ fn bf16_to_f32(bf: u16) -> f32 {
 
 /// Convert single-precision (f32) to BFloat16 (BF16)
 fn f32_to_bf16(f: f32) -> u16 {
-    // BF16 is the upper 16 bits of f32 with round-to-nearest-even
+    // BF16 is the upper 16 bits of f32 with round-to-nearest-even.
     let bits = f.to_bits();
 
-    // Check for NaN and preserve signaling NaN
+    // Check for NaN and preserve signaling NaN.
     if (bits & 0x7FFFFFFF) > 0x7F800000 {
         // NaN - ensure we keep a non-zero mantissa
         return ((bits >> 16) as u16) | 0x0040;
     }
 
-    // Round to nearest even
     let rounding_bias = 0x7FFF + ((bits >> 16) & 1);
-    ((bits.wrapping_add(rounding_bias)) >> 16) as u16
+    let rounded = ((bits.wrapping_add(rounding_bias)) >> 16) as u16;
+
+    // x86 VCVTNE*PS2BF16 does not produce BF16 subnormals. Finite results
+    // that underflow the BF16 normal range become signed zero.
+    if (rounded & 0x7f80) == 0 {
+        rounded & 0x8000
+    } else {
+        rounded
+    }
 }

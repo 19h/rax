@@ -2015,6 +2015,8 @@ enum InputProfile {
     /// f32 values around half-precision rounding, subnormal, and overflow
     /// boundaries for F16C/FP16 conversion paths.
     F32HalfRoundEdge,
+    /// f32 values around BF16 round-to-nearest-even ties and special values.
+    F32Bf16RoundEdge,
     /// f64 analogue with qword-sized signed/unsigned conversion boundaries.
     F64ConvertEdge,
     /// f32 values that keep sqrt exact-comparable while still stressing zeros,
@@ -2099,6 +2101,25 @@ const F32_HALF_ROUND_EDGES: [u32; 16] = [
     0x477f_f000, // overflow tie near max finite f16
     0xc77f_f000, // negative overflow tie near max finite f16
     0x7f80_0000, // +Inf
+];
+
+const F32_BF16_ROUND_EDGES: [u32; 16] = [
+    0x3f80_7fff, // just below 1.0 -> next BF16 tie
+    0x3f80_8000, // tie with even lower BF16 significand
+    0x3f80_8001, // just above tie
+    0x3f81_8000, // tie with odd lower BF16 significand
+    0xbf80_7fff, // negative just below magnitude tie
+    0xbf80_8000, // negative tie
+    0xbf80_8001, // negative just above magnitude tie
+    0xbf81_8000, // negative tie with odd lower BF16 significand
+    0x007f_7fff, // positive BF16 underflow boundary
+    0x807f_7fff, // negative BF16 underflow boundary
+    0x0080_0000, // smallest positive normal BF16 as f32
+    0x8080_0000, // smallest negative normal BF16 as f32
+    0x0080_8000, // low-magnitude positive BF16 tie
+    0x8080_8000, // low-magnitude negative BF16 tie
+    0x7f7f_8000, // positive overflow-adjacent tie
+    0xff7f_8000, // negative overflow-adjacent tie
 ];
 
 const F64_CONVERT_EDGES: [u64; 16] = [
@@ -2403,6 +2424,15 @@ fn f32_half_round_edge_zmm(reg: usize) -> [u8; 64] {
     bytes
 }
 
+fn f32_bf16_round_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..16 {
+        let value = F32_BF16_ROUND_EDGES[(reg * 5 + lane) % F32_BF16_ROUND_EDGES.len()];
+        bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
 fn f64_convert_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for lane in 0..8 {
@@ -2444,6 +2474,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::F64Edge => f64_edge_zmm(reg),
         InputProfile::F32ConvertEdge => f32_convert_edge_zmm(reg),
         InputProfile::F32HalfRoundEdge => f32_half_round_edge_zmm(reg),
+        InputProfile::F32Bf16RoundEdge => f32_bf16_round_edge_zmm(reg),
         InputProfile::F64ConvertEdge => f64_convert_edge_zmm(reg),
         InputProfile::F32SqrtEdge => f32_sqrt_edge_zmm(reg),
         InputProfile::F64SqrtEdge => f64_sqrt_edge_zmm(reg),
@@ -13763,6 +13794,56 @@ fn irregular_cases() -> Vec<Case> {
             asm: format!("movl ${mxcsr:#x}, 32(%rax)\nldmxcsr 32(%rax)\n{asm}"),
             feat: F16c,
             profile,
+        });
+    }
+
+    for &(label, asm) in &[
+        (
+            "vcvtneps2bf16_bf16_round_matrix_reg",
+            "vcvtneps2bf16 %zmm3, %ymm1",
+        ),
+        (
+            "vcvtneps2bf16_bf16_round_matrix_mem",
+            "vcvtneps2bf16 128(%rax), %ymm1",
+        ),
+        (
+            "vcvtneps2bf16_bf16_round_matrix_merge",
+            "vcvtneps2bf16 %zmm3, %ymm1 {%k1}",
+        ),
+        (
+            "vcvtneps2bf16_bf16_round_matrix_zero",
+            "vcvtneps2bf16 128(%rax), %ymm1 {%k1}{z}",
+        ),
+        (
+            "vcvtneps2bf16_bf16_round_matrix_high",
+            "vcvtneps2bf16 %zmm10, %ymm9",
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_round_matrix_reg",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1",
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_round_matrix_mem",
+            "vcvtne2ps2bf16 128(%rax), %zmm2, %zmm1",
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_round_matrix_merge",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1 {%k1}",
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_round_matrix_zero",
+            "vcvtne2ps2bf16 128(%rax), %zmm2, %zmm1 {%k1}{z}",
+        ),
+        (
+            "vcvtne2ps2bf16_bf16_round_matrix_high",
+            "vcvtne2ps2bf16 %zmm10, %zmm11, %zmm9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Bf16,
+            profile: F32Bf16RoundEdge,
         });
     }
 
@@ -37389,6 +37470,48 @@ fn avx512_kvm_bf16_edge_corpus() {
     assert_eq!(
         tally.compared, 12,
         "all AVX-512-BF16 edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_bf16_round_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_bf16_round_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected AVX-512-BF16 round-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX-512-BF16 round-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512-BF16 round-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512-BF16 round-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512-BF16 round-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bf16),
+        10,
+        "all AVX-512-BF16 round-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all AVX-512-BF16 round-matrix cases should compare"
     );
 }
 
