@@ -11941,6 +11941,51 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX2 integer 128-bit lane insert/extract forms. The AVX block covers the
+    // floating VINSERTF128/VEXTRACTF128 mnemonics; these pin the integer opcode
+    // aliases and their low/high lane selection for register and memory forms.
+    for &(label, asm) in &[
+        (
+            "vinserti128_avx2_lane_low_reg",
+            "{vex} vinserti128 $0x0, %xmm2, %ymm3, %ymm1",
+        ),
+        (
+            "vinserti128_avx2_lane_high_reg",
+            "{vex} vinserti128 $0x1, %xmm2, %ymm3, %ymm1",
+        ),
+        (
+            "vinserti128_avx2_lane_low_mem",
+            "{vex} vinserti128 $0x0, 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vinserti128_avx2_lane_high_mem",
+            "{vex} vinserti128 $0x1, 48(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vextracti128_avx2_lane_low_reg",
+            "{vex} vextracti128 $0x0, %ymm1, %xmm8",
+        ),
+        (
+            "vextracti128_avx2_lane_high_reg",
+            "{vex} vextracti128 $0x1, %ymm1, %xmm9",
+        ),
+        (
+            "vextracti128_avx2_lane_low_mem",
+            "{vex} vextracti128 $0x0, %ymm1, 32(%rax)",
+        ),
+        (
+            "vextracti128_avx2_lane_high_mem",
+            "{vex} vextracti128 $0x1, %ymm1, 48(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: Int,
+        });
+    }
+
     // Complementary AVX2 VEX integer operand forms. These target already
     // implemented 0F38 horizontal, sign/absolute, extend, compare, pack, and
     // flag-setting paths that were only lightly represented by the base AVX2
@@ -36089,6 +36134,48 @@ fn avx512_kvm_avx2_integer_operand_corpus() {
     assert_eq!(
         tally.compared, 24,
         "all AVX2 integer operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx2_lane_insert_extract_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_lane_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected AVX2 lane insert/extract corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX2 lane insert/extract cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 lane insert/extract case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 lane insert/extract corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 lane insert/extract cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        8,
+        "all AVX2 lane insert/extract cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all AVX2 lane insert/extract cases should compare"
     );
 }
 
