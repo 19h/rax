@@ -20165,6 +20165,95 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "rdrand_random_reg_matrix_rdx_success_flags",
+            "1:\nrdrand %rdx\njnc 1b\nmovq $0, %rdx",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_dx_preserves_upper",
+            "movabsq $0x1122334455667788, %rdx\n1:\nrdrand %dx\njnc 1b\nmovw $0, %dx",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_esi_zeroext",
+            "movabsq $-1, %rsi\n1:\nrdrand %esi\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %rsi\njz 2f\nmovq $1, %rsi\njmp 3f\n2:\nmovq $0, %rsi\n3:\naddq $0, %rsi",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_di_preserves_upper",
+            "movabsq $0x1020304050607080, %rdi\n1:\nrdrand %di\njnc 1b\nmovw $0, %di",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_rbp_success_flags",
+            "1:\nrdrand %rbp\njnc 1b\nmovq $0, %rbp",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_ebp_zeroext",
+            "movabsq $-1, %rbp\n1:\nrdrand %ebp\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %rbp\njz 2f\nmovq $1, %rbp\njmp 3f\n2:\nmovq $0, %rbp\n3:\naddq $0, %rbp",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_r8_success_flags",
+            "1:\nrdrand %r8\njnc 1b\nmovq $0, %r8",
+            Rdrand,
+        ),
+        (
+            "rdrand_random_reg_matrix_r9w_preserves_upper",
+            "movabsq $0x0f1e2d3c4b5a6978, %r9\n1:\nrdrand %r9w\njnc 1b\nmovw $0, %r9w",
+            Rdrand,
+        ),
+        (
+            "rdseed_random_reg_matrix_rdx_success_flags",
+            "1:\nrdseed %rdx\njnc 1b\nmovq $0, %rdx",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_dx_preserves_upper",
+            "movabsq $0x8877665544332211, %rdx\n1:\nrdseed %dx\njnc 1b\nmovw $0, %dx",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_esi_zeroext",
+            "movabsq $-1, %rsi\n1:\nrdseed %esi\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %rsi\njz 2f\nmovq $1, %rsi\njmp 3f\n2:\nmovq $0, %rsi\n3:\naddq $0, %rsi",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_di_preserves_upper",
+            "movabsq $0x8070605040302010, %rdi\n1:\nrdseed %di\njnc 1b\nmovw $0, %di",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_rbp_success_flags",
+            "1:\nrdseed %rbp\njnc 1b\nmovq $0, %rbp",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_ebp_zeroext",
+            "movabsq $-1, %rbp\n1:\nrdseed %ebp\njnc 1b\nmovabsq $0xffffffff00000000, %r10\ntestq %r10, %rbp\njz 2f\nmovq $1, %rbp\njmp 3f\n2:\nmovq $0, %rbp\n3:\naddq $0, %rbp",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_r8_success_flags",
+            "1:\nrdseed %r8\njnc 1b\nmovq $0, %r8",
+            Rdseed,
+        ),
+        (
+            "rdseed_random_reg_matrix_r9w_preserves_upper",
+            "movabsq $0xf0e1d2c3b4a59687, %r9\n1:\nrdseed %r9w\njnc 1b\nmovw $0, %r9w",
+            Rdseed,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // High-register variants exercising zmm16-31 across the irregular forms.
     for &(label, asm, feat, profile) in &[
@@ -32280,7 +32369,7 @@ fn avx512_kvm_random_tsc_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 29, "unexpected random/TSC corpus size");
+    assert_eq!(cases.len(), 45, "unexpected random/TSC corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -32300,12 +32389,12 @@ fn avx512_kvm_random_tsc_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Rdrand),
-        8,
+        16,
         "all RDRAND cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Rdseed),
-        8,
+        16,
         "all RDSEED cases should run"
     );
     assert_eq!(tally.ran_for(Feat::Tsc), 7, "all RDTSC cases should run");
@@ -32314,7 +32403,7 @@ fn avx512_kvm_random_tsc_corpus() {
         6,
         "all RDTSCP cases should run"
     );
-    assert_eq!(tally.compared, 29, "all random/TSC cases should compare");
+    assert_eq!(tally.compared, 45, "all random/TSC cases should compare");
 }
 
 #[test]
@@ -32352,6 +32441,53 @@ fn avx512_kvm_random_edge_corpus() {
         "all RDSEED edge cases should run"
     );
     assert_eq!(tally.compared, 4, "all random edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_random_register_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_random_reg_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected random register-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on random register-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a random register-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "random register-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "random register-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdrand),
+        8,
+        "all RDRAND register-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdseed),
+        8,
+        "all RDSEED register-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all random register-matrix cases should compare"
+    );
 }
 
 #[test]
