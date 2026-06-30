@@ -20494,9 +20494,65 @@ const MODERN_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x66, 0x48, 0x0f, 0x38, 0xf5, 0x18],
     ),
     (
+        "getsec_capabilities_unsupported",
+        &[
+            0xb8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_enteraccs_unsupported",
+        &[
+            0xb8, 0x02, 0x00, 0x00, 0x00, // mov eax, 2
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_exitac_unsupported",
+        &[
+            0xb8, 0x03, 0x00, 0x00, 0x00, // mov eax, 3
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_senter_unsupported",
+        &[
+            0xb8, 0x04, 0x00, 0x00, 0x00, // mov eax, 4
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_sexit_unsupported",
+        &[
+            0xb8, 0x05, 0x00, 0x00, 0x00, // mov eax, 5
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_parameters_unsupported",
+        &[
+            0xb8, 0x06, 0x00, 0x00, 0x00, // mov eax, 6
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
         "getsec_smctrl_unsupported",
         &[
             0xb8, 0x07, 0x00, 0x00, 0x00, // mov eax, 7
+            0x31, 0xdb, // xor ebx, ebx
+            0x0f, 0x37,
+        ],
+    ),
+    (
+        "getsec_wakeup_unsupported",
+        &[
+            0xb8, 0x08, 0x00, 0x00, 0x00, // mov eax, 8
             0x31, 0xdb, // xor ebx, ebx
             0x0f, 0x37,
         ],
