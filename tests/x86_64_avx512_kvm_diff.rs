@@ -9512,6 +9512,46 @@ fn irregular_cases() -> Vec<Case> {
             Avx2,
         ),
         (
+            "vpslldq_avx2_masklane_edge_imm0_xmm",
+            "{vex} vpslldq $0, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpslldq_avx2_masklane_edge_imm15_ymm",
+            "{vex} vpslldq $15, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpslldq_avx2_masklane_edge_imm16_ymm",
+            "{vex} vpslldq $16, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpslldq_avx2_masklane_edge_imm31_xmm",
+            "{vex} vpslldq $31, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrldq_avx2_masklane_edge_imm0_ymm",
+            "{vex} vpsrldq $0, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrldq_avx2_masklane_edge_imm15_xmm",
+            "{vex} vpsrldq $15, %xmm3, %xmm1",
+            Avx2,
+        ),
+        (
+            "vpsrldq_avx2_masklane_edge_imm16_ymm",
+            "{vex} vpsrldq $16, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsrldq_avx2_masklane_edge_imm31_ymm",
+            "{vex} vpsrldq $31, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
             "vpsllw_avx512_int_shift_edge_imm15",
             "vpsllw $15, %zmm3, %zmm1",
             Bw,
@@ -9820,6 +9860,75 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat,
             profile: IntShiftEdge,
+        });
+    }
+
+    // AVX2 VEX lane/mask edge cases. These cover integer immediate and
+    // variable blends plus mask-controlled loads/stores with zero, all-one,
+    // and partial masks.
+    for &(label, asm) in &[
+        (
+            "vpblendd_avx2_masklane_edge_imm0_xmm",
+            "{vex} vpblendd $0x00, %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpblendd_avx2_masklane_edge_immff_ymm_mem",
+            "{vex} vpblendd $0xff, 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpblendd_avx2_masklane_edge_cross_lane",
+            "{vex} vpblendd $0xf0, %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpblendvb_avx2_masklane_edge_zero_mask_xmm",
+            "{vex} vpxor %xmm4, %xmm4, %xmm4\n{vex} vpblendvb %xmm4, %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpblendvb_avx2_masklane_edge_allones_mask_ymm",
+            "{vex} vpcmpeqb %ymm4, %ymm4, %ymm4\n{vex} vpblendvb %ymm4, %ymm2, %ymm3, %ymm1",
+        ),
+        (
+            "vpblendvb_avx2_masklane_edge_alternating_byte_mask",
+            "{vex} vpcmpeqb %ymm4, %ymm4, %ymm4\n{vex} vpsllw $8, %ymm4, %ymm4\n{vex} vpblendvb %ymm4, 32(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpmaskmovd_avx2_masklane_edge_zero_load",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpmaskmovd 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovd_avx2_masklane_edge_allones_load",
+            "{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vpmaskmovd 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovd_avx2_masklane_edge_partial_load",
+            "{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vpslldq $4, %ymm2, %ymm2\n{vex} vpmaskmovd 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovd_avx2_masklane_edge_partial_store",
+            "{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vpslldq $4, %ymm2, %ymm2\n{vex} vpmaskmovd %ymm3, %ymm2, 96(%rax)",
+        ),
+        (
+            "vpmaskmovq_avx2_masklane_edge_zero_load",
+            "{vex} vpxor %ymm2, %ymm2, %ymm2\n{vex} vpmaskmovq 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovq_avx2_masklane_edge_allones_load",
+            "{vex} vpcmpeqq %ymm2, %ymm2, %ymm2\n{vex} vpmaskmovq 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovq_avx2_masklane_edge_partial_load",
+            "{vex} vpcmpeqq %ymm2, %ymm2, %ymm2\n{vex} vpslldq $8, %ymm2, %ymm2\n{vex} vpmaskmovq 64(%rax), %ymm2, %ymm1",
+        ),
+        (
+            "vpmaskmovq_avx2_masklane_edge_partial_store",
+            "{vex} vpcmpeqq %ymm2, %ymm2, %ymm2\n{vex} vpslldq $8, %ymm2, %ymm2\n{vex} vpmaskmovq %ymm3, %ymm2, 128(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: Int,
         });
     }
 
@@ -36309,6 +36418,44 @@ fn avx512_kvm_avx2_integer_extend_corpus() {
     assert_eq!(
         tally.compared, 12,
         "all AVX2 integer sign/zero-extension cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx2_masklane_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_masklane_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 22, "unexpected AVX2 mask/lane edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX2 mask/lane edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 mask/lane edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 mask/lane edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 mask/lane edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        22,
+        "all AVX2 mask/lane edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 22,
+        "all AVX2 mask/lane edge cases should compare"
     );
 }
 
