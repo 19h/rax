@@ -20563,6 +20563,74 @@ fn unsupported_xop_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8]
         .collect()
 }
 
+const AMD_SIMD_STATE_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "sse4a_extrq_imm_unsupported",
+        &[0x66, 0x0f, 0x78, 0xc0, 0x02, 0x01],
+    ),
+    ("sse4a_extrq_reg_unsupported", &[0x66, 0x0f, 0x79, 0xc1]),
+    (
+        "sse4a_insertq_imm_unsupported",
+        &[0xf2, 0x0f, 0x78, 0xc1, 0x02, 0x01],
+    ),
+    (
+        "sse4a_insertq_reg_unsupported",
+        &[0xf2, 0x0f, 0x79, 0xc1],
+    ),
+    ("sse4a_movntsd_unsupported", &[0xf2, 0x0f, 0x2b, 0x00]),
+    ("sse4a_movntss_unsupported", &[0xf3, 0x0f, 0x2b, 0x00]),
+    (
+        "fma4_vfmaddsubps_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x5c, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmaddsubpd_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x5d, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmaddps_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x68, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmaddpd_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x69, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmaddss_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x6a, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmaddsd_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x6b, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmsubps_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x6c, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfmsubsd_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x6f, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfnmaddps_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x78, 0xd8, 0x10],
+    ),
+    (
+        "fma4_vfnmaddsd_unsupported",
+        &[0xc4, 0xe3, 0xe9, 0x7b, 0xd8, 0x10],
+    ),
+    ("lwp_llwpcb_unsupported", &[0x8f, 0xe9, 0xf8, 0x12, 0xc0]),
+    ("lwp_slwpcb_unsupported", &[0x8f, 0xe9, 0xf8, 0x12, 0xc8]),
+];
+
+fn unsupported_amd_simd_state_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AMD_SIMD_STATE_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "sgx_encls_ecreate_unsupported",
@@ -22711,6 +22779,26 @@ fn avx512_kvm_xop_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported XOP", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_amd_simd_state_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_amd_simd_state_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AMD SIMD/state probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AMD SIMD/state", cases, expected);
 }
 
 #[test]
