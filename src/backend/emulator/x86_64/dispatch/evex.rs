@@ -2038,6 +2038,12 @@ impl X86_64Vcpu {
             // VPDPWUUDS (0xD3) - Multiply and Add Unsigned Word Integers with Saturation
             0xD3 if evex.pp == 0 && !evex.w => self.execute_vpdpwuud(ctx, true),
 
+            // CMPccXADD uses EVEX.66.0F38.W{0,1} E0..EF /r. The emulator does
+            // not implement the CMPCCXADD extension, so preserve architectural
+            // unsupported-feature behavior instead of reporting an internal
+            // unimplemented decode error.
+            0xE0..=0xEF => self.inject_undefined_instruction(),
+
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.0F38 opcode {:#04x} (W={}) at RIP={:#x}",
                 opcode, evex.w as u8, self.regs.rip

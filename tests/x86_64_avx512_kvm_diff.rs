@@ -21072,6 +21072,97 @@ fn unsupported_rao_int_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static 
         .collect()
 }
 
+const CMPCCXADD_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "cmpccxadd_cmpoxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe0, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnoxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe1, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpbxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe2, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnbxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe3, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpzxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe4, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnzxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe5, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpbexadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe6, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnaxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe7, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpsxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe8, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnsxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xe9, 0x18],
+    ),
+    (
+        "cmpccxadd_cmppxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xea, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpnpxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xeb, 0x18],
+    ),
+    (
+        "cmpccxadd_cmplxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xec, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpgexadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xed, 0x18],
+    ),
+    (
+        "cmpccxadd_cmplexadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xee, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpgxadd_vex_unsupported",
+        &[0xc4, 0xe2, 0x71, 0xef, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpbxadd64_vex_unsupported",
+        &[0xc4, 0xe2, 0xf1, 0xe2, 0x18],
+    ),
+    (
+        "cmpccxadd_cmpbxadd_high_regs_vex_unsupported",
+        &[0xc4, 0x42, 0x29, 0xe2, 0x08],
+    ),
+    (
+        "cmpccxadd_cmpbxadd_evex_egpr_unsupported",
+        &[0x62, 0xea, 0x61, 0x00, 0xe2, 0x44, 0x91, 0x20],
+    ),
+    (
+        "cmpccxadd_cmpbxadd_evex_legacy_addend_unsupported",
+        &[0x62, 0xea, 0x65, 0x08, 0xe2, 0x08],
+    ),
+];
+
+fn unsupported_cmpccxadd_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    CMPCCXADD_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -23205,6 +23296,26 @@ fn avx512_kvm_rao_int_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported RAO-INT", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_cmpccxadd_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_cmpccxadd_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD CMPCCXADD probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported CMPCCXADD", cases, expected);
 }
 
 #[test]
