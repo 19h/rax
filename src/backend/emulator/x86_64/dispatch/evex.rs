@@ -3288,6 +3288,7 @@ impl X86_64Vcpu {
         };
 
         let src1 = self.get_zmm_data(zmm_src1, vl);
+        let writemask = Self::evex_kmask(&evex, &self.regs.k, vl);
         let mut result: u64 = 0;
 
         // Process each qword
@@ -3306,7 +3307,7 @@ impl X86_64Vcpu {
             }
         }
 
-        self.regs.k[k_dst] = result;
+        self.regs.k[k_dst] = result & writemask;
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)

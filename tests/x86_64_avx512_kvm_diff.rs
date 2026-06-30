@@ -2001,6 +2001,9 @@ enum InputProfile {
     /// Integer data for mask-producing/vector-conflict instructions: duplicate
     /// dword/qword lanes, zero/all-ones values, and alternating bit patterns.
     IntPredicateEdge,
+    /// Integer qwords plus byte selectors for BITALG bit-selection and mixed
+    /// width population-count cases.
+    IntBitSelectEdge,
     /// Integer data around conversion-sensitive dword/qword boundaries and
     /// precision cliffs for integer-to-FP conversion forms.
     IntConvertEdge,
@@ -2267,6 +2270,22 @@ const INT_PREDICATE_EDGE_SCRATCH: [u32; 16] = [
     0xaaaa_aaaa,
     0x5555_5555,
 ];
+
+const INT_BIT_SELECT_QWORDS: [u64; 8] = [
+    0x0000_0000_0000_0000,
+    0xffff_ffff_ffff_ffff,
+    0x8000_0000_0000_0001,
+    0x0102_0408_1020_4080,
+    0x8040_2010_0804_0201,
+    0x7f00_ff00_00ff_55aa,
+    0x0123_4567_89ab_cdef,
+    0xfedc_ba98_7654_3210,
+];
+
+const INT_BIT_SELECT_BYTES: [u8; 16] = [
+    0, 1, 7, 8, 15, 16, 31, 32, 47, 48, 55, 56, 63, 64, 127, 255,
+];
+
 const INT_CONVERT_EDGE_QWORDS: [u64; 8] = [
     0x0000_0001_0000_0000,
     0xffff_ffff_7fff_ffff,
@@ -2353,6 +2372,21 @@ fn int_predicate_edge_zmm(reg: usize) -> [u8; 64] {
     let mut bytes = [0u8; 64];
     for (lane, value) in values.iter().enumerate() {
         bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn int_bit_select_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    if matches!(reg, 2 | 16 | 31) {
+        for (i, byte) in bytes.iter_mut().enumerate() {
+            *byte = INT_BIT_SELECT_BYTES[(i + reg) % INT_BIT_SELECT_BYTES.len()];
+        }
+    } else {
+        for lane in 0..8 {
+            let value = INT_BIT_SELECT_QWORDS[(reg * 3 + lane) % INT_BIT_SELECT_QWORDS.len()];
+            bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
+        }
     }
     bytes
 }
@@ -2490,6 +2524,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
         InputProfile::IntIfma52Edge => int_ifma52_edge_zmm(reg),
         InputProfile::IntShiftEdge => int_shift_edge_zmm(reg),
         InputProfile::IntPredicateEdge => int_predicate_edge_zmm(reg),
+        InputProfile::IntBitSelectEdge => int_bit_select_edge_zmm(reg),
         InputProfile::IntConvertEdge => int_convert_edge_zmm(reg),
         InputProfile::F32 => f32_zmm(reg),
         InputProfile::F64 => f64_zmm(reg),
@@ -10763,6 +10798,66 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat,
             profile: Int,
+        });
+    }
+
+    for &(label, asm, feat) in &[
+        (
+            "vpshufbitqmb_bitalg_bitselect_edge_reg",
+            "vpshufbitqmb %zmm2, %zmm3, %k5",
+            Bitalg,
+        ),
+        (
+            "vpshufbitqmb_bitalg_bitselect_edge_mem",
+            "vpshufbitqmb 128(%rax), %zmm3, %k5",
+            Bitalg,
+        ),
+        (
+            "vpshufbitqmb_bitalg_bitselect_edge_mask",
+            "vpshufbitqmb %zmm2, %zmm3, %k5 {%k1}",
+            Bitalg,
+        ),
+        (
+            "vpshufbitqmb_bitalg_bitselect_edge_high",
+            "vpshufbitqmb %zmm16, %zmm18, %k6",
+            Bitalg,
+        ),
+        (
+            "vpopcntb_bitalg_bitselect_edge_reg",
+            "vpopcntb %zmm3, %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpopcntw_bitalg_bitselect_edge_mem",
+            "vmovdqu64 %zmm3, 128(%rax)\nvpopcntw 128(%rax), %zmm1",
+            Bitalg,
+        ),
+        (
+            "vpopcntd_vpopcntdq_bitselect_edge_reg",
+            "vpopcntd %zmm3, %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntq_vpopcntdq_bitselect_edge_mem",
+            "vmovdqu64 %zmm3, 128(%rax)\nvpopcntq 128(%rax), %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntd_vpopcntdq_bitselect_edge_bcst",
+            "vmovdqu64 %zmm3, 128(%rax)\nvpopcntd 128(%rax){1to16}, %zmm1",
+            Vpopcntdq,
+        ),
+        (
+            "vpopcntq_vpopcntdq_bitselect_edge_bcst",
+            "vmovdqu64 %zmm3, 128(%rax)\nvpopcntq 128(%rax){1to8}, %zmm1",
+            Vpopcntdq,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: IntBitSelectEdge,
         });
     }
 
@@ -37960,6 +38055,53 @@ fn avx512_kvm_bitalg_popcnt_edge_corpus() {
     assert_eq!(
         tally.compared, 10,
         "all BITALG/VPOPCNTDQ edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_bitalg_bitselect_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_bitselect_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected BITALG bit-select edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on BITALG bit-select edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a BITALG bit-select edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "BITALG bit-select edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "BITALG bit-select edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bitalg),
+        6,
+        "all BITALG bit-select edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Vpopcntdq),
+        4,
+        "all VPOPCNTDQ bit-select edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 10,
+        "all BITALG bit-select edge cases should compare"
     );
 }
 
