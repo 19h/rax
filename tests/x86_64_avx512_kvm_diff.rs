@@ -21838,6 +21838,123 @@ fn compat_stack_addr32_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_implicit_state_input(rax: u64, rdx: u64, rflags: u64) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = rax;
+    input.rdx = rdx;
+    input.rflags = rflags | 0x2;
+    input
+}
+
+fn compat_implicit_flag_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "cbw16_compat_negative_preserves_high_rax",
+            op: vec![0x98],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_1280, RDX_SEED, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cbw16_compat_positive_preserves_high_rax",
+            op: vec![0x98],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_ff7f, RDX_SEED, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cwde32_compat_operand32_negative_zeroes_high_rax",
+            op: vec![0x66, 0x98],
+            input: compat_implicit_state_input(0xaaaa_bbbb_0000_8000, RDX_SEED, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cwde32_compat_operand32_positive_zeroes_high_rax",
+            op: vec![0x66, 0x98],
+            input: compat_implicit_state_input(0xaaaa_bbbb_0000_7fff, RDX_SEED, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cwd16_compat_negative_preserves_high_rdx",
+            op: vec![0x99],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_8000, 0xdddd_eeee_ffff_1234, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cwd16_compat_positive_preserves_high_rdx",
+            op: vec![0x99],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_7fff, 0xdddd_eeee_ffff_fedc, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cdq32_compat_operand32_negative_zeroes_high_rdx",
+            op: vec![0x66, 0x99],
+            input: compat_implicit_state_input(0xaaaa_bbbb_8000_0000, 0xdddd_eeee_ffff_0000, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cdq32_compat_operand32_positive_zeroes_high_rdx",
+            op: vec![0x66, 0x99],
+            input: compat_implicit_state_input(0xaaaa_bbbb_7fff_ffff, 0xdddd_eeee_ffff_ffff, INITIAL_RFLAGS),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lahf_compat_all_status_bits_into_ah",
+            op: vec![0x9f],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_1200, RDX_SEED, STATUS_RFLAGS_MASK),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lahf_compat_clear_status_sets_fixed_bit",
+            op: vec![0x9f],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_ff00, RDX_SEED, 0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sahf_compat_sets_status_preserves_of",
+            op: vec![0x9e],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_d700, RDX_SEED, RFLAGS_OF),
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "sahf_compat_clears_status_preserves_of",
+            op: vec![0x9e],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0200, RDX_SEED, STATUS_RFLAGS_MASK),
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "clc_compat_clears_cf_only",
+            op: vec![0xf8],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "stc_compat_sets_cf_only",
+            op: vec![0xf9],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, (INITIAL_RFLAGS | RFLAGS_DF) & !RFLAGS_CF),
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "cmc_compat_complements_cf_only",
+            op: vec![0xf5],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "cld_compat_clears_df",
+            op: vec![0xfc],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "std_compat_sets_df",
+            op: vec![0xfd],
+            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS & !RFLAGS_DF),
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25254,6 +25371,17 @@ fn avx512_kvm_stack_addr32_compat_corpus() {
         "unexpected compatibility stack address-size corpus size"
     );
     let _ = run_compat_state_cases("stack address-size", &cases);
+}
+
+#[test]
+fn avx512_kvm_implicit_flag_compat_corpus() {
+    let cases = compat_implicit_flag_cases();
+    assert_eq!(
+        cases.len(),
+        17,
+        "unexpected compatibility implicit-register/flag corpus size"
+    );
+    let _ = run_compat_state_cases("implicit-register/flag", &cases);
 }
 
 #[test]
