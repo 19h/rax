@@ -22631,6 +22631,206 @@ fn compat_mul_div_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_byte_order_cache_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF;
+    input
+}
+
+fn compat_byte_order_mem8_input(offset: usize, value: u8) -> CompatStateIn {
+    let mut input = compat_byte_order_cache_seed();
+    input.scratch[offset] = value;
+    input
+}
+
+fn compat_byte_order_mem16_input(offset: usize, value: u16) -> CompatStateIn {
+    let mut input = compat_byte_order_cache_seed();
+    input.scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_byte_order_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_byte_order_cache_seed();
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_byte_order_addr32_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_byte_order_mem32_input(offset, value);
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input
+}
+
+fn compat_byte_order_cache_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "bswap32_compat_eax_zeroes_high",
+            op: vec![0x66, 0x0f, 0xc8],
+            input: {
+                let mut input = compat_byte_order_cache_seed();
+                input.rax = 0xaaaa_bbbb_1234_5678;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "bswap32_compat_ecx_zeroes_high",
+            op: vec![0x66, 0x0f, 0xc9],
+            input: {
+                let mut input = compat_byte_order_cache_seed();
+                input.rcx = 0xbbbb_cccc_89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "movbe16_compat_load_modrm16_mem_to_ax",
+            op: vec![0x0f, 0x38, 0xf0, 0x00],
+            input: compat_byte_order_mem16_input(0x10, 0x1234),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "movbe32_compat_load_addr32_mem_to_eax_zeroes_high",
+            op: vec![0x67, 0x66, 0x0f, 0x38, 0xf0, 0x04, 0x33],
+            input: compat_byte_order_addr32_mem32_input(0x20, 0x1234_5678),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "movbe16_compat_store_cx_to_modrm16_mem",
+            op: vec![0x0f, 0x38, 0xf1, 0x08],
+            input: {
+                let mut input = compat_byte_order_mem16_input(0x10, 0xaaaa);
+                input.rcx = (input.rcx & !0xffff) | 0x1234;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "movbe32_compat_store_eax_to_addr32_mem",
+            op: vec![0x67, 0x66, 0x0f, 0x38, 0xf1, 0x04, 0x33],
+            input: {
+                let mut input = compat_byte_order_addr32_mem32_input(0x20, 0xaaaa_aaaa);
+                input.rax = (input.rax & !0xffff_ffff) | 0x1234_5678;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "crc32_compat_byte_mem_to_eax_zeroes_high",
+            op: vec![0xf2, 0x0f, 0x38, 0xf0, 0x00],
+            input: {
+                let mut input = compat_byte_order_mem8_input(0x10, 0x5a);
+                input.rax = 0xaaaa_bbbb_89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "crc32_compat_word_mem_to_eax_default16",
+            op: vec![0xf2, 0x0f, 0x38, 0xf1, 0x00],
+            input: {
+                let mut input = compat_byte_order_mem16_input(0x10, 0x1234);
+                input.rax = 0xaaaa_bbbb_89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "crc32_compat_dword_addr32_mem_to_eax_operand32_zeroes_high",
+            op: vec![0x67, 0x66, 0xf2, 0x0f, 0x38, 0xf1, 0x04, 0x33],
+            input: {
+                let mut input = compat_byte_order_addr32_mem32_input(0x20, 0x0123_4567);
+                input.rax = 0xaaaa_bbbb_89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "crc32_compat_byte_reg_cl_to_eax",
+            op: vec![0xf2, 0x0f, 0x38, 0xf0, 0xc1],
+            input: {
+                let mut input = compat_byte_order_cache_seed();
+                input.rax = 0xaaaa_bbbb_89ab_cdef;
+                input.rcx = (input.rcx & !0xff) | 0x5a;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "prefetchnta_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0x18, 0x00],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "prefetcht0_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0x18, 0x08],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "prefetchw_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0x0d, 0x08],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "prefetchwt1_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0x0d, 0x10],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "clflush_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0xae, 0x38],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "clflushopt_compat_modrm16_memory_preserves_state",
+            op: vec![0x66, 0x0f, 0xae, 0x38],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "clwb_compat_modrm16_memory_preserves_state",
+            op: vec![0x66, 0x0f, 0xae, 0x30],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cldemote_compat_modrm16_memory_preserves_state",
+            op: vec![0x0f, 0x1c, 0x00],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lfence_compat_preserves_state",
+            op: vec![0x0f, 0xae, 0xe8],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mfence_compat_preserves_state",
+            op: vec![0x0f, 0xae, 0xf0],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sfence_compat_preserves_state",
+            op: vec![0x0f, 0xae, 0xf8],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_xlat_input(rbx: u64, al: u8, table_index: usize, table_value: u8) -> CompatStateIn {
     let mut input = compat_state_seed();
     input.rax = 0xaaaa_bbbb_cccc_0000 | u64::from(al);
@@ -27070,6 +27270,17 @@ fn avx512_kvm_mul_div_compat_corpus() {
         "unexpected compatibility multiply/divide exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("multiply/divide", &exception_cases);
+}
+
+#[test]
+fn avx512_kvm_byte_order_cache_compat_corpus() {
+    let cases = compat_byte_order_cache_cases();
+    assert_eq!(
+        cases.len(),
+        21,
+        "unexpected compatibility byte-order/cache corpus size"
+    );
+    let _ = run_compat_state_cases("byte-order/cache", &cases);
 }
 
 #[test]

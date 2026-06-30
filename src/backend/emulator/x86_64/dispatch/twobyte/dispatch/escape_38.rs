@@ -407,8 +407,10 @@ impl X86_64Vcpu {
                             self.get_reg(rm, 8)
                         };
                         crc32c_u64(crc_in, src)
-                    } else if ctx.operand_size_override {
-                        // 16-bit source
+                    } else if ctx.op_size == 2 {
+                        // 16-bit source. This follows the operand-size attribute,
+                        // not the raw 66 prefix: in a 16-bit compat segment 66
+                        // selects the 32-bit CRC32 source form.
                         let src = if is_memory {
                             self.read_mem(addr, 2)? as u16
                         } else {
