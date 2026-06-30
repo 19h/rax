@@ -20424,6 +20424,29 @@ fn unsupported_key_locker_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stat
         .collect()
 }
 
+const AMX_DISABLED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("ldtilecfg_disabled", &[0xc4, 0xe2, 0x78, 0x49, 0x00]),
+    ("sttilecfg_disabled", &[0xc4, 0xe2, 0x78, 0x49, 0x0b]),
+    ("tileloadd_disabled", &[0xc4, 0xe2, 0x7a, 0x4b, 0x00]),
+    ("tileloaddt1_disabled", &[0xc4, 0xe2, 0x79, 0x4b, 0x09]),
+    ("tilestored_disabled", &[0xc4, 0xe2, 0x7b, 0x4b, 0x00]),
+    ("tilezero_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xc0]),
+    ("tilerelease_disabled", &[0xc4, 0xe2, 0x78, 0x49, 0xc0]),
+    ("tdpbf16ps_disabled", &[0xc4, 0xe2, 0x7b, 0x5c, 0xc8]),
+    ("tdpbssd_disabled", &[0xc4, 0xe2, 0x7a, 0x5e, 0xc8]),
+    ("tdpbsud_disabled", &[0xc4, 0xe2, 0x7b, 0x5e, 0xd0]),
+    ("tdpbusd_disabled", &[0xc4, 0xe2, 0x79, 0x5e, 0xe0]),
+    ("tdpbuud_disabled", &[0xc4, 0xe2, 0x7a, 0x5e, 0xf0]),
+];
+
+fn amx_disabled_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AMX_DISABLED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22296,6 +22319,26 @@ fn avx512_kvm_key_locker_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported key locker", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_amx_disabled_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = amx_disabled_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD disabled AMX probes");
+        return;
+    }
+    run_ud_marker_corpus("disabled AMX", cases, expected);
 }
 
 #[test]
