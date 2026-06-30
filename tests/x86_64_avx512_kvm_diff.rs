@@ -27243,6 +27243,27 @@ fn unsupported_amd_simd_state_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'
         .collect()
 }
 
+const AMD_TBM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("tbm_blcfillq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xc8]),
+    ("tbm_blcfilll_unsupported", &[0x8f, 0xe9, 0x60, 0x01, 0xc8]),
+    ("tbm_blciq_unsupported", &[0x8f, 0xe9, 0xe0, 0x02, 0xf0]),
+    ("tbm_blcicq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xe8]),
+    ("tbm_blcmskq_unsupported", &[0x8f, 0xe9, 0xe0, 0x02, 0xc8]),
+    ("tbm_blcsq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xd8]),
+    ("tbm_blsfillq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xd0]),
+    ("tbm_blsicq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xf0]),
+    ("tbm_t1mskcq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xf8]),
+    ("tbm_tzmskq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xe0]),
+];
+
+fn unsupported_amd_tbm_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AMD_TBM_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const XEON_PHI_AVX512_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "avx512er_vexp2ps_unsupported",
@@ -30307,6 +30328,26 @@ fn avx512_kvm_amd_simd_state_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AMD SIMD/state", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_amd_tbm_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_amd_tbm_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AMD TBM probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AMD TBM", cases, expected);
 }
 
 #[test]
