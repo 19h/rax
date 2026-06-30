@@ -848,6 +848,7 @@ const PDPTE_ADDR: u64 = 0x2000;
 // Keep this away from the shared test helper's GDT page at 0x10000; the
 // interpreter is explicitly redirected here so RIP-relative cases match KVM.
 const CODE_ADDR: u64 = 0x30000;
+const COMPAT_CODE_ADDR: u64 = 0x3000;
 const STACK_ADDR: u64 = 0x20000;
 const EXCEPTION_GDT_ADDR: u64 = 0x27000;
 const EXCEPTION_IDT_ADDR: u64 = 0x28000;
@@ -1118,7 +1119,7 @@ impl KvmOracle {
         let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
 
         install_page_tables(&mem);
-        mem.write(CODE_ADDR, code);
+        mem.write(COMPAT_CODE_ADDR, code);
 
         let region = kvm_userspace_memory_region {
             slot: 0,
@@ -1169,7 +1170,7 @@ impl KvmOracle {
             .map_err(|e| format!("set_sregs: {e:?}"))?;
 
         let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
-        kregs.rip = CODE_ADDR;
+        kregs.rip = COMPAT_CODE_ADDR;
         kregs.rax = rax;
         kregs.rsp = STACK_ADDR;
         kregs.rflags = rflags | 0x2;
@@ -1234,7 +1235,7 @@ impl KvmOracle {
         let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
 
         install_page_tables(&mem);
-        mem.write(CODE_ADDR, code);
+        mem.write(COMPAT_CODE_ADDR, code);
         mem.write(SCRATCH_ADDR, &input.scratch);
         mem.write(STACK_WINDOW_ADDR, &input.stack);
         if let Some(vector) = trap_vector {
@@ -1296,7 +1297,7 @@ impl KvmOracle {
             .map_err(|e| format!("set_sregs: {e:?}"))?;
 
         let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
-        kregs.rip = CODE_ADDR;
+        kregs.rip = COMPAT_CODE_ADDR;
         kregs.rax = input.rax;
         kregs.rbx = input.rbx;
         kregs.rcx = input.rcx;
@@ -21280,6 +21281,104 @@ fn compat_legacy_one_byte_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_loop_branch_code(op: &[u8]) -> Vec<u8> {
+    let mut code = Vec::from(op);
+    code.extend_from_slice(&[0xb8, 0x11, 0x11, 0xf4]);
+    code.extend_from_slice(&[0xb8, 0x22, 0x22]);
+    code
+}
+
+fn compat_loop_input(rcx: u64, zf: bool) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = 0xaaaa_bbbb_cccc_0000;
+    input.rcx = rcx;
+    if zf {
+        input.rflags |= RFLAGS_ZF;
+    } else {
+        input.rflags &= !RFLAGS_ZF;
+    }
+    input
+}
+
+fn compat_loop_control_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "jcxz16_compat_taken_low_cx_zero_high_rcx_set",
+            op: compat_loop_branch_code(&[0xe3, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0000, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jcxz16_compat_not_taken_low_cx_nonzero",
+            op: compat_loop_branch_code(&[0xe3, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0001, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jecxz32_compat_taken_low_ecx_zero_high_rcx_set",
+            op: compat_loop_branch_code(&[0x67, 0xe3, 0x04]),
+            input: compat_loop_input(0x1234_5678_0000_0000, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loop16_compat_underflow_taken_preserves_high_rcx",
+            op: compat_loop_branch_code(&[0xe2, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0000, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loop16_compat_low_one_not_taken_high_rcx_set",
+            op: compat_loop_branch_code(&[0xe2, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0001, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loop16_compat_low_two_taken",
+            op: compat_loop_branch_code(&[0xe2, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0002, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loopne16_compat_zf_clear_underflow_taken",
+            op: compat_loop_branch_code(&[0xe0, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0000, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loopne16_compat_zf_set_not_taken",
+            op: compat_loop_branch_code(&[0xe0, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0002, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loope16_compat_zf_set_underflow_taken",
+            op: compat_loop_branch_code(&[0xe1, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0000, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loope16_compat_zf_clear_not_taken",
+            op: compat_loop_branch_code(&[0xe1, 0x04]),
+            input: compat_loop_input(0x1234_5678_9abc_0002, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loop32_compat_addr32_ecx_underflow_zeroes_high_rcx",
+            op: compat_loop_branch_code(&[0x67, 0xe2, 0x04]),
+            input: compat_loop_input(0x1234_5678_0000_0000, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "loop32_compat_addr32_ecx_one_not_taken_zeroes_high_rcx",
+            op: compat_loop_branch_code(&[0x67, 0xe2, 0x04]),
+            input: compat_loop_input(0x1234_5678_0000_0001, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -24634,6 +24733,17 @@ fn avx512_kvm_legacy_one_byte_compat_corpus() {
         "unexpected compatibility legacy one-byte corpus size"
     );
     let _ = run_compat_state_cases("legacy one-byte", &cases);
+}
+
+#[test]
+fn avx512_kvm_loop_control_compat_corpus() {
+    let cases = compat_loop_control_cases();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected compatibility loop-control corpus size"
+    );
+    let _ = run_compat_state_cases("loop-control", &cases);
 }
 
 #[test]
