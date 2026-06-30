@@ -29739,6 +29739,62 @@ const APX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         "apx_map4_egpr_unsupported",
         &[0x62, 0xec, 0x74, 0x18, 0x01, 0xd8],
     ),
+    (
+        "apx_map4_adc_reg_unsupported",
+        &[0x62, 0xf4, 0x7c, 0x08, 0x11, 0xd8],
+    ),
+    (
+        "apx_map4_sbb_imm8_unsupported",
+        &[0x62, 0xf4, 0x7c, 0x08, 0x83, 0xd8, 0x00],
+    ),
+    (
+        "apx_map4_imul_reg_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x08, 0xaf, 0xc3],
+    ),
+    (
+        "apx_map4_setzu_unsupported",
+        &[0x62, 0xf4, 0x7f, 0x18, 0x42, 0xc0],
+    ),
+    (
+        "apx_map4_setcc_unsupported",
+        &[0x62, 0xf4, 0x7f, 0x08, 0x42, 0xc0],
+    ),
+    (
+        "apx_map4_cmov_nd_unsupported",
+        &[0x62, 0xf4, 0xbc, 0x18, 0x42, 0xc3],
+    ),
+    (
+        "apx_map4_cfcmov_reg_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x08, 0x42, 0xd8],
+    ),
+    (
+        "apx_map4_cfcmov_reverse_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x0c, 0x42, 0xd8],
+    ),
+    (
+        "apx_map4_cfcmov_mem_src_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x08, 0x42, 0x03],
+    ),
+    (
+        "apx_map4_cfcmov_mem_dest_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x0c, 0x42, 0x18],
+    ),
+    (
+        "apx_map4_shld_rip_imm_unsupported",
+        &[
+            0x62, 0xf4, 0x7c, 0x08, 0x24, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ],
+    ),
+    (
+        "apx_map4_shrd_rip_imm_unsupported",
+        &[
+            0x62, 0xf4, 0x7c, 0x08, 0x2c, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ],
+    ),
+    (
+        "apx_map4_conditional_invalid_pp_unsupported",
+        &[0x62, 0xf4, 0x7e, 0x18, 0x42, 0xc0],
+    ),
 ];
 
 fn unsupported_apx_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
@@ -32603,6 +32659,13 @@ fn avx512_kvm_apx_unsupported_ud_corpus() {
     if expected == 0 {
         eprintln!("[skip] KVM guest does not #UD APX probes");
         return;
+    }
+    if !host_cpu_flag("apx_f") {
+        assert_eq!(
+            expected,
+            APX_UNSUPPORTED_CANDIDATES.len(),
+            "APX-less KVM guest should #UD every APX probe"
+        );
     }
     run_ud_marker_corpus("unsupported APX", cases, expected);
 }
