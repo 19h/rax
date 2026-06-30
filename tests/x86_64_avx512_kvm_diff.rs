@@ -21955,6 +21955,98 @@ fn compat_implicit_flag_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_moffs16_op(prefixes: &[u8], opcode: u8, offset: u16) -> Vec<u8> {
+    let mut op = Vec::from(prefixes);
+    op.push(opcode);
+    op.extend_from_slice(&offset.to_le_bytes());
+    op
+}
+
+fn compat_moffs32_op(prefixes: &[u8], opcode: u8, offset: u32) -> Vec<u8> {
+    let mut op = Vec::from(prefixes);
+    op.push(opcode);
+    op.extend_from_slice(&offset.to_le_bytes());
+    op
+}
+
+fn compat_moffs_input() -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = 0xaaaa_bbbb_cccc_3412;
+    input.scratch[0x00] = 0x7b;
+    input.scratch[0x02..0x04].copy_from_slice(&0x8642u16.to_le_bytes());
+    input.scratch[0x04..0x08].copy_from_slice(&0x89ab_cdefu32.to_le_bytes());
+    input.scratch[0x20] = 0xa5;
+    input.scratch[0x24..0x28].copy_from_slice(&0x7654_3210u32.to_le_bytes());
+    input
+}
+
+fn compat_moffs_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "moffs16_compat_load_al_preserves_high_rax",
+            op: compat_moffs16_op(&[], 0xa0, SCRATCH_ADDR as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs16_compat_load_ax_preserves_high_rax",
+            op: compat_moffs16_op(&[], 0xa1, (SCRATCH_ADDR + 0x02) as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs16_compat_load_eax_zeroes_high_rax",
+            op: compat_moffs16_op(&[0x66], 0xa1, (SCRATCH_ADDR + 0x04) as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs16_compat_store_al",
+            op: compat_moffs16_op(&[], 0xa2, (SCRATCH_ADDR + 0x10) as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs16_compat_store_ax",
+            op: compat_moffs16_op(&[], 0xa3, (SCRATCH_ADDR + 0x12) as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs16_compat_store_eax",
+            op: compat_moffs16_op(&[0x66], 0xa3, (SCRATCH_ADDR + 0x14) as u16),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs32_compat_addr32_load_al",
+            op: compat_moffs32_op(&[0x67], 0xa0, (SCRATCH_ADDR + 0x20) as u32),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs32_compat_addr32_load_eax_zeroes_high_rax",
+            op: compat_moffs32_op(&[0x67, 0x66], 0xa1, (SCRATCH_ADDR + 0x24) as u32),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs32_compat_addr32_store_ax",
+            op: compat_moffs32_op(&[0x67], 0xa3, (SCRATCH_ADDR + 0x30) as u32),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "moffs32_compat_addr32_store_eax",
+            op: compat_moffs32_op(&[0x67, 0x66], 0xa3, (SCRATCH_ADDR + 0x34) as u32),
+            input: compat_moffs_input(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25382,6 +25474,17 @@ fn avx512_kvm_implicit_flag_compat_corpus() {
         "unexpected compatibility implicit-register/flag corpus size"
     );
     let _ = run_compat_state_cases("implicit-register/flag", &cases);
+}
+
+#[test]
+fn avx512_kvm_moffs_compat_corpus() {
+    let cases = compat_moffs_cases();
+    assert_eq!(
+        cases.len(),
+        10,
+        "unexpected compatibility moffs corpus size"
+    );
+    let _ = run_compat_state_cases("moffs", &cases);
 }
 
 #[test]
