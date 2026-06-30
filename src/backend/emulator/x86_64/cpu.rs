@@ -2282,6 +2282,17 @@ impl X86_64Vcpu {
         Ok(())
     }
 
+    pub(super) fn push_segment32(&mut self, value: u16) -> Result<()> {
+        let new_rsp = self.regs.rsp.wrapping_sub(4);
+        self.mmu.write_u16(
+            self.stack_segment_base().wrapping_add(new_rsp),
+            value,
+            &self.sregs,
+        )?;
+        self.regs.rsp = new_rsp;
+        Ok(())
+    }
+
     pub(super) fn pop32(&mut self) -> Result<u32> {
         let value = self.mmu.read_u32(
             self.stack_segment_base().wrapping_add(self.regs.rsp),

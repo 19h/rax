@@ -107,7 +107,7 @@ pub fn push_sreg(
     let value = vcpu.get_sreg(sreg) as u64;
     match op_size {
         2 => vcpu.push16(value as u16)?,
-        4 => vcpu.push32(value as u32)?,
+        4 => vcpu.push_segment32(value as u16)?,
         8 => vcpu.push64(value)?,
         _ => {
             return Err(Error::Emulator(format!(

@@ -21165,6 +21165,121 @@ fn compat_far_pointer_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_pop_sreg_input(selector: u16, operand32: bool) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    let stack_offset = (input.rsp - STACK_WINDOW_ADDR) as usize;
+    if operand32 {
+        input.stack[stack_offset..stack_offset + 4]
+            .copy_from_slice(&(selector as u32).to_le_bytes());
+    } else {
+        input.stack[stack_offset..stack_offset + 2].copy_from_slice(&selector.to_le_bytes());
+    }
+    input
+}
+
+fn compat_legacy_one_byte_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    let mut inc_ax = compat_state_seed();
+    inc_ax.rax = (inc_ax.rax & !0xffff) | 0xffff;
+
+    let mut dec_bx = compat_state_seed();
+    dec_bx.rbx = (dec_bx.rbx & !0xffff) | 0x8000;
+
+    let mut inc_eax = compat_state_seed();
+    inc_eax.rax = (inc_eax.rax & !0xffff_ffff) | 0xffff_ffff;
+
+    let mut dec_ecx = compat_state_seed();
+    dec_ecx.rcx = (dec_ecx.rcx & !0xffff_ffff) | 0x8000_0000;
+
+    let mut group1_82_add = compat_state_seed();
+    group1_82_add.rax = (group1_82_add.rax & !0xff) | 0x7f;
+
+    let mut group1_82_cmp = compat_state_seed();
+    group1_82_cmp.rax = (group1_82_cmp.rax & !0xff) | 0x80;
+
+    vec![
+        CompatStateCase {
+            label: "inc_ax_one_byte_compat_wrap",
+            op: vec![0x40],
+            input: inc_ax,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "dec_bx_one_byte_compat_sign_edge",
+            op: vec![0x4b],
+            input: dec_bx,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "inc_eax_one_byte_compat_operand32_zeroext",
+            op: vec![0x66, 0x40],
+            input: inc_eax,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "dec_ecx_one_byte_compat_operand32_sign_edge",
+            op: vec![0x66, 0x49],
+            input: dec_ecx,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "group1_82_add_al_compat_alias",
+            op: vec![0x82, 0xc0, 0x01],
+            input: group1_82_add,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "group1_82_cmp_al_compat_alias",
+            op: vec![0x82, 0xf8, 0x80],
+            input: group1_82_cmp,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "push_es_compat_segment_selector",
+            op: vec![0x06],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_cs_compat_segment_selector",
+            op: vec![0x0e],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_ss_compat_segment_selector",
+            op: vec![0x16],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_ds_compat_segment_selector",
+            op: vec![0x1e],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_ds_compat_operand32_selector",
+            op: vec![0x66, 0x1e],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_es_compat_null_selector",
+            op: vec![0x07, 0x8c, 0xc1],
+            input: compat_pop_sreg_input(0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_ds_compat_operand32_null_selector",
+            op: vec![0x66, 0x1f, 0x8c, 0xd9],
+            input: compat_pop_sreg_input(0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -21228,7 +21343,15 @@ fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
             failures.push(format!("{}: scratch memory diverged", case.label));
         }
         if interp.stack != kvm.stack {
-            failures.push(format!("{}: stack memory diverged", case.label));
+            let detail = interp
+                .stack
+                .iter()
+                .zip(kvm.stack.iter())
+                .enumerate()
+                .find(|(_, (i, k))| i != k)
+                .map(|(idx, (i, k))| format!(" at byte {idx}: interp={i:#04x} kvm={k:#04x}"))
+                .unwrap_or_default();
+            failures.push(format!("{}: stack memory diverged{detail}", case.label));
         }
     }
 
@@ -24500,6 +24623,17 @@ fn avx512_kvm_far_pointer_compat_corpus() {
         "unexpected compatibility far-pointer exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("far-pointer", &exception_cases);
+}
+
+#[test]
+fn avx512_kvm_legacy_one_byte_compat_corpus() {
+    let cases = compat_legacy_one_byte_cases();
+    assert_eq!(
+        cases.len(),
+        13,
+        "unexpected compatibility legacy one-byte corpus size"
+    );
+    let _ = run_compat_state_cases("legacy one-byte", &cases);
 }
 
 #[test]
