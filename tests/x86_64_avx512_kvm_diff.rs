@@ -19977,6 +19977,68 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Zero-count group-2 shifts/rotates and SHLD/SHRD are architectural no-ops
+    // for both data and flags. These cases seed non-trivial status flags, then
+    // use immediate-zero, masked-immediate, and CL-zero forms across register
+    // and memory destinations.
+    for &(label, asm) in &[
+        (
+            "rol_core_shift_zero_r8_imm0",
+            "movb $0xa5, %r8b\ncmpq %r8, %r8\nrolb $0, %r8b",
+        ),
+        (
+            "ror_core_shift_zero_r16_cl0",
+            "movw $0xa55a, %r8w\nxorl %ecx, %ecx\ncmpq %r8, %r8\nrorw %cl, %r8w",
+        ),
+        (
+            "rcl_core_shift_zero_r32_imm32_cf_set",
+            "movl $0x80000001, %r8d\ncmpq %r8, %r8\nstc\nrcll $32, %r8d",
+        ),
+        (
+            "rcr_core_shift_zero_r64_imm64_cf_clear",
+            "movabsq $0x8000000000000001, %r8\ncmpq %r8, %r8\nclc\nrcrq $64, %r8",
+        ),
+        (
+            "shl_core_shift_zero_m8_imm0",
+            "movb $0x7e, 2(%rax)\ncmpq %r8, %r8\nshlb $0, 2(%rax)",
+        ),
+        (
+            "shr_core_shift_zero_m16_cl0",
+            "movw $0x8001, 4(%rax)\nxorl %ecx, %ecx\ncmpq %r8, %r8\nshrw %cl, 4(%rax)",
+        ),
+        (
+            "sar_core_shift_zero_r32_imm32",
+            "movl $0x80000001, %r8d\ncmpq %r8, %r8\nsarl $32, %r8d",
+        ),
+        (
+            "sal_core_shift_zero_r64_cl0",
+            "movabsq $0x0123456789abcdef, %r8\nxorl %ecx, %ecx\ncmpq %r8, %r8\nsalq %cl, %r8",
+        ),
+        (
+            "shld_core_shift_zero_r16_imm0",
+            "movw $0x1234, %r8w\nmovw $0xabcd, %cx\ncmpq %r8, %r8\nshldw $0, %cx, %r8w",
+        ),
+        (
+            "shrd_core_shift_zero_r32_cl0",
+            "movl $0x80000001, %r8d\nmovl $0x7ffffffe, %edx\nxorl %ecx, %ecx\ncmpq %r8, %r8\nshrdl %cl, %edx, %r8d",
+        ),
+        (
+            "shld_core_shift_zero_m64_cl0",
+            "movabsq $0x0123456789abcdef, %r10\nmovq %r10, 48(%rax)\nmovabsq $0xfedcba9876543210, %rdx\nxorl %ecx, %ecx\ncmpq %r8, %r8\nshldq %cl, %rdx, 48(%rax)",
+        ),
+        (
+            "shrd_core_shift_zero_m64_imm0",
+            "movabsq $0x0123456789abcdef, %r10\nmovq %r10, 56(%rax)\nmovabsq $0xfedcba9876543210, %rdx\ncmpq %r8, %r8\nshrdq $0, %rdx, 56(%rax)",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Core integer multiply and divide forms. One-operand MUL/IMUL and
     // DIV/IDIV exercise the implicit RDX:RAX / RAX architectural operands; the
     // explicit IMUL forms cover register, memory, imm8, and imm32 encodings.
@@ -21067,6 +21129,10 @@ fn case_rflags_mask(case: &Case) -> u64 {
             return STATUS_RFLAGS_MASK;
         }
         return STATUS_RFLAGS_MASK & !RFLAGS_OF;
+    }
+
+    if case.label.contains("_core_shift_zero_") {
+        return STATUS_RFLAGS_MASK;
     }
 
     if case.label.contains("_core_double_shift_edge_") {
@@ -34397,6 +34463,48 @@ fn avx512_kvm_core_shift_width_corpus() {
     assert_eq!(
         tally.compared, 36,
         "all core shift-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_shift_zero_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_shift_zero_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected core zero-count shift/rotate corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core zero-count shift/rotate cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core zero-count shift/rotate case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core zero-count shift/rotate corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core zero-count shift/rotate cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        12,
+        "all core zero-count shift/rotate cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all core zero-count shift/rotate cases should compare"
     );
 }
 
