@@ -27725,9 +27725,16 @@ const AMD_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ("svm_clgi_unsupported", &[0x0f, 0x01, 0xdd]),
     ("svm_skinit_unsupported", &[0x0f, 0x01, 0xde]),
     ("svm_invlpga_unsupported", &[0x0f, 0x01, 0xdf]),
+    ("amd_clzero_unsupported", &[0x0f, 0x01, 0xfc]),
     ("monitorx_unsupported", &[0x0f, 0x01, 0xfa]),
     ("mwaitx_unsupported", &[0x0f, 0x01, 0xfb]),
     ("rdpru_unsupported", &[0x0f, 0x01, 0xfd]),
+    ("amd_invlpgb_unsupported", &[0x0f, 0x01, 0xfe]),
+    ("amd_tlbsync_unsupported", &[0x0f, 0x01, 0xff]),
+    ("snp_rmpupdate_unsupported", &[0xf2, 0x0f, 0x01, 0xfe]),
+    ("snp_pvalidate_unsupported", &[0xf2, 0x0f, 0x01, 0xff]),
+    ("snp_rmpadjust_unsupported", &[0xf3, 0x0f, 0x01, 0xfe]),
+    ("snp_psmash_unsupported", &[0xf3, 0x0f, 0x01, 0xff]),
 ];
 
 fn unsupported_amd_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
