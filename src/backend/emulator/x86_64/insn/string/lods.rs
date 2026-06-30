@@ -5,34 +5,34 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
-use super::{advance_index, dec_count, index, rep_count};
+use super::{address_size, advance_index, dec_count, index, normalize_count, rep_count};
 
 /// LODSB (0xAC)
 pub fn lodsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let is_rep = ctx.rep_prefix.is_some();
-    // Source DS:[RSI] honors a segment-override prefix (FS/GS); 0x67 selects
-    // 32-bit addressing (ESI/ECX) in 64-bit mode.
+    // Source DS:[RSI] honors a segment-override prefix (FS/GS); address size
+    // selects SI/CX, ESI/ECX, or RSI/RCX.
     let src_base = vcpu.get_segment_base(ctx.segment_override);
-    let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
+    let addr_size = address_size(vcpu, ctx);
     let count = if is_rep {
-        rep_count(vcpu.regs.rcx, addr32)
+        rep_count(vcpu.regs.rcx, addr_size)
     } else {
         1
     };
     if is_rep && count == 0 {
-        vcpu.regs.rcx = rep_count(vcpu.regs.rcx, addr32);
+        vcpu.regs.rcx = normalize_count(vcpu.regs.rcx, addr_size);
     }
     for _ in 0..count {
-        if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
+        if is_rep && rep_count(vcpu.regs.rcx, addr_size) == 0 {
             break;
         }
-        let src = src_base.wrapping_add(index(vcpu.regs.rsi, addr32));
+        let src = src_base.wrapping_add(index(vcpu.regs.rsi, addr_size));
         let val = vcpu.mmu.read_u8(src, &vcpu.sregs)?;
         vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (val as u64);
         let forward = vcpu.regs.rflags & flags::bits::DF == 0;
-        vcpu.regs.rsi = advance_index(vcpu.regs.rsi, 1, forward, addr32);
+        vcpu.regs.rsi = advance_index(vcpu.regs.rsi, 1, forward, addr_size);
         if is_rep {
-            vcpu.regs.rcx = dec_count(vcpu.regs.rcx, addr32);
+            vcpu.regs.rcx = dec_count(vcpu.regs.rcx, addr_size);
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -45,26 +45,26 @@ pub fn lods(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let delta = op_size as u64;
     let is_rep = ctx.rep_prefix.is_some();
     let src_base = vcpu.get_segment_base(ctx.segment_override);
-    let addr32 = ctx.address_size_override && vcpu.sregs.cs.l;
+    let addr_size = address_size(vcpu, ctx);
     let count = if is_rep {
-        rep_count(vcpu.regs.rcx, addr32)
+        rep_count(vcpu.regs.rcx, addr_size)
     } else {
         1
     };
     if is_rep && count == 0 {
-        vcpu.regs.rcx = rep_count(vcpu.regs.rcx, addr32);
+        vcpu.regs.rcx = normalize_count(vcpu.regs.rcx, addr_size);
     }
     for _ in 0..count {
-        if is_rep && rep_count(vcpu.regs.rcx, addr32) == 0 {
+        if is_rep && rep_count(vcpu.regs.rcx, addr_size) == 0 {
             break;
         }
-        let src = src_base.wrapping_add(index(vcpu.regs.rsi, addr32));
+        let src = src_base.wrapping_add(index(vcpu.regs.rsi, addr_size));
         let val = vcpu.read_mem(src, op_size)?;
         vcpu.set_reg(0, val, op_size);
         let forward = vcpu.regs.rflags & flags::bits::DF == 0;
-        vcpu.regs.rsi = advance_index(vcpu.regs.rsi, delta, forward, addr32);
+        vcpu.regs.rsi = advance_index(vcpu.regs.rsi, delta, forward, addr_size);
         if is_rep {
-            vcpu.regs.rcx = dec_count(vcpu.regs.rcx, addr32);
+            vcpu.regs.rcx = dec_count(vcpu.regs.rcx, addr_size);
         }
     }
     vcpu.regs.rip += ctx.cursor as u64;
