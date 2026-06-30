@@ -5610,6 +5610,99 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Multi-lane EVEX VSIB cases complement the sparse one-lane probes above.
+    // Index setup lives outside the compared scratch window; selected gather
+    // lanes update vector state, and selected scatter lanes update scratch.
+    for &(label, asm, profile) in &[
+        (
+            "vgatherdps_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvgatherdps 64(%rax,%zmm2,4), %zmm1 {%k1}",
+            F32,
+        ),
+        (
+            "vgatherdpd_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %ymm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvgatherdpd 64(%rax,%ymm2,8), %zmm1 {%k1}",
+            F64,
+        ),
+        (
+            "vgatherqps_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $2, 328(%rax)\nmovq $4, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvgatherqps 64(%rax,%zmm2,4), %ymm1 {%k1}",
+            F32,
+        ),
+        (
+            "vgatherqpd_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $1, 328(%rax)\nmovq $3, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvgatherqpd 64(%rax,%zmm2,8), %zmm1 {%k1}",
+            F64,
+        ),
+        (
+            "vpgatherdd_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpgatherdd 64(%rax,%zmm2,4), %zmm1 {%k1}",
+            Int,
+        ),
+        (
+            "vpgatherdq_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %ymm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpgatherdq 64(%rax,%ymm2,8), %zmm1 {%k1}",
+            Int,
+        ),
+        (
+            "vpgatherqd_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $2, 328(%rax)\nmovq $4, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpgatherqd 64(%rax,%zmm2,4), %ymm1 {%k1}",
+            Int,
+        ),
+        (
+            "vpgatherqq_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $1, 328(%rax)\nmovq $3, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpgatherqq 64(%rax,%zmm2,8), %zmm1 {%k1}",
+            Int,
+        ),
+        (
+            "vscatterdps_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvscatterdps %zmm3, 64(%rax,%zmm2,4) {%k1}",
+            F32,
+        ),
+        (
+            "vscatterdpd_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %ymm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvscatterdpd %zmm3, 64(%rax,%ymm2,8) {%k1}",
+            F64,
+        ),
+        (
+            "vscatterqps_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $2, 328(%rax)\nmovq $4, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvscatterqps %ymm3, 64(%rax,%zmm2,4) {%k1}",
+            F32,
+        ),
+        (
+            "vscatterqpd_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $1, 328(%rax)\nmovq $3, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvscatterqpd %zmm3, 64(%rax,%zmm2,8) {%k1}",
+            F64,
+        ),
+        (
+            "vpscatterdd_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpscatterdd %zmm3, 64(%rax,%zmm2,4) {%k1}",
+            Int,
+        ),
+        (
+            "vpscatterdq_avx512_vsib_matrix_i32x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu32 %zmm2, 320(%rax)\nmovl $0, 320(%rax)\nmovl $1, 324(%rax)\nmovl $3, 328(%rax)\nvmovdqu32 320(%rax), %ymm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpscatterdq %zmm3, 64(%rax,%ymm2,8) {%k1}",
+            Int,
+        ),
+        (
+            "vpscatterqd_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $2, 328(%rax)\nmovq $4, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpscatterqd %ymm3, 64(%rax,%zmm2,4) {%k1}",
+            Int,
+        ),
+        (
+            "vpscatterqq_avx512_vsib_matrix_i64x3",
+            "vpxord %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 320(%rax)\nmovq $0, 320(%rax)\nmovq $1, 328(%rax)\nmovq $3, 336(%rax)\nvmovdqu64 320(%rax), %zmm2\nkxnorw %k1, %k1, %k1\nkshiftrw $13, %k1, %k1\nvpscatterqq %zmm3, 64(%rax,%zmm2,8) {%k1}",
+            Int,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: F,
+            profile,
+        });
+    }
+
     // Selected compare predicates beyond the single baseline immediate in
     // `base_table()`. K-destination compares do not accept {z}, so enumerate
     // no-mask and merge forms explicitly.
@@ -37390,6 +37483,42 @@ fn avx512_kvm_avx512_sparse_memory_corpus() {
         tally.compared, 46,
         "all AVX-512 sparse memory cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_avx512_vsib_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx512_vsib_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected AVX-512 VSIB matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on AVX-512 VSIB cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-512 VSIB case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-512 VSIB corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-512 VSIB cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::F),
+        16,
+        "all AVX-512 VSIB cases should run"
+    );
+    assert_eq!(tally.compared, 16, "all AVX-512 VSIB cases should compare");
 }
 
 #[test]
