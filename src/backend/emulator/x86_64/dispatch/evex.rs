@@ -2436,6 +2436,9 @@ impl X86_64Vcpu {
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
         match opcode {
+            // AVX10.2 BF8 conversion families use MAP5 opcode 0x74. They are
+            // not part of the base CPUID profile and are not implemented here.
+            0x74 => self.inject_undefined_instruction(),
             // VUCOMISH/VCOMISH scalar FP16 compare into RFLAGS.
             0x2E if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, false),
             0x2F if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, true),
@@ -2575,6 +2578,9 @@ impl X86_64Vcpu {
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         match opcode {
+            // Reserve MAP6 opcode 0x74 for unsupported AVX10.2 BF8 conversion
+            // encodings rather than reporting an internal unimplemented decode.
+            0x74 => self.inject_undefined_instruction(),
             // VCVTSH2SS scalar FP16-to-FP32 conversion.
             0x13 if evex.pp == 0 && !evex.w => insn::simd::evex_fp_scalar_convert(self, ctx, 2, 4),
             // VCVTPH2PSX packed FP16-to-FP32 conversion.
