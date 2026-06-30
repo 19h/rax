@@ -42,7 +42,8 @@ use std::sync::OnceLock;
 mod common;
 
 use common::{
-    run_until_hlt, setup_vm, setup_vm_no_idt, Bytes, GuestAddress, GuestMemoryMmap, Registers, VCpu,
+    run_until_hlt, setup_vm, setup_vm_compat, setup_vm_no_idt, Bytes, GuestAddress,
+    GuestMemoryMmap, Registers, VCpu,
 };
 
 // ---------------------------------------------------------------------------
@@ -941,6 +942,17 @@ enum KvmOutcome {
     Faulted,
 }
 
+#[derive(Clone, Copy)]
+struct CompatOut {
+    rax: u64,
+    rflags: u64,
+}
+
+enum KvmCompatOutcome {
+    Ran(CompatOut),
+    Faulted,
+}
+
 /// Lazily-initialised, process-wide KVM context. `None` once we determine KVM
 /// is unusable so every subsequent case skips without re-probing.
 struct KvmOracle {
@@ -1053,6 +1065,100 @@ impl KvmOracle {
         vector: usize,
     ) -> Result<KvmOutcome, String> {
         self.run_inner(code, input, Some(vector))
+    }
+
+    fn run_compat(&self, code: &[u8], rax: u64, rflags: u64) -> Result<KvmCompatOutcome, String> {
+        use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+
+        let vm = self
+            .kvm
+            .create_vm()
+            .map_err(|e| format!("create_vm: {e:?}"))?;
+        let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
+
+        install_page_tables(&mem);
+        mem.write(CODE_ADDR, code);
+
+        let region = kvm_userspace_memory_region {
+            slot: 0,
+            guest_phys_addr: 0,
+            memory_size: MEM_SIZE as u64,
+            userspace_addr: mem.ptr as u64,
+            flags: 0,
+        };
+        unsafe { vm.set_user_memory_region(region) }.map_err(|e| format!("set_memory: {e:?}"))?;
+
+        let mut vcpu = vm
+            .create_vcpu(0)
+            .map_err(|e| format!("create_vcpu: {e:?}"))?;
+        vcpu.set_cpuid2(&self.supported_cpuid)
+            .map_err(|e| format!("set_cpuid2: {e:?}"))?;
+
+        let mut sregs = vcpu.get_sregs().map_err(|e| format!("get_sregs: {e:?}"))?;
+        let compat_code = kvm_segment {
+            base: 0,
+            limit: 0xFFFFF,
+            selector: 0x8,
+            type_: 0xB,
+            present: 1,
+            dpl: 0,
+            db: 0,
+            s: 1,
+            l: 0,
+            g: 1,
+            avl: 0,
+            unusable: 0,
+            padding: 0,
+        };
+        let mut flat_data = compat_code;
+        flat_data.selector = 0x10;
+        flat_data.type_ = 0x3;
+        flat_data.db = 1;
+        sregs.cr0 = CR0_VAL;
+        sregs.cr3 = PML4_ADDR;
+        sregs.cr4 = CR4_VAL;
+        sregs.efer = EFER_VAL;
+        sregs.cs = compat_code;
+        sregs.ds = flat_data;
+        sregs.es = flat_data;
+        sregs.fs = flat_data;
+        sregs.gs = flat_data;
+        sregs.ss = flat_data;
+        vcpu.set_sregs(&sregs)
+            .map_err(|e| format!("set_sregs: {e:?}"))?;
+
+        let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
+        kregs.rip = CODE_ADDR;
+        kregs.rax = rax;
+        kregs.rsp = STACK_ADDR;
+        kregs.rflags = rflags | 0x2;
+        vcpu.set_regs(&kregs)
+            .map_err(|e| format!("set_regs: {e:?}"))?;
+
+        let mut iters = 0u64;
+        loop {
+            iters += 1;
+            if iters > MAX_ITERS {
+                return Err(format!("kvm compat exceeded {MAX_ITERS} iterations"));
+            }
+            match vcpu.run().map_err(|e| format!("kvm compat run: {e:?}"))? {
+                kvm_ioctls::VcpuExit::Hlt => break,
+                kvm_ioctls::VcpuExit::IoIn(_, data) => data.iter_mut().for_each(|b| *b = 0),
+                kvm_ioctls::VcpuExit::IoOut(..) => {}
+                kvm_ioctls::VcpuExit::Shutdown
+                | kvm_ioctls::VcpuExit::FailEntry(..)
+                | kvm_ioctls::VcpuExit::InternalError => return Ok(KvmCompatOutcome::Faulted),
+                other => return Err(format!("kvm compat abnormal exit: {other:?}")),
+            }
+        }
+
+        let final_regs = vcpu
+            .get_regs()
+            .map_err(|e| format!("get_regs(final compat): {e:?}"))?;
+        Ok(KvmCompatOutcome::Ran(CompatOut {
+            rax: final_regs.rax,
+            rflags: final_regs.rflags,
+        }))
     }
 
     fn run_inner(
@@ -1417,6 +1523,20 @@ fn run_interp_with_exception_trap(
     })
 }
 
+fn run_interp_compat(code: &[u8], rax: u64, rflags: u64) -> Result<CompatOut, String> {
+    let regs = Registers {
+        rax,
+        rflags,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm_compat(code, Some(regs));
+    let out_regs = run_until_hlt(&mut vcpu).map_err(|e| format!("interp compat run: {e:?}"))?;
+    Ok(CompatOut {
+        rax: out_regs.rax,
+        rflags: out_regs.rflags,
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Code emission: the identical `mov rax, scratch; <op>; hlt` both sides run.
 // ---------------------------------------------------------------------------
@@ -1429,6 +1549,12 @@ fn build_code(op: &[u8]) -> Vec<u8> {
     code.extend_from_slice(&SCRATCH_ADDR.to_le_bytes());
     code.extend_from_slice(op);
     code.push(0xf4); // hlt
+    code
+}
+
+fn build_compat_code(op: &[u8]) -> Vec<u8> {
+    let mut code = Vec::from(op);
+    code.push(0xf4);
     code
 }
 
@@ -20196,6 +20322,274 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
     Some(tally)
 }
 
+#[derive(Clone, Copy)]
+struct CompatCase {
+    label: &'static str,
+    op: &'static [u8],
+    rax: u64,
+    rflags: u64,
+    rflags_mask: u64,
+}
+
+fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
+    const SEED: u64 = 0x1234_5678_9abc_0000;
+    const ADJUST_FLAGS: u64 = RFLAGS_CF | RFLAGS_AF;
+    const DECIMAL_FLAGS: u64 = RFLAGS_CF | RFLAGS_AF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF;
+    const RADIX_FLAGS: u64 = RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF;
+
+    vec![
+        CompatCase {
+            label: "aaa_compat_no_adjust",
+            op: &[0x37],
+            rax: SEED | 0x1204,
+            rflags: 0,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aaa_compat_low_digit_adjust",
+            op: &[0x37],
+            rax: SEED | 0x120a,
+            rflags: 0,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aaa_compat_af_input_adjust",
+            op: &[0x37],
+            rax: SEED | 0x1203,
+            rflags: RFLAGS_AF,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aaa_compat_low_wrap_adjust",
+            op: &[0x37],
+            rax: SEED | 0x12ff,
+            rflags: 0,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aas_compat_no_adjust",
+            op: &[0x3f],
+            rax: SEED | 0x1204,
+            rflags: 0,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aas_compat_low_digit_adjust",
+            op: &[0x3f],
+            rax: SEED | 0x120a,
+            rflags: 0,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aas_compat_af_input_adjust",
+            op: &[0x3f],
+            rax: SEED | 0x1203,
+            rflags: RFLAGS_AF,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aas_compat_low_borrow_adjust",
+            op: &[0x3f],
+            rax: SEED | 0x1200,
+            rflags: RFLAGS_AF,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_no_adjust",
+            op: &[0x27],
+            rax: SEED | 0x0009,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_low_adjust",
+            op: &[0x27],
+            rax: SEED | 0x000a,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_high_adjust",
+            op: &[0x27],
+            rax: SEED | 0x009a,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_cf_input",
+            op: &[0x27],
+            rax: SEED | 0x0023,
+            rflags: RFLAGS_CF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_af_input",
+            op: &[0x27],
+            rax: SEED | 0x0023,
+            rflags: RFLAGS_AF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_cf_af_inputs_high_value",
+            op: &[0x27],
+            rax: SEED | 0x0099,
+            rflags: RFLAGS_CF | RFLAGS_AF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_no_adjust",
+            op: &[0x2f],
+            rax: SEED | 0x0009,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_low_adjust",
+            op: &[0x2f],
+            rax: SEED | 0x000a,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_high_adjust",
+            op: &[0x2f],
+            rax: SEED | 0x009a,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_cf_input",
+            op: &[0x2f],
+            rax: SEED | 0x0023,
+            rflags: RFLAGS_CF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_af_input",
+            op: &[0x2f],
+            rax: SEED | 0x0023,
+            rflags: RFLAGS_AF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_cf_af_inputs_high_value",
+            op: &[0x2f],
+            rax: SEED | 0x0099,
+            rflags: RFLAGS_CF | RFLAGS_AF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "aam_compat_base10",
+            op: &[0xd4, 0x0a],
+            rax: SEED | 0x0063,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aam_compat_base16",
+            op: &[0xd4, 0x10],
+            rax: SEED | 0x00ff,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aam_compat_base2",
+            op: &[0xd4, 0x02],
+            rax: SEED | 0x007f,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aam_compat_base255",
+            op: &[0xd4, 0xff],
+            rax: SEED | 0x00fe,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_base10",
+            op: &[0xd5, 0x0a],
+            rax: SEED | 0x0203,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_base16",
+            op: &[0xd5, 0x10],
+            rax: SEED | 0x0f0f,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_base2",
+            op: &[0xd5, 0x02],
+            rax: SEED | 0x7f01,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_base255",
+            op: &[0xd5, 0xff],
+            rax: SEED | 0x0203,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+    ]
+}
+
+fn run_compat_cases(name: &str, cases: &[CompatCase]) -> Option<()> {
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable");
+        return None;
+    };
+
+    let mut failures = Vec::new();
+    for case in cases {
+        let code = build_compat_code(case.op);
+        let kvm = match oracle.run_compat(&code, case.rax, case.rflags) {
+            Ok(KvmCompatOutcome::Ran(out)) => out,
+            Ok(KvmCompatOutcome::Faulted) => {
+                failures.push(format!("{}: KVM faulted in compatibility mode", case.label));
+                continue;
+            }
+            Err(e) => panic!("{}: KVM compat backend failure: {e}", case.label),
+        };
+        let interp = match run_interp_compat(&code, case.rax, case.rflags) {
+            Ok(out) => out,
+            Err(e) => {
+                failures.push(format!("{}: rax compatibility run failed: {e}", case.label));
+                continue;
+            }
+        };
+
+        if interp.rax != kvm.rax {
+            failures.push(format!(
+                "{}: rax interp={:#x} kvm={:#x}",
+                case.label, interp.rax, kvm.rax
+            ));
+        }
+        let im = interp.rflags & case.rflags_mask;
+        let km = kvm.rflags & case.rflags_mask;
+        if im != km {
+            failures.push(format!(
+                "{}: rflags(mask={:#x}) interp={:#x} kvm={:#x}",
+                case.label, case.rflags_mask, im, km
+            ));
+        }
+    }
+
+    eprintln!(
+        "[avx512-kvm-diff] {name} compatibility cases compared={}",
+        cases.len().saturating_sub(failures.len())
+    );
+    assert!(
+        failures.is_empty(),
+        "{name} compatibility divergences vs silicon:\n{}",
+        failures.join("\n")
+    );
+    Some(())
+}
+
 fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("push_es_invalid_long", &[0x06]),
@@ -23325,6 +23719,17 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
         legacy_invalid_long_mode_cases(),
         21,
     );
+}
+
+#[test]
+fn avx512_kvm_bcd_ascii_adjust_compat_corpus() {
+    let cases = compat_bcd_ascii_adjust_cases();
+    assert_eq!(
+        cases.len(),
+        28,
+        "unexpected compatibility BCD/ASCII-adjust corpus size"
+    );
+    let _ = run_compat_cases("BCD/ASCII-adjust", &cases);
 }
 
 #[test]
