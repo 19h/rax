@@ -20727,6 +20727,76 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    for &(label, asm, feat) in &[
+        (
+            "tzcnt_count_flag_matrix_r32_zero_cf",
+            "xorl %ecx, %ecx\ntzcntl %ecx, %r8d",
+            Bmi1,
+        ),
+        (
+            "tzcnt_count_flag_matrix_r32_lowbit_zf",
+            "movl $1, %ecx\ntzcntl %ecx, %r8d",
+            Bmi1,
+        ),
+        (
+            "tzcnt_count_flag_matrix_r32_highbit_mem",
+            "movl $0x80000000, 96(%rax)\ntzcntl 96(%rax), %r9d",
+            Bmi1,
+        ),
+        (
+            "tzcnt_count_flag_matrix_r64_zero_cf",
+            "xorq %rcx, %rcx\ntzcntq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "tzcnt_count_flag_matrix_r64_lowbit_zf",
+            "movq $1, %rcx\ntzcntq %rcx, %r8",
+            Bmi1,
+        ),
+        (
+            "tzcnt_count_flag_matrix_r64_highbit_mem",
+            "movabsq $0x8000000000000000, %r10\nmovq %r10, 104(%rax)\ntzcntq 104(%rax), %r9",
+            Bmi1,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r32_zero_cf",
+            "xorl %ecx, %ecx\nlzcntl %ecx, %r8d",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r32_highbit_zf",
+            "movl $0x80000000, %ecx\nlzcntl %ecx, %r8d",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r32_lowbit_mem",
+            "movl $1, 112(%rax)\nlzcntl 112(%rax), %r9d",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r64_zero_cf",
+            "xorq %rcx, %rcx\nlzcntq %rcx, %r8",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r64_highbit_zf",
+            "movabsq $0x8000000000000000, %rcx\nlzcntq %rcx, %r8",
+            Lzcnt,
+        ),
+        (
+            "lzcnt_count_flag_matrix_r64_lowbit_mem",
+            "movq $1, 120(%rax)\nlzcntq 120(%rax), %r9",
+            Lzcnt,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+
     // Scalar bit-count/manipulation edge cases. These deliberately force zero
     // sources, boundary counts, and all-one masks so the differential harness
     // checks flag semantics and count masking beyond the ordinary operand-form
@@ -21228,6 +21298,10 @@ fn case_rflags_mask(case: &Case) -> u64 {
 
     if case.label.contains("_sse42_string_width_") {
         return RFLAGS_CF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF;
+    }
+
+    if case.label.contains("_count_flag_matrix_") {
+        return RFLAGS_CF | RFLAGS_ZF;
     }
 
     // Logical integer ops define CF/PF/ZF/SF/OF and leave AF undefined.
@@ -21777,6 +21851,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             && op.iter().any(|byte| matches!(byte, 0xc4 | 0xc5));
         let popcnt_flag_matrix_setup_allowed = case.label.contains("_popcnt_flag_matrix_")
             && op.windows(2).any(|bytes| bytes == [0x0f, 0xb8]);
+        let count_flag_matrix_setup_allowed = case.label.contains("_count_flag_matrix_")
+            && op
+                .windows(2)
+                .any(|bytes| bytes[0] == 0x0f && matches!(bytes[1], 0xbc | 0xbd));
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
@@ -21788,6 +21866,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             || avx2_gather_edge_setup_allowed
             || f16c_mxcsr_round_setup_allowed
             || popcnt_flag_matrix_setup_allowed
+            || count_flag_matrix_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -36704,6 +36783,53 @@ fn avx512_kvm_popcnt_flag_matrix_corpus() {
     assert_eq!(
         tally.compared, 10,
         "all POPCNT flag-matrix cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_tzcnt_lzcnt_flag_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_count_flag_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected TZCNT/LZCNT flag-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on TZCNT/LZCNT flag-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a TZCNT/LZCNT flag-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "TZCNT/LZCNT flag-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "TZCNT/LZCNT flag-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Bmi1),
+        6,
+        "all TZCNT flag-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Lzcnt),
+        6,
+        "all LZCNT flag-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all TZCNT/LZCNT flag-matrix cases should compare"
     );
 }
 
