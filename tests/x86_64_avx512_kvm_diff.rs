@@ -18721,6 +18721,22 @@ fn irregular_cases() -> Vec<Case> {
             "rdgsbase_r32_zeroext_dest",
             "movabsq $0x0000000076543210, %rcx\nwrgsbase %rcx\nmovabsq $0xffffffffffffffff, %r8\nrdgsbase %r8d",
         ),
+        (
+            "wrfsbase_fsgsbase_reg_matrix_r15_roundtrip",
+            "movabsq $0x0000000000567000, %r15\nwrfsbase %r15\nrdfsbase %r8",
+        ),
+        (
+            "wrgsbase_fsgsbase_reg_matrix_r15_roundtrip",
+            "movabsq $0x0000000000678000, %r15\nwrgsbase %r15\nrdgsbase %r9",
+        ),
+        (
+            "wrfsbase_fsgsbase_reg_matrix_eax_zeroext",
+            "movq %rax, %r10\nmovl $0x00789000, %eax\nwrfsbase %eax\nrdfsbase %r8\nmovq %r10, %rax",
+        ),
+        (
+            "rdgsbase_fsgsbase_reg_matrix_r15d_zeroext",
+            "movabsq $0x0000000076543000, %r8\nwrgsbase %r8\nmovabsq $-1, %r15\nrdgsbase %r15d\nmovq %r15, %r9",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18770,6 +18786,22 @@ fn irregular_cases() -> Vec<Case> {
         (
             "fs_segment_lea_ignores_base",
             "movabsq $0x4000, %r8\nwrfsbase %r8\nxorq %r9, %r9\nleaq %fs:96(%r9), %rcx",
+        ),
+        (
+            "fs_fsgsbase_segment_edge_base_switch_load",
+            "movabsq $0x1111222233334444, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x5555666677778888, %r8\nmovq %r8, 128(%rax)\nxorq %r9, %r9\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovq %fs:32(%r9), %rcx\nmovabsq $0x4080, %r8\nwrfsbase %r8\nmovq %fs:0(%r9), %rdx",
+        ),
+        (
+            "gs_fsgsbase_segment_edge_independent_fs_gs",
+            "movabsq $0x1111222233334444, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x5555666677778888, %r8\nmovq %r8, 128(%rax)\nxorq %r9, %r9\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovabsq $0x4080, %r8\nwrgsbase %r8\nmovq %fs:32(%r9), %rcx\nmovq %gs:0(%r9), %rdx",
+        ),
+        (
+            "fs_fsgsbase_segment_edge_store_after_base_switch",
+            "xorq %r9, %r9\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovq %rcx, %fs:96(%r9)\nmovabsq $0x4080, %r8\nwrfsbase %r8\nmovq %rdx, %fs:8(%r9)",
+        ),
+        (
+            "gs_fsgsbase_segment_edge_rmw_after_base_switch",
+            "xorq %r9, %r9\nmovabsq $0x4000, %r8\nwrgsbase %r8\naddq %rcx, %gs:64(%r9)\nmovabsq $0x4080, %r8\nwrgsbase %r8\naddq %rdx, %gs:16(%r9)",
         ),
     ] {
         out.push(Case {
@@ -33155,7 +33187,7 @@ fn avx512_kvm_fsgsbase_segment_memory_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        9,
+        13,
         "unexpected FSGSBASE segment-memory corpus size"
     );
 
@@ -33179,8 +33211,47 @@ fn avx512_kvm_fsgsbase_segment_memory_corpus() {
         "FSGSBASE segment-memory cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 9,
+        tally.compared, 13,
         "all FSGSBASE segment-memory cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_fsgsbase_edge_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.label.contains("_fsgsbase_reg_matrix_")
+                || case.label.contains("_fsgsbase_segment_edge_")
+        })
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected FSGSBASE edge-matrix corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on FSGSBASE edge-matrix cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an FSGSBASE edge-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "FSGSBASE edge-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "FSGSBASE edge-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fsgsbase),
+        8,
+        "all FSGSBASE edge-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared,
+        8,
+        "all FSGSBASE edge-matrix cases should compare"
     );
 }
 
