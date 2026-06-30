@@ -21112,6 +21112,74 @@ fn compat_bound_into_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_interrupt_exception_cases() -> Vec<CompatExceptionMarkerCase> {
+    vec![
+        CompatExceptionMarkerCase {
+            label: "int3_compat_bp_vector",
+            vector_name: "#BP",
+            vector: 3,
+            op: vec![0xcc],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_3_compat_bp_vector",
+            vector_name: "#BP",
+            vector: 3,
+            op: vec![0xcd, 0x03],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "icebp_compat_db_vector",
+            vector_name: "#DB",
+            vector: 1,
+            op: vec![0xf1],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_1_compat_db_vector",
+            vector_name: "#DB",
+            vector: 1,
+            op: vec![0xcd, 0x01],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_0_compat_de_vector",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0xcd, 0x00],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_4_compat_of_vector",
+            vector_name: "#OF",
+            vector: OF_VECTOR,
+            op: vec![0xcd, 0x04],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_80_compat_vector_128",
+            vector_name: "vector 128",
+            vector: 0x80,
+            op: vec![0xcd, 0x80],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "ud2_compat_ud_vector",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x0f, 0x0b],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "ud1_compat_modrm_ud_vector",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x0f, 0xb9, 0xc0],
+            input: compat_state_seed(),
+        },
+    ]
+}
+
 fn compat_far_pointer_input(offset: u32, selector: u16, operand32: bool) -> CompatStateIn {
     let mut input = compat_state_seed();
     if operand32 {
@@ -27533,6 +27601,17 @@ fn avx512_kvm_bound_into_compat_exception_corpus() {
         "unexpected compatibility BOUND/INTO exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("BOUND/INTO", &cases);
+}
+
+#[test]
+fn avx512_kvm_interrupt_exception_compat_corpus() {
+    let cases = compat_interrupt_exception_cases();
+    assert_eq!(
+        cases.len(),
+        9,
+        "unexpected compatibility interrupt exception corpus size"
+    );
+    let _ = run_compat_exception_marker_cases("interrupt", &cases);
 }
 
 #[test]
