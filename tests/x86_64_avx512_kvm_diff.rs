@@ -20092,6 +20092,83 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Core arithmetic flag edges. These cases make carry/borrow, signed
+    // overflow, zero/sign/parity results, and INC/DEC's CF preservation visible
+    // through the final RFLAGS and GPR/scratch comparison.
+    for &(label, asm) in &[
+        (
+            "add_core_arith_flag_edge_r8_signed_overflow",
+            "movb $0x7f, %r8b\naddb $1, %r8b",
+        ),
+        (
+            "add_core_arith_flag_edge_r8_carry_zero",
+            "movb $0xff, %r8b\naddb $1, %r8b",
+        ),
+        (
+            "add_core_arith_flag_edge_m8_carry_zero",
+            "movb $0xff, 92(%rax)\naddb $1, 92(%rax)",
+        ),
+        (
+            "adc_core_arith_flag_edge_r64_carry_in_zero",
+            "stc\nmovq $-1, %r8\nadcq $0, %r8",
+        ),
+        (
+            "adc_core_arith_flag_edge_m32_carry_in_zero",
+            "stc\nmovl $0xffffffff, 96(%rax)\nadcl $0, 96(%rax)",
+        ),
+        (
+            "sub_core_arith_flag_edge_r8_borrow_negative",
+            "xorb %r8b, %r8b\nsubb $1, %r8b",
+        ),
+        (
+            "sub_core_arith_flag_edge_m16_signed_overflow",
+            "movw $0x8000, 100(%rax)\nsubw $1, 100(%rax)",
+        ),
+        (
+            "sbb_core_arith_flag_edge_r64_borrow_in_negative",
+            "stc\nxorq %r8, %r8\nsbbq $0, %r8",
+        ),
+        (
+            "sbb_core_arith_flag_edge_m64_borrow_in_negative",
+            "stc\nmovq $0, 104(%rax)\nsbbq $0, 104(%rax)",
+        ),
+        (
+            "cmp_core_arith_flag_edge_r64_equal_preserves_dest",
+            "movabsq $0x1122334455667788, %r8\ncmpq %r8, %r8",
+        ),
+        (
+            "cmp_core_arith_flag_edge_r32_signed_less",
+            "movl $0x80000000, %r8d\ncmpl $1, %r8d",
+        ),
+        (
+            "inc_core_arith_flag_edge_preserves_cf_set",
+            "stc\nmovq $-1, %r8\nincq %r8",
+        ),
+        (
+            "inc_core_arith_flag_edge_m8_overflow_preserves_cf_clear",
+            "clc\nmovb $0x7f, 112(%rax)\nincb 112(%rax)",
+        ),
+        (
+            "dec_core_arith_flag_edge_preserves_cf_clear",
+            "clc\nxorq %r8, %r8\ndecq %r8",
+        ),
+        (
+            "neg_core_arith_flag_edge_zero_clears_cf",
+            "xorq %r8, %r8\nnegq %r8",
+        ),
+        (
+            "neg_core_arith_flag_edge_r32_min_overflow",
+            "movl $0x80000000, %r8d\nnegl %r8d",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // INC/DEC width variants. Byte forms dispatch through group 4 (0xFE),
     // including high-byte registers without REX; word/dword forms use group 5
     // with non-qword operand sizes.
@@ -35153,6 +35230,48 @@ fn avx512_kvm_core_rotate_double_shift_edge_corpus() {
     assert_eq!(
         tally.compared, 22,
         "all core rotate/double-shift edge cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_arith_flag_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_arith_flag_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        16,
+        "unexpected core arithmetic flag-edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core arithmetic flag-edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core arithmetic flag-edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core arithmetic flag-edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core arithmetic flag-edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        16,
+        "all core arithmetic flag-edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 16,
+        "all core arithmetic flag-edge cases should compare"
     );
 }
 
