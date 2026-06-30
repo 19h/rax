@@ -4,7 +4,7 @@ use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
-use super::call::validate_far_selector;
+use super::call::{near_branch_op_size, validate_far_selector};
 
 /// Group 4: INC/DEC r/m8 (0xFE)
 pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -247,6 +247,26 @@ fn group5_push(
     Ok(None)
 }
 
+fn mask_near_ip(ip: u64, op_size: u8) -> u64 {
+    match op_size {
+        2 => ip & 0xffff,
+        4 => ip & 0xffff_ffff,
+        _ => ip,
+    }
+}
+
+fn push_near_return(vcpu: &mut X86_64Vcpu, op_size: u8, ret_addr: u64) -> Result<()> {
+    match op_size {
+        2 => vcpu.push16(ret_addr as u16),
+        4 => vcpu.push32(ret_addr as u32),
+        8 => vcpu.push64(ret_addr),
+        _ => Err(Error::Emulator(format!(
+            "invalid near CALL return size: {}",
+            op_size
+        ))),
+    }
+}
+
 /// Group 5: INC/DEC/CALL/JMP/PUSH (0xFF)
 pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
@@ -285,33 +305,37 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.regs.rip += ctx.cursor as u64;
         }
         2 => {
-            // CALL r/m64
+            // CALL r/m16/r/m32/r/m64. Operand size controls target width and
+            // pushed return-address width outside long mode.
+            let op_size = near_branch_op_size(vcpu, ctx);
             let target = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 8)
+                vcpu.get_reg(rm, op_size)
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
-                vcpu.read_mem(addr, 8)?
+                vcpu.read_mem(addr, op_size)?
             };
             let ret_addr = vcpu.regs.rip + ctx.cursor as u64;
 
-            vcpu.push64(ret_addr)?;
-            vcpu.regs.rip = target;
+            push_near_return(vcpu, op_size, ret_addr)?;
+            vcpu.regs.rip = mask_near_ip(target, op_size);
         }
         3 => {
             // CALL FAR m16:16/m16:32/m16:64 (cold; far transfers are rare).
             return group5_call_far(vcpu, ctx, modrm_start, modrm);
         }
         4 => {
-            // JMP r/m64
+            // JMP r/m16/r/m32/r/m64. Operand size controls target width outside
+            // long mode.
+            let op_size = near_branch_op_size(vcpu, ctx);
             let target = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 8)
+                vcpu.get_reg(rm, op_size)
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
-                vcpu.read_mem(addr, 8)?
+                vcpu.read_mem(addr, op_size)?
             };
-            vcpu.regs.rip = target;
+            vcpu.regs.rip = mask_near_ip(target, op_size);
         }
         5 => {
             // JMP FAR m16:16/m16:32/m16:64 (cold; far transfers are rare).

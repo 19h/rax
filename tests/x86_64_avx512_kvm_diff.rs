@@ -1725,7 +1725,15 @@ fn run_interp_compat(code: &[u8], rax: u64, rflags: u64) -> Result<CompatOut, St
         rflags,
         ..Registers::default()
     };
-    let (mut vcpu, _) = setup_vm_compat(code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(code, Some(regs));
+    mem.write_slice(code, GuestAddress(COMPAT_CODE_ADDR))
+        .map_err(|e| format!("write compat code: {e:?}"))?;
+    let mut live_regs = vcpu
+        .get_regs()
+        .map_err(|e| format!("interp compat get regs: {e:?}"))?;
+    live_regs.rip = COMPAT_CODE_ADDR;
+    vcpu.set_regs(&live_regs)
+        .map_err(|e| format!("interp compat set regs: {e:?}"))?;
     let out_regs = run_until_hlt(&mut vcpu).map_err(|e| format!("interp compat run: {e:?}"))?;
     Ok(CompatOut {
         rax: out_regs.rax,
@@ -1768,6 +1776,14 @@ fn run_interp_compat_state_inner(
         ..Registers::default()
     };
     let (mut vcpu, mem) = setup_vm_compat(code, Some(regs));
+    mem.write_slice(code, GuestAddress(COMPAT_CODE_ADDR))
+        .map_err(|e| format!("write compat state code: {e:?}"))?;
+    let mut live_regs = vcpu
+        .get_regs()
+        .map_err(|e| format!("interp compat state get regs: {e:?}"))?;
+    live_regs.rip = COMPAT_CODE_ADDR;
+    vcpu.set_regs(&live_regs)
+        .map_err(|e| format!("interp compat state set regs: {e:?}"))?;
     let mut sregs = vcpu
         .get_sregs()
         .map_err(|e| format!("interp compat get sregs: {e:?}"))?;
@@ -21384,6 +21400,174 @@ fn compat_loop_control_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_control_target(offset: u16) -> u16 {
+    (COMPAT_CODE_ADDR as u16).wrapping_add(offset)
+}
+
+fn compat_control_seed() -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input
+}
+
+fn compat_control_modrm16_target_input(offset: usize, target: u16) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.scratch[offset..offset + 2].copy_from_slice(&target.to_le_bytes());
+    input
+}
+
+fn compat_control_addr32_target_input(offset: usize, target: u32) -> CompatStateIn {
+    let mut input = compat_control_seed();
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input.scratch[offset..offset + 4].copy_from_slice(&target.to_le_bytes());
+    input
+}
+
+fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "jmp_rel16_compat_taken",
+            op: vec![0xe9, 0x03, 0x00, 0xb8, 0x11, 0x11, 0xb8, 0x22, 0x22],
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jmp_rel32_compat_operand32_taken",
+            op: vec![
+                0x66, 0xe9, 0x06, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66,
+                0xb8, 0x22, 0x22, 0x00, 0x00,
+            ],
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jcc_rel16_compat_taken",
+            op: vec![
+                0x39, 0xc0, 0x0f, 0x84, 0x03, 0x00, 0xb8, 0x11, 0x11, 0xb8, 0x22, 0x22,
+            ],
+            input: compat_control_seed(),
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "call_rel16_ret16_compat_stack_roundtrip",
+            op: vec![
+                0xe8, 0x05, 0x00, 0xb8, 0x22, 0x22, 0xeb, 0x04, 0xb9, 0x33, 0x33, 0xc3,
+            ],
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "call_rel16_ret_imm16_compat_stack_adjust",
+            op: vec![
+                0x68, 0x77, 0x77, 0xe8, 0x05, 0x00, 0xb8, 0x22, 0x22, 0xeb, 0x06, 0xb9, 0x33,
+                0x33, 0xc2, 0x02, 0x00,
+            ],
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "call_rel32_ret32_compat_operand32_stack_roundtrip",
+            op: vec![
+                0x66, 0xe8, 0x08, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb,
+                0x08, 0x66, 0xb9, 0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
+            ],
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jmp_rm16_reg_compat_uses_word_target",
+            op: {
+                let target = compat_control_target(0x0008);
+                vec![
+                    0xba,
+                    (target & 0xff) as u8,
+                    (target >> 8) as u8,
+                    0xff,
+                    0xe2,
+                    0xb8,
+                    0x11,
+                    0x11,
+                    0xb8,
+                    0x22,
+                    0x22,
+                ]
+            },
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jmp_rm16_mem_compat_modrm16_uses_word_target",
+            op: vec![0xff, 0x20, 0xb8, 0x11, 0x11, 0xb8, 0x22, 0x22],
+            input: compat_control_modrm16_target_input(0x10, compat_control_target(0x0005)),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "call_rm16_reg_ret16_compat_uses_word_target",
+            op: {
+                let target = compat_control_target(0x000a);
+                vec![
+                    0xba,
+                    (target & 0xff) as u8,
+                    (target >> 8) as u8,
+                    0xff,
+                    0xd2,
+                    0xb8,
+                    0x22,
+                    0x22,
+                    0xeb,
+                    0x04,
+                    0xb9,
+                    0x33,
+                    0x33,
+                    0xc3,
+                ]
+            },
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "call_rm16_mem_ret16_compat_modrm16_uses_word_target",
+            op: vec![
+                0xff, 0x10, 0xb8, 0x22, 0x22, 0xeb, 0x04, 0xb9, 0x33, 0x33, 0xc3,
+            ],
+            input: compat_control_modrm16_target_input(0x10, compat_control_target(0x0007)),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "call_rm32_reg_ret32_compat_operand32_uses_dword_target",
+            op: {
+                let target = u32::from(compat_control_target(0x0011));
+                let mut op = vec![0x66, 0xba];
+                op.extend_from_slice(&target.to_le_bytes());
+                op.extend_from_slice(&[
+                    0x66, 0xff, 0xd2, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb, 0x08, 0x66,
+                    0xb9, 0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
+                ]);
+                op
+            },
+            input: compat_control_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jmp_rm32_mem_compat_addr32_uses_dword_target",
+            op: vec![
+                0x67, 0x66, 0xff, 0x24, 0x33, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66, 0xb8,
+                0x22, 0x22, 0x00, 0x00,
+            ],
+            input: compat_control_addr32_target_input(
+                0x20,
+                u32::from(compat_control_target(0x000b)),
+            ),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_xlat_input(rbx: u64, al: u8, table_index: usize, table_value: u8) -> CompatStateIn {
     let mut input = compat_state_seed();
     input.rax = 0xaaaa_bbbb_cccc_0000 | u64::from(al);
@@ -25749,6 +25933,17 @@ fn avx512_kvm_loop_control_compat_corpus() {
         "unexpected compatibility loop-control corpus size"
     );
     let _ = run_compat_state_cases("loop-control", &cases);
+}
+
+#[test]
+fn avx512_kvm_control_transfer_compat_corpus() {
+    let cases = compat_control_transfer_cases();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected compatibility control-transfer corpus size"
+    );
+    let _ = run_compat_state_cases("control-transfer", &cases);
 }
 
 #[test]
