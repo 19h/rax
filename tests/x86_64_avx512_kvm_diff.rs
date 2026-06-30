@@ -20871,6 +20871,68 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Long-mode repeated CMPS/SCAS termination edges. The snippets seed the
+    // compared string windows explicitly so RCX exhaustion, early stop, pointer
+    // movement, and final comparison flags are all visible without relying on
+    // the generic string input shaper.
+    for &(label, asm) in &[
+        (
+            "repe_cmpsb_core_string_repeat_edge_stops_on_mismatch",
+            "movl $0x55332211, 128(%rax)\nmovl $0x55442211, 32(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $4, %ecx\ncld\nrepe cmpsb",
+        ),
+        (
+            "repe_cmpsb_core_string_repeat_edge_consumes_all_equal",
+            "movl $0x44332211, 128(%rax)\nmovl $0x44332211, 32(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $4, %ecx\ncld\nrepe cmpsb",
+        ),
+        (
+            "repne_cmpsb_core_string_repeat_edge_stops_on_equal",
+            "movl $0x55332211, 128(%rax)\nmovl $0x55442222, 32(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $4, %ecx\ncld\nrepne cmpsb",
+        ),
+        (
+            "repne_cmpsb_core_string_repeat_edge_consumes_all_mismatch",
+            "movl $0x44332211, 128(%rax)\nmovl $0x88776655, 32(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $4, %ecx\ncld\nrepne cmpsb",
+        ),
+        (
+            "repe_cmpsq_core_string_repeat_edge_stops_on_mismatch",
+            "movabsq $0x1111222233334444, %r10\nmovq %r10, 128(%rax)\nmovq %r10, 32(%rax)\nmovabsq $0x5555666677778888, %r10\nmovq %r10, 136(%rax)\nmovq %r10, 40(%rax)\nmovabsq $0x9999aaaabbbbcccc, %r10\nmovq %r10, 144(%rax)\nmovabsq $0x9999aaaabbbbcccd, %r10\nmovq %r10, 48(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $3, %ecx\ncld\nrepe cmpsq",
+        ),
+        (
+            "repne_cmpsq_core_string_repeat_edge_stops_on_equal",
+            "movabsq $0x1111222233334444, %r10\nmovq %r10, 128(%rax)\nmovabsq $0x1111222233334445, %r10\nmovq %r10, 32(%rax)\nmovabsq $0x5555666677778888, %r10\nmovq %r10, 136(%rax)\nmovabsq $0x5555666677778889, %r10\nmovq %r10, 40(%rax)\nmovabsq $0x9999aaaabbbbcccc, %r10\nmovq %r10, 144(%rax)\nmovq %r10, 48(%rax)\nleaq 128(%rax), %rsi\nleaq 32(%rax), %rdi\nmovl $3, %ecx\ncld\nrepne cmpsq",
+        ),
+        (
+            "repe_scasb_core_string_repeat_edge_stops_on_mismatch",
+            "movl $0x5a5b5a5a, 32(%rax)\nleaq 32(%rax), %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\ncld\nrepe scasb",
+        ),
+        (
+            "repe_scasb_core_string_repeat_edge_consumes_all_equal",
+            "movl $0x5a5a5a5a, 32(%rax)\nleaq 32(%rax), %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\ncld\nrepe scasb",
+        ),
+        (
+            "repne_scasb_core_string_repeat_edge_stops_on_equal",
+            "movl $0x7e5a7d7c, 32(%rax)\nleaq 32(%rax), %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\ncld\nrepne scasb",
+        ),
+        (
+            "repne_scasq_core_string_repeat_edge_consumes_all_mismatch",
+            "movabsq $0x1111222233334444, %r10\nmovq %r10, 32(%rax)\nmovabsq $0x5555666677778888, %r10\nmovq %r10, 40(%rax)\nleaq 32(%rax), %rdi\nmovl $2, %ecx\nmovabsq $0x9999aaaabbbbcccc, %rax\ncld\nrepne scasq",
+        ),
+        (
+            "repe_cmpsb_core_string_repeat_edge_df_stops_on_mismatch",
+            "movl $0x55112233, 128(%rax)\nmovl $0x55112244, 32(%rax)\nleaq 131(%rax), %rsi\nleaq 35(%rax), %rdi\nmovl $4, %ecx\nstd\nrepe cmpsb",
+        ),
+        (
+            "repne_scasb_core_string_repeat_edge_df_stops_on_equal",
+            "movl $0x7e5a7d7c, 32(%rax)\nleaq 35(%rax), %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\nstd\nrepne scasb",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // SSE4.2 CRC32C accumulator forms. These update r8/r8d while leaving flags
     // unchanged, with source coverage across byte/word/dword/qword and memory.
     for &(label, asm) in &[
@@ -35558,7 +35620,7 @@ fn avx512_kvm_core_string_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_string"))
         .collect();
-    assert_eq!(cases.len(), 66, "unexpected core string corpus size");
+    assert_eq!(cases.len(), 78, "unexpected core string corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35576,7 +35638,51 @@ fn avx512_kvm_core_string_corpus() {
         tally.skipped_feature, 0,
         "core string cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 66, "all core string cases should compare");
+    assert_eq!(tally.compared, 78, "all core string cases should compare");
+}
+
+#[test]
+fn avx512_kvm_core_string_repeat_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.feat == Feat::Core && case.label.contains("_core_string_repeat_edge_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        12,
+        "unexpected core string repeat-edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core string repeat-edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core string repeat-edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core string repeat-edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core string repeat-edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        12,
+        "all core string repeat-edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 12,
+        "all core string repeat-edge cases should compare"
+    );
 }
 
 #[test]
