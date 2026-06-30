@@ -19359,6 +19359,75 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // Legacy prefix folding and precedence matrix. Raw bytes are used for
+    // non-canonical but architecturally accepted streams that normal assembler
+    // syntax either canonicalizes or refuses to spell directly.
+    for &(label, asm) in &[
+        (
+            "add_core_prefix_matrix_repeated_data16_m16_r8w",
+            ".byte 0x66, 0x66, 0x44, 0x01, 0x40, 0x08\n",
+        ),
+        (
+            "add_core_prefix_matrix_data16_rexw_m64_r8",
+            ".byte 0x66, 0x4c, 0x01, 0x40, 0x10\n",
+        ),
+        (
+            "add_core_prefix_matrix_rex_before_data16_m16_ax",
+            ".byte 0x4c, 0x66, 0x01, 0x40, 0x18\n",
+        ),
+        (
+            "mov_core_prefix_matrix_repeated_addr32_m64_r8",
+            ".byte 0x67, 0x67, 0x4c, 0x8b, 0x00\n",
+        ),
+        (
+            "mov_core_prefix_matrix_last_rex_wins_rax",
+            ".byte 0x4c, 0x48, 0x8b, 0x40, 0x20\n",
+        ),
+        (
+            "mov_core_prefix_matrix_last_rex_extends_r8",
+            ".byte 0x48, 0x4c, 0x8b, 0x40, 0x28\n",
+        ),
+        (
+            "mov_core_prefix_matrix_ds_override_ignored_m64_r8",
+            ".byte 0x3e, 0x4c, 0x8b, 0x40, 0x30\n",
+        ),
+        (
+            "mov_core_prefix_matrix_es_override_ignored_m64_r8",
+            ".byte 0x26, 0x4c, 0x8b, 0x40, 0x38\n",
+        ),
+        (
+            "mov_core_prefix_matrix_cs_override_ignored_m64_r8",
+            ".byte 0x2e, 0x4c, 0x8b, 0x40, 0x40\n",
+        ),
+        (
+            "mov_core_prefix_matrix_ss_override_stack_m64_r8",
+            ".byte 0x36, 0x4c, 0x8b, 0x45, 0xb0\n",
+        ),
+        (
+            "add_core_prefix_matrix_rep_ignored_m32_r8d",
+            ".byte 0xf3, 0x44, 0x01, 0x40, 0x48\n",
+        ),
+        (
+            "add_core_prefix_matrix_repne_ignored_m32_r8d",
+            ".byte 0xf2, 0x44, 0x01, 0x40, 0x50\n",
+        ),
+        (
+            "mov_core_prefix_matrix_no_rex_ah_imm8",
+            ".byte 0xb4, 0x5a\n",
+        ),
+        (
+            "mov_core_prefix_matrix_rex_spl_imm8",
+            ".byte 0x40, 0xb4, 0x5a\n",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Double-width atomic compare/exchange. These explicitly seed the memory
     // operand plus accumulator/new-value registers, then check success, failure,
     // and LOCK-prefixed memory forms through the scratch/GPR/RFLAGS diff.
@@ -34665,6 +34734,48 @@ fn avx512_kvm_core_hle_prefix_corpus() {
     assert_eq!(
         tally.compared, 7,
         "all core HLE prefix cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_prefix_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_prefix_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        14,
+        "unexpected core legacy-prefix matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core legacy-prefix matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core legacy-prefix matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core legacy-prefix matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core legacy-prefix matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        14,
+        "all core legacy-prefix matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 14,
+        "all core legacy-prefix matrix cases should compare"
     );
 }
 
