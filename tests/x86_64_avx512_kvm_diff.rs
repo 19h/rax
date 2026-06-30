@@ -21032,6 +21032,46 @@ fn unsupported_amd_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stat
         .collect()
 }
 
+const RAO_INT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("rao_int_aaddl_unsupported", &[0x0f, 0x38, 0xfc, 0x18]),
+    (
+        "rao_int_aaddq_unsupported",
+        &[0x48, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_aandl_unsupported",
+        &[0x66, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_aandq_unsupported",
+        &[0x66, 0x48, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_aorl_unsupported",
+        &[0xf2, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_aorq_unsupported",
+        &[0xf2, 0x48, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_axorl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+    (
+        "rao_int_axorq_unsupported",
+        &[0xf3, 0x48, 0x0f, 0x38, 0xfc, 0x18],
+    ),
+];
+
+fn unsupported_rao_int_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    RAO_INT_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -23145,6 +23185,26 @@ fn avx512_kvm_amd_system_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AMD system", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_rao_int_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_rao_int_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD RAO-INT probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported RAO-INT", cases, expected);
 }
 
 #[test]
