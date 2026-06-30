@@ -21568,6 +21568,204 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_alu_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF;
+    input
+}
+
+fn compat_alu_mem8_input(offset: usize, value: u8) -> CompatStateIn {
+    let mut input = compat_alu_seed();
+    input.scratch[offset] = value;
+    input
+}
+
+fn compat_alu_mem16_input(offset: usize, value: u16) -> CompatStateIn {
+    let mut input = compat_alu_seed();
+    input.scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_alu_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_alu_seed();
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_alu_addr32_mem32_input(offset: usize, value: u32) -> CompatStateIn {
+    let mut input = compat_alu_mem32_input(offset, value);
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input
+}
+
+fn compat_alu_modrm_cases() -> Vec<CompatStateCase> {
+    const ARITH_FLAGS: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    const LOGIC_FLAGS: u64 =
+        RFLAGS_CF | RFLAGS_PF | RFLAGS_ZF | RFLAGS_SF | RFLAGS_OF | RFLAGS_IF | RFLAGS_DF;
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "add16_compat_modrm16_mem_reg_overflow",
+            op: vec![0x01, 0x08],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0x7fff);
+                input.rcx = (input.rcx & !0xffff) | 0x0001;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "adc16_compat_modrm16_mem_to_ax_carry_zero",
+            op: vec![0x13, 0x00],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0xffff);
+                input.rax &= !0xffff;
+                input.rflags |= RFLAGS_CF;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "sbb16_compat_modrm16_reg_to_mem_borrow",
+            op: vec![0x19, 0x08],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0x0000);
+                input.rcx = (input.rcx & !0xffff) | 0x0001;
+                input.rflags |= RFLAGS_CF;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "sub32_compat_addr32_mem_to_eax_zeroes_high",
+            op: vec![0x67, 0x66, 0x2b, 0x04, 0x33],
+            input: {
+                let mut input = compat_alu_addr32_mem32_input(0x20, 0x0000_0001);
+                input.rax = 0xaaaa_bbbb_0000_0000;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "cmp16_compat_disp16_flags_only",
+            op: vec![0x3b, 0x06, 0x80, 0x40],
+            input: {
+                let mut input = compat_alu_mem16_input(0x80, 0x0001);
+                input.rax = (input.rax & !0xffff) | 0x8000;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "and16_compat_modrm16_mem_reg_logic_flags",
+            op: vec![0x21, 0x08],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0xf0f0);
+                input.rcx = (input.rcx & !0xffff) | 0x0ff0;
+                input
+            },
+            rflags_mask: LOGIC_FLAGS,
+        },
+        CompatStateCase {
+            label: "or16_compat_modrm16_mem_to_ax_logic_flags",
+            op: vec![0x0b, 0x00],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0x0ff0);
+                input.rax = (input.rax & !0xffff) | 0xf000;
+                input
+            },
+            rflags_mask: LOGIC_FLAGS,
+        },
+        CompatStateCase {
+            label: "xor32_compat_addr32_mem_to_eax_zeroes_high",
+            op: vec![0x67, 0x66, 0x33, 0x04, 0x33],
+            input: {
+                let mut input = compat_alu_addr32_mem32_input(0x20, 0xffff_0000);
+                input.rax = 0xaaaa_bbbb_ffff_0000;
+                input
+            },
+            rflags_mask: LOGIC_FLAGS,
+        },
+        CompatStateCase {
+            label: "test16_compat_modrm16_mem_reg_no_write",
+            op: vec![0x85, 0x08],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0xf000);
+                input.rcx = (input.rcx & !0xffff) | 0x0f00;
+                input
+            },
+            rflags_mask: LOGIC_FLAGS,
+        },
+        CompatStateCase {
+            label: "group1_add16_compat_imm8_mem",
+            op: vec![0x83, 0x00, 0x01],
+            input: compat_alu_mem16_input(0x10, 0x7fff),
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group1_sub16_compat_imm16_mem",
+            op: vec![0x81, 0x28, 0x01, 0x00],
+            input: compat_alu_mem16_input(0x10, 0x0000),
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group1_cmp8_compat_imm_mem_flags_only",
+            op: vec![0x80, 0x38, 0x80],
+            input: compat_alu_mem8_input(0x10, 0x7f),
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group3_test8_compat_imm_mem_logic_flags",
+            op: vec![0xf6, 0x00, 0xf0],
+            input: compat_alu_mem8_input(0x10, 0x0f),
+            rflags_mask: LOGIC_FLAGS,
+        },
+        CompatStateCase {
+            label: "group3_not16_compat_mem_preserves_flags",
+            op: vec![0xf7, 0x10],
+            input: compat_alu_mem16_input(0x10, 0x00ff),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "group3_neg16_compat_mem_status_flags",
+            op: vec![0xf7, 0x18],
+            input: compat_alu_mem16_input(0x10, 0x8000),
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group4_inc8_compat_mem_preserves_cf",
+            op: vec![0xfe, 0x00],
+            input: {
+                let mut input = compat_alu_mem8_input(0x10, 0x7f);
+                input.rflags |= RFLAGS_CF;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group5_dec16_compat_mem_preserves_cf",
+            op: vec![0xff, 0x08],
+            input: {
+                let mut input = compat_alu_mem16_input(0x10, 0x8000);
+                input.rflags |= RFLAGS_CF;
+                input
+            },
+            rflags_mask: ARITH_FLAGS,
+        },
+        CompatStateCase {
+            label: "group5_inc32_compat_addr32_mem_status_flags",
+            op: vec![0x67, 0x66, 0xff, 0x04, 0x33],
+            input: compat_alu_addr32_mem32_input(0x20, 0x7fff_ffff),
+            rflags_mask: ARITH_FLAGS,
+        },
+    ]
+}
+
 fn compat_xlat_input(rbx: u64, al: u8, table_index: usize, table_value: u8) -> CompatStateIn {
     let mut input = compat_state_seed();
     input.rax = 0xaaaa_bbbb_cccc_0000 | u64::from(al);
@@ -25944,6 +26142,17 @@ fn avx512_kvm_control_transfer_compat_corpus() {
         "unexpected compatibility control-transfer corpus size"
     );
     let _ = run_compat_state_cases("control-transfer", &cases);
+}
+
+#[test]
+fn avx512_kvm_alu_modrm_compat_corpus() {
+    let cases = compat_alu_modrm_cases();
+    assert_eq!(
+        cases.len(),
+        18,
+        "unexpected compatibility ALU ModRM corpus size"
+    );
+    let _ = run_compat_state_cases("ALU ModRM", &cases);
 }
 
 #[test]
