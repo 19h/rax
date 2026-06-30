@@ -21838,6 +21838,83 @@ fn compat_stack_addr32_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_stack_flags_seed(rflags: u64) -> CompatStateIn {
+    let mut input = compat_stack_addr32_seed();
+    input.rflags = rflags | 0x2;
+    input
+}
+
+fn compat_stack_flags_pop16_input(stack_flags: u16, rflags: u64) -> CompatStateIn {
+    let mut input = compat_stack_flags_seed(rflags);
+    let stack_offset = (STACK_ADDR - STACK_WINDOW_ADDR) as usize;
+    input.stack[stack_offset..stack_offset + 2].copy_from_slice(&stack_flags.to_le_bytes());
+    input
+}
+
+fn compat_stack_flags_pop32_input(stack_flags: u32, rflags: u64) -> CompatStateIn {
+    let mut input = compat_stack_flags_seed(rflags);
+    let stack_offset = (STACK_ADDR - STACK_WINDOW_ADDR) as usize;
+    input.stack[stack_offset..stack_offset + 4].copy_from_slice(&stack_flags.to_le_bytes());
+    input
+}
+
+fn compat_stack_flags_cases() -> Vec<CompatStateCase> {
+    const FLAGS_MASK: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF | RFLAGS_AC;
+    const LOW_FLAGS_SET: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    const FLAGS32_SET: u64 = LOW_FLAGS_SET | RFLAGS_AC;
+
+    vec![
+        CompatStateCase {
+            label: "pushf16_compat_stack_addr32_low_flags_image",
+            op: vec![0x9c],
+            input: compat_stack_flags_seed(FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "pushfd32_compat_stack_addr32_flags_image",
+            op: vec![0x66, 0x9c],
+            input: compat_stack_flags_seed(FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "popf16_compat_sets_low_status_if_df",
+            op: vec![0x9d],
+            input: compat_stack_flags_pop16_input(0x0ed7, 0),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "popf16_compat_clears_low_flags_preserves_ac",
+            op: vec![0x9d],
+            input: compat_stack_flags_pop16_input(0x0002, FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "popfd32_compat_sets_status_if_df_ac",
+            op: vec![0x66, 0x9d],
+            input: compat_stack_flags_pop32_input(0x0004_0ed7, 0),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "popfd32_compat_clears_status_if_df_ac",
+            op: vec![0x66, 0x9d],
+            input: compat_stack_flags_pop32_input(0x0000_0002, FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "pushf_popf16_compat_roundtrip_stack_addr32",
+            op: vec![0x9c, 0x9d],
+            input: compat_stack_flags_seed(FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "pushfd_popfd32_compat_roundtrip_stack_addr32",
+            op: vec![0x66, 0x9c, 0x66, 0x9d],
+            input: compat_stack_flags_seed(FLAGS32_SET),
+            rflags_mask: FLAGS_MASK,
+        },
+    ]
+}
+
 fn compat_implicit_state_input(rax: u64, rdx: u64, rflags: u64) -> CompatStateIn {
     let mut input = compat_state_seed();
     input.rax = rax;
@@ -25655,6 +25732,17 @@ fn avx512_kvm_stack_addr32_compat_corpus() {
         "unexpected compatibility stack address-size corpus size"
     );
     let _ = run_compat_state_cases("stack address-size", &cases);
+}
+
+#[test]
+fn avx512_kvm_stack_flags_compat_corpus() {
+    let cases = compat_stack_flags_cases();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected compatibility stack-flag corpus size"
+    );
+    let _ = run_compat_state_cases("stack flags", &cases);
 }
 
 #[test]
