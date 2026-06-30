@@ -20372,6 +20372,58 @@ fn unsupported_system_extension_cases() -> Vec<(&'static str, &'static [u8])> {
     cases
 }
 
+const KEY_LOCKER_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("loadiwkey_unsupported", &[0xf3, 0x0f, 0x38, 0xdc, 0xca]),
+    (
+        "encodekey128_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xfa, 0x0b],
+    ),
+    (
+        "encodekey256_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xfb, 0x0b],
+    ),
+    (
+        "aesenc128kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xdc, 0x03],
+    ),
+    (
+        "aesdec128kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xdd, 0x03],
+    ),
+    (
+        "aesenc256kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xde, 0x03],
+    ),
+    (
+        "aesdec256kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xdf, 0x03],
+    ),
+    (
+        "aesencwide128kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xd8, 0x03],
+    ),
+    (
+        "aesdecwide128kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xd8, 0x0b],
+    ),
+    (
+        "aesencwide256kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xd8, 0x12],
+    ),
+    (
+        "aesdecwide256kl_unsupported",
+        &[0xf3, 0x0f, 0x38, 0xd8, 0x19],
+    ),
+];
+
+fn unsupported_key_locker_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    KEY_LOCKER_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22224,6 +22276,26 @@ fn avx512_kvm_unsupported_system_extension_ud_corpus() {
         eprintln!("[skip] host exposes HRESET and PCONFIG");
     }
     run_ud_marker_corpus("unsupported system extension", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_key_locker_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_key_locker_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD Key Locker probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported key locker", cases, expected);
 }
 
 #[test]
