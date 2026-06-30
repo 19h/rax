@@ -77,16 +77,30 @@ pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     Ok(None)
 }
 
-/// BOUND (32-bit) or EVEX prefix (64-bit) (0x62)
+fn looks_like_evex_prefix(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> bool {
+    if ctx.cursor + 3 > ctx.bytes_len {
+        return false;
+    }
+
+    let p0 = ctx.bytes[ctx.cursor];
+    let p1 = ctx.bytes[ctx.cursor + 1];
+    let mm = p0 & 0x07;
+    let apx_mode = mm == 4 && vcpu.apx_enabled();
+    let supported_map = matches!(mm, 1 | 2 | 3 | 5 | 6) || apx_mode;
+
+    supported_map && ((p0 & 0x08) == 0 || apx_mode) && ((p1 & 0x04) != 0 || apx_mode)
+}
+
+/// BOUND (legacy/compatibility) or EVEX prefix (0x62)
 pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Check if we're in 64-bit mode by looking at EFER.LMA AND CS.L
-    // EFER.LMA = 1 and CS.L = 1 means 64-bit mode (EVEX)
-    // EFER.LMA = 1 and CS.L = 0 means compatibility mode (BOUND)
-    // EFER.LMA = 0 means legacy/real mode (BOUND)
+    // Check if we're in 64-bit mode by looking at EFER.LMA AND CS.L.
+    // In 64-bit mode BOUND is invalid and 0x62 is always an EVEX/APX prefix.
+    // In compatibility/legacy modes, valid EVEX payloads still decode as EVEX;
+    // otherwise 0x62 remains the legacy BOUND opcode.
     let in_long_mode = (vcpu.sregs.efer & 0x400) != 0; // EFER.LMA = bit 10
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
-    if in_64bit_mode {
+    if in_64bit_mode || looks_like_evex_prefix(vcpu, ctx) {
         // A legacy REX (0x40-0x4F) or REX2 (0xD5) prefix preceding an EVEX prefix
         // is an illegal encoding: EVEX carries its own R/X/B/W register-extension
         // bits, and the Intel SDM specifies #UD when a REX/REX2 prefix precedes a
@@ -102,8 +116,7 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
             return Ok(None);
         }
 
-        // In 64-bit mode, 0x62 is EVEX prefix (AVX-512)
-        // Decode 3-byte EVEX payload
+        // Decode 3-byte EVEX payload.
         let p0 = ctx.consume_u8()?;
         let p1 = ctx.consume_u8()?;
         let p2 = ctx.consume_u8()?;

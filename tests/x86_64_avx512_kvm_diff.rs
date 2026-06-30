@@ -25728,6 +25728,198 @@ fn compat_avx_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_avx512_put_m512(
+    scratch: &mut [u8; SCRATCH_BYTES],
+    offset: usize,
+    lanes: [u64; 8],
+) {
+    for (idx, lane) in lanes.iter().enumerate() {
+        let start = offset + idx * 8;
+        scratch[start..start + 8].copy_from_slice(&lane.to_le_bytes());
+    }
+}
+
+fn compat_avx512_put_u32x16(
+    scratch: &mut [u8; SCRATCH_BYTES],
+    offset: usize,
+    lanes: [u32; 16],
+) {
+    for (idx, lane) in lanes.iter().enumerate() {
+        let start = offset + idx * 4;
+        scratch[start..start + 4].copy_from_slice(&lane.to_le_bytes());
+    }
+}
+
+fn compat_xsetbv_avx512_prefix() -> [u8; 21] {
+    let mut op = [0u8; 21];
+    op[0..2].copy_from_slice(&[0x66, 0xb8]); // mov eax, XCR0_AVX512
+    op[2..6].copy_from_slice(&(XCR0_AVX512 as u32).to_le_bytes());
+    op[6..9].copy_from_slice(&[0x66, 0x31, 0xd2]); // xor edx, edx
+    op[9..12].copy_from_slice(&[0x66, 0x31, 0xc9]); // xor ecx, ecx
+    op[12..15].copy_from_slice(&[0x0f, 0x01, 0xd1]); // xsetbv
+    op[15..17].copy_from_slice(&[0x66, 0xb8]); // mov eax, SCRATCH_ADDR
+    op[17..21].copy_from_slice(&(SCRATCH_ADDR as u32).to_le_bytes());
+    op
+}
+
+fn compat_avx512_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    macro_rules! op {
+        ($($chunk:expr),+ $(,)?) => {{
+            let mut op = Vec::new();
+            $(op.extend_from_slice(&$chunk);)+
+            op
+        }};
+    }
+
+    vec![
+        CompatStateCase {
+            label: "avx512_compat_vmovups_zmm_addr32",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7c, 0x48, 0x10, 0x00]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7c, 0x48, 0x11, 0x40, 0x02]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_avx512_put_m512(
+                    scratch,
+                    0x00,
+                    [
+                        0x0102_0304_0506_0708,
+                        0x1112_1314_1516_1718,
+                        0x2122_2324_2526_2728,
+                        0x3132_3334_3536_3738,
+                        0x4142_4344_4546_4748,
+                        0x5152_5354_5556_5758,
+                        0x6162_6364_6566_6768,
+                        0x7172_7374_7576_7778,
+                    ],
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx512_compat_vmovdqu32_default16_bx_si_to_bx_di",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                [0x62, 0xf1, 0x7e, 0x48, 0x6f, 0x00],
+                [0x62, 0xf1, 0x7e, 0x48, 0x7f, 0x01],
+            ),
+            input: compat_xmm_modrm16_input(|scratch| {
+                compat_avx512_put_m512(
+                    scratch,
+                    0x10,
+                    [
+                        0x8877_6655_4433_2211,
+                        0x00ff_eedd_ccbb_aa99,
+                        0x1020_3040_5060_7080,
+                        0x90a0_b0c0_d0e0_f001,
+                        0x1357_9bdf_2468_ace0,
+                        0x0eca_8642_fdb9_7531,
+                        0xffff_0000_aaaa_5555,
+                        0x1234_5678_90ab_cdef,
+                    ],
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx512_compat_vaddps_zmm_addr32",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7c, 0x48, 0x10, 0x00]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7c, 0x48, 0x58, 0x40, 0x01]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7c, 0x48, 0x11, 0x40, 0x02]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                for idx in 0..16 {
+                    compat_x87_put_f32(scratch, idx * 4, (idx + 1) as f32);
+                    compat_x87_put_f32(scratch, 0x40 + idx * 4, (idx * 2 + 1) as f32);
+                }
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx512_compat_vpaddd_vpternlogd",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x6f, 0x00]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7d, 0x48, 0xfe, 0x40, 0x01]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x7f, 0x40, 0x02]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x6f, 0x00]),
+                compat_avx_addr32(&[0x62, 0xf3, 0x7d, 0x48, 0x25, 0x40, 0x01, 0x96]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x7f, 0x40, 0x02]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_avx512_put_u32x16(
+                    scratch,
+                    0x00,
+                    [
+                        1, 2, 3, 4, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff, 0x0102_0304, 9, 10,
+                        11, 12, 13, 14, 15, 16,
+                    ],
+                );
+                compat_avx512_put_u32x16(
+                    scratch,
+                    0x40,
+                    [
+                        16, 15, 14, 13, 1, 2, 3, 0xf0f0_0f0f, 8, 7, 6, 5, 4, 3, 2, 1,
+                    ],
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx512_compat_vpbroadcastd_addr32",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                compat_avx_addr32(&[0x62, 0xf2, 0x7d, 0x48, 0x58, 0x40, 0x04]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x7f, 0x40, 0x02]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_mmx_put_u32(scratch, 0x10, 0x89ab_cdef);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx512_compat_kmovw_masked_zmm_store",
+            op: op!(
+                compat_xsetbv_avx512_prefix(),
+                compat_avx_addr32(&[0xc5, 0xf8, 0x90, 0x48, 0x10]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x48, 0x6f, 0x40, 0x01]),
+                compat_avx_addr32(&[0x62, 0xf1, 0x7e, 0x49, 0x7f, 0x40, 0x02]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 0x5555);
+                compat_avx512_put_u32x16(
+                    scratch,
+                    0x40,
+                    [
+                        0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009,
+                        0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f, 0x0010,
+                    ],
+                );
+                compat_avx512_put_m512(
+                    scratch,
+                    0x80,
+                    [
+                        0xaaaa_aaaa_aaaa_aaaa,
+                        0xbbbb_bbbb_bbbb_bbbb,
+                        0xcccc_cccc_cccc_cccc,
+                        0xdddd_dddd_dddd_dddd,
+                        0xeeee_eeee_eeee_eeee,
+                        0xffff_ffff_ffff_ffff,
+                        0x1111_1111_1111_1111,
+                        0x2222_2222_2222_2222,
+                    ],
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_stack_addr32_rsp() -> u64 {
     0x1111_2222_0000_0000 | STACK_ADDR
 }
@@ -29889,6 +30081,17 @@ fn avx512_kvm_avx_compat_corpus() {
     let cases = compat_avx_cases();
     assert_eq!(cases.len(), 11, "unexpected compatibility AVX corpus size");
     let _ = run_compat_state_cases("AVX", &cases);
+}
+
+#[test]
+fn avx512_kvm_avx512_compat_corpus() {
+    let cases = compat_avx512_cases();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected compatibility AVX-512 corpus size"
+    );
+    let _ = run_compat_state_cases("AVX-512", &cases);
 }
 
 #[test]
