@@ -854,6 +854,8 @@ const EXCEPTION_IDT_ADDR: u64 = 0x28000;
 const EXCEPTION_HANDLER_ADDR: u64 = 0x29000;
 const EXCEPTION_CODE_SELECTOR: u16 = 0x8;
 const DE_VECTOR: usize = 0;
+const OF_VECTOR: usize = 4;
+const BR_VECTOR: usize = 5;
 const UD_VECTOR: usize = 6;
 const GP_VECTOR: usize = 13;
 const EXCEPTION_MARKER_OFFSET: usize = 0xf0;
@@ -1205,6 +1207,24 @@ impl KvmOracle {
         code: &[u8],
         input: &CompatStateIn,
     ) -> Result<KvmCompatStateOutcome, String> {
+        self.run_compat_state_inner(code, input, None)
+    }
+
+    fn run_compat_state_with_exception_trap(
+        &self,
+        code: &[u8],
+        input: &CompatStateIn,
+        vector: usize,
+    ) -> Result<KvmCompatStateOutcome, String> {
+        self.run_compat_state_inner(code, input, Some(vector))
+    }
+
+    fn run_compat_state_inner(
+        &self,
+        code: &[u8],
+        input: &CompatStateIn,
+        trap_vector: Option<usize>,
+    ) -> Result<KvmCompatStateOutcome, String> {
         use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
 
         let vm = self
@@ -1217,6 +1237,9 @@ impl KvmOracle {
         mem.write(CODE_ADDR, code);
         mem.write(SCRATCH_ADDR, &input.scratch);
         mem.write(STACK_WINDOW_ADDR, &input.stack);
+        if let Some(vector) = trap_vector {
+            install_exception_trap_kvm(&mem, vector);
+        }
 
         let region = kvm_userspace_memory_region {
             slot: 0,
@@ -1263,6 +1286,12 @@ impl KvmOracle {
         sregs.fs = flat_data;
         sregs.gs = flat_data;
         sregs.ss = flat_data;
+        if let Some(vector) = trap_vector {
+            sregs.gdt.base = EXCEPTION_GDT_ADDR;
+            sregs.gdt.limit = 0x0f;
+            sregs.idt.base = EXCEPTION_IDT_ADDR;
+            sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
+        }
         vcpu.set_sregs(&sregs)
             .map_err(|e| format!("set_sregs: {e:?}"))?;
 
@@ -1707,6 +1736,22 @@ fn run_interp_compat_state(
     code: &[u8],
     input: &CompatStateIn,
 ) -> Result<CompatStateOut, String> {
+    run_interp_compat_state_inner(code, input, None)
+}
+
+fn run_interp_compat_state_with_exception_trap(
+    code: &[u8],
+    input: &CompatStateIn,
+    vector: usize,
+) -> Result<CompatStateOut, String> {
+    run_interp_compat_state_inner(code, input, Some(vector))
+}
+
+fn run_interp_compat_state_inner(
+    code: &[u8],
+    input: &CompatStateIn,
+    trap_vector: Option<usize>,
+) -> Result<CompatStateOut, String> {
     let regs = Registers {
         rax: input.rax,
         rbx: input.rbx,
@@ -1722,6 +1767,16 @@ fn run_interp_compat_state(
         ..Registers::default()
     };
     let (mut vcpu, mem) = setup_vm_compat(code, Some(regs));
+    if let Some(vector) = trap_vector {
+        let mut sregs = vcpu
+            .get_sregs()
+            .map_err(|e| format!("interp compat get sregs: {e:?}"))?;
+        sregs.idt.base = EXCEPTION_IDT_ADDR;
+        sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
+        vcpu.set_sregs(&sregs)
+            .map_err(|e| format!("interp compat set sregs: {e:?}"))?;
+        install_exception_trap_interp(&mem, vector)?;
+    }
     mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
         .map_err(|e| format!("write compat scratch: {e:?}"))?;
     mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
@@ -20841,18 +20896,24 @@ fn compat_bound_addr32_op(operand32: bool) -> Vec<u8> {
     op
 }
 
+fn compat_bound16_input(index: i16, lower: i16, upper: i16) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = (input.rax & !0xffff) | ((index as u16) as u64);
+    input.scratch[0..2].copy_from_slice(&lower.to_le_bytes());
+    input.scratch[2..4].copy_from_slice(&upper.to_le_bytes());
+    input
+}
+
+fn compat_bound32_input(index: i32, lower: i32, upper: i32) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = (input.rax & !0xffff_ffff) | ((index as u32) as u64);
+    input.scratch[0..4].copy_from_slice(&lower.to_le_bytes());
+    input.scratch[4..8].copy_from_slice(&upper.to_le_bytes());
+    input
+}
+
 fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
     const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
-
-    let mut bound16 = compat_state_seed();
-    bound16.rax = (bound16.rax & !0xffff) | ((-4i16 as u16) as u64);
-    bound16.scratch[0..2].copy_from_slice(&(-4i16).to_le_bytes());
-    bound16.scratch[2..4].copy_from_slice(&(12i16).to_le_bytes());
-
-    let mut bound32 = compat_state_seed();
-    bound32.rax = (bound32.rax & !0xffff_ffff) | 4;
-    bound32.scratch[0..4].copy_from_slice(&(-10i32).to_le_bytes());
-    bound32.scratch[4..8].copy_from_slice(&(4i32).to_le_bytes());
 
     vec![
         CompatStateCase {
@@ -20894,14 +20955,132 @@ fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "bound16_compat_addr32_lower_edge",
             op: compat_bound_addr32_op(false),
-            input: bound16,
+            input: compat_bound16_input(-4, -4, 12),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
             label: "bound32_compat_addr32_upper_edge",
             op: compat_bound_addr32_op(true),
-            input: bound32,
+            input: compat_bound32_input(4, -10, 4),
             rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
+fn compat_arpl_mem_addr32_op() -> Vec<u8> {
+    let mut op = Vec::from([0x67, 0x63, 0x0d]);
+    op.extend_from_slice(&(SCRATCH_ADDR as u32).to_le_bytes());
+    op
+}
+
+fn compat_arpl_into_cases() -> Vec<CompatStateCase> {
+    let mut arpl_reg_adjust = compat_state_seed();
+    arpl_reg_adjust.rax = (arpl_reg_adjust.rax & !0xffff) | 0x1201;
+    arpl_reg_adjust.rcx = (arpl_reg_adjust.rcx & !0xffff) | 0x4503;
+
+    let mut arpl_reg_no_adjust = compat_state_seed();
+    arpl_reg_no_adjust.rax = (arpl_reg_no_adjust.rax & !0xffff) | 0x1203;
+    arpl_reg_no_adjust.rcx = (arpl_reg_no_adjust.rcx & !0xffff) | 0x4501;
+
+    let mut arpl_mem_adjust = compat_state_seed();
+    arpl_mem_adjust.rcx = (arpl_mem_adjust.rcx & !0xffff) | 0x4502;
+    arpl_mem_adjust.scratch[0..2].copy_from_slice(&(0x2200u16).to_le_bytes());
+
+    let mut arpl_mem_no_adjust = compat_state_seed();
+    arpl_mem_no_adjust.rcx = (arpl_mem_no_adjust.rcx & !0xffff) | 0x4501;
+    arpl_mem_no_adjust.scratch[0..2].copy_from_slice(&(0x2203u16).to_le_bytes());
+
+    let mut into_no_overflow = compat_state_seed();
+    into_no_overflow.rflags &= !RFLAGS_OF;
+
+    vec![
+        CompatStateCase {
+            label: "arpl_reg_compat_adjust_sets_zf",
+            op: vec![0x63, 0xc8],
+            input: arpl_reg_adjust,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "arpl_reg_compat_no_adjust_clears_zf",
+            op: vec![0x63, 0xc8],
+            input: arpl_reg_no_adjust,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "arpl_mem_compat_adjust_sets_zf",
+            op: compat_arpl_mem_addr32_op(),
+            input: arpl_mem_adjust,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "arpl_mem_compat_no_adjust_clears_zf",
+            op: compat_arpl_mem_addr32_op(),
+            input: arpl_mem_no_adjust,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "into_compat_overflow_clear_fallthrough",
+            op: vec![0xce],
+            input: into_no_overflow,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+    ]
+}
+
+struct CompatExceptionMarkerCase {
+    label: &'static str,
+    vector_name: &'static str,
+    vector: usize,
+    op: Vec<u8>,
+    input: CompatStateIn,
+}
+
+fn compat_bound_into_exception_cases() -> Vec<CompatExceptionMarkerCase> {
+    let mut into_overflow = compat_state_seed();
+    into_overflow.rflags |= RFLAGS_OF;
+
+    vec![
+        CompatExceptionMarkerCase {
+            label: "bound16_compat_below_lower_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: compat_bound_addr32_op(false),
+            input: compat_bound16_input(-5, -4, 12),
+        },
+        CompatExceptionMarkerCase {
+            label: "bound16_compat_above_upper_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: compat_bound_addr32_op(false),
+            input: compat_bound16_input(13, -4, 12),
+        },
+        CompatExceptionMarkerCase {
+            label: "bound32_compat_below_lower_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: compat_bound_addr32_op(true),
+            input: compat_bound32_input(-11, -10, 4),
+        },
+        CompatExceptionMarkerCase {
+            label: "bound32_compat_above_upper_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: compat_bound_addr32_op(true),
+            input: compat_bound32_input(5, -10, 4),
+        },
+        CompatExceptionMarkerCase {
+            label: "bound_compat_register_operand_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x62, 0xc0],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "into_compat_overflow_set_of",
+            vector_name: "#OF",
+            vector: OF_VECTOR,
+            op: vec![0xce],
+            input: into_overflow,
         },
     ]
 }
@@ -20980,6 +21159,70 @@ fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     assert!(
         failures.is_empty(),
         "{name} compatibility divergences vs silicon:\n{}",
+        failures.join("\n")
+    );
+    Some(())
+}
+
+fn run_compat_exception_marker_cases(
+    name: &str,
+    cases: &[CompatExceptionMarkerCase],
+) -> Option<()> {
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable");
+        return None;
+    };
+
+    let mut failures = Vec::new();
+    let mut compared = 0usize;
+    for case in cases {
+        let code = build_compat_code(&case.op);
+        let expected_marker = exception_marker(case.vector);
+        let kvm =
+            match oracle.run_compat_state_with_exception_trap(&code, &case.input, case.vector) {
+                Ok(KvmCompatStateOutcome::Ran(out)) => out,
+                Ok(KvmCompatStateOutcome::Faulted) => {
+                    failures.push(format!(
+                        "{}: KVM faulted before reaching {} handler",
+                        case.label, case.vector_name
+                    ));
+                    continue;
+                }
+                Err(e) => panic!("{}: KVM compat exception backend failure: {e}", case.label),
+            };
+        let interp =
+            match run_interp_compat_state_with_exception_trap(&code, &case.input, case.vector) {
+                Ok(out) => out,
+                Err(e) => {
+                    failures.push(format!(
+                        "{}: rax failed before reaching {} handler: {e}",
+                        case.label, case.vector_name
+                    ));
+                    continue;
+                }
+            };
+        compared += 1;
+
+        let kvm_marker = scratch_marker(&kvm.scratch);
+        let interp_marker = scratch_marker(&interp.scratch);
+        if kvm_marker != expected_marker {
+            failures.push(format!(
+                "{}: KVM marker {kvm_marker:#x}, expected {} marker {expected_marker:#x}",
+                case.label, case.vector_name
+            ));
+        }
+        if interp_marker != expected_marker {
+            failures.push(format!(
+                "{}: rax marker {interp_marker:#x}, expected {} marker {expected_marker:#x}",
+                case.label, case.vector_name
+            ));
+        }
+    }
+
+    eprintln!("[avx512-kvm-diff] {name} compat exception markers compared={compared}");
+    assert!(
+        failures.is_empty(),
+        "{name} compat exception marker mismatches vs silicon:\n{}",
         failures.join("\n")
     );
     Some(())
@@ -24136,6 +24379,28 @@ fn avx512_kvm_stack_bound_compat_corpus() {
         "unexpected compatibility stack/bounds corpus size"
     );
     let _ = run_compat_state_cases("stack/bounds", &cases);
+}
+
+#[test]
+fn avx512_kvm_arpl_into_compat_corpus() {
+    let cases = compat_arpl_into_cases();
+    assert_eq!(
+        cases.len(),
+        5,
+        "unexpected compatibility ARPL/INTO corpus size"
+    );
+    let _ = run_compat_state_cases("ARPL/INTO", &cases);
+}
+
+#[test]
+fn avx512_kvm_bound_into_compat_exception_corpus() {
+    let cases = compat_bound_into_exception_cases();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected compatibility BOUND/INTO exception corpus size"
+    );
+    let _ = run_compat_exception_marker_cases("BOUND/INTO", &cases);
 }
 
 #[test]
