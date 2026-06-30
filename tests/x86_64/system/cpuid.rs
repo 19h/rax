@@ -263,6 +263,26 @@ fn test_cpuid_leaf_7_xeon_phi_avx512_opt_in_bits() {
     assert!(regs.rdx as u32 & (1 << 3) != 0, "AVX512_4FMAPS advertised");
 }
 
+#[test]
+fn test_cpuid_leaf_7_vp2intersect_opt_in_bit() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    vcpu.set_vp2intersect_enabled(true);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert!(
+        regs.rdx as u32 & (1 << 8) != 0,
+        "AVX512_VP2INTERSECT advertised"
+    );
+}
+
 // CPUID extended function 0x80000000 - Get Max Extended Function
 #[test]
 fn test_cpuid_extended_function_80000000() {

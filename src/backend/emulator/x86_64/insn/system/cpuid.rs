@@ -162,6 +162,9 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                     edx |= (1u32 << 2) // AVX512_4VNNIW
                          | (1u32 << 3); // AVX512_4FMAPS
                 }
+                if vcpu.vp2intersect {
+                    edx |= 1u32 << 8; // AVX512_VP2INTERSECT
+                }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
                 let edx = 1u32 << 21; // APX_F

@@ -291,6 +291,10 @@ pub struct X86_64Vcpu {
     /// expose these bits, so their opcodes must #UD unless a semantic harness
     /// opts in explicitly.
     pub(super) xeon_phi_avx512: bool,
+    /// Enable AVX512_VP2INTERSECT. The base emulated CPUID profile does not
+    /// advertise this extension, so the opcode is disabled unless a semantic
+    /// harness opts in explicitly.
+    pub(super) vp2intersect: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -919,6 +923,7 @@ impl X86_64Vcpu {
             xcr0: 1, // x87 state component always enabled
             xgetbv1_value: 0,
             xeon_phi_avx512: false,
+            vp2intersect: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -963,6 +968,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn xeon_phi_avx512_enabled(&self) -> bool {
         self.xeon_phi_avx512
+    }
+
+    /// Enable or disable AVX512_VP2INTERSECT for semantic harnesses.
+    pub fn set_vp2intersect_enabled(&mut self, enabled: bool) {
+        self.vp2intersect = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn vp2intersect_enabled(&self) -> bool {
+        self.vp2intersect
     }
 
     #[cfg(feature = "debug")]

@@ -349,6 +349,7 @@ fn try_run_rax(case: &DiffCase) -> Result<OutCase, String> {
 
     let (mut vcpu, mem) = setup_vm(&code, Some(registers_from_input(&case.input)));
     vcpu.set_xeon_phi_avx512_enabled(true);
+    vcpu.set_vp2intersect_enabled(true);
     mem.write_slice(&case.input.scratch, GuestAddress(SCRATCH_ADDR))
         .unwrap();
     let regs = run_until_hlt(&mut vcpu).map_err(|error| error.to_string())?;
@@ -8172,6 +8173,31 @@ fn assert_evex_4vnniw_contracts(llvm_mc: &Path) {
     );
 }
 
+fn assert_evex_vp2intersect_contracts(llvm_mc: &Path) {
+    let mut case = assembled_rax_case(
+        llvm_mc,
+        "vp2intersectd_mask_pair_contract",
+        "vp2intersectd %zmm20, %zmm17, %k2",
+        InputProfile::Int,
+        0x5632,
+    );
+
+    let mut src1 = [0u8; 64];
+    for lane in 0..16 {
+        write_i32_lane(&mut src1, lane, lane as i32 + 1);
+    }
+    case.input.zmm[17] = zmm_from_bytes(src1);
+
+    let mut src2 = [0u8; 64];
+    write_i32_lane(&mut src2, 0, 3);
+    write_i32_lane(&mut src2, 1, 5);
+    case.input.zmm[20] = zmm_from_bytes(src2);
+
+    let out = run_rax(&case);
+    assert_eq!(out.k[2] & 0xffff, 0x0014, "vp2intersectd source1 mask");
+    assert_eq!(out.k[3] & 0xffff, 0x0003, "vp2intersectd source2 mask");
+}
+
 #[test]
 fn evex_generated_corpus_covers_supported_selectors_and_forms() {
     let specs = generated_specs();
@@ -8196,6 +8222,7 @@ fn evex_late_avx512_instruction_families_match_contracts() {
     assert_evex_fp16_complex_contracts(&llvm_mc);
     assert_evex_source_block_fma_contracts(&llvm_mc);
     assert_evex_4vnniw_contracts(&llvm_mc);
+    assert_evex_vp2intersect_contracts(&llvm_mc);
 }
 
 #[test]

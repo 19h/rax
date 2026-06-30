@@ -1408,6 +1408,9 @@ impl X86_64Vcpu {
                 insn::simd::evex_vaes(self, ctx, insn::simd::VaesRound::DecLast)
             }
             // VP2INTERSECTD/Q.
+            0x68 if evex.pp == 3 && !self.vp2intersect_enabled() => {
+                self.inject_undefined_instruction()
+            }
             0x68 if evex.pp == 3 => {
                 let es = if evex.w { 8 } else { 4 };
                 insn::simd::evex_p2intersect(self, ctx, es)

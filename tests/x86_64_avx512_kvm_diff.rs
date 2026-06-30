@@ -20770,6 +20770,57 @@ fn unsupported_xeon_phi_avx512_cases(oracle: &KvmOracle) -> Vec<(&'static str, &
         .collect()
 }
 
+const VP2INTERSECT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "vp2intersectd_xmm_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x08, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectd_ymm_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x28, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectd_zmm_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectq_xmm_unsupported",
+        &[0x62, 0xf2, 0xff, 0x08, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectq_ymm_unsupported",
+        &[0x62, 0xf2, 0xff, 0x28, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectq_zmm_unsupported",
+        &[0x62, 0xf2, 0xff, 0x48, 0x68, 0xd1],
+    ),
+    (
+        "vp2intersectd_mem_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0x68, 0x10],
+    ),
+    (
+        "vp2intersectd_broadcast_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x58, 0x68, 0x10],
+    ),
+    (
+        "vp2intersectq_mem_unsupported",
+        &[0x62, 0xf2, 0xff, 0x48, 0x68, 0x10],
+    ),
+    (
+        "vp2intersectq_broadcast_unsupported",
+        &[0x62, 0xf2, 0xff, 0x58, 0x68, 0x10],
+    ),
+];
+
+fn unsupported_vp2intersect_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    VP2INTERSECT_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "sgx_encls_ecreate_unsupported",
@@ -22958,6 +23009,26 @@ fn avx512_kvm_xeon_phi_avx512_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported Xeon Phi AVX-512", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_vp2intersect_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_vp2intersect_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD VP2INTERSECT probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported VP2INTERSECT", cases, expected);
 }
 
 #[test]
