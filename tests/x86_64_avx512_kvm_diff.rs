@@ -1767,16 +1767,21 @@ fn run_interp_compat_state_inner(
         ..Registers::default()
     };
     let (mut vcpu, mem) = setup_vm_compat(code, Some(regs));
+    let mut sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("interp compat get sregs: {e:?}"))?;
+    sregs.ds.selector = 0x10;
+    sregs.es.selector = 0x10;
+    sregs.ss.selector = 0x10;
+    sregs.fs.selector = 0x10;
+    sregs.gs.selector = 0x10;
     if let Some(vector) = trap_vector {
-        let mut sregs = vcpu
-            .get_sregs()
-            .map_err(|e| format!("interp compat get sregs: {e:?}"))?;
         sregs.idt.base = EXCEPTION_IDT_ADDR;
         sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
-        vcpu.set_sregs(&sregs)
-            .map_err(|e| format!("interp compat set sregs: {e:?}"))?;
         install_exception_trap_interp(&mem, vector)?;
     }
+    vcpu.set_sregs(&sregs)
+        .map_err(|e| format!("interp compat set sregs: {e:?}"))?;
     mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
         .map_err(|e| format!("write compat scratch: {e:?}"))?;
     mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
@@ -21085,6 +21090,81 @@ fn compat_bound_into_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_far_pointer_input(offset: u32, selector: u16, operand32: bool) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    if operand32 {
+        input.scratch[0..4].copy_from_slice(&offset.to_le_bytes());
+        input.scratch[4..6].copy_from_slice(&selector.to_le_bytes());
+    } else {
+        input.scratch[0..2].copy_from_slice(&(offset as u16).to_le_bytes());
+        input.scratch[2..4].copy_from_slice(&selector.to_le_bytes());
+    }
+    input
+}
+
+fn compat_far_pointer_addr32_op(opcode: u8, operand32: bool, capture_sreg_modrm: u8) -> Vec<u8> {
+    let mut op = Vec::new();
+    if operand32 {
+        op.push(0x66);
+    }
+    op.extend_from_slice(&[0x67, opcode, 0x05]);
+    op.extend_from_slice(&(SCRATCH_ADDR as u32).to_le_bytes());
+    op.extend_from_slice(&[0x8c, capture_sreg_modrm]);
+    op
+}
+
+fn compat_far_pointer_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    const MOV_ES_TO_CX: u8 = 0xc1;
+    const MOV_DS_TO_CX: u8 = 0xd9;
+
+    vec![
+        CompatStateCase {
+            label: "les16_compat_offset_selector",
+            op: compat_far_pointer_addr32_op(0xc4, false, MOV_ES_TO_CX),
+            input: compat_far_pointer_input(0x7bcd, 0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "les32_compat_offset_selector",
+            op: compat_far_pointer_addr32_op(0xc4, true, MOV_ES_TO_CX),
+            input: compat_far_pointer_input(0x8765_4321, 0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lds16_compat_offset_selector",
+            op: compat_far_pointer_addr32_op(0xc5, false, MOV_DS_TO_CX),
+            input: compat_far_pointer_input(0x1357, 0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lds32_compat_offset_selector",
+            op: compat_far_pointer_addr32_op(0xc5, true, MOV_DS_TO_CX),
+            input: compat_far_pointer_input(0x2468_ace0, 0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
+fn compat_far_pointer_exception_cases() -> Vec<CompatExceptionMarkerCase> {
+    vec![
+        CompatExceptionMarkerCase {
+            label: "les_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0xc4, 0xc0],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "lds_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0xc5, 0xc0],
+            input: compat_state_seed(),
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -24401,6 +24481,25 @@ fn avx512_kvm_bound_into_compat_exception_corpus() {
         "unexpected compatibility BOUND/INTO exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("BOUND/INTO", &cases);
+}
+
+#[test]
+fn avx512_kvm_far_pointer_compat_corpus() {
+    let state_cases = compat_far_pointer_cases();
+    assert_eq!(
+        state_cases.len(),
+        4,
+        "unexpected compatibility far-pointer state corpus size"
+    );
+    let _ = run_compat_state_cases("far-pointer", &state_cases);
+
+    let exception_cases = compat_far_pointer_exception_cases();
+    assert_eq!(
+        exception_cases.len(),
+        2,
+        "unexpected compatibility far-pointer exception corpus size"
+    );
+    let _ = run_compat_exception_marker_cases("far-pointer", &exception_cases);
 }
 
 #[test]
