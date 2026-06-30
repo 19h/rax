@@ -224,13 +224,20 @@ pub fn pop_r64(
 pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = stack_op_size(vcpu, ctx);
 
-    let modrm = ctx.peek_u8()?;
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
     if ((modrm >> 3) & 0x07) != 0 {
-        ctx.consume_u8()?;
         return vcpu.inject_undefined_instruction();
     }
 
-    let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
+    let is_memory = (modrm >> 6) != 3;
+    let extra = if is_memory {
+        let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        extra
+    } else {
+        0
+    };
 
     // Pop value based on operand size
     let value = match op_size {
@@ -246,6 +253,8 @@ pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     };
 
     if is_memory {
+        let (addr, _) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
         vcpu.write_mem(addr, value, op_size)?;
     } else {
         vcpu.set_reg(rm, value, op_size);

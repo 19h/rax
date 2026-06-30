@@ -21804,6 +21804,13 @@ fn compat_stack_addr32_pop_input(value: u16) -> CompatStateIn {
     input
 }
 
+fn compat_stack_addr32_pop32_input(value: u32) -> CompatStateIn {
+    let mut input = compat_stack_addr32_seed();
+    let stack_offset = (STACK_ADDR - STACK_WINDOW_ADDR) as usize;
+    input.stack[stack_offset..stack_offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
 fn compat_stack_addr32_cases() -> Vec<CompatStateCase> {
     const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
 
@@ -21833,6 +21840,67 @@ fn compat_stack_addr32_cases() -> Vec<CompatStateCase> {
             label: "leave16_compat_stack_addr32_uses_ebp_esp",
             op: vec![0xc9],
             input: compat_stack_addr32_pop_input(0x579b),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
+fn compat_stack_data_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    let mut pop_ax = compat_stack_addr32_pop_input(0x4567);
+    pop_ax.rax = 0xaaaa_bbbb_cccc_1111;
+
+    let mut pop_eax = compat_stack_addr32_pop32_input(0x89ab_cdef);
+    pop_eax.rax = 0xaaaa_bbbb_cccc_1111;
+
+    vec![
+        CompatStateCase {
+            label: "push_imm8_compat_sign_extends_to_word_stack_addr32",
+            op: vec![0x6a, 0x80],
+            input: compat_stack_addr32_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_imm16_compat_uses_word_immediate_stack_addr32",
+            op: vec![0x68, 0x34, 0x12],
+            input: compat_stack_addr32_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_imm8_compat_operand32_sign_extends_to_dword_stack_addr32",
+            op: vec![0x66, 0x6a, 0x80],
+            input: compat_stack_addr32_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_imm32_compat_operand32_uses_dword_immediate_stack_addr32",
+            op: vec![0x66, 0x68, 0x78, 0x56, 0x34, 0x12],
+            input: compat_stack_addr32_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_rm16_reg_compat_preserves_high_rax",
+            op: vec![0x8f, 0xc0],
+            input: pop_ax,
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_rm32_reg_compat_zeroes_high_rax",
+            op: vec![0x66, 0x8f, 0xc0],
+            input: pop_eax,
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_rm16_compat_addr32_esp_base_writes_after_increment",
+            op: vec![0x67, 0x8f, 0x04, 0x24],
+            input: compat_stack_addr32_pop_input(0x2468),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_rm32_compat_addr32_esp_disp8_writes_after_increment",
+            op: vec![0x67, 0x66, 0x8f, 0x44, 0x24, 0x04],
+            input: compat_stack_addr32_pop32_input(0x89ab_cdef),
             rflags_mask: FLAGS_UNCHANGED,
         },
     ]
@@ -25732,6 +25800,17 @@ fn avx512_kvm_stack_addr32_compat_corpus() {
         "unexpected compatibility stack address-size corpus size"
     );
     let _ = run_compat_state_cases("stack address-size", &cases);
+}
+
+#[test]
+fn avx512_kvm_stack_data_compat_corpus() {
+    let cases = compat_stack_data_cases();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected compatibility stack-data corpus size"
+    );
+    let _ = run_compat_state_cases("stack data", &cases);
 }
 
 #[test]
