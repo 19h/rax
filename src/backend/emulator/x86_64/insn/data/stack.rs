@@ -368,14 +368,13 @@ pub fn popa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         let ecx = vcpu.pop32()?;
         let eax = vcpu.pop32()?;
 
-        // Update only the lower 32 bits of registers, preserving upper 32 bits
-        vcpu.regs.rdi = (vcpu.regs.rdi & 0xFFFFFFFF00000000) | (edi as u64);
-        vcpu.regs.rsi = (vcpu.regs.rsi & 0xFFFFFFFF00000000) | (esi as u64);
-        vcpu.regs.rbp = (vcpu.regs.rbp & 0xFFFFFFFF00000000) | (ebp as u64);
-        vcpu.regs.rbx = (vcpu.regs.rbx & 0xFFFFFFFF00000000) | (ebx as u64);
-        vcpu.regs.rdx = (vcpu.regs.rdx & 0xFFFFFFFF00000000) | (edx as u64);
-        vcpu.regs.rcx = (vcpu.regs.rcx & 0xFFFFFFFF00000000) | (ecx as u64);
-        vcpu.regs.rax = (vcpu.regs.rax & 0xFFFFFFFF00000000) | (eax as u64);
+        vcpu.regs.rdi = edi as u64;
+        vcpu.regs.rsi = esi as u64;
+        vcpu.regs.rbp = ebp as u64;
+        vcpu.regs.rbx = ebx as u64;
+        vcpu.regs.rdx = edx as u64;
+        vcpu.regs.rcx = ecx as u64;
+        vcpu.regs.rax = eax as u64;
     }
 
     vcpu.regs.rip += ctx.cursor as u64;

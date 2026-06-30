@@ -953,6 +953,45 @@ enum KvmCompatOutcome {
     Faulted,
 }
 
+#[derive(Clone)]
+struct CompatStateIn {
+    rax: u64,
+    rbx: u64,
+    rcx: u64,
+    rdx: u64,
+    rsi: u64,
+    rdi: u64,
+    rbp: u64,
+    rsp: u64,
+    r8: u64,
+    r9: u64,
+    rflags: u64,
+    scratch: [u8; SCRATCH_BYTES],
+    stack: [u8; STACK_BYTES],
+}
+
+#[derive(Clone)]
+struct CompatStateOut {
+    rax: u64,
+    rbx: u64,
+    rcx: u64,
+    rdx: u64,
+    rsi: u64,
+    rdi: u64,
+    rbp: u64,
+    rsp: u64,
+    r8: u64,
+    r9: u64,
+    rflags: u64,
+    scratch: [u8; SCRATCH_BYTES],
+    stack: [u8; STACK_BYTES],
+}
+
+enum KvmCompatStateOutcome {
+    Ran(CompatStateOut),
+    Faulted,
+}
+
 /// Lazily-initialised, process-wide KVM context. `None` once we determine KVM
 /// is unusable so every subsequent case skips without re-probing.
 struct KvmOracle {
@@ -1158,6 +1197,133 @@ impl KvmOracle {
         Ok(KvmCompatOutcome::Ran(CompatOut {
             rax: final_regs.rax,
             rflags: final_regs.rflags,
+        }))
+    }
+
+    fn run_compat_state(
+        &self,
+        code: &[u8],
+        input: &CompatStateIn,
+    ) -> Result<KvmCompatStateOutcome, String> {
+        use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+
+        let vm = self
+            .kvm
+            .create_vm()
+            .map_err(|e| format!("create_vm: {e:?}"))?;
+        let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
+
+        install_page_tables(&mem);
+        mem.write(CODE_ADDR, code);
+        mem.write(SCRATCH_ADDR, &input.scratch);
+        mem.write(STACK_WINDOW_ADDR, &input.stack);
+
+        let region = kvm_userspace_memory_region {
+            slot: 0,
+            guest_phys_addr: 0,
+            memory_size: MEM_SIZE as u64,
+            userspace_addr: mem.ptr as u64,
+            flags: 0,
+        };
+        unsafe { vm.set_user_memory_region(region) }.map_err(|e| format!("set_memory: {e:?}"))?;
+
+        let mut vcpu = vm
+            .create_vcpu(0)
+            .map_err(|e| format!("create_vcpu: {e:?}"))?;
+        vcpu.set_cpuid2(&self.supported_cpuid)
+            .map_err(|e| format!("set_cpuid2: {e:?}"))?;
+
+        let mut sregs = vcpu.get_sregs().map_err(|e| format!("get_sregs: {e:?}"))?;
+        let compat_code = kvm_segment {
+            base: 0,
+            limit: 0xFFFFF,
+            selector: 0x8,
+            type_: 0xB,
+            present: 1,
+            dpl: 0,
+            db: 0,
+            s: 1,
+            l: 0,
+            g: 1,
+            avl: 0,
+            unusable: 0,
+            padding: 0,
+        };
+        let mut flat_data = compat_code;
+        flat_data.selector = 0x10;
+        flat_data.type_ = 0x3;
+        flat_data.db = 1;
+        sregs.cr0 = CR0_VAL;
+        sregs.cr3 = PML4_ADDR;
+        sregs.cr4 = CR4_VAL;
+        sregs.efer = EFER_VAL;
+        sregs.cs = compat_code;
+        sregs.ds = flat_data;
+        sregs.es = flat_data;
+        sregs.fs = flat_data;
+        sregs.gs = flat_data;
+        sregs.ss = flat_data;
+        vcpu.set_sregs(&sregs)
+            .map_err(|e| format!("set_sregs: {e:?}"))?;
+
+        let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
+        kregs.rip = CODE_ADDR;
+        kregs.rax = input.rax;
+        kregs.rbx = input.rbx;
+        kregs.rcx = input.rcx;
+        kregs.rdx = input.rdx;
+        kregs.rsi = input.rsi;
+        kregs.rdi = input.rdi;
+        kregs.rbp = input.rbp;
+        kregs.rsp = input.rsp;
+        kregs.r8 = input.r8;
+        kregs.r9 = input.r9;
+        kregs.rflags = input.rflags | 0x2;
+        vcpu.set_regs(&kregs)
+            .map_err(|e| format!("set_regs: {e:?}"))?;
+
+        let mut iters = 0u64;
+        loop {
+            iters += 1;
+            if iters > MAX_ITERS {
+                return Err(format!("kvm compat state exceeded {MAX_ITERS} iterations"));
+            }
+            match vcpu
+                .run()
+                .map_err(|e| format!("kvm compat state run: {e:?}"))?
+            {
+                kvm_ioctls::VcpuExit::Hlt => break,
+                kvm_ioctls::VcpuExit::IoIn(_, data) => data.iter_mut().for_each(|b| *b = 0),
+                kvm_ioctls::VcpuExit::IoOut(..) => {}
+                kvm_ioctls::VcpuExit::Shutdown
+                | kvm_ioctls::VcpuExit::FailEntry(..)
+                | kvm_ioctls::VcpuExit::InternalError => return Ok(KvmCompatStateOutcome::Faulted),
+                other => return Err(format!("kvm compat state abnormal exit: {other:?}")),
+            }
+        }
+
+        let final_regs = vcpu
+            .get_regs()
+            .map_err(|e| format!("get_regs(final compat state): {e:?}"))?;
+        let mut scratch = [0u8; SCRATCH_BYTES];
+        mem.read(SCRATCH_ADDR, &mut scratch);
+        let mut stack = [0u8; STACK_BYTES];
+        mem.read(STACK_WINDOW_ADDR, &mut stack);
+
+        Ok(KvmCompatStateOutcome::Ran(CompatStateOut {
+            rax: final_regs.rax,
+            rbx: final_regs.rbx,
+            rcx: final_regs.rcx,
+            rdx: final_regs.rdx,
+            rsi: final_regs.rsi,
+            rdi: final_regs.rdi,
+            rbp: final_regs.rbp,
+            rsp: final_regs.rsp,
+            r8: final_regs.r8,
+            r9: final_regs.r9,
+            rflags: final_regs.rflags,
+            scratch,
+            stack,
         }))
     }
 
@@ -1534,6 +1700,56 @@ fn run_interp_compat(code: &[u8], rax: u64, rflags: u64) -> Result<CompatOut, St
     Ok(CompatOut {
         rax: out_regs.rax,
         rflags: out_regs.rflags,
+    })
+}
+
+fn run_interp_compat_state(
+    code: &[u8],
+    input: &CompatStateIn,
+) -> Result<CompatStateOut, String> {
+    let regs = Registers {
+        rax: input.rax,
+        rbx: input.rbx,
+        rcx: input.rcx,
+        rdx: input.rdx,
+        rsi: input.rsi,
+        rdi: input.rdi,
+        rbp: input.rbp,
+        rsp: input.rsp,
+        r8: input.r8,
+        r9: input.r9,
+        rflags: input.rflags,
+        ..Registers::default()
+    };
+    let (mut vcpu, mem) = setup_vm_compat(code, Some(regs));
+    mem.write_slice(&input.scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("write compat scratch: {e:?}"))?;
+    mem.write_slice(&input.stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("write compat stack: {e:?}"))?;
+    let out_regs =
+        run_until_hlt(&mut vcpu).map_err(|e| format!("interp compat state run: {e:?}"))?;
+
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("read compat scratch: {e:?}"))?;
+    let mut stack = [0u8; STACK_BYTES];
+    mem.read_slice(&mut stack, GuestAddress(STACK_WINDOW_ADDR))
+        .map_err(|e| format!("read compat stack: {e:?}"))?;
+
+    Ok(CompatStateOut {
+        rax: out_regs.rax,
+        rbx: out_regs.rbx,
+        rcx: out_regs.rcx,
+        rdx: out_regs.rdx,
+        rsi: out_regs.rsi,
+        rdi: out_regs.rdi,
+        rbp: out_regs.rbp,
+        rsp: out_regs.rsp,
+        r8: out_regs.r8,
+        r9: out_regs.r9,
+        rflags: out_regs.rflags,
+        scratch,
+        stack,
     })
 }
 
@@ -20590,6 +20806,185 @@ fn run_compat_cases(name: &str, cases: &[CompatCase]) -> Option<()> {
     Some(())
 }
 
+struct CompatStateCase {
+    label: &'static str,
+    op: Vec<u8>,
+    input: CompatStateIn,
+    rflags_mask: u64,
+}
+
+fn compat_state_seed() -> CompatStateIn {
+    CompatStateIn {
+        rax: 0x1111_2222_3333_4444,
+        rbx: 0x5555_6666_7777_8888,
+        rcx: 0x9999_aaaa_bbbb_cccc,
+        rdx: 0xdddd_eeee_ffff_0001,
+        rsi: 0x1234_5678_2468_ace0,
+        rdi: 0xfeed_face_cafe_beef,
+        rbp: 0x0bad_f00d_0002_0020,
+        rsp: STACK_ADDR,
+        r8: R8_SEED,
+        r9: R9_SEED,
+        rflags: INITIAL_RFLAGS,
+        scratch: string_scratch(),
+        stack: stack_pattern(),
+    }
+}
+
+fn compat_bound_addr32_op(operand32: bool) -> Vec<u8> {
+    let mut op = Vec::new();
+    if operand32 {
+        op.push(0x66);
+    }
+    op.extend_from_slice(&[0x67, 0x62, 0x05]);
+    op.extend_from_slice(&(SCRATCH_ADDR as u32).to_le_bytes());
+    op
+}
+
+fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    let mut bound16 = compat_state_seed();
+    bound16.rax = (bound16.rax & !0xffff) | ((-4i16 as u16) as u64);
+    bound16.scratch[0..2].copy_from_slice(&(-4i16).to_le_bytes());
+    bound16.scratch[2..4].copy_from_slice(&(12i16).to_le_bytes());
+
+    let mut bound32 = compat_state_seed();
+    bound32.rax = (bound32.rax & !0xffff_ffff) | 4;
+    bound32.scratch[0..4].copy_from_slice(&(-10i32).to_le_bytes());
+    bound32.scratch[4..8].copy_from_slice(&(4i32).to_le_bytes());
+
+    vec![
+        CompatStateCase {
+            label: "pusha16_compat_stack_image",
+            op: vec![0x60],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pushad32_compat_stack_image",
+            op: vec![0x66, 0x60],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "popa16_compat_register_load",
+            op: vec![0x61],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "popad32_compat_register_load",
+            op: vec![0x66, 0x61],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pusha_popa16_compat_roundtrip",
+            op: vec![0x60, 0x61],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pushad_popad32_compat_roundtrip",
+            op: vec![0x66, 0x60, 0x66, 0x61],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "bound16_compat_addr32_lower_edge",
+            op: compat_bound_addr32_op(false),
+            input: bound16,
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "bound32_compat_addr32_upper_edge",
+            op: compat_bound_addr32_op(true),
+            input: bound32,
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
+fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable");
+        return None;
+    };
+
+    let mut failures = Vec::new();
+    let mut compared = 0usize;
+    for case in cases {
+        let code = build_compat_code(&case.op);
+        let kvm = match oracle.run_compat_state(&code, &case.input) {
+            Ok(KvmCompatStateOutcome::Ran(out)) => out,
+            Ok(KvmCompatStateOutcome::Faulted) => {
+                failures.push(format!("{}: KVM faulted in compatibility mode", case.label));
+                continue;
+            }
+            Err(e) => panic!("{}: KVM compat-state backend failure: {e}", case.label),
+        };
+        let interp = match run_interp_compat_state(&code, &case.input) {
+            Ok(out) => out,
+            Err(e) => {
+                failures.push(format!("{}: rax compatibility run failed: {e}", case.label));
+                continue;
+            }
+        };
+        compared += 1;
+
+        macro_rules! check_reg {
+            ($field:ident) => {
+                if interp.$field != kvm.$field {
+                    failures.push(format!(
+                        "{}: {} interp={:#x} kvm={:#x}",
+                        case.label,
+                        stringify!($field),
+                        interp.$field,
+                        kvm.$field
+                    ));
+                }
+            };
+        }
+        check_reg!(rax);
+        check_reg!(rbx);
+        check_reg!(rcx);
+        check_reg!(rdx);
+        check_reg!(rsi);
+        check_reg!(rdi);
+        check_reg!(rbp);
+        check_reg!(rsp);
+        check_reg!(r8);
+        check_reg!(r9);
+
+        let im = interp.rflags & case.rflags_mask;
+        let km = kvm.rflags & case.rflags_mask;
+        if im != km {
+            failures.push(format!(
+                "{}: rflags(mask={:#x}) interp={:#x} kvm={:#x}",
+                case.label, case.rflags_mask, im, km
+            ));
+        }
+        if interp.scratch != kvm.scratch {
+            failures.push(format!("{}: scratch memory diverged", case.label));
+        }
+        if interp.stack != kvm.stack {
+            failures.push(format!("{}: stack memory diverged", case.label));
+        }
+    }
+
+    eprintln!(
+        "[avx512-kvm-diff] {name} compatibility cases compared={}",
+        compared
+    );
+    assert!(
+        failures.is_empty(),
+        "{name} compatibility divergences vs silicon:\n{}",
+        failures.join("\n")
+    );
+    Some(())
+}
+
 fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("push_es_invalid_long", &[0x06]),
@@ -23730,6 +24125,17 @@ fn avx512_kvm_bcd_ascii_adjust_compat_corpus() {
         "unexpected compatibility BCD/ASCII-adjust corpus size"
     );
     let _ = run_compat_cases("BCD/ASCII-adjust", &cases);
+}
+
+#[test]
+fn avx512_kvm_stack_bound_compat_corpus() {
+    let cases = compat_stack_bound_cases();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected compatibility stack/bounds corpus size"
+    );
+    let _ = run_compat_state_cases("stack/bounds", &cases);
 }
 
 #[test]
