@@ -20528,6 +20528,55 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm, feat) in &[
+        (
+            "crc32_crc_movbe_flag_matrix_crc32b_reg_zf",
+            "cmpq %r8, %r8\ncrc32b %cl, %r9d",
+            Crc32,
+        ),
+        (
+            "crc32_crc_movbe_flag_matrix_crc32w_reg_cf",
+            "movq $1, %r10\ncmpq %r8, %r10\ncrc32w %r9w, %r8d",
+            Crc32,
+        ),
+        (
+            "crc32_crc_movbe_flag_matrix_crc32l_mem_zf",
+            "movl $0x12345678, 128(%rax)\ncmpq %r8, %r8\ncrc32l 128(%rax), %r9d",
+            Crc32,
+        ),
+        (
+            "crc32_crc_movbe_flag_matrix_crc32q_mem_cf",
+            "movq %rcx, 136(%rax)\nmovq $1, %r10\ncmpq %r8, %r10\ncrc32q 136(%rax), %r9",
+            Crc32,
+        ),
+        (
+            "movbe_crc_movbe_flag_matrix_load16_zf",
+            "movw $0x1234, 144(%rax)\ncmpq %r8, %r8\nmovbe 144(%rax), %r9w",
+            Movbe,
+        ),
+        (
+            "movbe_crc_movbe_flag_matrix_load64_cf",
+            "movq %rcx, 152(%rax)\nmovq $1, %r10\ncmpq %r8, %r10\nmovbe 152(%rax), %r9",
+            Movbe,
+        ),
+        (
+            "movbe_crc_movbe_flag_matrix_store32_zf",
+            "cmpq %r8, %r8\nmovbe %r9d, 160(%rax)",
+            Movbe,
+        ),
+        (
+            "movbe_crc_movbe_flag_matrix_store64_cf",
+            "movq $1, %r10\ncmpq %r8, %r10\nmovbe %r9, 168(%rax)",
+            Movbe,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
 
     // POPCNT scalar forms. These cover 16/32/64-bit destinations, register and
     // memory sources, plus the architectural flag result.
@@ -21855,6 +21904,10 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             && op
                 .windows(2)
                 .any(|bytes| bytes[0] == 0x0f && matches!(bytes[1], 0xbc | 0xbd));
+        let crc_movbe_flag_matrix_setup_allowed = case.label.contains("_crc_movbe_flag_matrix_")
+            && op.windows(3).any(|bytes| {
+                bytes[0] == 0x0f && bytes[1] == 0x38 && matches!(bytes[2], 0xf0 | 0xf1)
+            });
         let addr32_vex_allowed = matches!(op.first(), Some(0x67))
             && matches!(op.get(1), Some(0x62) | Some(0xc4) | Some(0xc5));
         let expected_encoding = matches!(op.first(), Some(0x62) | Some(0xC4) | Some(0xC5))
@@ -21867,6 +21920,7 @@ fn run_corpus(cases: &[Case]) -> Option<Tally> {
             || f16c_mxcsr_round_setup_allowed
             || popcnt_flag_matrix_setup_allowed
             || count_flag_matrix_setup_allowed
+            || crc_movbe_flag_matrix_setup_allowed
             || addr32_vex_allowed;
         assert!(
             expected_encoding,
@@ -36921,6 +36975,53 @@ fn avx512_kvm_scalar_crc_movbe_operand_form_corpus() {
     assert_eq!(
         tally.compared, 14,
         "all scalar CRC/MOVBE operand-form cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_scalar_crc_movbe_flag_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_crc_movbe_flag_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected scalar CRC/MOVBE flag-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on scalar CRC/MOVBE flag-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a scalar CRC/MOVBE flag-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "scalar CRC/MOVBE flag-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "scalar CRC/MOVBE flag-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Crc32),
+        4,
+        "all CRC32 flag-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Movbe),
+        4,
+        "all MOVBE flag-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all scalar CRC/MOVBE flag-matrix cases should compare"
     );
 }
 
