@@ -23675,6 +23675,668 @@ fn compat_fpu_modrm16_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_x87_mem(opcode: u8, reg: u8, disp: u8) -> [u8; 4] {
+    assert!(reg < 8);
+    assert!(disp <= 0x7f);
+    [0x67, opcode, 0x40 | (reg << 3), disp]
+}
+
+fn compat_x87_setcc(opcode: u8, disp: u8) -> [u8; 5] {
+    assert!(disp <= 0x7f);
+    [0x67, 0x0f, opcode, 0x40, disp]
+}
+
+fn compat_x87_put_f32(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, value: f32) {
+    scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn compat_x87_put_f64(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, value: f64) {
+    scratch[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+}
+
+fn compat_x87_put_i16(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, value: i16) {
+    scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+}
+
+fn compat_x87_put_i32(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, value: i32) {
+    scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn compat_x87_put_i64(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, value: i64) {
+    scratch[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+}
+
+fn compat_x87_input_with_flags(
+    rflags: u64,
+    init: impl FnOnce(&mut [u8; SCRATCH_BYTES]),
+) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = SCRATCH_ADDR;
+    input.rflags = rflags | 0x2;
+    init(&mut input.scratch);
+    input
+}
+
+fn compat_x87_input(init: impl FnOnce(&mut [u8; SCRATCH_BYTES])) -> CompatStateIn {
+    compat_x87_input_with_flags(INITIAL_RFLAGS, init)
+}
+
+fn compat_x87_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+    const FLAGS_FROM_COMPARE: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    macro_rules! op {
+        ($($chunk:expr),+ $(,)?) => {{
+            let mut op = Vec::new();
+            $(op.extend_from_slice(&$chunk);)+
+            op
+        }};
+    }
+
+    vec![
+        CompatStateCase {
+            label: "x87_compat_fninit_status_defaults",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xd9, 7, 0x20),
+                compat_x87_mem(0xdd, 7, 0x22),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fldcw_fnstcw_roundtrip",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xd9, 5, 0x10),
+                compat_x87_mem(0xd9, 7, 0x20),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 0x027f);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fld_constants_m64",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xe9],
+                compat_x87_mem(0xdd, 3, 0x20),
+                [0xd9, 0xea],
+                compat_x87_mem(0xdd, 3, 0x28),
+                [0xd9, 0xeb],
+                compat_x87_mem(0xdd, 3, 0x30),
+                [0xd9, 0xec],
+                compat_x87_mem(0xdd, 3, 0x38),
+                [0xd9, 0xed],
+                compat_x87_mem(0xdd, 3, 0x40),
+                [0xd9, 0xee],
+                compat_x87_mem(0xdd, 3, 0x48),
+                [0xd9, 0xe8],
+                compat_x87_mem(0xdd, 3, 0x50),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fldz_fchs_fabs",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xee],
+                [0xd9, 0xe0],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xe1],
+                compat_x87_mem(0xdd, 3, 0x28),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fld_fstp_m80",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdb, 5, 0x10),
+                compat_x87_mem(0xdb, 7, 0x20),
+            ),
+            input: compat_x87_input(|scratch| {
+                scratch[0x10..0x1a].copy_from_slice(&[
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x3f,
+                ]);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_real_arith_m64",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdc, 0, 0x18),
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdc, 4, 0x10),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdc, 1, 0x18),
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdc, 6, 0x10),
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdc, 5, 0x18),
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdc, 7, 0x18),
+                compat_x87_mem(0xdd, 3, 0x48),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.5);
+                compat_x87_put_f64(scratch, 0x18, 2.25);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_real_arith_m32",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xd9, 0, 0x10),
+                compat_x87_mem(0xd8, 0, 0x14),
+                compat_x87_mem(0xd9, 3, 0x20),
+                compat_x87_mem(0xd9, 0, 0x10),
+                compat_x87_mem(0xd8, 1, 0x14),
+                compat_x87_mem(0xd9, 3, 0x24),
+                compat_x87_mem(0xd9, 0, 0x10),
+                compat_x87_mem(0xd8, 4, 0x14),
+                compat_x87_mem(0xd9, 3, 0x28),
+                compat_x87_mem(0xd9, 0, 0x10),
+                compat_x87_mem(0xd8, 6, 0x14),
+                compat_x87_mem(0xd9, 3, 0x2c),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f32(scratch, 0x10, 3.5);
+                compat_x87_put_f32(scratch, 0x14, 1.25);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_integer_load_store_widths",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdf, 0, 0x10),
+                compat_x87_mem(0xdf, 3, 0x30),
+                compat_x87_mem(0xdb, 0, 0x14),
+                compat_x87_mem(0xdb, 3, 0x34),
+                compat_x87_mem(0xdf, 5, 0x18),
+                compat_x87_mem(0xdf, 7, 0x38),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, -1234);
+                compat_x87_put_i32(scratch, 0x14, 56789);
+                compat_x87_put_i64(scratch, 0x18, -1_234_567);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fist_nonpop_preserves_st0",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdf, 2, 0x20),
+                compat_x87_mem(0xdb, 2, 0x24),
+                compat_x87_mem(0xdd, 3, 0x28),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 4.5);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fisttp_widths_truncate",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdf, 1, 0x20),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdb, 1, 0x24),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 1, 0x28),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, -3.75);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_frndint_rounding_modes",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xd9, 5, 0x10),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xfc],
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xd9, 5, 0x12),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xfc],
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xd9, 5, 0x14),
+                compat_x87_mem(0xdd, 0, 0x28),
+                [0xd9, 0xfc],
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xd9, 5, 0x16),
+                compat_x87_mem(0xdd, 0, 0x28),
+                [0xd9, 0xfc],
+                compat_x87_mem(0xdd, 3, 0x48),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 0x037f);
+                compat_x87_put_i16(scratch, 0x12, 0x077f);
+                compat_x87_put_i16(scratch, 0x14, 0x0b7f);
+                compat_x87_put_i16(scratch, 0x16, 0x0f7f);
+                compat_x87_put_f64(scratch, 0x20, 3.5);
+                compat_x87_put_f64(scratch, 0x28, -3.5);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_integer_arith_m16",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdf, 0, 0x10),
+                compat_x87_mem(0xde, 0, 0x12),
+                compat_x87_mem(0xde, 1, 0x14),
+                compat_x87_mem(0xde, 4, 0x16),
+                compat_x87_mem(0xde, 6, 0x18),
+                compat_x87_mem(0xdb, 3, 0x20),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 5);
+                compat_x87_put_i16(scratch, 0x12, 3);
+                compat_x87_put_i16(scratch, 0x14, 2);
+                compat_x87_put_i16(scratch, 0x16, 4);
+                compat_x87_put_i16(scratch, 0x18, 3);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_integer_reverse_arith_m32",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdb, 0, 0x10),
+                compat_x87_mem(0xda, 5, 0x14),
+                compat_x87_mem(0xda, 7, 0x18),
+                compat_x87_mem(0xdb, 3, 0x20),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i32(scratch, 0x10, 8);
+                compat_x87_put_i32(scratch, 0x14, 20);
+                compat_x87_put_i32(scratch, 0x18, 36);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fcom_memory_status_and_pop",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xd8, 2, 0x10),
+                compat_x87_mem(0xdd, 7, 0x20),
+                compat_x87_mem(0xd8, 3, 0x10),
+                compat_x87_mem(0xdd, 7, 0x22),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdc, 2, 0x18),
+                compat_x87_mem(0xdd, 7, 0x24),
+                compat_x87_mem(0xdc, 3, 0x18),
+                compat_x87_mem(0xdd, 7, 0x26),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f32(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_ficom_status_and_pop",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdf, 0, 0x10),
+                compat_x87_mem(0xde, 2, 0x10),
+                compat_x87_mem(0xdd, 7, 0x20),
+                compat_x87_mem(0xda, 2, 0x14),
+                compat_x87_mem(0xdd, 7, 0x22),
+                compat_x87_mem(0xde, 3, 0x10),
+                compat_x87_mem(0xdd, 7, 0x24),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 7);
+                compat_x87_put_i32(scratch, 0x14, 9);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_stack_fxch_fld_fstp",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xd9, 0xc9],
+                [0xd8, 0xc1],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xd9, 0xc1],
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 3, 0x40),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_stack_pop_arithmetic",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xde, 0xc1],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xde, 0xc9],
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xdd, 0, 0x20),
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xde, 0xe9],
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 0, 0x20),
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xde, 0xe1],
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 0, 0x20),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xde, 0xf9],
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xdd, 0, 0x20),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xde, 0xf1],
+                compat_x87_mem(0xdd, 3, 0x48),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 2.0);
+                compat_x87_put_f64(scratch, 0x18, 4.0);
+                compat_x87_put_f64(scratch, 0x20, 8.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fcomi_fucomi_flags",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xdb, 0xf1],
+                compat_x87_setcc(0x92, 0x50),
+                compat_x87_setcc(0x94, 0x51),
+                compat_x87_setcc(0x9a, 0x52),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xdb, 0xe9],
+                compat_x87_setcc(0x92, 0x53),
+                compat_x87_setcc(0x94, 0x54),
+                compat_x87_setcc(0x9a, 0x55),
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 3, 0x40),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+                scratch[0x20..0x28].copy_from_slice(&0x7ff8_0000_0000_0000u64.to_le_bytes());
+            }),
+            rflags_mask: FLAGS_FROM_COMPARE,
+        },
+        CompatStateCase {
+            label: "x87_compat_fcomip_fucomip_pop_flags",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xdf, 0xf1],
+                compat_x87_setcc(0x92, 0x50),
+                compat_x87_setcc(0x94, 0x51),
+                compat_x87_setcc(0x9a, 0x52),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xdf, 0xe9],
+                compat_x87_setcc(0x92, 0x53),
+                compat_x87_setcc(0x94, 0x54),
+                compat_x87_setcc(0x9a, 0x55),
+                compat_x87_mem(0xdd, 3, 0x30),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+                scratch[0x20..0x28].copy_from_slice(&0x7ff8_0000_0000_0000u64.to_le_bytes());
+            }),
+            rflags_mask: FLAGS_FROM_COMPARE,
+        },
+        CompatStateCase {
+            label: "x87_compat_fcmovb_taken",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xda, 0xc1],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 3, 0x28),
+            ),
+            input: compat_x87_input_with_flags(RFLAGS_CF, |scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fcmovb_not_taken",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xda, 0xc1],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 3, 0x28),
+            ),
+            input: compat_x87_input_with_flags(0, |scratch| {
+                compat_x87_put_f64(scratch, 0x10, 1.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_ftst_fxam_status",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xee],
+                [0xd9, 0xe4],
+                compat_x87_mem(0xdd, 7, 0x20),
+                [0xd9, 0xe5],
+                compat_x87_mem(0xdd, 7, 0x22),
+                compat_x87_mem(0xdd, 3, 0x28),
+                [0xd9, 0xe8],
+                [0xd9, 0xe5],
+                compat_x87_mem(0xdd, 7, 0x30),
+                compat_x87_mem(0xdd, 3, 0x38),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fsqrt_f2xm1_fyl2x",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xd9, 0xfa],
+                compat_x87_mem(0xdd, 3, 0x28),
+                [0xd9, 0xee],
+                [0xd9, 0xf0],
+                compat_x87_mem(0xdd, 3, 0x30),
+                [0xd9, 0xe8],
+                [0xd9, 0xf0],
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xf1],
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xdd, 0, 0x18),
+                [0xd9, 0xe8],
+                [0xd9, 0xf9],
+                compat_x87_mem(0xdd, 3, 0x48),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 9.0);
+                compat_x87_put_f64(scratch, 0x18, 3.0);
+                compat_x87_put_f64(scratch, 0x20, 2.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_trig_zero_results",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xee],
+                [0xd9, 0xfe],
+                compat_x87_mem(0xdd, 3, 0x20),
+                [0xd9, 0xee],
+                [0xd9, 0xff],
+                compat_x87_mem(0xdd, 3, 0x28),
+                [0xd9, 0xee],
+                [0xd9, 0xfb],
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 3, 0x38),
+                [0xd9, 0xee],
+                [0xd9, 0xf2],
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xdd, 3, 0x48),
+                [0xd9, 0xee],
+                [0xd9, 0xe8],
+                [0xd9, 0xf3],
+                compat_x87_mem(0xdd, 3, 0x50),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fscale_fxtract",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdd, 0, 0x10),
+                [0xd9, 0xfd],
+                compat_x87_mem(0xdd, 3, 0x30),
+                compat_x87_mem(0xdd, 3, 0x38),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xf4],
+                compat_x87_mem(0xdd, 3, 0x40),
+                compat_x87_mem(0xdd, 3, 0x48),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 3.0);
+                compat_x87_put_f64(scratch, 0x18, 2.0);
+                compat_x87_put_f64(scratch, 0x20, 12.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fbld_fbstp_signs",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdf, 4, 0x10),
+                compat_x87_mem(0xdf, 6, 0x30),
+                compat_x87_mem(0xdf, 4, 0x20),
+                compat_x87_mem(0xdf, 6, 0x40),
+            ),
+            input: compat_x87_input(|scratch| {
+                scratch[0x10..0x1a].copy_from_slice(&[
+                    0x45, 0x23, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ]);
+                scratch[0x20..0x2a].copy_from_slice(&[
+                    0x56, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
+                ]);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fincstp_fdecstp_top",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem(0xdd, 0, 0x20),
+                [0xd9, 0xf7],
+                compat_x87_mem(0xdd, 2, 0x30),
+                [0xd9, 0xf6],
+                compat_x87_mem(0xdd, 3, 0x38),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 3.0);
+                compat_x87_put_f64(scratch, 0x18, 7.0);
+                compat_x87_put_f64(scratch, 0x20, 11.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fnop_fwait_fnclex",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xe8],
+                [0xd9, 0xd0],
+                [0x9b],
+                [0xdb, 0xe2],
+                compat_x87_mem(0xdd, 7, 0x20),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_x87_mem(0xd9, 7, 0x30),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_empty_fstp_indefinite_status",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 7, 0x28),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_ffree_full_stack_allows_push",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xd9, 0xe8],
+                [0xdd, 0xc7],
+                [0xd9, 0xee],
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 7, 0x28),
+            ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_stack_addr32_rsp() -> u64 {
     0x1111_2222_0000_0000 | STACK_ADDR
 }
@@ -27808,6 +28470,13 @@ fn avx512_kvm_fpu_modrm16_compat_corpus() {
         "unexpected compatibility FPU ModRM16 corpus size"
     );
     let _ = run_compat_state_cases("FPU ModRM16", &cases);
+}
+
+#[test]
+fn avx512_kvm_x87_compat_corpus() {
+    let cases = compat_x87_cases();
+    assert_eq!(cases.len(), 30, "unexpected compatibility x87 corpus size");
+    let _ = run_compat_state_cases("x87", &cases);
 }
 
 #[test]
