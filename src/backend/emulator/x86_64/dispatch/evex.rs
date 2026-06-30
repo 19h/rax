@@ -1677,6 +1677,11 @@ impl X86_64Vcpu {
                 insn::simd::evex_fma(self, ctx, opcode)
             }
             // V4FMADDPS/SS and V4FNMADDPS/SS source-block FMA forms.
+            0x9A | 0x9B | 0xAA | 0xAB
+                if evex.pp == 3 && !evex.w && !self.xeon_phi_avx512_enabled() =>
+            {
+                self.inject_undefined_instruction()
+            }
             0x9A if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, false, false),
             0x9B if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, true, false),
             0xAA if evex.pp == 3 && !evex.w => insn::simd::evex_4fmaddps(self, ctx, false, true),
@@ -1789,6 +1794,9 @@ impl X86_64Vcpu {
             // VPSCATTERD*/Q* and VSCATTERD*/Q*.
             0xA0..=0xA3 if evex.pp == 1 => insn::simd::evex_scatter(self, ctx, opcode),
             // VGATHERPF*/VSCATTERPF* opcode-extension forms.
+            0xC6 | 0xC7 if evex.pp == 1 && !self.xeon_phi_avx512_enabled() => {
+                self.inject_undefined_instruction()
+            }
             0xC6 | 0xC7 if evex.pp == 1 => insn::simd::evex_vsib_prefetch(self, ctx, opcode),
 
             // VEXPANDPS/VEXPANDPD (0x88)
@@ -1837,6 +1845,9 @@ impl X86_64Vcpu {
             // VPDPWSSDS (0x53) - Multiply and Add Signed Word Integers with Saturation
             0x53 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, true),
             // VP4DPWSSD/VP4DPWSSDS source-block dot products.
+            0x52 | 0x53 if evex.pp == 3 && !evex.w && !self.xeon_phi_avx512_enabled() => {
+                self.inject_undefined_instruction()
+            }
             0x52 if evex.pp == 3 && !evex.w => insn::simd::evex_4dpwssd(self, ctx, false),
             0x53 if evex.pp == 3 && !evex.w => insn::simd::evex_4dpwssd(self, ctx, true),
 
@@ -1869,6 +1880,9 @@ impl X86_64Vcpu {
                 insn::simd::evex_conflict(self, ctx, es)
             }
             // VEXP2PS/PD, VRCP28PS/PD, VRSQRT28PS/PD, and scalar 28-bit forms.
+            0xC8 | 0xCA | 0xCB | 0xCC | 0xCD if evex.pp == 1 && !self.xeon_phi_avx512_enabled() => {
+                self.inject_undefined_instruction()
+            }
             0xC8 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
                 insn::simd::evex_fp_unary_math(

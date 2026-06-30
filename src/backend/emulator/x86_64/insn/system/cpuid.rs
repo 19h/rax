@@ -143,16 +143,25 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Structured extended feature flags.
             if subleaf == 0 {
                 // AVX2 IS advertised now that XSAVE/XCR0 are implemented.
-                let ebx = (1u32 << 20) // SMAP
+                let mut ebx = (1u32 << 20) // SMAP
                         | (1u32 << 10) // INVPCID
                         | (1u32 << 5); // AVX2
+                if vcpu.xeon_phi_avx512 {
+                    ebx |= (1u32 << 16) // AVX512F
+                         | (1u32 << 26) // AVX512PF
+                         | (1u32 << 27); // AVX512ER
+                }
                 let ecx = 1u32 << 8; // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
                                      // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
                                      // the emulator does not enforce it (ENDBR is a NOP, indirect
                                      // CALL/JMP/RET are unchecked), so claiming it would mislead a
                                      // guest into believing hardware-enforced CFI is active and
                                      // silently weaken intra-guest control-flow protections.
-                let edx = 1u32 << 14; // SERIALIZE
+                let mut edx = 1u32 << 14; // SERIALIZE
+                if vcpu.xeon_phi_avx512 {
+                    edx |= (1u32 << 2) // AVX512_4VNNIW
+                         | (1u32 << 3); // AVX512_4FMAPS
+                }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
                 let edx = 1u32 << 21; // APX_F

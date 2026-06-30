@@ -286,6 +286,11 @@ pub struct X86_64Vcpu {
     /// IA32_XSS on the base KVM harness) but can be configured by harnesses
     /// that install XCRS state externally before guest execution.
     pub(super) xgetbv1_value: u64,
+    /// Enable Xeon Phi-only AVX-512 subsets (AVX512ER, AVX512PF,
+    /// AVX512_4FMAPS, and AVX512_4VNNIW). The default CPUID profile does not
+    /// expose these bits, so their opcodes must #UD unless a semantic harness
+    /// opts in explicitly.
+    pub(super) xeon_phi_avx512: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -913,6 +918,7 @@ impl X86_64Vcpu {
             mxcsr: 0x1F80,
             xcr0: 1, // x87 state component always enabled
             xgetbv1_value: 0,
+            xeon_phi_avx512: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -947,6 +953,16 @@ impl X86_64Vcpu {
     /// regular guests leave it at the architectural zero default.
     pub fn set_xgetbv1_value(&mut self, value: u64) {
         self.xgetbv1_value = value;
+    }
+
+    /// Enable or disable Xeon Phi-only AVX-512 subsets for semantic harnesses.
+    pub fn set_xeon_phi_avx512_enabled(&mut self, enabled: bool) {
+        self.xeon_phi_avx512 = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn xeon_phi_avx512_enabled(&self) -> bool {
+        self.xeon_phi_avx512
     }
 
     #[cfg(feature = "debug")]

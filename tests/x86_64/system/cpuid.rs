@@ -242,6 +242,27 @@ fn test_cpuid_function_7_extended_features() {
     assert_eq!(regs.rdx as u32 & (1 << 20), 0, "IBT must not be advertised");
 }
 
+#[test]
+fn test_cpuid_leaf_7_xeon_phi_avx512_opt_in_bits() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    vcpu.set_xeon_phi_avx512_enabled(true);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert!(regs.rbx as u32 & (1 << 16) != 0, "AVX512F advertised");
+    assert!(regs.rbx as u32 & (1 << 26) != 0, "AVX512PF advertised");
+    assert!(regs.rbx as u32 & (1 << 27) != 0, "AVX512ER advertised");
+    assert!(regs.rdx as u32 & (1 << 2) != 0, "AVX512_4VNNIW advertised");
+    assert!(regs.rdx as u32 & (1 << 3) != 0, "AVX512_4FMAPS advertised");
+}
+
 // CPUID extended function 0x80000000 - Get Max Extended Function
 #[test]
 fn test_cpuid_extended_function_80000000() {

@@ -20631,6 +20631,145 @@ fn unsupported_amd_simd_state_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'
         .collect()
 }
 
+const XEON_PHI_AVX512_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx512er_vexp2ps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x48, 0xc8, 0xc8],
+    ),
+    (
+        "avx512er_vexp2pd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x48, 0xc8, 0xc8],
+    ),
+    (
+        "avx512er_vrcp28ps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x48, 0xca, 0xc8],
+    ),
+    (
+        "avx512er_vrcp28pd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x48, 0xca, 0xc8],
+    ),
+    (
+        "avx512er_vrsqrt28ps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x48, 0xcc, 0xc8],
+    ),
+    (
+        "avx512er_vrsqrt28pd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x48, 0xcc, 0xc8],
+    ),
+    (
+        "avx512er_vrcp28ss_unsupported",
+        &[0x62, 0xf2, 0x65, 0x08, 0xcb, 0xe2],
+    ),
+    (
+        "avx512er_vrcp28sd_unsupported",
+        &[0x62, 0xf2, 0xe5, 0x08, 0xcb, 0xe2],
+    ),
+    (
+        "avx512er_vrsqrt28ss_unsupported",
+        &[0x62, 0xf2, 0x65, 0x08, 0xcd, 0xe2],
+    ),
+    (
+        "avx512er_vrsqrt28sd_unsupported",
+        &[0x62, 0xf2, 0xe5, 0x08, 0xcd, 0xe2],
+    ),
+    (
+        "avx512pf_vgatherpf0dps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x0c, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf1dps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x14, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf0dps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x2c, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf1dps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc6, 0x34, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf0dpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc6, 0x0c, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf1dpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc6, 0x14, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf0dpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc6, 0x2c, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf1dpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc6, 0x34, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf0qps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x0c, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf1qps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x14, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf0qps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x2c, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf1qps_unsupported",
+        &[0x62, 0xf2, 0x7d, 0x49, 0xc7, 0x34, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf0qpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc7, 0x0c, 0x00],
+    ),
+    (
+        "avx512pf_vgatherpf1qpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc7, 0x14, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf0qpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc7, 0x2c, 0x00],
+    ),
+    (
+        "avx512pf_vscatterpf1qpd_unsupported",
+        &[0x62, 0xf2, 0xfd, 0x49, 0xc7, 0x34, 0x00],
+    ),
+    (
+        "avx512_4fmaps_v4fmaddps_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0x9a, 0x20],
+    ),
+    (
+        "avx512_4fmaps_v4fnmaddps_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0xaa, 0x20],
+    ),
+    (
+        "avx512_4fmaps_v4fmaddss_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x08, 0x9b, 0x20],
+    ),
+    (
+        "avx512_4fmaps_v4fnmaddss_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x08, 0xab, 0x20],
+    ),
+    (
+        "avx512_4vnniw_vp4dpwssd_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0x52, 0x20],
+    ),
+    (
+        "avx512_4vnniw_vp4dpwssds_unsupported",
+        &[0x62, 0xf2, 0x7f, 0x48, 0x53, 0x20],
+    ),
+];
+
+fn unsupported_xeon_phi_avx512_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    XEON_PHI_AVX512_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "sgx_encls_ecreate_unsupported",
@@ -22799,6 +22938,26 @@ fn avx512_kvm_amd_simd_state_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AMD SIMD/state", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_xeon_phi_avx512_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_xeon_phi_avx512_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD Xeon Phi AVX-512 probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported Xeon Phi AVX-512", cases, expected);
 }
 
 #[test]

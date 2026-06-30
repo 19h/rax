@@ -348,6 +348,7 @@ fn try_run_rax(case: &DiffCase) -> Result<OutCase, String> {
     code.push(0xf4);
 
     let (mut vcpu, mem) = setup_vm(&code, Some(registers_from_input(&case.input)));
+    vcpu.set_xeon_phi_avx512_enabled(true);
     mem.write_slice(&case.input.scratch, GuestAddress(SCRATCH_ADDR))
         .unwrap();
     let regs = run_until_hlt(&mut vcpu).map_err(|error| error.to_string())?;
