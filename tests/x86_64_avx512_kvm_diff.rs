@@ -17653,6 +17653,47 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "umonitor_wait_reg_matrix_rbp_address",
+            "leaq 144(%rax), %rbp\numonitor %rbp\nmovq %rbp, %rcx",
+        ),
+        (
+            "umonitor_wait_reg_matrix_rsi_address",
+            "leaq 152(%rax), %rsi\numonitor %rsi\nmovq %rsi, %rcx",
+        ),
+        (
+            "umonitor_wait_reg_matrix_edi_zeroext_address",
+            "movabsq $0xffff0000000040a0, %rdi\numonitor %edi\nmovq %rdi, %rcx",
+        ),
+        (
+            "umonitor_wait_reg_matrix_r9d_zeroext_address",
+            "movabsq $0xffff0000000040b0, %r9\numonitor %r9d\nmovq %r9, %rcx",
+        ),
+        (
+            "umwait_wait_reg_matrix_eax_control0",
+            "xorl %edx, %edx\nxorl %eax, %eax\numwait %eax\naddq $0, %r8",
+        ),
+        (
+            "umwait_wait_reg_matrix_esi_control0",
+            "xorl %edx, %edx\nxorl %eax, %eax\nxorl %esi, %esi\numwait %esi\naddq $0, %r8",
+        ),
+        (
+            "tpause_wait_reg_matrix_edx_control0",
+            "xorl %edx, %edx\nxorl %eax, %eax\ntpause %edx\naddq $0, %r8",
+        ),
+        (
+            "tpause_wait_reg_matrix_r9d_control1",
+            "xorl %edx, %edx\nxorl %eax, %eax\nmovl $1, %r9d\ntpause %r9d\naddq $0, %r8",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Waitpkg,
+            profile: Int,
+        });
+    }
 
     // RDPID reads IA32_TSC_AUX. Fresh KVM vCPUs expose zero here, matching the
     // emulator model; the cases verify destination width, extended registers,
@@ -32079,6 +32120,48 @@ fn avx512_kvm_monitor_wait_edge_corpus() {
 }
 
 #[test]
+fn avx512_kvm_waitpkg_register_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_wait_reg_matrix_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected WAITPKG register-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on WAITPKG register-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a WAITPKG register-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "WAITPKG register-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "WAITPKG register-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Waitpkg),
+        8,
+        "all WAITPKG register-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all WAITPKG register-matrix cases should compare"
+    );
+}
+
+#[test]
 fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
@@ -32086,7 +32169,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        39,
+        47,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -32116,12 +32199,12 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Waitpkg),
-        17,
+        25,
         "all WAITPKG cases should run"
     );
     assert_eq!(tally.ran_for(Feat::Rdpid), 17, "all RDPID cases should run");
     assert_eq!(
-        tally.compared, 39,
+        tally.compared, 47,
         "all serialize/WAITPKG/RDPID cases should compare"
     );
 }
