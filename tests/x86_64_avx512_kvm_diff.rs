@@ -1992,6 +1992,9 @@ enum InputProfile {
     /// boundaries, laid out as dwords so pack/narrow and saturated arithmetic
     /// all see clamp-sensitive lanes.
     IntSatEdge,
+    /// Integer qwords around IFMA's 52-bit source mask and high/low product
+    /// split boundaries.
+    IntIfma52Edge,
     /// Integer data plus per-lane shift counts around architectural masking and
     /// zero/sign-fill boundaries for word, dword, and qword vector shifts.
     IntShiftEdge,
@@ -2275,6 +2278,17 @@ const INT_CONVERT_EDGE_QWORDS: [u64; 8] = [
     0x0020_0000_0000_0001,
 ];
 
+const INT_IFMA52_EDGE_QWORDS: [u64; 8] = [
+    0x0000_0000_0000_0000, // zero multiplicand/addend
+    0x0000_0000_0000_0001, // low product bit
+    0x000f_ffff_ffff_ffff, // max 52-bit source value
+    0x0008_0000_0000_0000, // top IFMA source bit
+    0x0007_ffff_ffff_fffe, // carry-rich value below the top bit
+    0xffff_ffff_ffff_ffff, // dest carry plus ignored high source bits
+    0xfff0_0000_0000_0000, // ignored source bits with zero 52-bit payload
+    0xfedc_ba98_7654_3210, // mixed high ignored bits and low payload
+];
+
 fn zmm_from_bytes(bytes: [u8; 64]) -> [u64; 8] {
     let mut out = [0u64; 8];
     for (i, chunk) in bytes.chunks_exact(8).enumerate() {
@@ -2296,6 +2310,15 @@ fn int_sat_edge_zmm(reg: usize) -> [u8; 64] {
     for lane in 0..16 {
         let value = INT_SAT_EDGES[(reg * 7 + lane) % INT_SAT_EDGES.len()];
         bytes[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    bytes
+}
+
+fn int_ifma52_edge_zmm(reg: usize) -> [u8; 64] {
+    let mut bytes = [0u8; 64];
+    for lane in 0..8 {
+        let value = INT_IFMA52_EDGE_QWORDS[(reg * 3 + lane) % INT_IFMA52_EDGE_QWORDS.len()];
+        bytes[lane * 8..lane * 8 + 8].copy_from_slice(&value.to_le_bytes());
     }
     bytes
 }
@@ -2464,6 +2487,7 @@ fn profile_zmm(profile: InputProfile, reg: usize) -> [u8; 64] {
     match profile {
         InputProfile::Int => int_zmm(reg),
         InputProfile::IntSatEdge => int_sat_edge_zmm(reg),
+        InputProfile::IntIfma52Edge => int_ifma52_edge_zmm(reg),
         InputProfile::IntShiftEdge => int_shift_edge_zmm(reg),
         InputProfile::IntPredicateEdge => int_predicate_edge_zmm(reg),
         InputProfile::IntConvertEdge => int_convert_edge_zmm(reg),
@@ -10875,6 +10899,56 @@ fn irregular_cases() -> Vec<Case> {
             asm: asm.to_string(),
             feat,
             profile: Int,
+        });
+    }
+
+    for &(label, asm) in &[
+        (
+            "vpmadd52luq_ifma52_edge_reg",
+            "vpmadd52luq %zmm2, %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52huq_ifma52_edge_reg",
+            "vpmadd52huq %zmm2, %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52luq_ifma52_edge_mem",
+            "vpmadd52luq 128(%rax), %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52huq_ifma52_edge_mem",
+            "vpmadd52huq 128(%rax), %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52luq_ifma52_edge_bcst",
+            "vpmadd52luq (%rax){1to8}, %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52huq_ifma52_edge_bcst",
+            "vpmadd52huq (%rax){1to8}, %zmm3, %zmm1",
+        ),
+        (
+            "vpmadd52luq_ifma52_edge_merge",
+            "vpmadd52luq %zmm2, %zmm3, %zmm1 {%k1}",
+        ),
+        (
+            "vpmadd52huq_ifma52_edge_zero",
+            "vpmadd52huq %zmm2, %zmm3, %zmm1 {%k1}{z}",
+        ),
+        (
+            "vpmadd52luq_ifma52_edge_high",
+            "vpmadd52luq %zmm16, %zmm18, %zmm17",
+        ),
+        (
+            "vpmadd52huq_ifma52_edge_high",
+            "vpmadd52huq %zmm16, %zmm18, %zmm17",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Ifma,
+            profile: IntIfma52Edge,
         });
     }
 
@@ -37808,6 +37882,38 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
         "all AVX-512 IFMA edge cases should run"
     );
     assert_eq!(tally.compared, 8, "all VNNI/IFMA edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_ifma52_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_ifma52_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 10, "unexpected IFMA52 edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on IFMA52 edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an IFMA52 edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "IFMA52 edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "IFMA52 edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Ifma),
+        10,
+        "all IFMA52 edge cases should run"
+    );
+    assert_eq!(tally.compared, 10, "all IFMA52 edge cases should compare");
 }
 
 #[test]
