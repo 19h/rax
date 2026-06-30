@@ -273,6 +273,8 @@ pub struct X86_64Vcpu {
     io_pending: Option<IoPending>,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
     pub(super) kernel_gs_base: u64,
+    /// IA32_TSC_AUX MSR (0xC0000103), consumed by RDPID and RDTSCP.
+    pub(super) tsc_aux: u32,
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
     /// SIMD floating-point control/status register used by LDMXCSR/STMXCSR and
@@ -935,6 +937,7 @@ impl X86_64Vcpu {
             halted: false,
             io_pending: None,
             kernel_gs_base: 0,
+            tsc_aux: 0,
             pkru: 0,
             mxcsr: 0x1F80,
             xcr0: 1, // x87 state component always enabled
@@ -3059,6 +3062,7 @@ impl X86_64Vcpu {
         self.halted = false;
         self.io_pending = None;
         self.kernel_gs_base = 0;
+        self.tsc_aux = 0;
         self.pkru = 0;
         self.xcr0 = 1;
         self.xgetbv1_value = 0;
@@ -3478,6 +3482,7 @@ impl VCpu for X86_64Vcpu {
                 size: lf.size,
             },
             kernel_gs_base: self.kernel_gs_base,
+            tsc_aux: self.tsc_aux,
             pkru: self.pkru,
             mxcsr: self.mxcsr,
             halted: self.halted,
@@ -3515,6 +3520,7 @@ impl VCpu for X86_64Vcpu {
 
         // Restore other state
         self.kernel_gs_base = state.kernel_gs_base;
+        self.tsc_aux = state.tsc_aux;
         self.pkru = state.pkru;
         self.mxcsr = state.mxcsr;
         self.halted = state.halted;

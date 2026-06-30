@@ -39,8 +39,8 @@ pub fn rdtscp(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     // EDX:EAX = TSC, upper 32 bits cleared
     vcpu.regs.rax = tsc & 0xFFFF_FFFF;
     vcpu.regs.rdx = (tsc >> 32) & 0xFFFF_FFFF;
-    // ECX = IA32_TSC_AUX[31:0] (processor ID), upper 32 bits cleared
-    vcpu.regs.rcx = 0; // Processor ID = 0
+    // ECX = IA32_TSC_AUX[31:0], upper 32 bits cleared
+    vcpu.regs.rcx = vcpu.tsc_aux as u64;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

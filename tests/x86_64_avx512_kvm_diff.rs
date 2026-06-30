@@ -17771,6 +17771,18 @@ fn irregular_cases() -> Vec<Case> {
             "rdpid_rdpid_reg_matrix_rdx_preserves_cmp_flags",
             "cmpq %r8, %r8\nrdpid %rdx",
         ),
+        (
+            "rdpid_tsc_aux_msr_roundtrip",
+            "movl $0xc0000103, %ecx\nmovl $0x2468ace0, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $-1, %r8\nrdpid %r8\ncmpl $0x2468ace0, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "rdpid_tsc_aux_msr_second_write_overwrites",
+            "movl $0xc0000103, %ecx\nmovl $0x11111111, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x33333333, %eax\nwrmsr\nmovabsq $-1, %r8\nrdpid %r8\ncmpl $0x33333333, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
+        (
+            "rdpid_tsc_aux_msr_high_rax_ignored",
+            "movl $0xc0000103, %ecx\nmovabsq $0xffffffff1234fedc, %rax\nxorl %edx, %edx\nwrmsr\nmovabsq $-1, %r8\nrdpid %r8\ncmpl $0x1234fedc, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rcx, %rcx",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -18200,6 +18212,16 @@ fn irregular_cases() -> Vec<Case> {
             Msr,
         ),
         (
+            "msr_tsc_aux_msr_roundtrip_low32",
+            "movl $0xc0000103, %ecx\nmovl $0x13579bdf, %eax\nxorl %edx, %edx\nwrmsr\nrdmsr\ncmpl $0x13579bdf, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            Msr,
+        ),
+        (
+            "msr_tsc_aux_msr_second_write_overwrites",
+            "movl $0xc0000103, %ecx\nmovl $0x11111111, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x22222222, %eax\nwrmsr\nrdmsr\ncmpl $0x22222222, %eax\nsete %r8b\ntestl %edx, %edx\nsetz %r9b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            Msr,
+        ),
+        (
             "debug_dr0_dr1_roundtrip",
             "movabsq $0x0000000000004000, %r8\nmovq %r8, %dr0\nmovq %dr0, %rcx\nmovabsq $0x0000000000004008, %r8\nmovq %r8, %dr1\nmovq %dr1, %rdx",
             DebugReg,
@@ -18613,6 +18635,21 @@ fn irregular_cases() -> Vec<Case> {
         (
             "rdtscp_tsc_edge_monotonic_pair",
             "rdtscp\nshlq $32, %rdx\norq %rdx, %rax\nmovq %rax, %r8\nrdtscp\nshlq $32, %rdx\norq %rdx, %rax\ncmpq %r8, %rax\nsetae %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_tsc_aux_msr_roundtrip",
+            "movl $0xc0000103, %ecx\nmovl $0x456789ab, %eax\nxorl %edx, %edx\nwrmsr\nrdtscp\ncmpl $0x456789ab, %ecx\nsete %r8b\nmovzbl %r8b, %r8d\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %rcx, %rcx\ncmpq %r8, %r8",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_tsc_aux_msr_second_write_overwrites",
+            "movl $0xc0000103, %ecx\nmovl $0x11111111, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x76543210, %eax\nwrmsr\nrdtscp\ncmpl $0x76543210, %ecx\nsete %r8b\nmovzbl %r8b, %r8d\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %rcx, %rcx\ncmpq %r8, %r8",
+            Rdtscp,
+        ),
+        (
+            "rdtscp_tsc_aux_msr_zero_extends_ecx",
+            "movl $0xc0000103, %ecx\nmovl $0x13572468, %eax\nxorl %edx, %edx\nwrmsr\nmovq $-1, %rcx\nrdtscp\nshrq $32, %rcx\nsetz %r8b\nmovzbl %r8b, %r8d\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %rcx, %rcx\ncmpq %r8, %r8",
             Rdtscp,
         ),
     ] {
@@ -31426,7 +31463,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 59, "unexpected privileged corpus size");
+    assert_eq!(cases.len(), 61, "unexpected privileged corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -31450,13 +31487,13 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         13,
         "all descriptor-table cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Msr), 14, "all MSR cases should run");
+    assert_eq!(tally.ran_for(Feat::Msr), 16, "all MSR cases should run");
     assert_eq!(
         tally.ran_for(Feat::DebugReg),
         16,
         "all debug-register cases should run"
     );
-    assert_eq!(tally.compared, 59, "all privileged cases should compare");
+    assert_eq!(tally.compared, 61, "all privileged cases should compare");
 }
 
 #[test]
@@ -31571,6 +31608,48 @@ fn avx512_kvm_msr_edge_corpus() {
     );
     assert_eq!(tally.ran_for(Feat::Msr), 6, "all MSR edge cases should run");
     assert_eq!(tally.compared, 6, "all MSR edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_tsc_aux_msr_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_tsc_aux_msr_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected TSC_AUX MSR corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on TSC_AUX MSR cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a TSC_AUX MSR case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "TSC_AUX MSR corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "TSC_AUX MSR cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Msr),
+        2,
+        "all direct TSC_AUX MSR cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdpid),
+        3,
+        "all RDPID TSC_AUX MSR cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Rdtscp),
+        3,
+        "all RDTSCP TSC_AUX MSR cases should run"
+    );
+    assert_eq!(tally.compared, 8, "all TSC_AUX MSR cases should compare");
 }
 
 #[test]
@@ -32169,7 +32248,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        47,
+        50,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -32202,9 +32281,9 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         25,
         "all WAITPKG cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Rdpid), 17, "all RDPID cases should run");
+    assert_eq!(tally.ran_for(Feat::Rdpid), 20, "all RDPID cases should run");
     assert_eq!(
-        tally.compared, 47,
+        tally.compared, 50,
         "all serialize/WAITPKG/RDPID cases should compare"
     );
 }
@@ -32531,7 +32610,7 @@ fn avx512_kvm_random_tsc_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 45, "unexpected random/TSC corpus size");
+    assert_eq!(cases.len(), 48, "unexpected random/TSC corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -32562,10 +32641,10 @@ fn avx512_kvm_random_tsc_corpus() {
     assert_eq!(tally.ran_for(Feat::Tsc), 7, "all RDTSC cases should run");
     assert_eq!(
         tally.ran_for(Feat::Rdtscp),
-        6,
+        9,
         "all RDTSCP cases should run"
     );
-    assert_eq!(tally.compared, 45, "all random/TSC cases should compare");
+    assert_eq!(tally.compared, 48, "all random/TSC cases should compare");
 }
 
 #[test]

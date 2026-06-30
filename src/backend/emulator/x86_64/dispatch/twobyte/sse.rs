@@ -2150,10 +2150,9 @@ impl X86_64Vcpu {
             return self.inject_undefined_instruction();
         }
 
-        // RDPID reads IA32_TSC_AUX MSR which contains the processor ID
-        // In an emulator, we return a constant processor ID (0)
-        // This is the same value that RDTSCP stores in ECX
-        let tsc_aux: u64 = 0; // Processor ID = 0
+        // RDPID reads IA32_TSC_AUX MSR. Fresh vCPUs default it to zero, but
+        // WRMSR can update it and RDTSCP must observe the same value.
+        let tsc_aux = self.tsc_aux as u64;
 
         // RDPID always uses 32-bit operand size (writes to r32, zeros upper 32 bits)
         // unless REX.W is present, then it uses 64-bit

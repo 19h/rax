@@ -42,6 +42,7 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             }
         }
         0xC0000102 => vcpu.kernel_gs_base = value, // KernelGSbase
+        0xC0000103 => vcpu.tsc_aux = value as u32, // IA32_TSC_AUX
         _ => {}                                    // Ignore unknown MSRs
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -82,6 +83,7 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0xC0000100 => vcpu.sregs.fs.base,  // FS.base
         0xC0000101 => vcpu.sregs.gs.base,  // GS.base
         0xC0000102 => vcpu.kernel_gs_base, // KernelGSbase
+        0xC0000103 => vcpu.tsc_aux as u64, // IA32_TSC_AUX
         _ => 0,                            // Return 0 for unknown MSRs
     };
 
