@@ -21379,6 +21379,45 @@ fn compat_loop_control_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_xlat_input(rbx: u64, al: u8, table_index: usize, table_value: u8) -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rax = 0xaaaa_bbbb_cccc_0000 | u64::from(al);
+    input.rbx = rbx;
+    input.scratch[table_index] = table_value;
+    input
+}
+
+fn compat_xlat_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "xlat16_compat_uses_bx_with_high_rbx_set",
+            op: vec![0xd7],
+            input: compat_xlat_input(0x1111_2222_3333_4000, 0x10, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xlat16_compat_unsigned_al_ff_preserves_high_rax",
+            op: vec![0xd7],
+            input: compat_xlat_input(0x1111_2222_3333_4000, 0xff, 0xff, 0x5a),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xlat32_compat_addr32_uses_ebx_with_high_rbx_set",
+            op: vec![0x67, 0xd7],
+            input: compat_xlat_input(0x1111_2222_0000_4000, 0x20, 0x20, 0xc3),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xlat32_compat_addr32_unsigned_al_ff",
+            op: vec![0x67, 0xd7],
+            input: compat_xlat_input(0x1111_2222_0000_4000, 0xff, 0xff, 0x3c),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -24744,6 +24783,13 @@ fn avx512_kvm_loop_control_compat_corpus() {
         "unexpected compatibility loop-control corpus size"
     );
     let _ = run_compat_state_cases("loop-control", &cases);
+}
+
+#[test]
+fn avx512_kvm_xlat_compat_corpus() {
+    let cases = compat_xlat_cases();
+    assert_eq!(cases.len(), 4, "unexpected compatibility XLAT corpus size");
+    let _ = run_compat_state_cases("XLAT", &cases);
 }
 
 #[test]
