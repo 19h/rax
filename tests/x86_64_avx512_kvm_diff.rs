@@ -17209,6 +17209,60 @@ fn irregular_cases() -> Vec<Case> {
             XsaveExt,
             Int,
         ),
+        (
+            "mxcsr_state_addr_matrix_r15_base",
+            "movl $0x5f80, 32(%rax)\nleaq 32(%rax), %r15\nldmxcsr (%r15)\nstmxcsr 4(%r15)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxsave64_state_addr_matrix_r15_base",
+            "movl $0x5f80, 32(%rax)\nldmxcsr 32(%rax)\nleaq 256(%rax), %r15\nfxsave64 (%r15)\nmovl 24(%r15), %r8d\nmovl %r8d, 36(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "fxrstor64_state_addr_matrix_scaled_index",
+            "movl $0x3f80, 32(%rax)\nldmxcsr 32(%rax)\nleaq 224(%rax), %r8\nmovl $4, %r9d\nfxsave64 (%r8,%r9,8)\nmovl $0x1f80, 36(%rax)\nldmxcsr 36(%rax)\nfxrstor64 (%r8,%r9,8)\nstmxcsr 40(%rax)",
+            Fxsave,
+            Int,
+        ),
+        (
+            "xsave64_state_addr_matrix_r15_base",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nleaq 240(%rbx), %r15\nxsave64 (%r15)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 (%r15)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xrstor64_state_addr_matrix_scaled_index",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nleaq 224(%rbx), %r8\nmovl $2, %r9d\nxsave64 (%r8,%r9,8)\nkxorq %k1, %k1, %k1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 (%r8,%r9,8)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsave64_state_addr_matrix_addr32_high_rbx",
+            "movabsq $0xffff000000004010, %rbx\nmovl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\naddr32 xsave64 240(%ebx)\nvpxord %ymm2, %ymm2, %ymm2\nmovl $0xe7, %eax\nxorl %edx, %edx\naddr32 xrstor64 240(%ebx)",
+            Xsave,
+            Int,
+        ),
+        (
+            "xsaveopt64_state_addr_matrix_r15_base",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nleaq 240(%rbx), %r15\nxsaveopt64 (%r15)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 (%r15)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsavec64_state_addr_matrix_scaled_index",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nleaq 224(%rbx), %r8\nmovl $2, %r9d\nxsavec64 (%r8,%r9,8)\nkxorq %k3, %k3, %k3\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 (%r8,%r9,8)",
+            XsaveExt,
+            Int,
+        ),
+        (
+            "xsaves64_state_addr_matrix_r15_base",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nleaq 240(%rbx), %r15\nxsaves64 (%r15)\nvpxord %zmm16, %zmm16, %zmm16\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstors64 (%r15)",
+            XsaveExt,
+            Int,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -33111,7 +33165,7 @@ fn avx512_kvm_processor_state_management_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        28,
+        34,
         "unexpected processor state-management corpus size"
     );
 
@@ -33136,12 +33190,12 @@ fn avx512_kvm_processor_state_management_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Fxsave),
-        14,
+        17,
         "all FXSAVE/MXCSR cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Xsave),
-        11,
+        14,
         "all XSAVE/XRSTOR cases should run"
     );
     assert_eq!(
@@ -33150,8 +33204,56 @@ fn avx512_kvm_processor_state_management_corpus() {
         "all XGETBV1 cases should run"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 34,
         "all processor state-management cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_state_address_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_state_addr_matrix_"))
+        .collect();
+    assert_eq!(cases.len(), 9, "unexpected state address-matrix size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on state address-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a state address-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "state address-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "state address-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Fxsave),
+        3,
+        "all FXSAVE state address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Xsave),
+        3,
+        "all base XSAVE address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::XsaveExt),
+        3,
+        "all extended XSAVE address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared, 9,
+        "all state address-matrix cases should compare"
     );
 }
 
@@ -33262,7 +33364,7 @@ fn avx512_kvm_extended_xsave_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::XsaveExt)
         .collect();
-    assert_eq!(cases.len(), 9, "unexpected extended XSAVE corpus size");
+    assert_eq!(cases.len(), 12, "unexpected extended XSAVE corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -33280,7 +33382,7 @@ fn avx512_kvm_extended_xsave_corpus() {
         tally.skipped_feature, 0,
         "extended XSAVE cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 9, "all extended XSAVE cases should compare");
+    assert_eq!(tally.compared, 12, "all extended XSAVE cases should compare");
 }
 
 #[test]
