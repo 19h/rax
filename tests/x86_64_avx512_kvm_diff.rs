@@ -20618,6 +20618,33 @@ fn unsupported_sgx_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8]
         .collect()
 }
 
+const VIRTUALIZATION_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("vmx_vmcall_unsupported", &[0x0f, 0x01, 0xc1]),
+    ("vmx_vmlaunch_unsupported", &[0x0f, 0x01, 0xc2]),
+    ("vmx_vmresume_unsupported", &[0x0f, 0x01, 0xc3]),
+    ("vmx_vmxoff_unsupported", &[0x0f, 0x01, 0xc4]),
+    ("vmx_vmfunc_unsupported", &[0x0f, 0x01, 0xd4]),
+    ("svm_vmmcall_unsupported", &[0x0f, 0x01, 0xd9]),
+    ("vmx_vmptrld_unsupported", &[0x0f, 0xc7, 0x30]),
+    ("vmx_vmptrst_unsupported", &[0x0f, 0xc7, 0x38]),
+    ("vmx_vmclear_unsupported", &[0x66, 0x0f, 0xc7, 0x30]),
+    ("vmx_vmxon_unsupported", &[0xf3, 0x0f, 0xc7, 0x30]),
+    ("vmx_vmread_reg_unsupported", &[0x0f, 0x78, 0xc3]),
+    ("vmx_vmread_mem_unsupported", &[0x0f, 0x78, 0x08]),
+    ("vmx_vmwrite_reg_unsupported", &[0x0f, 0x79, 0xc3]),
+    ("vmx_vmwrite_mem_unsupported", &[0x0f, 0x79, 0x08]),
+    ("vmx_invept_unsupported", &[0x66, 0x0f, 0x38, 0x80, 0x00]),
+    ("vmx_invvpid_unsupported", &[0x66, 0x0f, 0x38, 0x81, 0x00]),
+];
+
+fn unsupported_virtualization_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    VIRTUALIZATION_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22550,6 +22577,26 @@ fn avx512_kvm_sgx_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported SGX", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_virtualization_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_virtualization_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD virtualization probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported virtualization", cases, expected);
 }
 
 #[test]

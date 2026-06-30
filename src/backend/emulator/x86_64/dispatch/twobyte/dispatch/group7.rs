@@ -95,11 +95,11 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xD4 => {
-                    // VMFUNC (0x0F 0x01 0xD4) - VMX function
+                    // VMFUNC (0x0F 0x01 0xD4) requires VMX operation. The
+                    // emulator does not expose VMX execution state, so this
+                    // form is #UD.
                     ctx.consume_u8()?; // consume modrm
-                                       // Treat as NOP in emulator
-                    self.regs.rip += ctx.cursor as u64;
-                    Ok(None)
+                    self.inject_undefined_instruction()
                 }
                 0xD5 => {
                     // XEND outside an active transaction raises #GP(0). The
