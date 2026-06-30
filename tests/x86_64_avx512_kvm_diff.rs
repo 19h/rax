@@ -1776,6 +1776,11 @@ fn run_interp_compat_state_inner(
     sregs.ss.selector = 0x10;
     sregs.fs.selector = 0x10;
     sregs.gs.selector = 0x10;
+    sregs.ds.db = true;
+    sregs.es.db = true;
+    sregs.ss.db = true;
+    sregs.fs.db = true;
+    sregs.gs.db = true;
     if let Some(vector) = trap_vector {
         sregs.idt.base = EXCEPTION_IDT_ADDR;
         sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
@@ -21777,6 +21782,62 @@ fn compat_fpu_modrm16_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_stack_addr32_rsp() -> u64 {
+    0x1111_2222_0000_0000 | STACK_ADDR
+}
+
+fn compat_stack_addr32_rbp() -> u64 {
+    0x3333_4444_0000_0000 | STACK_ADDR
+}
+
+fn compat_stack_addr32_seed() -> CompatStateIn {
+    let mut input = compat_state_seed();
+    input.rsp = compat_stack_addr32_rsp();
+    input.rbp = compat_stack_addr32_rbp();
+    input
+}
+
+fn compat_stack_addr32_pop_input(value: u16) -> CompatStateIn {
+    let mut input = compat_stack_addr32_seed();
+    let stack_offset = (STACK_ADDR - STACK_WINDOW_ADDR) as usize;
+    input.stack[stack_offset..stack_offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_stack_addr32_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    let mut push_ax = compat_stack_addr32_seed();
+    push_ax.rax = (push_ax.rax & !0xffff) | 0x2468;
+
+    vec![
+        CompatStateCase {
+            label: "push_ax16_compat_stack_addr32_uses_esp",
+            op: vec![0x50],
+            input: push_ax,
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_bx16_compat_stack_addr32_uses_esp",
+            op: vec![0x5b],
+            input: compat_stack_addr32_pop_input(0x1357),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "enter16_compat_stack_addr32_uses_esp",
+            op: vec![0xc8, 0x04, 0x00, 0x00],
+            input: compat_stack_addr32_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "leave16_compat_stack_addr32_uses_ebp_esp",
+            op: vec![0xc9],
+            input: compat_stack_addr32_pop_input(0x579b),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25182,6 +25243,17 @@ fn avx512_kvm_fpu_modrm16_compat_corpus() {
         "unexpected compatibility FPU ModRM16 corpus size"
     );
     let _ = run_compat_state_cases("FPU ModRM16", &cases);
+}
+
+#[test]
+fn avx512_kvm_stack_addr32_compat_corpus() {
+    let cases = compat_stack_addr32_cases();
+    assert_eq!(
+        cases.len(),
+        4,
+        "unexpected compatibility stack address-size corpus size"
+    );
+    let _ = run_compat_state_cases("stack address-size", &cases);
 }
 
 #[test]

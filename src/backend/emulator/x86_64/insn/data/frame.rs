@@ -43,7 +43,7 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let delta = op_size as u64;
 
     push_frame(vcpu, vcpu.get_reg(5, op_size), op_size)?;
-    let frame_ptr = vcpu.regs.rsp;
+    let frame_ptr = vcpu.stack_pointer_offset();
 
     if nesting_level > 0 {
         for _ in 1..nesting_level {
@@ -56,7 +56,8 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     }
 
     vcpu.set_reg(5, frame_ptr, op_size);
-    vcpu.regs.rsp = vcpu.regs.rsp.wrapping_sub(alloc_size);
+    let new_sp = vcpu.stack_pointer_wrapping_sub(alloc_size);
+    vcpu.set_stack_pointer_offset(new_sp);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -64,7 +65,7 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 /// LEAVE (0xC9)
 pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = frame_op_size(vcpu, ctx);
-    vcpu.regs.rsp = vcpu.regs.rbp;
+    vcpu.set_stack_pointer_offset(vcpu.regs.rbp);
     let value = match op_size {
         2 => vcpu.pop16()? as u64,
         4 => vcpu.pop32()? as u64,

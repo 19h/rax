@@ -2241,14 +2241,71 @@ impl X86_64Vcpu {
         }
     }
 
+    #[inline(always)]
+    fn stack_address_size(&self) -> u8 {
+        if self.sregs.cs.l {
+            8
+        } else if self.sregs.ss.db {
+            4
+        } else {
+            2
+        }
+    }
+
+    #[inline(always)]
+    pub(super) fn stack_pointer_offset(&self) -> u64 {
+        match self.stack_address_size() {
+            2 => self.regs.rsp & 0xffff,
+            4 => self.regs.rsp & 0xffff_ffff,
+            8 => self.regs.rsp,
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline(always)]
+    pub(super) fn set_stack_pointer_offset(&mut self, value: u64) {
+        match self.stack_address_size() {
+            2 => {
+                self.regs.rsp = (self.regs.rsp & !0xffff) | (value & 0xffff);
+            }
+            4 => {
+                self.regs.rsp = value & 0xffff_ffff;
+            }
+            8 => {
+                self.regs.rsp = value;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline(always)]
+    pub(super) fn stack_pointer_wrapping_sub(&self, delta: u64) -> u64 {
+        match self.stack_address_size() {
+            2 => u64::from((self.stack_pointer_offset() as u16).wrapping_sub(delta as u16)),
+            4 => u64::from((self.stack_pointer_offset() as u32).wrapping_sub(delta as u32)),
+            8 => self.stack_pointer_offset().wrapping_sub(delta),
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline(always)]
+    fn stack_pointer_wrapping_add(&self, delta: u64) -> u64 {
+        match self.stack_address_size() {
+            2 => u64::from((self.stack_pointer_offset() as u16).wrapping_add(delta as u16)),
+            4 => u64::from((self.stack_pointer_offset() as u32).wrapping_add(delta as u32)),
+            8 => self.stack_pointer_offset().wrapping_add(delta),
+            _ => unreachable!(),
+        }
+    }
+
     pub(super) fn push64(&mut self, value: u64) -> Result<()> {
-        let new_rsp = self.regs.rsp.wrapping_sub(8);
+        let new_rsp = self.stack_pointer_wrapping_sub(8);
         self.mmu.write_u64(
             self.stack_segment_base().wrapping_add(new_rsp),
             value,
             &self.sregs,
         )?;
-        self.regs.rsp = new_rsp;
+        self.set_stack_pointer_offset(new_rsp);
         Ok(())
     }
 
@@ -2263,62 +2320,65 @@ impl X86_64Vcpu {
     }
 
     pub(super) fn pop64(&mut self) -> Result<u64> {
-        let value = self.mmu.read_u64(
-            self.stack_segment_base().wrapping_add(self.regs.rsp),
-            &self.sregs,
-        )?;
-        self.regs.rsp = self.regs.rsp.wrapping_add(8);
+        let rsp = self.stack_pointer_offset();
+        let value = self
+            .mmu
+            .read_u64(self.stack_segment_base().wrapping_add(rsp), &self.sregs)?;
+        let new_rsp = self.stack_pointer_wrapping_add(8);
+        self.set_stack_pointer_offset(new_rsp);
         Ok(value)
     }
 
     pub(super) fn push32(&mut self, value: u32) -> Result<()> {
-        let new_rsp = self.regs.rsp.wrapping_sub(4);
+        let new_rsp = self.stack_pointer_wrapping_sub(4);
         self.mmu.write_u32(
             self.stack_segment_base().wrapping_add(new_rsp),
             value,
             &self.sregs,
         )?;
-        self.regs.rsp = new_rsp;
+        self.set_stack_pointer_offset(new_rsp);
         Ok(())
     }
 
     pub(super) fn push_segment32(&mut self, value: u16) -> Result<()> {
-        let new_rsp = self.regs.rsp.wrapping_sub(4);
+        let new_rsp = self.stack_pointer_wrapping_sub(4);
         self.mmu.write_u16(
             self.stack_segment_base().wrapping_add(new_rsp),
             value,
             &self.sregs,
         )?;
-        self.regs.rsp = new_rsp;
+        self.set_stack_pointer_offset(new_rsp);
         Ok(())
     }
 
     pub(super) fn pop32(&mut self) -> Result<u32> {
-        let value = self.mmu.read_u32(
-            self.stack_segment_base().wrapping_add(self.regs.rsp),
-            &self.sregs,
-        )?;
-        self.regs.rsp = self.regs.rsp.wrapping_add(4);
+        let rsp = self.stack_pointer_offset();
+        let value = self
+            .mmu
+            .read_u32(self.stack_segment_base().wrapping_add(rsp), &self.sregs)?;
+        let new_rsp = self.stack_pointer_wrapping_add(4);
+        self.set_stack_pointer_offset(new_rsp);
         Ok(value)
     }
 
     pub(super) fn push16(&mut self, value: u16) -> Result<()> {
-        let new_rsp = self.regs.rsp.wrapping_sub(2);
+        let new_rsp = self.stack_pointer_wrapping_sub(2);
         self.mmu.write_u16(
             self.stack_segment_base().wrapping_add(new_rsp),
             value,
             &self.sregs,
         )?;
-        self.regs.rsp = new_rsp;
+        self.set_stack_pointer_offset(new_rsp);
         Ok(())
     }
 
     pub(super) fn pop16(&mut self) -> Result<u16> {
-        let value = self.mmu.read_u16(
-            self.stack_segment_base().wrapping_add(self.regs.rsp),
-            &self.sregs,
-        )?;
-        self.regs.rsp = self.regs.rsp.wrapping_add(2);
+        let rsp = self.stack_pointer_offset();
+        let value = self
+            .mmu
+            .read_u16(self.stack_segment_base().wrapping_add(rsp), &self.sregs)?;
+        let new_rsp = self.stack_pointer_wrapping_add(2);
+        self.set_stack_pointer_offset(new_rsp);
         Ok(value)
     }
 
