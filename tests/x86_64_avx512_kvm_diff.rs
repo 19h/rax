@@ -22047,6 +22047,89 @@ fn compat_moffs_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_lea_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input
+}
+
+fn compat_lea16_wrap_seed() -> CompatStateIn {
+    let mut input = compat_lea_seed();
+    input.rbx = compat_modrm16_reg(0x1111_2222_3333_0000, 0xfff0);
+    input.rsi = compat_modrm16_reg(0x2222_3333_4444_0000, 0x0030);
+    input
+}
+
+fn compat_lea32_wrap_seed() -> CompatStateIn {
+    let mut input = compat_lea_seed();
+    input.rbx = 0x1111_2222_ffff_fff0;
+    input.rsi = 0x2222_3333_0000_0030;
+    input
+}
+
+fn compat_lea_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "lea16_compat_bx_si_to_ax_preserves_high_rax",
+            op: vec![0x8d, 0x00],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea16_compat_bp_di_disp8_to_dx",
+            op: vec![0x8d, 0x53, 0x09],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea16_compat_disp16_to_cx",
+            op: vec![0x8d, 0x0e, 0x80, 0x40],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea32dest_compat_bx_si_disp16_zeroes_high_rax",
+            op: vec![0x66, 0x8d, 0x80, 0xf0, 0xff],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea16_compat_addr16_wraps_offset",
+            op: vec![0x8d, 0x00],
+            input: compat_lea16_wrap_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea16_compat_addr32_sib_to_ax",
+            op: vec![0x67, 0x8d, 0x44, 0x73, 0x20],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea32_compat_addr32_sib_to_eax_zeroes_high",
+            op: vec![0x67, 0x66, 0x8d, 0x44, 0xb3, 0x20],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea32_compat_addr32_disp32_to_ecx",
+            op: vec![0x67, 0x66, 0x8d, 0x0d, 0x80, 0x40, 0x00, 0x00],
+            input: compat_lea_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lea32_compat_addr32_wraps_offset",
+            op: vec![0x67, 0x66, 0x8d, 0x04, 0x33],
+            input: compat_lea32_wrap_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn run_compat_state_cases(name: &str, cases: &[CompatStateCase]) -> Option<()> {
     let Some(oracle) = oracle() else {
         eprintln!("[skip] /dev/kvm unavailable");
@@ -25485,6 +25568,13 @@ fn avx512_kvm_moffs_compat_corpus() {
         "unexpected compatibility moffs corpus size"
     );
     let _ = run_compat_state_cases("moffs", &cases);
+}
+
+#[test]
+fn avx512_kvm_lea_compat_corpus() {
+    let cases = compat_lea_cases();
+    assert_eq!(cases.len(), 9, "unexpected compatibility LEA corpus size");
+    let _ = run_compat_state_cases("LEA", &cases);
 }
 
 #[test]
