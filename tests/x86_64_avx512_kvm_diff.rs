@@ -11986,6 +11986,55 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // AVX2 integer broadcast forms across element widths and source shapes.
+    // Representative broadcast cases exist in the broad AVX2 block; this pins
+    // the byte/word/dword/qword register and memory-source matrix explicitly.
+    for &(label, asm) in &[
+        (
+            "vpbroadcastb_avx2_broadcast_xmm_reg",
+            "{vex} vpbroadcastb %xmm2, %xmm1",
+        ),
+        (
+            "vpbroadcastb_avx2_broadcast_ymm_mem",
+            "{vex} vpbroadcastb 32(%rax), %ymm1",
+        ),
+        (
+            "vpbroadcastw_avx2_broadcast_xmm_reg",
+            "{vex} vpbroadcastw %xmm2, %xmm1",
+        ),
+        (
+            "vpbroadcastw_avx2_broadcast_xmm_mem",
+            "{vex} vpbroadcastw 32(%rax), %xmm1",
+        ),
+        (
+            "vpbroadcastd_avx2_broadcast_xmm_reg",
+            "{vex} vpbroadcastd %xmm2, %xmm1",
+        ),
+        (
+            "vpbroadcastd_avx2_broadcast_ymm_mem",
+            "{vex} vpbroadcastd 32(%rax), %ymm1",
+        ),
+        (
+            "vpbroadcastq_avx2_broadcast_xmm_reg",
+            "{vex} vpbroadcastq %xmm2, %xmm1",
+        ),
+        (
+            "vpbroadcastq_avx2_broadcast_ymm_reg",
+            "{vex} vpbroadcastq %xmm2, %ymm1",
+        ),
+        (
+            "vbroadcasti128_avx2_broadcast_high_mem",
+            "{vex} vbroadcasti128 32(%rax), %ymm8",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Avx2,
+            profile: Int,
+        });
+    }
+
     // Complementary AVX2 VEX integer operand forms. These target already
     // implemented 0F38 horizontal, sign/absolute, extend, compare, pack, and
     // flag-setting paths that were only lightly represented by the base AVX2
@@ -36176,6 +36225,48 @@ fn avx512_kvm_avx2_lane_insert_extract_corpus() {
     assert_eq!(
         tally.compared, 8,
         "all AVX2 lane insert/extract cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_avx2_integer_broadcast_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_avx2_broadcast_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        9,
+        "unexpected AVX2 integer broadcast corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on AVX2 integer broadcast cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX2 integer broadcast case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX2 integer broadcast corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX2 integer broadcast cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Avx2),
+        9,
+        "all AVX2 integer broadcast cases should run"
+    );
+    assert_eq!(
+        tally.compared, 9,
+        "all AVX2 integer broadcast cases should compare"
     );
 }
 
