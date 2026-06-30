@@ -20511,6 +20511,113 @@ fn unsupported_modern_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'s
         .collect()
 }
 
+const SGX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "sgx_encls_ecreate_unsupported",
+        &[0xb8, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eadd_unsupported",
+        &[0xb8, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_einit_unsupported",
+        &[0xb8, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eremove_unsupported",
+        &[0xb8, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_edbgrd_unsupported",
+        &[0xb8, 0x04, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_edbgwr_unsupported",
+        &[0xb8, 0x05, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eextend_unsupported",
+        &[0xb8, 0x06, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eldb_unsupported",
+        &[0xb8, 0x07, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eldu_unsupported",
+        &[0xb8, 0x08, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_eblock_unsupported",
+        &[0xb8, 0x09, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_epa_unsupported",
+        &[0xb8, 0x0a, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_ewb_unsupported",
+        &[0xb8, 0x0b, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_encls_etrack_unsupported",
+        &[0xb8, 0x0c, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xcf],
+    ),
+    (
+        "sgx_enclu_ereport_unsupported",
+        &[0xb8, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_egetkey_unsupported",
+        &[0xb8, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_eenter_unsupported",
+        &[0xb8, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_eresume_unsupported",
+        &[0xb8, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_eexit_unsupported",
+        &[0xb8, 0x04, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_eaccept_unsupported",
+        &[0xb8, 0x05, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_emodpe_unsupported",
+        &[0xb8, 0x06, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclu_eacceptcopy_unsupported",
+        &[0xb8, 0x07, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd7],
+    ),
+    (
+        "sgx_enclv_edecvirtchild_unsupported",
+        &[0xb8, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xc0],
+    ),
+    (
+        "sgx_enclv_eincvirtchild_unsupported",
+        &[0xb8, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xc0],
+    ),
+    (
+        "sgx_enclv_esetcontext_unsupported",
+        &[0xb8, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xc0],
+    ),
+];
+
+fn unsupported_sgx_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    SGX_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 fn tsx_cases(run_xbegin: bool, run_xabort: bool, run_xtest: bool) -> Vec<Case> {
     let c = |label: &str, asm: &str| Case {
         label: label.to_string(),
@@ -22423,6 +22530,26 @@ fn avx512_kvm_modern_system_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported modern system", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_sgx_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_sgx_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD SGX probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported SGX", cases, expected);
 }
 
 #[test]
