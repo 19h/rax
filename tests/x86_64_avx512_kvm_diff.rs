@@ -23206,6 +23206,245 @@ fn compat_string_address_size_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_string_write_bytes(
+    mut input: CompatStateIn,
+    offset: usize,
+    values: &[u8],
+) -> CompatStateIn {
+    input.scratch[offset..offset + values.len()].copy_from_slice(values);
+    input
+}
+
+fn compat_string_repeat_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "rep_movsw16_compat_copies_words_preserves_high_regs",
+            op: vec![0xf3, 0xa5],
+            input: {
+                let mut input = compat_string_write_bytes(
+                    compat_string_movs_input(
+                        compat_string_addr16(0x20),
+                        compat_string_addr16(0x30),
+                        0x20,
+                        0x34,
+                    ),
+                    0x21,
+                    &[0x12, 0x78, 0x56],
+                );
+                input.rcx = compat_string_count16(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_movsd32_compat_addr32_copies_dwords_zeroes_high_regs",
+            op: vec![0x67, 0x66, 0xf3, 0xa5],
+            input: {
+                let mut input = compat_string_write_bytes(
+                    compat_string_movs_input(
+                        compat_string_addr32(0x40),
+                        compat_string_addr32(0x50),
+                        0x40,
+                        0x11,
+                    ),
+                    0x41,
+                    &[0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88],
+                );
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_movsb16_compat_df_backward_preserves_high_regs",
+            op: vec![0xf3, 0xa4],
+            input: {
+                let mut input = compat_string_write_bytes(
+                    compat_string_movs_input(
+                        compat_string_addr16(0x22),
+                        compat_string_addr16(0x32),
+                        0x21,
+                        0xa1,
+                    ),
+                    0x22,
+                    &[0xa2],
+                );
+                input.rcx = compat_string_count16(2);
+                input.rflags |= RFLAGS_DF;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_movsb32_compat_addr32_zero_count_normalizes_regs",
+            op: vec![0x67, 0xf3, 0xa4],
+            input: {
+                let mut input = compat_string_movs_input(
+                    compat_string_addr32(0x60),
+                    compat_string_addr32(0x70),
+                    0x60,
+                    0xc1,
+                );
+                input.rcx = 0x9999_aaaa_0000_0000;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_stosb16_compat_count3_preserves_high_rdi",
+            op: vec![0xf3, 0xaa],
+            input: {
+                let mut input = compat_string_stos_input(compat_string_addr16(0x80), 0x00d5);
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_stosd32_compat_addr32_zeroes_high_rdi_rcx",
+            op: vec![0x67, 0x66, 0xf3, 0xab],
+            input: {
+                let mut input = compat_string_stos_input(compat_string_addr32(0x90), 0xccdd);
+                input.rax = 0xaaaa_bbbb_1122_3344;
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_lodsb16_compat_loads_last_byte_preserves_high_rsi",
+            op: vec![0xf3, 0xac],
+            input: {
+                let mut input = compat_string_write_bytes(
+                    compat_string_lods_input(compat_string_addr16(0xa0), 0xa0, 0x11),
+                    0xa1,
+                    &[0x22, 0x33],
+                );
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_lodsd32_compat_addr32_loads_last_dword_zeroes_high",
+            op: vec![0x67, 0x66, 0xf3, 0xad],
+            input: {
+                let mut input = compat_string_write_bytes(
+                    compat_string_lods_input(compat_string_addr32(0xb0), 0xb0, 0x11),
+                    0xb1,
+                    &[0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88],
+                );
+                input.rax = 0xaaaa_bbbb_cccc_dddd;
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "repe_cmpsb16_compat_stops_on_mismatch",
+            op: vec![0xf3, 0xa6],
+            input: {
+                let mut input = compat_string_cmps_input(
+                    compat_string_addr16(0xc0),
+                    compat_string_addr16(0xd0),
+                    0xc0,
+                    0xd0,
+                    0x11,
+                    0x11,
+                );
+                input.scratch[0xc1] = 0x22;
+                input.scratch[0xd1] = 0x33;
+                input.scratch[0xc2] = 0x44;
+                input.scratch[0xd2] = 0x44;
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "repne_cmpsb16_compat_stops_on_equal",
+            op: vec![0xf2, 0xa6],
+            input: {
+                let mut input = compat_string_cmps_input(
+                    compat_string_addr16(0xc4),
+                    compat_string_addr16(0xd4),
+                    0xc4,
+                    0xD4,
+                    0x11,
+                    0x22,
+                );
+                input.scratch[0xc5] = 0x33;
+                input.scratch[0xd5] = 0x33;
+                input.scratch[0xc6] = 0x44;
+                input.scratch[0xd6] = 0x55;
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "repe_cmpsw16_compat_word_mismatch_status",
+            op: vec![0xf3, 0xa7],
+            input: {
+                let mut input = compat_string_cmps_input(
+                    compat_string_addr16(0xe0),
+                    compat_string_addr16(0xf0),
+                    0xe0,
+                    0xf0,
+                    0x34,
+                    0x34,
+                );
+                input.scratch[0xe1] = 0x12;
+                input.scratch[0xf1] = 0x12;
+                input.scratch[0xe2..0xe4].copy_from_slice(&0x1000u16.to_le_bytes());
+                input.scratch[0xf2..0xf4].copy_from_slice(&0x2000u16.to_le_bytes());
+                input.rcx = compat_string_count16(2);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "repe_scasb16_compat_stops_on_mismatch",
+            op: vec![0xf3, 0xae],
+            input: {
+                let mut input = compat_string_scas_input(compat_string_addr16(0x10), 0x10, 0x7a, 0x7a);
+                input.scratch[0x11] = 0x7a;
+                input.scratch[0x12] = 0x6b;
+                input.rcx = compat_string_count16(4);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "repne_scasb16_compat_stops_on_equal",
+            op: vec![0xf2, 0xae],
+            input: {
+                let mut input = compat_string_scas_input(compat_string_addr16(0x14), 0x14, 0x7a, 0x11);
+                input.scratch[0x15] = 0x22;
+                input.scratch[0x16] = 0x7a;
+                input.rcx = compat_string_count16(4);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+        CompatStateCase {
+            label: "repne_scasd32_compat_addr32_operand32_zeroes_high_regs",
+            op: vec![0x67, 0x66, 0xf2, 0xaf],
+            input: {
+                let mut input = compat_string_scas_input(compat_string_addr32(0x18), 0x18, 0x44, 0x11);
+                input.rax = 0xaaaa_bbbb_1122_3344;
+                input.scratch[0x18..0x1c].copy_from_slice(&0x0000_0011u32.to_le_bytes());
+                input.scratch[0x1c..0x20].copy_from_slice(&0x1122_3344u32.to_le_bytes());
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
+        },
+    ]
+}
+
 fn compat_modrm16_reg(seed: u64, low: u16) -> u64 {
     (seed & !0xffff) | u64::from(low)
 }
@@ -27457,6 +27696,17 @@ fn avx512_kvm_string_address_size_compat_corpus() {
         "unexpected compatibility string address-size corpus size"
     );
     let _ = run_compat_state_cases("string address-size", &cases);
+}
+
+#[test]
+fn avx512_kvm_string_repeat_compat_corpus() {
+    let cases = compat_string_repeat_cases();
+    assert_eq!(
+        cases.len(),
+        14,
+        "unexpected compatibility string repeat corpus size"
+    );
+    let _ = run_compat_state_cases("string repeat", &cases);
 }
 
 #[test]
