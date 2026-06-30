@@ -20697,6 +20697,27 @@ fn unsupported_virtualization_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'
         .collect()
 }
 
+const AMD_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("svm_vmrun_unsupported", &[0x0f, 0x01, 0xd8]),
+    ("svm_vmload_unsupported", &[0x0f, 0x01, 0xda]),
+    ("svm_vmsave_unsupported", &[0x0f, 0x01, 0xdb]),
+    ("svm_stgi_unsupported", &[0x0f, 0x01, 0xdc]),
+    ("svm_clgi_unsupported", &[0x0f, 0x01, 0xdd]),
+    ("svm_skinit_unsupported", &[0x0f, 0x01, 0xde]),
+    ("svm_invlpga_unsupported", &[0x0f, 0x01, 0xdf]),
+    ("monitorx_unsupported", &[0x0f, 0x01, 0xfa]),
+    ("mwaitx_unsupported", &[0x0f, 0x01, 0xfb]),
+    ("rdpru_unsupported", &[0x0f, 0x01, 0xfd]),
+];
+
+fn unsupported_amd_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AMD_SYSTEM_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -22730,6 +22751,26 @@ fn avx512_kvm_virtualization_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported virtualization", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_amd_system_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_amd_system_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AMD system probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AMD system", cases, expected);
 }
 
 #[test]
