@@ -10478,6 +10478,51 @@ fn irregular_cases() -> Vec<Case> {
         }
     }
 
+    // VEX AVX-VNNI dot-product accumulator edges. Zero sources isolate the
+    // accumulator path, while all-one memory sources drive dense signed and
+    // saturating dot products without using EVEX opmask state.
+    for &(label, asm) in &[
+        (
+            "vpdpbusd_vex_avx_vnni_edge_zero_acc_zero_src",
+            "{vex} vpxor %xmm1, %xmm1, %xmm1\n{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpdpbusd %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpdpbusd_vex_avx_vnni_edge_allones_acc_mem",
+            "{vex} vpcmpeqd %ymm1, %ymm1, %ymm1\n{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vmovdqu %ymm2, 64(%rax)\n{vex} vpdpbusd 64(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpdpbusds_vex_avx_vnni_edge_zero_acc_zero_src",
+            "{vex} vpxor %xmm1, %xmm1, %xmm1\n{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpdpbusds %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpdpbusds_vex_avx_vnni_edge_allones_acc_mem",
+            "{vex} vpcmpeqd %ymm1, %ymm1, %ymm1\n{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vmovdqu %ymm2, 64(%rax)\n{vex} vpdpbusds 64(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpdpwssd_vex_avx_vnni_edge_zero_acc_zero_src",
+            "{vex} vpxor %xmm1, %xmm1, %xmm1\n{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpdpwssd %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpdpwssd_vex_avx_vnni_edge_allones_acc_mem",
+            "{vex} vpcmpeqd %ymm1, %ymm1, %ymm1\n{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vmovdqu %ymm2, 64(%rax)\n{vex} vpdpwssd 64(%rax), %ymm3, %ymm1",
+        ),
+        (
+            "vpdpwssds_vex_avx_vnni_edge_zero_acc_zero_src",
+            "{vex} vpxor %xmm1, %xmm1, %xmm1\n{vex} vpxor %xmm2, %xmm2, %xmm2\n{vex} vpdpwssds %xmm2, %xmm3, %xmm1",
+        ),
+        (
+            "vpdpwssds_vex_avx_vnni_edge_allones_acc_mem",
+            "{vex} vpcmpeqd %ymm1, %ymm1, %ymm1\n{vex} vpcmpeqd %ymm2, %ymm2, %ymm2\n{vex} vmovdqu %ymm2, 64(%rax)\n{vex} vpdpwssds 64(%rax), %ymm3, %ymm1",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: AvxVnni,
+            profile: Int,
+        });
+    }
+
     // BITALG/VPOPCNTDQ edge operands. Zero and all-one vectors exercise exact
     // population-count results across every element width, and VPSHUFBITQMB
     // gets explicit zero/all-one selector vectors.
@@ -35542,7 +35587,7 @@ fn avx512_kvm_avx_vnni_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::AvxVnni)
         .collect();
-    assert_eq!(cases.len(), 48, "unexpected AVX-VNNI corpus size");
+    assert_eq!(cases.len(), 56, "unexpected AVX-VNNI corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35562,10 +35607,42 @@ fn avx512_kvm_avx_vnni_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::AvxVnni),
-        48,
+        56,
         "all AVX-VNNI cases should run"
     );
-    assert_eq!(tally.compared, 48, "all AVX-VNNI cases should compare");
+    assert_eq!(tally.compared, 56, "all AVX-VNNI cases should compare");
+}
+
+#[test]
+fn avx512_kvm_avx_vnni_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_vex_avx_vnni_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected AVX-VNNI edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on AVX-VNNI edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an AVX-VNNI edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "AVX-VNNI edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "AVX-VNNI edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::AvxVnni),
+        8,
+        "all AVX-VNNI edge cases should run"
+    );
+    assert_eq!(tally.compared, 8, "all AVX-VNNI edge cases should compare");
 }
 
 #[test]
