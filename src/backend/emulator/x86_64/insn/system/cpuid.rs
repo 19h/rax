@@ -167,7 +167,11 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
-                let edx = 1u32 << 21; // APX_F
+                let edx = if vcpu.apx_enabled() {
+                    1u32 << 21 // APX_F
+                } else {
+                    0
+                };
                 (0, 0, 0, edx)
             } else {
                 (0, 0, 0, 0)
@@ -216,13 +220,15 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 // Subleaf 0: EAX/EDX = supported XCR0 bits; EBX = area size for the
                 // currently-enabled features; ECX = max area size for all supported.
                 0 => {
-                    let xcr0_valid = XCR0_X87
+                    let mut xcr0_valid = XCR0_X87
                         | XCR0_SSE
                         | XCR0_AVX
                         | XCR0_OPMASK
                         | XCR0_ZMM_HI256
-                        | XCR0_HI16_ZMM
-                        | XCR0_APX_F;
+                        | XCR0_HI16_ZMM;
+                    if vcpu.apx_enabled() {
+                        xcr0_valid |= XCR0_APX_F;
+                    }
                     (
                         xcr0_valid as u32,
                         standard_xsave_area_size(vcpu.xcr0),
@@ -242,13 +248,13 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 // Subleaf 7: full ZMM16-31.
                 7 => (XSAVE_HI16_ZMM_SIZE, XSAVE_HI16_ZMM_OFFSET, 0, 0),
                 // Subleaf 19: APX_F EGPR component (R16-R31).
-                19 => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
+                19 if vcpu.apx_enabled() => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
                 _ => (0, 0, 0, 0),
             }
         }
         0x29 => {
             // Intel APX leaf. APX_F guarantees subleaf 0 with APX_NCI_NDD_NF.
-            if subleaf == 0 {
+            if subleaf == 0 && vcpu.apx_enabled() {
                 (0, 1, 0, 0)
             } else {
                 (0, 0, 0, 0)

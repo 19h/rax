@@ -156,6 +156,16 @@ pub fn setup_vm(
     (vcpu, mem)
 }
 
+/// Create a test VM with APX enabled for APX semantic instruction tests.
+pub fn setup_apx_vm(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    let (mut vcpu, mem) = setup_vm(code, initial_regs);
+    vcpu.set_apx_enabled(true);
+    (vcpu, mem)
+}
+
 /// Create a test VM in compatibility mode (32-bit code within long mode).
 /// Use this for instructions that are only valid in 32-bit mode (BOUND, PUSHA, POPA, etc.)
 /// In compatibility mode: CS.L=0, CS.D determines operand size (D=1 means 32-bit default)
@@ -293,6 +303,16 @@ pub fn setup_vm_no_idt(
     sregs.idt.limit = 0xFF; // Small limit, no entries populated
     vcpu.set_sregs(&sregs).unwrap();
 
+    (vcpu, mem)
+}
+
+/// Create a no-IDT test VM with APX enabled.
+pub fn setup_apx_vm_no_idt(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    let (mut vcpu, mem) = setup_vm_no_idt(code, initial_regs);
+    vcpu.set_apx_enabled(true);
     (vcpu, mem)
 }
 

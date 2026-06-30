@@ -27,7 +27,7 @@ fn test_setzuo_true_zeroes_upper_match_llvm() {
     regs.rax = 0xFFFF_FFFF_FFFF_FF00;
     regs.rflags = OF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 1);
 }
@@ -41,7 +41,7 @@ fn test_setzune_false_zeroes_upper_match_llvm() {
     regs.rbx = 0xFFFF_FFFF_FFFF_FFFF;
     regs.rflags = ZF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0);
 }
@@ -60,7 +60,7 @@ fn test_standard_mov32_zeros_upper() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFFFF;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -77,7 +77,7 @@ fn test_apx_add_ndd_zu_set() {
     regs.rax = 0xFFFFFFFF00000000;
     regs.rbx = 10;
     regs.rcx = 20;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -93,7 +93,7 @@ fn test_apx_add_ndd_zu_clear() {
     regs.rax = 0xDEADBEEF00000000;
     regs.rbx = 10;
     regs.rcx = 20;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -113,7 +113,7 @@ fn test_sub_ndd_zu_set() {
     regs.rax = 0xCAFEBABE00000000;
     regs.rbx = 100;
     regs.rcx = 30;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -125,7 +125,7 @@ fn test_sub_ndd_zu_clear() {
     regs.rax = 0x1234567800000000;
     regs.rbx = 100;
     regs.rcx = 30;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -141,7 +141,7 @@ fn test_and_ndd_zu_set() {
     regs.rax = 0xABCDEF0000000000;
     regs.rbx = 0xFF00FF00;
     regs.rcx = 0x0F0F0F0F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -157,7 +157,7 @@ fn test_or_ndd_zu_clear() {
     regs.rax = 0xDEADDEAD00000000;
     regs.rbx = 0x00FF0000;
     regs.rcx = 0x000000FF;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -173,7 +173,7 @@ fn test_xor_ndd_zu_set() {
     regs.rax = 0x1111111100000000;
     regs.rbx = 0xAAAAAAAA;
     regs.rcx = 0x55555555;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -192,7 +192,7 @@ fn test_shl_ndd_zu_set() {
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFF00000000;
     regs.rbx = 0x00000001;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -207,7 +207,7 @@ fn test_shr_ndd_zu_clear() {
     let mut regs = Registers::default();
     regs.rax = 0xBEEFBEEF00000000;
     regs.rbx = 0x80000000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -222,7 +222,7 @@ fn test_sar_ndd_zu_set() {
     let mut regs = Registers::default();
     regs.rax = 0xDEADDEAD00000000;
     regs.rbx = 0x80000000u64;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -237,7 +237,7 @@ fn test_rol_ndd_zu_set() {
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA00000000;
     regs.rbx = 0x12345678;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -252,7 +252,7 @@ fn test_ror_ndd_zu_clear() {
     let mut regs = Registers::default();
     regs.rax = 0x5555555500000000;
     regs.rbx = 0x12345678;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -265,7 +265,7 @@ fn test_ror_ndd_zu_clear() {
 fn test_add_r16_zu_set() {
     // ADD32 r16d, ebx, ecx with ZU=1
     let code = [0x62, 0xEC, 0x64, 0x1A, 0x01, 0xD9, 0xF4];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -274,7 +274,7 @@ fn test_add_r16_zu_set() {
 fn test_sub_r24_zu_clear() {
     // SUB32 r24d, r25d, r26d with ZU=0
     let code = [0x62, 0xEC, 0x34, 0x10, 0x29, 0xD1, 0xF4];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -283,7 +283,7 @@ fn test_sub_r24_zu_clear() {
 fn test_shl_r31_zu_set() {
     // SHL32 r31d, r30d, 4 with ZU=1
     let code = [0x62, 0xEC, 0x04, 0x1A, 0xC1, 0xE6, 0x04, 0xF4];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -302,7 +302,7 @@ fn test_mov_from_mem_zu_set() {
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFFFF;
     regs.rbx = DATA_ADDR;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u32(&mem, DATA_ADDR, 0x12345678);
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -318,7 +318,7 @@ fn test_add_from_mem_zu_clear() {
     let mut regs = Registers::default();
     regs.rax = 0xABCDABCD00000064;
     regs.rbx = DATA_ADDR;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u32(&mem, DATA_ADDR, 50);
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -336,7 +336,7 @@ fn test_add_overflow_zu_set() {
     regs.rax = 0xFFFFFFFF00000000;
     regs.rbx = 0xFFFFFFFF;
     regs.rcx = 1;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -349,7 +349,7 @@ fn test_add_overflow_zu_clear() {
     regs.rax = 0xDEADBEEF00000000;
     regs.rbx = 0xFFFFFFFF;
     regs.rcx = 2;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -362,7 +362,7 @@ fn test_xor_zero_zu_set() {
     regs.rax = 0xCAFEBABE00000000;
     regs.rbx = 0x12345678;
     regs.rcx = 0x12345678;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -375,7 +375,7 @@ fn test_xor_zero_zu_clear() {
     regs.rax = 0xFEEDFACE00000000;
     regs.rbx = 0x12345678;
     regs.rcx = 0x12345678;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -393,7 +393,7 @@ fn test_16bit_preserves_upper() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFF0000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -407,7 +407,7 @@ fn test_8bit_preserves_upper() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFF00;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -427,7 +427,7 @@ fn test_add_nf_zu_set() {
     regs.rax = 0xCAFEBABE00000000;
     regs.rbx = 100;
     regs.rcx = 50;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -443,7 +443,7 @@ fn test_sub_nf_zu_clear() {
     regs.rax = 0xCAFEBABE00000000;
     regs.rbx = 100;
     regs.rcx = 30;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -460,7 +460,7 @@ fn test_ndd_add_zu_preserves_sources() {
     regs.rax = 0xFFFFFFFF00000000;
     regs.rbx = 0xAAAAAAAA00000064;
     regs.rcx = 0xBBBBBBBB00000032;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -481,6 +481,6 @@ fn test_consecutive_zu_operations() {
     regs.rax = 0xFFFFFFFF00000000;
     regs.rbx = 10;
     regs.rcx = 5;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }

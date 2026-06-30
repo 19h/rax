@@ -42,7 +42,7 @@ fn test_ccmp_false_condition_uses_encoded_default_flags_match_llvm() {
     regs.rflags = 0x2;
     let code = [0x62, 0xF4, 0x9C, 0x00, 0x39, 0xD8, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_ne!(regs.rflags & CF, 0);
     assert_ne!(regs.rflags & ZF, 0);
@@ -62,7 +62,7 @@ fn test_ccmp_true_condition_performs_compare_match_llvm() {
     regs.rflags = 0x2;
     let code = [0x62, 0xF4, 0x9C, 0x01, 0x39, 0xD8, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rflags & CF, 0);
     assert_ne!(regs.rflags & ZF, 0);
@@ -82,7 +82,7 @@ fn test_ctest_false_condition_uses_encoded_default_flags_match_llvm() {
     regs.rflags = 0x2;
     let code = [0x62, 0xF4, 0xE4, 0x00, 0x85, 0xD8, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rflags & CF, 0);
     assert_eq!(regs.rflags & ZF, 0);
@@ -101,7 +101,7 @@ fn test_ccmpo_r64_r64() {
         0x00, // dfv = 0
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -115,7 +115,7 @@ fn test_ccmpno_r64_r64() {
         0x00, // dfv = 0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -128,7 +128,7 @@ fn test_ccmpb_r32_r32() {
         0x39, 0xD1, // CMP ecx, edx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -141,7 +141,7 @@ fn test_ccmpnb_r64_imm8() {
         0x83, 0xF8, 0x64, // CMP rax, 100
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -154,7 +154,7 @@ fn test_ccmpz_r64_r64() {
         0x4D, 0x39, 0xC8, // CMP r8, r9
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -169,7 +169,7 @@ fn test_ccmpnz_r64_mem() {
     ];
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0x1234);
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -183,7 +183,7 @@ fn test_ccmpbe_r64_r64() {
         0x39, 0xD1, // CMP rcx, rdx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -196,7 +196,7 @@ fn test_ccmpnbe_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -209,7 +209,7 @@ fn test_ccmps_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -222,7 +222,7 @@ fn test_ccmpns_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -235,7 +235,7 @@ fn test_ccmpp_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -248,7 +248,7 @@ fn test_ccmpnp_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -261,7 +261,7 @@ fn test_ccmpl_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -274,7 +274,7 @@ fn test_ccmpge_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -287,7 +287,7 @@ fn test_ccmple_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -300,7 +300,7 @@ fn test_ccmpg_r64_r64() {
         0x39, 0xD8, // CMP rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -317,7 +317,7 @@ fn test_ctesto_r64_r64() {
         0x85, 0xD8, // TEST rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -330,7 +330,7 @@ fn test_ctestz_r32_r32() {
         0x85, 0xD1, // TEST ecx, edx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -345,7 +345,7 @@ fn test_ctestnz_r64_imm32() {
         0x00, // dfv
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -358,7 +358,7 @@ fn test_ctestb_r64_r64() {
         0x85, 0xD8, // TEST rax, rbx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -374,7 +374,7 @@ fn test_ctests_mem_imm() {
     ];
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0x00F0);
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -391,7 +391,7 @@ fn test_ccmp_dfv_all_set() {
         0x62, 0xF4, 0xE4, 0x00, 0x39, 0xD8, 0x0F, // dfv = all 4 flags set
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -403,7 +403,7 @@ fn test_ccmp_dfv_selective() {
         0x62, 0xF4, 0xE4, 0x00, 0x39, 0xD8, 0x05, // dfv = CF + SF
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -420,7 +420,7 @@ fn test_ccmpz_r16_r17() {
         0x39, 0xC8, // CMP r16, r17 (modrm)
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -433,7 +433,7 @@ fn test_ctestnz_r20_imm() {
         0xF7, 0xC4, // TEST r20, imm32
         0x0F, 0x00, 0x00, 0x00, 0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -450,7 +450,7 @@ fn test_ccmpz_r8_r8() {
         0x38, 0xD8, // CMP al, bl
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -463,7 +463,7 @@ fn test_ccmpnz_r16_r16_operands() {
         0x39, 0xD8, // CMP ax, bx
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -475,7 +475,7 @@ fn test_ctestb_r8_imm8() {
         0x62, 0xF4, 0x24, 0x42, 0xF6, 0xC0, 0x0F, // TEST al, 0x0F
         0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -497,7 +497,7 @@ fn test_ccmp_chain() {
     let mut regs = Registers::default();
     regs.rax = 15; // > 10
     regs.rbx = 12; // < 20
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -513,7 +513,7 @@ fn test_ccmpnz_r64_mem64() {
     let mut regs = Registers::default();
     regs.rax = 1000;
     regs.rbx = DATA_ADDR;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 500);
     let _ = run_until_hlt(&mut vcpu);
 }
@@ -529,7 +529,7 @@ fn test_ctestb_mem_r64() {
     let mut regs = Registers::default();
     regs.rbx = DATA_ADDR;
     regs.rcx = 0x00FF;
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0xFF00);
     let _ = run_until_hlt(&mut vcpu);
 }

@@ -78,11 +78,12 @@ impl X86_64Vcpu {
                     // APX_F (bit19) enables APX EGPR state.
                     const XCR0_AVX512: u64 = (1 << 5) | (1 << 6) | (1 << 7);
                     const XCR0_APX_F: u64 = 1 << 19;
-                    const SUPPORTED: u64 = 0x7 | XCR0_AVX512 | XCR0_APX_F;
+                    let supported =
+                        0x7 | XCR0_AVX512 | if self.apx_enabled() { XCR0_APX_F } else { 0 };
                     let avx512_bits = value & XCR0_AVX512;
                     let invalid = ecx != 0
                         || (value & 1) == 0
-                        || (value & !SUPPORTED) != 0
+                        || (value & !supported) != 0
                         || ((value & 0x4) != 0 && (value & 0x2) == 0)
                         || (avx512_bits != 0
                             && (avx512_bits != XCR0_AVX512 || (value & 0x6) != 0x6));

@@ -37,7 +37,7 @@ fn test_nf_add_real_encoding_preserves_flags_match_llvm() {
     regs.rflags = 0x2;
     let code = [0x62, 0xF4, 0xFC, 0x0C, 0x01, 0xD8, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0);
     assert_eq!(regs.rflags & ZF, 0);
@@ -54,7 +54,7 @@ fn test_nf_add_without_p2_bit2_updates_flags_match_llvm() {
     regs.rflags = 0x2;
     let code = [0x62, 0xF4, 0xFC, 0x08, 0x01, 0xD8, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0);
     assert_ne!(regs.rflags & ZF, 0);
@@ -68,7 +68,7 @@ fn test_nf_add_reg_reg() {
         0x01, 0xD8, // ADD r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -80,7 +80,7 @@ fn test_nf_add_reg_imm32() {
         0x81, 0xC0, // ADD r/m64, imm32
         0x78, 0x56, 0x34, 0x12, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -92,7 +92,7 @@ fn test_nf_add_reg_mem() {
         0x03, 0x03, // ADD r64, r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -105,7 +105,7 @@ fn test_nf_add_preserves_flags() {
         0x62, 0xF4, 0xFC, 0x08, 0x01, 0xD1, // JZ should work based on original CMP
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -121,7 +121,7 @@ fn test_nf_sub_reg_reg() {
         0x29, 0xD8, // SUB r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -133,7 +133,7 @@ fn test_nf_sub_reg_imm8() {
         0x83, 0xE8, 0x10, // SUB r/m64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -149,7 +149,7 @@ fn test_nf_and_reg_reg() {
         0x21, 0xD8, // AND r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -161,7 +161,7 @@ fn test_nf_or_reg_reg() {
         0x09, 0xD8, // OR r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -173,7 +173,7 @@ fn test_nf_xor_reg_reg() {
         0x31, 0xD8, // XOR r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -185,7 +185,7 @@ fn test_nf_xor_zero_idiom() {
         0x31, 0xC0, // XOR r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -201,7 +201,7 @@ fn test_nf_shl_reg_imm() {
         0xC1, 0xE0, 0x04, // SHL r/m64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -213,7 +213,7 @@ fn test_nf_shl_reg_cl() {
         0xD3, 0xE0, // SHL r/m64, CL
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -225,7 +225,7 @@ fn test_nf_shr_reg_imm() {
         0xC1, 0xE8, 0x08, // SHR r/m64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -237,7 +237,7 @@ fn test_nf_sar_reg_imm() {
         0xD1, 0xF8, // SAR r/m64, 1
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -253,7 +253,7 @@ fn test_nf_rol_reg_imm() {
         0xC1, 0xC0, 0x07, // ROL r/m64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -265,7 +265,7 @@ fn test_nf_ror_reg_cl() {
         0xD3, 0xC8, // ROR r/m64, CL
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -281,7 +281,7 @@ fn test_nf_inc_reg() {
         0xFF, 0xC0, // INC r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -293,7 +293,7 @@ fn test_nf_dec_reg() {
         0xFF, 0xC8, // DEC r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -305,7 +305,7 @@ fn test_nf_inc_preserves_cf() {
         0xF9, // INC{NF} RAX (should preserve CF and all other flags)
         0x62, 0xF4, 0xFC, 0x08, 0xFF, 0xC0, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -321,7 +321,7 @@ fn test_nf_neg_reg() {
         0xF7, 0xD8, // NEG r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -333,7 +333,7 @@ fn test_nf_not_reg() {
         0xF7, 0xD0, // NOT r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -352,7 +352,7 @@ fn test_nf_mul_implicit_match_llvm() {
     regs.rbx = 4;
     regs.rflags = CF | ZF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 12);
     assert_eq!(regs.rdx, 0);
@@ -369,7 +369,7 @@ fn test_nf_imul_implicit_match_llvm() {
     regs.rbx = 4;
     regs.rflags = OF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, (-12i64) as u64);
     assert_eq!(regs.rdx, u64::MAX);
@@ -387,7 +387,7 @@ fn test_nf_div_implicit_match_llvm() {
     regs.rbx = 7;
     regs.rflags = CF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 14);
     assert_eq!(regs.rdx, 2);
@@ -405,7 +405,7 @@ fn test_nf_idiv_implicit_match_llvm() {
     regs.rbx = 7;
     regs.rflags = SF | 0x2;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, (-14i64) as u64);
     assert_eq!(regs.rdx, (-2i64) as u64);
@@ -425,7 +425,7 @@ fn test_nf_adc_uses_cf() {
         0x62, 0xF4, 0xFC, 0x08, 0x11, 0xD8, // CF should still be set (from STC)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -437,7 +437,7 @@ fn test_nf_sbb_uses_cf() {
         0xF9, // SBB{NF} RAX, RBX (RAX = RAX - RBX - 1)
         0x62, 0xF4, 0xFC, 0x08, 0x19, 0xD8, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -453,7 +453,7 @@ fn test_nf_imul_reg_reg() {
         0xAF, 0xC3, // IMUL r64, r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -465,7 +465,7 @@ fn test_nf_imul_reg_reg_imm() {
         0x6B, 0xC3, 0x64, // IMUL r64, r/m64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -481,7 +481,7 @@ fn test_nf_shld_reg_reg_imm() {
         0xA4, 0xD8, 0x08, // SHLD r/m64, r64, imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -493,7 +493,7 @@ fn test_nf_shrd_reg_reg_cl() {
         0xAD, 0xD8, // SHRD r/m64, r64, CL
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -509,7 +509,7 @@ fn test_nf_ndd_add() {
         0x01, 0xD8, // ADD
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -521,7 +521,7 @@ fn test_nf_ndd_sub() {
         0x29, 0xD8, // SUB
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -533,7 +533,7 @@ fn test_nf_ndd_shl() {
         0xC1, 0xE0, 0x04, // SHL imm8
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -549,7 +549,7 @@ fn test_nf_add_r16_r17() {
         0x01, 0xC8, // ADD r/m64, r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -561,7 +561,7 @@ fn test_nf_sub_r24_r31() {
         0x29, 0xF8, // SUB
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -577,7 +577,7 @@ fn test_nf_add_32bit() {
         0x01, 0xD8, // ADD r/m32, r32
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -600,7 +600,7 @@ fn test_nf_complete_flag_preservation() {
         0x62, 0xF4, 0xFC, 0x08, 0xFF, 0xC0, // Flags should still be: ZF=1, SF=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -616,7 +616,7 @@ fn test_nf_add_mem_reg() {
         0x01, 0x18, // ADD [r/m64], r64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -628,7 +628,7 @@ fn test_nf_sub_reg_mem() {
         0x2B, 0x83, // SUB r64, [r/m64+disp32]
         0x00, 0x01, 0x00, 0x00, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -646,7 +646,7 @@ fn test_nf_popcnt_reg_reg_preserves_flags_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0x74, 0xFC, 0x0C, 0x88, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 32);
     assert_eq!(regs.rax, 0xF0F0_F0F0_0F0F_0F0F);
@@ -663,7 +663,7 @@ fn test_nf_lzcnt_reg_reg_preserves_flags_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0x74, 0xFC, 0x0C, 0xF5, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 8);
     assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK);
@@ -679,7 +679,7 @@ fn test_nf_tzcnt_reg_reg_preserves_flags_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0x74, 0xFC, 0x0C, 0xF4, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 12);
     assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK);
@@ -695,7 +695,7 @@ fn test_nf_popcnt_word_preserves_upper_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0x74, 0x7D, 0x0C, 0x88, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 0x1122_3344_5566_0008);
     assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK);
@@ -711,7 +711,7 @@ fn test_nf_lzcnt_memory_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0x74, 0xFC, 0x0C, 0xF5, 0x03, 0xF4];
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
     write_mem_at_u64(&mem, DATA_ADDR, 0x0000_0000_0000_1000);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 51);

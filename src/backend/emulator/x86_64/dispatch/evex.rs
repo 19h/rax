@@ -44,7 +44,8 @@ impl X86_64Vcpu {
             1 => self.execute_evex_0f(ctx, opcode),
             2 => self.execute_evex_0f38(ctx, opcode),
             3 => self.execute_evex_0f3a(ctx, opcode),
-            4 => self.execute_evex_map4_apx(ctx, opcode), // APX GPR instructions
+            4 if self.apx_enabled() => self.execute_evex_map4_apx(ctx, opcode),
+            4 => self.inject_undefined_instruction(),
             5 => self.execute_evex_map5(ctx, opcode),
             6 => self.execute_evex_map6(ctx, opcode),
             _ => self.inject_undefined_instruction(),

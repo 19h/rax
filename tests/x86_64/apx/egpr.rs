@@ -29,7 +29,7 @@ fn test_mov_r16_imm64() {
         0xEF, 0xBE, 0xAD, 0xDE, 0x78, 0x56, 0x34, 0x12, // imm64 = 0x12345678DEADBEEF
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -43,7 +43,7 @@ fn test_mov_r17_imm64() {
         0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, // imm64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -60,7 +60,7 @@ fn test_mov_r24_imm64() {
         0xB8, // MOV r64, imm64 (R24 = base 0 + B3*8 + B4*16)
         0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -75,7 +75,7 @@ fn test_mov_r31_imm64() {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, // imm64 = INT64_MAX
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -94,7 +94,7 @@ fn test_mov_r16_rax() {
         0x89, 0xC0, // MOV r/m64, r64: mod=11, reg=0, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -107,7 +107,7 @@ fn test_mov_rax_r16() {
         0x8B, 0xC0, // MOV r64, r/m64: mod=11, reg=0 (RAX), rm=0 (R16)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -120,7 +120,7 @@ fn test_mov_r16_r17() {
         0x89, 0xC8, // MOV r/m64, r64: mod=11, reg=1 (R17), rm=0 (R16)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -134,7 +134,7 @@ fn test_mov_r24_r31() {
         0x89, 0xF8, // MOV r/m64, r64: mod=11, reg=7 (R31), rm=0 (R24)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -151,7 +151,7 @@ fn test_mov_mem_r16_base() {
         0x89, 0x00, // MOV [r/m64], r64: mod=00, reg=0, rm=0 (R16 as base)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -163,7 +163,7 @@ fn test_mov_mem_r16_disp8() {
         0x89, 0x40, 0x10, // MOV [r/m64+disp8], r64: mod=01, reg=0, rm=0, disp8=0x10
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -176,7 +176,7 @@ fn test_mov_mem_r16_disp32() {
         0x78, 0x56, 0x34, 0x12, // disp32
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -193,7 +193,7 @@ fn test_mov_mem_sib_r16_index() {
         0x89, 0x1C, 0x80, // MOV [SIB], r64: mod=00, reg=3, rm=100, SIB=scale*4 idx=0 base=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -206,7 +206,7 @@ fn test_mov_mem_sib_r24_index() {
         0x89, 0x0C, 0xC0, // MOV [SIB], r64: mod=00, reg=1, rm=100, SIB=scale*8 idx=0 base=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -219,7 +219,7 @@ fn test_mov_mem_sib_r16_base_r24_index() {
         0x89, 0x14, 0x40, // MOV [SIB], r64: mod=00, reg=2, rm=100, SIB=scale*2 idx=0 base=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -235,7 +235,7 @@ fn test_add_r16_rax() {
         0x01, 0xC0, // ADD r/m64, r64: mod=11, reg=0, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -248,7 +248,7 @@ fn test_add_r16_imm32() {
         0x78, 0x56, 0x34, 0x12, // imm32
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -260,7 +260,7 @@ fn test_sub_r24_r31() {
         0x29, 0xF8, // SUB r/m64, r64: mod=11, reg=7 (R31), rm=0 (R24)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -272,7 +272,7 @@ fn test_imul_r16_r17() {
         0xAF, 0xC1, // IMUL r64, r/m64: mod=11, reg=0 (R16), rm=1 (R17)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -284,7 +284,7 @@ fn test_xor_r16_r16() {
         0x31, 0xC0, // XOR r/m64, r64: mod=11, reg=0, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -300,7 +300,7 @@ fn test_shl_r16_cl() {
         0xD3, 0xE0, // SHL r/m64, CL: opcode + mod=11, /4, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -312,7 +312,7 @@ fn test_shr_r24_imm8() {
         0xC1, 0xE8, 0x04, // SHR r/m64, imm8: mod=11, /5, rm=0, imm8=4
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -324,7 +324,7 @@ fn test_ror_r16_1() {
         0xD1, 0xC8, // ROR r/m64, 1: mod=11, /1, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -341,7 +341,7 @@ fn test_push_r16() {
         0x50, // PUSH r64 (R16)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -354,7 +354,7 @@ fn test_pop_r16() {
         0x58, // POP r64 (R16)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -366,7 +366,7 @@ fn test_push_r31() {
         0x57, // PUSH r64 (rd=7 -> R31 with B3B4)
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -383,7 +383,7 @@ fn test_lea_r16_mem() {
         0x00, 0x01, 0x00, 0x00, // disp32 = 0x100
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -395,7 +395,7 @@ fn test_lea_rax_r16_base() {
         0x8D, 0x40, 0x50, // LEA r64, [r/m+disp8]: mod=01, reg=0, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -411,7 +411,7 @@ fn test_inc_r16() {
         0xFF, 0xC0, // INC r/m64: mod=11, /0, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -423,7 +423,7 @@ fn test_dec_r24() {
         0xFF, 0xC8, // DEC r/m64: mod=11, /1, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -439,7 +439,7 @@ fn test_test_r16_r17() {
         0x85, 0xC8, // TEST r/m64, r64: mod=11, reg=1, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -452,7 +452,7 @@ fn test_cmp_r16_imm32() {
         0x78, 0x56, 0x34, 0x12, // imm32
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -468,7 +468,7 @@ fn test_xchg_r16_r17() {
         0x87, 0xC8, // XCHG r/m64, r64: mod=11, reg=1, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -480,7 +480,7 @@ fn test_cmpxchg_r16_r17() {
         0xB1, 0xC8, // CMPXCHG r/m64, r64: 0F B1 mod=11, reg=1, rm=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -492,7 +492,7 @@ fn test_bsf_r16_r17() {
         0xBC, 0xC1, // BSF r64, r/m64: 0F BC mod=11, reg=0, rm=1
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -504,7 +504,7 @@ fn test_bsr_r24_r31() {
         0xBD, 0xC7, // BSR r64, r/m64: 0F BD mod=11, reg=0, rm=7
         0xF4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -550,7 +550,7 @@ fn test_egpr_all_registers_mov() {
         // R31 (B3=1, B4=1, rd=7)
         0xD5, 0x59, 0xBF, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_apx_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -568,7 +568,7 @@ fn test_apx_movbe_reg_reg_64_match_llvm() {
     regs.rflags = 0x2 | FLAG_MASK;
     let code = [0x62, 0xD4, 0xFC, 0x08, 0x61, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 0x8877_6655_4433_2211);
     assert_eq!(regs.rax, 0x1122_3344_5566_7788);
@@ -583,7 +583,7 @@ fn test_apx_movbe_reg_reg_32_zero_extends_match_llvm() {
     regs.r8 = u64::MAX;
     let code = [0x62, 0xD4, 0x7C, 0x08, 0x61, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 0x4433_2211);
 }
@@ -596,7 +596,7 @@ fn test_apx_movbe_reg_reg_16_preserves_upper_match_llvm() {
     regs.r8 = 0xAABB_CCDD_EEFF_7788;
     let code = [0x62, 0xD4, 0x7D, 0x08, 0x61, 0xC0, 0xF4];
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 0xAABB_CCDD_EEFF_2211);
 }

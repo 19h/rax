@@ -1,7 +1,7 @@
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_apx_vm, setup_vm};
 
 // CPUID - CPU Identification
 // Opcode: 0F A2
@@ -709,7 +709,27 @@ fn test_cpuid_function_7_subleaves() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // After the sequence, RAX holds leaf 7 subleaf 1, which advertises APX_F.
+    // After the sequence, RAX holds leaf 7 subleaf 1. The default profile does
+    // not advertise APX_F.
+    assert_eq!(regs.rax as u32, 0, "leaf 7 subleaf 1 EAX = 0");
+    assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
+    assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
+    assert_eq!(regs.rdx as u32, 0, "leaf 7 subleaf 1 EDX hides APX_F");
+}
+
+#[test]
+fn test_cpuid_function_7_subleaf1_apx_enabled() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
+        0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
     assert_eq!(regs.rax as u32, 0, "leaf 7 subleaf 1 EAX = 0");
     assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
     assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
@@ -735,9 +755,31 @@ fn test_cpuid_leaf_d_subleaf0_xsave_area() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // EAX = supported XCR0 low bits = x87|SSE|AVX|AVX-512|APX_F = 0x800E7.
+    // EAX = supported XCR0 low bits = x87|SSE|AVX|AVX-512 = 0xE7.
     // EBX = current enabled area size (XCR0 default has AVX disabled => 576).
     // ECX = max area size for all supported standard-format state. EDX = high XCR0 bits = 0.
+    assert_eq!(
+        regs.rax as u32, 0xE7,
+        "XCR0 valid low bits x87|SSE|AVX|AVX-512"
+    );
+    assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
+    assert_eq!(regs.rcx as u32, 2688, "max XSAVE area");
+    assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
+}
+
+#[test]
+fn test_cpuid_leaf_d_subleaf0_apx_enabled_xsave_area() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0x31, 0xc9, // XOR ECX, ECX (subleaf 0)
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
     assert_eq!(
         regs.rax as u32, 0x800E7,
         "XCR0 valid low bits x87|SSE|AVX|AVX-512|APX_F"
@@ -794,9 +836,9 @@ fn test_cpuid_leaf_d_subleaf2_avx_component() {
     assert_eq!(regs.rbx as u32, 576, "AVX component offset");
 }
 
-// CPUID leaf 0xD subleaf 19 - APX_F EGPR component.
+// CPUID leaf 0xD subleaf 19 - APX_F EGPR component hidden by default.
 #[test]
-fn test_cpuid_leaf_d_subleaf19_apx_component() {
+fn test_cpuid_leaf_d_subleaf19_apx_component_hidden_by_default() {
     let code = [
         0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
         0xb9, 0x13, 0x00, 0x00, 0x00, // MOV ECX, 19
@@ -808,14 +850,32 @@ fn test_cpuid_leaf_d_subleaf19_apx_component() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
+    assert_eq!(regs.rax as u32, 0, "APX_F component hidden by default");
+    assert_eq!(regs.rbx as u32, 0, "APX_F component offset hidden");
+    assert_eq!(regs.rcx as u32, 0, "APX_F component controls hidden");
+}
+
+#[test]
+fn test_cpuid_leaf_d_subleaf19_apx_component_enabled() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0xb9, 0x13, 0x00, 0x00, 0x00, // MOV ECX, 19
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
     assert_eq!(regs.rax as u32, 128, "APX_F component size");
     assert_eq!(regs.rbx as u32, 0x3C0, "APX_F component offset");
     assert_eq!(regs.rcx as u32, 0, "APX_F component controls");
 }
 
-// CPUID leaf 0x29 - APX feature leaf.
+// CPUID leaf 0x29 - APX feature leaf hidden by default.
 #[test]
-fn test_cpuid_leaf_29_apx_features() {
+fn test_cpuid_leaf_29_apx_features_hidden_by_default() {
     let code = [
         0xb8, 0x29, 0x00, 0x00, 0x00, // MOV EAX, 0x29
         0x31, 0xc9, // XOR ECX, ECX
@@ -825,6 +885,25 @@ fn test_cpuid_leaf_29_apx_features() {
     let mut regs = Registers::default();
     regs.rsp = 0x1000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax as u32, 0, "APX max subleaf hidden");
+    assert_eq!(regs.rbx as u32, 0, "APX_NCI_NDD_NF hidden");
+    assert_eq!(regs.rcx as u32, 0, "APX leaf ECX reserved");
+    assert_eq!(regs.rdx as u32, 0, "APX leaf EDX reserved");
+}
+
+#[test]
+fn test_cpuid_leaf_29_apx_features_enabled() {
+    let code = [
+        0xb8, 0x29, 0x00, 0x00, 0x00, // MOV EAX, 0x29
+        0x31, 0xc9, // XOR ECX, ECX
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax as u32, 0, "APX max subleaf");

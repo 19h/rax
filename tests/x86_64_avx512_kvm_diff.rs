@@ -21163,6 +21163,54 @@ fn unsupported_cmpccxadd_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stati
         .collect()
 }
 
+const APX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    ("apx_rex2_mov_r16_rax_unsupported", &[0xd5, 0x18, 0x89, 0xc0]),
+    (
+        "apx_rex2_0f_movzx_unsupported",
+        &[0xd5, 0x88, 0xb6, 0xc3],
+    ),
+    (
+        "apx_map4_ndd_add_unsupported",
+        &[0x62, 0xf4, 0x7c, 0x18, 0x01, 0xc0],
+    ),
+    (
+        "apx_map4_nf_add_unsupported",
+        &[0x62, 0xf4, 0xfc, 0x0c, 0x01, 0xd8],
+    ),
+    (
+        "apx_map4_ccmp_unsupported",
+        &[0x62, 0xf4, 0x9c, 0x00, 0x39, 0xd8],
+    ),
+    (
+        "apx_map4_ctest_unsupported",
+        &[0x62, 0xf4, 0xe4, 0x00, 0x85, 0xd8],
+    ),
+    (
+        "apx_map4_push2_unsupported",
+        &[0x62, 0xf4, 0x64, 0x18, 0xff, 0xf0],
+    ),
+    (
+        "apx_map4_pop2_unsupported",
+        &[0x62, 0xf4, 0x54, 0x18, 0x8f, 0xc1],
+    ),
+    (
+        "apx_map4_movbe_unsupported",
+        &[0x62, 0xd4, 0xfc, 0x08, 0x61, 0xc0],
+    ),
+    (
+        "apx_map4_egpr_unsupported",
+        &[0x62, 0xec, 0x74, 0x18, 0x01, 0xd8],
+    ),
+];
+
+fn unsupported_apx_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    APX_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "avx_vnni_int8_vpdpbssd_xmm_unsupported",
@@ -23484,6 +23532,26 @@ fn avx512_kvm_cmpccxadd_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported CMPCCXADD", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_apx_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_apx_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD APX probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported APX", cases, expected);
 }
 
 #[test]

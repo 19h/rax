@@ -308,6 +308,10 @@ pub struct X86_64Vcpu {
     /// CPUID profile does not advertise this extension, so its opcodes must #UD
     /// unless a semantic harness opts in explicitly.
     pub(super) avx10_sat_convert: bool,
+    /// Enable Intel APX instruction forms (REX2 and EVEX MAP4). The base
+    /// emulated CPUID profile does not advertise APX, so its opcodes must #UD
+    /// unless a semantic harness opts in explicitly.
+    pub(super) apx: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -940,6 +944,7 @@ impl X86_64Vcpu {
             avx10_media: false,
             avx10_vminmax: false,
             avx10_sat_convert: false,
+            apx: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -1024,6 +1029,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn avx10_sat_convert_enabled(&self) -> bool {
         self.avx10_sat_convert
+    }
+
+    /// Enable or disable Intel APX instructions for semantic harnesses.
+    pub fn set_apx_enabled(&mut self, enabled: bool) {
+        self.apx = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn apx_enabled(&self) -> bool {
+        self.apx
     }
 
     #[cfg(feature = "debug")]
@@ -1598,6 +1613,10 @@ impl X86_64Vcpu {
                     boundary_gp: false,
                 };
 
+                if self.reject_disabled_apx(&ctx)? {
+                    return Ok(None);
+                }
+
                 // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
                 // The LOCK-present verdict was computed once on the fill path, so the
                 // hit path skips the prefix-byte scan and only takes the (cold)
@@ -1711,6 +1730,10 @@ impl X86_64Vcpu {
                 has_lock,
                 handler,
             };
+        }
+
+        if self.reject_disabled_apx(&ctx)? {
+            return Ok(None);
         }
 
         // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
@@ -1879,6 +1902,16 @@ impl X86_64Vcpu {
 
         self.inject_exception(6, None)?;
         Ok(true)
+    }
+
+    #[inline(always)]
+    fn reject_disabled_apx(&mut self, ctx: &InsnContext) -> Result<bool> {
+        if ctx.rex2.is_some() && !self.apx_enabled() {
+            self.inject_exception(6, None)?;
+            return Ok(true);
+        }
+
+        Ok(false)
     }
 
     /// Dispatch a decode-cache HIT through the pre-resolved handler fn-pointer.
