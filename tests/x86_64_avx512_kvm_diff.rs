@@ -21568,6 +21568,171 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_condition_seed(status_flags: u64) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = (INITIAL_RFLAGS & !STATUS_RFLAGS_MASK) | RFLAGS_DF | status_flags;
+    input
+}
+
+fn compat_condition_mem8_input(status_flags: u64, offset: usize, value: u8) -> CompatStateIn {
+    let mut input = compat_condition_seed(status_flags);
+    input.scratch[offset] = value;
+    input
+}
+
+fn compat_condition_mem16_input(status_flags: u64, offset: usize, value: u16) -> CompatStateIn {
+    let mut input = compat_condition_seed(status_flags);
+    input.scratch[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_condition_addr32_mem32_input(
+    status_flags: u64,
+    offset: usize,
+    value: u32,
+) -> CompatStateIn {
+    let mut input = compat_condition_seed(status_flags);
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input.scratch[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    input
+}
+
+fn compat_jcc_rel8_select_ax(opcode: u8) -> Vec<u8> {
+    vec![opcode, 0x05, 0xb8, 0x11, 0x11, 0xeb, 0x03, 0xb8, 0x22, 0x22]
+}
+
+fn compat_jcc_rel16_select_ax(opcode: u8) -> Vec<u8> {
+    vec![
+        0x0f, opcode, 0x05, 0x00, 0xb8, 0x11, 0x11, 0xeb, 0x03, 0xb8, 0x22, 0x22,
+    ]
+}
+
+fn compat_jcc_rel32_select_ax(opcode: u8) -> Vec<u8> {
+    vec![
+        0x66, 0x0f, opcode, 0x05, 0x00, 0x00, 0x00, 0xb8, 0x11, 0x11, 0xeb, 0x03, 0xb8, 0x22,
+        0x22,
+    ]
+}
+
+fn compat_condition_code_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "jz_rel8_compat_taken_preserves_flags",
+            op: compat_jcc_rel8_select_ax(0x74),
+            input: compat_condition_seed(RFLAGS_ZF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jz_rel8_compat_not_taken_preserves_flags",
+            op: compat_jcc_rel8_select_ax(0x74),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jnz_rel16_compat_taken_uses_word_displacement",
+            op: compat_jcc_rel16_select_ax(0x85),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jnz_rel16_compat_not_taken_uses_word_displacement",
+            op: compat_jcc_rel16_select_ax(0x85),
+            input: compat_condition_seed(RFLAGS_ZF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jz_rel32_compat_operand32_uses_dword_displacement",
+            op: compat_jcc_rel32_select_ax(0x84),
+            input: compat_condition_seed(RFLAGS_ZF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jb_rel8_compat_carry_taken",
+            op: compat_jcc_rel8_select_ax(0x72),
+            input: compat_condition_seed(RFLAGS_CF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmove16_compat_mem_true_preserves_high_rax",
+            op: vec![0x0f, 0x44, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_ZF, 0x10, 0x2468),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovne16_compat_mem_false_preserves_ax",
+            op: vec![0x0f, 0x45, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_ZF, 0x10, 0x2468),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovne32_compat_addr32_mem_true_zeroes_high_eax",
+            op: vec![0x67, 0x66, 0x0f, 0x45, 0x04, 0x33],
+            input: compat_condition_addr32_mem32_input(0, 0x20, 0x89ab_cdef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmove32_compat_reg_false_zeroes_high_eax",
+            op: vec![0x66, 0x0f, 0x44, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(0);
+                input.rax = 0xaaaa_bbbb_1234_5678;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovb16_compat_reg_true_from_cx",
+            op: vec![0x0f, 0x42, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_CF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x2222;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sete8_compat_mem_true_writes_one",
+            op: vec![0x0f, 0x94, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_ZF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setne8_compat_mem_false_writes_zero",
+            op: vec![0x0f, 0x95, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_ZF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setb8_compat_high_byte_ah_true",
+            op: vec![0x0f, 0x92, 0xc4],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_CF);
+                input.rax = 0xaaaa_bbbb_cccc_a55a;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setg8_compat_reg_cl_true",
+            op: vec![0x0f, 0x9f, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(0);
+                input.rcx = (input.rcx & !0xff) | 0xa5;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_alu_seed() -> CompatStateIn {
     let mut input = compat_modrm16_seed();
     input.rax = 0xaaaa_bbbb_cccc_1111;
@@ -26842,6 +27007,17 @@ fn avx512_kvm_control_transfer_compat_corpus() {
         "unexpected compatibility control-transfer corpus size"
     );
     let _ = run_compat_state_cases("control-transfer", &cases);
+}
+
+#[test]
+fn avx512_kvm_condition_code_compat_corpus() {
+    let cases = compat_condition_code_cases();
+    assert_eq!(
+        cases.len(),
+        15,
+        "unexpected compatibility condition-code corpus size"
+    );
+    let _ = run_compat_state_cases("condition-code", &cases);
 }
 
 #[test]
