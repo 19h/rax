@@ -17344,6 +17344,46 @@ fn irregular_cases() -> Vec<Case> {
             Cldemote,
         ),
         (
+            "clflush_cache_tlb_edge_cache_addr_matrix_r15_base",
+            "leaq 136(%rax), %r15\nmovq %rcx, (%r15)\nclflush (%r15)\nmovq (%r15), %r9",
+            Clflush,
+        ),
+        (
+            "clflush_cache_tlb_edge_cache_addr_matrix_scaled_index",
+            "leaq 32(%rax), %r10\nmovl $4, %r9d\nmovq %rcx, 64(%r10,%r9,8)\nclflush 64(%r10,%r9,8)\nmovq 64(%r10,%r9,8), %rcx",
+            Clflush,
+        ),
+        (
+            "clflushopt_cache_tlb_edge_cache_addr_matrix_r15_base",
+            "leaq 144(%rax), %r15\nmovq %rcx, (%r15)\nclflushopt (%r15)\nsfence\nmovq (%r15), %r9",
+            Clflushopt,
+        ),
+        (
+            "clflushopt_cache_tlb_edge_cache_addr_matrix_scaled_index",
+            "leaq 40(%rax), %r10\nmovl $4, %r9d\nmovq %rcx, 64(%r10,%r9,8)\nclflushopt 64(%r10,%r9,8)\nsfence\nmovq 64(%r10,%r9,8), %rcx",
+            Clflushopt,
+        ),
+        (
+            "clwb_cache_tlb_edge_cache_addr_matrix_r15_base",
+            "leaq 152(%rax), %r15\nmovq %rcx, (%r15)\nclwb (%r15)\nsfence\nmovq (%r15), %r9",
+            Clwb,
+        ),
+        (
+            "clwb_cache_tlb_edge_cache_addr_matrix_stack_address",
+            "movq %rcx, 16(%rsp)\nclwb 16(%rsp)\nsfence\nmovq 16(%rsp), %r9",
+            Clwb,
+        ),
+        (
+            "cldemote_cache_tlb_edge_cache_addr_matrix_r15_base",
+            "leaq 160(%rax), %r15\nmovq %rcx, (%r15)\ncldemote (%r15)\nmovq (%r15), %r9",
+            Cldemote,
+        ),
+        (
+            "cldemote_cache_tlb_edge_cache_addr_matrix_scaled_index",
+            "leaq 48(%rax), %r10\nmovl $4, %r9d\nmovq %rcx, 64(%r10,%r9,8)\ncldemote 64(%r10,%r9,8)\nmovq 64(%r10,%r9,8), %rcx",
+            Cldemote,
+        ),
+        (
             "invd_cache_tlb_edge_after_load",
             "movq 32(%rax), %r8\ncmpq %rcx, %r8\ninvd\nmovq %r8, %rcx",
             CacheInvd,
@@ -17954,6 +17994,21 @@ fn irregular_cases() -> Vec<Case> {
             Invlpg,
         ),
         (
+            "invlpg_cache_tlb_edge_tlb_addr_matrix_r15_base",
+            "leaq 160(%rax), %r15\ncmpq %rcx, %r8\ninvlpg (%r15)\nmovq %r15, %rcx",
+            Invlpg,
+        ),
+        (
+            "invlpg_cache_tlb_edge_tlb_addr_matrix_scaled_index",
+            "leaq 96(%rax), %r8\nmovl $4, %r9d\ncmpq %rcx, %r8\ninvlpg 32(%r8,%r9,8)\nmovq %r8, %rcx",
+            Invlpg,
+        ),
+        (
+            "invlpg_cache_tlb_edge_tlb_addr_matrix_addr32_high_rax",
+            "movq %rax, %r10\nmovabsq $0xffff0000000040c0, %rax\ncmpq %rcx, %r8\naddr32 invlpg (%eax)\nmovq %r10, %rax\nmovq %rax, %rcx",
+            Invlpg,
+        ),
+        (
             "invpcid_cache_tlb_edge_type0_nonzero_linear",
             "movq $0, 32(%rax)\nmovq %rax, 40(%rax)\nmovq $0, %r8\ncmpq %rcx, %r9\ninvpcid 32(%rax), %r8\nmovq 40(%rax), %rcx",
             Invpcid,
@@ -17976,6 +18031,21 @@ fn irregular_cases() -> Vec<Case> {
         (
             "invpcid_cache_tlb_edge_type_in_r9",
             "movq $0, 144(%rax)\nmovq %rax, 152(%rax)\nmovq $0, %r9\ncmpq %rcx, %r8\ninvpcid 144(%rax), %r9\nmovq 152(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_tlb_addr_matrix_r15_descriptor",
+            "movq $0, 160(%rax)\nmovq %rax, 168(%rax)\nleaq 160(%rax), %r15\nmovq $0, %r8\ncmpq %rcx, %r9\ninvpcid (%r15), %r8\nmovq 168(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_tlb_addr_matrix_scaled_index",
+            "movq $0, 224(%rax)\nmovq $0, 232(%rax)\nleaq 128(%rax), %r15\nmovl $6, %r9d\nmovq $2, %r8\ncmpq %rcx, %r9\ninvpcid 48(%r15,%r9,8), %r8\nmovq 232(%rax), %rcx",
+            Invpcid,
+        ),
+        (
+            "invpcid_cache_tlb_edge_tlb_addr_matrix_stack_descriptor",
+            "movq $0, 16(%rsp)\nmovq $0, 24(%rsp)\nmovq $3, %r9\ncmpq %rcx, %r8\ninvpcid 16(%rsp), %r9\nmovq 24(%rsp), %rcx",
             Invpcid,
         ),
     ] {
@@ -32093,7 +32163,7 @@ fn avx512_kvm_cache_memory_order_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 43, "unexpected cache/memory-order corpus size");
+    assert_eq!(cases.len(), 51, "unexpected cache/memory-order corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -32117,18 +32187,18 @@ fn avx512_kvm_cache_memory_order_corpus() {
     assert_eq!(tally.ran_for(Feat::Fence), 9, "all fence cases should run");
     assert_eq!(
         tally.ran_for(Feat::Clflush),
-        6,
+        8,
         "all CLFLUSH cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Clflushopt),
-        6,
+        8,
         "all CLFLUSHOPT cases should run"
     );
-    assert_eq!(tally.ran_for(Feat::Clwb), 6, "all CLWB cases should run");
+    assert_eq!(tally.ran_for(Feat::Clwb), 8, "all CLWB cases should run");
     assert_eq!(
         tally.ran_for(Feat::Cldemote),
-        6,
+        8,
         "all CLDEMOTE cases should run"
     );
     assert_eq!(
@@ -32142,8 +32212,79 @@ fn avx512_kvm_cache_memory_order_corpus() {
         "all WBNOINVD cases should run"
     );
     assert_eq!(
-        tally.compared, 43,
+        tally.compared, 51,
         "all cache/memory-order cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_cache_tlb_address_matrix_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.label.contains("_cache_addr_matrix_")
+                || case.label.contains("_tlb_addr_matrix_")
+        })
+        .collect();
+    assert_eq!(
+        cases.len(),
+        14,
+        "unexpected cache/TLB address-matrix corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on cache/TLB address-matrix cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a cache/TLB address-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "cache/TLB address-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "cache/TLB address-matrix cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Clflush),
+        2,
+        "all CLFLUSH address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Clflushopt),
+        2,
+        "all CLFLUSHOPT address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Clwb),
+        2,
+        "all CLWB address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cldemote),
+        2,
+        "all CLDEMOTE address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Invlpg),
+        3,
+        "all INVLPG address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Invpcid),
+        3,
+        "all INVPCID address-matrix cases should run"
+    );
+    assert_eq!(
+        tally.compared,
+        14,
+        "all cache/TLB address-matrix cases should compare"
     );
 }
 
@@ -32153,7 +32294,7 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_cache_tlb_edge_"))
         .collect();
-    assert_eq!(cases.len(), 28, "unexpected cache/TLB edge corpus size");
+    assert_eq!(cases.len(), 42, "unexpected cache/TLB edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -32178,22 +32319,22 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Clflush),
-        3,
+        5,
         "all CLFLUSH edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Clflushopt),
-        3,
+        5,
         "all CLFLUSHOPT edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Clwb),
-        3,
+        5,
         "all CLWB edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Cldemote),
-        3,
+        5,
         "all CLDEMOTE edge cases should run"
     );
     assert_eq!(
@@ -32208,16 +32349,16 @@ fn avx512_kvm_cache_tlb_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Invlpg),
-        4,
+        7,
         "all INVLPG edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Invpcid),
-        5,
+        8,
         "all INVPCID edge cases should run"
     );
     assert_eq!(
-        tally.compared, 28,
+        tally.compared, 42,
         "all cache/TLB edge cases should compare"
     );
 }
@@ -33055,7 +33196,7 @@ fn avx512_kvm_invpcid_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Invpcid)
         .collect();
-    assert_eq!(cases.len(), 11, "unexpected INVPCID corpus size");
+    assert_eq!(cases.len(), 14, "unexpected INVPCID corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -33070,7 +33211,7 @@ fn avx512_kvm_invpcid_corpus() {
         tally.skipped_feature, 0,
         "INVPCID cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 11, "all INVPCID cases should compare");
+    assert_eq!(tally.compared, 14, "all INVPCID cases should compare");
 }
 
 #[test]
