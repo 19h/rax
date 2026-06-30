@@ -1283,6 +1283,7 @@ impl X86_64Vcpu {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+        let avx10_media_disabled = !self.avx10_media_enabled();
 
         match opcode {
             // VPMULLD/VPMULLQ (0x40)
@@ -2013,6 +2014,13 @@ impl X86_64Vcpu {
             // AVX10.2 Media Acceleration Instructions (VPDPB*/VPDPW*)
             // ============================================================================
 
+            0x50 | 0x51 if matches!(evex.pp, 0 | 2 | 3) && !evex.w && avx10_media_disabled =>
+            {
+                self.inject_undefined_instruction()
+            }
+            0xD2 | 0xD3 if evex.pp <= 2 && !evex.w && avx10_media_disabled => {
+                self.inject_undefined_instruction()
+            }
             // VPDPBSSD (0x50) - Multiply and Add Signed Byte Integers
             0x50 if evex.pp == 3 && !evex.w => self.execute_vpdpbssd(ctx, false),
             // VPDPBSSDS (0x51) - Multiply and Add Signed Byte Integers with Saturation

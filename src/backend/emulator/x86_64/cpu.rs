@@ -295,6 +295,11 @@ pub struct X86_64Vcpu {
     /// advertise this extension, so the opcode is disabled unless a semantic
     /// harness opts in explicitly.
     pub(super) vp2intersect: bool,
+    /// Enable AVX10.2 media dot-product instructions (AVX_VNNI_INT8 and
+    /// AVX_VNNI_INT16 families). The base emulated CPUID profile does not
+    /// advertise these extensions, so their opcodes must #UD unless a semantic
+    /// harness opts in explicitly.
+    pub(super) avx10_media: bool,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
@@ -924,6 +929,7 @@ impl X86_64Vcpu {
             xgetbv1_value: 0,
             xeon_phi_avx512: false,
             vp2intersect: false,
+            avx10_media: false,
 
             decode_cache,
             lazy_flags: LazyFlags::default(),
@@ -978,6 +984,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn vp2intersect_enabled(&self) -> bool {
         self.vp2intersect
+    }
+
+    /// Enable or disable AVX10.2 media dot-product instructions for semantic harnesses.
+    pub fn set_avx10_media_enabled(&mut self, enabled: bool) {
+        self.avx10_media = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn avx10_media_enabled(&self) -> bool {
+        self.avx10_media
     }
 
     #[cfg(feature = "debug")]

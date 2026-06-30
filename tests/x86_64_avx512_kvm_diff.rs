@@ -21163,6 +21163,65 @@ fn unsupported_cmpccxadd_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stati
         .collect()
 }
 
+const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx_vnni_int8_vpdpbssd_xmm_unsupported",
+        &[0x62, 0xf2, 0x77, 0x08, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbssds_xmm_unsupported",
+        &[0x62, 0xf2, 0x77, 0x08, 0x51, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbsud_xmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x08, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbsuds_xmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x08, 0x51, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbuud_xmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x08, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbuuds_xmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x08, 0x51, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwsud_xmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x08, 0xd2, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwsuds_xmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x08, 0xd3, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwusd_xmm_unsupported",
+        &[0x62, 0xf2, 0x75, 0x08, 0xd2, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwusds_xmm_unsupported",
+        &[0x62, 0xf2, 0x75, 0x08, 0xd3, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwuud_xmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x08, 0xd2, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwuuds_xmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x08, 0xd3, 0xc2],
+    ),
+];
+
+fn unsupported_avx10_media_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AVX10_MEDIA_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
     ("mpx_bndcl_bnd0_rax_disabled", &[0xf3, 0x0f, 0x1a, 0x00]),
     (
@@ -23316,6 +23375,26 @@ fn avx512_kvm_cmpccxadd_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported CMPCCXADD", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx10_media_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx10_media_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX10 media probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AVX10 media", cases, expected);
 }
 
 #[test]
