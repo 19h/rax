@@ -23140,6 +23140,22 @@ fn compat_bound32_input(index: i32, lower: i32, upper: i32) -> CompatStateIn {
     input
 }
 
+fn compat_bound16_modrm16_input(index: i16, lower: i16, upper: i16) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = (input.rax & !0xffff) | ((index as u16) as u64);
+    input.scratch[0x10..0x12].copy_from_slice(&lower.to_le_bytes());
+    input.scratch[0x12..0x14].copy_from_slice(&upper.to_le_bytes());
+    input
+}
+
+fn compat_bound32_modrm16_input(index: i32, lower: i32, upper: i32) -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rcx = (input.rcx & !0xffff_ffff) | ((index as u32) as u64);
+    input.scratch[0x24..0x28].copy_from_slice(&lower.to_le_bytes());
+    input.scratch[0x28..0x2c].copy_from_slice(&upper.to_le_bytes());
+    input
+}
+
 fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
     const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
 
@@ -23148,6 +23164,18 @@ fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
             label: "pusha16_compat_stack_image",
             op: vec![0x60],
             input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pusha16_compat_shifted_sp_stack_image",
+            op: vec![0x60],
+            input: {
+                let mut input = compat_state_seed();
+                input.rsp = STACK_ADDR + 14;
+                input.rax = (input.rax & !0xffff) | 0x8000;
+                input.rdx = (input.rdx & !0xffff) | 0xffff;
+                input
+            },
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -23169,6 +23197,16 @@ fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "popad32_compat_shifted_sp_register_load",
+            op: vec![0x66, 0x61],
+            input: {
+                let mut input = compat_state_seed();
+                input.rsp = STACK_ADDR - 16;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "pusha_popa16_compat_roundtrip",
             op: vec![0x60, 0x61],
             input: compat_state_seed(),
@@ -23187,9 +23225,21 @@ fn compat_stack_bound_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "bound16_compat_modrm16_bx_si_inside_range",
+            op: vec![0x62, 0x00],
+            input: compat_bound16_modrm16_input(7, -8, 7),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "bound32_compat_addr32_upper_edge",
             op: compat_bound_addr32_op(true),
             input: compat_bound32_input(4, -10, 4),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "bound32_compat_modrm16_bp_di_disp8_lower_edge",
+            op: vec![0x66, 0x62, 0x4b, 0x04],
+            input: compat_bound32_modrm16_input(-12, -12, 20),
             rflags_mask: FLAGS_UNCHANGED,
         },
     ]
@@ -23229,6 +23279,17 @@ fn compat_arpl_into_cases() -> Vec<CompatStateCase> {
             rflags_mask: STATUS_RFLAGS_MASK,
         },
         CompatStateCase {
+            label: "arpl_reg_compat_equal_rpl_clears_zf",
+            op: vec![0x63, 0xc8],
+            input: {
+                let mut input = compat_state_seed();
+                input.rax = (input.rax & !0xffff) | 0x1202;
+                input.rcx = (input.rcx & !0xffff) | 0x4502;
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
             label: "arpl_reg_compat_no_adjust_clears_zf",
             op: vec![0x63, 0xc8],
             input: arpl_reg_no_adjust,
@@ -23244,6 +23305,28 @@ fn compat_arpl_into_cases() -> Vec<CompatStateCase> {
             label: "arpl_mem_compat_no_adjust_clears_zf",
             op: compat_arpl_mem_addr32_op(),
             input: arpl_mem_no_adjust,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "arpl_mem_modrm16_compat_adjust_sets_zf",
+            op: vec![0x63, 0x10],
+            input: {
+                let mut input = compat_modrm16_seed();
+                input.rdx = (input.rdx & !0xffff) | 0x4503;
+                input.scratch[0x10..0x12].copy_from_slice(&(0x2201u16).to_le_bytes());
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "arpl_mem_modrm16_compat_no_adjust_clears_zf",
+            op: vec![0x63, 0x10],
+            input: {
+                let mut input = compat_modrm16_seed();
+                input.rdx = (input.rdx & !0xffff) | 0x4501;
+                input.scratch[0x10..0x12].copy_from_slice(&(0x2203u16).to_le_bytes());
+                input
+            },
             rflags_mask: STATUS_RFLAGS_MASK,
         },
         CompatStateCase {
@@ -23276,6 +23359,13 @@ fn compat_bound_into_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             input: compat_bound16_input(-5, -4, 12),
         },
         CompatExceptionMarkerCase {
+            label: "bound16_compat_modrm16_below_lower_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: vec![0x62, 0x00],
+            input: compat_bound16_modrm16_input(-9, -8, 7),
+        },
+        CompatExceptionMarkerCase {
             label: "bound16_compat_above_upper_br",
             vector_name: "#BR",
             vector: BR_VECTOR,
@@ -23295,6 +23385,13 @@ fn compat_bound_into_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             vector: BR_VECTOR,
             op: compat_bound_addr32_op(true),
             input: compat_bound32_input(5, -10, 4),
+        },
+        CompatExceptionMarkerCase {
+            label: "bound32_compat_modrm16_above_upper_br",
+            vector_name: "#BR",
+            vector: BR_VECTOR,
+            op: vec![0x66, 0x62, 0x4b, 0x04],
+            input: compat_bound32_modrm16_input(21, -12, 20),
         },
         CompatExceptionMarkerCase {
             label: "bound_compat_register_operand_ud",
@@ -23365,6 +23462,27 @@ fn compat_interrupt_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             input: compat_state_seed(),
         },
         CompatExceptionMarkerCase {
+            label: "int_20_compat_vector_32",
+            vector_name: "vector 32",
+            vector: 0x20,
+            op: vec![0xcd, 0x20],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_7f_compat_vector_127",
+            vector_name: "vector 127",
+            vector: 0x7f,
+            op: vec![0xcd, 0x7f],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "int_ff_compat_vector_255",
+            vector_name: "vector 255",
+            vector: 0xff,
+            op: vec![0xcd, 0xff],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
             label: "ud2_compat_ud_vector",
             vector_name: "#UD",
             vector: UD_VECTOR,
@@ -23417,9 +23535,21 @@ fn compat_far_pointer_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "les16_compat_modrm16_bx_si_offset_selector",
+            op: vec![0xc4, 0x00, 0x8c, 0xc2],
+            input: compat_far_pointer_modrm16_input(0xbeef, 0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "les32_compat_offset_selector",
             op: compat_far_pointer_addr32_op(0xc4, true, MOV_ES_TO_CX),
             input: compat_far_pointer_input(0x8765_4321, 0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "les32_compat_addr32_indexed_offset_selector",
+            op: vec![0x67, 0x66, 0xc4, 0x04, 0x33, 0x8c, 0xc2],
+            input: compat_far_pointer_addr32_input(0x7654_3210, 0),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -23429,9 +23559,21 @@ fn compat_far_pointer_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "lds16_compat_addr32_indexed_offset_selector",
+            op: vec![0x67, 0xc5, 0x04, 0x33, 0x8c, 0xda],
+            input: compat_far_pointer_addr32_input(0x4321, 0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "lds32_compat_offset_selector",
             op: compat_far_pointer_addr32_op(0xc5, true, MOV_DS_TO_CX),
             input: compat_far_pointer_input(0x2468_ace0, 0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lds32_compat_modrm16_bx_si_zeroes_high",
+            op: vec![0x66, 0xc5, 0x00, 0x8c, 0xda],
+            input: compat_far_pointer_modrm16_input(0x89ab_cdef, 0, true),
             rflags_mask: FLAGS_UNCHANGED,
         },
     ]
@@ -23447,10 +23589,24 @@ fn compat_far_pointer_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             input: compat_state_seed(),
         },
         CompatExceptionMarkerCase {
+            label: "les32_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x66, 0xc4, 0xc0],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
             label: "lds_compat_register_source_ud",
             vector_name: "#UD",
             vector: UD_VECTOR,
             op: vec![0xc5, 0xc0],
+            input: compat_state_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "lds32_compat_register_source_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x66, 0xc5, 0xc0],
             input: compat_state_seed(),
         },
     ]
@@ -23503,6 +23659,18 @@ fn compat_segment_data_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "mov_cs_to_dx_compat_selector",
+            op: vec![0x8c, 0xca],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_ss_to_bx_compat_selector",
+            op: vec![0x8c, 0xd3],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "mov_ds_to_eax_compat_operand32_zeroes_high",
             op: vec![0x66, 0x8c, 0xd8],
             input: compat_segment_data_seed(),
@@ -23512,6 +23680,28 @@ fn compat_segment_data_cases() -> Vec<CompatStateCase> {
             label: "mov_fs_to_modrm16_mem_compat",
             op: vec![0x8c, 0x20],
             input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_gs_to_modrm16_mem_compat",
+            op: vec![0x8c, 0x28],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_es_to_addr32_mem_compat",
+            op: vec![0x67, 0x8c, 0x05, 0x00, 0x40, 0x00, 0x00],
+            input: compat_segment_data_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_es_from_ax_null_compat_then_capture",
+            op: vec![0x8e, 0xc0, 0x8c, 0xc1],
+            input: {
+                let mut input = compat_segment_data_seed();
+                input.rax &= !0xffff;
+                input
+            },
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -23527,6 +23717,12 @@ fn compat_segment_data_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "mov_fs_from_modrm16_mem_null_compat_then_capture",
             op: vec![0x8e, 0x20, 0x8c, 0xe1],
+            input: compat_segment_mem16_input(0x10, 0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_gs_from_modrm16_mem_null_compat_then_capture",
+            op: vec![0x8e, 0x28, 0x8c, 0xe9],
             input: compat_segment_mem16_input(0x10, 0),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -23577,6 +23773,31 @@ fn compat_segment_data_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             vector: UD_VECTOR,
             op: vec![0x0f, 0xb2, 0xc0],
             input: compat_segment_data_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "lss16_compat_null_selector_gp",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: vec![0x0f, 0xb2, 0x00],
+            input: compat_far_pointer_modrm16_input(0x2468, 0, false),
+        },
+        CompatExceptionMarkerCase {
+            label: "mov_cs_from_ax_compat_ud",
+            vector_name: "#UD",
+            vector: UD_VECTOR,
+            op: vec![0x8e, 0xc8],
+            input: compat_segment_data_seed(),
+        },
+        CompatExceptionMarkerCase {
+            label: "mov_ss_from_ax_null_compat_gp",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: vec![0x8e, 0xd0],
+            input: {
+                let mut input = compat_segment_data_seed();
+                input.rax &= !0xffff;
+                input
+            },
         },
         CompatExceptionMarkerCase {
             label: "lfs_compat_register_source_ud",
@@ -23648,9 +23869,29 @@ fn compat_legacy_one_byte_cases() -> Vec<CompatStateCase> {
             rflags_mask: STATUS_RFLAGS_MASK,
         },
         CompatStateCase {
+            label: "inc_sp_one_byte_compat_wrap_preserves_high_rsp",
+            op: vec![0x44],
+            input: {
+                let mut input = compat_state_seed();
+                input.rsp = (input.rsp & !0xffff) | 0xffff;
+                input
+            },
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
             label: "dec_ecx_one_byte_compat_operand32_sign_edge",
             op: vec![0x66, 0x49],
             input: dec_ecx,
+            rflags_mask: STATUS_RFLAGS_MASK,
+        },
+        CompatStateCase {
+            label: "dec_di_one_byte_compat_zero_edge",
+            op: vec![0x4f],
+            input: {
+                let mut input = compat_state_seed();
+                input.rdi &= !0xffff;
+                input
+            },
             rflags_mask: STATUS_RFLAGS_MASK,
         },
         CompatStateCase {
@@ -23672,14 +23913,32 @@ fn compat_legacy_one_byte_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "push_es_compat_operand32_selector",
+            op: vec![0x66, 0x06],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "push_cs_compat_segment_selector",
             op: vec![0x0e],
             input: compat_state_seed(),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "push_cs_compat_operand32_selector",
+            op: vec![0x66, 0x0e],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "push_ss_compat_segment_selector",
             op: vec![0x16],
+            input: compat_state_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "push_ss_compat_operand32_selector",
+            op: vec![0x66, 0x16],
             input: compat_state_seed(),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -23698,6 +23957,18 @@ fn compat_legacy_one_byte_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "pop_es_compat_null_selector",
             op: vec![0x07, 0x8c, 0xc1],
+            input: compat_pop_sreg_input(0, false),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_es_compat_operand32_null_selector",
+            op: vec![0x66, 0x07, 0x8c, 0xc1],
+            input: compat_pop_sreg_input(0, true),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pop_ds_compat_null_selector",
+            op: vec![0x1f, 0x8c, 0xd9],
             input: compat_pop_sreg_input(0, false),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -33785,7 +34056,7 @@ fn avx512_kvm_stack_bound_compat_corpus() {
     let cases = compat_stack_bound_cases();
     assert_eq!(
         cases.len(),
-        8,
+        12,
         "unexpected compatibility stack/bounds corpus size"
     );
     let _ = run_compat_state_cases("stack/bounds", &cases);
@@ -33796,7 +34067,7 @@ fn avx512_kvm_arpl_into_compat_corpus() {
     let cases = compat_arpl_into_cases();
     assert_eq!(
         cases.len(),
-        5,
+        8,
         "unexpected compatibility ARPL/INTO corpus size"
     );
     let _ = run_compat_state_cases("ARPL/INTO", &cases);
@@ -33807,7 +34078,7 @@ fn avx512_kvm_bound_into_compat_exception_corpus() {
     let cases = compat_bound_into_exception_cases();
     assert_eq!(
         cases.len(),
-        6,
+        8,
         "unexpected compatibility BOUND/INTO exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("BOUND/INTO", &cases);
@@ -33818,7 +34089,7 @@ fn avx512_kvm_interrupt_exception_compat_corpus() {
     let cases = compat_interrupt_exception_cases();
     assert_eq!(
         cases.len(),
-        9,
+        12,
         "unexpected compatibility interrupt exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("interrupt", &cases);
@@ -33829,7 +34100,7 @@ fn avx512_kvm_far_pointer_compat_corpus() {
     let state_cases = compat_far_pointer_cases();
     assert_eq!(
         state_cases.len(),
-        4,
+        8,
         "unexpected compatibility far-pointer state corpus size"
     );
     let _ = run_compat_state_cases("far-pointer", &state_cases);
@@ -33837,7 +34108,7 @@ fn avx512_kvm_far_pointer_compat_corpus() {
     let exception_cases = compat_far_pointer_exception_cases();
     assert_eq!(
         exception_cases.len(),
-        2,
+        4,
         "unexpected compatibility far-pointer exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("far-pointer", &exception_cases);
@@ -33848,7 +34119,7 @@ fn avx512_kvm_segment_data_compat_corpus() {
     let cases = compat_segment_data_cases();
     assert_eq!(
         cases.len(),
-        11,
+        17,
         "unexpected compatibility segment-data corpus size"
     );
     let _ = run_compat_state_cases("segment-data", &cases);
@@ -33856,7 +34127,7 @@ fn avx512_kvm_segment_data_compat_corpus() {
     let exception_cases = compat_segment_data_exception_cases();
     assert_eq!(
         exception_cases.len(),
-        3,
+        6,
         "unexpected compatibility segment-data exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("segment-data", &exception_cases);
@@ -33867,7 +34138,7 @@ fn avx512_kvm_legacy_one_byte_compat_corpus() {
     let cases = compat_legacy_one_byte_cases();
     assert_eq!(
         cases.len(),
-        13,
+        20,
         "unexpected compatibility legacy one-byte corpus size"
     );
     let _ = run_compat_state_cases("legacy one-byte", &cases);

@@ -187,6 +187,13 @@ pub fn mov_sreg_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     } else {
         vcpu.get_reg(rm, 2) as u16
     };
+    if sreg == 1 {
+        return vcpu.inject_undefined_instruction();
+    }
+    if sreg == 2 && vcpu.sregs.cr0 & 1 != 0 && value & 0xfffc == 0 {
+        vcpu.inject_exception(13, Some(0))?;
+        return Ok(None);
+    }
     vcpu.set_sreg(sreg, value);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -213,6 +220,10 @@ fn load_pointer_to_segment(
     let selector = vcpu
         .mmu
         .read_u16(addr.wrapping_add(op_size as u64), &vcpu.sregs)?;
+    if segment == 2 && vcpu.sregs.cr0 & 1 != 0 && selector & 0xfffc == 0 {
+        vcpu.inject_exception(13, Some(0))?;
+        return Ok(None);
+    }
     vcpu.set_reg(reg, offset, op_size);
     vcpu.set_sreg(segment, selector);
     vcpu.regs.rip += ctx.cursor as u64;
