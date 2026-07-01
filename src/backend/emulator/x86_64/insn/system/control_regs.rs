@@ -5,6 +5,9 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
+const CR0_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
+const CR4_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
+
 /// Current Privilege Level of the executing code.
 ///
 /// The CPL is the low two bits of the CS selector. In real mode (CR0.PE=0)
@@ -276,6 +279,10 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
     match cr {
         0 => {
+            if value & CR0_HIGH_RESERVED_MASK != 0 {
+                return raise_gp0(vcpu);
+            }
+
             // Validate CR0 value - PG=1 requires PE=1 (x86 architectural requirement).
             // An invalid intermediate (PG=1, PE=0) would #GP on real hardware; force
             // PE=1 so a guest computing the wrong transient can continue.
@@ -318,11 +325,19 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
             vcpu.mmu.flush_tlb();
         }
         4 => {
+            if value & CR4_HIGH_RESERVED_MASK != 0 {
+                return raise_gp0(vcpu);
+            }
             vcpu.sregs.cr4 = value;
             // CR4 changes can affect paging (PAE, PSE, PGE, etc.), flush TLB
             vcpu.mmu.flush_tlb();
         }
-        8 => vcpu.sregs.cr8 = value & 0xF,
+        8 => {
+            if value & !0xF != 0 {
+                return raise_gp0(vcpu);
+            }
+            vcpu.sregs.cr8 = value;
+        }
         _ => return vcpu.inject_undefined_instruction(),
     }
     vcpu.regs.rip += ctx.cursor as u64;

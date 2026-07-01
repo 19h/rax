@@ -32017,6 +32017,33 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             op: &[0xb9, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x01, 0xd0],
         },
         ExceptionMarkerCase {
+            label: "mov_cr0_reserved_high_bit",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x49, 0xb8, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f,
+                0x22, 0xc0,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "mov_cr4_reserved_high_bit",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x49, 0xb8, 0x20, 0x06, 0x05, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f,
+                0x22, 0xe0,
+            ],
+        },
+        ExceptionMarkerCase {
+            label: "mov_cr8_reserved_low_high_bits",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x49, 0xb8, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x0f,
+                0x22, 0xc0,
+            ],
+        },
+        ExceptionMarkerCase {
             label: "rdpkru_nonzero_ecx",
             vector_name: "#GP",
             vector: GP_VECTOR,
@@ -33404,7 +33431,7 @@ fn avx512_kvm_software_interrupt_exception_corpus() {
 
 #[test]
 fn avx512_kvm_general_protection_exception_corpus() {
-    let mut expected = 35;
+    let mut expected = 38;
     if host_cpu_flag("movdir64b") {
         expected += 1;
     }
