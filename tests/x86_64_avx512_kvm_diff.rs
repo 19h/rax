@@ -29759,6 +29759,130 @@ fn compat_xmm_cases() -> Vec<CompatStateCase> {
             }),
             rflags_mask: FLAGS_UNCHANGED,
         },
+        CompatStateCase {
+            label: "xmm_compat_sse3_addsub_horizontal_ps_addr32",
+            op: op!(
+                compat_xmm_mem(&[], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0xf2], 0xd0, 0, 0x20),
+                compat_xmm_mem(&[], 0x11, 0, 0x40),
+                compat_xmm_mem(&[], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0xf2], 0x7c, 0, 0x20),
+                compat_xmm_mem(&[], 0x11, 0, 0x50),
+                compat_xmm_mem(&[], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0xf2], 0x7d, 0, 0x20),
+                compat_xmm_mem(&[], 0x11, 0, 0x60),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_x87_put_f32(scratch, 0x10, 8.0);
+                compat_x87_put_f32(scratch, 0x14, 4.0);
+                compat_x87_put_f32(scratch, 0x18, 2.5);
+                compat_x87_put_f32(scratch, 0x1c, -1.5);
+                compat_x87_put_f32(scratch, 0x20, 1.25);
+                compat_x87_put_f32(scratch, 0x24, -2.0);
+                compat_x87_put_f32(scratch, 0x28, 10.0);
+                compat_x87_put_f32(scratch, 0x2c, 3.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xmm_compat_sse3_addsub_horizontal_pd_addr32",
+            op: op!(
+                compat_xmm_mem(&[0x66], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0x66], 0xd0, 0, 0x20),
+                compat_xmm_mem(&[0x66], 0x11, 0, 0x40),
+                compat_xmm_mem(&[0x66], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0x66], 0x7c, 0, 0x20),
+                compat_xmm_mem(&[0x66], 0x11, 0, 0x50),
+                compat_xmm_mem(&[0x66], 0x10, 0, 0x10),
+                compat_xmm_mem(&[0x66], 0x7d, 0, 0x20),
+                compat_xmm_mem(&[0x66], 0x11, 0, 0x60),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 8.0);
+                compat_x87_put_f64(scratch, 0x18, -1.5);
+                compat_x87_put_f64(scratch, 0x20, 2.25);
+                compat_x87_put_f64(scratch, 0x28, 4.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xmm_compat_sse3_duplicate_moves_addr32",
+            op: op!(
+                compat_xmm_mem(&[0xf2], 0x12, 0, 0x10),
+                compat_xmm_mem(&[0xf3], 0x7f, 0, 0x40),
+                compat_xmm_mem(&[0xf3], 0x12, 0, 0x10),
+                compat_xmm_mem(&[0xf3], 0x7f, 0, 0x50),
+                compat_xmm_mem(&[0xf3], 0x16, 0, 0x10),
+                compat_xmm_mem(&[0xf3], 0x7f, 0, 0x60),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_xmm_put_m128(
+                    scratch,
+                    0x10,
+                    0x4000_0000_3f80_0000,
+                    0xc040_0000_4040_0000,
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xmm_compat_sse3_lddqu_addr32_modrm16",
+            op: op!(
+                compat_xmm_mem(&[0xf2], 0xf0, 0, 0x11),
+                compat_xmm_mem(&[0xf3], 0x7f, 0, 0x40),
+                compat_xmm_mem16(&[0xf2], 0xf0, 0, 0),
+                compat_xmm_mem(&[0xf3], 0x7f, 0, 0x50),
+            ),
+            input: {
+                let mut input = compat_xmm_modrm16_input(|scratch| {
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x10,
+                        0x1122_3344_5566_7788,
+                        0x99aa_bbcc_ddee_ff00,
+                    );
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x20,
+                        0x0102_0304_0506_0708,
+                        0x1112_1314_1516_1718,
+                    );
+                });
+                input.rax = SCRATCH_ADDR;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "xmm_compat_sse3_default16_horizontal_sources",
+            op: op!(
+                compat_xmm_mem16(&[], 0x10, 0, 0),
+                compat_xmm_mem16(&[0xf2], 0xd0, 0, 1),
+                compat_xmm_mem(&[], 0x11, 0, 0x40),
+                compat_xmm_mem16(&[0x66], 0x10, 0, 0),
+                compat_xmm_mem16(&[0x66], 0x7c, 0, 1),
+                compat_xmm_mem(&[0x66], 0x11, 0, 0x50),
+            ),
+            input: {
+                let mut input = compat_xmm_modrm16_input(|scratch| {
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x10,
+                        0x4000_0000_3f80_0000,
+                        0x4080_0000_4040_0000,
+                    );
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x20,
+                        0xbf80_0000_3f00_0000,
+                        0x40e0_0000_40a0_0000,
+                    );
+                });
+                input.rax = SCRATCH_ADDR;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
     ]
 }
 
@@ -35274,7 +35398,7 @@ fn avx512_kvm_mmx_compat_corpus() {
 #[test]
 fn avx512_kvm_xmm_compat_corpus() {
     let cases = compat_xmm_cases();
-    assert_eq!(cases.len(), 23, "unexpected compatibility XMM corpus size");
+    assert_eq!(cases.len(), 28, "unexpected compatibility XMM corpus size");
     let _ = run_compat_state_cases("XMM", &cases);
 }
 
