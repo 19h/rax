@@ -35,15 +35,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
 
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
 use common::{
-    Bytes, GuestAddress, GuestMemoryMmap, Registers, VCpu, run_until_hlt, setup_vm,
-    setup_vm_compat, setup_vm_no_idt,
+    run_until_hlt, setup_vm, setup_vm_compat, setup_vm_no_idt, Bytes, GuestAddress,
+    GuestMemoryMmap, Registers, VCpu,
 };
 
 // ---------------------------------------------------------------------------
@@ -3323,6 +3323,8 @@ fn base_table() -> Vec<Base> {
         // ---- blend by mask (F) ----
         b("vpblendmd", F, Vvv, Int, 4, f, f),
         b("vpblendmq", F, Vvv, Int, 8, f, f),
+        b("vpblendmb", Bw, Vvv, Int, 0, t, f),
+        b("vpblendmw", Bw, Vvv, Int, 0, t, f),
         b("vblendmps", F, Vvv, F32, 4, f, f),
         b("vblendmpd", F, Vvv, F64, 8, f, f),
         // ---- masked moves ----
@@ -3456,17 +3458,47 @@ fn base_table() -> Vec<Base> {
         // ---- FMA (F) ----
         b("vfmadd213ps", F, Vvv, F32, 4, f, t),
         b("vfmadd213pd", F, Vvv, F64, 8, f, t),
+        b("vfmadd132ps", F, Vvv, F32, 4, f, f),
+        b("vfmadd132pd", F, Vvv, F64, 8, f, f),
         b("vfmadd231ps", F, Vvv, F32, 4, f, f),
+        b("vfmadd231pd", F, Vvv, F64, 8, f, f),
+        b("vfmsub132ps", F, Vvv, F32, 4, f, f),
+        b("vfmsub132pd", F, Vvv, F64, 8, f, f),
         b("vfmsub213ps", F, Vvv, F32, 4, f, t),
+        b("vfmsub213pd", F, Vvv, F64, 8, f, f),
+        b("vfmsub231ps", F, Vvv, F32, 4, f, f),
+        b("vfmsub231pd", F, Vvv, F64, 8, f, f),
+        b("vfnmadd132ps", F, Vvv, F32, 4, f, f),
+        b("vfnmadd132pd", F, Vvv, F64, 8, f, f),
         b("vfnmadd213ps", F, Vvv, F32, 4, f, f),
+        b("vfnmadd213pd", F, Vvv, F64, 8, f, f),
+        b("vfnmadd231ps", F, Vvv, F32, 4, f, f),
+        b("vfnmadd231pd", F, Vvv, F64, 8, f, f),
+        b("vfnmsub132ps", F, Vvv, F32, 4, f, f),
+        b("vfnmsub132pd", F, Vvv, F64, 8, f, f),
+        b("vfnmsub213ps", F, Vvv, F32, 4, f, f),
+        b("vfnmsub213pd", F, Vvv, F64, 8, f, f),
+        b("vfnmsub231ps", F, Vvv, F32, 4, f, f),
+        b("vfnmsub231pd", F, Vvv, F64, 8, f, f),
+        b("vfmaddsub132ps", F, Vvv, F32, 4, f, f),
+        b("vfmaddsub132pd", F, Vvv, F64, 8, f, f),
         b("vfmaddsub213ps", F, Vvv, F32, 4, f, f),
+        b("vfmaddsub213pd", F, Vvv, F64, 8, f, f),
+        b("vfmaddsub231ps", F, Vvv, F32, 4, f, f),
+        b("vfmaddsub231pd", F, Vvv, F64, 8, f, f),
+        b("vfmsubadd132ps", F, Vvv, F32, 4, f, f),
+        b("vfmsubadd132pd", F, Vvv, F64, 8, f, f),
         b("vfmsubadd213ps", F, Vvv, F32, 4, f, f),
+        b("vfmsubadd213pd", F, Vvv, F64, 8, f, f),
+        b("vfmsubadd231ps", F, Vvv, F32, 4, f, f),
+        b("vfmsubadd231pd", F, Vvv, F64, 8, f, f),
         // ---- FP range/scale/round/class (F + DQ) ----
         b("vscalefps", F, Vvv, F32, 4, f, t),
         b("vscalefpd", F, Vvv, F64, 8, f, t),
         b("vgetexpps", F, Vv, F32, 4, f, t),
         b("vgetexppd", F, Vv, F64, 8, f, t),
         b("vgetmantps", F, VvI(0x00), F32, 4, f, t),
+        b("vgetmantpd", F, VvI(0x00), F64, 8, f, t),
         b("vrndscaleps", F, VvI(0x03), F32, 4, f, t),
         b("vrndscalepd", F, VvI(0x03), F64, 8, f, t),
         b("vreduceps", Dq, VvI(0x03), F32, 4, f, t),
@@ -3597,6 +3629,22 @@ fn irregular_cases() -> Vec<Case> {
         ("vpbroadcastw", "vpbroadcastw %xmm3, %zmm1", Bw, Int, true),
         ("vbroadcastss", "vbroadcastss %xmm3, %zmm1", F, F32, true),
         ("vbroadcastsd", "vbroadcastsd %xmm3, %zmm1", F, F64, true),
+        // block broadcasts with smaller/larger source blocks than the existing
+        // x4/x8 integer and f64x2/f64x4 coverage.
+        (
+            "vbroadcastf32x2",
+            "vbroadcastf32x2 (%rax), %zmm1",
+            Dq,
+            F32,
+            true,
+        ),
+        (
+            "vbroadcasti32x2",
+            "vbroadcasti32x2 (%rax), %xmm1",
+            Dq,
+            Int,
+            true,
+        ),
         // mask/vector transfers and mask broadcasts
         ("vpmovm2b", "vpmovm2b %k2, %zmm1", Bw, Int, false),
         ("vpmovm2w", "vpmovm2w %k2, %zmm1", Bw, Int, false),
@@ -3661,6 +3709,78 @@ fn irregular_cases() -> Vec<Case> {
             Dq,
             F64,
             true,
+        ),
+        (
+            "vbroadcasti64x2",
+            "vbroadcasti64x2 (%rax), %zmm1",
+            Dq,
+            Int,
+            true,
+        ),
+        (
+            "vbroadcastf32x8",
+            "vbroadcastf32x8 (%rax), %zmm1",
+            Dq,
+            F32,
+            true,
+        ),
+        // EVEX scalar/vector transfers that share legacy names but exercise
+        // different decode paths and zeroing semantics.
+        (
+            "vmovd_gpr_to_xmm",
+            "{evex} vmovd %r8d, %xmm1",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovd_xmm_to_gpr",
+            "{evex} vmovd %xmm1, %r8d",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovd_mem_to_xmm",
+            "{evex} vmovd (%rax), %xmm1",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovd_xmm_to_mem",
+            "{evex} vmovd %xmm1, (%rax)",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovq_gpr_to_xmm",
+            "{evex} vmovq %r8, %xmm1",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovq_xmm_to_gpr",
+            "{evex} vmovq %xmm1, %r8",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovq_mem_to_xmm",
+            "{evex} vmovq (%rax), %xmm1",
+            Dq,
+            Int,
+            false,
+        ),
+        (
+            "vmovq_xmm_to_mem",
+            "{evex} vmovq %xmm1, (%rax)",
+            Dq,
+            Int,
+            false,
         ),
         // compress / expand (mask selects packed elements)
         ("vpcompressd", "vpcompressd %zmm2, %zmm1", F, Int, true),
@@ -3782,6 +3902,34 @@ fn irregular_cases() -> Vec<Case> {
             F32,
             false,
         ),
+        (
+            "vcvtss2sd",
+            "{evex} vcvtss2sd %xmm2, %xmm3, %xmm1",
+            F,
+            F32,
+            true,
+        ),
+        (
+            "vcvtss2sd_mem",
+            "{evex} vcvtss2sd (%rax), %xmm3, %xmm1",
+            F,
+            F32,
+            true,
+        ),
+        (
+            "vcvtusi2ss_r32",
+            "{evex} vcvtusi2ss %r8d, %xmm3, %xmm1",
+            F,
+            Int,
+            false,
+        ),
+        (
+            "vcvtusi2ss_r64",
+            "{evex} vcvtusi2ss %r8, %xmm3, %xmm1",
+            F,
+            Int,
+            false,
+        ),
         ("vaddsd", "{evex} vaddsd %xmm2, %xmm3, %xmm1", F, F64, true),
         ("vsubsd", "{evex} vsubsd %xmm2, %xmm3, %xmm1", F, F64, true),
         ("vmulsd", "{evex} vmulsd %xmm2, %xmm3, %xmm1", F, F64, true),
@@ -3870,6 +4018,34 @@ fn irregular_cases() -> Vec<Case> {
             "{evex} vcmpsd $2, (%rax), %xmm3, %k5 {%k1}",
             F,
             F64,
+            false,
+        ),
+        (
+            "vcvtsd2ss",
+            "{evex} vcvtsd2ss %xmm2, %xmm3, %xmm1",
+            F,
+            F64,
+            true,
+        ),
+        (
+            "vcvtsd2ss_mem",
+            "{evex} vcvtsd2ss (%rax), %xmm3, %xmm1",
+            F,
+            F64,
+            true,
+        ),
+        (
+            "vcvtusi2sd_r32",
+            "{evex} vcvtusi2sd %r8d, %xmm3, %xmm1",
+            F,
+            Int,
+            false,
+        ),
+        (
+            "vcvtusi2sd_r64",
+            "{evex} vcvtusi2sd %r8, %xmm3, %xmm1",
+            F,
+            Int,
             false,
         ),
         // FP32/FP64 scalar fused multiply-add/subtract.
@@ -4908,6 +5084,118 @@ fn irregular_cases() -> Vec<Case> {
             Fp16,
             F16,
             true,
+        ),
+        // FP16 scalar moves and scalar conversions.
+        ("vmovsh", "vmovsh %xmm2, %xmm3, %xmm1", Fp16, F16, true),
+        ("vmovsh_memload", "vmovsh (%rax), %xmm1", Fp16, F16, true),
+        ("vmovsh_store", "vmovsh %xmm2, (%rax)", Fp16, F16, false),
+        ("vmovw_gpr_to_xmm", "vmovw %r8d, %xmm1", Fp16, Int, false),
+        ("vmovw_xmm_to_gpr", "vmovw %xmm1, %r8d", Fp16, Int, false),
+        ("vmovw_mem_to_xmm", "vmovw (%rax), %xmm1", Fp16, Int, false),
+        ("vmovw_xmm_to_mem", "vmovw %xmm1, (%rax)", Fp16, Int, false),
+        (
+            "vcvtss2sh",
+            "vcvtss2sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F32,
+            true,
+        ),
+        (
+            "vcvtss2sh_mem",
+            "vcvtss2sh (%rax), %xmm3, %xmm1",
+            Fp16,
+            F32,
+            true,
+        ),
+        (
+            "vcvtsd2sh",
+            "vcvtsd2sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F64,
+            true,
+        ),
+        (
+            "vcvtsd2sh_mem",
+            "vcvtsd2sh (%rax), %xmm3, %xmm1",
+            Fp16,
+            F64,
+            true,
+        ),
+        (
+            "vcvtsh2ss",
+            "vcvtsh2ss %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vcvtsh2ss_mem",
+            "vcvtsh2ss (%rax), %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vcvtsh2sd",
+            "vcvtsh2sd %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vcvtsh2sd_mem",
+            "vcvtsh2sd (%rax), %xmm3, %xmm1",
+            Fp16,
+            F16,
+            true,
+        ),
+        (
+            "vcvtsi2sh_r32",
+            "vcvtsi2sh %r8d, %xmm3, %xmm1",
+            Fp16,
+            Int,
+            false,
+        ),
+        (
+            "vcvtsi2sh_r64",
+            "vcvtsi2sh %r8, %xmm3, %xmm1",
+            Fp16,
+            Int,
+            false,
+        ),
+        (
+            "vcvtusi2sh_r32",
+            "vcvtusi2sh %r8d, %xmm3, %xmm1",
+            Fp16,
+            Int,
+            false,
+        ),
+        (
+            "vcvtusi2sh_r64",
+            "vcvtusi2sh %r8, %xmm3, %xmm1",
+            Fp16,
+            Int,
+            false,
+        ),
+        ("vcvtsh2si_r32", "vcvtsh2si %xmm2, %r8d", Fp16, F16, false),
+        ("vcvtsh2si_r64", "vcvtsh2si %xmm2, %r8", Fp16, F16, false),
+        ("vcvttsh2si_r32", "vcvttsh2si %xmm2, %r8d", Fp16, F16, false),
+        ("vcvttsh2si_r64", "vcvttsh2si %xmm2, %r8", Fp16, F16, false),
+        ("vcvtsh2usi_r32", "vcvtsh2usi %xmm2, %r8d", Fp16, F16, false),
+        ("vcvtsh2usi_r64", "vcvtsh2usi %xmm2, %r8", Fp16, F16, false),
+        (
+            "vcvttsh2usi_r32",
+            "vcvttsh2usi %xmm2, %r8d",
+            Fp16,
+            F16,
+            false,
+        ),
+        (
+            "vcvttsh2usi_r64",
+            "vcvttsh2usi %xmm2, %r8",
+            Fp16,
+            F16,
+            false,
         ),
         // FP16 packed conversions that change vector width.
         ("vcvtph2ps", "vcvtph2ps %ymm3, %zmm1", Fp16, F16, true),
@@ -22955,7 +23243,11 @@ fn parse_encoding(text: &str) -> Option<Vec<u8>> {
         }
         rest = &rest[end + 1..];
     }
-    if bytes.is_empty() { None } else { Some(bytes) }
+    if bytes.is_empty() {
+        None
+    } else {
+        Some(bytes)
+    }
 }
 
 #[test]
@@ -23028,7 +23320,11 @@ fn assemble_object_text(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
             return None;
         }
         let bytes = std::fs::read(&bin_path).ok()?;
-        if bytes.is_empty() { None } else { Some(bytes) }
+        if bytes.is_empty() {
+            None
+        } else {
+            Some(bytes)
+        }
     })();
 
     let _ = std::fs::remove_file(&obj_path);
@@ -37579,15 +37875,27 @@ fn modern_msr_state_expected_cases() -> usize {
 }
 
 fn pcid_control_reg_expected_cases() -> usize {
-    if host_cpu_flag("pcid") { 6 } else { 0 }
+    if host_cpu_flag("pcid") {
+        6
+    } else {
+        0
+    }
 }
 
 fn pcid_cpuid_expected_cases() -> usize {
-    if host_cpu_flag("pcid") { 1 } else { 0 }
+    if host_cpu_flag("pcid") {
+        1
+    } else {
+        0
+    }
 }
 
 fn pku_cpuid_expected_cases() -> usize {
-    if host_cpu_flag("pku") { 1 } else { 0 }
+    if host_cpu_flag("pku") {
+        1
+    } else {
+        0
+    }
 }
 
 #[derive(Clone, Copy)]
