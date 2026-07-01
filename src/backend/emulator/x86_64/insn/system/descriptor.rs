@@ -5,7 +5,7 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
-use super::control_regs::{is_cpl0, raise_gp0};
+use super::control_regs::{current_cpl, is_cpl0, raise_gp0};
 
 #[derive(Clone, Copy)]
 struct Descriptor {
@@ -29,6 +29,23 @@ impl Descriptor {
         self.type_() & 0x8 != 0
     }
 
+    fn conforming_code(self) -> bool {
+        self.executable() && self.type_() & 0x4 != 0
+    }
+
+    fn dpl(self) -> u8 {
+        ((self.raw >> 45) & 0x3) as u8
+    }
+
+    fn visible_from(self, selector: u16, cpl: u8) -> bool {
+        if self.is_code_or_data() && self.conforming_code() {
+            return true;
+        }
+
+        let rpl = (selector & 0x3) as u8;
+        cpl <= self.dpl() && rpl <= self.dpl()
+    }
+
     fn access_rights(self) -> u64 {
         ((self.raw >> 40) & 0xFFFF) << 8
     }
@@ -41,28 +58,30 @@ impl Descriptor {
         limit
     }
 
-    fn can_lar_lsl(self) -> bool {
+    fn can_lar_lsl(self, selector: u16, cpl: u8) -> bool {
         if !self.present() {
             return false;
         }
 
-        if self.is_code_or_data() {
-            return true;
-        }
+        let valid_type = self.is_code_or_data() || matches!(self.type_(), 0x2 | 0x9 | 0xB);
 
-        matches!(self.type_(), 0x2 | 0x9 | 0xB)
+        valid_type && self.visible_from(selector, cpl)
     }
 
-    fn can_verr(self) -> bool {
-        if !self.present() || !self.is_code_or_data() {
+    fn can_verr(self, selector: u16, cpl: u8) -> bool {
+        if !self.present() || !self.is_code_or_data() || !self.visible_from(selector, cpl) {
             return false;
         }
 
         !self.executable() || self.type_() & 0x2 != 0
     }
 
-    fn can_verw(self) -> bool {
-        self.present() && self.is_code_or_data() && !self.executable() && self.type_() & 0x2 != 0
+    fn can_verw(self, selector: u16, cpl: u8) -> bool {
+        self.present()
+            && self.is_code_or_data()
+            && self.visible_from(selector, cpl)
+            && !self.executable()
+            && self.type_() & 0x2 != 0
     }
 }
 
@@ -91,7 +110,8 @@ fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Optio
 }
 
 fn descriptor_for_lar_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
-    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar_lsl()))
+    let cpl = current_cpl(vcpu);
+    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar_lsl(selector, cpl)))
 }
 
 fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
@@ -205,8 +225,9 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
+            let cpl = current_cpl(vcpu);
             let readable = descriptor_for_selector(vcpu, selector)?
-                .map(|desc| desc.can_verr())
+                .map(|desc| desc.can_verr(selector, cpl))
                 .unwrap_or(false);
             set_zf(vcpu, readable);
         }
@@ -219,8 +240,9 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
+            let cpl = current_cpl(vcpu);
             let writable = descriptor_for_selector(vcpu, selector)?
-                .map(|desc| desc.can_verw())
+                .map(|desc| desc.can_verw(selector, cpl))
                 .unwrap_or(false);
             set_zf(vcpu, writable);
         }
