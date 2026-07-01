@@ -26626,6 +26626,66 @@ fn compat_byte_order_cache_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "nop90_compat_preserves_state",
+            op: vec![0x90],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nop90_prefix66_compat_preserves_state",
+            op: vec![0x66, 0x90],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nop90_repne_compat_preserves_state",
+            op: vec![0xf2, 0x90],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "pause_compat_preserves_state",
+            op: vec![0xf3, 0x90],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nopl_compat_modrm16_bx_si_preserves_state",
+            op: vec![0x0f, 0x1f, 0x00],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nopl_compat_modrm16_bp_di_disp8_preserves_state",
+            op: vec![0x66, 0x0f, 0x1f, 0x43, 0x04],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nopl_compat_addr32_sib_preserves_state",
+            op: vec![0x67, 0x0f, 0x1f, 0x04, 0x33],
+            input: compat_byte_order_addr32_mem32_input(0x20, 0x1234_5678),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nopl_compat_addr32_sib_disp8_preserves_state",
+            op: vec![0x67, 0x0f, 0x1f, 0x44, 0x33, 0x04],
+            input: compat_byte_order_addr32_mem32_input(0x24, 0x89ab_cdef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "nopl_compat_register_operand_preserves_state",
+            op: vec![0x0f, 0x1f, 0xc0],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "endbr32_compat_preserves_state",
+            op: vec![0xf3, 0x0f, 0x1e, 0xfb],
+            input: compat_byte_order_cache_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "prefetchnta_compat_modrm16_memory_preserves_state",
             op: vec![0x0f, 0x18, 0x00],
             input: compat_byte_order_cache_seed(),
@@ -34898,7 +34958,7 @@ fn avx512_kvm_byte_order_cache_compat_corpus() {
     let cases = compat_byte_order_cache_cases();
     assert_eq!(
         cases.len(),
-        30,
+        40,
         "unexpected compatibility byte-order/cache corpus size"
     );
     let _ = run_compat_state_cases("byte-order/cache", &cases);
