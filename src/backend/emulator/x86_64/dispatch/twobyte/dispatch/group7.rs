@@ -183,6 +183,12 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xE8 | 0xE9 if ctx.rep_prefix == Some(0xF2) => {
+                    // XSUSLDTRK/XRESLDTRK require TSXLDTRK, which the emulator
+                    // does not expose. Keep the F2 forms distinct from SERIALIZE.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xE8 if ctx.rep_prefix == Some(0xF3) => {
                     // SETSSBSY is a CET shadow-stack instruction. The emulator
                     // does not expose CET shadow stacks, so this form is #UD.

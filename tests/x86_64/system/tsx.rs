@@ -3,6 +3,15 @@
 use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt};
 use rax::cpu::VCpu;
 
+fn assert_missing_idt_ud(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm_no_idt(code, None);
+    let err = run_until_hlt(&mut vcpu).expect_err("instruction should inject #UD");
+    assert!(
+        err.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {err}"
+    );
+}
+
 #[test]
 fn test_xbegin_forced_abort_jumps_to_fallback() {
     let code = [
@@ -69,4 +78,20 @@ fn test_xend_outside_transaction_raises_gp() {
         err.to_string().contains("IDT entry 13 not present"),
         "expected #GP delivery failure, got {err}"
     );
+}
+
+#[test]
+fn test_xsusldtrk_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0xf2, 0x0f, 0x01, 0xe8, // XSUSLDTRK
+        0xf4, // HLT (should not be reached)
+    ]);
+}
+
+#[test]
+fn test_xresldtrk_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0xf2, 0x0f, 0x01, 0xe9, // XRESLDTRK
+        0xf4, // HLT (should not be reached)
+    ]);
 }
