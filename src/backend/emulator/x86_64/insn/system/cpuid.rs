@@ -189,6 +189,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 5) // WAITPKG
                         | (((vcpu.sregs.cr4 >> 22) as u32 & 1) << 4) // OSPKE
                         | (1u32 << 3) // PKU (RDPKRU/WRPKRU implemented)
+                        | (1u32 << 2) // UMIP
                         | (1u32 << 1); // AVX512VBMI
                                        // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
                                        // the emulator does not enforce it (ENDBR is a NOP, indirect
@@ -389,6 +390,7 @@ mod tests {
         vcpu.regs.rax = 7;
         vcpu.regs.rcx = 0;
         cpuid(&mut vcpu, &mut ctx).unwrap();
+        assert_eq!(vcpu.regs.rcx & (1 << 2), 1 << 2);
         assert_eq!(vcpu.regs.rbx & (1 << 9), 1 << 9);
         assert_eq!(vcpu.regs.rdx & (1 << 9), 1 << 9);
 

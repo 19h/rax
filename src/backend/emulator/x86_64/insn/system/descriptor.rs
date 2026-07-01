@@ -5,7 +5,7 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
-use super::control_regs::{current_cpl, is_cpl0, raise_gp0};
+use super::control_regs::{current_cpl, is_cpl0, raise_gp0, umip_blocks_user_instruction};
 
 #[derive(Clone, Copy)]
 struct Descriptor {
@@ -149,6 +149,9 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     match reg_op {
         // SLDT - Store Local Descriptor Table (0x0F 0x00 /0)
         0 => {
+            if umip_blocks_user_instruction(vcpu) {
+                return raise_gp0(vcpu);
+            }
             let selector = vcpu.sregs.ldt.selector;
             if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
@@ -161,6 +164,9 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // STR - Store Task Register (0x0F 0x00 /1)
         1 => {
+            if umip_blocks_user_instruction(vcpu) {
+                return raise_gp0(vcpu);
+            }
             let selector = vcpu.sregs.tr.selector;
             if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;

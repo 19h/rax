@@ -35,6 +35,7 @@ pub const GDT_BASE: u64 = 0x10000;
 pub const CR4_FSGSBASE: u64 = 1 << 16;
 pub const CR4_OSXSAVE: u64 = 1 << 18;
 pub const CR4_PKE: u64 = 1 << 22;
+pub const CR4_UMIP: u64 = 1 << 11;
 
 pub fn enable_cr4_bits(vcpu: &mut X86_64Vcpu, bits: u64) {
     let mut sregs = vcpu.get_sregs().unwrap();

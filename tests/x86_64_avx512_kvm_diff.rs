@@ -731,6 +731,16 @@ fn host_cpu_flag(flag: &str) -> bool {
     flags.split_whitespace().any(|word| word == flag)
 }
 
+fn kvm_exposes_umip(oracle: &KvmOracle) -> bool {
+    oracle
+        .supported_cpuid
+        .as_slice()
+        .iter()
+        .find(|entry| entry.function == 7 && entry.index == 0)
+        .map(|entry| entry.ecx & (1u32 << 2) != 0)
+        .unwrap_or(false)
+}
+
 fn host_kvm_pmu_enabled() -> bool {
     static ENABLED: OnceLock<bool> = OnceLock::new();
     *ENABLED.get_or_init(|| {
@@ -853,7 +863,13 @@ const STACK_ADDR: u64 = 0x20000;
 const EXCEPTION_GDT_ADDR: u64 = 0x27000;
 const EXCEPTION_IDT_ADDR: u64 = 0x28000;
 const EXCEPTION_HANDLER_ADDR: u64 = 0x29000;
+const EXCEPTION_TSS_ADDR: u64 = 0x2a000;
+const EXCEPTION_KERNEL_STACK_TOP: u64 = 0x2c000;
 const EXCEPTION_CODE_SELECTOR: u16 = 0x8;
+const USER_EXCEPTION_CODE_SELECTOR: u16 = 0x1b;
+const USER_EXCEPTION_DATA_SELECTOR: u16 = 0x23;
+const EXCEPTION_TSS_SELECTOR: u16 = 0x28;
+const USER_EXCEPTION_GDT_LIMIT: u16 = 0x37;
 const DE_VECTOR: usize = 0;
 const OF_VECTOR: usize = 4;
 const BR_VECTOR: usize = 5;
@@ -871,6 +887,7 @@ const CR0_WP: u64 = 1 << 16;
 const CR0_PG: u64 = 1 << 31;
 const CR0_VAL: u64 = CR0_PE | CR0_MP | CR0_ET | CR0_NE | CR0_WP | CR0_PG;
 const CR4_PAE: u64 = 1 << 5;
+const CR4_UMIP: u64 = 1 << 11;
 const CR4_FSGSBASE: u64 = 1 << 16;
 const CR4_OSFXSR: u64 = 1 << 9;
 const CR4_OSXMMEXCPT: u64 = 1 << 10;
@@ -1027,6 +1044,69 @@ fn idt_gate64(handler: u64, selector: u16) -> [u8; 16] {
     gate
 }
 
+fn tss64_descriptor(base: u64, limit: u32) -> [u8; 16] {
+    let mut descriptor = [0u8; 16];
+    descriptor[0..2].copy_from_slice(&(limit as u16).to_le_bytes());
+    descriptor[2..4].copy_from_slice(&(base as u16).to_le_bytes());
+    descriptor[4] = (base >> 16) as u8;
+    descriptor[5] = 0x89;
+    descriptor[6] = ((limit >> 16) as u8) & 0x0f;
+    descriptor[7] = (base >> 24) as u8;
+    descriptor[8..12].copy_from_slice(&((base >> 32) as u32).to_le_bytes());
+    descriptor
+}
+
+fn write_exception_tss_kvm(mem: &KvmMem) {
+    let mut tss = [0u8; 104];
+    tss[4..12].copy_from_slice(&EXCEPTION_KERNEL_STACK_TOP.to_le_bytes());
+    mem.write(EXCEPTION_TSS_ADDR, &tss);
+}
+
+fn write_exception_tss_interp(mem: &GuestMemoryMmap) -> Result<(), String> {
+    let mut tss = [0u8; 104];
+    tss[4..12].copy_from_slice(&EXCEPTION_KERNEL_STACK_TOP.to_le_bytes());
+    mem.write_slice(&tss, GuestAddress(EXCEPTION_TSS_ADDR))
+        .map_err(|e| format!("write exception TSS: {e:?}"))
+}
+
+fn write_user_exception_gdt_kvm(mem: &KvmMem) {
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0x9a, 0x20, 0x00];
+    let user_code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x20, 0x00];
+    let user_data_descriptor = [0xff, 0xff, 0x00, 0x00, 0x00, 0xf2, 0xcf, 0x00];
+    let tss_descriptor = tss64_descriptor(EXCEPTION_TSS_ADDR, 0x67);
+
+    mem.write(EXCEPTION_GDT_ADDR, &null_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 8, &code64_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 16, &null_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 24, &user_code64_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 32, &user_data_descriptor);
+    mem.write(EXCEPTION_GDT_ADDR + 40, &tss_descriptor);
+    write_exception_tss_kvm(mem);
+}
+
+fn write_user_exception_gdt_interp(mem: &GuestMemoryMmap) -> Result<(), String> {
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0x9a, 0x20, 0x00];
+    let user_code64_descriptor = [0x00, 0x00, 0x00, 0x00, 0x00, 0xfa, 0x20, 0x00];
+    let user_data_descriptor = [0xff, 0xff, 0x00, 0x00, 0x00, 0xf2, 0xcf, 0x00];
+    let tss_descriptor = tss64_descriptor(EXCEPTION_TSS_ADDR, 0x67);
+
+    for (offset, descriptor) in [
+        (0, null_descriptor.as_slice()),
+        (8, code64_descriptor.as_slice()),
+        (16, null_descriptor.as_slice()),
+        (24, user_code64_descriptor.as_slice()),
+        (32, user_data_descriptor.as_slice()),
+        (40, tss_descriptor.as_slice()),
+    ] {
+        mem.write_slice(descriptor, GuestAddress(EXCEPTION_GDT_ADDR + offset))
+            .map_err(|e| format!("write user exception GDT at {offset}: {e:?}"))?;
+    }
+    write_exception_tss_interp(mem)?;
+    Ok(())
+}
+
 const fn exception_marker(vector: usize) -> u32 {
     0x5544_0000 | vector as u32
 }
@@ -1073,6 +1153,36 @@ fn install_exception_trap_interp(mem: &GuestMemoryMmap, vector: usize) -> Result
     Ok(())
 }
 
+fn install_user_exception_trap_kvm(mem: &KvmMem, vector: usize) {
+    assert!(vector < 256);
+    write_user_exception_gdt_kvm(mem);
+
+    let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
+    mem.write(EXCEPTION_IDT_ADDR + (vector as u64) * 16, &gate);
+    mem.write(
+        EXCEPTION_HANDLER_ADDR,
+        &store_marker_code(exception_marker(vector)),
+    );
+}
+
+fn install_user_exception_trap_interp(mem: &GuestMemoryMmap, vector: usize) -> Result<(), String> {
+    assert!(vector < 256);
+    write_user_exception_gdt_interp(mem)?;
+
+    let gate = idt_gate64(EXCEPTION_HANDLER_ADDR, EXCEPTION_CODE_SELECTOR);
+    mem.write_slice(
+        &gate,
+        GuestAddress(EXCEPTION_IDT_ADDR + (vector as u64) * 16),
+    )
+    .map_err(|e| format!("write user exception IDT gate {vector}: {e:?}"))?;
+    mem.write_slice(
+        &store_marker_code(exception_marker(vector)),
+        GuestAddress(EXCEPTION_HANDLER_ADDR),
+    )
+    .map_err(|e| format!("write user exception handler {vector}: {e:?}"))?;
+    Ok(())
+}
+
 fn enable_kvm_xcr0_avx512(vcpu: &kvm_ioctls::VcpuFd) -> Result<(), String> {
     let mut xcrs = kvm_bindings::kvm_xcrs::default();
     xcrs.nr_xcrs = 1;
@@ -1116,6 +1226,122 @@ impl KvmOracle {
         vector: usize,
     ) -> Result<KvmOutcome, String> {
         self.run_inner(code, input, Some(vector))
+    }
+
+    fn run_user_umip_marker(&self, op: &[u8], vector: usize) -> Result<u32, String> {
+        use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
+
+        let vm = self
+            .kvm
+            .create_vm()
+            .map_err(|e| format!("create_vm: {e:?}"))?;
+        let mem = KvmMem::new(MEM_SIZE).ok_or("mmap guest memory failed")?;
+
+        install_page_tables(&mem);
+        let code = build_fault_probe_code(op);
+        mem.write(CODE_ADDR, &code);
+        install_user_exception_trap_kvm(&mem, vector);
+
+        let region = kvm_userspace_memory_region {
+            slot: 0,
+            guest_phys_addr: 0,
+            memory_size: MEM_SIZE as u64,
+            userspace_addr: mem.ptr as u64,
+            flags: 0,
+        };
+        unsafe { vm.set_user_memory_region(region) }.map_err(|e| format!("set_memory: {e:?}"))?;
+
+        let mut vcpu = vm
+            .create_vcpu(0)
+            .map_err(|e| format!("create_vcpu: {e:?}"))?;
+        vcpu.set_cpuid2(&self.supported_cpuid)
+            .map_err(|e| format!("set_cpuid2: {e:?}"))?;
+
+        let user_code = kvm_segment {
+            base: 0,
+            limit: 0xfffff,
+            selector: USER_EXCEPTION_CODE_SELECTOR,
+            type_: 0xb,
+            present: 1,
+            dpl: 3,
+            db: 0,
+            s: 1,
+            l: 1,
+            g: 1,
+            avl: 0,
+            unusable: 0,
+            padding: 0,
+        };
+        let mut user_data = user_code;
+        user_data.selector = USER_EXCEPTION_DATA_SELECTOR;
+        user_data.type_ = 0x3;
+        user_data.l = 0;
+        user_data.db = 1;
+        let tss = kvm_segment {
+            base: EXCEPTION_TSS_ADDR,
+            limit: 0x67,
+            selector: EXCEPTION_TSS_SELECTOR,
+            type_: 0xb,
+            present: 1,
+            dpl: 0,
+            db: 0,
+            s: 0,
+            l: 0,
+            g: 0,
+            avl: 0,
+            unusable: 0,
+            padding: 0,
+        };
+
+        let mut sregs = vcpu.get_sregs().map_err(|e| format!("get_sregs: {e:?}"))?;
+        sregs.cr0 = CR0_VAL;
+        sregs.cr3 = PML4_ADDR;
+        sregs.cr4 = CR4_VAL | CR4_UMIP;
+        sregs.efer = EFER_VAL;
+        sregs.gdt.base = EXCEPTION_GDT_ADDR;
+        sregs.gdt.limit = USER_EXCEPTION_GDT_LIMIT;
+        sregs.idt.base = EXCEPTION_IDT_ADDR;
+        sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
+        sregs.cs = user_code;
+        sregs.ds = user_data;
+        sregs.es = user_data;
+        sregs.fs = user_data;
+        sregs.gs = user_data;
+        sregs.ss = user_data;
+        sregs.tr = tss;
+        vcpu.set_sregs(&sregs)
+            .map_err(|e| format!("set_sregs: {e:?}"))?;
+        enable_kvm_xcr0_avx512(&vcpu)?;
+
+        let mut kregs = vcpu.get_regs().map_err(|e| format!("get_regs: {e:?}"))?;
+        kregs.rip = CODE_ADDR;
+        kregs.rax = SCRATCH_ADDR;
+        kregs.rsp = STACK_ADDR;
+        kregs.rflags = INITIAL_RFLAGS | 0x2;
+        vcpu.set_regs(&kregs)
+            .map_err(|e| format!("set_regs: {e:?}"))?;
+
+        let mut iters = 0u64;
+        loop {
+            iters += 1;
+            if iters > MAX_ITERS {
+                return Err(format!("kvm user UMIP exceeded {MAX_ITERS} iterations"));
+            }
+            match vcpu
+                .run()
+                .map_err(|e| format!("kvm user UMIP run: {e:?}"))?
+            {
+                kvm_ioctls::VcpuExit::Hlt => break,
+                kvm_ioctls::VcpuExit::Shutdown
+                | kvm_ioctls::VcpuExit::FailEntry(..)
+                | kvm_ioctls::VcpuExit::InternalError => return Err("kvm user UMIP faulted".into()),
+                other => return Err(format!("kvm user UMIP abnormal exit: {other:?}")),
+            }
+        }
+
+        let mut scratch = [0u8; SCRATCH_BYTES];
+        mem.read(SCRATCH_ADDR, &mut scratch);
+        Ok(scratch_marker(&scratch))
     }
 
     fn run_compat(&self, code: &[u8], rax: u64, rflags: u64) -> Result<KvmCompatOutcome, String> {
@@ -1728,6 +1954,67 @@ fn run_interp_with_exception_trap(
         scratch,
         stack,
     })
+}
+
+fn run_interp_user_umip_marker(op: &[u8], vector: usize) -> Result<u32, String> {
+    let regs = Registers {
+        rax: SCRATCH_ADDR,
+        rsp: STACK_ADDR,
+        rflags: INITIAL_RFLAGS,
+        ..Registers::default()
+    };
+    let (mut vcpu, mem) = setup_vm_no_idt(&[0xf4], Some(regs));
+    let code = build_fault_probe_code(op);
+    mem.write_slice(&code, GuestAddress(CODE_ADDR))
+        .map_err(|e| format!("write user UMIP code: {e:?}"))?;
+    install_user_exception_trap_interp(&mem, vector)?;
+    let mut live_regs = vcpu
+        .get_regs()
+        .map_err(|e| format!("interp user UMIP get regs: {e:?}"))?;
+    live_regs.rip = CODE_ADDR;
+    vcpu.set_regs(&live_regs)
+        .map_err(|e| format!("interp user UMIP set regs: {e:?}"))?;
+
+    let mut sregs = vcpu
+        .get_sregs()
+        .map_err(|e| format!("interp user UMIP get sregs: {e:?}"))?;
+    sregs.cr4 = CR4_VAL | CR4_UMIP;
+    sregs.gdt.base = EXCEPTION_GDT_ADDR;
+    sregs.gdt.limit = USER_EXCEPTION_GDT_LIMIT;
+    sregs.idt.base = EXCEPTION_IDT_ADDR;
+    sregs.idt.limit = ((vector + 1) * 16 - 1) as u16;
+    sregs.cs.selector = USER_EXCEPTION_CODE_SELECTOR;
+    sregs.cs.dpl = 3;
+    sregs.cs.l = true;
+    sregs.cs.db = false;
+    for seg in [
+        &mut sregs.ds,
+        &mut sregs.es,
+        &mut sregs.fs,
+        &mut sregs.gs,
+        &mut sregs.ss,
+    ] {
+        seg.selector = USER_EXCEPTION_DATA_SELECTOR;
+        seg.dpl = 3;
+        seg.l = false;
+        seg.db = true;
+    }
+    sregs.tr.selector = EXCEPTION_TSS_SELECTOR;
+    sregs.tr.base = EXCEPTION_TSS_ADDR;
+    sregs.tr.limit = 0x67;
+    sregs.tr.type_ = 0xb;
+    sregs.tr.present = true;
+    sregs.tr.s = false;
+    vcpu.set_sregs(&sregs)
+        .map_err(|e| format!("interp user UMIP set sregs: {e:?}"))?;
+    vcpu.set_xgetbv1_value(XCR0_AVX512);
+
+    run_until_hlt(&mut vcpu).map_err(|e| format!("interp user UMIP run: {e:?}"))?;
+
+    let mut scratch = [0u8; SCRATCH_BYTES];
+    mem.read_slice(&mut scratch, GuestAddress(SCRATCH_ADDR))
+        .map_err(|e| format!("read user UMIP scratch: {e:?}"))?;
+    Ok(scratch_marker(&scratch))
 }
 
 fn run_interp_compat(code: &[u8], rax: u64, rflags: u64) -> Result<CompatOut, String> {
@@ -37230,6 +37517,23 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
     cases
 }
 
+fn umip_user_mode_gp_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("umip_sgdt_user_mode", &[0x0f, 0x01, 0x00]),
+        ("umip_sidt_user_mode", &[0x0f, 0x01, 0x08]),
+        ("umip_sldt_user_mode", &[0x0f, 0x00, 0xc0]),
+        ("umip_str_user_mode", &[0x0f, 0x00, 0xc8]),
+        ("umip_smsw_user_mode", &[0x0f, 0x01, 0xe0]),
+    ]
+}
+
+fn umip_user_mode_ud_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        ("umip_sgdt_register_form_stays_ud", &[0x0f, 0x01, 0xc0]),
+        ("umip_sidt_register_form_stays_ud", &[0x0f, 0x01, 0xcc]),
+    ]
+}
+
 fn run_exception_marker_cases(name: &str, cases: Vec<ExceptionMarkerCase>, expected: usize) {
     if !is_x86_feature_detected!("avx512f") {
         eprintln!("[skip] host lacks AVX-512F");
@@ -38469,6 +38773,130 @@ fn avx512_kvm_general_protection_exception_corpus() {
     );
 }
 
+#[test]
+fn avx512_kvm_umip_user_mode_exception_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    if !host_cpu_flag("umip") {
+        eprintln!("[skip] host lacks UMIP");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+    if !kvm_exposes_umip(oracle) {
+        eprintln!("[skip] KVM guest CPUID does not expose UMIP");
+        return;
+    }
+
+    let cases = umip_user_mode_gp_cases();
+    assert_eq!(cases.len(), 5, "unexpected UMIP user-mode corpus size");
+
+    let expected_marker = exception_marker(GP_VECTOR);
+    let mut failures = Vec::new();
+    for (label, op) in cases {
+        let kvm_marker = match oracle.run_user_umip_marker(op, GP_VECTOR) {
+            Ok(marker) => marker,
+            Err(e) => {
+                failures.push(format!("{label}: KVM backend failure: {e}"));
+                continue;
+            }
+        };
+        let interp_marker = match run_interp_user_umip_marker(op, GP_VECTOR) {
+            Ok(marker) => marker,
+            Err(e) => {
+                failures.push(format!("{label}: rax backend failure: {e}"));
+                continue;
+            }
+        };
+
+        if kvm_marker != expected_marker {
+            failures.push(format!(
+                "{label}: KVM marker {kvm_marker:#x}, expected #GP marker {expected_marker:#x}"
+            ));
+        }
+        if interp_marker != expected_marker {
+            failures.push(format!(
+                "{label}: rax marker {interp_marker:#x}, expected #GP marker {expected_marker:#x}"
+            ));
+        }
+    }
+
+    eprintln!("[avx512-kvm-diff] UMIP user-mode exception markers compared=5");
+    assert!(
+        failures.is_empty(),
+        "UMIP user-mode exception marker mismatches vs silicon:\n{}",
+        failures.join("\n")
+    );
+}
+
+#[test]
+fn avx512_kvm_umip_invalid_register_form_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    if !host_cpu_flag("umip") {
+        eprintln!("[skip] host lacks UMIP");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+    if !kvm_exposes_umip(oracle) {
+        eprintln!("[skip] KVM guest CPUID does not expose UMIP");
+        return;
+    }
+
+    let cases = umip_user_mode_ud_cases();
+    assert_eq!(
+        cases.len(),
+        2,
+        "unexpected UMIP invalid register corpus size"
+    );
+
+    let expected_marker = exception_marker(UD_VECTOR);
+    let mut failures = Vec::new();
+    for (label, op) in cases {
+        let kvm_marker = match oracle.run_user_umip_marker(op, UD_VECTOR) {
+            Ok(marker) => marker,
+            Err(e) => {
+                failures.push(format!("{label}: KVM backend failure: {e}"));
+                continue;
+            }
+        };
+        let interp_marker = match run_interp_user_umip_marker(op, UD_VECTOR) {
+            Ok(marker) => marker,
+            Err(e) => {
+                failures.push(format!("{label}: rax backend failure: {e}"));
+                continue;
+            }
+        };
+
+        if kvm_marker != expected_marker {
+            failures.push(format!(
+                "{label}: KVM marker {kvm_marker:#x}, expected #UD marker {expected_marker:#x}"
+            ));
+        }
+        if interp_marker != expected_marker {
+            failures.push(format!(
+                "{label}: rax marker {interp_marker:#x}, expected #UD marker {expected_marker:#x}"
+            ));
+        }
+    }
+
+    eprintln!("[avx512-kvm-diff] UMIP invalid register markers compared=2");
+    assert!(
+        failures.is_empty(),
+        "UMIP invalid register exception marker mismatches vs silicon:\n{}",
+        failures.join("\n")
+    );
+}
+
 /// Self-validation of the cross-KVM plumbing: with an *empty* instruction under
 /// test, both backends start from identical injected state and must end in
 /// identical state. This proves the XSAVE/XCR0 ZMM+opmask injection/extraction
@@ -38656,6 +39084,7 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_leaf7_0_ebx_avx512bw", 7, 0, Ebx, 30),
         p!("cpuid_feature_leaf7_0_ebx_avx512vl", 7, 0, Ebx, 31),
         p!("cpuid_feature_leaf7_0_ecx_avx512vbmi", 7, 0, Ecx, 1),
+        p!("cpuid_feature_leaf7_0_ecx_umip", 7, 0, Ecx, 2),
         p!("cpuid_feature_leaf7_0_ecx_pku", 7, 0, Ecx, 3),
         p!("cpuid_feature_leaf7_0_ecx_waitpkg", 7, 0, Ecx, 5),
         p!("cpuid_feature_leaf7_0_ecx_avx512vbmi2", 7, 0, Ecx, 6),

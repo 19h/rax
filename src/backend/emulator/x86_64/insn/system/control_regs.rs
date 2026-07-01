@@ -6,6 +6,7 @@ use crate::error::Result;
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
 const CR0_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
+const CR4_UMIP: u64 = 1 << 11;
 const CR4_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
 
 /// Current Privilege Level of the executing code.
@@ -28,6 +29,11 @@ pub(super) fn current_cpl(vcpu: &X86_64Vcpu) -> u8 {
 #[inline]
 pub(super) fn is_cpl0(vcpu: &X86_64Vcpu) -> bool {
     current_cpl(vcpu) == 0
+}
+
+#[inline]
+pub(super) fn umip_blocks_user_instruction(vcpu: &X86_64Vcpu) -> bool {
+    vcpu.sregs.cr4 & CR4_UMIP != 0 && current_cpl(vcpu) > 0
 }
 
 fn write_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64, limit: u16, base: u64) -> Result<()> {
@@ -74,6 +80,9 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if modrm >> 6 == 3 {
                 return vcpu.inject_undefined_instruction();
             }
+            if umip_blocks_user_instruction(vcpu) {
+                return raise_gp0(vcpu);
+            }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
             write_descriptor_table(vcpu, addr, vcpu.sregs.gdt.limit, vcpu.sregs.gdt.base)?;
@@ -83,6 +92,9 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         1 => {
             if modrm >> 6 == 3 {
                 return vcpu.inject_undefined_instruction();
+            }
+            if umip_blocks_user_instruction(vcpu) {
+                return raise_gp0(vcpu);
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -123,6 +135,9 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // SMSW r/m16 - Store Machine Status Word (lower 16 bits of CR0)
         4 => {
+            if umip_blocks_user_instruction(vcpu) {
+                return raise_gp0(vcpu);
+            }
             let rm = (modrm & 0x07) | ctx.rex_b();
             let is_memory = modrm >> 6 != 3;
             if is_memory {

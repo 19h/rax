@@ -23,6 +23,7 @@ mod invd_wbinvd_invlpg;
 mod invept_invpcid;
 mod fences;
 mod tsx;
+mod umip;
 mod mov_cr;
 mod mov_dr;
 mod clts;

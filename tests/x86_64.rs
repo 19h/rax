@@ -1684,6 +1684,8 @@ mod x86_64_system_swapgs;
 mod x86_64_system_system_management;
 #[path = "x86_64/system/tsx.rs"]
 mod x86_64_system_tsx;
+#[path = "x86_64/system/umip.rs"]
+mod x86_64_system_umip;
 #[path = "x86_64/system/user_mode_wait.rs"]
 mod x86_64_system_user_mode_wait;
 #[path = "x86_64/system/verr_verw.rs"]
