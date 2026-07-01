@@ -34,20 +34,24 @@ use rax::smir::{
 const NREG: usize = 32;
 const CODE_ADDR: u32 = 0x1000;
 
-fn run_on_large_lifter_stack<F>(name: &str, f: F)
+fn run_on_large_lifter_stack<F, R>(name: &str, f: F) -> R
 where
-    F: FnOnce() + Send + 'static,
+    F: FnOnce() -> R + Send,
+    R: Send,
 {
-    // The scalar Hexagon opcode lifter has a large debug stack frame. Keep the
-    // exhaustive audit independent of the test harness thread stack size.
-    let handle = std::thread::Builder::new()
-        .name(name.into())
-        .stack_size(64 * 1024 * 1024)
-        .spawn(f)
-        .expect("failed to spawn large-stack Hexagon lifter test thread");
-    if let Err(payload) = handle.join() {
-        std::panic::resume_unwind(payload);
-    }
+    // The scalar Hexagon opcode lifter has a large debug stack frame. Keep
+    // lifter-heavy tests independent of the harness thread stack size.
+    std::thread::scope(|scope| {
+        let handle = std::thread::Builder::new()
+            .name(name.into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn_scoped(scope, f)
+            .expect("failed to spawn large-stack Hexagon lifter test thread");
+        match handle.join() {
+            Ok(result) => result,
+            Err(payload) => std::panic::resume_unwind(payload),
+        }
+    })
 }
 
 /// HVX saturating families whose qemu-verified interpreter sets the USR:OVF
@@ -329,6 +333,10 @@ impl Rng {
 /// truth, USR). Panics on a real divergence; reports (and tolerates) ops whose
 /// lift is not yet implemented so the harness doubles as a coverage probe.
 fn lift_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
+    run_on_large_lifter_stack(name, || lift_family_inner(name, cases, n, seed));
+}
+
+fn lift_family_inner(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -634,6 +642,19 @@ fn lift_mem_family_idx(
     n: usize,
     seed: u64,
 ) {
+    run_on_large_lifter_stack(name, || {
+        lift_mem_family_idx_inner(name, cases, base_reg, index_regs, n, seed)
+    });
+}
+
+fn lift_mem_family_idx_inner(
+    name: &str,
+    cases: &[(&str, &str)],
+    base_reg: usize,
+    index_regs: &[usize],
+    n: usize,
+    seed: u64,
+) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -772,6 +793,17 @@ fn lift_mem_family_idx(
 }
 
 fn assert_lift_mem_words_match(
+    label: &str,
+    words: &[u32],
+    init: &State,
+    data: &[u8],
+) -> Option<State> {
+    run_on_large_lifter_stack(label, || {
+        assert_lift_mem_words_match_inner(label, words, init, data)
+    })
+}
+
+fn assert_lift_mem_words_match_inner(
     label: &str,
     words: &[u32],
     init: &State,
@@ -1064,6 +1096,18 @@ fn lift_cf_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
 /// to PROVE the harness catches a wrong branch (the self-check): with it set, a
 /// CORRECT lift must be reported as a (forced) mismatch.
 fn lift_cf_family_inner(
+    name: &str,
+    cases: &[(&str, &str)],
+    n: usize,
+    seed: u64,
+    invert_check: bool,
+) -> usize {
+    run_on_large_lifter_stack(name, || {
+        lift_cf_family_inner_large_stack(name, cases, n, seed, invert_check)
+    })
+}
+
+fn lift_cf_family_inner_large_stack(
     name: &str,
     cases: &[(&str, &str)],
     n: usize,
@@ -3864,6 +3908,10 @@ fn hist_requires_tmp_load_and_respects_predicate() {
 }
 
 fn lift_hist_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
+    run_on_large_lifter_stack(name, || lift_hist_family_inner(name, cases, n, seed));
+}
+
+fn lift_hist_family_inner(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -5456,6 +5504,10 @@ fn lift_extract_insert_rp() {
 // state, so the runtime width/offset paths are pinned, not left to chance.
 #[test]
 fn lift_extract_insert_rp_edges() {
+    run_on_large_lifter_stack("lift_extract_insert_rp_edges", lift_extract_insert_rp_edges_inner);
+}
+
+fn lift_extract_insert_rp_edges_inner() {
     // (label, asm). Pair: Rtt=r5:r4 (r4=offset, r5=width). 32-bit: Rtt=r3:r2.
     let cases: &[(&str, &str, bool)] = &[
         ("extractup_rp", "{ r1:0 = extractu(r3:2,r5:4) }", true),
@@ -7672,6 +7724,10 @@ const FP_SPECIAL: &[u32] = &[
 /// scalbn branches are densely exercised. Compares ALL GPRs, ALL predicate bytes
 /// (the seed ops write the full Pe byte) and USR:OVF, like `lift_family`.
 fn lift_fp_special_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
+    run_on_large_lifter_stack(name, || lift_fp_special_family_inner(name, cases, n, seed));
+}
+
+fn lift_fp_special_family_inner(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -7859,6 +7915,10 @@ const DF_SPECIAL: &[u64] = &[
 /// pair `R{2k+1}:R{2k}` is seeded as a whole f64 (even = low word, odd = high
 /// word). Compares ALL GPRs + USR:OVF (these ops never set OVF).
 fn lift_df_special_family(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
+    run_on_large_lifter_stack(name, || lift_df_special_family_inner(name, cases, n, seed));
+}
+
+fn lift_df_special_family_inner(name: &str, cases: &[(&str, &str)], n: usize, seed: u64) {
     let asms: Vec<String> = cases.iter().map(|(_, a)| a.to_string()).collect();
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -7969,6 +8029,10 @@ fn lift_f2_dfmpyfix() {
 // Lifted via OpKind::HexCabacDecBin (writes the Rdd pair AND P0). ----
 #[test]
 fn lift_s2_cabacdecbin() {
+    run_on_large_lifter_stack("lift_s2_cabacdecbin", lift_s2_cabacdecbin_inner);
+}
+
+fn lift_s2_cabacdecbin_inner() {
     let asm = "{ r5:4 = decbin(r1:0, r3:2) }";
     let words = match assemble(&[asm.to_string()]) {
         Some(w) => w.into_iter().next().unwrap(),
@@ -8052,6 +8116,10 @@ fn lift_s2_cabacdecbin() {
 // Bias TLBHI's bit31 (valid) and align some entries so matches actually occur.
 #[test]
 fn lift_a4_tlbmatch() {
+    run_on_large_lifter_stack("lift_a4_tlbmatch", lift_a4_tlbmatch_inner);
+}
+
+fn lift_a4_tlbmatch_inner() {
     let asm = "{ p3 = tlbmatch(r1:0, r2) }";
     let words = match assemble(&[asm.to_string()]) {
         Some(w) => w.into_iter().next().unwrap(),
