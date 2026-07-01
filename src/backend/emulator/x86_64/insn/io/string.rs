@@ -234,9 +234,6 @@ fn update_si(vcpu: &mut X86_64Vcpu, addr_size: u8, size: u8, df: bool) {
 
 /// OUTSW/OUTSD (0x6F) - Output word/dword from DS:[RSI] to port DX
 pub fn outsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Determine operand size: 0x66 prefix toggles between word (2) and dword (4)
-    // In 64-bit mode default is 32-bit, in 32-bit mode default is also 32-bit
-    // 0x66 prefix makes it 16-bit
-    let size: u8 = if ctx.operand_size_override { 2 } else { 4 };
+    let size = if ctx.op_size == 2 { 2 } else { 4 };
     outs_common(vcpu, ctx, size)
 }

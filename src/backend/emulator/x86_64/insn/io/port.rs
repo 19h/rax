@@ -5,6 +5,14 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
+fn ax_eax_size(ctx: &InsnContext) -> u8 {
+    if ctx.op_size == 2 {
+        2
+    } else {
+        4
+    }
+}
+
 /// IN AL, imm8 (0xE4)
 pub fn in_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = ctx.consume_u8()? as u16;
@@ -16,7 +24,7 @@ pub fn in_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 /// IN AX/EAX, imm8 (0xE5)
 pub fn in_ax_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = ctx.consume_u8()? as u16;
-    let size = if ctx.operand_size_override { 2 } else { 4 };
+    let size = ax_eax_size(ctx);
     vcpu.regs.rip += ctx.cursor as u64;
     vcpu.set_io_pending_reg(size);
     Ok(Some(VcpuExit::IoIn { port, size }))
@@ -33,7 +41,7 @@ pub fn in_al_dx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// IN AX/EAX, DX (0xED)
 pub fn in_ax_dx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
-    let size = if ctx.operand_size_override { 2 } else { 4 };
+    let size = ax_eax_size(ctx);
     vcpu.regs.rip += ctx.cursor as u64;
     vcpu.set_io_pending_reg(size);
     Ok(Some(VcpuExit::IoIn { port, size }))
@@ -52,7 +60,7 @@ pub fn out_imm8_al(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 /// OUT imm8, AX/EAX (0xE7)
 pub fn out_imm8_ax(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = ctx.consume_u8()? as u16;
-    let data = if ctx.operand_size_override {
+    let data = if ax_eax_size(ctx) == 2 {
         (vcpu.regs.rax as u16).to_le_bytes().to_vec()
     } else {
         (vcpu.regs.rax as u32).to_le_bytes().to_vec()
@@ -74,7 +82,7 @@ pub fn out_dx_al(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 /// OUT DX, AX/EAX (0xEF)
 pub fn out_dx_ax(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
-    let data = if ctx.operand_size_override {
+    let data = if ax_eax_size(ctx) == 2 {
         (vcpu.regs.rax as u16).to_le_bytes().to_vec()
     } else {
         (vcpu.regs.rax as u32).to_le_bytes().to_vec()

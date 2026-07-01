@@ -27289,6 +27289,196 @@ fn compat_string_repeat_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_io_seed() -> CompatStateIn {
+    let mut input = compat_string_seed();
+    input.rax = 0xaaaa_bbbb_cccc_7788;
+    input.rdx = (input.rdx & !0xffff) | 0x0080;
+    input
+}
+
+fn compat_io_ins_input(rdi: u64, dst_index: usize, bytes: &[u8]) -> CompatStateIn {
+    let mut input = compat_io_seed();
+    input.rdi = rdi;
+    input.scratch[dst_index..dst_index + bytes.len()].copy_from_slice(bytes);
+    input
+}
+
+fn compat_io_outs_input(rsi: u64, src_index: usize, bytes: &[u8]) -> CompatStateIn {
+    let mut input = compat_io_seed();
+    input.rsi = rsi;
+    input.scratch[src_index..src_index + bytes.len()].copy_from_slice(bytes);
+    input
+}
+
+fn compat_io_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "in_al_imm8_compat_zero_input_preserves_high_rax",
+            op: vec![0xe4, 0x80],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "in_ax_imm8_compat_zero_input_preserves_high_rax",
+            op: vec![0xe5, 0x81],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "in_eax_imm8_compat_operand32_zeroes_high_rax",
+            op: vec![0x66, 0xe5, 0x82],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "in_al_dx_compat_uses_dx_port",
+            op: vec![0xec],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "in_eax_dx_compat_operand32_zeroes_high_rax",
+            op: vec![0x66, 0xed],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "out_al_imm8_compat_preserves_registers",
+            op: vec![0xe6, 0x80],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "out_ax_dx_compat_preserves_registers",
+            op: vec![0xef],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "out_eax_dx_compat_operand32_preserves_registers",
+            op: vec![0x66, 0xef],
+            input: compat_io_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "insb16_compat_uses_di_preserves_high_rdi",
+            op: vec![0x6c],
+            input: compat_io_ins_input(compat_string_addr16(0x10), 0x10, &[0xa5]),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "insw16_compat_uses_di_preserves_high_rdi",
+            op: vec![0x6d],
+            input: compat_io_ins_input(compat_string_addr16(0x12), 0x12, &[0xa5, 0x5a]),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "insd32_compat_addr32_operand32_zeroes_high_rdi",
+            op: vec![0x67, 0x66, 0x6d],
+            input: compat_io_ins_input(
+                compat_string_addr32(0x20),
+                0x20,
+                &[0x11, 0x22, 0x33, 0x44],
+            ),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_insb16_compat_uses_cx_and_di",
+            op: vec![0xf3, 0x6c],
+            input: {
+                let mut input =
+                    compat_io_ins_input(compat_string_addr16(0x30), 0x30, &[0xa1, 0xa2, 0xa3]);
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_insd32_compat_addr32_uses_ecx_edi",
+            op: vec![0x67, 0x66, 0xf3, 0x6d],
+            input: {
+                let mut input = compat_io_ins_input(
+                    compat_string_addr32(0x40),
+                    0x40,
+                    &[0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8],
+                );
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "insb16_compat_df_decrements_di",
+            op: vec![0x6c],
+            input: {
+                let mut input = compat_io_ins_input(compat_string_addr16(0x50), 0x50, &[0xc5]);
+                input.rflags |= RFLAGS_DF;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "outsb16_compat_uses_si_preserves_high_rsi",
+            op: vec![0x6e],
+            input: compat_io_outs_input(compat_string_addr16(0x60), 0x60, &[0xd1]),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "outsw16_compat_uses_si_preserves_high_rsi",
+            op: vec![0x6f],
+            input: compat_io_outs_input(compat_string_addr16(0x62), 0x62, &[0xd1, 0xd2]),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "outsd32_compat_addr32_operand32_zeroes_high_rsi",
+            op: vec![0x67, 0x66, 0x6f],
+            input: compat_io_outs_input(
+                compat_string_addr32(0x70),
+                0x70,
+                &[0xe1, 0xe2, 0xe3, 0xe4],
+            ),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_outsb16_compat_uses_cx_and_si",
+            op: vec![0xf3, 0x6e],
+            input: {
+                let mut input =
+                    compat_io_outs_input(compat_string_addr16(0x80), 0x80, &[0xf1, 0xf2, 0xf3]);
+                input.rcx = compat_string_count16(3);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "rep_outsd32_compat_addr32_uses_ecx_esi",
+            op: vec![0x67, 0x66, 0xf3, 0x6f],
+            input: {
+                let mut input = compat_io_outs_input(
+                    compat_string_addr32(0x90),
+                    0x90,
+                    &[0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80],
+                );
+                input.rcx = compat_string_count32(2);
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "outsb16_compat_df_decrements_si",
+            op: vec![0x6e],
+            input: {
+                let mut input = compat_io_outs_input(compat_string_addr16(0xa0), 0xa0, &[0x5c]);
+                input.rflags |= RFLAGS_DF;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_modrm16_reg(seed: u64, low: u16) -> u64 {
     (seed & !0xffff) | u64::from(low)
 }
@@ -34741,6 +34931,13 @@ fn avx512_kvm_string_repeat_compat_corpus() {
         "unexpected compatibility string repeat corpus size"
     );
     let _ = run_compat_state_cases("string repeat", &cases);
+}
+
+#[test]
+fn avx512_kvm_io_compat_corpus() {
+    let cases = compat_io_cases();
+    assert_eq!(cases.len(), 20, "unexpected compatibility I/O corpus size");
+    let _ = run_compat_state_cases("I/O", &cases);
 }
 
 #[test]
