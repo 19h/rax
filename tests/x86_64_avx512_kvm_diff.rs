@@ -10977,6 +10977,46 @@ fn irregular_cases() -> Vec<Case> {
             Vnni,
         ),
         (
+            "vpdpbusd_vnni_ifma_edge_bcst_one_lane_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpdpbusd 64(%rax){1to16}, %zmm3, %zmm1 {%k1}",
+            Vnni,
+        ),
+        (
+            "vpdpbusds_vnni_ifma_edge_bcst_one_lane_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpdpbusds 64(%rax){1to16}, %zmm3, %zmm1 {%k1}{z}",
+            Vnni,
+        ),
+        (
+            "vpdpwssd_vnni_ifma_edge_bcst_one_lane_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpdpwssd 64(%rax){1to16}, %zmm3, %zmm1 {%k1}",
+            Vnni,
+        ),
+        (
+            "vpdpwssds_vnni_ifma_edge_bcst_one_lane_zero",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpdpwssds 64(%rax){1to16}, %zmm3, %zmm1 {%k1}{z}",
+            Vnni,
+        ),
+        (
+            "vpdpbusd_vnni_ifma_edge_high_regs",
+            "vpdpbusd %zmm16, %zmm18, %zmm17",
+            Vnni,
+        ),
+        (
+            "vpdpbusds_vnni_ifma_edge_high_mask_merge",
+            "vpdpbusds %zmm16, %zmm18, %zmm17 {%k3}",
+            Vnni,
+        ),
+        (
+            "vpdpwssd_vnni_ifma_edge_high_regs",
+            "vpdpwssd %zmm16, %zmm18, %zmm17",
+            Vnni,
+        ),
+        (
+            "vpdpwssds_vnni_ifma_edge_high_mask_zero",
+            "vpdpwssds %zmm16, %zmm18, %zmm17 {%k3}{z}",
+            Vnni,
+        ),
+        (
             "vpmadd52luq_vnni_ifma_edge_zero_acc_src",
             "vpxorq %zmm1, %zmm1, %zmm1\nvpxorq %zmm2, %zmm2, %zmm2\nvpmadd52luq %zmm2, %zmm3, %zmm1",
             Ifma,
@@ -10994,6 +11034,26 @@ fn irregular_cases() -> Vec<Case> {
         (
             "vpmadd52huq_vnni_ifma_edge_allones_acc_mem",
             "vpternlogq $0xff, %zmm1, %zmm1, %zmm1\nvpternlogq $0xff, %zmm2, %zmm2, %zmm2\nvmovdqu64 %zmm2, 64(%rax)\nvpmadd52huq 64(%rax), %zmm3, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52luq_vnni_ifma_edge_self_accumulator",
+            "vpmadd52luq %zmm1, %zmm1, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52huq_vnni_ifma_edge_self_accumulator",
+            "vpmadd52huq %zmm1, %zmm1, %zmm1",
+            Ifma,
+        ),
+        (
+            "vpmadd52luq_vnni_ifma_edge_bcst_one_lane_merge",
+            "kxnorw %k1, %k1, %k1\nkshiftrw $15, %k1, %k1\nvpmadd52luq 64(%rax){1to8}, %zmm3, %zmm1 {%k1}",
+            Ifma,
+        ),
+        (
+            "vpmadd52huq_vnni_ifma_edge_high_mask_zero",
+            "vpmadd52huq %zmm16, %zmm18, %zmm17 {%k3}{z}",
             Ifma,
         ),
     ] {
@@ -42775,7 +42835,7 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_vnni_ifma_edge_"))
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected VNNI/IFMA edge corpus size");
+    assert_eq!(cases.len(), 20, "unexpected VNNI/IFMA edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -42795,15 +42855,15 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Vnni),
-        4,
+        12,
         "all AVX-512 VNNI edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Ifma),
-        4,
+        8,
         "all AVX-512 IFMA edge cases should run"
     );
-    assert_eq!(tally.compared, 8, "all VNNI/IFMA edge cases should compare");
+    assert_eq!(tally.compared, 20, "all VNNI/IFMA edge cases should compare");
 }
 
 #[test]
