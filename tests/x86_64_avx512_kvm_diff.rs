@@ -15486,6 +15486,46 @@ fn irregular_cases() -> Vec<Case> {
             Movdiri,
         ),
         (
+            "movdiri_movdir_edge_m32_truncates_r10",
+            "movabsq $0x1122334455667788, %r10\nmovdiri %r10d, 44(%rax)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_m64_r10_full",
+            "movabsq $0x1122334455667788, %r10\nmovdiri %r10, 48(%rax)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_m32_r14_source",
+            "movl $0xa5c33c5a, %r14d\nmovdiri %r14d, 60(%rax)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_sib_scaled_source",
+            "movdiri %r8, -91(%rax,%r9,2)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_addr32_sib_scale4",
+            "addr32 movdiri %r8d, -216(%rax,%r9,4)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_base_r15_disp",
+            "leaq 96(%rax), %r15\nmovdiri %r8d, 12(%r15)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_cf_preserved",
+            "stc\nmovdiri %r8d, 112(%rax)",
+            Movdiri,
+        ),
+        (
+            "movdiri_movdir_edge_m64_last_qword",
+            "movdiri %r8, 248(%rax)",
+            Movdiri,
+        ),
+        (
             "movdir64b_movdir_edge_r8_dest",
             "leaq 64(%rax), %r8\nmovdir64b 128(%rax), %r8",
             Movdir64b,
@@ -15508,6 +15548,46 @@ fn irregular_cases() -> Vec<Case> {
         (
             "movdir64b_movdir_edge_flags_preserved",
             "cmpq %r8, %r8\nmovdir64b 128(%rax), %rax",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_overlap_to_zero",
+            "movdir64b 32(%rax), %rax",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_overlap_to_64",
+            "leaq 64(%rax), %r8\nmovdir64b 32(%rax), %r8",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_r10_dest_last_line",
+            "leaq 192(%rax), %r10\nmovdir64b 64(%rax), %r10",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_addr32_high_dest",
+            "movabsq $0xffff0000000040c0, %r8\naddr32 movdir64b 128(%rax), %r8",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_scaled_source",
+            "leaq 192(%rax), %r10\nmovdir64b -12(%rax,%r9,2), %r10",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_negative_disp_source",
+            "leaq 192(%rax), %r15\nmovdir64b -64(%r15), %rax",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_addr32_scaled_source",
+            "movabsq $0xffff000000004080, %r8\naddr32 movdir64b -216(%rax,%r9,4), %r8",
+            Movdir64b,
+        ),
+        (
+            "movdir64b_movdir_edge_cf_preserved",
+            "stc\nmovdir64b 64(%rax), %rax",
             Movdir64b,
         ),
     ] {
@@ -42346,7 +42426,7 @@ fn avx512_kvm_movdir_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Movdiri | Feat::Movdir64b))
         .collect();
-    assert_eq!(cases.len(), 22, "unexpected MOVDIR corpus size");
+    assert_eq!(cases.len(), 38, "unexpected MOVDIR corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -42363,15 +42443,15 @@ fn avx512_kvm_movdir_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Movdiri),
-        13,
+        21,
         "all MOVDIRI cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Movdir64b),
-        9,
+        17,
         "all MOVDIR64B cases should run"
     );
-    assert_eq!(tally.compared, 22, "all MOVDIR cases should compare");
+    assert_eq!(tally.compared, 38, "all MOVDIR cases should compare");
 }
 
 #[test]
@@ -42380,7 +42460,7 @@ fn avx512_kvm_movdir_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_movdir_edge_"))
         .collect();
-    assert_eq!(cases.len(), 10, "unexpected MOVDIR edge corpus size");
+    assert_eq!(cases.len(), 26, "unexpected MOVDIR edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -42400,15 +42480,15 @@ fn avx512_kvm_movdir_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Movdiri),
-        5,
+        13,
         "all MOVDIRI edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Movdir64b),
-        5,
+        13,
         "all MOVDIR64B edge cases should run"
     );
-    assert_eq!(tally.compared, 10, "all MOVDIR edge cases should compare");
+    assert_eq!(tally.compared, 26, "all MOVDIR edge cases should compare");
 }
 
 #[test]
