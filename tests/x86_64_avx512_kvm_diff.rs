@@ -19952,6 +19952,22 @@ fn irregular_cases() -> Vec<Case> {
             "gs_segstring_repne_scasb_ignores_prefix",
             "movl $0x7e5a7d7c, 32(%rax)\nmovabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\ncld\n.byte 0x65\nrepne scasb",
         ),
+        (
+            "fs_segstring_stosb_ignores_prefix",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovabsq $0x4020, %rdi\nmovb $0xa5, %al\n.byte 0x64\nstosb",
+        ),
+        (
+            "gs_segstring_rep_stosq_ignores_prefix",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $0x4040, %rdi\nmovl $2, %ecx\nmovabsq $0x1122334455667788, %rax\n.byte 0x65\nrep stosq",
+        ),
+        (
+            "fs_segstring_stosq_df_ignores_prefix",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovabsq $0x4050, %rdi\nmovabsq $0x8877665544332211, %rax\nstd\n.byte 0x64\nstosq",
+        ),
+        (
+            "gs_segstring_rep_stosb_df_ignores_prefix",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $0x4022, %rdi\nmovl $3, %ecx\nmovb $0x6b, %al\nstd\n.byte 0x65\nrep stosb",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -39407,7 +39423,7 @@ fn avx512_kvm_fsgsbase_segment_string_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        14,
+        18,
         "unexpected FSGSBASE segment-string corpus size"
     );
 
@@ -39431,7 +39447,7 @@ fn avx512_kvm_fsgsbase_segment_string_corpus() {
         "FSGSBASE segment-string cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 14,
+        tally.compared, 18,
         "all FSGSBASE segment-string cases should compare"
     );
 }
