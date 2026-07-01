@@ -22922,6 +22922,525 @@ fn generated_cases() -> Vec<Case> {
     out
 }
 
+fn profile_matrix_cases() -> Vec<Case> {
+    use Feat::*;
+    use InputProfile::*;
+
+    let mut out = Vec::new();
+    let mut c = |label: &str, asm: &str, feat: Feat, profile: InputProfile| {
+        out.push(Case {
+            label: format!("profile_matrix_{label}"),
+            asm: asm.to_string(),
+            feat,
+            profile,
+        });
+    };
+
+    for &(label, asm, feat) in &[
+        ("vpaddsb_sat_zmm", "vpaddsb %zmm2, %zmm3, %zmm1", Bw),
+        ("vpaddsw_sat_zmm", "vpaddsw %zmm2, %zmm3, %zmm1", Bw),
+        ("vpaddusb_sat_mem", "vpaddusb (%rax), %zmm3, %zmm1", Bw),
+        ("vpaddusw_sat_mem", "vpaddusw (%rax), %zmm3, %zmm1", Bw),
+        ("vpsubsb_sat_zmm", "vpsubsb %zmm2, %zmm3, %zmm1", Bw),
+        ("vpsubsw_sat_zmm", "vpsubsw %zmm2, %zmm3, %zmm1", Bw),
+        ("vpsubusb_sat_mem", "vpsubusb (%rax), %zmm3, %zmm1", Bw),
+        ("vpsubusw_sat_mem", "vpsubusw (%rax), %zmm3, %zmm1", Bw),
+        ("vpackssdw_sat_zmm", "vpackssdw %zmm2, %zmm3, %zmm1", F),
+        ("vpackusdw_sat_mem", "vpackusdw (%rax), %zmm3, %zmm1", F),
+        ("vpacksswb_sat_zmm", "vpacksswb %zmm2, %zmm3, %zmm1", Bw),
+        ("vpackuswb_sat_mem", "vpackuswb (%rax), %zmm3, %zmm1", Bw),
+        (
+            "vpaddsb_sat_vex_ymm",
+            "{vex} vpaddsb %ymm2, %ymm3, %ymm1",
+            Avx2,
+        ),
+        (
+            "vpsubusb_sat_vex_ymm_mem",
+            "{vex} vpsubusb (%rax), %ymm3, %ymm1",
+            Avx2,
+        ),
+        ("paddsb_sat_xmm", "paddsb %xmm2, %xmm1", Sse2),
+        ("psubusw_sat_xmm_mem", "psubusw 32(%rax), %xmm1", Sse2),
+        ("packssdw_sat_xmm", "packssdw %xmm2, %xmm1", Sse2),
+        ("packuswb_sat_xmm_mem", "packuswb 32(%rax), %xmm1", Sse2),
+    ] {
+        c(label, asm, feat, IntSatEdge);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vpsllvd_shift_zmm",
+            "vpsllvd %zmm2, %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpsrlvd_shift_mem",
+            "vpsrlvd (%rax), %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpsravd_shift_zmm",
+            "vpsravd %zmm2, %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpsllvq_shift_zmm",
+            "vpsllvq %zmm2, %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpsrlvq_shift_mem",
+            "vpsrlvq (%rax), %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpsravq_shift_zmm",
+            "vpsravq %zmm2, %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpshldd_shift_zmm",
+            "vpshldd $7, %zmm2, %zmm3, %zmm1",
+            Vbmi2,
+            IntShiftEdge,
+        ),
+        (
+            "vpshrdd_shift_mem",
+            "vpshrdd $9, (%rax), %zmm3, %zmm1",
+            Vbmi2,
+            IntShiftEdge,
+        ),
+        (
+            "vprolvd_shift_zmm",
+            "vprolvd %zmm2, %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vprorvq_shift_mem",
+            "vprorvq (%rax), %zmm3, %zmm1",
+            F,
+            IntShiftEdge,
+        ),
+        (
+            "vpcmpd_pred_eq",
+            "vpcmpd $0, %zmm2, %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vpcmpud_pred_le_bcst",
+            "vpcmpud $2, (%rax){1to16}, %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vptestnmd_pred_mem",
+            "vptestnmd (%rax), %zmm3, %k5",
+            F,
+            IntPredicateEdge,
+        ),
+        (
+            "vpconflictd_pred_zmm",
+            "vpconflictd %zmm3, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vplzcntq_pred_zmm",
+            "vplzcntq %zmm3, %zmm1",
+            Cd,
+            IntPredicateEdge,
+        ),
+        (
+            "vpshufbitqmb_bitselect_zmm",
+            "vpshufbitqmb %zmm2, %zmm3, %k5",
+            Bitalg,
+            IntBitSelectEdge,
+        ),
+        (
+            "vpopcntb_bitselect_zmm",
+            "vpopcntb %zmm3, %zmm1",
+            Bitalg,
+            IntBitSelectEdge,
+        ),
+        (
+            "vpopcntq_bitselect_mem",
+            "vpopcntq (%rax), %zmm1",
+            Vpopcntdq,
+            IntBitSelectEdge,
+        ),
+    ] {
+        c(label, asm, feat, profile);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vpmadd52luq_ifma_zmm",
+            "vpmadd52luq %zmm2, %zmm3, %zmm1",
+            Ifma,
+            IntIfma52Edge,
+        ),
+        (
+            "vpmadd52huq_ifma_bcst",
+            "vpmadd52huq (%rax){1to8}, %zmm3, %zmm1",
+            Ifma,
+            IntIfma52Edge,
+        ),
+        (
+            "vpdpbusd_vnni_zmm",
+            "vpdpbusd %zmm2, %zmm3, %zmm1",
+            Vnni,
+            IntSatEdge,
+        ),
+        (
+            "vpdpbusds_vnni_mem",
+            "vpdpbusds (%rax), %zmm3, %zmm1",
+            Vnni,
+            IntSatEdge,
+        ),
+        (
+            "vpdpwssd_vnni_zmm",
+            "vpdpwssd %zmm2, %zmm3, %zmm1",
+            Vnni,
+            IntSatEdge,
+        ),
+        (
+            "vpdpwssds_vnni_mem",
+            "vpdpwssds (%rax), %zmm3, %zmm1",
+            Vnni,
+            IntSatEdge,
+        ),
+        (
+            "vpdpbusd_avx_vnni_ymm",
+            "{vex} vpdpbusd %ymm2, %ymm3, %ymm1",
+            AvxVnni,
+            IntSatEdge,
+        ),
+        (
+            "vpdpwssds_avx_vnni_mem",
+            "{vex} vpdpwssds (%rax), %ymm3, %ymm1",
+            AvxVnni,
+            IntSatEdge,
+        ),
+        (
+            "vgf2p8mulb_crypto_zmm",
+            "vgf2p8mulb %zmm2, %zmm3, %zmm1",
+            Gfni,
+            IntBitSelectEdge,
+        ),
+        (
+            "vgf2p8affineqb_crypto_zmm",
+            "vgf2p8affineqb $0x96, %zmm2, %zmm3, %zmm1",
+            Gfni,
+            IntBitSelectEdge,
+        ),
+        (
+            "vaesenc_crypto_zmm",
+            "vaesenc %zmm2, %zmm3, %zmm1",
+            Vaes,
+            Int,
+        ),
+        (
+            "vaesdeclast_crypto_mem",
+            "vaesdeclast (%rax), %zmm3, %zmm1",
+            Vaes,
+            Int,
+        ),
+        (
+            "vpclmulqdq_crypto_zmm",
+            "vpclmulqdq $0x10, %zmm2, %zmm3, %zmm1",
+            Vpclmulqdq,
+            IntBitSelectEdge,
+        ),
+        (
+            "vpclmulqdq_crypto_mem",
+            "vpclmulqdq $0x01, (%rax), %zmm3, %zmm1",
+            Vpclmulqdq,
+            IntBitSelectEdge,
+        ),
+    ] {
+        c(label, asm, feat, profile);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vcvtdq2ps_int_convert",
+            "vcvtdq2ps %zmm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtudq2ps_int_convert",
+            "vcvtudq2ps %zmm3, %zmm1",
+            F,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2pd_int_convert",
+            "vcvtqq2pd %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2pd_int_convert",
+            "vcvtuqq2pd %zmm3, %zmm1",
+            Dq,
+            IntConvertEdge,
+        ),
+        (
+            "vcvtps2dq_f32_convert",
+            "vcvtps2dq %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2dq_f32_convert",
+            "vcvttps2dq %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2udq_f32_convert",
+            "vcvtps2udq %zmm3, %zmm1",
+            F,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2qq_f32_convert",
+            "vcvtps2qq %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvttps2qq_f32_convert",
+            "vcvttps2qq %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtps2uqq_f32_convert",
+            "vcvtps2uqq %ymm3, %zmm1",
+            Dq,
+            F32ConvertEdge,
+        ),
+        (
+            "vcvtpd2dq_f64_convert",
+            "vcvtpd2dq %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2dq_f64_convert",
+            "vcvttpd2dq %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2udq_f64_convert",
+            "vcvtpd2udq %zmm3, %ymm1",
+            F,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2qq_f64_convert",
+            "vcvtpd2qq %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvttpd2qq_f64_convert",
+            "vcvttpd2qq %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+        (
+            "vcvtpd2uqq_f64_convert",
+            "vcvtpd2uqq %zmm3, %zmm1",
+            Dq,
+            F64ConvertEdge,
+        ),
+    ] {
+        c(label, asm, feat, profile);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "vcvtneps2bf16_round",
+            "vcvtneps2bf16 %zmm3, %ymm1",
+            Bf16,
+            F32Bf16RoundEdge,
+        ),
+        (
+            "vcvtne2ps2bf16_round",
+            "vcvtne2ps2bf16 %zmm3, %zmm2, %zmm1",
+            Bf16,
+            F32Bf16RoundEdge,
+        ),
+        (
+            "vcvtps2ph_f16c_round",
+            "{vex} vcvtps2ph $0, %ymm3, %xmm1",
+            F16c,
+            F32HalfRoundEdge,
+        ),
+        (
+            "vcvtph2ps_f16c_edge",
+            "{vex} vcvtph2ps %xmm3, %ymm1",
+            F16c,
+            F16Edge,
+        ),
+        (
+            "vcvtps2phx_fp16_round",
+            "vcvtps2phx %zmm3, %ymm1",
+            Fp16,
+            F32HalfRoundEdge,
+        ),
+        (
+            "vcvtph2psx_fp16_edge",
+            "vcvtph2psx %ymm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtss2sh_fp16_round",
+            "vcvtss2sh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F32HalfRoundEdge,
+        ),
+        (
+            "vcvtsh2ss_fp16_edge",
+            "vcvtsh2ss %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vaddph_fp16_edge",
+            "vaddph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vfmadd213ph_fp16_edge",
+            "vfmadd213ph %zmm2, %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vaddsh_fp16_edge",
+            "vaddsh %xmm2, %xmm3, %xmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcmpsh_fp16_edge",
+            "vcmpsh $0, %xmm2, %xmm3, %k5",
+            Fp16,
+            F16Edge,
+        ),
+        ("vminps_f32_edge", "vminps %zmm2, %zmm3, %zmm1", F, F32Edge),
+        ("vmaxpd_f64_edge", "vmaxpd %zmm2, %zmm3, %zmm1", F, F64Edge),
+        (
+            "vgetmantpd_f64_edge",
+            "vgetmantpd $0, %zmm3, %zmm1",
+            F,
+            F64Edge,
+        ),
+        (
+            "vfixupimmps_f32_edge",
+            "vfixupimmps $0, %zmm2, %zmm3, %zmm1",
+            F,
+            F32Edge,
+        ),
+    ] {
+        c(label, asm, feat, profile);
+    }
+
+    for &(label, asm, feat, profile) in &[
+        (
+            "roundps_sse41_f32_edge",
+            "roundps $0, %xmm2, %xmm1",
+            Sse41,
+            F32Edge,
+        ),
+        (
+            "dpps_sse41_f32_edge",
+            "dpps $0xff, %xmm2, %xmm1",
+            Sse41,
+            F32Edge,
+        ),
+        (
+            "mpsadbw_sse41_int_edge",
+            "mpsadbw $7, %xmm2, %xmm1",
+            Sse41,
+            IntPredicateEdge,
+        ),
+        (
+            "insertps_sse41_f32_edge",
+            "insertps $0xff, %xmm2, %xmm1",
+            Sse41,
+            F32Edge,
+        ),
+        (
+            "sse42_string_width_pcmpistri_i8",
+            "pcmpistri $0x46, %xmm2, %xmm1",
+            Sse42,
+            IntPredicateEdge,
+        ),
+        (
+            "sse42_string_width_pcmpistrm_u16",
+            "pcmpistrm $0x41, %xmm2, %xmm1",
+            Sse42,
+            IntPredicateEdge,
+        ),
+        (
+            "sse42_string_width_pcmpestri_len_mix",
+            "movq %rax, %r10\nmovl $-7, %eax\nmovl $11, %edx\npcmpestri $0x18, 48(%r10), %xmm1",
+            Sse42,
+            IntPredicateEdge,
+        ),
+        (
+            "sse42_string_width_pcmpestrm_len_mix",
+            "movq %rax, %r10\nmovl $6, %eax\nmovl $-12, %edx\npcmpestrm $0x5f, 64(%r10), %xmm1",
+            Sse42,
+            IntPredicateEdge,
+        ),
+        (
+            "crc32_edge_byte",
+            "crc32b (%rax), %r8d",
+            Crc32,
+            IntPredicateEdge,
+        ),
+        (
+            "crc32_edge_qword",
+            "crc32q 32(%rax), %r8",
+            Crc32,
+            IntPredicateEdge,
+        ),
+        (
+            "movbe_edge_load",
+            "movbeq 32(%rax), %r8",
+            Movbe,
+            IntPredicateEdge,
+        ),
+        (
+            "movbe_edge_store",
+            "movbeq %r8, 40(%rax)",
+            Movbe,
+            IntPredicateEdge,
+        ),
+    ] {
+        c(label, asm, feat, profile);
+    }
+
+    out
+}
+
 // ---------------------------------------------------------------------------
 // Case classification.
 //
@@ -45356,6 +45875,72 @@ fn avx512_kvm_mmx_corpus() {
         "MMX corpus produced assembler-rejected cases"
     );
     assert_eq!(tally.compared, 76, "all MMX cases should compare");
+}
+
+#[test]
+fn avx512_kvm_profile_matrix_corpus() {
+    let cases = profile_matrix_cases();
+    assert_eq!(cases.len(), 94, "unexpected profile-matrix corpus size");
+
+    let host = HostFeatures::detect();
+    let supported = cases.iter().filter(|case| host.supports(case.feat)).count();
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on profile-matrix cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a profile-matrix case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "profile-matrix corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature,
+        cases.len() - supported,
+        "profile-matrix feature skips should match host support"
+    );
+    assert_eq!(
+        tally.approx, 0,
+        "profile-matrix cases should all be bit-exact"
+    );
+    assert_eq!(
+        tally.compared, supported,
+        "all host-supported profile-matrix cases should compare"
+    );
+    for &feat in &[
+        Feat::F,
+        Feat::Bw,
+        Feat::Dq,
+        Feat::Cd,
+        Feat::Avx2,
+        Feat::AvxVnni,
+        Feat::Sse2,
+        Feat::Sse41,
+        Feat::Sse42,
+        Feat::F16c,
+        Feat::Ifma,
+        Feat::Vnni,
+        Feat::Vbmi2,
+        Feat::Bitalg,
+        Feat::Vpopcntdq,
+        Feat::Bf16,
+        Feat::Fp16,
+        Feat::Gfni,
+        Feat::Vaes,
+        Feat::Vpclmulqdq,
+        Feat::Movbe,
+        Feat::Crc32,
+    ] {
+        if host.supports(feat) {
+            assert!(
+                tally.ran_for(feat) > 0,
+                "host supports {}, but profile-matrix corpus ran no cases for it",
+                feat.name()
+            );
+        }
+    }
 }
 
 /// The exhaustive corpus: every host-supported AVX-512 mnemonic family rax
