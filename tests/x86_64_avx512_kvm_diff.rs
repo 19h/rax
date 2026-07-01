@@ -32220,6 +32220,26 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             ],
         });
     }
+    if host_cpu_flag("fsgsbase") {
+        cases.push(ExceptionMarkerCase {
+            label: "wrfsbase_noncanonical_r64",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49,
+                0x0f, 0xae, 0xd0,
+            ],
+        });
+        cases.push(ExceptionMarkerCase {
+            label: "wrgsbase_noncanonical_r64",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49,
+                0x0f, 0xae, 0xd8,
+            ],
+        });
+    }
     if host_cpu_flag("xsaves") {
         cases.push(ExceptionMarkerCase {
             label: "xrstors_non_compacted_xsave_area",
@@ -33387,6 +33407,9 @@ fn avx512_kvm_general_protection_exception_corpus() {
     let mut expected = 35;
     if host_cpu_flag("movdir64b") {
         expected += 1;
+    }
+    if host_cpu_flag("fsgsbase") {
+        expected += 2;
     }
     if host_cpu_flag("xsaves") {
         expected += 1;

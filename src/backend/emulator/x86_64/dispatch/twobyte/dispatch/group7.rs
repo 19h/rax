@@ -13,6 +13,11 @@ const CR4_FSGSBASE: u64 = 1 << 16;
 const CR4_OSXSAVE: u64 = 1 << 18;
 const CR4_PKE: u64 = 1 << 22;
 
+#[inline(always)]
+fn is_canonical_48(addr: u64) -> bool {
+    ((addr as i64) << 16 >> 16) as u64 == addr
+}
+
 impl X86_64Vcpu {
     #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn require_cr0_ts_clear_for_nm(
@@ -331,6 +336,10 @@ impl X86_64Vcpu {
                     } else {
                         self.get_reg(rm, 4)
                     };
+                    if !is_canonical_48(value) {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
                     self.sregs.fs.base = value;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
@@ -345,6 +354,10 @@ impl X86_64Vcpu {
                     } else {
                         self.get_reg(rm, 4)
                     };
+                    if !is_canonical_48(value) {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
                     self.sregs.gs.base = value;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
