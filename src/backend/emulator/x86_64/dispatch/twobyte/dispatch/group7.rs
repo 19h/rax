@@ -8,11 +8,21 @@ use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
 
+const CR0_TS: u64 = 1 << 3;
 const CR4_FSGSBASE: u64 = 1 << 16;
 const CR4_OSXSAVE: u64 = 1 << 18;
 const CR4_PKE: u64 = 1 << 22;
 
 impl X86_64Vcpu {
+    #[inline(always)]
+    fn require_cr0_ts_clear_for_nm(&mut self) -> Result<bool> {
+        if self.sregs.cr0 & CR0_TS != 0 {
+            self.inject_exception(7, None)?;
+            return Ok(false);
+        }
+        Ok(true)
+    }
+
     #[inline(always)]
     fn require_cr4_bit_for_ud(&mut self, bit: u64) -> Result<bool> {
         if self.sregs.cr4 & bit == 0 {
@@ -367,6 +377,9 @@ impl X86_64Vcpu {
 
             match reg_op {
                 0 => {
+                    if !self.require_cr0_ts_clear_for_nm()? {
+                        return Ok(None);
+                    }
                     // FXSAVE - save FPU/SSE state (512 bytes)
                     // Zero the area first
                     for i in 0..64 {
@@ -410,6 +423,9 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 1 => {
+                    if !self.require_cr0_ts_clear_for_nm()? {
+                        return Ok(None);
+                    }
                     // FXRSTOR - restore FPU/SSE state (512 bytes)
                     // FCW at offset 0
                     self.fpu.control_word = self.read_mem16(addr)?;
@@ -448,12 +464,18 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 2 => {
+                    if !self.require_cr0_ts_clear_for_nm()? {
+                        return Ok(None);
+                    }
                     // LDMXCSR - load MXCSR register from memory
                     self.mxcsr = self.read_mem32(addr)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 3 => {
+                    if !self.require_cr0_ts_clear_for_nm()? {
+                        return Ok(None);
+                    }
                     // STMXCSR - store MXCSR register to memory
                     self.write_mem(addr, self.mxcsr as u64, 4)?;
                     self.regs.rip += ctx.cursor as u64;
@@ -463,6 +485,9 @@ impl X86_64Vcpu {
                     if reg_op == 4 || (ctx.rep_prefix.is_none() && !ctx.operand_size_override) =>
                 {
                     if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
+                    if !self.require_cr0_ts_clear_for_nm()? {
                         return Ok(None);
                     }
                     // XSAVE/XSAVEOPT - save x87/SSE/AVX/AVX-512 state selected by
@@ -566,6 +591,9 @@ impl X86_64Vcpu {
                 }
                 5 => {
                     if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
+                    if !self.require_cr0_ts_clear_for_nm()? {
                         return Ok(None);
                     }
                     // XRSTOR - restore x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.

@@ -858,6 +858,7 @@ const DE_VECTOR: usize = 0;
 const OF_VECTOR: usize = 4;
 const BR_VECTOR: usize = 5;
 const UD_VECTOR: usize = 6;
+const NM_VECTOR: usize = 7;
 const GP_VECTOR: usize = 13;
 const EXCEPTION_MARKER_OFFSET: usize = 0xf0;
 const FALLTHROUGH_MARKER: u32 = 0xbaad_0000;
@@ -28847,6 +28848,58 @@ fn cr4_gated_system_ud_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn cr0_ts_state_nm_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        (
+            "fxsave64_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae,
+                0x03,
+            ],
+        ),
+        (
+            "fxrstor64_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae,
+                0x0b,
+            ],
+        ),
+        (
+            "ldmxcsr_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x0f, 0xae, 0x13,
+            ],
+        ),
+        (
+            "stmxcsr_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x0f, 0xae, 0x1b,
+            ],
+        ),
+        (
+            "xsave64_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
+                0xd2, 0x48, 0x0f, 0xae, 0x23,
+            ],
+        ),
+        (
+            "xrstor64_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
+                0xd2, 0x48, 0x0f, 0xae, 0x2b,
+            ],
+        ),
+        (
+            "xsaveopt64_cr0_ts_set",
+            &[
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
+                0xd2, 0x48, 0x0f, 0xae, 0x33,
+            ],
+        ),
+    ]
+}
+
 fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         ("ud2_explicit", &[0x0f, 0x0b]),
@@ -32657,6 +32710,17 @@ fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
 #[test]
 fn avx512_kvm_cr4_gated_system_ud_corpus() {
     run_ud_marker_corpus("CR4-gated system", cr4_gated_system_ud_cases(), 14);
+}
+
+#[test]
+fn avx512_kvm_cr0_ts_state_nm_corpus() {
+    run_exception_marker_corpus(
+        "CR0.TS state instruction",
+        "#NM",
+        NM_VECTOR,
+        cr0_ts_state_nm_cases(),
+        7,
+    );
 }
 
 #[test]
