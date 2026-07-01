@@ -106,13 +106,14 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 24)  // FXSR - REQUIRED
                                   | (1 << 25)  // SSE - REQUIRED
                                   | (1 << 26); // SSE2 - REQUIRED
-                                               // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
+                                               // ECX: SSE3(0), MONITOR/MWAIT(3), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
                                                // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
                                                // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
                                                // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
             let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 1)   // PCLMULQDQ
+                                  | (1 << 3)   // MONITOR/MWAIT
                                   | (1 << 9)   // SSSE3
                                   | (1 << 12)  // FMA
                                   | (1 << 13)  // CMPXCHG16B
@@ -165,6 +166,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 17) // AVX512DQ
                         | (1u32 << 16) // AVX512F
                         | (1u32 << 10) // INVPCID
+                        | (1u32 << 9) // ERMS
                         | (1u32 << 8) // BMI2
                         | (1u32 << 5) // AVX2
                         | (1u32 << 3) // BMI1
@@ -195,6 +197,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                        // silently weaken intra-guest control-flow protections.
                 let mut edx = (1u32 << 23) // AVX512FP16
                             | (1u32 << 14); // SERIALIZE
+                edx |= 1u32 << 9; // WBNOINVD
                 if vcpu.xeon_phi_avx512 {
                     edx |= (1u32 << 2) // AVX512_4VNNIW
                          | (1u32 << 3); // AVX512_4FMAPS
@@ -226,6 +229,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             let signature: u32 = 0x000006F1;
             let features_ecx = (1u32 << 5)  // LZCNT/ABM
                              | ((vcpu.sse4a_enabled() as u32) << 6) // SSE4A
+                             | (1u32 << 8)  // PREFETCHW / 3DNow! PREFETCH
                              | (1u32 << 0); // LAHF/SAHF in long mode
             let features_edx = (1u32 << 29)  // LM (Long Mode)
                              | (1u32 << 27)  // RDTSCP instruction available
@@ -369,5 +373,29 @@ mod tests {
         cpuid(&mut vcpu, &mut ctx).unwrap();
 
         assert_eq!(vcpu.regs.rcx & (1 << 6), 1 << 6);
+    }
+
+    #[test]
+    fn cpuid_advertises_implemented_hint_and_cache_features() {
+        let mut vcpu = vcpu();
+
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 1;
+        vcpu.regs.rcx = 0;
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+        assert_eq!(vcpu.regs.rcx & (1 << 3), 1 << 3);
+
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 7;
+        vcpu.regs.rcx = 0;
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+        assert_eq!(vcpu.regs.rbx & (1 << 9), 1 << 9);
+        assert_eq!(vcpu.regs.rdx & (1 << 9), 1 << 9);
+
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 0x8000_0001;
+        vcpu.regs.rcx = 0;
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+        assert_eq!(vcpu.regs.rcx & (1 << 8), 1 << 8);
     }
 }
