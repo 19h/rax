@@ -1212,6 +1212,18 @@ impl HexagonLifter {
         }
     }
 
+    /// Hexagon PC-relative control-flow offsets are already decoded, including
+    /// constant extenders. The extender only changes the architectural base:
+    /// extended branches use packet PC, ordinary branches use instruction PC.
+    fn pcrel_target(&self, ctx: &mut LiftContext, addr: GuestAddr, offset: i32) -> GuestAddr {
+        let base = if ctx.take_extended_imm().is_some() {
+            self.packet_start_pc
+        } else {
+            addr
+        };
+        base.wrapping_add(offset as i64 as u64) & !0x3
+    }
+
     /// Lift a single Hexagon instruction to SMIR operations
     fn lift_insn_inner(
         &mut self,
@@ -2631,8 +2643,7 @@ impl HexagonLifter {
             // Control Flow
             // ================================================================
             DecodedInsn::Jump { offset } => {
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64);
+                let target = self.pcrel_target(ctx, addr, *offset);
                 ControlFlow::Branch { target }
             }
 
@@ -2642,8 +2653,7 @@ impl HexagonLifter {
                 sense,
                 pred_new: _,
             } => {
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64) & !0x3;
+                let target = self.pcrel_target(ctx, addr, *offset);
                 let fallthrough = addr + 4;
 
                 // The truth value (low predicate bit) decides the branch; the
@@ -2707,8 +2717,7 @@ impl HexagonLifter {
                 offset,
                 pred: Some(cond),
             } => {
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64) & !0x3;
+                let target = self.pcrel_target(ctx, addr, *offset);
                 let ret_addr = addr + 4;
                 // LR == R31 on Hexagon (the SMIR context stores them separately).
                 let lr = self.hex_reg(31);
@@ -2799,8 +2808,7 @@ impl HexagonLifter {
             }
 
             DecodedInsn::Call { offset, pred: None } => {
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64) & !0x3;
+                let target = self.pcrel_target(ctx, addr, *offset);
                 let ret_addr = addr + 4;
 
                 // Save return address to LR == R31 (on Hexagon the link register
@@ -3122,8 +3130,7 @@ impl HexagonLifter {
                 count_reg,
                 lpcfg: Some(n),
             } => {
-                let offset = ctx.extend_imm(*start_offset);
-                let target = addr.wrapping_add(offset as i64 as u64);
+                let target = self.pcrel_target(ctx, addr, *start_offset);
                 let sa = if *loop_id == 0 {
                     VReg::Arch(ArchReg::Hexagon(HexagonReg::Sa0))
                 } else {
@@ -3154,8 +3161,7 @@ impl HexagonLifter {
                 count,
                 lpcfg: Some(n),
             } => {
-                let offset = ctx.extend_imm(*start_offset);
-                let target = addr.wrapping_add(offset as i64 as u64);
+                let target = self.pcrel_target(ctx, addr, *start_offset);
                 let sa = if *loop_id == 0 {
                     VReg::Arch(ArchReg::Hexagon(HexagonReg::Sa0))
                 } else {
@@ -3186,8 +3192,7 @@ impl HexagonLifter {
                 count_reg,
                 lpcfg: None,
             } => {
-                let offset = ctx.extend_imm(*start_offset);
-                let target = addr.wrapping_add(offset as i64 as u64);
+                let target = self.pcrel_target(ctx, addr, *start_offset);
 
                 // Set SA (loop start address)
                 let sa = if *loop_id == 0 {
@@ -3222,8 +3227,7 @@ impl HexagonLifter {
                 count,
                 lpcfg: None,
             } => {
-                let offset = ctx.extend_imm(*start_offset);
-                let target = addr.wrapping_add(offset as i64 as u64);
+                let target = self.pcrel_target(ctx, addr, *start_offset);
 
                 let sa = if *loop_id == 0 {
                     VReg::Arch(ArchReg::Hexagon(HexagonReg::Sa0))
@@ -3833,16 +3837,11 @@ impl HexagonLifter {
                 new_value: false,
                 offset,
             } => {
-                let offset = ctx.extend_imm(*offset);
                 // Hexagon PC-relative branch targets are computed relative to the
-                // PACKET start (`packet_start_pc`), not the branching
-                // instruction's own address. For the FUSED predicate-writing
-                // `_jump` forms the instruction IS the whole packet, so
-                // `packet_start_pc == addr`. For a (delegated) new-value
-                // `_jumpnv` the jump is the LAST word of a multi-word packet, so
-                // the target uses the packet start while the fallthrough is the
-                // jump's own `addr + 4` (the next-packet address).
-                let target = self.packet_start_pc.wrapping_add(offset as i64 as u64) & !0x3;
+                // instruction PC unless a constant extender is present; `_jumpnv`
+                // packets put the branch after its producer, so packet PC and
+                // instruction PC differ in the common two-word form.
+                let target = self.pcrel_target(ctx, addr, *offset);
                 let fallthrough = addr + 4;
 
                 // Compute the compare RESULT (1 if the compare holds, else 0) into
@@ -3948,8 +3947,7 @@ impl HexagonLifter {
             // conditioned on a register compare against zero. The `jumpr` mnemonic
             // is misleading — the target is `PC + offset`, not a register.
             DecodedInsn::JumpRegZero { src, kind, offset } => {
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64) & !0x3;
+                let target = self.pcrel_target(ctx, addr, *offset);
                 let fallthrough = addr + 4;
                 let cond = match kind {
                     CmpKind::Eq => Condition::Eq,
@@ -3994,8 +3992,7 @@ impl HexagonLifter {
                     src,
                     width: OpWidth::W32,
                 });
-                let offset = ctx.extend_imm(*offset);
-                let target = addr.wrapping_add(offset as i64 as u64) & !0x3;
+                let target = self.pcrel_target(ctx, addr, *offset);
                 ControlFlow::Branch { target }
             }
 

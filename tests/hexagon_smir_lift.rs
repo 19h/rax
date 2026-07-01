@@ -1468,6 +1468,57 @@ fn cf_cmpjump_nv() {
     );
 }
 
+#[test]
+fn cf_cmpjump_nv_target_is_branch_word_relative() {
+    let asms = vec!["{ r0 = r4; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }".to_string()];
+    let words_per = match assemble(&asms) {
+        Some(w) => w,
+        None => {
+            eprintln!("[cf_cmpjump_nv_target] llvm-mc unavailable -> skipping");
+            return;
+        }
+    };
+    let words = &words_per[0];
+    assert_eq!(words.len(), 2, "new-value compare jump must be a two-word packet");
+
+    let mut st = State::zeroed();
+    st.r[1] = 0x1234;
+    st.r[4] = 0x1234;
+
+    let (ifin, _) = run_interp_cf(words, &st).expect("interp must run jumpnv packet");
+    let inext = ifin.wrapping_sub(4) as u64;
+    let (lnext, _) = lift_and_run_cf(words, &st)
+        .expect("lift must run jumpnv packet")
+        .expect("jumpnv packet must lift");
+    let expected = CODE_ADDR as u64 + 4 + 0x10;
+    assert_eq!(inext, expected, "interpreter branch target");
+    assert_eq!(lnext, expected, "SMIR branch target");
+}
+
+#[test]
+fn cf_extended_jump_target_is_packet_relative() {
+    let asms = vec!["{ jump ##0x100 }".to_string()];
+    let words_per = match assemble(&asms) {
+        Some(w) => w,
+        None => {
+            eprintln!("[cf_ext_jump_target] llvm-mc unavailable -> skipping");
+            return;
+        }
+    };
+    let words = &words_per[0];
+    assert_eq!(words.len(), 2, "extended jump must include an immext word");
+
+    let st = State::zeroed();
+    let (ifin, _) = run_interp_cf(words, &st).expect("interp must run extended jump");
+    let inext = ifin.wrapping_sub(4) as u64;
+    let (lnext, _) = lift_and_run_cf(words, &st)
+        .expect("lift must run extended jump")
+        .expect("extended jump must lift");
+    let expected = CODE_ADDR as u64 + 0x100;
+    assert_eq!(inext, expected, "interpreter extended target");
+    assert_eq!(lnext, expected, "SMIR extended target");
+}
+
 // ---- jumpr-compare-zero + jumpset ----
 
 #[test]
