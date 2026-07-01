@@ -35061,6 +35061,90 @@ fn unsupported_apx_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8]
         .collect()
 }
 
+const MODERN_CRYPTO_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    // Intel ISE Programming Reference 319433-052, SHA512/SM3/SM4 VEX forms.
+    (
+        "sha512_vsha512msg1_ymm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x7f, 0xcc, 0xca],
+    ),
+    (
+        "sha512_vsha512msg2_ymm_ymm_unsupported",
+        &[0xc4, 0xe2, 0x7f, 0xcd, 0xca],
+    ),
+    (
+        "sha512_vsha512rnds2_ymm_ymm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x6f, 0xcb, 0xcb],
+    ),
+    (
+        "sm3_vsm3msg1_xmm_xmm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x68, 0xda, 0xcb],
+    ),
+    (
+        "sm3_vsm3msg1_xmm_xmm_mem_unsupported",
+        &[0xc4, 0xe2, 0x68, 0xda, 0x08],
+    ),
+    (
+        "sm3_vsm3msg2_xmm_xmm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x69, 0xda, 0xcb],
+    ),
+    (
+        "sm3_vsm3msg2_xmm_xmm_mem_unsupported",
+        &[0xc4, 0xe2, 0x69, 0xda, 0x08],
+    ),
+    (
+        "sm3_vsm3rnds2_xmm_xmm_xmm_imm0_unsupported",
+        &[0xc4, 0xe3, 0x69, 0xde, 0xcb, 0x00],
+    ),
+    (
+        "sm3_vsm3rnds2_xmm_xmm_mem_imm0_unsupported",
+        &[0xc4, 0xe3, 0x69, 0xde, 0x08, 0x00],
+    ),
+    (
+        "sm3_vsm3rnds2_xmm_xmm_xmm_imm3e_unsupported",
+        &[0xc4, 0xe3, 0x69, 0xde, 0xcb, 0x3e],
+    ),
+    (
+        "sm4_vsm4key4_xmm_xmm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x6a, 0xda, 0xcb],
+    ),
+    (
+        "sm4_vsm4key4_xmm_xmm_mem_unsupported",
+        &[0xc4, 0xe2, 0x6a, 0xda, 0x08],
+    ),
+    (
+        "sm4_vsm4key4_ymm_ymm_ymm_unsupported",
+        &[0xc4, 0xe2, 0x6e, 0xda, 0xcb],
+    ),
+    (
+        "sm4_vsm4key4_ymm_ymm_mem_unsupported",
+        &[0xc4, 0xe2, 0x6e, 0xda, 0x08],
+    ),
+    (
+        "sm4_vsm4rnds4_xmm_xmm_xmm_unsupported",
+        &[0xc4, 0xe2, 0x6b, 0xda, 0xcb],
+    ),
+    (
+        "sm4_vsm4rnds4_xmm_xmm_mem_unsupported",
+        &[0xc4, 0xe2, 0x6b, 0xda, 0x08],
+    ),
+    (
+        "sm4_vsm4rnds4_ymm_ymm_ymm_unsupported",
+        &[0xc4, 0xe2, 0x6f, 0xda, 0xcb],
+    ),
+    (
+        "sm4_vsm4rnds4_ymm_ymm_mem_unsupported",
+        &[0xc4, 0xe2, 0x6f, 0xda, 0x08],
+    ),
+];
+
+fn unsupported_modern_crypto_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    MODERN_CRYPTO_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "avx_vnni_int8_vpdpbssd_xmm_unsupported",
@@ -38066,6 +38150,33 @@ fn avx512_kvm_apx_unsupported_ud_corpus() {
         );
     }
     run_ud_marker_corpus("unsupported APX", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_modern_crypto_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_modern_crypto_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD modern crypto probes");
+        return;
+    }
+    if !host_cpu_flag("sha512") && !host_cpu_flag("sm3") && !host_cpu_flag("sm4") {
+        assert_eq!(
+            expected,
+            MODERN_CRYPTO_UNSUPPORTED_CANDIDATES.len(),
+            "host without SHA512/SM3/SM4 should #UD every modern crypto probe"
+        );
+    }
+    run_ud_marker_corpus("unsupported modern crypto", cases, expected);
 }
 
 #[test]
