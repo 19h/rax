@@ -25350,6 +25350,152 @@ fn compat_data_addr32_mem32_input(offset: usize, value: u32) -> CompatStateIn {
     input
 }
 
+fn compat_mov_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "mov8_compat_modrm16_mem_to_al_preserves_high_rax",
+            op: vec![0x8a, 0x00],
+            input: compat_data_mem8_input(0x10, 0x80),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov8_compat_ah_to_modrm16_mem",
+            op: vec![0x88, 0x20],
+            input: {
+                let mut input = compat_data_mem8_input(0x10, 0x5a);
+                input.rax = 0xaaaa_bbbb_cccc_a512;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov8_compat_modrm16_mem_to_ah",
+            op: vec![0x8a, 0x20],
+            input: compat_data_mem8_input(0x10, 0x7b),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov16_compat_modrm16_mem_to_cx_preserves_high_rcx",
+            op: vec![0x8b, 0x08],
+            input: compat_data_mem16_input(0x10, 0x89ab),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov16_compat_cx_to_modrm16_mem",
+            op: vec![0x89, 0x08],
+            input: {
+                let mut input = compat_data_mem16_input(0x10, 0x1234);
+                input.rcx = (input.rcx & !0xffff) | 0x89ab;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov32_compat_addr32_mem_to_eax_zeroes_high",
+            op: vec![0x67, 0x66, 0x8b, 0x04, 0x33],
+            input: compat_data_addr32_mem32_input(0x20, 0x89ab_cdef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov32_compat_eax_to_addr32_mem",
+            op: vec![0x67, 0x66, 0x89, 0x04, 0x33],
+            input: {
+                let mut input = compat_data_addr32_mem32_input(0x20, 0x1020_3040);
+                input.rax = 0xaaaa_bbbb_89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov16_compat_reg_dx_to_ax_preserves_high_rax",
+            op: vec![0x8b, 0xc2],
+            input: {
+                let mut input = compat_data_exchange_seed();
+                input.rax = 0xaaaa_bbbb_cccc_1111;
+                input.rdx = (input.rdx & !0xffff) | 0x8001;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov32_compat_reg_edx_to_ecx_zeroes_high",
+            op: vec![0x66, 0x8b, 0xca],
+            input: {
+                let mut input = compat_data_exchange_seed();
+                input.rcx = 0xaaaa_bbbb_1111_2222;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0x89ab_cdef;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov8_compat_reg_ch_to_dl",
+            op: vec![0x8a, 0xd5],
+            input: {
+                let mut input = compat_data_exchange_seed();
+                input.rcx = (input.rcx & !0xffff) | 0x5600;
+                input.rdx = (input.rdx & !0xff) | 0xa5;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm8_compat_to_ah_preserves_other_rax",
+            op: vec![0xb4, 0x5a],
+            input: compat_data_exchange_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm16_compat_to_ax_preserves_high_rax",
+            op: vec![0xb8, 0xcd, 0xab],
+            input: compat_data_exchange_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm32_compat_to_eax_zeroes_high",
+            op: vec![0x66, 0xb8, 0x78, 0x56, 0x34, 0x12],
+            input: compat_data_exchange_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm8_compat_to_modrm16_mem",
+            op: vec![0xc6, 0x00, 0x7f],
+            input: compat_data_mem8_input(0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm16_compat_to_modrm16_mem",
+            op: vec![0xc7, 0x00, 0xcd, 0xab],
+            input: compat_data_mem16_input(0x10, 0x1234),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov_imm32_compat_to_addr32_mem",
+            op: vec![0x67, 0x66, 0xc7, 0x04, 0x33, 0x78, 0x56, 0x34, 0x12],
+            input: compat_data_addr32_mem32_input(0x20, 0x1020_3040),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov16_compat_disp16_mem_to_dx",
+            op: vec![0x8b, 0x16, 0x80, 0x40],
+            input: compat_data_mem16_input(0x80, 0xbeef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "mov32_compat_addr32_disp32_mem_to_ecx_zeroes_high",
+            op: {
+                let mut op = vec![0x67, 0x66, 0x8b, 0x0d];
+                op.extend_from_slice(&((SCRATCH_ADDR + 0x84) as u32).to_le_bytes());
+                op
+            },
+            input: compat_data_mem32_input(0x84, 0x89ab_cdef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_data_exchange_cases() -> Vec<CompatStateCase> {
     const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
     const IMUL_FLAGS: u64 = RFLAGS_CF | RFLAGS_OF | RFLAGS_IF | RFLAGS_DF;
@@ -34507,6 +34653,13 @@ fn avx512_kvm_alu_modrm_compat_corpus() {
         "unexpected compatibility ALU ModRM corpus size"
     );
     let _ = run_compat_state_cases("ALU ModRM", &cases);
+}
+
+#[test]
+fn avx512_kvm_mov_compat_corpus() {
+    let cases = compat_mov_cases();
+    assert_eq!(cases.len(), 18, "unexpected compatibility MOV corpus size");
+    let _ = run_compat_state_cases("MOV", &cases);
 }
 
 #[test]
