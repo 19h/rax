@@ -22796,6 +22796,13 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             rflags_mask: ADJUST_FLAGS,
         },
         CompatCase {
+            label: "aaa_compat_af_input_low_wrap_adjust",
+            op: &[0x37],
+            rax: SEED | 0x12fa,
+            rflags: RFLAGS_AF,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
             label: "aas_compat_no_adjust",
             op: &[0x3f],
             rax: SEED | 0x1204,
@@ -22820,6 +22827,13 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             label: "aas_compat_low_borrow_adjust",
             op: &[0x3f],
             rax: SEED | 0x1200,
+            rflags: RFLAGS_AF,
+            rflags_mask: ADJUST_FLAGS,
+        },
+        CompatCase {
+            label: "aas_compat_af_input_no_low_digit_borrow",
+            op: &[0x3f],
+            rax: SEED | 0x1205,
             rflags: RFLAGS_AF,
             rflags_mask: ADJUST_FLAGS,
         },
@@ -22866,6 +22880,20 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             rflags_mask: DECIMAL_FLAGS,
         },
         CompatCase {
+            label: "daa_compat_zero_result",
+            op: &[0x27],
+            rax: SEED,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "daa_compat_low_adjust_sets_carry",
+            op: &[0x27],
+            rax: SEED | 0x00fa,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
             label: "das_compat_no_adjust",
             op: &[0x2f],
             rax: SEED | 0x0009,
@@ -22908,6 +22936,20 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             rflags_mask: DECIMAL_FLAGS,
         },
         CompatCase {
+            label: "das_compat_zero_result",
+            op: &[0x2f],
+            rax: SEED,
+            rflags: 0,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
+            label: "das_compat_low_borrow_wrap",
+            op: &[0x2f],
+            rax: SEED | 0x0005,
+            rflags: RFLAGS_AF,
+            rflags_mask: DECIMAL_FLAGS,
+        },
+        CompatCase {
             label: "aam_compat_base10",
             op: &[0xd4, 0x0a],
             rax: SEED | 0x0063,
@@ -22936,6 +22978,20 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             rflags_mask: RADIX_FLAGS,
         },
         CompatCase {
+            label: "aam_compat_base3",
+            op: &[0xd4, 0x03],
+            rax: SEED | 0x00fe,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aam_compat_zero_result",
+            op: &[0xd4, 0x0a],
+            rax: SEED,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
             label: "aad_compat_base10",
             op: &[0xd5, 0x0a],
             rax: SEED | 0x0203,
@@ -22960,6 +23016,20 @@ fn compat_bcd_ascii_adjust_cases() -> Vec<CompatCase> {
             label: "aad_compat_base255",
             op: &[0xd5, 0xff],
             rax: SEED | 0x0203,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_high_only_base10",
+            op: &[0xd5, 0x0a],
+            rax: SEED | 0x0100,
+            rflags: 0,
+            rflags_mask: RADIX_FLAGS,
+        },
+        CompatCase {
+            label: "aad_compat_base16_wrap",
+            op: &[0xd5, 0x10],
+            rax: SEED | 0x1010,
             rflags: 0,
             rflags_mask: RADIX_FLAGS,
         },
@@ -25577,6 +25647,28 @@ fn compat_mul_div_cases() -> Vec<CompatStateCase> {
             rflags_mask: MUL_FLAGS,
         },
         CompatStateCase {
+            label: "mul8_compat_reg_cl_no_overflow",
+            op: vec![0xf6, 0xe1],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xff) | 0x03;
+                input.rcx = (input.rcx & !0xff) | 0x04;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
+            label: "imul8_compat_reg_cl_no_overflow",
+            op: vec![0xf6, 0xe9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xff) | 0xff;
+                input.rcx = (input.rcx & !0xff) | 0x02;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
             label: "mul16_compat_modrm16_mem_sets_dx_ax",
             op: vec![0xf7, 0x20],
             input: {
@@ -25608,6 +25700,28 @@ fn compat_mul_div_cases() -> Vec<CompatStateCase> {
             rflags_mask: MUL_FLAGS,
         },
         CompatStateCase {
+            label: "mul16_compat_reg_dx_no_overflow",
+            op: vec![0xf7, 0xe2],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff) | 0x0010;
+                input.rdx = (input.rdx & !0xffff) | 0x0004;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
+            label: "imul16_compat_reg_cx_negative_no_overflow",
+            op: vec![0xf7, 0xe9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff) | 0xfffe;
+                input.rcx = (input.rcx & !0xffff) | 0x0003;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
             label: "mul32_compat_addr32_mem_zeroes_high_edx_eax",
             op: vec![0x67, 0x66, 0xf7, 0x24, 0x33],
             input: {
@@ -25623,6 +25737,28 @@ fn compat_mul_div_cases() -> Vec<CompatStateCase> {
             input: {
                 let mut input = compat_mul_div_addr32_mem32_input(0x20, 0x0000_0004);
                 input.rax = (input.rax & !0xffff_ffff) | 0x4000_0000;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
+            label: "mul32_compat_reg_ecx_no_overflow_zeroes_high",
+            op: vec![0x66, 0xf7, 0xe1],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = 0xaaaa_bbbb_0001_0000;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x0000_0010;
+                input
+            },
+            rflags_mask: MUL_FLAGS,
+        },
+        CompatStateCase {
+            label: "imul32_compat_reg_ecx_negative_no_overflow",
+            op: vec![0x66, 0xf7, 0xe9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = 0xaaaa_bbbb_ffff_fffe;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x0000_0003;
                 input
             },
             rflags_mask: MUL_FLAGS,
@@ -25648,12 +25784,57 @@ fn compat_mul_div_cases() -> Vec<CompatStateCase> {
             rflags_mask: DIV_FLAGS,
         },
         CompatStateCase {
+            label: "div8_compat_reg_cl_sets_ah_al",
+            op: vec![0xf6, 0xf1],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff) | 0x0123;
+                input.rcx = (input.rcx & !0xff) | 0x12;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
+            label: "idiv8_compat_reg_cl_signed_remainder",
+            op: vec![0xf6, 0xf9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff) | 0xff85;
+                input.rcx = (input.rcx & !0xff) | 0xf9;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
             label: "div16_compat_modrm16_mem_sets_dx_ax",
             op: vec![0xf7, 0x30],
             input: {
                 let mut input = compat_mul_div_mem16_input(0x10, 1000);
                 input.rax = (input.rax & !0xffff) | 0xffff;
                 input.rdx &= !0xffff;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
+            label: "div16_compat_addr32_mem_sets_dx_ax",
+            op: vec![0x67, 0xf7, 0x34, 0x33],
+            input: {
+                let mut input = compat_mul_div_addr32_mem32_input(0x20, 0x0000_0100);
+                input.rax &= !0xffff;
+                input.rdx = (input.rdx & !0xffff) | 0x0001;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
+            label: "idiv16_compat_reg_cx_signed_remainder",
+            op: vec![0xf7, 0xf9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff) | 0xfb2e;
+                input.rcx = (input.rcx & !0xffff) | 0xfff3;
+                input.rdx = (input.rdx & !0xffff) | 0xffff;
                 input
             },
             rflags_mask: DIV_FLAGS,
@@ -25688,6 +25869,30 @@ fn compat_mul_div_cases() -> Vec<CompatStateCase> {
                 let mut input = compat_mul_div_addr32_mem32_input(0x20, 0x0001_0000);
                 input.rax &= !0xffff_ffff;
                 input.rdx = (input.rdx & !0xffff_ffff) | 0x0000_0001;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
+            label: "div32_compat_reg_ecx_zeroes_high_edx_eax",
+            op: vec![0x66, 0xf7, 0xf1],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax &= !0xffff_ffff;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0x0000_0001;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x0001_0000;
+                input
+            },
+            rflags_mask: DIV_FLAGS,
+        },
+        CompatStateCase {
+            label: "idiv32_compat_reg_ecx_zeroes_high_edx_eax",
+            op: vec![0x66, 0xf7, 0xf9],
+            input: {
+                let mut input = compat_mul_div_seed();
+                input.rax = (input.rax & !0xffff_ffff) | 0xff43_9eb2;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0xffff_ffff;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0xffff_fb2e;
                 input
             },
             rflags_mask: DIV_FLAGS,
@@ -25732,6 +25937,28 @@ fn compat_mul_div_exception_cases() -> Vec<CompatExceptionMarkerCase> {
             },
         },
         CompatExceptionMarkerCase {
+            label: "div8_compat_quotient_overflow_de",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0xf6, 0x30],
+            input: {
+                let mut input = compat_mul_div_mem8_input(0x10, 0x01);
+                input.rax = (input.rax & !0xffff) | 0x0100;
+                input
+            },
+        },
+        CompatExceptionMarkerCase {
+            label: "idiv8_compat_min_neg_one_overflow_de",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0xf6, 0x38],
+            input: {
+                let mut input = compat_mul_div_mem8_input(0x10, 0xff);
+                input.rax = (input.rax & !0xffff) | 0xff80;
+                input
+            },
+        },
+        CompatExceptionMarkerCase {
             label: "idiv16_compat_min_neg_one_overflow_de",
             vector_name: "#DE",
             vector: DE_VECTOR,
@@ -25740,6 +25967,42 @@ fn compat_mul_div_exception_cases() -> Vec<CompatExceptionMarkerCase> {
                 let mut input = compat_mul_div_mem16_input(0x10, 0xffff);
                 input.rax = (input.rax & !0xffff) | 0x8000;
                 input.rdx = (input.rdx & !0xffff) | 0xffff;
+                input
+            },
+        },
+        CompatExceptionMarkerCase {
+            label: "div32_compat_zero_divisor_de",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0x67, 0x66, 0xf7, 0x34, 0x33],
+            input: {
+                let mut input = compat_mul_div_addr32_mem32_input(0x20, 0);
+                input.rax = (input.rax & !0xffff_ffff) | 0x0123_4567;
+                input.rdx &= !0xffff_ffff;
+                input
+            },
+        },
+        CompatExceptionMarkerCase {
+            label: "div32_compat_quotient_overflow_de",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0x67, 0x66, 0xf7, 0x34, 0x33],
+            input: {
+                let mut input = compat_mul_div_addr32_mem32_input(0x20, 1);
+                input.rax &= !0xffff_ffff;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0x0000_0001;
+                input
+            },
+        },
+        CompatExceptionMarkerCase {
+            label: "idiv32_compat_min_neg_one_overflow_de",
+            vector_name: "#DE",
+            vector: DE_VECTOR,
+            op: vec![0x67, 0x66, 0xf7, 0x3c, 0x33],
+            input: {
+                let mut input = compat_mul_div_addr32_mem32_input(0x20, 0xffff_ffff);
+                input.rax = (input.rax & !0xffff_ffff) | 0x8000_0000;
+                input.rdx = (input.rdx & !0xffff_ffff) | 0xffff_ffff;
                 input
             },
         },
@@ -33511,7 +33774,7 @@ fn avx512_kvm_bcd_ascii_adjust_compat_corpus() {
     let cases = compat_bcd_ascii_adjust_cases();
     assert_eq!(
         cases.len(),
-        28,
+        38,
         "unexpected compatibility BCD/ASCII-adjust corpus size"
     );
     let _ = run_compat_cases("BCD/ASCII-adjust", &cases);
@@ -33681,7 +33944,7 @@ fn avx512_kvm_mul_div_compat_corpus() {
     let cases = compat_mul_div_cases();
     assert_eq!(
         cases.len(),
-        15,
+        27,
         "unexpected compatibility multiply/divide corpus size"
     );
     let _ = run_compat_state_cases("multiply/divide", &cases);
@@ -33689,7 +33952,7 @@ fn avx512_kvm_mul_div_compat_corpus() {
     let exception_cases = compat_mul_div_exception_cases();
     assert_eq!(
         exception_cases.len(),
-        3,
+        8,
         "unexpected compatibility multiply/divide exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("multiply/divide", &exception_cases);
