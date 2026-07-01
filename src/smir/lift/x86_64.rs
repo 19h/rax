@@ -9502,6 +9502,7 @@ impl X86_64Lifter {
                 let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
                 let mut ops = Vec::new();
                 let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
+                let src_is_rex_byte_reg = !modrm.is_memory && prefix2.has_rex();
 
                 let src = if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
@@ -9524,7 +9525,7 @@ impl X86_64Lifter {
                     self.gpr(modrm.rm)
                 };
 
-                ops.push(SmirOp::new(
+                let mut op = SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::ZeroExtend {
@@ -9533,7 +9534,11 @@ impl X86_64Lifter {
                         from_width: OpWidth::W8,
                         to_width: self.size_to_width(op_size),
                     },
-                ));
+                );
+                if src_is_rex_byte_reg {
+                    op.x86_hint = Some(X86OpHint::RexByteReg);
+                }
+                ops.push(op);
 
                 Ok(LiftResult::fallthrough(
                     ops,
@@ -9595,6 +9600,7 @@ impl X86_64Lifter {
                 let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
                 let mut ops = Vec::new();
                 let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
+                let src_is_rex_byte_reg = !modrm.is_memory && prefix2.has_rex();
 
                 let src = if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
@@ -9617,7 +9623,7 @@ impl X86_64Lifter {
                     self.gpr(modrm.rm)
                 };
 
-                ops.push(SmirOp::new(
+                let mut op = SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::SignExtend {
@@ -9626,7 +9632,11 @@ impl X86_64Lifter {
                         from_width: OpWidth::W8,
                         to_width: self.size_to_width(op_size),
                     },
-                ));
+                );
+                if src_is_rex_byte_reg {
+                    op.x86_hint = Some(X86OpHint::RexByteReg);
+                }
+                ops.push(op);
 
                 Ok(LiftResult::fallthrough(
                     ops,

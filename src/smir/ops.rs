@@ -104,6 +104,10 @@ pub enum X86OpHint {
     ImulImm32,
     /// BMI2 MULX, which has non-destructive RAX/RDX semantics.
     Mulx,
+    /// Byte-register source was encoded with a REX/REX2 prefix, so ModR/M
+    /// codes 4..7 name SPL/BPL/SIL/DIL (or extended low-byte regs), not
+    /// legacy AH/CH/DH/BH.
+    RexByteReg,
     /// SSE mov with explicit prefix/opcode
     SseMov { prefix: X86SsePrefix, opcode: u8 },
     /// SSE opcode with explicit prefix/opcode

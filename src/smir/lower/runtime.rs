@@ -791,7 +791,7 @@ impl std::error::Error for ExecMemError {}
 /// Pure architectural-register blocks (counter/pointer loops, ALU chains,
 /// guest-conditional branches) pass — which is the bulk of hot code.
 pub fn is_native_clobber_safe(func: &crate::smir::ir::SmirFunction) -> bool {
-    func.blocks.iter().all(|b| block_is_clobber_safe(b, false))
+    is_native_clobber_safe_excluding(func, &std::collections::HashMap::new(), false)
 }
 
 /// Like [`is_native_clobber_safe`] but skips blocks in `excluded` (block-id ⇒
@@ -804,10 +804,144 @@ pub fn is_native_clobber_safe_excluding(
     excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
+    let flag_live_in = x86_flag_live_in(func, excluded);
     func.blocks
         .iter()
         .filter(|b| !excluded.contains_key(&b.id))
-        .all(|b| block_is_clobber_safe(b, allow_mem))
+        .all(|b| {
+            let flags_live_out = x86_block_flag_live_out(b, excluded, &flag_live_in);
+            block_is_clobber_safe(b, allow_mem, flags_live_out)
+        })
+}
+
+fn x86_flag_live_in(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
+) -> std::collections::HashMap<crate::smir::types::BlockId, crate::smir::flags::FlagSet> {
+    use crate::smir::flags::FlagSet;
+
+    let mut live_in: std::collections::HashMap<_, _> = func
+        .blocks
+        .iter()
+        .filter(|b| !excluded.contains_key(&b.id))
+        .map(|b| (b.id, FlagSet::EMPTY))
+        .collect();
+
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for block in func
+            .blocks
+            .iter()
+            .rev()
+            .filter(|b| !excluded.contains_key(&b.id))
+        {
+            let mut live = x86_block_flag_live_out(block, excluded, &live_in);
+            for op in block.ops.iter().rev() {
+                live = x86_flags_before_op(&op.kind, live);
+            }
+            if live_in.get(&block.id).copied() != Some(live) {
+                live_in.insert(block.id, live);
+                changed = true;
+            }
+        }
+    }
+
+    live_in
+}
+
+fn x86_block_flag_live_out(
+    block: &crate::smir::ir::SmirBlock,
+    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
+    live_in: &std::collections::HashMap<crate::smir::types::BlockId, crate::smir::flags::FlagSet>,
+) -> crate::smir::flags::FlagSet {
+    use crate::smir::flags::FlagSet;
+
+    let successors = block.terminator.successors();
+    if successors.is_empty() {
+        return FlagSet::ALL_X86;
+    }
+
+    let mut live = FlagSet::EMPTY;
+    for succ in successors {
+        live = live.union(if excluded.contains_key(&succ) {
+            FlagSet::ALL_X86
+        } else {
+            live_in.get(&succ).copied().unwrap_or(FlagSet::ALL_X86)
+        });
+    }
+    live
+}
+
+fn x86_flags_before_op(
+    op: &crate::smir::ops::OpKind,
+    live_after: crate::smir::flags::FlagSet,
+) -> crate::smir::flags::FlagSet {
+    live_after
+        .difference(x86_flag_defs(op))
+        .union(x86_flag_uses(op))
+}
+
+fn x86_flag_uses(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
+    use crate::smir::flags::{FlagSet, FlagState};
+    use crate::smir::ops::OpKind;
+
+    match op {
+        OpKind::TestCondition { cond, .. }
+        | OpKind::SetCC { cond, .. }
+        | OpKind::CMove { cond, .. } => FlagState::required_flags(*cond),
+        OpKind::Adc { .. } | OpKind::Sbb { .. } | OpKind::Rcl { .. } | OpKind::Rcr { .. } => {
+            FlagSet::CF
+        }
+        _ => FlagSet::EMPTY,
+    }
+}
+
+fn x86_flag_defs(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
+    use crate::smir::flags::FlagSet;
+    use crate::smir::ops::OpKind;
+
+    match op {
+        OpKind::Add { flags, .. }
+        | OpKind::Sub { flags, .. }
+        | OpKind::Adc { flags, .. }
+        | OpKind::Sbb { flags, .. }
+        | OpKind::Neg { flags, .. }
+        | OpKind::Inc { flags, .. }
+        | OpKind::Dec { flags, .. }
+        | OpKind::MulU { flags, .. }
+        | OpKind::MulS { flags, .. }
+        | OpKind::And { flags, .. }
+        | OpKind::Or { flags, .. }
+        | OpKind::Xor { flags, .. }
+        | OpKind::AndNot { flags, .. }
+        | OpKind::Shl { flags, .. }
+        | OpKind::Shr { flags, .. }
+        | OpKind::Sar { flags, .. }
+        | OpKind::Shld { flags, .. }
+        | OpKind::Shrd { flags, .. }
+        | OpKind::Rol { flags, .. }
+        | OpKind::Ror { flags, .. }
+        | OpKind::Rcl { flags, .. }
+        | OpKind::Rcr { flags, .. }
+        | OpKind::Bsf { flags, .. }
+        | OpKind::Bsr { flags, .. } => flags.as_set(),
+        OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
+        _ => FlagSet::EMPTY,
+    }
+}
+
+fn x86_block_preserves_live_flags(
+    block: &crate::smir::ir::SmirBlock,
+    mut live: crate::smir::flags::FlagSet,
+) -> bool {
+    for op in block.ops.iter().rev() {
+        if x86_native_op_would_clobber_preserved_flags(&op.kind) && !live.is_empty() {
+            return false;
+        }
+        live = x86_flags_before_op(&op.kind, live);
+    }
+    true
 }
 
 /// True if every op in `block` is safe to execute natively under the JIT:
@@ -817,10 +951,18 @@ pub fn is_native_clobber_safe_excluding(
 ///       alias a guest GPR under the identity register map).
 /// A trailing `TestCondition` feeding the block's `CondBranch` is exempt (the
 /// lowerer folds it into a direct `Jcc` and never materializes its dst).
-fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
+fn block_is_clobber_safe(
+    block: &crate::smir::ir::SmirBlock,
+    allow_mem: bool,
+    flags_live_out: crate::smir::flags::FlagSet,
+) -> bool {
     use crate::smir::ir::Terminator;
     use crate::smir::ops::OpKind;
     use crate::smir::types::{ArchReg, SrcOperand, VReg, X86Reg};
+
+    if !x86_block_preserves_live_flags(block, flags_live_out) {
+        return false;
+    }
 
     // The native trampoline runs the region on the HOST stack: guest RSP is
     // never loaded into the host RSP, and the lowerer's prologue repurposes RBP
@@ -858,14 +1000,7 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
         if !op.is_jit_safe() && !mem_ok {
             return false;
         }
-        // The x86_64 lowerer emits ordinary native ALU/shift/rotate
-        // instructions for these SMIR ops. Those instructions update host
-        // RFLAGS, so flag-preserving forms cannot run inside a native region
-        // whose branches and exit state read live host flags.
-        if x86_native_op_would_clobber_preserved_flags(&op.kind) {
-            return false;
-        }
-        if x86_movx_uses_ambiguous_high_byte_source(&op.kind) {
+        if x86_movx_uses_ambiguous_high_byte_source(op) {
             return false;
         }
         // (2) no virtual-temp writes (would clobber a guest GPR).
@@ -908,12 +1043,16 @@ fn block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) ->
     true
 }
 
-fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ops::OpKind) -> bool {
-    use crate::smir::ops::OpKind;
+fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ops::SmirOp) -> bool {
+    use crate::smir::ops::{OpKind, X86OpHint};
     use crate::smir::types::{ArchReg, OpWidth, VReg, X86Reg};
 
+    if matches!(op.x86_hint, Some(X86OpHint::RexByteReg)) {
+        return false;
+    }
+
     matches!(
-        op,
+        &op.kind,
         OpKind::ZeroExtend {
             src: VReg::Arch(ArchReg::X86(X86Reg::Rsi | X86Reg::Rdi)),
             from_width: OpWidth::W8,
@@ -1381,6 +1520,72 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn clobber_gate_allows_dead_flag_preserving_x86_native_flag_clobber_ops() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        b.push_op(
+            0x1000,
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        b.push_op(
+            0x1003,
+            OpKind::Cmp {
+                src1: x86(X86Reg::Rcx),
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        assert!(
+            is_native_clobber_safe(&b.finish()),
+            "a later flag definition kills the exit live set, so the dead flag-preserving add can run natively"
+        );
+    }
+
+    #[test]
+    fn clobber_gate_rejects_live_flag_preserving_x86_native_flag_clobber_ops() {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        b.push_op(
+            0x1000,
+            OpKind::Cmp {
+                src1: x86(X86Reg::Rcx),
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+        );
+        b.push_op(
+            0x1003,
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        b.push_op(
+            0x1006,
+            OpKind::SetCC {
+                dst: x86(X86Reg::Rbx),
+                cond: crate::smir::types::Condition::Eq,
+                width: OpWidth::W64,
+            },
+        );
+        b.set_terminator(Terminator::Return { values: vec![] });
+
+        assert!(
+            !is_native_clobber_safe(&b.finish()),
+            "the flag-preserving add would clobber flags still live into setcc"
+        );
+    }
+
+    #[test]
     fn clobber_gate_allows_flag_updating_x86_alu() {
         assert!(x86_gate(OpKind::Add {
             dst: x86(X86Reg::Rax),
@@ -1432,6 +1637,31 @@ mod jit_gate_tests {
             }),
             "word-sized RSI source is not a high-byte register ambiguity"
         );
+
+        for op in [
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rdi),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W64,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rsi),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W64,
+            },
+        ] {
+            let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+            b.push_op(0x1000, op);
+            b.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = b.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+            assert!(
+                is_native_clobber_safe(&func),
+                "REX-prefixed byte-register MOVX cannot be AH/CH/DH/BH and may JIT"
+            );
+        }
     }
 
     // Regression for issue #14: an APX NDD ADC/SBB whose destination aliases its
