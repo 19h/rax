@@ -5,7 +5,7 @@
 //! TBM: BLCFILL, BLCI, BLCS, BLSFILL, BLSIC, T1MSKC, TZMSK (AMD)
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::flags;
@@ -447,12 +447,7 @@ pub fn tbm_01_group(
         4 => inv & sub1, // TZMSK: ~src & (src - 1)
         6 => inv | sub1, // BLSIC: ~src | (src - 1)
         7 => inv | add1, // T1MSKC: ~src | (src + 1)
-        _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented VEX.0F38.01 /{}",
-                reg_op
-            )));
-        }
+        _ => return vcpu.inject_undefined_instruction(),
     };
     vcpu.set_reg(vvvv, result & mask, ctx.op_size);
     vcpu.regs.rip += ctx.cursor as u64;
@@ -473,10 +468,7 @@ pub fn tbm_blci(
     let modrm = ctx.peek_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
     if reg_op != 6 {
-        return Err(Error::Emulator(format!(
-            "unimplemented VEX.0F38.02 /{}",
-            reg_op
-        )));
+        return vcpu.inject_undefined_instruction();
     }
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {

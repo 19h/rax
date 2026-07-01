@@ -34809,6 +34809,14 @@ const AMD_TBM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ("tbm_blsicq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xf0]),
     ("tbm_t1mskcq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xf8]),
     ("tbm_tzmskq_unsupported", &[0x8f, 0xe9, 0xe0, 0x01, 0xe0]),
+    (
+        "tbm_0f38_01_reg0_reserved_ud",
+        &[0x8f, 0xe9, 0xe0, 0x01, 0xc0],
+    ),
+    (
+        "tbm_0f38_02_reg0_reserved_ud",
+        &[0x8f, 0xe9, 0xe0, 0x02, 0xc0],
+    ),
 ];
 
 fn unsupported_amd_tbm_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
