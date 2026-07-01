@@ -30,6 +30,26 @@ pub(super) fn is_cpl0(vcpu: &X86_64Vcpu) -> bool {
     current_cpl(vcpu) == 0
 }
 
+fn write_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64, limit: u16, base: u64) -> Result<()> {
+    vcpu.mmu.write_u16(addr, limit, &vcpu.sregs)?;
+    if vcpu.sregs.cs.l {
+        vcpu.mmu.write_u64(addr + 2, base, &vcpu.sregs)?;
+    } else {
+        vcpu.mmu.write_u32(addr + 2, base as u32, &vcpu.sregs)?;
+    }
+    Ok(())
+}
+
+fn read_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<(u16, u64)> {
+    let limit = vcpu.mmu.read_u16(addr, &vcpu.sregs)?;
+    let base = if vcpu.sregs.cs.l {
+        vcpu.mmu.read_u64(addr + 2, &vcpu.sregs)?
+    } else {
+        u64::from(vcpu.mmu.read_u32(addr + 2, &vcpu.sregs)?)
+    };
+    Ok((limit, base))
+}
+
 /// Inject a #GP(0) (General Protection fault, vector 13, error code 0).
 ///
 /// Exception delivery sets RIP to the fault handler, so callers MUST return
@@ -56,11 +76,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            // Write 10 bytes: 2-byte limit + 8-byte base
-            vcpu.mmu
-                .write_u16(addr, vcpu.sregs.gdt.limit, &vcpu.sregs)?;
-            vcpu.mmu
-                .write_u64(addr + 2, vcpu.sregs.gdt.base, &vcpu.sregs)?;
+            write_descriptor_table(vcpu, addr, vcpu.sregs.gdt.limit, vcpu.sregs.gdt.base)?;
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // SIDT m16&64 - Store Interrupt Descriptor Table
@@ -70,11 +86,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            // Write 10 bytes: 2-byte limit + 8-byte base
-            vcpu.mmu
-                .write_u16(addr, vcpu.sregs.idt.limit, &vcpu.sregs)?;
-            vcpu.mmu
-                .write_u64(addr + 2, vcpu.sregs.idt.base, &vcpu.sregs)?;
+            write_descriptor_table(vcpu, addr, vcpu.sregs.idt.limit, vcpu.sregs.idt.base)?;
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // LGDT m16&64
@@ -88,9 +100,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            // Read 10 bytes: 2-byte limit + 8-byte base
-            let limit = vcpu.mmu.read_u16(addr, &vcpu.sregs)?;
-            let base = vcpu.mmu.read_u64(addr + 2, &vcpu.sregs)?;
+            let (limit, base) = read_descriptor_table(vcpu, addr)?;
             vcpu.sregs.gdt.limit = limit;
             vcpu.sregs.gdt.base = base;
             vcpu.regs.rip += ctx.cursor as u64;
@@ -106,9 +116,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            // Read 10 bytes: 2-byte limit + 8-byte base
-            let limit = vcpu.mmu.read_u16(addr, &vcpu.sregs)?;
-            let base = vcpu.mmu.read_u64(addr + 2, &vcpu.sregs)?;
+            let (limit, base) = read_descriptor_table(vcpu, addr)?;
             vcpu.sregs.idt.limit = limit;
             vcpu.sregs.idt.base = base;
             vcpu.regs.rip += ctx.cursor as u64;

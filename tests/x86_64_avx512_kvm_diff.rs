@@ -23945,6 +23945,90 @@ fn compat_descriptor_status_cases() -> Vec<CompatStateCase> {
     ]
 }
 
+fn compat_descriptor_table_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF | RFLAGS_ZF;
+    input
+}
+
+fn compat_descriptor_pseudo_input(
+    load_offset: usize,
+    store_offset: usize,
+    limit: u16,
+    base: u32,
+    tail: u32,
+) -> CompatStateIn {
+    let mut input = compat_descriptor_table_seed();
+    input.scratch[load_offset..load_offset + 2].copy_from_slice(&limit.to_le_bytes());
+    input.scratch[load_offset + 2..load_offset + 6].copy_from_slice(&base.to_le_bytes());
+    input.scratch[load_offset + 6..load_offset + 10].copy_from_slice(&tail.to_le_bytes());
+    input.scratch[store_offset..store_offset + 10].copy_from_slice(&[0xa5; 10]);
+    input
+}
+
+fn compat_descriptor_pseudo_addr32_input(
+    load_offset: usize,
+    store_offset: usize,
+    limit: u16,
+    base: u32,
+    tail: u32,
+) -> CompatStateIn {
+    let mut input = compat_descriptor_pseudo_input(load_offset, store_offset, limit, base, tail);
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input
+}
+
+fn compat_descriptor_table_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "lgdt_sgdt_compat_modrm16_pseudo_descriptor_roundtrip",
+            op: vec![0x0f, 0x01, 0x10, 0x0f, 0x01, 0x01],
+            input: compat_descriptor_pseudo_input(0x10, 0x20, 0x0037, 0x0000_6200, 0xdead_beef),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lidt_sidt_compat_modrm16_pseudo_descriptor_roundtrip",
+            op: vec![0x0f, 0x01, 0x18, 0x0f, 0x01, 0x09],
+            input: compat_descriptor_pseudo_input(0x10, 0x20, 0x0047, 0x0000_7200, 0xcafe_babe),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lgdt_sgdt_compat_addr32_pseudo_descriptor_roundtrip",
+            op: vec![
+                0x67, 0x0f, 0x01, 0x14, 0x33, 0x67, 0x0f, 0x01, 0x44, 0x33, 0x20,
+            ],
+            input: compat_descriptor_pseudo_addr32_input(
+                0x20,
+                0x40,
+                0x0057,
+                0x0000_6300,
+                0x0bad_f00d,
+            ),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lidt_sidt_compat_addr32_pseudo_descriptor_roundtrip",
+            op: vec![
+                0x67, 0x0f, 0x01, 0x1c, 0x33, 0x67, 0x0f, 0x01, 0x4c, 0x33, 0x20,
+            ],
+            input: compat_descriptor_pseudo_addr32_input(
+                0x20,
+                0x40,
+                0x0067,
+                0x0000_7300,
+                0xfeed_face,
+            ),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+    ]
+}
+
 fn compat_pop_sreg_input(selector: u16, operand32: bool) -> CompatStateIn {
     let mut input = compat_state_seed();
     let stack_offset = (input.rsp - STACK_WINDOW_ADDR) as usize;
@@ -34988,6 +35072,17 @@ fn avx512_kvm_descriptor_status_compat_corpus() {
         "unexpected compatibility descriptor-status corpus size"
     );
     let _ = run_compat_state_cases("descriptor-status", &cases);
+}
+
+#[test]
+fn avx512_kvm_descriptor_table_compat_corpus() {
+    let cases = compat_descriptor_table_cases();
+    assert_eq!(
+        cases.len(),
+        4,
+        "unexpected compatibility descriptor-table corpus size"
+    );
+    let _ = run_compat_state_cases("descriptor-table", &cases);
 }
 
 #[test]
