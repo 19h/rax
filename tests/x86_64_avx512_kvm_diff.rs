@@ -28679,6 +28679,19 @@ fn legacy_invalid_long_mode_cases() -> Vec<(&'static str, &'static [u8])> {
         ("das_invalid_long", &[0x2f]),
         ("aaa_invalid_long", &[0x37]),
         ("aas_invalid_long", &[0x3f]),
+        ("aad_invalid_long", &[0xd5, 0x0a]),
+        ("daa_66_invalid_long", &[0x66, 0x27]),
+        ("das_66_invalid_long", &[0x66, 0x2f]),
+        ("aaa_66_invalid_long", &[0x66, 0x37]),
+        ("aas_66_invalid_long", &[0x66, 0x3f]),
+        ("aam_66_invalid_long", &[0x66, 0xd4, 0x0a]),
+        ("aad_66_invalid_long", &[0x66, 0xd5, 0x0a]),
+        ("daa_rexw_invalid_long", &[0x48, 0x27]),
+        ("das_rexw_invalid_long", &[0x48, 0x2f]),
+        ("aaa_rexw_invalid_long", &[0x48, 0x37]),
+        ("aas_rexw_invalid_long", &[0x48, 0x3f]),
+        ("aam_rexw_invalid_long", &[0x48, 0xd4, 0x0a]),
+        ("aad_rexw_invalid_long", &[0x48, 0xd5, 0x0a]),
         ("pushad_invalid_long", &[0x60]),
         ("popad_invalid_long", &[0x61]),
         ("pusha_invalid_long", &[0x66, 0x60]),
@@ -32163,7 +32176,7 @@ fn avx512_kvm_legacy_invalid_long_mode_ud_corpus() {
     run_ud_marker_corpus(
         "invalid-long-mode legacy",
         legacy_invalid_long_mode_cases(),
-        21,
+        34,
     );
 }
 
