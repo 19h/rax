@@ -35,15 +35,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 #[path = "x86_64/common/mod.rs"]
 mod common;
 
 use common::{
-    run_until_hlt, setup_vm, setup_vm_compat, setup_vm_no_idt, Bytes, GuestAddress,
-    GuestMemoryMmap, Registers, VCpu,
+    Bytes, GuestAddress, GuestMemoryMmap, Registers, VCpu, run_until_hlt, setup_vm,
+    setup_vm_compat, setup_vm_no_idt,
 };
 
 // ---------------------------------------------------------------------------
@@ -1078,8 +1078,7 @@ fn enable_kvm_xcr0_avx512(vcpu: &kvm_ioctls::VcpuFd) -> Result<(), String> {
     xcrs.nr_xcrs = 1;
     xcrs.xcrs[0].xcr = 0;
     xcrs.xcrs[0].value = XCR0_AVX512;
-    vcpu.set_xcrs(&xcrs)
-        .map_err(|e| format!("set_xcrs: {e:?}"))
+    vcpu.set_xcrs(&xcrs).map_err(|e| format!("set_xcrs: {e:?}"))
 }
 
 impl KvmOracle {
@@ -1760,10 +1759,7 @@ fn run_interp_compat(code: &[u8], rax: u64, rflags: u64) -> Result<CompatOut, St
     })
 }
 
-fn run_interp_compat_state(
-    code: &[u8],
-    input: &CompatStateIn,
-) -> Result<CompatStateOut, String> {
+fn run_interp_compat_state(code: &[u8], input: &CompatStateIn) -> Result<CompatStateOut, String> {
     run_interp_compat_state_inner(code, input, None)
 }
 
@@ -2290,9 +2286,8 @@ const INT_BIT_SELECT_QWORDS: [u64; 8] = [
     0xfedc_ba98_7654_3210,
 ];
 
-const INT_BIT_SELECT_BYTES: [u8; 16] = [
-    0, 1, 7, 8, 15, 16, 31, 32, 47, 48, 55, 56, 63, 64, 127, 255,
-];
+const INT_BIT_SELECT_BYTES: [u8; 16] =
+    [0, 1, 7, 8, 15, 16, 31, 32, 47, 48, 55, 56, 63, 64, 127, 255];
 
 const INT_CONVERT_EDGE_QWORDS: [u64; 8] = [
     0x0000_0001_0000_0000,
@@ -9329,24 +9324,96 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0x7fff80000001ffff, %r8\nmovq %r8, 32(%rax)\nmovabsq $0x80017fff0000fffe, %r8\nmovq %r8, 40(%rax)\nmovq 32(%rax), %mm0\npmaxsw 40(%rax), %mm0\nmovq %mm0, 88(%rax)\nemms",
             Mmx,
         ),
-        ("pcmpeqb_sse2_int_order_edge_reg", "pcmpeqb %xmm2, %xmm1", Sse2),
-        ("pcmpgtb_sse2_int_order_edge_reg", "pcmpgtb %xmm2, %xmm1", Sse2),
-        ("pcmpgtw_sse2_int_order_edge_mem", "pcmpgtw 32(%rax), %xmm1", Sse2),
-        ("pcmpgtd_sse2_int_order_edge_reg", "pcmpgtd %xmm2, %xmm1", Sse2),
-        ("pminub_sse2_int_order_edge_reg", "pminub %xmm2, %xmm1", Sse2),
-        ("pminsw_sse2_int_order_edge_mem", "pminsw 32(%rax), %xmm1", Sse2),
-        ("pmaxub_sse2_int_order_edge_reg", "pmaxub %xmm2, %xmm1", Sse2),
-        ("pmaxsw_sse2_int_order_edge_mem", "pmaxsw 32(%rax), %xmm1", Sse2),
-        ("pminsb_sse41_int_order_edge_reg", "pminsb %xmm2, %xmm1", Sse41),
-        ("pminuw_sse41_int_order_edge_mem", "pminuw 32(%rax), %xmm1", Sse41),
-        ("pminud_sse41_int_order_edge_reg", "pminud %xmm2, %xmm1", Sse41),
-        ("pminsd_sse41_int_order_edge_mem", "pminsd 32(%rax), %xmm1", Sse41),
-        ("pmaxsb_sse41_int_order_edge_mem", "pmaxsb 32(%rax), %xmm1", Sse41),
-        ("pmaxuw_sse41_int_order_edge_reg", "pmaxuw %xmm2, %xmm1", Sse41),
-        ("pmaxud_sse41_int_order_edge_mem", "pmaxud 32(%rax), %xmm1", Sse41),
-        ("pmaxsd_sse41_int_order_edge_reg", "pmaxsd %xmm2, %xmm1", Sse41),
-        ("pcmpgtq_sse42_int_order_edge_reg", "pcmpgtq %xmm2, %xmm1", Sse42),
-        ("pcmpgtq_sse42_int_order_edge_mem", "pcmpgtq 32(%rax), %xmm1", Sse42),
+        (
+            "pcmpeqb_sse2_int_order_edge_reg",
+            "pcmpeqb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pcmpgtb_sse2_int_order_edge_reg",
+            "pcmpgtb %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pcmpgtw_sse2_int_order_edge_mem",
+            "pcmpgtw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pcmpgtd_sse2_int_order_edge_reg",
+            "pcmpgtd %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pminub_sse2_int_order_edge_reg",
+            "pminub %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pminsw_sse2_int_order_edge_mem",
+            "pminsw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pmaxub_sse2_int_order_edge_reg",
+            "pmaxub %xmm2, %xmm1",
+            Sse2,
+        ),
+        (
+            "pmaxsw_sse2_int_order_edge_mem",
+            "pmaxsw 32(%rax), %xmm1",
+            Sse2,
+        ),
+        (
+            "pminsb_sse41_int_order_edge_reg",
+            "pminsb %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "pminuw_sse41_int_order_edge_mem",
+            "pminuw 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "pminud_sse41_int_order_edge_reg",
+            "pminud %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "pminsd_sse41_int_order_edge_mem",
+            "pminsd 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "pmaxsb_sse41_int_order_edge_mem",
+            "pmaxsb 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "pmaxuw_sse41_int_order_edge_reg",
+            "pmaxuw %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "pmaxud_sse41_int_order_edge_mem",
+            "pmaxud 32(%rax), %xmm1",
+            Sse41,
+        ),
+        (
+            "pmaxsd_sse41_int_order_edge_reg",
+            "pmaxsd %xmm2, %xmm1",
+            Sse41,
+        ),
+        (
+            "pcmpgtq_sse42_int_order_edge_reg",
+            "pcmpgtq %xmm2, %xmm1",
+            Sse42,
+        ),
+        (
+            "pcmpgtq_sse42_int_order_edge_mem",
+            "pcmpgtq 32(%rax), %xmm1",
+            Sse42,
+        ),
         (
             "vpcmpgtb_avx2_int_order_edge_reg",
             "{vex} vpcmpgtb %xmm2, %xmm3, %xmm1",
@@ -19856,6 +19923,22 @@ fn irregular_cases() -> Vec<Case> {
             "stac_clac_protection_edge_repeated_idempotent",
             "clac\nclac\nstac\nstac\nclac",
         ),
+        (
+            "stac_protection_edge_pushfq_visible",
+            "clac\nstac\npushfq\npopq %r8",
+        ),
+        (
+            "clac_protection_edge_pushfq_visible",
+            "stac\nclac\npushfq\npopq %r8",
+        ),
+        (
+            "stac_protection_edge_preserves_cmp_flags",
+            "clac\ncmpq %r8, %r8\nstac",
+        ),
+        (
+            "clac_protection_edge_preserves_cmp_flags",
+            "stac\ncmpq %r8, %r9\nclac",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -19945,6 +20028,26 @@ fn irregular_cases() -> Vec<Case> {
             Pku,
         ),
         (
+            "rdpkru_protection_edge_store_result_pair",
+            "movq %rax, %r10\nmovq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x5555aaa0, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nrdpkru\nmovl %eax, 40(%r10)\nmovl %edx, 44(%r10)",
+            Pku,
+        ),
+        (
+            "rdpkru_protection_edge_copy_result_to_gprs",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x00aa5500, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nrdpkru\nmovl %eax, %r8d\nmovl %edx, %r9d",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_repeated_same_value",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x77777770, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_write_pattern_then_zero",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x0f0f0f00, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nxorl %eax, %eax\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
             "swapgs_roundtrip_rdgsbase",
             "movl $0xc0000102, %ecx\nmovabsq $0x0000000000789000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000123000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nrdgsbase %rbx\nswapgs\nrdgsbase %rcx\nswapgs\nrdgsbase %rdx",
             Swapgs,
@@ -19967,6 +20070,26 @@ fn irregular_cases() -> Vec<Case> {
         (
             "swapgs_protection_edge_gs_memory_base",
             "movabsq $0x1111222233334444, %r8\nmovq %r8, 32(%rdi)\nmovabsq $0x5555666677778888, %r8\nmovq %r8, 128(%rdi)\nmovl $0xc0000102, %ecx\nmovabsq $0x40a0, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x4040, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nmovq %gs:0, %r8\nswapgs\nmovq %gs:0, %r9",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_triple_swap_kernel_visible",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000555000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000666000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nswapgs\nswapgs\nrdgsbase %r8\nswapgs\nrdgsbase %r9",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_preserves_cmp_flags",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000777000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000888000, %rax\nwrgsbase %rax\ncmpq %r8, %r8\nswapgs\nswapgs",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_memory_base_offset8",
+            "movabsq $0x0102030405060708, %r8\nmovq %r8, 40(%rdi)\nmovabsq $0x8877665544332211, %r8\nmovq %r8, 136(%rdi)\nmovl $0xc0000102, %ecx\nmovabsq $0x40a8, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x4048, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nswapgs\nmovq %gs:0, %r8\nswapgs\nmovq %gs:0, %r9",
+            Swapgs,
+        ),
+        (
+            "swapgs_protection_edge_rdgsbase_sequence",
+            "movl $0xc0000102, %ecx\nmovabsq $0x0000000000999000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000aaa000, %rax\nwrgsbase %rax\ncmpq %r8, %r8\nrdgsbase %r8\nswapgs\nrdgsbase %r9\nswapgs\nrdgsbase %rcx",
             Swapgs,
         ),
     ] {
@@ -22832,11 +22955,7 @@ fn parse_encoding(text: &str) -> Option<Vec<u8>> {
         }
         rest = &rest[end + 1..];
     }
-    if bytes.is_empty() {
-        None
-    } else {
-        Some(bytes)
-    }
+    if bytes.is_empty() { None } else { Some(bytes) }
 }
 
 #[test]
@@ -22909,11 +23028,7 @@ fn assemble_object_text(llvm_mc: &Path, asm: &str) -> Option<Vec<u8>> {
             return None;
         }
         let bytes = std::fs::read(&bin_path).ok()?;
-        if bytes.is_empty() {
-            None
-        } else {
-            Some(bytes)
-        }
+        if bytes.is_empty() { None } else { Some(bytes) }
     })();
 
     let _ = std::fs::remove_file(&obj_path);
@@ -24834,8 +24949,8 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "jmp_rel32_compat_operand32_taken",
             op: vec![
-                0x66, 0xe9, 0x06, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66,
-                0xb8, 0x22, 0x22, 0x00, 0x00,
+                0x66, 0xe9, 0x06, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66, 0xb8,
+                0x22, 0x22, 0x00, 0x00,
             ],
             input: compat_control_seed(),
             rflags_mask: FLAGS_UNCHANGED,
@@ -24859,8 +24974,8 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "call_rel16_ret_imm16_compat_stack_adjust",
             op: vec![
-                0x68, 0x77, 0x77, 0xe8, 0x05, 0x00, 0xb8, 0x22, 0x22, 0xeb, 0x06, 0xb9, 0x33,
-                0x33, 0xc2, 0x02, 0x00,
+                0x68, 0x77, 0x77, 0xe8, 0x05, 0x00, 0xb8, 0x22, 0x22, 0xeb, 0x06, 0xb9, 0x33, 0x33,
+                0xc2, 0x02, 0x00,
             ],
             input: compat_control_seed(),
             rflags_mask: FLAGS_UNCHANGED,
@@ -24868,8 +24983,8 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "call_rel32_ret32_compat_operand32_stack_roundtrip",
             op: vec![
-                0x66, 0xe8, 0x08, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb,
-                0x08, 0x66, 0xb9, 0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
+                0x66, 0xe8, 0x08, 0x00, 0x00, 0x00, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb, 0x08,
+                0x66, 0xb9, 0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
             ],
             input: compat_control_seed(),
             rflags_mask: FLAGS_UNCHANGED,
@@ -24940,8 +25055,8 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
                 let mut op = vec![0x66, 0xba];
                 op.extend_from_slice(&target.to_le_bytes());
                 op.extend_from_slice(&[
-                    0x66, 0xff, 0xd2, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb, 0x08, 0x66,
-                    0xb9, 0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
+                    0x66, 0xff, 0xd2, 0x66, 0xb8, 0x22, 0x22, 0x00, 0x00, 0xeb, 0x08, 0x66, 0xb9,
+                    0x33, 0x33, 0x00, 0x00, 0x66, 0xc3,
                 ]);
                 op
             },
@@ -24951,8 +25066,8 @@ fn compat_control_transfer_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "jmp_rm32_mem_compat_addr32_uses_dword_target",
             op: vec![
-                0x67, 0x66, 0xff, 0x24, 0x33, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66, 0xb8,
-                0x22, 0x22, 0x00, 0x00,
+                0x67, 0x66, 0xff, 0x24, 0x33, 0x66, 0xb8, 0x11, 0x11, 0x00, 0x00, 0x66, 0xb8, 0x22,
+                0x22, 0x00, 0x00,
             ],
             input: compat_control_addr32_target_input(
                 0x20,
@@ -25008,8 +25123,7 @@ fn compat_jcc_rel16_select_ax(opcode: u8) -> Vec<u8> {
 
 fn compat_jcc_rel32_select_ax(opcode: u8) -> Vec<u8> {
     vec![
-        0x66, 0x0f, opcode, 0x05, 0x00, 0x00, 0x00, 0xb8, 0x11, 0x11, 0xeb, 0x03, 0xb8, 0x22,
-        0x22,
+        0x66, 0x0f, opcode, 0x05, 0x00, 0x00, 0x00, 0xb8, 0x11, 0x11, 0xeb, 0x03, 0xb8, 0x22, 0x22,
     ]
 }
 
@@ -28029,7 +28143,8 @@ fn compat_string_repeat_cases() -> Vec<CompatStateCase> {
             label: "repe_scasb16_compat_stops_on_mismatch",
             op: vec![0xf3, 0xae],
             input: {
-                let mut input = compat_string_scas_input(compat_string_addr16(0x10), 0x10, 0x7a, 0x7a);
+                let mut input =
+                    compat_string_scas_input(compat_string_addr16(0x10), 0x10, 0x7a, 0x7a);
                 input.scratch[0x11] = 0x7a;
                 input.scratch[0x12] = 0x6b;
                 input.rcx = compat_string_count16(4);
@@ -28041,7 +28156,8 @@ fn compat_string_repeat_cases() -> Vec<CompatStateCase> {
             label: "repne_scasb16_compat_stops_on_equal",
             op: vec![0xf2, 0xae],
             input: {
-                let mut input = compat_string_scas_input(compat_string_addr16(0x14), 0x14, 0x7a, 0x11);
+                let mut input =
+                    compat_string_scas_input(compat_string_addr16(0x14), 0x14, 0x7a, 0x11);
                 input.scratch[0x15] = 0x22;
                 input.scratch[0x16] = 0x7a;
                 input.rcx = compat_string_count16(4);
@@ -28053,7 +28169,8 @@ fn compat_string_repeat_cases() -> Vec<CompatStateCase> {
             label: "repne_scasd32_compat_addr32_operand32_zeroes_high_regs",
             op: vec![0x67, 0x66, 0xf2, 0xaf],
             input: {
-                let mut input = compat_string_scas_input(compat_string_addr32(0x18), 0x18, 0x44, 0x11);
+                let mut input =
+                    compat_string_scas_input(compat_string_addr32(0x18), 0x18, 0x44, 0x11);
                 input.rax = 0xaaaa_bbbb_1122_3344;
                 input.scratch[0x18..0x1c].copy_from_slice(&0x0000_0011u32.to_le_bytes());
                 input.scratch[0x1c..0x20].copy_from_slice(&0x1122_3344u32.to_le_bytes());
@@ -28153,11 +28270,7 @@ fn compat_io_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "insd32_compat_addr32_operand32_zeroes_high_rdi",
             op: vec![0x67, 0x66, 0x6d],
-            input: compat_io_ins_input(
-                compat_string_addr32(0x20),
-                0x20,
-                &[0x11, 0x22, 0x33, 0x44],
-            ),
+            input: compat_io_ins_input(compat_string_addr32(0x20), 0x20, &[0x11, 0x22, 0x33, 0x44]),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -28648,9 +28761,8 @@ fn compat_x87_cases() -> Vec<CompatStateCase> {
                 compat_x87_mem(0xdb, 7, 0x20),
             ),
             input: compat_x87_input(|scratch| {
-                scratch[0x10..0x1a].copy_from_slice(&[
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x3f,
-                ]);
+                scratch[0x10..0x1a]
+                    .copy_from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x3f]);
             }),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -29115,12 +29227,10 @@ fn compat_x87_cases() -> Vec<CompatStateCase> {
                 compat_x87_mem(0xdf, 6, 0x40),
             ),
             input: compat_x87_input(|scratch| {
-                scratch[0x10..0x1a].copy_from_slice(&[
-                    0x45, 0x23, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                ]);
-                scratch[0x20..0x2a].copy_from_slice(&[
-                    0x56, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80,
-                ]);
+                scratch[0x10..0x1a]
+                    .copy_from_slice(&[0x45, 0x23, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+                scratch[0x20..0x2a]
+                    .copy_from_slice(&[0x56, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]);
             }),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -29839,12 +29949,7 @@ fn compat_xmm_modrm16_input(init: impl FnOnce(&mut [u8; SCRATCH_BYTES])) -> Comp
     input
 }
 
-fn compat_xmm_put_m128(
-    scratch: &mut [u8; SCRATCH_BYTES],
-    offset: usize,
-    lo: u64,
-    hi: u64,
-) {
+fn compat_xmm_put_m128(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, lo: u64, hi: u64) {
     scratch[offset..offset + 8].copy_from_slice(&lo.to_le_bytes());
     scratch[offset + 8..offset + 16].copy_from_slice(&hi.to_le_bytes());
 }
@@ -30399,12 +30504,7 @@ fn compat_xmm_cases() -> Vec<CompatStateCase> {
                 compat_xmm_mem(&[0xf3], 0x7f, 0, 0x60),
             ),
             input: compat_xmm_input(|scratch| {
-                compat_xmm_put_m128(
-                    scratch,
-                    0x10,
-                    0x4000_0000_3f80_0000,
-                    0xc040_0000_4040_0000,
-                );
+                compat_xmm_put_m128(scratch, 0x10, 0x4000_0000_3f80_0000, 0xc040_0000_4040_0000);
             }),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -30552,8 +30652,18 @@ fn compat_xmm_cases() -> Vec<CompatStateCase> {
             ),
             input: {
                 let mut input = compat_xmm_modrm16_input(|scratch| {
-                    compat_xmm_put_m128(scratch, 0x10, 0x0706_0504_0302_0100, 0x0f0e_0d0c_0b0a_0908);
-                    compat_xmm_put_m128(scratch, 0x20, 0x0f0e_8d0c_8b0a_0908, 0x8786_0504_0302_0180);
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x10,
+                        0x0706_0504_0302_0100,
+                        0x0f0e_0d0c_0b0a_0908,
+                    );
+                    compat_xmm_put_m128(
+                        scratch,
+                        0x20,
+                        0x0f0e_8d0c_8b0a_0908,
+                        0x8786_0504_0302_0180,
+                    );
                 });
                 input.rax = SCRATCH_ADDR;
                 input
@@ -30845,11 +30955,7 @@ fn compat_avx_addr32(bytes: &[u8]) -> Vec<u8> {
     op
 }
 
-fn compat_avx_put_m256(
-    scratch: &mut [u8; SCRATCH_BYTES],
-    offset: usize,
-    lanes: [u64; 4],
-) {
+fn compat_avx_put_m256(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, lanes: [u64; 4]) {
     for (idx, lane) in lanes.iter().enumerate() {
         let start = offset + idx * 8;
         scratch[start..start + 8].copy_from_slice(&lane.to_le_bytes());
@@ -31299,22 +31405,14 @@ fn compat_avx_cases() -> Vec<CompatStateCase> {
     ]
 }
 
-fn compat_avx512_put_m512(
-    scratch: &mut [u8; SCRATCH_BYTES],
-    offset: usize,
-    lanes: [u64; 8],
-) {
+fn compat_avx512_put_m512(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, lanes: [u64; 8]) {
     for (idx, lane) in lanes.iter().enumerate() {
         let start = offset + idx * 8;
         scratch[start..start + 8].copy_from_slice(&lane.to_le_bytes());
     }
 }
 
-fn compat_avx512_put_u32x16(
-    scratch: &mut [u8; SCRATCH_BYTES],
-    offset: usize,
-    lanes: [u32; 16],
-) {
+fn compat_avx512_put_u32x16(scratch: &mut [u8; SCRATCH_BYTES], offset: usize, lanes: [u32; 16]) {
     for (idx, lane) in lanes.iter().enumerate() {
         let start = offset + idx * 4;
         scratch[start..start + 4].copy_from_slice(&lane.to_le_bytes());
@@ -31427,16 +31525,28 @@ fn compat_avx512_cases() -> Vec<CompatStateCase> {
                     scratch,
                     0x00,
                     [
-                        1, 2, 3, 4, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff, 0x0102_0304, 9, 10,
-                        11, 12, 13, 14, 15, 16,
+                        1,
+                        2,
+                        3,
+                        4,
+                        0x7fff_ffff,
+                        0x8000_0000,
+                        0xffff_ffff,
+                        0x0102_0304,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
                     ],
                 );
                 compat_avx512_put_u32x16(
                     scratch,
                     0x40,
-                    [
-                        16, 15, 14, 13, 1, 2, 3, 0xf0f0_0f0f, 8, 7, 6, 5, 4, 3, 2, 1,
-                    ],
+                    [16, 15, 14, 13, 1, 2, 3, 0xf0f0_0f0f, 8, 7, 6, 5, 4, 3, 2, 1],
                 );
             }),
             rflags_mask: FLAGS_UNCHANGED,
@@ -31549,8 +31659,22 @@ fn compat_avx512_cases() -> Vec<CompatStateCase> {
                     scratch,
                     0x00,
                     [
-                        1, 2, 3, 4, 0x7fff_fff0, 0x8000_0000, 0xffff_fff0, 8, 9, 10, 11, 12, 13,
-                        14, 15, 16,
+                        1,
+                        2,
+                        3,
+                        4,
+                        0x7fff_fff0,
+                        0x8000_0000,
+                        0xffff_fff0,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
                     ],
                 );
                 compat_avx512_put_m512(
@@ -31990,25 +32114,41 @@ fn compat_implicit_flag_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "cwd16_compat_negative_preserves_high_rdx",
             op: vec![0x99],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_8000, 0xdddd_eeee_ffff_1234, INITIAL_RFLAGS),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_8000,
+                0xdddd_eeee_ffff_1234,
+                INITIAL_RFLAGS,
+            ),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
             label: "cwd16_compat_positive_preserves_high_rdx",
             op: vec![0x99],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_7fff, 0xdddd_eeee_ffff_fedc, INITIAL_RFLAGS),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_7fff,
+                0xdddd_eeee_ffff_fedc,
+                INITIAL_RFLAGS,
+            ),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
             label: "cdq32_compat_operand32_negative_zeroes_high_rdx",
             op: vec![0x66, 0x99],
-            input: compat_implicit_state_input(0xaaaa_bbbb_8000_0000, 0xdddd_eeee_ffff_0000, INITIAL_RFLAGS),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_8000_0000,
+                0xdddd_eeee_ffff_0000,
+                INITIAL_RFLAGS,
+            ),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
             label: "cdq32_compat_operand32_positive_zeroes_high_rdx",
             op: vec![0x66, 0x99],
-            input: compat_implicit_state_input(0xaaaa_bbbb_7fff_ffff, 0xdddd_eeee_ffff_ffff, INITIAL_RFLAGS),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_7fff_ffff,
+                0xdddd_eeee_ffff_ffff,
+                INITIAL_RFLAGS,
+            ),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -32038,31 +32178,51 @@ fn compat_implicit_flag_cases() -> Vec<CompatStateCase> {
         CompatStateCase {
             label: "clc_compat_clears_cf_only",
             op: vec![0xf8],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_0000,
+                RDX_SEED,
+                INITIAL_RFLAGS | RFLAGS_DF,
+            ),
             rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
         },
         CompatStateCase {
             label: "stc_compat_sets_cf_only",
             op: vec![0xf9],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, (INITIAL_RFLAGS | RFLAGS_DF) & !RFLAGS_CF),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_0000,
+                RDX_SEED,
+                (INITIAL_RFLAGS | RFLAGS_DF) & !RFLAGS_CF,
+            ),
             rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
         },
         CompatStateCase {
             label: "cmc_compat_complements_cf_only",
             op: vec![0xf5],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_0000,
+                RDX_SEED,
+                INITIAL_RFLAGS | RFLAGS_DF,
+            ),
             rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
         },
         CompatStateCase {
             label: "cld_compat_clears_df",
             op: vec![0xfc],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS | RFLAGS_DF),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_0000,
+                RDX_SEED,
+                INITIAL_RFLAGS | RFLAGS_DF,
+            ),
             rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
         },
         CompatStateCase {
             label: "std_compat_sets_df",
             op: vec![0xfd],
-            input: compat_implicit_state_input(0xaaaa_bbbb_cccc_0000, RDX_SEED, INITIAL_RFLAGS & !RFLAGS_DF),
+            input: compat_implicit_state_input(
+                0xaaaa_bbbb_cccc_0000,
+                RDX_SEED,
+                INITIAL_RFLAGS & !RFLAGS_DF,
+            ),
             rflags_mask: STATUS_RFLAGS_MASK | RFLAGS_DF,
         },
     ]
@@ -32503,18 +32663,18 @@ fn run_compat_exception_marker_cases(
     for case in cases {
         let code = build_compat_code(&case.op);
         let expected_marker = exception_marker(case.vector);
-        let kvm =
-            match oracle.run_compat_state_with_exception_trap(&code, &case.input, case.vector) {
-                Ok(KvmCompatStateOutcome::Ran(out)) => out,
-                Ok(KvmCompatStateOutcome::Faulted) => {
-                    failures.push(format!(
-                        "{}: KVM faulted before reaching {} handler",
-                        case.label, case.vector_name
-                    ));
-                    continue;
-                }
-                Err(e) => panic!("{}: KVM compat exception backend failure: {e}", case.label),
-            };
+        let kvm = match oracle.run_compat_state_with_exception_trap(&code, &case.input, case.vector)
+        {
+            Ok(KvmCompatStateOutcome::Ran(out)) => out,
+            Ok(KvmCompatStateOutcome::Faulted) => {
+                failures.push(format!(
+                    "{}: KVM faulted before reaching {} handler",
+                    case.label, case.vector_name
+                ));
+                continue;
+            }
+            Err(e) => panic!("{}: KVM compat exception backend failure: {e}", case.label),
+        };
         let interp =
             match run_interp_compat_state_with_exception_trap(&code, &case.input, case.vector) {
                 Ok(out) => out,
@@ -32622,18 +32782,12 @@ fn illegal_lock_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
         ("lock_push_mem_illegal", &[0xf0, 0xff, 0x30]),
         ("lock_xchg_reg_illegal", &[0xf0, 0x48, 0x87, 0xc8]),
         ("lock_xadd_reg_illegal", &[0xf0, 0x48, 0x0f, 0xc1, 0xc8]),
-        (
-            "lock_cmpxchg_reg_illegal",
-            &[0xf0, 0x48, 0x0f, 0xb1, 0xc8],
-        ),
+        ("lock_cmpxchg_reg_illegal", &[0xf0, 0x48, 0x0f, 0xb1, 0xc8]),
         ("lock_bt_mem_imm_illegal", &[0xf0, 0x0f, 0xba, 0x20, 0x01]),
         ("lock_bts_reg_illegal", &[0xf0, 0x0f, 0xab, 0xc8]),
         ("lock_btr_reg_illegal", &[0xf0, 0x0f, 0xb3, 0xc8]),
         ("lock_btc_reg_illegal", &[0xf0, 0x0f, 0xbb, 0xc8]),
-        (
-            "lock_btr_imm_reg_illegal",
-            &[0xf0, 0x0f, 0xba, 0xf0, 0x01],
-        ),
+        ("lock_btr_imm_reg_illegal", &[0xf0, 0x0f, 0xba, 0xf0, 0x01]),
         ("lock_cmpxchg8b_reg_illegal", &[0xf0, 0x0f, 0xc7, 0xc8]),
     ]
 }
@@ -32664,14 +32818,8 @@ fn invalid_0fae_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
             "xsaveopt_f2_prefix_illegal",
             &[0x31, 0xc0, 0x31, 0xd2, 0xf2, 0x0f, 0xae, 0x30],
         ),
-        (
-            "clflush_f2_prefix_illegal",
-            &[0xf2, 0x0f, 0xae, 0x38],
-        ),
-        (
-            "clflush_f3_prefix_illegal",
-            &[0xf3, 0x0f, 0xae, 0x38],
-        ),
+        ("clflush_f2_prefix_illegal", &[0xf2, 0x0f, 0xae, 0x38]),
+        ("clflush_f3_prefix_illegal", &[0xf3, 0x0f, 0xae, 0x38]),
     ]
 }
 
@@ -32680,99 +32828,99 @@ fn cr4_gated_system_ud_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "rdfsbase_cr4_fsgsbase_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3,
-                0x48, 0x0f, 0xae, 0xc0,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3, 0x48,
+                0x0f, 0xae, 0xc0,
             ],
         ),
         (
             "rdgsbase_cr4_fsgsbase_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3,
-                0x48, 0x0f, 0xae, 0xc8,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3, 0x48,
+                0x0f, 0xae, 0xc8,
             ],
         ),
         (
             "wrfsbase_cr4_fsgsbase_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3,
-                0x48, 0x0f, 0xae, 0xd0,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3, 0x48,
+                0x0f, 0xae, 0xd0,
             ],
         ),
         (
             "wrgsbase_cr4_fsgsbase_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3,
-                0x48, 0x0f, 0xae, 0xd8,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfe, 0xff, 0x0f, 0x22, 0xe0, 0xf3, 0x48,
+                0x0f, 0xae, 0xd8,
             ],
         ),
         (
             "rdpkru_cr4_pke_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xbf, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc9, 0x0f, 0x01, 0xee,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xbf, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc9,
+                0x0f, 0x01, 0xee,
             ],
         ),
         (
             "wrpkru_cr4_pke_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xbf, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xc9, 0x31, 0xd2, 0x0f, 0x01, 0xef,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xbf, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xc9, 0x31, 0xd2, 0x0f, 0x01, 0xef,
             ],
         ),
         (
             "xgetbv_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc9, 0x0f, 0x01, 0xd0,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc9,
+                0x0f, 0x01, 0xd0,
             ],
         ),
         (
             "xsetbv_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0xb8,
-                0x01, 0x00, 0x00, 0x00, 0x31, 0xd2, 0x31, 0xc9, 0x0f, 0x01, 0xd1,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0xb8, 0x01,
+                0x00, 0x00, 0x00, 0x31, 0xd2, 0x31, 0xc9, 0x0f, 0x01, 0xd1,
             ],
         ),
         (
             "xsave64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xae, 0x27,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xae, 0x27,
             ],
         ),
         (
             "xrstor64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xae, 0x2f,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xae, 0x2f,
             ],
         ),
         (
             "xsaveopt64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xae, 0x37,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xae, 0x37,
             ],
         ),
         (
             "xrstors64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x1f,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x1f,
             ],
         ),
         (
             "xsavec64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x27,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x27,
             ],
         ),
         (
             "xsaves64_cr4_osxsave_clear",
             &[
-                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31,
-                0xc0, 0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x2f,
+                0x0f, 0x20, 0xe0, 0x48, 0x25, 0xff, 0xff, 0xfb, 0xff, 0x0f, 0x22, 0xe0, 0x31, 0xc0,
+                0x31, 0xd2, 0x48, 0x0f, 0xc7, 0x2f,
             ],
         ),
     ]
@@ -32783,15 +32931,13 @@ fn cr0_ts_state_nm_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "fxsave64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae,
-                0x03,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae, 0x03,
             ],
         ),
         (
             "fxrstor64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae,
-                0x0b,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x48, 0x0f, 0xae, 0x0b,
             ],
         ),
         (
@@ -32809,43 +32955,43 @@ fn cr0_ts_state_nm_cases() -> Vec<(&'static str, &'static [u8])> {
         (
             "xsave64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xae, 0x23,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xae, 0x23,
             ],
         ),
         (
             "xrstor64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xae, 0x2b,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xae, 0x2b,
             ],
         ),
         (
             "xsaveopt64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xae, 0x33,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xae, 0x33,
             ],
         ),
         (
             "xrstors64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xc7, 0x1b,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xc7, 0x1b,
             ],
         ),
         (
             "xsavec64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xc7, 0x23,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xc7, 0x23,
             ],
         ),
         (
             "xsaves64_cr0_ts_set",
             &[
-                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31,
-                0xd2, 0x48, 0x0f, 0xc7, 0x2b,
+                0x0f, 0x20, 0xc0, 0x48, 0x83, 0xc8, 0x08, 0x0f, 0x22, 0xc0, 0x31, 0xc0, 0x31, 0xd2,
+                0x48, 0x0f, 0xc7, 0x2b,
             ],
         ),
     ]
@@ -33145,7 +33291,10 @@ const AMX_DISABLED_CANDIDATES: &[(&str, &[u8])] = &[
     ),
     ("tileloadd_tmm1_disabled", &[0xc4, 0xe2, 0x7a, 0x4b, 0x08]),
     ("tileloadd_tmm6_disabled", &[0xc4, 0xe2, 0x7a, 0x4b, 0x30]),
-    ("tileloaddt1_tmm1_rcx_disabled", &[0xc4, 0xe2, 0x79, 0x4b, 0x09]),
+    (
+        "tileloaddt1_tmm1_rcx_disabled",
+        &[0xc4, 0xe2, 0x79, 0x4b, 0x09],
+    ),
     ("tilezero_tmm1_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xc8]),
     ("tilezero_tmm2_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xd0]),
     ("tilezero_tmm5_disabled", &[0xc4, 0xe2, 0x7a, 0x49, 0xe8]),
@@ -33173,40 +33322,25 @@ const MODERN_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ("uintr_senduipi_rax_unsupported", &[0xf3, 0x0f, 0xc7, 0xf0]),
     ("uintr_senduipi_rbx_unsupported", &[0xf3, 0x0f, 0xc7, 0xf3]),
     ("ptwrite_r32_unsupported", &[0xf3, 0x0f, 0xae, 0xe0]),
-    (
-        "ptwrite_r64_unsupported",
-        &[0xf3, 0x48, 0x0f, 0xae, 0xe0],
-    ),
+    ("ptwrite_r64_unsupported", &[0xf3, 0x48, 0x0f, 0xae, 0xe0]),
     ("ptwrite_mem32_unsupported", &[0xf3, 0x0f, 0xae, 0x20]),
-    (
-        "enqcmd_unsupported",
-        &[0xf2, 0x0f, 0x38, 0xf8, 0x00],
-    ),
+    ("enqcmd_unsupported", &[0xf2, 0x0f, 0x38, 0xf8, 0x00]),
     (
         "enqcmd_rexw_unsupported",
         &[0xf2, 0x48, 0x0f, 0x38, 0xf8, 0x00],
     ),
-    (
-        "enqcmds_unsupported",
-        &[0xf3, 0x0f, 0x38, 0xf8, 0x00],
-    ),
+    ("enqcmds_unsupported", &[0xf3, 0x0f, 0x38, 0xf8, 0x00]),
     (
         "enqcmds_rexw_unsupported",
         &[0xf3, 0x48, 0x0f, 0x38, 0xf8, 0x00],
     ),
     ("cet_incsspd_unsupported", &[0xf3, 0x0f, 0xae, 0xe8]),
-    (
-        "cet_incsspq_unsupported",
-        &[0xf3, 0x48, 0x0f, 0xae, 0xe8],
-    ),
+    ("cet_incsspq_unsupported", &[0xf3, 0x48, 0x0f, 0xae, 0xe8]),
     ("cet_clrssbsy_unsupported", &[0xf3, 0x0f, 0xae, 0x30]),
     ("cet_rstorssp_unsupported", &[0xf3, 0x0f, 0x01, 0x28]),
     ("cet_saveprevssp_unsupported", &[0xf3, 0x0f, 0x01, 0xea]),
     ("cet_setssbsy_unsupported", &[0xf3, 0x0f, 0x01, 0xe8]),
-    (
-        "cet_wrussd_unsupported",
-        &[0x66, 0x0f, 0x38, 0xf5, 0x18],
-    ),
+    ("cet_wrussd_unsupported", &[0x66, 0x0f, 0x38, 0xf5, 0x18]),
     (
         "cet_wrussq_unsupported",
         &[0x66, 0x48, 0x0f, 0x38, 0xf5, 0x18],
@@ -33324,58 +33458,19 @@ fn unsupported_amd_legacy_multimedia_cases(
 }
 
 const XOP_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
-    (
-        "xop_vfrczps_unsupported",
-        &[0x8f, 0xe9, 0x78, 0x80, 0xc8],
-    ),
-    (
-        "xop_vfrczpd_unsupported",
-        &[0x8f, 0xe9, 0x78, 0x81, 0xd1],
-    ),
-    (
-        "xop_vfrczss_unsupported",
-        &[0x8f, 0xe9, 0x78, 0x82, 0xd1],
-    ),
-    (
-        "xop_vfrczsd_unsupported",
-        &[0x8f, 0xe9, 0x78, 0x83, 0xc8],
-    ),
-    (
-        "xop_vphaddbd_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xc2, 0xc8],
-    ),
-    (
-        "xop_vphaddbw_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xc1, 0xd1],
-    ),
-    (
-        "xop_vphaddwd_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xc6, 0xd1],
-    ),
-    (
-        "xop_vphadddq_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xcb, 0xd1],
-    ),
-    (
-        "xop_vphaddubw_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xd1, 0xd1],
-    ),
-    (
-        "xop_vphaddudq_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xdb, 0xd1],
-    ),
-    (
-        "xop_vphsubbw_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xe1, 0xd1],
-    ),
-    (
-        "xop_vphsubwd_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xe2, 0xd1],
-    ),
-    (
-        "xop_vphsubdq_unsupported",
-        &[0x8f, 0xe9, 0x78, 0xe3, 0xd1],
-    ),
+    ("xop_vfrczps_unsupported", &[0x8f, 0xe9, 0x78, 0x80, 0xc8]),
+    ("xop_vfrczpd_unsupported", &[0x8f, 0xe9, 0x78, 0x81, 0xd1]),
+    ("xop_vfrczss_unsupported", &[0x8f, 0xe9, 0x78, 0x82, 0xd1]),
+    ("xop_vfrczsd_unsupported", &[0x8f, 0xe9, 0x78, 0x83, 0xc8]),
+    ("xop_vphaddbd_unsupported", &[0x8f, 0xe9, 0x78, 0xc2, 0xc8]),
+    ("xop_vphaddbw_unsupported", &[0x8f, 0xe9, 0x78, 0xc1, 0xd1]),
+    ("xop_vphaddwd_unsupported", &[0x8f, 0xe9, 0x78, 0xc6, 0xd1]),
+    ("xop_vphadddq_unsupported", &[0x8f, 0xe9, 0x78, 0xcb, 0xd1]),
+    ("xop_vphaddubw_unsupported", &[0x8f, 0xe9, 0x78, 0xd1, 0xd1]),
+    ("xop_vphaddudq_unsupported", &[0x8f, 0xe9, 0x78, 0xdb, 0xd1]),
+    ("xop_vphsubbw_unsupported", &[0x8f, 0xe9, 0x78, 0xe1, 0xd1]),
+    ("xop_vphsubwd_unsupported", &[0x8f, 0xe9, 0x78, 0xe2, 0xd1]),
+    ("xop_vphsubdq_unsupported", &[0x8f, 0xe9, 0x78, 0xe3, 0xd1]),
     (
         "xop_vpcmov_unsupported",
         &[0x8f, 0xe8, 0x68, 0xa2, 0xd9, 0x00],
@@ -33436,10 +33531,7 @@ const AMD_SIMD_STATE_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         "sse4a_insertq_imm_unsupported",
         &[0xf2, 0x0f, 0x78, 0xc1, 0x02, 0x01],
     ),
-    (
-        "sse4a_insertq_reg_unsupported",
-        &[0xf2, 0x0f, 0x79, 0xc1],
-    ),
+    ("sse4a_insertq_reg_unsupported", &[0xf2, 0x0f, 0x79, 0xc1]),
     ("sse4a_movntsd_unsupported", &[0xf2, 0x0f, 0x2b, 0x00]),
     ("sse4a_movntss_unsupported", &[0xf3, 0x0f, 0x2b, 0x00]),
     (
@@ -33909,30 +34001,18 @@ fn unsupported_amd_system_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stat
 
 const RAO_INT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ("rao_int_aaddl_unsupported", &[0x0f, 0x38, 0xfc, 0x18]),
-    (
-        "rao_int_aaddq_unsupported",
-        &[0x48, 0x0f, 0x38, 0xfc, 0x18],
-    ),
-    (
-        "rao_int_aandl_unsupported",
-        &[0x66, 0x0f, 0x38, 0xfc, 0x18],
-    ),
+    ("rao_int_aaddq_unsupported", &[0x48, 0x0f, 0x38, 0xfc, 0x18]),
+    ("rao_int_aandl_unsupported", &[0x66, 0x0f, 0x38, 0xfc, 0x18]),
     (
         "rao_int_aandq_unsupported",
         &[0x66, 0x48, 0x0f, 0x38, 0xfc, 0x18],
     ),
-    (
-        "rao_int_aorl_unsupported",
-        &[0xf2, 0x0f, 0x38, 0xfc, 0x18],
-    ),
+    ("rao_int_aorl_unsupported", &[0xf2, 0x0f, 0x38, 0xfc, 0x18]),
     (
         "rao_int_aorq_unsupported",
         &[0xf2, 0x48, 0x0f, 0x38, 0xfc, 0x18],
     ),
-    (
-        "rao_int_axorl_unsupported",
-        &[0xf3, 0x0f, 0x38, 0xfc, 0x18],
-    ),
+    ("rao_int_axorl_unsupported", &[0xf3, 0x0f, 0x38, 0xfc, 0x18]),
     (
         "rao_int_axorq_unsupported",
         &[0xf3, 0x48, 0x0f, 0x38, 0xfc, 0x18],
@@ -34039,11 +34119,11 @@ fn unsupported_cmpccxadd_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'stati
 }
 
 const APX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
-    ("apx_rex2_mov_r16_rax_unsupported", &[0xd5, 0x18, 0x89, 0xc0]),
     (
-        "apx_rex2_0f_movzx_unsupported",
-        &[0xd5, 0x88, 0xb6, 0xc3],
+        "apx_rex2_mov_r16_rax_unsupported",
+        &[0xd5, 0x18, 0x89, 0xc0],
     ),
+    ("apx_rex2_0f_movzx_unsupported", &[0xd5, 0x88, 0xb6, 0xc3]),
     (
         "apx_map4_ndd_add_unsupported",
         &[0x62, 0xf4, 0x7c, 0x18, 0x01, 0xc0],
@@ -34255,9 +34335,7 @@ const AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ),
 ];
 
-fn unsupported_avx10_sat_convert_cases(
-    oracle: &KvmOracle,
-) -> Vec<(&'static str, &'static [u8])> {
+fn unsupported_avx10_sat_convert_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
     AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES
         .iter()
         .copied()
@@ -34300,9 +34378,7 @@ const AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     ),
 ];
 
-fn unsupported_avx10_bf8_convert_cases(
-    oracle: &KvmOracle,
-) -> Vec<(&'static str, &'static [u8])> {
+fn unsupported_avx10_bf8_convert_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
     AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES
         .iter()
         .copied()
@@ -34553,14 +34629,8 @@ fn invalid_extension_encoding_cases() -> Vec<(&'static str, &'static [u8])> {
             "evex_p1_fixed_bit_illegal",
             &[0x62, 0xf1, 0x78, 0x48, 0x28, 0xc0],
         ),
-        (
-            "evex_mm0_illegal",
-            &[0x62, 0xf0, 0x7c, 0x48, 0x28, 0xc0],
-        ),
-        (
-            "evex_mm7_illegal",
-            &[0x62, 0xf7, 0x7c, 0x48, 0x28, 0xc0],
-        ),
+        ("evex_mm0_illegal", &[0x62, 0xf0, 0x7c, 0x48, 0x28, 0xc0]),
+        ("evex_mm7_illegal", &[0x62, 0xf7, 0x7c, 0x48, 0x28, 0xc0]),
         ("kunpckbw_vvvv_k8_illegal", &[0xc5, 0xbd, 0x4b, 0xc0]),
         ("kandw_vvvv_k8_illegal", &[0xc5, 0xbc, 0x41, 0xc0]),
         ("kmovw_store_reg_k8_illegal", &[0xc5, 0x78, 0x91, 0x00]),
@@ -35622,7 +35692,10 @@ fn cldemote_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
     }
 
     vec![
-        ("cldemote_register_source_fallthrough", &[0x0fu8, 0x1c, 0xc0]),
+        (
+            "cldemote_register_source_fallthrough",
+            &[0x0fu8, 0x1c, 0xc0],
+        ),
         (
             "cldemote_register_source_reg3_fallthrough",
             &[0x0fu8, 0x1c, 0xd8],
@@ -35631,14 +35704,8 @@ fn cldemote_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
             "cldemote_register_source_reg7_fallthrough",
             &[0x0fu8, 0x1c, 0xf8],
         ),
-        (
-            "cldemote_memory_reg1_fallthrough",
-            &[0x0fu8, 0x1c, 0x08],
-        ),
-        (
-            "cldemote_memory_reg7_fallthrough",
-            &[0x0fu8, 0x1c, 0x38],
-        ),
+        ("cldemote_memory_reg1_fallthrough", &[0x0fu8, 0x1c, 0x08]),
+        ("cldemote_memory_reg7_fallthrough", &[0x0fu8, 0x1c, 0x38]),
         (
             "cldemote_66_register_source_fallthrough",
             &[0x66, 0x0f, 0x1c, 0xc0],
@@ -35647,10 +35714,7 @@ fn cldemote_fallthrough_cases() -> Vec<(&'static str, &'static [u8])> {
             "cldemote_f2_register_source_fallthrough",
             &[0xf2, 0x0f, 0x1c, 0xc0],
         ),
-        (
-            "cldemote_f3_memory_fallthrough",
-            &[0xf3, 0x0f, 0x1c, 0x00],
-        ),
+        ("cldemote_f3_memory_fallthrough", &[0xf3, 0x0f, 0x1c, 0x00]),
     ]
 }
 
@@ -35935,8 +35999,7 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x49, 0xb8, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f,
-                0x22, 0xc0,
+                0x49, 0xb8, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f, 0x22, 0xc0,
             ],
         },
         ExceptionMarkerCase {
@@ -35944,8 +36007,7 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x49, 0xb8, 0x20, 0x06, 0x05, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f,
-                0x22, 0xe0,
+                0x49, 0xb8, 0x20, 0x06, 0x05, 0x00, 0x00, 0x00, 0x00, 0x80, 0x49, 0x0f, 0x22, 0xe0,
             ],
         },
         ExceptionMarkerCase {
@@ -35953,8 +36015,7 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x49, 0xb8, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x0f,
-                0x22, 0xc0,
+                0x49, 0xb8, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x0f, 0x22, 0xc0,
             ],
         },
         ExceptionMarkerCase {
@@ -36167,8 +36228,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49,
-                0x0f, 0xae, 0xd0,
+                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49, 0x0f, 0xae,
+                0xd0,
             ],
         });
         cases.push(ExceptionMarkerCase {
@@ -36176,8 +36237,8 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             vector_name: "#GP",
             vector: GP_VECTOR,
             op: &[
-                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49,
-                0x0f, 0xae, 0xd8,
+                0x49, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0xf3, 0x49, 0x0f, 0xae,
+                0xd8,
             ],
         });
     }
@@ -36802,7 +36863,11 @@ fn avx512_kvm_lea_compat_corpus() {
 #[test]
 fn avx512_kvm_bit_manip_compat_corpus() {
     let cases = compat_bit_manip_cases();
-    assert_eq!(cases.len(), 11, "unexpected compatibility bit-manip corpus size");
+    assert_eq!(
+        cases.len(),
+        11,
+        "unexpected compatibility bit-manip corpus size"
+    );
     let _ = run_compat_state_cases("bit-manip", &cases);
 }
 
@@ -37322,8 +37387,7 @@ fn avx512_kvm_tsx_corpus() {
         return;
     };
 
-    let run_xbegin =
-        kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
+    let run_xbegin = kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
     let run_xabort = kvm_reaches_fallthrough_marker(oracle, &[0xc6, 0xf8, 0x42]);
     let run_xtest = kvm_reaches_fallthrough_marker(oracle, &[0x0f, 0x01, 0xd6]);
     let cases = tsx_cases(run_xbegin, run_xabort, run_xtest);
@@ -37352,8 +37416,7 @@ fn avx512_kvm_tsx_transaction_matrix_corpus() {
         return;
     };
 
-    let run_xbegin =
-        kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
+    let run_xbegin = kvm_reaches_fallthrough_marker(oracle, &[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00]);
     let run_xabort = kvm_reaches_fallthrough_marker(oracle, &[0xc6, 0xf8, 0x42]);
     let run_xtest = kvm_reaches_fallthrough_marker(oracle, &[0x0f, 0x01, 0xd6]);
     let cases: Vec<_> = tsx_cases(run_xbegin, run_xabort, run_xtest)
@@ -37369,9 +37432,15 @@ fn avx512_kvm_tsx_transaction_matrix_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(tally.compared, expected, "unexpected TSX matrix compare count");
+    assert_eq!(
+        tally.compared, expected,
+        "unexpected TSX matrix compare count"
+    );
     assert_eq!(tally.faulted, 0, "TSX matrix corpus should not fault");
-    assert_eq!(tally.interp_err, 0, "TSX matrix corpus should be implemented");
+    assert_eq!(
+        tally.interp_err, 0,
+        "TSX matrix corpus should be implemented"
+    );
     assert_eq!(
         tally.skipped_asm, 0,
         "TSX matrix corpus produced assembler-rejected cases"
@@ -37650,7 +37719,13 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_ext1_edx_nx", 0x8000_0001, 0, Edx, 20),
         p!("cpuid_feature_ext1_edx_rdtscp", 0x8000_0001, 0, Edx, 27),
         p!("cpuid_feature_ext1_edx_lm", 0x8000_0001, 0, Edx, 29),
-        p!("cpuid_feature_ext7_edx_invariant_tsc", 0x8000_0007, 0, Edx, 8),
+        p!(
+            "cpuid_feature_ext7_edx_invariant_tsc",
+            0x8000_0007,
+            0,
+            Edx,
+            8
+        ),
     ]
 }
 
@@ -37834,9 +37909,7 @@ fn avx512_kvm_control_register_edge_corpus() {
 fn avx512_kvm_pcid_control_state_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.label.contains("pcid_control_") || case.label.contains("cpuid_pcid_")
-        })
+        .filter(|case| case.label.contains("pcid_control_") || case.label.contains("cpuid_pcid_"))
         .collect();
     let expected_control = pcid_control_reg_expected_cases();
     let expected_cpuid = pcid_cpuid_expected_cases();
@@ -37851,10 +37924,7 @@ fn avx512_kvm_pcid_control_state_corpus() {
         return;
     };
     assert_eq!(tally.faulted, 0, "silicon faulted on PCID cases");
-    assert_eq!(
-        tally.interp_err, 0,
-        "rax failed to execute a PCID case"
-    );
+    assert_eq!(tally.interp_err, 0, "rax failed to execute a PCID case");
     assert_eq!(
         tally.skipped_asm, 0,
         "PCID corpus produced assembler-rejected cases"
@@ -38468,8 +38538,7 @@ fn avx512_kvm_cache_tlb_address_matrix_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
         .filter(|case| {
-            case.label.contains("_cache_addr_matrix_")
-                || case.label.contains("_tlb_addr_matrix_")
+            case.label.contains("_cache_addr_matrix_") || case.label.contains("_tlb_addr_matrix_")
         })
         .collect();
     assert_eq!(
@@ -38528,8 +38597,7 @@ fn avx512_kvm_cache_tlb_address_matrix_corpus() {
         "all INVPCID address-matrix cases should run"
     );
     assert_eq!(
-        tally.compared,
-        14,
+        tally.compared, 14,
         "all cache/TLB address-matrix cases should compare"
     );
 }
@@ -38835,10 +38903,7 @@ fn avx512_kvm_serialize_edge_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on SERIALIZE edge cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on SERIALIZE edge cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a SERIALIZE edge case"
@@ -38856,10 +38921,7 @@ fn avx512_kvm_serialize_edge_corpus() {
         8,
         "all SERIALIZE edge cases should run"
     );
-    assert_eq!(
-        tally.compared, 8,
-        "all SERIALIZE edge cases should compare"
-    );
+    assert_eq!(tally.compared, 8, "all SERIALIZE edge cases should compare");
 }
 
 #[test]
@@ -38900,7 +38962,11 @@ fn avx512_kvm_rdpid_register_matrix_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_rdpid_reg_matrix_"))
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected RDPID register-matrix corpus size");
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected RDPID register-matrix corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -39105,8 +39171,7 @@ fn avx512_kvm_processor_query_corpus() {
             "only RDPMC cases should feature-skip"
         );
         assert_eq!(
-            tally.compared,
-            cpuid_cases,
+            tally.compared, cpuid_cases,
             "all CPUID cases should compare"
         );
     }
@@ -39665,7 +39730,10 @@ fn avx512_kvm_extended_xsave_corpus() {
         tally.skipped_feature, 0,
         "extended XSAVE cases should not feature-skip"
     );
-    assert_eq!(tally.compared, 12, "all extended XSAVE cases should compare");
+    assert_eq!(
+        tally.compared, 12,
+        "all extended XSAVE cases should compare"
+    );
 }
 
 #[test]
@@ -39700,7 +39768,7 @@ fn avx512_kvm_protection_state_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        19,
+        31,
         "unexpected protection-state edge corpus size"
     );
 
@@ -39728,9 +39796,9 @@ fn avx512_kvm_protection_state_edge_corpus() {
         "protection-state edge corpus produced assembler-rejected cases"
     );
 
-    let expected_smap = if host.supports(Feat::Smap) { 3 } else { 0 };
-    let expected_pku = if host.supports(Feat::Pku) { 13 } else { 0 };
-    let expected_skips = 16 - expected_smap - expected_pku;
+    let expected_smap = if host.supports(Feat::Smap) { 7 } else { 0 };
+    let expected_pku = if host.supports(Feat::Pku) { 17 } else { 0 };
+    let expected_skips = 24 - expected_smap - expected_pku;
     assert_eq!(
         tally.ran_for(Feat::Smap),
         expected_smap,
@@ -39743,7 +39811,7 @@ fn avx512_kvm_protection_state_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Swapgs),
-        3,
+        7,
         "all SWAPGS edge cases should run"
     );
     assert_eq!(
@@ -39752,9 +39820,50 @@ fn avx512_kvm_protection_state_edge_corpus() {
     );
     assert_eq!(
         tally.compared,
-        expected_smap + expected_pku + 3,
+        expected_smap + expected_pku + 7,
         "all supported protection-state edge cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_smap_protection_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Smap && case.label.contains("_protection_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        7,
+        "unexpected SMAP protection edge corpus size"
+    );
+
+    if !HostFeatures::detect().supports(Feat::Smap) {
+        eprintln!("[skip] host lacks SMAP support; SMAP edge cases will skip");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SMAP edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SMAP edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SMAP edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SMAP edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Smap),
+        7,
+        "all SMAP edge cases should run"
+    );
+    assert_eq!(tally.compared, 7, "all SMAP edge cases should compare");
 }
 
 #[test]
@@ -39765,7 +39874,7 @@ fn avx512_kvm_pkru_protection_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        13,
+        17,
         "unexpected PKRU protection edge corpus size"
     );
 
@@ -39792,10 +39901,46 @@ fn avx512_kvm_pkru_protection_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Pku),
-        13,
+        17,
         "all PKRU edge cases should run"
     );
-    assert_eq!(tally.compared, 13, "all PKRU edge cases should compare");
+    assert_eq!(tally.compared, 17, "all PKRU edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_swapgs_protection_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Swapgs && case.label.contains("_protection_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        7,
+        "unexpected SWAPGS protection edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on SWAPGS edge cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SWAPGS edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SWAPGS edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SWAPGS edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Swapgs),
+        7,
+        "all SWAPGS edge cases should run"
+    );
+    assert_eq!(tally.compared, 7, "all SWAPGS edge cases should compare");
 }
 
 #[test]
@@ -39844,12 +39989,19 @@ fn avx512_kvm_fsgsbase_edge_matrix_corpus() {
                 || case.label.contains("_fsgsbase_segment_edge_")
         })
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected FSGSBASE edge-matrix corpus size");
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected FSGSBASE edge-matrix corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(tally.faulted, 0, "silicon faulted on FSGSBASE edge-matrix cases");
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on FSGSBASE edge-matrix cases"
+    );
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute an FSGSBASE edge-matrix case"
@@ -39868,8 +40020,7 @@ fn avx512_kvm_fsgsbase_edge_matrix_corpus() {
         "all FSGSBASE edge-matrix cases should run"
     );
     assert_eq!(
-        tally.compared,
-        8,
+        tally.compared, 8,
         "all FSGSBASE edge-matrix cases should compare"
     );
 }
@@ -40739,7 +40890,10 @@ fn avx512_kvm_core_jcc_matrix_corpus() {
         64,
         "all core Jcc matrix cases should run"
     );
-    assert_eq!(tally.compared, 64, "all core Jcc matrix cases should compare");
+    assert_eq!(
+        tally.compared, 64,
+        "all core Jcc matrix cases should compare"
+    );
 }
 
 #[test]
@@ -40773,9 +40927,7 @@ fn avx512_kvm_core_string_corpus() {
 fn avx512_kvm_core_string_repeat_edge_corpus() {
     let cases: Vec<_> = generated_cases()
         .into_iter()
-        .filter(|case| {
-            case.feat == Feat::Core && case.label.contains("_core_string_repeat_edge_")
-        })
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_string_repeat_edge_"))
         .collect();
     assert_eq!(
         cases.len(),
@@ -40884,10 +41036,7 @@ fn avx512_kvm_core_hle_prefix_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(
-        tally.faulted, 0,
-        "silicon faulted on core HLE prefix cases"
-    );
+    assert_eq!(tally.faulted, 0, "silicon faulted on core HLE prefix cases");
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute a core HLE prefix case"
@@ -42919,7 +43068,11 @@ fn avx512_kvm_adx_edge_corpus() {
         tally.skipped_feature, 0,
         "ADX edge cases should not feature-skip"
     );
-    assert_eq!(tally.ran_for(Feat::Adx), 15, "all ADX edge cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Adx),
+        15,
+        "all ADX edge cases should run"
+    );
     assert_eq!(tally.compared, 15, "all ADX edge cases should compare");
 }
 
@@ -42934,7 +43087,10 @@ fn avx512_kvm_adx_carry_matrix_corpus() {
     let Some(tally) = run_corpus(&cases) else {
         return;
     };
-    assert_eq!(tally.faulted, 0, "silicon faulted on ADX carry-matrix cases");
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on ADX carry-matrix cases"
+    );
     assert_eq!(
         tally.interp_err, 0,
         "rax failed to execute an ADX carry-matrix case"
@@ -42953,8 +43109,7 @@ fn avx512_kvm_adx_carry_matrix_corpus() {
         "all ADX carry-matrix cases should run"
     );
     assert_eq!(
-        tally.compared,
-        8,
+        tally.compared, 8,
         "all ADX carry-matrix cases should compare"
     );
 }
@@ -43028,11 +43183,7 @@ fn avx512_kvm_f16c_mxcsr_round_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_f16c_mxcsr_round_"))
         .collect();
-    assert_eq!(
-        cases.len(),
-        8,
-        "unexpected F16C MXCSR-round corpus size"
-    );
+    assert_eq!(cases.len(), 8, "unexpected F16C MXCSR-round corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -43440,7 +43591,10 @@ fn avx512_kvm_vnni_ifma_edge_corpus() {
         8,
         "all AVX-512 IFMA edge cases should run"
     );
-    assert_eq!(tally.compared, 20, "all VNNI/IFMA edge cases should compare");
+    assert_eq!(
+        tally.compared, 20,
+        "all VNNI/IFMA edge cases should compare"
+    );
 }
 
 #[test]
@@ -44344,7 +44498,11 @@ fn avx512_kvm_avx2_masklane_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_avx2_masklane_edge_"))
         .collect();
-    assert_eq!(cases.len(), 22, "unexpected AVX2 mask/lane edge corpus size");
+    assert_eq!(
+        cases.len(),
+        22,
+        "unexpected AVX2 mask/lane edge corpus size"
+    );
 
     let Some(tally) = run_corpus(&cases) else {
         return;
