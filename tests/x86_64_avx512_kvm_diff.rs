@@ -23997,6 +23997,84 @@ fn compat_condition_code_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "jo_rel8_compat_overflow_taken",
+            op: compat_jcc_rel8_select_ax(0x70),
+            input: compat_condition_seed(RFLAGS_OF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jno_rel8_compat_overflow_clear_taken",
+            op: compat_jcc_rel8_select_ax(0x71),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jae_rel16_compat_carry_clear_taken",
+            op: compat_jcc_rel16_select_ax(0x83),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jbe_rel16_compat_zero_taken",
+            op: compat_jcc_rel16_select_ax(0x86),
+            input: compat_condition_seed(RFLAGS_ZF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "ja_rel32_compat_operand32_above_taken",
+            op: compat_jcc_rel32_select_ax(0x87),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "js_rel8_compat_sign_taken",
+            op: compat_jcc_rel8_select_ax(0x78),
+            input: compat_condition_seed(RFLAGS_SF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jns_rel8_compat_sign_clear_taken",
+            op: compat_jcc_rel8_select_ax(0x79),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jp_rel16_compat_parity_taken",
+            op: compat_jcc_rel16_select_ax(0x8a),
+            input: compat_condition_seed(RFLAGS_PF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jnp_rel16_compat_parity_clear_taken",
+            op: compat_jcc_rel16_select_ax(0x8b),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jl_rel32_compat_operand32_signed_less_taken",
+            op: compat_jcc_rel32_select_ax(0x8c),
+            input: compat_condition_seed(RFLAGS_SF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jge_rel8_compat_signed_greater_equal_taken",
+            op: compat_jcc_rel8_select_ax(0x7d),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jle_rel16_compat_signed_less_equal_zero_taken",
+            op: compat_jcc_rel16_select_ax(0x8e),
+            input: compat_condition_seed(RFLAGS_ZF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "jg_rel32_compat_operand32_signed_greater_taken",
+            op: compat_jcc_rel32_select_ax(0x8f),
+            input: compat_condition_seed(0),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "cmove16_compat_mem_true_preserves_high_rax",
             op: vec![0x0f, 0x44, 0x00],
             input: compat_condition_mem16_input(RFLAGS_ZF, 0x10, 0x2468),
@@ -32780,7 +32858,7 @@ fn avx512_kvm_condition_code_compat_corpus() {
     let cases = compat_condition_code_cases();
     assert_eq!(
         cases.len(),
-        15,
+        28,
         "unexpected compatibility condition-code corpus size"
     );
     let _ = run_compat_state_cases("condition-code", &cases);
