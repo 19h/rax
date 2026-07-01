@@ -18250,6 +18250,45 @@ fn irregular_cases() -> Vec<Case> {
     }
     for &(label, asm, feat) in &[
         (
+            "invd_cache_invd_edge_two_stores",
+            "movq %r8, 72(%rax)\nmovq %r9, 80(%rax)\ninvd\nmovq 72(%rax), %rcx\nmovq 80(%rax), %rdx",
+            CacheInvd,
+        ),
+        (
+            "invd_cache_invd_edge_carry_flag_preserved",
+            "stc\ninvd",
+            CacheInvd,
+        ),
+        (
+            "wbinvd_cache_invd_edge_two_stores",
+            "movq %r8, 88(%rax)\nmovq %r9, 96(%rax)\nwbinvd\nmovq 88(%rax), %rcx\nmovq 96(%rax), %rdx",
+            CacheInvd,
+        ),
+        (
+            "wbinvd_cache_invd_edge_stack_roundtrip",
+            "pushq %r8\nwbinvd\npopq %rcx",
+            CacheInvd,
+        ),
+        (
+            "wbnoinvd_cache_invd_edge_two_stores",
+            "movq %r8, 104(%rax)\nmovq %r9, 112(%rax)\nwbnoinvd\nmovq 104(%rax), %rcx\nmovq 112(%rax), %rdx",
+            Wbnoinvd,
+        ),
+        (
+            "wbnoinvd_cache_invd_edge_flags_to_stack",
+            "cmpq %rcx, %r8\nwbnoinvd\npushfq\npopq %r9",
+            Wbnoinvd,
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat,
+            profile: Int,
+        });
+    }
+    for &(label, asm, feat) in &[
+        (
             "lfence_cache_tlb_edge_load_store",
             "movq 32(%rax), %r8\nlfence\nmovq %r8, 88(%rax)",
             Fence,
@@ -38293,7 +38332,7 @@ fn avx512_kvm_cache_memory_order_corpus() {
             )
         })
         .collect();
-    assert_eq!(cases.len(), 51, "unexpected cache/memory-order corpus size");
+    assert_eq!(cases.len(), 57, "unexpected cache/memory-order corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -38333,17 +38372,64 @@ fn avx512_kvm_cache_memory_order_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::CacheInvd),
-        6,
+        10,
         "all INVD/WBINVD cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Wbnoinvd),
-        4,
+        6,
         "all WBNOINVD cases should run"
     );
     assert_eq!(
-        tally.compared, 51,
+        tally.compared, 57,
         "all cache/memory-order cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_cache_invd_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_cache_invd_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        6,
+        "unexpected INVD/WBINVD/WBNOINVD edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on INVD/WBINVD/WBNOINVD edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute an INVD/WBINVD/WBNOINVD edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "INVD/WBINVD/WBNOINVD edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "INVD/WBINVD/WBNOINVD edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::CacheInvd),
+        4,
+        "all INVD/WBINVD edge cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Wbnoinvd),
+        2,
+        "all WBNOINVD edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 6,
+        "all INVD/WBINVD/WBNOINVD edge cases should compare"
     );
 }
 
