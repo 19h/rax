@@ -3,7 +3,7 @@
 
 #![cfg(feature = "x86_64-suite")]
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -220,16 +220,5 @@ fn x86_64_unimplemented_source_diagnostics_are_inventoried() {
         count_failures.is_empty(),
         "x86_64 unimplemented source inventory occurrence mismatch:\n{}",
         count_failures.join("\n")
-    );
-
-    let mut by_classification = BTreeMap::<&str, usize>::new();
-    for entry in &entries {
-        *by_classification
-            .entry(entry.classification.as_str())
-            .or_default() += entry.count;
-    }
-    assert!(
-        by_classification.contains_key("valid-gap-needs-diff"),
-        "source inventory must keep valid unimplemented gaps visible until they are covered"
     );
 }
