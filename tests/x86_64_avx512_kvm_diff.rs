@@ -28830,18 +28830,32 @@ fn illegal_lock_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
         ("lock_mov_reg_illegal", &[0xf0, 0x48, 0x89, 0xc8]),
         ("lock_lea_mem_illegal", &[0xf0, 0x48, 0x8d, 0x08]),
         ("lock_add_reg_dest_illegal", &[0xf0, 0x48, 0x01, 0xc8]),
+        ("lock_adc_reg_dest_illegal", &[0xf0, 0x48, 0x11, 0xc8]),
         ("lock_or_reg_imm_illegal", &[0xf0, 0x48, 0x83, 0xc8, 0x01]),
         ("lock_cmp_mem_imm_illegal", &[0xf0, 0x83, 0x38, 0x01]),
         (
             "lock_test_mem_imm_illegal",
             &[0xf0, 0xf7, 0x00, 0x01, 0x00, 0x00, 0x00],
         ),
+        ("lock_not_reg_illegal", &[0xf0, 0xf6, 0xd0]),
+        ("lock_neg_reg_illegal", &[0xf0, 0x48, 0xf7, 0xd8]),
         ("lock_imul_mem_illegal", &[0xf0, 0xf7, 0x28]),
         ("lock_inc_reg_illegal", &[0xf0, 0xff, 0xc0]),
         ("lock_push_mem_illegal", &[0xf0, 0xff, 0x30]),
         ("lock_xchg_reg_illegal", &[0xf0, 0x48, 0x87, 0xc8]),
+        ("lock_xadd_reg_illegal", &[0xf0, 0x48, 0x0f, 0xc1, 0xc8]),
+        (
+            "lock_cmpxchg_reg_illegal",
+            &[0xf0, 0x48, 0x0f, 0xb1, 0xc8],
+        ),
         ("lock_bt_mem_imm_illegal", &[0xf0, 0x0f, 0xba, 0x20, 0x01]),
         ("lock_bts_reg_illegal", &[0xf0, 0x0f, 0xab, 0xc8]),
+        ("lock_btr_reg_illegal", &[0xf0, 0x0f, 0xb3, 0xc8]),
+        ("lock_btc_reg_illegal", &[0xf0, 0x0f, 0xbb, 0xc8]),
+        (
+            "lock_btr_imm_reg_illegal",
+            &[0xf0, 0x0f, 0xba, 0xf0, 0x01],
+        ),
         ("lock_cmpxchg8b_reg_illegal", &[0xf0, 0x0f, 0xc7, 0xc8]),
     ]
 }
@@ -32980,7 +32994,7 @@ fn avx512_kvm_bit_manip_compat_corpus() {
 
 #[test]
 fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
-    run_ud_marker_corpus("illegal LOCK prefix", illegal_lock_prefix_cases(), 15);
+    run_ud_marker_corpus("illegal LOCK prefix", illegal_lock_prefix_cases(), 23);
 }
 
 #[test]
