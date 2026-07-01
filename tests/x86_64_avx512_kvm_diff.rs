@@ -15677,6 +15677,26 @@ fn irregular_cases() -> Vec<Case> {
             "sahf_core_flag_edge_clear_status_preserve_of",
             "movw $0x0200, %ax\nsahf",
         ),
+        (
+            "clc_core_flag_edge_after_lazy_carry",
+            "movb $0xff, %r8b\naddb $1, %r8b\nclc",
+        ),
+        (
+            "stc_core_flag_edge_after_lazy_no_carry",
+            "xorl %r8d, %r8d\naddl $1, %r8d\nstc",
+        ),
+        (
+            "cmc_core_flag_edge_after_lazy_carry",
+            "movb $0xff, %r8b\naddb $1, %r8b\ncmc",
+        ),
+        (
+            "lahf_core_flag_edge_after_lazy_add",
+            "movb $0x7f, %r8b\naddb $1, %r8b\nlahf",
+        ),
+        (
+            "sahf_core_flag_edge_preserves_lazy_of",
+            "movl $0x7fffffff, %r8d\naddl $1, %r8d\nmovw $0x0300, %ax\nsahf",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -15764,6 +15784,30 @@ fn irregular_cases() -> Vec<Case> {
         ("movsxd_core_extend_m32_to_r64", "movslq 4(%rax), %r8"),
         ("movsxd_core_extend_r32_default", ".byte 0x63, 0xc1\n"),
         ("movsxd_core_extend_r16_operand", ".byte 0x66, 0x63, 0xc1\n"),
+        (
+            "cbw_core_extend_high_preserve_negative",
+            "movabsq $0xffff000000000080, %rax\ncbtw",
+        ),
+        (
+            "cwde_core_extend_high_clear_negative",
+            "movabsq $0xffff000000008000, %rax\ncwtl",
+        ),
+        (
+            "cdqe_core_extend_high_clear_positive",
+            "movabsq $0xffff00007fffffff, %rax\ncltq",
+        ),
+        (
+            "cwd_core_extend_high_preserve_positive",
+            "movw $0x7fff, %ax\nmovabsq $0xffff00000000ffff, %rdx\ncwtd",
+        ),
+        (
+            "cdq_core_extend_high_clear_negative",
+            "movl $0x80000000, %eax\nmovabsq $0xffff000000000000, %rdx\ncltd",
+        ),
+        (
+            "cqo_core_extend_zero",
+            "xorq %rax, %rax\nmovabsq $-1, %rdx\ncqto",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -35994,7 +36038,7 @@ fn avx512_kvm_flag_edge_corpus() {
             case.label.contains("_core_flag_edge_") || case.label.contains("_flag_control_edge_")
         })
         .collect();
-    assert_eq!(cases.len(), 14, "unexpected flag edge corpus size");
+    assert_eq!(cases.len(), 19, "unexpected flag edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -36014,7 +36058,7 @@ fn avx512_kvm_flag_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Core),
-        7,
+        12,
         "all direct core flag edge cases should run"
     );
     assert_eq!(
@@ -36022,7 +36066,7 @@ fn avx512_kvm_flag_edge_corpus() {
         7,
         "all flag-control edge cases should run"
     );
-    assert_eq!(tally.compared, 14, "all flag edge cases should compare");
+    assert_eq!(tally.compared, 19, "all flag edge cases should compare");
 }
 
 #[test]
@@ -36226,7 +36270,7 @@ fn avx512_kvm_core_extend_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Core && case.label.contains("_core_extend_"))
         .collect();
-    assert_eq!(cases.len(), 30, "unexpected core extension corpus size");
+    assert_eq!(cases.len(), 36, "unexpected core extension corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -36245,7 +36289,7 @@ fn avx512_kvm_core_extend_corpus() {
         "core extension cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 30,
+        tally.compared, 36,
         "all core extension cases should compare"
     );
 }
