@@ -17906,6 +17906,42 @@ fn irregular_cases() -> Vec<Case> {
             Int,
         ),
         (
+            "xgetbv1_xgetbv1_edge_store_result_pair",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $1, %ecx\nxgetbv\nmovl %eax, 64(%rbx)\nmovl %edx, 68(%rbx)",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_copy_result_to_gprs",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $1, %ecx\nxgetbv\nmovl %eax, %r8d\nmovl %edx, %r9d",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_preserves_nonquery_gprs",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovabsq $0x1122334455667788, %r8\nmovabsq $0x8877665544332211, %r9\nmovl $1, %ecx\nxgetbv",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_stack_roundtrip",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nmovl $1, %ecx\nxgetbv\npushq %rax\npushq %rdx\npopq %r9\npopq %r8",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_carry_flag_preserved",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nstc\nmovl $1, %ecx\nxgetbv",
+            Xgetbv1,
+            Int,
+        ),
+        (
+            "xgetbv1_xgetbv1_edge_xcr0_then_xinuse_pair",
+            "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxgetbv\nmovl %eax, 72(%rbx)\nmovl %edx, 76(%rbx)\nmovl $1, %ecx\nxgetbv\nmovl %eax, 80(%rbx)\nmovl %edx, 84(%rbx)",
+            Xgetbv1,
+            Int,
+        ),
+        (
             "xsave64_xrstor64_zmm_roundtrip",
             "movl $0xe7, %eax\nxorl %edx, %edx\nxorl %ecx, %ecx\nxsetbv\nxsave64 240(%rbx)\nvpxord %zmm1, %zmm1, %zmm1\nmovl $0xe7, %eax\nxorl %edx, %edx\nxrstor64 240(%rbx)",
             Xsave,
@@ -39218,7 +39254,7 @@ fn avx512_kvm_processor_state_management_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        34,
+        40,
         "unexpected processor state-management corpus size"
     );
 
@@ -39253,11 +39289,11 @@ fn avx512_kvm_processor_state_management_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Xgetbv1),
-        3,
+        9,
         "all XGETBV1 cases should run"
     );
     assert_eq!(
-        tally.compared, 34,
+        tally.compared, 40,
         "all processor state-management cases should compare"
     );
 }
@@ -39385,7 +39421,7 @@ fn avx512_kvm_xgetbv1_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_xgetbv1_edge_"))
         .collect();
-    assert_eq!(cases.len(), 3, "unexpected XGETBV1 edge corpus size");
+    assert_eq!(cases.len(), 9, "unexpected XGETBV1 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -39405,10 +39441,10 @@ fn avx512_kvm_xgetbv1_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Xgetbv1),
-        3,
+        9,
         "all XGETBV1 edge cases should run"
     );
-    assert_eq!(tally.compared, 3, "all XGETBV1 edge cases should compare");
+    assert_eq!(tally.compared, 9, "all XGETBV1 edge cases should compare");
 }
 
 #[test]
