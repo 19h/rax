@@ -2440,6 +2440,9 @@ impl X86_64Vcpu {
             // AVX10.2 BF8 conversion families use MAP5 opcode 0x74. They are
             // not part of the base CPUID profile and are not implemented here.
             0x74 => self.inject_undefined_instruction(),
+            // AVX10.2 BF16 scalar compare encodings are distinct from the
+            // AVX-512-FP16 VCOMISH/VUCOMISH forms below.
+            0x2E | 0x2F if evex.pp == 1 && !evex.w => self.inject_undefined_instruction(),
             // VUCOMISH/VCOMISH scalar FP16 compare into RFLAGS.
             0x2E if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, false),
             0x2F if evex.pp == 0 && !evex.w => insn::simd::evex_comi(self, ctx, 2, true),

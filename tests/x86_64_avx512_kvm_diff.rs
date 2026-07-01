@@ -35478,12 +35478,28 @@ const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf2, 0x77, 0x08, 0x50, 0xc2],
     ),
     (
+        "avx_vnni_int8_vpdpbssd_zmm_unsupported",
+        &[0x62, 0xf2, 0x77, 0x48, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbssd_mem_unsupported",
+        &[0x62, 0xf2, 0x77, 0x08, 0x50, 0x00],
+    ),
+    (
         "avx_vnni_int8_vpdpbssds_xmm_unsupported",
         &[0x62, 0xf2, 0x77, 0x08, 0x51, 0xc2],
     ),
     (
+        "avx_vnni_int8_vpdpbssds_zmm_unsupported",
+        &[0x62, 0xf2, 0x77, 0x48, 0x51, 0xc2],
+    ),
+    (
         "avx_vnni_int8_vpdpbsud_xmm_unsupported",
         &[0x62, 0xf2, 0x76, 0x08, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbsud_zmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x48, 0x50, 0xc2],
     ),
     (
         "avx_vnni_int8_vpdpbsuds_xmm_unsupported",
@@ -35494,12 +35510,24 @@ const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf2, 0x7c, 0x08, 0x50, 0xc2],
     ),
     (
+        "avx_vnni_int8_vpdpbuud_ymm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x28, 0x50, 0xc2],
+    ),
+    (
+        "avx_vnni_int8_vpdpbuud_zmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x48, 0x50, 0xc2],
+    ),
+    (
         "avx_vnni_int8_vpdpbuuds_xmm_unsupported",
         &[0x62, 0xf2, 0x7c, 0x08, 0x51, 0xc2],
     ),
     (
         "avx_vnni_int16_vpdpwsud_xmm_unsupported",
         &[0x62, 0xf2, 0x76, 0x08, 0xd2, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwsud_zmm_unsupported",
+        &[0x62, 0xf2, 0x76, 0x48, 0xd2, 0xc2],
     ),
     (
         "avx_vnni_int16_vpdpwsuds_xmm_unsupported",
@@ -35510,12 +35538,20 @@ const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf2, 0x75, 0x08, 0xd2, 0xc2],
     ),
     (
+        "avx_vnni_int16_vpdpwusd_mem_unsupported",
+        &[0x62, 0xf2, 0x75, 0x08, 0xd2, 0x00],
+    ),
+    (
         "avx_vnni_int16_vpdpwusds_xmm_unsupported",
         &[0x62, 0xf2, 0x75, 0x08, 0xd3, 0xc2],
     ),
     (
         "avx_vnni_int16_vpdpwuud_xmm_unsupported",
         &[0x62, 0xf2, 0x7c, 0x08, 0xd2, 0xc2],
+    ),
+    (
+        "avx_vnni_int16_vpdpwuud_zmm_unsupported",
+        &[0x62, 0xf2, 0x7c, 0x48, 0xd2, 0xc2],
     ),
     (
         "avx_vnni_int16_vpdpwuuds_xmm_unsupported",
@@ -35537,12 +35573,24 @@ const AVX10_VMINMAX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf3, 0x75, 0x08, 0x52, 0xc2, 0x00],
     ),
     (
+        "avx10_vminmaxps_zmm_unsupported",
+        &[0x62, 0xf3, 0x75, 0x48, 0x52, 0xc2, 0x01],
+    ),
+    (
+        "avx10_vminmaxps_mem_unsupported",
+        &[0x62, 0xf3, 0x75, 0x08, 0x52, 0x00, 0x02],
+    ),
+    (
         "avx10_vminmaxpd_xmm_unsupported",
         &[0x62, 0xf3, 0xf5, 0x08, 0x52, 0xc2, 0x00],
     ),
     (
         "avx10_vminmaxph_xmm_unsupported",
         &[0x62, 0xf3, 0x7c, 0x08, 0x52, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxph_zmm_mask_unsupported",
+        &[0x62, 0xf3, 0x7c, 0x49, 0x52, 0xc2, 0x02],
     ),
     (
         "avx10_vminmaxss_xmm_unsupported",
@@ -35555,6 +35603,10 @@ const AVX10_VMINMAX_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "avx10_vminmaxsh_xmm_unsupported",
         &[0x62, 0xf3, 0x7c, 0x08, 0x53, 0xc2, 0x00],
+    ),
+    (
+        "avx10_vminmaxsh_mask_unsupported",
+        &[0x62, 0xf3, 0x7c, 0x09, 0x53, 0xc2, 0x01],
     ),
 ];
 
@@ -35572,16 +35624,36 @@ const AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf5, 0x7d, 0x08, 0x68, 0xc1],
     ),
     (
+        "avx10_vcvttps2ibs_zmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x48, 0x68, 0xc1],
+    ),
+    (
+        "avx10_vcvttps2ibs_mem_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x68, 0x00],
+    ),
+    (
         "avx10_vcvttps2iubs_xmm_unsupported",
         &[0x62, 0xf5, 0x7d, 0x08, 0x6a, 0xc1],
+    ),
+    (
+        "avx10_vcvttps2iubs_zmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x48, 0x6a, 0xc1],
     ),
     (
         "avx10_vcvttpd2qqs_xmm_unsupported",
         &[0x62, 0xf5, 0xfd, 0x08, 0x6d, 0xc1],
     ),
     (
+        "avx10_vcvttpd2qqs_zmm_unsupported",
+        &[0x62, 0xf5, 0xfd, 0x48, 0x6d, 0xc1],
+    ),
+    (
         "avx10_vcvttpd2uqqs_xmm_unsupported",
         &[0x62, 0xf5, 0xfd, 0x08, 0x6c, 0xc1],
+    ),
+    (
+        "avx10_vcvttpd2uqqs_mem_unsupported",
+        &[0x62, 0xf5, 0xfd, 0x08, 0x6c, 0x00],
     ),
 ];
 
@@ -35599,12 +35671,28 @@ const AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf5, 0x74, 0x08, 0x74, 0xc2],
     ),
     (
+        "avx10_bf8_vcvtbiasph2bf8_zmm_unsupported",
+        &[0x62, 0xf5, 0x74, 0x48, 0x74, 0xc2],
+    ),
+    (
+        "avx10_bf8_vcvtbiasph2bf8_mem_unsupported",
+        &[0x62, 0xf5, 0x74, 0x08, 0x74, 0x00],
+    ),
+    (
         "avx10_bf8_vcvtbiasph2bf8s_xmm_unsupported",
         &[0x62, 0xf5, 0x75, 0x08, 0x74, 0xc2],
     ),
     (
+        "avx10_bf8_vcvtbiasph2bf8s_zmm_unsupported",
+        &[0x62, 0xf5, 0x75, 0x48, 0x74, 0xc2],
+    ),
+    (
         "avx10_bf8_vcvtne2ph2bf8_xmm_unsupported",
         &[0x62, 0xf5, 0x77, 0x08, 0x74, 0xc2],
+    ),
+    (
+        "avx10_bf8_vcvtne2ph2bf8_zmm_unsupported",
+        &[0x62, 0xf5, 0x77, 0x48, 0x74, 0xc2],
     ),
     (
         "avx10_bf8_vcvtne2ph2bf8s_xmm_unsupported",
@@ -35615,12 +35703,20 @@ const AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         &[0x62, 0xf5, 0x7e, 0x08, 0x74, 0xc1],
     ),
     (
+        "avx10_bf8_vcvtneph2bf8_zmm_unsupported",
+        &[0x62, 0xf5, 0x7e, 0x48, 0x74, 0xc1],
+    ),
+    (
         "avx10_bf8_vcvtneph2bf8s_xmm_unsupported",
         &[0x62, 0xf5, 0x5e, 0x08, 0x74, 0xc1],
     ),
     (
         "avx10_bf8_map6_vcvtne2ph2bf8s_xmm_unsupported",
         &[0x62, 0xf6, 0x57, 0x08, 0x74, 0xc2],
+    ),
+    (
+        "avx10_bf8_map6_vcvtne2ph2bf8s_zmm_unsupported",
+        &[0x62, 0xf6, 0x57, 0x48, 0x74, 0xc2],
     ),
     (
         "avx10_bf8_map6_vcvtneph2bf8s_xmm_unsupported",
@@ -35630,6 +35726,86 @@ const AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
 
 fn unsupported_avx10_bf8_convert_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
     AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
+const AVX10_BF16_COMPARE_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx10_vcomsbf16_xmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x2f, 0xc1],
+    ),
+    (
+        "avx10_vcomsbf16_high_regs_unsupported",
+        &[0x62, 0xe5, 0x7d, 0x08, 0x2f, 0xc1],
+    ),
+    (
+        "avx10_vcomsbf16_mem_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x2f, 0x00],
+    ),
+    (
+        "avx10_vcomsbf16_sae_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x18, 0x2f, 0xc1],
+    ),
+    (
+        "avx10_vucomsbf16_xmm_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x2e, 0xc1],
+    ),
+    (
+        "avx10_vucomsbf16_high_regs_unsupported",
+        &[0x62, 0xe5, 0x7d, 0x08, 0x2e, 0xe5],
+    ),
+    (
+        "avx10_vucomsbf16_mem_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x08, 0x2e, 0x00],
+    ),
+    (
+        "avx10_vucomsbf16_sae_unsupported",
+        &[0x62, 0xf5, 0x7d, 0x18, 0x2e, 0xc1],
+    ),
+];
+
+fn unsupported_avx10_bf16_compare_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AVX10_BF16_COMPARE_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
+const AVX10_YMM_EMBEDDED_ROUNDING_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    (
+        "avx10_ymm_er_vaddps_rn_sae_unsupported",
+        &[0x62, 0xf1, 0x74, 0x18, 0x58, 0xc2],
+    ),
+    (
+        "avx10_ymm_er_vaddps_rz_sae_unsupported",
+        &[0x62, 0xf1, 0x74, 0x78, 0x58, 0xc2],
+    ),
+    (
+        "avx10_ymm_er_vaddpd_rd_sae_unsupported",
+        &[0x62, 0xf1, 0xf5, 0x38, 0x58, 0xc2],
+    ),
+    (
+        "avx10_ymm_er_vmulps_ru_sae_unsupported",
+        &[0x62, 0xf1, 0x74, 0x58, 0x59, 0xc2],
+    ),
+    (
+        "avx10_ymm_er_vdivps_rn_sae_unsupported",
+        &[0x62, 0xf1, 0x74, 0x18, 0x5e, 0xc2],
+    ),
+    (
+        "avx10_ymm_er_vsqrtps_rz_sae_unsupported",
+        &[0x62, 0xf1, 0x7c, 0x78, 0x51, 0xc1],
+    ),
+];
+
+fn unsupported_avx10_ymm_embedded_rounding_cases(
+    oracle: &KvmOracle,
+) -> Vec<(&'static str, &'static [u8])> {
+    AVX10_YMM_EMBEDDED_ROUNDING_UNSUPPORTED_CANDIDATES
         .iter()
         .copied()
         .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
@@ -38601,6 +38777,46 @@ fn avx512_kvm_avx10_bf8_convert_unsupported_ud_corpus() {
         return;
     }
     run_ud_marker_corpus("unsupported AVX10 BF8 conversions", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx10_bf16_compare_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx10_bf16_compare_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX10 BF16 compare probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AVX10 BF16 compares", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx10_ymm_embedded_rounding_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx10_ymm_embedded_rounding_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX10 YMM embedded-rounding probes");
+        return;
+    }
+    run_ud_marker_corpus("unsupported AVX10 YMM embedded rounding", cases, expected);
 }
 
 #[test]

@@ -9,6 +9,15 @@
 
 use crate::common::*;
 
+fn assert_missing_idt_ud(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm_no_idt(code, None);
+    let err = run_until_hlt(&mut vcpu).expect_err("instruction should inject #UD");
+    assert!(
+        err.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {err}"
+    );
+}
+
 // ============================================================================
 // VCOMSBF16 Tests - Ordered Scalar BF16 Compare
 // ============================================================================
@@ -23,6 +32,14 @@ fn test_vcomsbf16_xmm_basic() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
+}
+
+#[test]
+fn test_vcomsbf16_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0x62, 0xf5, 0x7d, 0x08, 0x2f, 0xc1, // VCOMSBF16 xmm0, xmm1
+        0xf4, // HLT (should not be reached)
+    ]);
 }
 
 #[test]
@@ -106,6 +123,14 @@ fn test_vucomsbf16_xmm_basic() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
+}
+
+#[test]
+fn test_vucomsbf16_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0x62, 0xf5, 0x7d, 0x08, 0x2e, 0xc1, // VUCOMSBF16 xmm0, xmm1
+        0xf4, // HLT (should not be reached)
+    ]);
 }
 
 #[test]
