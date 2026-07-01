@@ -10,6 +10,7 @@ use super::super::super::insn;
 
 const XSAVE_COMPACTED_FORMAT: u64 = 1 << 63;
 const XSAVE_EXTENDED_COMPONENTS: [u8; 5] = [2, 5, 6, 7, 19];
+const CR4_OSXSAVE: u64 = 1 << 18;
 
 // x86 MIN/MAX semantics differ from IEEE/Rust `f32::min`/`f32::max`.
 // SDM: MIN returns `(dst < src) ? dst : src` and MAX returns `(dst > src) ? dst : src`.
@@ -51,6 +52,15 @@ fn x86_max_f64(dst: f64, src: f64) -> f64 {
 }
 
 impl X86_64Vcpu {
+    #[inline(always)]
+    fn require_cr4_osxsave_for_ud(&mut self) -> Result<bool> {
+        if self.sregs.cr4 & CR4_OSXSAVE == 0 {
+            self.inject_undefined_instruction()?;
+            return Ok(false);
+        }
+        Ok(true)
+    }
+
     pub(in crate::backend::emulator::x86_64) fn execute_sse_add(
         &mut self,
         ctx: &mut InsnContext,
@@ -2012,14 +2022,23 @@ impl X86_64Vcpu {
             }
             3 => {
                 // XRSTORS - Restore processor extended states supervisor.
+                if !self.require_cr4_osxsave_for_ud()? {
+                    return Ok(None);
+                }
                 self.execute_xrstors(ctx)
             }
             4 => {
                 // XSAVEC - Save processor extended states with compaction.
+                if !self.require_cr4_osxsave_for_ud()? {
+                    return Ok(None);
+                }
                 self.execute_xsave_compacted(ctx)
             }
             5 => {
                 // XSAVES - Save processor extended states supervisor.
+                if !self.require_cr4_osxsave_for_ud()? {
+                    return Ok(None);
+                }
                 self.execute_xsave_compacted(ctx)
             }
             _ => self.inject_undefined_instruction(),

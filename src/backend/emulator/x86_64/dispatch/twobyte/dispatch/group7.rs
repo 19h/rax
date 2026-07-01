@@ -8,7 +8,20 @@ use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
 
+const CR4_FSGSBASE: u64 = 1 << 16;
+const CR4_OSXSAVE: u64 = 1 << 18;
+const CR4_PKE: u64 = 1 << 22;
+
 impl X86_64Vcpu {
+    #[inline(always)]
+    fn require_cr4_bit_for_ud(&mut self, bit: u64) -> Result<bool> {
+        if self.sregs.cr4 & bit == 0 {
+            self.inject_undefined_instruction()?;
+            return Ok(false);
+        }
+        Ok(true)
+    }
+
     #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f01(
         &mut self,
@@ -49,7 +62,9 @@ impl X86_64Vcpu {
                 0xD0 => {
                     // XGETBV (0F 01 D0) - read extended control register XCR[ECX].
                     ctx.consume_u8()?; // consume modrm
-                                       // Lenient on CR4.OSXSAVE since the harness reads XCRs directly.
+                    if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
                     let value = match self.regs.rcx as u32 {
                         0 => self.xcr0,
                         1 => self.xgetbv1_value,
@@ -66,7 +81,10 @@ impl X86_64Vcpu {
                 0xD1 => {
                     // XSETBV (0F 01 D1) - write XCR[ECX] from EDX:EAX (privileged).
                     ctx.consume_u8()?; // consume modrm
-                                       // #GP(0) if CPL != 0.
+                    if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
+                    // #GP(0) if CPL != 0.
                     if self.sregs.cr0 & 1 != 0 && (self.sregs.cs.selector & 3) != 0 {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
@@ -177,6 +195,9 @@ impl X86_64Vcpu {
                 0xEE => {
                     // RDPKRU (0x0F 0x01 0xEE) - Read PKRU into EAX, clear EDX
                     ctx.consume_u8()?; // consume modrm
+                    if !self.require_cr4_bit_for_ud(CR4_PKE)? {
+                        return Ok(None);
+                    }
                     if (self.regs.rcx as u32) != 0 {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
@@ -189,6 +210,9 @@ impl X86_64Vcpu {
                 0xEF => {
                     // WRPKRU (0x0F 0x01 0xEF) - Write EAX into PKRU
                     ctx.consume_u8()?; // consume modrm
+                    if !self.require_cr4_bit_for_ud(CR4_PKE)? {
+                        return Ok(None);
+                    }
                     if (self.regs.rcx as u32) != 0 || (self.regs.rdx as u32) != 0 {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
@@ -259,6 +283,9 @@ impl X86_64Vcpu {
                 // FSGSBASE instructions (require F3 prefix)
                 0 if ctx.rep_prefix == Some(0xF3) => {
                     // RDFSBASE - Read FS base to register
+                    if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
+                        return Ok(None);
+                    }
                     let value = if ctx.rex_w() {
                         self.sregs.fs.base
                     } else {
@@ -270,6 +297,9 @@ impl X86_64Vcpu {
                 }
                 1 if ctx.rep_prefix == Some(0xF3) => {
                     // RDGSBASE - Read GS base to register
+                    if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
+                        return Ok(None);
+                    }
                     let value = if ctx.rex_w() {
                         self.sregs.gs.base
                     } else {
@@ -281,6 +311,9 @@ impl X86_64Vcpu {
                 }
                 2 if ctx.rep_prefix == Some(0xF3) => {
                     // WRFSBASE - Write register to FS base
+                    if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
+                        return Ok(None);
+                    }
                     let value = if ctx.rex_w() {
                         self.get_reg(rm, 8)
                     } else {
@@ -292,6 +325,9 @@ impl X86_64Vcpu {
                 }
                 3 if ctx.rep_prefix == Some(0xF3) => {
                     // WRGSBASE - Write register to GS base
+                    if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
+                        return Ok(None);
+                    }
                     let value = if ctx.rex_w() {
                         self.get_reg(rm, 8)
                     } else {
@@ -426,6 +462,9 @@ impl X86_64Vcpu {
                 4 | 6
                     if reg_op == 4 || (ctx.rep_prefix.is_none() && !ctx.operand_size_override) =>
                 {
+                    if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
                     // XSAVE/XSAVEOPT - save x87/SSE/AVX/AVX-512 state selected by
                     // (EDX:EAX) & XCR0. XSAVEOPT may omit clean components, but this
                     // conservative save model is architecturally valid for observable state.
@@ -526,6 +565,9 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 5 => {
+                    if !self.require_cr4_bit_for_ud(CR4_OSXSAVE)? {
+                        return Ok(None);
+                    }
                     // XRSTOR - restore x87/SSE/AVX/AVX-512 state selected by (EDX:EAX) & XCR0.
                     if self.read_mem64(addr + 520)? & (1u64 << 63) != 0 {
                         if self.restore_xsave_compacted_area(addr)? {
