@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm as setup_base_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -16,6 +16,18 @@ use vm_memory::{Bytes, GuestAddress};
 // F2 0F 2B /r             MOVNTSD m64, xmm1      - Move scalar double-precision from xmm1 to m64 using non-temporal hint
 
 const ADDR: u64 = 0x3000; // Address for testing
+
+fn setup_vm(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+) -> (
+    rax::backend::emulator::x86_64::X86_64Vcpu,
+    std::sync::Arc<vm_memory::GuestMemoryMmap>,
+) {
+    let (mut vcpu, mem) = setup_base_vm(code, initial_regs);
+    vcpu.set_sse4a_enabled(true);
+    (vcpu, mem)
+}
 
 // ============================================================================
 // MOVNTSS Tests - Non-Temporal Store of Scalar Single-Precision

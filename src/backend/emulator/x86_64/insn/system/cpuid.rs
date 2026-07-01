@@ -225,6 +225,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // EAX: Same signature as leaf 1 (extended signature)
             let signature: u32 = 0x000006F1;
             let features_ecx = (1u32 << 5)  // LZCNT/ABM
+                             | ((vcpu.sse4a_enabled() as u32) << 6) // SSE4A
                              | (1u32 << 0); // LAHF/SAHF in long mode
             let features_edx = (1u32 << 29)  // LM (Long Mode)
                              | (1u32 << 27)  // RDTSCP instruction available
@@ -312,4 +313,61 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     vcpu.regs.rdx = edx as u64;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::sync::Arc;
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    use crate::backend::emulator::x86_64::cpu::MAX_INSN_LEN;
+
+    fn vcpu() -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        X86_64Vcpu::new(0, mem)
+    }
+
+    fn cpuid_ctx() -> InsnContext {
+        let instruction = [0x0f, 0xa2];
+        let mut bytes = [0; MAX_INSN_LEN];
+        bytes[..instruction.len()].copy_from_slice(&instruction);
+        InsnContext {
+            bytes,
+            bytes_len: instruction.len(),
+            cursor: 2,
+            rex: None,
+            rex2: None,
+            operand_size_override: false,
+            address_size_override: false,
+            rep_prefix: None,
+            op_size: 4,
+            rip_relative_offset: 0,
+            segment_override: None,
+            evex: None,
+            opcode: 0xa2,
+            boundary_gp: false,
+        }
+    }
+
+    #[test]
+    fn cpuid_sse4a_bit_tracks_feature_gate() {
+        let mut vcpu = vcpu();
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 0x8000_0001;
+
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(vcpu.regs.rcx & (1 << 6), 0);
+
+        let mut ctx = cpuid_ctx();
+        vcpu.set_sse4a_enabled(true);
+        vcpu.regs.rax = 0x8000_0001;
+
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(vcpu.regs.rcx & (1 << 6), 1 << 6);
+    }
 }

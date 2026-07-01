@@ -1104,6 +1104,9 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
         size: u8,
     ) -> Result<Option<VcpuExit>> {
+        if !self.sse4a_enabled() {
+            return self.inject_undefined_instruction();
+        }
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
             return self.inject_undefined_instruction();
@@ -2448,4 +2451,76 @@ unsafe fn rsqrt_scalar_f32_native(bits: u32) -> u32 {
 
     let src = _mm_set_ss(f32::from_bits(bits));
     _mm_cvtss_f32(_mm_rsqrt_ss(src)).to_bits()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::sync::Arc;
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+
+    use crate::backend::emulator::x86_64::cpu::MAX_INSN_LEN;
+
+    const DATA_ADDR: u64 = 0x3000;
+
+    fn vcpu() -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        let mut vcpu = X86_64Vcpu::new(0, mem.clone());
+        vcpu.sregs.cs.l = true;
+        (vcpu, mem)
+    }
+
+    fn movnt_scalar_ctx(prefix: u8, opcode: u8) -> InsnContext {
+        let instruction = [prefix, 0x0f, opcode, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00];
+        let mut bytes = [0; MAX_INSN_LEN];
+        bytes[..instruction.len()].copy_from_slice(&instruction);
+        InsnContext {
+            bytes,
+            bytes_len: instruction.len(),
+            cursor: 3,
+            rex: None,
+            rex2: None,
+            operand_size_override: false,
+            address_size_override: false,
+            rep_prefix: Some(prefix),
+            op_size: 4,
+            rip_relative_offset: 0,
+            segment_override: None,
+            evex: None,
+            opcode,
+            boundary_gp: false,
+        }
+    }
+
+    fn is_missing_ud_idt(err: crate::error::Error) -> bool {
+        format!("{err:?}").contains("IDT entry 6 not present")
+    }
+
+    #[test]
+    fn movntss_without_sse4a_injects_ud() {
+        let (mut vcpu, _) = vcpu();
+        let mut ctx = movnt_scalar_ctx(0xf3, 0x2b);
+
+        let err = vcpu.execute_movnt_scalar_store(&mut ctx, 4).unwrap_err();
+
+        assert!(is_missing_ud_idt(err));
+    }
+
+    #[test]
+    fn movntsd_with_sse4a_enabled_stores_scalar() {
+        let (mut vcpu, mem) = vcpu();
+        vcpu.set_sse4a_enabled(true);
+        vcpu.regs.xmm[0][0] = 0x8877_6655_4433_2211;
+        let mut ctx = movnt_scalar_ctx(0xf2, 0x2b);
+
+        vcpu.execute_movnt_scalar_store(&mut ctx, 8)
+            .expect("enabled SSE4A MOVNTSD should execute");
+
+        assert_eq!(
+            mem.read_obj::<u64>(GuestAddress(DATA_ADDR)).unwrap(),
+            0x8877_6655_4433_2211
+        );
+    }
 }

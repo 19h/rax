@@ -86,6 +86,11 @@ pub fn jcc_rel32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, cc: u8) -> Result
 /// JMP FAR ptr16:16/ptr16:32 (0xEA)
 /// Far jump with immediate pointer - loads segment:offset from instruction.
 pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if vcpu.sregs.cs.l {
+        vcpu.inject_exception(6, None)?;
+        return Ok(None);
+    }
+
     let offset = match ctx.op_size {
         2 => ctx.consume_u16()? as u64,
         4 => ctx.consume_u32()? as u64,
@@ -213,5 +218,33 @@ mod tests {
         jcc_rel8(&mut vcpu, &mut ctx, 0x5).unwrap();
 
         assert_eq!(vcpu.regs.rip, HIGH_RIP + 2);
+    }
+
+    fn is_missing_ud_idt(err: Error) -> bool {
+        format!("{err:?}").contains("IDT entry 6 not present")
+    }
+
+    #[test]
+    fn long_mode_jmp_far_ptr_injects_ud() {
+        let mut vcpu = long_mode_vcpu(0x2);
+        let mut ctx = context(&[0xEA, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00], 0xEA);
+
+        let err = jmp_far_ptr(&mut vcpu, &mut ctx).unwrap_err();
+
+        assert!(is_missing_ud_idt(err));
+        assert_eq!(vcpu.regs.rip, HIGH_RIP);
+    }
+
+    #[test]
+    fn long_mode_jmp_far_ptr16_injects_ud() {
+        let mut vcpu = long_mode_vcpu(0x2);
+        let mut ctx = context(&[0x66, 0xEA, 0x00, 0x00, 0x08, 0x00], 0xEA);
+        ctx.cursor = 2;
+        ctx.op_size = 2;
+
+        let err = jmp_far_ptr(&mut vcpu, &mut ctx).unwrap_err();
+
+        assert!(is_missing_ud_idt(err));
+        assert_eq!(vcpu.regs.rip, HIGH_RIP);
     }
 }

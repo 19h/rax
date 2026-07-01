@@ -299,6 +299,10 @@ pub struct X86_64Vcpu {
     /// advertise this extension, so the opcode is disabled unless a semantic
     /// harness opts in explicitly.
     pub(super) vp2intersect: bool,
+    /// Enable AMD SSE4A instructions. The base emulated CPUID profile does not
+    /// advertise this extension, so its opcodes must #UD unless a semantic
+    /// harness opts in explicitly.
+    pub(super) sse4a: bool,
     /// Enable AVX10.2 media dot-product instructions (AVX_VNNI_INT8 and
     /// AVX_VNNI_INT16 families). The base emulated CPUID profile does not
     /// advertise these extensions, so their opcodes must #UD unless a semantic
@@ -947,6 +951,7 @@ impl X86_64Vcpu {
             xgetbv1_value: 0,
             xeon_phi_avx512: false,
             vp2intersect: false,
+            sse4a: false,
             avx10_media: false,
             avx10_vminmax: false,
             avx10_sat_convert: false,
@@ -1005,6 +1010,16 @@ impl X86_64Vcpu {
     #[inline]
     pub(in crate::backend::emulator::x86_64) fn vp2intersect_enabled(&self) -> bool {
         self.vp2intersect
+    }
+
+    /// Enable or disable AMD SSE4A instructions for semantic harnesses.
+    pub fn set_sse4a_enabled(&mut self, enabled: bool) {
+        self.sse4a = enabled;
+    }
+
+    #[inline]
+    pub(in crate::backend::emulator::x86_64) fn sse4a_enabled(&self) -> bool {
+        self.sse4a
     }
 
     /// Enable or disable AVX10.2 media dot-product instructions for semantic harnesses.
