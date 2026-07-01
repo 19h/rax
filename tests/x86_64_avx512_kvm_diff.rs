@@ -16175,6 +16175,14 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    if host_cpu_flag("pku") {
+        out.push(Case {
+            label: "cpuid_cpuid_edge_ospke_reflects_cr4_pke".to_string(),
+            asm: "movl $7, %eax\nxorl %ecx, %ecx\ncpuid\nbtl $4, %ecx\nsetc %r8b\nmovq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $7, %eax\nxorl %ecx, %ecx\ncpuid\nbtl $4, %ecx\nsetc %r9b\nxorb $1, %r8b\nandb %r9b, %r8b\nmovzbl %r8b, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax".to_string(),
+            feat: Cpuid,
+            profile: Int,
+        });
+    }
 
     for &(label, asm) in &[
         (
@@ -33564,6 +33572,10 @@ fn pcid_cpuid_expected_cases() -> usize {
     if host_cpu_flag("pcid") { 1 } else { 0 }
 }
 
+fn pku_cpuid_expected_cases() -> usize {
+    if host_cpu_flag("pku") { 1 } else { 0 }
+}
+
 #[derive(Clone, Copy)]
 enum CpuidReg {
     Eax,
@@ -33617,30 +33629,57 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
     }
 
     &[
+        p!("cpuid_feature_leaf1_ecx_sse3", 1, 0, Ecx, 0),
         p!("cpuid_feature_leaf1_ecx_pclmulqdq", 1, 0, Ecx, 1),
         p!("cpuid_feature_leaf1_ecx_fma", 1, 0, Ecx, 12),
         p!("cpuid_feature_leaf1_ecx_cx16", 1, 0, Ecx, 13),
+        p!("cpuid_feature_leaf1_ecx_pcid", 1, 0, Ecx, 17),
+        p!("cpuid_feature_leaf1_ecx_sse4_1", 1, 0, Ecx, 19),
+        p!("cpuid_feature_leaf1_ecx_sse4_2", 1, 0, Ecx, 20),
         p!("cpuid_feature_leaf1_ecx_movbe", 1, 0, Ecx, 22),
+        p!("cpuid_feature_leaf1_ecx_popcnt", 1, 0, Ecx, 23),
         p!("cpuid_feature_leaf1_ecx_aes", 1, 0, Ecx, 25),
+        p!("cpuid_feature_leaf1_ecx_xsave", 1, 0, Ecx, 26),
+        p!("cpuid_feature_leaf1_ecx_osxsave", 1, 0, Ecx, 27),
+        p!("cpuid_feature_leaf1_ecx_avx", 1, 0, Ecx, 28),
         p!("cpuid_feature_leaf1_ecx_f16c", 1, 0, Ecx, 29),
         p!("cpuid_feature_leaf1_ecx_rdrand", 1, 0, Ecx, 30),
+        p!("cpuid_feature_leaf1_edx_fpu", 1, 0, Edx, 0),
+        p!("cpuid_feature_leaf1_edx_tsc", 1, 0, Edx, 4),
+        p!("cpuid_feature_leaf1_edx_msr", 1, 0, Edx, 5),
+        p!("cpuid_feature_leaf1_edx_pae", 1, 0, Edx, 6),
+        p!("cpuid_feature_leaf1_edx_cx8", 1, 0, Edx, 8),
+        p!("cpuid_feature_leaf1_edx_apic", 1, 0, Edx, 9),
         p!("cpuid_feature_leaf1_edx_sep", 1, 0, Edx, 11),
+        p!("cpuid_feature_leaf1_edx_pge", 1, 0, Edx, 13),
+        p!("cpuid_feature_leaf1_edx_cmov", 1, 0, Edx, 15),
+        p!("cpuid_feature_leaf1_edx_clflush", 1, 0, Edx, 19),
+        p!("cpuid_feature_leaf1_edx_mmx", 1, 0, Edx, 23),
+        p!("cpuid_feature_leaf1_edx_fxsr", 1, 0, Edx, 24),
+        p!("cpuid_feature_leaf1_edx_sse", 1, 0, Edx, 25),
+        p!("cpuid_feature_leaf1_edx_sse2", 1, 0, Edx, 26),
         p!("cpuid_feature_leaf7_0_ebx_fsgsbase", 7, 0, Ebx, 0),
         p!("cpuid_feature_leaf7_0_ebx_bmi1", 7, 0, Ebx, 3),
+        p!("cpuid_feature_leaf7_0_ebx_avx2", 7, 0, Ebx, 5),
         p!("cpuid_feature_leaf7_0_ebx_bmi2", 7, 0, Ebx, 8),
+        p!("cpuid_feature_leaf7_0_ebx_invpcid", 7, 0, Ebx, 10),
         p!("cpuid_feature_leaf7_0_ebx_avx512f", 7, 0, Ebx, 16),
         p!("cpuid_feature_leaf7_0_ebx_avx512dq", 7, 0, Ebx, 17),
         p!("cpuid_feature_leaf7_0_ebx_rdseed", 7, 0, Ebx, 18),
         p!("cpuid_feature_leaf7_0_ebx_adx", 7, 0, Ebx, 19),
+        p!("cpuid_feature_leaf7_0_ebx_smap", 7, 0, Ebx, 20),
         p!("cpuid_feature_leaf7_0_ebx_avx512ifma", 7, 0, Ebx, 21),
         p!("cpuid_feature_leaf7_0_ebx_clflushopt", 7, 0, Ebx, 23),
         p!("cpuid_feature_leaf7_0_ebx_clwb", 7, 0, Ebx, 24),
         p!("cpuid_feature_leaf7_0_ebx_avx512cd", 7, 0, Ebx, 28),
+        p!("cpuid_feature_leaf7_0_ebx_sha", 7, 0, Ebx, 29),
         p!("cpuid_feature_leaf7_0_ebx_avx512bw", 7, 0, Ebx, 30),
         p!("cpuid_feature_leaf7_0_ebx_avx512vl", 7, 0, Ebx, 31),
         p!("cpuid_feature_leaf7_0_ecx_avx512vbmi", 7, 0, Ecx, 1),
+        p!("cpuid_feature_leaf7_0_ecx_pku", 7, 0, Ecx, 3),
         p!("cpuid_feature_leaf7_0_ecx_waitpkg", 7, 0, Ecx, 5),
         p!("cpuid_feature_leaf7_0_ecx_avx512vbmi2", 7, 0, Ecx, 6),
+        p!("cpuid_feature_leaf7_0_ecx_gfni", 7, 0, Ecx, 8),
         p!("cpuid_feature_leaf7_0_ecx_vaes", 7, 0, Ecx, 9),
         p!("cpuid_feature_leaf7_0_ecx_vpclmulqdq", 7, 0, Ecx, 10),
         p!("cpuid_feature_leaf7_0_ecx_avx512vnni", 7, 0, Ecx, 11),
@@ -33656,6 +33695,9 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_ext1_ecx_lahf_lm", 0x8000_0001, 0, Ecx, 0),
         p!("cpuid_feature_ext1_ecx_lzcnt", 0x8000_0001, 0, Ecx, 5),
         p!("cpuid_feature_ext1_edx_syscall", 0x8000_0001, 0, Edx, 11),
+        p!("cpuid_feature_ext1_edx_nx", 0x8000_0001, 0, Edx, 20),
+        p!("cpuid_feature_ext1_edx_rdtscp", 0x8000_0001, 0, Edx, 27),
+        p!("cpuid_feature_ext1_edx_lm", 0x8000_0001, 0, Edx, 29),
     ]
 }
 
@@ -34933,9 +34975,11 @@ fn avx512_kvm_processor_query_corpus() {
         .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
         .collect();
     let pcid_cpuid_cases = pcid_cpuid_expected_cases();
+    let pku_cpuid_cases = pku_cpuid_expected_cases();
+    let cpuid_cases = 23 + pcid_cpuid_cases + pku_cpuid_cases;
     assert_eq!(
         cases.len(),
-        35 + pcid_cpuid_cases,
+        12 + cpuid_cases,
         "unexpected processor-query corpus size"
     );
 
@@ -34958,7 +35002,7 @@ fn avx512_kvm_processor_query_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Cpuid),
-        23 + pcid_cpuid_cases,
+        cpuid_cases,
         "all CPUID cases should run"
     );
     if host.supports(Feat::Rdpmc) {
@@ -34969,7 +35013,7 @@ fn avx512_kvm_processor_query_corpus() {
         );
         assert_eq!(
             tally.compared,
-            35 + pcid_cpuid_cases,
+            12 + cpuid_cases,
             "all processor-query cases should compare"
         );
     } else {
@@ -34979,7 +35023,7 @@ fn avx512_kvm_processor_query_corpus() {
         );
         assert_eq!(
             tally.compared,
-            23 + pcid_cpuid_cases,
+            cpuid_cases,
             "all CPUID cases should compare"
         );
     }
@@ -35036,7 +35080,8 @@ fn avx512_kvm_cpuid_edge_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Cpuid && case.label.contains("_cpuid_edge_"))
         .collect();
-    assert_eq!(cases.len(), 10, "unexpected CPUID edge corpus size");
+    let expected = 10 + pku_cpuid_expected_cases();
+    assert_eq!(cases.len(), expected, "unexpected CPUID edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35056,10 +35101,13 @@ fn avx512_kvm_cpuid_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Cpuid),
-        10,
+        expected,
         "all CPUID edge cases should run"
     );
-    assert_eq!(tally.compared, 10, "all CPUID edge cases should compare");
+    assert_eq!(
+        tally.compared, expected,
+        "all CPUID edge cases should compare"
+    );
 }
 
 #[test]

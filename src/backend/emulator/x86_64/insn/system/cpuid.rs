@@ -185,6 +185,8 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 8) // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
                         | (1u32 << 6) // AVX512VBMI2
                         | (1u32 << 5) // WAITPKG
+                        | (((vcpu.sregs.cr4 >> 22) as u32 & 1) << 4) // OSPKE
+                        | (1u32 << 3) // PKU (RDPKRU/WRPKRU implemented)
                         | (1u32 << 1); // AVX512VBMI
                                        // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
                                        // the emulator does not enforce it (ENDBR is a NOP, indirect
