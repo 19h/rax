@@ -20546,6 +20546,51 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    // One-bit rotate-through-carry cases with explicit carry-in. The snippets
+    // save CF/OF immediately after RCL/RCR, then normalize the data result and
+    // flag bits into GPRs so later comparison instructions cannot mask defects.
+    for &(label, asm) in &[
+        (
+            "rcl_core_rotate_flag_edge_b_cf0_high_bit",
+            "clc\nmovb $0x80, %r8b\nrclb $1, %r8b\npushfq\npopq %r9\nandq $0x801, %r9\nmovzbl %r8b, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcl_core_rotate_flag_edge_b_cf1_zero",
+            "stc\nmovb $0x00, %r8b\nrclb $1, %r8b\npushfq\npopq %r9\nandq $0x801, %r9\nmovzbl %r8b, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcr_core_rotate_flag_edge_b_cf1_low_bit",
+            "stc\nmovb $0x01, %r8b\nrcrb $1, %r8b\npushfq\npopq %r9\nandq $0x801, %r9\nmovzbl %r8b, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcr_core_rotate_flag_edge_b_cf0_high_bit",
+            "clc\nmovb $0x80, %r8b\nrcrb $1, %r8b\npushfq\npopq %r9\nandq $0x801, %r9\nmovzbl %r8b, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcl_core_rotate_flag_edge_w_cf0_sign_flip",
+            "clc\nmovw $0x7fff, %r8w\nrclw $1, %r8w\npushfq\npopq %r9\nandq $0x801, %r9\nmovzwl %r8w, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcr_core_rotate_flag_edge_l_cf1_injects_sign",
+            "stc\nmovl $0x00000002, %r8d\nrcrl $1, %r8d\npushfq\npopq %r9\nandq $0x801, %r9\nmovl %r8d, %ecx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcl_core_rotate_flag_edge_q_cf1_high_bit",
+            "stc\nmovabsq $0x8000000000000000, %r8\nrclq $1, %r8\npushfq\npopq %r9\nandq $0x801, %r9\nmovq %r8, %rcx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+        (
+            "rcr_core_rotate_flag_edge_q_cf0_low_bit",
+            "clc\nmovq $1, %r8\nrcrq $1, %r8\npushfq\npopq %r9\nandq $0x801, %r9\nmovq %r8, %rcx\nxorq %r8, %r8\ncmpq %r9, %r9",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Core,
+            profile: Int,
+        });
+    }
+
     // Zero-count group-2 shifts/rotates and SHLD/SHRD are architectural no-ops
     // for both data and flags. These cases seed non-trivial status flags, then
     // use immediate-zero, masked-immediate, and CL-zero forms across register
@@ -35478,6 +35523,48 @@ fn avx512_kvm_core_shift_width_corpus() {
     assert_eq!(
         tally.compared, 36,
         "all core shift-width cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_core_rotate_flag_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.feat == Feat::Core && case.label.contains("_core_rotate_flag_edge_"))
+        .collect();
+    assert_eq!(
+        cases.len(),
+        8,
+        "unexpected core rotate flag-edge corpus size"
+    );
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on core rotate flag-edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a core rotate flag-edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "core rotate flag-edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "core rotate flag-edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Core),
+        8,
+        "all core rotate flag-edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all core rotate flag-edge cases should compare"
     );
 }
 
