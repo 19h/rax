@@ -1,7 +1,7 @@
 //! Bit test instructions: BT, BTS, BTR, BTC.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
@@ -267,12 +267,7 @@ pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 vcpu.set_reg(rm, new_val, op_size);
             }
         }
-        _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented 0F BA /{} at RIP={:#x}",
-                reg_op, vcpu.regs.rip
-            )));
-        }
+        _ => unreachable!("0F BA reg_op is masked to three bits"),
     }
     // Clear lazy flags since we explicitly set CF
     vcpu.clear_lazy_flags();

@@ -1,6 +1,6 @@
 //! Core shift and rotate execution helpers.
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::X86_64Vcpu;
 use super::super::super::flags;
@@ -139,7 +139,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             let of = Some(false);
             (result, cf, of)
         }
-        _ => return Err(Error::Emulator(format!("unimplemented shift8 op: {}", op))),
+        _ => unreachable!("shift8 op is masked to three bits"),
     };
 
     if !is_rotate {
@@ -340,7 +340,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             let of = Some(false);
             (result, cf, of)
         }
-        _ => return Err(Error::Emulator(format!("unimplemented shift op: {}", op))),
+        _ => unreachable!("shift op is masked to three bits"),
     };
 
     if !is_rotate {

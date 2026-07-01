@@ -4,7 +4,7 @@
 //! based on the ModR/M reg field.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
@@ -155,7 +155,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             let ax = ((remainder as i8 as u8 as u16) << 8) | (quotient as i8 as u8 as u16);
             vcpu.set_reg(0, ax as u64, 2);
         }
-        _ => return Err(Error::Emulator(format!("unimplemented 0xF6 /op: {}", op))),
+        _ => unreachable!("0xF6 group op is masked to three bits"),
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -456,7 +456,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 _ => {}
             }
         }
-        _ => return Err(Error::Emulator(format!("unimplemented 0xF7 /op: {}", op))),
+        _ => unreachable!("0xF7 group op is masked to three bits"),
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
