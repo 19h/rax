@@ -1977,6 +1977,7 @@ const GENERATED_A64_DIFF_SOURCES: &[&str] = &[
     "sve/convert.rs",
     "sve/float.rs",
     "sve/load.rs",
+    "sve/load_part2.rs",
     "sve/logical.rs",
     "sve/other.rs",
     "sve/predicate.rs",
@@ -2166,7 +2167,9 @@ fn generated_branch_immediate_cases() -> Vec<(String, u32)> {
 fn generated_branch_register_cases() -> Vec<(String, u32, u32)> {
     let source = include_str!("arm/generated/a64/branch/unconditional.rs");
     let mut by_encoding = std::collections::BTreeMap::new();
-    for (label, insn, fields) in parse_generated_a64_cases_with_fields("branch/register", source) {
+    for (label, insn, fields) in
+        parse_generated_a64_cases_with_fields_and_asm("branch/register", source)
+    {
         if !branch_register_in_tiny_program(&fields) {
             continue;
         }
@@ -2641,6 +2644,10 @@ fn generated_sve_prefetch_cases() -> Vec<(String, u32)> {
 fn generated_sve_base_imm_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2661,6 +2668,10 @@ fn generated_sve_base_imm_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_contiguous_base_imm_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2679,14 +2690,22 @@ fn generated_sve_contiguous_base_imm_memory_cases() -> Vec<(String, u32)> {
 }
 
 fn generated_sve_ldnf1_memory_cases() -> Vec<(String, u32)> {
-    let source = include_str!("arm/generated/a64/sve/load.rs");
+    let sources = [
+        ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
+    ];
     let mut by_encoding = std::collections::BTreeMap::new();
-    let parsed = parse_generated_a64_cases_with_fields_and_asm("sve/load", source);
-    for (label, insn, fields) in parsed {
-        if !sve_ldnf1_memory_in_scratch_window(&label, &fields) {
-            continue;
+    for (family, source) in sources {
+        let parsed = parse_generated_a64_cases_with_fields_and_asm(family, source);
+        for (label, insn, fields) in parsed {
+            if !sve_ldnf1_memory_in_scratch_window(&label, &fields) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
         }
-        by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
         .into_iter()
@@ -2695,14 +2714,22 @@ fn generated_sve_ldnf1_memory_cases() -> Vec<(String, u32)> {
 }
 
 fn generated_sve_replicate_memory_cases() -> Vec<(String, u32)> {
-    let source = include_str!("arm/generated/a64/sve/load.rs");
+    let sources = [
+        ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
+    ];
     let mut by_encoding = std::collections::BTreeMap::new();
-    let parsed = parse_generated_a64_cases_with_fields_and_asm("sve/load", source);
-    for (label, insn, fields) in parsed {
-        if !sve_replicate_memory_in_scratch_window(&label, &fields) {
-            continue;
+    for (family, source) in sources {
+        let parsed = parse_generated_a64_cases_with_fields_and_asm(family, source);
+        for (label, insn, fields) in parsed {
+            if !sve_replicate_memory_in_scratch_window(&label, &fields) {
+                continue;
+            }
+            by_encoding.entry(insn).or_insert(label);
         }
-        by_encoding.entry(insn).or_insert(label);
     }
     by_encoding
         .into_iter()
@@ -2713,6 +2740,10 @@ fn generated_sve_replicate_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_non_temporal_imm_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2734,6 +2765,10 @@ fn generated_sve_non_temporal_imm_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_non_temporal_reg_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2755,6 +2790,10 @@ fn generated_sve_non_temporal_reg_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_multi_reg_reg_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2776,6 +2815,10 @@ fn generated_sve_multi_reg_reg_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_ldst_reg_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -2797,6 +2840,10 @@ fn generated_sve_ldst_reg_memory_cases() -> Vec<(String, u32)> {
 fn generated_sve_vector_offset_memory_cases() -> Vec<(String, u32)> {
     let sources = [
         ("sve/load", include_str!("arm/generated/a64/sve/load.rs")),
+        (
+            "sve/load_part2",
+            include_str!("arm/generated/a64/sve/load_part2.rs"),
+        ),
         ("sve/store", include_str!("arm/generated/a64/sve/store.rs")),
     ];
     let mut by_encoding = std::collections::BTreeMap::new();
@@ -3802,7 +3849,7 @@ fn generated_a64_case_selectors_are_non_empty() {
         ("generated_sve_other_cases", 1643),
         ("generated_sve_prefetch_cases", 444),
         ("generated_sve_base_imm_memory_cases", 48),
-        ("generated_sve_contiguous_base_imm_memory_cases", 552),
+        ("generated_sve_contiguous_base_imm_memory_cases", 520),
         ("generated_sve_ldnf1_memory_cases", 160),
         ("generated_sve_replicate_memory_cases", 288),
         ("generated_sve_non_temporal_imm_memory_cases", 80),
@@ -4255,7 +4302,13 @@ fn sve_ldst_reg_memory_in_scratch_window(
     }
     let rm = fields.get("Rm").copied().unwrap_or(31);
     let rn = fields.get("Rn").copied().unwrap_or(31);
-    rn != 31 && (rm == 31 || rn != rm)
+    if rn == 31 {
+        return false;
+    }
+    if rm == 31 {
+        return !mnemonic.starts_with("st");
+    }
+    rn != rm
 }
 
 fn sve_vector_offset_memory_in_scratch_window(
@@ -4340,6 +4393,12 @@ fn branch_immediate_in_tiny_program(fields: &std::collections::BTreeMap<String, 
 }
 
 fn branch_register_in_tiny_program(fields: &std::collections::BTreeMap<String, i32>) -> bool {
+    if !["Z", "op", "A", "M", "Rm", "Rn"]
+        .iter()
+        .all(|field| fields.contains_key(*field))
+    {
+        return false;
+    }
     if fields.get("Z").copied().unwrap_or(0) != 0
         || fields.get("A").copied().unwrap_or(0) != 0
         || fields.get("M").copied().unwrap_or(0) != 0
