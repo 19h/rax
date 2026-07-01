@@ -16308,6 +16308,26 @@ fn irregular_cases() -> Vec<Case> {
             "sysexit_fast_syscall_edge_rexw_loads_rsp",
             "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $0x20000, %rcx\nleaq 2f(%rip), %rdx\nsysexitq\n2:\ncmpq $0x20000, %rsp\nsete %r9b\nmovzbq %r9b, %r9\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovq %r9, %rcx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nmovq $0x8485, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
         ),
+        (
+            "syscall_fast_syscall_edge_preserves_rax_rdi",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nleaq 2f(%rip), %r8\nmovabsq $0x123456789abcdef0, %rax\nsyscall\n2:\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovabsq $0x123456789abcdef0, %r9\ncmpq %r9, %rax\nsete %cl\ncmpq $0x4000, %rdi\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nmovq $0x5153, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "syscall_fast_syscall_edge_fmask_clears_status_flags",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nmovl $0x8d5, %eax\nxorl %edx, %edx\nmovl $0xc0000084, %ecx\nwrmsr\npushq $0x8d7\npopfq\nsyscall\nmovq $0xbad, %rbx\njmp 2f\n1:\npushfq\npopq %r9\nandq $0x8d5, %r9\ntestq %r9, %r9\nsetz %al\nmovq %r11, %r10\nandq $0x8d5, %r10\ncmpq $0x8d5, %r10\nsete %dl\nandb %dl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nxorq %r10, %r10\nmovq $0x5154, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n2:",
+        ),
+        (
+            "sysret_fast_syscall_edge_preserves_rsp",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovabsq $0x20080, %rsp\nleaq 2f(%rip), %rcx\nmovq $0x202, %r11\nsysretq\n2:\nmovabsq $0x20080, %r8\ncmpq %r8, %rsp\nsete %r9b\nmovzbq %r9b, %r9\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovq %r9, %rcx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nmovq $0x6264, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
+        (
+            "sysenter_fast_syscall_edge_preserves_non_query_gprs",
+            "movq %rax, %rdi\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovl $0x175, %ecx\nmovl $0x20000, %eax\nxorl %edx, %edx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0x176, %ecx\nwrmsr\nmovabsq $0x1122334455667788, %r8\nmovabsq $0x8877665544332211, %r9\nsysenter\nmovq $0xbad, %rbx\njmp 2f\n1:\nmovabsq $0x1122334455667788, %rax\ncmpq %rax, %r8\nsete %cl\nmovabsq $0x8877665544332211, %rax\ncmpq %rax, %r9\nsete %dl\nandb %dl, %cl\ncmpq $0x20000, %rsp\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nmovq $0x7375, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n2:",
+        ),
+        (
+            "sysexit_fast_syscall_edge_preserves_r8_and_rsp",
+            "movq %rax, %rdi\nmovl $0xc0000080, %ecx\nrdmsr\norl $1, %eax\nwrmsr\nmovabsq $0x0018000800000000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000081, %ecx\nwrmsr\nleaq 1f(%rip), %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nmovl $0xc0000082, %ecx\nwrmsr\nxorq %rax, %rax\nxorq %rdx, %rdx\nmovl $0xc0000084, %ecx\nwrmsr\nmovl $0x174, %ecx\nmovl $0x8, %eax\nxorl %edx, %edx\nwrmsr\nmovabsq $0x20040, %rcx\nleaq 2f(%rip), %rdx\nmovabsq $0x1122334455667788, %r8\nsysexitq\n2:\nmovabsq $0x1122334455667788, %r9\ncmpq %r9, %r8\nsete %r9b\ncmpq $0x20040, %rsp\nsete %al\nandb %al, %r9b\nmovzbq %r9b, %r9\nsyscall\nmovq $0xbad, %rbx\njmp 3f\n1:\nmovq %r9, %rcx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\nmovq $0x8486, %rbx\nmovq $0x8888, %r8\ncmpq %r8, %r8\n3:",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -38657,7 +38677,7 @@ fn avx512_kvm_fast_syscall_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::FastSyscall)
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected fast syscall corpus size");
+    assert_eq!(cases.len(), 13, "unexpected fast syscall corpus size");
 
     if !HostFeatures::detect().supports(Feat::FastSyscall) {
         eprintln!("[skip] host lacks SYSCALL or SYSENTER support");
@@ -38676,7 +38696,7 @@ fn avx512_kvm_fast_syscall_corpus() {
         tally.skipped_asm, 0,
         "fast syscall corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.compared, 8, "all fast syscall cases should compare");
+    assert_eq!(tally.compared, 13, "all fast syscall cases should compare");
 }
 
 #[test]
@@ -38685,7 +38705,7 @@ fn avx512_kvm_fast_syscall_edge_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::FastSyscall && case.label.contains("_fast_syscall_edge_"))
         .collect();
-    assert_eq!(cases.len(), 4, "unexpected fast syscall edge corpus size");
+    assert_eq!(cases.len(), 9, "unexpected fast syscall edge corpus size");
 
     if !HostFeatures::detect().supports(Feat::FastSyscall) {
         eprintln!("[skip] host lacks SYSCALL or SYSENTER support");
@@ -38713,11 +38733,11 @@ fn avx512_kvm_fast_syscall_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::FastSyscall),
-        4,
+        9,
         "all fast syscall edge cases should run"
     );
     assert_eq!(
-        tally.compared, 4,
+        tally.compared, 9,
         "all fast syscall edge cases should compare"
     );
 }
