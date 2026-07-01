@@ -5008,14 +5008,12 @@ fn smir_native_m0_add() {
 }
 
 // #163: a guest block that overwrites RBP must NOT be able to pivot the host
-// stack. The epilogue deallocates the frame with `lea rsp, [rsp + frame]`
-// (frame-size based, RBP-independent) rather than `mov rsp, rbp`, so the block
-// returns cleanly with RAX intact. With the old `mov rsp, rbp` teardown the
-// bogus guest RBP becomes RSP and `pop rbp; ret` faults / hijacks control.
+// stack. The native lowerer now rejects guest RBP destinations before emitting
+// code so the epilogue can never consume a guest-controlled frame pointer.
 #[test]
-fn smir_native_rbp_clobber_does_not_pivot_stack() {
+fn smir_native_rbp_clobber_is_rejected() {
     use rax::smir::ir::{FunctionBuilder, Terminator};
-    use rax::smir::lower::SmirLowerer;
+    use rax::smir::lower::{LowerError, SmirLowerer};
     use rax::smir::lower::x86_64::X86_64Lowerer;
     use rax::smir::ops::OpKind;
     use rax::smir::types::{ArchReg, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
@@ -5045,16 +5043,12 @@ fn smir_native_rbp_clobber_does_not_pivot_stack() {
     let func = b.finish();
 
     let mut l = X86_64Lowerer::new();
-    let res = l.lower_function(&func).expect("lower_function");
-    let code = l.finalize().expect("finalize");
-    let mem = ExecMem::new(&code).expect("ExecMem");
-    let mut regs = GuestRegs::default();
-    regs.rflags = 0x2;
-    // Returns cleanly (no stack pivot) and preserves the RAX computation.
-    mem.run(res.entry_offset, &mut regs);
-    assert_eq!(
-        regs.gpr[0], 0x1234_5678,
-        "RAX corrupted or control hijacked by guest RBP clobber; regs={regs:?}"
+    let err = l
+        .lower_function(&func)
+        .expect_err("guest RBP destination must be rejected");
+    assert!(
+        matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rbp")),
+        "guest RBP destination must be rejected before native code emission, got {err:?}"
     );
 }
 
