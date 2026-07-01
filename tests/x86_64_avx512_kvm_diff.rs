@@ -18672,6 +18672,47 @@ fn irregular_cases() -> Vec<Case> {
     }
     for &(label, asm) in &[
         (
+            "serialize_serialize_edge_repeated_noop",
+            "serialize\nserialize\nmovq %r8, %rcx",
+        ),
+        (
+            "serialize_serialize_edge_gpr_preservation",
+            "movabsq $0x1122334455667788, %r8\nmovabsq $0x8877665544332211, %r9\nserialize",
+        ),
+        (
+            "serialize_serialize_edge_lazy_add_flags",
+            "movl $0x7fffffff, %r8d\naddl $1, %r8d\nserialize",
+        ),
+        (
+            "serialize_serialize_edge_flags_to_stack",
+            "cmpq %rcx, %r8\nserialize\npushfq\npopq %r9",
+        ),
+        (
+            "serialize_serialize_edge_two_store_order",
+            "movq %r8, 32(%rax)\nserialize\nmovq %r9, 40(%rax)\nmovq 32(%rax), %rcx\nmovq 40(%rax), %rdx",
+        ),
+        (
+            "serialize_serialize_edge_r15_base_load",
+            "leaq 112(%rax), %r15\nmovq %rcx, (%r15)\nserialize\nmovq (%r15), %r9",
+        ),
+        (
+            "serialize_serialize_edge_xmm_roundtrip",
+            "movdqu 32(%rax), %xmm4\nserialize\nmovdqu %xmm4, 96(%rax)\npxor %xmm4, %xmm4\nserialize\nmovdqu 96(%rax), %xmm4",
+        ),
+        (
+            "serialize_serialize_edge_fence_chain",
+            "movq %r8, 48(%rax)\nlfence\nserialize\nmfence\nserialize\nsfence\nmovq 48(%rax), %rcx",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Serialize,
+            profile: Int,
+        });
+    }
+    for &(label, asm) in &[
+        (
             "umonitor_wait_reg_matrix_rbp_address",
             "leaq 144(%rax), %rbp\numonitor %rbp\nmovq %rbp, %rcx",
         ),
@@ -38513,7 +38554,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        50,
+        58,
         "unexpected serialize/WAITPKG/RDPID corpus size"
     );
 
@@ -38538,7 +38579,7 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Serialize),
-        5,
+        13,
         "all SERIALIZE cases should run"
     );
     assert_eq!(
@@ -38548,8 +38589,46 @@ fn avx512_kvm_serialize_waitpkg_rdpid_corpus() {
     );
     assert_eq!(tally.ran_for(Feat::Rdpid), 20, "all RDPID cases should run");
     assert_eq!(
-        tally.compared, 50,
+        tally.compared, 58,
         "all serialize/WAITPKG/RDPID cases should compare"
+    );
+}
+
+#[test]
+fn avx512_kvm_serialize_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_serialize_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 8, "unexpected SERIALIZE edge corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on SERIALIZE edge cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a SERIALIZE edge case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "SERIALIZE edge corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "SERIALIZE edge cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Serialize),
+        8,
+        "all SERIALIZE edge cases should run"
+    );
+    assert_eq!(
+        tally.compared, 8,
+        "all SERIALIZE edge cases should compare"
     );
 }
 
