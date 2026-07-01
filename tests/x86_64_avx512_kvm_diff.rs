@@ -19177,7 +19177,7 @@ fn irregular_cases() -> Vec<Case> {
     // present writable DPL0 and DPL3 data descriptors, then observes
     // LAR/LSL/VERR/VERW through stable GPR booleans or the architecturally
     // loaded segment limit.
-    let descriptor_access_setup = "movq $0, 128(%rax)\nmovabsq $0x0041930000002345, %r8\nmovq %r8, 136(%rax)\nmovabsq $0x0041f30000002345, %r8\nmovq %r8, 144(%rax)\nmovw $0x0017, 32(%rax)\nleaq 128(%rax), %r8\nmovq %r8, 34(%rax)\nlgdt 32(%rax)";
+    let descriptor_access_setup = "movq $0, 128(%rax)\nmovabsq $0x0041930000002345, %r8\nmovq %r8, 136(%rax)\nmovabsq $0x0041f30000002345, %r8\nmovq %r8, 144(%rax)\nmovabsq $0x00008c0000080000, %r8\nmovq %r8, 152(%rax)\nmovq $0, 160(%rax)\nmovabsq $0x0000ec0000080000, %r8\nmovq %r8, 168(%rax)\nmovq $0, 176(%rax)\nmovw $0x0037, 32(%rax)\nleaq 128(%rax), %r8\nmovq %r8, 34(%rax)\nlgdt 32(%rax)";
     for &(label, check) in &[
         (
             "lsl_descriptor_limit",
@@ -19189,7 +19189,7 @@ fn irregular_cases() -> Vec<Case> {
         ),
         (
             "lar_descriptor_invalid_preserves_dest",
-            "movl $0x7777, %r9d\nmovw $0x18, %r8w\nlar %r8w, %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            "movl $0x7777, %r9d\nmovw $0x38, %r8w\nlar %r8w, %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
         ),
         (
             "verr_descriptor_readable",
@@ -19209,7 +19209,7 @@ fn irregular_cases() -> Vec<Case> {
         ),
         (
             "lar_descriptor_access_edge_invalid_mem_preserves_dest",
-            "movw $0x18, 52(%rax)\nmovl $0x7777, %r9d\nlar 52(%rax), %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            "movw $0x38, 52(%rax)\nmovl $0x7777, %r9d\nlar 52(%rax), %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
         ),
         (
             "lsl_descriptor_access_edge_addr32_mem_selector",
@@ -19270,6 +19270,22 @@ fn irregular_cases() -> Vec<Case> {
         (
             "verw_descriptor_access_edge_dpl3_rpl3_accepts",
             "movw $0x13, %r8w\ncmpq %rcx, %r8\nverw %r8w\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lar_descriptor_access_edge_call_gate_dpl0_accepts",
+            "movl $0, %r9d\nmovw $0x18, %r8w\nlar %r8w, %r9d\nsetz %cl\ntestl %r9d, %r9d\nsetnz %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lar_descriptor_access_edge_call_gate_dpl0_rpl3_rejects",
+            "movl $0x7777, %r9d\nmovw $0x1b, %r8w\nlar %r8w, %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lar_descriptor_access_edge_call_gate_dpl3_rpl3_accepts",
+            "movl $0, %r9d\nmovw $0x2b, %r8w\nlar %r8w, %r9d\nsetz %cl\ntestl %r9d, %r9d\nsetnz %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+        ),
+        (
+            "lsl_descriptor_access_edge_call_gate_rejects",
+            "movl $0x7777, %r9d\nmovw $0x18, %r8w\nlsl %r8w, %r9d\nsetnz %cl\ncmpl $0x7777, %r9d\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r9, %r9\ncmpq %rcx, %rcx",
         ),
     ] {
         out.push(Case {
@@ -34111,7 +34127,7 @@ fn avx512_kvm_descriptor_access_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::DescriptorAccess)
         .collect();
-    assert_eq!(cases.len(), 33, "unexpected descriptor-access corpus size");
+    assert_eq!(cases.len(), 37, "unexpected descriptor-access corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -34134,11 +34150,11 @@ fn avx512_kvm_descriptor_access_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::DescriptorAccess),
-        33,
+        37,
         "all descriptor-access cases should run"
     );
     assert_eq!(
-        tally.compared, 33,
+        tally.compared, 37,
         "all descriptor-access cases should compare"
     );
 }
@@ -34153,7 +34169,7 @@ fn avx512_kvm_descriptor_access_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        18,
+        22,
         "unexpected descriptor-access edge corpus size"
     );
 
@@ -34178,11 +34194,11 @@ fn avx512_kvm_descriptor_access_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::DescriptorAccess),
-        18,
+        22,
         "all descriptor-access edge cases should run"
     );
     assert_eq!(
-        tally.compared, 18,
+        tally.compared, 22,
         "all descriptor-access edge cases should compare"
     );
 }

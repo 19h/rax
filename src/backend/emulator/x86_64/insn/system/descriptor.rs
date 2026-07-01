@@ -58,7 +58,17 @@ impl Descriptor {
         limit
     }
 
-    fn can_lar_lsl(self, selector: u16, cpl: u8) -> bool {
+    fn can_lar(self, selector: u16, cpl: u8) -> bool {
+        if !self.present() {
+            return false;
+        }
+
+        let valid_type = self.is_code_or_data() || matches!(self.type_(), 0x2 | 0x9 | 0xB | 0xC);
+
+        valid_type && self.visible_from(selector, cpl)
+    }
+
+    fn can_lsl(self, selector: u16, cpl: u8) -> bool {
         if !self.present() {
             return false;
         }
@@ -109,9 +119,14 @@ fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Optio
     Ok(Some(Descriptor { raw }))
 }
 
-fn descriptor_for_lar_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
+fn descriptor_for_lar(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
     let cpl = current_cpl(vcpu);
-    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar_lsl(selector, cpl)))
+    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar(selector, cpl)))
+}
+
+fn descriptor_for_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
+    let cpl = current_cpl(vcpu);
+    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lsl(selector, cpl)))
 }
 
 fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
@@ -270,7 +285,7 @@ pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
         vcpu.get_reg(rm, 2) as u16
     };
 
-    if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
+    if let Some(desc) = descriptor_for_lar(vcpu, selector)? {
         vcpu.set_reg(reg, desc.access_rights(), ctx.op_size);
         set_zf(vcpu, true); // Valid selector
     } else {
@@ -297,7 +312,7 @@ pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
         vcpu.get_reg(rm, 2) as u16
     };
 
-    if let Some(desc) = descriptor_for_lar_lsl(vcpu, selector)? {
+    if let Some(desc) = descriptor_for_lsl(vcpu, selector)? {
         vcpu.set_reg(reg, desc.limit(), ctx.op_size);
         set_zf(vcpu, true); // Valid selector
     } else {
