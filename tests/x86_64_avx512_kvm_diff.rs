@@ -16202,6 +16202,18 @@ fn irregular_cases() -> Vec<Case> {
             "cpuid_cpuid_matrix_xsave_component_offsets_ordered",
             "movl $0xd, %eax\nmovl $5, %ecx\ncpuid\nmovl %ebx, %r8d\nmovl $0xd, %eax\nmovl $6, %ecx\ncpuid\nmovl %ebx, %r9d\nmovl $0xd, %eax\nmovl $7, %ecx\ncpuid\ncmpl %r9d, %r8d\nsetb %al\ncmpl %ebx, %r9d\nsetb %cl\nandb %cl, %al\nmovzbl %al, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
+        (
+            "cpuid_cpuid_matrix_xsave_subleaf1_feature_bits",
+            "movl $0xd, %eax\nmovl $1, %ecx\ncpuid\nandl $0xf, %eax\ncmpl $0xf, %eax\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_subleaf1_compacted_size_nonzero",
+            "movl $0xd, %eax\nmovl $1, %ecx\ncpuid\ntestl %ebx, %ebx\nsetnz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rax, %rax",
+        ),
+        (
+            "cpuid_cpuid_matrix_xsave_subleaf1_size_within_leaf0_max",
+            "movl $0xd, %eax\nxorl %ecx, %ecx\ncpuid\nmovl %ecx, %r8d\nmovl $0xd, %eax\nmovl $1, %ecx\ncpuid\ncmpl %r8d, %ebx\nsetbe %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -33820,9 +33832,14 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_leaf7_0_ecx_cldemote", 7, 0, Ecx, 25),
         p!("cpuid_feature_leaf7_0_ecx_movdiri", 7, 0, Ecx, 27),
         p!("cpuid_feature_leaf7_0_ecx_movdir64b", 7, 0, Ecx, 28),
+        p!("cpuid_feature_leaf7_0_edx_serialize", 7, 0, Edx, 14),
         p!("cpuid_feature_leaf7_0_edx_avx512fp16", 7, 0, Edx, 23),
         p!("cpuid_feature_leaf7_1_eax_avx_vnni", 7, 1, Eax, 4),
         p!("cpuid_feature_leaf7_1_eax_avx512bf16", 7, 1, Eax, 5),
+        p!("cpuid_feature_xsave1_eax_xsaveopt", 0xD, 1, Eax, 0),
+        p!("cpuid_feature_xsave1_eax_xsavec", 0xD, 1, Eax, 1),
+        p!("cpuid_feature_xsave1_eax_xgetbv1", 0xD, 1, Eax, 2),
+        p!("cpuid_feature_xsave1_eax_xsaves", 0xD, 1, Eax, 3),
         p!("cpuid_feature_ext1_ecx_lahf_lm", 0x8000_0001, 0, Ecx, 0),
         p!("cpuid_feature_ext1_ecx_lzcnt", 0x8000_0001, 0, Ecx, 5),
         p!("cpuid_feature_ext1_edx_syscall", 0x8000_0001, 0, Edx, 11),
@@ -35107,7 +35124,7 @@ fn avx512_kvm_processor_query_corpus() {
         .collect();
     let pcid_cpuid_cases = pcid_cpuid_expected_cases();
     let pku_cpuid_cases = pku_cpuid_expected_cases();
-    let cpuid_cases = 23 + pcid_cpuid_cases + pku_cpuid_cases;
+    let cpuid_cases = 26 + pcid_cpuid_cases + pku_cpuid_cases;
     assert_eq!(
         cases.len(),
         12 + cpuid_cases,
@@ -35290,7 +35307,7 @@ fn avx512_kvm_cpuid_query_matrix_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_cpuid_matrix_"))
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected CPUID query-matrix size");
+    assert_eq!(cases.len(), 11, "unexpected CPUID query-matrix size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -35313,11 +35330,11 @@ fn avx512_kvm_cpuid_query_matrix_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Cpuid),
-        8,
+        11,
         "all CPUID query-matrix cases should run"
     );
     assert_eq!(
-        tally.compared, 8,
+        tally.compared, 11,
         "all CPUID query-matrix cases should compare"
     );
 }
