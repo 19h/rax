@@ -1766,22 +1766,41 @@ pub fn evex_fixupimm(
     Ok(None)
 }
 
-#[inline]
-fn round_f16_value(value: f32) -> f32 {
-    f16_to_f32(f32_to_f16(value))
-}
-
-fn read_fp16_pair(bytes: &[u8; 64], pair: usize) -> (f32, f32) {
+fn read_fp16_pair_bits(bytes: &[u8; 64], pair: usize) -> (u16, u16) {
     let base = pair * 4;
     let real = u16::from_le_bytes([bytes[base], bytes[base + 1]]);
     let imag = u16::from_le_bytes([bytes[base + 2], bytes[base + 3]]);
-    (f16_to_f32(real), f16_to_f32(imag))
+    (real, imag)
 }
 
-fn write_fp16_pair(bytes: &mut [u8; 64], pair: usize, real: f32, imag: f32) {
+fn write_fp16_pair_bits(bytes: &mut [u8; 64], pair: usize, real: u16, imag: u16) {
     let base = pair * 4;
-    bytes[base..base + 2].copy_from_slice(&f32_to_f16(real).to_le_bytes());
-    bytes[base + 2..base + 4].copy_from_slice(&f32_to_f16(imag).to_le_bytes());
+    bytes[base..base + 2].copy_from_slice(&real.to_le_bytes());
+    bytes[base + 2..base + 4].copy_from_slice(&imag.to_le_bytes());
+}
+
+fn fp16_fma_boundary_bits(a_bits: u16, b_bits: u16, c_bits: u16, negate_a: bool) -> u16 {
+    if fp_is_nan(a_bits as u64, 2) {
+        return fp_quiet_nan(a_bits as u64, 2) as u16;
+    }
+    if fp_is_nan(b_bits as u64, 2) {
+        return fp_quiet_nan(b_bits as u64, 2) as u16;
+    }
+    if fp_is_nan(c_bits as u64, 2) {
+        return fp_quiet_nan(c_bits as u64, 2) as u16;
+    }
+
+    let a = if negate_a {
+        -f16_to_f32(a_bits)
+    } else {
+        f16_to_f32(a_bits)
+    };
+    let computed = a.mul_add(f16_to_f32(b_bits), f16_to_f32(c_bits));
+    if computed.is_nan() {
+        fp_qnan_indefinite(2) as u16
+    } else {
+        f32_to_f16(computed)
+    }
 }
 
 /// EVEX V[FC]MULCPH/SH and V[FC]MADDCPH/SH complex FP16 arithmetic.
@@ -1843,28 +1862,28 @@ pub fn evex_fp16_complex(
     let mut raw = if scalar { src1_bytes } else { [0u8; 64] };
 
     for pair in 0..num_pairs {
-        let (a_re, a_im) = read_fp16_pair(&src1_bytes, pair);
-        let (b_re, b_im) = read_fp16_pair(&src2_bytes, pair);
+        let (a_re, a_im) = read_fp16_pair_bits(&src1_bytes, pair);
+        let (b_re, b_im) = read_fp16_pair_bits(&src2_bytes, pair);
         let (acc_re, acc_im) = if accumulate {
-            read_fp16_pair(&dest_old, pair)
+            read_fp16_pair_bits(&dest_old, pair)
         } else {
-            (0.0, 0.0)
+            (0, 0)
         };
 
-        let tmp_re = round_f16_value(a_re.mul_add(b_re, acc_re));
-        let tmp_im = round_f16_value(a_im.mul_add(b_re, acc_im));
+        let tmp_re = fp16_fma_boundary_bits(a_re, b_re, acc_re, false);
+        let tmp_im = fp16_fma_boundary_bits(a_im, b_re, acc_im, false);
         let (real, imag) = if conjugate {
             (
-                round_f16_value(a_im.mul_add(b_im, tmp_re)),
-                round_f16_value((-a_re).mul_add(b_im, tmp_im)),
+                fp16_fma_boundary_bits(a_im, b_im, tmp_re, false),
+                fp16_fma_boundary_bits(a_re, b_im, tmp_im, true),
             )
         } else {
             (
-                round_f16_value((-a_im).mul_add(b_im, tmp_re)),
-                round_f16_value(a_re.mul_add(b_im, tmp_im)),
+                fp16_fma_boundary_bits(a_im, b_im, tmp_re, true),
+                fp16_fma_boundary_bits(a_re, b_im, tmp_im, false),
             )
         };
-        write_fp16_pair(&mut raw, pair, real, imag);
+        write_fp16_pair_bits(&mut raw, pair, real, imag);
     }
 
     let result = if scalar {
@@ -3653,22 +3672,23 @@ fn fp_getmant_bits(bits: u64, elem_size: usize, imm: u8) -> u64 {
     if nan {
         return fp_quiet_nan(bits, elem_size);
     }
-    if sign == 0 && (zero || infinity) {
-        return one_bits;
-    }
-
-    let signed_one = if sign_control & 0x01 != 0 {
-        one_bits
-    } else {
-        one_bits | sign_mask
-    };
     if sign != 0 {
-        if zero || infinity {
+        let signed_one = if sign_control & 0x01 != 0 {
+            one_bits
+        } else {
+            one_bits | sign_mask
+        };
+        if zero {
             return signed_one;
         }
         if sign_control & 0x02 != 0 {
             return fp_qnan_indefinite(elem_size);
         }
+        if infinity {
+            return signed_one;
+        }
+    } else if zero || infinity {
+        return one_bits;
     }
 
     let mut dst_exp = exp as i32;

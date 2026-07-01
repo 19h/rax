@@ -5144,6 +5144,76 @@ fn irregular_cases() -> Vec<Case> {
             "vfpclasssh $0x7f, 22(%rax), %k5",
             F16Edge,
         ),
+        (
+            "vgetexpph_fp16_edge_specials_reg",
+            "vgetexpph %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vgetmantph_fp16_edge_sign_control_mem",
+            "vgetmantph $0x0c, 64(%rax), %zmm1",
+            F16Edge,
+        ),
+        (
+            "vrndscaleph_fp16_edge_round_imm_reg",
+            "vrndscaleph $0x0b, %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vreduceph_fp16_edge_fraction_mem",
+            "vreduceph $0x0f, 64(%rax), %zmm1",
+            F16Edge,
+        ),
+        (
+            "vscalefph_fp16_edge_mask_merge",
+            "vscalefph %zmm2, %zmm3, %zmm1 {%k1}",
+            F16Edge,
+        ),
+        (
+            "vscalefph_fp16_edge_mask_zero_mem",
+            "vscalefph 64(%rax), %zmm3, %zmm1 {%k1}{z}",
+            F16Edge,
+        ),
+        (
+            "vrcpph_fp16_edge_approx_reg",
+            "vrcpph %zmm3, %zmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vrsqrtph_fp16_edge_approx_mem",
+            "vrsqrtph 64(%rax), %zmm1",
+            F16SqrtEdge,
+        ),
+        (
+            "vfmulcph_fp16_edge_high_regs",
+            "vfmulcph %zmm16, %zmm18, %zmm17",
+            F16Edge,
+        ),
+        (
+            "vfcmulcph_fp16_edge_mem",
+            "vfcmulcph 64(%rax), %zmm3, %zmm1",
+            F16Edge,
+        ),
+        (
+            "vfmaddcph_fp16_edge_mask_merge",
+            "vfmaddcph %zmm2, %zmm3, %zmm1 {%k1}",
+            F16Edge,
+        ),
+        (
+            "vfcmaddcph_fp16_edge_mask_zero",
+            "vfcmaddcph %zmm2, %zmm3, %zmm1 {%k1}{z}",
+            F16Edge,
+        ),
+        (
+            "vfmaddcsh_fp16_edge_scalar_reg",
+            "vfmaddcsh %xmm2, %xmm3, %xmm1",
+            F16Edge,
+        ),
+        (
+            "vfcmaddcsh_fp16_edge_scalar_mem",
+            "vfcmaddcsh 22(%rax), %xmm3, %xmm1",
+            F16Edge,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -42577,7 +42647,7 @@ fn avx512_kvm_fp16_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_fp16_edge_"))
         .collect();
-    assert_eq!(cases.len(), 22, "unexpected AVX-512-FP16 edge corpus size");
+    assert_eq!(cases.len(), 36, "unexpected AVX-512-FP16 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -42600,12 +42670,16 @@ fn avx512_kvm_fp16_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Fp16),
-        22,
+        36,
         "all AVX-512-FP16 edge cases should run"
     );
     assert_eq!(
-        tally.compared, 22,
-        "all AVX-512-FP16 edge cases should compare"
+        tally.compared, 34,
+        "all exact AVX-512-FP16 edge cases should compare"
+    );
+    assert_eq!(
+        tally.approx, 2,
+        "FP16 reciprocal/rsqrt edge cases should run as approximate cases"
     );
 }
 
