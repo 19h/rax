@@ -4,10 +4,16 @@ use crate::cpu::{Segment, VcpuExit};
 use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::control_regs::raise_gp0;
 
 const EFER_SCE: u64 = 1 << 0;
 const EFER_LMA: u64 = 1 << 10;
 const SYSRET_RFLAGS_MASK: u64 = 0x3C7FD7;
+
+#[inline(always)]
+fn is_canonical_48(addr: u64) -> bool {
+    ((addr as i64) << 16 >> 16) as u64 == addr
+}
 
 fn build_cs(selector: u16, dpl: u8, l: bool, db: bool) -> Segment {
     Segment {
@@ -110,6 +116,9 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     } else {
         (vcpu.regs.rcx as u32) as u64
     };
+    if is_64 && !is_canonical_48(new_rip) {
+        return raise_gp0(vcpu);
+    }
 
     vcpu.regs.rip = new_rip;
     vcpu.regs.rflags = (vcpu.regs.r11 & SYSRET_RFLAGS_MASK) | 0x2;

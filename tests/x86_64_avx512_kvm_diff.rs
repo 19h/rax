@@ -32324,6 +32324,23 @@ fn general_protection_exception_cases() -> Vec<ExceptionMarkerCase> {
             ],
         });
     }
+    if host_cpu_flag("syscall") {
+        cases.push(ExceptionMarkerCase {
+            label: "sysretq_noncanonical_rcx",
+            vector_name: "#GP",
+            vector: GP_VECTOR,
+            op: &[
+                0xb9, 0x80, 0x00, 0x00, 0xc0, // mov ecx, IA32_EFER
+                0x0f, 0x32, // rdmsr
+                0x83, 0xc8, 0x01, // or eax, EFER.SCE
+                0x0f, 0x30, // wrmsr
+                0x48, 0xb9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00,
+                0x00, // movabs rcx, 0x0000800000000000
+                0x49, 0xc7, 0xc3, 0x02, 0x02, 0x00, 0x00, // mov r11, 0x202
+                0x48, 0x0f, 0x07, // sysretq
+            ],
+        });
+    }
     if host_cpu_flag("xsaves") {
         cases.push(ExceptionMarkerCase {
             label: "xrstors_non_compacted_xsave_area",
@@ -33494,6 +33511,9 @@ fn avx512_kvm_general_protection_exception_corpus() {
     }
     if host_cpu_flag("fsgsbase") {
         expected += 2;
+    }
+    if host_cpu_flag("syscall") {
+        expected += 1;
     }
     if host_cpu_flag("xsaves") {
         expected += 1;
