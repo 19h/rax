@@ -29114,6 +29114,27 @@ fn undefined_opcode_cases() -> Vec<(&'static str, &'static [u8])> {
 fn unsupported_system_extension_cases() -> Vec<(&'static str, &'static [u8])> {
     let mut cases: Vec<(&'static str, &'static [u8])> = Vec::new();
 
+    cases.push((
+        "syscall_efer_sce_clear",
+        &[
+            0xb9, 0x80, 0x00, 0x00, 0xc0, // mov ecx, IA32_EFER
+            0x0f, 0x32, // rdmsr
+            0x83, 0xe0, 0xfe, // and eax, !EFER.SCE
+            0x0f, 0x30, // wrmsr
+            0x0f, 0x05, // syscall
+        ],
+    ));
+    cases.push((
+        "sysretq_efer_sce_clear",
+        &[
+            0xb9, 0x80, 0x00, 0x00, 0xc0, // mov ecx, IA32_EFER
+            0x0f, 0x32, // rdmsr
+            0x83, 0xe0, 0xfe, // and eax, !EFER.SCE
+            0x0f, 0x30, // wrmsr
+            0x48, 0x0f, 0x07, // sysretq
+        ],
+    ));
+
     if !host_cpu_flag("hreset") {
         cases.push((
             "hreset_unsupported_imm0",
@@ -32915,15 +32936,12 @@ fn avx512_kvm_undefined_opcode_ud_corpus() {
 #[test]
 fn avx512_kvm_unsupported_system_extension_ud_corpus() {
     let cases = unsupported_system_extension_cases();
-    let mut expected = 0;
+    let mut expected = 2;
     if !host_cpu_flag("hreset") {
         expected += 2;
     }
     if !host_cpu_flag("pconfig") {
         expected += 2;
-    }
-    if expected == 0 {
-        eprintln!("[skip] host exposes HRESET and PCONFIG");
     }
     run_ud_marker_corpus("unsupported system extension", cases, expected);
 }

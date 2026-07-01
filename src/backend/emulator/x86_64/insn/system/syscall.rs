@@ -53,9 +53,7 @@ fn build_ss(selector: u16, dpl: u8) -> Segment {
 pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
-        return Err(Error::Emulator(
-            "SYSCALL requires EFER.LMA and EFER.SCE".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     // Optional fork/clone/vfork tracing — opt-in via RAX_TRACE_FORK so it does
@@ -99,9 +97,7 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
-        return Err(Error::Emulator(
-            "SYSRET requires EFER.LMA and EFER.SCE".to_string(),
-        ));
+        return vcpu.inject_undefined_instruction();
     }
 
     let cpl = (vcpu.sregs.cs.selector & 0x3) as u8;
