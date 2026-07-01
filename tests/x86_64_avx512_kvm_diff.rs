@@ -33223,6 +33223,131 @@ fn pcid_cpuid_expected_cases() -> usize {
     if host_cpu_flag("pcid") { 1 } else { 0 }
 }
 
+#[derive(Clone, Copy)]
+enum CpuidReg {
+    Eax,
+    Ebx,
+    Ecx,
+    Edx,
+}
+
+impl CpuidReg {
+    fn asm_name(self) -> &'static str {
+        match self {
+            CpuidReg::Eax => "eax",
+            CpuidReg::Ebx => "ebx",
+            CpuidReg::Ecx => "ecx",
+            CpuidReg::Edx => "edx",
+        }
+    }
+
+    fn entry_value(self, entry: &kvm_bindings::kvm_cpuid_entry2) -> u32 {
+        match self {
+            CpuidReg::Eax => entry.eax,
+            CpuidReg::Ebx => entry.ebx,
+            CpuidReg::Ecx => entry.ecx,
+            CpuidReg::Edx => entry.edx,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct CpuidFeatureProbe {
+    label: &'static str,
+    leaf: u32,
+    subleaf: u32,
+    reg: CpuidReg,
+    bit: u8,
+}
+
+fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
+    use CpuidReg::*;
+
+    macro_rules! p {
+        ($label:literal, $leaf:expr, $subleaf:expr, $reg:ident, $bit:expr) => {
+            CpuidFeatureProbe {
+                label: $label,
+                leaf: $leaf,
+                subleaf: $subleaf,
+                reg: $reg,
+                bit: $bit,
+            }
+        };
+    }
+
+    &[
+        p!("cpuid_feature_leaf1_ecx_pclmulqdq", 1, 0, Ecx, 1),
+        p!("cpuid_feature_leaf1_ecx_fma", 1, 0, Ecx, 12),
+        p!("cpuid_feature_leaf1_ecx_cx16", 1, 0, Ecx, 13),
+        p!("cpuid_feature_leaf1_ecx_movbe", 1, 0, Ecx, 22),
+        p!("cpuid_feature_leaf1_ecx_aes", 1, 0, Ecx, 25),
+        p!("cpuid_feature_leaf1_ecx_f16c", 1, 0, Ecx, 29),
+        p!("cpuid_feature_leaf1_ecx_rdrand", 1, 0, Ecx, 30),
+        p!("cpuid_feature_leaf1_edx_sep", 1, 0, Edx, 11),
+        p!("cpuid_feature_leaf7_0_ebx_fsgsbase", 7, 0, Ebx, 0),
+        p!("cpuid_feature_leaf7_0_ebx_bmi1", 7, 0, Ebx, 3),
+        p!("cpuid_feature_leaf7_0_ebx_bmi2", 7, 0, Ebx, 8),
+        p!("cpuid_feature_leaf7_0_ebx_avx512f", 7, 0, Ebx, 16),
+        p!("cpuid_feature_leaf7_0_ebx_avx512dq", 7, 0, Ebx, 17),
+        p!("cpuid_feature_leaf7_0_ebx_rdseed", 7, 0, Ebx, 18),
+        p!("cpuid_feature_leaf7_0_ebx_adx", 7, 0, Ebx, 19),
+        p!("cpuid_feature_leaf7_0_ebx_avx512ifma", 7, 0, Ebx, 21),
+        p!("cpuid_feature_leaf7_0_ebx_clflushopt", 7, 0, Ebx, 23),
+        p!("cpuid_feature_leaf7_0_ebx_clwb", 7, 0, Ebx, 24),
+        p!("cpuid_feature_leaf7_0_ebx_avx512cd", 7, 0, Ebx, 28),
+        p!("cpuid_feature_leaf7_0_ebx_avx512bw", 7, 0, Ebx, 30),
+        p!("cpuid_feature_leaf7_0_ebx_avx512vl", 7, 0, Ebx, 31),
+        p!("cpuid_feature_leaf7_0_ecx_avx512vbmi", 7, 0, Ecx, 1),
+        p!("cpuid_feature_leaf7_0_ecx_waitpkg", 7, 0, Ecx, 5),
+        p!("cpuid_feature_leaf7_0_ecx_avx512vbmi2", 7, 0, Ecx, 6),
+        p!("cpuid_feature_leaf7_0_ecx_vaes", 7, 0, Ecx, 9),
+        p!("cpuid_feature_leaf7_0_ecx_vpclmulqdq", 7, 0, Ecx, 10),
+        p!("cpuid_feature_leaf7_0_ecx_avx512vnni", 7, 0, Ecx, 11),
+        p!("cpuid_feature_leaf7_0_ecx_avx512bitalg", 7, 0, Ecx, 12),
+        p!("cpuid_feature_leaf7_0_ecx_avx512vpopcntdq", 7, 0, Ecx, 14),
+        p!("cpuid_feature_leaf7_0_ecx_rdpid", 7, 0, Ecx, 22),
+        p!("cpuid_feature_leaf7_0_ecx_cldemote", 7, 0, Ecx, 25),
+        p!("cpuid_feature_leaf7_0_ecx_movdiri", 7, 0, Ecx, 27),
+        p!("cpuid_feature_leaf7_0_ecx_movdir64b", 7, 0, Ecx, 28),
+        p!("cpuid_feature_leaf7_0_edx_avx512fp16", 7, 0, Edx, 23),
+        p!("cpuid_feature_leaf7_1_eax_avx_vnni", 7, 1, Eax, 4),
+        p!("cpuid_feature_leaf7_1_eax_avx512bf16", 7, 1, Eax, 5),
+        p!("cpuid_feature_ext1_ecx_lahf_lm", 0x8000_0001, 0, Ecx, 0),
+        p!("cpuid_feature_ext1_ecx_lzcnt", 0x8000_0001, 0, Ecx, 5),
+        p!("cpuid_feature_ext1_edx_syscall", 0x8000_0001, 0, Edx, 11),
+    ]
+}
+
+fn kvm_exposes_cpuid_feature(oracle: &KvmOracle, probe: CpuidFeatureProbe) -> bool {
+    oracle
+        .supported_cpuid
+        .as_slice()
+        .iter()
+        .find(|entry| entry.function == probe.leaf && entry.index == probe.subleaf)
+        .map(|entry| (probe.reg.entry_value(entry) & (1u32 << probe.bit)) != 0)
+        .unwrap_or(false)
+}
+
+fn cpuid_feature_flag_cases(oracle: &KvmOracle) -> Vec<Case> {
+    cpuid_feature_probes()
+        .iter()
+        .copied()
+        .filter(|probe| kvm_exposes_cpuid_feature(oracle, *probe))
+        .map(|probe| Case {
+            label: probe.label.to_string(),
+            asm: format!(
+                "movl ${:#x}, %eax\nmovl ${:#x}, %ecx\ncpuid\nbtl ${}, %{}\nsetc %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rcx, %rcx",
+                probe.leaf,
+                probe.subleaf,
+                probe.bit,
+                probe.reg.asm_name(),
+            ),
+            feat: Feat::Cpuid,
+            profile: InputProfile::Int,
+        })
+        .collect()
+}
+
 const APIC_BASE_MSR_CASES: usize = 5;
 
 #[test]
@@ -34594,6 +34719,49 @@ fn avx512_kvm_cpuid_edge_corpus() {
         "all CPUID edge cases should run"
     );
     assert_eq!(tally.compared, 10, "all CPUID edge cases should compare");
+}
+
+#[test]
+fn avx512_kvm_cpuid_feature_flag_corpus() {
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+    let cases = cpuid_feature_flag_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest exposes none of the CPUID feature probes");
+        return;
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(
+        tally.faulted, 0,
+        "silicon faulted on CPUID feature flag cases"
+    );
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a CPUID feature flag case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "CPUID feature flag corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "CPUID feature flag cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cpuid),
+        expected,
+        "all CPUID feature flag cases should run"
+    );
+    assert_eq!(
+        tally.compared, expected,
+        "all CPUID feature flag cases should compare"
+    );
 }
 
 #[test]

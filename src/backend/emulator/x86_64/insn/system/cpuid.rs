@@ -98,6 +98,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 6)   // PAE
                                   | (1 << 8)   // CX8 (CMPXCHG8B) - REQUIRED
                                   | (1 << 9)   // APIC
+                                  | (1 << 11)  // SEP (SYSENTER/SYSEXIT)
                                   | (1 << 13)  // PGE - REQUIRED
                                   | (1 << 15)  // CMOV
                                   | (1 << 19)  // CLFLUSH
@@ -111,14 +112,21 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                                // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
             let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
+                                  | (1 << 1)   // PCLMULQDQ
                                   | (1 << 9)   // SSSE3
+                                  | (1 << 12)  // FMA
+                                  | (1 << 13)  // CMPXCHG16B
                                   | (1 << 17)  // PCID
                                   | (1 << 19)  // SSE4.1
                                   | (1 << 20)  // SSE4.2
+                                  | (1 << 22)  // MOVBE
                                   | (1 << 23)  // POPCNT
+                                  | (1 << 25)  // AESNI
                                   | (1 << 26)  // XSAVE
                                   | (osxsave << 27) // OSXSAVE (reflects CR4.OSXSAVE)
-                                  | (1 << 28); // AVX
+                                  | (1 << 28)  // AVX
+                                  | (1 << 29)  // F16C
+                                  | (1 << 30); // RDRAND
             (signature, 0x00000000, features_ecx, features_edx)
         }
         0x15 => {
@@ -144,22 +152,47 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Structured extended feature flags.
             if subleaf == 0 {
                 // AVX2 IS advertised now that XSAVE/XCR0 are implemented.
-                let mut ebx = (1u32 << 29) // SHA-NI
+                let mut ebx = (1u32 << 31) // AVX512VL
+                        | (1u32 << 30) // AVX512BW
+                        | (1u32 << 29) // SHA-NI
+                        | (1u32 << 28) // AVX512CD
+                        | (1u32 << 24) // CLWB
+                        | (1u32 << 23) // CLFLUSHOPT
+                        | (1u32 << 21) // AVX512IFMA
                         | (1u32 << 20) // SMAP
+                        | (1u32 << 19) // ADX
+                        | (1u32 << 18) // RDSEED
+                        | (1u32 << 17) // AVX512DQ
+                        | (1u32 << 16) // AVX512F
                         | (1u32 << 10) // INVPCID
-                        | (1u32 << 5); // AVX2
+                        | (1u32 << 8) // BMI2
+                        | (1u32 << 5) // AVX2
+                        | (1u32 << 3) // BMI1
+                        | (1u32 << 0); // FSGSBASE
                 if vcpu.xeon_phi_avx512 {
-                    ebx |= (1u32 << 16) // AVX512F
-                         | (1u32 << 26) // AVX512PF
+                    ebx |= (1u32 << 26) // AVX512PF
                          | (1u32 << 27); // AVX512ER
                 }
-                let ecx = 1u32 << 8; // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
-                                     // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
-                                     // the emulator does not enforce it (ENDBR is a NOP, indirect
-                                     // CALL/JMP/RET are unchecked), so claiming it would mislead a
-                                     // guest into believing hardware-enforced CFI is active and
-                                     // silently weaken intra-guest control-flow protections.
-                let mut edx = 1u32 << 14; // SERIALIZE
+                let ecx = (1u32 << 28) // MOVDIR64B
+                        | (1u32 << 27) // MOVDIRI
+                        | (1u32 << 25) // CLDEMOTE
+                        | (1u32 << 22) // RDPID
+                        | (1u32 << 14) // AVX512VPOPCNTDQ
+                        | (1u32 << 12) // AVX512BITALG
+                        | (1u32 << 11) // AVX512VNNI
+                        | (1u32 << 10) // VPCLMULQDQ
+                        | (1u32 << 9) // VAES
+                        | (1u32 << 8) // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
+                        | (1u32 << 6) // AVX512VBMI2
+                        | (1u32 << 5) // WAITPKG
+                        | (1u32 << 1); // AVX512VBMI
+                                       // Do NOT advertise IBT (CET Indirect Branch Tracking, bit 20):
+                                       // the emulator does not enforce it (ENDBR is a NOP, indirect
+                                       // CALL/JMP/RET are unchecked), so claiming it would mislead a
+                                       // guest into believing hardware-enforced CFI is active and
+                                       // silently weaken intra-guest control-flow protections.
+                let mut edx = (1u32 << 23) // AVX512FP16
+                            | (1u32 << 14); // SERIALIZE
                 if vcpu.xeon_phi_avx512 {
                     edx |= (1u32 << 2) // AVX512_4VNNIW
                          | (1u32 << 3); // AVX512_4FMAPS
@@ -169,12 +202,14 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
+                let eax = (1u32 << 5) // AVX512_BF16
+                        | (1u32 << 4); // AVX_VNNI
                 let edx = if vcpu.apx_enabled() {
                     1u32 << 21 // APX_F
                 } else {
                     0
                 };
-                (0, 0, 0, edx)
+                (eax, 0, 0, edx)
             } else {
                 (0, 0, 0, 0)
             }
@@ -187,11 +222,14 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Extended features - CRITICAL for efficient identity mapping
             // EAX: Same signature as leaf 1 (extended signature)
             let signature: u32 = 0x000006F1;
+            let features_ecx = (1u32 << 5)  // LZCNT/ABM
+                             | (1u32 << 0); // LAHF/SAHF in long mode
             let features_edx = (1u32 << 29)  // LM (Long Mode)
                              | (1u32 << 27)  // RDTSCP instruction available
                              // Removed PDPE1GB - causes issues with direct mapping
-                             | (1u32 << 20); // NX (No Execute)
-            (signature, 0, 0, features_edx)
+                             | (1u32 << 20)  // NX (No Execute)
+                             | (1u32 << 11); // SYSCALL/SYSRET
+            (signature, 0, features_ecx, features_edx)
         }
         0x80000007 => {
             // Advanced power management
