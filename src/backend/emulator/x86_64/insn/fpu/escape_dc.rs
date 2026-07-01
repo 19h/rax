@@ -1,7 +1,7 @@
 //! DC escape - FADD, FMUL, FCOM, FCOMP, FSUB, FSUBR, FDIV, FDIVR (m64)
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::helpers::set_fpu_compare_flags;
@@ -49,12 +49,7 @@ pub fn escape_dc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             0xE8..=0xEF => vcpu.fpu.set_st(rm, sti - st0), // FSUB ST(i), ST(0)
             0xF0..=0xF7 => vcpu.fpu.set_st(rm, st0 / sti), // FDIVR ST(i), ST(0)
             0xF8..=0xFF => vcpu.fpu.set_st(rm, sti / st0), // FDIV ST(i), ST(0)
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unimplemented DC register opcode modrm={:#x} at RIP={:#x}",
-                    modrm, vcpu.regs.rip
-                )));
-            }
+            _ => unreachable!("DC register opcode is constrained to 0xc0..=0xff"),
         }
     }
 

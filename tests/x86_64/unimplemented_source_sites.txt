@@ -16,7 +16,6 @@
 src/backend/emulator/x86_64/dispatch/twobyte/dispatch/group7.rs|1|system-gap|unimplemented 0F AE /{} at RIP={:#x}
 src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|3|non-instruction|unsupported XSAVE component {}
 src/backend/emulator/x86_64/dispatch/vex/fma.rs|1|manifest-diff|unimplemented VEX FMA opcode {:#x}
-src/backend/emulator/x86_64/insn/fpu/escape_dc.rs|1|encoding-hole|unimplemented DC register opcode modrm={:#x} at RIP={:#x}
 src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FMA opcode {:#x}
 src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FP16 FMA opcode {:#x}
 src/backend/emulator/x86_64/insn/simd/sse.rs|2|encoding-hole|unimplemented PSUB opcode {:#x} at RIP={:#x}
