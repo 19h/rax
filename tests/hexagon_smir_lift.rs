@@ -34,6 +34,22 @@ use rax::smir::{
 const NREG: usize = 32;
 const CODE_ADDR: u32 = 0x1000;
 
+fn run_on_large_lifter_stack<F>(name: &str, f: F)
+where
+    F: FnOnce() + Send + 'static,
+{
+    // The scalar Hexagon opcode lifter has a large debug stack frame. Keep the
+    // exhaustive audit independent of the test harness thread stack size.
+    let handle = std::thread::Builder::new()
+        .name(name.into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(f)
+        .expect("failed to spawn large-stack Hexagon lifter test thread");
+    if let Err(payload) = handle.join() {
+        std::panic::resume_unwind(payload);
+    }
+}
+
 /// HVX saturating families whose qemu-verified interpreter sets the USR:OVF
 /// sticky bit but whose SMIR vector lift did NOT model it. These all route
 /// through vector `OpKind`s (`VLane`/`VNarrowShiftSat`/`VReduceMul`/
@@ -1865,6 +1881,10 @@ fn lift_m2_mpy() {
 // lifted). This proves the oracle plumbing before the HVX lift wave.
 #[test]
 fn hvx_harness_probe() {
+    run_on_large_lifter_stack("hvx_harness_probe", hvx_harness_probe_inner);
+}
+
+fn hvx_harness_probe_inner() {
     let asms = vec!["{ v2.w = vadd(v0.w,v1.w) }".to_string()];
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -6808,6 +6828,10 @@ fn lift_a5_acs() {
 // — i.e. if a new tractable scalar register/memory op silently regresses.
 #[test]
 fn audit_final_scalar_gap_rescan() {
+    run_on_large_lifter_stack("audit_final_scalar_gap_rescan", audit_final_scalar_gap_rescan_inner);
+}
+
+fn audit_final_scalar_gap_rescan_inner() {
     let unlifted = HexagonLifter::audit_unlifted_scalar();
 
     // Histogram by rejection mnemonic (the precise reason each op was rejected).
