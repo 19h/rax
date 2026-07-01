@@ -18,4 +18,3 @@ src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|3|non-instruction|unsupporte
 src/backend/emulator/x86_64/dispatch/vex/fma.rs|1|manifest-diff|unimplemented VEX FMA opcode {:#x}
 src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FMA opcode {:#x}
 src/backend/emulator/x86_64/insn/simd/avx512.rs|1|manifest-diff|unimplemented EVEX FP16 FMA opcode {:#x}
-src/backend/emulator/x86_64/insn/simd/sse.rs|2|encoding-hole|unimplemented PSUB opcode {:#x} at RIP={:#x}

@@ -302,12 +302,7 @@ pub fn psub_packed(
             vcpu.regs.xmm[xmm_dst][0] = res_lo;
             vcpu.regs.xmm[xmm_dst][1] = res_hi;
         }
-        _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented PSUB opcode {:#x} at RIP={:#x}",
-                opcode, vcpu.regs.rip
-            )));
-        }
+        _ => unreachable!("PSUB opcode is filtered by dispatch"),
     };
 
     vcpu.regs.rip += ctx.cursor as u64;
@@ -337,12 +332,7 @@ fn psub_packed_mmx(
         0xF9 => sub_u16_wrap(dst, src),     // PSUBW
         0xFA => sub_u32_wrap(dst, src),     // PSUBD
         0xFB => dst.wrapping_sub(src),      // PSUBQ
-        _ => {
-            return Err(Error::Emulator(format!(
-                "unimplemented PSUB opcode {:#x} at RIP={:#x}",
-                opcode, vcpu.regs.rip
-            )));
-        }
+        _ => unreachable!("PSUB opcode is filtered by dispatch"),
     };
 
     vcpu.regs.mm[mm_dst] = result;
