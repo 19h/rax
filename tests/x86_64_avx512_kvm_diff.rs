@@ -30637,6 +30637,162 @@ fn compat_avx_cases() -> Vec<CompatStateCase> {
             }),
             rflags_mask: FLAGS_UNCHANGED,
         },
+        CompatStateCase {
+            label: "avx_compat_fma_packed_addr32",
+            op: op!(
+                compat_avx_addr32(&[0xc5, 0xfc, 0x10, 0x48, 0x10]),
+                compat_avx_addr32(&[0xc5, 0xfc, 0x10, 0x50, 0x30]),
+                compat_avx_addr32(&[0xc4, 0xe2, 0x6d, 0xa8, 0x48, 0x50]),
+                compat_avx_addr32(&[0xc5, 0xfc, 0x11, 0x88, 0xd0, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc5, 0xfd, 0x10, 0x48, 0x70]),
+                compat_avx_addr32(&[0xc5, 0xfd, 0x10, 0x90, 0x90, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc4, 0xe2, 0xed, 0xbc, 0x88, 0xb0, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc5, 0xfd, 0x11, 0x48, 0x30]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                for (idx, value) in [1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+                    .iter()
+                    .enumerate()
+                {
+                    compat_x87_put_f32(scratch, 0x10 + idx * 4, *value);
+                }
+                for (idx, value) in [2.0f32, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+                    .iter()
+                    .enumerate()
+                {
+                    compat_x87_put_f32(scratch, 0x30 + idx * 4, *value);
+                }
+                for (idx, value) in [10.0f32, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0]
+                    .iter()
+                    .enumerate()
+                {
+                    compat_x87_put_f32(scratch, 0x50 + idx * 4, *value);
+                }
+                for (idx, value) in [2.0f64, 4.0, 6.0, 8.0].iter().enumerate() {
+                    compat_x87_put_f64(scratch, 0x70 + idx * 8, *value);
+                }
+                for (idx, value) in [1.5f64, 2.5, 3.5, 4.5].iter().enumerate() {
+                    compat_x87_put_f64(scratch, 0x90 + idx * 8, *value);
+                }
+                for (idx, value) in [1.0f64, 2.0, 3.0, 4.0].iter().enumerate() {
+                    compat_x87_put_f64(scratch, 0xb0 + idx * 8, *value);
+                }
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx_compat_f16c_convert_addr32",
+            op: op!(
+                compat_avx_addr32(&[0xc4, 0xe2, 0x7d, 0x13, 0x48, 0x10]),
+                compat_avx_addr32(&[0xc5, 0xfc, 0x11, 0x88, 0x80, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc5, 0xfc, 0x10, 0x50, 0x30]),
+                compat_avx_addr32(&[0xc4, 0xe3, 0x7d, 0x1d, 0x90, 0xa0, 0x00, 0x00, 0x00, 0x03]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                for (idx, value) in [
+                    0x3c00u16, 0x4000, 0xc000, 0x4200, 0x4400, 0x3800, 0xbc00, 0x0000,
+                ]
+                .iter()
+                .enumerate()
+                {
+                    scratch[0x10 + idx * 2..0x12 + idx * 2].copy_from_slice(&value.to_le_bytes());
+                }
+                for (idx, value) in [1.0f32, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0]
+                    .iter()
+                    .enumerate()
+                {
+                    compat_x87_put_f32(scratch, 0x30 + idx * 4, *value);
+                }
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx2_compat_maskmov_gather_addr32",
+            op: op!(
+                compat_avx_addr32(&[0xc5, 0xfe, 0x6f, 0x50, 0x10]),
+                compat_avx_addr32(&[0xc4, 0xe2, 0x6d, 0x8c, 0x48, 0x40]),
+                compat_avx_addr32(&[0xc5, 0xfe, 0x7f, 0x88, 0x80, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc5, 0xfe, 0x6f, 0x58, 0x60]),
+                compat_avx_addr32(&[0xc4, 0xe2, 0x6d, 0x8e, 0x98, 0xa0, 0x00, 0x00, 0x00]),
+                [0xc5, 0xed, 0xef, 0xd2],
+                [0xc5, 0xe5, 0x76, 0xdb],
+                compat_avx_addr32(&[0xc4, 0xe2, 0x65, 0x92, 0x4c, 0x90, 0x40]),
+                compat_avx_addr32(&[0xc5, 0xfc, 0x11, 0x88, 0xc0, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc5, 0xfe, 0x7f, 0x98, 0xe0, 0x00, 0x00, 0x00]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_avx_put_m256(
+                    scratch,
+                    0x10,
+                    [
+                        0x8000_0000_0000_0000,
+                        0x8000_0000_0000_0000,
+                        0x0000_0000_8000_0000,
+                        0x0000_0000_8000_0000,
+                    ],
+                );
+                compat_avx_put_m256(
+                    scratch,
+                    0x40,
+                    [
+                        0x4000_0000_3f80_0000,
+                        0x4080_0000_4040_0000,
+                        0x40c0_0000_40a0_0000,
+                        0x4100_0000_40e0_0000,
+                    ],
+                );
+                compat_avx_put_m256(
+                    scratch,
+                    0x60,
+                    [
+                        0x1111_2222_3333_4444,
+                        0x5555_6666_7777_8888,
+                        0x9999_aaaa_bbbb_cccc,
+                        0xdddd_eeee_ffff_0001,
+                    ],
+                );
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "avx2_compat_permute_broadcast_addr32",
+            op: op!(
+                compat_avx_addr32(&[0xc5, 0xfe, 0x6f, 0x50, 0x10]),
+                compat_avx_addr32(&[0xc5, 0xfe, 0x6f, 0x58, 0x30]),
+                [0xc4, 0xe3, 0x65, 0x06, 0xca, 0x31],
+                compat_avx_addr32(&[0xc5, 0xfc, 0x11, 0x88, 0x80, 0x00, 0x00, 0x00]),
+                [0xc4, 0xe3, 0x65, 0x46, 0xca, 0x31],
+                compat_avx_addr32(&[0xc5, 0xfe, 0x7f, 0x88, 0xa0, 0x00, 0x00, 0x00]),
+                [0xc4, 0xe2, 0x6d, 0x36, 0xcb],
+                compat_avx_addr32(&[0xc5, 0xfe, 0x7f, 0x88, 0xc0, 0x00, 0x00, 0x00]),
+                compat_avx_addr32(&[0xc4, 0xe2, 0x7d, 0x5a, 0x48, 0x50]),
+                compat_avx_addr32(&[0xc5, 0xfe, 0x7f, 0x88, 0xe0, 0x00, 0x00, 0x00]),
+            ),
+            input: compat_xmm_input(|scratch| {
+                compat_avx_put_m256(
+                    scratch,
+                    0x10,
+                    [
+                        0x0000_0003_0000_0002,
+                        0x0000_0001_0000_0000,
+                        0x0000_0007_0000_0006,
+                        0x0000_0005_0000_0004,
+                    ],
+                );
+                compat_avx_put_m256(
+                    scratch,
+                    0x30,
+                    [
+                        0x1111_2222_3333_4444,
+                        0x5555_6666_7777_8888,
+                        0x9999_aaaa_bbbb_cccc,
+                        0xdddd_eeee_ffff_0001,
+                    ],
+                );
+                compat_xmm_put_m128(scratch, 0x50, 0x0102_0304_0506_0708, 0x1112_1314_1516_1718);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
     ]
 }
 
@@ -35855,7 +36011,7 @@ fn avx512_kvm_xmm_compat_corpus() {
 #[test]
 fn avx512_kvm_avx_compat_corpus() {
     let cases = compat_avx_cases();
-    assert_eq!(cases.len(), 11, "unexpected compatibility AVX corpus size");
+    assert_eq!(cases.len(), 15, "unexpected compatibility AVX corpus size");
     let _ = run_compat_state_cases("AVX", &cases);
 }
 
