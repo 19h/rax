@@ -24115,6 +24115,124 @@ fn compat_condition_code_cases() -> Vec<CompatStateCase> {
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
+            label: "cmovo16_compat_reg_true_from_cx",
+            op: vec![0x0f, 0x40, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_OF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x3333;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovno16_compat_reg_false_preserves_ax",
+            op: vec![0x0f, 0x41, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_OF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x3333;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovae16_compat_mem_true_carry_clear",
+            op: vec![0x0f, 0x43, 0x00],
+            input: compat_condition_mem16_input(0, 0x10, 0x3456),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovbe16_compat_mem_true_zero_set",
+            op: vec![0x0f, 0x46, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_ZF, 0x10, 0x4567),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmova32_compat_reg_true_zeroes_high_eax",
+            op: vec![0x66, 0x0f, 0x47, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(0);
+                input.rax = 0xaaaa_bbbb_1111_2222;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x3456_789a;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovs16_compat_reg_true_from_cx",
+            op: vec![0x0f, 0x48, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_SF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x5678;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovns16_compat_reg_false_preserves_ax",
+            op: vec![0x0f, 0x49, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_SF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x5678;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovp16_compat_mem_true_parity_set",
+            op: vec![0x0f, 0x4a, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_PF, 0x10, 0x6789),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovnp16_compat_mem_false_preserves_ax",
+            op: vec![0x0f, 0x4b, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_PF, 0x10, 0x6789),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovl32_compat_reg_true_zeroes_high_eax",
+            op: vec![0x66, 0x0f, 0x4c, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_SF);
+                input.rax = 0xaaaa_bbbb_1111_2222;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x789a_bcde;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovge16_compat_reg_false_preserves_ax",
+            op: vec![0x0f, 0x4d, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(RFLAGS_SF);
+                input.rax = (input.rax & !0xffff) | 0x1111;
+                input.rcx = (input.rcx & !0xffff) | 0x789a;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovle16_compat_mem_true_zero_set",
+            op: vec![0x0f, 0x4e, 0x00],
+            input: compat_condition_mem16_input(RFLAGS_ZF, 0x10, 0x89ab),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "cmovg32_compat_reg_true_zeroes_high_eax",
+            op: vec![0x66, 0x0f, 0x4f, 0xc1],
+            input: {
+                let mut input = compat_condition_seed(0);
+                input.rax = 0xaaaa_bbbb_1111_2222;
+                input.rcx = (input.rcx & !0xffff_ffff) | 0x9abc_def0;
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
             label: "sete8_compat_mem_true_writes_one",
             op: vec![0x0f, 0x94, 0x00],
             input: compat_condition_mem8_input(RFLAGS_ZF, 0x10, 0xa5),
@@ -24144,6 +24262,78 @@ fn compat_condition_code_cases() -> Vec<CompatStateCase> {
                 input.rcx = (input.rcx & !0xff) | 0xa5;
                 input
             },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "seto8_compat_reg_al_true",
+            op: vec![0x0f, 0x90, 0xc0],
+            input: compat_condition_seed(RFLAGS_OF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setno8_compat_mem_false_writes_zero",
+            op: vec![0x0f, 0x91, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_OF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setae8_compat_mem_true_carry_clear",
+            op: vec![0x0f, 0x93, 0x00],
+            input: compat_condition_mem8_input(0, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setbe8_compat_reg_dl_true",
+            op: vec![0x0f, 0x96, 0xc2],
+            input: compat_condition_seed(RFLAGS_CF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "seta8_compat_mem_true_above",
+            op: vec![0x0f, 0x97, 0x00],
+            input: compat_condition_mem8_input(0, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sets8_compat_reg_al_true",
+            op: vec![0x0f, 0x98, 0xc0],
+            input: compat_condition_seed(RFLAGS_SF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setns8_compat_mem_false_writes_zero",
+            op: vec![0x0f, 0x99, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_SF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setp8_compat_mem_true_parity_set",
+            op: vec![0x0f, 0x9a, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_PF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setnp8_compat_mem_false_writes_zero",
+            op: vec![0x0f, 0x9b, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_PF, 0x10, 0xa5),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setl8_compat_reg_cl_true",
+            op: vec![0x0f, 0x9c, 0xc1],
+            input: compat_condition_seed(RFLAGS_SF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setge8_compat_reg_cl_false",
+            op: vec![0x0f, 0x9d, 0xc1],
+            input: compat_condition_seed(RFLAGS_SF),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "setle8_compat_mem_true_zero_set",
+            op: vec![0x0f, 0x9e, 0x00],
+            input: compat_condition_mem8_input(RFLAGS_ZF, 0x10, 0xa5),
             rflags_mask: FLAGS_UNCHANGED,
         },
     ]
@@ -32858,7 +33048,7 @@ fn avx512_kvm_condition_code_compat_corpus() {
     let cases = compat_condition_code_cases();
     assert_eq!(
         cases.len(),
-        28,
+        53,
         "unexpected compatibility condition-code corpus size"
     );
     let _ = run_compat_state_cases("condition-code", &cases);
