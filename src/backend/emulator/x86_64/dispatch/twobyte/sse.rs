@@ -2025,6 +2025,9 @@ impl X86_64Vcpu {
                 if !self.require_cr4_osxsave_for_ud()? {
                     return Ok(None);
                 }
+                if !self.require_cr0_ts_clear_for_nm()? {
+                    return Ok(None);
+                }
                 self.execute_xrstors(ctx)
             }
             4 => {
@@ -2032,11 +2035,17 @@ impl X86_64Vcpu {
                 if !self.require_cr4_osxsave_for_ud()? {
                     return Ok(None);
                 }
+                if !self.require_cr0_ts_clear_for_nm()? {
+                    return Ok(None);
+                }
                 self.execute_xsave_compacted(ctx)
             }
             5 => {
                 // XSAVES - Save processor extended states supervisor.
                 if !self.require_cr4_osxsave_for_ud()? {
+                    return Ok(None);
+                }
+                if !self.require_cr0_ts_clear_for_nm()? {
                     return Ok(None);
                 }
                 self.execute_xsave_compacted(ctx)

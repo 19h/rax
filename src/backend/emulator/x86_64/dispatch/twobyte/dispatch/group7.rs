@@ -15,7 +15,9 @@ const CR4_PKE: u64 = 1 << 22;
 
 impl X86_64Vcpu {
     #[inline(always)]
-    fn require_cr0_ts_clear_for_nm(&mut self) -> Result<bool> {
+    pub(in crate::backend::emulator::x86_64) fn require_cr0_ts_clear_for_nm(
+        &mut self,
+    ) -> Result<bool> {
         if self.sregs.cr0 & CR0_TS != 0 {
             self.inject_exception(7, None)?;
             return Ok(false);
