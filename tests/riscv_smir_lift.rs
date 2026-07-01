@@ -500,6 +500,25 @@ fn retarget_mem(w: u32, insn: &Op) -> (u32, Option<u32>) {
     }
 }
 
+fn assert_lift_matches_oracle(name: &str, word: u32, st: &State) {
+    let bytes = word.to_le_bytes();
+    let ref_state = run_ref(&bytes, st).unwrap_or_else(|| panic!("{name}: oracle trapped"));
+    let smir_state = run_smir(&bytes, st)
+        .unwrap_or_else(|e| panic!("{name}: smir execution failed: {e}"))
+        .unwrap_or_else(|| panic!("{name}: lift gap"));
+    if let Some(diff) = ref_state.eq_regs(&smir_state) {
+        panic!("{name}: {diff}");
+    }
+}
+
+fn encode_hypervisor_mem(funct7: u32, rs2: u32, rs1: u32, rd: u32) -> u32 {
+    (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | (0b100 << 12) | (rd << 7) | 0x73
+}
+
+fn encode_amo(funct5: u32, funct3: u32, rd: u32, rs1: u32, rs2: u32) -> u32 {
+    (funct5 << 27) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | 0x2f
+}
+
 #[test]
 fn lift_op_imm() {
     // OP-IMM (0x13), OP-IMM-32 (0x1b), LUI (0x37), AUIPC (0x17)
@@ -516,6 +535,109 @@ fn lift_op() {
 fn lift_mem() {
     // loads (0x03), stores (0x23), AMO (0x2f)
     sweep(0x5117_0003, &[0x03, 0x23, 0x2f], 40_000);
+}
+
+#[test]
+fn lift_hypervisor_loads() {
+    let mut rng = Rng::new(0x5117_0010);
+    let cases = [
+        ("hlv.b", encode_hypervisor_mem(0x30, 0, 5, 10)),
+        ("hlv.bu", encode_hypervisor_mem(0x30, 1, 5, 10)),
+        ("hlv.h", encode_hypervisor_mem(0x32, 0, 5, 10)),
+        ("hlv.hu", encode_hypervisor_mem(0x32, 1, 5, 10)),
+        ("hlvx.hu", encode_hypervisor_mem(0x32, 3, 5, 10)),
+        ("hlv.w", encode_hypervisor_mem(0x34, 0, 5, 10)),
+        ("hlv.wu", encode_hypervisor_mem(0x34, 1, 5, 10)),
+        ("hlvx.wu", encode_hypervisor_mem(0x34, 3, 5, 10)),
+        ("hlv.d", encode_hypervisor_mem(0x36, 0, 5, 10)),
+    ];
+    for (name, word) in cases {
+        let mut st = rand_state(&mut rng);
+        st.x[5] = SCRATCH + 0x40;
+        st.scratch[8] = 0xfedc_ba98_8765_4321;
+        assert_lift_matches_oracle(name, word, &st);
+    }
+}
+
+#[test]
+fn lift_hypervisor_stores() {
+    let mut rng = Rng::new(0x5117_0011);
+    let cases = [
+        ("hsv.b", encode_hypervisor_mem(0x31, 6, 5, 0)),
+        ("hsv.h", encode_hypervisor_mem(0x33, 6, 5, 0)),
+        ("hsv.w", encode_hypervisor_mem(0x35, 6, 5, 0)),
+        ("hsv.d", encode_hypervisor_mem(0x37, 6, 5, 0)),
+    ];
+    for (name, word) in cases {
+        let mut st = rand_state(&mut rng);
+        st.x[5] = SCRATCH + 0x40;
+        st.x[6] = 0x0123_4567_89ab_cdef;
+        st.scratch[8] = 0xfedc_ba98_7654_3210;
+        assert_lift_matches_oracle(name, word, &st);
+    }
+}
+
+#[test]
+fn lift_amocas_scalar() {
+    let mut rng = Rng::new(0x5117_0012);
+    let cases = [
+        (
+            "amocas.w success",
+            encode_amo(0b00101, 0b010, 10, 5, 6),
+            0xffff_ffff_8765_4321,
+            0x8765_4321,
+            0x1234_5678,
+        ),
+        (
+            "amocas.w failure",
+            encode_amo(0b00101, 0b010, 10, 5, 6),
+            0xffff_ffff_8765_4321,
+            0x1111_2222,
+            0x1234_5678,
+        ),
+        (
+            "amocas.d success",
+            encode_amo(0b00101, 0b011, 10, 5, 6),
+            0x0123_4567_89ab_cdef,
+            0x0123_4567_89ab_cdef,
+            0xfedc_ba98_7654_3210,
+        ),
+        (
+            "amocas.d failure",
+            encode_amo(0b00101, 0b011, 10, 5, 6),
+            0x0123_4567_89ab_cdef,
+            0x1111_2222_3333_4444,
+            0xfedc_ba98_7654_3210,
+        ),
+    ];
+    for (name, word, old_mem, expected, new_val) in cases {
+        let mut st = rand_state(&mut rng);
+        st.x[5] = SCRATCH + 0x40;
+        st.x[6] = new_val;
+        st.x[10] = expected;
+        st.scratch[8] = old_mem;
+        assert_lift_matches_oracle(name, word, &st);
+    }
+}
+
+#[test]
+fn lift_amocas_q_remains_pair_cas_gap() {
+    let word = encode_amo(0b00101, 0b100, 4, 10, 6);
+    let mut rng = Rng::new(0x5117_0013);
+    let mut st = rand_state(&mut rng);
+    st.x[10] = SCRATCH + 0x40;
+    st.scratch[8] = 0x0123_4567_89ab_cdef;
+    st.scratch[9] = 0xfedc_ba98_7654_3210;
+    st.x[4] = st.scratch[8];
+    st.x[5] = st.scratch[9];
+    st.x[6] = 0x1111_2222_3333_4444;
+    st.x[7] = 0x5555_6666_7777_8888;
+
+    assert!(run_ref(&word.to_le_bytes(), &st).is_some());
+    assert!(
+        matches!(run_smir(&word.to_le_bytes(), &st), Ok(None)),
+        "amocas.q should stay an explicit gap until SMIR has pair-wide CAS"
+    );
 }
 
 /// Sweep compressed (16-bit) instructions. Base registers x2 (sp) and x8..x15
@@ -1024,7 +1146,9 @@ fn lift_exhaustive_audit() {
     // harness: ECALL/EBREAK (environment trap), FENCE/FENCE.I (ordering no-op),
     // privileged MRET/SRET/WFI, and CSR access to UNMODELED CSRs (privileged
     // machine state + the nondeterministic cycle/time/instret counters — only
-    // the application FP/vector CSRs are modeled; see lift_csr). Every
+    // the application FP/vector CSRs are modeled; see lift_csr). AMOCAS.Q is
+    // a precise IR boundary today: it is a 128-bit pair compare-and-swap, while
+    // SMIR's scalar CAS interface returns/stores one u64. Every other
     // computational / load-store / atomic / FP / vector / control-flow / app-CSR
     // instruction MUST lift.
     let allowed = |op: &str| {
@@ -1038,6 +1162,7 @@ fn lift_exhaustive_audit() {
                 | "Sret"
                 | "Wfi"
                 | "Pause"
+                | "AmocasQ"
                 | "c.Ebreak"
         ) || op.starts_with("Csrr")
     };

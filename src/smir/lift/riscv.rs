@@ -758,6 +758,88 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
+    /// Hypervisor memory instructions (HLV*/HSV*) are modeled like direct
+    /// loads/stores in the local RISC-V interpreter.
+    fn lift_hypervisor_mem(
+        &mut self,
+        insn: u32,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        let d = rv_decode(insn, self.rv_xlen(), &self.decoder_isa());
+        if d.is_illegal() {
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
+
+        let base = self.get_x_reg(d.rs1, ctx);
+        let mut ops = Vec::new();
+
+        match d.op {
+            RvOp::HlvB
+            | RvOp::HlvBu
+            | RvOp::HlvH
+            | RvOp::HlvHu
+            | RvOp::HlvxHu
+            | RvOp::HlvW
+            | RvOp::HlvWu
+            | RvOp::HlvxWu
+            | RvOp::HlvD => {
+                let (width, sign) = match d.op {
+                    RvOp::HlvB => (MemWidth::B1, SignExtend::Sign),
+                    RvOp::HlvBu => (MemWidth::B1, SignExtend::Zero),
+                    RvOp::HlvH => (MemWidth::B2, SignExtend::Sign),
+                    RvOp::HlvHu | RvOp::HlvxHu => (MemWidth::B2, SignExtend::Zero),
+                    RvOp::HlvW => (MemWidth::B4, SignExtend::Sign),
+                    RvOp::HlvWu | RvOp::HlvxWu => (MemWidth::B4, SignExtend::Zero),
+                    RvOp::HlvD => (MemWidth::B8, SignExtend::Sign),
+                    _ => unreachable!(),
+                };
+                if let Some(dst) = self.def_x_reg(d.rd, ctx) {
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Load {
+                            dst,
+                            addr: Address::Direct(base),
+                            width,
+                            sign,
+                        },
+                    ));
+                }
+            }
+            RvOp::HsvB | RvOp::HsvH | RvOp::HsvW | RvOp::HsvD => {
+                let width = match d.op {
+                    RvOp::HsvB => MemWidth::B1,
+                    RvOp::HsvH => MemWidth::B2,
+                    RvOp::HsvW => MemWidth::B4,
+                    RvOp::HsvD => MemWidth::B8,
+                    _ => unreachable!(),
+                };
+                let src = self.get_x_reg(d.rs2, ctx);
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Store {
+                        src,
+                        addr: Address::Direct(base),
+                        width,
+                    },
+                ));
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr,
+                    bytes: insn.to_le_bytes().to_vec(),
+                });
+            }
+        }
+
+        Ok((ops, ControlFlow::NextInsn))
+    }
+
     /// Integer register-immediate operations
     fn lift_op_imm(
         &mut self,
@@ -3720,10 +3802,17 @@ impl RiscVLifter {
 
         let rs1 = self.get_x_reg(rs1_reg, ctx);
         let rs2 = self.get_x_reg(rs2_reg, ctx);
+        let rd_old = self.get_x_reg(rd, ctx);
 
         let width = match funct3 {
             0b010 => MemWidth::B4, // 32-bit
             0b011 => MemWidth::B8, // 64-bit
+            0b100 if self.xlen == 64 && self.extensions.zacas && funct5 == 0b00101 => {
+                return Err(LiftError::Unsupported {
+                    addr,
+                    mnemonic: "amocas.q".to_string(),
+                });
+            }
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr,
@@ -3776,6 +3865,17 @@ impl RiscVLifter {
                     addr: address,
                     src: rs2,
                     op: AtomicOp::Swap,
+                    width,
+                    order,
+                },
+                0b00101 if self.extensions.zacas => OpKind::Cas {
+                    // AMOCAS.W/D: compare memory with old rd, store rs2 on
+                    // match, and always return the old memory value in rd.
+                    dst: result,
+                    success: ctx.alloc_vreg(),
+                    addr: address,
+                    expected: rd_old,
+                    new_val: rs2,
                     width,
                     order,
                 },
@@ -3968,6 +4068,10 @@ impl RiscVLifter {
         let csr = ((insn >> 20) & 0xFFF) as u32;
 
         let mut ops = Vec::new();
+
+        if funct3 == 0b100 && self.extensions.h {
+            return self.lift_hypervisor_mem(insn, addr, ctx);
+        }
 
         match funct3 {
             0b000 => {
