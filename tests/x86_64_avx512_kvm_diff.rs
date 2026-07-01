@@ -18549,6 +18549,39 @@ fn irregular_cases() -> Vec<Case> {
             profile: Int,
         });
     }
+    for &(label, asm) in &[
+        (
+            "monitor_monitor_edge_scratch_end",
+            "leaq 224(%rax), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\nmovq %rax, %r8",
+        ),
+        (
+            "monitor_monitor_edge_rbx_derived_address",
+            "leaq 80(%rbx), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\nmovq %rax, %r8",
+        ),
+        (
+            "monitor_monitor_edge_two_addresses",
+            "leaq 32(%rax), %rax\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\naddq $64, %rax\nmonitor\nmovq %rax, %r8",
+        ),
+        (
+            "monitor_monitor_edge_store_before_monitor",
+            "movq %r8, 96(%rax)\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor\nmovq 96(%rax), %rcx",
+        ),
+        (
+            "monitor_monitor_edge_carry_flag_preserved",
+            "xorl %ecx, %ecx\nxorl %edx, %edx\nstc\nmonitor",
+        ),
+        (
+            "monitor_monitor_edge_hint_zero_high_halves",
+            "movabsq $-1, %rcx\nmovabsq $-1, %rdx\nxorl %ecx, %ecx\nxorl %edx, %edx\nmonitor",
+        ),
+    ] {
+        out.push(Case {
+            label: label.to_string(),
+            asm: asm.to_string(),
+            feat: Monitor,
+            profile: Int,
+        });
+    }
     for &(label, asm, feat) in &[
         (
             "monitor_wait_edge_unaligned_address",
@@ -38466,7 +38499,7 @@ fn avx512_kvm_monitor_corpus() {
         .into_iter()
         .filter(|case| case.feat == Feat::Monitor)
         .collect();
-    assert_eq!(cases.len(), 8, "unexpected MONITOR corpus size");
+    assert_eq!(cases.len(), 14, "unexpected MONITOR corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Monitor) {
@@ -38487,13 +38520,58 @@ fn avx512_kvm_monitor_corpus() {
             tally.skipped_feature, 0,
             "MONITOR cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 8, "all MONITOR cases should compare");
+        assert_eq!(tally.compared, 14, "all MONITOR cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 8,
+            tally.skipped_feature, 14,
             "all MONITOR cases should feature-skip"
         );
         assert_eq!(tally.compared, 0, "MONITOR cases should not run");
+    }
+}
+
+#[test]
+fn avx512_kvm_monitor_edge_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| case.label.contains("_monitor_edge_"))
+        .collect();
+    assert_eq!(cases.len(), 6, "unexpected MONITOR edge corpus size");
+
+    let host = HostFeatures::detect();
+    if !host.supports(Feat::Monitor) {
+        eprintln!("[skip] host lacks MONITOR support; MONITOR edge cases will skip");
+    }
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    if host.supports(Feat::Monitor) {
+        assert_eq!(tally.faulted, 0, "silicon faulted on MONITOR edge cases");
+        assert_eq!(
+            tally.interp_err, 0,
+            "rax failed to execute a MONITOR edge case"
+        );
+        assert_eq!(
+            tally.skipped_asm, 0,
+            "MONITOR edge corpus produced assembler-rejected cases"
+        );
+        assert_eq!(
+            tally.skipped_feature, 0,
+            "MONITOR edge cases should not feature-skip"
+        );
+        assert_eq!(
+            tally.ran_for(Feat::Monitor),
+            6,
+            "all MONITOR edge cases should run"
+        );
+        assert_eq!(tally.compared, 6, "all MONITOR edge cases should compare");
+    } else {
+        assert_eq!(
+            tally.skipped_feature, 6,
+            "all MONITOR edge cases should feature-skip"
+        );
+        assert_eq!(tally.compared, 0, "MONITOR edge cases should not run");
     }
 }
 
