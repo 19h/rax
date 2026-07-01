@@ -364,6 +364,15 @@ impl X86_64Vcpu {
                 }
             }
         } else {
+            if (reg_op == 4 && (ctx.operand_size_override || ctx.rep_prefix == Some(0xF2)))
+                || (reg_op == 5 && (ctx.operand_size_override || ctx.rep_prefix.is_some()))
+                || (reg_op == 6 && ctx.rep_prefix == Some(0xF2))
+                || (reg_op == 7 && ctx.rep_prefix.is_some())
+            {
+                self.inject_undefined_instruction()?;
+                return Ok(None);
+            }
+
             if reg_op == 6 && ctx.rep_prefix == Some(0xF3) {
                 // CLRSSBSY is a CET shadow-stack instruction. The emulator does
                 // not expose CET shadow stacks, so this F3-prefixed memory form

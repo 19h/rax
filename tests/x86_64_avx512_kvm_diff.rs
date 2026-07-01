@@ -28745,6 +28745,43 @@ fn illegal_lock_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
     ]
 }
 
+fn invalid_0fae_prefix_cases() -> Vec<(&'static str, &'static [u8])> {
+    vec![
+        (
+            "xsave_66_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0x66, 0x0f, 0xae, 0x20],
+        ),
+        (
+            "xsave_f2_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0xf2, 0x0f, 0xae, 0x20],
+        ),
+        (
+            "xrstor_66_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0x66, 0x0f, 0xae, 0x28],
+        ),
+        (
+            "xrstor_f2_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0xf2, 0x0f, 0xae, 0x28],
+        ),
+        (
+            "xrstor_f3_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0xf3, 0x0f, 0xae, 0x28],
+        ),
+        (
+            "xsaveopt_f2_prefix_illegal",
+            &[0x31, 0xc0, 0x31, 0xd2, 0xf2, 0x0f, 0xae, 0x30],
+        ),
+        (
+            "clflush_f2_prefix_illegal",
+            &[0xf2, 0x0f, 0xae, 0x38],
+        ),
+        (
+            "clflush_f3_prefix_illegal",
+            &[0xf3, 0x0f, 0xae, 0x38],
+        ),
+    ]
+}
+
 fn cr4_gated_system_ud_cases() -> Vec<(&'static str, &'static [u8])> {
     vec![
         (
@@ -32726,6 +32763,11 @@ fn avx512_kvm_bit_manip_compat_corpus() {
 #[test]
 fn avx512_kvm_illegal_lock_prefix_ud_corpus() {
     run_ud_marker_corpus("illegal LOCK prefix", illegal_lock_prefix_cases(), 15);
+}
+
+#[test]
+fn avx512_kvm_invalid_0fae_prefix_ud_corpus() {
+    run_ud_marker_corpus("invalid 0F AE prefix", invalid_0fae_prefix_cases(), 8);
 }
 
 #[test]
