@@ -112,6 +112,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 9)   // SSSE3
+                                  | (1 << 17)  // PCID
                                   | (1 << 19)  // SSE4.1
                                   | (1 << 20)  // SSE4.2
                                   | (1 << 23)  // POPCNT

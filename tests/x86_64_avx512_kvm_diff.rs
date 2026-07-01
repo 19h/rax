@@ -16159,6 +16159,15 @@ fn irregular_cases() -> Vec<Case> {
         });
     }
 
+    if host_cpu_flag("pcid") {
+        out.push(Case {
+            label: "cpuid_pcid_leaf1_feature_bit".to_string(),
+            asm: "movl $1, %eax\nxorl %ecx, %ecx\ncpuid\nbtl $17, %ecx\nsetc %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rbx, %rbx\nxorq %rdx, %rdx\ncmpq %rcx, %rcx".to_string(),
+            feat: Cpuid,
+            profile: Int,
+        });
+    }
+
     for &(label, asm) in &[
         (
             "rdpmc_counter0_zero_ext",
@@ -19040,6 +19049,42 @@ fn irregular_cases() -> Vec<Case> {
             feat,
             profile: Int,
         });
+    }
+
+    if host_cpu_flag("pcid") {
+        for &(label, asm) in &[
+            (
+                "pcid_control_cr4_pcide_enable_roundtrip",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr4, %r9\nbtq $17, %r9\nsetc %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rcx, %rcx",
+            ),
+            (
+                "pcid_control_cr3_low12_roundtrip",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr3, %r8\nandq $-4096, %r8\nmovq %r8, %r9\norq $0x123, %r9\nmovq %r9, %cr3\nmovq %cr3, %r10\nmovq %r10, %r11\nandq $0xfff, %r11\ncmpq $0x123, %r11\nsete %cl\nandq $-4096, %r10\ncmpq %r8, %r10\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+            ),
+            (
+                "pcid_control_cr3_second_pcid_overwrites",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr3, %r8\nandq $-4096, %r8\nmovq %r8, %r9\norq $0x123, %r9\nmovq %r9, %cr3\nmovq %r8, %r9\norq $0x456, %r9\nmovq %r9, %cr3\nmovq %cr3, %r10\nandq $0xfff, %r10\ncmpq $0x456, %r10\nsete %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\ncmpq %rcx, %rcx",
+            ),
+            (
+                "pcid_control_cr3_noflush_bit_not_retained",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr3, %r8\nandq $-4096, %r8\nmovabsq $0x8000000000000abc, %r9\norq %r8, %r9\nmovq %r9, %cr3\nmovq %cr3, %r10\nbtq $63, %r10\nsetnc %cl\nmovq %r10, %r11\nandq $0xfff, %r11\ncmpq $0xabc, %r11\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+            ),
+            (
+                "pcid_control_cr3_max_pcid_preserves_base",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr3, %r8\nandq $-4096, %r8\nmovq %r8, %r9\norq $0xfff, %r9\nmovq %r9, %cr3\nmovq %cr3, %r10\nmovq %r10, %r11\nandq $0xfff, %r11\ncmpq $0xfff, %r11\nsete %cl\nandq $-4096, %r10\ncmpq %r8, %r10\nsete %dl\nandb %dl, %cl\nmovzbl %cl, %ecx\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+            ),
+            (
+                "pcid_control_cr4_self_write_preserves_cr3_pcid",
+                "movq %cr4, %r8\norq $0x20000, %r8\nmovq %r8, %cr4\nmovq %cr3, %r9\nandq $-4096, %r9\norq $0x321, %r9\nmovq %r9, %cr3\nmovq %cr4, %r10\nmovq %r10, %cr4\nmovq %cr3, %r11\nandq $0xfff, %r11\ncmpq $0x321, %r11\nsete %cl\nmovzbl %cl, %ecx\nxorq %r8, %r8\nxorq %r9, %r9\nxorq %r10, %r10\nxorq %r11, %r11\ncmpq %rcx, %rcx",
+            ),
+        ] {
+            out.push(Case {
+                label: label.to_string(),
+                asm: asm.to_string(),
+                feat: ControlReg,
+                profile: Int,
+            });
+        }
     }
 
     if host_cpu_flag("tsc_adjust") {
@@ -33157,6 +33202,14 @@ fn modern_msr_state_expected_cases() -> usize {
     expected
 }
 
+fn pcid_control_reg_expected_cases() -> usize {
+    if host_cpu_flag("pcid") { 6 } else { 0 }
+}
+
+fn pcid_cpuid_expected_cases() -> usize {
+    if host_cpu_flag("pcid") { 1 } else { 0 }
+}
+
 const APIC_BASE_MSR_CASES: usize = 5;
 
 #[test]
@@ -33171,9 +33224,10 @@ fn avx512_kvm_privileged_machine_state_corpus() {
         })
         .collect();
     let modern_msr_cases = modern_msr_state_expected_cases();
+    let pcid_control_cases = pcid_control_reg_expected_cases();
     assert_eq!(
         cases.len(),
-        61 + modern_msr_cases + APIC_BASE_MSR_CASES,
+        61 + modern_msr_cases + APIC_BASE_MSR_CASES + pcid_control_cases,
         "unexpected privileged corpus size"
     );
 
@@ -33191,7 +33245,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::ControlReg),
-        16,
+        16 + pcid_control_cases,
         "all control-register cases should run"
     );
     assert_eq!(
@@ -33211,7 +33265,7 @@ fn avx512_kvm_privileged_machine_state_corpus() {
     );
     assert_eq!(
         tally.compared,
-        61 + modern_msr_cases + APIC_BASE_MSR_CASES,
+        61 + modern_msr_cases + APIC_BASE_MSR_CASES + pcid_control_cases,
         "all privileged cases should compare"
     );
 }
@@ -33300,6 +33354,52 @@ fn avx512_kvm_control_register_edge_corpus() {
         tally.compared, 8,
         "all control-register edge cases should compare"
     );
+}
+
+#[test]
+fn avx512_kvm_pcid_control_state_corpus() {
+    let cases: Vec<_> = generated_cases()
+        .into_iter()
+        .filter(|case| {
+            case.label.contains("pcid_control_") || case.label.contains("cpuid_pcid_")
+        })
+        .collect();
+    let expected_control = pcid_control_reg_expected_cases();
+    let expected_cpuid = pcid_cpuid_expected_cases();
+    let expected = expected_control + expected_cpuid;
+    if expected == 0 {
+        eprintln!("[skip] host lacks PCID support");
+        return;
+    }
+    assert_eq!(cases.len(), expected, "unexpected PCID corpus size");
+
+    let Some(tally) = run_corpus(&cases) else {
+        return;
+    };
+    assert_eq!(tally.faulted, 0, "silicon faulted on PCID cases");
+    assert_eq!(
+        tally.interp_err, 0,
+        "rax failed to execute a PCID case"
+    );
+    assert_eq!(
+        tally.skipped_asm, 0,
+        "PCID corpus produced assembler-rejected cases"
+    );
+    assert_eq!(
+        tally.skipped_feature, 0,
+        "PCID cases should not feature-skip"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::ControlReg),
+        expected_control,
+        "all PCID control-register cases should run"
+    );
+    assert_eq!(
+        tally.ran_for(Feat::Cpuid),
+        expected_cpuid,
+        "all PCID CPUID cases should run"
+    );
+    assert_eq!(tally.compared, expected, "all PCID cases should compare");
 }
 
 #[test]
@@ -34353,7 +34453,12 @@ fn avx512_kvm_processor_query_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::Cpuid | Feat::Rdpmc))
         .collect();
-    assert_eq!(cases.len(), 35, "unexpected processor-query corpus size");
+    let pcid_cpuid_cases = pcid_cpuid_expected_cases();
+    assert_eq!(
+        cases.len(),
+        35 + pcid_cpuid_cases,
+        "unexpected processor-query corpus size"
+    );
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Rdpmc) {
@@ -34372,7 +34477,11 @@ fn avx512_kvm_processor_query_corpus() {
         tally.skipped_asm, 0,
         "processor-query corpus produced assembler-rejected cases"
     );
-    assert_eq!(tally.ran_for(Feat::Cpuid), 23, "all CPUID cases should run");
+    assert_eq!(
+        tally.ran_for(Feat::Cpuid),
+        23 + pcid_cpuid_cases,
+        "all CPUID cases should run"
+    );
     if host.supports(Feat::Rdpmc) {
         assert_eq!(tally.ran_for(Feat::Rdpmc), 12, "all RDPMC cases should run");
         assert_eq!(
@@ -34380,7 +34489,8 @@ fn avx512_kvm_processor_query_corpus() {
             "processor-query cases should not feature-skip"
         );
         assert_eq!(
-            tally.compared, 35,
+            tally.compared,
+            35 + pcid_cpuid_cases,
             "all processor-query cases should compare"
         );
     } else {
@@ -34388,7 +34498,11 @@ fn avx512_kvm_processor_query_corpus() {
             tally.skipped_feature, 12,
             "only RDPMC cases should feature-skip"
         );
-        assert_eq!(tally.compared, 23, "all CPUID cases should compare");
+        assert_eq!(
+            tally.compared,
+            23 + pcid_cpuid_cases,
+            "all CPUID cases should compare"
+        );
     }
 }
 

@@ -312,7 +312,9 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         }
         2 => vcpu.sregs.cr2 = value,
         3 => {
-            vcpu.sregs.cr3 = value;
+            // With CR4.PCIDE set, CR3 bit 63 requests no TLB flush on write; it
+            // is not part of the architecturally readable CR3 value.
+            vcpu.sregs.cr3 = value & !(1u64 << 63);
             vcpu.mmu.flush_tlb();
         }
         4 => {
