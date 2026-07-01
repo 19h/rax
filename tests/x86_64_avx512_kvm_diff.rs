@@ -18551,6 +18551,36 @@ fn irregular_cases() -> Vec<Case> {
             "movabsq $0xffff000000004000, %rax\naddr32 prefetchwt1 (%eax)",
             Prefetchw,
         ),
+        (
+            "prefetchw_prefetch_edge_negative_disp",
+            "prefetchw -16(%rbx)",
+            Prefetchw,
+        ),
+        (
+            "prefetchw_prefetch_edge_scaled_index",
+            "movl $2, %ecx\nprefetchw 160(%rax,%rcx,8)",
+            Prefetchw,
+        ),
+        (
+            "prefetchw_prefetch_edge_stack_base",
+            "prefetchw 16(%rsp)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_negative_disp",
+            "prefetchwt1 -16(%rbx)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_scaled_index",
+            "movl $2, %ecx\nprefetchwt1 160(%rax,%rcx,8)",
+            Prefetchw,
+        ),
+        (
+            "prefetchwt1_prefetch_edge_stack_base",
+            "prefetchwt1 16(%rsp)",
+            Prefetchw,
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -38218,7 +38248,7 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
         .into_iter()
         .filter(|case| matches!(case.feat, Feat::HintNop | Feat::Prefetchw))
         .collect();
-    assert_eq!(cases.len(), 32, "unexpected hint/prefetch corpus size");
+    assert_eq!(cases.len(), 38, "unexpected hint/prefetch corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Prefetchw) {
@@ -38245,17 +38275,17 @@ fn avx512_kvm_hint_nop_prefetch_corpus() {
     if host.supports(Feat::Prefetchw) {
         assert_eq!(
             tally.ran_for(Feat::Prefetchw),
-            10,
+            16,
             "all PREFETCHW/PREFETCHWT1 cases should run"
         );
         assert_eq!(
             tally.skipped_feature, 0,
             "hint/prefetch cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 32, "all hint/prefetch cases should compare");
+        assert_eq!(tally.compared, 38, "all hint/prefetch cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 10,
+            tally.skipped_feature, 16,
             "only PREFETCHW/PREFETCHWT1 cases should feature-skip"
         );
         assert_eq!(
@@ -38271,7 +38301,7 @@ fn avx512_kvm_prefetch_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_prefetch_edge_"))
         .collect();
-    assert_eq!(cases.len(), 12, "unexpected prefetch edge corpus size");
+    assert_eq!(cases.len(), 18, "unexpected prefetch edge corpus size");
 
     let host = HostFeatures::detect();
     if !host.supports(Feat::Prefetchw) {
@@ -38298,17 +38328,17 @@ fn avx512_kvm_prefetch_edge_corpus() {
     if host.supports(Feat::Prefetchw) {
         assert_eq!(
             tally.ran_for(Feat::Prefetchw),
-            7,
+            13,
             "all PREFETCHW/PREFETCHWT1 edge cases should run"
         );
         assert_eq!(
             tally.skipped_feature, 0,
             "prefetch edge cases should not feature-skip"
         );
-        assert_eq!(tally.compared, 12, "all prefetch edge cases should compare");
+        assert_eq!(tally.compared, 18, "all prefetch edge cases should compare");
     } else {
         assert_eq!(
-            tally.skipped_feature, 7,
+            tally.skipped_feature, 13,
             "only PREFETCHW/PREFETCHWT1 edge cases should feature-skip"
         );
         assert_eq!(tally.compared, 5, "all PREFETCHh edge cases should compare");
