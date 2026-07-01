@@ -23816,6 +23816,135 @@ fn compat_segment_data_exception_cases() -> Vec<CompatExceptionMarkerCase> {
     ]
 }
 
+fn compat_descriptor_status_seed() -> CompatStateIn {
+    let mut input = compat_modrm16_seed();
+    input.rax = 0xaaaa_bbbb_cccc_1111;
+    input.rcx = 0xbbbb_cccc_dddd_2222;
+    input.rdx = 0xcccc_dddd_eeee_3333;
+    input.rflags = INITIAL_RFLAGS | RFLAGS_DF | RFLAGS_ZF;
+    input
+}
+
+fn compat_descriptor_addr32_mem_input(offset: usize) -> CompatStateIn {
+    let mut input = compat_descriptor_status_seed();
+    input.rbx = 0x1111_2222_0000_4000;
+    input.rsi = 0x2222_3333_0000_0020;
+    input.scratch[offset..offset + 2].copy_from_slice(&0xffffu16.to_le_bytes());
+    input
+}
+
+fn compat_descriptor_invalid_input(selector: u16) -> CompatStateIn {
+    let mut input = compat_descriptor_status_seed();
+    input.rax = (input.rax & !0xffff) | 0x7777;
+    input.rcx = (input.rcx & !0xffff) | u64::from(selector);
+    input
+}
+
+fn compat_descriptor_status_cases() -> Vec<CompatStateCase> {
+    const FLAGS_UNCHANGED: u64 = STATUS_RFLAGS_MASK | RFLAGS_IF | RFLAGS_DF;
+
+    vec![
+        CompatStateCase {
+            label: "smsw_ax_compat_low16_preserves_high_rax",
+            op: vec![0x0f, 0x01, 0xe0],
+            input: compat_descriptor_status_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "smsw_modrm16_mem_compat_writes_low16",
+            op: vec![0x0f, 0x01, 0x20],
+            input: {
+                let mut input = compat_descriptor_status_seed();
+                input.scratch[0x10..0x12].copy_from_slice(&0xffffu16.to_le_bytes());
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "smsw_addr32_mem_compat_writes_low16",
+            op: vec![0x67, 0x0f, 0x01, 0x24, 0x33],
+            input: compat_descriptor_addr32_mem_input(0x20),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sldt_ax_compat_zero_selector_preserves_high_rax",
+            op: vec![0x0f, 0x00, 0xc0],
+            input: compat_descriptor_status_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "sldt_modrm16_mem_compat_writes_selector",
+            op: vec![0x0f, 0x00, 0x00],
+            input: {
+                let mut input = compat_descriptor_status_seed();
+                input.scratch[0x10..0x12].copy_from_slice(&0xffffu16.to_le_bytes());
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "str_ax_compat_selector_preserves_high_rax",
+            op: vec![0x0f, 0x00, 0xc8],
+            input: compat_descriptor_status_seed(),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "str_modrm16_mem_compat_writes_selector",
+            op: vec![0x0f, 0x00, 0x08],
+            input: {
+                let mut input = compat_descriptor_status_seed();
+                input.scratch[0x10..0x12].copy_from_slice(&0xffffu16.to_le_bytes());
+                input
+            },
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "lar_null_selector_compat_clears_zf_preserves_ax",
+            op: vec![0x0f, 0x02, 0xc1],
+            input: compat_descriptor_invalid_input(0),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "lsl_null_selector_compat_clears_zf_preserves_ax",
+            op: vec![0x0f, 0x03, 0xc1],
+            input: compat_descriptor_invalid_input(0),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "lar_out_of_limit_selector_compat_clears_zf_preserves_ax",
+            op: vec![0x0f, 0x02, 0xc1],
+            input: compat_descriptor_invalid_input(0x20),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "lsl_out_of_limit_selector_compat_clears_zf_preserves_ax",
+            op: vec![0x0f, 0x03, 0xc1],
+            input: compat_descriptor_invalid_input(0x20),
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "verr_null_selector_compat_clears_zf",
+            op: vec![0x0f, 0x00, 0xe0],
+            input: {
+                let mut input = compat_descriptor_status_seed();
+                input.rax &= !0xffff;
+                input
+            },
+            rflags_mask: RFLAGS_ZF,
+        },
+        CompatStateCase {
+            label: "verw_null_selector_compat_clears_zf",
+            op: vec![0x0f, 0x00, 0xe8],
+            input: {
+                let mut input = compat_descriptor_status_seed();
+                input.rax &= !0xffff;
+                input
+            },
+            rflags_mask: RFLAGS_ZF,
+        },
+    ]
+}
+
 fn compat_pop_sreg_input(selector: u16, operand32: bool) -> CompatStateIn {
     let mut input = compat_state_seed();
     let stack_offset = (input.rsp - STACK_WINDOW_ADDR) as usize;
@@ -34848,6 +34977,17 @@ fn avx512_kvm_segment_data_compat_corpus() {
         "unexpected compatibility segment-data exception corpus size"
     );
     let _ = run_compat_exception_marker_cases("segment-data", &exception_cases);
+}
+
+#[test]
+fn avx512_kvm_descriptor_status_compat_corpus() {
+    let cases = compat_descriptor_status_cases();
+    assert_eq!(
+        cases.len(),
+        13,
+        "unexpected compatibility descriptor-status corpus size"
+    );
+    let _ = run_compat_state_cases("descriptor-status", &cases);
 }
 
 #[test]
