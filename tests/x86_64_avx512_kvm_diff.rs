@@ -14921,6 +14921,12 @@ fn irregular_cases() -> Vec<Case> {
             F32ConvertEdge,
         ),
         (
+            "dpps_sse41_simd_dot_edge_nan_payload_reg",
+            "dpps $0xff, %xmm2, %xmm1",
+            Sse41,
+            F32Edge,
+        ),
+        (
             "dpps_sse41_simd_dot_edge_alt_reg",
             "dpps $0x5a, %xmm2, %xmm1",
             Sse41,
@@ -14951,6 +14957,12 @@ fn irregular_cases() -> Vec<Case> {
             F64ConvertEdge,
         ),
         (
+            "dppd_sse41_simd_dot_edge_nan_payload_reg",
+            "dppd $0x33, %xmm2, %xmm1",
+            Sse41,
+            F64Edge,
+        ),
+        (
             "dppd_sse41_simd_dot_edge_high_to_high_mem",
             "dppd $0x22, 32(%rax), %xmm1",
             Sse41,
@@ -14979,6 +14991,12 @@ fn irregular_cases() -> Vec<Case> {
             "{vex} vdpps $0xff, %xmm2, %xmm3, %xmm1",
             Avx,
             F32ConvertEdge,
+        ),
+        (
+            "vdpps_avx_simd_dot_edge_xmm_nan_payload_reg",
+            "{vex} vdpps $0xff, %xmm2, %xmm1, %xmm1",
+            Avx,
+            F32Edge,
         ),
         (
             "vdpps_avx_simd_dot_edge_ymm_all_mem",
@@ -15015,6 +15033,12 @@ fn irregular_cases() -> Vec<Case> {
             "{vex} vdppd $0x33, %xmm2, %xmm3, %xmm1",
             Avx,
             F64ConvertEdge,
+        ),
+        (
+            "vdppd_avx_simd_dot_edge_nan_payload_reg",
+            "{vex} vdppd $0x33, %xmm2, %xmm1, %xmm1",
+            Avx,
+            F64Edge,
         ),
         (
             "vdppd_avx_simd_dot_edge_high_to_high_mem",
@@ -42598,7 +42622,7 @@ fn avx512_kvm_simd_dot_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_simd_dot_edge_"))
         .collect();
-    assert_eq!(cases.len(), 21, "unexpected SIMD dot edge corpus size");
+    assert_eq!(cases.len(), 25, "unexpected SIMD dot edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -42618,15 +42642,15 @@ fn avx512_kvm_simd_dot_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Sse41),
-        10,
+        12,
         "all SSE4.1 dot edge cases should run"
     );
     assert_eq!(
         tally.ran_for(Feat::Avx),
-        11,
+        13,
         "all AVX dot edge cases should run"
     );
-    assert_eq!(tally.compared, 21, "all SIMD dot edge cases should compare");
+    assert_eq!(tally.compared, 25, "all SIMD dot edge cases should compare");
 }
 
 #[test]

@@ -7,6 +7,7 @@ use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::insn;
 use super::super::super::super::sha;
+use super::super::super::{x86_dppd_lane_result_bits, x86_dpps_lane_result_bits};
 
 impl X86_64Vcpu {
     #[inline(always)]
@@ -625,37 +626,39 @@ impl X86_64Vcpu {
                 let in_mask = (imm8 >> 4) & 0x0F;
                 let out_mask = imm8 & 0x0F;
 
-                // Get all 4 floats from both operands
-                let d0 = f32::from_bits(dst_lo as u32);
-                let d1 = f32::from_bits((dst_lo >> 32) as u32);
-                let d2 = f32::from_bits(dst_hi as u32);
-                let d3 = f32::from_bits((dst_hi >> 32) as u32);
-                let s0 = f32::from_bits(src_lo as u32);
-                let s1 = f32::from_bits((src_lo >> 32) as u32);
-                let s2 = f32::from_bits(src_hi as u32);
-                let s3 = f32::from_bits((src_hi >> 32) as u32);
-
-                // Compute dot product with input mask
-                let mut dp = 0.0f32;
-                if in_mask & 0x01 != 0 {
-                    dp += d0 * s0;
-                }
-                if in_mask & 0x02 != 0 {
-                    dp += d1 * s1;
-                }
-                if in_mask & 0x04 != 0 {
-                    dp += d2 * s2;
-                }
-                if in_mask & 0x08 != 0 {
-                    dp += d3 * s3;
-                }
-
                 // Store result with output mask
-                let dp_bits = dp.to_bits();
-                let r0 = if out_mask & 0x01 != 0 { dp_bits } else { 0 };
-                let r1 = if out_mask & 0x02 != 0 { dp_bits } else { 0 };
-                let r2 = if out_mask & 0x04 != 0 { dp_bits } else { 0 };
-                let r3 = if out_mask & 0x08 != 0 { dp_bits } else { 0 };
+                let dst = [
+                    dst_lo as u32,
+                    (dst_lo >> 32) as u32,
+                    dst_hi as u32,
+                    (dst_hi >> 32) as u32,
+                ];
+                let src = [
+                    src_lo as u32,
+                    (src_lo >> 32) as u32,
+                    src_hi as u32,
+                    (src_hi >> 32) as u32,
+                ];
+                let r0 = if out_mask & 0x01 != 0 {
+                    x86_dpps_lane_result_bits(dst, src, in_mask, 0)
+                } else {
+                    0
+                };
+                let r1 = if out_mask & 0x02 != 0 {
+                    x86_dpps_lane_result_bits(dst, src, in_mask, 1)
+                } else {
+                    0
+                };
+                let r2 = if out_mask & 0x04 != 0 {
+                    x86_dpps_lane_result_bits(dst, src, in_mask, 2)
+                } else {
+                    0
+                };
+                let r3 = if out_mask & 0x08 != 0 {
+                    x86_dpps_lane_result_bits(dst, src, in_mask, 3)
+                } else {
+                    0
+                };
 
                 self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
@@ -683,22 +686,18 @@ impl X86_64Vcpu {
                 let in_mask = (imm8 >> 4) & 0x03;
                 let out_mask = imm8 & 0x03;
 
-                let d0 = f64::from_bits(dst_lo);
-                let d1 = f64::from_bits(dst_hi);
-                let s0 = f64::from_bits(src_lo);
-                let s1 = f64::from_bits(src_hi);
-
-                let mut dp = 0.0f64;
-                if in_mask & 0x01 != 0 {
-                    dp += d0 * s0;
-                }
-                if in_mask & 0x02 != 0 {
-                    dp += d1 * s1;
-                }
-
-                let dp_bits = dp.to_bits();
-                self.regs.xmm[xmm_dst][0] = if out_mask & 0x01 != 0 { dp_bits } else { 0 };
-                self.regs.xmm[xmm_dst][1] = if out_mask & 0x02 != 0 { dp_bits } else { 0 };
+                let dst = [dst_lo, dst_hi];
+                let src = [src_lo, src_hi];
+                self.regs.xmm[xmm_dst][0] = if out_mask & 0x01 != 0 {
+                    x86_dppd_lane_result_bits(dst, src, in_mask, 0)
+                } else {
+                    0
+                };
+                self.regs.xmm[xmm_dst][1] = if out_mask & 0x02 != 0 {
+                    x86_dppd_lane_result_bits(dst, src, in_mask, 1)
+                } else {
+                    0
+                };
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
             }

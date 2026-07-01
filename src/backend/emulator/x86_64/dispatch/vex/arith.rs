@@ -5,6 +5,7 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::insn;
+use super::super::{x86_dppd_lane_result_bits, x86_dpps_lane_result_bits};
 
 impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn execute_vex_arith(
@@ -329,58 +330,54 @@ impl X86_64Vcpu {
         if opcode == 0x40 {
             // VDPPS
             let lanes = if vex_l == 1 { 2 } else { 1 };
-            let mut src1 = [0f32; 8];
-            let mut src2 = [0f32; 8];
+            let mut src1 = [0u32; 8];
+            let mut src2 = [0u32; 8];
             let lo1 = self.regs.xmm[xmm_src1][0];
             let hi1 = self.regs.xmm[xmm_src1][1];
-            src1[0] = f32::from_bits(lo1 as u32);
-            src1[1] = f32::from_bits((lo1 >> 32) as u32);
-            src1[2] = f32::from_bits(hi1 as u32);
-            src1[3] = f32::from_bits((hi1 >> 32) as u32);
+            src1[0] = lo1 as u32;
+            src1[1] = (lo1 >> 32) as u32;
+            src1[2] = hi1 as u32;
+            src1[3] = (hi1 >> 32) as u32;
             if vex_l == 1 {
                 let hi2 = self.regs.ymm_high[xmm_src1][0];
                 let hi3 = self.regs.ymm_high[xmm_src1][1];
-                src1[4] = f32::from_bits(hi2 as u32);
-                src1[5] = f32::from_bits((hi2 >> 32) as u32);
-                src1[6] = f32::from_bits(hi3 as u32);
-                src1[7] = f32::from_bits((hi3 >> 32) as u32);
+                src1[4] = hi2 as u32;
+                src1[5] = (hi2 >> 32) as u32;
+                src1[6] = hi3 as u32;
+                src1[7] = (hi3 >> 32) as u32;
             }
 
             if is_memory {
                 let count = lanes * 4;
                 for i in 0..count {
-                    src2[i] = f32::from_bits(self.read_mem(addr + (i * 4) as u64, 4)? as u32);
+                    src2[i] = self.read_mem(addr + (i * 4) as u64, 4)? as u32;
                 }
             } else {
                 let xmm_src2 = rm as usize;
                 let lo2 = self.regs.xmm[xmm_src2][0];
                 let hi2 = self.regs.xmm[xmm_src2][1];
-                src2[0] = f32::from_bits(lo2 as u32);
-                src2[1] = f32::from_bits((lo2 >> 32) as u32);
-                src2[2] = f32::from_bits(hi2 as u32);
-                src2[3] = f32::from_bits((hi2 >> 32) as u32);
+                src2[0] = lo2 as u32;
+                src2[1] = (lo2 >> 32) as u32;
+                src2[2] = hi2 as u32;
+                src2[3] = (hi2 >> 32) as u32;
                 if vex_l == 1 {
                     let hi3 = self.regs.ymm_high[xmm_src2][0];
                     let hi4 = self.regs.ymm_high[xmm_src2][1];
-                    src2[4] = f32::from_bits(hi3 as u32);
-                    src2[5] = f32::from_bits((hi3 >> 32) as u32);
-                    src2[6] = f32::from_bits(hi4 as u32);
-                    src2[7] = f32::from_bits((hi4 >> 32) as u32);
+                    src2[4] = hi3 as u32;
+                    src2[5] = (hi3 >> 32) as u32;
+                    src2[6] = hi4 as u32;
+                    src2[7] = (hi4 >> 32) as u32;
                 }
             }
 
             let mut dst = [0u32; 8];
             for lane in 0..lanes {
                 let base = lane * 4;
-                let mut sum = 0.0f32;
-                for i in 0..4 {
-                    if ((imm8 >> (4 + i)) & 1) != 0 {
-                        sum += src1[base + i] * src2[base + i];
-                    }
-                }
+                let lhs = [src1[base], src1[base + 1], src1[base + 2], src1[base + 3]];
+                let rhs = [src2[base], src2[base + 1], src2[base + 2], src2[base + 3]];
                 for i in 0..4 {
                     dst[base + i] = if ((imm8 >> i) & 1) != 0 {
-                        sum.to_bits()
+                        x86_dpps_lane_result_bits(lhs, rhs, imm8 >> 4, i)
                     } else {
                         0
                     };
@@ -401,30 +398,28 @@ impl X86_64Vcpu {
             if vex_l != 0 {
                 return self.inject_undefined_instruction();
             }
-            let src1_lo = f64::from_bits(self.regs.xmm[xmm_src1][0]);
-            let src1_hi = f64::from_bits(self.regs.xmm[xmm_src1][1]);
+            let src1_lo = self.regs.xmm[xmm_src1][0];
+            let src1_hi = self.regs.xmm[xmm_src1][1];
             let (src2_lo, src2_hi) = if is_memory {
-                (
-                    f64::from_bits(self.read_mem(addr, 8)?),
-                    f64::from_bits(self.read_mem(addr + 8, 8)?),
-                )
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
             } else {
                 let xmm_src2 = rm as usize;
-                (
-                    f64::from_bits(self.regs.xmm[xmm_src2][0]),
-                    f64::from_bits(self.regs.xmm[xmm_src2][1]),
-                )
+                (self.regs.xmm[xmm_src2][0], self.regs.xmm[xmm_src2][1])
             };
-            let mut sum = 0.0f64;
-            if ((imm8 >> 4) & 1) != 0 {
-                sum += src1_lo * src2_lo;
-            }
-            if ((imm8 >> 5) & 1) != 0 {
-                sum += src1_hi * src2_hi;
-            }
 
-            let dst_lo = if (imm8 & 1) != 0 { sum.to_bits() } else { 0 };
-            let dst_hi = if (imm8 & 2) != 0 { sum.to_bits() } else { 0 };
+            let lhs = [src1_lo, src1_hi];
+            let rhs = [src2_lo, src2_hi];
+            let in_mask = (imm8 >> 4) & 0x03;
+            let dst_lo = if (imm8 & 1) != 0 {
+                x86_dppd_lane_result_bits(lhs, rhs, in_mask, 0)
+            } else {
+                0
+            };
+            let dst_hi = if (imm8 & 2) != 0 {
+                x86_dppd_lane_result_bits(lhs, rhs, in_mask, 1)
+            } else {
+                0
+            };
             self.regs.xmm[xmm_dst][0] = dst_lo;
             self.regs.xmm[xmm_dst][1] = dst_hi;
             self.regs.ymm_high[xmm_dst][0] = 0;
