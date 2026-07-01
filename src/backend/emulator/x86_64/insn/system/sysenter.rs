@@ -9,6 +9,11 @@ use super::super::super::flags;
 const CR0_PE: u64 = 1 << 0;
 const EFER_LMA: u64 = 1 << 10;
 
+#[inline(always)]
+fn is_canonical_48(addr: u64) -> bool {
+    ((addr as i64) << 16 >> 16) as u64 == addr
+}
+
 fn inject_general_protection(vcpu: &mut X86_64Vcpu) -> Result<Option<VcpuExit>> {
     vcpu.inject_exception(13, Some(0))?;
     Ok(None)
@@ -97,6 +102,9 @@ pub fn sysexit(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
     let is_64 = ctx.rex_w();
     if is_64 {
+        if !is_canonical_48(vcpu.regs.rcx) || !is_canonical_48(vcpu.regs.rdx) {
+            return inject_general_protection(vcpu);
+        }
         vcpu.regs.rsp = vcpu.regs.rcx;
         vcpu.regs.rip = vcpu.regs.rdx;
     } else {
