@@ -84,6 +84,11 @@ impl X86_64Vcpu {
             0xA1 => insn::data::pop_sreg(self, ctx, 4),  // POP FS
             0xA8 => insn::data::push_sreg(self, ctx, 5), // PUSH GS
             0xA9 => insn::data::pop_sreg(self, ctx, 5),  // POP GS
+            0xAA => {
+                // RSM is only valid while resuming from SMM; the emulator does
+                // not expose SMM state, so normal execution receives #UD.
+                self.inject_undefined_instruction()
+            }
             0xA2 => insn::system::cpuid(self, ctx),
             0xAE => self.execute_0fae(ctx),
 

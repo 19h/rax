@@ -9,6 +9,10 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn endbr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
+    if ctx.rep_prefix == Some(0xF3) && modrm >> 6 == 3 && ((modrm >> 3) & 0x07) == 1 {
+        // F3 0F 1E /1 is RDSSPD/RDSSPQ, not an ENDBR hint.
+        return vcpu.inject_undefined_instruction();
+    }
     if modrm >> 6 != 3 {
         let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
         ctx.cursor = modrm_start + 1 + extra;

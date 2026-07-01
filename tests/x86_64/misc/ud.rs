@@ -57,6 +57,14 @@ fn test_unimplemented_two_byte_opcode_injects_ud() {
 }
 
 #[test]
+fn test_rsm_outside_smm_injects_ud() {
+    assert_missing_idt_ud(&[
+        0x0f, 0xaa, // RSM outside SMM
+        0xf4, // HLT (should not be reached)
+    ]);
+}
+
+#[test]
 fn test_unimplemented_vex_opcode_injects_ud() {
     assert_missing_idt_ud(&[
         0xc5, 0xf8, 0xff, // Unimplemented VEX.128.0F opcode

@@ -21,6 +21,15 @@
 use crate::common::*;
 use rax::cpu::Registers;
 
+fn assert_missing_idt_ud(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm_no_idt(code, None);
+    let err = run_until_hlt(&mut vcpu).expect_err("instruction should inject #UD");
+    assert!(
+        err.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {err}"
+    );
+}
+
 // ============================================================================
 // INCSSPD/INCSSPQ Tests - Increment Shadow Stack Pointer
 // ============================================================================
@@ -127,6 +136,26 @@ fn test_incsspd_preserves_register() {
     ];
     let (mut vcpu, _) = setup_vm_no_idt(&code, None);
     assert!(run_until_hlt(&mut vcpu).is_err(), "INCSSPD should #UD");
+}
+
+// ============================================================================
+// RDSSPD/RDSSPQ Tests - Read shadow stack pointer
+// ============================================================================
+
+#[test]
+fn test_rdsspd_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0xf3, 0x0f, 0x1e, 0xc8, // RDSSPD eax
+        0xf4, // HLT (should not be reached)
+    ]);
+}
+
+#[test]
+fn test_rdsspq_unsupported_injects_ud() {
+    assert_missing_idt_ud(&[
+        0xf3, 0x48, 0x0f, 0x1e, 0xc9, // RDSSPQ rcx
+        0xf4, // HLT (should not be reached)
+    ]);
 }
 
 // ============================================================================
