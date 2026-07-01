@@ -19924,6 +19924,34 @@ fn irregular_cases() -> Vec<Case> {
             "gs_segstring_repe_cmpsb_equal",
             "movl 128(%rax), %r10d\nmovl %r10d, 32(%rax)\nmovabsq $0x4000, %r8\nwrgsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\n.byte 0x65\nrepe cmpsb",
         ),
+        (
+            "fs_segstring_movsb_df",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $131, %esi\nmovabsq $0x4023, %rdi\nstd\n.byte 0x64\nmovsb",
+        ),
+        (
+            "gs_segstring_rep_movsq_df",
+            "movabsq $0x4000, %r8\nwrgsbase %r8\nmovl $136, %esi\nmovabsq $0x4058, %rdi\nmovl $2, %ecx\nstd\n.byte 0x65\nrep movsq",
+        ),
+        (
+            "fs_segstring_lodsq_df",
+            "movabsq $0x4000, %r8\nwrfsbase %r8\nmovl $136, %esi\nmovabsq $-1, %rax\nstd\n.byte 0x64\nlodsq",
+        ),
+        (
+            "gs_segstring_repne_cmpsb_mismatch",
+            "movl $0x11223344, 128(%rax)\nmovl $0x55667788, 32(%rax)\nmovabsq $0x4000, %r8\nwrgsbase %r8\nmovl $128, %esi\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\ncld\n.byte 0x65\nrepne cmpsb",
+        ),
+        (
+            "fs_segstring_repe_cmpsb_df_mismatch",
+            "movl $0x55112233, 128(%rax)\nmovl $0x55112244, 32(%rax)\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovl $131, %esi\nmovabsq $0x4023, %rdi\nmovl $4, %ecx\nstd\n.byte 0x64\nrepe cmpsb",
+        ),
+        (
+            "fs_segstring_scasb_ignores_prefix",
+            "movb $0x5a, 32(%rax)\nmovb $0x7e, 128(%rax)\nmovabsq $0x4000, %r8\nwrfsbase %r8\nmovabsq $0x4020, %rdi\nmovb $0x5a, %al\n.byte 0x64\nscasb",
+        ),
+        (
+            "gs_segstring_repne_scasb_ignores_prefix",
+            "movl $0x7e5a7d7c, 32(%rax)\nmovabsq $0x4000, %r8\nwrgsbase %r8\nmovabsq $0x4020, %rdi\nmovl $4, %ecx\nmovb $0x5a, %al\ncld\n.byte 0x65\nrepne scasb",
+        ),
     ] {
         out.push(Case {
             label: label.to_string(),
@@ -39379,7 +39407,7 @@ fn avx512_kvm_fsgsbase_segment_string_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        7,
+        14,
         "unexpected FSGSBASE segment-string corpus size"
     );
 
@@ -39403,7 +39431,7 @@ fn avx512_kvm_fsgsbase_segment_string_corpus() {
         "FSGSBASE segment-string cases should not feature-skip"
     );
     assert_eq!(
-        tally.compared, 7,
+        tally.compared, 14,
         "all FSGSBASE segment-string cases should compare"
     );
 }
