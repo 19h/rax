@@ -19716,6 +19716,36 @@ fn irregular_cases() -> Vec<Case> {
             Pku,
         ),
         (
+            "rdpkru_protection_edge_high_ecx_ignored",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x13579b00, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nmovq $-1, %rax\nmovq $-1, %rdx\nmovabsq $0xffffffff00000000, %rcx\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_preserves_cmp_flags",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x2468ace0, %eax\nmovl $0, %ecx\nmovl $0, %edx\ncmpq %r8, %r8\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_preserves_lazy_add_flags",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x33333330, %eax\nmovl $0, %ecx\nmovl $0, %edx\nmovl $0x7fffffff, %r8d\naddl $1, %r8d\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "rdpkru_protection_edge_intermediate_reads_visible",
+            "movq %rax, %r10\nmovq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x11111110, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nrdpkru\nmovl %eax, 32(%r10)\nmovl $0x22222220, %eax\nwrpkru\nrdpkru\nmovl %eax, 36(%r10)",
+            Pku,
+        ),
+        (
+            "wrpkru_protection_edge_alternating_patterns",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0xf0f0f0f0, %eax\nmovl $0, %ecx\nmovl $0, %edx\nwrpkru\nmovl $0x0f0f0f0c, %eax\nwrpkru\nrdpkru",
+            Pku,
+        ),
+        (
+            "rdpkru_protection_edge_high_ecx_preserved",
+            "movq %cr4, %rax\norq $0x400000, %rax\nmovq %rax, %cr4\nmovl $0x00ff00f0, %eax\nxorl %ecx, %ecx\nxorl %edx, %edx\nwrpkru\nmovabsq $0x1234567800000000, %rcx\nrdpkru",
+            Pku,
+        ),
+        (
             "swapgs_roundtrip_rdgsbase",
             "movl $0xc0000102, %ecx\nmovabsq $0x0000000000789000, %rax\nmovq %rax, %rdx\nshrq $32, %rdx\nwrmsr\nmovabsq $0x0000000000123000, %rax\nwrgsbase %rax\ncmpq %rcx, %r8\nrdgsbase %rbx\nswapgs\nrdgsbase %rcx\nswapgs\nrdgsbase %rdx",
             Swapgs,
@@ -39321,7 +39351,7 @@ fn avx512_kvm_protection_state_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        13,
+        19,
         "unexpected protection-state edge corpus size"
     );
 
@@ -39350,8 +39380,8 @@ fn avx512_kvm_protection_state_edge_corpus() {
     );
 
     let expected_smap = if host.supports(Feat::Smap) { 3 } else { 0 };
-    let expected_pku = if host.supports(Feat::Pku) { 7 } else { 0 };
-    let expected_skips = 10 - expected_smap - expected_pku;
+    let expected_pku = if host.supports(Feat::Pku) { 13 } else { 0 };
+    let expected_skips = 16 - expected_smap - expected_pku;
     assert_eq!(
         tally.ran_for(Feat::Smap),
         expected_smap,
@@ -39386,7 +39416,7 @@ fn avx512_kvm_pkru_protection_edge_corpus() {
         .collect();
     assert_eq!(
         cases.len(),
-        7,
+        13,
         "unexpected PKRU protection edge corpus size"
     );
 
@@ -39413,10 +39443,10 @@ fn avx512_kvm_pkru_protection_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Pku),
-        7,
+        13,
         "all PKRU edge cases should run"
     );
-    assert_eq!(tally.compared, 7, "all PKRU edge cases should compare");
+    assert_eq!(tally.compared, 13, "all PKRU edge cases should compare");
 }
 
 #[test]
