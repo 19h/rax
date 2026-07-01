@@ -27351,6 +27351,24 @@ fn compat_x87_mem(opcode: u8, reg: u8, disp: u8) -> [u8; 4] {
     [0x67, opcode, 0x40 | (reg << 3), disp]
 }
 
+fn compat_x87_mem32(prefixes: &[u8], opcode: u8, reg: u8, disp: u32) -> Vec<u8> {
+    assert!(reg < 8);
+    let mut op = Vec::from(prefixes);
+    op.extend_from_slice(&[0x67, opcode, 0x80 | (reg << 3)]);
+    op.extend_from_slice(&disp.to_le_bytes());
+    op
+}
+
+fn compat_addr32_zero_dwords(offset: u32, count: u8) -> Vec<u8> {
+    let mut op = Vec::new();
+    for idx in 0..count {
+        op.extend_from_slice(&[0x67, 0x66, 0xc7, 0x80]);
+        op.extend_from_slice(&(offset + u32::from(idx) * 4).to_le_bytes());
+        op.extend_from_slice(&0u32.to_le_bytes());
+    }
+    op
+}
+
 fn compat_x87_setcc(opcode: u8, disp: u8) -> [u8; 5] {
     assert!(disp <= 0x7f);
     [0x67, 0x0f, opcode, 0x40, disp]
@@ -27424,6 +27442,54 @@ fn compat_x87_cases() -> Vec<CompatStateCase> {
             input: compat_x87_input(|scratch| {
                 compat_x87_put_i16(scratch, 0x10, 0x027f);
             }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fnstenv32_fldenv32_control_roundtrip",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem32(&[0x66], 0xd9, 5, 0x10),
+                compat_x87_mem32(&[0x66], 0xd9, 6, 0x60),
+                [0xdb, 0xe3],
+                compat_x87_mem32(&[0x66], 0xd9, 4, 0x60),
+                compat_x87_mem32(&[], 0xd9, 7, 0x12),
+                compat_addr32_zero_dwords(0x60, 7),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_i16(scratch, 0x10, 0x0f7f);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fnsave32_frstor32_stack_roundtrip",
+            op: op!(
+                [0xdb, 0xe3],
+                compat_x87_mem(0xdd, 0, 0x10),
+                compat_x87_mem(0xdd, 0, 0x18),
+                compat_x87_mem32(&[0x66], 0xdd, 6, 0x80),
+                [0xd9, 0xe8],
+                compat_x87_mem32(&[0x66], 0xdd, 4, 0x80),
+                compat_x87_mem(0xdd, 3, 0x20),
+                compat_x87_mem(0xdd, 3, 0x28),
+                compat_addr32_zero_dwords(0x80, 28),
+            ),
+            input: compat_x87_input(|scratch| {
+                compat_x87_put_f64(scratch, 0x10, 21.0);
+                compat_x87_put_f64(scratch, 0x18, 29.0);
+            }),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fnsave32_reinitializes_control_status",
+            op: op!(
+                [0xdb, 0xe3],
+                [0xd9, 0xe8],
+                compat_x87_mem32(&[0x66], 0xdd, 6, 0x80),
+                compat_x87_mem(0xd9, 7, 0x20),
+                compat_x87_mem(0xdd, 7, 0x22),
+                compat_addr32_zero_dwords(0x80, 28),
+            ),
+            input: compat_x87_input(|_| {}),
             rflags_mask: FLAGS_UNCHANGED,
         },
         CompatStateCase {
@@ -27842,6 +27908,12 @@ fn compat_x87_cases() -> Vec<CompatStateCase> {
                 compat_x87_mem(0xdd, 7, 0x30),
                 compat_x87_mem(0xdd, 3, 0x38),
             ),
+            input: compat_x87_input(|_| {}),
+            rflags_mask: FLAGS_UNCHANGED,
+        },
+        CompatStateCase {
+            label: "x87_compat_fnstsw_ax_after_ftst",
+            op: op!([0xdb, 0xe3], [0xd9, 0xee], [0xd9, 0xe4], [0xdf, 0xe0],),
             input: compat_x87_input(|_| {}),
             rflags_mask: FLAGS_UNCHANGED,
         },
@@ -34543,7 +34615,7 @@ fn avx512_kvm_fpu_modrm16_compat_corpus() {
 #[test]
 fn avx512_kvm_x87_compat_corpus() {
     let cases = compat_x87_cases();
-    assert_eq!(cases.len(), 30, "unexpected compatibility x87 corpus size");
+    assert_eq!(cases.len(), 34, "unexpected compatibility x87 corpus size");
     let _ = run_compat_state_cases("x87", &cases);
 }
 
