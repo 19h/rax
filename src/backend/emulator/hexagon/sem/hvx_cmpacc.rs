@@ -9,9 +9,11 @@
 //! sets every Q bit covering that element's bytes), and combines it bit-wise into
 //! `Qx` with `&` / `|` / `^`. Semantics taken verbatim from the V69 HVX spec:
 //!
-//!     for( i = 0; i < VWIDTH; i += W ) {
-//!         QxV[i+W-1:i] = QxV[i+W-1:i] [&|^] ((Vu.<t>[i/W] CMP Vv.<t>[i/W]) ? MASK : 0);
-//!     }
+//! ```text
+//! for( i = 0; i < VWIDTH; i += W ) {
+//!     QxV[i+W-1:i] = QxV[i+W-1:i] [&|^] ((Vu.<t>[i/W] CMP Vv.<t>[i/W]) ? MASK : 0);
+//! }
+//! ```
 //!
 //! A Q vector-predicate stores one bit per vector byte: 128 bits = `[u32; 4]`,
 //! bit `b` => `(Q.w[b>>5] >> (b&31)) & 1`. `vcmp.eq` is identical for signed and

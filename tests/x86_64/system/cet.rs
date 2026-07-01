@@ -119,15 +119,14 @@ fn test_incsspd_sequential() {
 
 #[test]
 fn test_incsspd_preserves_register() {
-    // INCSSPD should not modify the register
+    // CET is not exposed by the emulator, so INCSSPD should #UD before HLT.
     let code = [
         0x48, 0xC7, 0xC0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
         0xF3, 0x0F, 0xAE, 0xE8, // INCSSPD eax
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x42, "EAX should not be modified");
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    assert!(run_until_hlt(&mut vcpu).is_err(), "INCSSPD should #UD");
 }
 
 // ============================================================================
@@ -211,17 +210,15 @@ fn test_saveprevssp_no_operands() {
 
 #[test]
 fn test_saveprevssp_preserves_registers() {
-    // SAVEPREVSSP should not modify GP registers
+    // CET is not exposed by the emulator, so SAVEPREVSSP should #UD before HLT.
     let code = [
         0x48, 0xC7, 0xC0, 0x11, 0x11, 0x11, 0x11, // MOV RAX, 0x11111111
         0x48, 0xC7, 0xC3, 0x22, 0x22, 0x22, 0x22, // MOV RBX, 0x22222222
         0xF3, 0x0F, 0x01, 0xEA, // SAVEPREVSSP
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x11111111, "RAX should not be modified");
-    assert_eq!(regs.rbx, 0x22222222, "RBX should not be modified");
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    assert!(run_until_hlt(&mut vcpu).is_err(), "SAVEPREVSSP should #UD");
 }
 
 #[test]
@@ -318,17 +315,15 @@ fn test_setssbsy_no_operands() {
 
 #[test]
 fn test_setssbsy_preserves_registers() {
-    // SETSSBSY should not modify GP registers
+    // CET is not exposed by the emulator, so SETSSBSY should #UD before HLT.
     let code = [
         0x48, 0xC7, 0xC0, 0x33, 0x33, 0x33, 0x33, // MOV RAX, 0x33333333
         0x48, 0xC7, 0xC1, 0x44, 0x44, 0x44, 0x44, // MOV RCX, 0x44444444
         0xF3, 0x0F, 0x01, 0xE8, // SETSSBSY
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x33333333, "RAX should not be modified");
-    assert_eq!(regs.rcx, 0x44444444, "RCX should not be modified");
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    assert!(run_until_hlt(&mut vcpu).is_err(), "SETSSBSY should #UD");
 }
 
 #[test]

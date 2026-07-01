@@ -16,6 +16,10 @@ use rax::cpu::Registers;
 //
 // The SP/ESP value from stack is skipped during POPA/POPAD
 
+fn compat_stack_sub(rsp: u64, delta: u16) -> u64 {
+    (rsp & !0xFFFF) | u64::from((rsp as u16).wrapping_sub(delta))
+}
+
 // ===== PUSHAD TESTS (32-bit) =====
 
 #[test]
@@ -265,9 +269,8 @@ fn test_popad_ignores_sp_on_stack() {
     // POPAD should ignore (skip) the SP value on the stack
     let code = [
         0x66, 0x60, // PUSHAD (saves ESP)
-        0x48, 0x83, 0xec, 0x20, // SUB RSP, 32 (make space)
-        0x48, 0xc7, 0x84, 0x24, 0x00, 0xff, 0xff, 0xff, 0xEF, 0xBE, 0xAD,
-        0xDE, // MOV QWORD [RSP+offset], 0xDEADBEEF (corrupted ESP on stack)
+        0x66, 0x67, 0xC7, 0x44, 0x24, 0x0C, 0xEF, 0xBE, 0xAD,
+        0xDE, // MOV dword [ESP+12], 0xDEADBEEF (corrupted ESP slot)
         0x66, 0x61, // POPAD (should ignore the corrupted SP value)
         0xf4, // HLT
     ];
@@ -277,9 +280,10 @@ fn test_popad_ignores_sp_on_stack() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // ESP should be restored properly despite corruption, incremented correctly
-    // (may not be exactly 0x8000 due to the SUB instruction, but should be sensible)
-    assert!(result_regs.rsp > 0x7000, "RSP should be reasonable");
+    assert_eq!(
+        result_regs.rsp, 0x8000,
+        "POPAD should ignore the corrupted ESP slot"
+    );
 }
 
 #[test]
@@ -476,7 +480,8 @@ fn test_popad_overwrites_current_values() {
 
 #[test]
 fn test_pushad_popa_preserves_higher_bits_in_64bit() {
-    // In 64-bit mode, only lower 32 bits of registers are involved in PUSHAD/POPAD
+    // PUSHAD/POPAD execute in compatibility mode here. POPAD writes 32-bit
+    // register destinations, which zero-extend into the corresponding 64-bit registers.
     let code = [
         0x66, 0x60, // PUSHAD
         0x66, 0x61, // POPAD
@@ -495,12 +500,7 @@ fn test_pushad_popa_preserves_higher_bits_in_64bit() {
         0x11111111,
         "Lower 32 bits unchanged"
     );
-    // Upper 32 bits should also be unchanged
-    assert_eq!(
-        result_regs.rax >> 32,
-        0x11111111u64,
-        "Upper 32 bits unchanged"
-    );
+    assert_eq!(result_regs.rax >> 32, 0, "POPAD zero-extends EAX into RAX");
 }
 
 #[test]
@@ -519,7 +519,7 @@ fn test_pushad_does_not_fault_with_various_rsp() {
 
         assert_eq!(
             result_regs.rsp,
-            rsp_val - 32,
+            compat_stack_sub(*rsp_val, 32),
             "RSP decremented correctly for RSP={:x}",
             rsp_val
         );

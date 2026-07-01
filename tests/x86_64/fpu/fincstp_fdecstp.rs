@@ -38,6 +38,10 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
     f64::from_le_bytes(buf)
 }
 
+fn assert_empty_pop(value: f64, message: &str) {
+    assert!(value.is_nan(), "{}", message);
+}
+
 // ============================================================================
 // FINCSTP - Basic Tests
 // ============================================================================
@@ -78,8 +82,11 @@ fn test_fincstp_single_value() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    // After FINCSTP, the value is still accessible but at different stack position
-    assert!(result == 5.0 || result == 0.0, "FINCSTP with single value");
+    // After FINCSTP, TOP points at an empty physical register.
+    assert_empty_pop(
+        result,
+        "FINCSTP with a single value should expose empty ST(0)",
+    );
 }
 
 #[test]
@@ -465,7 +472,10 @@ fn test_fincstp_sequence() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result == 123.0 || result == 0.0, "Sequence of FINCSTPs");
+    assert_empty_pop(
+        result,
+        "FINCSTP sequence should expose an empty physical register",
+    );
 }
 
 #[test]
@@ -486,7 +496,10 @@ fn test_fdecstp_sequence() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result >= 0.0, "Sequence of FDECSTPs");
+    assert_empty_pop(
+        result,
+        "FDECSTP sequence should expose an empty physical register",
+    );
 }
 
 #[test]

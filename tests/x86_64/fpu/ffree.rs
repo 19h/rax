@@ -30,13 +30,18 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
     f64::from_le_bytes(buf)
 }
 
+fn assert_empty_pop(value: f64, message: &str) {
+    assert!(value.is_nan(), "{}", message);
+}
+
 // ============================================================================
 // FFREE - Basic Tests
 // ============================================================================
 
 #[test]
 fn test_ffree_st0() {
-    // FFREE ST(0) - marks ST(0) as empty but doesn't change value
+    // FFREE ST(0) marks ST(0) empty. Popping it stores the masked-invalid
+    // x87 indefinite value.
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD qword [0x2000]
         0xDD, 0xC0, // FFREE ST(0)
@@ -50,7 +55,7 @@ fn test_ffree_st0() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 5.0, "FFREE should not change register value");
+    assert_empty_pop(result, "FSTP from FFREE'd ST(0) should be indefinite");
 }
 
 #[test]
@@ -74,7 +79,7 @@ fn test_ffree_st1() {
     let result0 = read_f64(&mem, 0x3000);
     let result1 = read_f64(&mem, 0x3008);
     assert_eq!(result0, 20.0, "ST(0) should be unchanged");
-    assert_eq!(result1, 10.0, "ST(1) should be unchanged despite FFREE");
+    assert_empty_pop(result1, "FFREE ST(1) should make the second pop empty");
 }
 
 #[test]
@@ -103,7 +108,7 @@ fn test_ffree_st2() {
     let result2 = read_f64(&mem, 0x3010);
     assert_eq!(result0, 3.0, "ST(0) unchanged");
     assert_eq!(result1, 2.0, "ST(1) unchanged");
-    assert_eq!(result2, 1.0, "ST(2) unchanged despite FFREE");
+    assert_empty_pop(result2, "FFREE ST(2) should make the third pop empty");
 }
 
 #[test]
@@ -131,7 +136,7 @@ fn test_ffree_st3() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result3 = read_f64(&mem, 0x3018);
-    assert_eq!(result3, 4.0, "ST(3) value unchanged despite FFREE");
+    assert_empty_pop(result3, "FFREE ST(3) should make the fourth pop empty");
 }
 
 #[test]
@@ -177,7 +182,7 @@ fn test_ffree_does_not_pop() {
 
     let result0 = read_f64(&mem, 0x3000);
     let result1 = read_f64(&mem, 0x3008);
-    assert_eq!(result0, 200.0, "Stack should still have 2 items");
+    assert_empty_pop(result0, "FFREE ST(0) should mark the top item empty");
     assert_eq!(result1, 100.0, "Both items should be accessible");
 }
 
@@ -197,7 +202,7 @@ fn test_ffree_does_not_push() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 42.0, "Stack depth unchanged");
+    assert_empty_pop(result, "FFREE should not push a replacement value");
 }
 
 // ============================================================================
@@ -230,9 +235,9 @@ fn test_ffree_multiple_registers() {
     let result0 = read_f64(&mem, 0x3000);
     let result1 = read_f64(&mem, 0x3008);
     let result2 = read_f64(&mem, 0x3010);
-    assert_eq!(result0, 3.0, "All values should still be accessible");
-    assert_eq!(result1, 2.0);
-    assert_eq!(result2, 1.0);
+    assert_empty_pop(result0, "FFREE ST(0) should make first pop empty");
+    assert_empty_pop(result1, "FFREE ST(1) should make second pop empty");
+    assert_empty_pop(result2, "FFREE ST(2) should make third pop empty");
 }
 
 #[test]
@@ -252,7 +257,7 @@ fn test_ffree_same_register_twice() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 99.0, "Double FFREE should be safe");
+    assert_empty_pop(result, "Double FFREE keeps the register empty");
 }
 
 // ============================================================================
@@ -298,7 +303,7 @@ fn test_ffree_after_operation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 4.0, "Result should be available after FFREE");
+    assert_empty_pop(result, "FFREE after FSQRT marks the result empty");
 }
 
 // ============================================================================
@@ -320,7 +325,7 @@ fn test_ffree_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.0, "FFREE should work with zero");
+    assert_empty_pop(result, "FFREE should mark zero-valued ST(0) empty");
 }
 
 #[test]
@@ -338,7 +343,7 @@ fn test_ffree_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FFREE should work with infinity");
+    assert_empty_pop(result, "FFREE should mark infinite ST(0) empty");
 }
 
 #[test]
@@ -393,7 +398,11 @@ fn test_ffree_all_positions() {
         run_until_hlt(&mut vcpu).unwrap();
 
         let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, i as f64, "FFREE ST({}) should work", i);
+        if i == 0 {
+            assert_empty_pop(result, "FFREE ST(0) should make ST(0) empty");
+        } else {
+            assert_eq!(result, i as f64, "FFREE ST({}) should not affect ST(0)", i);
+        }
     }
 }
 
@@ -447,7 +456,7 @@ fn test_ffree_pattern() {
 
     let result0 = read_f64(&mem, 0x3000);
     let result1 = read_f64(&mem, 0x3008);
-    assert_eq!(result0, 4.0, "Pattern FFREE test");
+    assert_empty_pop(result0, "Pattern FFREE should empty the first pop");
     assert_eq!(result1, 3.0);
 }
 
@@ -473,7 +482,7 @@ fn test_ffree_reverse_order() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 33.0, "Reverse order FFREE should work");
+    assert_empty_pop(result, "Reverse order FFREE should empty ST(0)");
 }
 
 #[test]

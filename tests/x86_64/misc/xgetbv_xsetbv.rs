@@ -34,7 +34,7 @@ fn test_xgetbv_xcr0_basic() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EDX:EAX should contain XCR0 value
@@ -54,7 +54,7 @@ fn test_xgetbv_xcr0_eax_contains_lower_32bits() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EAX should contain lower 32 bits
@@ -71,7 +71,7 @@ fn test_xgetbv_xcr0_edx_contains_upper_32bits() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EDX should contain upper 32 bits
@@ -93,7 +93,7 @@ fn test_xgetbv_xcr0_multiple_reads_consistent() {
         0x0f, 0x01, 0xd0, // XGETBV (second read)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let eax_second = regs.rax & 0xFFFFFFFF;
@@ -114,7 +114,7 @@ fn test_xgetbv_xcr0_x87_always_set() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let eax = regs.rax & 0xFFFFFFFF;
@@ -134,7 +134,7 @@ fn test_xgetbv_ecx_parameter_used() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let xcr0_value = regs.rbx & 0xFFFFFFFF;
@@ -158,7 +158,7 @@ fn test_xgetbv_clears_high_32bits_in_64bit_mode() {
         0x0f, 0x01, 0xd0, // XGETBV (should clear upper 32 bits)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // In 64-bit mode, high-order 32 bits of RAX and RDX are cleared
@@ -179,7 +179,7 @@ fn test_xgetbv_does_not_modify_other_registers() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EBX should be unchanged
@@ -195,7 +195,7 @@ fn test_xgetbv_does_not_modify_flags() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Carry flag should still be set
@@ -216,7 +216,7 @@ fn test_xsetbv_xcr0_x87_required() {
         0x0f, 0x01, 0xd1, // XSETBV (would fail with #GP)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     // This may fault, which is expected behavior
     let result = run_until_hlt(&mut vcpu);
     // If it completes, the system must have rejected it
@@ -236,7 +236,7 @@ fn test_xsetbv_xcr0_x87_must_remain_set() {
         0x0f, 0x01, 0xd1, // XSETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     // May fail in user mode (requires CPL=0), which is expected
     if result.is_ok() {
@@ -255,7 +255,7 @@ fn test_xsetbv_sse_compat_with_avx() {
         0x0f, 0x01, 0xd1, // XSETBV (should fail with #GP)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     // This should fail or be rejected, but we can't easily test exceptions
     if result.is_ok() {
@@ -273,7 +273,7 @@ fn test_xsetbv_xcr0_valid_combination() {
         0x0f, 0x01, 0xd1, // XSETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     // May fail in user mode, which is expected
     if result.is_ok() {
@@ -306,6 +306,7 @@ fn test_xsetbv_accepts_apx_f_bit_when_enabled() {
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_apx_vm(&code, None);
+    enable_cr4_bits(&mut vcpu, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax as u32, 0x80007, "XCR0 should retain APX_F");
@@ -324,7 +325,7 @@ fn test_xsetbv_ecx_parameter_selects_xcrn() {
         0x0f, 0x01, 0xd1, // XSETBV (XCR1)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     // XCR1 doesn't exist on most CPUs, so this may fault
     if result.is_ok() {
@@ -342,7 +343,7 @@ fn test_xsetbv_edx_eax_64bit_parameter() {
         0x0f, 0x01, 0xd1, // XSETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     if result.is_ok() {
         let _regs = result.unwrap();
@@ -367,7 +368,7 @@ fn test_xgetbv_after_xsetbv_reflects_change() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     // This test just verifies the sequence executes without crashing
     if result.is_ok() {
@@ -393,7 +394,7 @@ fn test_xgetbv_xsetbv_operations_sequence() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let result = run_until_hlt(&mut vcpu);
     if result.is_ok() {
         let _regs = result.unwrap();
@@ -408,7 +409,7 @@ fn test_xgetbv_xcr0_contains_valid_state_bits() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let eax = regs.rax & 0xFFFFFFFF;
@@ -437,7 +438,7 @@ fn test_xgetbv_multiple_sequential_reads() {
         // Now EAX = 3rd read, EBX = 2nd read, ESI = 1st read
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let read3 = regs.rax & 0xFFFFFFFF;
@@ -467,7 +468,7 @@ fn test_avx_enable_handshake() {
         0x0f, 0x01, 0xd0, // XGETBV
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rax & 0xFFFF_FFFF,
@@ -508,7 +509,7 @@ fn test_xsave_xrstor_roundtrip_xmm() {
         0x66, 0x48, 0x0f, 0x7e, 0xc0, // MOVQ RAX, XMM0
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rax, 0xDEAD_BEEF_CAFE_BABE,

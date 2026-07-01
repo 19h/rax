@@ -36,6 +36,7 @@ fn write_bounds_32(mem: &vm_memory::GuestMemoryMmap, lower: i32, upper: i32) {
 fn bound_eax_code() -> Vec<u8> {
     vec![
         0x66, // Operand size prefix (16->32 bit)
+        0x67, // Address size prefix (16->32 bit)
         0x62, 0x05, // BOUND EAX, [disp32]
         0x00, 0x20, 0x00, 0x00, // disp32 = 0x2000
         0xf4, // HLT
@@ -48,6 +49,7 @@ fn bound_reg_code(reg: u8) -> Vec<u8> {
     let modrm = 0x05 | (reg << 3);
     vec![
         0x66, // Operand size prefix
+        0x67, // Address size prefix
         0x62, modrm, // BOUND reg, [disp32]
         0x00, 0x20, 0x00, 0x00, // disp32 = 0x2000
         0xf4, // HLT
@@ -338,8 +340,8 @@ fn test_bound_practical_array_bounds() {
 fn test_bound_multiple_sequential_checks() {
     // Two BOUND instructions in sequence
     let code = vec![
-        0x66, 0x62, 0x05, 0x00, 0x20, 0x00, 0x00, // BOUND EAX, [0x2000]
-        0x66, 0x62, 0x0D, 0x00, 0x20, 0x00, 0x00, // BOUND ECX, [0x2000]
+        0x66, 0x67, 0x62, 0x05, 0x00, 0x20, 0x00, 0x00, // BOUND EAX, [0x2000]
+        0x66, 0x67, 0x62, 0x0D, 0x00, 0x20, 0x00, 0x00, // BOUND ECX, [0x2000]
         0xf4, // HLT
     ];
     let mut regs = Registers::default();

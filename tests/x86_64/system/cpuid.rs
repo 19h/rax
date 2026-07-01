@@ -64,9 +64,9 @@ fn test_cpuid_function_1_features() {
     assert_eq!(regs.rbx as u32, 0x00000000, "leaf 1 EBX");
 
     // EDX feature bits: FPU(0) PSE(3) TSC(4) MSR(5) PAE(6) CX8(8) APIC(9)
-    // PGE(13) CMOV(15) CLFLUSH(19) MMX(23) FXSR(24) SSE(25) SSE2(26).
+    // SEP(11) PGE(13) CMOV(15) CLFLUSH(19) MMX(23) FXSR(24) SSE(25) SSE2(26).
     let edx = regs.rdx as u32;
-    assert_eq!(edx, 0x0788A379, "leaf 1 EDX feature bits");
+    assert_eq!(edx, 0x0788AB79, "leaf 1 EDX feature bits");
     for (bit, name) in [
         (0, "FPU"),
         (4, "TSC"),
@@ -86,10 +86,12 @@ fn test_cpuid_function_1_features() {
         );
     }
 
-    // ECX with default CR4 (OSXSAVE=0): SSE3(0) SSSE3(9) SSE4.1(19) SSE4.2(20)
-    // POPCNT(23) XSAVE(26) AVX(28). OSXSAVE(27) is 0 because CR4.OSXSAVE=0.
+    // ECX with default CR4 (OSXSAVE=0): SSE3(0), PCLMULQDQ(1), SSSE3(9),
+    // FMA(12), CMPXCHG16B(13), PCID(17), SSE4.1(19), SSE4.2(20), MOVBE(22),
+    // POPCNT(23), AESNI(25), XSAVE(26), AVX(28), F16C(29), RDRAND(30).
+    // OSXSAVE(27) is 0 because CR4.OSXSAVE=0.
     let ecx = regs.rcx as u32;
-    assert_eq!(ecx, 0x14980201, "leaf 1 ECX with OSXSAVE clear");
+    assert_eq!(ecx, 0x76DA3203, "leaf 1 ECX with OSXSAVE clear");
     assert!(ecx & (1 << 26) != 0, "XSAVE advertised");
     assert!(ecx & (1 << 28) != 0, "AVX advertised");
     assert_eq!(ecx & (1 << 27), 0, "OSXSAVE clear (CR4.OSXSAVE=0)");
@@ -226,21 +228,20 @@ fn test_cpuid_function_7_extended_features() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Leaf 7 subleaf 0: EAX=1 (max subleaf), EBX has SHA-NI(29) + SMAP(20) +
-    // INVPCID(10) + AVX2(5),
-    // ECX has GFNI(8), EDX has SERIALIZE(14) only. IBT (bit 20) must NOT be
-    // advertised because the emulator does not enforce CET branch tracking.
+    // Leaf 7 subleaf 0: EAX=1 (max subleaf). EBX/ECX/EDX reflect the emulator's
+    // implemented scalar/SIMD/system feature surface. IBT (EDX bit 20) must NOT
+    // be advertised because the emulator does not enforce CET branch tracking.
     assert_eq!(regs.rax as u32, 1, "leaf 7 max subleaf");
-    assert_eq!(
-        regs.rbx as u32, 0x20100420,
-        "leaf 7 EBX (SHA-NI|SMAP|INVPCID|AVX2)"
-    );
+    assert_eq!(regs.rbx as u32, 0xF1BF0529, "leaf 7 EBX feature mask");
     assert!(regs.rbx as u32 & (1 << 5) != 0, "AVX2 advertised");
     assert!(regs.rbx as u32 & (1 << 10) != 0, "INVPCID advertised");
     assert!(regs.rbx as u32 & (1 << 20) != 0, "SMAP advertised");
     assert!(regs.rbx as u32 & (1 << 29) != 0, "SHA-NI advertised");
-    assert_eq!(regs.rcx as u32, 0x00000100, "leaf 7 ECX (GFNI)");
-    assert_eq!(regs.rdx as u32, 0x0000_4000, "leaf 7 EDX (SERIALIZE only)");
+    assert_eq!(regs.rcx as u32, 0x1A405F6A, "leaf 7 ECX feature mask");
+    assert_eq!(
+        regs.rdx as u32, 0x0080_4000,
+        "leaf 7 EDX (SERIALIZE|AVX512FP16)"
+    );
     assert_eq!(regs.rdx as u32 & (1 << 20), 0, "IBT must not be advertised");
 }
 
@@ -318,10 +319,11 @@ fn test_cpuid_extended_function_80000001() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Extended signature equals leaf-1 signature; EDX has LM(29), RDTSCP(27), NX(20).
+    // Extended signature equals leaf-1 signature; EDX has LM(29), RDTSCP(27),
+    // NX(20), and SYSCALL/SYSRET(11).
     assert_eq!(regs.rax as u32, 0x000006F1, "extended signature");
     let edx = regs.rdx as u32;
-    assert_eq!(edx, 0x28100000, "0x80000001 EDX (LM|RDTSCP|NX)");
+    assert_eq!(edx, 0x28100800, "0x80000001 EDX (LM|RDTSCP|NX|SYSCALL)");
     assert!(edx & (1 << 29) != 0, "LM (long mode) advertised");
     assert!(edx & (1 << 27) != 0, "RDTSCP advertised");
     assert!(edx & (1 << 20) != 0, "NX advertised");
@@ -711,9 +713,12 @@ fn test_cpuid_function_7_subleaves() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // After the sequence, RAX holds leaf 7 subleaf 1. The default profile does
-    // not advertise APX_F.
-    assert_eq!(regs.rax as u32, 0, "leaf 7 subleaf 1 EAX = 0");
+    // After the sequence, RAX holds leaf 7 subleaf 1. AVX_VNNI and AVX512_BF16
+    // are always exposed here; APX_F remains hidden by default in EDX.
+    assert_eq!(
+        regs.rax as u32, 0x30,
+        "leaf 7 subleaf 1 EAX = AVX_VNNI|AVX512_BF16"
+    );
     assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
     assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
     assert_eq!(regs.rdx as u32, 0, "leaf 7 subleaf 1 EDX hides APX_F");
@@ -732,7 +737,10 @@ fn test_cpuid_function_7_subleaf1_apx_enabled() {
     let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax as u32, 0, "leaf 7 subleaf 1 EAX = 0");
+    assert_eq!(
+        regs.rax as u32, 0x30,
+        "leaf 7 subleaf 1 EAX = AVX_VNNI|AVX512_BF16"
+    );
     assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
     assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
     assert_eq!(regs.rdx as u32, 1 << 21, "leaf 7 subleaf 1 EDX APX_F");
@@ -949,8 +957,8 @@ fn test_cpuid_leaf1_osxsave_reflects_cr4() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let ecx = regs.rcx as u32;
-    // With CR4.OSXSAVE=1, leaf 1 ECX now has bit 27 set => 0x1C980201.
-    assert_eq!(ecx, 0x1C980201, "leaf 1 ECX with OSXSAVE set");
+    // With CR4.OSXSAVE=1, leaf 1 ECX has bit 27 set.
+    assert_eq!(ecx, 0x7EDA3203, "leaf 1 ECX with OSXSAVE set");
     assert!(ecx & (1 << 27) != 0, "OSXSAVE bit reflects CR4.OSXSAVE=1");
 }
 

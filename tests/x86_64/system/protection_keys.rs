@@ -23,7 +23,7 @@ fn test_rdpkru_basic() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // EAX contains PKRU value, EDX should be 0
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0, "EDX should be zero after RDPKRU");
@@ -39,7 +39,7 @@ fn test_rdpkru_preserves_registers() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
     assert_eq!(
@@ -56,7 +56,7 @@ fn test_rdpkru_ecx_zero_required() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0, "RCX should be 0");
 }
@@ -71,7 +71,7 @@ fn test_rdpkru_multiple_reads() {
         0x0F, 0x01, 0xEE, // RDPKRU #2
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rax & 0xFFFFFFFF,
@@ -90,7 +90,7 @@ fn test_rdpkru_clears_upper_bits() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX should be cleared");
     assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX should be cleared");
@@ -112,7 +112,7 @@ fn test_wrpkru_basic() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -126,7 +126,7 @@ fn test_wrpkru_different_values() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -141,7 +141,7 @@ fn test_wrpkru_preserves_registers() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
 }
@@ -156,7 +156,7 @@ fn test_wrpkru_ecx_edx_zero_required() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -175,7 +175,7 @@ fn test_pkru_roundtrip() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Value should match what was written (masked to valid bits)
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0, "EDX should be 0 after RDPKRU");
@@ -197,7 +197,7 @@ fn test_pkru_multiple_writes() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -214,7 +214,7 @@ fn test_pkru_protection_keys() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0x3, 0x1, "Key 0 should have AD=1, WD=0");
 }
@@ -232,7 +232,7 @@ fn test_pkru_multiple_keys() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }
 
@@ -251,6 +251,6 @@ fn test_pkru_preserve_across_operations() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let _ = run_until_hlt(&mut vcpu);
 }

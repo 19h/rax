@@ -626,7 +626,8 @@ fn test_stack_top_after_one_push() {
 #[test]
 fn test_stack_overflow_sets_invalid_and_stack_fault() {
     // FNINIT then 9 pushes. The 9th push targets an already-occupied slot, i.e.
-    // a stack OVERFLOW. Real x87: IE=1, SF=1, C1=1 (overflow direction), ES=1.
+    // a stack OVERFLOW. With the default masked invalid-operation exception,
+    // the emulator records IE/SF/C1 and leaves ES clear.
     let code = [
         0xDB, 0xE3, // FNINIT
         0xD9, 0xE8, 0xD9, 0xE8, 0xD9, 0xE8, 0xD9, 0xE8, // 4x FLD1
@@ -650,17 +651,18 @@ fn test_stack_overflow_sets_invalid_and_stack_fault() {
         0,
         "stack overflow must set C1 (overflow direction)"
     );
-    assert_ne!(
+    assert_eq!(
         sw & ES_BIT,
         0,
-        "IE+SF must raise the Exception Summary (ES)"
+        "masked invalid-operation should leave Exception Summary (ES) clear"
     );
 }
 
 #[test]
 fn test_stack_underflow_sets_invalid_and_stack_fault() {
     // FNINIT leaves the stack empty; FSTP of ST(0) is then a stack UNDERFLOW.
-    // Real x87: IE=1, SF=1, C1=0 (underflow direction), ES=1.
+    // With the default masked invalid-operation exception, the emulator records
+    // IE/SF, clears C1, and leaves ES clear.
     let code = [
         0xDB, 0xE3, // FNINIT (stack empty)
         0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00, // FSTP qword [0x3010] -> underflow
@@ -682,9 +684,9 @@ fn test_stack_underflow_sets_invalid_and_stack_fault() {
         0,
         "stack underflow must clear C1 (underflow direction)"
     );
-    assert_ne!(
+    assert_eq!(
         sw & ES_BIT,
         0,
-        "IE+SF must raise the Exception Summary (ES)"
+        "masked invalid-operation should leave Exception Summary (ES) clear"
     );
 }

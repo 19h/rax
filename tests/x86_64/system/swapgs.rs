@@ -37,7 +37,7 @@ fn test_swapgs_basic() {
         0x0F, 0x01, 0xF8, // SWAPGS
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -59,7 +59,7 @@ fn test_swapgs_preserves_registers() {
         0x0F, 0x01, 0xF8, // SWAPGS
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -88,7 +88,7 @@ fn test_swapgs_preserves_flags() {
         0x58, // POP RAX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -112,7 +112,7 @@ fn test_swapgs_double_swap_restores() {
         0x0F, 0x01, 0xF8, // SWAPGS (swap back)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -142,7 +142,7 @@ fn test_swapgs_with_wrgsbase() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCA, // RDGSBASE RDX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -169,7 +169,7 @@ fn test_swapgs_sequential() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCA, // RDGSBASE RDX (read A)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -218,7 +218,7 @@ fn test_swapgs_syscall_entry_pattern() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX (should be user GS)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -245,7 +245,7 @@ fn test_swapgs_with_interrupt_handler() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX (reg=1 for RDGSBASE, rm=3 for RBX)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -279,7 +279,7 @@ fn test_swapgs_with_wrmsr_kernel_gs_base() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC8, // RDGSBASE RAX (reg=1 for RDGSBASE, rm=0 for RAX)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -313,7 +313,7 @@ fn test_swapgs_rapid_toggle() {
 
     code.push(0xF4); // HLT
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After even number (20) of swaps, should be back to original
@@ -343,7 +343,7 @@ fn test_swapgs_preserves_other_segments() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCA, // RDGSBASE RDX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -368,7 +368,7 @@ fn test_swapgs_with_arithmetic_operations() {
         0x48, 0x83, 0xC0, 0x10, // ADD RAX, 16
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -392,7 +392,7 @@ fn test_swapgs_zero_values() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC1, // RDGSBASE RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -417,7 +417,7 @@ fn test_swapgs_high_addresses() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX (reg=1, rm=1)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -442,7 +442,7 @@ fn test_swapgs_no_memory_access() {
         0x48, 0xC7, 0xC0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

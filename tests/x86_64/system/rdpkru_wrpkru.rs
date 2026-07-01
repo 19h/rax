@@ -40,7 +40,7 @@ fn test_wrpkru_basic() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -82,7 +82,7 @@ fn test_wrpkru_various_values() {
             0xEF, // WRPKRU
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
         let _regs = run_until_hlt(&mut vcpu).unwrap();
         // PKRU should be set to value
@@ -100,7 +100,7 @@ fn test_wrpkru_ignores_upper_32_bits() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -117,7 +117,7 @@ fn test_wrpkru_preserves_registers() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -146,7 +146,7 @@ fn test_wrpkru_preserves_flags() {
         0x5E, // POP RSI
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -174,7 +174,7 @@ fn test_wrpkru_sequential_writes() {
         0x0F, 0x01, 0xEF, // WRPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -194,7 +194,7 @@ fn test_rdpkru_basic() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -215,7 +215,7 @@ fn test_rdpkru_clears_upper_bits() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -242,7 +242,7 @@ fn test_rdpkru_preserves_flags() {
         0x5E, // POP RSI
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -266,7 +266,7 @@ fn test_rdpkru_multiple_reads() {
         0x49, 0x89, 0xC1, // MOV R9, RAX (save third read)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -298,7 +298,7 @@ fn test_write_then_read_pkru() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -343,7 +343,7 @@ fn test_pkru_write_read_cycle() {
             0xEE, // RDPKRU
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -377,7 +377,7 @@ fn test_pkru_alternating_write_read() {
         0x49, 0x89, 0xC0, // MOV R8, RAX (save)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -403,7 +403,7 @@ fn test_pkru_persistence_across_operations() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -426,7 +426,7 @@ fn test_pkru_zero_state() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -448,7 +448,7 @@ fn test_pkru_all_bits_set() {
         0x0F, 0x01, 0xEE, // RDPKRU
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -483,7 +483,7 @@ fn test_wrpkru_rdpkru_stress() {
 
     code.push(0xF4); // HLT
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Last value should be 9 * 0x11111111 = 0x9999999
@@ -534,7 +534,7 @@ fn test_pkru_bit_patterns() {
             0xEE, // RDPKRU
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_PKE);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 

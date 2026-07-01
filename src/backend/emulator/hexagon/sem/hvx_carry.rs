@@ -16,13 +16,15 @@
 //! `(a as u64 + b as u64 + cin as u64) >> 32 != 0`. Subtract is realised as
 //! `Vu + ~Vv + cin` (two's-complement), exactly as the PRM writes it.
 //!
-//!     Vd.w,Qe4 = vadd(Vu.w,Vv.w):carry        (carryo: cin=0, separate Qe out)
-//!     Vd.w,Qe4 = vsub(Vu.w,Vv.w):carry        (subcarryo: cin=1, separate Qe out)
-//!     Vd.w     = vadd(Vu.w,Vv.w,Qx4):carry    (carry: cin/out share Qx)
-//!     Vd.w     = vsub(Vu.w,Vv.w,Qx4):carry
-//!     Vd.w     = vadd(Vu.w,Vv.w,Qs4):carry:sat (carry-in Qs, sat_32, no Q out)
-//!     Vd.uw    = vsub(Vu.uw,Vv.uw):sat        (per-lane usat_32(Vu-Vv))
-//!     Qd4      = vsetq2(Rt)                    (mask of length Rt, byte-granular)
+//! ```text
+//! Vd.w,Qe4 = vadd(Vu.w,Vv.w):carry        (carryo: cin=0, separate Qe out)
+//! Vd.w,Qe4 = vsub(Vu.w,Vv.w):carry        (subcarryo: cin=1, separate Qe out)
+//! Vd.w     = vadd(Vu.w,Vv.w,Qx4):carry    (carry: cin/out share Qx)
+//! Vd.w     = vsub(Vu.w,Vv.w,Qx4):carry
+//! Vd.w     = vadd(Vu.w,Vv.w,Qs4):carry:sat (carry-in Qs, sat_32, no Q out)
+//! Vd.uw    = vsub(Vu.uw,Vv.uw):sat        (per-lane usat_32(Vu-Vv))
+//! Qd4      = vsetq2(Rt)                    (mask of length Rt, byte-granular)
+//! ```
 
 use super::super::opcode::{DecodedOp, Opcode};
 use super::{fld, SemCtx};

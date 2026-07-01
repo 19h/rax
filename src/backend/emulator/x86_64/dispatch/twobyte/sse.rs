@@ -1098,6 +1098,23 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    /// MOVNTSS/MOVNTSD - Store scalar with non-temporal hint (F3/F2 0x0F 0x2B)
+    pub(in crate::backend::emulator::x86_64) fn execute_movnt_scalar_store(
+        &mut self,
+        ctx: &mut InsnContext,
+        size: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return self.inject_undefined_instruction();
+        }
+        let xmm_src = reg as usize;
+        // Non-temporal hint is ignored in emulator - just store normally.
+        self.write_mem(addr, self.regs.xmm[xmm_src][0], size)?;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// COMISS/COMISD - Compare scalar and set EFLAGS (0x0F 0x2F)
     pub(in crate::backend::emulator::x86_64) fn execute_comiss(
         &mut self,

@@ -221,9 +221,11 @@ fn test_mov_ss_dx() {
         0x8c, 0xd0, // MOV AX, SS (read back)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    assert!(
+        run_until_hlt(&mut vcpu).is_err(),
+        "loading SS with a null selector in protected mode should fault"
+    );
 }
 
 #[test]

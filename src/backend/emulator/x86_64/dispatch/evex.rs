@@ -6214,6 +6214,7 @@ mod tests {
         vcpu.sregs.efer = 0x400;
         vcpu.sregs.cs.l = true;
         vcpu.sregs.cs.db = false;
+        vcpu.set_apx_enabled(true);
 
         let sregs = vcpu.sregs.clone();
         vcpu.mmu.write(CODE, code, &sregs).unwrap();

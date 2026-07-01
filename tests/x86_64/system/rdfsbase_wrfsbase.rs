@@ -39,7 +39,7 @@ fn test_wrfsbase_64bit() {
         0xF3, 0x48, 0x0F, 0xAE, 0xD0, // WRFSBASE RAX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -56,7 +56,7 @@ fn test_wrfsbase_32bit() {
         0xF3, 0x0F, 0xAE, 0xD0, // WRFSBASE EAX (32-bit)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -93,7 +93,7 @@ fn test_wrfsbase_various_values() {
             0xD0, // WRFSBASE RAX
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
         let _regs = run_until_hlt(&mut vcpu).unwrap();
         // FS base should be set to value
@@ -115,7 +115,7 @@ fn test_wrfsbase_from_different_registers() {
         0xF3, 0x48, 0x0F, 0xAE, 0xD2, // WRFSBASE RDX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -140,7 +140,7 @@ fn test_wrfsbase_preserves_flags() {
         0x59, // POP RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -165,7 +165,7 @@ fn test_wrgsbase_64bit() {
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -180,7 +180,7 @@ fn test_wrgsbase_32bit() {
         0xF3, 0x0F, 0xAE, 0xD8, // WRGSBASE EAX (32-bit)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -205,7 +205,7 @@ fn test_wrgsbase_preserves_flags() {
         0x59, // POP RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -233,7 +233,7 @@ fn test_rdfsbase_64bit() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -256,7 +256,7 @@ fn test_rdfsbase_32bit_clears_upper_bits() {
         0xF3, 0x0F, 0xAE, 0xC3, // RDFSBASE EBX (32-bit)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -286,7 +286,7 @@ fn test_rdfsbase_to_different_registers() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC2, // RDFSBASE RDX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -315,7 +315,7 @@ fn test_rdfsbase_preserves_flags() {
         0x59, // POP RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -344,7 +344,7 @@ fn test_rdgsbase_64bit() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -363,7 +363,7 @@ fn test_rdgsbase_32bit_clears_upper_bits() {
         0xF3, 0x0F, 0xAE, 0xCB, // RDGSBASE EBX (32-bit)
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -399,7 +399,7 @@ fn test_rdgsbase_preserves_flags() {
         0x59, // POP RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -431,7 +431,7 @@ fn test_fs_gs_independent() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -476,7 +476,7 @@ fn test_write_read_cycle_fs() {
             0xC3, // RDFSBASE RBX
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -524,7 +524,7 @@ fn test_write_read_cycle_gs() {
             0xCB, // RDGSBASE RBX
             0xF4, // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -553,7 +553,7 @@ fn test_alternate_fs_gs_writes() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -576,7 +576,7 @@ fn test_32bit_write_clears_upper_fs() {
         0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDFSBASE RBX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -606,7 +606,7 @@ fn test_32bit_write_clears_upper_gs() {
         0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX
         0xF4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 

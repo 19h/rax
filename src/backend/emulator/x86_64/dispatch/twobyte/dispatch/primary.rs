@@ -378,11 +378,10 @@ impl X86_64Vcpu {
                     insn::simd::cvtps2pi(self, ctx)
                 }
             }
-            // MOVNTPS/MOVNTPD - non-temporal hint store. F2/F3 encodings are
-            // AMD SSE4A MOVNTSD/MOVNTSS and are unsupported here.
-            0x2B if ctx.rep_prefix == Some(0xF2) || ctx.rep_prefix == Some(0xF3) => {
-                self.inject_undefined_instruction()
-            }
+            // MOVNTSS/MOVNTSD - AMD SSE4A scalar non-temporal stores.
+            0x2B if ctx.rep_prefix == Some(0xF3) => self.execute_movnt_scalar_store(ctx, 4),
+            0x2B if ctx.rep_prefix == Some(0xF2) => self.execute_movnt_scalar_store(ctx, 8),
+            // MOVNTPS/MOVNTPD - packed non-temporal stores.
             0x2B => self.execute_movnt_store(ctx),
             0x2E => insn::simd::ucomiss_ucomisd(self, ctx),
             // COMISS/COMISD - compare scalar and set EFLAGS

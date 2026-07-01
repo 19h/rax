@@ -32,6 +32,26 @@ pub const IDT_BASE: u64 = 0x11000;
 /// GDT base address
 pub const GDT_BASE: u64 = 0x10000;
 
+pub const CR4_FSGSBASE: u64 = 1 << 16;
+pub const CR4_OSXSAVE: u64 = 1 << 18;
+pub const CR4_PKE: u64 = 1 << 22;
+
+pub fn enable_cr4_bits(vcpu: &mut X86_64Vcpu, bits: u64) {
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr4 |= bits;
+    vcpu.set_sregs(&sregs).unwrap();
+}
+
+pub fn setup_vm_with_cr4(
+    code: &[u8],
+    initial_regs: Option<Registers>,
+    cr4_bits: u64,
+) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    let (mut vcpu, mem) = setup_vm(code, initial_regs);
+    enable_cr4_bits(&mut vcpu, cr4_bits);
+    (vcpu, mem)
+}
+
 /// Create a test VM with the given code and initial register state.
 pub fn setup_vm(
     code: &[u8],
