@@ -34516,6 +34516,16 @@ const MODERN_SYSTEM_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
         "cet_wrussd_disp8_unsupported",
         &[0x66, 0x0f, 0x38, 0xf5, 0x58, 0x20],
     ),
+    ("cet_wrssd_unsupported", &[0x0f, 0x38, 0xf6, 0x18]),
+    ("cet_wrssq_unsupported", &[0x48, 0x0f, 0x38, 0xf6, 0x18]),
+    (
+        "cet_wrssd_r8_disp8_unsupported",
+        &[0x44, 0x0f, 0x38, 0xf6, 0x40, 0x20],
+    ),
+    (
+        "cet_wrssq_r8_disp8_unsupported",
+        &[0x4c, 0x0f, 0x38, 0xf6, 0x40, 0x20],
+    ),
     ("rsm_unsupported", &[0x0f, 0xaa]),
     (
         "getsec_capabilities_unsupported",
