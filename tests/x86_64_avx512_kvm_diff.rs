@@ -38447,6 +38447,59 @@ fn run_ud_marker_corpus(name: &str, cases: Vec<(&'static str, &'static [u8])>, e
     run_exception_marker_corpus(name, "#UD", UD_VECTOR, cases, expected);
 }
 
+fn collect_manifest_mnemonics(manifest: &'static str, out: &mut BTreeSet<&'static str>) {
+    for line in manifest.lines().map(str::trim) {
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        out.insert(line);
+    }
+}
+
+#[test]
+fn avx512_kvm_unimplemented_manifests_have_unsupported_candidates() {
+    let mut manifest_mnemonics = BTreeSet::new();
+    for manifest in [
+        include_str!("x86_64/apx_unimplemented_mnemonics.txt"),
+        include_str!("x86_64/avx_unimplemented_mnemonics.txt"),
+        include_str!("x86_64/avx2_unimplemented_mnemonics.txt"),
+        include_str!("x86_64/avx10_unimplemented_mnemonics.txt"),
+        include_str!("x86_64/avx512_unimplemented_mnemonics.txt"),
+    ] {
+        collect_manifest_mnemonics(manifest, &mut manifest_mnemonics);
+    }
+
+    let candidate_groups: &[&[(&str, &[u8])]] = &[
+        APX_UNSUPPORTED_CANDIDATES,
+        MODERN_CRYPTO_UNSUPPORTED_CANDIDATES,
+        AVX_NE_CONVERT_UNSUPPORTED_CANDIDATES,
+        AVX10_MEDIA_UNSUPPORTED_CANDIDATES,
+        AVX10_VMINMAX_UNSUPPORTED_CANDIDATES,
+        AVX10_SAT_CONVERT_UNSUPPORTED_CANDIDATES,
+        AVX10_BF8_CONVERT_UNSUPPORTED_CANDIDATES,
+        AVX10_BF16_COMPARE_UNSUPPORTED_CANDIDATES,
+        AVX10_YMM_EMBEDDED_ROUNDING_UNSUPPORTED_CANDIDATES,
+    ];
+    let candidate_labels: Vec<_> = candidate_groups
+        .iter()
+        .flat_map(|group| group.iter().map(|(label, _)| *label))
+        .collect();
+
+    let missing: Vec<_> = manifest_mnemonics
+        .into_iter()
+        .filter(|mnemonic| {
+            !candidate_labels
+                .iter()
+                .any(|label| label.contains(*mnemonic))
+        })
+        .collect();
+    assert!(
+        missing.is_empty(),
+        "unimplemented manifest mnemonics lack KVM unsupported candidates: {}",
+        missing.join(", ")
+    );
+}
+
 fn run_fallthrough_marker_corpus(
     name: &str,
     cases: Vec<(&'static str, &'static [u8])>,
