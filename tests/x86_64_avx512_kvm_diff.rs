@@ -23649,6 +23649,34 @@ fn profile_matrix_cases() -> Vec<Case> {
     }
 
     for &(label, asm, feat, profile) in &[
+        ("minps_sse_f32_edge", "minps %xmm2, %xmm1", Sse, F32Edge),
+        ("haddps_sse3_f32_edge", "haddps %xmm2, %xmm1", Sse3, F32Edge),
+        (
+            "pabsb_ssse3_sat_edge",
+            "pabsb %xmm2, %xmm1",
+            Ssse3,
+            IntSatEdge,
+        ),
+        (
+            "vaddps_avx_f32_edge",
+            "{vex} vaddps %ymm2, %ymm3, %ymm1",
+            Avx,
+            F32Edge,
+        ),
+        (
+            "vfmadd213ps_fma_f32_edge",
+            "{vex} vfmadd213ps %ymm2, %ymm3, %ymm1",
+            Fma,
+            F32Edge,
+        ),
+        ("aesenc_aes_edge", "aesenc %xmm2, %xmm1", Aes, Int),
+        (
+            "pclmulqdq_pclmul_edge",
+            "pclmulqdq $0x11, %xmm2, %xmm1",
+            Pclmulqdq,
+            IntBitSelectEdge,
+        ),
+        ("sha256rnds2_sha_edge", "sha256rnds2 %xmm2, %xmm1", Sha, Int),
         (
             "roundps_sse41_f32_edge",
             "roundps $0, %xmm2, %xmm1",
@@ -47367,7 +47395,7 @@ fn avx512_kvm_mmx_corpus() {
 #[test]
 fn avx512_kvm_profile_matrix_corpus() {
     let cases = profile_matrix_cases();
-    assert_eq!(cases.len(), 94, "unexpected profile-matrix corpus size");
+    assert_eq!(cases.len(), 102, "unexpected profile-matrix corpus size");
 
     let host = HostFeatures::detect();
     let supported = cases.iter().filter(|case| host.supports(case.feat)).count();
@@ -47401,12 +47429,20 @@ fn avx512_kvm_profile_matrix_corpus() {
         Feat::Bw,
         Feat::Dq,
         Feat::Cd,
+        Feat::Avx,
         Feat::Avx2,
+        Feat::Fma,
         Feat::AvxVnni,
+        Feat::Sse,
         Feat::Sse2,
+        Feat::Sse3,
+        Feat::Ssse3,
         Feat::Sse41,
         Feat::Sse42,
+        Feat::Aes,
+        Feat::Pclmulqdq,
         Feat::F16c,
+        Feat::Sha,
         Feat::Ifma,
         Feat::Vnni,
         Feat::Vbmi2,
