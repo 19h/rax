@@ -1389,8 +1389,8 @@ pub fn evex_fma(
     let evex = ctx
         .evex
         .ok_or_else(|| Error::Emulator("EVEX FMA requires EVEX prefix".to_string()))?;
-    let (kind, order, scalar) = decode_fma_opcode(opcode)
-        .ok_or_else(|| Error::Emulator(format!("unimplemented EVEX FMA opcode {:#x}", opcode)))?;
+    let (kind, order, scalar) =
+        decode_fma_opcode(opcode).expect("EVEX FMA opcode is filtered by dispatch");
 
     let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -1490,9 +1490,8 @@ pub fn evex_fma_fp16(
             "EVEX FP16 FMA requires W0 encoding".to_string(),
         ));
     }
-    let (kind, order, scalar) = decode_fma_opcode(opcode).ok_or_else(|| {
-        Error::Emulator(format!("unimplemented EVEX FP16 FMA opcode {:#x}", opcode))
-    })?;
+    let (kind, order, scalar) =
+        decode_fma_opcode(opcode).expect("EVEX FP16 FMA opcode is filtered by dispatch");
 
     let modrm_start = ctx.cursor;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;

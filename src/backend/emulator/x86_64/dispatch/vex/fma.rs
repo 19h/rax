@@ -1,7 +1,7 @@
 //! VEX FMA instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
@@ -151,9 +151,8 @@ impl X86_64Vcpu {
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
-        let (kind, order, is_scalar) = decode_fma(opcode).ok_or_else(|| {
-            Error::Emulator(format!("unimplemented VEX FMA opcode {:#x}", opcode))
-        })?;
+        let (kind, order, is_scalar) =
+            decode_fma(opcode).expect("VEX FMA opcode is filtered by dispatch");
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
         let xmm_src2 = vvvv as usize;
