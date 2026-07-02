@@ -1713,17 +1713,14 @@ impl X86_64Vcpu {
         ((self.regs.rax & 0xFFFF_FFFF) | ((self.regs.rdx & 0xFFFF_FFFF) << 32)) & self.xcr0
     }
 
-    fn xsave_extended_component_size(component: u8) -> Result<u64> {
+    fn xsave_extended_component_size(component: u8) -> u64 {
         match component {
-            2 => Ok(256),
-            5 => Ok(64),
-            6 => Ok(512),
-            7 => Ok(1024),
-            19 => Ok(128),
-            _ => Err(Error::Emulator(format!(
-                "unsupported XSAVE component {}",
-                component
-            ))),
+            2 => 256,
+            5 => 64,
+            6 => 512,
+            7 => 1024,
+            19 => 128,
+            _ => unreachable!("XSAVE component is filtered by XSAVE_EXTENDED_COMPONENTS"),
         }
     }
 
@@ -1801,12 +1798,7 @@ impl X86_64Vcpu {
                     )?;
                 }
             }
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unsupported XSAVE component {}",
-                    component
-                )));
-            }
+            _ => unreachable!("XSAVE component is filtered by XSAVE_EXTENDED_COMPONENTS"),
         }
         Ok(())
     }
@@ -1834,7 +1826,7 @@ impl X86_64Vcpu {
             if rfbm & (1u64 << component) != 0 {
                 self.save_xsave_extended_component(component, next_component_addr)?;
                 xstate_bv |= 1u64 << component;
-                next_component_addr += Self::xsave_extended_component_size(component)?;
+                next_component_addr += Self::xsave_extended_component_size(component);
             }
         }
 
@@ -1914,12 +1906,7 @@ impl X86_64Vcpu {
                     self.set_reg(16 + i as u8, value, 8);
                 }
             }
-            _ => {
-                return Err(Error::Emulator(format!(
-                    "unsupported XSAVE component {}",
-                    component
-                )));
-            }
+            _ => unreachable!("XSAVE component is filtered by XSAVE_EXTENDED_COMPONENTS"),
         }
         Ok(())
     }
@@ -1986,7 +1973,7 @@ impl X86_64Vcpu {
                 if rfbm & bit != 0 && xstate_bv & bit != 0 {
                     self.restore_xsave_extended_component(component, next_component_addr)?;
                 }
-                next_component_addr += Self::xsave_extended_component_size(component)?;
+                next_component_addr += Self::xsave_extended_component_size(component);
             } else if rfbm & bit != 0 {
                 self.init_xsave_component(component);
             }

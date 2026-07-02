@@ -13,4 +13,3 @@
 # valid-gap-needs-diff Valid instruction-family gap still needing differential work.
 #
 # Keep this sorted by path, then source fragment.
-src/backend/emulator/x86_64/dispatch/twobyte/sse.rs|3|non-instruction|unsupported XSAVE component {}
