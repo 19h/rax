@@ -35879,6 +35879,11 @@ const MPX_DISABLED_FALLTHROUGH_CANDIDATES: &[(&str, &[u8])] = &[
         "mpx_bndcu_bnd0_rax_rexw_disabled",
         &[0xf2, 0x48, 0x0f, 0x1a, 0x00],
     ),
+    ("mpx_bndcn_bnd0_rax_disabled", &[0xf2, 0x0f, 0x1b, 0x00]),
+    (
+        "mpx_bndcn_bnd0_rax_rexw_disabled",
+        &[0xf2, 0x48, 0x0f, 0x1b, 0x00],
+    ),
     ("mpx_bndmk_bnd0_mem_disabled", &[0xf3, 0x0f, 0x1b, 0x00]),
     (
         "mpx_bndmk_bnd0_mem_rexw_disabled",
