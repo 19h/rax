@@ -1,7 +1,7 @@
 //! Two-byte opcode instruction implementation for x86_64 emulator.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
@@ -749,12 +749,7 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
-                _ => {
-                    return Err(Error::Emulator(format!(
-                        "unimplemented 0F AE /{} at RIP={:#x}",
-                        reg_op, self.regs.rip
-                    )));
-                }
+                _ => unreachable!("0F AE reg_op is masked to three bits"),
             }
         }
     }
