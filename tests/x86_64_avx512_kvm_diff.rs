@@ -36014,6 +36014,66 @@ fn unsupported_modern_crypto_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'s
         .collect()
 }
 
+const AVX_NE_CONVERT_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
+    // LLVM's AVX-NE-CONVERT MC tests encode these VEX memory-only forms.
+    (
+        "avx_ne_convert_vbcstnebf162ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7a, 0xb1, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vbcstnebf162ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7e, 0xb1, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vbcstnesh2ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x79, 0xb1, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vbcstnesh2ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7d, 0xb1, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneebf162ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7a, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneebf162ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7e, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneeph2ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x79, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneeph2ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7d, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneobf162ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7b, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneobf162ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7f, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneoph2ps_xmm_rip_unsupported",
+        &[0xc4, 0xe2, 0x78, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+    (
+        "avx_ne_convert_vcvtneoph2ps_ymm_rip_unsupported",
+        &[0xc4, 0xe2, 0x7c, 0xb0, 0x15, 0x00, 0x00, 0x00, 0x00],
+    ),
+];
+
+fn unsupported_avx_ne_convert_cases(oracle: &KvmOracle) -> Vec<(&'static str, &'static [u8])> {
+    AVX_NE_CONVERT_UNSUPPORTED_CANDIDATES
+        .iter()
+        .copied()
+        .filter(|(_, op)| kvm_reaches_exception_marker(oracle, op, UD_VECTOR))
+        .collect()
+}
+
 const AVX10_MEDIA_UNSUPPORTED_CANDIDATES: &[(&str, &[u8])] = &[
     (
         "avx_vnni_int8_vpdpbssd_xmm_unsupported",
@@ -39244,6 +39304,33 @@ fn avx512_kvm_modern_crypto_unsupported_ud_corpus() {
         );
     }
     run_ud_marker_corpus("unsupported modern crypto", cases, expected);
+}
+
+#[test]
+fn avx512_kvm_avx_ne_convert_unsupported_ud_corpus() {
+    if !is_x86_feature_detected!("avx512f") {
+        eprintln!("[skip] host lacks AVX-512F");
+        return;
+    }
+    let Some(oracle) = oracle() else {
+        eprintln!("[skip] /dev/kvm unavailable or AVX-512 XSAVE undrivable");
+        return;
+    };
+
+    let cases = unsupported_avx_ne_convert_cases(oracle);
+    let expected = cases.len();
+    if expected == 0 {
+        eprintln!("[skip] KVM guest does not #UD AVX-NE-CONVERT probes");
+        return;
+    }
+    if !host_cpu_flag("avx_ne_convert") && !host_cpu_flag("avxneconvert") {
+        assert_eq!(
+            expected,
+            AVX_NE_CONVERT_UNSUPPORTED_CANDIDATES.len(),
+            "host without AVX-NE-CONVERT should #UD every AVX-NE-CONVERT probe"
+        );
+    }
+    run_ud_marker_corpus("unsupported AVX-NE-CONVERT", cases, expected);
 }
 
 #[test]
