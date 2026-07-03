@@ -86,12 +86,12 @@ fn test_cpuid_function_1_features() {
         );
     }
 
-    // ECX with default CR4 (OSXSAVE=0): SSE3(0), PCLMULQDQ(1), SSSE3(9),
-    // FMA(12), CMPXCHG16B(13), PCID(17), SSE4.1(19), SSE4.2(20), MOVBE(22),
-    // POPCNT(23), AESNI(25), XSAVE(26), AVX(28), F16C(29), RDRAND(30).
+    // ECX with default CR4 (OSXSAVE=0): SSE3(0), PCLMULQDQ(1), MONITOR(3),
+    // SSSE3(9), FMA(12), CMPXCHG16B(13), PCID(17), SSE4.1(19), SSE4.2(20),
+    // MOVBE(22), POPCNT(23), AESNI(25), XSAVE(26), AVX(28), F16C(29), RDRAND(30).
     // OSXSAVE(27) is 0 because CR4.OSXSAVE=0.
     let ecx = regs.rcx as u32;
-    assert_eq!(ecx, 0x76DA3203, "leaf 1 ECX with OSXSAVE clear");
+    assert_eq!(ecx, 0x76DA320B, "leaf 1 ECX with OSXSAVE clear");
     assert!(ecx & (1 << 26) != 0, "XSAVE advertised");
     assert!(ecx & (1 << 28) != 0, "AVX advertised");
     assert_eq!(ecx & (1 << 27), 0, "OSXSAVE clear (CR4.OSXSAVE=0)");
@@ -232,12 +232,14 @@ fn test_cpuid_function_7_extended_features() {
     // implemented scalar/SIMD/system feature surface. IBT (EDX bit 20) must NOT
     // be advertised because the emulator does not enforce CET branch tracking.
     assert_eq!(regs.rax as u32, 1, "leaf 7 max subleaf");
-    assert_eq!(regs.rbx as u32, 0xF1BF0529, "leaf 7 EBX feature mask");
+    assert_eq!(regs.rbx as u32, 0xF1BF0729, "leaf 7 EBX feature mask");
     assert!(regs.rbx as u32 & (1 << 5) != 0, "AVX2 advertised");
+    assert!(regs.rbx as u32 & (1 << 9) != 0, "ERMS advertised");
     assert!(regs.rbx as u32 & (1 << 10) != 0, "INVPCID advertised");
     assert!(regs.rbx as u32 & (1 << 20) != 0, "SMAP advertised");
     assert!(regs.rbx as u32 & (1 << 29) != 0, "SHA-NI advertised");
-    assert_eq!(regs.rcx as u32, 0x1A405F6A, "leaf 7 ECX feature mask");
+    assert_eq!(regs.rcx as u32, 0x1A405F6E, "leaf 7 ECX feature mask");
+    assert!(regs.rcx as u32 & (1 << 2) != 0, "UMIP advertised");
     assert_eq!(
         regs.rdx as u32, 0x0080_4000,
         "leaf 7 EDX (SERIALIZE|AVX512FP16)"
@@ -466,6 +468,7 @@ fn test_cpuid_extended_function_80000008() {
     assert_eq!(eax, 0x00003030, "0x80000008 EAX (48 phys | 48 linear)");
     assert_eq!(eax & 0xFF, 48, "48 physical address bits");
     assert_eq!((eax >> 8) & 0xFF, 48, "48 linear address bits");
+    assert_eq!(regs.rbx as u32, 1 << 9, "0x80000008 EBX (WBNOINVD)");
 }
 
 // CPUID preserves register values when called with same input
@@ -958,7 +961,7 @@ fn test_cpuid_leaf1_osxsave_reflects_cr4() {
 
     let ecx = regs.rcx as u32;
     // With CR4.OSXSAVE=1, leaf 1 ECX has bit 27 set.
-    assert_eq!(ecx, 0x7EDA3203, "leaf 1 ECX with OSXSAVE set");
+    assert_eq!(ecx, 0x7EDA320B, "leaf 1 ECX with OSXSAVE set");
     assert!(ecx & (1 << 27) != 0, "OSXSAVE bit reflects CR4.OSXSAVE=1");
 }
 

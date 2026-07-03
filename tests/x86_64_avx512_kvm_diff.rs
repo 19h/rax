@@ -40069,7 +40069,6 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_leaf7_0_ecx_cldemote", 7, 0, Ecx, 25),
         p!("cpuid_feature_leaf7_0_ecx_movdiri", 7, 0, Ecx, 27),
         p!("cpuid_feature_leaf7_0_ecx_movdir64b", 7, 0, Ecx, 28),
-        p!("cpuid_feature_leaf7_0_edx_wbnoinvd", 7, 0, Edx, 9),
         p!("cpuid_feature_leaf7_0_edx_serialize", 7, 0, Edx, 14),
         p!("cpuid_feature_leaf7_0_edx_avx512fp16", 7, 0, Edx, 23),
         p!("cpuid_feature_leaf7_1_eax_avx_vnni", 7, 1, Eax, 4),
@@ -40085,6 +40084,7 @@ fn cpuid_feature_probes() -> &'static [CpuidFeatureProbe] {
         p!("cpuid_feature_ext1_edx_nx", 0x8000_0001, 0, Edx, 20),
         p!("cpuid_feature_ext1_edx_rdtscp", 0x8000_0001, 0, Edx, 27),
         p!("cpuid_feature_ext1_edx_lm", 0x8000_0001, 0, Edx, 29),
+        p!("cpuid_feature_ext8_ebx_wbnoinvd", 0x8000_0008, 0, Ebx, 9),
         p!(
             "cpuid_feature_ext7_edx_invariant_tsc",
             0x8000_0007,

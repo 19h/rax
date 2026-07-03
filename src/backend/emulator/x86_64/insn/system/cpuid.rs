@@ -198,7 +198,8 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                        // silently weaken intra-guest control-flow protections.
                 let mut edx = (1u32 << 23) // AVX512FP16
                             | (1u32 << 14); // SERIALIZE
-                edx |= 1u32 << 9; // WBNOINVD
+                                            // WBNOINVD is enumerated in CPUID.80000008H:EBX[9],
+                                            // not here: leaf 7 EDX bit 9 is SRBDS_CTRL.
                 if vcpu.xeon_phi_avx512 {
                     edx |= (1u32 << 2) // AVX512_4VNNIW
                          | (1u32 << 3); // AVX512_4FMAPS
@@ -260,7 +261,9 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Use 48 bits for physical address space (common for real systems)
             let phys_bits: u32 = 48;
             let linear_bits: u32 = 48;
-            (phys_bits | (linear_bits << 8), 0, 0, 0)
+            // EBX bit 9 = WBNOINVD (CPUID.80000008H:EBX[9] per SDM).
+            let features_ebx = 1u32 << 9;
+            (phys_bits | (linear_bits << 8), features_ebx, 0, 0)
         }
         0xD => {
             // XSAVE feature enumeration leaf.
@@ -392,12 +395,18 @@ mod tests {
         cpuid(&mut vcpu, &mut ctx).unwrap();
         assert_eq!(vcpu.regs.rcx & (1 << 2), 1 << 2);
         assert_eq!(vcpu.regs.rbx & (1 << 9), 1 << 9);
-        assert_eq!(vcpu.regs.rdx & (1 << 9), 1 << 9);
+        assert_eq!(vcpu.regs.rdx & (1 << 9), 0);
 
         let mut ctx = cpuid_ctx();
         vcpu.regs.rax = 0x8000_0001;
         vcpu.regs.rcx = 0;
         cpuid(&mut vcpu, &mut ctx).unwrap();
         assert_eq!(vcpu.regs.rcx & (1 << 8), 1 << 8);
+
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 0x8000_0008;
+        vcpu.regs.rcx = 0;
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+        assert_eq!(vcpu.regs.rbx & (1 << 9), 1 << 9);
     }
 }
