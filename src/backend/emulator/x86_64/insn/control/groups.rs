@@ -191,8 +191,10 @@ fn group5_jmp_far(
     let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
     validate_far_selector(vcpu, selector)?;
 
-    // Load new CS:IP
-    vcpu.set_sreg(1, selector);
+    // Load new CS:IP. Far JMP cannot lower CPL; use the same lenient,
+    // CPL-preserving CS load as the immediate far-JMP path so a CPL3 guest
+    // cannot escalate to ring 0 through the memory-indirect form.
+    vcpu.load_code_segment_far_jmp(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }
