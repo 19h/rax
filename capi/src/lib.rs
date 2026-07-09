@@ -26,9 +26,16 @@
 
 #![allow(clippy::missing_safety_doc)]
 
+// Every exported entry point promises to contain Rust panics. Refuse a build
+// configuration that would silently turn catch_unwind into process aborts and
+// make that ABI contract false.
+#[cfg(panic = "abort")]
+compile_error!("rax-capi requires panic=unwind to preserve its C ABI panic-containment contract");
+
 use std::os::raw::{c_char, c_int};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
+mod analyze;
 mod arch;
 mod context;
 mod decode;
@@ -47,6 +54,18 @@ pub use status::RaxStatus;
 // Re-export the FFI surface and ABI constants from each module so they form a
 // tidy Rust API for rlib consumers in addition to the C ABI. (The
 // `#[unsafe(no_mangle)]` symbols are exported regardless.)
+pub use analyze::{
+    RAX_ADDRESS_ABSOLUTE, RAX_ADDRESS_BASE_DISP, RAX_ADDRESS_BASE_INDEX_DISP,
+    RAX_ADDRESS_GP_RELATIVE, RAX_ADDRESS_NONE, RAX_ADDRESS_PC_RELATIVE, RAX_ADDRESS_REGISTER,
+    RAX_ADDRESS_SEGMENT_RELATIVE, RAX_ADDRESS_UNKNOWN, RAX_ANALYSIS_ABI_VERSION,
+    RAX_ANALYSIS_COMPLETE, RAX_ANALYSIS_HAS_SMIR, RAX_ANALYSIS_PARTIAL, RAX_ANALYSIS_TRUNCATED,
+    RAX_ANALYSIS_UNSUPPORTED, RAX_ANALYSIS_VALID, RAX_EFFECT_ADDRESS_COMPLETE, RAX_EFFECT_ATOMIC,
+    RAX_EFFECT_CONDITIONAL, RAX_EFFECT_IMPLICIT, RAX_EFFECT_MEMORY, RAX_EFFECT_ORDERED,
+    RAX_EFFECT_READ, RAX_EFFECT_REGISTER, RAX_EFFECT_REPEATED, RAX_EFFECT_VALUE_COMPLETE,
+    RAX_EFFECT_WRITE, RAX_FLAG_A, RAX_FLAG_ARITHMETIC, RAX_FLAG_C, RAX_FLAG_D, RAX_FLAG_N,
+    RAX_FLAG_NZCV, RAX_FLAG_P, RAX_FLAG_V, RAX_FLAG_Z, RAX_VALUE_CONSTANT, RAX_VALUE_REGISTER,
+    RAX_VALUE_UNKNOWN, RaxAnalysis, RaxAnalysisEffect, rax_analyze,
+};
 pub use arch::{
     RAX_BACKEND_DEFAULT, RAX_BACKEND_EMULATOR, RAX_MODE_16, RAX_MODE_32, RAX_MODE_64, RAX_MODE_ARM,
     RAX_MODE_BIG_ENDIAN, RAX_MODE_LITTLE_ENDIAN, RAX_MODE_THUMB, RAX_RISCV_EXT_SUPPORTED,
@@ -76,16 +95,16 @@ pub use run::{
 /// ABI major version. Incremented only on a breaking ABI change.
 pub const RAX_API_MAJOR: u32 = 1;
 /// ABI minor version. Incremented when backward-compatible additions are made.
-pub const RAX_API_MINOR: u32 = 2;
+pub const RAX_API_MINOR: u32 = 3;
 /// ABI patch version.
 pub const RAX_API_PATCH: u32 = 0;
 
 /// Runs `f` under a panic guard, returning [`RaxStatus::Internal`] if it panics.
 ///
 /// All public entry points funnel through this so a panic in engine code (which
-/// would otherwise be undefined behaviour across an `extern "C"` boundary, or an
-/// abort under a `panic = "abort"` profile) is contained and surfaced as a
-/// status code in builds compiled with unwinding.
+/// would otherwise be undefined behaviour across an `extern "C"` boundary) is
+/// contained and surfaced as a status code. The workspace release profile keeps
+/// unwinding enabled specifically to preserve this contract in optimized dylibs.
 #[inline]
 pub(crate) fn guard<F>(f: F) -> RaxStatus
 where
@@ -139,7 +158,7 @@ pub extern "C" fn rax_version(major: *mut u32, minor: *mut u32, patch: *mut u32)
 #[unsafe(no_mangle)]
 pub extern "C" fn rax_version_string() -> *const c_char {
     // Static NUL-terminated string with embedded version.
-    concat!(env!("CARGO_PKG_VERSION"), " (rax-capi ABI ", "1.2.0", ")\0").as_ptr() as *const c_char
+    concat!(env!("CARGO_PKG_VERSION"), " (rax-capi ABI ", "1.3.0", ")\0").as_ptr() as *const c_char
 }
 
 /// Returns a static, NUL-terminated description for a [`RaxStatus`] code.

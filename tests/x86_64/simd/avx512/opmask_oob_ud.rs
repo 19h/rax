@@ -5,7 +5,7 @@
 //! the 4-bit `VEX.vvvv` field (range 0..=15) or, for KMOV stores, via a
 //! `REX.R`/`VEX.R`-extended `ModRM.reg` field. Only k0-k7 exist, so any selector
 //! >= 8 previously indexed `regs.k` (`[u64; 8]`) out of bounds. Under the release
-//! profile's `panic = "abort"` that turned a single guest instruction into a host
+//! aborting panic strategy that turned a single guest instruction into a host
 //! process abort/DoS. The fix raises #UD (invalid-opcode, vector 6) for an
 //! out-of-range opmask selector instead of panicking.
 //!

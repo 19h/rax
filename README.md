@@ -470,7 +470,9 @@ codesign -s - -f --entitlements rax.entitlements target/release/rax
 
 > Note: `.cargo/config.toml` ships `target-cpu=x86-64-v3` as a portable default. It still lets LLVM emit
 > AVX2/BMI2/FMA and autovectorize the scalar SIMD/flag loops while staying runnable on any 2013-or-later
-> x86-64 host. The release profile is fat-LTO, one codegen unit, `panic=abort`, stripped.
+> x86-64 host. The release profile is fat-LTO, one codegen unit, `panic=unwind`, stripped.
+> Unwinding is retained deliberately: the stable C ABI catches internal panics and returns
+> `RAX_ERR_INTERNAL`, so an aborting release profile would violate that embedding contract.
 
 | Feature | Default | Enables |
 |---------|---------|---------|

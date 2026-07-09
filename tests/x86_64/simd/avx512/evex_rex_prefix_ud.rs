@@ -7,7 +7,7 @@
 //! `any_rex_b()` into the r/m field, and `evex_rm_vec_reg` adds EVEX.B/EVEX.X on
 //! top — pushing the vector-register index to 32 and indexing the 16-entry
 //! `regs.zmm_ext` array out of bounds. Under the release profile's
-//! `panic = "abort"` that turned a single guest instruction into a host process
+//! an aborting panic strategy that turned a single guest instruction into a host process
 //! abort/DoS.
 //!
 //! A REX/REX2 prefix preceding a VEX/EVEX prefix is an illegal encoding (#UD per

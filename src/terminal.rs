@@ -15,9 +15,10 @@
 //! from the guest is still expanded to `\r\n` on the host — otherwise console
 //! output would "staircase".
 //!
-//! Because the release profile builds with `panic = "abort"` (no unwinding),
-//! a stack `Drop` guard is not sufficient on its own to restore the terminal
-//! when something goes wrong. We therefore ALSO:
+//! The release profile keeps panic unwinding enabled so library entry points can
+//! uphold their C-ABI panic containment contract. The stack `Drop` guard thus
+//! restores the terminal on an unwinding panic. As backstops for fatal signals
+//! and for restoration before a panic diagnostic is printed, we ALSO:
 //!   - install a panic hook that restores the terminal before printing, and
 //!   - install signal handlers (SIGINT/TERM/HUP/QUIT and the fatal
 //!     SIGSEGV/ABRT/BUS/ILL/FPE) that restore the terminal and then re-raise
@@ -154,7 +155,8 @@ fn install_restore_hooks() {
     HOOKS.call_once(|| {
         // Panic hook: restore the terminal (so the message prints cleanly with
         // proper CR/LF and the user's shell is usable afterwards), then run the
-        // default hook. With panic=abort this fires before the process aborts.
+        // default hook. The RawTty Drop remains an idempotent second backstop
+        // if the panic continues unwinding through the interactive frontend.
         let default_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |info| {
             restore_terminal();

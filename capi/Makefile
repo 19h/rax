@@ -20,6 +20,7 @@ HERE        := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TARGET_DIR  ?= $(HERE)../target
 INCDIR      := $(HERE)include
 EXAMPLE_DIR := $(HERE)examples
+TEST_DIR    := $(HERE)tests
 
 ifeq ($(PROFILE),release)
   CARGO_FLAGS := --release
@@ -50,11 +51,12 @@ C_SRCS      := $(wildcard $(EXAMPLE_DIR)/*.c)
 CXX_SRCS    := $(wildcard $(EXAMPLE_DIR)/*.cpp)
 C_BINS      := $(patsubst $(EXAMPLE_DIR)/%.c,$(EXAMPLE_DIR)/%,$(C_SRCS))
 CXX_BINS    := $(patsubst $(EXAMPLE_DIR)/%.cpp,$(EXAMPLE_DIR)/%,$(CXX_SRCS))
+ABI_TEST_OBJ := $(TEST_DIR)/analyze_abi.o
 
 CFLAGS      ?= -O2 -Wall -Wextra
 CXXFLAGS    ?= -O2 -Wall -Wextra -std=c++17
 
-.PHONY: all release debug lib test examples clean install
+.PHONY: all release debug lib test examples abi-test clean install
 
 all: release
 
@@ -68,7 +70,7 @@ lib:
 	$(CARGO) build --package rax-capi $(CARGO_FLAGS)
 
 # Build the library, compile all examples against the dynamic lib, run them.
-test: lib examples
+test: lib abi-test examples
 	@status=0; \
 	for bin in $(C_BINS) $(CXX_BINS); do \
 	  echo "== running $$bin =="; \
@@ -77,6 +79,12 @@ test: lib examples
 	exit $$status
 
 examples: $(C_BINS) $(CXX_BINS)
+
+abi-test: $(ABI_TEST_OBJ)
+
+$(ABI_TEST_OBJ): $(TEST_DIR)/analyze_abi.c $(INCDIR)/rax.h
+	$(CC) -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Werror \
+	      -I$(INCDIR) -c $< -o $@
 
 $(EXAMPLE_DIR)/%: $(EXAMPLE_DIR)/%.c lib
 	$(CC) $(CFLAGS) -I$(INCDIR) $< -L$(OUT_DIR) -lrax $(RPATH_FLAG) -o $@
@@ -98,4 +106,4 @@ install: lib
 	@echo "installed rax to $(PREFIX)"
 
 clean:
-	rm -f $(C_BINS) $(CXX_BINS)
+	rm -f $(C_BINS) $(CXX_BINS) $(ABI_TEST_OBJ)

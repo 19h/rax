@@ -1259,6 +1259,21 @@ impl VRegAllocator {
     pub fn count(&self) -> u32 {
         self.next_id
     }
+
+    /// Snapshot the current architectural-register to SSA-value bindings.
+    ///
+    /// Single-instruction consumers (the ISA oracle and the stable C analysis
+    /// ABI) use this to recover which architectural registers a lift defines.
+    /// The allocator deliberately keeps its hash map private; returning copied
+    /// pairs prevents callers from retaining references into mutable lifter
+    /// state.  Callers that serialize the result must sort it because hash-map
+    /// iteration order is intentionally unspecified.
+    pub fn arch_bindings(&self) -> Vec<(ArchReg, VReg)> {
+        self.arch_to_vreg
+            .iter()
+            .map(|(reg, id)| (*reg, VReg::Virtual(*id)))
+            .collect()
+    }
 }
 
 /// Block ID allocator
@@ -1311,6 +1326,16 @@ mod tests {
         assert!(v1.is_virtual());
         assert_ne!(v0, v1);
         assert_eq!(alloc.count(), 2);
+
+        let rax = ArchReg::X86(X86Reg::Rax);
+        let defined = alloc.define_arch(rax);
+        assert_eq!(defined, VReg::virt(2));
+        assert_eq!(alloc.arch_bindings(), vec![(rax, defined)]);
+        // The snapshot owns copied values and does not borrow allocator state.
+        let snapshot = alloc.arch_bindings();
+        alloc.reset();
+        assert_eq!(snapshot, vec![(rax, defined)]);
+        assert!(alloc.arch_bindings().is_empty());
     }
 
     #[test]

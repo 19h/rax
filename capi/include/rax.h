@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 2u
+#define RAX_API_MINOR 3u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -576,6 +576,132 @@ typedef struct rax_decoded {
  * error status only for a bad argument (NULL out/bytes, unsupported arch). */
 RAX_API rax_status rax_decode(int arch, uint32_t mode, uint64_t pc,
                               const void *bytes, size_t len, rax_decoded *out);
+
+/* ===========================================================================
+ * Stateless instruction-effect analysis (since API 1.3)
+ *
+ * This is a producer-neutral, pointer-free projection of the SMIR lift for one
+ * instruction. It includes rax_decode's flow result plus normalized register
+ * and memory effects. The library owns no memory in the returned data: callers
+ * provide the optional effect array and may use the two-call sizing form.
+ *
+ * Rich effects are currently defined for x86-64, AArch64, RV64, and Hexagon.
+ * Other modes may still produce a valid `decoded` member but set
+ * RAX_ANALYSIS_UNSUPPORTED/RAX_ANALYSIS_PARTIAL.
+ * ======================================================================== */
+
+#define RAX_ANALYSIS_ABI_VERSION 1u
+
+/* rax_analysis.flags */
+#define RAX_ANALYSIS_VALID       (1u << 0) /* decoded.valid is true              */
+#define RAX_ANALYSIS_HAS_SMIR    (1u << 1) /* a SMIR lift produced the effects   */
+#define RAX_ANALYSIS_COMPLETE    (1u << 2) /* effect set is semantically complete */
+#define RAX_ANALYSIS_PARTIAL     (1u << 3) /* useful effects, but not exhaustive */
+#define RAX_ANALYSIS_UNSUPPORTED (1u << 4) /* no rich lifter for this insn/mode  */
+#define RAX_ANALYSIS_TRUNCATED   (1u << 5) /* caller effect array was too small  */
+
+/* rax_analysis_effect.kind */
+#define RAX_EFFECT_REGISTER 1u
+#define RAX_EFFECT_MEMORY   2u
+
+/* rax_analysis_effect.access */
+#define RAX_EFFECT_READ             (1u << 0)
+#define RAX_EFFECT_WRITE            (1u << 1)
+#define RAX_EFFECT_CONDITIONAL      (1u << 2)
+#define RAX_EFFECT_ATOMIC           (1u << 3)
+#define RAX_EFFECT_REPEATED         (1u << 4)
+#define RAX_EFFECT_ORDERED          (1u << 5)
+#define RAX_EFFECT_IMPLICIT         (1u << 6)
+#define RAX_EFFECT_ADDRESS_COMPLETE (1u << 7)
+#define RAX_EFFECT_VALUE_COMPLETE   (1u << 8)
+
+/* rax_analysis_effect.value_kind */
+#define RAX_VALUE_UNKNOWN  0u
+#define RAX_VALUE_CONSTANT 1u
+#define RAX_VALUE_REGISTER 2u
+
+/* rax_analysis_effect.address_kind */
+#define RAX_ADDRESS_NONE            0u
+#define RAX_ADDRESS_UNKNOWN         1u
+#define RAX_ADDRESS_ABSOLUTE        2u
+#define RAX_ADDRESS_REGISTER        3u
+#define RAX_ADDRESS_BASE_DISP       4u
+#define RAX_ADDRESS_BASE_INDEX_DISP 5u
+#define RAX_ADDRESS_PC_RELATIVE     6u
+#define RAX_ADDRESS_GP_RELATIVE     7u
+#define RAX_ADDRESS_SEGMENT_RELATIVE 8u
+
+/* Architecture-neutral condition-code masks used by flags_{read,written,
+ * undefined}. On x86 N/V mean SF/OF; on ARM they mean N/V. P and A are
+ * x86-only. D is the x86 direction flag. */
+#define RAX_FLAG_C (1u << 0)
+#define RAX_FLAG_Z (1u << 1)
+#define RAX_FLAG_N (1u << 2)
+#define RAX_FLAG_V (1u << 3)
+#define RAX_FLAG_P (1u << 4)
+#define RAX_FLAG_A (1u << 5)
+#define RAX_FLAG_D (1u << 6)
+#define RAX_FLAG_NZCV       (RAX_FLAG_C | RAX_FLAG_Z | RAX_FLAG_N | RAX_FLAG_V)
+#define RAX_FLAG_ARITHMETIC (RAX_FLAG_NZCV | RAX_FLAG_P | RAX_FLAG_A)
+
+/* One normalized register or data-memory effect. Ordinary instruction fetch
+ * and sequential PC advance are represented by `decoded` rather than repeated
+ * as effects. All register fields use the
+ * architecture-specific stable RAX_* register-id space above; -1 means absent.
+ * `width_bits == 0` means the lift did not expose a precise width. For a
+ * register write or memory store, value_kind may prove a direct constant or a
+ * direct register copy. Address fields are meaningful according to
+ * address_kind. Reserved words are zero and must be ignored. */
+typedef struct rax_analysis_effect {
+    uint32_t struct_size; /* sizeof(rax_analysis_effect) */
+    uint16_t abi_version; /* RAX_ANALYSIS_ABI_VERSION */
+    uint16_t kind;        /* RAX_EFFECT_REGISTER/MEMORY */
+    uint32_t access;      /* RAX_EFFECT_* bitmask */
+    int32_t  reg;         /* affected register, or -1 */
+    uint32_t width_bits;
+    uint32_t value_kind;  /* RAX_VALUE_* */
+    int32_t  source_reg;  /* RAX_VALUE_REGISTER source, or -1 */
+    uint32_t address_kind;/* RAX_ADDRESS_* */
+    int32_t  base_reg;
+    int32_t  index_reg;
+    int32_t  segment_reg;
+    uint32_t scale;
+    uint64_t value;       /* RAX_VALUE_CONSTANT */
+    uint64_t address;     /* resolved absolute address when available */
+    int64_t  displacement;
+    uint64_t _reserved[2];
+} rax_analysis_effect;
+
+/* Fixed summary. `effect_count` is the number copied; required_effect_count is
+ * the full count. struct_size and abi_version describe the library output. */
+typedef struct rax_analysis {
+    uint32_t struct_size; /* sizeof(rax_analysis) */
+    uint32_t abi_version; /* RAX_ANALYSIS_ABI_VERSION */
+    rax_decoded decoded;
+    uint32_t flags;       /* RAX_ANALYSIS_* */
+    uint32_t effect_count;
+    uint32_t required_effect_count;
+    uint32_t flags_read;      /* RAX_FLAG_* */
+    uint32_t flags_written;   /* RAX_FLAG_* */
+    uint32_t flags_undefined; /* RAX_FLAG_* */
+    uint32_t smir_op_count;
+    uint32_t _reserved0;
+    uint64_t _reserved[4];
+} rax_analysis;
+
+/* Analyze ONE instruction. `out` and `out_effect_count` are required.
+ *
+ * Size query: pass effects == NULL and effect_cap == 0; RAX_OK is returned and
+ * *out_effect_count/required_effect_count receive the required count.
+ *
+ * Fill: pass an array of effect_cap records. An undersized non-NULL array is
+ * filled with a deterministic prefix, sets RAX_ANALYSIS_TRUNCATED, and returns
+ * RAX_ERR_BOUNDS. A NULL array with nonzero capacity is RAX_ERR_ARG. */
+RAX_API rax_status rax_analyze(int arch, uint32_t mode, uint64_t pc,
+                               const void *bytes, size_t len,
+                               rax_analysis *out,
+                               rax_analysis_effect *effects, size_t effect_cap,
+                               size_t *out_effect_count);
 
 #ifdef __cplusplus
 } /* extern "C" */

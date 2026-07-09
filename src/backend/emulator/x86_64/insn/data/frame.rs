@@ -108,7 +108,8 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         // ctx.rex/ctx.rex2, which would otherwise leak into decode_modrm()
         // (reg |= any_rex_r(), rm |= any_rex_b()) and push the EVEX vector-register
         // index past 31 — an out-of-bounds access into regs.zmm_ext that aborts the
-        // host under panic=abort. Reject it as #UD before decoding the EVEX payload.
+        // host (and abort an aborting build). Reject it as #UD before decoding
+        // the EVEX payload.
         // RIP is left on the faulting instruction (advanced only on retire), so the
         // fault points at it.
         if ctx.has_any_rex() {

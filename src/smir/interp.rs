@@ -6240,7 +6240,7 @@ impl SmirInterpreter {
         // VecValue is a fixed 1024-bit (16-word) backing store. A lane whose
         // bits fall outside it has no storage; reading it as 0 keeps an
         // oversized/invalid VLane lane count from indexing out of bounds and
-        // aborting the emulator (panic=abort) instead of corrupting memory.
+        // panicking (or aborting an aborting build) instead of corrupting memory.
         if word_index >= value.len() {
             return 0;
         }

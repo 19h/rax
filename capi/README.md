@@ -13,7 +13,8 @@ control over stop conditions and a rich set of execution hooks.
   typed register access, `std::function` (lambda) hooks, and exceptions.
 - **Embeddable.** No global state, no hidden threads, no required runtime files.
   The library validates every argument and can never let a Rust panic cross the
-  FFI boundary.
+  FFI boundary. The crate intentionally rejects `panic=abort` builds because
+  they cannot uphold that containment contract.
 - **Cross‑platform.** Uses the portable software emulator backend, so the same
   code runs identically on Linux, macOS (Intel and Apple Silicon), etc.
 
@@ -133,6 +134,24 @@ cargo build -p rax-capi --release --features jit
 | Interrupts | `rax_interrupt`, `rax_nmi`, `rax_can_interrupt` |
 | Hooks | `rax_hook_add_code`/`block`/`intr`/`io_in`/`io_out`/`mmio_read`/`mmio_write`/`invalid`/`mem`, `rax_hook_del` |
 | Context | `rax_context_save`, `rax_context_restore` |
+| Stateless analysis | `rax_decode`, `rax_analyze` |
+
+### Stateless instruction analysis
+
+`rax_analyze` lifts one instruction without opening an engine or mapping guest
+memory. It returns the same decoded control-flow/target summary as `rax_decode`,
+plus normalized architectural-register reads/writes, memory access and effective
+address characteristics, condition-code effects, and direct constant/register
+results when SMIR proves them. Rich effects currently cover x86-64, AArch64,
+RV64 and Hexagon; the summary explicitly distinguishes complete, partial and
+unsupported results.
+
+The effect list is caller-owned and uses normal two-call negotiation: pass a
+NULL array and zero capacity to obtain the required count, then pass that many
+`rax_analysis_effect` records. Every returned structure carries its fixed ABI
+size/version and reserved zero fields; no Rust pointer or allocation crosses the
+C boundary. An undersized non-NULL array receives a deterministic prefix and
+returns `RAX_ERR_BOUNDS` with `RAX_ANALYSIS_TRUNCATED` set.
 
 ### Memory model
 

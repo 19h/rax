@@ -59,7 +59,7 @@ pub struct RaxDecoded {
 }
 
 impl RaxDecoded {
-    fn zeroed() -> Self {
+    pub(crate) fn zeroed() -> Self {
         RaxDecoded {
             size: 0,
             flow: RAX_FLOW_FALLTHROUGH,
@@ -134,7 +134,7 @@ fn extract_size(value: &Value) -> u32 {
 }
 
 /// Builds oracle options for an architecture and CPU mode.
-fn oracle_options(arch: RaxArch, mode: u32, pc: u64) -> OracleOptions {
+pub(crate) fn oracle_options(arch: RaxArch, mode: u32, pc: u64) -> OracleOptions {
     let mut opts = OracleOptions::default();
     opts.pc = pc;
     opts.include_smir = true;
@@ -181,7 +181,7 @@ fn oracle_options(arch: RaxArch, mode: u32, pc: u64) -> OracleOptions {
 }
 
 /// Maps a decoded oracle JSON value into the caller's [`RaxDecoded`].
-fn fill_from_json(value: &Value, out: &mut RaxDecoded) {
+pub(crate) fn fill_from_json(value: &Value, out: &mut RaxDecoded) {
     let size = extract_size(value);
     if size == 0 {
         // The bytes did not decode to a valid instruction.
@@ -268,7 +268,10 @@ pub extern "C" fn rax_decode(
         unsafe {
             *out = RaxDecoded::zeroed();
         }
-        if bytes.is_null() || len == 0 {
+        // Rust slices require a length no greater than isize::MAX even for a
+        // non-NULL C pointer. Reject it before from_raw_parts so malformed FFI
+        // input cannot create an invalid slice.
+        if bytes.is_null() || len == 0 || len > isize::MAX as usize {
             return RaxStatus::Arg;
         }
         let arch = match RaxArch::from_i32(arch) {

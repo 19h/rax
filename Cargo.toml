@@ -87,7 +87,11 @@ kvm-ioctls = { version = "0.24.0", optional = true }
 [profile.release]
 lto = "fat"
 codegen-units = 1
-panic = "abort"
+# The stable C ABI contains every entry point in catch_unwind and promises to
+# convert an internal panic to RAX_ERR_INTERNAL. Keep unwind tables in release
+# artifacts so that contract remains true for librax, even though it costs a
+# small amount of code size compared with panic="abort".
+panic = "unwind"
 strip = true
 
 [profile.release.build-override]

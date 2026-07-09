@@ -980,11 +980,42 @@ fn lift_smir(source: SourceArch, bytes: &[u8], opts: &OracleOptions) -> Value {
         Ok(result) => {
             let ops = result.ops.iter().map(smir_op_json).collect::<Vec<_>>();
             let control_flow = control_flow_json(&result.control_flow);
+            // Some lifters (notably RISC-V and Hexagon) model architectural
+            // writes by rebinding an architecture register to a fresh SSA
+            // VReg instead of putting the architecture register directly in
+            // `OpKind::dests()`.  Publish that final mapping as additive oracle
+            // metadata so stateless effect consumers can faithfully recover
+            // architectural writes. Sort by the stable textual register name;
+            // VRegAllocator is backed by a HashMap and has no iteration-order
+            // guarantee.
+            let mut arch_outputs = ctx
+                .vreg_alloc
+                .arch_bindings()
+                .into_iter()
+                .map(|(reg, value)| {
+                    json!({
+                        "reg": VReg::Arch(reg).oracle_json(),
+                        "value": value.oracle_json(),
+                    })
+                })
+                .collect::<Vec<_>>();
+            arch_outputs.sort_by(|a, b| {
+                let key = |v: &Value| {
+                    let r = &v["reg"];
+                    format!(
+                        "{}:{}",
+                        r.get("arch").and_then(Value::as_str).unwrap_or(""),
+                        r.get("name").and_then(Value::as_str).unwrap_or("")
+                    )
+                };
+                key(a).cmp(&key(b))
+            });
             json!({
                 "available": true,
                 "source_arch": format!("{source:?}"),
                 "bytes_consumed": result.bytes_consumed,
                 "ops": ops,
+                "arch_outputs": arch_outputs,
                 "control_flow": control_flow,
                 "branch_targets": result.branch_targets.iter().map(|target| hex_u64(*target)).collect::<Vec<_>>(),
                 "ends_block": result.control_flow.ends_block(),
@@ -3090,14 +3121,23 @@ fn control_flow_json(cf: &ControlFlow) -> Value {
         } => json!({
             "kind": "cond_branch_reg",
             "condition_reg": format!("{cond:?}"),
+            "condition_value": cond.oracle_json(),
             "target": hex_u64(*taken),
             "fallthrough": hex_u64(*not_taken),
         }),
         ControlFlow::IndirectBranch { target } => {
-            json!({"kind": "indirect_branch", "target": format!("{target:?}")})
+            json!({
+                "kind": "indirect_branch",
+                "target": format!("{target:?}"),
+                "target_value": target.oracle_json(),
+            })
         }
         ControlFlow::IndirectBranchMem { addr } => {
-            json!({"kind": "indirect_branch_mem", "addr": format!("{addr:?}")})
+            json!({
+                "kind": "indirect_branch_mem",
+                "addr": format!("{addr:?}"),
+                "address": addr.oracle_json(),
+            })
         }
         ControlFlow::Call { target } => json!({"kind": "call", "target": call_target_json(target)}),
         ControlFlow::Return => json!({"kind": "return"}),
@@ -3110,9 +3150,17 @@ fn call_target_json(target: &CallTarget) -> Value {
     match target {
         CallTarget::Direct(id) => json!({"kind": "direct_function", "id": id.0}),
         CallTarget::GuestAddr(addr) => json!({"kind": "direct", "addr": hex_u64(*addr)}),
-        CallTarget::Indirect(reg) => json!({"kind": "indirect", "reg": format!("{reg:?}")}),
+        CallTarget::Indirect(reg) => json!({
+            "kind": "indirect",
+            "reg": format!("{reg:?}"),
+            "reg_value": reg.oracle_json(),
+        }),
         CallTarget::IndirectMem(addr) => {
-            json!({"kind": "indirect_mem", "addr": format!("{addr:?}")})
+            json!({
+                "kind": "indirect_mem",
+                "addr": format!("{addr:?}"),
+                "address": addr.oracle_json(),
+            })
         }
         CallTarget::Runtime(func) => json!({"kind": "runtime", "func": format!("{func:?}")}),
     }

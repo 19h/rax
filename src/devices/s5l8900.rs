@@ -726,8 +726,9 @@ impl S5lSysic {
             // Only GPIO_NUMINTGROUPS (7) interrupt groups exist, so the valid
             // register offsets stop at index 6 (base + 6*4). The endpoints must be
             // 0x98/0xB8/0xD8/0xF8, not 0x9C/0xBC/0xDC/0xFC — the latter compute
-            // index 7 and a guest LDR there would panic (host abort under
-            // panic=abort). Out-of-range offsets fall through to open-bus (0). (#42)
+            // index 7 and a guest LDR there would panic (and abort an embedding
+            // built with an aborting panic strategy). Out-of-range offsets fall
+            // through to open-bus (0). (#42)
             0x80..=0x98 => self.gpio_int_level[((offset - 0x80) / 4) as usize],
             0xA0..=0xB8 => self.gpio_int_status[((offset - 0xA0) / 4) as usize],
             0xC0..=0xD8 => self.gpio_int_enabled[((offset - 0xC0) / 4) as usize],
@@ -2724,7 +2725,7 @@ mod sysic_dos_tests {
     // Regression for issue #42: the last register of each SYSIC GPIO
     // interrupt-group range (0x9C/0xBC/0xDC/0xFC) used to compute array index 7
     // into the 7-entry gpio_int_* arrays, so a guest MMIO access there panicked
-    // (host abort under panic=abort). They must now be handled as open-bus.
+    // (a host abort in aborting builds). They must now be handled as open-bus.
     #[test]
     fn sysic_gpio_group_endpoint_offsets_do_not_panic() {
         let mut sysic = S5lSysic::new();

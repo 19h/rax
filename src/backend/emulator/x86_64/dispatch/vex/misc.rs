@@ -1143,7 +1143,8 @@ impl X86_64Vcpu {
         // ModRM.reg selects the source opmask register. decode_modrm extends reg
         // with REX.R / VEX.R, but opmask registers are only k0-k7, so a VEX.R-
         // extended encoding (reg >= 8) would index past the 8-entry regs.k array
-        // and abort the host under panic=abort. Reject the invalid encoding with #UD.
+        // and could abort a host built with an aborting panic strategy. Reject
+        // the invalid encoding with #UD.
         if reg >= 8 {
             self.inject_exception(6, None)?; // #UD = vector 6
             return Ok(None);
@@ -1241,7 +1242,8 @@ impl X86_64Vcpu {
         // vvvv is a 4-bit field (0..=15) but only k0-k7 exist, so a guest can set
         // the high bit (e.g. KANDW with VEX.vvvv=8) to name a non-existent opmask
         // register. Indexing the 8-entry regs.k array with it would panic and, under
-        // panic=abort, abort the host process. Reject the invalid encoding with #UD.
+        // abort a host process built with an aborting panic strategy. Reject the
+        // invalid encoding with #UD.
         if vvvv >= 8 {
             self.inject_exception(6, None)?; // #UD = vector 6
             return Ok(None);
@@ -1390,7 +1392,7 @@ impl X86_64Vcpu {
         // exist. VEX decodes vvvv as a 4-bit field (0..=15), so a guest can set
         // the high bit (e.g. KUNPCKBW `C5 BD 4B C0` decodes vvvv=8) to name a
         // non-existent opmask register. Using it as an index into regs.k (an
-        // 8-entry array) would panic and, under panic=abort, turn a guest
+        // 8-entry array) would panic and, in an aborting build, turn a guest
         // instruction into a host process abort/DoS. Reject the invalid encoding
         // with #UD instead, matching how other invalid encodings are handled
         // (see movdir.rs / evex.rs). RIP is left on the faulting instruction
