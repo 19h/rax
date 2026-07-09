@@ -49,7 +49,7 @@ extern "C" {
  * Versioning
  * ======================================================================== */
 #define RAX_API_MAJOR 1u
-#define RAX_API_MINOR 1u
+#define RAX_API_MINOR 2u
 #define RAX_API_PATCH 0u
 
 /* ===========================================================================
@@ -534,6 +534,48 @@ RAX_API rax_status rax_context_restore(rax_engine *engine, const void *data, siz
 #define RAX_HEX_P(i)    (0x0400 + (i)) /* P0..P3 predicates (1 byte) */
 #define RAX_HEX_Q(i)    (0x0500 + (i)) /* Q0..Q3 vector predicates (16 bytes) */
 #define RAX_HEX_REG_PC  RAX_HEX_C(9)
+
+/* ===========================================================================
+ * Static instruction decode (since API 1.2)
+ *
+ * A pure, stateless disassembly of a single instruction — no engine, no memory
+ * map, no execution, no side effects. Backed by the same comprehensive x86 and
+ * ARM (and RISC-V / Hexagon) decoders the emulator uses, exposed here so tools
+ * can recover instruction length and control-flow semantics statically.
+ * ======================================================================== */
+
+/* Control-flow class of a decoded instruction (rax_decoded.flow). */
+#define RAX_FLOW_FALLTHROUGH    0  /* no branch; execution continues to next insn */
+#define RAX_FLOW_BRANCH         1  /* unconditional direct jump; `target` valid    */
+#define RAX_FLOW_COND_BRANCH    2  /* conditional branch; `target`+`fallthrough`    */
+#define RAX_FLOW_INDIRECT_JUMP  3  /* computed jump; no static target               */
+#define RAX_FLOW_CALL           4  /* direct call; `target` valid                   */
+#define RAX_FLOW_INDIRECT_CALL  5  /* computed call; no static target               */
+#define RAX_FLOW_RETURN         6  /* return from function                          */
+#define RAX_FLOW_TRAP           7  /* trap / undefined / exception-raising          */
+#define RAX_FLOW_SYSCALL        8  /* system call                                   */
+#define RAX_FLOW_UNKNOWN        9  /* decoded, but control flow not classified      */
+
+/* Result of rax_decode(). ABI-stable: trailing `_reserved` is for extension. */
+typedef struct rax_decoded {
+    uint32_t size;        /* instruction length in bytes (0 if !valid)            */
+    int32_t  flow;        /* one of RAX_FLOW_*                                     */
+    uint32_t is_indirect; /* 1 if the branch/call target is computed at runtime   */
+    uint32_t has_target;  /* 1 if `target` holds a resolved direct target         */
+    uint64_t target;      /* absolute direct branch/call target (when has_target) */
+    uint64_t fallthrough; /* not-taken address for a conditional branch           */
+    uint32_t valid;       /* 1 if the bytes decoded to a valid instruction        */
+    uint32_t _reserved;
+} rax_decoded;
+
+/* Decode ONE instruction at virtual address `pc` from `bytes[0..len)` for the
+ * given architecture and CPU mode (same `arch`/`mode` values as
+ * rax_engine_open). Fills *out. Returns RAX_OK when the call is well-formed —
+ * inspect out->valid to see whether the bytes actually decoded (an undecodable
+ * or truncated instruction yields RAX_OK with out->valid == 0). Returns an
+ * error status only for a bad argument (NULL out/bytes, unsupported arch). */
+RAX_API rax_status rax_decode(int arch, uint32_t mode, uint64_t pc,
+                              const void *bytes, size_t len, rax_decoded *out);
 
 #ifdef __cplusplus
 } /* extern "C" */

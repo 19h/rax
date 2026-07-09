@@ -444,6 +444,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "rax",
+ "serde_json",
 ]
 
 [[package]]

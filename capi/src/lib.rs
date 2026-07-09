@@ -31,6 +31,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 mod arch;
 mod context;
+mod decode;
 mod engine;
 mod hook;
 mod mem;
@@ -52,6 +53,11 @@ pub use arch::{
     RAX_RISCV_EXT_XANDES, RAX_RISCV_EXT_XHAZARD3, RAX_RISCV_EXT_XIDA_SLTW, RAX_RISCV_EXT_XTHEAD,
     RAX_RISCV_EXT_ZCLSD, RAX_RISCV_EXT_ZCMP, RAX_RISCV_EXT_ZCMT, RAX_RISCV_EXT_ZILSD, RaxArch,
 };
+pub use decode::{
+    RAX_FLOW_BRANCH, RAX_FLOW_CALL, RAX_FLOW_COND_BRANCH, RAX_FLOW_FALLTHROUGH,
+    RAX_FLOW_INDIRECT_CALL, RAX_FLOW_INDIRECT_JUMP, RAX_FLOW_RETURN, RAX_FLOW_SYSCALL,
+    RAX_FLOW_TRAP, RAX_FLOW_UNKNOWN, RaxDecoded,
+};
 pub use engine::{DEFAULT_MEM_SIZE, Engine, RAX_OPEN_NO_DEFAULT_STATE, RaxEngineConfig};
 pub use hook::{
     RAX_HOOK_BLOCK, RAX_HOOK_CODE, RAX_HOOK_INTR, RAX_HOOK_INVALID, RAX_HOOK_IO_IN,
@@ -70,7 +76,7 @@ pub use run::{
 /// ABI major version. Incremented only on a breaking ABI change.
 pub const RAX_API_MAJOR: u32 = 1;
 /// ABI minor version. Incremented when backward-compatible additions are made.
-pub const RAX_API_MINOR: u32 = 1;
+pub const RAX_API_MINOR: u32 = 2;
 /// ABI patch version.
 pub const RAX_API_PATCH: u32 = 0;
 
@@ -133,7 +139,7 @@ pub extern "C" fn rax_version(major: *mut u32, minor: *mut u32, patch: *mut u32)
 #[unsafe(no_mangle)]
 pub extern "C" fn rax_version_string() -> *const c_char {
     // Static NUL-terminated string with embedded version.
-    concat!(env!("CARGO_PKG_VERSION"), " (rax-capi ABI ", "1.1.0", ")\0").as_ptr() as *const c_char
+    concat!(env!("CARGO_PKG_VERSION"), " (rax-capi ABI ", "1.2.0", ")\0").as_ptr() as *const c_char
 }
 
 /// Returns a static, NUL-terminated description for a [`RaxStatus`] code.
