@@ -12,7 +12,7 @@
 //! - FISTTP m32int: DB /1
 //! - FISTTP m64int: DD /1
 //!
-//! Reference: /Users/int/dev/rax/docs/fisttp.txt
+//! Reference: docs/fisttp.txt
 
 use crate::common::*;
 use std::sync::Arc;

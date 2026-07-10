@@ -22,7 +22,7 @@
 //! Flags affected: ZF, PF, CF
 //! Flags cleared: OF, SF, AF
 //!
-//! Reference: /Users/int/dev/rax/docs/fucomi:fucomip:fucomi:fucomip.txt
+//! Reference: docs/fucomi:fucomip:fucomi:fucomip.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

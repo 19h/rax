@@ -23,7 +23,7 @@ use vm_memory::{Bytes, GuestAddress};
 //
 // Terminates when RCX=0 OR when bytes match (ZF=1)
 //
-// Based on: /Users/int/dev/rax/docs/rep:repe:repz:repne:repnz.txt
+// Based on: docs/rep:repe:repz:repne:repnz.txt
 
 // ============================================================================
 // REPNE CMPSB - Repeat Compare Byte While Not Equal

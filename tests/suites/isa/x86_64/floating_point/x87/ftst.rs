@@ -18,7 +18,7 @@
 //! - C0, C2, C3: Set according to comparison result
 //! - C1: Set to 0
 //!
-//! Reference: /Users/int/dev/rax/docs/ftst.txt
+//! Reference: docs/ftst.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

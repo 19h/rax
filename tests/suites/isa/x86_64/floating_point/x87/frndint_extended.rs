@@ -13,7 +13,7 @@
 //! - 10b: Round up (toward +infinity)
 //! - 11b: Round toward zero (truncate)
 //!
-//! Reference: /Users/int/dev/rax/docs/frndint.txt
+//! Reference: docs/frndint.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

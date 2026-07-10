@@ -7,8 +7,8 @@
 //! FSUBRP - Reverse subtract and pop
 //! FISUBR - Reverse subtract integer
 //!
-//! References: /Users/int/dev/rax/docs/fsub:fsubp:fisub.txt
-//!             /Users/int/dev/rax/docs/fsubr:fsubrp:fisubr.txt
+//! References: docs/fsub:fsubp:fisub.txt
+//!             docs/fsubr:fsubrp:fisubr.txt
 
 use crate::common::*;
 use std::sync::Arc;

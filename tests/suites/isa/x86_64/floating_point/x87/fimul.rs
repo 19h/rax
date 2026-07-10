@@ -2,7 +2,7 @@
 //!
 //! FIMUL - Multiply integer with floating-point (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fmul:fmulp:fimul.txt
+//! Reference: docs/fmul:fmulp:fimul.txt
 //!
 //! Opcode: DE /1 - FIMUL m16int  ; ST(0) = ST(0) * m16int
 //! Opcode: DA /1 - FIMUL m32int  ; ST(0) = ST(0) * m32int

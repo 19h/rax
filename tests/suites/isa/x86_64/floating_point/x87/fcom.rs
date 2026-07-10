@@ -23,7 +23,7 @@
 //! - C1: Set to 0
 //! - C0, C2, C3: Set according to comparison result
 //!
-//! Reference: /Users/int/dev/rax/docs/fcom:fcomp:fcompp.txt
+//! Reference: docs/fcom:fcomp:fcompp.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

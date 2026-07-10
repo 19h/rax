@@ -13,7 +13,7 @@
 //! - C1: Set to 0 if stack underflow; set if result rounded up, cleared otherwise
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/frndint.txt
+//! Reference: docs/frndint.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

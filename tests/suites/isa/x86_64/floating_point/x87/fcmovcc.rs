@@ -26,8 +26,8 @@
 //! - FCMOVNBE: DB D0+i
 //! - FCMOVNU: DB D8+i
 //!
-//! Reference: /Users/int/dev/rax/docs/fcmovb:fcmove:fcmovbe:fcmovu.txt
-//! Reference: /Users/int/dev/rax/docs/fcmovnb:fcmovne:fcmovnbe:fcmovnu.txt
+//! Reference: docs/fcmovb:fcmove:fcmovbe:fcmovu.txt
+//! Reference: docs/fcmovnb:fcmovne:fcmovnbe:fcmovnu.txt
 
 use crate::common::*;
 use std::sync::Arc;

@@ -2,7 +2,7 @@
 //!
 //! FIADD - Add integer to floating-point (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fadd:faddp:fiadd.txt
+//! Reference: docs/fadd:faddp:fiadd.txt
 //!
 //! Opcode: DE /0 - FIADD m16int
 //! Opcode: DA /0 - FIADD m32int

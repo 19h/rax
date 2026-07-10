@@ -3,7 +3,7 @@
 //! FICOM - Compare integer with floating-point (m16int and m32int)
 //! FICOMP - Compare integer and pop
 //!
-//! Reference: /Users/int/dev/rax/docs/ficom:ficomp.txt
+//! Reference: docs/ficom:ficomp.txt
 //!
 //! Opcode: DE /2 - FICOM m16int
 //! Opcode: DA /2 - FICOM m32int

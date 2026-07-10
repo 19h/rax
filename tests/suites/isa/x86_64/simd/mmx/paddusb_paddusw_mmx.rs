@@ -12,7 +12,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/paddusb:paddusw.txt
+//! Reference: docs/paddusb:paddusw.txt
 
 use crate::common::*;
 

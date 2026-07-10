@@ -27,7 +27,7 @@
 //! - C1: Set to 1 if stack overflow occurred; otherwise, set to 0
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fld1:fldl2t:fldl2e:fldpi:fldlg2:fldln2:fldz.txt
+//! Reference: docs/fld1:fldl2t:fldl2e:fldpi:fldlg2:fldln2:fldz.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

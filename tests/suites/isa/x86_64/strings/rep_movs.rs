@@ -18,7 +18,7 @@ use vm_memory::{Bytes, GuestAddress};
 //   RCX -= 1
 // END
 //
-// Based on: /Users/int/dev/rax/docs/rep:repe:repz:repne:repnz.txt
+// Based on: docs/rep:repe:repz:repne:repnz.txt
 
 // ============================================================================
 // REP MOVSB - Repeat Move Byte

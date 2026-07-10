@@ -135,13 +135,13 @@ Recently closed optional slices:
 Remaining optional groups:
 
 - **Zimop/Zcmop** — may-be-ops.
-  The local Hex-Rays/IDA decoder at `/Users/int/hexrays/ida/module/riscv` does
-  not currently decode these; they remain a general optional-ISA gap rather than
-  an IDA-parity gap. The remaining local IDA mnemonic-only deltas are simplify
-  aliases such as `rdcycle`, `csrw`, `beqz`, and RVV aliases; rax keeps canonical
-  instruction disassembly for those encodings.
+  The comparison decoder does not currently decode these; they remain a general
+  optional-ISA gap rather than a cross-decoder parity gap. The remaining
+  mnemonic-only deltas are simplification aliases such as `rdcycle`, `csrw`,
+  `beqz`, and RVV aliases; rax keeps canonical instruction disassembly for those
+  encodings.
 - **Q execution** — quad-precision floating point execution. rax now has
-  decode/disassembly parity for the local IDA decoder's Q-format coverage, but
+  decode/disassembly parity for the comparison decoder's Q-format coverage, but
   the FP register file is still 64-bit and `float.rs` only implements
   F16/F32/F64. Real Q support needs 128-bit FP register storage plus binary128
   soft-float.

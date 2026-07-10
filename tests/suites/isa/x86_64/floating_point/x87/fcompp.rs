@@ -2,7 +2,7 @@
 //!
 //! FCOMPP - Compare floating-point and pop twice
 //!
-//! Reference: /Users/int/dev/rax/docs/fcom:fcomp:fcompp.txt
+//! Reference: docs/fcom:fcomp:fcompp.txt
 //!
 //! Opcode: DE D9 - FCOMPP ; Compare ST(0) with ST(1) and pop twice
 

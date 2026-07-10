@@ -7,8 +7,8 @@
 //! FDIVRP - Reverse divide and pop
 //! FIDIVR - Reverse divide by integer
 //!
-//! References: /Users/int/dev/rax/docs/fdiv:fdivp:fidiv.txt
-//!             /Users/int/dev/rax/docs/fdivr:fdivrp:fidivr.txt
+//! References: docs/fdiv:fdivp:fidiv.txt
+//!             docs/fdivr:fdivrp:fidivr.txt
 
 use crate::common::*;
 use std::sync::Arc;

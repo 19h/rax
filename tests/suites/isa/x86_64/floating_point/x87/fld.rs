@@ -11,7 +11,7 @@
 //! The FLD instruction can also push the value in a selected FPU register [ST(i)] onto
 //! the stack. Here, pushing register ST(0) duplicates the stack top.
 //!
-//! Reference: /Users/int/dev/rax/docs/fld.txt
+//! Reference: docs/fld.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

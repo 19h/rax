@@ -23,7 +23,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/pshufw.txt
+//! Reference: docs/pshufw.txt
 
 use crate::common::*;
 

@@ -14,7 +14,7 @@
 //! - FISTP m32int: DB /3
 //! - FISTP m64int: DF /7
 //!
-//! Reference: /Users/int/dev/rax/docs/fist:fistp.txt
+//! Reference: docs/fist:fistp.txt
 
 use crate::common::*;
 use std::sync::Arc;

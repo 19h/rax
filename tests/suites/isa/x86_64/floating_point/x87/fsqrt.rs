@@ -17,7 +17,7 @@
 //! - #D: Source operand is a denormal value
 //! - #P: Value cannot be represented exactly in destination format
 //!
-//! Reference: /Users/int/dev/rax/docs/fsqrt.txt
+//! Reference: docs/fsqrt.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

@@ -23,7 +23,7 @@
 //! - C1: Set to 0 if stack underflow occurred; set to 1 if stack overflow occurred
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fxtract.txt
+//! Reference: docs/fxtract.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

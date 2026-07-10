@@ -24,7 +24,7 @@
 //! - Bytes 12-13: DS or reserved
 //! - Bytes 14-27: Reserved
 //!
-//! References: /Users/int/dev/rax/docs/fldenv.txt, /Users/int/dev/rax/docs/fstenv:fnstenv.txt
+//! References: docs/fldenv.txt, docs/fstenv:fnstenv.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

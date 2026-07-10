@@ -11,7 +11,7 @@
 //! - FILD m32int: DB /0
 //! - FILD m64int: DF /5
 //!
-//! Reference: /Users/int/dev/rax/docs/fild.txt
+//! Reference: docs/fild.txt
 
 use crate::common::*;
 use std::sync::Arc;

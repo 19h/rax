@@ -2,7 +2,7 @@
 //!
 //! FISUB - Subtract integer from floating-point (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fsub:fsubp:fisub.txt
+//! Reference: docs/fsub:fsubp:fisub.txt
 //!
 //! Opcode: DE /4 - FISUB m16int  ; ST(0) = ST(0) - m16int
 //! Opcode: DA /4 - FISUB m32int  ; ST(0) = ST(0) - m32int

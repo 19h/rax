@@ -31,7 +31,7 @@
 //!
 //! Flags affected: C0, C1, C2, C3 are undefined (they reflect the current FPU state)
 //!
-//! References: /Users/int/dev/rax/docs/fstsw:fnstsw.txt
+//! References: docs/fstsw:fnstsw.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

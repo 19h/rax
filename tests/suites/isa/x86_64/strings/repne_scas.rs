@@ -24,7 +24,7 @@ use vm_memory::{Bytes, GuestAddress};
 // Terminates when RCX=0 OR when [RDI] == AL/AX/EAX/RAX (ZF=1)
 // Scans for first value that DOES match accumulator
 //
-// Based on: /Users/int/dev/rax/docs/rep:repe:repz:repne:repnz.txt
+// Based on: docs/rep:repe:repz:repne:repnz.txt
 
 // ============================================================================
 // REPNE SCASB - Repeat Scan Byte While Not Equal

@@ -17,7 +17,7 @@
 //! - FBLD m80dec: DF /4
 //! - FBSTP m80bcd: DF /6
 //!
-//! Reference: /Users/int/dev/rax/docs/fbld.txt, /Users/int/dev/rax/docs/fbstp.txt
+//! Reference: docs/fbld.txt, docs/fbstp.txt
 
 use crate::common::*;
 use std::sync::Arc;

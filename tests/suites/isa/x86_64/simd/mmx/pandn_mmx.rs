@@ -9,7 +9,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/pandn.txt
+//! Reference: docs/pandn.txt
 
 use crate::common::*;
 

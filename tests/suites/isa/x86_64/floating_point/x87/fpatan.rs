@@ -20,7 +20,7 @@
 //! - C1: Set to 0 if stack underflow occurred; Set if result was rounded up
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fpatan.txt
+//! Reference: docs/fpatan.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

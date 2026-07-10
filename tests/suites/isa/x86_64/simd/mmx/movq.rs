@@ -16,7 +16,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/movq.txt
+//! Reference: docs/movq.txt
 
 use crate::common::*;
 

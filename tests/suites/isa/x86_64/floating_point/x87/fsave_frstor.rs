@@ -18,7 +18,7 @@
 //! - Environment (14 or 28 bytes)
 //! - FPU Register Stack (80 bytes) - 8 registers x 10 bytes each
 //!
-//! References: /Users/int/dev/rax/docs/fsave:fnsave.txt, /Users/int/dev/rax/docs/frstor.txt
+//! References: docs/fsave:fnsave.txt, docs/frstor.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

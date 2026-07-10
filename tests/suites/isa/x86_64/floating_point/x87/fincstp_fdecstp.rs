@@ -19,7 +19,7 @@
 //! - C1: Set to 0
 //! - C0, C2, C3: Undefined
 //!
-//! References: /Users/int/dev/rax/docs/fincstp.txt, /Users/int/dev/rax/docs/fdecstp.txt
+//! References: docs/fincstp.txt, docs/fdecstp.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

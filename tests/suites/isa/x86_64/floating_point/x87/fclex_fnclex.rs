@@ -24,7 +24,7 @@
 //!
 //! Condition codes C0, C1, C2, C3 are undefined after FCLEX/FNCLEX.
 //!
-//! References: /Users/int/dev/rax/docs/fclex:fnclex.txt
+//! References: docs/fclex:fnclex.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

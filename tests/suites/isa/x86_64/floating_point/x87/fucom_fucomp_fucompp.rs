@@ -24,7 +24,7 @@
 //! - C1: Set to 0
 //! - C0, C2, C3: Set according to comparison result
 //!
-//! Reference: /Users/int/dev/rax/docs/fucom:fucomp:fucompp.txt
+//! Reference: docs/fucom:fucomp:fucompp.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

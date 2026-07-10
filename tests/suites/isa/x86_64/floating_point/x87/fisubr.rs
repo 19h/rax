@@ -2,7 +2,7 @@
 //!
 //! FISUBR - Reverse subtract integer from floating-point (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fsubr:fsubrp:fisubr.txt
+//! Reference: docs/fsubr:fsubrp:fisubr.txt
 //!
 //! Opcode: DE /5 - FISUBR m16int  ; ST(0) = m16int - ST(0)
 //! Opcode: DA /5 - FISUBR m32int  ; ST(0) = m32int - ST(0)

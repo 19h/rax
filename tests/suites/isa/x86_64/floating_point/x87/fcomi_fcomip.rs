@@ -22,7 +22,7 @@
 //! Flags affected: ZF, PF, CF
 //! Flags cleared: OF, SF, AF
 //!
-//! Reference: /Users/int/dev/rax/docs/fcomi:fcomip:fcomi:fcomip.txt
+//! Reference: docs/fcomi:fcomip:fcomi:fcomip.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

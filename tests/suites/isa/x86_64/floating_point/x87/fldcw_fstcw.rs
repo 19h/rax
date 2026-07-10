@@ -24,7 +24,7 @@
 //! Flags affected:
 //! - C0, C1, C2, C3: Undefined
 //!
-//! References: /Users/int/dev/rax/docs/fldcw.txt, /Users/int/dev/rax/docs/fstcw:fnstcw.txt
+//! References: docs/fldcw.txt, docs/fstcw:fnstcw.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

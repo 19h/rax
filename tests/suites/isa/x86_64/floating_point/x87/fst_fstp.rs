@@ -10,7 +10,7 @@
 //! the register stack. The FSTP instruction can also store values in memory in double
 //! extended-precision floating-point format.
 //!
-//! Reference: /Users/int/dev/rax/docs/fst:fstp.txt
+//! Reference: docs/fst:fstp.txt
 
 use crate::common::*;
 use std::sync::Arc;

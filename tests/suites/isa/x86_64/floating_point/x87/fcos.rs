@@ -12,7 +12,7 @@
 //! - C2: Set to 1 if source out of range; otherwise 0
 //! - C0, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fcos.txt
+//! Reference: docs/fcos.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

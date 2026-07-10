@@ -11,7 +11,7 @@
 //! - FNSAVE: DD /6
 //! - FNOP: D9 D0
 //!
-//! Reference: /Users/int/dev/rax/docs/fnsave.txt, /Users/int/dev/rax/docs/fnop.txt
+//! Reference: docs/fnsave.txt, docs/fnop.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

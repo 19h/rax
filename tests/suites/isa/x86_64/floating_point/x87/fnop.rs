@@ -11,7 +11,7 @@
 //! Flags affected:
 //! - C0, C1, C2, C3: Undefined (but typically unchanged in practice)
 //!
-//! Reference: /Users/int/dev/rax/docs/fnop.txt
+//! Reference: docs/fnop.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

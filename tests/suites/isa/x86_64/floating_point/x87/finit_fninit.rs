@@ -20,7 +20,7 @@
 //! Status Word after FINIT/FNINIT: 0000H
 //! Tag Word after FINIT/FNINIT: FFFFH
 //!
-//! References: /Users/int/dev/rax/docs/finit:fninit.txt
+//! References: docs/finit:fninit.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

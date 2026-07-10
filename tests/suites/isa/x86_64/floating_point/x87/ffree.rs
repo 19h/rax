@@ -11,7 +11,7 @@
 //! Flags affected:
 //! - C0, C1, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/ffree.txt
+//! Reference: docs/ffree.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

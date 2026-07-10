@@ -2,7 +2,7 @@
 //!
 //! FIDIVR - Reverse divide integer by floating-point (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fdivr:fdivrp:fidivr.txt
+//! Reference: docs/fdivr:fdivrp:fidivr.txt
 //!
 //! Opcode: DE /7 - FIDIVR m16int  ; ST(0) = m16int / ST(0)
 //! Opcode: DA /7 - FIDIVR m32int  ; ST(0) = m32int / ST(0)

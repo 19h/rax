@@ -15,7 +15,7 @@
 //! - C2: Set to 0 if reduction complete, 1 if incomplete
 //! - C3: Set to bit 1 (Q1) of quotient
 //!
-//! Reference: /Users/int/dev/rax/docs/fprem1.txt
+//! Reference: docs/fprem1.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};
 
 // Comprehensive tests for MOV with segment registers
-// Based on documentation from /Users/int/dev/rax/docs/mov.txt
+// Based on documentation from docs/mov.txt
 //
 // MOV Sreg, r/m16 - Move r/m16 to segment register (opcode 8E /r)
 // MOV r/m16, Sreg - Move segment register to r/m16 (opcode 8C /r)

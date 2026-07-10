@@ -21,7 +21,7 @@
 //! - C0, C2, C3: Set according to value class (see table above)
 //! - C1: Set to sign bit (0 for positive, 1 for negative)
 //!
-//! Reference: /Users/int/dev/rax/docs/fxam.txt
+//! Reference: docs/fxam.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

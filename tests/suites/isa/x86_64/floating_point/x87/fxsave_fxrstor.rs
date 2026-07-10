@@ -24,7 +24,7 @@
 //! - Bytes 32-159: ST0-ST7 (8 x 16 bytes each)
 //! - Bytes 160-463: XMM0-XMM7 (8 x 16 bytes each)
 //!
-//! References: /Users/int/dev/rax/docs/fxsave.txt
+//! References: docs/fxsave.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

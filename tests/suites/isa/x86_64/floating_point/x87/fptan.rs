@@ -29,7 +29,7 @@
 //! - C2: Set to 1 if outside range (-2^63 < source < +2^63); otherwise 0
 //! - C0, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fptan.txt
+//! Reference: docs/fptan.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

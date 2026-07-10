@@ -20,7 +20,7 @@
 //! - C2: Set to 1 if outside range (-2^63 < source < +2^63); otherwise 0
 //! - C0, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fsin.txt, /Users/int/dev/rax/docs/fcos.txt
+//! Reference: docs/fsin.txt, docs/fcos.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

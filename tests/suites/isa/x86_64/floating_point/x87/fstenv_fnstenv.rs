@@ -17,7 +17,7 @@
 //! - FSTENV: 9B D9 /6
 //! - FNSTENV: D9 /6
 //!
-//! Reference: /Users/int/dev/rax/docs/fstenv:fnstenv.txt
+//! Reference: docs/fstenv:fnstenv.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

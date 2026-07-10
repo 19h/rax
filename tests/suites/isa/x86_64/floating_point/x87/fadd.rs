@@ -4,7 +4,7 @@
 //! FADDP - Add floating-point and pop
 //! FIADD - Add integer to floating-point
 //!
-//! Reference: /Users/int/dev/rax/docs/fadd:faddp:fiadd.txt
+//! Reference: docs/fadd:faddp:fiadd.txt
 
 use crate::common::*;
 use std::sync::Arc;

@@ -11,7 +11,7 @@
 //! - C1: Set to 0
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fabs.txt
+//! Reference: docs/fabs.txt
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;

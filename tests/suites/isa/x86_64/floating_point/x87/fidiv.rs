@@ -2,7 +2,7 @@
 //!
 //! FIDIV - Divide floating-point by integer (m16int and m32int)
 //!
-//! Reference: /Users/int/dev/rax/docs/fdiv:fdivp:fidiv.txt
+//! Reference: docs/fdiv:fdivp:fidiv.txt
 //!
 //! Opcode: DE /6 - FIDIV m16int  ; ST(0) = ST(0) / m16int
 //! Opcode: DA /6 - FIDIV m32int  ; ST(0) = ST(0) / m32int

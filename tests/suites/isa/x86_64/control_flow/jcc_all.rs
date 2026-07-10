@@ -3,7 +3,7 @@ use rax::vm::vcpu::Registers;
 
 // Comprehensive tests for all conditional jump instructions
 // Tests all 30+ conditional jump mnemonics including aliases
-// Based on documentation from /Users/int/dev/rax/docs/jcc.txt
+// Based on documentation from docs/jcc.txt
 
 // ============================================================================
 // JA / JNBE - Jump if Above / Not Below or Equal

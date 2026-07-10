@@ -17,7 +17,7 @@
 //!
 //! Opcode: DB E3
 //!
-//! Reference: /Users/int/dev/rax/docs/finit:fninit.txt
+//! Reference: docs/finit:fninit.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};

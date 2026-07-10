@@ -12,7 +12,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/psubsb:psubsw.txt
+//! Reference: docs/psubsb:psubsw.txt
 
 use crate::common::*;
 

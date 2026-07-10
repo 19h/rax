@@ -3,7 +3,7 @@ use rax::vm::vcpu::Registers;
 
 // Comprehensive tests for JCXZ, JECXZ, and JRCXZ instructions
 // These instructions jump if CX/ECX/RCX is zero (don't check flags)
-// Based on documentation from /Users/int/dev/rax/docs/jcc.txt
+// Based on documentation from docs/jcc.txt
 //
 // JCXZ - Jump if CX is zero (16-bit, NOT available in 64-bit mode)
 // JECXZ - Jump if ECX is zero (32-bit)

@@ -4,7 +4,7 @@
 //! FMULP - Multiply floating-point and pop
 //! FIMUL - Multiply integer with floating-point
 //!
-//! Reference: /Users/int/dev/rax/docs/fmul:fmulp:fimul.txt
+//! Reference: docs/fmul:fmulp:fimul.txt
 
 use crate::common::*;
 use std::sync::Arc;

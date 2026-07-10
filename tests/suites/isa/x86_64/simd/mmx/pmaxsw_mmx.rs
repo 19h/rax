@@ -8,7 +8,7 @@
 //!
 //! Flags affected: None
 //!
-//! Reference: /Users/int/dev/rax/docs/pmaxsb:pmaxsw:pmaxsd:pmaxsq.txt
+//! Reference: docs/pmaxsb:pmaxsw:pmaxsd:pmaxsq.txt
 
 use crate::common::*;
 

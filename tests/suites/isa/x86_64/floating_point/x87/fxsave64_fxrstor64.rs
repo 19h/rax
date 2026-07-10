@@ -20,7 +20,7 @@
 //! - FXSAVE64: REX.W + 0F AE /0
 //! - FXRSTOR64: REX.W + 0F AE /1
 //!
-//! Reference: /Users/int/dev/rax/docs/fxsave64.txt
+//! Reference: docs/fxsave64.txt
 
 use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
