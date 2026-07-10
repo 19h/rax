@@ -28,7 +28,7 @@
 //!           ▼             ▼             ▼
 //!     ┌──────────┐  ┌──────────┐  ┌──────────┐
 //!     │Interpreter│  │   JIT    │  │ Analysis │
-//!     │ (interp) │  │ (future) │  │ (future) │
+//!     │(interpret)│ │ (future) │  │ (future) │
 //!     └──────────┘  └──────────┘  └──────────┘
 //! ```
 //!
@@ -57,24 +57,38 @@
 //! let exit = interp.run(&mut ctx, &mut memory);
 //! ```
 
-pub mod context;
-pub mod flags;
-pub mod interp;
+pub mod interpret;
 pub mod ir;
 pub mod lift;
 pub mod lower;
-pub mod memory;
-pub mod ops;
-pub mod opt;
-pub mod types;
+pub mod optimize;
+
+// Compatibility module aliases. The canonical locations are under `ir/`, but
+// these preserve the existing public Rust paths while downstream users migrate.
+pub use interpret as interp;
+pub use ir::{context, flags, memory, ops, types};
+pub use optimize as opt;
 
 // Re-export commonly used types
-pub use context::{
+pub use interpret::{BlockResult, SmirInterpreter};
+pub use ir::context::{
     Aarch64RegState, ArchRegState, DebugState, ExitReason, HexagonRegState, RiscVRegState,
     SmirContext, VRegFile, X86RegState,
 };
-pub use flags::{FlagSet, FlagState, FlagUpdate, LazyFlagOp, LazyFlags, MaterializedFlags};
-pub use interp::{BlockResult, SmirInterpreter};
+pub use ir::flags::{FlagSet, FlagState, FlagUpdate, LazyFlagOp, LazyFlags, MaterializedFlags};
+pub use ir::memory::{
+    ExclusiveMonitor, FlatMemory, MemoryError, MemoryReader, SmirMemory, bytes_to_u64,
+    check_alignment, u64_to_bytes,
+};
+pub use ir::ops::{OpKind, SmirOp};
+pub use ir::types::{
+    Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
+    BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,
+    GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
+    ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator, VShiftVKind,
+    VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth, VirtualId,
+    X86Reg,
+};
 pub use ir::{
     CallTarget, CallingConv, FunctionBuilder, PhiNode, RuntimeFunc, SmirBlock, SmirFunction,
     SmirModule, Terminator, TrapKind,
@@ -92,17 +106,4 @@ pub use lower::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, RuntimeHelper,
     SmirLowerer,
 };
-pub use memory::{
-    ExclusiveMonitor, FlatMemory, MemoryError, MemoryReader, SmirMemory, bytes_to_u64,
-    check_alignment, u64_to_bytes,
-};
-pub use ops::{OpKind, SmirOp};
-pub use opt::{OptLevel, OptStats, optimize_function};
-pub use types::{
-    Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
-    BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,
-    GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
-    ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator, VShiftVKind,
-    VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth, VirtualId,
-    X86Reg,
-};
+pub use optimize::{OptLevel, OptStats, optimize_function};

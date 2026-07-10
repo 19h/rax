@@ -161,7 +161,7 @@ pub struct Serial16550 {
 
     // Input handling. Host bytes are staged in `input_buffer` (unbounded) and
     // metered into the 16-byte hardware RX FIFO by `pump_input`. The stdin
-    // reader thread and host escape mux live in `crate::console`, which feeds
+    // reader thread and host escape mux live in `crate::host::console`, which feeds
     // bytes in via `queue_input`.
     input_buffer: VecDeque<u8>,
     cpr_state: CprFilterState,
@@ -255,7 +255,7 @@ impl Serial16550 {
 
     /// Queue host input bytes for delivery to the guest.
     ///
-    /// Bytes arrive from `crate::console` (which owns the stdin reader thread
+    /// Bytes arrive from `crate::host::console` (which owns the stdin reader thread
     /// and the host escape mux). They are filtered for terminal cursor-position
     /// responses, staged in the unbounded `input_buffer`, then metered into the
     /// 16-byte RX FIFO by `pump_input` — so a burst/paste larger than the FIFO

@@ -1,0 +1,57 @@
+schema_version = 1
+
+[corpora.arm_asl]
+outputs = "tests/generated/arm/{a32,a64,t16,t32,sysreg,test_helpers.rs,test_helpers_32.rs}"
+generator = "asl-parser"
+generator_revision = "unknown"
+inputs = "ARM ASL specifications; exact input set/revision unknown"
+command = "unknown"
+reachability = "a64 active; a32, t16, t32, and sysreg dormant"
+
+[corpora.arm_aarch32_oracle_cases]
+output = "tests/generated/arm/oracle_cases/aarch32_sweep.rs"
+sha256 = "db08637864823a541e4e9757e8e3220d44179847e75580932a3b838d7fac5488"
+generator = "tools/arm-diff/gen_a32.py"
+generator_revision = "unknown"
+inputs = "unknown"
+command = "unknown"
+
+[corpora.arm_neon_oracle_cases]
+output = "tests/generated/arm/oracle_cases/neon_sweep.rs"
+sha256 = "58380e07b5de21642ca98cce8490045aae9c9fa96af90d131ff74e1877fc29b5"
+generator = "llvm-mc; repository generator unknown"
+generator_revision = "unknown"
+inputs = "unknown"
+command = "unknown"
+
+[corpora.arm_sve2_oracle_cases]
+output = "tests/generated/arm/oracle_cases/sve2_sweep.rs"
+sha256 = "e45b641f79b903cbdd8d9d347f482bfd3ba2d0b51479c9e179c930876ac0ad6c"
+generator = "llvm-mc; repository generator unknown"
+generator_revision = "unknown"
+inputs = "unknown"
+command = "unknown"
+
+[corpora.x86_64_avx512_inventory]
+output = "tests/generated/x86_64/inventories/avx512.rs"
+sha256 = "c59978c7efee8a517493520ee8d83e733dbe44a4bbd2586ecef1e2fcfce1236e"
+generator = "unknown"
+generator_revision = "unknown"
+inputs = "Intel AVX-512 specification data; exact input set/revision unknown"
+command = "unknown"
+
+[corpora.x86_64_unimplemented_mnemonics]
+outputs = "tests/generated/x86_64/inventories/{apx,avx,avx2,avx10,avx512}.txt"
+sha256 = "apx=06b5691ae8162e9c196e231603298420615824a721e35192151a088b48691c07; avx=386cd900dd6d700e9a4ab44bc909e64d831cb43ef424939d199a97407b0ce8ed; avx2=532f1d847f83655c0f8fb794cac3641d896714d13a185cea871fc2f278856ca7; avx10=343b120fede708306de544ccc4b8e0ff57298660dfd26de0f9b356dd3f781ae4; avx512=50768b08db39ffcefdefbb38ba036b72bea5731f8fa83bc84253e8514f690aa3"
+generator = "unknown"
+generator_revision = "unknown"
+inputs = "docs/specifications/x86_64/intel-intrinsics-guide-3-6-9.xml plus local semantic coverage"
+command = "unknown"
+
+[corpora.x86_64_unimplemented_source_sites]
+output = "tests/generated/x86_64/inventories/unimplemented_source_sites.txt"
+sha256 = "f08ed5d7191cf4bd5c58afdafb7d91f7d3fec32246470d8da924d49413fefe47"
+generator = "unknown"
+generator_revision = "unknown"
+inputs = "src/isa/x86_64; exact scan command unknown"
+command = "unknown"

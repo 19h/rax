@@ -2,7 +2,7 @@
 
 This document records the state of RISC-V support in rax across two layers:
 
-1. **The interpreter** (`src/riscv/`) — a self-contained, spec-faithful RV64
+1. **The interpreter** (`src/isa/riscv/`) — a self-contained, spec-faithful RV64
    software interpreter, differentially verified against `qemu-riscv64`.
 2. **The SMIR lifter** (`src/smir/lift/riscv.rs`) — translation of RISC-V machine
    code to rax's SMIR (the hot-block JIT IR), verified against the interpreter.
@@ -14,9 +14,9 @@ toolchain is absent.
 
 ---
 
-## 1. Interpreter (`src/riscv/`)
+## 1. Interpreter (`src/isa/riscv/`)
 
-A foundational RV64 interpreter structured to parallel `src/arm/`, intentionally
+A foundational RV64 interpreter structured to parallel `src/isa/arm/`, intentionally
 decoupled from the VMM so the differential oracle drives it directly.
 
 ### Coverage
@@ -42,7 +42,7 @@ data path**:
 
 `VLEN = 128` (matches qemu's default `vlenb = 16`), a flat `v[32×16]` register
 file so LMUL groups and element strides index naturally. Implemented and verified
-family-by-family (32 differential suites in `tests/riscv_vector.rs`):
+family-by-family (32 differential suites in `tests/suites/differential/riscv/vector.rs`):
 
 - **Config**: `vsetvli` / `vsetivli` / `vsetvl` (vill, VLMAX, vl clamping)
 - **Integer arithmetic**: add/sub/rsub, and/or/xor, min/max(u), shifts (vv/vx/vi)
@@ -81,19 +81,19 @@ machine state and `siglongjmp`s back.
 
 Test inventory (all green; self-skip without qemu + `riscv64-linux-gnu-gcc`):
 
-- `tests/riscv_diff.rs` — **29 scalar suites** including massive fuzzers
+- `tests/suites/differential/riscv/scalar.rs` — **29 scalar suites** including massive fuzzers
   (`diff_decode_fuzz` 140k words, `diff_mem_fuzz` 70k, `diff_fuzz_exhaustive` 90k,
   `diff_compressed_fuzz` 8k) → **~300k+ comparisons/run**, plus structured suites
   for FP, Zfh, crypto, bit-manip, Zicond, Zfa.
-- `tests/riscv_vector.rs` — **32 vector suites**, every family above, across SEW
+- `tests/suites/differential/riscv/vector.rs` — **32 vector suites**, every family above, across SEW
   8/16/32/64, vv/vx/vi/vf forms, masked/unmasked, all rounding modes; compares
   the full x/f/v register file + vl/vtype/fcsr/vcsr/scratch window.
-- `tests/riscv_boot.rs` — end-to-end VMM boot (UART @ `0x10000000`, `ecall`→halt).
+- `tests/suites/machine/riscv_virt/boot.rs` — end-to-end VMM boot (UART @ `0x10000000`, `ecall`→halt).
 - `cargo test --lib riscv::` — ~45 unit tests.
 
 ### VMM integration
 
-`ArchKind::Riscv64`, `CpuState::RiscV`/`RiscVRegisters`, `src/arch/riscv.rs`
+`ArchKind::Riscv64`, `CpuState::RiscV`/`RiscVRegisters`, `src/machine/riscv_virt.rs`
 (ELF/raw load, 16550 UART), `src/backend/emulator/riscv/cpu.rs` (`RiscVVcpu`).
 Run with `--backend emulator`.
 
@@ -119,7 +119,7 @@ ops traps because the interpreter still stores FP registers as 64-bit values and
 `RiscVLifter` (exposed as `rax::smir::RiscVLifter`) translates RISC-V machine code
 to SMIR ops for the hot-block JIT.
 
-### Verification harness — `tests/riscv_smir_lift.rs`
+### Verification harness — `tests/suites/smir/lift/riscv.rs`
 
 For each instruction: lift to SMIR → run on `SmirInterpreter` from a seeded state
 → compare x/f/fcsr/scratch against the (qemu-verified) `RiscVCpu`. The interpreter
@@ -180,7 +180,7 @@ Five sweeps; latest run (**zero divergence across all of them**):
 
 ### Gaps — blocked by SMIR's op-set (not by RISC-V), intentional
 
-Every remaining op needs a **shared SMIR-core change** (`ops.rs`/`interp.rs` + the
+Every remaining op needs a **shared SMIR-core change** (`ir/ops.rs`/`interpret.rs` + the
 exhaustive matches), which is out of the RISC-V-specific scope and actively
 churned by concurrent agents:
 

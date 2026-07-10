@@ -8,11 +8,11 @@ fn main() {
     let count: usize = a[4].parse().unwrap();
     let thumb = a.get(5).map(|s| s == "thumb").unwrap_or(true);
     let st = if thumb {
-        rax::arm::ExecutionState::Thumb
+        rax::isa::arm::ExecutionState::Thumb
     } else {
-        rax::arm::ExecutionState::Aarch32
+        rax::isa::arm::ExecutionState::Aarch32
     };
-    let mut d = rax::arm::decoder::Decoder::new(st);
+    let mut d = rax::isa::arm::decoder::Decoder::new(st);
     d.set_state(st);
     let mut va = start;
     for _ in 0..count {

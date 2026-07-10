@@ -27,7 +27,7 @@
 //!   the count reaches 0, then stays high until reprogrammed.
 //! - Mode 5 (hardware-triggered strobe): gate-triggered strobe; partial, see Mode 1.
 
-use crate::timing;
+use crate::vm::timing;
 use serde::{Deserialize, Serialize};
 
 use super::bus::IoDevice;
@@ -625,7 +625,7 @@ mod tests {
     /// Helper to create a fresh PIT for testing
     fn make_pit() -> Pit {
         // Initialize timing to ensure consistent behavior
-        crate::timing::init();
+        crate::vm::timing::init();
         Pit::new()
     }
 

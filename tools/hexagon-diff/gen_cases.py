@@ -11,7 +11,7 @@ cleanly are emitted.
 Output (cases.txt), one instruction per line, tab-separated:
     TAG \\t ASM \\t w0,w1,...        (machine words, little-endian hex)
 
-The Rust harness (tests/hexagon_diff.rs) consumes this corpus: it feeds the
+The Rust harness (`tests/suites/differential/hexagon/scalar.rs`) consumes this corpus: it feeds the
 words to both the qemu-hexagon oracle and the rax interpreter and reports which
 instructions rax executes correctly, rejects, or diverges on.
 

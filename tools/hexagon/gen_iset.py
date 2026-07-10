@@ -505,7 +505,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--out",
-        default="src/backend/emulator/hexagon/opcode_generated.rs",
+        default="src/isa/hexagon/generated/opcodes.rs",
         help="Rust output path",
     )
     parser.add_argument("--force", action="store_true", help="Refetch QEMU files")

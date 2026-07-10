@@ -1,12 +1,16 @@
 # AArch64 FP & SVE Coverage Session — 2026-06-02
 
+Repository paths are normalized to the current layout; the historical commits
+retain their original paths in Git history.
+
 A differential-testing session that extended rax's AArch64 interpreter
-(`src/arm/aarch64/cpu.rs`) toward a bit-exact, hardware-verified implementation
+(`src/isa/arm/aarch64/cpu.rs`) toward a bit-exact, hardware-verified implementation
 of the full practical ISA, and fixed several **fundamental, previously-untested
 bugs** in scalar FP and floating-point NaN handling.
 
 All work was verified against the **qemu-aarch64 differential oracle**
-(`tools/arm-diff/` + `tests/arm_diff.rs`, pinned to VL=128) — every commit is
+(`tools/arm-diff/` + `tests/suites/differential/arm/aarch64.rs`, pinned to
+VL=128) — every commit is
 bit-exact vs hardware semantics, not merely "does not crash."
 
 - **14 commits** (`bc1eaf4` … `a8a705c`), all `feat/fix(aarch64)`.
@@ -226,7 +230,7 @@ The new helpers are `is_nan32/64`, `is_snan32/64`, `fp32/64_nan2/nan3`, and
 A second agent expands x86/hexagon concurrently in the same tree, so:
 
 - **Commit with a pathspec from the main tree only:**
-  `git -C /models/dev/rax commit -F /tmp/msg.txt -- src/arm/aarch64/cpu.rs tests/arm_diff.rs`.
+  `git -C /models/dev/rax commit -F /tmp/msg.txt -- src/isa/arm/aarch64/cpu.rs tests/suites/differential/arm/aarch64.rs`.
   Never `red --run`/`git add -A` (it sweeps the other agent's files into your
   commit).
 - **Build/test in an isolated worktree** (`/tmp/rax-arm-iso`) so the other agent's
@@ -257,7 +261,7 @@ bit-exact vs the qemu-aarch64 oracle.
 
 ## Differential tests added this session
 
-`tests/arm_diff.rs` (16 functions):
+`tests/suites/differential/arm/aarch64.rs` (16 functions):
 
 ```
 diff_sve_fp_cmp            diff_sve_cmp_imm           diff_sve_bfcvt

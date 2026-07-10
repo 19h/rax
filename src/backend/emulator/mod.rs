@@ -1,6 +1,7 @@
-//! Software CPU emulator backend.
+//! Software-emulation backend adapters.
 //!
-//! This module provides a software-based x86_64 CPU emulator for cross-platform support.
+//! Instruction semantics live under [`crate::isa`]. This module selects the
+//! appropriate adapter and exposes it through the architecture-neutral VM API.
 
 pub mod aarch64;
 pub mod armv6;
@@ -16,9 +17,14 @@ use std::sync::Arc;
 use vm_memory::GuestMemoryMmap;
 
 use crate::config::{ArchKind, Endianness, HexagonIsa};
-use crate::cpu::VCpu;
 use crate::error::{Error, Result};
-use crate::riscv::RiscVConfig;
+use crate::isa::hexagon::HexagonVcpu;
+use crate::isa::riscv::RiscVConfig;
+use crate::isa::x86_64::X86_64Vcpu;
+use crate::machine::gsc::runtime::GscVcpu;
+use crate::machine::s3c64xx::runtime::Armv6Vcpu;
+use crate::machine::s5l8900::runtime::S5L8900Vcpu;
+use crate::vm::vcpu::VCpu;
 
 use super::{Backend, Vm};
 
@@ -99,8 +105,8 @@ impl EmulatorVm {
 impl Vm for EmulatorVm {
     fn create_vcpu(&self, id: u32, mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
         match self.arch {
-            ArchKind::X86_64 => Ok(Box::new(x86_64::X86_64Vcpu::new(id, mem))),
-            ArchKind::Hexagon => Ok(Box::new(hexagon::HexagonVcpu::new(
+            ArchKind::X86_64 => Ok(Box::new(X86_64Vcpu::new(id, mem))),
+            ArchKind::Hexagon => Ok(Box::new(HexagonVcpu::new(
                 id,
                 mem,
                 self.hexagon_isa,
@@ -108,7 +114,7 @@ impl Vm for EmulatorVm {
             ))),
             ArchKind::Riscv64 => {
                 if std::env::var("RAX_MACHINE").as_deref() == Ok("gsc") {
-                    Ok(Box::new(gsc::GscVcpu::new(id, mem)))
+                    Ok(Box::new(GscVcpu::new(id, mem)))
                 } else {
                     Ok(Box::new(riscv::RiscVVcpu::new_with_config(
                         id,
@@ -120,9 +126,9 @@ impl Vm for EmulatorVm {
             ArchKind::Aarch64 => Ok(Box::new(aarch64::Aarch64Vcpu::new(id, mem))),
             ArchKind::Armv7a => {
                 if std::env::var("RAX_MACHINE").as_deref() == Ok("s5l8900") {
-                    Ok(Box::new(s5l8900::S5L8900Vcpu::new(id, mem)))
+                    Ok(Box::new(S5L8900Vcpu::new(id, mem)))
                 } else {
-                    Ok(Box::new(armv6::Armv6Vcpu::new(id, mem)))
+                    Ok(Box::new(Armv6Vcpu::new(id, mem)))
                 }
             }
             _ => Err(Error::Emulator(format!(

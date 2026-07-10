@@ -3,7 +3,8 @@
  *
  * Built as a *static* 32-bit ARM ELF and executed under `qemu-arm` (user mode)
  * on an x86 host. It is the hardware-semantics reference against which the rax
- * AArch32 interpreter (src/arm/execution.rs + src/arm/decoder/{aarch32,thumb}.rs)
+ * AArch32 interpreter (src/isa/arm/aarch32/cpu.rs +
+ * src/isa/arm/decoder/{aarch32,thumb}.rs)
  * is checked. Mirrors tools/arm-diff/oracle.c (the AArch64 oracle).
  *
  * Protocol (little-endian binary, over stdin -> stdout):
@@ -38,7 +39,8 @@
 #include <unistd.h>
 
 /* ------------------------------------------------------------------ */
-/* Wire format -- must match tests/arm_diff32.rs ArmState32 exactly.    */
+/* Wire format -- must match tests/suites/differential/arm/aarch32.rs */
+/* ArmState32 exactly.                                                */
 /* ------------------------------------------------------------------ */
 
 typedef struct {

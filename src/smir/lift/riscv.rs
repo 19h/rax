@@ -3,11 +3,11 @@
 //! This module lifts RISC-V instructions to SMIR operations.
 //! Supports RV64I base, M (multiply/divide), A (atomics), and C (compressed) extensions.
 
-use crate::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
-use crate::smir::flags::FlagUpdate;
+use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
+use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
+use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
-use crate::smir::ops::{OpKind, RvVectorState, SmirOp};
-use crate::smir::types::*;
 
 use super::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
 
@@ -2631,7 +2631,7 @@ impl RiscVLifter {
     fn emit_rv_vector(
         &mut self,
         insn: u32,
-        d: &crate::riscv::Insn,
+        d: &crate::isa::riscv::Insn,
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
@@ -3079,7 +3079,7 @@ impl RiscVLifter {
             // Zfa load-immediate: `rs1` is a 32-entry table index (NOT a
             // register), so materialise the constant directly and NaN-box it.
             RvOp::FliS | RvOp::FliD | RvOp::FliH => {
-                use crate::riscv::float as ff;
+                use crate::isa::riscv::float as ff;
                 let (bits, boxmask) = match d.op {
                     RvOp::FliS => (ff::fli(ff::F32, d.rs1) as u32 as i64, BOX_S),
                     RvOp::FliH => (ff::fli(ff::F16, d.rs1) as u16 as i64, BOX_H),
@@ -3140,19 +3140,19 @@ impl RiscVLifter {
     /// Emit a bit-exact [`OpKind::RvFp`] for a scalar OP-FP / FMA instruction
     /// whose result depends on `fflags` / NaN-canonicalisation / dynamic
     /// rounding. Routes the source/destination register *files* per
-    /// [`crate::riscv::float::fp_uses_int_src1`] /
-    /// [`crate::riscv::float::fp_writes_int_dst`], threads `fcsr` in and out, and
+    /// [`crate::isa::riscv::float::fp_uses_int_src1`] /
+    /// [`crate::isa::riscv::float::fp_writes_int_dst`], threads `fcsr` in and out, and
     /// updates `fcsr` even when an integer destination is `x0` (exceptions still
     /// accrue). Read all source vregs (incl. `fcsr_src`) BEFORE defining any
     /// destination so a `rd == rs1` aliasing case reads the old value.
     fn emit_rvfp(
         &mut self,
-        d: &crate::riscv::Insn,
+        d: &crate::isa::riscv::Insn,
         addr: GuestAddr,
         ctx: &mut LiftContext,
         ops: &mut Vec<SmirOp>,
     ) {
-        use crate::riscv::float::{fp_uses_int_src1, fp_writes_int_dst};
+        use crate::isa::riscv::float::{fp_uses_int_src1, fp_writes_int_dst};
         let op = d.op;
         let src1 = if fp_uses_int_src1(op) {
             self.get_x_reg(d.rs1, ctx)
@@ -4394,7 +4394,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = crate::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
+        let d = crate::isa::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,
@@ -4456,7 +4456,7 @@ impl RiscVLifter {
         } else {
             RvXlen::Rv32
         };
-        let d = crate::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
+        let d = crate::isa::riscv::decode::decode_compressed(insn, xl, &self.decoder_isa());
         if d.is_illegal() {
             return Err(LiftError::InvalidEncoding {
                 addr,

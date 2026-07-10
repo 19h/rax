@@ -27,8 +27,7 @@
 //! ```
 
 pub mod aarch64;
-pub mod aarch64_x86;
-pub mod avx10;
+pub mod cross;
 pub mod regalloc;
 /// Native execution runtime for lowered blocks (the JIT executor). Present with
 /// the `smir-jit` feature on x86-64 and aarch64 hosts.
@@ -38,10 +37,14 @@ pub mod runtime;
 mod validation;
 pub mod x86_64;
 
+// Compatibility aliases for the former flat lowering layout.
+pub use cross::aarch64_guest_to_x86_64_host as aarch64_x86;
+pub use x86_64::avx10;
+
 use std::collections::HashMap;
 
 use crate::smir::ir::SmirFunction;
-use crate::smir::types::{BlockId, GuestAddr};
+use crate::smir::ir::types::{BlockId, GuestAddr};
 
 /// Number of x86-64 guest GPR slots in the native JIT register file. APX adds
 /// R16-R31, which are state-backed because the host has no physical EGPRs.

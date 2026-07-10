@@ -3,7 +3,7 @@
 //! Generates tests in a hierarchical directory structure:
 //!
 //! ```text
-//! tests/arm/
+//! tests/generated/arm/
 //! ├── mod.rs
 //! ├── a64/
 //! │   ├── mod.rs
@@ -611,7 +611,7 @@ fn generate_category_header(category: &TestCategory) -> String {
     writeln!(output).unwrap();
 
     // Use the common test infrastructure
-    // Path is relative to tests/arm.rs crate root -> generated module -> helpers
+    // Path is relative to tests/suites/isa/arm/main.rs -> generated module -> helpers
     if category.iset == "a64" {
         writeln!(output, "use crate::generated::test_helpers::*;").unwrap();
     } else {

@@ -4,18 +4,18 @@
 
 use std::collections::HashSet;
 
-use crate::arm::decoder::{
+use crate::isa::arm::decoder::{
     AddressingMode, Condition as ArmCondition, DecodedInsn, ExtendType, FpRegSize, FpRegister,
     MemOffset, MemOperand, Mnemonic, Operand, Register, ShiftType,
 };
-use crate::smir::flags::FlagUpdate;
+use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::memory::MemoryError;
+use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::types::*;
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
 };
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
-use crate::smir::memory::MemoryError;
-use crate::smir::ops::{OpKind, SmirOp};
-use crate::smir::types::*;
 
 const NZCV_N: i64 = 1_i64 << 31;
 const NZCV_Z: i64 = 1_i64 << 30;
@@ -5101,7 +5101,7 @@ impl crate::smir::lift::SmirLifter for Aarch64Lifter {
         bytes: &[u8],
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        use crate::arm::decoder::aarch64::Aarch64Decoder;
+        use crate::isa::arm::decoder::aarch64::Aarch64Decoder;
 
         if bytes.len() < 4 {
             return Err(LiftError::Incomplete {
@@ -5857,7 +5857,7 @@ mod tests {
     fn assert_mnemonic_unsupported(mnemonic: Mnemonic) {
         let lifter = Aarch64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::Aarch64);
-        let insn = DecodedInsn::new(mnemonic, crate::arm::ExecutionState::Aarch64, 0, 4);
+        let insn = DecodedInsn::new(mnemonic, crate::isa::arm::ExecutionState::Aarch64, 0, 4);
         let err = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap_err();
         assert!(
             matches!(err, LiftError::Unsupported { .. }),
@@ -6033,15 +6033,20 @@ mod tests {
     fn test_lift_fcvtas_scalar_uses_ties_away() {
         let mut lifter = Aarch64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::Aarch64);
-        let insn = DecodedInsn::new(Mnemonic::FCVTAS, crate::arm::ExecutionState::Aarch64, 0, 4)
-            .with_operand(Operand::FpReg(FpRegister {
-                num: 0,
-                size: FpRegSize::S,
-            }))
-            .with_operand(Operand::FpReg(FpRegister {
-                num: 1,
-                size: FpRegSize::S,
-            }));
+        let insn = DecodedInsn::new(
+            Mnemonic::FCVTAS,
+            crate::isa::arm::ExecutionState::Aarch64,
+            0,
+            4,
+        )
+        .with_operand(Operand::FpReg(FpRegister {
+            num: 0,
+            size: FpRegSize::S,
+        }))
+        .with_operand(Operand::FpReg(FpRegister {
+            num: 1,
+            size: FpRegSize::S,
+        }));
         let ops = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap().0;
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {
@@ -6065,15 +6070,20 @@ mod tests {
     fn test_lift_fcvtau_scalar_uses_ties_away() {
         let mut lifter = Aarch64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::Aarch64);
-        let insn = DecodedInsn::new(Mnemonic::FCVTAU, crate::arm::ExecutionState::Aarch64, 0, 4)
-            .with_operand(Operand::FpReg(FpRegister {
-                num: 0,
-                size: FpRegSize::D,
-            }))
-            .with_operand(Operand::FpReg(FpRegister {
-                num: 1,
-                size: FpRegSize::D,
-            }));
+        let insn = DecodedInsn::new(
+            Mnemonic::FCVTAU,
+            crate::isa::arm::ExecutionState::Aarch64,
+            0,
+            4,
+        )
+        .with_operand(Operand::FpReg(FpRegister {
+            num: 0,
+            size: FpRegSize::D,
+        }))
+        .with_operand(Operand::FpReg(FpRegister {
+            num: 1,
+            size: FpRegSize::D,
+        }));
         let ops = lifter.lift_insn_inner(&insn, 0x1000, &mut ctx).unwrap().0;
         assert_eq!(ops.len(), 1);
         match &ops[0].kind {

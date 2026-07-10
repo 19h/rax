@@ -12,6 +12,167 @@ exclude = [
 name = "rax"
 version = "0.1.0"
 edition = "2024"
+autotests = false
+
+[[bin]]
+name = "rax-isa-oracle"
+path = "src/bin/rax_isa_oracle.rs"
+
+# Integration tests live in semantic subdirectories. Explicit declarations
+# make build participation independent of filesystem accidents and keep
+# generated Rust data from becoming standalone test binaries.
+[[test]]
+name = "aarch64_smir_native"
+path = "tests/suites/smir/lower/aarch64_native.rs"
+
+[[test]]
+name = "arm"
+path = "tests/suites/isa/arm/main.rs"
+
+[[test]]
+name = "arm_diff"
+path = "tests/suites/differential/arm/aarch64.rs"
+
+[[test]]
+name = "arm_diff32"
+path = "tests/suites/differential/arm/aarch32.rs"
+
+[[test]]
+name = "arm_vfp_a32"
+path = "tests/suites/isa/arm/aarch32/vfp.rs"
+
+[[test]]
+name = "asm_instructions"
+path = "tests/suites/isa/x86_64/assembly.rs"
+
+[[test]]
+name = "ci_actions_pinned"
+path = "tests/suites/tooling/ci_actions_pinned.rs"
+
+[[test]]
+name = "diff_fuzz"
+path = "tests/suites/differential/x86_64/fuzz.rs"
+
+[[test]]
+name = "differential"
+path = "tests/suites/differential/x86_64/kvm.rs"
+
+[[test]]
+name = "hexagon_bare_metal"
+path = "tests/suites/machine/hexagon_baremetal/boot.rs"
+
+[[test]]
+name = "hexagon_cf_diff"
+path = "tests/suites/differential/hexagon/control_flow.rs"
+
+[[test]]
+name = "hexagon_diff"
+path = "tests/suites/differential/hexagon/scalar.rs"
+
+[[test]]
+name = "hexagon_float_diff"
+path = "tests/suites/differential/hexagon/float.rs"
+
+[[test]]
+name = "hexagon_hvx_diff"
+path = "tests/suites/differential/hexagon/hvx.rs"
+
+[[test]]
+name = "hexagon_hvx_mem_diff"
+path = "tests/suites/differential/hexagon/hvx_memory.rs"
+
+[[test]]
+name = "hexagon_mem_diff"
+path = "tests/suites/differential/hexagon/memory.rs"
+
+[[test]]
+name = "hexagon_smir_lift"
+path = "tests/suites/smir/lift/hexagon.rs"
+
+[[test]]
+name = "isa_oracle"
+path = "tests/suites/api/isa_oracle.rs"
+
+[[test]]
+name = "kvm_minimal"
+path = "tests/suites/backend/kvm/minimal.rs"
+
+[[test]]
+name = "microkernel_multiarch"
+path = "tests/suites/machine/microkernel/multiarch.rs"
+
+[[test]]
+name = "pgo_build_script"
+path = "tests/suites/tooling/pgo/build.rs"
+
+[[test]]
+name = "pgo_script_safe"
+path = "tests/suites/tooling/pgo/safety.rs"
+
+[[test]]
+name = "realmode_boot"
+path = "tests/suites/machine/pc/real_mode_boot.rs"
+
+[[test]]
+name = "riscv_boot"
+path = "tests/suites/machine/riscv_virt/boot.rs"
+
+[[test]]
+name = "riscv_diff"
+path = "tests/suites/differential/riscv/scalar.rs"
+
+[[test]]
+name = "riscv_smir_lift"
+path = "tests/suites/smir/lift/riscv.rs"
+
+[[test]]
+name = "riscv_vector"
+path = "tests/suites/differential/riscv/vector.rs"
+
+[[test]]
+name = "smir_avx10_roundtrip"
+path = "tests/suites/smir/roundtrip/avx10.rs"
+
+[[test]]
+name = "smir_jit_evex_masking"
+path = "tests/suites/smir/jit/x86_64_evex_masking.rs"
+
+[[test]]
+name = "smir_jit_vcpu"
+path = "tests/suites/smir/jit/x86_64.rs"
+
+[[test]]
+name = "x86_64"
+path = "tests/suites/isa/x86_64/main.rs"
+required-features = ["x86_64-suite"]
+
+[[test]]
+name = "x86_64_apx_map4_qemu_diff"
+path = "tests/suites/differential/x86_64/qemu_apx.rs"
+
+[[test]]
+name = "x86_64_avx512_inventory"
+path = "tests/suites/coverage/x86_64/avx512_inventory.rs"
+
+[[test]]
+name = "x86_64_avx512_kvm_diff"
+path = "tests/suites/differential/x86_64/kvm_avx512.rs"
+
+[[test]]
+name = "x86_64_evex_qemu_diff"
+path = "tests/suites/differential/x86_64/qemu_evex.rs"
+
+[[test]]
+name = "x86_64_unimplemented_manifests"
+path = "tests/suites/coverage/x86_64/unimplemented_manifests.rs"
+
+[[test]]
+name = "x86_64_unimplemented_qemu_diff"
+path = "tests/suites/differential/x86_64/qemu_unimplemented.rs"
+
+[[test]]
+name = "x86_64_unimplemented_source_inventory"
+path = "tests/suites/coverage/x86_64/unimplemented_source_inventory.rs"
 
 [features]
 default = ["kvm", "smir-jit"]

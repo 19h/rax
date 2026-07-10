@@ -29,9 +29,9 @@ use std::sync::{Arc, Mutex};
 use tracing::{debug, info, warn};
 use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemoryRegion};
 
-use crate::cpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
 use crate::error::{Error, Result};
-use crate::memory::GuestMemoryWrapper;
+use crate::vm::memory::GuestMemoryWrapper;
+use crate::vm::vcpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
 
 use super::{Backend, Vm};
 use bindings::*;

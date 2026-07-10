@@ -1,6 +1,6 @@
-# RISC-V (`rax::riscv`) — Remaining Work
+# RISC-V (`rax::isa::riscv`) — Remaining Work
 
-Status snapshot for the self-contained RISC-V interpreter at `src/riscv/`. The
+Status snapshot for the self-contained RISC-V interpreter at `src/isa/riscv/`. The
 **user-mode ISA is complete and differentially verified** against `qemu-riscv64`;
 what remains is privileged/system architecture, a few illegal-encoding fidelity
 gaps, and additional (mostly optional) extensions.
@@ -19,8 +19,9 @@ gaps, and additional (mostly optional) extensions.
   compress), widening/narrowing, all conversions (`vfcvt`/`vfwcvt`/`vfncvt` incl.
   rtz + round-to-odd), `vfrsqrt7`/`vfrec7`, and **all load/store addressing modes**
   (unit/strided/indexed/mask/whole-register/segment + `vleff`).
-- **Verification**: 29 scalar + 32 vector differential suites (`tests/riscv_diff.rs`,
-  `tests/riscv_vector.rs`) + ~45 lib unit tests, all green. Oracles:
+- **Verification**: 29 scalar + 32 vector differential suites
+  (`tests/suites/differential/riscv/scalar.rs`,
+  `tests/suites/differential/riscv/vector.rs`) + ~45 lib unit tests, all green. Oracles:
   `tools/riscv-diff/{oracle,voracle}.c` (static RV64 ELF run under qemu-user;
   SIGTRAP handler captures the register/vector frame).
 
@@ -61,7 +62,8 @@ known ROM; (b) a custom bare-metal test program whose final state is compared; o
 work can only be unit-tested, not oracle-verified.
 
 See [[rax-kernel-boot]] for the analogous x86 boot blocker, and the existing
-end-to-end wiring in `tests/riscv_boot.rs` (UART @ 0x10000000, `ecall` → shutdown).
+end-to-end wiring in `tests/suites/machine/riscv_virt/boot.rs` (UART @ 0x10000000,
+`ecall` → shutdown).
 
 ---
 

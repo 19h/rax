@@ -3,7 +3,7 @@
  *
  * Built as a *static* AArch64 ELF and executed under `qemu-aarch64` (user mode)
  * on an x86 host. It is the hardware-semantics reference against which the rax
- * software interpreter (src/arm/aarch64/cpu.rs) is checked.
+ * software interpreter (src/isa/arm/aarch64/cpu.rs) is checked.
  *
  * Protocol (little-endian binary, over stdin -> stdout):
  *   stdin:  u32 magic 'A','R','M','1' (0x314d5241)
@@ -37,7 +37,8 @@
 #include <unistd.h>
 
 /* ------------------------------------------------------------------ */
-/* Wire format -- must match tests/arm_diff.rs ArmState exactly.       */
+/* Wire format -- must match tests/suites/differential/arm/aarch64.rs */
+/* ArmState exactly.                                                  */
 /* All-u64 layout (8-byte aligned, no padding). V-registers are stored */
 /* as lo/hi u64 pairs: v[2*r], v[2*r+1].                               */
 /* ------------------------------------------------------------------ */

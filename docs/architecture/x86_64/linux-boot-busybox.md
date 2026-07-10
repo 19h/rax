@@ -18,6 +18,9 @@ This document records how it works, the root-cause analysis that got us here
 (which **overturned a previous wrong diagnosis**), the fixes, how to reproduce,
 and the known remaining issues.
 
+Source paths in this historical report are normalized to the current repository
+layout; the cited commits retain the original paths in Git history.
+
 ---
 
 ## 1. TL;DR
@@ -90,7 +93,7 @@ data → the corruption happened *earlier*, in a loop an interrupt had landed in
 
 ## 3. The fixes (emulator)
 
-### 3a. IRET lazy-flag invalidation — `src/.../insn/control/int.rs` (committed `30badc3`)
+### 3a. IRET lazy-flag invalidation — `src/isa/x86_64/execute/control/int.rs` (committed `30badc3`)
 ```rust
 fn apply_iret_flags(vcpu, size, value) -> Result<()> {
     match size { 2 => {...}, 4|8 => {...}, _ => return Err(...) }
@@ -103,7 +106,7 @@ fn apply_iret_flags(vcpu, size, value) -> Result<()> {
 (Any code path that writes `regs.rflags` wholesale — POPF, sysret — should follow
 the same discipline; IRET was the one the timer exercised constantly.)
 
-### 3b. VMOVD/VMOVQ + VMOVDQA — `src/.../insn/simd/avx.rs`, `dispatch/vex/mod.rs` (committed `3f87705`)
+### 3b. VMOVD/VMOVQ + VMOVDQA — `src/isa/x86_64/execute/simd/avx.rs`, `src/isa/x86_64/decode/dispatch/vex/mod.rs` (committed `3f87705`)
 - Added `vmovd_load`/`vmovd_store` (VEX.66.0F 6E/7E, `VEX.W` = D vs Q),
   `vmovq_load` (VEX.F3.0F 7E), `vmovq_store` (VEX.66.0F D6); all clear the upper
   YMM lane.
@@ -141,7 +144,7 @@ The ELF `vmlinux` boot path works; the **bzImage** (real-mode/setup entry
 clock **~100× faster than real time**, so the kernel's TSC clocksource diverged
 wildly from the PIT and only worked if forced via cmdline crutches
 (`clocksource=tsc nohz=off tsc=reliable`) — and any custom `--cmdline` that
-dropped them hung the boot. The `DEFAULT_CMDLINE` (`src/config.rs:18`) was a
+dropped them hung the boot. The `DEFAULT_CMDLINE` (`src/config/runtime.rs:20`) was a
 stack of exactly these crutches.
 
 ### The fix

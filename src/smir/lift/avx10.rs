@@ -18,9 +18,9 @@
 //! - VMINMAX: VMINMAXPS, VMINMAXPD, VMINMAXSS, VMINMAXSD
 //! - Media acceleration: VPDPB*/VPDPW* variants
 
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ir::types::*;
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
-use crate::smir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecMap};
-use crate::smir::types::*;
 
 // ============================================================================
 // EVEX Prefix Decoding

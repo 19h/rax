@@ -3,7 +3,7 @@
  *
  * Built as a *static* RV64 ELF and executed under `qemu-riscv64` (user mode) on
  * an x86 host. It is the hardware-semantics reference against which the rax
- * software interpreter (src/riscv/cpu.rs) is checked.
+ * software interpreter (src/isa/riscv/cpu.rs) is checked.
  *
  * Protocol (little-endian binary, over stdin -> stdout):
  *   stdin:  u32 magic 'R','V','6','4' (0x34365652)
@@ -40,7 +40,8 @@
 #include <unistd.h>
 
 /* ------------------------------------------------------------------ */
-/* Wire format -- must match tests/riscv_diff.rs RvState exactly.      */
+/* Wire format -- must match tests/suites/differential/riscv/scalar.rs */
+/* RvState exactly.                                                    */
 /* All-u64 layout (8-byte aligned, no padding).                        */
 /* ------------------------------------------------------------------ */
 

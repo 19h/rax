@@ -19,8 +19,8 @@ use std::sync::Arc;
 use vm_memory::GuestMemoryMmap;
 
 use crate::config::{ArchKind, BackendKind, VmConfig};
-use crate::cpu::VCpu;
 use crate::error::{Error, Result};
+use crate::vm::vcpu::VCpu;
 
 /// Abstract VM interface.
 ///

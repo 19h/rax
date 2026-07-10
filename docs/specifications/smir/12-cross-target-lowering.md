@@ -70,7 +70,7 @@ The AArch64 host path uses AArch64 native instruction emission and a trampoline 
 
 ## 7. x86 guest on AArch64 host
 
-The root README claims groundwork for x86-on-ARM through the AArch64 host backend. The source baseline includes AArch64 runtime support. Exact integrated coverage for x86 guest semantics on AArch64 is source-defined by `lower/aarch64.rs` and its tests.
+The root README claims groundwork for x86-on-ARM through the AArch64 host backend. The source baseline includes AArch64 runtime support. Exact integrated coverage for x86 guest semantics on AArch64 is source-defined by `lower/aarch64/mod.rs` and its tests.
 
 ## 8. Memory cross-targeting
 

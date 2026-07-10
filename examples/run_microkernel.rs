@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap, GuestRegionMmap, MmapRegion};
 
-use rax::backend::emulator::x86_64::X86_64Vcpu;
-use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
+use rax::isa::x86_64::X86_64Vcpu;
+use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 
 const LOAD_ADDR: u64 = 0x100000;
 const MEM_SIZE: u64 = 16 * 1024 * 1024; // 16 MB

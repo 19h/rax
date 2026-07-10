@@ -8,9 +8,9 @@ use std::sync::Arc;
 use kvm_ioctls::{Kvm, VcpuFd, VmFd};
 use vm_memory::GuestMemoryMmap;
 
-use crate::cpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
 use crate::error::{Error, Result};
-use crate::memory::GuestMemoryWrapper;
+use crate::vm::memory::GuestMemoryWrapper;
+use crate::vm::vcpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
 
 use super::{Backend, Vm};
 

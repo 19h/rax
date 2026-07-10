@@ -5,18 +5,18 @@
 
 use std::collections::HashSet;
 
-use crate::smir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::memory::MemoryError;
+use crate::smir::ir::ops::{
+    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap,
+};
+use crate::smir::ir::types::*;
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
 };
 use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
-use crate::smir::memory::MemoryError;
-use crate::smir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap,
-};
-use crate::smir::types::*;
 
 fn x86_rotate_flags() -> FlagUpdate {
     FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF))

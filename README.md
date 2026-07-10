@@ -91,7 +91,7 @@ authoritative reference:
   speaks APX; each test pins an instruction to LLVM's exact bytes and checks rax's architectural effect
   against the documented semantics.
 
-That approach keeps rax both legible (open `insn/arith/add.rs` and read exactly what `ADD` does to the
+That approach keeps rax both legible (open `src/isa/x86_64/execute/arith/add.rs` and read exactly what `ADD` does to the
 flags) and trustworthy (a regression suite stands between any change and the behavior it might break).
 It is also what makes the JIT possible: a native code generator is only safe if you can prove its
 output matches the interpreter, and the same oracle provides that proof.
@@ -160,7 +160,8 @@ are bootable emulator backends for bare-metal programs. All four also have SMIR 
 
 The most complete target. The decoder handles the full x86-64 encoding space (REX and
 REX2, every legacy prefix including the `0x67` address-size override, ModR/M + SIB, VEX2/VEX3, EVEX
-including APX Map 4, RIP-relative), dispatching to per-category implementations under `insn/`.
+including APX Map 4, RIP-relative), dispatching to per-category implementations under
+`src/isa/x86_64/execute/`.
 
 | Category | Coverage |
 |----------|----------|
@@ -184,14 +185,14 @@ A broad ISA surface, and a runnable backend that boots Linux.
 - **SVE2 and SVE2.1** are complete on the register surface, every encoding bit-exact against the
   qemu-aarch64 oracle: long/wide/narrow and saturating integer ops, complex arithmetic, bit-permute,
   pairwise, BF16 (B16B16, dot product), quadword reductions, and PMOV/PSEL/PEXT. An `llvm-mc` sweep
-  (`tests/sve2_gen.rs`) guards it; only multi-vector memory, SME, and FEAT_LUT remain, beyond reach of a
+  (`tests/generated/arm/oracle_cases/sve2_sweep.rs`) guards it; only multi-vector memory, SME, and FEAT_LUT remain, beyond reach of a
   register-only oracle.
 - **NEON / VFP**: full Advanced SIMD and scalar FP including FP16, bit-exact against the oracle on a
-  generated sweep (`tests/neon_gen.rs`); full crypto (AES, SHA1/256/512, SHA3, SM3, SM4).
+  generated sweep (`tests/generated/arm/oracle_cases/neon_sweep.rs`); full crypto (AES, SHA1/256/512, SHA3, SM3, SM4).
 - **Modern A64 extensions**: MTE (memory tagging), PAuth (pointer authentication), FlagM, LRCPC
   (release-consistency atomics), and FP8 (FP8FMA).
 - **AArch32 / Thumb / Cortex-M (M0-M85)**: the A32 and Thumb (T16/T32) integer ISA is bit-exact against
-  a qemu-arm oracle (`tests/arm_diff32.rs`), with VFP and NEON execution and hardware exception routing.
+  a qemu-arm oracle (`tests/suites/differential/arm/aarch32.rs`), with VFP and NEON execution and hardware exception routing.
   Cortex-M adds NVIC/SysTick/SCB/MPU across ARMv6-M to v8.1-M, and an ARMv6 core (CP15 + MMU) drives two
   emulated SoC machines: the S3C64xx, and the S5L8900 (the original iPhone / iPod Touch 1G). The S5L8900
   boots Apple's **iBoot** from real device firmware (bootrom + LLB + NOR) and runs on into early iOS XNU
@@ -236,16 +237,16 @@ pseudo-random states, so each test function exercises many cases.
 
 | Harness | rax core | Oracle | Compares |
 |---------|----------|--------|----------|
-| `tests/differential.rs` | x86-64 | KVM (hardware) | GPRs, RIP, RFLAGS, XMM, memory |
-| `tests/arm_diff.rs` | AArch64: NEON + SVE/SVE2/SVE2.1 | native EL0 hardware on aarch64; `qemu-aarch64` fallback | X0-X30, SP, NZCV, V0-V31, P0-P15 |
-| `tests/arm_diff32.rs` | AArch32: A32 + Thumb T16/T32 | `qemu-arm` | R0-R14, CPSR, FPSCR, D0-D31, scratch |
-| `tests/hexagon_*_diff.rs` | Hexagon (scalar / cf / float / mem / HVX / HVX-mem) | `qemu-hexagon` | GPRs, P3:0, USR, loop regs, V0-V31, Q0-Q3 |
-| `tests/riscv_diff.rs` | RV64GC | `qemu-riscv64` | x1-x31, f0-f31, fcsr, scratch |
-| `tests/diff_fuzz.rs` | SMIR (lift → interp / native) | KVM | guest state after lift+run |
-| `tests/riscv_smir_lift.rs` | RISC-V → SMIR lift | rax RISC-V interp | x/f/v/fcsr (incl. RVV, zero divergence) |
-| `tests/hexagon_smir_lift.rs` | Hexagon → SMIR lift | rax Hexagon interp | R/P/USR/V/Q (entire ISA: scalar + HVX) |
-| `tests/aarch64_smir_native.rs` | AArch64 → SMIR lift + native ARM64 lower | rax AArch64 interp | X0-X30, V0-V31, memory (scalar int/FP + NEON) |
-| `tests/smir_jit_vcpu.rs` | SMIR JIT in the real vcpu | interpreter | registers + throughput |
+| `tests/suites/differential/x86_64/kvm.rs` | x86-64 | KVM (hardware) | GPRs, RIP, RFLAGS, XMM, memory |
+| `tests/suites/differential/arm/aarch64.rs` | AArch64: NEON + SVE/SVE2/SVE2.1 | native EL0 hardware on aarch64; `qemu-aarch64` fallback | X0-X30, SP, NZCV, V0-V31, P0-P15 |
+| `tests/suites/differential/arm/aarch32.rs` | AArch32: A32 + Thumb T16/T32 | `qemu-arm` | R0-R14, CPSR, FPSCR, D0-D31, scratch |
+| `tests/suites/differential/hexagon/*.rs` | Hexagon (scalar / control flow / float / memory / HVX / HVX-memory) | `qemu-hexagon` | GPRs, P3:0, USR, loop regs, V0-V31, Q0-Q3 |
+| `tests/suites/differential/riscv/scalar.rs` | RV64GC | `qemu-riscv64` | x1-x31, f0-f31, fcsr, scratch |
+| `tests/suites/differential/x86_64/fuzz.rs` | SMIR (lift → interp / native) | KVM | guest state after lift+run |
+| `tests/suites/smir/lift/riscv.rs` | RISC-V → SMIR lift | rax RISC-V interp | x/f/v/fcsr (incl. RVV, zero divergence) |
+| `tests/suites/smir/lift/hexagon.rs` | Hexagon → SMIR lift | rax Hexagon interp | R/P/USR/V/Q (entire ISA: scalar + HVX) |
+| `tests/suites/smir/lower/aarch64_native.rs` | AArch64 → SMIR lift + native ARM64 lower | rax AArch64 interp | X0-X30, V0-V31, memory (scalar int/FP + NEON) |
+| `tests/suites/smir/jit/x86_64.rs` | SMIR JIT in the real vcpu | interpreter | registers + throughput |
 
 > Note: the reference harnesses are small C/asm programs (`tools/{arm,riscv,hexagon}-diff/`) that QEMU
 > runs as ground truth; for x86 the ground truth is KVM.
@@ -299,7 +300,7 @@ region heads are memoized so SMC-heavy guests like TempleOS do not thrash the co
 frontier-less spin loop is refused so native code cannot trap the vcpu.
 
 The lowerer is retargetable. Alongside the x86-64 host backend sits a full AArch64 host backend
-(`lower/aarch64.rs`) that emits native ARM64 for the entire SMIR op set, x86-64 guest semantics included
+(`lower/aarch64/mod.rs`) that emits native ARM64 for the entire SMIR op set, x86-64 guest semantics included
 (APX, atomics, REP MOVS, vector/FP), plus an AArch64-guest-to-x86 lowerer: the groundwork for
 JIT-compiling a guest across host ISAs (x86 on ARM, ARM on x86). Live native execution now runs on both
 host ISAs: an x86-64 guest on an x86-64 host, and an AArch64 guest on an AArch64 host, each via a 1:1
@@ -308,23 +309,24 @@ identity register map. The cross-ISA paths remain emit-and-test only, not yet wi
 | Piece | Where | What it does |
 |-------|-------|--------------|
 | **Lifters** | `lift/` | x86-64; AArch64 (A64 scalar, control flow, scalar FP, and a growing NEON set: FP arithmetic, FMLA/FMLS, unary, reductions, permutes, TBL/TBX); RISC-V; AVX10; and a lift-complete Hexagon (every opcode, scalar and HVX) |
-| **Interpreter** | `interp.rs` | direct execution; lazy flags, block caching |
-| **Optimizer** | `opt.rs` | frontier-aware liveness; dead-flag and dead-code elimination, copy propagation, constant and branch folding (O2) |
-| **JIT lowering** | `lower/x86_64.rs`, `lower/aarch64.rs`, `lower/regalloc.rs`, `lower/runtime.rs` | x86-64 and AArch64 host emitters (SMIR to native code, x86 guest semantics included), plus an ARM-guest-to-x86 lowerer; 1:1 register map; W^X exec runtime + entry trampoline on both hosts |
-| **JIT integration** | `backend/.../x86_64/cpu.rs` and `arm/aarch64/cpu.rs` (on by default) | hot-loop detection, region cache, memory via MMU helpers, safety gate, SMC eviction; native exec on both hosts |
+| **Interpreter** | `interpret.rs` | direct execution; lazy flags, block caching |
+| **Optimizer** | `optimize.rs` | frontier-aware liveness; dead-flag and dead-code elimination, copy propagation, constant and branch folding (O2) |
+| **JIT lowering** | `lower/x86_64/mod.rs`, `lower/aarch64/mod.rs`, `lower/regalloc.rs`, `lower/runtime.rs` | x86-64 and AArch64 host emitters (SMIR to native code, x86 guest semantics included), plus an ARM-guest-to-x86 lowerer; 1:1 register map; W^X exec runtime + entry trampoline on both hosts |
+| **JIT integration** | `src/isa/x86_64/cpu.rs` and `src/isa/arm/aarch64/cpu.rs` (on by default) | hot-loop detection, region cache, memory via MMU helpers, safety gate, SMC eviction; native exec on both hosts |
 
-The lifters are verified too, not just the JIT's native output: `tests/riscv_smir_lift.rs` and
-`tests/hexagon_smir_lift.rs` lift each instruction to SMIR, interpret it, and diff against that
+The lifters are verified too, not just the JIT's native output:
+`tests/suites/smir/lift/riscv.rs` and `tests/suites/smir/lift/hexagon.rs` lift each instruction to
+SMIR, interpret it, and diff against that
 architecture's own qemu-verified interpreter. RISC-V lifts its entire user-mode RV64GCV (scalar, the
 full RVV vector ISA, FP, the Zb*/Zk* bit-manip and crypto extensions, and CSRs) at zero divergence;
 Hexagon lifts its entire ISA. AArch64 lifting is verified the same way, though not yet exhaustively:
-`tests/aarch64_smir_native.rs` lifts, lowers to native ARM64, and executes scalar-integer, scalar-FP,
+`tests/suites/smir/lower/aarch64_native.rs` lifts, lowers to native ARM64, and executes scalar-integer, scalar-FP,
 and NEON sequences on an AArch64 host.
 
 > Note: the JIT does not change behavior. A kernel boots identically with it on or off, because a region
 > it cannot prove correct falls back to the interpreter. On the x86-64 host, `RAX_JIT_VERIFY=1` audits
 > that equivalence live; the AArch64 tier has no live verify mode yet and relies on its static safety
-> gate plus the end-to-end tests in `tests/aarch64_smir_native.rs`.
+> gate plus the end-to-end tests in `tests/suites/smir/lower/aarch64_native.rs`.
 
 ---
 

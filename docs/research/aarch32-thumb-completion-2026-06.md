@@ -1,7 +1,11 @@
 # AArch32 / Thumb Completion Session — 2026-06-05
 
-Drove rax's AArch32 interpreter (`src/arm/execution.rs` + `src/arm/instructions.rs`
-+ `src/arm/decoder/{aarch32,thumb}.rs`) to **bit-exact, hardware-verified**
+Repository paths are normalized to the current layout; the historical commits
+retain their original paths in Git history.
+
+Drove rax's AArch32 interpreter (`src/isa/arm/aarch32/cpu.rs` +
+`src/isa/arm/aarch32/instructions.rs` +
+`src/isa/arm/decoder/{aarch32,thumb}.rs`) to **bit-exact, hardware-verified**
 coverage of the entire **A32 + T16 + T32 integer register-data-processing**
 instruction set, verified against a new **qemu-arm differential oracle**.
 
@@ -18,9 +22,11 @@ D-regs/FPSCR from the VFP record). A MAP_FIXED scratch window at `0x200000`
 backs load/store tests.
 
 `tools/arm-diff/gen_a32.py` enumerates every integer mnemonic across the
-operand variations that affect semantics and emits `tests/arm32_gen.rs`
+operand variations that affect semantics and emits
+`tests/generated/arm/oracle_cases/aarch32_sweep.rs`
 (`A32_SWEEP`: 1666 entries — A32 916, T16 35, T32 715), each tagged with a mode
-(0=ARM, 1=T16, 2=T32). The harness `tests/arm_diff32.rs` drives `Armv7Cpu` +
+(0=ARM, 1=T16, 2=T32). The harness `tests/suites/differential/arm/aarch32.rs`
+drives `Armv7Cpu` +
 `Aarch32Decoder`/`ThumbDecoder` + `Executor` per instruction and compares
 GPRs + CPSR(NZCVQ+GE) + scratch against the oracle at **24 inputs/insn**
 (~40k oracle cases), asserting zero divergence. Self-skips if `qemu-arm` / the
@@ -51,7 +57,7 @@ Started at 7507 mismatches. Root causes / additions:
 ## Thumb fixes (commit 347070e)
 
 The `ThumbDecoder`+`Executor` path had **never been differentially exercised**
-(`tests/arm/generated/mod.rs` only enables a64). Both T16 and T32 mis-executed
+(`tests/generated/arm/mod.rs` only enables a64). Both T16 and T32 mis-executed
 because the A32 exec re-reads `insn.raw` with A32 field positions.
 
 - **Operand-based Thumb executor**: `decode_dp_operands`, `decode_shift_operands`,
@@ -104,7 +110,7 @@ small so every access stays in the exchanged region). All green. Fixes:
   decoders don't decode VFP. The oracle already captures D0–D31/FPSCR, so this is
   a wiring + decode + exec effort, not an oracle gap.
 - **Cortex-M system features** (NVIC/SCB/SysTick/MPU/exception model/TrustZone/
-  MVE) live in the separate `src/arm/cortex_m/` CPU and are system-level, not
+  MVE) live in the separate `src/isa/arm/cortex_m/` CPU and are system-level, not
   user-mode-differential-testable.
 
 ## How to run

@@ -1,6 +1,6 @@
 fn main() {
-    let mut d = rax::arm::decoder::Decoder::new(rax::arm::ExecutionState::Thumb);
-    d.set_state(rax::arm::ExecutionState::Thumb);
+    let mut d = rax::isa::arm::decoder::Decoder::new(rax::isa::arm::ExecutionState::Thumb);
+    d.set_state(rax::isa::arm::ExecutionState::Thumb);
     for raw in [0xbc1cu16, 0xbdf0, 0xb013, 0xb580] {
         let b = raw.to_le_bytes();
         match d.decode(&b) {

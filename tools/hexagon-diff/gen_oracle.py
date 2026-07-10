@@ -3,7 +3,7 @@
 
 The oracle is a freestanding static Hexagon ELF executed under `qemu-hexagon`
 (user mode). It is the hardware-semantics reference against which the rax
-software interpreter (src/backend/emulator/hexagon/) is checked.
+software interpreter (`src/isa/hexagon/`) is checked.
 
 Protocol (little-endian binary, stdin -> stdout):
   stdin:  u32 magic ('H','E','X','1' = 0x31584548)

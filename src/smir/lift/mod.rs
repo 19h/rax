@@ -10,10 +10,10 @@ pub mod x86_64;
 
 use std::collections::HashMap;
 
+use crate::smir::ir::memory::MemoryError;
+use crate::smir::ir::ops::SmirOp;
+use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
-use crate::smir::memory::MemoryError;
-use crate::smir::ops::SmirOp;
-use crate::smir::types::*;
 
 // ============================================================================
 // Lifter Trait

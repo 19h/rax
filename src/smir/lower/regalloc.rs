@@ -5,9 +5,9 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::smir::ir::ops::OpKind;
+use crate::smir::ir::types::{ArchReg, OpId, VReg, VirtualId, X86Reg};
 use crate::smir::ir::{SmirBlock, SmirFunction};
-use crate::smir::ops::OpKind;
-use crate::smir::types::{ArchReg, OpId, VReg, VirtualId, X86Reg};
 
 use super::LowerError;
 

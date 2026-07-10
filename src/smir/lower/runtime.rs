@@ -13,7 +13,7 @@
 //! directly; the only marshalling is once on entry and once on exit.
 //!
 //! The x86-64 path is validated bit-exact against KVM by the differential
-//! harness in `tests/diff_fuzz.rs` (`smir_native_*` tests). The AArch64 path is
+//! harness in `tests/suites/differential/x86_64/fuzz.rs` (`smir_native_*` tests). The AArch64 path is
 //! validated against the AArch64 interpreter.
 
 #![cfg(feature = "smir-jit")]
@@ -801,7 +801,7 @@ pub fn is_native_clobber_safe(func: &crate::smir::ir::SmirFunction) -> bool {
 /// when an exit/continuation block uses a virtual temporary.
 pub fn is_native_clobber_safe_excluding(
     func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
     let flag_live_in = x86_flag_live_in(func, excluded);
@@ -816,9 +816,9 @@ pub fn is_native_clobber_safe_excluding(
 
 fn x86_flag_live_in(
     func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
-) -> std::collections::HashMap<crate::smir::types::BlockId, crate::smir::flags::FlagSet> {
-    use crate::smir::flags::FlagSet;
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> std::collections::HashMap<crate::smir::ir::types::BlockId, crate::smir::ir::flags::FlagSet> {
+    use crate::smir::ir::flags::FlagSet;
 
     let mut live_in: std::collections::HashMap<_, _> = func
         .blocks
@@ -852,10 +852,13 @@ fn x86_flag_live_in(
 
 fn x86_block_flag_live_out(
     block: &crate::smir::ir::SmirBlock,
-    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
-    live_in: &std::collections::HashMap<crate::smir::types::BlockId, crate::smir::flags::FlagSet>,
-) -> crate::smir::flags::FlagSet {
-    use crate::smir::flags::FlagSet;
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+    live_in: &std::collections::HashMap<
+        crate::smir::ir::types::BlockId,
+        crate::smir::ir::flags::FlagSet,
+    >,
+) -> crate::smir::ir::flags::FlagSet {
+    use crate::smir::ir::flags::FlagSet;
 
     let successors = block.terminator.successors();
     if successors.is_empty() {
@@ -874,17 +877,17 @@ fn x86_block_flag_live_out(
 }
 
 fn x86_flags_before_op(
-    op: &crate::smir::ops::OpKind,
-    live_after: crate::smir::flags::FlagSet,
-) -> crate::smir::flags::FlagSet {
+    op: &crate::smir::ir::ops::OpKind,
+    live_after: crate::smir::ir::flags::FlagSet,
+) -> crate::smir::ir::flags::FlagSet {
     live_after
         .difference(x86_flag_defs(op))
         .union(x86_flag_uses(op))
 }
 
-fn x86_flag_uses(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
-    use crate::smir::flags::{FlagSet, FlagState};
-    use crate::smir::ops::OpKind;
+fn x86_flag_uses(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::FlagSet {
+    use crate::smir::ir::flags::{FlagSet, FlagState};
+    use crate::smir::ir::ops::OpKind;
 
     match op {
         OpKind::TestCondition { cond, .. }
@@ -897,9 +900,9 @@ fn x86_flag_uses(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
     }
 }
 
-fn x86_flag_defs(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
-    use crate::smir::flags::FlagSet;
-    use crate::smir::ops::OpKind;
+fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::FlagSet {
+    use crate::smir::ir::flags::FlagSet;
+    use crate::smir::ir::ops::OpKind;
 
     match op {
         OpKind::Add { flags, .. }
@@ -933,7 +936,7 @@ fn x86_flag_defs(op: &crate::smir::ops::OpKind) -> crate::smir::flags::FlagSet {
 
 fn x86_block_preserves_live_flags(
     block: &crate::smir::ir::SmirBlock,
-    mut live: crate::smir::flags::FlagSet,
+    mut live: crate::smir::ir::flags::FlagSet,
 ) -> bool {
     for op in block.ops.iter().rev() {
         if x86_native_op_would_clobber_preserved_flags(&op.kind) && !live.is_empty() {
@@ -954,11 +957,11 @@ fn x86_block_preserves_live_flags(
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
     allow_mem: bool,
-    flags_live_out: crate::smir::flags::FlagSet,
+    flags_live_out: crate::smir::ir::flags::FlagSet,
 ) -> bool {
     use crate::smir::ir::Terminator;
-    use crate::smir::ops::OpKind;
-    use crate::smir::types::{ArchReg, SrcOperand, VReg, X86Reg};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, SrcOperand, VReg, X86Reg};
 
     if !x86_block_preserves_live_flags(block, flags_live_out) {
         return false;
@@ -1043,9 +1046,9 @@ fn block_is_clobber_safe(
     true
 }
 
-fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ops::SmirOp) -> bool {
-    use crate::smir::ops::{OpKind, X86OpHint};
-    use crate::smir::types::{ArchReg, OpWidth, VReg, X86Reg};
+fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
 
     if matches!(op.x86_hint, Some(X86OpHint::RexByteReg)) {
         return false;
@@ -1065,9 +1068,9 @@ fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ops::SmirOp) -> bo
     )
 }
 
-fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ops::OpKind) -> bool {
-    use crate::smir::flags::FlagUpdate;
-    use crate::smir::ops::OpKind;
+fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
 
     matches!(
         op,
@@ -1138,7 +1141,7 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ops::OpKind) ->
 /// lowerer folds it into a `B.cond` and never materializes its dst).
 pub fn is_aarch64_native_clobber_safe_excluding(
     func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::types::BlockId, u64>,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
     let blocks = func.blocks.iter().filter(|b| !excluded.contains_key(&b.id));
@@ -1159,8 +1162,8 @@ pub fn is_aarch64_native_clobber_safe_excluding(
     !(uses_fp_trampoline && uses_mem_helper)
 }
 
-fn aarch64_mem_helper_op(op: &crate::smir::ops::OpKind) -> bool {
-    use crate::smir::ops::OpKind;
+fn aarch64_mem_helper_op(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
 
     matches!(
         op,
@@ -1168,8 +1171,8 @@ fn aarch64_mem_helper_op(op: &crate::smir::ops::OpKind) -> bool {
     )
 }
 
-fn aarch64_fp_trampoline_vreg(vreg: &crate::smir::types::VReg) -> bool {
-    use crate::smir::types::{ArchReg, ArmReg, VReg};
+fn aarch64_fp_trampoline_vreg(vreg: &crate::smir::ir::types::VReg) -> bool {
+    use crate::smir::ir::types::{ArchReg, ArmReg, VReg};
 
     matches!(
         vreg,
@@ -1184,8 +1187,8 @@ fn aarch64_fp_sysreg(reg: u32) -> bool {
     matches!(reg, SYSREG_FPCR | SYSREG_FPSR)
 }
 
-fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ops::OpKind) -> bool {
-    use crate::smir::ops::OpKind;
+fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
 
     let touches_raw_fp_sysreg = match op {
         OpKind::ReadSysReg { reg, .. } | OpKind::WriteSysReg { reg, .. } => aarch64_fp_sysreg(*reg),
@@ -1199,8 +1202,8 @@ fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ops::OpKind) -> bool {
 
 fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
     use crate::smir::ir::Terminator;
-    use crate::smir::ops::OpKind;
-    use crate::smir::types::{ArchReg, ArmReg, VReg};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ArmReg, VReg};
 
     // Reserved host registers under the identity-map trampoline. A guest write to
     // any of these clobbers host platform/state/link/stack; a guest read returns
@@ -1233,7 +1236,7 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
         // whitelist omits: UDIV/SDIV never trap on AArch64 (no x86 `#DE`), and
         // CLZ/RBIT/REV(Bswap)/bitfield insert+extract are pure ALU ops the
         // native lowerer emits correctly (validated by the differential harness
-        // in tests/aarch64_smir_native.rs). Admitting them lets the emulator JIT
+        // in tests/suites/smir/lower/aarch64_native.rs). Admitting them lets the emulator JIT
         // real scalar loops that use them instead of deopting.
         let a64_ok = matches!(
             op.kind,
@@ -1300,13 +1303,13 @@ fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: 
 mod jit_gate_tests {
     use super::*;
 
-    use crate::smir::flags::FlagUpdate;
-    use crate::smir::ir::{FunctionBuilder, Terminator};
-    use crate::smir::ops::{OpKind, X86OpHint};
-    use crate::smir::types::{
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, SignExtend,
         SrcOperand, VReg, X86Reg,
     };
+    use crate::smir::ir::{FunctionBuilder, Terminator};
 
     fn x86(reg: X86Reg) -> VReg {
         VReg::Arch(ArchReg::X86(reg))
@@ -1573,7 +1576,7 @@ mod jit_gate_tests {
             0x1006,
             OpKind::SetCC {
                 dst: x86(X86Reg::Rbx),
-                cond: crate::smir::types::Condition::Eq,
+                cond: crate::smir::ir::types::Condition::Eq,
                 width: OpWidth::W64,
             },
         );
@@ -1752,7 +1755,8 @@ mod tests {
 
     // Hand-assembled `mov eax, 0x2a ; ret` — proves ExecMem (W^X map) and the
     // enter_native trampoline marshal a result back out, independent of the
-    // lowerer. The lowerer-driven end-to-end paths live in tests/diff_fuzz.rs.
+    // lowerer. The lowerer-driven end-to-end paths live in
+    // tests/suites/differential/x86_64/fuzz.rs.
     #[test]
     fn exec_mem_runs_raw_block() {
         let code = [0xB8, 0x2A, 0x00, 0x00, 0x00, 0xC3];
@@ -1822,10 +1826,12 @@ mod tests {
         assert_eq!(regs.gpr[0], 0xCAFE, "guest RAX restored after scratch use");
     }
 
-    use crate::smir::flags::FlagUpdate;
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{
+        ArchReg, Condition, FunctionId, OpWidth, SrcOperand, VReg, X86Reg,
+    };
     use crate::smir::ir::{FunctionBuilder, Terminator, TrapKind};
-    use crate::smir::ops::OpKind;
-    use crate::smir::types::{ArchReg, Condition, FunctionId, OpWidth, SrcOperand, VReg, X86Reg};
 
     fn rax() -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Rax))

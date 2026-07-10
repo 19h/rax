@@ -1,4 +1,4 @@
-# Built on demand by build.sh / tests/arm_diff.rs
+# Built on demand by build.sh / tests/suites/differential/arm/aarch64.rs
 oracle
 oracle-native
 *.o

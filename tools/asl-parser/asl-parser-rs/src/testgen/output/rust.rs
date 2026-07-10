@@ -19,9 +19,9 @@ thread_local! {
     /// memory is allocated once; `reset()` restores the default `create_test_cpu`
     /// state before each query (cheap; memory contents are irrelevant to the
     /// allocated-vs-UNDEFINED verdict).
-    static ORACLE_CPU: RefCell<rax::arm::AArch64Cpu> = RefCell::new(rax::arm::AArch64Cpu::new(
-        rax::arm::AArch64Config::default(),
-        Box::new(rax::arm::FlatMemory::new(0, 0x1000_0000)),
+    static ORACLE_CPU: RefCell<rax::isa::arm::AArch64Cpu> = RefCell::new(rax::isa::arm::AArch64Cpu::new(
+        rax::isa::arm::AArch64Config::default(),
+        Box::new(rax::isa::arm::FlatMemory::new(0, 0x1000_0000)),
     ));
 }
 
@@ -31,7 +31,7 @@ thread_local! {
 /// (the arm_diff hardware-differential suite remains the independent check),
 /// instead of stale hand-coded allocation heuristics.
 fn emulator_expected_a64(encoding: u32) -> ExpectedResult {
-    use rax::arm::{ArmCpu, ArmError, CpuExit};
+    use rax::isa::arm::{ArmCpu, ArmError, CpuExit};
     ORACLE_CPU.with(|c| {
         let mut cpu = c.borrow_mut();
         cpu.reset();
@@ -68,7 +68,7 @@ enum A64ExecOutcome {
 /// memory values so the emitted assertions characterize the verified-correct
 /// emulator instead of the generator's (often divergent) ASL-computed values.
 fn characterize_a64_execution(test: &ExecutionTest) -> A64ExecOutcome {
-    use rax::arm::{ArmCpu, ArmError, CpuExit};
+    use rax::isa::arm::{ArmCpu, ArmError, CpuExit};
     ORACLE_CPU.with(|c| {
         let mut cpu = c.borrow_mut();
         cpu.reset();
@@ -175,7 +175,7 @@ fn write_file_header(output: &mut String) {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, ArmError, CpuExit, FlatMemory};
+use rax::isa::arm::{AArch64Config, AArch64Cpu, ArmCpu, ArmError, CpuExit, FlatMemory};
 
 // ============================================================================
 // Test Helpers

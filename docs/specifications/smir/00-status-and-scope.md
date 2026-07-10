@@ -4,19 +4,22 @@
 
 This specification is synchronized to repository `HexRaysSA/rax`, default branch `master`, commit `7ff6953e9919916632e4c321a64a14fb1fac1f73`. The source files used are enumerated in `PROVENANCE.md`.
 
+Paths below use the current repository layout; the baseline commit stores some
+of the same files under their pre-reorganization names.
+
 ## 2. Status summary
 
 | Area | Current status |
 |---|---|
-| Core IR | Implemented in `src/smir/ir.rs`, `types.rs`, and `ops.rs`. |
+| Core IR | Implemented in `src/smir/ir/mod.rs`, `ir/types.rs`, and `ir/ops.rs`. |
 | Source lifters | Implemented for x86-64, AArch64, Hexagon, RISC-V, and AVX10-visible operation families. |
-| Interpreter | Implemented in `interp.rs`; executes blocks from cache over `SmirContext` and `SmirMemory`. |
-| Optimizer | Implemented in `opt.rs`; includes O0/O1/O2, frontier-aware liveness, dead-flag elimination, constant/copy/branch transforms. |
+| Interpreter | Implemented in `interpret.rs`; executes blocks from cache over `SmirContext` and `SmirMemory`. |
+| Optimizer | Implemented in `optimize.rs`; includes O0/O1/O2, frontier-aware liveness, dead-flag elimination, constant/copy/branch transforms. |
 | Lowering framework | Implemented in `lower/mod.rs`; lowerers emit machine-code bytes/words and return `LowerResult`. |
-| x86-64 native backend | Implemented in `lower/x86_64.rs`; used by the hot-block JIT path. |
-| AArch64 native backend | Implemented in `lower/aarch64.rs` and runtime trampoline support exists in `lower/runtime.rs`. Exact coverage is source-defined. |
-| AArch64 guest to x86-64 host | Implemented as a state-backed scalar lowerer in `lower/aarch64_x86.rs`. |
-| AVX10 lowering | Implemented as a specialized EVEX/AVX10 lowering component in `lower/avx10.rs`. |
+| x86-64 native backend | Implemented in `lower/x86_64/mod.rs`; used by the hot-block JIT path. |
+| AArch64 native backend | Implemented in `lower/aarch64/mod.rs` and runtime trampoline support exists in `lower/runtime.rs`. Exact coverage is source-defined. |
+| AArch64 guest to x86-64 host | Implemented as a state-backed scalar lowerer in `lower/cross/aarch64_guest_to_x86_64_host.rs`. |
+| AVX10 lowering | Implemented as a specialized EVEX/AVX10 lowering component in `lower/x86_64/avx10.rs`. |
 | Native runtime | Implemented in `lower/runtime.rs`; x86-64 and AArch64 host trampolines plus W^X / MAP_JIT executable memory handling. |
 | JIT feature | `smir-jit` is a default Cargo feature. |
 | Fallback | Unsupported or unproven regions must fall back to the interpreter. |

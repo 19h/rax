@@ -1,11 +1,15 @@
 # AArch64 Native EL0 Oracle
 
+Repository paths are normalized to the current layout; the historical commits
+retain their original paths in Git history.
+
 Status: implemented and green on `m9g.large` / Graviton5-class hardware. The
 strict architectural comparison includes FPCR/FPSR globally, so floating-point
 control and status state is now part of the normal native oracle gate rather
 than a side probe.
 
-`tests/arm_diff.rs` now prefers a native EL0 oracle on aarch64 hosts. The test
+`tests/suites/differential/arm/aarch64.rs` now prefers a native EL0 oracle on
+aarch64 hosts. The test
 builds `tools/arm-diff/oracle.c` with the host C compiler as
 `tools/arm-diff/oracle-native`, executes test instructions directly in user
 mode, and captures architectural state through signal frames. Non-aarch64 hosts
@@ -40,7 +44,8 @@ feature flags. Nondeterministic RNDR/RNDRRS reads are covered as EL0
 trap-vs-execute legality tests rather than value comparisons.
 
 Native AArch32/Thumb EL0 execution is not available on this instance: `lscpu`
-reports only 64-bit CPU op modes. `tests/arm_diff32.rs` therefore still needs
+reports only 64-bit CPU op modes. `tests/suites/differential/arm/aarch32.rs`
+therefore still needs
 the `qemu-arm` and ARM32 cross-toolchain path, or a different machine that
 exposes AArch32 EL0.
 

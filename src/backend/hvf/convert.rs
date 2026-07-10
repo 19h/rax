@@ -4,8 +4,8 @@
 //! and the Hypervisor.framework VMCS fields and register values.
 
 use super::bindings::*;
-use crate::cpu::{DescriptorTable, Registers, Segment, SystemRegisters};
 use crate::error::{Error, Result};
+use crate::vm::vcpu::{DescriptorTable, Registers, Segment, SystemRegisters};
 
 /// Read a VMCS field, returning an error if the operation fails.
 #[inline]

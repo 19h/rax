@@ -14,11 +14,11 @@ use std::sync::{Arc, Mutex};
 use tracing::{debug, info, warn};
 use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemoryRegion};
 
-use crate::cpu::{
+use crate::error::{Error, Result};
+use crate::vm::memory::GuestMemoryWrapper;
+use crate::vm::vcpu::{
     Aarch64CpuState, Aarch64Registers, Aarch64SystemRegisters, CpuState, VCpu, VcpuExit,
 };
-use crate::error::{Error, Result};
-use crate::memory::GuestMemoryWrapper;
 
 use super::arm64_bindings::*;
 use super::{Backend, Vm};
@@ -65,24 +65,30 @@ impl Backend for HvfArm64Backend {
             ));
         }
         let ret = unsafe {
-            hv_gic_config_set_distributor_base(gic_config, crate::arch::arm::AARCH64_GICD_BASE)
+            hv_gic_config_set_distributor_base(
+                gic_config,
+                crate::machine::arm_virt::AARCH64_GICD_BASE,
+            )
         };
         if ret != HV_SUCCESS {
             unsafe { hv_vm_destroy() };
             return Err(Error::Emulator(format!(
                 "hv_gic_config_set_distributor_base({:#x}) failed: {}",
-                crate::arch::arm::AARCH64_GICD_BASE,
+                crate::machine::arm_virt::AARCH64_GICD_BASE,
                 hv_error_string(ret)
             )));
         }
         let ret = unsafe {
-            hv_gic_config_set_redistributor_base(gic_config, crate::arch::arm::AARCH64_GICR_BASE)
+            hv_gic_config_set_redistributor_base(
+                gic_config,
+                crate::machine::arm_virt::AARCH64_GICR_BASE,
+            )
         };
         if ret != HV_SUCCESS {
             unsafe { hv_vm_destroy() };
             return Err(Error::Emulator(format!(
                 "hv_gic_config_set_redistributor_base({:#x}) failed: {}",
-                crate::arch::arm::AARCH64_GICR_BASE,
+                crate::machine::arm_virt::AARCH64_GICR_BASE,
                 hv_error_string(ret)
             )));
         }
@@ -101,8 +107,8 @@ impl Backend for HvfArm64Backend {
             hv_gic_get_redistributor_region_size(&mut redist_size);
         }
         info!(
-            gicd_base = format!("{:#x}", crate::arch::arm::AARCH64_GICD_BASE),
-            gicr_base = format!("{:#x}", crate::arch::arm::AARCH64_GICR_BASE),
+            gicd_base = format!("{:#x}", crate::machine::arm_virt::AARCH64_GICD_BASE),
+            gicr_base = format!("{:#x}", crate::machine::arm_virt::AARCH64_GICR_BASE),
             dist_size = format!("{:#x}", dist_size),
             redist_region_size = format!("{:#x}", redist_size),
             "Created ARM64 HVF VM with in-kernel GICv3"

@@ -160,7 +160,7 @@ enum Command {
         #[arg(long, default_value = "a64")]
         iset: InstructionSetArg,
 
-        /// Generate structured hierarchical output (tests/arm/a64/integer/...)
+        /// Generate structured hierarchical output (tests/generated/arm/a64/integer/...)
         #[arg(long, default_value = "false")]
         structured: bool,
     },
@@ -969,10 +969,10 @@ fn generate_helper_files(
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{AArch64Config, AArch64Cpu, FlatMemory};
+use rax::isa::arm::{AArch64Config, AArch64Cpu, FlatMemory};
 
 // Re-export types so tests can use them directly
-pub use rax::arm::{ArmCpu, ArmError, CpuExit};
+pub use rax::isa::arm::{ArmCpu, ArmError, CpuExit};
 
 /// Create a test CPU with default configuration
 pub fn create_test_cpu() -> AArch64Cpu {
@@ -1043,10 +1043,10 @@ pub fn get_qreg(cpu: &AArch64Cpu, reg: u8) -> u128 {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{Armv7Cpu, Executor, ExecResult, ExceptionType};
-use rax::arm::decoder::{Aarch32Decoder, ThumbDecoder};
-use rax::arm::execution::{ArmMemory, FlatMemory};
-pub use rax::arm::CpuExit;
+use rax::isa::arm::{Armv7Cpu, Executor, ExecResult, ExceptionType};
+use rax::isa::arm::decoder::{Aarch32Decoder, ThumbDecoder};
+use rax::isa::arm::execution::{ArmMemory, FlatMemory};
+pub use rax::isa::arm::CpuExit;
 
 /// Processor state for flag assertions
 #[derive(Debug, Clone, Copy, Default)]

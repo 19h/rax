@@ -1,5 +1,8 @@
 # Linux Kernel Stack Corruption Bug Analysis
 
+Source paths in this historical analysis are normalized to the current
+repository layout; Git history retains the paths used during the investigation.
+
 ## Executive Summary
 
 The rax x86_64 emulator successfully boots the Linux kernel through early initialization but panics approximately 8 seconds into boot with a **stack-protector corruption error**. The kernel's stack canary mechanism detects that a function's stack guard value has been overwritten, indicating memory corruption caused by the emulator.
@@ -236,18 +239,16 @@ A bug in any memory write instruction could cause writes to go to wrong addresse
 
 ### 6.2 Code Review Areas
 
-1. **`decode_modrm_addr` in decoder.rs** (lines 150-272):
+1. **`decode_modrm_addr` in `src/isa/x86_64/decode/mod.rs`**:
    - Verify RIP-relative address calculation when segment override is present
    - Check order of operations: RIP-relative first, then segment base
 
 2. **Stack manipulation instructions**:
-   - `insn/data/push.rs` - PUSH implementations
-   - `insn/data/pop.rs` - POP implementations
-   - `insn/control/call.rs` - CALL implementations
-   - `insn/control/ret.rs` - RET implementations
+   - `src/isa/x86_64/execute/data/stack.rs` - PUSH and POP implementations
+   - `src/isa/x86_64/execute/control/call.rs` - CALL and RET implementations
 
 3. **Memory write path**:
-   - `mmu.rs` - All write_* functions
+   - `src/isa/x86_64/memory.rs` - All write_* functions
    - Verify address translation is correct
 
 ### 6.3 Test Case Development
@@ -270,10 +271,10 @@ Debug instrumentation was added to these files (should be cleaned up):
 
 | File | Debug Added |
 |------|-------------|
-| `src/backend/emulator/x86_64/cpu.rs` | vpanic/stack_chk_fail detection, RIP history |
-| `src/backend/emulator/x86_64/decoder.rs` | GS prefix tracing (cleaned) |
-| `src/backend/emulator/x86_64/insn/system/msr.rs` | WRMSR GS_BASE tracing (cleaned) |
-| `src/backend/emulator/x86_64/insn/system/timing.rs` | RDTSC tracing (cleaned) |
+| `src/isa/x86_64/cpu.rs` | vpanic/stack_chk_fail detection, RIP history |
+| `src/isa/x86_64/decode/mod.rs` | GS prefix tracing (cleaned) |
+| `src/isa/x86_64/execute/system/msr.rs` | WRMSR GS_BASE tracing (cleaned) |
+| `src/isa/x86_64/execute/system/timing.rs` | RDTSC tracing (cleaned) |
 
 ---
 

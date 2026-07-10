@@ -55,7 +55,7 @@ The identity-mapped JIT path is more restrictive than the general allocator: bec
 
 ## 8. AArch64 native backend
 
-The AArch64 backend emits native AArch64 instruction words. Runtime support exists for identity-mapped AArch64 execution on AArch64 hosts, including scalar and FP/SIMD trampolines. Coverage is source-defined by `lower/aarch64.rs` and tests.
+The AArch64 backend emits native AArch64 instruction words. Runtime support exists for identity-mapped AArch64 execution on AArch64 hosts, including scalar and FP/SIMD trampolines. Coverage is source-defined by `lower/aarch64/mod.rs` and tests.
 
 ## 9. AArch64-to-x86-64 state-backed backend
 

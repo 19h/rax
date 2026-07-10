@@ -7,13 +7,13 @@
 mod tests {
     use std::collections::HashMap;
 
+    use crate::smir::ir::memory::SmirMemory;
+    use crate::smir::ir::types::{BlockId, FunctionId, SourceArch};
     use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
     use crate::smir::lift::x86_64::X86_64Lifter;
     use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
     use crate::smir::lower::SmirLowerer;
     use crate::smir::lower::x86_64::X86_64Lowerer;
-    use crate::smir::memory::SmirMemory;
-    use crate::smir::types::{BlockId, FunctionId, SourceArch};
 
     /// Format bytes as hex string
     fn hex_bytes(bytes: &[u8]) -> String {
@@ -25,7 +25,7 @@ mod tests {
     }
 
     /// Print op details
-    fn print_op(op: &crate::smir::ops::SmirOp) {
+    fn print_op(op: &crate::smir::ir::ops::SmirOp) {
         println!("    [{:04}] {:?}", op.id.0, op.kind);
     }
 
@@ -622,10 +622,10 @@ mod tests {
     //
     // This validates that the round-trip preserves semantic correctness.
 
-    use crate::smir::context::SmirContext;
-    use crate::smir::interp::SmirInterpreter;
-    use crate::smir::memory::FlatMemory;
-    use crate::smir::types::{ArchReg, X86Reg};
+    use crate::smir::interpret::SmirInterpreter;
+    use crate::smir::ir::context::SmirContext;
+    use crate::smir::ir::memory::FlatMemory;
+    use crate::smir::ir::types::{ArchReg, X86Reg};
 
     fn execute_block(
         block: &SmirBlock,

@@ -1,4 +1,4 @@
-//! RISC-V vCPU: drives the [`crate::riscv::RiscVCpu`] interpreter over guest
+//! RISC-V vCPU: drives the [`crate::isa::riscv::RiscVCpu`] interpreter over guest
 //! memory and maps its exits onto [`VcpuExit`].
 //!
 //! Guest memory is bridged through [`GuestBridge`], a [`Memory`] implementation
@@ -14,11 +14,11 @@ use std::sync::{Arc, Mutex};
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-use crate::cpu::{CpuState, RiscVRegisters, VCpu, VcpuExit};
 use crate::error::{Error, Result};
-use crate::riscv::{MemError, MemResult, Memory, RiscVConfig, RiscVCpu, RiscVExit};
+use crate::isa::riscv::{MemError, MemResult, Memory, RiscVConfig, RiscVCpu, RiscVExit};
+use crate::vm::vcpu::{CpuState, RiscVRegisters, VCpu, VcpuExit};
 
-/// 16550 UART MMIO base/length (matches `Riscv64Arch::serial_mmio_base`).
+/// 16550 UART MMIO base/length (matches `RiscvVirtMachine::serial_mmio_base`).
 const UART_BASE: u64 = 0x1000_0000;
 const UART_LEN: u64 = 8;
 /// 16550 Line Status Register offset and the "ready to transmit" bits.

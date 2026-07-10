@@ -5,18 +5,18 @@
 
 use std::collections::HashSet;
 
-use crate::smir::flags::FlagUpdate;
+use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::ops::{HexDfOp, HexFpOp, HexFpRecipKind, OpKind, SmirOp};
+use crate::smir::ir::types::*;
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
 };
 use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
-use crate::smir::ops::{HexDfOp, HexFpOp, HexFpRecipKind, OpKind, SmirOp};
-use crate::smir::types::*;
 
 // Re-use the existing Hexagon decoder types
-use crate::backend::emulator::hexagon::decode::{
+use crate::isa::hexagon::decode::{
     AddrMode, CmpKind, DecodedInsn, ExtendKind, MemOpKind, MemOpSrc, MemSign,
     MemWidth as HexMemWidth, ShiftKind,
 };
@@ -24,7 +24,7 @@ use crate::backend::emulator::hexagon::decode::{
 // `DecodedInsn::Unknown` (handled only by the sem layer in cpu.rs). The lifter
 // re-decodes such words via `decode_word` and emits SMIR for the regular
 // scalar register ops; see `lift_unknown_op`.
-use crate::backend::emulator::hexagon::opcode::{DecodedOp, Opcode, decode_word};
+use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 
 // ============================================================================
 // Hexagon Lifter
@@ -1557,7 +1557,7 @@ impl HexagonLifter {
             DecodedInsn::Combine { dst, high, low } => {
                 // Combine two 32-bit values into a 64-bit pair (stored in Rdd)
                 // This maps to a pair of registers Rd:Rd+1
-                use crate::backend::emulator::hexagon::decode::CombineOperand;
+                use crate::isa::hexagon::decode::CombineOperand;
 
                 let high_val = match high {
                     CombineOperand::Reg(r) => SrcOperand::Reg(self.hex_reg(*r)),
@@ -3471,7 +3471,7 @@ impl HexagonLifter {
                 src_high,
                 amount,
             } => {
-                use crate::backend::emulator::hexagon::decode::SpliceAmount;
+                use crate::isa::hexagon::decode::SpliceAmount;
                 let rss_even = *src_low & !1;
                 let rtt_even = *src_high & !1;
                 let dst_even = *dst & !1;
@@ -3847,7 +3847,7 @@ impl HexagonLifter {
                 // Compute the compare RESULT (1 if the compare holds, else 0) into
                 // `result`.
                 let result = ctx.alloc_vreg();
-                use crate::backend::emulator::hexagon::decode::CmpJumpKind;
+                use crate::isa::hexagon::decode::CmpJumpKind;
                 match kind {
                     CmpJumpKind::TstBit0 => {
                         // result = (Rs & 1) != 0.
@@ -3982,7 +3982,7 @@ impl HexagonLifter {
             // `Rd = <Rs | #u6> ; jump #r`: write Rd unconditionally, then take the
             // PC-relative branch.
             DecodedInsn::JumpSet { dst, value, offset } => {
-                use crate::backend::emulator::hexagon::decode::JumpSetSrc;
+                use crate::isa::hexagon::decode::JumpSetSrc;
                 let src = match value {
                     JumpSetSrc::Reg(reg) => SrcOperand::Reg(self.hex_reg(*reg)),
                     JumpSetSrc::Imm(imm) => SrcOperand::Imm(*imm as i64),
@@ -4049,7 +4049,7 @@ impl HexagonLifter {
         }
 
         let op = dop.opcode;
-        let mnemonic = crate::backend::emulator::hexagon::opcode::opcode_name(op);
+        let mnemonic = crate::isa::hexagon::opcode::opcode_name(op);
         let unsupported = || LiftError::Unsupported {
             addr,
             mnemonic: mnemonic.to_string(),
@@ -9827,7 +9827,7 @@ impl HexagonLifter {
             // each pair of adjacent NARROW lanes is multiplied into a
             // double-width product; the EVEN narrow lanes' products go to the
             // low vector (V[base]) and the ODD lanes' to the high (V[base+1]).
-            // OpKind::VWidenMul models exactly this layout (see interp.rs):
+            // OpKind::VWidenMul models exactly this layout (see interpret.rs):
             // even/odd split, per-operand signedness, and `acc` read-modify-
             // write of the dst pair. `src_elem` is the NARROW lane type — I8
             // for byte multiplies (-> halfword pair), I16 for half (-> word
@@ -12302,7 +12302,7 @@ impl HexagonLifter {
 
             // vmpyewuh_64 / vmpyowh_64_acc: even/odd word*half multiply repacked
             // into a 64-bit (vector-pair) result. Modeled by VMulWord64Pair (mode
-            // selects the exact repack — see ops.rs). Both write a register pair
+            // selects the exact repack — see ir/ops.rs). Both write a register pair
             // Vdd = (V[base], V[base+1]); the _acc form reads that pair first.
             //   vmpyewuh_64 (mode 0): prod = Vu.w[i]*Vv.uh0; hi=prod>>16, lo=prod<<16.
             //   vmpyowh_64_acc (mode 1): prod = Vu.w[i]*Vv.h1 + Vxx.hi.w[i];
@@ -20571,9 +20571,7 @@ impl HexagonLifter {
     /// separate, complete subsystem). This is a coverage signal, not a semantic
     /// check — it tells us which scalar ops remain genuinely unhandled.
     pub fn audit_unlifted_scalar() -> Vec<(&'static str, String)> {
-        use crate::backend::emulator::hexagon::opcode::{
-            ENCODINGS_BY_ICLASS, ENCODINGS_MISC, opcode_name,
-        };
+        use crate::isa::hexagon::opcode::{ENCODINGS_BY_ICLASS, ENCODINGS_MISC, opcode_name};
         let mut seen: std::collections::HashSet<&'static str> = std::collections::HashSet::new();
         let mut out: Vec<(&'static str, String)> = Vec::new();
         let all = ENCODINGS_BY_ICLASS
@@ -20641,8 +20639,7 @@ impl SmirLifter for HexagonLifter {
         self.prev_word_ended_packet = parse == 0b11 || parse == 0b00;
 
         // Use the existing Hexagon decoder
-        let decoded =
-            crate::backend::emulator::hexagon::decode::decode(word, ctx.extended_imm, self.isa);
+        let decoded = crate::isa::hexagon::decode::decode(word, ctx.extended_imm, self.isa);
 
         let insn = decoded.insn;
         ctx.guest_pc = addr;
@@ -20874,10 +20871,10 @@ mod tests {
             &self,
             addr: GuestAddr,
             size: usize,
-        ) -> Result<Vec<u8>, crate::smir::memory::MemoryError> {
+        ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
             let offset = (addr - self.base) as usize;
             if offset + size > self.data.len() {
-                return Err(crate::smir::memory::MemoryError::OutOfBounds { addr });
+                return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
             }
             Ok(self.data[offset..offset + size].to_vec())
         }
@@ -21136,16 +21133,16 @@ mod tests {
             },
             exec_count: 0,
         };
-        let mut ctx = crate::smir::context::SmirContext::new_hexagon();
+        let mut ctx = crate::smir::ir::context::SmirContext::new_hexagon();
         ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::R(0)), 0x2000);
         let mut memory = crate::smir::FlatMemory::new(0x1000);
-        let interp = crate::smir::interp::SmirInterpreter::new();
+        let interp = crate::smir::interpret::SmirInterpreter::new();
 
         let exit = interp.execute_block(&mut ctx, &mut memory, &block);
 
         match exit {
-            crate::smir::interp::BlockResult::Exit(
-                crate::smir::context::ExitReason::MemoryFault { addr, write },
+            crate::smir::interpret::BlockResult::Exit(
+                crate::smir::ir::context::ExitReason::MemoryFault { addr, write },
             ) => {
                 assert_eq!(addr, 0x2000);
                 assert!(!write);
@@ -21229,7 +21226,7 @@ mod tests {
             addr: AddrMode::PostIncImm { base: 0, offset: 4 },
             width: HexMemWidth::Word,
             sign: MemSign::Unsigned,
-            pred: Some(crate::backend::emulator::hexagon::decode::PredCond {
+            pred: Some(crate::isa::hexagon::decode::PredCond {
                 pred: 0,
                 sense: true,
                 pred_new: false,

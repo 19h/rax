@@ -18,7 +18,8 @@ import sys
 NOP = 0x7F00C000
 ARENA_SIZE = 256
 
-# HexState field byte offsets (must match tests/hexagon_diff.rs HexState).
+# HexState field byte offsets (must match the wire layout in
+# tests/suites/differential/hexagon/memory.rs).
 O_R = 0
 O_PRED = 128
 O_USR = 132

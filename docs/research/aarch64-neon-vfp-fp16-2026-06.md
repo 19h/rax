@@ -1,12 +1,17 @@
 # AArch64 NEON / VFP / FP16 Completion Session — 2026-06-05
 
-Drove rax's AArch64 interpreter (`src/arm/aarch64/cpu.rs`) to **bit-exact,
+Repository paths are normalized to the current layout; the historical commits
+retain their original paths in Git history.
+
+Drove rax's AArch64 interpreter (`src/isa/arm/aarch64/cpu.rs`) to **bit-exact,
 hardware-verified** coverage of the entire AdvSIMD (NEON) + scalar-VFP + FP16
 *data-processing* instruction set, verified against the **qemu-aarch64
-differential oracle** (`tools/arm-diff/` + `tests/arm_diff.rs`).
+differential oracle** (`tools/arm-diff/` +
+`tests/suites/differential/arm/aarch64.rs`).
 
 - A new permanent regression test **`diff_neon_comprehensive_sweep`** sweeps an
-  `llvm-mc`-generated **3939-instruction** encoding table (`tests/neon_gen.rs`),
+  `llvm-mc`-generated **3939-instruction** encoding table
+  (`tests/generated/arm/oracle_cases/neon_sweep.rs`),
   covering every NEON/VFP/FP16 mnemonic across all element arrangements, Q
   variants, element indices, shift amounts, immediates and sign variants, at
   **16 random + special-value inputs each** (~63k oracle cases), and asserts

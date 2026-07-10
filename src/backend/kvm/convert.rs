@@ -2,7 +2,7 @@
 
 use kvm_bindings::{kvm_dtable, kvm_regs, kvm_segment, kvm_sregs};
 
-use crate::cpu::{DescriptorTable, Registers, Segment, SystemRegisters};
+use crate::vm::vcpu::{DescriptorTable, Registers, Segment, SystemRegisters};
 
 /// Convert KVM registers to our Registers type.
 pub fn regs_from_kvm(kvm: &kvm_regs) -> Registers {

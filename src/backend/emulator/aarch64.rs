@@ -1,4 +1,4 @@
-//! AArch64 vCPU: drives the software [`crate::arm::aarch64::AArch64Cpu`]
+//! AArch64 vCPU: drives the software [`crate::isa::arm::aarch64::AArch64Cpu`]
 //! system emulator over guest memory and maps its exits onto [`VcpuExit`].
 //!
 //! Guest memory is bridged through [`GuestBridge`], an [`ArmMemory`] over the
@@ -20,20 +20,20 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tracing::{debug, info};
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-use crate::arch::arm::{AARCH64_GICD_BASE, AARCH64_GICR_BASE, AARCH64_UART_IRQ};
-use crate::arm::aarch64::{AArch64Config, AArch64Cpu, Gic};
-use crate::arm::cpu_trait::{ArmCpu, CpuExit, ProcessorState};
-use crate::arm::memory::{ArmMemory, MemResult, MemoryError, MmioHandler};
-use crate::cpu::{CpuState, VCpu, VcpuExit};
 use crate::devices::pl011::{Pl011, Pl011MmioDevice};
 use crate::error::{Error, Result};
+use crate::isa::arm::aarch64::{AArch64Config, AArch64Cpu, Gic};
+use crate::isa::arm::cpu_trait::{ArmCpu, CpuExit, ProcessorState};
+use crate::isa::arm::memory::{ArmMemory, MemResult, MemoryError, MmioHandler};
+use crate::machine::arm_virt::{AARCH64_GICD_BASE, AARCH64_GICR_BASE, AARCH64_UART_IRQ};
+use crate::vm::vcpu::{CpuState, VCpu, VcpuExit};
 
 /// GICv3 distributor frame size.
 const GICD_SIZE: u64 = 0x1_0000;
 /// GICv3 redistributor frame size (RD + SGI frames, one CPU).
 const GICR_SIZE: u64 = 0x2_0000;
 /// PL011 window.
-const UART_BASE: u64 = crate::arch::arm::AARCH64_UART_BASE;
+const UART_BASE: u64 = crate::machine::arm_virt::AARCH64_UART_BASE;
 const UART_SIZE: u64 = 0x1000;
 
 /// Instructions executed per `run()` call before yielding to the VMM loop
@@ -464,7 +464,7 @@ impl VCpu for Aarch64Vcpu {
     }
 
     fn get_state(&self) -> Result<CpuState> {
-        use crate::cpu::Aarch64Registers;
+        use crate::vm::vcpu::Aarch64Registers;
         let mut regs = Aarch64Registers::default();
         for i in 0..31 {
             regs.x[i] = self.cpu.get_gpr(i as u8);
@@ -568,8 +568,8 @@ mod tests {
     use vm_memory::{GuestAddress, GuestMemoryMmap};
 
     use super::*;
-    use crate::arm::cpu_trait::ArmCpu;
-    use crate::cpu::{Aarch64Registers, Aarch64SystemRegisters, CpuState, VcpuExit};
+    use crate::isa::arm::cpu_trait::ArmCpu;
+    use crate::vm::vcpu::{Aarch64Registers, Aarch64SystemRegisters, CpuState, VcpuExit};
 
     fn test_vcpu() -> Aarch64Vcpu {
         let mem =

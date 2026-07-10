@@ -1,5 +1,8 @@
 # QEMU x86-64 Emulation Reference for Fixmap Corruption Bug
 
+rax source paths in this historical reference are normalized to the current
+repository layout; Git history retains the paths used during the investigation.
+
 This document provides an exhaustive technical reference of QEMU's x86-64 emulation implementation, specifically focused on the instruction execution path involved in the fixmap corruption bug. Use this as the authoritative reference when debugging the rax emulator.
 
 **QEMU Source Location:** `/models/dev/qemu`
@@ -604,7 +607,7 @@ Effective address = Next_RIP + sign_extend(0x017fcc33)
 
 ### 5.5 Comparison with rax Implementation
 
-**rax decoder.rs:207-230:**
+**rax `src/isa/x86_64/decode/mod.rs` (`decode_modrm_addr`):**
 
 ```rust
 } else if rm_field == 5 && mod_bits == 0 {
@@ -1301,10 +1304,10 @@ For `ADD R13, [RIP+0x017fcc33]` at `RIP=0xffffffff812ac776`:
 
 | File | Key Areas |
 |------|-----------|
-| `src/backend/emulator/x86_64/decoder.rs` | RIP-relative detection (lines 207-230), ModRM parsing |
-| `src/backend/emulator/x86_64/cpu.rs` | `rip_relative_offset` field, register state |
-| `src/backend/emulator/x86_64/insn/arith/add.rs` | ADD instruction implementation |
-| `src/backend/emulator/x86_64/insn/data/mov.rs` | Memory operand handling, `rip_relative_offset` usage |
+| `src/isa/x86_64/decode/mod.rs` | RIP-relative detection and ModRM parsing |
+| `src/isa/x86_64/cpu.rs` | `rip_relative_offset` field, register state |
+| `src/isa/x86_64/execute/arith/add.rs` | ADD instruction implementation |
+| `src/isa/x86_64/execute/data/mov.rs` | Memory operand handling, `rip_relative_offset` usage |
 
 ---
 

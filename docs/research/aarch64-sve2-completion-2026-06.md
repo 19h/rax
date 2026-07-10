@@ -1,18 +1,23 @@
 # AArch64 SVE2 / SVE2.1 Completion Session — 2026-06-04
 
+Repository paths are normalized to the current layout; the historical commits
+retain their original paths in Git history.
+
 A differential-testing session that drove rax's AArch64 interpreter
-(`src/arm/aarch64/cpu.rs`) to a **bit-exact, hardware-verified** implementation
+(`src/isa/arm/aarch64/cpu.rs`) to a **bit-exact, hardware-verified** implementation
 of the entire *register-data-processing* surface of **SVE2** and **SVE2.1**
 (FEAT_SVE2, FEAT_SVE2p1, FEAT_SVE_B16B16, and the SVE-encoded multi-vector and
 predicate-as-counter ops).
 
 Every change is verified against the **qemu-aarch64 differential oracle**
-(`tools/arm-diff/` + `tests/arm_diff.rs`, pinned to VL=128) — bit-exact vs
+(`tools/arm-diff/` + `tests/suites/differential/arm/aarch64.rs`, pinned to
+VL=128) — bit-exact vs
 hardware semantics, not merely "does not crash."
 
 - **6 commits** (`b07b4ca` … `049606a`), all `feat/fix(aarch64)`.
 - A new permanent regression test **`diff_sve2_comprehensive_sweep`** sweeps an
-  **879-instruction** `llvm-mc`-generated encoding table (`tests/sve2_gen.rs`)
+  **879-instruction** `llvm-mc`-generated encoding table
+  (`tests/generated/arm/oracle_cases/sve2_sweep.rs`)
   through the oracle with random + "interesting" (special-FP-laden) inputs and
   asserts **zero divergences**.
 - The full `arm_diff` suite is **197/197 green**.
@@ -39,7 +44,8 @@ sweep test:
 +sve2-aes,+sve2-sha3,+sve2-sm4,+fullfp16,+f32mm,+f64mm,+sme2 --show-encoding
    ```
    Convert the `[b0,b1,b2,b3]` bytes to a little-endian `u32` and append to
-   `tests/sve2_gen.rs` (`pub static SVE2_SWEEP: &[(&str, u32)]`).
+   `tests/generated/arm/oracle_cases/sve2_sweep.rs`
+   (`pub static SVE2_SWEEP: &[(&str, u32)]`).
 2. **Probe.** `diff_sve2_comprehensive_sweep` runs every encoding through the
    oracle with random + `interesting()` inputs (which tile `0`, `-1`, `1`,
    `0x8000…`, `0x…8000_0000`, and random — i.e. `±0`, `±Inf`, qNaN/sNaN, denormal
@@ -79,7 +85,7 @@ The 778-encoding probe immediately found **22 decode-gaps + 5 value-mismatches**
 | `FCVTXNT` (and, latently, `FCVTX`) | **value** (NaN) | `round_odd_f64_to_f32` was canonicalising every NaN to the default `0x7FC0_0000`; ARM at `FPCR.DN=0` **preserves** sign + top-23 payload and forces the quiet bit (FPConvertNaN). The old FCVTX test only used finite inputs, so it never caught this. |
 
 This commit also added the permanent harness: `diff_sve2_comprehensive_sweep`
-+ `tests/sve2_gen.rs`.
++ `tests/generated/arm/oracle_cases/sve2_sweep.rs`.
 
 ### Commit `edb4337` — SVE2.1 quadword / clamp / per-segment permute
 
@@ -246,7 +252,7 @@ than guessed at:
 A second agent expands SMIR concurrently in the same tree, so:
 
 - **Build/test in the main tree but stage only the ARM files** when committing:
-  `git add src/arm/aarch64/cpu.rs tests/arm_diff.rs tests/sve2_gen.rs` then
+  `git add src/isa/arm/aarch64/cpu.rs tests/suites/differential/arm/aarch64.rs tests/generated/arm/oracle_cases/sve2_sweep.rs` then
   `red -m --staged --run <those files>`. Never `git add -A` / unscoped `red`
   (it would sweep the other agent's SMIR WIP into the commit).
 - `git stash` is shared across worktrees — never use it for A/B benchmarking.

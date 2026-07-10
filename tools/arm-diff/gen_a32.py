@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Generate an exhaustive A32 + T16/T32 instruction encoding table for the
-AArch32 differential sweep (tests/arm_diff32.rs).
+AArch32 differential sweep (`tests/suites/differential/arm/aarch32.rs`).
 
 Mirrors the NEON sweep generator: enumerate every register-data-processing
 mnemonic across the operand variations that affect *semantics* (opcode, S-bit,
