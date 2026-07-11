@@ -89,6 +89,151 @@ pub enum X86VecAlign {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86CacheControlKind {
+    Cldemote,
+    Clflush,
+    Clflushopt,
+    Clwb,
+}
+
+/// x87 environment/control operations that do not consume or produce an x87
+/// data-stack value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87ControlKind {
+    Init,
+    ClearExceptions,
+    StoreStatusAx,
+    LoadControlWord,
+    StoreControlWord,
+    StoreStatusWord,
+    /// `FLDENV m14byte/m28byte`.
+    LoadEnvironment(X86X87EnvWidth),
+    /// `FNSTENV m14byte/m28byte` (the waiting `FSTENV` spelling is FWAIT
+    /// followed by this instruction).
+    StoreEnvironment(X86X87EnvWidth),
+    /// `FRSTOR m94byte/m108byte`.
+    RestoreState(X86X87EnvWidth),
+    /// `FNSAVE m94byte/m108byte` (the waiting `FSAVE` spelling is FWAIT
+    /// followed by this instruction).
+    SaveState(X86X87EnvWidth),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87EnvWidth {
+    W16,
+    W32,
+}
+
+/// Exact x87 data-stack operations and explicit format conversions. Arithmetic
+/// remains separate because it requires binary80 result rounding and its own
+/// exception precedence rather than a transfer/conversion response.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87DataKind {
+    /// `FLD ST(i)`.
+    LoadRegister,
+    /// `FLD m80fp`.
+    LoadExtended,
+    /// `FLD m32fp`.
+    LoadSingle,
+    /// `FLD m64fp`.
+    LoadDouble,
+    /// `FILD m16int`.
+    LoadInt16,
+    /// `FILD m32int`.
+    LoadInt32,
+    /// `FILD m64int`.
+    LoadInt64,
+    /// `FBLD m80bcd`.
+    LoadBcd,
+    /// `FST ST(i)`.
+    StoreRegister,
+    /// `FSTP ST(i)`.
+    StorePopRegister,
+    /// `FSTP m80fp`.
+    StorePopExtended,
+    /// `FXCH ST(i)`.
+    Exchange,
+    /// `FFREE ST(i)`.
+    Free,
+    /// `FCHS`.
+    ChangeSign,
+    /// `FABS`.
+    Absolute,
+    /// `FDECSTP`.
+    DecrementTop,
+    /// `FINCSTP`.
+    IncrementTop,
+    /// One of the seven `FLD*` architectural constants.
+    LoadConstant(X86X87Constant),
+    /// `FCMOVcc ST(0), ST(i)` using the integer condition flags.
+    ConditionalMove(Condition),
+    /// `FXAM` raw binary80/tag classification.
+    Examine,
+    /// `FTST` ordered comparison of ST(0) with +0.0.
+    TestZero,
+    /// `FRNDINT` integral rounding in binary80 format using FCW.RC.
+    RoundInteger,
+    /// `FXTRACT` exponent/significand decomposition with a stack push.
+    Extract,
+    /// `FSCALE` multiplication of ST(0) by 2^trunc(ST(1)).
+    Scale,
+    /// `FSQRT` square root rounded according to FCW.PC and FCW.RC.
+    SquareRoot,
+    /// x87 floating-point compare family. `unordered` selects FUCOM policy,
+    /// `pop` is the architectural pop count, and `eflags` selects the
+    /// FCOMI/FUCOMI destination instead of C0/C2/C3.
+    Compare {
+        source: X86X87CompareSource,
+        unordered: bool,
+        pop: u8,
+        eflags: bool,
+    },
+    /// `FIST`, `FISTP`, or `FISTTP` integer store.
+    StoreInteger {
+        width: X86X87IntWidth,
+        pop: bool,
+        truncate: bool,
+    },
+    /// `FST` or `FSTP` narrowing store to IEEE binary32/binary64.
+    StoreFloat { width: X86X87FloatWidth, pop: bool },
+    /// `FBSTP m80bcd`.
+    StoreBcd,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87CompareSource {
+    Register,
+    Single,
+    Double,
+    Int16,
+    Int32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87IntWidth {
+    I16,
+    I32,
+    I64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87FloatWidth {
+    F32,
+    F64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87Constant {
+    One,
+    Log2Ten,
+    Log2E,
+    Pi,
+    Log10Two,
+    LnTwo,
+    Zero,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86OpHint {
     /// ALU encoding preference
     AluEncoding(X86AluEncoding),
@@ -128,6 +273,23 @@ pub enum X86OpHint {
     },
     /// Alignment hint for default vector moves
     VecAlign(X86VecAlign),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86StringKind {
+    Movs,
+    Stos,
+    Lods,
+    Scas,
+    Cmps,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86RepMode {
+    None,
+    Rep,
+    Repe,
+    Repne,
 }
 
 // ============================================================================
@@ -807,6 +969,21 @@ pub enum OpKind {
         width: MemWidth,
     },
 
+    /// Complete x86 string-operation semantics, including address-size index
+    /// masking, source segment base, DF direction, REP count, and REPE/REPNE
+    /// termination. Architectural registers are explicit for dataflow.
+    X86String {
+        kind: X86StringKind,
+        rep: X86RepMode,
+        accumulator: VReg,
+        src_index: VReg,
+        dst_index: VReg,
+        count: VReg,
+        src_segment: Option<VReg>,
+        width: MemWidth,
+        address_width: OpWidth,
+    },
+
     /// Load pair (ARM LDP)
     LoadPair {
         dst1: VReg,
@@ -896,6 +1073,12 @@ pub enum OpKind {
 
     /// Prefetch hint
     Prefetch { addr: Address, write: bool },
+
+    /// x86 cache-line writeback/invalidation operation.
+    X86CacheControl {
+        addr: Address,
+        kind: X86CacheControlKind,
+    },
 
     /// Memory fence
     Fence { kind: FenceKind },
@@ -988,6 +1171,68 @@ pub enum OpKind {
         precision: FpPrecision,
     },
 
+    /// x86 COMIS*/UCOMIS* scalar floating-point comparison. Writes the x86
+    /// arithmetic flags with the architectural unordered/equal/less/greater
+    /// truth table. `signaling` distinguishes COMI from UCOMI exception policy.
+    X86FpCompare {
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        signaling: bool,
+    },
+
+    /// x86 CVT(T)SS2SI/CVT(T)SD2SI scalar conversion. Invalid or out-of-range
+    /// inputs produce the signed integer-indefinite value for `int_width` when
+    /// the SIMD invalid exception is masked. Non-truncating forms use MXCSR.RC.
+    X86FpToInt {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        int_width: OpWidth,
+        truncate: bool,
+    },
+
+    /// x86 CVTSI2SS/CVTSI2SD scalar signed-integer conversion. `merge` supplies
+    /// destination bits 32/64..127. VEX/EVEX forms set `zero_upper` to clear
+    /// shared vector state above bit 127; legacy forms preserve it.
+    X86IntToFp {
+        dst: VReg,
+        merge: VReg,
+        src: VReg,
+        elem: VecElementType,
+        int_width: OpWidth,
+        zero_upper: bool,
+    },
+
+    /// x86 CVTSS2SD/CVTSD2SS scalar precision conversion. `merge` supplies
+    /// the non-low scalar lanes; VEX/EVEX forms clear state above bit 127.
+    X86FpConvert {
+        dst: VReg,
+        merge: VReg,
+        src: VReg,
+        from: VecElementType,
+        to: VecElementType,
+        zero_upper: bool,
+    },
+
+    /// x86 packed CVTPS2PD/CVTPD2PS precision conversion. `lanes` is the
+    /// number of converted source elements. `dst_width` identifies the
+    /// architecturally written low region; narrowing conversions clear any
+    /// unused bits in that region. VEX forms set `zero_upper` to clear all
+    /// shared vector state above `dst_width`, while legacy forms preserve it.
+    X86PackedFpConvert {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        from: VecElementType,
+        to: VecElementType,
+        lanes: u8,
+        dst_width: VecWidth,
+        mask_zeroing: bool,
+        zero_upper: bool,
+        round: FpRoundMode,
+    },
+
     /// FP convert precision
     FConvert {
         dst: VReg,
@@ -1051,6 +1296,18 @@ pub enum OpKind {
         src2: VReg,
         elem: VecElementType,
         lanes: u8,
+    },
+
+    /// x86 MIN*/MAX* selection semantics. Unordered or equal FP operands
+    /// select `src2` bit-for-bit; ordered unequal operands select the numeric
+    /// minimum or maximum. This is distinct from AArch64 FMIN/FMAX and *NM.
+    VX86MinMax {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        min: bool,
     },
 
     /// Vector multiply
@@ -2398,6 +2655,35 @@ pub enum OpKind {
     /// Force flag materialization
     MaterializeFlags,
 
+    /// x86 LDMXCSR/VLDMXCSR: load the 32-bit SIMD control/status register.
+    X86LoadMxcsr { addr: Address },
+
+    /// x86 STMXCSR/VSTMXCSR: store the 32-bit SIMD control/status register.
+    X86StoreMxcsr { addr: Address },
+
+    /// x87 environment/control operation. Memory forms carry `Some(addr)`;
+    /// register-only FNINIT/FNCLEX/FNSTSW AX forms carry `None`.
+    X86X87Control {
+        kind: X86X87ControlKind,
+        addr: Option<Address>,
+    },
+
+    /// Exact x87 register-stack or m80fp transfer. Memory forms carry an
+    /// address; register forms select logical `ST(st)`. `fop` is the 11-bit
+    /// x87 opcode recorded in the architectural environment.
+    X86X87Data {
+        kind: X86X87DataKind,
+        addr: Option<Address>,
+        st: u8,
+        fop: u16,
+    },
+
+    /// FXSAVE/FXSAVE64: save the 512-byte legacy x87/SSE state image.
+    X86FxSave { addr: Address, rex_w: bool },
+
+    /// FXRSTOR/FXRSTOR64: restore the 512-byte legacy x87/SSE state image.
+    X86FxRstor { addr: Address, rex_w: bool },
+
     /// Test condition and store result
     TestCondition { dst: VReg, cond: Condition },
 
@@ -2422,6 +2708,10 @@ pub enum OpKind {
 
     /// Write system register
     WriteSysReg { reg: u32, src: VReg },
+
+    /// x86 RDTSC: read the monotonically increasing SMIR cycle counter into
+    /// EDX:EAX (both destinations are 32-bit zero-extending writes).
+    X86ReadTsc { dst_lo: VReg, dst_hi: VReg },
 
     // ========================================================================
     // HEXAGON SCALAR FLOATING POINT (F2_*)
@@ -2833,10 +3123,15 @@ impl OpKind {
             | OpKind::HexTlbMatch { dst, .. }
             | OpKind::IntToFp { dst, .. }
             | OpKind::FpToInt { dst, .. }
+            | OpKind::X86FpToInt { dst, .. }
+            | OpKind::X86IntToFp { dst, .. }
+            | OpKind::X86FpConvert { dst, .. }
+            | OpKind::X86PackedFpConvert { dst, .. }
             | OpKind::FRound { dst, .. }
             | OpKind::VAdd { dst, .. }
             | OpKind::VSub { dst, .. }
             | OpKind::VMax { dst, .. }
+            | OpKind::VX86MinMax { dst, .. }
             | OpKind::VMul { dst, .. }
             | OpKind::VDiv { dst, .. }
             | OpKind::VUnary { dst, .. }
@@ -2877,6 +3172,13 @@ impl OpKind {
             | OpKind::TestCondition { dst, .. }
             | OpKind::SetCC { dst, .. }
             | OpKind::ReadSysReg { dst, .. } => vec![*dst],
+
+            OpKind::X86ReadTsc { dst_lo, dst_hi } => vec![*dst_lo, *dst_hi],
+
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::StoreStatusAx,
+                ..
+            } => vec![VReg::Arch(ArchReg::X86(X86Reg::Rax))],
 
             OpKind::Leave => vec![
                 VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
@@ -3039,6 +3341,28 @@ impl OpKind {
                 dst, src, count, ..
             } => vec![*dst, *src, *count],
 
+            OpKind::X86String {
+                kind,
+                rep,
+                accumulator,
+                src_index,
+                dst_index,
+                count,
+                ..
+            } => {
+                let mut dsts = match kind {
+                    X86StringKind::Movs => vec![*src_index, *dst_index],
+                    X86StringKind::Stos => vec![*dst_index],
+                    X86StringKind::Lods => vec![*accumulator, *src_index],
+                    X86StringKind::Scas => vec![*dst_index],
+                    X86StringKind::Cmps => vec![*src_index, *dst_index],
+                };
+                if *rep != X86RepMode::None {
+                    dsts.push(*count);
+                }
+                dsts
+            }
+
             OpKind::LoadPair { dst1, dst2, .. } => vec![*dst1, *dst2],
 
             OpKind::Cas { dst, success, .. } => vec![*dst, *success],
@@ -3057,14 +3381,34 @@ impl OpKind {
             | OpKind::AtomicStore { .. }
             | OpKind::ClearExclusive
             | OpKind::Prefetch { .. }
+            | OpKind::X86CacheControl { .. }
             | OpKind::Fence { .. }
             | OpKind::FCmp { .. }
+            | OpKind::X86FpCompare { .. }
             | OpKind::VStore { .. }
             | OpKind::WriteFlags { .. }
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
+            | OpKind::X86LoadMxcsr { .. }
+            | OpKind::X86StoreMxcsr { .. }
+            | OpKind::X86X87Control {
+                kind:
+                    X86X87ControlKind::Init
+                    | X86X87ControlKind::ClearExceptions
+                    | X86X87ControlKind::LoadControlWord
+                    | X86X87ControlKind::StoreControlWord
+                    | X86X87ControlKind::StoreStatusWord
+                    | X86X87ControlKind::LoadEnvironment(_)
+                    | X86X87ControlKind::StoreEnvironment(_)
+                    | X86X87ControlKind::RestoreState(_)
+                    | X86X87ControlKind::SaveState(_),
+                ..
+            }
+            | OpKind::X86X87Data { .. }
+            | OpKind::X86FxSave { .. }
+            | OpKind::X86FxRstor { .. }
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
@@ -3087,6 +3431,7 @@ impl OpKind {
                     | OpKind::PredStore { .. }
                     | OpKind::RepStos { .. }
                     | OpKind::RepMovs { .. }
+                    | OpKind::X86String { .. }
                     | OpKind::StorePair { .. }
                     | OpKind::AtomicStore { .. }
                     | OpKind::AtomicRmw { .. }
@@ -3105,6 +3450,21 @@ impl OpKind {
                     | OpKind::SetDF { .. }
                     | OpKind::CmcCF
                     | OpKind::MaterializeFlags
+                    | OpKind::X86LoadMxcsr { .. }
+                    | OpKind::X86StoreMxcsr { .. }
+                    | OpKind::X86CacheControl { .. }
+                    | OpKind::X86X87Control {
+                        kind:
+                            X86X87ControlKind::Init
+                            | X86X87ControlKind::ClearExceptions
+                            | X86X87ControlKind::StoreControlWord
+                            | X86X87ControlKind::StoreStatusWord
+                            | X86X87ControlKind::StoreEnvironment(_)
+                            | X86X87ControlKind::SaveState(_),
+                        ..
+                    }
+                    | OpKind::X86X87Data { .. }
+                    | OpKind::X86FxSave { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
                     // actually clamps and `set_ovf` is set. That update is invisible
                     // to `dests()`, so the op must be treated as side-effecting or DCE
@@ -3115,6 +3475,7 @@ impl OpKind {
                     | OpKind::Syscall { .. }
                     | OpKind::Swi { .. }
                     | OpKind::WriteSysReg { .. }
+                    | OpKind::X86ReadTsc { .. }
                     | OpKind::Breakpoint
             )
     }
@@ -3132,8 +3493,50 @@ impl OpKind {
                 | OpKind::AtomicCmpXadd { .. }
                 | OpKind::LoadExclusive { .. }
                 | OpKind::RepMovs { .. }
+                | OpKind::X86String { .. }
                 | OpKind::VLoad { .. }
                 | OpKind::VHist { .. }
+                | OpKind::X86LoadMxcsr { .. }
+                | OpKind::X86X87Control {
+                    kind: X86X87ControlKind::LoadControlWord
+                        | X86X87ControlKind::LoadEnvironment(_)
+                        | X86X87ControlKind::RestoreState(_),
+                    addr: Some(_),
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::LoadExtended
+                        | X86X87DataKind::LoadSingle
+                        | X86X87DataKind::LoadDouble
+                        | X86X87DataKind::LoadInt16
+                        | X86X87DataKind::LoadInt32
+                        | X86X87DataKind::LoadInt64
+                        | X86X87DataKind::LoadBcd,
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::Compare {
+                        source: X86X87CompareSource::Single | X86X87CompareSource::Double,
+                        ..
+                    },
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::Compare {
+                        source: X86X87CompareSource::Int16 | X86X87CompareSource::Int32,
+                        ..
+                    },
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86FxRstor { .. }
+                | OpKind::X86CacheControl {
+                    kind: X86CacheControlKind::Clflush
+                        | X86CacheControlKind::Clflushopt
+                        | X86CacheControlKind::Clwb,
+                    ..
+                }
                 | OpKind::RvVector { .. }
                 | OpKind::Leave
         )
@@ -3147,6 +3550,10 @@ impl OpKind {
                 | OpKind::PredStore { .. }
                 | OpKind::RepStos { .. }
                 | OpKind::RepMovs { .. }
+                | OpKind::X86String {
+                    kind: X86StringKind::Movs | X86StringKind::Stos,
+                    ..
+                }
                 | OpKind::StorePair { .. }
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }
@@ -3154,6 +3561,35 @@ impl OpKind {
                 | OpKind::AtomicCmpXadd { .. }
                 | OpKind::StoreExclusive { .. }
                 | OpKind::VStore { .. }
+                | OpKind::X86StoreMxcsr { .. }
+                | OpKind::X86X87Control {
+                    kind: X86X87ControlKind::StoreControlWord
+                        | X86X87ControlKind::StoreStatusWord
+                        | X86X87ControlKind::StoreEnvironment(_)
+                        | X86X87ControlKind::SaveState(_),
+                    addr: Some(_),
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::StorePopExtended,
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::StoreInteger { .. },
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::StoreFloat { .. },
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::StoreBcd,
+                    addr: Some(_),
+                    ..
+                }
+                | OpKind::X86FxSave { .. }
                 | OpKind::RvVector { .. }
         )
     }
@@ -3166,6 +3602,210 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn x86_x87_control_metadata_tracks_hidden_state_and_memory_effects() {
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let init = OpKind::X86X87Control {
+            kind: X86X87ControlKind::Init,
+            addr: None,
+        };
+        assert!(init.has_side_effects());
+        assert!(init.dests().is_empty());
+
+        let status_ax = OpKind::X86X87Control {
+            kind: X86X87ControlKind::StoreStatusAx,
+            addr: None,
+        };
+        assert_eq!(
+            status_ax.dests(),
+            vec![VReg::Arch(ArchReg::X86(X86Reg::Rax))]
+        );
+        assert!(!status_ax.reads_memory());
+        assert!(!status_ax.writes_memory());
+
+        let load = OpKind::X86X87Control {
+            kind: X86X87ControlKind::LoadControlWord,
+            addr: Some(Address::Direct(rbx)),
+        };
+        assert!(load.reads_memory());
+        assert!(!load.writes_memory());
+        assert!(load.has_side_effects());
+
+        for kind in [
+            X86X87ControlKind::LoadEnvironment(X86X87EnvWidth::W16),
+            X86X87ControlKind::RestoreState(X86X87EnvWidth::W32),
+        ] {
+            let load = OpKind::X86X87Control {
+                kind,
+                addr: Some(Address::Direct(rbx)),
+            };
+            assert!(load.reads_memory());
+            assert!(!load.writes_memory());
+            assert!(load.has_side_effects());
+            assert!(load.dests().is_empty());
+        }
+
+        for kind in [
+            X86X87ControlKind::StoreControlWord,
+            X86X87ControlKind::StoreStatusWord,
+            X86X87ControlKind::StoreEnvironment(X86X87EnvWidth::W16),
+            X86X87ControlKind::SaveState(X86X87EnvWidth::W32),
+        ] {
+            let store = OpKind::X86X87Control {
+                kind,
+                addr: Some(Address::Direct(rbx)),
+            };
+            assert!(!store.reads_memory());
+            assert!(store.writes_memory());
+            assert!(store.has_side_effects());
+        }
+
+        let load_extended = OpKind::X86X87Data {
+            kind: X86X87DataKind::LoadExtended,
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0x328,
+        };
+        assert!(load_extended.reads_memory());
+        assert!(!load_extended.writes_memory());
+        assert!(load_extended.has_side_effects());
+        assert!(load_extended.dests().is_empty());
+
+        for kind in [
+            X86X87DataKind::LoadSingle,
+            X86X87DataKind::LoadDouble,
+            X86X87DataKind::LoadInt16,
+            X86X87DataKind::LoadInt32,
+            X86X87DataKind::LoadInt64,
+            X86X87DataKind::LoadBcd,
+        ] {
+            let load = OpKind::X86X87Data {
+                kind,
+                addr: Some(Address::Direct(rbx)),
+                st: 0,
+                fop: 0,
+            };
+            assert!(load.reads_memory());
+            assert!(!load.writes_memory());
+            assert!(load.has_side_effects());
+        }
+
+        let compare_memory = OpKind::X86X87Data {
+            kind: X86X87DataKind::Compare {
+                source: X86X87CompareSource::Double,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0,
+        };
+        assert!(compare_memory.reads_memory());
+        assert!(!compare_memory.writes_memory());
+        assert!(compare_memory.has_side_effects());
+
+        let store_extended = OpKind::X86X87Data {
+            kind: X86X87DataKind::StorePopExtended,
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0x338,
+        };
+        assert!(!store_extended.reads_memory());
+        assert!(store_extended.writes_memory());
+        assert!(store_extended.has_side_effects());
+
+        let store_integer = OpKind::X86X87Data {
+            kind: X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I32,
+                pop: true,
+                truncate: false,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0x318,
+        };
+        assert!(!store_integer.reads_memory());
+        assert!(store_integer.writes_memory());
+        assert!(store_integer.has_side_effects());
+
+        let store_float = OpKind::X86X87Data {
+            kind: X86X87DataKind::StoreFloat {
+                width: X86X87FloatWidth::F64,
+                pop: true,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0x518,
+        };
+        assert!(!store_float.reads_memory());
+        assert!(store_float.writes_memory());
+        assert!(store_float.has_side_effects());
+
+        let store_bcd = OpKind::X86X87Data {
+            kind: X86X87DataKind::StoreBcd,
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0x730,
+        };
+        assert!(!store_bcd.reads_memory());
+        assert!(store_bcd.writes_memory());
+        assert!(store_bcd.has_side_effects());
+
+        for kind in [
+            X86X87DataKind::LoadRegister,
+            X86X87DataKind::StoreRegister,
+            X86X87DataKind::StorePopRegister,
+            X86X87DataKind::Exchange,
+            X86X87DataKind::Free,
+            X86X87DataKind::ChangeSign,
+            X86X87DataKind::Absolute,
+            X86X87DataKind::DecrementTop,
+            X86X87DataKind::IncrementTop,
+            X86X87DataKind::LoadConstant(X86X87Constant::Pi),
+            X86X87DataKind::ConditionalMove(Condition::Eq),
+            X86X87DataKind::Examine,
+            X86X87DataKind::TestZero,
+            X86X87DataKind::RoundInteger,
+            X86X87DataKind::Extract,
+            X86X87DataKind::Scale,
+            X86X87DataKind::SquareRoot,
+            X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 1,
+                eflags: true,
+            },
+        ] {
+            let register = OpKind::X86X87Data {
+                kind,
+                addr: None,
+                st: 3,
+                fop: 0x1C3,
+            };
+            assert!(!register.reads_memory());
+            assert!(!register.writes_memory());
+            assert!(register.has_side_effects());
+            assert!(register.dests().is_empty());
+        }
+
+        let fxsave = OpKind::X86FxSave {
+            addr: Address::Direct(rbx),
+            rex_w: true,
+        };
+        assert!(!fxsave.reads_memory());
+        assert!(fxsave.writes_memory());
+        assert!(fxsave.has_side_effects());
+
+        let fxrstor = OpKind::X86FxRstor {
+            addr: Address::Direct(rbx),
+            rex_w: false,
+        };
+        assert!(fxrstor.reads_memory());
+        assert!(!fxrstor.writes_memory());
+        assert!(fxrstor.has_side_effects());
+    }
 
     #[test]
     fn test_op_dests() {
@@ -3186,5 +3826,45 @@ mod tests {
         assert!(op.dests().is_empty());
         assert!(op.has_side_effects());
         assert!(op.writes_memory());
+    }
+
+    #[test]
+    fn x86_string_dests_are_kind_and_rep_precise() {
+        let rax = VReg::virt(0);
+        let rcx = VReg::virt(1);
+        let rsi = VReg::virt(2);
+        let rdi = VReg::virt(3);
+        let make = |kind, rep| OpKind::X86String {
+            kind,
+            rep,
+            accumulator: rax,
+            src_index: rsi,
+            dst_index: rdi,
+            count: rcx,
+            src_segment: None,
+            width: MemWidth::B1,
+            address_width: OpWidth::W64,
+        };
+
+        assert_eq!(
+            make(X86StringKind::Movs, X86RepMode::None).dests(),
+            vec![rsi, rdi]
+        );
+        assert_eq!(
+            make(X86StringKind::Stos, X86RepMode::Rep).dests(),
+            vec![rdi, rcx]
+        );
+        assert_eq!(
+            make(X86StringKind::Lods, X86RepMode::Rep).dests(),
+            vec![rax, rsi, rcx]
+        );
+        assert_eq!(
+            make(X86StringKind::Scas, X86RepMode::None).dests(),
+            vec![rdi]
+        );
+        assert_eq!(
+            make(X86StringKind::Cmps, X86RepMode::Repe).dests(),
+            vec![rsi, rdi, rcx]
+        );
     }
 }

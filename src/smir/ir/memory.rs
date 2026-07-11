@@ -323,6 +323,7 @@ impl SmirMemory for FlatMemory {
         let new = match op {
             AtomicOp::Add => old_m.wrapping_add(o),
             AtomicOp::Sub => old_m.wrapping_sub(o),
+            AtomicOp::Neg => 0u64.wrapping_sub(old_m),
             AtomicOp::And => old_m & o,
             AtomicOp::Or => old_m | o,
             AtomicOp::Xor => old_m ^ o,
@@ -533,6 +534,22 @@ mod tests {
             .atomic_load(0x200, MemWidth::B8, MemoryOrder::SeqCst)
             .unwrap();
         assert_eq!(val, 100);
+
+        let old = mem
+            .atomic_rmw(
+                0x200,
+                AtomicOp::Neg,
+                0xDEAD_BEEF,
+                MemWidth::B8,
+                MemoryOrder::SeqCst,
+            )
+            .unwrap();
+        assert_eq!(old, 100);
+        assert_eq!(
+            mem.atomic_load(0x200, MemWidth::B8, MemoryOrder::SeqCst)
+                .unwrap(),
+            0u64.wrapping_sub(100),
+        );
     }
 
     #[test]

@@ -11,6 +11,14 @@ use crate::isa::riscv::decode as rv_decode;
 use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen};
 use crate::smir::ir::ops::HexFpOp;
 use crate::smir::ir::ops::HexFpRecipKind;
+use crate::smir::ir::ops::X86CacheControlKind;
+use crate::smir::ir::ops::X86X87CompareSource;
+use crate::smir::ir::ops::X86X87Constant;
+use crate::smir::ir::ops::X86X87ControlKind;
+use crate::smir::ir::ops::X86X87DataKind;
+use crate::smir::ir::ops::X86X87EnvWidth;
+use crate::smir::ir::ops::X86X87FloatWidth;
+use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::types::DispSize;
 use crate::smir::lift::riscv::RiscVExtensions;
 use crate::smir::{
@@ -1111,6 +1119,14 @@ debug_name_json!(
     Condition,
     HexFpOp,
     HexFpRecipKind,
+    X86CacheControlKind,
+    X86X87Constant,
+    X86X87CompareSource,
+    X86X87ControlKind,
+    X86X87DataKind,
+    X86X87EnvWidth,
+    X86X87IntWidth,
+    X86X87FloatWidth,
 );
 
 impl OracleJson for FlagSet {
@@ -1764,6 +1780,79 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             precision,
         } => op_json!("fcmp", src1, src2, precision),
+        OpKind::X86FpCompare {
+            src1,
+            src2,
+            elem,
+            signaling,
+        } => op_json!("x86_fp_compare", src1, src2, elem, signaling),
+        OpKind::X86FpToInt {
+            dst,
+            src,
+            elem,
+            int_width,
+            truncate,
+        } => op_json!("x86_fp_to_int", dst, src, elem, int_width, truncate),
+        OpKind::X86IntToFp {
+            dst,
+            merge,
+            src,
+            elem,
+            int_width,
+            zero_upper,
+        } => op_json!(
+            "x86_int_to_fp",
+            dst,
+            merge,
+            src,
+            elem,
+            int_width,
+            zero_upper
+        ),
+        OpKind::X86FpConvert {
+            dst,
+            merge,
+            src,
+            from,
+            to,
+            zero_upper,
+        } => op_json!("x86_fp_convert", dst, merge, src, from, to, zero_upper),
+        OpKind::X86PackedFpConvert {
+            dst,
+            src,
+            mask,
+            from,
+            to,
+            lanes,
+            dst_width,
+            mask_zeroing,
+            zero_upper,
+            round,
+        } => op_json!(
+            "x86_packed_fp_convert",
+            dst,
+            src,
+            mask,
+            from,
+            to,
+            lanes,
+            dst_width,
+            mask_zeroing,
+            zero_upper,
+            round
+        ),
+        OpKind::X86LoadMxcsr { addr } => op_json!("x86_load_mxcsr", addr),
+        OpKind::X86StoreMxcsr { addr } => op_json!("x86_store_mxcsr", addr),
+        OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),
+        OpKind::X86X87Control { kind, addr } => op_json!("x86_x87_control", kind, addr),
+        OpKind::X86X87Data {
+            kind,
+            addr,
+            st,
+            fop,
+        } => op_json!("x86_x87_data", kind, addr, st, fop),
+        OpKind::X86FxSave { addr, rex_w } => op_json!("x86_fxsave", addr, rex_w),
+        OpKind::X86FxRstor { addr, rex_w } => op_json!("x86_fxrstor", addr, rex_w),
         OpKind::FConvert { dst, src, from, to } => op_json!("fconvert", dst, src, from, to),
         OpKind::HexFp {
             dst,
@@ -1836,6 +1925,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             lanes,
         } => op_json!("vmax", dst, src1, src2, elem, lanes),
+        OpKind::VX86MinMax {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            min,
+        } => op_json!("vx86_minmax", dst, src1, src2, elem, lanes, min),
         OpKind::VMul {
             dst,
             src1,
@@ -2672,6 +2769,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::Swi { imm } => op_json!("swi", imm),
         OpKind::ReadSysReg { dst, reg } => op_json!("read_sys_reg", dst, reg),
         OpKind::WriteSysReg { reg, src } => op_json!("write_sys_reg", reg, src),
+        OpKind::X86ReadTsc { dst_lo, dst_hi } => op_json!("x86_read_tsc", dst_lo, dst_hi),
         OpKind::Nop => op_json!("nop"),
         OpKind::Undefined { opcode } => {
             let mut obj = Map::new();
@@ -2719,6 +2817,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst, src1, src2, ..
         } => op_json!("rv_int_crypto", dst, src1, src2),
         OpKind::RvVector { rs1, rs2, .. } => op_json!("rv_vector", rs1, rs2),
+        OpKind::X86String {
+            accumulator,
+            src_index,
+            dst_index,
+            count,
+            ..
+        } => op_json!("x86_string", accumulator, src_index, dst_index, count),
     }
 }
 

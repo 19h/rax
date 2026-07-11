@@ -1466,11 +1466,57 @@ mod tests {
             ("shr rax, 4", vec![0x48, 0xC1, 0xE8, 0x04]),
             ("sar rax, 4", vec![0x48, 0xC1, 0xF8, 0x04]),
             ("sete al", vec![0x0F, 0x94, 0xC0]),
+            ("rdtsc", vec![0x0F, 0x31]),
+            ("movups xmm0,xmm1", vec![0x0F, 0x10, 0xC1]),
+            ("addps xmm0,xmm1", vec![0x0F, 0x58, 0xC1]),
+            ("divpd xmm0,xmm1", vec![0x66, 0x0F, 0x5E, 0xC1]),
+            ("xorps xmm0,xmm1", vec![0x0F, 0x57, 0xC1]),
+            ("vandps xmm0,xmm0,xmm1", vec![0xC5, 0xF8, 0x54, 0xC1]),
+            ("cvtps2pd xmm0,xmm1", vec![0x0F, 0x5A, 0xC1]),
+            ("cvtpd2ps xmm0,xmm1", vec![0x66, 0x0F, 0x5A, 0xC1]),
+            ("vcvtps2pd ymm0,xmm1", vec![0xC5, 0xFC, 0x5A, 0xC1]),
+            ("vcvtpd2ps xmm0,ymm1", vec![0xC5, 0xFD, 0x5A, 0xC1]),
+            (
+                "vcvtps2pd zmm0{k1}{z},ymm1",
+                vec![0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1],
+            ),
+            (
+                "vcvtpd2ps ymm5{k4}{z},zmm6",
+                vec![0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE],
+            ),
+            (
+                "vcvtpd2ps ymm0{k1},zmm1,{rd-sae}",
+                vec![0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1],
+            ),
             ("rep stosq", vec![0xF3, 0x48, 0xAB]),
         ];
 
         for (name, bytes) in cases {
             let lowered = lower_body_bytes(name, &bytes).expect("lower body bytes");
+            assert_eq!(lowered, bytes, "{}: bytes mismatch", name);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_exact_bytes_string_family() {
+        let cases: Vec<(&str, Vec<u8>)> = vec![
+            ("movsb", vec![0xA4]),
+            ("movsw", vec![0x66, 0xA5]),
+            ("movsd", vec![0xA5]),
+            ("movsq", vec![0x48, 0xA5]),
+            ("addr32 rep movsb", vec![0x67, 0xF3, 0xA4]),
+            ("cmpsb", vec![0xA6]),
+            ("repne cmpsq", vec![0xF2, 0x48, 0xA7]),
+            ("stosb", vec![0xAA]),
+            ("rep stosq", vec![0xF3, 0x48, 0xAB]),
+            ("lodsb", vec![0xAC]),
+            ("lodsq", vec![0x48, 0xAD]),
+            ("scasb", vec![0xAE]),
+            ("repe scasd", vec![0xF3, 0xAF]),
+        ];
+
+        for (name, bytes) in cases {
+            let lowered = lower_body_bytes(name, &bytes).expect("lower string body bytes");
             assert_eq!(lowered, bytes, "{}: bytes mismatch", name);
         }
     }

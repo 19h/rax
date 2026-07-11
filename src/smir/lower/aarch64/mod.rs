@@ -4356,9 +4356,11 @@ impl Aarch64Lowerer {
             AtomicOp::And if src == VReg::Imm(0) => Ok((1, 0b000)),
             AtomicOp::And if src == VReg::Imm(-1) => Ok((0, 0b001)),
             AtomicOp::Sub if src == VReg::Imm(0) => Ok((0, 0b000)),
-            AtomicOp::And | AtomicOp::Sub | AtomicOp::Nand => Err(LowerError::UnsupportedOp {
-                op: format!("AArch64 native atomic RMW op {op:?}"),
-            }),
+            AtomicOp::And | AtomicOp::Sub | AtomicOp::Neg | AtomicOp::Nand => {
+                Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native atomic RMW op {op:?}"),
+                })
+            }
         }
     }
 
@@ -4452,7 +4454,7 @@ impl Aarch64Lowerer {
         };
 
         match op {
-            AtomicOp::And | AtomicOp::Sub | AtomicOp::Nand => {}
+            AtomicOp::And | AtomicOp::Sub | AtomicOp::Neg | AtomicOp::Nand => {}
             other => {
                 return Err(LowerError::UnsupportedOp {
                     op: format!("AArch64 native atomic RMW op {other:?}"),
@@ -4514,6 +4516,9 @@ impl Aarch64Lowerer {
             }
             AtomicOp::Sub => {
                 self.emit_addsub_reg(work, rt, operand, true, false, op_width)?;
+            }
+            AtomicOp::Neg => {
+                self.emit_addsub_reg(work, 31, rt, true, false, op_width)?;
             }
             AtomicOp::Nand => {
                 self.emit_logic_shifted(work, rt, operand, 0b00, false, 0, 0, op_width)?;
@@ -19410,6 +19415,7 @@ mod tests {
         let new = match op {
             AtomicOp::Add => old.wrapping_add(operand),
             AtomicOp::Sub => old.wrapping_sub(operand),
+            AtomicOp::Neg => 0u64.wrapping_sub(old),
             AtomicOp::And => old & operand,
             AtomicOp::Or => old | operand,
             AtomicOp::Xor => old ^ operand,
@@ -37941,6 +37947,18 @@ mod tests {
             MemWidth::B1,
             MemoryOrder::SeqCst,
             0x3c,
+        );
+        assert_atomic_rmw_lowering(
+            "neg_b4_ignores_operand",
+            AtomicOp::Neg,
+            0,
+            1,
+            VReg::Imm(0),
+            None,
+            0,
+            MemWidth::B4,
+            MemoryOrder::SeqCst,
+            1,
         );
     }
 

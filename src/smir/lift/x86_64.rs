@@ -8,7 +8,9 @@ use std::collections::HashSet;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AluEncoding, X86CacheControlKind, X86OpHint, X86RepMode, X86SsePrefix,
+    X86StringKind, X86VecAlign, X86VecMap, X86X87CompareSource, X86X87Constant, X86X87ControlKind,
+    X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -210,9 +212,16 @@ struct VecPrefix {
     map: X86VecMap,
     pp: X86SsePrefix,
     width: VecWidth,
+    l_bits: u8,
     w: bool,
     vvvv: u8,
     rex: Option<u8>,
+    aaa: u8,
+    zeroing: bool,
+    b: bool,
+    reg_high: bool,
+    rm_high: bool,
+    v_high: bool,
     bytes: usize,
 }
 
@@ -500,9 +509,16 @@ fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
                 } else {
                     VecWidth::V128
                 },
+                l_bits: l,
                 w: false,
                 vvvv,
                 rex: build_rex(r, 0, 0, false),
+                aaa: 0,
+                zeroing: false,
+                b: false,
+                reg_high: false,
+                rm_high: false,
+                v_high: false,
                 bytes: 2,
             })
         }
@@ -537,9 +553,16 @@ fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
                 } else {
                     VecWidth::V128
                 },
+                l_bits: l,
                 w,
                 vvvv,
                 rex: build_rex(r, x, b, w),
+                aaa: 0,
+                zeroing: false,
+                b: false,
+                reg_high: false,
+                rm_high: false,
+                v_high: false,
                 bytes: 3,
             })
         }
@@ -563,15 +586,13 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let b2 = bytes[2];
     let b3 = bytes[3];
 
-    // The SMIR vector model does not represent EVEX write-masking ({k}), zeroing
-    // ({z}), or the EVEX.b bit (memory broadcast {1toN} / register embedded
-    // rounding {er}+SAE — which also repurposes L'L as the rounding mode, so even
-    // the vector-length decode below would be wrong). Refuse to lift any vector
-    // EVEX instruction that uses them so the interpreter (which models them
-    // correctly) handles it. This keeps a future vector-JIT from silently
-    // miscompiling them regardless of the op whitelist:
-    //   - aaa (b3 bits[2:0]) != 0  -> a real write-mask {k1}..{k7}
-    //   - z   (b3 bit[7])          -> zeroing {z}
+    // Scalar EVEX moves and arithmetic below model one-bit write masks with
+    // Select plus PredLoad/PredStore, including {z} and memory-fault suppression.
+    // Other masked vector families remain unsupported. EVEX.b (memory broadcast
+    // or register embedded rounding/SAE) remains rejected for every vector form
+    // because the current IR does not carry its rounding/exception semantics:
+    //   - aaa (b3 bits[2:0]) != 0  -> allowed only for scalar maskable forms
+    //   - z   (b3 bit[7])          -> allowed only with those scalar masks
     //   - b   (b3 bit[4])          -> broadcast / embedded rounding
     //
     // EXCEPTION: APX GPR instructions on map 0F38 (opcodes F2/F3/F5/F6/F7) are
@@ -580,14 +601,27 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     // lift_apx_{nf_,}bmi2_0f38, so the vector mask guard must not trip on them.
     let is_apx_gpr_0f38 =
         (b1 & 0x07) == 0x02 && matches!(bytes.get(4), Some(0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7));
-    if !is_apx_gpr_0f38 && ((b3 & 0x07) != 0 || (b3 & 0x80) != 0 || (b3 & 0x10) != 0) {
+    let is_scalar_maskable = (b1 & 0x07) == 1
+        && matches!(b2 & 0x03, 2 | 3)
+        && matches!(
+            bytes.get(4),
+            Some(0x10 | 0x11 | 0x51 | 0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F)
+        );
+    let is_packed_fp_convert =
+        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A));
+    let is_maskable = is_scalar_maskable || is_packed_fp_convert;
+    if !is_apx_gpr_0f38
+        && ((!is_maskable && ((b3 & 0x07) != 0 || (b3 & 0x80) != 0))
+            || (!is_packed_fp_convert && (b3 & 0x10) != 0))
+    {
         return Err(LiftError::Unsupported {
             addr,
             mnemonic: "EVEX write-mask / zeroing / broadcast / embedded-rounding".to_string(),
         });
     }
 
-    let r = ((b1 >> 4) & 1) ^ 1;
+    let r = ((b1 >> 7) & 1) ^ 1;
+    let r_prime = ((b1 >> 4) & 1) ^ 1;
     let x = ((b1 >> 6) & 1) ^ 1;
     let b = ((b1 >> 5) & 1) ^ 1;
     let map_bits = b1 & 0x07;
@@ -598,6 +632,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
 
     let w = (b2 >> 7) & 1 != 0;
     let vvvv = (!b2 >> 3) & 0x0F;
+    let v_prime = ((b3 >> 3) & 1) ^ 1;
     let pp = vex_pp_to_prefix(b2 & 0x3);
 
     let l_bits = (b3 >> 5) & 0x3;
@@ -613,9 +648,16 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         map,
         pp,
         width,
+        l_bits,
         w,
         vvvv,
         rex: build_rex(r, x, b, w),
+        aaa: b3 & 0x07,
+        zeroing: b3 & 0x80 != 0,
+        b: b3 & 0x10 != 0,
+        reg_high: r_prime != 0,
+        rm_high: x != 0,
+        v_high: v_prime != 0,
         bytes: 4,
     })
 }
@@ -703,6 +745,10 @@ pub struct X86Address {
     pub disp: i64,
     /// RIP-relative addressing?
     pub rip_relative: bool,
+    /// Address calculation width. In 64-bit mode a `67h` override selects
+    /// modulo-2^32 base/index/displacement arithmetic whose result is
+    /// zero-extended before an FS/GS segment base is added.
+    pub address_width: OpWidth,
     /// Displacement size hint
     pub disp_size: DispSize,
     /// FS/GS segment override, if any (`X86Reg::FsBase` / `X86Reg::GsBase`). In
@@ -741,18 +787,6 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
         });
     }
 
-    // 32-bit address-size override (0x67) in 64-bit mode uses the 32-bit halves
-    // of base/index and ZERO-extends the effective address — semantics the
-    // lifter does not model (it would treat `[eax]` as `[rax]`, wrong whenever
-    // the upper 32 bits are non-zero). Refuse to lift such operands so the
-    // region falls back to the interpreter. (Rare in 64-bit kernel code.)
-    if prefix.address_size_override {
-        return Err(LiftError::Unsupported {
-            addr,
-            mnemonic: "32-bit address-size (0x67) memory operand".to_string(),
-        });
-    }
-
     // FS (0x64) / GS (0x65) overrides carry a non-zero segment base in long mode
     // (TLS / per-CPU data); the lifted memory operand becomes an
     // `Address::SegmentRel` that adds the FsBase/GsBase register. CS/DS/ES/SS
@@ -772,6 +806,11 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
         scale: 1,
         disp: 0,
         rip_relative: false,
+        address_width: if prefix.address_size_override {
+            OpWidth::W32
+        } else {
+            OpWidth::W64
+        },
         disp_size: DispSize::Auto,
         segment,
     };
@@ -825,7 +864,8 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
             x86_addr.base = Some(base);
         }
     } else if rm_field == 5 && mod_bits == 0 {
-        // RIP-relative addressing in 64-bit mode
+        // In the default 64-bit address size this is RIP-relative. Under a
+        // 67h override the same encoding is a zero-extended absolute disp32.
         if bytes.len() < 5 {
             return Err(LiftError::Incomplete {
                 addr,
@@ -836,7 +876,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
         let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
         consumed += 4;
         x86_addr.disp = disp;
-        x86_addr.rip_relative = true;
+        x86_addr.rip_relative = !prefix.address_size_override;
         x86_addr.disp_size = DispSize::Disp32;
     } else {
         // Regular register indirect
@@ -903,6 +943,125 @@ impl X86_64Lifter {
         self.x86_gpr(reg & 0x1F)
     }
 
+    /// Decode an 8-bit register source, extracting AH/CH/DH/BH when no REX
+    /// prefix is present. With REX, codes 4..7 remain SPL/BPL/SIL/DIL.
+    fn read_byte_reg(
+        &self,
+        reg: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        if !prefix.has_rex() && (4..=7).contains(&(reg & 7)) {
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Shr {
+                    dst: tmp,
+                    src: self.gpr((reg & 7) - 4),
+                    amount: SrcOperand::Imm(8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            tmp
+        } else {
+            self.gpr(reg)
+        }
+    }
+
+    /// Return the aliased full GPR for an AH/CH/DH/BH destination.
+    fn high_byte_base(&self, reg: u8, prefix: &X86Prefix) -> Option<VReg> {
+        (!prefix.has_rex() && (4..=7).contains(&(reg & 7))).then(|| self.gpr((reg & 7) - 4))
+    }
+
+    /// Merge the low byte of `value` into bits 15:8 of `base`, preserving all
+    /// other bits. All helper arithmetic is explicitly flag-free.
+    fn merge_high_byte(
+        &self,
+        base: VReg,
+        value: VReg,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let byte = ctx.alloc_vreg();
+        let shifted = ctx.alloc_vreg();
+        let preserved = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: byte,
+                src1: value,
+                src2: SrcOperand::Imm(0xFF),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Shl {
+                dst: shifted,
+                src: byte,
+                amount: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: preserved,
+                src1: base,
+                src2: SrcOperand::Imm(!0xFF00u64 as i64),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Or {
+                dst: base,
+                src1: preserved,
+                src2: SrcOperand::Reg(shifted),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+    }
+
+    /// Write an 8-bit register destination from `value`, including the legacy
+    /// high-byte aliases when no REX prefix is present.
+    fn write_byte_reg(
+        &self,
+        reg: u8,
+        prefix: &X86Prefix,
+        value: VReg,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        if let Some(base) = self.high_byte_base(reg, prefix) {
+            self.merge_high_byte(base, value, pc, ctx, ops);
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: self.gpr(reg),
+                    src: SrcOperand::Reg(value),
+                    width: OpWidth::W8,
+                },
+            ));
+        }
+    }
+
     fn xmm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(reg)))
     }
@@ -922,6 +1081,213 @@ impl X86_64Lifter {
             VecWidth::V512 => self.zmm(reg),
             VecWidth::V64 => self.xmm(reg),
         }
+    }
+
+    /// Merge a computed legacy packed-XMM result into the architectural
+    /// destination without changing the shared YMM/ZMM state above bit 127.
+    fn append_legacy_packed_result(
+        &self,
+        dst: VReg,
+        result: VReg,
+        elem: VecElementType,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let lanes = VecWidth::V128.lanes(elem) as u8;
+        let mut scalars = Vec::with_capacity(lanes as usize);
+        for lane in 0..lanes {
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: result,
+                    lane,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            scalars.push((lane, scalar));
+        }
+        for (lane, scalar) in scalars {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst,
+                    vec: dst,
+                    scalar,
+                    lane,
+                    elem,
+                },
+            ));
+        }
+    }
+
+    /// Construct a VEX scalar XMM result: lane 0 comes from `low_scalar`, the
+    /// remaining 128-bit lanes come from `upper_src`, and all state above bit
+    /// 127 is cleared. Extract upper lanes before clearing `dst` so aliases are
+    /// exact (for example, `vaddss xmm0,xmm0,xmm1`).
+    fn append_vex_scalar_result(
+        &self,
+        dst: VReg,
+        upper_src: VReg,
+        low_scalar: VReg,
+        elem: VecElementType,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let xmm_lanes = if elem == VecElementType::F32 { 4 } else { 2 };
+        let mut upper = Vec::with_capacity((xmm_lanes - 1) as usize);
+        for lane in 1..xmm_lanes {
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: upper_src,
+                    lane,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            upper.push((lane, scalar));
+        }
+
+        let zero = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: zero,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VBroadcast {
+                dst,
+                scalar: zero,
+                elem,
+                lanes: 1,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VInsertLane {
+                dst,
+                vec: dst,
+                scalar: low_scalar,
+                lane: 0,
+                elem,
+            },
+        ));
+        for (lane, scalar) in upper {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst,
+                    vec: dst,
+                    scalar,
+                    lane,
+                    elem,
+                },
+            ));
+        }
+    }
+
+    fn append_evex_mask_condition(
+        &self,
+        prefix: VecPrefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> Option<VReg> {
+        if prefix.encoding != VecEncodingKind::Evex || prefix.aaa == 0 {
+            return None;
+        }
+        let cond = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: cond,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        Some(cond)
+    }
+
+    fn append_evex_scalar_select(
+        &self,
+        prefix: VecPrefix,
+        cond: Option<VReg>,
+        dst: VReg,
+        value: VReg,
+        elem: VecElementType,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let Some(cond) = cond else {
+            return value;
+        };
+        let fallback = ctx.alloc_vreg();
+        if prefix.zeroing {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: fallback,
+                    src: SrcOperand::Imm(0),
+                    width: if elem == VecElementType::F32 {
+                        OpWidth::W32
+                    } else {
+                        OpWidth::W64
+                    },
+                },
+            ));
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: fallback,
+                    vec: dst,
+                    lane: 0,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+        }
+        let selected = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Select {
+                dst: selected,
+                cond,
+                src_true: value,
+                src_false: fallback,
+                width: if elem == VecElementType::F32 {
+                    OpWidth::W32
+                } else {
+                    OpWidth::W64
+                },
+            },
+        ));
+        selected
     }
 
     /// Get RSP register
@@ -951,6 +1317,155 @@ impl X86_64Lifter {
         }
     }
 
+    /// Materialize a 32-bit effective address selected by a `67h` override in
+    /// 64-bit mode. Base, index, scaling, and displacement are evaluated
+    /// modulo 2^32; the resulting offset is zero-extended to 64 bits before an
+    /// optional FS/GS segment base is added. Flag-neutral integer operations
+    /// make this width rule explicit to interpreters and native lowerers.
+    fn x86_addr32_to_smir(
+        &self,
+        x86_addr: &X86Address,
+        ctx: &mut LiftContext,
+        gpr_override: Option<(u8, VReg)>,
+    ) -> (Address, Vec<SmirOp>) {
+        debug_assert_eq!(x86_addr.address_width, OpWidth::W32);
+        debug_assert!(!x86_addr.rip_relative);
+
+        let mut pre_ops = Vec::new();
+        let pc = ctx.guest_pc;
+        let displacement = (x86_addr.disp as u64 & u32::MAX as u64) as i64;
+        let segment = x86_addr.segment.map(|seg| VReg::Arch(ArchReg::X86(seg)));
+        let gpr = |index| match gpr_override {
+            Some((from, replacement)) if index == from => replacement,
+            _ => self.gpr(index),
+        };
+
+        // A displacement-only address has no arithmetic operands. Normalize
+        // its signed decoder representation directly to the architectural
+        // zero-extended 32-bit offset.
+        if x86_addr.base.is_none() && x86_addr.index.is_none() {
+            return match segment {
+                Some(segment) => (
+                    Address::SegmentRel {
+                        segment,
+                        base: None,
+                        index: None,
+                        scale: 1,
+                        disp: displacement,
+                    },
+                    pre_ops,
+                ),
+                None => (Address::Absolute(displacement as u64), pre_ops),
+            };
+        }
+
+        let mut offset = match (x86_addr.base, x86_addr.index) {
+            (Some(base), None) => {
+                let dst = ctx.alloc_vreg();
+                let kind = if x86_addr.disp == 0 {
+                    OpKind::Mov {
+                        dst,
+                        src: SrcOperand::Reg(gpr(base)),
+                        width: OpWidth::W32,
+                    }
+                } else {
+                    OpKind::Add {
+                        dst,
+                        src1: gpr(base),
+                        src2: SrcOperand::Imm(x86_addr.disp),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                };
+                pre_ops.push(SmirOp::new(OpId(pre_ops.len() as u16), pc, kind));
+                dst
+            }
+            (None, Some(index)) => {
+                let dst = ctx.alloc_vreg();
+                let kind = if x86_addr.scale == 1 {
+                    OpKind::Mov {
+                        dst,
+                        src: SrcOperand::Reg(gpr(index)),
+                        width: OpWidth::W32,
+                    }
+                } else {
+                    OpKind::Shl {
+                        dst,
+                        src: gpr(index),
+                        amount: SrcOperand::Imm(x86_addr.scale.trailing_zeros() as i64),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                };
+                pre_ops.push(SmirOp::new(OpId(pre_ops.len() as u16), pc, kind));
+                dst
+            }
+            (Some(base), Some(index)) => {
+                let scaled_index = if x86_addr.scale == 1 {
+                    gpr(index)
+                } else {
+                    let dst = ctx.alloc_vreg();
+                    pre_ops.push(SmirOp::new(
+                        OpId(pre_ops.len() as u16),
+                        pc,
+                        OpKind::Shl {
+                            dst,
+                            src: gpr(index),
+                            amount: SrcOperand::Imm(x86_addr.scale.trailing_zeros() as i64),
+                            width: OpWidth::W32,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    dst
+                };
+                let dst = ctx.alloc_vreg();
+                pre_ops.push(SmirOp::new(
+                    OpId(pre_ops.len() as u16),
+                    pc,
+                    OpKind::Add {
+                        dst,
+                        src1: gpr(base),
+                        src2: SrcOperand::Reg(scaled_index),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                dst
+            }
+            (None, None) => unreachable!(),
+        };
+
+        // The base-only case folded its displacement into the first Add. All
+        // indexed forms apply it after scaling/base addition, still at W32.
+        if x86_addr.index.is_some() && x86_addr.disp != 0 {
+            let dst = ctx.alloc_vreg();
+            pre_ops.push(SmirOp::new(
+                OpId(pre_ops.len() as u16),
+                pc,
+                OpKind::Add {
+                    dst,
+                    src1: offset,
+                    src2: SrcOperand::Imm(x86_addr.disp),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            offset = dst;
+        }
+
+        let addr = match segment {
+            Some(segment) => Address::SegmentRel {
+                segment,
+                base: Some(offset),
+                index: None,
+                scale: 1,
+                disp: 0,
+            },
+            None => Address::Direct(offset),
+        };
+        (addr, pre_ops)
+    }
+
     /// Convert x86 address to SMIR Address, optionally generating pre-ops
     fn x86_addr_to_smir(
         &self,
@@ -958,6 +1473,10 @@ impl X86_64Lifter {
         next_rip: u64,
         ctx: &mut LiftContext,
     ) -> (Address, Vec<SmirOp>) {
+        if x86_addr.address_width == OpWidth::W32 {
+            return self.x86_addr32_to_smir(x86_addr, ctx, None);
+        }
+
         let mut pre_ops = Vec::new();
         let pc = ctx.guest_pc;
         let disp_i32 = |disp: i64| -> Option<i32> {
@@ -1157,6 +1676,102 @@ impl X86_64Lifter {
         }
     }
 
+    fn vec_scalar_addr_to_smir(
+        &self,
+        prefix: VecPrefix,
+        x86_addr: &X86Address,
+        next_rip: u64,
+        elem: VecElementType,
+        ctx: &mut LiftContext,
+    ) -> (Address, Vec<SmirOp>) {
+        if prefix.encoding != VecEncodingKind::Evex || x86_addr.disp_size != DispSize::Disp8 {
+            return self.x86_addr_to_smir(x86_addr, next_rip, ctx);
+        }
+        let mut scaled = x86_addr.clone();
+        scaled.disp = scaled.disp.wrapping_mul(i64::from(elem.bytes()));
+        self.x86_addr_to_smir(&scaled, next_rip, ctx)
+    }
+
+    /// Decode an EVEX full-vector memory tuple. A disp8 is compressed by the
+    /// complete vector width (16, 32, or 64 bytes).
+    fn vec_full_addr_to_smir(
+        &self,
+        prefix: VecPrefix,
+        x86_addr: &X86Address,
+        next_rip: u64,
+        ctx: &mut LiftContext,
+    ) -> (Address, Vec<SmirOp>) {
+        if prefix.encoding != VecEncodingKind::Evex || x86_addr.disp_size != DispSize::Disp8 {
+            return self.x86_addr_to_smir(x86_addr, next_rip, ctx);
+        }
+        let mut scaled = x86_addr.clone();
+        scaled.disp = scaled.disp.wrapping_mul(i64::from(prefix.width.bytes()));
+        self.x86_addr_to_smir(&scaled, next_rip, ctx)
+    }
+
+    fn vec_disp8_addr_to_smir(
+        &self,
+        prefix: VecPrefix,
+        x86_addr: &X86Address,
+        next_rip: u64,
+        scale: u32,
+        ctx: &mut LiftContext,
+    ) -> (Address, Vec<SmirOp>) {
+        if prefix.encoding != VecEncodingKind::Evex || x86_addr.disp_size != DispSize::Disp8 {
+            return self.x86_addr_to_smir(x86_addr, next_rip, ctx);
+        }
+        let mut scaled = x86_addr.clone();
+        scaled.disp = scaled.disp.wrapping_mul(i64::from(scale));
+        self.x86_addr_to_smir(&scaled, next_rip, ctx)
+    }
+
+    /// Replace one register in an already-decoded address expression. Used by
+    /// POP r/m memory forms, whose effective address observes the incremented
+    /// stack pointer even though the architectural RSP update must not commit
+    /// until the destination store succeeds.
+    fn replace_address_reg(addr: Address, from: VReg, to: VReg) -> Address {
+        let replace = |reg: VReg| if reg == from { to } else { reg };
+        match addr {
+            Address::Direct(reg) => Address::Direct(replace(reg)),
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => Address::BaseOffset {
+                base: replace(base),
+                offset,
+                disp_size,
+            },
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => Address::BaseIndexScale {
+                base: base.map(replace),
+                index: replace(index),
+                scale,
+                disp,
+                disp_size,
+            },
+            Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale,
+                disp,
+            } => Address::SegmentRel {
+                segment,
+                base: base.map(replace),
+                index: index.map(replace),
+                scale,
+                disp,
+            },
+            other => other,
+        }
+    }
+
     /// Map x86 condition code (0-15) to SMIR Condition
     fn x86_cond(&self, cc: u8) -> Condition {
         match cc & 0x0F {
@@ -1186,6 +1801,152 @@ impl X86_64Lifter {
 // ============================================================================
 
 impl X86_64Lifter {
+    fn x86_alu_op(
+        group: u8,
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    ) -> OpKind {
+        match group {
+            0 => OpKind::Add {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            1 => OpKind::Or {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            2 => OpKind::Adc {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            3 => OpKind::Sbb {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            4 => OpKind::And {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            5 => OpKind::Sub {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            6 => OpKind::Xor {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            },
+            _ => unreachable!("x86 ALU group {group}"),
+        }
+    }
+
+    /// Append one architecturally atomic x86 memory ALU operation. ADC/SBB
+    /// fold the incoming CF into the atomic operand while retaining the
+    /// original source for the post-retirement flag calculation.
+    fn append_locked_alu(
+        group: u8,
+        source: VReg,
+        addr: Address,
+        width: OpWidth,
+        mem_width: MemWidth,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let atomic_source = if group == 2 || group == 3 {
+            let saved_flags = ctx.alloc_vreg();
+            let carry = ctx.alloc_vreg();
+            let combined = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::ReadFlags { dst: saved_flags },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::And {
+                    dst: carry,
+                    src1: saved_flags,
+                    src2: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Add {
+                    dst: combined,
+                    src1: source,
+                    src2: SrcOperand::Reg(carry),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            combined
+        } else {
+            source
+        };
+        let atomic_op = match group {
+            0 | 2 => AtomicOp::Add,
+            1 => AtomicOp::Or,
+            3 | 5 => AtomicOp::Sub,
+            4 => AtomicOp::And,
+            6 => AtomicOp::Xor,
+            _ => unreachable!("locked x86 ALU group {group}"),
+        };
+        let old = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::AtomicRmw {
+                dst: old,
+                addr,
+                src: atomic_source,
+                op: atomic_op,
+                width: mem_width,
+                order: MemoryOrder::SeqCst,
+            },
+        ));
+        let flag_result = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            Self::x86_alu_op(
+                group,
+                flag_result,
+                old,
+                SrcOperand::Reg(source),
+                width,
+                FlagUpdate::All,
+            ),
+        ));
+    }
+
     /// Lift arithmetic instruction (ADD, SUB, ADC, SBC, CMP)
     fn lift_arith(
         &self,
@@ -1215,6 +1976,12 @@ impl X86_64Lifter {
         let width = self.size_to_width(op_size);
 
         if (opcode & 0x07) == 4 || (opcode & 0x07) == 5 {
+            if prefix.lock {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
             let imm_size = if is_8bit {
                 1
             } else if op_size == 2 {
@@ -1312,6 +2079,39 @@ impl X86_64Lifter {
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let mut ops = Vec::new();
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let alu_group = (opcode >> 3) & 0x07;
+        if prefix.lock {
+            if !modrm.is_memory || !dir_rm_reg || alu_group == 7 {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let source = if is_8bit {
+                self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+            } else {
+                self.gpr(modrm.reg)
+            };
+            Self::append_locked_alu(
+                alu_group,
+                source,
+                addr,
+                width,
+                self.size_to_memwidth(op_size),
+                pc,
+                ctx,
+                &mut ops,
+            );
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        let mut high_dst = None;
+        let mut writeback_addr = None;
 
         // Get source and destination
         let (dst, src) = if modrm.is_memory {
@@ -1321,6 +2121,7 @@ impl X86_64Lifter {
 
             if dir_rm_reg {
                 // rm is destination, reg is source
+                writeback_addr = Some(addr.clone());
                 let tmp = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
@@ -1332,7 +2133,12 @@ impl X86_64Lifter {
                         sign: SignExtend::Zero,
                     },
                 ));
-                (tmp, self.gpr(modrm.reg))
+                let src = if is_8bit {
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+                } else {
+                    self.gpr(modrm.reg)
+                };
+                (tmp, src)
             } else {
                 // reg is destination, rm is source
                 let tmp = ctx.alloc_vreg();
@@ -1346,97 +2152,141 @@ impl X86_64Lifter {
                         sign: SignExtend::Zero,
                     },
                 ));
-                (self.gpr(modrm.reg), tmp)
+                let dst = if is_8bit {
+                    high_dst = self.high_byte_base(modrm.reg, prefix);
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+                } else {
+                    self.gpr(modrm.reg)
+                };
+                (dst, tmp)
             }
         } else if dir_rm_reg {
-            (self.gpr(modrm.rm), self.gpr(modrm.reg))
+            if is_8bit {
+                high_dst = self.high_byte_base(modrm.rm, prefix);
+                (
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops),
+                )
+            } else {
+                (self.gpr(modrm.rm), self.gpr(modrm.reg))
+            }
         } else {
-            (self.gpr(modrm.reg), self.gpr(modrm.rm))
+            if is_8bit {
+                high_dst = self.high_byte_base(modrm.reg, prefix);
+                (
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops),
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                )
+            } else {
+                (self.gpr(modrm.reg), self.gpr(modrm.rm))
+            }
         };
 
-        // Determine operation from opcode high bits
-        let result = dst;
+        // Determine operation from opcode high bits. A memory-destination RMW
+        // computes its value without flags, stores it, and only then replays
+        // the operation to commit flags. A faulting store therefore leaves the
+        // architectural flags unchanged.
         let hint = X86OpHint::AluEncoding(if dir_rm_reg {
             X86AluEncoding::RmReg
         } else {
             X86AluEncoding::RegRm
         });
-        let op_kind = match (opcode >> 3) & 0x07 {
+        if alu_group == 7 {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Cmp {
+                    src1: dst,
+                    src2: SrcOperand::Reg(src),
+                    width,
+                },
+                hint,
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        let make_alu = |result, flags| match alu_group {
             0 => OpKind::Add {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             1 => OpKind::Or {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             2 => OpKind::Adc {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             3 => OpKind::Sbb {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             4 => OpKind::And {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             5 => OpKind::Sub {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             6 => OpKind::Xor {
                 dst: result,
                 src1: dst,
                 src2: SrcOperand::Reg(src),
                 width,
-                flags: FlagUpdate::All,
+                flags,
             },
             7 => {
-                // CMP - subtract but don't store
-                ops.push(SmirOp::with_hint(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Cmp {
-                        src1: dst,
-                        src2: SrcOperand::Reg(src),
-                        width,
-                    },
-                    hint,
-                ));
-                return Ok(LiftResult::fallthrough(
-                    ops,
-                    prefix.cursor + modrm.bytes_consumed,
-                ));
+                unreachable!()
             }
             _ => unreachable!(),
         };
 
-        ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, op_kind, hint));
+        let result = if writeback_addr.is_some() {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            make_alu(
+                result,
+                if writeback_addr.is_some() {
+                    FlagUpdate::None
+                } else {
+                    FlagUpdate::All
+                },
+            ),
+            hint,
+        ));
 
-        // Write back if destination was memory
-        if modrm.is_memory && dir_rm_reg {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, _) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        if let Some(base) = high_dst {
+            self.merge_high_byte(base, result, pc, ctx, &mut ops);
+        }
+
+        if let Some(addr) = writeback_addr {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -1445,6 +2295,12 @@ impl X86_64Lifter {
                     addr,
                     width: self.size_to_memwidth(op_size),
                 },
+            ));
+            let flags_result = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                make_alu(flags_result, FlagUpdate::All),
             ));
         }
 
@@ -1518,6 +2374,35 @@ impl X86_64Lifter {
 
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + imm_size as u64;
         let mut ops = Vec::new();
+        let mut high_dst = None;
+        let group = (modrm.byte >> 3) & 0x07;
+
+        if prefix.lock {
+            if !modrm.is_memory || group == 7 {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let source = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: source,
+                    src: SrcOperand::Imm(imm),
+                    width,
+                },
+            ));
+            Self::append_locked_alu(group, source, addr, width, mem_width, pc, ctx, &mut ops);
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed + imm_size,
+            ));
+        }
 
         let (dst, addr) = if modrm.is_memory {
             let x86_addr = modrm.addr.as_ref().unwrap();
@@ -1536,113 +2421,114 @@ impl X86_64Lifter {
                 },
             ));
             (tmp, Some(addr))
+        } else if is_8bit {
+            high_dst = self.high_byte_base(modrm.rm, prefix);
+            (
+                self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                None,
+            )
         } else {
             (self.gpr(modrm.rm), None)
         };
 
-        let group = (modrm.byte >> 3) & 0x07;
-        match group {
-            0 => ops.push(SmirOp::new(
+        if group == 7 {
+            ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::Add {
-                    dst,
+                OpKind::Cmp {
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
                 },
-            )),
-            1 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Or {
-                    dst,
+            ));
+        } else {
+            let make_alu = |result, flags| match group {
+                0 => OpKind::Add {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            2 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Adc {
-                    dst,
+                1 => OpKind::Or {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            3 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Sbb {
-                    dst,
+                2 => OpKind::Adc {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            4 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::And {
-                    dst,
+                3 => OpKind::Sbb {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            5 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Sub {
-                    dst,
+                4 => OpKind::And {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            6 => ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Xor {
-                    dst,
+                5 => OpKind::Sub {
+                    dst: result,
                     src1: dst,
                     src2: SrcOperand::Imm(imm),
                     width,
-                    flags: FlagUpdate::All,
+                    flags,
                 },
-            )),
-            7 => {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Cmp {
-                        src1: dst,
-                        src2: SrcOperand::Imm(imm),
-                        width,
+                6 => OpKind::Xor {
+                    dst: result,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags,
+                },
+                _ => unreachable!(),
+            };
+            let result = if addr.is_some() {
+                ctx.alloc_vreg()
+            } else {
+                dst
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                make_alu(
+                    result,
+                    if addr.is_some() {
+                        FlagUpdate::None
+                    } else {
+                        FlagUpdate::All
                     },
-                ));
+                ),
+            ));
+            if let Some(base) = high_dst {
+                self.merge_high_byte(base, result, pc, ctx, &mut ops);
             }
-            _ => {}
-        }
-
-        if group != 7 {
             if let Some(addr) = addr {
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Store {
-                        src: dst,
+                        src: result,
                         addr,
                         width: mem_width,
                     },
+                ));
+                let flag_result = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    make_alu(flag_result, FlagUpdate::All),
                 ));
             }
         }
@@ -1651,6 +2537,78 @@ impl X86_64Lifter {
             ops,
             prefix.cursor + modrm.bytes_consumed + imm_size,
         ))
+    }
+
+    fn x86_shift_op(
+        group: u8,
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        update_flags: bool,
+    ) -> OpKind {
+        let rotate_flags = if update_flags {
+            x86_rotate_flags()
+        } else {
+            FlagUpdate::None
+        };
+        let shift_flags = if update_flags {
+            FlagUpdate::All
+        } else {
+            FlagUpdate::None
+        };
+        match group {
+            0 => OpKind::Rol {
+                dst,
+                src,
+                amount,
+                width,
+                flags: rotate_flags,
+            },
+            1 => OpKind::Ror {
+                dst,
+                src,
+                amount,
+                width,
+                flags: rotate_flags,
+            },
+            2 => OpKind::Rcl {
+                dst,
+                src,
+                amount,
+                width,
+                flags: rotate_flags,
+            },
+            3 => OpKind::Rcr {
+                dst,
+                src,
+                amount,
+                width,
+                flags: rotate_flags,
+            },
+            4 | 6 => OpKind::Shl {
+                dst,
+                src,
+                amount,
+                width,
+                flags: shift_flags,
+            },
+            5 => OpKind::Shr {
+                dst,
+                src,
+                amount,
+                width,
+                flags: shift_flags,
+            },
+            7 => OpKind::Sar {
+                dst,
+                src,
+                amount,
+                width,
+                flags: shift_flags,
+            },
+            _ => unreachable!(),
+        }
     }
 
     /// Lift shift instructions with immediate (C0/C1)
@@ -1662,10 +2620,17 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let op_size = if opcode == 0xC0 { 1 } else { prefix.op_size() };
+        let is_8bit = opcode == 0xC0;
+        let op_size = if is_8bit { 1 } else { prefix.op_size() };
         let width = self.size_to_width(op_size);
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
         if bytes.len() < modrm.bytes_consumed + 1 {
             return Err(LiftError::Incomplete {
                 addr: pc,
@@ -1677,6 +2642,7 @@ impl X86_64Lifter {
         let imm = bytes[modrm.bytes_consumed] as i64;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + 1;
         let mut ops = Vec::new();
+        let mut high_dst = None;
 
         let group = (modrm.byte >> 3) & 0x07;
 
@@ -1698,75 +2664,38 @@ impl X86_64Lifter {
             ));
             (tmp, Some(addr))
         } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let result = src;
-        let op_kind = match group {
-            0 => OpKind::Rol {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            1 => OpKind::Ror {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            2 => OpKind::Rcl {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            3 => OpKind::Rcr {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            4 | 6 => OpKind::Shl {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: FlagUpdate::All,
-            },
-            5 => OpKind::Shr {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: FlagUpdate::All,
-            },
-            7 => OpKind::Sar {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(imm),
-                width,
-                flags: FlagUpdate::All,
-            },
-            _ => {
-                if self.strict {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("shift group {}", group),
-                    });
-                }
-                return Ok(LiftResult::fallthrough(
-                    vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                    prefix.cursor + modrm.bytes_consumed + 1,
-                ));
+            if is_8bit {
+                high_dst = self.high_byte_base(modrm.rm, prefix);
+                (
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                    None,
+                )
+            } else {
+                (self.gpr(modrm.rm), None)
             }
         };
 
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
+        let result = if addr.is_some() {
+            ctx.alloc_vreg()
+        } else {
+            src
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            Self::x86_shift_op(
+                group,
+                result,
+                src,
+                SrcOperand::Imm(imm),
+                width,
+                addr.is_none(),
+            ),
+        ));
+
+        if let Some(base) = high_dst {
+            self.merge_high_byte(base, result, pc, ctx, &mut ops);
+        }
 
         if let Some(addr) = addr {
             ops.push(SmirOp::new(
@@ -1777,6 +2706,12 @@ impl X86_64Lifter {
                     addr,
                     width: self.size_to_memwidth(op_size),
                 },
+            ));
+            let flag_result = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::x86_shift_op(group, flag_result, src, SrcOperand::Imm(imm), width, true),
             ));
         }
 
@@ -1795,12 +2730,20 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let op_size = if opcode == 0xD0 { 1 } else { prefix.op_size() };
+        let is_8bit = opcode == 0xD0;
+        let op_size = if is_8bit { 1 } else { prefix.op_size() };
         let width = self.size_to_width(op_size);
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
+        let mut high_dst = None;
 
         let group = (modrm.byte >> 3) & 0x07;
 
@@ -1822,75 +2765,38 @@ impl X86_64Lifter {
             ));
             (tmp, Some(addr))
         } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let result = src;
-        let op_kind = match group {
-            0 => OpKind::Rol {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            1 => OpKind::Ror {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            2 => OpKind::Rcl {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            3 => OpKind::Rcr {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: x86_rotate_flags(),
-            },
-            4 | 6 => OpKind::Shl {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: FlagUpdate::All,
-            },
-            5 => OpKind::Shr {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: FlagUpdate::All,
-            },
-            7 => OpKind::Sar {
-                dst: result,
-                src,
-                amount: SrcOperand::Imm(1),
-                width,
-                flags: FlagUpdate::All,
-            },
-            _ => {
-                if self.strict {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("shift group {}", group),
-                    });
-                }
-                return Ok(LiftResult::fallthrough(
-                    vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                    prefix.cursor + modrm.bytes_consumed,
-                ));
+            if is_8bit {
+                high_dst = self.high_byte_base(modrm.rm, prefix);
+                (
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                    None,
+                )
+            } else {
+                (self.gpr(modrm.rm), None)
             }
         };
 
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
+        let result = if addr.is_some() {
+            ctx.alloc_vreg()
+        } else {
+            src
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            Self::x86_shift_op(
+                group,
+                result,
+                src,
+                SrcOperand::Imm(1),
+                width,
+                addr.is_none(),
+            ),
+        ));
+
+        if let Some(base) = high_dst {
+            self.merge_high_byte(base, result, pc, ctx, &mut ops);
+        }
 
         if let Some(addr) = addr {
             ops.push(SmirOp::new(
@@ -1901,6 +2807,12 @@ impl X86_64Lifter {
                     addr,
                     width: self.size_to_memwidth(op_size),
                 },
+            ));
+            let flag_result = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::x86_shift_op(group, flag_result, src, SrcOperand::Imm(1), width, true),
             ));
         }
 
@@ -1919,12 +2831,20 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let op_size = if opcode == 0xD2 { 1 } else { prefix.op_size() };
+        let is_8bit = opcode == 0xD2;
+        let op_size = if is_8bit { 1 } else { prefix.op_size() };
         let width = self.size_to_width(op_size);
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
+        let mut high_dst = None;
 
         let group = (modrm.byte >> 3) & 0x07;
 
@@ -1946,76 +2866,32 @@ impl X86_64Lifter {
             ));
             (tmp, Some(addr))
         } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let result = src;
-        let amount = SrcOperand::Reg(self.gpr(1));
-        let op_kind = match group {
-            0 => OpKind::Rol {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: x86_rotate_flags(),
-            },
-            1 => OpKind::Ror {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: x86_rotate_flags(),
-            },
-            2 => OpKind::Rcl {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: x86_rotate_flags(),
-            },
-            3 => OpKind::Rcr {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: x86_rotate_flags(),
-            },
-            4 | 6 => OpKind::Shl {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: FlagUpdate::All,
-            },
-            5 => OpKind::Shr {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: FlagUpdate::All,
-            },
-            7 => OpKind::Sar {
-                dst: result,
-                src,
-                amount,
-                width,
-                flags: FlagUpdate::All,
-            },
-            _ => {
-                if self.strict {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("shift group {}", group),
-                    });
-                }
-                return Ok(LiftResult::fallthrough(
-                    vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                    prefix.cursor + modrm.bytes_consumed,
-                ));
+            if is_8bit {
+                high_dst = self.high_byte_base(modrm.rm, prefix);
+                (
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                    None,
+                )
+            } else {
+                (self.gpr(modrm.rm), None)
             }
         };
 
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
+        let result = if addr.is_some() {
+            ctx.alloc_vreg()
+        } else {
+            src
+        };
+        let amount = SrcOperand::Reg(self.gpr(1));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            Self::x86_shift_op(group, result, src, amount.clone(), width, addr.is_none()),
+        ));
+
+        if let Some(base) = high_dst {
+            self.merge_high_byte(base, result, pc, ctx, &mut ops);
+        }
 
         if let Some(addr) = addr {
             ops.push(SmirOp::new(
@@ -2026,6 +2902,12 @@ impl X86_64Lifter {
                     addr,
                     width: self.size_to_memwidth(op_size),
                 },
+            ));
+            let flag_result = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::x86_shift_op(group, flag_result, src, amount, width, true),
             ));
         }
 
@@ -2096,6 +2978,713 @@ impl X86_64Lifter {
         ))
     }
 
+    fn emit_bit_test_ops(
+        &self,
+        action: u8,
+        modrm: &ModRm,
+        index: SrcOperand,
+        memory_index_reg: Option<VReg>,
+        width: OpWidth,
+        mem_width: MemWidth,
+        prefix: &X86Prefix,
+        next_pc: u64,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<Vec<SmirOp>, LiftError> {
+        if !(4..=7).contains(&action) || (prefix.lock && (action == 4 || !modrm.is_memory)) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![modrm.byte],
+            });
+        }
+
+        let mut ops = Vec::new();
+        if !modrm.is_memory {
+            let operand = self.gpr(modrm.rm);
+            let kind = match action {
+                4 => OpKind::Bt {
+                    src: operand,
+                    index,
+                    width,
+                },
+                5 => OpKind::Bts {
+                    dst: operand,
+                    src: operand,
+                    index,
+                    width,
+                },
+                6 => OpKind::Btr {
+                    dst: operand,
+                    src: operand,
+                    index,
+                    width,
+                },
+                7 => OpKind::Btc {
+                    dst: operand,
+                    src: operand,
+                    index,
+                    width,
+                },
+                _ => unreachable!(),
+            };
+            ops.push(SmirOp::new(OpId(0), pc, kind));
+            return Ok(ops);
+        }
+
+        let (mut addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        ops.extend(pre_ops);
+
+        // Register-index memory forms address a bit string, not merely one
+        // operand. A signed bit index selects floor(index / operand_bits)
+        // operands away from the decoded base. Since operand sizes are powers
+        // of two, arithmetic shift implements the required floor division.
+        if let Some(index_reg) = memory_index_reg {
+            let signed_index = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::SignExtend {
+                    dst: signed_index,
+                    src: index_reg,
+                    from_width: width,
+                    to_width: OpWidth::W64,
+                },
+            ));
+            let operand_delta = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sar {
+                    dst: operand_delta,
+                    src: signed_index,
+                    amount: SrcOperand::Imm(match width {
+                        OpWidth::W16 => 4,
+                        OpWidth::W32 => 5,
+                        OpWidth::W64 => 6,
+                        _ => unreachable!(),
+                    }),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            let byte_delta = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Shl {
+                    dst: byte_delta,
+                    src: operand_delta,
+                    amount: SrcOperand::Imm(match mem_width {
+                        MemWidth::B2 => 1,
+                        MemWidth::B4 => 2,
+                        MemWidth::B8 => 3,
+                        _ => unreachable!(),
+                    }),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            let base_addr = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Lea {
+                    dst: base_addr,
+                    addr,
+                },
+            ));
+            let effective_addr = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Add {
+                    dst: effective_addr,
+                    src1: base_addr,
+                    src2: SrcOperand::Reg(byte_delta),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            addr = Address::Direct(effective_addr);
+        }
+
+        let bit_index = match index {
+            SrcOperand::Imm(value) => SrcOperand::Imm(value & (width.bits() as i64 - 1)),
+            SrcOperand::Reg(reg) => {
+                let normalized = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::And {
+                        dst: normalized,
+                        src1: reg,
+                        src2: SrcOperand::Imm(width.bits() as i64 - 1),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                SrcOperand::Reg(normalized)
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![modrm.byte],
+                });
+            }
+        };
+
+        let old_value = ctx.alloc_vreg();
+        if prefix.lock {
+            let mask = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: mask,
+                    src: SrcOperand::Imm(1),
+                    width,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Shl {
+                    dst: mask,
+                    src: mask,
+                    amount: bit_index.clone(),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            let atomic_op = match action {
+                5 => AtomicOp::Or,
+                6 => {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Not {
+                            dst: mask,
+                            src: mask,
+                            width,
+                        },
+                    ));
+                    AtomicOp::And
+                }
+                7 => AtomicOp::Xor,
+                _ => unreachable!(),
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::AtomicRmw {
+                    dst: old_value,
+                    addr,
+                    src: mask,
+                    op: atomic_op,
+                    width: mem_width,
+                    order: MemoryOrder::SeqCst,
+                },
+            ));
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: old_value,
+                    addr: addr.clone(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            if action != 4 {
+                let mask = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: mask,
+                        src: SrcOperand::Imm(1),
+                        width,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Shl {
+                        dst: mask,
+                        src: mask,
+                        amount: bit_index.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                let new_value = ctx.alloc_vreg();
+                let kind = match action {
+                    5 => OpKind::Or {
+                        dst: new_value,
+                        src1: old_value,
+                        src2: SrcOperand::Reg(mask),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    6 => OpKind::And {
+                        dst: new_value,
+                        src1: old_value,
+                        src2: SrcOperand::Reg(mask),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    7 => OpKind::Xor {
+                        dst: new_value,
+                        src1: old_value,
+                        src2: SrcOperand::Reg(mask),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    _ => unreachable!(),
+                };
+                if action == 6 {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Not {
+                            dst: mask,
+                            src: mask,
+                            width,
+                        },
+                    ));
+                }
+                ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Store {
+                        src: new_value,
+                        addr,
+                        width: mem_width,
+                    },
+                ));
+            }
+        }
+
+        // Commit CF only after any update store/atomic operation succeeds.
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Bt {
+                src: old_value,
+                index: bit_index,
+                width,
+            },
+        ));
+        Ok(ops)
+    }
+
+    /// Lift BT/BTS/BTR/BTC r/m,reg (0F A3/AB/B3/BB).
+    fn lift_bit_test_reg(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let op_size = prefix.op_size();
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let action = match opcode {
+            0xA3 => 4,
+            0xAB => 5,
+            0xB3 => 6,
+            0xBB => 7,
+            _ => unreachable!(),
+        };
+        let index_reg = self.gpr(modrm.reg);
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let ops = self.emit_bit_test_ops(
+            action,
+            &modrm,
+            SrcOperand::Reg(index_reg),
+            modrm.is_memory.then_some(index_reg),
+            width,
+            mem_width,
+            prefix,
+            next_pc,
+            pc,
+            ctx,
+        )?;
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift Group-8 BT/BTS/BTR/BTC r/m,imm8 (0F BA /4-/7).
+    fn lift_bit_test_imm(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let op_size = prefix.op_size();
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if bytes.len() <= modrm.bytes_consumed {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: modrm.bytes_consumed + 1,
+            });
+        }
+        let action = (modrm.byte >> 3) & 7;
+        let imm = bytes[modrm.bytes_consumed] as i64;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + 1;
+        let ops = self.emit_bit_test_ops(
+            action,
+            &modrm,
+            SrcOperand::Imm(imm),
+            None,
+            width,
+            mem_width,
+            prefix,
+            next_pc,
+            pc,
+            ctx,
+        )?;
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed + 1,
+        ))
+    }
+
+    /// Lift POPCNT/TZCNT/LZCNT (F3 0F B8/BC/BD), including their exact
+    /// modeled RFLAGS effects. POPCNT clears the arithmetic status flags other
+    /// than ZF; TZCNT/LZCNT replace CF/ZF and retain the emulator's values for
+    /// their architecturally undefined status flags. DF is preserved throughout.
+    fn lift_count_0f(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.rep_prefix != Some(0xF3) || prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let op_size = prefix.op_size();
+        let width = self.size_to_width(op_size);
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+
+        let source = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: loaded,
+                    addr,
+                    width: self.size_to_memwidth(op_size),
+                    sign: SignExtend::Zero,
+                },
+            ));
+            loaded
+        } else {
+            self.gpr(modrm.rm)
+        };
+
+        // Snapshot the source because destination/source aliasing is legal.
+        let saved_source = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: saved_source,
+                src: SrcOperand::Reg(source),
+                width,
+            },
+        ));
+        let old_flags = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::ReadFlags { dst: old_flags },
+        ));
+
+        let dst = self.gpr(modrm.reg);
+        let count = match opcode {
+            0xB8 => OpKind::Popcnt {
+                dst,
+                src: saved_source,
+                width,
+            },
+            0xBC => OpKind::Ctz {
+                dst,
+                src: saved_source,
+                width,
+            },
+            0xBD => OpKind::Clz {
+                dst,
+                src: saved_source,
+                width,
+            },
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        };
+        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, count));
+
+        let cf = if opcode == 0xB8 {
+            None
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Cmp {
+                    src1: saved_source,
+                    src2: SrcOperand::Imm(0),
+                    width,
+                },
+            ));
+            let cf = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::SetCC {
+                    dst: cf,
+                    cond: Condition::Eq,
+                    width: OpWidth::W64,
+                },
+            ));
+            Some(cf)
+        };
+
+        // POPCNT's ZF is source==0; TZCNT/LZCNT's ZF is result==0.
+        let zf_input = if opcode == 0xB8 { saved_source } else { dst };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Cmp {
+                src1: zf_input,
+                src2: SrcOperand::Imm(0),
+                width,
+            },
+        ));
+        let zf = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::SetCC {
+                dst: zf,
+                cond: Condition::Eq,
+                width: OpWidth::W64,
+            },
+        ));
+        let zf_bit = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Shl {
+                dst: zf_bit,
+                src: zf,
+                amount: SrcOperand::Imm(6),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+
+        let preserved_flags = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: preserved_flags,
+                src1: old_flags,
+                src2: SrcOperand::Imm(if opcode == 0xB8 {
+                    1 << 10
+                } else {
+                    !((1 << 0) | (1 << 6))
+                }),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let status = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Or {
+                dst: status,
+                src1: preserved_flags,
+                src2: SrcOperand::Reg(zf_bit),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let status = if let Some(cf) = cf {
+            let with_cf = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Or {
+                    dst: with_cf,
+                    src1: status,
+                    src2: SrcOperand::Reg(cf),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            with_cf
+        } else {
+            status
+        };
+        let final_flags = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Or {
+                dst: final_flags,
+                src1: status,
+                src2: SrcOperand::Imm(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::WriteFlags { src: final_flags },
+        ));
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift legacy LDMXCSR/STMXCSR and LFENCE/MFENCE/SFENCE (0F AE).
+    fn lift_fence_0f(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let group = (modrm.byte >> 3) & 7;
+        if matches!(group, 0 | 1) {
+            if !modrm.is_memory {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                });
+            }
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                if group == 0 {
+                    OpKind::X86FxSave {
+                        addr,
+                        rex_w: prefix.rex_w(),
+                    }
+                } else {
+                    OpKind::X86FxRstor {
+                        addr,
+                        rex_w: prefix.rex_w(),
+                    }
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        if modrm.is_memory && matches!(group, 2 | 3) {
+            if prefix.rep_prefix.is_some() || prefix.operand_size_override {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                if group == 2 {
+                    OpKind::X86LoadMxcsr { addr }
+                } else {
+                    OpKind::X86StoreMxcsr { addr }
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        if modrm.is_memory && ((group == 7) || (group == 6 && prefix.operand_size_override)) {
+            if prefix.rep_prefix.is_some() {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let kind = match (group, prefix.operand_size_override) {
+                (7, false) => X86CacheControlKind::Clflush,
+                (7, true) => X86CacheControlKind::Clflushopt,
+                (6, true) => X86CacheControlKind::Clwb,
+                _ => unreachable!(),
+            };
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86CacheControl { addr, kind },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        let kind = match modrm.byte {
+            0xE8 => FenceKind::LoadLoad,
+            0xF0 => FenceKind::Full,
+            0xF8 => FenceKind::StoreStore,
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("0F AE /{}", (modrm.byte >> 3) & 7),
+                });
+            }
+        };
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(OpId(0), pc, OpKind::Fence { kind })],
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
     /// Lift CMPXCHG r/m, r (0F B0/0F B1).
     fn lift_cmpxchg(
         &self,
@@ -2114,7 +3703,11 @@ impl X86_64Lifter {
         let mut ops = Vec::new();
 
         let acc = self.gpr(0);
-        let src = self.gpr(modrm.reg);
+        let src = if is_byte {
+            self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+        } else {
+            self.gpr(modrm.reg)
+        };
 
         let saved_src = ctx.alloc_vreg();
         ops.push(SmirOp::new(
@@ -2138,6 +3731,7 @@ impl X86_64Lifter {
             },
         ));
 
+        let mut dst_high_base = None;
         let (old_dst, dst_reg, dst_addr) = if modrm.is_memory {
             let x86_addr = modrm.addr.as_ref().unwrap();
             let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
@@ -2156,7 +3750,12 @@ impl X86_64Lifter {
             ));
             (tmp, None, Some(addr))
         } else {
-            let dst = self.gpr(modrm.rm);
+            let dst = if is_byte {
+                dst_high_base = self.high_byte_base(modrm.rm, prefix);
+                self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops)
+            } else {
+                self.gpr(modrm.rm)
+            };
             let tmp = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -2167,7 +3766,7 @@ impl X86_64Lifter {
                     width,
                 },
             ));
-            (tmp, Some(dst), None)
+            (tmp, Some(self.gpr(modrm.rm)), None)
         };
 
         ops.push(SmirOp::new(
@@ -2221,6 +3820,33 @@ impl X86_64Lifter {
             // CMove only writes on the mismatch path (ZF=0 → Ne), preserving the
             // high bits on the no-op (match) path. The flags were set by the Cmp
             // above. (#21)
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::CMove {
+                    dst: acc,
+                    src: old_dst,
+                    cond: Condition::Ne,
+                    width,
+                },
+            ));
+        } else if let Some(base) = dst_high_base {
+            let new_dst = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Select {
+                    dst: new_dst,
+                    cond: matched,
+                    src_true: saved_src,
+                    src_false: old_dst,
+                    width,
+                },
+            ));
+            self.merge_high_byte(base, new_dst, pc, ctx, &mut ops);
+
+            // AH/CH/DH/BH are distinct from AL even when AH aliases RAX.
+            // On mismatch, AL receives the old high-byte destination.
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -2286,6 +3912,11 @@ impl X86_64Lifter {
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let src_reg = self.gpr(modrm.reg);
         let mut ops = Vec::new();
+        let src_value = if is_byte {
+            self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+        } else {
+            src_reg
+        };
 
         let saved_src = ctx.alloc_vreg();
         ops.push(SmirOp::new(
@@ -2293,7 +3924,7 @@ impl X86_64Lifter {
             pc,
             OpKind::Mov {
                 dst: saved_src,
-                src: SrcOperand::Reg(src_reg),
+                src: SrcOperand::Reg(src_value),
                 width,
             },
         ));
@@ -2367,15 +3998,19 @@ impl X86_64Lifter {
                 ));
             }
 
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: src_reg,
-                    src: SrcOperand::Reg(old_dst),
-                    width,
-                },
-            ));
+            if is_byte {
+                self.write_byte_reg(modrm.reg, prefix, old_dst, pc, ctx, &mut ops);
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: src_reg,
+                        src: SrcOperand::Reg(old_dst),
+                        width,
+                    },
+                ));
+            }
 
             if !prefix.lock {
                 // Now that the store has retired, commit the arithmetic flags. If
@@ -2409,13 +4044,18 @@ impl X86_64Lifter {
         }
 
         let dst_reg = self.gpr(modrm.rm);
+        let dst_value = if is_byte {
+            self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops)
+        } else {
+            dst_reg
+        };
         let old_dst = ctx.alloc_vreg();
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::Mov {
                 dst: old_dst,
-                src: SrcOperand::Reg(dst_reg),
+                src: SrcOperand::Reg(dst_value),
                 width,
             },
         ));
@@ -2433,24 +4073,29 @@ impl X86_64Lifter {
             },
         ));
 
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: src_reg,
-                src: SrcOperand::Reg(old_dst),
-                width,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: dst_reg,
-                src: SrcOperand::Reg(sum),
-                width,
-            },
-        ));
+        if is_byte {
+            self.write_byte_reg(modrm.reg, prefix, old_dst, pc, ctx, &mut ops);
+            self.write_byte_reg(modrm.rm, prefix, sum, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: src_reg,
+                    src: SrcOperand::Reg(old_dst),
+                    width,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: dst_reg,
+                    src: SrcOperand::Reg(sum),
+                    width,
+                },
+            ));
+        }
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -2476,6 +4121,11 @@ impl X86_64Lifter {
             let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
             let x86_addr = modrm.addr.as_ref().unwrap();
             let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            let src = if is_byte {
+                self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+            } else {
+                self.gpr(modrm.reg)
+            };
             let old = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -2483,21 +4133,25 @@ impl X86_64Lifter {
                 OpKind::AtomicRmw {
                     dst: old,
                     addr,
-                    src: self.gpr(modrm.reg),
+                    src,
                     op: AtomicOp::Swap,
                     width: mem_width,
                     order: MemoryOrder::SeqCst,
                 },
             ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(modrm.reg),
-                    src: SrcOperand::Reg(old),
-                    width,
-                },
-            ));
+            if is_byte {
+                self.write_byte_reg(modrm.reg, prefix, old, pc, ctx, &mut ops);
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.gpr(modrm.reg),
+                        src: SrcOperand::Reg(old),
+                        width,
+                    },
+                ));
+            }
 
             return Ok(LiftResult::fallthrough(
                 ops,
@@ -2505,18 +4159,50 @@ impl X86_64Lifter {
             ));
         }
 
-        Ok(LiftResult::fallthrough(
-            vec![SmirOp::new(
-                OpId(0),
+        if is_byte {
+            let mut ops = Vec::new();
+            let rm = self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops);
+            let reg = self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops);
+            let old_rm = ctx.alloc_vreg();
+            let old_reg = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
                 pc,
-                OpKind::Xchg {
-                    reg1: self.gpr(modrm.rm),
-                    reg2: self.gpr(modrm.reg),
-                    width,
+                OpKind::Mov {
+                    dst: old_rm,
+                    src: SrcOperand::Reg(rm),
+                    width: OpWidth::W8,
                 },
-            )],
-            prefix.cursor + modrm.bytes_consumed,
-        ))
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: old_reg,
+                    src: SrcOperand::Reg(reg),
+                    width: OpWidth::W8,
+                },
+            ));
+            self.write_byte_reg(modrm.rm, prefix, old_reg, pc, ctx, &mut ops);
+            self.write_byte_reg(modrm.reg, prefix, old_rm, pc, ctx, &mut ops);
+            Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ))
+        } else {
+            Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::Xchg {
+                        reg1: self.gpr(modrm.rm),
+                        reg2: self.gpr(modrm.reg),
+                        width,
+                    },
+                )],
+                prefix.cursor + modrm.bytes_consumed,
+            ))
+        }
     }
 
     /// Lift SSE MOVDQA/MOVDQU (0F 6F/7F with prefixes)
@@ -2528,6 +4214,12 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let mut ops = Vec::new();
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
@@ -2547,8 +4239,165 @@ impl X86_64Lifter {
             opcode,
         };
 
+        if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+            if !matches!(opcode, 0x10 | 0x11) {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![0x0F, opcode],
+                });
+            }
+            let elem = if prefix_kind == X86SsePrefix::Rep {
+                VecElementType::F32
+            } else {
+                VecElementType::F64
+            };
+            let mem_width = if elem == VecElementType::F32 {
+                MemWidth::B4
+            } else {
+                MemWidth::B8
+            };
+            let dst = self.xmm(modrm.reg);
+
+            if opcode == 0x10 {
+                if modrm.is_memory {
+                    let (addr, pre_ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.extend(pre_ops);
+                    let scalar = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Load {
+                            dst: scalar,
+                            addr,
+                            width: mem_width,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                    let zero = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Mov {
+                            dst: zero,
+                            src: SrcOperand::Imm(0),
+                            width: OpWidth::W64,
+                        },
+                    ));
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VInsertLane {
+                            dst,
+                            vec: dst,
+                            scalar,
+                            elem,
+                            lane: 0,
+                        },
+                        hint,
+                    ));
+                    let xmm_lanes = if elem == VecElementType::F32 { 4 } else { 2 };
+                    for lane in 1..xmm_lanes {
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VInsertLane {
+                                dst,
+                                vec: dst,
+                                scalar: zero,
+                                lane,
+                                elem,
+                            },
+                        ));
+                    }
+                } else {
+                    let scalar = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VExtractLane {
+                            dst: scalar,
+                            vec: self.xmm(modrm.rm),
+                            lane: 0,
+                            elem,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VInsertLane {
+                            dst,
+                            vec: dst,
+                            scalar,
+                            lane: 0,
+                            elem,
+                        },
+                        hint,
+                    ));
+                }
+            } else if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: scalar,
+                        vec: dst,
+                        lane: 0,
+                        elem,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Store {
+                        src: scalar,
+                        addr,
+                        width: mem_width,
+                    },
+                    hint,
+                ));
+            } else {
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: scalar,
+                        vec: dst,
+                        lane: 0,
+                        elem,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                let rm = self.xmm(modrm.rm);
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VInsertLane {
+                        dst: rm,
+                        vec: rm,
+                        scalar,
+                        lane: 0,
+                        elem,
+                    },
+                    hint,
+                ));
+            }
+
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
         match opcode {
-            0x6F => {
+            0x10 | 0x28 | 0x6F => {
                 if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
                     let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
@@ -2576,7 +4425,7 @@ impl X86_64Lifter {
                     ));
                 }
             }
-            0x7F => {
+            0x11 | 0x29 | 0x7F => {
                 if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
                     let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
@@ -2607,6 +4456,843 @@ impl X86_64Lifter {
             _ => {}
         }
 
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift packed and scalar legacy SSE/SSE2 floating-point arithmetic.
+    fn lift_sse_packed_arith(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
+        let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
+            X86SsePrefix::Rep
+        } else if prefix.rep_prefix == Some(0xF2) {
+            X86SsePrefix::Repne
+        } else if prefix.operand_size_override {
+            X86SsePrefix::OpSize
+        } else {
+            X86SsePrefix::None
+        };
+        if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+            let elem = if prefix_kind == X86SsePrefix::Rep {
+                VecElementType::F32
+            } else {
+                VecElementType::F64
+            };
+            let mem_width = if elem == VecElementType::F32 {
+                MemWidth::B4
+            } else {
+                MemWidth::B8
+            };
+            let modrm = decode_modrm(bytes, prefix, pc)?;
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let mut ops = Vec::new();
+            let dst = self.xmm(modrm.reg);
+            let src2 = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let scalar = ctx.alloc_vreg();
+                let vector = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Load {
+                        dst: scalar,
+                        addr,
+                        width: mem_width,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VBroadcast {
+                        dst: vector,
+                        scalar,
+                        elem,
+                        lanes: 1,
+                    },
+                ));
+                vector
+            } else {
+                self.xmm(modrm.rm)
+            };
+            let vector_result = ctx.alloc_vreg();
+            let scalar_result = ctx.alloc_vreg();
+            let kind = match opcode {
+                0x58 => OpKind::VAdd {
+                    dst: vector_result,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: 1,
+                },
+                0x59 => OpKind::VMul {
+                    dst: vector_result,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: 1,
+                },
+                0x5C => OpKind::VSub {
+                    dst: vector_result,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: 1,
+                },
+                0x5E => OpKind::VDiv {
+                    dst: vector_result,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: 1,
+                },
+                0x5D | 0x5F => OpKind::VX86MinMax {
+                    dst: vector_result,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: 1,
+                    min: opcode == 0x5D,
+                },
+                _ => unreachable!(),
+            };
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar_result,
+                    vec: vector_result,
+                    lane: 0,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst,
+                    vec: dst,
+                    scalar: scalar_result,
+                    lane: 0,
+                    elem,
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
+        let elem = match prefix_kind {
+            X86SsePrefix::None => VecElementType::F32,
+            X86SsePrefix::OpSize => VecElementType::F64,
+            X86SsePrefix::Rep | X86SsePrefix::Repne => unreachable!(),
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: tmp,
+                    addr,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::VecAlign(X86VecAlign::Unaligned),
+            ));
+            tmp
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let dst = self.xmm(modrm.reg);
+        let lanes = VecWidth::V128.lanes(elem) as u8;
+        let kind = match opcode {
+            0x58 => OpKind::VAdd {
+                dst,
+                src1: dst,
+                src2,
+                elem,
+                lanes,
+            },
+            0x59 => OpKind::VMul {
+                dst,
+                src1: dst,
+                src2,
+                elem,
+                lanes,
+            },
+            0x5C => OpKind::VSub {
+                dst,
+                src1: dst,
+                src2,
+                elem,
+                lanes,
+            },
+            0x5E => OpKind::VDiv {
+                dst,
+                src1: dst,
+                src2,
+                elem,
+                lanes,
+            },
+            0x5D | 0x5F => OpKind::VX86MinMax {
+                dst,
+                src1: dst,
+                src2,
+                elem,
+                lanes,
+                min: opcode == 0x5D,
+            },
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![0x0F, opcode],
+                });
+            }
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            kind,
+            X86OpHint::SseOp {
+                prefix: prefix_kind,
+                opcode,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_sse_sqrt(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, 0x51],
+            });
+        }
+        let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
+            X86SsePrefix::Rep
+        } else if prefix.rep_prefix == Some(0xF2) {
+            X86SsePrefix::Repne
+        } else if prefix.operand_size_override {
+            X86SsePrefix::OpSize
+        } else {
+            X86SsePrefix::None
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let dst = self.xmm(modrm.reg);
+
+        if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+            let elem = if prefix_kind == X86SsePrefix::Rep {
+                VecElementType::F32
+            } else {
+                VecElementType::F64
+            };
+            let src = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let scalar = ctx.alloc_vreg();
+                let vector = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Load {
+                        dst: scalar,
+                        addr,
+                        width: if elem == VecElementType::F32 {
+                            MemWidth::B4
+                        } else {
+                            MemWidth::B8
+                        },
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VBroadcast {
+                        dst: vector,
+                        scalar,
+                        elem,
+                        lanes: 1,
+                    },
+                ));
+                vector
+            } else {
+                self.xmm(modrm.rm)
+            };
+            let vector_result = ctx.alloc_vreg();
+            let scalar_result = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VUnary {
+                    dst: vector_result,
+                    src,
+                    elem,
+                    lanes: 1,
+                    op: VecUnaryOp::FSqrt,
+                },
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode: 0x51,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar_result,
+                    vec: vector_result,
+                    lane: 0,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst,
+                    vec: dst,
+                    scalar: scalar_result,
+                    lane: 0,
+                    elem,
+                },
+            ));
+        } else {
+            let elem = if prefix_kind == X86SsePrefix::OpSize {
+                VecElementType::F64
+            } else {
+                VecElementType::F32
+            };
+            let src = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let vector = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: vector,
+                        addr,
+                        width: VecWidth::V128,
+                    },
+                ));
+                vector
+            } else {
+                self.xmm(modrm.rm)
+            };
+            let result = ctx.alloc_vreg();
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VUnary {
+                    dst: result,
+                    src,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                    op: VecUnaryOp::FSqrt,
+                },
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode: 0x51,
+                },
+            ));
+            self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_sse_comi(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
+        let elem = if prefix.operand_size_override {
+            VecElementType::F64
+        } else {
+            VecElementType::F32
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let scalar = ctx.alloc_vreg();
+            let vector = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: scalar,
+                    addr,
+                    width: if elem == VecElementType::F32 {
+                        MemWidth::B4
+                    } else {
+                        MemWidth::B8
+                    },
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem,
+                    lanes: 1,
+                },
+            ));
+            vector
+        } else {
+            self.xmm(modrm.rm)
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86FpCompare {
+                src1: self.xmm(modrm.reg),
+                src2,
+                elem,
+                signaling: opcode == 0x2F,
+            },
+            X86OpHint::SseOp {
+                prefix: if elem == VecElementType::F64 {
+                    X86SsePrefix::OpSize
+                } else {
+                    X86SsePrefix::None
+                },
+                opcode,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_sse_fp_to_int(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let elem = match prefix.rep_prefix {
+            Some(0xF3) => VecElementType::F32,
+            Some(0xF2) => VecElementType::F64,
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![0x0F, opcode],
+                });
+            }
+        };
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
+        let int_width = if prefix.rex_w() {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: scalar,
+                    addr,
+                    width: if elem == VecElementType::F32 {
+                        MemWidth::B4
+                    } else {
+                        MemWidth::B8
+                    },
+                    sign: SignExtend::Zero,
+                },
+            ));
+            scalar
+        } else {
+            self.xmm(modrm.rm)
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86FpToInt {
+                dst: self.gpr(modrm.reg),
+                src,
+                elem,
+                int_width,
+                truncate: opcode == 0x2C,
+            },
+            X86OpHint::SseOp {
+                prefix: if elem == VecElementType::F32 {
+                    X86SsePrefix::Rep
+                } else {
+                    X86SsePrefix::Repne
+                },
+                opcode,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_sse_int_to_fp(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let elem = match prefix.rep_prefix {
+            Some(0xF3) => VecElementType::F32,
+            Some(0xF2) => VecElementType::F64,
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![0x0F, 0x2A],
+                });
+            }
+        };
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, 0x2A],
+            });
+        }
+        let int_width = if prefix.rex_w() {
+            OpWidth::W64
+        } else {
+            OpWidth::W32
+        };
+        let mem_width = if int_width == OpWidth::W64 {
+            MemWidth::B8
+        } else {
+            MemWidth::B4
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let value = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: value,
+                    addr,
+                    width: mem_width,
+                    sign: SignExtend::Sign,
+                },
+            ));
+            value
+        } else {
+            self.gpr(modrm.rm)
+        };
+        let dst = self.xmm(modrm.reg);
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86IntToFp {
+                dst,
+                merge: dst,
+                src,
+                elem,
+                int_width,
+                zero_upper: false,
+            },
+            X86OpHint::SseOp {
+                prefix: if elem == VecElementType::F32 {
+                    X86SsePrefix::Rep
+                } else {
+                    X86SsePrefix::Repne
+                },
+                opcode: 0x2A,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_sse_scalar_fp_convert(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, 0x5A],
+            });
+        }
+        if prefix.rep_prefix.is_none() {
+            let (from, to, prefix_kind, src_width) = if prefix.operand_size_override {
+                (
+                    VecElementType::F64,
+                    VecElementType::F32,
+                    X86SsePrefix::OpSize,
+                    VecWidth::V128,
+                )
+            } else {
+                (
+                    VecElementType::F32,
+                    VecElementType::F64,
+                    X86SsePrefix::None,
+                    VecWidth::V64,
+                )
+            };
+            let modrm = decode_modrm(bytes, prefix, pc)?;
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let mut ops = Vec::new();
+            let src = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let value = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: value,
+                        addr,
+                        width: src_width,
+                    },
+                ));
+                value
+            } else {
+                self.xmm(modrm.rm)
+            };
+            let dst = self.xmm(modrm.reg);
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedFpConvert {
+                    dst,
+                    src,
+                    mask: None,
+                    from,
+                    to,
+                    lanes: 2,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: FpRoundMode::Dynamic,
+                },
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode: 0x5A,
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        let (from, to, prefix_kind) = match prefix.rep_prefix {
+            Some(0xF3) => (VecElementType::F32, VecElementType::F64, X86SsePrefix::Rep),
+            Some(0xF2) => (
+                VecElementType::F64,
+                VecElementType::F32,
+                X86SsePrefix::Repne,
+            ),
+            _ => unreachable!(),
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let value = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: value,
+                    addr,
+                    width: if from == VecElementType::F32 {
+                        MemWidth::B4
+                    } else {
+                        MemWidth::B8
+                    },
+                    sign: SignExtend::Zero,
+                },
+            ));
+            value
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let dst = self.xmm(modrm.reg);
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86FpConvert {
+                dst,
+                merge: dst,
+                src,
+                from,
+                to,
+                zero_upper: false,
+            },
+            X86OpHint::SseOp {
+                prefix: prefix_kind,
+                opcode: 0x5A,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift packed legacy SSE/SSE2 bitwise AND/OR/XOR.
+    fn lift_sse_logic(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: tmp,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            tmp
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let dst = self.xmm(modrm.reg);
+        let kind = match opcode {
+            0x54 => OpKind::VAnd {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            0x56 => OpKind::VOr {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            0x57 => OpKind::VXor {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            _ => unreachable!(),
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            kind,
+            X86OpHint::SseOp {
+                prefix: if prefix.operand_size_override {
+                    X86SsePrefix::OpSize
+                } else {
+                    X86SsePrefix::None
+                },
+                opcode,
+            },
+        ));
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -2741,6 +5427,10 @@ impl X86_64Lifter {
         }
 
         let dst = self.xmm(modrm.reg);
+        let hint = X86OpHint::SseOp {
+            prefix: prefix_kind,
+            opcode,
+        };
         if modrm.is_memory {
             let x86_addr = modrm.addr.as_ref().unwrap();
             let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
@@ -2757,7 +5447,7 @@ impl X86_64Lifter {
                 },
                 X86OpHint::VecAlign(X86VecAlign::Unaligned),
             ));
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VMul {
@@ -2767,9 +5457,10 @@ impl X86_64Lifter {
                     elem: VecElementType::I32,
                     lanes: 4,
                 },
+                hint,
             ));
         } else {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(0),
                 pc,
                 OpKind::VMul {
@@ -2779,6 +5470,7 @@ impl X86_64Lifter {
                     elem: VecElementType::I32,
                     lanes: 4,
                 },
+                hint,
             ));
         }
 
@@ -4327,6 +7019,1212 @@ impl X86_64Lifter {
 
         match prefix.map {
             X86VecMap::Map0F => match opcode {
+                // VCVTSI2SS/VCVTSI2SD.
+                0x2A => {
+                    if !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let elem = if prefix.pp == X86SsePrefix::Rep {
+                        VecElementType::F32
+                    } else {
+                        VecElementType::F64
+                    };
+                    let int_width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+                    let mem_width = if int_width == OpWidth::W64 {
+                        MemWidth::B8
+                    } else {
+                        MemWidth::B4
+                    };
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && !modrm.is_memory
+                        && prefix.rm_high
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let src = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            mem_width.bytes(),
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let value = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Load {
+                                dst: value,
+                                addr,
+                                width: mem_width,
+                                sign: SignExtend::Sign,
+                            },
+                        ));
+                        value
+                    } else {
+                        self.gpr(modrm.rm)
+                    };
+                    let dst = self.xmm(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                    );
+                    let merge = self.xmm(
+                        prefix.vvvv
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                16
+                            } else {
+                                0
+                            },
+                    );
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86IntToFp {
+                            dst,
+                            merge,
+                            src,
+                            elem,
+                            int_width,
+                            zero_upper: true,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VCVTTSS2SI/VCVTTSD2SI and VCVTSS2SI/VCVTSD2SI.
+                0x2C | 0x2D => {
+                    if prefix.vvvv != 0
+                        || prefix.v_high
+                        || prefix.reg_high
+                        || !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let elem = if prefix.pp == X86SsePrefix::Rep {
+                        VecElementType::F32
+                    } else {
+                        VecElementType::F64
+                    };
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let src = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            elem,
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let scalar = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Load {
+                                dst: scalar,
+                                addr,
+                                width: if elem == VecElementType::F32 {
+                                    MemWidth::B4
+                                } else {
+                                    MemWidth::B8
+                                },
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                        scalar
+                    } else {
+                        self.xmm(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        )
+                    };
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86FpToInt {
+                            dst: self.gpr(modrm.reg),
+                            src,
+                            elem,
+                            int_width: if prefix.w { OpWidth::W64 } else { OpWidth::W32 },
+                            truncate: opcode == 0x2C,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VCOMISS/VUCOMISS/VCOMISD/VUCOMISD.
+                0x2E | 0x2F => {
+                    if prefix.vvvv != 0
+                        || prefix.v_high
+                        || matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let elem = if prefix.pp == X86SsePrefix::OpSize {
+                        VecElementType::F64
+                    } else {
+                        VecElementType::F32
+                    };
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && ((elem == VecElementType::F32 && prefix.w)
+                            || (elem == VecElementType::F64 && !prefix.w))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let src1 = self.xmm(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                    );
+                    let src2 = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            elem,
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let scalar = ctx.alloc_vreg();
+                        let vector = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Load {
+                                dst: scalar,
+                                addr,
+                                width: if elem == VecElementType::F32 {
+                                    MemWidth::B4
+                                } else {
+                                    MemWidth::B8
+                                },
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VBroadcast {
+                                dst: vector,
+                                scalar,
+                                elem,
+                                lanes: 1,
+                            },
+                        ));
+                        vector
+                    } else {
+                        self.xmm(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        )
+                    };
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86FpCompare {
+                            src1,
+                            src2,
+                            elem,
+                            signaling: opcode == 0x2F,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VEX VMOVUPS/VMOVUPD and scalar VMOVSS/VMOVSD. Scalar register
+                // forms merge XMM lanes from vvvv; scalar memory forms reserve
+                // vvvv and zero everything above the loaded lane.
+                0x10 | 0x11 => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let scalar_elem = match prefix.pp {
+                        X86SsePrefix::Rep => Some(VecElementType::F32),
+                        X86SsePrefix::Repne => Some(VecElementType::F64),
+                        _ => None,
+                    };
+
+                    if let Some(elem) = scalar_elem {
+                        if prefix.encoding == VecEncodingKind::Evex
+                            && ((prefix.zeroing && prefix.aaa == 0)
+                                || (elem == VecElementType::F32 && prefix.w)
+                                || (elem == VecElementType::F64 && !prefix.w))
+                        {
+                            return Err(LiftError::InvalidEncoding {
+                                addr: pc,
+                                bytes: bytes.to_vec(),
+                            });
+                        }
+                        let mem_width = if elem == VecElementType::F32 {
+                            MemWidth::B4
+                        } else {
+                            MemWidth::B8
+                        };
+                        let reg_index = modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            };
+                        let rm_index = modrm.rm
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                16
+                            } else {
+                                0
+                            };
+                        let v_index = prefix.vvvv
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                16
+                            } else {
+                                0
+                            };
+                        let mask_cond = self.append_evex_mask_condition(prefix, pc, ctx, &mut ops);
+                        if modrm.is_memory {
+                            if prefix.vvvv != 0 || prefix.v_high {
+                                return Err(LiftError::InvalidEncoding {
+                                    addr: pc,
+                                    bytes: bytes.to_vec(),
+                                });
+                            }
+                            let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                                prefix,
+                                modrm.addr.as_ref().unwrap(),
+                                next_pc,
+                                elem,
+                                ctx,
+                            );
+                            ops.extend(pre_ops);
+                            if opcode == 0x10 {
+                                let scalar = ctx.alloc_vreg();
+                                if let Some(cond) = mask_cond {
+                                    ops.push(SmirOp::new(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::Mov {
+                                            dst: scalar,
+                                            src: SrcOperand::Imm(0),
+                                            width: if elem == VecElementType::F32 {
+                                                OpWidth::W32
+                                            } else {
+                                                OpWidth::W64
+                                            },
+                                        },
+                                    ));
+                                    ops.push(SmirOp::new(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::PredLoad {
+                                            dst: scalar,
+                                            cond,
+                                            addr,
+                                            width: mem_width,
+                                            signed: SignExtend::Zero,
+                                        },
+                                    ));
+                                } else {
+                                    ops.push(SmirOp::new(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::Load {
+                                            dst: scalar,
+                                            addr,
+                                            width: mem_width,
+                                            sign: SignExtend::Zero,
+                                        },
+                                    ));
+                                }
+                                let scalar = self.append_evex_scalar_select(
+                                    prefix,
+                                    mask_cond,
+                                    self.xmm(reg_index),
+                                    scalar,
+                                    elem,
+                                    pc,
+                                    ctx,
+                                    &mut ops,
+                                );
+                                ops.push(SmirOp::with_hint(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VBroadcast {
+                                        dst: self.xmm(reg_index),
+                                        scalar,
+                                        elem,
+                                        lanes: 1,
+                                    },
+                                    hint,
+                                ));
+                            } else {
+                                if prefix.zeroing {
+                                    return Err(LiftError::InvalidEncoding {
+                                        addr: pc,
+                                        bytes: bytes.to_vec(),
+                                    });
+                                }
+                                let scalar = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VExtractLane {
+                                        dst: scalar,
+                                        vec: self.xmm(reg_index),
+                                        lane: 0,
+                                        elem,
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                                if let Some(cond) = mask_cond {
+                                    ops.push(SmirOp::with_hint(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::PredStore {
+                                            src: SrcOperand::Reg(scalar),
+                                            cond,
+                                            addr,
+                                            width: mem_width,
+                                        },
+                                        hint,
+                                    ));
+                                } else {
+                                    ops.push(SmirOp::with_hint(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::Store {
+                                            src: scalar,
+                                            addr,
+                                            width: mem_width,
+                                        },
+                                        hint,
+                                    ));
+                                }
+                            }
+                        } else {
+                            let low_src = if opcode == 0x10 {
+                                self.xmm(rm_index)
+                            } else {
+                                self.xmm(reg_index)
+                            };
+                            let dst = if opcode == 0x10 {
+                                self.xmm(reg_index)
+                            } else {
+                                self.xmm(rm_index)
+                            };
+                            let scalar = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VExtractLane {
+                                    dst: scalar,
+                                    vec: low_src,
+                                    lane: 0,
+                                    elem,
+                                    sign: SignExtend::Zero,
+                                },
+                            ));
+                            let scalar = self.append_evex_scalar_select(
+                                prefix, mask_cond, dst, scalar, elem, pc, ctx, &mut ops,
+                            );
+                            self.append_vex_scalar_result(
+                                dst,
+                                self.xmm(v_index),
+                                scalar,
+                                elem,
+                                pc,
+                                ctx,
+                                &mut ops,
+                            );
+                        }
+                        return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
+                    }
+
+                    if prefix.vvvv != 0 {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let dst = self.vec_reg(modrm.reg, prefix.width);
+                    if opcode == 0x10 {
+                        if modrm.is_memory {
+                            let (addr, pre_ops) =
+                                self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                            ops.extend(pre_ops);
+                            ops.push(SmirOp::with_hint(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VLoad {
+                                    dst,
+                                    addr,
+                                    width: prefix.width,
+                                },
+                                hint,
+                            ));
+                        } else {
+                            ops.push(SmirOp::with_hint(
+                                OpId(0),
+                                pc,
+                                OpKind::VAnd {
+                                    dst,
+                                    src1: self.vec_reg(modrm.rm, prefix.width),
+                                    src2: self.vec_reg(modrm.rm, prefix.width),
+                                    width: prefix.width,
+                                },
+                                hint,
+                            ));
+                        }
+                    } else if modrm.is_memory {
+                        let (addr, pre_ops) =
+                            self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                        ops.extend(pre_ops);
+                        ops.push(SmirOp::with_hint(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VStore {
+                                src: dst,
+                                addr,
+                                width: prefix.width,
+                            },
+                            hint,
+                        ));
+                    } else {
+                        let src = dst;
+                        ops.push(SmirOp::with_hint(
+                            OpId(0),
+                            pc,
+                            OpKind::VAnd {
+                                dst: self.vec_reg(modrm.rm, prefix.width),
+                                src1: src,
+                                src2: src,
+                                width: prefix.width,
+                            },
+                            hint,
+                        ));
+                    }
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // Packed VEX/EVEX VCVTPS2PD/VCVTPD2PS.
+                0x5A if matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) => {
+                    if prefix.vvvv != 0
+                        || (prefix.encoding == VecEncodingKind::Evex && prefix.v_high)
+                        || (prefix.zeroing && prefix.aaa == 0)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let (from, to) = if prefix.pp == X86SsePrefix::None {
+                        (VecElementType::F32, VecElementType::F64)
+                    } else {
+                        (VecElementType::F64, VecElementType::F32)
+                    };
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && ((from == VecElementType::F32 && prefix.w)
+                            || (from == VecElementType::F64 && !prefix.w))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let embedded_rounding =
+                        prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
+                    if (prefix.encoding == VecEncodingKind::Evex
+                        && !embedded_rounding
+                        && prefix.l_bits == 3)
+                        || (embedded_rounding && from != VecElementType::F64)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let instruction_width = if embedded_rounding {
+                        VecWidth::V512
+                    } else {
+                        prefix.width
+                    };
+                    let lanes = match instruction_width {
+                        VecWidth::V128 => 2,
+                        VecWidth::V256 => 4,
+                        VecWidth::V512 => 8,
+                        VecWidth::V64 => unreachable!(),
+                    };
+                    let src_width = match (from, instruction_width) {
+                        (VecElementType::F32, VecWidth::V128) => VecWidth::V64,
+                        (VecElementType::F32, VecWidth::V256) => VecWidth::V128,
+                        (VecElementType::F32, VecWidth::V512) => VecWidth::V256,
+                        (VecElementType::F64, width) => width,
+                        _ => unreachable!(),
+                    };
+                    let dst_width = if to == VecElementType::F32 {
+                        if lanes == 8 {
+                            VecWidth::V256
+                        } else {
+                            VecWidth::V128
+                        }
+                    } else {
+                        instruction_width
+                    };
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let mask = if prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0 {
+                        Some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))))
+                    } else {
+                        None
+                    };
+                    let src = if modrm.is_memory {
+                        let broadcast = prefix.encoding == VecEncodingKind::Evex && prefix.b;
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            if broadcast {
+                                from.bytes()
+                            } else {
+                                src_width.bytes()
+                            },
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let value = ctx.alloc_vreg();
+                        if broadcast {
+                            let scalar = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Mov {
+                                    dst: scalar,
+                                    src: SrcOperand::Imm(0),
+                                    width: OpWidth::W64,
+                                },
+                            ));
+                            if let Some(mask_reg) = mask {
+                                let cond = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::And {
+                                        dst: cond,
+                                        src1: mask_reg,
+                                        src2: SrcOperand::Imm((1i64 << lanes) - 1),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr,
+                                        width: if from == VecElementType::F32 {
+                                            MemWidth::B4
+                                        } else {
+                                            MemWidth::B8
+                                        },
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                            } else {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Load {
+                                        dst: scalar,
+                                        addr,
+                                        width: if from == VecElementType::F32 {
+                                            MemWidth::B4
+                                        } else {
+                                            MemWidth::B8
+                                        },
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                            }
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: value,
+                                    scalar,
+                                    elem: from,
+                                    lanes,
+                                },
+                            ));
+                        } else if let Some(mask_reg) = mask {
+                            let zero = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Mov {
+                                    dst: zero,
+                                    src: SrcOperand::Imm(0),
+                                    width: OpWidth::W64,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: value,
+                                    scalar: zero,
+                                    elem: from,
+                                    lanes,
+                                },
+                            ));
+                            let base = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Lea { dst: base, addr },
+                            ));
+                            for lane in 0..lanes {
+                                let shifted = ctx.alloc_vreg();
+                                let cond = ctx.alloc_vreg();
+                                let scalar = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Shr {
+                                        dst: shifted,
+                                        src: mask_reg,
+                                        amount: SrcOperand::Imm(i64::from(lane)),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::And {
+                                        dst: cond,
+                                        src1: shifted,
+                                        src2: SrcOperand::Imm(1),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Mov {
+                                        dst: scalar,
+                                        src: SrcOperand::Imm(0),
+                                        width: OpWidth::W64,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr: Address::base_off(
+                                            base,
+                                            i64::from(lane) * i64::from(from.bytes()),
+                                        ),
+                                        width: if from == VecElementType::F32 {
+                                            MemWidth::B4
+                                        } else {
+                                            MemWidth::B8
+                                        },
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VInsertLane {
+                                        dst: value,
+                                        vec: value,
+                                        scalar,
+                                        lane,
+                                        elem: from,
+                                    },
+                                ));
+                            }
+                        } else {
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VLoad {
+                                    dst: value,
+                                    addr,
+                                    width: src_width,
+                                },
+                            ));
+                        }
+                        value
+                    } else {
+                        self.vec_reg(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                            src_width,
+                        )
+                    };
+                    let dst = self.vec_reg(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                        dst_width,
+                    );
+                    let round = if embedded_rounding {
+                        match prefix.l_bits {
+                            0 => FpRoundMode::RoundNearest,
+                            1 => FpRoundMode::RoundDown,
+                            2 => FpRoundMode::RoundUp,
+                            _ => FpRoundMode::RoundTowardZero,
+                        }
+                    } else {
+                        FpRoundMode::Dynamic
+                    };
+                    let conversion_hint = if embedded_rounding {
+                        X86OpHint::EvexOp {
+                            map: prefix.map,
+                            pp: prefix.pp,
+                            opcode,
+                            width: instruction_width,
+                        }
+                    } else {
+                        hint
+                    };
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86PackedFpConvert {
+                            dst,
+                            src,
+                            mask,
+                            from,
+                            to,
+                            lanes,
+                            dst_width,
+                            mask_zeroing: prefix.zeroing,
+                            zero_upper: true,
+                            round,
+                        },
+                        conversion_hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // Scalar VCVTSS2SD/VCVTSD2SS.
+                0x5A if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) => {
+                    let (from, to) = if prefix.pp == X86SsePrefix::Rep {
+                        (VecElementType::F32, VecElementType::F64)
+                    } else {
+                        (VecElementType::F64, VecElementType::F32)
+                    };
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && ((from == VecElementType::F32 && prefix.w)
+                            || (from == VecElementType::F64 && !prefix.w))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let src = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            from.bytes(),
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let value = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Load {
+                                dst: value,
+                                addr,
+                                width: if from == VecElementType::F32 {
+                                    MemWidth::B4
+                                } else {
+                                    MemWidth::B8
+                                },
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                        value
+                    } else {
+                        self.xmm(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        )
+                    };
+                    let dst = self.xmm(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                    );
+                    let merge = self.xmm(
+                        prefix.vvvv
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                16
+                            } else {
+                                0
+                            },
+                    );
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86FpConvert {
+                            dst,
+                            merge,
+                            src,
+                            from,
+                            to,
+                            zero_upper: true,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // Packed and scalar VSQRTPS/VSQRTPD/VSQRTSS/VSQRTSD.
+                0x51 => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+                        let elem = if prefix.pp == X86SsePrefix::Rep {
+                            VecElementType::F32
+                        } else {
+                            VecElementType::F64
+                        };
+                        if prefix.encoding == VecEncodingKind::Evex
+                            && ((prefix.zeroing && prefix.aaa == 0)
+                                || (elem == VecElementType::F32 && prefix.w)
+                                || (elem == VecElementType::F64 && !prefix.w))
+                        {
+                            return Err(LiftError::InvalidEncoding {
+                                addr: pc,
+                                bytes: bytes.to_vec(),
+                            });
+                        }
+                        let dst = self.xmm(
+                            modrm.reg
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        );
+                        let src1 = self.xmm(
+                            prefix.vvvv
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        );
+                        let mask_cond = self.append_evex_mask_condition(prefix, pc, ctx, &mut ops);
+                        let src = if modrm.is_memory {
+                            let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                                prefix,
+                                modrm.addr.as_ref().unwrap(),
+                                next_pc,
+                                elem,
+                                ctx,
+                            );
+                            ops.extend(pre_ops);
+                            let scalar = ctx.alloc_vreg();
+                            let vector = ctx.alloc_vreg();
+                            if let Some(cond) = mask_cond {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Mov {
+                                        dst: scalar,
+                                        src: SrcOperand::Imm(0),
+                                        width: if elem == VecElementType::F32 {
+                                            OpWidth::W32
+                                        } else {
+                                            OpWidth::W64
+                                        },
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr,
+                                        width: if elem == VecElementType::F32 {
+                                            MemWidth::B4
+                                        } else {
+                                            MemWidth::B8
+                                        },
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                            } else {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Load {
+                                        dst: scalar,
+                                        addr,
+                                        width: if elem == VecElementType::F32 {
+                                            MemWidth::B4
+                                        } else {
+                                            MemWidth::B8
+                                        },
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                            }
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: vector,
+                                    scalar,
+                                    elem,
+                                    lanes: 1,
+                                },
+                            ));
+                            vector
+                        } else {
+                            self.xmm(
+                                modrm.rm
+                                    + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high
+                                    {
+                                        16
+                                    } else {
+                                        0
+                                    },
+                            )
+                        };
+                        let vector_result = ctx.alloc_vreg();
+                        let scalar_result = ctx.alloc_vreg();
+                        ops.push(SmirOp::with_hint(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VUnary {
+                                dst: vector_result,
+                                src,
+                                elem,
+                                lanes: 1,
+                                op: VecUnaryOp::FSqrt,
+                            },
+                            hint,
+                        ));
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VExtractLane {
+                                dst: scalar_result,
+                                vec: vector_result,
+                                lane: 0,
+                                elem,
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                        let scalar_result = self.append_evex_scalar_select(
+                            prefix,
+                            mask_cond,
+                            dst,
+                            scalar_result,
+                            elem,
+                            pc,
+                            ctx,
+                            &mut ops,
+                        );
+                        self.append_vex_scalar_result(
+                            dst,
+                            src1,
+                            scalar_result,
+                            elem,
+                            pc,
+                            ctx,
+                            &mut ops,
+                        );
+                        return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
+                    }
+
+                    if prefix.vvvv != 0 || prefix.v_high || prefix.aaa != 0 || prefix.zeroing {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let elem = if prefix.pp == X86SsePrefix::OpSize {
+                        VecElementType::F64
+                    } else {
+                        VecElementType::F32
+                    };
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && ((elem == VecElementType::F32 && prefix.w)
+                            || (elem == VecElementType::F64 && !prefix.w))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let dst = self.vec_reg(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let src = if modrm.is_memory {
+                        let (addr, pre_ops) = self.vec_full_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            ctx,
+                        );
+                        ops.extend(pre_ops);
+                        let vector = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: vector,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        vector
+                    } else {
+                        self.vec_reg(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                            prefix.width,
+                        )
+                    };
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VUnary {
+                            dst,
+                            src,
+                            elem,
+                            lanes: prefix.width.lanes(elem) as u8,
+                            op: VecUnaryOp::FSqrt,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // Packed vector bitwise logic.
+                0x54 | 0x56 | 0x57 => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let dst = self.vec_reg(modrm.reg, prefix.width);
+                    let src1 = self.vec_reg(prefix.vvvv, prefix.width);
+                    let src2 = if modrm.is_memory {
+                        let (addr, pre_ops) =
+                            self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                        ops.extend(pre_ops);
+                        let tmp = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: tmp,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        tmp
+                    } else {
+                        self.vec_reg(modrm.rm, prefix.width)
+                    };
+                    let kind = match opcode {
+                        0x54 => OpKind::VAnd {
+                            dst,
+                            src1,
+                            src2,
+                            width: prefix.width,
+                        },
+                        0x56 => OpKind::VOr {
+                            dst,
+                            src1,
+                            src2,
+                            width: prefix.width,
+                        },
+                        0x57 => OpKind::VXor {
+                            dst,
+                            src1,
+                            src2,
+                            width: prefix.width,
+                        },
+                        _ => unreachable!(),
+                    };
+                    ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, kind, hint));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
                 // VMOVAPS (0F 28/29) and VMOVDQA (0F 6F/7F with 66)
                 0x28 | 0x29 | 0x6F | 0x7F => {
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
@@ -4397,28 +8295,240 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // VADDPS/VADDPS/VMULPS/VMAXPS
-                0x58 | 0x59 | 0x5C | 0x5F | 0xFE => {
+                // Packed/scalar vector ADD/MUL/SUB/DIV/MIN/MAX and PADDD.
+                0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F | 0xFE => {
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-                    let dst = self.vec_reg(modrm.reg, prefix.width);
-                    let src1 = self.vec_reg(prefix.vvvv, prefix.width);
 
-                    let (elem, lanes) = if opcode == 0xFE {
-                        (
-                            VecElementType::I32,
-                            prefix.width.lanes(VecElementType::I32) as u8,
-                        )
+                    if opcode != 0xFE
+                        && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+                    {
+                        if prefix.encoding == VecEncodingKind::Evex
+                            && ((prefix.zeroing && prefix.aaa == 0)
+                                || (prefix.pp == X86SsePrefix::Rep && prefix.w)
+                                || (prefix.pp == X86SsePrefix::Repne && !prefix.w))
+                        {
+                            return Err(LiftError::Unsupported {
+                                addr: pc,
+                                mnemonic: format!("scalar vector opcode 0x{opcode:02X}"),
+                            });
+                        }
+                        let elem = if prefix.pp == X86SsePrefix::Rep {
+                            VecElementType::F32
+                        } else {
+                            VecElementType::F64
+                        };
+                        let mem_width = if elem == VecElementType::F32 {
+                            MemWidth::B4
+                        } else {
+                            MemWidth::B8
+                        };
+                        let dst = self.xmm(
+                            modrm.reg
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        );
+                        let src1 = self.xmm(
+                            prefix.vvvv
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                        );
+                        let mask_cond = self.append_evex_mask_condition(prefix, pc, ctx, &mut ops);
+                        let src2 = if modrm.is_memory {
+                            let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
+                                prefix,
+                                modrm.addr.as_ref().unwrap(),
+                                next_pc,
+                                elem,
+                                ctx,
+                            );
+                            ops.extend(pre_ops);
+                            let scalar = ctx.alloc_vreg();
+                            let vector = ctx.alloc_vreg();
+                            if let Some(cond) = mask_cond {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Mov {
+                                        dst: scalar,
+                                        src: SrcOperand::Imm(0),
+                                        width: if elem == VecElementType::F32 {
+                                            OpWidth::W32
+                                        } else {
+                                            OpWidth::W64
+                                        },
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr,
+                                        width: mem_width,
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                            } else {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Load {
+                                        dst: scalar,
+                                        addr,
+                                        width: mem_width,
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                            }
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: vector,
+                                    scalar,
+                                    elem,
+                                    lanes: 1,
+                                },
+                            ));
+                            vector
+                        } else {
+                            self.xmm(
+                                modrm.rm
+                                    + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high
+                                    {
+                                        16
+                                    } else {
+                                        0
+                                    },
+                            )
+                        };
+                        let vector_result = ctx.alloc_vreg();
+                        let scalar_result = ctx.alloc_vreg();
+                        let kind = match opcode {
+                            0x58 => OpKind::VAdd {
+                                dst: vector_result,
+                                src1,
+                                src2,
+                                elem,
+                                lanes: 1,
+                            },
+                            0x59 => OpKind::VMul {
+                                dst: vector_result,
+                                src1,
+                                src2,
+                                elem,
+                                lanes: 1,
+                            },
+                            0x5C => OpKind::VSub {
+                                dst: vector_result,
+                                src1,
+                                src2,
+                                elem,
+                                lanes: 1,
+                            },
+                            0x5E => OpKind::VDiv {
+                                dst: vector_result,
+                                src1,
+                                src2,
+                                elem,
+                                lanes: 1,
+                            },
+                            0x5D | 0x5F => OpKind::VX86MinMax {
+                                dst: vector_result,
+                                src1,
+                                src2,
+                                elem,
+                                lanes: 1,
+                                min: opcode == 0x5D,
+                            },
+                            _ => unreachable!(),
+                        };
+                        ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, kind, hint));
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VExtractLane {
+                                dst: scalar_result,
+                                vec: vector_result,
+                                lane: 0,
+                                elem,
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                        let scalar_result = self.append_evex_scalar_select(
+                            prefix,
+                            mask_cond,
+                            dst,
+                            scalar_result,
+                            elem,
+                            pc,
+                            ctx,
+                            &mut ops,
+                        );
+                        self.append_vex_scalar_result(
+                            dst,
+                            src1,
+                            scalar_result,
+                            elem,
+                            pc,
+                            ctx,
+                            &mut ops,
+                        );
+                        return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
+                    }
+
+                    let dst = self.vec_reg(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let src1 = self.vec_reg(
+                        prefix.vvvv
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+
+                    let elem = if opcode == 0xFE {
+                        VecElementType::I32
                     } else {
-                        (
-                            VecElementType::F32,
-                            prefix.width.lanes(VecElementType::F32) as u8,
-                        )
+                        match prefix.pp {
+                            X86SsePrefix::None => VecElementType::F32,
+                            X86SsePrefix::OpSize => VecElementType::F64,
+                            X86SsePrefix::Rep | X86SsePrefix::Repne => unreachable!(),
+                        }
                     };
+                    let lanes = prefix.width.lanes(elem) as u8;
+                    if opcode != 0xFE
+                        && prefix.encoding == VecEncodingKind::Evex
+                        && ((elem == VecElementType::F32 && prefix.w)
+                            || (elem == VecElementType::F64 && !prefix.w))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
 
                     let src2 = if modrm.is_memory {
                         let x86_addr = modrm.addr.as_ref().unwrap();
-                        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                        let (addr, pre_ops) =
+                            self.vec_full_addr_to_smir(prefix, x86_addr, next_pc, ctx);
                         ops.extend(pre_ops);
                         let tmp = ctx.alloc_vreg();
                         ops.push(SmirOp::with_hint(
@@ -4433,7 +8543,15 @@ impl X86_64Lifter {
                         ));
                         tmp
                     } else {
-                        self.vec_reg(modrm.rm, prefix.width)
+                        self.vec_reg(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                            prefix.width,
+                        )
                     };
 
                     let op_kind = match opcode {
@@ -4458,12 +8576,20 @@ impl X86_64Lifter {
                             elem,
                             lanes,
                         },
-                        0x5F => OpKind::VMax {
+                        0x5E => OpKind::VDiv {
                             dst,
                             src1,
                             src2,
                             elem,
                             lanes,
+                        },
+                        0x5D | 0x5F => OpKind::VX86MinMax {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                            min: opcode == 0x5D,
                         },
                         _ => {
                             return Err(LiftError::Unsupported {
@@ -4475,6 +8601,43 @@ impl X86_64Lifter {
 
                     ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, op_kind, hint));
 
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VEX.128 VLDMXCSR/VSTMXCSR (VEX.0F.AE /2,/3).
+                0xAE => {
+                    if prefix.encoding != VecEncodingKind::Vex
+                        || prefix.pp != X86SsePrefix::None
+                        || prefix.width != VecWidth::V128
+                        || prefix.w
+                        || prefix.vvvv != 0
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let group = (modrm.byte >> 3) & 7;
+                    if !modrm.is_memory || !matches!(group, 2 | 3) {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let (addr, mut ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        if group == 2 {
+                            OpKind::X86LoadMxcsr { addr }
+                        } else {
+                            OpKind::X86StoreMxcsr { addr }
+                        },
+                        hint,
+                    ));
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
@@ -7019,6 +11182,439 @@ impl X86_64Lifter {
         }
     }
 
+    /// Lift Group 4 INC/DEC r/m8 (FE /0, /1).
+    fn lift_group4(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let group = (modrm.byte >> 3) & 0x07;
+        if group > 1 || (prefix.lock && !modrm.is_memory) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
+
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let operand;
+        let mut store_addr = None;
+        let mut high_byte_base = None;
+
+        if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            operand = ctx.alloc_vreg();
+
+            if prefix.lock {
+                let one = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: one,
+                        src: SrcOperand::Imm(1),
+                        width: OpWidth::W8,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::AtomicRmw {
+                        dst: operand,
+                        addr,
+                        src: one,
+                        op: if group == 0 {
+                            AtomicOp::Add
+                        } else {
+                            AtomicOp::Sub
+                        },
+                        width: MemWidth::B1,
+                        order: MemoryOrder::SeqCst,
+                    },
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Load {
+                        dst: operand,
+                        addr: addr.clone(),
+                        width: MemWidth::B1,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                store_addr = Some(addr);
+            }
+        } else {
+            if !prefix.has_rex() && (4..=7).contains(&(modrm.rm & 7)) {
+                // Legacy byte-register codes 4..7 name AH/CH/DH/BH. Extract
+                // bits 15:8 into a temporary, operate on its low byte, then
+                // merge the result back after the flag-producing operation.
+                let base = self.gpr((modrm.rm & 7) - 4);
+                operand = ctx.alloc_vreg();
+                high_byte_base = Some(base);
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Shr {
+                        dst: operand,
+                        src: base,
+                        amount: SrcOperand::Imm(8),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+            } else {
+                operand = self.gpr(modrm.rm);
+            }
+        }
+
+        if let Some(addr) = store_addr {
+            // Delay the architectural flag update until after the potentially
+            // faulting store. This preserves precise-exception semantics.
+            let result = ctx.alloc_vreg();
+            let update_no_flags = if group == 0 {
+                OpKind::Inc {
+                    dst: result,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                }
+            } else {
+                OpKind::Dec {
+                    dst: result,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                }
+            };
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, update_no_flags));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: result,
+                    addr,
+                    width: MemWidth::B1,
+                },
+            ));
+            let flags_result = ctx.alloc_vreg();
+            let update_flags = if group == 0 {
+                OpKind::Inc {
+                    dst: flags_result,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                }
+            } else {
+                OpKind::Dec {
+                    dst: flags_result,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                }
+            };
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, update_flags));
+        } else {
+            let update = if group == 0 {
+                OpKind::Inc {
+                    dst: operand,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                }
+            } else {
+                OpKind::Dec {
+                    dst: operand,
+                    src: operand,
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                }
+            };
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, update));
+
+            if let Some(base) = high_byte_base {
+                let byte = ctx.alloc_vreg();
+                let shifted = ctx.alloc_vreg();
+                let preserved = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::And {
+                        dst: byte,
+                        src1: operand,
+                        src2: SrcOperand::Imm(0xFF),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Shl {
+                        dst: shifted,
+                        src: byte,
+                        amount: SrcOperand::Imm(8),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::And {
+                        dst: preserved,
+                        src1: base,
+                        src2: SrcOperand::Imm(!0xFF00u64 as i64),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Or {
+                        dst: base,
+                        src1: preserved,
+                        src2: SrcOperand::Reg(shifted),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+            }
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift POP r/m16 or r/m64 (8F /0) in 64-bit mode.
+    fn lift_pop_rm(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if ((modrm.byte >> 3) & 0x07) != 0 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
+
+        let (stack_bytes, width, mem_width) = if prefix.operand_size_override {
+            (2, OpWidth::W16, MemWidth::B2)
+        } else {
+            (8, OpWidth::W64, MemWidth::B8)
+        };
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let popped = ctx.alloc_vreg();
+
+        // POP obtains the value at the old RSP, increments RSP, then evaluates a
+        // memory destination using the updated RSP (relevant to POP [RSP+disp]).
+        ops.push(SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::Load {
+                dst: popped,
+                addr: Address::Direct(self.rsp()),
+                width: mem_width,
+                sign: SignExtend::Zero,
+            },
+        ));
+        let incremented_rsp = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(1),
+            pc,
+            OpKind::Add {
+                dst: incremented_rsp,
+                src1: self.rsp(),
+                src2: SrcOperand::Imm(stack_bytes),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+
+        if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let address_uses_materialized_addr32 = x86_addr.address_width == OpWidth::W32;
+            let (addr, mut post_ops) = if address_uses_materialized_addr32 {
+                // POP evaluates an ESP-based memory destination after the
+                // architectural stack increment. Substitute the incremented
+                // value before materializing the modulo-2^32 address.
+                self.x86_addr32_to_smir(x86_addr, ctx, Some((4, incremented_rsp)))
+            } else {
+                self.x86_addr_to_smir(x86_addr, next_pc, ctx)
+            };
+            for op in &mut post_ops {
+                op.id = OpId(ops.len() as u16);
+                ops.push(op.clone());
+            }
+            let addr = if address_uses_materialized_addr32 {
+                addr
+            } else {
+                Self::replace_address_reg(addr, self.rsp(), incremented_rsp)
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: popped,
+                    addr,
+                    width: mem_width,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: self.rsp(),
+                    src: SrcOperand::Reg(incremented_rsp),
+                    width: OpWidth::W64,
+                },
+            ));
+        } else {
+            if self.gpr(modrm.rm) == self.rsp() {
+                if width == OpWidth::W16 {
+                    ops.push(SmirOp::new(
+                        OpId(2),
+                        pc,
+                        OpKind::Mov {
+                            dst: self.rsp(),
+                            src: SrcOperand::Reg(incremented_rsp),
+                            width: OpWidth::W64,
+                        },
+                    ));
+                }
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.rsp(),
+                        src: SrcOperand::Reg(popped),
+                        width,
+                    },
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.rsp(),
+                        src: SrcOperand::Reg(incremented_rsp),
+                        width: OpWidth::W64,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(3),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.gpr(modrm.rm),
+                        src: SrcOperand::Reg(popped),
+                        width,
+                    },
+                ));
+            }
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift MOV accumulator to/from a moffs absolute offset (A0-A3).
+    fn lift_mov_moffs(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+        let addr_bytes = if prefix.address_size_override { 4 } else { 8 };
+        if bytes.len() < addr_bytes {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: addr_bytes,
+            });
+        }
+        let offset = if addr_bytes == 4 {
+            u32::from_le_bytes(bytes[..4].try_into().unwrap()) as u64
+        } else {
+            u64::from_le_bytes(bytes[..8].try_into().unwrap())
+        };
+        let addr = match prefix.segment_override {
+            Some(0x64) => Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: None,
+                index: None,
+                scale: 1,
+                disp: offset as i64,
+            },
+            Some(0x65) => Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
+                base: None,
+                index: None,
+                scale: 1,
+                disp: offset as i64,
+            },
+            _ => Address::Absolute(offset),
+        };
+        let mem_width = if matches!(opcode, 0xA0 | 0xA2) {
+            MemWidth::B1
+        } else {
+            let size = prefix.op_size();
+            self.size_to_memwidth(size)
+        };
+
+        let kind = match opcode {
+            0xA0 | 0xA1 => OpKind::Load {
+                dst: self.gpr(0),
+                addr,
+                width: mem_width,
+                sign: SignExtend::Zero,
+            },
+            0xA2 | 0xA3 => OpKind::Store {
+                src: self.gpr(0),
+                addr,
+                width: mem_width,
+            },
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        };
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(OpId(0), pc, kind)],
+            prefix.cursor + addr_bytes,
+        ))
+    }
+
     /// Lift group 5 instructions (FF)
     fn lift_group5(
         &self,
@@ -7036,6 +11632,69 @@ impl X86_64Lifter {
         let mut ops = Vec::new();
 
         let group = (modrm.byte >> 3) & 0x07;
+
+        if prefix.lock {
+            if !modrm.is_memory || (group != 0 && group != 1) {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let one = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: one,
+                    src: SrcOperand::Imm(1),
+                    width,
+                },
+            ));
+            let old = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::AtomicRmw {
+                    dst: old,
+                    addr,
+                    src: one,
+                    op: if group == 0 {
+                        AtomicOp::Add
+                    } else {
+                        AtomicOp::Sub
+                    },
+                    width: mem_width,
+                    order: MemoryOrder::SeqCst,
+                },
+            ));
+            let flag_result = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                if group == 0 {
+                    OpKind::Inc {
+                        dst: flag_result,
+                        src: old,
+                        width,
+                        flags: FlagUpdate::All,
+                    }
+                } else {
+                    OpKind::Dec {
+                        dst: flag_result,
+                        src: old,
+                        width,
+                        flags: FlagUpdate::All,
+                    }
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
 
         if modrm.is_memory && (group == 2 || group == 4) {
             let x86_addr = modrm.addr.as_ref().unwrap();
@@ -7080,14 +11739,23 @@ impl X86_64Lifter {
 
         match group {
             0 => {
+                let result = if addr.is_some() {
+                    ctx.alloc_vreg()
+                } else {
+                    operand
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Inc {
-                        dst: operand,
+                        dst: result,
                         src: operand,
                         width,
-                        flags: FlagUpdate::All,
+                        flags: if addr.is_some() {
+                            FlagUpdate::None
+                        } else {
+                            FlagUpdate::All
+                        },
                     },
                 ));
                 if let Some(addr) = addr {
@@ -7095,9 +11763,20 @@ impl X86_64Lifter {
                         OpId(ops.len() as u16),
                         pc,
                         OpKind::Store {
-                            src: operand,
+                            src: result,
                             addr,
                             width: mem_width,
+                        },
+                    ));
+                    let flag_result = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Inc {
+                            dst: flag_result,
+                            src: operand,
+                            width,
+                            flags: FlagUpdate::All,
                         },
                     ));
                 }
@@ -7107,14 +11786,23 @@ impl X86_64Lifter {
                 ))
             }
             1 => {
+                let result = if addr.is_some() {
+                    ctx.alloc_vreg()
+                } else {
+                    operand
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Dec {
-                        dst: operand,
+                        dst: result,
                         src: operand,
                         width,
-                        flags: FlagUpdate::All,
+                        flags: if addr.is_some() {
+                            FlagUpdate::None
+                        } else {
+                            FlagUpdate::All
+                        },
                     },
                 ));
                 if let Some(addr) = addr {
@@ -7122,9 +11810,20 @@ impl X86_64Lifter {
                         OpId(ops.len() as u16),
                         pc,
                         OpKind::Store {
-                            src: operand,
+                            src: result,
                             addr,
                             width: mem_width,
+                        },
+                    ));
+                    let flag_result = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Dec {
+                            dst: flag_result,
+                            src: operand,
+                            width,
+                            flags: FlagUpdate::All,
                         },
                     ));
                 }
@@ -7243,6 +11942,63 @@ impl X86_64Lifter {
 
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + imm_size as u64;
         let mut ops = Vec::new();
+        let mut high_dst = None;
+
+        if prefix.lock {
+            if !modrm.is_memory || (group != 2 && group != 3) {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let atomic_source = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: atomic_source,
+                    src: SrcOperand::Imm(if group == 2 { -1 } else { 0 }),
+                    width,
+                },
+            ));
+            let old = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::AtomicRmw {
+                    dst: old,
+                    addr,
+                    src: atomic_source,
+                    op: if group == 2 {
+                        AtomicOp::Nand
+                    } else {
+                        AtomicOp::Neg
+                    },
+                    width: mem_width,
+                    order: MemoryOrder::SeqCst,
+                },
+            ));
+            if group == 3 {
+                let flag_result = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Neg {
+                        dst: flag_result,
+                        src: old,
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                ));
+            }
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
 
         let (operand, addr) = if modrm.is_memory {
             let x86_addr = modrm.addr.as_ref().unwrap();
@@ -7261,9 +12017,17 @@ impl X86_64Lifter {
                 },
             ));
             (tmp, Some(addr))
+        } else if is_8bit {
+            high_dst = self.high_byte_base(modrm.rm, prefix);
+            (
+                self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                None,
+            )
         } else {
             (self.gpr(modrm.rm), None)
         };
+
+        let mut writeback_value = operand;
 
         match group {
             0 => {
@@ -7289,14 +12053,23 @@ impl X86_64Lifter {
                 ));
             }
             3 => {
+                writeback_value = if addr.is_some() {
+                    ctx.alloc_vreg()
+                } else {
+                    operand
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Neg {
-                        dst: operand,
+                        dst: writeback_value,
                         src: operand,
                         width,
-                        flags: FlagUpdate::All,
+                        flags: if addr.is_some() {
+                            FlagUpdate::None
+                        } else {
+                            FlagUpdate::All
+                        },
                     },
                 ));
             }
@@ -7368,16 +12141,32 @@ impl X86_64Lifter {
         }
 
         if matches!(group, 2 | 3) {
+            if let Some(base) = high_dst {
+                self.merge_high_byte(base, writeback_value, pc, ctx, &mut ops);
+            }
             if let Some(addr) = addr {
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Store {
-                        src: operand,
+                        src: writeback_value,
                         addr,
                         width: mem_width,
                     },
                 ));
+                if group == 3 {
+                    let flag_result = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Neg {
+                            dst: flag_result,
+                            src: operand,
+                            width,
+                            flags: FlagUpdate::All,
+                        },
+                    ));
+                }
             }
         }
 
@@ -7659,7 +12448,7 @@ impl X86_64Lifter {
         bytes: &[u8],
         prefix: &X86Prefix,
         pc: u64,
-        _ctx: &mut LiftContext,
+        ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let reg = (opcode & 0x07) | prefix.rex_b();
 
@@ -7673,15 +12462,30 @@ impl X86_64Lifter {
 
         let imm = bytes[0] as i8 as i64;
 
-        let ops = vec![SmirOp::new(
-            OpId(0),
-            pc,
-            OpKind::Mov {
-                dst: self.gpr(reg),
-                src: SrcOperand::Imm(imm),
-                width: OpWidth::W8,
-            },
-        )];
+        let mut ops = Vec::new();
+        if let Some(base) = self.high_byte_base(reg, prefix) {
+            let value = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::Mov {
+                    dst: value,
+                    src: SrcOperand::Imm(imm),
+                    width: OpWidth::W8,
+                },
+            ));
+            self.merge_high_byte(base, value, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::Mov {
+                    dst: self.gpr(reg),
+                    src: SrcOperand::Imm(imm),
+                    width: OpWidth::W8,
+                },
+            ));
+        }
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor + 1))
     }
@@ -7775,6 +12579,338 @@ impl X86_64Lifter {
                 width,
             },
         )];
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor))
+    }
+
+    /// Lift CBW/CWDE/CDQE (98).
+    fn lift_cbw_cwde_cdqe(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x98],
+            });
+        }
+        let (from_width, to_width) = if prefix.rex_w() {
+            (OpWidth::W32, OpWidth::W64)
+        } else if prefix.operand_size_override {
+            (OpWidth::W8, OpWidth::W16)
+        } else {
+            (OpWidth::W16, OpWidth::W32)
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::SignExtend {
+                    dst: self.gpr(0),
+                    src: self.gpr(0),
+                    from_width,
+                    to_width,
+                },
+            )],
+            prefix.cursor,
+        ))
+    }
+
+    /// Lift PUSHFQ/PUSHFW (9C) and POPFQ/POPFW (9D) in 64-bit mode.
+    fn lift_stack_flags(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+        let (stack_bytes, mem_width) = if prefix.operand_size_override {
+            (2, MemWidth::B2)
+        } else {
+            (8, MemWidth::B8)
+        };
+        let mut ops = Vec::new();
+
+        match opcode {
+            0x9C => {
+                let flags = ctx.alloc_vreg();
+                ops.push(SmirOp::new(OpId(0), pc, OpKind::ReadFlags { dst: flags }));
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::Sub {
+                        dst: self.rsp(),
+                        src1: self.rsp(),
+                        src2: SrcOperand::Imm(stack_bytes),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::Store {
+                        src: flags,
+                        addr: Address::Direct(self.rsp()),
+                        width: mem_width,
+                    },
+                ));
+            }
+            0x9D => {
+                let popped = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::Load {
+                        dst: popped,
+                        addr: Address::Direct(self.rsp()),
+                        width: mem_width,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::Add {
+                        dst: self.rsp(),
+                        src1: self.rsp(),
+                        src2: SrcOperand::Imm(stack_bytes),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+
+                // SMIR models CF/PF/AF/ZF/SF/DF/OF. Apply POPF's reserved-bit
+                // filtering to that representable subset and force bit 1 set.
+                const SMIR_RFLAGS_MASK: i64 = 0xCD5;
+                let masked = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::And {
+                        dst: masked,
+                        src1: popped,
+                        src2: SrcOperand::Imm(SMIR_RFLAGS_MASK),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+
+                let new_flags = if prefix.operand_size_override {
+                    let old_flags = ctx.alloc_vreg();
+                    let preserved = ctx.alloc_vreg();
+                    let merged = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(3),
+                        pc,
+                        OpKind::ReadFlags { dst: old_flags },
+                    ));
+                    ops.push(SmirOp::new(
+                        OpId(4),
+                        pc,
+                        OpKind::And {
+                            dst: preserved,
+                            src1: old_flags,
+                            src2: SrcOperand::Imm(!0xFFFF),
+                            width: OpWidth::W64,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    ops.push(SmirOp::new(
+                        OpId(5),
+                        pc,
+                        OpKind::Or {
+                            dst: merged,
+                            src1: preserved,
+                            src2: SrcOperand::Reg(masked),
+                            width: OpWidth::W64,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    merged
+                } else {
+                    masked
+                };
+
+                let with_reserved = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Or {
+                        dst: with_reserved,
+                        src1: new_flags,
+                        src2: SrcOperand::Imm(2),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::WriteFlags { src: with_reserved },
+                ));
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        }
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor))
+    }
+
+    /// Lift SAHF (9E) and LAHF (9F).
+    fn lift_ah_flags(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+        const STATUS_MASK: i64 = 0xD5;
+        let mut ops = Vec::new();
+
+        match opcode {
+            0x9E => {
+                let old_flags = ctx.alloc_vreg();
+                let ah = ctx.alloc_vreg();
+                let status = ctx.alloc_vreg();
+                let preserved = ctx.alloc_vreg();
+                let merged = ctx.alloc_vreg();
+
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::ReadFlags { dst: old_flags },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::Shr {
+                        dst: ah,
+                        src: self.gpr(0),
+                        amount: SrcOperand::Imm(8),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::And {
+                        dst: status,
+                        src1: ah,
+                        src2: SrcOperand::Imm(STATUS_MASK),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(3),
+                    pc,
+                    OpKind::And {
+                        dst: preserved,
+                        src1: old_flags,
+                        src2: SrcOperand::Imm(!STATUS_MASK),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(4),
+                    pc,
+                    OpKind::Or {
+                        dst: merged,
+                        src1: preserved,
+                        src2: SrcOperand::Reg(status),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(OpId(5), pc, OpKind::WriteFlags { src: merged }));
+            }
+            0x9F => {
+                let flags = ctx.alloc_vreg();
+                let status = ctx.alloc_vreg();
+                let shifted = ctx.alloc_vreg();
+                let cleared_rax = ctx.alloc_vreg();
+
+                ops.push(SmirOp::new(OpId(0), pc, OpKind::ReadFlags { dst: flags }));
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::And {
+                        dst: status,
+                        src1: flags,
+                        src2: SrcOperand::Imm(STATUS_MASK),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::Or {
+                        dst: status,
+                        src1: status,
+                        src2: SrcOperand::Imm(2),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(3),
+                    pc,
+                    OpKind::Shl {
+                        dst: shifted,
+                        src: status,
+                        amount: SrcOperand::Imm(8),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(4),
+                    pc,
+                    OpKind::And {
+                        dst: cleared_rax,
+                        src1: self.gpr(0),
+                        src2: SrcOperand::Imm(!0xFF00),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(5),
+                    pc,
+                    OpKind::Or {
+                        dst: self.gpr(0),
+                        src1: cleared_rax,
+                        src2: SrcOperand::Reg(shifted),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        }
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
@@ -8018,6 +13154,174 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
+    /// Lift ENTER imm16, imm8 (C8), including all 32 architectural nesting
+    /// levels. Stack stores are emitted in retirement order.
+    fn lift_enter(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0xC8],
+            });
+        }
+        if bytes.len() < 3 {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: 3,
+            });
+        }
+
+        let alloc_size = u16::from_le_bytes([bytes[0], bytes[1]]) as i64;
+        let nesting = bytes[2] & 0x1F;
+        let (width, mem_width, delta) = if prefix.operand_size_override {
+            (OpWidth::W16, MemWidth::B2, 2)
+        } else {
+            (OpWidth::W64, MemWidth::B8, 8)
+        };
+        let rbp = self.gpr(5);
+        let rsp = self.rsp();
+        let mut ops = Vec::new();
+
+        let old_bp = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: old_bp,
+                src: SrcOperand::Reg(rbp),
+                width,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Sub {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(delta),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Store {
+                src: old_bp,
+                addr: Address::Direct(rsp),
+                width: mem_width,
+            },
+        ));
+
+        let frame_ptr = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: frame_ptr,
+                src: SrcOperand::Reg(rsp),
+                width: OpWidth::W64,
+            },
+        ));
+
+        for _ in 1..nesting {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sub {
+                    dst: rbp,
+                    src1: rbp,
+                    src2: SrcOperand::Imm(delta),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            let parent = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: parent,
+                    addr: Address::Direct(rbp),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sub {
+                    dst: rsp,
+                    src1: rsp,
+                    src2: SrcOperand::Imm(delta),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: parent,
+                    addr: Address::Direct(rsp),
+                    width: mem_width,
+                },
+            ));
+        }
+
+        if nesting != 0 {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sub {
+                    dst: rsp,
+                    src1: rsp,
+                    src2: SrcOperand::Imm(delta),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: frame_ptr,
+                    addr: Address::Direct(rsp),
+                    width: mem_width,
+                },
+            ));
+        }
+
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: rbp,
+                src: SrcOperand::Reg(frame_ptr),
+                width,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Sub {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(alloc_size),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor + 3))
+    }
+
     /// Lift JMP rel8 (EB)
     fn lift_jmp_rel8(
         &self,
@@ -8118,6 +13422,140 @@ impl X86_64Lifter {
         ))
     }
 
+    /// Lift LOOPNZ/LOOPZ/LOOP/JRCXZ (E0-E3) in 64-bit mode. Counter width
+    /// follows address size (RCX normally, ECX under 67h); internal comparisons
+    /// restore RFLAGS because these instructions do not modify flags.
+    fn lift_loop_rel8(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+        if bytes.is_empty() {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: 0,
+                need: 1,
+            });
+        }
+
+        let width = if prefix.address_size_override {
+            OpWidth::W32
+        } else {
+            OpWidth::W64
+        };
+        let insn_len = prefix.cursor + 1;
+        let next_pc = pc + insn_len as u64;
+        let target = (next_pc as i64 + bytes[0] as i8 as i64) as u64;
+        let mut ops = Vec::new();
+        let saved_flags = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::ReadFlags { dst: saved_flags },
+        ));
+
+        if opcode != 0xE3 {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Dec {
+                    dst: self.gpr(1),
+                    src: self.gpr(1),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            ));
+        }
+
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Cmp {
+                src1: self.gpr(1),
+                src2: SrcOperand::Imm(0),
+                width,
+            },
+        ));
+        let count_condition = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::SetCC {
+                dst: count_condition,
+                cond: if opcode == 0xE3 {
+                    Condition::Eq
+                } else {
+                    Condition::Ne
+                },
+                width: OpWidth::W64,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::WriteFlags { src: saved_flags },
+        ));
+
+        let branch_condition = match opcode {
+            0xE0 | 0xE1 => {
+                let zf_condition = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::SetCC {
+                        dst: zf_condition,
+                        cond: if opcode == 0xE0 {
+                            Condition::Ne
+                        } else {
+                            Condition::Eq
+                        },
+                        width: OpWidth::W64,
+                    },
+                ));
+                let combined = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::And {
+                        dst: combined,
+                        src1: count_condition,
+                        src2: SrcOperand::Reg(zf_condition),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                combined
+            }
+            0xE2 | 0xE3 => count_condition,
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        };
+
+        Ok(LiftResult {
+            ops,
+            bytes_consumed: insn_len,
+            control_flow: ControlFlow::CondBranchReg {
+                cond: branch_condition,
+                taken: target,
+                not_taken: next_pc,
+            },
+            branch_targets: vec![target, next_pc],
+        })
+    }
+
     /// Lift LEA (8D)
     fn lift_lea(
         &self,
@@ -8161,72 +13599,468 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift STOS/REP STOS (AA/AB with optional REP prefix)
-    fn lift_stos(
+    /// Lift MOVS/STOS/LODS/SCAS/CMPS, with or without REP prefixes.
+    fn lift_string(
         &self,
         opcode: u8,
         prefix: &X86Prefix,
         pc: u64,
-        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let width = match opcode {
-            0xAA => MemWidth::B1,
-            0xAB => self.size_to_memwidth(prefix.op_size()),
-            _ => MemWidth::B1,
-        };
-
-        if prefix.rep_prefix == Some(0xF3) {
-            let ops = vec![SmirOp::new(
-                OpId(0),
-                pc,
-                OpKind::RepStos {
-                    dst: self.gpr(7),
-                    src: self.gpr(0),
-                    count: self.gpr(1),
-                    width,
-                },
-            )];
-
-            Ok(LiftResult::fallthrough(ops, prefix.cursor))
-        } else if self.strict {
-            Err(LiftError::Unsupported {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
                 addr: pc,
-                mnemonic: "stos".to_string(),
-            })
-        } else {
-            Ok(LiftResult::fallthrough(vec![], prefix.cursor))
+                bytes: vec![opcode],
+            });
         }
+        let kind = match opcode {
+            0xA4 | 0xA5 => X86StringKind::Movs,
+            0xAA | 0xAB => X86StringKind::Stos,
+            0xAC | 0xAD => X86StringKind::Lods,
+            0xAE | 0xAF => X86StringKind::Scas,
+            0xA6 | 0xA7 => X86StringKind::Cmps,
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        };
+        let width = if opcode & 1 == 0 {
+            MemWidth::B1
+        } else {
+            self.size_to_memwidth(prefix.op_size())
+        };
+        let rep = match (kind, prefix.rep_prefix) {
+            (_, None) => X86RepMode::None,
+            (X86StringKind::Scas | X86StringKind::Cmps, Some(0xF3)) => X86RepMode::Repe,
+            (X86StringKind::Scas | X86StringKind::Cmps, Some(0xF2)) => X86RepMode::Repne,
+            _ => X86RepMode::Rep,
+        };
+        let src_segment = if matches!(
+            kind,
+            X86StringKind::Movs | X86StringKind::Lods | X86StringKind::Cmps
+        ) {
+            match prefix.segment_override {
+                Some(0x64) => Some(VReg::Arch(ArchReg::X86(X86Reg::FsBase))),
+                Some(0x65) => Some(VReg::Arch(ArchReg::X86(X86Reg::GsBase))),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let op = OpKind::X86String {
+            kind,
+            rep,
+            accumulator: self.gpr(0),
+            src_index: self.gpr(6),
+            dst_index: self.gpr(7),
+            count: self.gpr(1),
+            src_segment,
+            width,
+            address_width: if prefix.address_size_override {
+                OpWidth::W32
+            } else {
+                OpWidth::W64
+            },
+        };
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(OpId(0), pc, op)],
+            prefix.cursor,
+        ))
     }
 
-    /// Lift MOVS/REP MOVS (A4/A5 with optional REP prefix)
-    fn lift_movs(&self, opcode: u8, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
-        let width = match opcode {
-            0xA4 => MemWidth::B1,
-            0xA5 => self.size_to_memwidth(prefix.op_size()),
-            _ => MemWidth::B1,
+    /// Lift exact x87 environment/control operations and raw double-extended
+    /// stack transfers. Arithmetic and narrowing conversions remain explicit
+    /// unsupported until their FCW-controlled binary80 semantics are present.
+    fn lift_x87_escape(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
+
+        let group = (modrm.byte >> 3) & 7;
+        let st = modrm.byte & 7;
+        let fop = (((opcode & 7) as u16) << 8) | modrm.byte as u16;
+        let data_kind = match (opcode, modrm.is_memory, group, modrm.byte) {
+            (0xD9, true, 2, _) => Some(X86X87DataKind::StoreFloat {
+                width: X86X87FloatWidth::F32,
+                pop: false,
+            }),
+            (0xD9, true, 3, _) => Some(X86X87DataKind::StoreFloat {
+                width: X86X87FloatWidth::F32,
+                pop: true,
+            }),
+            (0xDD, true, 2, _) => Some(X86X87DataKind::StoreFloat {
+                width: X86X87FloatWidth::F64,
+                pop: false,
+            }),
+            (0xDD, true, 3, _) => Some(X86X87DataKind::StoreFloat {
+                width: X86X87FloatWidth::F64,
+                pop: true,
+            }),
+            (0xDF, true, 2, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I16,
+                pop: false,
+                truncate: false,
+            }),
+            (0xDB, true, 2, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I32,
+                pop: false,
+                truncate: false,
+            }),
+            (0xDF, true, 3, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I16,
+                pop: true,
+                truncate: false,
+            }),
+            (0xDB, true, 3, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I32,
+                pop: true,
+                truncate: false,
+            }),
+            (0xDF, true, 7, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I64,
+                pop: true,
+                truncate: false,
+            }),
+            (0xDF, true, 1, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I16,
+                pop: true,
+                truncate: true,
+            }),
+            (0xDB, true, 1, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I32,
+                pop: true,
+                truncate: true,
+            }),
+            (0xDD, true, 1, _) => Some(X86X87DataKind::StoreInteger {
+                width: X86X87IntWidth::I64,
+                pop: true,
+                truncate: true,
+            }),
+            (0xD8, true, 2, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Single,
+                unordered: false,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xD8, true, 3, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Single,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xDC, true, 2, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Double,
+                unordered: false,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xDC, true, 3, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Double,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xDE, true, 2, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int16,
+                unordered: false,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xDE, true, 3, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int16,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xDA, true, 2, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int32,
+                unordered: false,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xDA, true, 3, _) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int32,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xD8, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: false,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xD8, false, _, 0xD8..=0xDF) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: false,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xDD, false, _, 0xE0..=0xE7) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 0,
+                eflags: false,
+            }),
+            (0xDD, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 1,
+                eflags: false,
+            }),
+            (0xDE, false, _, 0xD9) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: false,
+                pop: 2,
+                eflags: false,
+            }),
+            (0xDA, false, _, 0xE9) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 2,
+                eflags: false,
+            }),
+            (0xDB, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 0,
+                eflags: true,
+            }),
+            (0xDB, false, _, 0xF0..=0xF7) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: false,
+                pop: 0,
+                eflags: true,
+            }),
+            (0xDF, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: true,
+                pop: 1,
+                eflags: true,
+            }),
+            (0xDF, false, _, 0xF0..=0xF7) => Some(X86X87DataKind::Compare {
+                source: X86X87CompareSource::Register,
+                unordered: false,
+                pop: 1,
+                eflags: true,
+            }),
+            (0xD9, true, 0, _) => Some(X86X87DataKind::LoadSingle),
+            (0xDD, true, 0, _) => Some(X86X87DataKind::LoadDouble),
+            (0xDF, true, 0, _) => Some(X86X87DataKind::LoadInt16),
+            (0xDB, true, 0, _) => Some(X86X87DataKind::LoadInt32),
+            (0xDF, true, 5, _) => Some(X86X87DataKind::LoadInt64),
+            (0xDF, true, 4, _) => Some(X86X87DataKind::LoadBcd),
+            (0xD9, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::LoadRegister),
+            (0xDB, true, 5, _) => Some(X86X87DataKind::LoadExtended),
+            (0xDD, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::StoreRegister),
+            (0xDD, false, _, 0xD8..=0xDF) => Some(X86X87DataKind::StorePopRegister),
+            (0xDB, true, 7, _) => Some(X86X87DataKind::StorePopExtended),
+            (0xDF, true, 6, _) => Some(X86X87DataKind::StoreBcd),
+            (0xD9, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::Exchange),
+            (0xDD, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::Free),
+            (0xD9, false, _, 0xE0) => Some(X86X87DataKind::ChangeSign),
+            (0xD9, false, _, 0xE1) => Some(X86X87DataKind::Absolute),
+            (0xD9, false, _, 0xE4) => Some(X86X87DataKind::TestZero),
+            (0xD9, false, _, 0xE5) => Some(X86X87DataKind::Examine),
+            (0xD9, false, _, 0xF4) => Some(X86X87DataKind::Extract),
+            (0xD9, false, _, 0xFA) => Some(X86X87DataKind::SquareRoot),
+            (0xD9, false, _, 0xFC) => Some(X86X87DataKind::RoundInteger),
+            (0xD9, false, _, 0xFD) => Some(X86X87DataKind::Scale),
+            (0xD9, false, _, 0xF6) => Some(X86X87DataKind::DecrementTop),
+            (0xD9, false, _, 0xF7) => Some(X86X87DataKind::IncrementTop),
+            (0xD9, false, _, 0xE8) => Some(X86X87DataKind::LoadConstant(X86X87Constant::One)),
+            (0xD9, false, _, 0xE9) => Some(X86X87DataKind::LoadConstant(X86X87Constant::Log2Ten)),
+            (0xD9, false, _, 0xEA) => Some(X86X87DataKind::LoadConstant(X86X87Constant::Log2E)),
+            (0xD9, false, _, 0xEB) => Some(X86X87DataKind::LoadConstant(X86X87Constant::Pi)),
+            (0xD9, false, _, 0xEC) => Some(X86X87DataKind::LoadConstant(X86X87Constant::Log10Two)),
+            (0xD9, false, _, 0xED) => Some(X86X87DataKind::LoadConstant(X86X87Constant::LnTwo)),
+            (0xD9, false, _, 0xEE) => Some(X86X87DataKind::LoadConstant(X86X87Constant::Zero)),
+            (0xDA, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::ConditionalMove(Condition::Ult)),
+            (0xDA, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::ConditionalMove(Condition::Eq)),
+            (0xDA, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::ConditionalMove(Condition::Ule)),
+            (0xDA, false, _, 0xD8..=0xDF) => {
+                Some(X86X87DataKind::ConditionalMove(Condition::Parity))
+            }
+            (0xDB, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::ConditionalMove(Condition::Uge)),
+            (0xDB, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::ConditionalMove(Condition::Ne)),
+            (0xDB, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::ConditionalMove(Condition::Ugt)),
+            (0xDB, false, _, 0xD8..=0xDF) => {
+                Some(X86X87DataKind::ConditionalMove(Condition::NoParity))
+            }
+            _ => None,
+        };
+        if let Some(kind) = data_kind {
+            let mut ops = Vec::new();
+            let addr = if modrm.is_memory {
+                let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                Some(addr)
+            } else {
+                None
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Data {
+                    kind,
+                    addr,
+                    st,
+                    fop,
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
+        let env_width = if prefix.operand_size_override {
+            X86X87EnvWidth::W16
+        } else {
+            X86X87EnvWidth::W32
+        };
+        let kind = match (opcode, modrm.is_memory, group, modrm.byte) {
+            (0xD9, true, 4, _) => Some(X86X87ControlKind::LoadEnvironment(env_width)),
+            (0xD9, true, 5, _) => Some(X86X87ControlKind::LoadControlWord),
+            (0xD9, true, 6, _) => Some(X86X87ControlKind::StoreEnvironment(env_width)),
+            (0xD9, true, 7, _) => Some(X86X87ControlKind::StoreControlWord),
+            (0xDD, true, 4, _) => Some(X86X87ControlKind::RestoreState(env_width)),
+            (0xDD, true, 6, _) => Some(X86X87ControlKind::SaveState(env_width)),
+            (0xDD, true, 7, _) => Some(X86X87ControlKind::StoreStatusWord),
+            (0xDB, false, _, 0xE2) => Some(X86X87ControlKind::ClearExceptions),
+            (0xDB, false, _, 0xE3) => Some(X86X87ControlKind::Init),
+            (0xDF, false, _, 0xE0) => Some(X86X87ControlKind::StoreStatusAx),
+            // FNOP has no architectural state effect in the SMIR profile.
+            (0xD9, false, _, 0xD0) => None,
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("x87 {opcode:02X} {:02X}", modrm.byte),
+                });
+            }
         };
 
-        if prefix.rep_prefix.is_some() {
-            let ops = vec![SmirOp::new(
-                OpId(0),
+        let mut ops = Vec::new();
+        if let Some(kind) = kind {
+            let addr = if modrm.is_memory {
+                let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                Some(addr)
+            } else {
+                None
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
                 pc,
-                OpKind::RepMovs {
-                    dst: self.gpr(7),
-                    src: self.gpr(6),
-                    count: self.gpr(1),
-                    width,
-                },
-            )];
-
-            Ok(LiftResult::fallthrough(ops, prefix.cursor))
-        } else if self.strict {
-            Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "movs".to_string(),
-            })
-        } else {
-            Ok(LiftResult::fallthrough(vec![], prefix.cursor))
+                OpKind::X86X87Control { kind, addr },
+            ));
         }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift XLAT/XLATB (D7): AL := byte ptr [segment:(E)BX + AL].
+    fn lift_xlat(
+        &self,
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0xD7],
+            });
+        }
+
+        let address_width = if prefix.address_size_override {
+            OpWidth::W32
+        } else {
+            OpWidth::W64
+        };
+        let al = ctx.alloc_vreg();
+        let offset = ctx.alloc_vreg();
+        let value = ctx.alloc_vreg();
+        let mut ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::And {
+                dst: al,
+                src1: self.gpr(0),
+                src2: SrcOperand::Imm(0xFF),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        )];
+        ops.push(SmirOp::new(
+            OpId(1),
+            pc,
+            OpKind::Add {
+                dst: offset,
+                src1: self.gpr(3),
+                src2: SrcOperand::Reg(al),
+                width: address_width,
+                flags: FlagUpdate::None,
+            },
+        ));
+
+        let addr = match prefix.segment_override {
+            Some(0x64) => Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: Some(offset),
+                index: None,
+                scale: 1,
+                disp: 0,
+            },
+            Some(0x65) => Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
+                base: Some(offset),
+                index: None,
+                scale: 1,
+                disp: 0,
+            },
+            _ => Address::Direct(offset),
+        };
+        ops.push(SmirOp::new(
+            OpId(2),
+            pc,
+            OpKind::Load {
+                dst: value,
+                addr,
+                width: MemWidth::B1,
+                sign: SignExtend::Zero,
+            },
+        ));
+        ops.push(SmirOp::new(
+            OpId(3),
+            pc,
+            OpKind::Mov {
+                dst: self.gpr(0),
+                src: SrcOperand::Reg(value),
+                width: OpWidth::W8,
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
     /// Lift IN imm8 or DX (E4/E5/EC/ED)
@@ -8389,23 +14223,39 @@ impl X86_64Lifter {
 
             if dir_reg_rm {
                 // MOV r, rm - load from memory
+                let dst = if is_8bit && self.high_byte_base(modrm.reg, prefix).is_some() {
+                    ctx.alloc_vreg()
+                } else {
+                    self.gpr(modrm.reg)
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Load {
-                        dst: self.gpr(modrm.reg),
+                        dst,
                         addr,
                         width: mem_width,
                         sign: SignExtend::Zero,
                     },
                 ));
+                if let Some(base) = is_8bit
+                    .then(|| self.high_byte_base(modrm.reg, prefix))
+                    .flatten()
+                {
+                    self.merge_high_byte(base, dst, pc, ctx, &mut ops);
+                }
             } else {
                 // MOV rm, r - store to memory
+                let src = if is_8bit {
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+                } else {
+                    self.gpr(modrm.reg)
+                };
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Store {
-                        src: self.gpr(modrm.reg),
+                        src,
                         addr,
                         width: mem_width,
                     },
@@ -8413,14 +14263,27 @@ impl X86_64Lifter {
             }
         } else {
             // Register to register
-            let (dst, src) = if dir_reg_rm {
-                (self.gpr(modrm.reg), self.gpr(modrm.rm))
+            let (dst_code, src_code) = if dir_reg_rm {
+                (modrm.reg, modrm.rm)
             } else {
-                (self.gpr(modrm.rm), self.gpr(modrm.reg))
+                (modrm.rm, modrm.reg)
+            };
+            let src = if is_8bit {
+                self.read_byte_reg(src_code, prefix, pc, ctx, &mut ops)
+            } else {
+                self.gpr(src_code)
+            };
+            let high_dst = is_8bit
+                .then(|| self.high_byte_base(dst_code, prefix))
+                .flatten();
+            let dst = if high_dst.is_some() {
+                ctx.alloc_vreg()
+            } else {
+                self.gpr(dst_code)
             };
 
             ops.push(SmirOp::new(
-                OpId(0),
+                OpId(ops.len() as u16),
                 pc,
                 OpKind::Mov {
                     dst,
@@ -8428,6 +14291,9 @@ impl X86_64Lifter {
                     width,
                 },
             ));
+            if let Some(base) = high_dst {
+                self.merge_high_byte(base, dst, pc, ctx, &mut ops);
+            }
         }
 
         Ok(LiftResult::fallthrough(
@@ -8569,16 +14435,34 @@ impl X86_64Lifter {
                 hint,
             ));
         } else {
-            ops.push(SmirOp::with_hint(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(modrm.rm),
-                    src: SrcOperand::Imm(imm),
-                    width,
-                },
-                hint,
-            ));
+            if let Some(base) = is_8bit
+                .then(|| self.high_byte_base(modrm.rm, prefix))
+                .flatten()
+            {
+                let value = ctx.alloc_vreg();
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: value,
+                        src: SrcOperand::Imm(imm),
+                        width,
+                    },
+                    hint,
+                ));
+                self.merge_high_byte(base, value, pc, ctx, &mut ops);
+            } else {
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.gpr(modrm.rm),
+                        src: SrcOperand::Imm(imm),
+                        width,
+                    },
+                    hint,
+                ));
+            }
         }
 
         Ok(LiftResult::fallthrough(
@@ -8620,9 +14504,21 @@ impl X86_64Lifter {
                     sign: SignExtend::Zero,
                 },
             ));
-            (tmp, self.gpr(modrm.reg))
+            let reg = if is_8bit {
+                self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops)
+            } else {
+                self.gpr(modrm.reg)
+            };
+            (tmp, reg)
         } else {
-            (self.gpr(modrm.rm), self.gpr(modrm.reg))
+            if is_8bit {
+                (
+                    self.read_byte_reg(modrm.rm, prefix, pc, ctx, &mut ops),
+                    self.read_byte_reg(modrm.reg, prefix, pc, ctx, &mut ops),
+                )
+            } else {
+                (self.gpr(modrm.rm), self.gpr(modrm.reg))
+            }
         };
 
         ops.push(SmirOp::new(
@@ -8895,6 +14791,22 @@ impl X86_64Lifter {
                 branch_targets: vec![],
             }),
 
+            // Instructions architecturally invalid in 64-bit mode. Model the
+            // guaranteed #UD explicitly rather than reporting missing support.
+            0x27 | 0x2F | 0x37 | 0x3F // DAA/DAS/AAA/AAS
+            | 0x60 | 0x61             // PUSHA/POPA
+            | 0x82                    // legacy Group-1 alias
+            | 0x9A | 0xEA             // far CALL/JMP immediate
+            | 0xCE                    // INTO
+            | 0xD4 => Ok(LiftResult { // AAM (D5 is APX REX2 in this decoder)
+                ops: vec![],
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
+
             // Two-byte opcode prefix
             0x0F => self.lift_0f_opcode(after_opcode, &prefix, pc, ctx, 2),
 
@@ -8943,6 +14855,15 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
+            0xC8 => self.lift_enter(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
             0xC9 => self.lift_leave(
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
@@ -8957,6 +14878,37 @@ impl X86_64Lifter {
                 },
                 pc,
             ),
+            0x98 => self.lift_cbw_cwde_cdqe(
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
+            0x9C | 0x9D => self.lift_stack_flags(
+                opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+            0x9E | 0x9F => self.lift_ah_flags(
+                opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+            // WAIT/FWAIT has no state effect in the base emulator profile.
+            0x9B if !prefix.lock => Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1)),
+            0x9B => Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            }),
             0x70..=0x7F => self.lift_jcc_rel8(
                 opcode,
                 after_opcode,
@@ -8967,7 +14919,26 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
+            0xE0..=0xE3 => self.lift_loop_rel8(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
             0xA1 if prefix.rex2.is_some() => self.lift_jmp_abs(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
+            0xA0..=0xA3 => self.lift_mov_moffs(
+                opcode,
                 after_opcode,
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
@@ -9056,6 +15027,15 @@ impl X86_64Lifter {
             ),
             0x58..=0x5F => self.lift_pop_r64(
                 opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+            0x8F => self.lift_pop_rm(
+                after_opcode,
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
                     ..prefix
@@ -9154,7 +15134,7 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ), // SUB
-            0x30..=0x33 => self.lift_xor_rm_r(
+            0x30..=0x35 => self.lift_arith(
                 opcode,
                 after_opcode,
                 &X86Prefix {
@@ -9209,8 +15189,15 @@ impl X86_64Lifter {
             ),
 
             // String ops
-            0xAA | 0xAB => self.lift_stos(
+            0xA4..=0xA7 | 0xAA..=0xAF => self.lift_string(
                 opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
+            0xD7 => self.lift_xlat(
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
                     ..prefix
@@ -9218,13 +15205,15 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
-            0xA4 | 0xA5 => self.lift_movs(
+            0xD8..=0xDF => self.lift_x87_escape(
                 opcode,
+                after_opcode,
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
                     ..prefix
                 },
                 pc,
+                ctx,
             ),
 
             // Shift/rotate group (C0/C1) - immediate
@@ -9264,6 +15253,15 @@ impl X86_64Lifter {
             ),
 
             // Group 5 (FF)
+            0xFE => self.lift_group4(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
             0xFF => self.lift_group5(
                 after_opcode,
                 &X86Prefix {
@@ -9337,6 +15335,70 @@ impl X86_64Lifter {
         };
 
         match opcode2 {
+            // Cache-maintenance instructions modeled as no-ops by the base
+            // emulator profile.
+            0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
+
+            // NOP/cache/prefetch hint encodings still consume a complete
+            // ModR/M addressing form even though they have no state effect.
+            0x0D | 0x18 | 0x1A | 0x1B | 0x1E | 0x1F => {
+                let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
+                if opcode2 == 0x1E
+                    && prefix2.rep_prefix == Some(0xF3)
+                    && !modrm.is_memory
+                    && ((modrm.byte >> 3) & 7) == 1
+                {
+                    return Ok(LiftResult {
+                        ops: vec![],
+                        bytes_consumed: prefix2.cursor + modrm.bytes_consumed,
+                        control_flow: ControlFlow::Trap {
+                            kind: TrapKind::InvalidOpcode,
+                        },
+                        branch_targets: vec![],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![],
+                    prefix2.cursor + modrm.bytes_consumed,
+                ))
+            }
+
+            // CLDEMOTE m8 (0F 1C /0). It is an architectural hint with no
+            // memory-address exceptions; register forms and nonzero ModR/M.reg
+            // encodings are observed fallthrough hints on supported silicon.
+            0x1C => {
+                let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
+                if prefix2.lock {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: after_opcode[..modrm.bytes_consumed.min(after_opcode.len())]
+                            .to_vec(),
+                    });
+                }
+                if modrm.is_memory && ((modrm.byte >> 3) & 7) == 0 {
+                    let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
+                    let (addr, mut ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86CacheControl {
+                            addr,
+                            kind: X86CacheControlKind::Cldemote,
+                        },
+                    ));
+                    Ok(LiftResult::fallthrough(
+                        ops,
+                        prefix2.cursor + modrm.bytes_consumed,
+                    ))
+                } else {
+                    Ok(LiftResult::fallthrough(
+                        vec![],
+                        prefix2.cursor + modrm.bytes_consumed,
+                    ))
+                }
+            }
+
             // Jcc rel32 (0F 80 - 0F 8F)
             0x80..=0x8F => {
                 if after_opcode.len() < 4 {
@@ -9403,15 +15465,24 @@ impl X86_64Lifter {
                         },
                     ));
                 } else {
+                    let high_dst = self.high_byte_base(modrm.rm, &prefix2);
+                    let dst = if high_dst.is_some() {
+                        ctx.alloc_vreg()
+                    } else {
+                        self.gpr(modrm.rm)
+                    };
                     ops.push(SmirOp::new(
                         OpId(0),
                         pc,
                         OpKind::SetCC {
-                            dst: self.gpr(modrm.rm),
+                            dst,
                             cond,
                             width: OpWidth::W8,
                         },
                     ));
+                    if let Some(base) = high_dst {
+                        self.merge_high_byte(base, dst, pc, ctx, &mut ops);
+                    }
                 }
 
                 Ok(LiftResult::fallthrough(
@@ -9469,8 +15540,33 @@ impl X86_64Lifter {
                 ))
             }
 
-            // SSE MOVDQA/MOVDQU (0F 6F/7F)
-            0x6F | 0x7F => self.lift_sse_mov(opcode2, after_opcode, &prefix2, pc, ctx),
+            // Packed legacy SSE/SSE2 moves.
+            0x10 | 0x11 | 0x28 | 0x29 | 0x6F | 0x7F => {
+                self.lift_sse_mov(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+
+            // Scalar ordered/unordered FP compare setting integer flags.
+            0x2E | 0x2F => self.lift_sse_comi(opcode2, after_opcode, &prefix2, pc, ctx),
+
+            // Scalar FP-to-signed-integer conversions.
+            0x2C | 0x2D => self.lift_sse_fp_to_int(opcode2, after_opcode, &prefix2, pc, ctx),
+
+            // Scalar signed-integer-to-FP conversions.
+            0x2A => self.lift_sse_int_to_fp(after_opcode, &prefix2, pc, ctx),
+
+            // Packed legacy SSE/SSE2 floating-point arithmetic.
+            0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F => {
+                self.lift_sse_packed_arith(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+
+            // Scalar single/double precision conversion.
+            0x5A => self.lift_sse_scalar_fp_convert(after_opcode, &prefix2, pc, ctx),
+
+            // Packed and scalar SQRTPS/SQRTPD/SQRTSS/SQRTSD.
+            0x51 => self.lift_sse_sqrt(after_opcode, &prefix2, pc, ctx),
+
+            // Packed legacy SSE/SSE2 bitwise logic.
+            0x54 | 0x56 | 0x57 => self.lift_sse_logic(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // SSE PADDD (66 0F FE)
             0xFE => self.lift_sse_padd(opcode2, after_opcode, &prefix2, pc, ctx),
@@ -9486,6 +15582,15 @@ impl X86_64Lifter {
             0xA4 | 0xA5 | 0xAC | 0xAD => {
                 self.lift_shld_shrd(opcode2, after_opcode, &prefix2, pc, ctx)
             }
+
+            // BT/BTS/BTR/BTC register-index and immediate Group-8 forms.
+            0xA3 | 0xAB | 0xB3 | 0xBB => {
+                self.lift_bit_test_reg(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+            0xBA => self.lift_bit_test_imm(after_opcode, &prefix2, pc, ctx),
+
+            // LFENCE/MFENCE/SFENCE (0F AE /5,/6,/7 register encodings).
+            0xAE => self.lift_fence_0f(after_opcode, &prefix2, pc, ctx),
 
             // CMPXCHG r/m, r (0F B0/0F B1)
             0xB0 | 0xB1 => self.lift_cmpxchg(opcode2, after_opcode, &prefix2, pc, ctx),
@@ -9522,7 +15627,7 @@ impl X86_64Lifter {
                     ));
                     tmp
                 } else {
-                    self.gpr(modrm.rm)
+                    self.read_byte_reg(modrm.rm, &prefix2, pc, ctx, &mut ops)
                 };
 
                 let mut op = SmirOp::new(
@@ -9591,7 +15696,12 @@ impl X86_64Lifter {
                 ))
             }
 
-            // BSF/BSR (0F BC/0F BD)
+            // POPCNT/TZCNT/LZCNT (mandatory F3 prefix).
+            0xB8 | 0xBC | 0xBD if prefix2.rep_prefix == Some(0xF3) => {
+                self.lift_count_0f(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+
+            // BSF/BSR (0F BC/0F BD without F3)
             0xBC | 0xBD => self.lift_bsf_bsr(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // MOVSX r, r/m8 (0F BE)
@@ -9620,7 +15730,7 @@ impl X86_64Lifter {
                     ));
                     tmp
                 } else {
-                    self.gpr(modrm.rm)
+                    self.read_byte_reg(modrm.rm, &prefix2, pc, ctx, &mut ops)
                 };
 
                 let mut op = SmirOp::new(
@@ -9745,19 +15855,56 @@ impl X86_64Lifter {
                 branch_targets: vec![],
             }),
 
+            // RDTSC (0F 31): EDX:EAX := time-stamp counter.
+            0x31 => Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86ReadTsc {
+                        dst_lo: self.gpr(0),
+                        dst_hi: self.gpr(2),
+                    },
+                )],
+                prefix2.cursor,
+            )),
+
+            // UD2 (0F 0B): architecturally guaranteed invalid opcode trap.
+            0x0B => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix2.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
+
+            // RSM is invalid outside SMM; SMIR exposes no SMM execution state.
+            0xAA => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix2.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
+
+            // UD1 (0F B9 /r) always traps but consumes its ModR/M address form.
+            0xB9 => {
+                let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
+                Ok(LiftResult {
+                    ops: vec![],
+                    bytes_consumed: prefix2.cursor + modrm.bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: vec![],
+                })
+            }
+
             // SYSRET (0F 07)
             0x07 => {
                 // Treat as return for lifting purposes
                 Ok(LiftResult::ret(vec![], prefix2.cursor))
-            }
-
-            // NOP (0F 1F /0) - multi-byte NOP
-            0x1F => {
-                let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
-                Ok(LiftResult::fallthrough(
-                    vec![],
-                    prefix2.cursor + modrm.bytes_consumed,
-                ))
             }
 
             _ => {
@@ -10109,12 +16256,103 @@ mod tests {
         );
     }
 
-    /// A 0x67 (32-bit address-size) memory operand is not modeled and must bail
-    /// rather than silently mis-lift `[ebx]` as `[rbx]`.
+    /// A 67h ModR/M address is calculated at W32 and zero-extended. This also
+    /// verifies that mod=00,r/m=101 becomes absolute disp32 rather than RIP
+    /// relative, and that FS is added after the 32-bit offset calculation.
     #[test]
-    fn addr_size_override_memory_bails() {
-        let r = lift_one(&[0x67, 0x48, 0x8b, 0x03]); // mov rax, [ebx]  (32-bit addr)
-        assert!(r.is_err(), "0x67 address-size memory operand must bail");
+    fn addr_size_override_memory_materializes_zero_extended_offset() {
+        let ops = lift_one(&[0x67, 0x48, 0x8b, 0x03]).expect("mov rax,[ebx]");
+        let offset = match &ops[0].kind {
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W32,
+            } => {
+                assert_eq!(*src, x86_gpr(3));
+                *dst
+            }
+            other => panic!("expected W32 address truncation, got {other:?}"),
+        };
+        assert!(matches!(
+            &ops[1].kind,
+            OpKind::Load {
+                addr: Address::Direct(reg),
+                width: MemWidth::B8,
+                ..
+            } if *reg == offset
+        ));
+
+        let absolute = lift_one(&[0x67, 0x48, 0x8b, 0x05, 0xfc, 0xff, 0xff, 0xff])
+            .expect("addr32 absolute disp32");
+        assert!(matches!(
+            &absolute[0].kind,
+            OpKind::Load {
+                addr: Address::Absolute(0xffff_fffc),
+                ..
+            }
+        ));
+
+        let fs =
+            lift_one(&[0x67, 0x64, 0x48, 0x8b, 0x44, 0x0b, 0x08]).expect("mov rax,fs:[ebx+ecx+8]");
+        assert!(matches!(
+            &fs[0].kind,
+            OpKind::Add {
+                src1,
+                src2: SrcOperand::Reg(src2),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } if *src1 == x86_gpr(3) && *src2 == x86_gpr(1)
+        ));
+        let final_offset = match &fs[1].kind {
+            OpKind::Add {
+                dst,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } => *dst,
+            other => panic!("expected W32 displacement add, got {other:?}"),
+        };
+        assert!(matches!(
+            &fs[2].kind,
+            OpKind::Load {
+                addr: Address::SegmentRel {
+                    segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                    base: Some(base),
+                    index: None,
+                    scale: 1,
+                    disp: 0,
+                },
+                ..
+            } if *base == final_offset
+        ));
+
+        // REX.X/B remain effective in addr32 mode: [r8d+r12d*4+8].
+        let high = lift_one(&[0x67, 0x4b, 0x8b, 0x44, 0xa0, 0x08]).expect("mov rax,[r8d+r12d*4+8]");
+        let scaled = match &high[0].kind {
+            OpKind::Shl {
+                dst,
+                src,
+                amount: SrcOperand::Imm(2),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            } => {
+                assert_eq!(*src, x86_gpr(12));
+                *dst
+            }
+            other => panic!("expected W32 scaled r12d, got {other:?}"),
+        };
+        assert!(matches!(
+            &high[1].kind,
+            OpKind::Add {
+                src1,
+                src2: SrcOperand::Reg(index),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } if *src1 == x86_gpr(8) && *index == scaled
+        ));
     }
 
     fn x86_gpr(idx: u8) -> VReg {
@@ -16430,6 +22668,3463 @@ mod tests {
     }
 
     #[test]
+    fn lift_complete_x86_string_opcode_and_width_inventory() {
+        for (opcode, expected_kind, expected_width) in [
+            (0xA4, X86StringKind::Movs, MemWidth::B1),
+            (0xA5, X86StringKind::Movs, MemWidth::B4),
+            (0xA6, X86StringKind::Cmps, MemWidth::B1),
+            (0xA7, X86StringKind::Cmps, MemWidth::B4),
+            (0xAA, X86StringKind::Stos, MemWidth::B1),
+            (0xAB, X86StringKind::Stos, MemWidth::B4),
+            (0xAC, X86StringKind::Lods, MemWidth::B1),
+            (0xAD, X86StringKind::Lods, MemWidth::B4),
+            (0xAE, X86StringKind::Scas, MemWidth::B1),
+            (0xAF, X86StringKind::Scas, MemWidth::B4),
+        ] {
+            let result = lift_single(&[opcode]).unwrap();
+            assert_eq!(result.bytes_consumed, 1);
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86String {
+                        kind,
+                        rep: X86RepMode::None,
+                        width,
+                        address_width: OpWidth::W64,
+                        ..
+                    },
+                    ..
+                }] if *kind == expected_kind && *width == expected_width
+            ));
+        }
+
+        let word = lift_single(&[0x66, 0xAD]).unwrap();
+        assert!(matches!(
+            word.ops[0].kind,
+            OpKind::X86String {
+                width: MemWidth::B2,
+                ..
+            }
+        ));
+        let qword = lift_single(&[0x48, 0xAD]).unwrap();
+        assert!(matches!(
+            qword.ops[0].kind,
+            OpKind::X86String {
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn lift_x86_string_rep_address_and_segment_prefixes() {
+        let repe = lift_single(&[0xF3, 0xA6]).unwrap();
+        assert!(matches!(
+            repe.ops[0].kind,
+            OpKind::X86String {
+                kind: X86StringKind::Cmps,
+                rep: X86RepMode::Repe,
+                ..
+            }
+        ));
+        let repne = lift_single(&[0xF2, 0xAF]).unwrap();
+        assert!(matches!(
+            repne.ops[0].kind,
+            OpKind::X86String {
+                kind: X86StringKind::Scas,
+                rep: X86RepMode::Repne,
+                ..
+            }
+        ));
+        for bytes in [&[0xF2, 0xA4][..], &[0xF3, 0xAA], &[0xF2, 0xAC]] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops[0].kind,
+                OpKind::X86String {
+                    rep: X86RepMode::Rep,
+                    ..
+                }
+            ));
+        }
+
+        let addr32_fs = lift_single(&[0x67, 0x64, 0xA4]).unwrap();
+        assert!(matches!(
+            addr32_fs.ops[0].kind,
+            OpKind::X86String {
+                kind: X86StringKind::Movs,
+                src_segment: Some(VReg::Arch(ArchReg::X86(X86Reg::FsBase))),
+                address_width: OpWidth::W32,
+                ..
+            }
+        ));
+        let ignored_scas_segment = lift_single(&[0x64, 0xAE]).unwrap();
+        assert!(matches!(
+            ignored_scas_segment.ops[0].kind,
+            OpKind::X86String {
+                kind: X86StringKind::Scas,
+                src_segment: None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xA4]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_cbw_cwde_cdqe_widths() {
+        for (bytes, from_width, to_width) in [
+            (&[0x66, 0x98][..], OpWidth::W8, OpWidth::W16),
+            (&[0x98][..], OpWidth::W16, OpWidth::W32),
+            (&[0x48, 0x98][..], OpWidth::W32, OpWidth::W64),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            match result.ops.as_slice() {
+                [
+                    SmirOp {
+                        kind:
+                            OpKind::SignExtend {
+                                dst,
+                                src,
+                                from_width: got_from,
+                                to_width: got_to,
+                            },
+                        ..
+                    },
+                ] => {
+                    assert_eq!(*dst, x86_gpr(0));
+                    assert_eq!(*src, x86_gpr(0));
+                    assert_eq!(*got_from, from_width);
+                    assert_eq!(*got_to, to_width);
+                }
+                other => panic!("unexpected 98 lift: {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn lift_popcnt_tzcnt_lzcnt_forms_flags_and_invalid_prefixes() {
+        let popcnt = lift_single(&[0xF3, 0x0F, 0xB8, 0xC3]).unwrap();
+        assert_eq!(popcnt.bytes_consumed, 4);
+        assert!(popcnt.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Popcnt {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                width: OpWidth::W32,
+                ..
+            }
+        )));
+        assert!(matches!(
+            popcnt.ops.last().unwrap().kind,
+            OpKind::WriteFlags { .. }
+        ));
+
+        let tzcnt_alias = lift_single(&[0xF3, 0x48, 0x0F, 0xBC, 0xC0]).unwrap();
+        assert!(tzcnt_alias.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Ctz {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src: VReg::Virtual(_),
+                width: OpWidth::W64,
+            }
+        )));
+
+        let lzcnt_mem16 = lift_single(&[0xF3, 0x66, 0x0F, 0xBD, 0x03]).unwrap();
+        assert!(lzcnt_mem16.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                width: MemWidth::B2,
+                ..
+            }
+        )));
+        assert!(lzcnt_mem16.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Clz {
+                width: OpWidth::W16,
+                ..
+            }
+        )));
+
+        let bsf = lift_single(&[0x0F, 0xBC, 0xC3]).unwrap();
+        assert!(
+            bsf.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Bsf { .. }))
+        );
+        assert!(
+            !bsf.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Ctz { .. }))
+        );
+
+        assert!(matches!(
+            lift_single(&[0x0F, 0xB8, 0xC3]),
+            Err(LiftError::Unsupported { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xF3, 0x0F, 0xB8, 0xC3]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_bit_test_register_forms_widths_and_partial_destinations() {
+        for (opcode, expected) in [(0xA3, "bt"), (0xAB, "bts"), (0xB3, "btr"), (0xBB, "btc")] {
+            let result = lift_single(&[0x66, 0x0F, opcode, 0xC8]).unwrap();
+            assert_eq!(result.bytes_consumed, 4);
+            let matches_kind = match (&result.ops[0].kind, expected) {
+                (
+                    OpKind::Bt {
+                        width: OpWidth::W16,
+                        ..
+                    },
+                    "bt",
+                ) => true,
+                (
+                    OpKind::Bts {
+                        width: OpWidth::W16,
+                        ..
+                    },
+                    "bts",
+                ) => true,
+                (
+                    OpKind::Btr {
+                        width: OpWidth::W16,
+                        ..
+                    },
+                    "btr",
+                ) => true,
+                (
+                    OpKind::Btc {
+                        width: OpWidth::W16,
+                        ..
+                    },
+                    "btc",
+                ) => true,
+                _ => false,
+            };
+            assert!(matches_kind, "unexpected {expected} lift: {:?}", result.ops);
+        }
+
+        let wide = lift_single(&[0x48, 0x0F, 0xAB, 0xC8]).unwrap();
+        assert!(matches!(
+            wide.ops[0].kind,
+            OpKind::Bts {
+                width: OpWidth::W64,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn lift_bit_test_memory_bit_string_and_group8_forms() {
+        let indexed = lift_single(&[0x48, 0x0F, 0xA3, 0x08]).unwrap(); // bt [rax],rcx
+        assert!(indexed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::SignExtend {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                from_width: OpWidth::W64,
+                to_width: OpWidth::W64,
+                ..
+            }
+        )));
+        assert!(indexed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Sar {
+                amount: SrcOperand::Imm(6),
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(indexed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Shl {
+                amount: SrcOperand::Imm(3),
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(matches!(
+            indexed.ops.last().unwrap().kind,
+            OpKind::Bt { .. }
+        ));
+
+        let immediate = lift_single(&[0x0F, 0xBA, 0x28, 0x25]).unwrap(); // bts dword [rax],37
+        assert_eq!(immediate.bytes_consumed, 4);
+        let store_idx = immediate
+            .ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::Store { .. }))
+            .unwrap();
+        let bt_idx = immediate
+            .ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::Bt { .. }))
+            .unwrap();
+        assert!(store_idx < bt_idx, "CF must commit after the update store");
+        assert!(
+            !immediate
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::SignExtend { .. }))
+        );
+
+        let riprel = lift_single(&[0x0F, 0xBA, 0x25, 0, 0, 0, 0, 1]).unwrap();
+        assert!(riprel.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::PcRel {
+                    base: Some(0x1008),
+                    ..
+                },
+                ..
+            }
+        )));
+
+        for (modrm, expected) in [(0xE0, "bt"), (0xE8, "bts"), (0xF0, "btr"), (0xF8, "btc")] {
+            let result = lift_single(&[0x0F, 0xBA, modrm, 7]).unwrap();
+            let found = result.ops.iter().any(|op| match (&op.kind, expected) {
+                (
+                    OpKind::Bt {
+                        index: SrcOperand::Imm(7),
+                        ..
+                    },
+                    "bt",
+                ) => true,
+                (
+                    OpKind::Bts {
+                        index: SrcOperand::Imm(7),
+                        ..
+                    },
+                    "bts",
+                ) => true,
+                (
+                    OpKind::Btr {
+                        index: SrcOperand::Imm(7),
+                        ..
+                    },
+                    "btr",
+                ) => true,
+                (
+                    OpKind::Btc {
+                        index: SrcOperand::Imm(7),
+                        ..
+                    },
+                    "btc",
+                ) => true,
+                _ => false,
+            });
+            assert!(found, "missing Group-8 {expected} register lift");
+        }
+    }
+
+    #[test]
+    fn lift_bit_test_lock_atomic_and_invalid_encodings() {
+        for (opcode, atomic_op) in [
+            (0xAB, AtomicOp::Or),
+            (0xB3, AtomicOp::And),
+            (0xBB, AtomicOp::Xor),
+        ] {
+            let result = lift_single(&[0xF0, 0x48, 0x0F, opcode, 0x08]).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::AtomicRmw {
+                    op,
+                    width: MemWidth::B8,
+                    order: MemoryOrder::SeqCst,
+                    ..
+                } if op == atomic_op
+            )));
+            assert!(matches!(result.ops.last().unwrap().kind, OpKind::Bt { .. }));
+        }
+
+        let locked_imm = lift_single(&[0xF0, 0x0F, 0xBA, 0x28, 5]).unwrap();
+        assert!(locked_imm.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::AtomicRmw {
+                op: AtomicOp::Or,
+                width: MemWidth::B4,
+                order: MemoryOrder::SeqCst,
+                ..
+            }
+        )));
+
+        assert!(matches!(
+            lift_single(&[0xF0, 0x48, 0x0F, 0xA3, 0x08]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0x48, 0x0F, 0xAB, 0xC8]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0xBA, 0xC0, 1]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0xBA, 0xE0]),
+            Err(LiftError::Incomplete { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_fwait_and_memory_fences() {
+        let wait = lift_single(&[0x9B]).unwrap();
+        assert_eq!(wait.bytes_consumed, 1);
+        assert!(wait.ops.is_empty());
+
+        for (bytes, expected) in [
+            (&[0x0F, 0xAE, 0xE8][..], FenceKind::LoadLoad),
+            (&[0x0F, 0xAE, 0xF0][..], FenceKind::Full),
+            (&[0x0F, 0xAE, 0xF8][..], FenceKind::StoreStore),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::Fence { kind },
+                    ..
+                }] if *kind == expected
+            ));
+        }
+
+        for (bytes, expected) in [
+            (&[0x0F, 0xAE, 0x38][..], X86CacheControlKind::Clflush),
+            (
+                &[0x66, 0x0F, 0xAE, 0x38][..],
+                X86CacheControlKind::Clflushopt,
+            ),
+            (&[0x66, 0x0F, 0xAE, 0x30][..], X86CacheControlKind::Clwb),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86CacheControl { kind, .. } if kind == expected
+            ));
+        }
+
+        assert!(matches!(
+            lift_single(&[0x0F, 0xAE, 0x28]),
+            Err(LiftError::Unsupported { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0x0F, 0xAE, 0xF0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0x9B]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_legacy_and_vex_mxcsr_memory_operations() {
+        for (bytes, load, vex) in [
+            (&[0x0F, 0xAE, 0x10][..], true, false),
+            (&[0x0F, 0xAE, 0x58, 0x04][..], false, false),
+            (&[0xC5, 0xF8, 0xAE, 0x10][..], true, true),
+            (&[0xC5, 0xF8, 0xAE, 0x58, 0x04][..], false, true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(result.ops.iter().any(|op| {
+                (load && matches!(op.kind, OpKind::X86LoadMxcsr { .. }))
+                    || (!load && matches!(op.kind, OpKind::X86StoreMxcsr { .. }))
+            }));
+            if vex {
+                assert!(matches!(
+                    result.ops.last().unwrap().x86_hint,
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F,
+                        pp: X86SsePrefix::None,
+                        opcode: 0xAE,
+                        width: VecWidth::V128,
+                    })
+                ));
+            }
+        }
+
+        for bytes in [
+            &[0x0F, 0xAE, 0xD0][..],       // register /2
+            &[0x66, 0x0F, 0xAE, 0x10][..], // legacy mandatory prefix
+            &[0xC5, 0xFC, 0xAE, 0x10][..], // VEX.L=1
+            &[0xC5, 0xE8, 0xAE, 0x10][..], // reserved VEX.vvvv
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+
+        let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x14, 0x77]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 5);
+        assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
+            op.kind,
+            OpKind::Shl {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } | OpKind::Add {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86LoadMxcsr { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_x87_environment_control_encodings_and_legality() {
+        for (bytes, expected, has_memory) in [
+            (
+                &[0xD9, 0x20][..],
+                X86X87ControlKind::LoadEnvironment(X86X87EnvWidth::W32),
+                true,
+            ),
+            (
+                &[0x66, 0xD9, 0x20][..],
+                X86X87ControlKind::LoadEnvironment(X86X87EnvWidth::W16),
+                true,
+            ),
+            (
+                &[0xD9, 0x30][..],
+                X86X87ControlKind::StoreEnvironment(X86X87EnvWidth::W32),
+                true,
+            ),
+            (
+                &[0x66, 0xD9, 0x30][..],
+                X86X87ControlKind::StoreEnvironment(X86X87EnvWidth::W16),
+                true,
+            ),
+            (
+                &[0xDD, 0x20][..],
+                X86X87ControlKind::RestoreState(X86X87EnvWidth::W32),
+                true,
+            ),
+            (
+                &[0x66, 0xDD, 0x20][..],
+                X86X87ControlKind::RestoreState(X86X87EnvWidth::W16),
+                true,
+            ),
+            (
+                &[0xDD, 0x30][..],
+                X86X87ControlKind::SaveState(X86X87EnvWidth::W32),
+                true,
+            ),
+            (
+                &[0x66, 0xDD, 0x30][..],
+                X86X87ControlKind::SaveState(X86X87EnvWidth::W16),
+                true,
+            ),
+            (&[0xD9, 0x28][..], X86X87ControlKind::LoadControlWord, true),
+            (&[0xD9, 0x38][..], X86X87ControlKind::StoreControlWord, true),
+            (&[0xDD, 0x38][..], X86X87ControlKind::StoreStatusWord, true),
+            (&[0xDB, 0xE2][..], X86X87ControlKind::ClearExceptions, false),
+            (&[0xDB, 0xE3][..], X86X87ControlKind::Init, false),
+            (&[0xDF, 0xE0][..], X86X87ControlKind::StoreStatusAx, false),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Control { kind, addr },
+                    ..
+                }] if *kind == expected && addr.is_some() == has_memory
+            ));
+        }
+
+        let fnop = lift_single(&[0xD9, 0xD0]).unwrap();
+        assert_eq!(fnop.bytes_consumed, 2);
+        assert!(fnop.ops.is_empty());
+
+        let addr32 = lift_single(&[0x67, 0xD9, 0x6B, 0x20]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 4);
+        assert!(matches!(
+            addr32.ops.first().map(|op| &op.kind),
+            Some(OpKind::Add {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                src2: SrcOperand::Imm(0x20),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            })
+        ));
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86X87Control {
+                kind: X86X87ControlKind::LoadControlWord,
+                addr: Some(Address::Direct(_)),
+            })
+        ));
+
+        for bytes in [
+            &[0xF0, 0xDB, 0xE3][..],
+            &[0xF0, 0xD9, 0x28][..],
+            &[0xF0, 0xD9, 0x30][..],
+            &[0xF0, 0xDD, 0x20][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+        for bytes in [
+            &[0xD8, 0xC0][..], // FADD ST(0),ST(0): data family not yet represented
+            &[0xD9, 0xD1][..], // reserved register encoding
+            &[0xD9, 0x08][..], // reserved memory /1
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_x87_exact_data_transfer_encodings_addressing_and_legality() {
+        for (bytes, expected_kind, expected_st, has_memory, expected_fop) in [
+            (
+                &[0xD9, 0x00][..],
+                X86X87DataKind::LoadSingle,
+                0,
+                true,
+                0x0100,
+            ),
+            (
+                &[0xDD, 0x00][..],
+                X86X87DataKind::LoadDouble,
+                0,
+                true,
+                0x0500,
+            ),
+            (
+                &[0xDF, 0x00][..],
+                X86X87DataKind::LoadInt16,
+                0,
+                true,
+                0x0700,
+            ),
+            (
+                &[0xDB, 0x00][..],
+                X86X87DataKind::LoadInt32,
+                0,
+                true,
+                0x0300,
+            ),
+            (
+                &[0xDF, 0x28][..],
+                X86X87DataKind::LoadInt64,
+                0,
+                true,
+                0x0728,
+            ),
+            (&[0xDF, 0x20][..], X86X87DataKind::LoadBcd, 0, true, 0x0720),
+            (
+                &[0xD9, 0xC5][..],
+                X86X87DataKind::LoadRegister,
+                5,
+                false,
+                0x01C5,
+            ),
+            (
+                &[0xDB, 0x28][..],
+                X86X87DataKind::LoadExtended,
+                0,
+                true,
+                0x0328,
+            ),
+            (
+                &[0xDD, 0xD6][..],
+                X86X87DataKind::StoreRegister,
+                6,
+                false,
+                0x05D6,
+            ),
+            (
+                &[0xDD, 0xDE][..],
+                X86X87DataKind::StorePopRegister,
+                6,
+                false,
+                0x05DE,
+            ),
+            (
+                &[0xDB, 0x38][..],
+                X86X87DataKind::StorePopExtended,
+                0,
+                true,
+                0x0338,
+            ),
+            (&[0xDF, 0x30][..], X86X87DataKind::StoreBcd, 0, true, 0x0730),
+            (
+                &[0xD9, 0x10][..],
+                X86X87DataKind::StoreFloat {
+                    width: X86X87FloatWidth::F32,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0110,
+            ),
+            (
+                &[0xD9, 0x18][..],
+                X86X87DataKind::StoreFloat {
+                    width: X86X87FloatWidth::F32,
+                    pop: true,
+                },
+                0,
+                true,
+                0x0118,
+            ),
+            (
+                &[0xDD, 0x10][..],
+                X86X87DataKind::StoreFloat {
+                    width: X86X87FloatWidth::F64,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0510,
+            ),
+            (
+                &[0xDD, 0x18][..],
+                X86X87DataKind::StoreFloat {
+                    width: X86X87FloatWidth::F64,
+                    pop: true,
+                },
+                0,
+                true,
+                0x0518,
+            ),
+            (
+                &[0xD9, 0xCC][..],
+                X86X87DataKind::Exchange,
+                4,
+                false,
+                0x01CC,
+            ),
+            (&[0xDD, 0xC3][..], X86X87DataKind::Free, 3, false, 0x05C3),
+            (
+                &[0xD9, 0xE0][..],
+                X86X87DataKind::ChangeSign,
+                0,
+                false,
+                0x01E0,
+            ),
+            (
+                &[0xD9, 0xE1][..],
+                X86X87DataKind::Absolute,
+                1,
+                false,
+                0x01E1,
+            ),
+            (&[0xD9, 0xE5][..], X86X87DataKind::Examine, 5, false, 0x01E5),
+            (
+                &[0xD9, 0xE4][..],
+                X86X87DataKind::TestZero,
+                4,
+                false,
+                0x01E4,
+            ),
+            (
+                &[0xD9, 0xFC][..],
+                X86X87DataKind::RoundInteger,
+                4,
+                false,
+                0x01FC,
+            ),
+            (&[0xD9, 0xF4][..], X86X87DataKind::Extract, 4, false, 0x01F4),
+            (&[0xD9, 0xFD][..], X86X87DataKind::Scale, 5, false, 0x01FD),
+            (
+                &[0xD9, 0xFA][..],
+                X86X87DataKind::SquareRoot,
+                2,
+                false,
+                0x01FA,
+            ),
+            (
+                &[0xD9, 0xF6][..],
+                X86X87DataKind::DecrementTop,
+                6,
+                false,
+                0x01F6,
+            ),
+            (
+                &[0xD9, 0xF7][..],
+                X86X87DataKind::IncrementTop,
+                7,
+                false,
+                0x01F7,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Data { kind, addr, st, fop },
+                    ..
+                }] if *kind == expected_kind
+                    && addr.is_some() == has_memory
+                    && *st == expected_st
+                    && *fop == expected_fop
+            ));
+        }
+
+        for (opcode, constant) in [
+            (0xE8, X86X87Constant::One),
+            (0xE9, X86X87Constant::Log2Ten),
+            (0xEA, X86X87Constant::Log2E),
+            (0xEB, X86X87Constant::Pi),
+            (0xEC, X86X87Constant::Log10Two),
+            (0xED, X86X87Constant::LnTwo),
+            (0xEE, X86X87Constant::Zero),
+        ] {
+            let result = lift_single(&[0xD9, opcode]).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Data {
+                        kind: X86X87DataKind::LoadConstant(got),
+                        addr: None,
+                        fop,
+                        ..
+                    },
+                    ..
+                }] if *got == constant && *fop == (0x0100 | opcode as u16)
+            ));
+        }
+
+        for (bytes, condition, st, fop) in [
+            (&[0xDA, 0xC3][..], Condition::Ult, 3, 0x02C3),
+            (&[0xDA, 0xCA][..], Condition::Eq, 2, 0x02CA),
+            (&[0xDA, 0xD5][..], Condition::Ule, 5, 0x02D5),
+            (&[0xDA, 0xDF][..], Condition::Parity, 7, 0x02DF),
+            (&[0xDB, 0xC1][..], Condition::Uge, 1, 0x03C1),
+            (&[0xDB, 0xCC][..], Condition::Ne, 4, 0x03CC),
+            (&[0xDB, 0xD6][..], Condition::Ugt, 6, 0x03D6),
+            (&[0xDB, 0xD8][..], Condition::NoParity, 0, 0x03D8),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Data {
+                        kind: X86X87DataKind::ConditionalMove(got),
+                        addr: None,
+                        st: got_st,
+                        fop: got_fop,
+                    },
+                    ..
+                }] if *got == condition && *got_st == st && *got_fop == fop
+            ));
+        }
+
+        for (bytes, source, unordered, pop, eflags, st, fop, has_memory) in [
+            (
+                &[0xD8, 0x10][..],
+                X86X87CompareSource::Single,
+                false,
+                0,
+                false,
+                0,
+                0x0010,
+                true,
+            ),
+            (
+                &[0xD8, 0x18][..],
+                X86X87CompareSource::Single,
+                false,
+                1,
+                false,
+                0,
+                0x0018,
+                true,
+            ),
+            (
+                &[0xDC, 0x10][..],
+                X86X87CompareSource::Double,
+                false,
+                0,
+                false,
+                0,
+                0x0410,
+                true,
+            ),
+            (
+                &[0xDC, 0x18][..],
+                X86X87CompareSource::Double,
+                false,
+                1,
+                false,
+                0,
+                0x0418,
+                true,
+            ),
+            (
+                &[0xDE, 0x10][..],
+                X86X87CompareSource::Int16,
+                false,
+                0,
+                false,
+                0,
+                0x0610,
+                true,
+            ),
+            (
+                &[0xDE, 0x18][..],
+                X86X87CompareSource::Int16,
+                false,
+                1,
+                false,
+                0,
+                0x0618,
+                true,
+            ),
+            (
+                &[0xDA, 0x10][..],
+                X86X87CompareSource::Int32,
+                false,
+                0,
+                false,
+                0,
+                0x0210,
+                true,
+            ),
+            (
+                &[0xDA, 0x18][..],
+                X86X87CompareSource::Int32,
+                false,
+                1,
+                false,
+                0,
+                0x0218,
+                true,
+            ),
+            (
+                &[0xD8, 0xD3][..],
+                X86X87CompareSource::Register,
+                false,
+                0,
+                false,
+                3,
+                0x00D3,
+                false,
+            ),
+            (
+                &[0xD8, 0xDB][..],
+                X86X87CompareSource::Register,
+                false,
+                1,
+                false,
+                3,
+                0x00DB,
+                false,
+            ),
+            (
+                &[0xDD, 0xE3][..],
+                X86X87CompareSource::Register,
+                true,
+                0,
+                false,
+                3,
+                0x05E3,
+                false,
+            ),
+            (
+                &[0xDD, 0xEB][..],
+                X86X87CompareSource::Register,
+                true,
+                1,
+                false,
+                3,
+                0x05EB,
+                false,
+            ),
+            (
+                &[0xDE, 0xD9][..],
+                X86X87CompareSource::Register,
+                false,
+                2,
+                false,
+                1,
+                0x06D9,
+                false,
+            ),
+            (
+                &[0xDA, 0xE9][..],
+                X86X87CompareSource::Register,
+                true,
+                2,
+                false,
+                1,
+                0x02E9,
+                false,
+            ),
+            (
+                &[0xDB, 0xEB][..],
+                X86X87CompareSource::Register,
+                true,
+                0,
+                true,
+                3,
+                0x03EB,
+                false,
+            ),
+            (
+                &[0xDB, 0xF3][..],
+                X86X87CompareSource::Register,
+                false,
+                0,
+                true,
+                3,
+                0x03F3,
+                false,
+            ),
+            (
+                &[0xDF, 0xEB][..],
+                X86X87CompareSource::Register,
+                true,
+                1,
+                true,
+                3,
+                0x07EB,
+                false,
+            ),
+            (
+                &[0xDF, 0xF3][..],
+                X86X87CompareSource::Register,
+                false,
+                1,
+                true,
+                3,
+                0x07F3,
+                false,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Data {
+                        kind: X86X87DataKind::Compare {
+                            source: got_source,
+                            unordered: got_unordered,
+                            pop: got_pop,
+                            eflags: got_eflags,
+                        },
+                        addr,
+                        st: got_st,
+                        fop: got_fop,
+                    },
+                    ..
+                }] if *got_source == source
+                    && *got_unordered == unordered
+                    && *got_pop == pop
+                    && *got_eflags == eflags
+                    && *got_st == st
+                    && *got_fop == fop
+                    && addr.is_some() == has_memory
+            ));
+        }
+
+        for (bytes, width, pop, truncate, fop) in [
+            (&[0xDF, 0x10][..], X86X87IntWidth::I16, false, false, 0x0710),
+            (&[0xDB, 0x10][..], X86X87IntWidth::I32, false, false, 0x0310),
+            (&[0xDF, 0x18][..], X86X87IntWidth::I16, true, false, 0x0718),
+            (&[0xDB, 0x18][..], X86X87IntWidth::I32, true, false, 0x0318),
+            (&[0xDF, 0x38][..], X86X87IntWidth::I64, true, false, 0x0738),
+            (&[0xDF, 0x08][..], X86X87IntWidth::I16, true, true, 0x0708),
+            (&[0xDB, 0x08][..], X86X87IntWidth::I32, true, true, 0x0308),
+            (&[0xDD, 0x08][..], X86X87IntWidth::I64, true, true, 0x0508),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Data {
+                        kind: X86X87DataKind::StoreInteger {
+                            width: got_width,
+                            pop: got_pop,
+                            truncate: got_truncate,
+                        },
+                        addr: Some(_),
+                        fop: got_fop,
+                        ..
+                    },
+                    ..
+                }] if *got_width == width
+                    && *got_pop == pop
+                    && *got_truncate == truncate
+                    && *got_fop == fop
+            ));
+        }
+
+        // addr32 arithmetic wraps in 32 bits and is materialized before the
+        // exact ten-byte load operation.
+        let addr32 = lift_single(&[0x67, 0xDB, 0x6C, 0x8B, 0x20]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 5);
+        assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
+            op.kind,
+            OpKind::Shl {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } | OpKind::Add {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86X87Data {
+                kind: X86X87DataKind::LoadExtended,
+                addr: Some(Address::Direct(_)),
+                ..
+            })
+        ));
+
+        for bytes in [
+            &[0xF0, 0xD9, 0xC0][..],
+            &[0xF0, 0xDB, 0x28][..],
+            &[0xF0, 0xDB, 0x38][..],
+            &[0xF0, 0xDD, 0xC0][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_fxsave_fxrstor_width_addressing_and_legality() {
+        for (bytes, save, rex_w) in [
+            (&[0x0F, 0xAE, 0x00][..], true, false),
+            (&[0x48, 0x0F, 0xAE, 0x00][..], true, true),
+            (&[0x0F, 0xAE, 0x08][..], false, false),
+            (&[0x48, 0x0F, 0xAE, 0x08][..], false, true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86FxSave { rex_w: got, .. },
+                        ..
+                    }] if save && *got == rex_w
+                ) || matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86FxRstor { rex_w: got, .. },
+                        ..
+                    }] if !save && *got == rex_w
+                )
+            );
+        }
+
+        let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x44, 0x4B, 0x20]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 6);
+        assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
+            op.kind,
+            OpKind::Shl {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            } | OpKind::Add {
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86FxSave {
+                addr: Address::Direct(_),
+                rex_w: false,
+            })
+        ));
+
+        // Legacy optional prefixes are tolerated; LOCK and register operands
+        // are architecturally invalid.
+        for bytes in [
+            &[0x66, 0x0F, 0xAE, 0x00][..],
+            &[0xF2, 0x0F, 0xAE, 0x08][..],
+            &[0xF3, 0x0F, 0xAE, 0x00][..],
+        ] {
+            assert!(lift_single(bytes).is_ok(), "{bytes:02X?}");
+        }
+        for bytes in [
+            &[0xF0, 0x0F, 0xAE, 0x00][..],
+            &[0x0F, 0xAE, 0xC0][..],
+            &[0x0F, 0xAE, 0xC8][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_pushf_popf_stack_widths_and_flag_masking() {
+        for (bytes, delta, mem_width) in [
+            (&[0x9C][..], 8, MemWidth::B8),
+            (&[0x66, 0x9C][..], 2, MemWidth::B2),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(result.ops[0].kind, OpKind::ReadFlags { .. }));
+            assert!(matches!(
+                result.ops[1].kind,
+                OpKind::Sub {
+                    src2: SrcOperand::Imm(got),
+                    flags: FlagUpdate::None,
+                    ..
+                } if got == delta
+            ));
+            assert!(matches!(
+                result.ops[2].kind,
+                OpKind::Store { width, .. } if width == mem_width
+            ));
+        }
+
+        for (bytes, delta, mem_width) in [
+            (&[0x9D][..], 8, MemWidth::B8),
+            (&[0x66, 0x9D][..], 2, MemWidth::B2),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops[0].kind,
+                OpKind::Load { width, .. } if width == mem_width
+            ));
+            assert!(matches!(
+                result.ops[1].kind,
+                OpKind::Add {
+                    src2: SrcOperand::Imm(got),
+                    flags: FlagUpdate::None,
+                    ..
+                } if got == delta
+            ));
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::And {
+                    src2: SrcOperand::Imm(0xCD5),
+                    ..
+                }
+            )));
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::WriteFlags { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_lahf_sahf_use_exact_status_mask() {
+        let lahf = lift_single(&[0x9F]).unwrap();
+        assert_eq!(lahf.bytes_consumed, 1);
+        assert!(matches!(lahf.ops[0].kind, OpKind::ReadFlags { .. }));
+        assert!(lahf.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::And {
+                src2: SrcOperand::Imm(0xD5),
+                ..
+            }
+        )));
+        assert!(matches!(
+            lahf.ops.last().unwrap().kind,
+            OpKind::Or {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+
+        let sahf = lift_single(&[0x9E]).unwrap();
+        assert_eq!(sahf.bytes_consumed, 1);
+        assert!(matches!(sahf.ops[0].kind, OpKind::ReadFlags { .. }));
+        assert!(sahf.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Shr {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                amount: SrcOperand::Imm(8),
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(matches!(
+            sahf.ops.last().unwrap().kind,
+            OpKind::WriteFlags { .. }
+        ));
+    }
+
+    #[test]
+    fn lift_mov_moffs_address_width_segment_and_direction() {
+        let load =
+            lift_single(&[0x48, 0xA1, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11]).unwrap();
+        assert_eq!(load.bytes_consumed, 10);
+        assert!(matches!(
+            load.ops[0].kind,
+            OpKind::Load {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                addr: Address::Absolute(0x1122_3344_5566_7788),
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+
+        let store = lift_single(&[0x67, 0x64, 0xA2, 0x78, 0x56, 0x34, 0x12]).unwrap();
+        assert_eq!(store.bytes_consumed, 7);
+        assert!(matches!(
+            store.ops[0].kind,
+            OpKind::Store {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                addr: Address::SegmentRel {
+                    segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                    base: None,
+                    index: None,
+                    scale: 1,
+                    disp: 0x1234_5678,
+                },
+                width: MemWidth::B1,
+            }
+        ));
+
+        let load_byte = lift_single(&[0x67, 0xA0, 0x00, 0x20, 0x00, 0x00]).unwrap();
+        assert!(matches!(
+            load_byte.ops[0].kind,
+            OpKind::Load {
+                addr: Address::Absolute(0x2000),
+                width: MemWidth::B1,
+                ..
+            }
+        ));
+
+        let store_dword =
+            lift_single(&[0xA3, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap();
+        assert!(matches!(
+            store_dword.ops[0].kind,
+            OpKind::Store {
+                addr: Address::Absolute(0x3000),
+                width: MemWidth::B4,
+                ..
+            }
+        ));
+
+        assert!(matches!(
+            lift_single(&[0xA1, 0, 0, 0]),
+            Err(LiftError::Incomplete { need: 8, .. })
+        ));
+    }
+
+    #[test]
+    fn lift_pop_rm_orders_rsp_update_before_memory_destination() {
+        let result = lift_single(&[0x8F, 0x44, 0x24, 0x08]).unwrap(); // pop qword ptr [rsp+8]
+        assert_eq!(result.bytes_consumed, 4);
+        assert!(matches!(
+            result.ops[0].kind,
+            OpKind::Load {
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rsp))),
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+        assert!(matches!(
+            result.ops[1].kind,
+            OpKind::Add {
+                dst: VReg::Virtual(_),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                src2: SrcOperand::Imm(8),
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            result.ops[2].kind,
+            OpKind::Store {
+                addr: Address::BaseOffset {
+                    base: VReg::Virtual(_),
+                    offset: 8,
+                    ..
+                },
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+        assert!(matches!(
+            result.ops[3].kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                width: OpWidth::W64,
+                ..
+            }
+        ));
+
+        let addr32 = lift_single(&[0x67, 0x8F, 0x44, 0x24, 0x08]).unwrap();
+        let incremented_rsp = match addr32.ops[1].kind {
+            OpKind::Add { dst, .. } => dst,
+            ref other => panic!("expected stack increment, got {other:?}"),
+        };
+        let materialized_offset = match addr32.ops[2].kind {
+            OpKind::Add {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            } => {
+                assert_eq!(src1, incremented_rsp);
+                dst
+            }
+            ref other => panic!("expected post-increment ESP address, got {other:?}"),
+        };
+        assert!(matches!(
+            addr32.ops[3].kind,
+            OpKind::Store {
+                addr: Address::Direct(reg),
+                width: MemWidth::B8,
+                ..
+            } if reg == materialized_offset
+        ));
+
+        let pop_rsp = lift_single(&[0x8F, 0xC4]).unwrap();
+        assert!(matches!(
+            pop_rsp.ops.last().unwrap().kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                width: OpWidth::W64,
+                ..
+            }
+        ));
+
+        let pop16 = lift_single(&[0x66, 0x8F, 0xC0]).unwrap();
+        assert!(matches!(
+            pop16.ops[0].kind,
+            OpKind::Load {
+                width: MemWidth::B2,
+                ..
+            }
+        ));
+        assert!(matches!(
+            pop16.ops[1].kind,
+            OpKind::Add {
+                src2: SrcOperand::Imm(2),
+                ..
+            }
+        ));
+        assert!(matches!(
+            pop16.ops[3].kind,
+            OpKind::Mov {
+                width: OpWidth::W16,
+                ..
+            }
+        ));
+        assert!(matches!(
+            lift_single(&[0x8F, 0xC8]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+
+        let pop_sp = lift_single(&[0x66, 0x8F, 0xC4]).unwrap();
+        assert!(matches!(
+            pop_sp.ops[2].kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                width: OpWidth::W64,
+                ..
+            }
+        ));
+        assert!(matches!(
+            pop_sp.ops[3].kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                width: OpWidth::W16,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn lift_group4_register_memory_lock_and_invalid_forms() {
+        let inc = lift_single(&[0xFE, 0xC0]).unwrap(); // inc al
+        assert!(matches!(
+            inc.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Inc {
+                    width: OpWidth::W8,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let dec_mem = lift_single(&[0xFE, 0x08]).unwrap(); // dec byte ptr [rax]
+        assert!(matches!(
+            dec_mem.ops[0].kind,
+            OpKind::Load {
+                width: MemWidth::B1,
+                ..
+            }
+        ));
+        assert!(matches!(
+            dec_mem.ops[1].kind,
+            OpKind::Dec {
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            dec_mem.ops[2].kind,
+            OpKind::Store {
+                width: MemWidth::B1,
+                ..
+            }
+        ));
+        assert!(matches!(
+            dec_mem.ops[3].kind,
+            OpKind::Dec {
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                ..
+            }
+        ));
+
+        let lock_inc = lift_single(&[0xF0, 0xFE, 0x00]).unwrap();
+        assert!(lock_inc.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::AtomicRmw {
+                op: AtomicOp::Add,
+                width: MemWidth::B1,
+                order: MemoryOrder::SeqCst,
+                ..
+            }
+        )));
+
+        assert!(matches!(
+            lift_single(&[0xFE, 0xD0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        let inc_ah = lift_single(&[0xFE, 0xC4]).unwrap();
+        assert!(matches!(
+            inc_ah.ops.first().unwrap().kind,
+            OpKind::Shr {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                amount: SrcOperand::Imm(8),
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(inc_ah.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Inc {
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                ..
+            }
+        )));
+        assert!(matches!(
+            inc_ah.ops.last().unwrap().kind,
+            OpKind::Or {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xFE, 0xC0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lock_memory_alu_group3_and_group5_use_atomic_rmw() {
+        for (name, bytes, expected_atomic, expects_flags) in [
+            ("add rm,reg", &[0xF0, 0x01, 0x08][..], AtomicOp::Add, true),
+            (
+                "adc rm,imm",
+                &[0xF0, 0x83, 0x10, 0x01][..],
+                AtomicOp::Add,
+                true,
+            ),
+            (
+                "sbb rm,imm",
+                &[0xF0, 0x83, 0x18, 0x01][..],
+                AtomicOp::Sub,
+                true,
+            ),
+            (
+                "and rm,imm",
+                &[0xF0, 0x83, 0x20, 0x01][..],
+                AtomicOp::And,
+                true,
+            ),
+            (
+                "xor rm,imm",
+                &[0xF0, 0x83, 0x30, 0x01][..],
+                AtomicOp::Xor,
+                true,
+            ),
+            ("inc rm", &[0xF0, 0x48, 0xFF, 0x00][..], AtomicOp::Add, true),
+            ("dec rm", &[0xF0, 0x48, 0xFF, 0x08][..], AtomicOp::Sub, true),
+            ("not rm", &[0xF0, 0xF7, 0x10][..], AtomicOp::Nand, false),
+            ("neg rm", &[0xF0, 0xF7, 0x18][..], AtomicOp::Neg, true),
+        ] {
+            let result = lift_single(bytes).unwrap_or_else(|err| panic!("{name}: {err:?}"));
+            let atomic = result
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::AtomicRmw {
+                            op,
+                            order: MemoryOrder::SeqCst,
+                            ..
+                        } if op == expected_atomic
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: missing {expected_atomic:?}: {:?}", result.ops));
+            assert!(
+                result.ops[..atomic]
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty()),
+                "{name}: pre-atomic flags",
+            );
+            assert_eq!(
+                result.ops[atomic + 1..]
+                    .iter()
+                    .any(|op| !op.kind.flags_written().is_empty()),
+                expects_flags,
+                "{name}: post-atomic flag commit",
+            );
+        }
+
+        let adc = lift_single(&[0xF0, 0x83, 0x10, 0x01]).unwrap();
+        assert!(
+            adc.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+        );
+        assert!(matches!(
+            adc.ops.last().unwrap().kind,
+            OpKind::Adc {
+                flags: FlagUpdate::All,
+                ..
+            }
+        ));
+
+        for bytes in [
+            &[0xF0, 0x01, 0xC8][..],       // ADD register destination
+            &[0xF0, 0x03, 0x08][..],       // ADD reg,[mem]
+            &[0xF0, 0x39, 0x08][..],       // CMP [mem],reg
+            &[0xF0, 0x05, 0, 0, 0, 0][..], // ADD accumulator,imm
+            &[0xF0, 0x83, 0xC0, 1][..],    // ADD register,imm
+            &[0xF0, 0x83, 0x38, 1][..],    // CMP [mem],imm
+            &[0xF0, 0xC1, 0x20, 1][..],    // shift immediate
+            &[0xF0, 0xD1, 0x20][..],       // shift by one
+            &[0xF0, 0xD3, 0x20][..],       // shift by CL
+            &[0xF0, 0xF7, 0xD8][..],       // NEG register
+            &[0xF0, 0xF7, 0x20][..],       // MUL [mem]
+            &[0xF0, 0xFF, 0x10][..],       // CALL [mem]
+            &[0xF0, 0xFF, 0x30][..],       // PUSH [mem]
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "illegal LOCK form accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn memory_rmw_flag_updates_follow_the_potentially_faulting_store() {
+        for (name, bytes) in [
+            ("add", &[0x01, 0x08][..]),
+            ("adc immediate", &[0x83, 0x10, 0x01][..]),
+            ("shift immediate", &[0xC1, 0x20, 0x01][..]),
+            ("rotate one", &[0xD0, 0x08][..]),
+            ("rotate through carry CL", &[0x48, 0xD3, 0x18][..]),
+            ("neg", &[0xF7, 0x18][..]),
+            ("inc", &[0x48, 0xFF, 0x00][..]),
+            ("dec", &[0x66, 0xFF, 0x08][..]),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            let store = result
+                .ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::Store { .. }))
+                .unwrap_or_else(|| panic!("{name}: missing store"));
+            assert!(
+                result.ops[..store]
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty()),
+                "{name}: flags written before store: {:?}",
+                result.ops,
+            );
+            assert!(
+                result.ops[store + 1..]
+                    .iter()
+                    .any(|op| !op.kind.flags_written().is_empty()),
+                "{name}: missing post-store flag commit: {:?}",
+                result.ops,
+            );
+        }
+    }
+
+    #[test]
+    fn newly_lifted_legacy_paths_reject_illegal_lock_prefixes() {
+        for bytes in [
+            &[0xF0, 0x98][..],
+            &[0xF0, 0x9C][..],
+            &[0xF0, 0x9D][..],
+            &[0xF0, 0x9E][..],
+            &[0xF0, 0x9F][..],
+            &[0xF0, 0x8F, 0xC0][..],
+            &[0xF0, 0x67, 0xA0, 0, 0, 0, 0][..],
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "LOCK-prefixed bytes should be invalid: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_xlat_models_index_width_segment_and_invalid_lock() {
+        let plain = lift_single(&[0xD7]).unwrap();
+        assert_eq!(plain.bytes_consumed, 1);
+        assert!(matches!(
+            plain.ops[0].kind,
+            OpKind::And {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src2: SrcOperand::Imm(0xFF),
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            plain.ops[1].kind,
+            OpKind::Add {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            plain.ops[2].kind,
+            OpKind::Load {
+                width: MemWidth::B1,
+                ..
+            }
+        ));
+        assert!(matches!(
+            plain.ops[3].kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                width: OpWidth::W8,
+                ..
+            }
+        ));
+
+        let addr32_fs = lift_single(&[0x67, 0x64, 0xD7]).unwrap();
+        assert!(matches!(
+            addr32_fs.ops[1].kind,
+            OpKind::Add {
+                width: OpWidth::W32,
+                ..
+            }
+        ));
+        assert!(matches!(
+            addr32_fs.ops[2].kind,
+            OpKind::Load {
+                addr: Address::SegmentRel {
+                    segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                    ..
+                },
+                ..
+            }
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xD7]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_ud2_is_an_explicit_invalid_opcode_trap() {
+        for bytes in [&[0x0F, 0x0B][..], &[0x66, 0x0F, 0x0B][..]] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(result.ops.is_empty());
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                }
+            ));
+        }
+
+        for bytes in [
+            &[0x0F, 0xAA][..],
+            &[0x0F, 0xB9, 0xC0][..],
+            &[0x0F, 0xB9, 0x84, 0x88, 0x78, 0x56, 0x34, 0x12][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                }
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_enter_decodes_width_nesting_mask_and_invalid_forms() {
+        let enter64 = lift_single(&[0xC8, 0x20, 0, 0]).unwrap();
+        assert_eq!(enter64.bytes_consumed, 4);
+        assert!(matches!(
+            enter64.ops[1].kind,
+            OpKind::Sub {
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            enter64.ops[2].kind,
+            OpKind::Store {
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+
+        let enter16_nested = lift_single(&[0x66, 0xC8, 0x10, 0, 0x22]).unwrap();
+        assert_eq!(enter16_nested.bytes_consumed, 5);
+        assert_eq!(
+            enter16_nested
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+            "nesting immediate must be masked to five bits (0x22 -> 2)",
+        );
+        assert!(matches!(
+            lift_single(&[0xF0, 0xC8, 0, 0, 0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xC8, 0, 0]),
+            Err(LiftError::Incomplete { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_long_mode_invalid_legacy_opcodes_are_explicit_ud_traps() {
+        for opcode in [
+            0x27, 0x2F, 0x37, 0x3F, 0x60, 0x61, 0x82, 0x9A, 0xCE, 0xD4, 0xEA,
+        ] {
+            let result = lift_single(&[opcode]).unwrap();
+            assert_eq!(result.bytes_consumed, 1, "opcode {opcode:02X}");
+            assert!(result.ops.is_empty(), "opcode {opcode:02X}");
+            assert!(
+                matches!(
+                    result.control_flow,
+                    ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode
+                    }
+                ),
+                "opcode {opcode:02X}",
+            );
+        }
+
+        let prefixed = lift_single(&[0x66, 0xD4]).unwrap();
+        assert_eq!(prefixed.bytes_consumed, 2);
+        assert!(matches!(
+            prefixed.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
+        ));
+    }
+
+    #[test]
+    fn lift_nop_cache_and_prefetch_hints_consume_complete_encodings() {
+        for bytes in [
+            &[0x0F, 0x08][..],
+            &[0x0F, 0x09][..],
+            &[0x0F, 0x1A, 0xC0][..],
+            &[0x0F, 0x1B, 0xC0][..],
+            &[0xF3, 0x0F, 0x1E, 0xFA][..], // ENDBR64
+            &[0x0F, 0x1F, 0x84, 0x88, 0x78, 0x56, 0x34, 0x12][..],
+            &[0x0F, 0x18, 0x4C, 0x88, 0x20][..],
+            &[0x0F, 0x0D, 0x4C, 0x88, 0x20][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(result.ops.is_empty(), "{bytes:02X?}");
+            assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        }
+
+        let cldemote = lift_single(&[0x0F, 0x1C, 0x40, 0x20]).unwrap();
+        assert_eq!(cldemote.bytes_consumed, 4);
+        assert!(matches!(
+            cldemote.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86CacheControl {
+                    addr: Address::BaseOffset {
+                        base: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                        offset: 0x20,
+                        ..
+                    },
+                    kind: X86CacheControlKind::Cldemote,
+                },
+                ..
+            }]
+        ));
+        assert!(cldemote.ops[0].kind.has_side_effects());
+        assert!(!cldemote.ops[0].kind.reads_memory());
+
+        let cldemote_addr32 = lift_single(&[0x67, 0x0F, 0x1C, 0x43, 0x20]).unwrap();
+        assert_eq!(cldemote_addr32.bytes_consumed, 5);
+        assert!(matches!(
+            cldemote_addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86CacheControl {
+                kind: X86CacheControlKind::Cldemote,
+                ..
+            })
+        ));
+        assert!(
+            cldemote_addr32.ops[..cldemote_addr32.ops.len() - 1]
+                .iter()
+                .all(|op| matches!(
+                    op.kind,
+                    OpKind::Mov {
+                        width: OpWidth::W32,
+                        ..
+                    } | OpKind::Add {
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                ))
+        );
+
+        for bytes in [
+            &[0x0F, 0x1C, 0xC0][..],
+            &[0x0F, 0x1C, 0x08][..],
+            &[0x66, 0x0F, 0x1C, 0xD8][..],
+            &[0xF2, 0x0F, 0x1C, 0xF8][..],
+            &[0xF3, 0x0F, 0x1C, 0x08][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(result.ops.is_empty(), "reserved hint {bytes:02X?}");
+        }
+        assert!(matches!(
+            lift_single(&[0xF0, 0x0F, 0x1C, 0x00]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+
+        let rdssp = lift_single(&[0xF3, 0x0F, 0x1E, 0xC8]).unwrap();
+        assert!(matches!(
+            rdssp.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
+        ));
+    }
+
+    #[test]
+    fn lift_rdtsc_has_exact_destinations_and_length() {
+        let result = lift_single(&[0x0F, 0x31]).unwrap();
+        assert_eq!(result.bytes_consumed, 2);
+        assert!(matches!(
+            result.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86ReadTsc {
+                    dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    dst_hi: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                },
+                ..
+            }]
+        ));
+        assert!(result.ops[0].kind.has_side_effects());
+    }
+
+    #[test]
+    fn lift_packed_sse_moves_arithmetic_and_vex_divide() {
+        let movups = lift_single(&[0x0F, 0x10, 0xC1]).unwrap();
+        assert!(matches!(
+            movups.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VMov {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    width: VecWidth::V128,
+                },
+                x86_hint: Some(X86OpHint::SseMov { opcode: 0x10, .. }),
+                ..
+            }]
+        ));
+
+        for (bytes, expected_elem, expected) in [
+            (&[0x0F, 0x58, 0xC1][..], VecElementType::F32, "add"),
+            (&[0x66, 0x0F, 0x59, 0xC1][..], VecElementType::F64, "mul"),
+            (&[0x0F, 0x5C, 0xC1][..], VecElementType::F32, "sub"),
+            (&[0x66, 0x0F, 0x5E, 0xC1][..], VecElementType::F64, "div"),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            let matches_kind = result.ops.iter().any(|op| match (&op.kind, expected) {
+                (OpKind::VAdd { elem, .. }, "add")
+                | (OpKind::VMul { elem, .. }, "mul")
+                | (OpKind::VSub { elem, .. }, "sub")
+                | (OpKind::VDiv { elem, .. }, "div") => *elem == expected_elem,
+                _ => false,
+            });
+            assert!(matches_kind, "{bytes:02X?}");
+        }
+
+        let vex_divps = lift_single(&[0xC5, 0xF8, 0x5E, 0xC1]).unwrap();
+        assert!(matches!(
+            vex_divps.ops.last().unwrap().kind,
+            OpKind::VDiv {
+                elem: VecElementType::F32,
+                lanes: 4,
+                ..
+            }
+        ));
+        let vex_divpd = lift_single(&[0xC5, 0xF9, 0x5E, 0xC1]).unwrap();
+        assert!(matches!(
+            vex_divpd.ops.last().unwrap().kind,
+            OpKind::VDiv {
+                elem: VecElementType::F64,
+                lanes: 2,
+                ..
+            }
+        ));
+
+        let xorps = lift_single(&[0x0F, 0x57, 0xC1]).unwrap();
+        assert!(xorps.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VXor {
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+        let vex_andps = lift_single(&[0xC5, 0xF8, 0x54, 0xC1]).unwrap();
+        assert!(matches!(
+            vex_andps.ops.last().unwrap().kind,
+            OpKind::VAnd {
+                width: VecWidth::V128,
+                ..
+            }
+        ));
+
+        let movss = lift_single(&[0xF3, 0x0F, 0x10, 0xC1]).unwrap();
+        assert!(matches!(
+            movss.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: VecElementType::F32,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::F32,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let addsd = lift_single(&[0xF2, 0x0F, 0x58, 0xC1]).unwrap();
+        assert!(addsd.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAdd {
+                elem: VecElementType::F64,
+                lanes: 1,
+                ..
+            }
+        )));
+        assert!(matches!(
+            addsd.ops.last().unwrap().kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                elem: VecElementType::F64,
+                ..
+            }
+        ));
+
+        let movss_mem = lift_single(&[0xF3, 0x0F, 0x10, 0x00]).unwrap();
+        assert!(matches!(
+            movss_mem.ops.first().unwrap().kind,
+            OpKind::Load {
+                width: MemWidth::B4,
+                ..
+            }
+        ));
+        assert_eq!(
+            movss_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        elem: VecElementType::F32,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+        );
+        let movsd_store = lift_single(&[0xF2, 0x0F, 0x11, 0x00]).unwrap();
+        assert!(matches!(
+            movsd_store.ops.last().unwrap().kind,
+            OpKind::Store {
+                width: MemWidth::B8,
+                ..
+            }
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xF3, 0x0F, 0x58, 0xC1]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_vex_scalar_moves_and_arithmetic_merge_xmm_and_zero_upper_state() {
+        let vaddss = lift_single(&[0xC5, 0xF2, 0x58, 0xC2]).unwrap();
+        assert!(vaddss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAdd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                ..
+            }
+        )));
+        assert!(vaddss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                lane: 3,
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+        assert!(vaddss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                ..
+            }
+        )));
+
+        for (bytes, expected) in [
+            (&[0xC5, 0xF2, 0x59, 0xC2][..], "mulss"),
+            (&[0xC5, 0xF3, 0x5C, 0xC2][..], "subsd"),
+            (&[0xC5, 0xF2, 0x5E, 0xC2][..], "divss"),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(
+                result.ops.iter().any(|op| match (&op.kind, expected) {
+                    (OpKind::VMul { lanes: 1, .. }, "mulss")
+                    | (OpKind::VSub { lanes: 1, .. }, "subsd")
+                    | (OpKind::VDiv { lanes: 1, .. }, "divss") => true,
+                    _ => false,
+                }),
+                "{expected}: {:?}",
+                result.ops,
+            );
+        }
+
+        let vmovss = lift_single(&[0xC5, 0xFA, 0x10, 0xD1]).unwrap();
+        assert!(vmovss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                lane: 0,
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+        assert!(vmovss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                lane: 3,
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+        assert!(vmovss.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                ..
+            }
+        )));
+
+        let reverse = lift_single(&[0xC5, 0xF2, 0x11, 0xC2]).unwrap();
+        assert!(reverse.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                lane: 0,
+                ..
+            }
+        )));
+        assert!(reverse.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                ..
+            }
+        )));
+
+        let memory = lift_single(&[0xC5, 0xFA, 0x10, 0x00]).unwrap();
+        assert!(matches!(
+            memory.ops.first().unwrap().kind,
+            OpKind::Load {
+                width: MemWidth::B4,
+                ..
+            }
+        ));
+        assert!(matches!(
+            memory.ops.last().unwrap().kind,
+            OpKind::VBroadcast {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                ..
+            }
+        ));
+
+        let packed = lift_single(&[0xC5, 0xF8, 0x10, 0xC1]).unwrap();
+        assert!(matches!(
+            packed.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAnd {
+                    width: VecWidth::V128,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        for bytes in [
+            &[0xC5, 0xF2, 0x10, 0x00][..], // memory VMOVSS with non-reserved vvvv
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "unsupported/reserved scalar form accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_scalar_masking_fault_suppression_and_high_registers() {
+        let merge = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0xD1]).unwrap();
+        assert!(merge.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::And {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                src2: SrcOperand::Imm(1),
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(merge.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                lane: 0,
+                ..
+            }
+        )));
+        assert!(
+            merge
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+        assert!(merge.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAdd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                ..
+            }
+        )));
+
+        for (bytes, expected_elem, expected) in [
+            (
+                &[0x62, 0xF1, 0x7E, 0x0A, 0x59, 0xE1][..],
+                VecElementType::F32,
+                "mul",
+            ),
+            (
+                &[0x62, 0xF1, 0x7E, 0x8A, 0x5E, 0xE9][..],
+                VecElementType::F32,
+                "div",
+            ),
+            (
+                &[0x62, 0xF1, 0xFF, 0x09, 0x58, 0xD1][..],
+                VecElementType::F64,
+                "add",
+            ),
+            (
+                &[0x62, 0xF1, 0xFF, 0x89, 0x5C, 0xD9][..],
+                VecElementType::F64,
+                "sub",
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(
+                result.ops.iter().any(|op| match (&op.kind, expected) {
+                    (OpKind::VMul { elem, lanes: 1, .. }, "mul")
+                    | (OpKind::VDiv { elem, lanes: 1, .. }, "div")
+                    | (OpKind::VAdd { elem, lanes: 1, .. }, "add")
+                    | (OpKind::VSub { elem, lanes: 1, .. }, "sub") => {
+                        *elem == expected_elem
+                    }
+                    _ => false,
+                }),
+                "{expected}: {:?}",
+                result.ops,
+            );
+        }
+
+        let zero = lift_single(&[0x62, 0xF1, 0x7E, 0x89, 0x5C, 0xD1]).unwrap();
+        assert!(zero.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Mov {
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W32,
+                ..
+            }
+        )));
+        assert!(!zero.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                lane: 0,
+                ..
+            }
+        )));
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0x10]).unwrap();
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        assert!(
+            !masked_memory
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Load { .. }))
+        );
+
+        let compressed = lift_single(&[0x62, 0xF1, 0x7E, 0x08, 0x58, 0x57, 0x10]).unwrap();
+        assert!(compressed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        let compressed_sd = lift_single(&[0x62, 0xF1, 0xFF, 0x08, 0x58, 0x5F, 0x08]).unwrap();
+        assert!(compressed_sd.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+
+        let high = lift_single(&[0x62, 0xA1, 0x7E, 0x00, 0x58, 0xD1]).unwrap();
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAdd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(16))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                ..
+            }
+        )));
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                ..
+            }
+        )));
+
+        let high_move = lift_single(&[0x62, 0xA1, 0x7E, 0x00, 0x10, 0xD1]).unwrap();
+        assert!(high_move.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                lane: 0,
+                ..
+            }
+        )));
+        assert!(high_move.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF1, 0x7E, 0x88, 0x58, 0xD1][..], // {z} with k0
+            &[0x62, 0xF1, 0x7E, 0x18, 0x58, 0xD1][..], // embedded rounding/SAE
+            &[0x62, 0xF1, 0xFE, 0x08, 0x58, 0xD1][..], // VADDSS with W=1
+            &[0x62, 0xF1, 0x7F, 0x08, 0x58, 0xD1][..], // VADDSD with W=0
+            &[0x62, 0xF1, 0xFE, 0x08, 0x10, 0xD1][..], // VMOVSS with W=1
+            &[0x62, 0xF1, 0x7F, 0x08, 0x10, 0xD1][..], // VMOVSD with W=0
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_scalar_and_packed_sqrt() {
+        let legacy = lift_single(&[0xF3, 0x0F, 0x51, 0xC1]).unwrap();
+        assert!(legacy.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VUnary {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                op: VecUnaryOp::FSqrt,
+                ..
+            }
+        )));
+        assert!(matches!(
+            legacy.ops.last().unwrap().kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                ..
+            }
+        ));
+
+        for (bytes, elem, lanes) in [
+            (&[0x0F, 0x51, 0xC1][..], VecElementType::F32, 4),
+            (&[0x66, 0x0F, 0x51, 0xC1][..], VecElementType::F64, 2),
+            (&[0xC5, 0xF8, 0x51, 0xC1][..], VecElementType::F32, 4),
+            (&[0xC5, 0xF9, 0x51, 0xC1][..], VecElementType::F64, 2),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VUnary {
+                    elem: actual_elem,
+                    lanes: actual_lanes,
+                    op: VecUnaryOp::FSqrt,
+                    ..
+                } if actual_elem == elem && actual_lanes == lanes
+            )));
+        }
+        let legacy_packed = lift_single(&[0x0F, 0x51, 0xC1]).unwrap();
+        let computed = legacy_packed
+            .ops
+            .iter()
+            .find_map(|op| match op.kind {
+                OpKind::VUnary {
+                    dst,
+                    op: VecUnaryOp::FSqrt,
+                    ..
+                } => Some(dst),
+                _ => None,
+            })
+            .unwrap();
+        assert!(matches!(computed, VReg::Virtual(_)));
+        assert_eq!(
+            legacy_packed
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+            "legacy packed SQRT must merge only the four XMM lanes"
+        );
+
+        let vex = lift_single(&[0xC5, 0xF2, 0x51, 0xC2]).unwrap();
+        assert!(vex.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VUnary {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                elem: VecElementType::F32,
+                lanes: 1,
+                op: VecUnaryOp::FSqrt,
+                ..
+            }
+        )));
+        assert!(vex.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                lane: 3,
+                ..
+            }
+        )));
+
+        let evex = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x51, 0xD1]).unwrap();
+        assert!(evex.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::And {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                ..
+            }
+        )));
+        assert!(evex.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VUnary {
+                op: VecUnaryOp::FSqrt,
+                lanes: 1,
+                ..
+            }
+        )));
+        assert!(
+            evex.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x51, 0x10]).unwrap();
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        let compressed_packed = lift_single(&[0x62, 0xF1, 0x7C, 0x48, 0x51, 0x50, 0x01]).unwrap();
+        assert!(compressed_packed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        for bytes in [
+            &[0x62, 0xF1, 0xFC, 0x48, 0x51, 0xC1][..], // VSQRTPS with W=1
+            &[0x62, 0xF1, 0x7D, 0x48, 0x51, 0xC1][..], // VSQRTPD with W=0
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+        assert!(matches!(
+            lift_single(&[0xF0, 0xF3, 0x0F, 0x51, 0xC1]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn legacy_packed_sse_results_are_bounded_to_xmm_lanes() {
+        for (name, bytes, result_kind) in [
+            ("ADDPS", &[0x0F, 0x58, 0xC1][..], "add"),
+            ("ANDPS", &[0x0F, 0x54, 0xC1][..], "and"),
+            ("PADDD", &[0x66, 0x0F, 0xFE, 0xC1][..], "add"),
+            ("PMULLD", &[0x66, 0x0F, 0x38, 0x40, 0xC1][..], "mul"),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            match result_kind {
+                "add" => assert!(result.ops.iter().any(|op| matches!(
+                    op,
+                    SmirOp {
+                        kind: OpKind::VAdd {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            ..
+                        },
+                        x86_hint: Some(X86OpHint::SseOp { .. }),
+                        ..
+                    }
+                ))),
+                "and" => assert!(result.ops.iter().any(|op| matches!(
+                    op,
+                    SmirOp {
+                        kind: OpKind::VAnd {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            ..
+                        },
+                        x86_hint: Some(X86OpHint::SseOp { .. }),
+                        ..
+                    }
+                ))),
+                "mul" => assert!(result.ops.iter().any(|op| matches!(
+                    op,
+                    SmirOp {
+                        kind: OpKind::VMul {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            ..
+                        },
+                        x86_hint: Some(X86OpHint::SseOp { .. }),
+                        ..
+                    }
+                ))),
+                _ => unreachable!(),
+            }
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            ..
+                        }
+                    ))
+                    .count(),
+                0,
+                "{name}: canonical legacy operation must remain directly lowerable"
+            );
+        }
+
+        let register_move = lift_single(&[0x0F, 0x10, 0xC1]).unwrap();
+        assert!(matches!(
+            register_move.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VMov {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    width: VecWidth::V128,
+                },
+                x86_hint: Some(X86OpHint::SseMov { .. }),
+                ..
+            }]
+        ));
+
+        let memory = lift_single(&[0x0F, 0x10, 0x00]).unwrap();
+        assert!(memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
+        for (bytes, elem, lanes, min) in [
+            (&[0xF3, 0x0F, 0x5D, 0xC1][..], VecElementType::F32, 1, true),
+            (&[0xF2, 0x0F, 0x5F, 0xC1][..], VecElementType::F64, 1, false),
+            (&[0x0F, 0x5D, 0xC1][..], VecElementType::F32, 4, true),
+            (&[0x66, 0x0F, 0x5F, 0xC1][..], VecElementType::F64, 2, false),
+            (&[0xC5, 0xF2, 0x5D, 0xC2][..], VecElementType::F32, 1, true),
+            (&[0xC5, 0xF5, 0x5F, 0xC2][..], VecElementType::F64, 4, false),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VX86MinMax {
+                    elem: actual_elem,
+                    lanes: actual_lanes,
+                    min: actual_min,
+                    ..
+                } if actual_elem == elem && actual_lanes == lanes && actual_min == min
+            )));
+        }
+
+        let legacy_packed = lift_single(&[0x0F, 0x5D, 0xC1]).unwrap();
+        assert!(legacy_packed.ops.iter().any(|op| matches!(
+            op,
+            SmirOp {
+                kind: OpKind::VX86MinMax {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    elem: VecElementType::F32,
+                    lanes: 4,
+                    min: true,
+                    ..
+                },
+                x86_hint: Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x5D,
+                }),
+                ..
+            }
+        )));
+        assert_eq!(
+            legacy_packed
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                ))
+                .count(),
+            0
+        );
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7E, 0x09, 0x5D, 0x10]).unwrap();
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VX86MinMax {
+                min: true,
+                lanes: 1,
+                ..
+            }
+        )));
+        assert!(
+            masked_memory
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+
+        let compressed = lift_single(&[0x62, 0xF1, 0x7C, 0x48, 0x5D, 0x50, 0x01]).unwrap();
+        assert!(compressed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(compressed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VX86MinMax {
+                elem: VecElementType::F32,
+                lanes: 16,
+                min: true,
+                ..
+            }
+        )));
+
+        let high = lift_single(&[0x62, 0xA1, 0x7C, 0x40, 0x5D, 0xD1]).unwrap();
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VX86MinMax {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF1, 0xFE, 0x09, 0x5D, 0xD1][..], // VMINSS W=1
+            &[0x62, 0xF1, 0x7F, 0x09, 0x5F, 0xD1][..], // VMAXSD W=0
+            &[0x62, 0xF1, 0xFC, 0x48, 0x5D, 0xC1][..], // VMINPS W=1
+            &[0x62, 0xF1, 0x7D, 0x48, 0x5F, 0xC1][..], // VMAXPD W=0
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_comi_ucomi() {
+        for (bytes, elem, signaling) in [
+            (&[0x0F, 0x2E, 0xC1][..], VecElementType::F32, false),
+            (&[0x66, 0x0F, 0x2F, 0xC1][..], VecElementType::F64, true),
+            (&[0xC5, 0xF8, 0x2E, 0xC1][..], VecElementType::F32, false),
+            (&[0xC5, 0xF9, 0x2F, 0xC1][..], VecElementType::F64, true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86FpCompare {
+                    elem: actual_elem,
+                    signaling: actual_signaling,
+                    ..
+                } if actual_elem == elem && actual_signaling == signaling
+            ));
+        }
+
+        let high = lift_single(&[0x62, 0xA1, 0x7C, 0x08, 0x2E, 0xD1]).unwrap();
+        assert!(matches!(
+            high.ops.last().unwrap().kind,
+            OpKind::X86FpCompare {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                elem: VecElementType::F32,
+                signaling: false,
+            }
+        ));
+
+        let compressed = lift_single(&[0x62, 0xE1, 0xFD, 0x08, 0x2F, 0x50, 0x08]).unwrap();
+        assert!(compressed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+        assert!(matches!(
+            compressed.ops.last().unwrap().kind,
+            OpKind::X86FpCompare {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                elem: VecElementType::F64,
+                signaling: true,
+                ..
+            }
+        ));
+
+        for bytes in [
+            &[0xF0, 0x0F, 0x2E, 0xC1][..],             // LOCK
+            &[0xF3, 0x0F, 0x2E, 0xC1][..],             // reserved legacy prefix
+            &[0xC5, 0xF0, 0x2E, 0xC1][..],             // reserved VEX.vvvv
+            &[0x62, 0xF1, 0xFC, 0x08, 0x2E, 0xC1][..], // VUCOMISS W=1
+            &[0x62, 0xF1, 0x7D, 0x08, 0x2F, 0xC1][..], // VCOMISD W=0
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_scalar_fp_to_integer_conversions() {
+        for (bytes, dst, elem, width, truncate) in [
+            (
+                &[0xF3, 0x0F, 0x2D, 0xC1][..],
+                X86Reg::Rax,
+                VecElementType::F32,
+                OpWidth::W32,
+                false,
+            ),
+            (
+                &[0xF2, 0x48, 0x0F, 0x2C, 0xC1][..],
+                X86Reg::Rax,
+                VecElementType::F64,
+                OpWidth::W64,
+                true,
+            ),
+            (
+                &[0xC4, 0x61, 0xFA, 0x2D, 0xC9][..],
+                X86Reg::R9,
+                VecElementType::F32,
+                OpWidth::W64,
+                false,
+            ),
+            (
+                &[0xC4, 0x61, 0xFB, 0x2C, 0xD1][..],
+                X86Reg::R10,
+                VecElementType::F64,
+                OpWidth::W64,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86FpToInt {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    elem: actual_elem,
+                    int_width: actual_width,
+                    truncate: actual_truncate,
+                    ..
+                } if actual_dst == dst && actual_elem == elem && actual_width == width
+                    && actual_truncate == truncate
+            ));
+        }
+
+        let memory = lift_single(&[0xF2, 0x0F, 0x2D, 0x00]).unwrap();
+        assert!(memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+        assert!(matches!(
+            memory.ops.last().unwrap().kind,
+            OpKind::X86FpToInt {
+                src: VReg::Virtual(_),
+                elem: VecElementType::F64,
+                ..
+            }
+        ));
+
+        let evex_high = lift_single(&[0x62, 0x31, 0xFE, 0x08, 0x2D, 0xD1]).unwrap();
+        assert!(matches!(
+            evex_high.ops.last().unwrap().kind,
+            OpKind::X86FpToInt {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::R10)),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                elem: VecElementType::F32,
+                int_width: OpWidth::W64,
+                truncate: false,
+            }
+        ));
+
+        for bytes in [
+            &[0x0F, 0x2D, 0xC1][..],                   // missing F2/F3
+            &[0xF0, 0xF3, 0x0F, 0x2D, 0xC1][..],       // LOCK
+            &[0xC5, 0xF2, 0x2D, 0xC1][..],             // reserved VEX.vvvv
+            &[0x62, 0xE1, 0x7E, 0x08, 0x2D, 0xC1][..], // EVEX GPR R'
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_scalar_integer_to_fp_conversions() {
+        for (bytes, dst, merge, src, elem, width, zero_upper) in [
+            (
+                &[0xF3, 0x0F, 0x2A, 0xC8][..],
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(1),
+                X86Reg::Rax,
+                VecElementType::F32,
+                OpWidth::W32,
+                false,
+            ),
+            (
+                &[0xF2, 0x48, 0x0F, 0x2A, 0xC8][..],
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(1),
+                X86Reg::Rax,
+                VecElementType::F64,
+                OpWidth::W64,
+                false,
+            ),
+            (
+                &[0xC4, 0xC1, 0xEA, 0x2A, 0xC9][..],
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(2),
+                X86Reg::R9,
+                VecElementType::F32,
+                OpWidth::W64,
+                true,
+            ),
+            (
+                &[0xC4, 0xC1, 0xE3, 0x2A, 0xD2][..],
+                X86Reg::Xmm(2),
+                X86Reg::Xmm(3),
+                X86Reg::R10,
+                VecElementType::F64,
+                OpWidth::W64,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86IntToFp {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    merge: VReg::Arch(ArchReg::X86(actual_merge)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    elem: actual_elem,
+                    int_width: actual_width,
+                    zero_upper: actual_zero,
+                } if actual_dst == dst && actual_merge == merge && actual_src == src
+                    && actual_elem == elem && actual_width == width && actual_zero == zero_upper
+            ));
+        }
+
+        let evex_high = lift_single(&[0x62, 0xC1, 0xFE, 0x00, 0x2A, 0xCA]).unwrap();
+        assert!(matches!(
+            evex_high.ops.last().unwrap().kind,
+            OpKind::X86IntToFp {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(16))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::R10)),
+                elem: VecElementType::F32,
+                int_width: OpWidth::W64,
+                zero_upper: true,
+            }
+        ));
+
+        for (bytes, width, offset) in [
+            (
+                &[0x62, 0xE1, 0x7E, 0x00, 0x2A, 0x48, 0x10][..],
+                MemWidth::B4,
+                64i64,
+            ),
+            (
+                &[0x62, 0xE1, 0xFE, 0x00, 0x2A, 0x48, 0x08][..],
+                MemWidth::B8,
+                64i64,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load {
+                    addr: Address::BaseOffset {
+                        offset: actual_offset,
+                        disp_size: DispSize::Disp8,
+                        ..
+                    },
+                    width: actual_width,
+                    sign: SignExtend::Sign,
+                    ..
+                } if actual_offset == offset && actual_width == width
+            )));
+        }
+
+        for bytes in [
+            &[0x0F, 0x2A, 0xC8][..],             // missing F2/F3
+            &[0xF0, 0xF3, 0x0F, 0x2A, 0xC8][..], // LOCK
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_scalar_fp_precision_conversions() {
+        for (bytes, dst, merge, src, from, to, zero_upper) in [
+            (
+                &[0xF3, 0x0F, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                VecElementType::F64,
+                false,
+            ),
+            (
+                &[0xF2, 0x0F, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                VecElementType::F32,
+                false,
+            ),
+            (
+                &[0xC5, 0xF2, 0x5A, 0xC2][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(2),
+                VecElementType::F32,
+                VecElementType::F64,
+                true,
+            ),
+            (
+                &[0xC5, 0xF3, 0x5A, 0xC2][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(2),
+                VecElementType::F64,
+                VecElementType::F32,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86FpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    merge: VReg::Arch(ArchReg::X86(actual_merge)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    from: actual_from,
+                    to: actual_to,
+                    zero_upper: actual_zero,
+                } if actual_dst == dst && actual_merge == merge && actual_src == src
+                    && actual_from == from && actual_to == to && actual_zero == zero_upper
+            ));
+        }
+
+        let high = lift_single(&[0x62, 0xA1, 0x7E, 0x00, 0x5A, 0xD1]).unwrap();
+        assert!(matches!(
+            high.ops.last().unwrap().kind,
+            OpKind::X86FpConvert {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(16))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                from: VecElementType::F32,
+                to: VecElementType::F64,
+                zero_upper: true,
+            }
+        ));
+
+        let compressed = lift_single(&[0x62, 0xE1, 0xFF, 0x00, 0x5A, 0x50, 0x08]).unwrap();
+        assert!(compressed.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0xF0, 0xF3, 0x0F, 0x5A, 0xC1][..],       // LOCK
+            &[0x62, 0xF1, 0xFE, 0x00, 0x5A, 0xC1][..], // VCVTSS2SD W=1
+            &[0x62, 0xF1, 0x7F, 0x00, 0x5A, 0xC1][..], // VCVTSD2SS W=0
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_legacy_and_vex_packed_fp_precision_conversions() {
+        for (bytes, dst, src, from, to, lanes, dst_width, zero_upper) in [
+            (
+                &[0x0F, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                VecElementType::F64,
+                2,
+                VecWidth::V128,
+                false,
+            ),
+            (
+                &[0x66, 0x0F, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                VecElementType::F32,
+                2,
+                VecWidth::V128,
+                false,
+            ),
+            (
+                &[0xC5, 0xF8, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                VecElementType::F64,
+                2,
+                VecWidth::V128,
+                true,
+            ),
+            (
+                &[0xC5, 0xFC, 0x5A, 0xC1][..],
+                X86Reg::Ymm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                VecElementType::F64,
+                4,
+                VecWidth::V256,
+                true,
+            ),
+            (
+                &[0xC5, 0xF9, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                VecElementType::F32,
+                2,
+                VecWidth::V128,
+                true,
+            ),
+            (
+                &[0xC5, 0xFD, 0x5A, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Ymm(1),
+                VecElementType::F64,
+                VecElementType::F32,
+                4,
+                VecWidth::V128,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    from: actual_from,
+                    to: actual_to,
+                    lanes: actual_lanes,
+                    dst_width: actual_width,
+                    zero_upper: actual_zero,
+                    ..
+                } if actual_dst == dst && actual_src == src && actual_from == from
+                    && actual_to == to && actual_lanes == lanes && actual_width == dst_width
+                    && actual_zero == zero_upper
+            ));
+        }
+
+        for (bytes, width) in [
+            (&[0x0F, 0x5A, 0x00][..], VecWidth::V64),
+            (&[0x66, 0x0F, 0x5A, 0x00][..], VecWidth::V128),
+            (&[0xC5, 0xFC, 0x5A, 0x00][..], VecWidth::V128),
+            (&[0xC5, 0xFD, 0x5A, 0x00][..], VecWidth::V256),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VLoad {
+                    width: actual_width,
+                    ..
+                } if actual_width == width
+            )));
+        }
+
+        for bytes in [
+            &[0xF0, 0x0F, 0x5A, 0xC1][..], // LOCK
+            &[0xC5, 0xE8, 0x5A, 0xC1][..], // reserved VEX.vvvv
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_evex_packed_fp_precision_masks_broadcast_rounding_and_high_registers() {
+        for (bytes, dst, src, mask, from, to, lanes, dst_width, zeroing, round) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1][..],
+                X86Reg::Zmm(0),
+                X86Reg::Ymm(1),
+                X86Reg::K(1),
+                VecElementType::F32,
+                VecElementType::F64,
+                8,
+                VecWidth::V512,
+                true,
+                FpRoundMode::Dynamic,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE][..],
+                X86Reg::Ymm(5),
+                X86Reg::Zmm(6),
+                X86Reg::K(4),
+                VecElementType::F64,
+                VecElementType::F32,
+                8,
+                VecWidth::V256,
+                true,
+                FpRoundMode::Dynamic,
+            ),
+            (
+                &[0x62, 0xA1, 0x7C, 0x4B, 0x5A, 0xD1][..],
+                X86Reg::Zmm(18),
+                X86Reg::Ymm(17),
+                X86Reg::K(3),
+                VecElementType::F32,
+                VecElementType::F64,
+                8,
+                VecWidth::V512,
+                false,
+                FpRoundMode::Dynamic,
+            ),
+            (
+                &[0x62, 0xA1, 0xFD, 0xCD, 0x5A, 0xDC][..],
+                X86Reg::Ymm(19),
+                X86Reg::Zmm(20),
+                X86Reg::K(5),
+                VecElementType::F64,
+                VecElementType::F32,
+                8,
+                VecWidth::V256,
+                true,
+                FpRoundMode::Dynamic,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1][..],
+                X86Reg::Ymm(0),
+                X86Reg::Zmm(1),
+                X86Reg::K(1),
+                VecElementType::F64,
+                VecElementType::F32,
+                8,
+                VecWidth::V256,
+                false,
+                FpRoundMode::RoundDown,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    mask: Some(VReg::Arch(ArchReg::X86(actual_mask))),
+                    from: actual_from,
+                    to: actual_to,
+                    lanes: actual_lanes,
+                    dst_width: actual_width,
+                    mask_zeroing: actual_zeroing,
+                    zero_upper: true,
+                    round: actual_round,
+                } if actual_dst == dst && actual_src == src && actual_mask == mask
+                    && actual_from == from && actual_to == to && actual_lanes == lanes
+                    && actual_width == dst_width && actual_zeroing == zeroing
+                    && actual_round == round
+            ));
+        }
+
+        for (bytes, expected_offset, pred_loads) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0x4B, 0x5A, 0x50, 0x02][..],
+                64i64,
+                8usize,
+            ),
+            (&[0x62, 0xF1, 0x7C, 0xDA, 0x5A, 0x60, 0x08][..], 32, 1),
+            (&[0x62, 0xF1, 0xFD, 0x4D, 0x5A, 0x78, 0x02][..], 128, 8),
+            (&[0x62, 0xF1, 0xFD, 0xDA, 0x5A, 0x48, 0x08][..], 64, 1),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(
+                result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::Lea {
+                        addr: Address::BaseOffset {
+                            offset,
+                            disp_size: DispSize::Disp8,
+                            ..
+                        },
+                        ..
+                    } if offset == expected_offset
+                )) || result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        addr: Address::BaseOffset {
+                            offset,
+                            disp_size: DispSize::Disp8,
+                            ..
+                        },
+                        ..
+                    } if offset == expected_offset
+                ))
+            );
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                    .count(),
+                pred_loads
+            );
+        }
+
+        for (byte4, expected_round) in [
+            (0x19, FpRoundMode::RoundNearest),
+            (0x39, FpRoundMode::RoundDown),
+            (0x59, FpRoundMode::RoundUp),
+            (0x79, FpRoundMode::RoundTowardZero),
+        ] {
+            let result = lift_single(&[0x62, 0xF1, 0xFD, byte4, 0x5A, 0xC1]).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    lanes: 8,
+                    round,
+                    ..
+                } if round == expected_round
+            ));
+        }
+
+        for bytes in [
+            &[0x62, 0xF1, 0x7C, 0xC8, 0x5A, 0xC1][..], // {z} with k0
+            &[0x62, 0xF1, 0xFC, 0x48, 0x5A, 0xC1][..], // VCVTPS2PD W=1
+            &[0x62, 0xF1, 0x7D, 0x48, 0x5A, 0xC1][..], // VCVTPD2PS W=0
+            &[0x62, 0xF1, 0x7C, 0x58, 0x5A, 0xC1][..], // widening EVEX.b reg
+            &[0x62, 0xF1, 0x7C, 0x68, 0x5A, 0xC1][..], // reserved EVEX.L'L=3
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
     fn test_lift_jmp() {
         let mut lifter = X86_64Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
@@ -16473,6 +26168,57 @@ mod tests {
             }
             _ => panic!("Expected CondBranch"),
         }
+    }
+
+    #[test]
+    fn lift_loop_family_counter_width_targets_and_flag_restoration() {
+        for opcode in 0xE0..=0xE3 {
+            let result = lift_single(&[opcode, 0xFE]).unwrap();
+            assert_eq!(result.bytes_consumed, 2);
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::CondBranchReg {
+                    taken: 0x1000,
+                    not_taken: 0x1002,
+                    ..
+                }
+            ));
+            assert!(matches!(result.ops[0].kind, OpKind::ReadFlags { .. }));
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
+            );
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::Dec { .. }))
+                    .count(),
+                usize::from(opcode != 0xE3),
+            );
+        }
+
+        let loop32 = lift_single(&[0x67, 0xE2, 0x00]).unwrap();
+        assert!(loop32.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Dec {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+
+        assert!(matches!(
+            lift_single(&[0xE2]),
+            Err(LiftError::Incomplete { need: 1, .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0xF0, 0xE2, 0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
     }
 
     #[test]

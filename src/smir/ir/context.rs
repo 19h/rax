@@ -169,6 +169,180 @@ impl ArchRegState {
     }
 }
 
+/// x87 architectural state used by x86-64 SMIR execution.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct X86X87State {
+    /// x87 control word (FCW).
+    pub control_word: u16,
+    /// x87 status word (FSW), including TOP in bits 13:11.
+    pub status_word: u16,
+    /// Full two-bit-per-register x87 tag word.
+    pub tag_word: u16,
+    /// Last x87 data-operand pointer.
+    pub data_ptr: u64,
+    /// Last x87 instruction pointer.
+    pub instr_ptr: u64,
+    /// Last x87 opcode (11 significant bits architecturally).
+    pub last_opcode: u16,
+    /// Physical x87 registers R0-R7 in exact 80-bit memory encoding. Logical
+    /// ST(i) is selected through TOP; unused high padding is deliberately not
+    /// stored here because FXSAVE supplies six reserved bytes per slot.
+    pub regs: [[u8; 10]; 8],
+}
+
+impl Default for X86X87State {
+    fn default() -> Self {
+        Self {
+            control_word: 0x037F,
+            status_word: 0,
+            tag_word: 0xFFFF,
+            data_ptr: 0,
+            instr_ptr: 0,
+            last_opcode: 0,
+            regs: [[0; 10]; 8],
+        }
+    }
+}
+
+impl X86X87State {
+    /// Canonical x87 QNaN floating-point indefinite value in little-endian
+    /// double-extended memory format: FFFF_C000000000000000h.
+    pub const INDEFINITE: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 0xC0, 0xFF, 0xFF];
+
+    /// Architectural TOP value encoded in FSW bits 13:11.
+    pub fn top(&self) -> u8 {
+        ((self.status_word >> 11) & 7) as u8
+    }
+
+    /// FINIT/FNINIT environment reset. Physical register payloads are
+    /// preserved and made inaccessible by setting every tag to empty.
+    pub fn init(&mut self) {
+        self.control_word = 0x037F;
+        self.status_word = 0;
+        self.tag_word = 0xFFFF;
+        self.data_ptr = 0;
+        self.instr_ptr = 0;
+        self.last_opcode = 0;
+    }
+
+    /// FCLEX/FNCLEX clears exception flags, stack fault, error summary, and
+    /// busy while preserving condition codes and TOP.
+    pub fn clear_exceptions(&mut self) {
+        self.status_word &= !0x80FF;
+    }
+
+    /// Map logical ST(i) to its physical R0-R7 register.
+    pub fn physical_index(&self, logical_index: u8) -> usize {
+        ((self.top().wrapping_add(logical_index)) & 7) as usize
+    }
+
+    /// Read the full-tag classification of one physical register.
+    pub fn physical_tag(&self, physical_index: usize) -> u16 {
+        (self.tag_word >> ((physical_index & 7) * 2)) & 3
+    }
+
+    /// Write the full-tag classification of one physical register.
+    pub fn set_physical_tag(&mut self, physical_index: usize, tag: u16) {
+        let shift = (physical_index & 7) * 2;
+        self.tag_word = (self.tag_word & !(3 << shift)) | ((tag & 3) << shift);
+    }
+
+    /// Read the full-tag classification of logical ST(i).
+    pub fn tag(&self, logical_index: u8) -> u16 {
+        self.physical_tag(self.physical_index(logical_index))
+    }
+
+    /// Whether logical ST(i) is empty.
+    pub fn is_empty(&self, logical_index: u8) -> bool {
+        self.tag(logical_index) == 3
+    }
+
+    /// Set TOP while preserving all other status-word fields.
+    pub fn set_top(&mut self, top: u8) {
+        self.status_word = (self.status_word & !0x3800) | (((top & 7) as u16) << 11);
+    }
+
+    /// Mark ST(0) empty and advance TOP by one.
+    pub fn pop(&mut self) {
+        let physical = self.physical_index(0);
+        self.set_physical_tag(physical, 3);
+        self.set_top(self.top().wrapping_add(1));
+    }
+
+    /// Record an x87 stack fault. Returns true when the invalid-operation mask
+    /// permits the instruction's masked response. With IM clear, ES and B are
+    /// asserted and the caller must leave TOP and operands unchanged.
+    pub fn signal_stack_fault(&mut self, overflow: bool) -> bool {
+        self.status_word |= 0x0001 | 0x0040; // IE | SF
+        if overflow {
+            self.status_word |= 0x0200; // C1=1: overflow
+        } else {
+            self.status_word &= !0x0200; // C1=0: underflow
+        }
+        let masked = self.control_word & 1 != 0;
+        if !masked {
+            self.status_word |= 0x8080; // B | ES
+        }
+        masked
+    }
+
+    /// Install a raw value and explicit tag into logical ST(i).
+    pub fn set_logical_raw_tagged(&mut self, logical_index: u8, raw: [u8; 10], tag: u16) {
+        let physical = self.physical_index(logical_index);
+        self.regs[physical] = raw;
+        self.set_physical_tag(physical, tag);
+    }
+
+    /// Install a raw memory-format value into logical ST(i), deriving its full
+    /// tag from the 80-bit payload.
+    pub fn set_logical_raw(&mut self, logical_index: u8, raw: [u8; 10]) {
+        let tag = Self::classify_raw_register(&raw);
+        self.set_logical_raw_tagged(logical_index, raw, tag);
+    }
+
+    /// Build the one-bit-per-physical-register FTW used by FXSAVE/XSAVE.
+    pub fn abridged_tag_word(&self) -> u8 {
+        let mut abridged = 0u8;
+        for physical in 0..8 {
+            if (self.tag_word >> (physical * 2)) & 3 != 3 {
+                abridged |= 1 << physical;
+            }
+        }
+        abridged
+    }
+
+    /// Reconstruct the full FSAVE-format tag word after FXRSTOR. The abridged
+    /// FTW identifies empty registers; nonempty zero/special/valid tags are
+    /// recovered from each exact 80-bit physical payload.
+    pub fn restore_abridged_tag_word(&mut self, abridged: u8) {
+        let mut tags = 0u16;
+        for physical in 0..8 {
+            let tag = if abridged & (1 << physical) == 0 {
+                3 // empty
+            } else {
+                Self::classify_raw_register(&self.regs[physical])
+            };
+            tags |= tag << (physical * 2);
+        }
+        self.tag_word = tags;
+    }
+
+    /// Return the architectural full-tag classification: 0 valid, 1 zero,
+    /// 2 special, 3 empty (the latter is supplied only by abridged FTW).
+    fn classify_raw_register(raw: &[u8; 10]) -> u16 {
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent = u16::from_le_bytes([raw[8], raw[9]]) & 0x7FFF;
+        let integer_bit = significand >> 63;
+        if exponent == 0 {
+            if significand == 0 { 1 } else { 2 }
+        } else if exponent == 0x7FFF || integer_bit == 0 {
+            2
+        } else {
+            0
+        }
+    }
+}
+
 /// x86_64 register state
 #[derive(Clone, Debug, Default)]
 pub struct X86RegState {
@@ -188,6 +362,8 @@ pub struct X86RegState {
     pub k: [u64; 8],
     /// MXCSR (SSE control/status)
     pub mxcsr: u32,
+    /// x87 architectural environment and exact 80-bit physical registers.
+    pub x87: X86X87State,
 }
 
 impl X86RegState {
@@ -743,6 +919,67 @@ mod tests {
 
         // Immediate
         assert_eq!(ctx.read_vreg(VReg::Imm(123)), 123);
+    }
+
+    #[test]
+    fn x86_x87_state_defaults_and_environment_resets_preserve_raw_registers() {
+        let mut state = X86X87State::default();
+        assert_eq!(state.control_word, 0x037F);
+        assert_eq!(state.status_word, 0);
+        assert_eq!(state.tag_word, 0xFFFF);
+        assert_eq!(state.top(), 0);
+
+        let raw = [0xFF, 0, 1, 2, 3, 4, 5, 6, 0xFE, 0x7F];
+        state.regs[5] = raw;
+        state.control_word = 0;
+        state.status_word = 0xFFFF;
+        state.tag_word = 0;
+        state.data_ptr = u64::MAX;
+        state.instr_ptr = u64::MAX;
+        state.last_opcode = 0x07FF;
+        state.clear_exceptions();
+        assert_eq!(state.status_word, 0x7F00);
+        assert_eq!(state.top(), 7);
+
+        state.init();
+        assert_eq!(
+            state,
+            X86X87State {
+                regs: state.regs,
+                ..Default::default()
+            }
+        );
+        assert_eq!(state.regs[5], raw);
+    }
+
+    #[test]
+    fn x86_x87_abridged_tags_use_physical_order_and_reconstruct_classes() {
+        fn raw(significand: u64, exponent: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent.to_le_bytes());
+            value
+        }
+
+        let mut state = X86X87State::default();
+        state.regs[0] = raw(0x8000_0000_0000_0000, 0x3FFF); // valid 1.0
+        state.regs[1] = raw(0, 0); // zero
+        state.regs[2] = raw(0x8000_0000_0000_0000, 0x7FFF); // infinity: special
+        state.regs[3] = raw(1, 1); // unnormal: special
+        state.tag_word = 0;
+        state.tag_word |= 0 << 0;
+        state.tag_word |= 1 << 2;
+        state.tag_word |= 2 << 4;
+        state.tag_word |= 2 << 6;
+        for physical in 4..8 {
+            state.tag_word |= 3 << (physical * 2);
+        }
+        assert_eq!(state.abridged_tag_word(), 0x0F);
+
+        state.tag_word = 0;
+        state.restore_abridged_tag_word(0x0F);
+        assert_eq!(state.tag_word & 0x00FF, 0b10_10_01_00);
+        assert_eq!(state.tag_word & 0xFF00, 0xFF00);
     }
 
     #[test]

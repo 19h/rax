@@ -73,7 +73,7 @@ pub use optimize as opt;
 pub use interpret::{BlockResult, SmirInterpreter};
 pub use ir::context::{
     Aarch64RegState, ArchRegState, DebugState, ExitReason, HexagonRegState, RiscVRegState,
-    SmirContext, VRegFile, X86RegState,
+    SmirContext, VRegFile, X86RegState, X86X87State,
 };
 pub use ir::flags::{FlagSet, FlagState, FlagUpdate, LazyFlagOp, LazyFlags, MaterializedFlags};
 pub use ir::memory::{

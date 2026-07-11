@@ -8,11 +8,12 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind,
+    X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, ShiftOp,
-    SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
+    Address, ArchReg, BlockId, Condition, DispSize, FpRoundMode, GuestAddr, MemWidth, OpWidth,
+    ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -948,6 +949,61 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
+    /// Emit a scalar x86 string instruction in canonical prefix order.
+    pub fn emit_x86_string(
+        &mut self,
+        kind: X86StringKind,
+        rep: X86RepMode,
+        width: MemWidth,
+        address_width: OpWidth,
+    ) -> Result<(), LowerError> {
+        match address_width {
+            OpWidth::W32 => self.code.emit_u8(0x67),
+            OpWidth::W64 => {}
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: "X86String".to_string(),
+                    operand: format!("unsupported address width {address_width:?}"),
+                });
+            }
+        }
+        match rep {
+            X86RepMode::None => {}
+            X86RepMode::Rep | X86RepMode::Repe => self.code.emit_u8(0xF3),
+            X86RepMode::Repne => self.code.emit_u8(0xF2),
+        }
+
+        let byte_form = width == MemWidth::B1;
+        if !byte_form {
+            match width {
+                MemWidth::B2 => self.code.emit_u8(0x66),
+                MemWidth::B4 => {}
+                MemWidth::B8 => self.code.emit_u8(0x48),
+                MemWidth::B1 => unreachable!(),
+                MemWidth::B16 | MemWidth::B32 | MemWidth::B64 => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("X86String width {width:?}"),
+                    });
+                }
+            }
+        }
+
+        let opcode = match (kind, byte_form) {
+            (X86StringKind::Movs, true) => 0xA4,
+            (X86StringKind::Movs, false) => 0xA5,
+            (X86StringKind::Cmps, true) => 0xA6,
+            (X86StringKind::Cmps, false) => 0xA7,
+            (X86StringKind::Stos, true) => 0xAA,
+            (X86StringKind::Stos, false) => 0xAB,
+            (X86StringKind::Lods, true) => 0xAC,
+            (X86StringKind::Lods, false) => 0xAD,
+            (X86StringKind::Scas, true) => 0xAE,
+            (X86StringKind::Scas, false) => 0xAF,
+        };
+        self.code.emit_u8(opcode);
+        Ok(())
+    }
+
     /// MOVZX r64, r/m8 or r/m16
     pub fn emit_movzx(
         &mut self,
@@ -1239,6 +1295,21 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_sse_fp_to_int_rr(
+        &mut self,
+        prefix: u8,
+        opcode: u8,
+        dst: PhysReg,
+        src: PhysReg,
+        width: OpWidth,
+    ) {
+        self.code.emit_u8(prefix);
+        self.emit_rex(width == OpWidth::W64, dst, None, src);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(dst, src);
+    }
+
     pub fn emit_sse_mov_rm_disp(
         &mut self,
         prefix: Option<u8>,
@@ -1483,6 +1554,61 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(byte2);
         self.code.emit_u8(byte3);
         self.code.emit_u8(byte4);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn emit_evex_masked_rr(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        w: bool,
+        opcode: u8,
+        reg: PhysReg,
+        rm: PhysReg,
+        aaa: u8,
+        zeroing: bool,
+        broadcast_or_round: bool,
+        round: FpRoundMode,
+    ) {
+        let r = reg.vec_ext();
+        let r2 = reg.vec_ext2();
+        let b = rm.vec_ext();
+        let b2 = rm.vec_ext2();
+        let r_inv = u8::from(r == 0);
+        let r2_inv = u8::from(r2 == 0);
+        let b_inv = u8::from(b == 0);
+        let b2_inv = u8::from(b2 == 0);
+        let map_bits = Self::vex_map_bits(map) & 0x0F;
+        let pp_bits = Self::vex_pp_bits(pp);
+        let byte2 = (r_inv << 7) | (b2_inv << 6) | (b_inv << 5) | (r2_inv << 4) | map_bits;
+        let byte3 = ((w as u8) << 7) | (0x0F << 3) | 0x04 | pp_bits;
+        let ll_or_rc = if broadcast_or_round && round != FpRoundMode::Dynamic {
+            match round {
+                FpRoundMode::RoundNearest => 0,
+                FpRoundMode::RoundDown => 1,
+                FpRoundMode::RoundUp => 2,
+                FpRoundMode::RoundTowardZero => 3,
+                _ => 0,
+            }
+        } else {
+            match width {
+                VecWidth::V128 | VecWidth::V64 => 0,
+                VecWidth::V256 => 1,
+                VecWidth::V512 => 2,
+            }
+        };
+        let byte4 = ((zeroing as u8) << 7)
+            | (ll_or_rc << 5)
+            | ((broadcast_or_round as u8) << 4)
+            | (1 << 3)
+            | (aaa & 7);
+        self.code.emit_u8(0x62);
+        self.code.emit_u8(byte2);
+        self.code.emit_u8(byte3);
+        self.code.emit_u8(byte4);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
     }
 
     pub fn emit_vex_rrr(
@@ -5119,6 +5245,308 @@ impl X86_64Lowerer {
                 self.code.emit_u8(0x9D); // popfq
             }
 
+            OpKind::X86FpCompare {
+                src1,
+                src2,
+                elem,
+                signaling,
+            } => {
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FpCompare".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+                let pp = match elem {
+                    VecElementType::F32 => X86SsePrefix::None,
+                    VecElementType::F64 => X86SsePrefix::OpSize,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("X86FpCompare {elem:?}"),
+                        });
+                    }
+                };
+                let opcode = if *signaling { 0x2F } else { 0x2E };
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    self.emit_vec_rr(
+                        VecEncoding {
+                            width: VecWidth::V128,
+                            opcode,
+                            ..enc_hint
+                        },
+                        src1_reg,
+                        src2_reg,
+                        0x1F,
+                    );
+                } else if src1_reg.vec_ext2() != 0 || src2_reg.vec_ext2() != 0 {
+                    self.emit_vec_rr(
+                        VecEncoding {
+                            kind: VecEncodingKind::Evex,
+                            map: X86VecMap::Map0F,
+                            pp,
+                            opcode,
+                            width: VecWidth::V128,
+                        },
+                        src1_reg,
+                        src2_reg,
+                        0x1F,
+                    );
+                } else {
+                    let prefix = if pp == X86SsePrefix::OpSize {
+                        Some(0x66)
+                    } else {
+                        None
+                    };
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, src1_reg, src2_reg);
+                }
+            }
+
+            OpKind::X86FpToInt {
+                dst,
+                src,
+                elem,
+                int_width,
+                truncate,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                if dst_reg.is_vec() || !src_reg.is_vec() || src_reg.vec_ext2() != 0 {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FpToInt".to_string(),
+                        operand: "requires a GPR destination and XMM0-XMM15 source".to_string(),
+                    });
+                }
+                if !matches!(int_width, OpWidth::W32 | OpWidth::W64) {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("X86FpToInt width {int_width:?}"),
+                    });
+                }
+                let prefix = match elem {
+                    VecElementType::F32 => 0xF3,
+                    VecElementType::F64 => 0xF2,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("X86FpToInt element {elem:?}"),
+                        });
+                    }
+                };
+                let opcode = if *truncate { 0x2C } else { 0x2D };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_fp_to_int_rr(prefix, opcode, dst_reg, src_reg, *int_width);
+            }
+
+            OpKind::X86IntToFp {
+                dst,
+                merge,
+                src,
+                elem,
+                int_width,
+                zero_upper,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let merge_reg = self.get_reg(*merge)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec()
+                    || merge_reg != dst_reg
+                    || src_reg.is_vec()
+                    || dst_reg.vec_ext2() != 0
+                    || *zero_upper
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86IntToFp".to_string(),
+                        operand: "native legacy lowering requires dst=merge XMM0-XMM15".to_string(),
+                    });
+                }
+                if !matches!(int_width, OpWidth::W32 | OpWidth::W64) {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("X86IntToFp width {int_width:?}"),
+                    });
+                }
+                let prefix = match elem {
+                    VecElementType::F32 => 0xF3,
+                    VecElementType::F64 => 0xF2,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("X86IntToFp element {elem:?}"),
+                        });
+                    }
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_fp_to_int_rr(prefix, 0x2A, dst_reg, src_reg, *int_width);
+            }
+
+            OpKind::X86FpConvert {
+                dst,
+                merge,
+                src,
+                from,
+                to,
+                zero_upper,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let merge_reg = self.get_reg(*merge)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec()
+                    || !src_reg.is_vec()
+                    || merge_reg != dst_reg
+                    || dst_reg.vec_ext2() != 0
+                    || src_reg.vec_ext2() != 0
+                    || *zero_upper
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FpConvert".to_string(),
+                        operand: "native legacy lowering requires dst=merge XMM0-XMM15".to_string(),
+                    });
+                }
+                let prefix = match (*from, *to) {
+                    (VecElementType::F32, VecElementType::F64) => Some(0xF3),
+                    (VecElementType::F64, VecElementType::F32) => Some(0xF2),
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("X86FpConvert {from:?}->{to:?}"),
+                        });
+                    }
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_mov_rr(prefix, 0x5A, dst_reg, src_reg);
+            }
+
+            OpKind::X86PackedFpConvert {
+                dst,
+                src,
+                mask,
+                from,
+                to,
+                lanes,
+                dst_width,
+                mask_zeroing,
+                zero_upper,
+                round,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec() || !src_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86PackedFpConvert".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+                let pp = match (*from, *to) {
+                    (VecElementType::F32, VecElementType::F64) => X86SsePrefix::None,
+                    (VecElementType::F64, VecElementType::F32) => X86SsePrefix::OpSize,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("X86PackedFpConvert {from:?}->{to:?}"),
+                        });
+                    }
+                };
+                let instruction_width = match (*from, *lanes) {
+                    (VecElementType::F64, 2) => VecWidth::V128,
+                    (VecElementType::F64, 4) => VecWidth::V256,
+                    (VecElementType::F64, 8) => VecWidth::V512,
+                    (VecElementType::F32, 2 | 4 | 8) => *dst_width,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFpConvert".to_string(),
+                            operand: "invalid packed conversion lane count".to_string(),
+                        });
+                    }
+                };
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFpConvert".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                if *mask_zeroing && aaa == 0 {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86PackedFpConvert".to_string(),
+                        operand: "zeroing requires a nonzero opmask".to_string(),
+                    });
+                }
+                if let Some(X86OpHint::EvexOp { map, .. }) = op.x86_hint {
+                    if !*zero_upper
+                        || !matches!(*lanes, 2 | 4 | 8)
+                        || (*round != FpRoundMode::Dynamic
+                            && !(*from == VecElementType::F64
+                                && *lanes == 8
+                                && instruction_width == VecWidth::V512))
+                    {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFpConvert".to_string(),
+                            operand: "invalid EVEX packed conversion shape".to_string(),
+                        });
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_evex_masked_rr(
+                        map,
+                        pp,
+                        instruction_width,
+                        *from == VecElementType::F64,
+                        0x5A,
+                        dst_reg,
+                        src_reg,
+                        aaa,
+                        *mask_zeroing,
+                        *round != FpRoundMode::Dynamic,
+                        *round,
+                    );
+                } else if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    if !*zero_upper
+                        || mask.is_some()
+                        || *mask_zeroing
+                        || *round != FpRoundMode::Dynamic
+                        || !matches!(*lanes, 2 | 4)
+                        || !matches!(instruction_width, VecWidth::V128 | VecWidth::V256)
+                    {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFpConvert".to_string(),
+                            operand: "invalid VEX packed conversion shape".to_string(),
+                        });
+                    }
+                    self.emit_vec_rr(
+                        VecEncoding {
+                            pp,
+                            opcode: 0x5A,
+                            width: instruction_width,
+                            ..enc_hint
+                        },
+                        dst_reg,
+                        src_reg,
+                        0,
+                    );
+                } else {
+                    if *zero_upper
+                        || mask.is_some()
+                        || *mask_zeroing
+                        || *round != FpRoundMode::Dynamic
+                        || *lanes != 2
+                        || *dst_width != VecWidth::V128
+                        || dst_reg.vec_ext2() != 0
+                        || src_reg.vec_ext2() != 0
+                    {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFpConvert".to_string(),
+                            operand: "invalid legacy packed conversion shape".to_string(),
+                        });
+                    }
+                    let prefix = if pp == X86SsePrefix::OpSize {
+                        Some(0x66)
+                    } else {
+                        None
+                    };
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, 0x5A, dst_reg, src_reg);
+                }
+            }
+
             OpKind::MaterializeFlags => {}
 
             OpKind::SetCF { value } => {
@@ -5480,14 +5908,167 @@ impl X86_64Lowerer {
                 }
             }
 
-            OpKind::VDiv { elem, lanes, .. } => {
-                // Vector FP divide is currently emitted only by the AArch64
-                // lifter; the x86 struct-lowerer does not yet implement DIVPS/
-                // DIVPD, so this path is unreachable in practice and bails
-                // explicitly rather than mis-lowering.
-                return Err(LowerError::UnsupportedOp {
-                    op: format!("VDiv {:?}x{} (x86 vector FP divide)", elem, lanes),
-                });
+            OpKind::VX86MinMax {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                min,
+            } => {
+                let width =
+                    if *lanes == 1 && matches!(elem, VecElementType::F32 | VecElementType::F64) {
+                        VecWidth::V128
+                    } else {
+                        self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                            LowerError::UnsupportedOp {
+                                op: format!("VX86MinMax {:?}x{}", elem, lanes),
+                            }
+                        })?
+                    };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VX86MinMax".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                let opcode = if *min { 0x5D } else { 0x5F };
+                let pp = match (*elem, *lanes == 1) {
+                    (VecElementType::F32, false) => X86SsePrefix::None,
+                    (VecElementType::F64, false) => X86SsePrefix::OpSize,
+                    (VecElementType::F32, true) => X86SsePrefix::Rep,
+                    (VecElementType::F64, true) => X86SsePrefix::Repne,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("VX86MinMax {:?}x{}", elem, lanes),
+                        });
+                    }
+                };
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding {
+                            width,
+                            opcode,
+                            ..enc_hint
+                        },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    self.emit_vec_rrr(
+                        VecEncoding {
+                            kind,
+                            map: X86VecMap::Map0F,
+                            pp,
+                            opcode,
+                            width,
+                        },
+                        dst_reg,
+                        src1_reg,
+                        src2_reg,
+                    );
+                } else {
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(Some(0xF3), 0x6F, dst_reg, src1_reg);
+                    }
+                    let prefix = match pp {
+                        X86SsePrefix::None => None,
+                        X86SsePrefix::OpSize => Some(0x66),
+                        X86SsePrefix::Rep => Some(0xF3),
+                        X86SsePrefix::Repne => Some(0xF2),
+                    };
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+                }
+            }
+
+            OpKind::VDiv {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VDiv {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VDiv".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let pp = match elem {
+                        VecElementType::F32 => X86SsePrefix::None,
+                        VecElementType::F64 => X86SsePrefix::OpSize,
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VDiv {:?}x{}", elem, lanes),
+                            });
+                        }
+                    };
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    self.emit_vec_rrr(
+                        VecEncoding {
+                            kind,
+                            map: X86VecMap::Map0F,
+                            pp,
+                            opcode: 0x5E,
+                            width,
+                        },
+                        dst_reg,
+                        src1_reg,
+                        src2_reg,
+                    );
+                } else {
+                    let prefix = match elem {
+                        VecElementType::F32 => None,
+                        VecElementType::F64 => Some(0x66),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VDiv {:?}x{}", elem, lanes),
+                            });
+                        }
+                    };
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, 0x5E, dst_reg, src2_reg);
+                }
             }
 
             OpKind::VUnary {
@@ -5622,6 +6203,80 @@ impl X86_64Lowerer {
                             });
                         }
                     }
+                }
+            }
+
+            OpKind::VAnd {
+                dst,
+                src1,
+                src2,
+                width,
+            }
+            | OpKind::VOr {
+                dst,
+                src1,
+                src2,
+                width,
+            }
+            | OpKind::VXor {
+                dst,
+                src1,
+                src2,
+                width,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "vector logic".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+                let default_opcode = match &op.kind {
+                    OpKind::VAnd { .. } => 0x54,
+                    OpKind::VOr { .. } => 0x56,
+                    OpKind::VXor { .. } => 0x57,
+                    _ => unreachable!(),
+                };
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding {
+                            width: *width,
+                            ..enc_hint
+                        },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if *width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let kind = if self.vec_requires_evex(*width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    self.emit_vec_rrr(
+                        VecEncoding {
+                            kind,
+                            map: X86VecMap::Map0F,
+                            pp: X86SsePrefix::None,
+                            opcode: default_opcode,
+                            width: *width,
+                        },
+                        dst_reg,
+                        src1_reg,
+                        src2_reg,
+                    );
+                } else {
+                    let prefix = self.sse_prefix(op.x86_hint);
+                    let opcode = self.sse_opcode(op.x86_hint, default_opcode);
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x28, dst_reg, src1_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
                 }
             }
 
@@ -6230,6 +6885,74 @@ impl X86_64Lowerer {
                         });
                     }
                 }
+            }
+
+            OpKind::X86String {
+                kind,
+                rep,
+                accumulator,
+                src_index,
+                dst_index,
+                count,
+                src_segment,
+                width,
+                address_width,
+            } => {
+                let require = |actual: PhysReg, expected: PhysReg, role: &str| {
+                    if actual == expected {
+                        Ok(())
+                    } else {
+                        Err(LowerError::InvalidOperand {
+                            op: format!("X86String {kind:?} {rep:?}"),
+                            operand: format!("{role} requires {expected:?}"),
+                        })
+                    }
+                };
+                if matches!(
+                    kind,
+                    X86StringKind::Stos | X86StringKind::Lods | X86StringKind::Scas
+                ) {
+                    require(self.get_reg(*accumulator)?, PhysReg::Rax, "accumulator")?;
+                }
+                if matches!(
+                    kind,
+                    X86StringKind::Movs | X86StringKind::Lods | X86StringKind::Cmps
+                ) {
+                    require(self.get_reg(*src_index)?, PhysReg::Rsi, "source index")?;
+                }
+                if matches!(
+                    kind,
+                    X86StringKind::Movs
+                        | X86StringKind::Stos
+                        | X86StringKind::Scas
+                        | X86StringKind::Cmps
+                ) {
+                    require(self.get_reg(*dst_index)?, PhysReg::Rdi, "destination index")?;
+                }
+                if *rep != X86RepMode::None {
+                    require(self.get_reg(*count)?, PhysReg::Rcx, "repeat count")?;
+                }
+                if src_segment.is_some() {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("X86String {kind:?} with guest segment base"),
+                    });
+                }
+
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_x86_string(*kind, *rep, *width, *address_width)?;
+            }
+
+            OpKind::X86ReadTsc { dst_lo, dst_hi } => {
+                let lo = self.get_dst_reg(*dst_lo)?;
+                let hi = self.get_dst_reg(*dst_hi)?;
+                if lo != PhysReg::Rax || hi != PhysReg::Rdx {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86ReadTsc".to_string(),
+                        operand: "requires EAX/EDX destinations".to_string(),
+                    });
+                }
+                self.code.emit_u8(0x0F);
+                self.code.emit_u8(0x31);
             }
 
             OpKind::IoIn { dst, port, width } => {
@@ -10461,6 +11184,411 @@ mod tests {
         }
         // ADD RAX, RBX = 48 01 D8
         assert_eq!(buf.data(), &[0x48, 0x01, 0xD8]);
+    }
+
+    #[test]
+    fn lower_x86_minmax_emits_source2_selecting_native_opcodes() {
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let xmm2 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)));
+
+        for (name, kind, expected) in [
+            (
+                "MINSS",
+                OpKind::VX86MinMax {
+                    dst: xmm0,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::F32,
+                    lanes: 1,
+                    min: true,
+                },
+                &[0xF3, 0x0F, 0x5D, 0xC2][..],
+            ),
+            (
+                "MAXPD",
+                OpKind::VX86MinMax {
+                    dst: xmm0,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::F64,
+                    lanes: 2,
+                    min: false,
+                },
+                &[0x66, 0x0F, 0x5F, 0xC2][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+            assert!(
+                code.windows(4)
+                    .any(|window| window == [0xF3, 0x0F, 0x6F, 0xC1]),
+                "{name}: source1 copy missing in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_fp_compare_emits_comi_ucomi_native_opcodes() {
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        for (name, kind, expected) in [
+            (
+                "UCOMISS",
+                OpKind::X86FpCompare {
+                    src1: xmm0,
+                    src2: xmm1,
+                    elem: VecElementType::F32,
+                    signaling: false,
+                },
+                &[0x0F, 0x2E, 0xC1][..],
+            ),
+            (
+                "COMISD",
+                OpKind::X86FpCompare {
+                    src1: xmm0,
+                    src2: xmm1,
+                    elem: VecElementType::F64,
+                    signaling: true,
+                },
+                &[0x66, 0x0F, 0x2F, 0xC1][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_fp_to_int_emits_width_and_rounding_native_opcodes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        for (name, kind, expected) in [
+            (
+                "CVTSS2SI eax,xmm1",
+                OpKind::X86FpToInt {
+                    dst: rax,
+                    src: xmm1,
+                    elem: VecElementType::F32,
+                    int_width: OpWidth::W32,
+                    truncate: false,
+                },
+                &[0xF3, 0x0F, 0x2D, 0xC1][..],
+            ),
+            (
+                "CVTTSD2SI rax,xmm1",
+                OpKind::X86FpToInt {
+                    dst: rax,
+                    src: xmm1,
+                    elem: VecElementType::F64,
+                    int_width: OpWidth::W64,
+                    truncate: true,
+                },
+                &[0xF2, 0x48, 0x0F, 0x2C, 0xC1][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_int_to_fp_emits_source_width_native_opcodes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        for (name, kind, expected) in [
+            (
+                "CVTSI2SS xmm1,eax",
+                OpKind::X86IntToFp {
+                    dst: xmm1,
+                    merge: xmm1,
+                    src: rax,
+                    elem: VecElementType::F32,
+                    int_width: OpWidth::W32,
+                    zero_upper: false,
+                },
+                &[0xF3, 0x0F, 0x2A, 0xC8][..],
+            ),
+            (
+                "CVTSI2SD xmm1,rax",
+                OpKind::X86IntToFp {
+                    dst: xmm1,
+                    merge: xmm1,
+                    src: rax,
+                    elem: VecElementType::F64,
+                    int_width: OpWidth::W64,
+                    zero_upper: false,
+                },
+                &[0xF2, 0x48, 0x0F, 0x2A, 0xC8][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_scalar_fp_convert_emits_native_opcodes() {
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        for (name, kind, expected) in [
+            (
+                "CVTSS2SD xmm0,xmm1",
+                OpKind::X86FpConvert {
+                    dst: xmm0,
+                    merge: xmm0,
+                    src: xmm1,
+                    from: VecElementType::F32,
+                    to: VecElementType::F64,
+                    zero_upper: false,
+                },
+                &[0xF3, 0x0F, 0x5A, 0xC1][..],
+            ),
+            (
+                "CVTSD2SS xmm0,xmm1",
+                OpKind::X86FpConvert {
+                    dst: xmm0,
+                    merge: xmm0,
+                    src: xmm1,
+                    from: VecElementType::F64,
+                    to: VecElementType::F32,
+                    zero_upper: false,
+                },
+                &[0xF2, 0x0F, 0x5A, 0xC1][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_packed_fp_convert_emits_legacy_and_vex_native_opcodes() {
+        fn lower_hinted(kind: OpKind, hint: X86OpHint) -> Vec<u8> {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            func.blocks[0].ops[0].x86_hint = Some(hint);
+            let mut lowerer = X86_64Lowerer::new();
+            let result = lowerer.lower_function(&func).expect("lower hinted op");
+            assert!(result.relocations.is_empty());
+            lowerer.finalize().expect("finalize")
+        }
+
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let ymm0 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(0)));
+        let ymm1 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(1)));
+
+        for (name, kind, expected) in [
+            (
+                "CVTPS2PD xmm0,xmm1",
+                OpKind::X86PackedFpConvert {
+                    dst: xmm0,
+                    src: xmm1,
+                    mask: None,
+                    from: VecElementType::F32,
+                    to: VecElementType::F64,
+                    lanes: 2,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: FpRoundMode::Dynamic,
+                },
+                &[0x0F, 0x5A, 0xC1][..],
+            ),
+            (
+                "CVTPD2PS xmm0,xmm1",
+                OpKind::X86PackedFpConvert {
+                    dst: xmm0,
+                    src: xmm1,
+                    mask: None,
+                    from: VecElementType::F64,
+                    to: VecElementType::F32,
+                    lanes: 2,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: FpRoundMode::Dynamic,
+                },
+                &[0x66, 0x0F, 0x5A, 0xC1][..],
+            ),
+        ] {
+            let code = lower_single_op(kind);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+
+        for (name, kind, hint, expected) in [
+            (
+                "VCVTPS2PD ymm0,xmm1",
+                OpKind::X86PackedFpConvert {
+                    dst: ymm0,
+                    src: xmm1,
+                    mask: None,
+                    from: VecElementType::F32,
+                    to: VecElementType::F64,
+                    lanes: 4,
+                    dst_width: VecWidth::V256,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x5A,
+                    width: VecWidth::V256,
+                },
+                &[0xC5, 0xFC, 0x5A, 0xC1][..],
+            ),
+            (
+                "VCVTPD2PS xmm0,ymm1",
+                OpKind::X86PackedFpConvert {
+                    dst: xmm0,
+                    src: ymm1,
+                    mask: None,
+                    from: VecElementType::F64,
+                    to: VecElementType::F32,
+                    lanes: 4,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x5A,
+                    width: VecWidth::V256,
+                },
+                &[0xC5, 0xFD, 0x5A, 0xC1][..],
+            ),
+        ] {
+            let code = lower_hinted(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing native opcode in {code:02X?}"
+            );
+        }
+
+        let zmm0 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)));
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm6 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(6)));
+        let ymm5 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(5)));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        for (name, kind, expected) in [
+            (
+                "VCVTPS2PD zmm0{k1}{z},ymm1",
+                OpKind::X86PackedFpConvert {
+                    dst: zmm0,
+                    src: ymm1,
+                    mask: Some(k1),
+                    from: VecElementType::F32,
+                    to: VecElementType::F64,
+                    lanes: 8,
+                    dst_width: VecWidth::V512,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                },
+                &[0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1][..],
+            ),
+            (
+                "VCVTPD2PS ymm5{k4}{z},zmm6",
+                OpKind::X86PackedFpConvert {
+                    dst: ymm5,
+                    src: zmm6,
+                    mask: Some(k4),
+                    from: VecElementType::F64,
+                    to: VecElementType::F32,
+                    lanes: 8,
+                    dst_width: VecWidth::V256,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                },
+                &[0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE][..],
+            ),
+            (
+                "VCVTPS2PD zmm18{k3},ymm17",
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(17))),
+                    mask: Some(k3),
+                    from: VecElementType::F32,
+                    to: VecElementType::F64,
+                    lanes: 8,
+                    dst_width: VecWidth::V512,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                },
+                &[0x62, 0xA1, 0x7C, 0x4B, 0x5A, 0xD1][..],
+            ),
+            (
+                "VCVTPD2PS ymm0{k1},zmm1,{rd-sae}",
+                OpKind::X86PackedFpConvert {
+                    dst: ymm0,
+                    src: zmm1,
+                    mask: Some(k1),
+                    from: VecElementType::F64,
+                    to: VecElementType::F32,
+                    lanes: 8,
+                    dst_width: VecWidth::V256,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::RoundDown,
+                },
+                &[0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1][..],
+            ),
+        ] {
+            let code = lower_hinted(
+                kind,
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: if name.contains("PD2PS") {
+                        X86SsePrefix::OpSize
+                    } else {
+                        X86SsePrefix::None
+                    },
+                    opcode: 0x5A,
+                    width: VecWidth::V512,
+                },
+            );
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing EVEX opcode in {code:02X?}"
+            );
+        }
     }
 
     #[test]

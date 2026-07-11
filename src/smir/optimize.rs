@@ -7,7 +7,9 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign};
+use crate::smir::ir::ops::{
+    OpKind, SmirOp, X86OpHint, X86RepMode, X86StringKind, X86VecAlign, X86X87DataKind,
+};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
     VecWidth, X86Reg,
@@ -1874,8 +1876,22 @@ impl OpKind {
                 FlagSet::ALL_X86
             }
 
+            OpKind::X86FpCompare { .. } => FlagSet::ALL_X86,
+
+            OpKind::X86X87Data {
+                kind: X86X87DataKind::Compare { eflags: true, .. },
+                ..
+            } => FlagSet::ALL_X86,
+
             // Bit test updates CF
             OpKind::Bt { .. } => FlagSet::CF,
+
+            // SCAS and CMPS may update all arithmetic flags. With REP, an
+            // initial count of zero performs no comparison and preserves them.
+            OpKind::X86String {
+                kind: X86StringKind::Scas | X86StringKind::Cmps,
+                ..
+            } => FlagSet::ALL_X86,
 
             OpKind::SetCF { .. } | OpKind::CmcCF => FlagSet::CF,
 
@@ -1905,6 +1921,15 @@ impl OpKind {
             | OpKind::MulS { .. }
             | OpKind::Bsf { .. }
             | OpKind::Bsr { .. } => FlagSet::EMPTY,
+            OpKind::X86String {
+                kind: X86StringKind::Scas | X86StringKind::Cmps,
+                rep,
+                ..
+            } if *rep != X86RepMode::None => FlagSet::EMPTY,
+            OpKind::X86X87Data {
+                kind: X86X87DataKind::Compare { eflags: true, .. },
+                ..
+            } => FlagSet::OF.union(FlagSet::SF).union(FlagSet::AF),
             _ => self.flags_written(),
         }
     }
@@ -1924,6 +1949,11 @@ impl OpKind {
 
             // TestCondition reads flags
             OpKind::TestCondition { cond, .. } => FlagState::required_flags(*cond),
+
+            OpKind::X86X87Data {
+                kind: X86X87DataKind::ConditionalMove(cond),
+                ..
+            } => FlagState::required_flags(*cond),
 
             // AArch64 conditional-compare lifting materializes ArmReg::Nzcv
             // from the immediately preceding flag-producing compare op.
@@ -2233,6 +2263,7 @@ impl OpKind {
             | OpKind::FMin { src1, src2, .. }
             | OpKind::FMax { src1, src2, .. }
             | OpKind::FCmp { src1, src2, .. }
+            | OpKind::X86FpCompare { src1, src2, .. }
             | OpKind::HexFp { src1, src2, .. }
             | OpKind::HexFpRecip { src1, src2, .. }
             | OpKind::HexCabacDecBin { src1, src2, .. }
@@ -2312,14 +2343,31 @@ impl OpKind {
             | OpKind::FConvert { src, .. }
             | OpKind::IntToFp { src, .. }
             | OpKind::FpToInt { src, .. }
+            | OpKind::X86FpToInt { src, .. }
             | OpKind::FRound { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::X86IntToFp { merge, src, .. } => {
+                result.push(*merge);
+                result.push(*src);
+            }
+
+            OpKind::X86FpConvert { merge, src, .. } => {
+                result.push(*merge);
+                result.push(*src);
+            }
+
+            OpKind::X86PackedFpConvert { src, mask, .. } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
             }
 
             // Vector operations
             OpKind::VAdd { src1, src2, .. }
             | OpKind::VSub { src1, src2, .. }
             | OpKind::VMax { src1, src2, .. }
+            | OpKind::VX86MinMax { src1, src2, .. }
             | OpKind::VMul { src1, src2, .. }
             | OpKind::VDiv { src1, src2, .. }
             | OpKind::VLane { src1, src2, .. }
@@ -2921,6 +2969,30 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
+            OpKind::X86LoadMxcsr { addr } | OpKind::X86StoreMxcsr { addr } => {
+                result.extend(addr.regs());
+            }
+
+            OpKind::X86CacheControl { addr, .. } => {
+                result.extend(addr.regs());
+            }
+
+            OpKind::X86FxSave { addr, .. } | OpKind::X86FxRstor { addr, .. } => {
+                result.extend(addr.regs());
+            }
+
+            OpKind::X86X87Control {
+                addr: Some(addr), ..
+            } => {
+                result.extend(addr.regs());
+            }
+
+            OpKind::X86X87Data {
+                addr: Some(addr), ..
+            } => {
+                result.extend(addr.regs());
+            }
+
             OpKind::VStore { src, addr, .. } => {
                 result.push(*src);
                 result.extend(addr.regs());
@@ -2930,6 +3002,9 @@ impl OpKind {
             OpKind::ReadFlags { .. }
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
+            | OpKind::X86ReadTsc { .. }
+            | OpKind::X86X87Control { addr: None, .. }
+            | OpKind::X86X87Data { addr: None, .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::TestCondition { .. }
@@ -3065,6 +3140,31 @@ impl OpKind {
                     result.push(*r);
                 }
             }
+
+            OpKind::X86String {
+                kind,
+                rep,
+                accumulator,
+                src_index,
+                dst_index,
+                count,
+                src_segment,
+                ..
+            } => {
+                match kind {
+                    X86StringKind::Movs => result.extend([*src_index, *dst_index]),
+                    X86StringKind::Stos => result.extend([*accumulator, *dst_index]),
+                    X86StringKind::Lods => result.extend([*accumulator, *src_index]),
+                    X86StringKind::Scas => result.extend([*accumulator, *dst_index]),
+                    X86StringKind::Cmps => result.extend([*src_index, *dst_index]),
+                }
+                if *rep != X86RepMode::None {
+                    result.push(*count);
+                }
+                if let Some(segment) = src_segment {
+                    result.push(*segment);
+                }
+            }
         }
 
         result
@@ -3078,13 +3178,56 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86CacheControlKind, X86X87ControlKind, X86X87DataKind};
     use crate::smir::ir::types::{
         Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType,
     };
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
         SmirOp::new(OpId(id), 0x1000, kind)
+    }
+
+    fn string_compare(rep: X86RepMode) -> OpKind {
+        OpKind::X86String {
+            kind: X86StringKind::Cmps,
+            rep,
+            accumulator: VReg::virt(0),
+            src_index: VReg::virt(1),
+            dst_index: VReg::virt(2),
+            count: VReg::virt(3),
+            src_segment: None,
+            width: MemWidth::B1,
+            address_width: OpWidth::W64,
+        }
+    }
+
+    #[test]
+    fn x86_string_compare_flag_metadata_handles_zero_count_rep() {
+        let plain = string_compare(X86RepMode::None);
+        assert_eq!(plain.flags_written(), FlagSet::ALL_X86);
+        assert_eq!(plain.flags_must_write(), FlagSet::ALL_X86);
+
+        for rep in [X86RepMode::Repe, X86RepMode::Repne] {
+            let repeated = string_compare(rep);
+            assert_eq!(repeated.flags_written(), FlagSet::ALL_X86);
+            assert_eq!(repeated.flags_must_write(), FlagSet::EMPTY);
+        }
+    }
+
+    #[test]
+    fn dead_code_elimination_preserves_volatile_x86_timestamp_read() {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::X86ReadTsc {
+                dst_lo: VReg::virt(0),
+                dst_hi: VReg::virt(1),
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![] });
+
+        assert_eq!(dead_code_elimination(&mut block), 0);
+        assert!(matches!(block.ops[0].kind, OpKind::X86ReadTsc { .. }));
     }
 
     #[test]
@@ -3331,6 +3474,853 @@ mod tests {
              store cannot commit flags (store at {store_pos}, flag add at {})",
             flag_add_positions[0],
         );
+    }
+
+    #[test]
+    fn optimizer_keeps_generic_memory_rmw_flag_commits_after_store() {
+        use crate::smir::ir::FunctionBuilder;
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        for (name, bytes) in [
+            ("add", &[0x01, 0x08][..]),
+            ("adc immediate", &[0x83, 0x10, 0x01][..]),
+            ("shift", &[0xC1, 0x20, 0x01][..]),
+            ("rcr", &[0x48, 0xD3, 0x18][..]),
+            ("neg", &[0xF7, 0x18][..]),
+            ("inc", &[0x48, 0xFF, 0x00][..]),
+        ] {
+            let mut lifter = X86_64Lifter::new();
+            let mut lctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            for op in result.ops {
+                builder.push_op(op.guest_pc, op.kind);
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            optimize_function(&mut func, OptLevel::O2);
+
+            let ops = &func.blocks[0].ops;
+            let store = ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::Store { .. }))
+                .unwrap_or_else(|| panic!("{name}: store removed"));
+            assert!(
+                ops[..store]
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty()),
+                "{name}: optimizer exposed flags before store: {ops:?}",
+            );
+            assert!(
+                ops[store + 1..]
+                    .iter()
+                    .any(|op| !op.kind.flags_written().is_empty()),
+                "{name}: optimizer removed post-store flag commit: {ops:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn optimizer_keeps_locked_memory_rmw_flag_commits_after_atomic_write() {
+        use crate::smir::ir::FunctionBuilder;
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        for (name, bytes) in [
+            ("lock add", &[0xF0, 0x01, 0x08][..]),
+            ("lock adc", &[0xF0, 0x83, 0x10, 0x01][..]),
+            ("lock inc", &[0xF0, 0x48, 0xFF, 0x00][..]),
+            ("lock neg", &[0xF0, 0xF7, 0x18][..]),
+        ] {
+            let mut lifter = X86_64Lifter::new();
+            let mut lctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            for op in result.ops {
+                builder.push_op(op.guest_pc, op.kind);
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            optimize_function(&mut func, OptLevel::O2);
+
+            let ops = &func.blocks[0].ops;
+            let atomic = ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::AtomicRmw { .. }))
+                .unwrap_or_else(|| panic!("{name}: atomic write removed"));
+            assert!(
+                ops[..atomic]
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty()),
+                "{name}: optimizer exposed flags before atomic write: {ops:?}",
+            );
+            assert!(
+                ops[atomic + 1..]
+                    .iter()
+                    .any(|op| !op.kind.flags_written().is_empty()),
+                "{name}: optimizer removed post-atomic flag commit: {ops:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
+        use crate::smir::ir::types::{SourceArch, VecUnaryOp, X86Reg};
+        use crate::smir::ir::{FunctionBuilder, SmirFunction};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        fn optimized(bytes: &[u8]) -> SmirFunction {
+            let mut lifter = X86_64Lifter::new();
+            let mut lctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            func.blocks[0].ops = result.ops;
+            optimize_function(&mut func, OptLevel::O2);
+            func
+        }
+
+        let arithmetic = optimized(&[0xC5, 0xF2, 0x58, 0xC2]);
+        let ops = &arithmetic.blocks[0].ops;
+        let last_upper_extract = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        lane: 3,
+                        ..
+                    }
+                )
+            })
+            .expect("VADDSS must retain merge-source lane extraction");
+        let clear = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                )
+            })
+            .expect("VADDSS must retain VEX upper-state clearing");
+        assert!(
+            last_upper_extract < clear,
+            "alias-safe merge must precede clear"
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                lane: 0,
+                ..
+            }
+        )));
+
+        let memory = optimized(&[0xC5, 0xFB, 0x10, 0x00]);
+        let ops = &memory.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VMOVSD load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                )
+            })
+            .expect("VMOVSD destination write must survive optimization");
+        assert!(
+            load < destination_write,
+            "destination changed before load fault boundary"
+        );
+
+        let evex = optimized(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0x10]);
+        let ops = &evex.blocks[0].ops;
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::And {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                ..
+            }
+        )));
+        let pred_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX memory source must retain conditional load");
+        assert!(!ops.iter().any(|op| matches!(op.kind, OpKind::Load { .. })));
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX arithmetic must retain destination clear/write");
+        assert!(pred_load < destination_write);
+        assert!(
+            ops.iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+
+        let legacy_sqrt = optimized(&[0x0F, 0x51, 0x00]);
+        let ops = &legacy_sqrt.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting packed SQRTPS load must survive optimization");
+        let first_destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                )
+            })
+            .expect("legacy SQRTPS XMM merge must survive optimization");
+        assert!(
+            load < first_destination_write,
+            "legacy SQRTPS changed its destination before the load fault boundary"
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VUnary {
+                dst: VReg::Virtual(_),
+                op: VecUnaryOp::FSqrt,
+                ..
+            }
+        )));
+
+        let evex_sqrt = optimized(&[0x62, 0xF1, 0x7E, 0x09, 0x51, 0x10]);
+        let ops = &evex_sqrt.blocks[0].ops;
+        let pred_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VSQRTSS conditional load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VSQRTSS destination clear/write must survive optimization");
+        assert!(pred_load < destination_write);
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VUnary {
+                op: VecUnaryOp::FSqrt,
+                ..
+            }
+        )));
+        assert!(
+            ops.iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+
+        let legacy_min = optimized(&[0xF3, 0x0F, 0x5D, 0x00]);
+        let ops = &legacy_min.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting MINSS load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        ..
+                    }
+                )
+            })
+            .expect("MINSS destination merge must survive optimization");
+        assert!(load < destination_write);
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VX86MinMax {
+                min: true,
+                lanes: 1,
+                ..
+            }
+        )));
+
+        let evex_min = optimized(&[0x62, 0xF1, 0x7E, 0x09, 0x5D, 0x10]);
+        let ops = &evex_min.blocks[0].ops;
+        let pred_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VMINSS conditional load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VMINSS destination write must survive optimization");
+        assert!(pred_load < destination_write);
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VX86MinMax {
+                min: true,
+                lanes: 1,
+                ..
+            }
+        )));
+        assert!(
+            ops.iter()
+                .any(|op| matches!(op.kind, OpKind::Select { .. }))
+        );
+
+        let comi = optimized(&[0x66, 0x0F, 0x2F, 0x00]);
+        let ops = &comi.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting COMISD load must survive optimization");
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpCompare {
+                        elem: VecElementType::F64,
+                        signaling: true,
+                        ..
+                    }
+                )
+            })
+            .expect("COMISD flag producer must survive optimization");
+        assert!(load < compare);
+        assert_eq!(ops[compare].kind.flags_written(), FlagSet::ALL_X86);
+
+        let fp_to_int = optimized(&[0xF2, 0x48, 0x0F, 0x2D, 0x00]);
+        let ops = &fp_to_int.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting CVTSD2SI load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpToInt {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                        elem: VecElementType::F64,
+                        int_width: OpWidth::W64,
+                        truncate: false,
+                        ..
+                    }
+                )
+            })
+            .expect("CVTSD2SI conversion must survive optimization");
+        assert!(load < conversion);
+        assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let int_to_fp = optimized(&[0xF2, 0x48, 0x0F, 0x2A, 0x08]);
+        let ops = &int_to_fp.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        sign: SignExtend::Sign,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting CVTSI2SD load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86IntToFp {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: VecElementType::F64,
+                        int_width: OpWidth::W64,
+                        zero_upper: false,
+                        ..
+                    }
+                )
+            })
+            .expect("CVTSI2SD conversion must survive optimization");
+        assert!(load < conversion);
+        assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let fp_convert = optimized(&[0xF2, 0x0F, 0x5A, 0x00]);
+        let ops = &fp_convert.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting CVTSD2SS load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpConvert {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        from: VecElementType::F64,
+                        to: VecElementType::F32,
+                        zero_upper: false,
+                        ..
+                    }
+                )
+            })
+            .expect("CVTSD2SS conversion must survive optimization");
+        assert!(load < conversion);
+        assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let packed_fp_convert = optimized(&[0x66, 0x0F, 0x5A, 0x00]);
+        let ops = &packed_fp_convert.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting CVTPD2PS load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op,
+                    SmirOp {
+                        kind: OpKind::X86PackedFpConvert {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            from: VecElementType::F64,
+                            to: VecElementType::F32,
+                            lanes: 2,
+                            dst_width: VecWidth::V128,
+                            zero_upper: false,
+                            ..
+                        },
+                        x86_hint: Some(X86OpHint::SseOp { .. }),
+                        ..
+                    }
+                )
+            })
+            .expect("CVTPD2PS conversion must survive optimization");
+        assert!(load < conversion);
+        assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let evex_packed_fp_convert = optimized(&[0x62, 0xF1, 0x7C, 0x4B, 0x5A, 0x00]);
+        let ops = &evex_packed_fp_convert.blocks[0].ops;
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op,
+                    SmirOp {
+                        kind: OpKind::X86PackedFpConvert {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                            lanes: 8,
+                            ..
+                        },
+                        x86_hint: Some(X86OpHint::EvexOp { .. }),
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX packed conversion removed");
+        assert_eq!(
+            ops[..conversion]
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                .count(),
+            8,
+            "per-lane fault-suppressing loads must precede conversion"
+        );
+
+        for (name, bytes, load) in [
+            ("LDMXCSR", &[0x0F, 0xAE, 0x10][..], true),
+            ("VSTMXCSR", &[0xC5, 0xF8, 0xAE, 0x18][..], false),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| {
+                    (load && matches!(op.kind, OpKind::X86LoadMxcsr { .. }))
+                        || (!load && matches!(op.kind, OpKind::X86StoreMxcsr { .. }))
+                }),
+                "{name}: architectural MXCSR operation removed"
+            );
+        }
+
+        let cldemote = optimized(&[0x0F, 0x1C, 0x00]);
+        let cldemote = cldemote.blocks[0]
+            .ops
+            .iter()
+            .find(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86CacheControl {
+                        kind: X86CacheControlKind::Cldemote,
+                        ..
+                    }
+                )
+            })
+            .expect("CLDEMOTE hint removed by DCE");
+        assert!(!cldemote.kind.reads_memory());
+        assert!(cldemote.kind.has_side_effects());
+
+        for (name, bytes, expected) in [
+            ("FNINIT", &[0xDB, 0xE3][..], X86X87ControlKind::Init),
+            (
+                "FNCLEX",
+                &[0xDB, 0xE2][..],
+                X86X87ControlKind::ClearExceptions,
+            ),
+            (
+                "FLDCW",
+                &[0xD9, 0x28][..],
+                X86X87ControlKind::LoadControlWord,
+            ),
+            (
+                "FNSTCW",
+                &[0xD9, 0x38][..],
+                X86X87ControlKind::StoreControlWord,
+            ),
+            (
+                "FNSTSW",
+                &[0xDD, 0x38][..],
+                X86X87ControlKind::StoreStatusWord,
+            ),
+            (
+                "FLDENV m28byte",
+                &[0xD9, 0x20][..],
+                X86X87ControlKind::LoadEnvironment(crate::smir::ir::ops::X86X87EnvWidth::W32),
+            ),
+            (
+                "FNSTENV m14byte",
+                &[0x66, 0xD9, 0x30][..],
+                X86X87ControlKind::StoreEnvironment(crate::smir::ir::ops::X86X87EnvWidth::W16),
+            ),
+            (
+                "FRSTOR m108byte",
+                &[0xDD, 0x20][..],
+                X86X87ControlKind::RestoreState(crate::smir::ir::ops::X86X87EnvWidth::W32),
+            ),
+            (
+                "FNSAVE m94byte",
+                &[0x66, 0xDD, 0x30][..],
+                X86X87ControlKind::SaveState(crate::smir::ir::ops::X86X87EnvWidth::W16),
+            ),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::X86X87Control { kind, .. } if kind == expected
+                )),
+                "{name}: x87 environment operation removed"
+            );
+        }
+
+        for (name, bytes, expected) in [
+            ("FLD m32fp", &[0xD9, 0x00][..], X86X87DataKind::LoadSingle),
+            ("FLD m64fp", &[0xDD, 0x00][..], X86X87DataKind::LoadDouble),
+            ("FILD m64int", &[0xDF, 0x28][..], X86X87DataKind::LoadInt64),
+            ("FBLD m80bcd", &[0xDF, 0x20][..], X86X87DataKind::LoadBcd),
+            (
+                "FISTP m64int",
+                &[0xDF, 0x38][..],
+                X86X87DataKind::StoreInteger {
+                    width: crate::smir::ir::ops::X86X87IntWidth::I64,
+                    pop: true,
+                    truncate: false,
+                },
+            ),
+            (
+                "FSTP m64fp",
+                &[0xDD, 0x18][..],
+                X86X87DataKind::StoreFloat {
+                    width: crate::smir::ir::ops::X86X87FloatWidth::F64,
+                    pop: true,
+                },
+            ),
+            ("FBSTP m80bcd", &[0xDF, 0x30][..], X86X87DataKind::StoreBcd),
+            ("FLD m80fp", &[0xDB, 0x28][..], X86X87DataKind::LoadExtended),
+            (
+                "FSTP m80fp",
+                &[0xDB, 0x38][..],
+                X86X87DataKind::StorePopExtended,
+            ),
+            ("FLD ST(3)", &[0xD9, 0xC3][..], X86X87DataKind::LoadRegister),
+            ("FXCH ST(1)", &[0xD9, 0xC9][..], X86X87DataKind::Exchange),
+            ("FFREE ST(2)", &[0xDD, 0xC2][..], X86X87DataKind::Free),
+            ("FCHS", &[0xD9, 0xE0][..], X86X87DataKind::ChangeSign),
+            ("FINCSTP", &[0xD9, 0xF7][..], X86X87DataKind::IncrementTop),
+            (
+                "FLDPI",
+                &[0xD9, 0xEB][..],
+                X86X87DataKind::LoadConstant(crate::smir::ir::ops::X86X87Constant::Pi),
+            ),
+            (
+                "FCMOVE ST(2)",
+                &[0xDA, 0xCA][..],
+                X86X87DataKind::ConditionalMove(Condition::Eq),
+            ),
+            ("FXAM", &[0xD9, 0xE5][..], X86X87DataKind::Examine),
+            ("FTST", &[0xD9, 0xE4][..], X86X87DataKind::TestZero),
+            ("FRNDINT", &[0xD9, 0xFC][..], X86X87DataKind::RoundInteger),
+            ("FXTRACT", &[0xD9, 0xF4][..], X86X87DataKind::Extract),
+            ("FSCALE", &[0xD9, 0xFD][..], X86X87DataKind::Scale),
+            ("FSQRT", &[0xD9, 0xFA][..], X86X87DataKind::SquareRoot),
+            (
+                "FCOM m32fp",
+                &[0xD8, 0x10][..],
+                X86X87DataKind::Compare {
+                    source: crate::smir::ir::ops::X86X87CompareSource::Single,
+                    unordered: false,
+                    pop: 0,
+                    eflags: false,
+                },
+            ),
+            (
+                "FUCOMIP ST(1)",
+                &[0xDF, 0xE9][..],
+                X86X87DataKind::Compare {
+                    source: crate::smir::ir::ops::X86X87CompareSource::Register,
+                    unordered: true,
+                    pop: 1,
+                    eflags: true,
+                },
+            ),
+            (
+                "FICOMP m32int",
+                &[0xDA, 0x18][..],
+                X86X87DataKind::Compare {
+                    source: crate::smir::ir::ops::X86X87CompareSource::Int32,
+                    unordered: false,
+                    pop: 1,
+                    eflags: false,
+                },
+            ),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::X86X87Data { kind, .. } if kind == expected
+                )),
+                "{name}: x87 data operation removed"
+            );
+        }
+
+        let fcomi = optimized(&[0xDB, 0xF1]);
+        let fcomi = fcomi.blocks[0]
+            .ops
+            .iter()
+            .find(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86X87Data {
+                        kind: X86X87DataKind::Compare { eflags: true, .. },
+                        ..
+                    }
+                )
+            })
+            .expect("FCOMI removed");
+        assert_eq!(fcomi.kind.flags_written(), FlagSet::ALL_X86);
+        assert_eq!(
+            fcomi.kind.flags_must_write(),
+            FlagSet::OF.union(FlagSet::SF).union(FlagSet::AF)
+        );
+        let fcmovbe = optimized(&[0xDA, 0xD1]);
+        let fcmovbe = fcmovbe.blocks[0]
+            .ops
+            .iter()
+            .find(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86X87Data {
+                        kind: X86X87DataKind::ConditionalMove(Condition::Ule),
+                        ..
+                    }
+                )
+            })
+            .expect("FCMOVBE removed");
+        assert_eq!(fcmovbe.kind.flags_read(), FlagSet::CF.union(FlagSet::ZF));
+
+        for (name, bytes, save) in [
+            ("FXSAVE64", &[0x48, 0x0F, 0xAE, 0x00][..], true),
+            ("FXRSTOR64", &[0x48, 0x0F, 0xAE, 0x08][..], false),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| {
+                    (save && matches!(op.kind, OpKind::X86FxSave { .. }))
+                        || (!save && matches!(op.kind, OpKind::X86FxRstor { .. }))
+                }),
+                "{name}: state operation removed"
+            );
+        }
+
+        {
+            let name = "ADDPS";
+            let function = optimized(&[0x0F, 0x58, 0x00]);
+            let ops = &function.blocks[0].ops;
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: VecWidth::V128,
+                            ..
+                        }
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: faulting VLoad removed"));
+            let first_destination_write = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op,
+                        SmirOp {
+                            kind: OpKind::VAdd {
+                                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                                ..
+                            },
+                            x86_hint: Some(X86OpHint::SseOp { .. }),
+                            ..
+                        }
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: hinted destination write removed"));
+            assert!(
+                load < first_destination_write,
+                "{name}: write before fault boundary"
+            );
+        }
+
+        let movups = optimized(&[0x0F, 0x10, 0x00]);
+        assert!(movups.blocks[0].ops.iter().any(|op| matches!(
+            op,
+            SmirOp {
+                kind: OpKind::VLoad {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    width: VecWidth::V128,
+                    ..
+                },
+                x86_hint: Some(X86OpHint::SseMov { .. }),
+                ..
+            }
+        )));
     }
 
     // Regression for issue #108: OpKind::SatN ORs the Hexagon USR:OVF sticky bit

@@ -2,12 +2,17 @@
 //!
 //! This module provides the interpreter for executing SMIR code.
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::ir::flags::{LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
-use crate::smir::ir::ops::{HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp};
+use crate::smir::ir::ops::{
+    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86CacheControlKind, X86OpHint,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth,
+};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
@@ -22,6 +27,72 @@ pub enum BlockResult {
     Continue(GuestAddr),
     /// Exit with a reason
     Exit(ExitReason),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87RawInfo {
+    sign: bool,
+    unsupported: bool,
+    nan: bool,
+    signaling_nan: bool,
+    denormal: bool,
+    zero: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87IntegerConversion {
+    value: u64,
+    invalid: bool,
+    inexact: bool,
+    rounded_up: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87IntegralConversion {
+    raw: [u8; 10],
+    invalid: bool,
+    denormal: bool,
+    inexact: bool,
+    rounded_up: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87ExtractResult {
+    significand: [u8; 10],
+    exponent: [u8; 10],
+    invalid: bool,
+    denormal: bool,
+    zero: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87ScaleResult {
+    raw: [u8; 10],
+    invalid: bool,
+    denormal: bool,
+    overflow: bool,
+    underflow: bool,
+    inexact: bool,
+    rounded_up: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87SqrtResult {
+    raw: [u8; 10],
+    invalid: bool,
+    denormal: bool,
+    inexact: bool,
+    rounded_up: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct X87FloatConversion {
+    bits: u64,
+    invalid: bool,
+    overflow: bool,
+    underflow: bool,
+    inexact: bool,
+    rounded_up: bool,
 }
 
 // ============================================================================
@@ -135,11 +206,14 @@ impl SmirInterpreter {
                         MemoryError::OutOfBounds { addr } => addr,
                         MemoryError::ExclusiveFailed => ctx.pc,
                     },
-                    write: matches!(
-                        e,
-                        MemoryError::PageFault { write: true, .. }
-                            | MemoryError::AccessViolation { write: true, .. }
-                    ),
+                    write: match e {
+                        MemoryError::PageFault { write, .. }
+                        | MemoryError::AccessViolation { write, .. } => write,
+                        // These error variants do not carry an access direction;
+                        // recover it from the faulting operation's memory-effect
+                        // metadata rather than misreporting every store as a read.
+                        _ => op.kind.writes_memory(),
+                    },
                 });
             }
             ctx.insn_count += 1;
@@ -1314,7 +1388,7 @@ impl SmirInterpreter {
                 let idx = self.read_src_operand(ctx, index) & (width.bits() as u64 - 1);
                 let result = val | (1u64 << idx);
 
-                ctx.write_vreg(*dst, result & width.mask());
+                Self::write_gpr(ctx, *dst, result & width.mask(), *width);
 
                 ctx.flags.lazy = Some(LazyFlags {
                     op: LazyFlagOp::Bt,
@@ -1336,7 +1410,7 @@ impl SmirInterpreter {
                 let idx = self.read_src_operand(ctx, index) & (width.bits() as u64 - 1);
                 let result = val & !(1u64 << idx);
 
-                ctx.write_vreg(*dst, result & width.mask());
+                Self::write_gpr(ctx, *dst, result & width.mask(), *width);
 
                 ctx.flags.lazy = Some(LazyFlags {
                     op: LazyFlagOp::Bt,
@@ -1358,7 +1432,7 @@ impl SmirInterpreter {
                 let idx = self.read_src_operand(ctx, index) & (width.bits() as u64 - 1);
                 let result = val ^ (1u64 << idx);
 
-                ctx.write_vreg(*dst, result & width.mask());
+                Self::write_gpr(ctx, *dst, result & width.mask(), *width);
 
                 ctx.flags.lazy = Some(LazyFlags {
                     op: LazyFlagOp::Bt,
@@ -1629,10 +1703,10 @@ impl SmirInterpreter {
                 dst,
                 src,
                 from_width,
-                to_width: _,
+                to_width,
             } => {
                 let val = ctx.read_vreg(*src) & from_width.mask();
-                ctx.write_vreg(*dst, val);
+                Self::write_x86_partial(ctx, *dst, val, *to_width);
             }
 
             OpKind::SignExtend {
@@ -1648,7 +1722,7 @@ impl SmirInterpreter {
                 } else {
                     val
                 };
-                ctx.write_vreg(*dst, extended & to_width.mask());
+                Self::write_x86_partial(ctx, *dst, extended, *to_width);
             }
 
             OpKind::Cwd { dst, src, width } => {
@@ -1799,6 +1873,139 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, dst_addr);
                 ctx.write_vreg(*src, src_addr);
                 ctx.write_vreg(*count, remaining);
+            }
+
+            OpKind::X86String {
+                kind,
+                rep,
+                accumulator,
+                src_index,
+                dst_index,
+                count,
+                src_segment,
+                width,
+                address_width,
+            } => {
+                let addr_mask = match address_width {
+                    OpWidth::W32 => u32::MAX as u64,
+                    OpWidth::W64 => u64::MAX,
+                    _ => {
+                        return Err(MemoryError::OutOfBounds { addr: ctx.pc });
+                    }
+                };
+                let op_width = width.to_op_width().unwrap_or(OpWidth::W64);
+                let stride = width.bytes() as u64;
+                ctx.flags.materialize_all();
+                let forward = !ctx.flags.materialized.df;
+                let segment_base = src_segment.map_or(0, |reg| ctx.read_vreg(reg));
+                let repeated = *rep != crate::smir::ir::ops::X86RepMode::None;
+                let mut remaining = if repeated {
+                    ctx.read_vreg(*count) & addr_mask
+                } else {
+                    1
+                };
+
+                if repeated && remaining == 0 {
+                    ctx.write_vreg(*count, 0);
+                    if *address_width == OpWidth::W32 {
+                        if *kind == crate::smir::ir::ops::X86StringKind::Movs {
+                            ctx.write_vreg(*src_index, ctx.read_vreg(*src_index) & addr_mask);
+                        }
+                        if matches!(
+                            kind,
+                            crate::smir::ir::ops::X86StringKind::Movs
+                                | crate::smir::ir::ops::X86StringKind::Stos
+                        ) {
+                            ctx.write_vreg(*dst_index, ctx.read_vreg(*dst_index) & addr_mask);
+                        }
+                    }
+                }
+
+                while remaining != 0 {
+                    let src_off = ctx.read_vreg(*src_index) & addr_mask;
+                    let dst_off = ctx.read_vreg(*dst_index) & addr_mask;
+                    let src_addr = segment_base.wrapping_add(src_off);
+                    let mut compared = false;
+
+                    match kind {
+                        crate::smir::ir::ops::X86StringKind::Movs => {
+                            let value =
+                                self.load_memory(memory, src_addr, *width, SignExtend::Zero)?;
+                            self.store_memory(memory, dst_off, value, *width)?;
+                        }
+                        crate::smir::ir::ops::X86StringKind::Stos => {
+                            self.store_memory(
+                                memory,
+                                dst_off,
+                                ctx.read_vreg(*accumulator),
+                                *width,
+                            )?;
+                        }
+                        crate::smir::ir::ops::X86StringKind::Lods => {
+                            let value =
+                                self.load_memory(memory, src_addr, *width, SignExtend::Zero)?;
+                            Self::write_gpr(ctx, *accumulator, value, op_width);
+                        }
+                        crate::smir::ir::ops::X86StringKind::Scas => {
+                            let rhs =
+                                self.load_memory(memory, dst_off, *width, SignExtend::Zero)?;
+                            let lhs = ctx.read_vreg(*accumulator) & op_width.mask();
+                            let result = lhs.wrapping_sub(rhs) & op_width.mask();
+                            ctx.flags.set_lazy_sub(lhs, rhs, result, op_width);
+                            compared = true;
+                        }
+                        crate::smir::ir::ops::X86StringKind::Cmps => {
+                            let lhs =
+                                self.load_memory(memory, src_addr, *width, SignExtend::Zero)?;
+                            let rhs =
+                                self.load_memory(memory, dst_off, *width, SignExtend::Zero)?;
+                            let result = lhs.wrapping_sub(rhs) & op_width.mask();
+                            ctx.flags.set_lazy_sub(lhs, rhs, result, op_width);
+                            compared = true;
+                        }
+                    }
+
+                    let advance = |value: u64| {
+                        if forward {
+                            value.wrapping_add(stride) & addr_mask
+                        } else {
+                            value.wrapping_sub(stride) & addr_mask
+                        }
+                    };
+                    if matches!(
+                        kind,
+                        crate::smir::ir::ops::X86StringKind::Movs
+                            | crate::smir::ir::ops::X86StringKind::Lods
+                            | crate::smir::ir::ops::X86StringKind::Cmps
+                    ) {
+                        ctx.write_vreg(*src_index, advance(src_off));
+                    }
+                    if matches!(
+                        kind,
+                        crate::smir::ir::ops::X86StringKind::Movs
+                            | crate::smir::ir::ops::X86StringKind::Stos
+                            | crate::smir::ir::ops::X86StringKind::Scas
+                            | crate::smir::ir::ops::X86StringKind::Cmps
+                    ) {
+                        ctx.write_vreg(*dst_index, advance(dst_off));
+                    }
+
+                    if repeated {
+                        remaining = remaining.wrapping_sub(1) & addr_mask;
+                        ctx.write_vreg(*count, remaining);
+                    } else {
+                        remaining = 0;
+                    }
+
+                    if compared && repeated {
+                        let zf = ctx.flags.get_zf();
+                        if (*rep == crate::smir::ir::ops::X86RepMode::Repe && !zf)
+                            || (*rep == crate::smir::ir::ops::X86RepMode::Repne && zf)
+                        {
+                            break;
+                        }
+                    }
+                }
             }
 
             OpKind::Leave => {
@@ -1981,6 +2188,18 @@ impl SmirInterpreter {
                 memory.prefetch(effective_addr, *write);
             }
 
+            OpKind::X86CacheControl { addr, kind } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                // Intel specifies no memory-address exceptions for CLDEMOTE;
+                // it is permitted to be ignored even when the line is absent.
+                // Flush/writeback operations perform an architectural address
+                // access and therefore retain the explicit probe.
+                if *kind != X86CacheControlKind::Cldemote {
+                    memory.probe(effective_addr, 1, false)?;
+                }
+                memory.prefetch(effective_addr, matches!(kind, X86CacheControlKind::Clwb));
+            }
+
             OpKind::Fence { kind } => {
                 memory.fence(*kind);
             }
@@ -2115,6 +2334,50 @@ impl SmirInterpreter {
                     result,
                     OpWidth::W64,
                 );
+            }
+
+            OpKind::X86FpCompare {
+                src1, src2, elem, ..
+            } => {
+                let elem_bits = elem.bytes() * 8;
+                let a_bits = Self::get_lane(&Self::read_vec(ctx, *src1), 0, elem_bits);
+                let b_bits = Self::get_lane(&Self::read_vec(ctx, *src2), 0, elem_bits);
+                let ordering = match elem {
+                    VecElementType::F32 => {
+                        f32::from_bits(a_bits as u32).partial_cmp(&f32::from_bits(b_bits as u32))
+                    }
+                    VecElementType::F64 => {
+                        f64::from_bits(a_bits).partial_cmp(&f64::from_bits(b_bits))
+                    }
+                    _ => None,
+                };
+                ctx.flags.materialize_all();
+                ctx.flags.lazy = None;
+                ctx.flags.materialized.of = false;
+                ctx.flags.materialized.sf = false;
+                ctx.flags.materialized.af = false;
+                match ordering {
+                    None => {
+                        ctx.flags.materialized.zf = true;
+                        ctx.flags.materialized.pf = true;
+                        ctx.flags.materialized.cf = true;
+                    }
+                    Some(std::cmp::Ordering::Less) => {
+                        ctx.flags.materialized.zf = false;
+                        ctx.flags.materialized.pf = false;
+                        ctx.flags.materialized.cf = true;
+                    }
+                    Some(std::cmp::Ordering::Equal) => {
+                        ctx.flags.materialized.zf = true;
+                        ctx.flags.materialized.pf = false;
+                        ctx.flags.materialized.cf = false;
+                    }
+                    Some(std::cmp::Ordering::Greater) => {
+                        ctx.flags.materialized.zf = false;
+                        ctx.flags.materialized.pf = false;
+                        ctx.flags.materialized.cf = false;
+                    }
+                }
             }
 
             OpKind::FConvert { dst, src, from, to } => {
@@ -2312,6 +2575,161 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, val & int_width.mask());
             }
 
+            OpKind::X86FpToInt {
+                dst,
+                src,
+                elem,
+                int_width,
+                truncate,
+            } => {
+                let bits = if matches!(src, VReg::Virtual(_)) {
+                    ctx.read_vreg(*src)
+                } else {
+                    Self::get_lane(&Self::read_vec(ctx, *src), 0, elem.bytes() * 8)
+                };
+                let value = match elem {
+                    VecElementType::F32 => f32::from_bits(bits as u32) as f64,
+                    VecElementType::F64 => f64::from_bits(bits),
+                    _ => f64::NAN,
+                };
+                let rounded = if *truncate {
+                    value.trunc()
+                } else {
+                    self.round_fp_value(ctx, value, FpRoundMode::Dynamic)
+                };
+                let indefinite = match int_width {
+                    OpWidth::W32 => 0x8000_0000,
+                    OpWidth::W64 => 0x8000_0000_0000_0000,
+                    _ => 0,
+                };
+                let valid = match int_width {
+                    OpWidth::W32 => {
+                        rounded.is_finite()
+                            && rounded >= i32::MIN as f64
+                            && rounded <= i32::MAX as f64
+                    }
+                    OpWidth::W64 => {
+                        rounded.is_finite()
+                            && rounded >= -9_223_372_036_854_775_808.0
+                            && rounded < 9_223_372_036_854_775_808.0
+                    }
+                    _ => false,
+                };
+                let result = if valid {
+                    (rounded as i64 as u64) & int_width.mask()
+                } else {
+                    indefinite
+                };
+                Self::write_gpr(ctx, *dst, result, *int_width);
+            }
+
+            OpKind::X86IntToFp {
+                dst,
+                merge,
+                src,
+                elem,
+                int_width,
+                zero_upper,
+            } => {
+                let raw = ctx.read_vreg(*src) & int_width.mask();
+                let value = self.sign_extend(raw, *int_width) as i64 as i128;
+                let scalar_bits = self.x86_int_to_fp_bits(ctx, value, *elem);
+                let mut result = Self::read_vec(ctx, *merge);
+                Self::set_lane(&mut result, 0, elem.bytes() * 8, scalar_bits);
+                if *zero_upper {
+                    result[2..].fill(0);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86FpConvert {
+                dst,
+                merge,
+                src,
+                from,
+                to,
+                zero_upper,
+            } => {
+                let source = if matches!(src, VReg::Virtual(_)) {
+                    let mut value = [0; 16];
+                    value[0] = ctx.read_vreg(*src);
+                    value
+                } else {
+                    Self::read_vec(ctx, *src)
+                };
+                let scalar_bits = match (*from, *to) {
+                    (VecElementType::F32, VecElementType::F64) => {
+                        let bits = Self::get_lane(&source, 0, 32) as u32;
+                        (f32::from_bits(bits) as f64).to_bits()
+                    }
+                    (VecElementType::F64, VecElementType::F32) => {
+                        let bits = Self::get_lane(&source, 0, 64);
+                        self.x86_f64_to_f32_bits(ctx, f64::from_bits(bits)) as u64
+                    }
+                    _ => 0,
+                };
+                let mut result = Self::read_vec(ctx, *merge);
+                Self::set_lane(&mut result, 0, to.bytes() * 8, scalar_bits);
+                if *zero_upper {
+                    result[2..].fill(0);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedFpConvert {
+                dst,
+                src,
+                mask,
+                from,
+                to,
+                lanes,
+                dst_width,
+                mask_zeroing,
+                zero_upper,
+                round,
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = old;
+                if *zero_upper {
+                    result[(dst_width.bytes() / 8) as usize..].fill(0);
+                }
+                result[..(dst_width.bytes() / 8) as usize].fill(0);
+                let mask_bits = mask.map(|reg| ctx.read_vreg(reg));
+                for lane in 0..*lanes {
+                    if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
+                        if !*mask_zeroing {
+                            let preserved = Self::get_lane(&old, lane, to.bytes() * 8);
+                            Self::set_lane(&mut result, lane, to.bytes() * 8, preserved);
+                        }
+                        continue;
+                    }
+                    let converted = match (*from, *to) {
+                        (VecElementType::F32, VecElementType::F64) => {
+                            let bits = Self::get_lane(&source, lane, 32) as u32;
+                            (f32::from_bits(bits) as f64).to_bits()
+                        }
+                        (VecElementType::F64, VecElementType::F32) => {
+                            let bits = Self::get_lane(&source, lane, 64);
+                            u64::from(self.x86_f64_to_f32_bits_mode(
+                                ctx,
+                                f64::from_bits(bits),
+                                *round,
+                            ))
+                        }
+                        _ => {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: ctx.pc,
+                                opcode: 0,
+                            });
+                            0
+                        }
+                    };
+                    Self::set_lane(&mut result, lane, to.bytes() * 8, converted);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::FRound {
                 dst,
                 src,
@@ -2331,19 +2749,23 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => match elem {
-                VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
+                    }
+                    _ => {
+                        self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                            a.wrapping_add(b)
+                        });
+                    }
                 }
-                VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
-                }
-                _ => {
-                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                        a.wrapping_add(b)
-                    });
-                }
-            },
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
 
             OpKind::VSub {
                 dst,
@@ -2351,19 +2773,23 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => match elem {
-                VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
+                    }
+                    _ => {
+                        self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                            a.wrapping_sub(b)
+                        });
+                    }
                 }
-                VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
-                }
-                _ => {
-                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                        a.wrapping_sub(b)
-                    });
-                }
-            },
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
 
             OpKind::VMax {
                 dst,
@@ -2371,37 +2797,79 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => match elem {
-                // VMax is architectural vector FMAX: NaN-PROPAGATING (a lone
-                // quiet NaN wins), distinct from the numeric VFMinMaxNm. Rust's
-                // `a.max(b)` is numeric (drops a lone NaN), so propagate
-                // explicitly. (#159)
-                VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
-                        if a.is_nan() {
-                            a
-                        } else if b.is_nan() {
-                            b
-                        } else {
-                            a.max(b)
-                        }
-                    });
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    // VMax is architectural vector FMAX: NaN-PROPAGATING (a lone
+                    // quiet NaN wins), distinct from the numeric VFMinMaxNm. Rust's
+                    // `a.max(b)` is numeric (drops a lone NaN), so propagate
+                    // explicitly. (#159)
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if a.is_nan() {
+                                a
+                            } else if b.is_nan() {
+                                b
+                            } else {
+                                a.max(b)
+                            }
+                        });
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if a.is_nan() {
+                                a
+                            } else if b.is_nan() {
+                                b
+                            } else {
+                                a.max(b)
+                            }
+                        });
+                    }
+                    _ => {
+                        self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| a.max(b));
+                    }
                 }
-                VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
-                        if a.is_nan() {
-                            a
-                        } else if b.is_nan() {
-                            b
-                        } else {
-                            a.max(b)
-                        }
-                    });
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
+
+            OpKind::VX86MinMax {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                min,
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if (*min && a < b) || (!*min && a > b) {
+                                a
+                            } else {
+                                b
+                            }
+                        });
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| {
+                            if (*min && a < b) || (!*min && a > b) {
+                                a
+                            } else {
+                                b
+                            }
+                        });
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                    }
                 }
-                _ => {
-                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| a.max(b));
-                }
-            },
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
 
             OpKind::VMul {
                 dst,
@@ -2409,19 +2877,23 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => match elem {
-                VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
+                    }
+                    _ => {
+                        self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                            a.wrapping_mul(b)
+                        });
+                    }
                 }
-                VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
-                }
-                _ => {
-                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                        a.wrapping_mul(b)
-                    });
-                }
-            },
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
 
             OpKind::VDiv {
                 dst,
@@ -2429,21 +2901,25 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => match elem {
-                VecElementType::F32 => {
-                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
+            } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                match elem {
+                    VecElementType::F32 => {
+                        self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
+                    }
+                    VecElementType::F64 => {
+                        self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
+                    }
+                    _ => {
+                        // Integer vector divide is not a NEON op; guard against
+                        // division-by-zero in case a malformed op reaches here.
+                        self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                            if b == 0 { 0 } else { a.wrapping_div(b) }
+                        });
+                    }
                 }
-                VecElementType::F64 => {
-                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a / b);
-                }
-                _ => {
-                    // Integer vector divide is not a NEON op; guard against
-                    // division-by-zero in case a malformed op reaches here.
-                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                        if b == 0 { 0 } else { a.wrapping_div(b) }
-                    });
-                }
-            },
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
 
             OpKind::VUnary {
                 dst,
@@ -2844,22 +3320,16 @@ impl SmirInterpreter {
                 src2,
                 width,
             } => {
-                let a = ctx.vregs.get_vec(match *src1 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                let b = ctx.vregs.get_vec(match *src2 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                if let VReg::Virtual(id) = *dst {
-                    let mut result = [0u64; 16];
-                    let word_count = (width.bytes() / 8) as usize;
-                    for i in 0..word_count {
-                        result[i] = a[i] & b[i];
-                    }
-                    ctx.vregs.set_vec(id, result);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                let word_count = (width.bytes() / 8) as usize;
+                for i in 0..word_count {
+                    result[i] = a[i] & b[i];
                 }
+                Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VOr {
@@ -2868,22 +3338,16 @@ impl SmirInterpreter {
                 src2,
                 width,
             } => {
-                let a = ctx.vregs.get_vec(match *src1 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                let b = ctx.vregs.get_vec(match *src2 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                if let VReg::Virtual(id) = *dst {
-                    let mut result = [0u64; 16];
-                    let word_count = (width.bytes() / 8) as usize;
-                    for i in 0..word_count {
-                        result[i] = a[i] | b[i];
-                    }
-                    ctx.vregs.set_vec(id, result);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                let word_count = (width.bytes() / 8) as usize;
+                for i in 0..word_count {
+                    result[i] = a[i] | b[i];
                 }
+                Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VXor {
@@ -2892,22 +3356,16 @@ impl SmirInterpreter {
                 src2,
                 width,
             } => {
-                let a = ctx.vregs.get_vec(match *src1 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                let b = ctx.vregs.get_vec(match *src2 {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                if let VReg::Virtual(id) = *dst {
-                    let mut result = [0u64; 16];
-                    let word_count = (width.bytes() / 8) as usize;
-                    for i in 0..word_count {
-                        result[i] = a[i] ^ b[i];
-                    }
-                    ctx.vregs.set_vec(id, result);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, op.x86_hint);
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                let word_count = (width.bytes() / 8) as usize;
+                for i in 0..word_count {
+                    result[i] = a[i] ^ b[i];
                 }
+                Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VBitSelect {
@@ -5419,9 +5877,16 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::VMov { dst, src, width: _ } => {
+            OpKind::VMov { dst, src, width } => {
                 let val = Self::read_vec(ctx, *src);
-                Self::write_vec(ctx, *dst, val);
+                if matches!(op.x86_hint, Some(X86OpHint::SseMov { .. })) {
+                    let mut result = Self::read_vec(ctx, *dst);
+                    let words = width.bytes() as usize / 8;
+                    result[..words].copy_from_slice(&val[..words]);
+                    Self::write_vec(ctx, *dst, result);
+                } else {
+                    Self::write_vec(ctx, *dst, val);
+                }
             }
 
             OpKind::VShift {
@@ -5485,10 +5950,36 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
-            OpKind::VCmp { .. }
-            | OpKind::VInsertLane { .. }
-            | OpKind::VExtractLane { .. }
-            | OpKind::VShuffle { .. } => {
+            OpKind::VInsertLane {
+                dst,
+                vec,
+                scalar,
+                lane,
+                elem,
+            } => {
+                let mut value = Self::read_vec(ctx, *vec);
+                Self::set_lane(&mut value, *lane, elem.bytes() * 8, ctx.read_vreg(*scalar));
+                Self::write_vec(ctx, *dst, value);
+            }
+
+            OpKind::VExtractLane {
+                dst,
+                vec,
+                lane,
+                elem,
+                sign,
+            } => {
+                let bits = elem.bytes() * 8;
+                let raw = Self::get_lane(&Self::read_vec(ctx, *vec), *lane, bits);
+                let value = if *sign == SignExtend::Sign && bits < 64 {
+                    (((raw << (64 - bits)) as i64) >> (64 - bits)) as u64
+                } else {
+                    raw
+                };
+                ctx.write_vreg(*dst, value);
+            }
+
+            OpKind::VCmp { .. } | OpKind::VShuffle { .. } => {
                 // Simplified: not fully implemented
             }
 
@@ -5498,7 +5989,11 @@ impl SmirInterpreter {
                 let size = width.bytes() as usize;
                 memory.read(effective_addr, &mut buf[..size])?;
 
-                let mut vec = [0u64; 16];
+                let mut vec = if matches!(op.x86_hint, Some(X86OpHint::SseMov { .. })) {
+                    Self::read_vec(ctx, *dst)
+                } else {
+                    [0u64; 16]
+                };
                 let words = (size + 7) / 8;
                 for i in 0..words {
                     let start = i * 8;
@@ -5561,6 +6056,187 @@ impl SmirInterpreter {
                 ctx.flags.materialize_all();
             }
 
+            OpKind::X86LoadMxcsr { addr } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                let mut bytes = [0u8; 4];
+                memory.read(effective_addr, &mut bytes)?;
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mxcsr = u32::from_le_bytes(bytes);
+                }
+            }
+
+            OpKind::X86StoreMxcsr { addr } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                let value = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0,
+                };
+                memory.write(effective_addr, &value.to_le_bytes())?;
+            }
+
+            OpKind::X86X87Control { kind, addr } => match kind {
+                X86X87ControlKind::Init => {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.init();
+                    }
+                }
+                X86X87ControlKind::ClearExceptions => {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.clear_exceptions();
+                    }
+                }
+                X86X87ControlKind::StoreStatusAx => {
+                    let status = match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => x86.x87.status_word,
+                        _ => 0,
+                    };
+                    Self::write_x86_partial(
+                        ctx,
+                        VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                        status as u64,
+                        OpWidth::W16,
+                    );
+                }
+                X86X87ControlKind::LoadControlWord => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref().expect("x87 FLDCW requires an address"),
+                    );
+                    let mut bytes = [0u8; 2];
+                    memory.read(effective_addr, &mut bytes)?;
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.control_word = u16::from_le_bytes(bytes);
+                    }
+                }
+                X86X87ControlKind::LoadEnvironment(width) => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref().expect("x87 FLDENV requires an address"),
+                    );
+                    let len = Self::x86_x87_environment_len(*width);
+                    let mut image = [0u8; 28];
+                    memory.read(effective_addr, &mut image[..len])?;
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        Self::restore_x86_x87_environment(&mut x86.x87, &image[..len], *width);
+                    }
+                }
+                X86X87ControlKind::StoreEnvironment(width) => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref().expect("x87 FNSTENV requires an address"),
+                    );
+                    let (image, len) = match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => {
+                            Self::x86_x87_environment_image(&x86.x87, *width)
+                        }
+                        _ => ([0u8; 28], Self::x86_x87_environment_len(*width)),
+                    };
+                    memory.write(effective_addr, &image[..len])?;
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        // The saved FCW is the pre-instruction value; exception
+                        // masks become set only after the complete store.
+                        x86.x87.control_word |= 0x003F;
+                    }
+                }
+                X86X87ControlKind::RestoreState(width) => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref().expect("x87 FRSTOR requires an address"),
+                    );
+                    let len = Self::x86_x87_environment_len(*width) + 80;
+                    let mut image = [0u8; 108];
+                    memory.read(effective_addr, &mut image[..len])?;
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        Self::restore_x86_x87_state(&mut x86.x87, &image[..len], *width);
+                    }
+                }
+                X86X87ControlKind::SaveState(width) => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref().expect("x87 FNSAVE requires an address"),
+                    );
+                    let (image, len) = match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => Self::x86_x87_state_image(&x86.x87, *width),
+                        _ => ([0u8; 108], Self::x86_x87_environment_len(*width) + 80),
+                    };
+                    memory.write(effective_addr, &image[..len])?;
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.init();
+                    }
+                }
+                X86X87ControlKind::StoreControlWord | X86X87ControlKind::StoreStatusWord => {
+                    let effective_addr = self.compute_address(
+                        ctx,
+                        addr.as_ref()
+                            .expect("x87 status/control store requires an address"),
+                    );
+                    let value = match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => {
+                            if *kind == X86X87ControlKind::StoreControlWord {
+                                x86.x87.control_word
+                            } else {
+                                x86.x87.status_word
+                            }
+                        }
+                        _ => 0,
+                    };
+                    memory.write(effective_addr, &value.to_le_bytes())?;
+                }
+            },
+
+            OpKind::X86X87Data {
+                kind,
+                addr,
+                st,
+                fop,
+            } => {
+                self.execute_x86_x87_data(
+                    ctx,
+                    memory,
+                    op.guest_pc,
+                    *kind,
+                    addr.as_ref(),
+                    *st,
+                    *fop,
+                )?;
+            }
+
+            OpKind::X86FxSave { addr, rex_w } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                if effective_addr & 0xF != 0 {
+                    return Err(MemoryError::Alignment {
+                        addr: effective_addr,
+                        required: 16,
+                    });
+                }
+                let image = Self::x86_fxsave_image(ctx, *rex_w);
+                // Bytes 464:511 are explicitly available to software and are
+                // not modified by FXSAVE.
+                memory.write(effective_addr, &image)?;
+            }
+
+            OpKind::X86FxRstor { addr, rex_w } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                if effective_addr & 0xF != 0 {
+                    return Err(MemoryError::Alignment {
+                        addr: effective_addr,
+                        required: 16,
+                    });
+                }
+                let mut image = [0u8; 512];
+                memory.read(effective_addr, &mut image)?;
+                let mxcsr = u32::from_le_bytes(image[24..28].try_into().unwrap());
+                if mxcsr & !0x0000_FFFF != 0 {
+                    return Err(MemoryError::AccessViolation {
+                        addr: effective_addr,
+                        write: false,
+                    });
+                }
+                // Commit only after the complete image and MXCSR validation
+                // succeed, preserving architectural state on a restore fault.
+                Self::restore_x86_fxsave_image(ctx, &image, *rex_w);
+            }
+
             OpKind::TestCondition { dst, cond } => {
                 let result = if ctx.flags.eval_condition(*cond) {
                     1
@@ -5576,7 +6252,7 @@ impl SmirInterpreter {
                 } else {
                     0
                 };
-                ctx.write_vreg(*dst, result & width.mask());
+                Self::write_x86_partial(ctx, *dst, result & width.mask(), *width);
             }
 
             // ==================================================================
@@ -5605,6 +6281,12 @@ impl SmirInterpreter {
 
             OpKind::WriteSysReg { reg: _, src: _ } => {
                 // Simplified: no-op
+            }
+
+            OpKind::X86ReadTsc { dst_lo, dst_hi } => {
+                let tsc = ctx.cycle_count;
+                Self::write_x86_partial(ctx, *dst_lo, tsc & u32::MAX as u64, OpWidth::W32);
+                Self::write_x86_partial(ctx, *dst_hi, tsc >> 32, OpWidth::W32);
             }
 
             // ==================================================================
@@ -5711,6 +6393,33 @@ impl SmirInterpreter {
         }
     }
 
+    /// Snapshot a legacy packed-SSE architectural destination before an
+    /// operation whose generic vector implementation clears inactive words.
+    fn legacy_xmm_snapshot(
+        ctx: &SmirContext,
+        dst: VReg,
+        hint: Option<X86OpHint>,
+    ) -> Option<VecValue> {
+        if matches!(hint, Some(X86OpHint::SseOp { .. }))
+            && matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Xmm(_))))
+        {
+            Some(Self::read_vec(ctx, dst))
+        } else {
+            None
+        }
+    }
+
+    /// Legacy 128-bit SSE operations preserve the shared YMM/ZMM backing
+    /// state above bit 127. Restore those words after the low XMM result has
+    /// been computed by a width-bounded generic vector operation.
+    fn restore_legacy_xmm_upper(ctx: &mut SmirContext, dst: VReg, old: Option<VecValue>) {
+        if let Some(old) = old {
+            let mut result = Self::read_vec(ctx, dst);
+            result[2..].copy_from_slice(&old[2..]);
+            Self::write_vec(ctx, dst, result);
+        }
+    }
+
     fn write_vec(ctx: &mut SmirContext, reg: VReg, value: VecValue) {
         match reg {
             VReg::Virtual(id) => ctx.vregs.set_vec(id, value),
@@ -5751,6 +6460,2198 @@ impl SmirInterpreter {
             }
         }
         ctx.write_vreg(dst, value & width.mask());
+    }
+
+    fn execute_x86_x87_data(
+        &self,
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+        guest_pc: GuestAddr,
+        kind: X86X87DataKind,
+        addr: Option<&Address>,
+        st: u8,
+        fop: u16,
+    ) -> Result<(), MemoryError> {
+        let effective_addr = addr.map(|address| self.compute_address(ctx, address));
+
+        // FLD reads the complete source before changing TOP or any environment
+        // field. This also makes a memory fault restartable.
+        let loaded = match kind {
+            X86X87DataKind::LoadSingle => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FLD m32fp requires an address"),
+                    &mut source[..4],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadDouble => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FLD m64fp requires an address"),
+                    &mut source[..8],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::Compare {
+                source: X86X87CompareSource::Single,
+                ..
+            } => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FCOM m32fp requires an address"),
+                    &mut source[..4],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::Compare {
+                source: X86X87CompareSource::Double,
+                ..
+            } => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FCOM m64fp requires an address"),
+                    &mut source[..8],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int16,
+                ..
+            } => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FICOM m16int requires an address"),
+                    &mut source[..2],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::Compare {
+                source: X86X87CompareSource::Int32,
+                ..
+            } => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FICOM m32int requires an address"),
+                    &mut source[..4],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadExtended => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FLD m80fp requires an address"),
+                    &mut source,
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadInt16 => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FILD m16int requires an address"),
+                    &mut source[..2],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadInt32 => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FILD m32int requires an address"),
+                    &mut source[..4],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadInt64 => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FILD m64int requires an address"),
+                    &mut source[..8],
+                )?;
+                Some(source)
+            }
+            X86X87DataKind::LoadBcd => {
+                let mut source = [0u8; 10];
+                memory.read(
+                    effective_addr.expect("FBLD m80bcd requires an address"),
+                    &mut source,
+                )?;
+                Some(source)
+            }
+            _ => None,
+        };
+        let conditional_move_taken = if let X86X87DataKind::ConditionalMove(condition) = kind {
+            Some(ctx.flags.eval_condition(condition))
+        } else {
+            None
+        };
+
+        let original = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => return Ok(()),
+        };
+        let mut next = original.clone();
+        next.instr_ptr = guest_pc;
+        next.last_opcode = fop & 0x07FF;
+        if let Some(address) = effective_addr {
+            next.data_ptr = address;
+        }
+
+        match kind {
+            X86X87DataKind::LoadRegister
+            | X86X87DataKind::LoadSingle
+            | X86X87DataKind::LoadDouble
+            | X86X87DataKind::LoadExtended
+            | X86X87DataKind::LoadInt16
+            | X86X87DataKind::LoadInt32
+            | X86X87DataKind::LoadInt64
+            | X86X87DataKind::LoadBcd
+            | X86X87DataKind::LoadConstant(_) => {
+                let source = if kind == X86X87DataKind::LoadRegister {
+                    let physical = original.physical_index(st);
+                    Some((original.regs[physical], original.physical_tag(physical)))
+                } else {
+                    None
+                };
+                let underflow = source.is_some_and(|(_, tag)| tag == 3);
+                let new_top = original.top().wrapping_sub(1) & 7;
+                let overflow = original.physical_tag(new_top as usize) != 3;
+
+                if underflow || overflow {
+                    // Intel exception precedence gives stack underflow priority
+                    // over stack overflow when both conditions are present.
+                    let masked = next.signal_stack_fault(!underflow && overflow);
+                    if !masked {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.set_top(new_top);
+                    next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                } else {
+                    next.status_word &= !0x0200; // C1=0: no stack overflow
+                    next.set_top(new_top);
+                    if let Some((raw, tag)) = source {
+                        next.set_logical_raw_tagged(0, raw, tag);
+                    } else if let X86X87DataKind::LoadConstant(constant) = kind {
+                        next.set_logical_raw(
+                            0,
+                            Self::x86_x87_constant(constant, original.control_word),
+                        );
+                    } else if kind == X86X87DataKind::LoadBcd {
+                        let source = loaded.expect("FBLD source missing");
+                        let mut magnitude = 0u64;
+                        for byte in source[..9].iter().rev() {
+                            magnitude = magnitude * 10 + u64::from(byte >> 4);
+                            magnitude = magnitude * 10 + u64::from(byte & 0x0F);
+                        }
+                        // Bits 78:72 are architecturally ignored. Invalid BCD
+                        // digits produce an undefined value without #IA; the
+                        // deterministic nibble interpretation here is one
+                        // permitted result for that undefined input domain.
+                        next.set_logical_raw(
+                            0,
+                            Self::x86_x87_from_signed_magnitude(magnitude, source[9] & 0x80 != 0),
+                        );
+                    } else if matches!(
+                        kind,
+                        X86X87DataKind::LoadSingle | X86X87DataKind::LoadDouble
+                    ) {
+                        let source = loaded.expect("FLD narrow source missing");
+                        let bits = if kind == X86X87DataKind::LoadSingle {
+                            u32::from_le_bytes(source[..4].try_into().unwrap()) as u64
+                        } else {
+                            u64::from_le_bytes(source[..8].try_into().unwrap())
+                        };
+                        let (raw, signaling_nan, denormal) = if kind == X86X87DataKind::LoadSingle {
+                            Self::x86_x87_widen_ieee(bits, 8, 23)
+                        } else {
+                            Self::x86_x87_widen_ieee(bits, 11, 52)
+                        };
+                        if signaling_nan {
+                            next.status_word |= 0x0001; // IE
+                            if next.control_word & 0x0001 == 0 {
+                                next.status_word |= 0x8080; // B | ES
+                                next.set_top(original.top());
+                                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                    x86.x87 = next;
+                                }
+                                return Ok(());
+                            }
+                        }
+                        if denormal {
+                            next.status_word |= 0x0002; // DE
+                            // FLD is exceptional: even with DM clear, Intel
+                            // specifies that the denormal value is still pushed.
+                            if next.control_word & 0x0002 == 0 {
+                                next.status_word |= 0x8080; // B | ES
+                            }
+                        }
+                        next.set_logical_raw(0, raw);
+                    } else if matches!(
+                        kind,
+                        X86X87DataKind::LoadInt16
+                            | X86X87DataKind::LoadInt32
+                            | X86X87DataKind::LoadInt64
+                    ) {
+                        let source = loaded.expect("FILD source missing");
+                        let value = match kind {
+                            X86X87DataKind::LoadInt16 => {
+                                i16::from_le_bytes(source[..2].try_into().unwrap()) as i64
+                            }
+                            X86X87DataKind::LoadInt32 => {
+                                i32::from_le_bytes(source[..4].try_into().unwrap()) as i64
+                            }
+                            X86X87DataKind::LoadInt64 => {
+                                i64::from_le_bytes(source[..8].try_into().unwrap())
+                            }
+                            _ => unreachable!(),
+                        };
+                        next.set_logical_raw(0, Self::x86_x87_from_i64(value));
+                    } else {
+                        next.set_logical_raw(0, loaded.expect("FLD m80fp source missing"));
+                    }
+                }
+            }
+            X86X87DataKind::StoreRegister | X86X87DataKind::StorePopRegister => {
+                let source_physical = original.physical_index(0);
+                let empty = original.physical_tag(source_physical) == 3;
+                let (raw, tag) = if empty {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    (crate::smir::X86X87State::INDEFINITE, 2)
+                } else {
+                    next.status_word &= !0x0200;
+                    (
+                        original.regs[source_physical],
+                        original.physical_tag(source_physical),
+                    )
+                };
+                next.set_logical_raw_tagged(st, raw, tag);
+                if kind == X86X87DataKind::StorePopRegister {
+                    next.pop();
+                }
+            }
+            X86X87DataKind::StorePopExtended => {
+                let source_physical = original.physical_index(0);
+                let empty = original.physical_tag(source_physical) == 3;
+                let raw = if empty {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    crate::smir::X86X87State::INDEFINITE
+                } else {
+                    next.status_word &= !0x0200;
+                    original.regs[source_physical]
+                };
+                next.pop();
+                // Commit the pop, environment, and any masked stack-fault flags
+                // only after the complete ten-byte store succeeds.
+                memory.write(
+                    effective_addr.expect("FSTP m80fp requires an address"),
+                    &raw,
+                )?;
+            }
+            X86X87DataKind::StoreInteger {
+                width,
+                pop,
+                truncate,
+            } => {
+                let physical = original.physical_index(0);
+                let width_bits: u32 = match width {
+                    X86X87IntWidth::I16 => 16,
+                    X86X87IntWidth::I32 => 32,
+                    X86X87IntWidth::I64 => 64,
+                };
+                let indefinite = 1u64 << (width_bits - 1);
+                let value = if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    indefinite
+                } else {
+                    let conversion = Self::x86_x87_to_integer(
+                        &original.regs[physical],
+                        width_bits,
+                        if truncate {
+                            3
+                        } else {
+                            (original.control_word >> 10) & 3
+                        },
+                    );
+                    if conversion.invalid {
+                        next.status_word |= 0x0001; // IE
+                        next.status_word &= !0x0200; // C1=0
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                        indefinite
+                    } else {
+                        next.status_word &= !0x0200;
+                        if conversion.inexact {
+                            next.status_word |= 0x0020; // PE
+                            if !truncate && conversion.rounded_up {
+                                next.status_word |= 0x0200; // C1 roundup
+                            }
+                            if next.control_word & 0x0020 == 0 {
+                                next.status_word |= 0x8080; // B | ES
+                            }
+                        }
+                        conversion.value
+                    }
+                };
+                if pop {
+                    next.pop();
+                }
+                let bytes = value.to_le_bytes();
+                let len = (width_bits / 8) as usize;
+                memory.write(
+                    effective_addr.expect("FIST/FISTP/FISTTP requires an address"),
+                    &bytes[..len],
+                )?;
+            }
+            X86X87DataKind::StoreFloat { width, pop } => {
+                let physical = original.physical_index(0);
+                let (fraction_bits, exponent_bits, indefinite, len) = match width {
+                    X86X87FloatWidth::F32 => (23, 8, 0xFFC0_0000u64, 4usize),
+                    X86X87FloatWidth::F64 => (52, 11, 0xFFF8_0000_0000_0000u64, 8usize),
+                };
+                next.status_word &= !0x0200; // C1=0 unless rounded upward
+                let bits = if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    indefinite
+                } else {
+                    let conversion = Self::x86_x87_to_ieee(
+                        &original.regs[physical],
+                        exponent_bits,
+                        fraction_bits,
+                        (original.control_word >> 10) & 3,
+                    );
+                    if conversion.invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if conversion.overflow {
+                        next.status_word |= 0x0008; // OE
+                        if next.control_word & 0x0008 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if conversion.underflow {
+                        next.status_word |= 0x0010; // UE
+                        if next.control_word & 0x0010 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    }
+
+                    if !conversion.invalid && conversion.inexact {
+                        next.status_word |= 0x0020; // PE
+                        if conversion.rounded_up {
+                            next.status_word |= 0x0200; // C1 roundup
+                        }
+                        if next.control_word & 0x0020 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                        }
+                    }
+                    conversion.bits
+                };
+                if pop {
+                    next.pop();
+                }
+                memory.write(
+                    effective_addr.expect("FST/FSTP requires an address"),
+                    &bits.to_le_bytes()[..len],
+                )?;
+            }
+            X86X87DataKind::StoreBcd => {
+                const MAX_BCD: u64 = 999_999_999_999_999_999;
+                const BCD_INDEFINITE: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 0xC0, 0xFF, 0xFF];
+
+                let physical = original.physical_index(0);
+                next.status_word &= !0x0200; // C1=0 unless rounded upward
+                let output = if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    BCD_INDEFINITE
+                } else {
+                    let raw = &original.regs[physical];
+                    let info = Self::x86_x87_raw_info(raw);
+                    let conversion =
+                        Self::x86_x87_to_integer(raw, 64, (original.control_word >> 10) & 3);
+                    let magnitude = if conversion.invalid {
+                        0
+                    } else if info.sign {
+                        (conversion.value as i64).unsigned_abs()
+                    } else {
+                        conversion.value
+                    };
+                    let invalid = conversion.invalid || magnitude > MAX_BCD;
+                    if invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                        BCD_INDEFINITE
+                    } else {
+                        if conversion.inexact {
+                            next.status_word |= 0x0020; // PE
+                            if conversion.rounded_up {
+                                next.status_word |= 0x0200; // C1 roundup
+                            }
+                            if next.control_word & 0x0020 == 0 {
+                                next.status_word |= 0x8080; // B | ES
+                            }
+                        }
+                        let mut bcd = [0u8; 10];
+                        let mut remaining = magnitude;
+                        for byte in &mut bcd[..9] {
+                            let low = (remaining % 10) as u8;
+                            remaining /= 10;
+                            let high = (remaining % 10) as u8;
+                            remaining /= 10;
+                            *byte = (high << 4) | low;
+                        }
+                        bcd[9] = u8::from(info.sign) << 7;
+                        bcd
+                    }
+                };
+                next.pop();
+                memory.write(
+                    effective_addr.expect("FBSTP m80bcd requires an address"),
+                    &output,
+                )?;
+            }
+            X86X87DataKind::Exchange => {
+                let p0 = original.physical_index(0);
+                let pi = original.physical_index(st);
+                let empty0 = original.physical_tag(p0) == 3;
+                let emptyi = original.physical_tag(pi) == 3;
+                if empty0 || emptyi {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    if empty0 {
+                        next.regs[p0] = crate::smir::X86X87State::INDEFINITE;
+                        next.set_physical_tag(p0, 2);
+                    }
+                    if emptyi {
+                        next.regs[pi] = crate::smir::X86X87State::INDEFINITE;
+                        next.set_physical_tag(pi, 2);
+                    }
+                } else {
+                    next.status_word &= !0x0200;
+                }
+                next.regs.swap(p0, pi);
+                let tag0 = next.physical_tag(p0);
+                let tagi = next.physical_tag(pi);
+                next.set_physical_tag(p0, tagi);
+                next.set_physical_tag(pi, tag0);
+            }
+            X86X87DataKind::Free => {
+                let physical = next.physical_index(st);
+                next.set_physical_tag(physical, 3);
+                // C0-C3 are undefined; deterministic SMIR preserves them.
+            }
+            X86X87DataKind::ChangeSign | X86X87DataKind::Absolute => {
+                let physical = original.physical_index(0);
+                if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.regs[physical] = crate::smir::X86X87State::INDEFINITE;
+                    next.set_physical_tag(physical, 2);
+                } else {
+                    next.status_word &= !0x0200;
+                    if kind == X86X87DataKind::ChangeSign {
+                        next.regs[physical][9] ^= 0x80;
+                    } else {
+                        next.regs[physical][9] &= 0x7F;
+                    }
+                }
+            }
+            X86X87DataKind::RoundInteger => {
+                let physical = original.physical_index(0);
+                if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                } else {
+                    next.status_word &= !0x0200; // C1=0 unless magnitude increments
+                    let conversion = Self::x86_x87_round_to_integral(
+                        &original.regs[physical],
+                        (original.control_word >> 10) & 3,
+                    );
+                    if conversion.invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if conversion.denormal {
+                        next.status_word |= 0x0002; // DE
+                        if next.control_word & 0x0002 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    }
+                    if conversion.inexact {
+                        next.status_word |= 0x0020; // PE
+                        if conversion.rounded_up {
+                            next.status_word |= 0x0200; // C1 roundup
+                        }
+                        // Precision is a post-computation exception: the
+                        // rounded result is committed even when PM is clear.
+                        if next.control_word & 0x0020 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                        }
+                    }
+                    next.set_logical_raw(0, conversion.raw);
+                }
+            }
+            X86X87DataKind::Extract => {
+                let source_physical = original.physical_index(0);
+                let new_top = original.top().wrapping_sub(1) & 7;
+                let underflow = original.physical_tag(source_physical) == 3;
+                let overflow = original.physical_tag(new_top as usize) != 3;
+                if underflow || overflow {
+                    // Source underflow takes priority when both stack
+                    // conditions are present, matching other x87 push forms.
+                    if !next.signal_stack_fault(!underflow && overflow) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.regs[source_physical] = crate::smir::X86X87State::INDEFINITE;
+                    next.set_physical_tag(source_physical, 2);
+                    next.set_top(new_top);
+                    next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                } else {
+                    next.status_word &= !0x0200; // C1=0: no stack fault
+                    let result = Self::x86_x87_extract(&original.regs[source_physical]);
+                    if result.invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if result.denormal {
+                        next.status_word |= 0x0002; // DE
+                        if next.control_word & 0x0002 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if result.zero {
+                        next.status_word |= 0x0004; // ZE
+                        if next.control_word & 0x0004 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    }
+                    // The old ST(0) becomes ST(1) after the push.
+                    next.set_top(new_top);
+                    next.set_logical_raw(1, result.exponent);
+                    next.set_logical_raw(0, result.significand);
+                }
+            }
+            X86X87DataKind::Scale => {
+                let destination = original.physical_index(0);
+                let source = original.physical_index(1);
+                if original.physical_tag(destination) == 3 || original.physical_tag(source) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                } else {
+                    next.status_word &= !0x0200; // C1=0 unless magnitude increments
+                    let result = Self::x86_x87_scale(
+                        &original.regs[destination],
+                        &original.regs[source],
+                        original.control_word,
+                    );
+                    if result.invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if result.denormal {
+                        next.status_word |= 0x0002; // DE
+                        if next.control_word & 0x0002 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    }
+                    if result.overflow {
+                        next.status_word |= 0x0008; // OE
+                    }
+                    if result.underflow {
+                        next.status_word |= 0x0010; // UE
+                    }
+                    if result.inexact {
+                        next.status_word |= 0x0020; // PE
+                    }
+                    if result.rounded_up {
+                        next.status_word |= 0x0200; // C1 roundup
+                    }
+                    if (result.overflow && next.control_word & 0x0008 == 0)
+                        || (result.underflow && next.control_word & 0x0010 == 0)
+                        || (result.inexact && next.control_word & 0x0020 == 0)
+                    {
+                        next.status_word |= 0x8080; // B | ES
+                    }
+                    next.set_logical_raw(0, result.raw);
+                }
+            }
+            X86X87DataKind::SquareRoot => {
+                let physical = original.physical_index(0);
+                if original.physical_tag(physical) == 3 {
+                    if !next.signal_stack_fault(false) {
+                        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                            x86.x87 = next;
+                        }
+                        return Ok(());
+                    }
+                    next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                } else {
+                    next.status_word &= !0x0200; // C1=0 unless significand increments
+                    let result =
+                        Self::x86_x87_sqrt(&original.regs[physical], original.control_word);
+                    if result.invalid {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    } else if result.denormal {
+                        next.status_word |= 0x0002; // DE
+                        if next.control_word & 0x0002 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                    }
+                    if result.inexact {
+                        next.status_word |= 0x0020; // PE
+                        if result.rounded_up {
+                            next.status_word |= 0x0200; // C1 roundup
+                        }
+                        if next.control_word & 0x0020 == 0 {
+                            next.status_word |= 0x8080; // B | ES
+                        }
+                    }
+                    next.set_logical_raw(0, result.raw);
+                }
+            }
+            X86X87DataKind::DecrementTop => {
+                next.status_word &= !0x0200;
+                next.set_top(next.top().wrapping_sub(1));
+            }
+            X86X87DataKind::IncrementTop => {
+                next.status_word &= !0x0200;
+                next.set_top(next.top().wrapping_add(1));
+            }
+            X86X87DataKind::ConditionalMove(_) => {
+                if conditional_move_taken.expect("FCMOV condition missing") {
+                    let source_physical = original.physical_index(st);
+                    if original.physical_tag(source_physical) == 3 {
+                        if !next.signal_stack_fault(false) {
+                            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                                x86.x87 = next;
+                            }
+                            return Ok(());
+                        }
+                        next.set_logical_raw_tagged(0, crate::smir::X86X87State::INDEFINITE, 2);
+                    } else {
+                        next.set_logical_raw_tagged(
+                            0,
+                            original.regs[source_physical],
+                            original.physical_tag(source_physical),
+                        );
+                    }
+                }
+            }
+            X86X87DataKind::Examine => {
+                let physical = original.physical_index(0);
+                let raw = original.regs[physical];
+                let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+                let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+                let exponent = exponent_sign & 0x7FFF;
+                let integer_bit = significand >> 63;
+                let fraction = significand & 0x7FFF_FFFF_FFFF_FFFF;
+                let condition_codes = if original.physical_tag(physical) == 3 {
+                    0x4100 // Empty: C3,C2,C0 = 101
+                } else if exponent == 0 {
+                    if significand == 0 {
+                        0x4000 // Zero: 100
+                    } else {
+                        0x4400 // Denormal or pseudo-denormal: 110
+                    }
+                } else if exponent == 0x7FFF {
+                    if integer_bit == 0 {
+                        0x0000 // Pseudo-NaN/pseudo-infinity: unsupported 000
+                    } else if fraction == 0 {
+                        0x0500 // Infinity: 011
+                    } else {
+                        0x0100 // NaN: 001
+                    }
+                } else if integer_bit == 0 {
+                    0x0000 // Unnormal: unsupported 000
+                } else {
+                    0x0400 // Normal finite: 010
+                };
+                next.status_word = (next.status_word & !0x4700) | condition_codes;
+                if exponent_sign & 0x8000 != 0 {
+                    next.status_word |= 0x0200;
+                }
+            }
+            X86X87DataKind::TestZero => {
+                let physical = original.physical_index(0);
+                let prior_codes = next.status_word & 0x4500;
+                next.status_word &= !0x0200; // C1=0
+                if original.physical_tag(physical) == 3 {
+                    if next.signal_stack_fault(false) {
+                        next.status_word = (next.status_word & !0x4500) | 0x4500;
+                    } else {
+                        next.status_word = (next.status_word & !0x4500) | prior_codes;
+                    }
+                } else {
+                    let raw = original.regs[physical];
+                    let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+                    let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+                    let exponent = exponent_sign & 0x7FFF;
+                    let integer_bit = significand >> 63;
+                    let fraction = significand & 0x7FFF_FFFF_FFFF_FFFF;
+                    let unsupported = (exponent == 0x7FFF && integer_bit == 0)
+                        || (exponent != 0 && exponent != 0x7FFF && integer_bit == 0);
+                    let nan = exponent == 0x7FFF && integer_bit == 1 && fraction != 0;
+                    let denormal = exponent == 0 && significand != 0;
+                    if unsupported || nan {
+                        next.status_word |= 0x0001; // IE
+                        if next.control_word & 0x0001 != 0 {
+                            next.status_word = (next.status_word & !0x4500) | 0x4500;
+                        } else {
+                            next.status_word |= 0x8080; // B | ES
+                            next.status_word = (next.status_word & !0x4500) | prior_codes;
+                        }
+                    } else if denormal && next.control_word & 0x0002 == 0 {
+                        next.status_word |= 0x8082; // B | ES | DE
+                        next.status_word = (next.status_word & !0x4500) | prior_codes;
+                    } else {
+                        if denormal {
+                            next.status_word |= 0x0002; // DE
+                        }
+                        let codes = if significand == 0 && exponent == 0 {
+                            0x4000 // equal, including -0.0
+                        } else if exponent_sign & 0x8000 != 0 {
+                            0x0100 // less than zero
+                        } else {
+                            0x0000 // greater than zero
+                        };
+                        next.status_word = (next.status_word & !0x4500) | codes;
+                    }
+                }
+            }
+            X86X87DataKind::Compare {
+                source,
+                unordered,
+                pop,
+                eflags,
+            } => {
+                let p0 = original.physical_index(0);
+                let (source_raw, source_empty, memory_snan) = match source {
+                    X86X87CompareSource::Register => {
+                        let physical = original.physical_index(st);
+                        (
+                            original.regs[physical],
+                            original.physical_tag(physical) == 3,
+                            false,
+                        )
+                    }
+                    X86X87CompareSource::Single => {
+                        let bytes = loaded.expect("FCOM m32fp source missing");
+                        let bits = u32::from_le_bytes(bytes[..4].try_into().unwrap()) as u64;
+                        let (raw, snan, _) = Self::x86_x87_widen_ieee(bits, 8, 23);
+                        (raw, false, snan)
+                    }
+                    X86X87CompareSource::Double => {
+                        let bytes = loaded.expect("FCOM m64fp source missing");
+                        let bits = u64::from_le_bytes(bytes[..8].try_into().unwrap());
+                        let (raw, snan, _) = Self::x86_x87_widen_ieee(bits, 11, 52);
+                        (raw, false, snan)
+                    }
+                    X86X87CompareSource::Int16 => {
+                        let bytes = loaded.expect("FICOM m16int source missing");
+                        let value = i16::from_le_bytes(bytes[..2].try_into().unwrap()) as i64;
+                        (Self::x86_x87_from_i64(value), false, false)
+                    }
+                    X86X87CompareSource::Int32 => {
+                        let bytes = loaded.expect("FICOM m32int source missing");
+                        let value = i32::from_le_bytes(bytes[..4].try_into().unwrap()) as i64;
+                        (Self::x86_x87_from_i64(value), false, false)
+                    }
+                };
+                let lhs_empty = original.physical_tag(p0) == 3;
+                let lhs_raw = original.regs[p0];
+                let lhs_info = Self::x86_x87_raw_info(&lhs_raw);
+                let mut rhs_info = Self::x86_x87_raw_info(&source_raw);
+                rhs_info.signaling_nan |= memory_snan;
+
+                // C1 is cleared by every compare form. FCOMI/FUCOMI also clear
+                // OF/SF/AF even when an unmasked invalid exception suppresses
+                // updates to ZF/PF/CF.
+                next.status_word &= !0x0200;
+                if eflags {
+                    ctx.flags.materialize_all();
+                    ctx.flags.materialized.of = false;
+                    ctx.flags.materialized.sf = false;
+                    ctx.flags.materialized.af = false;
+                    ctx.flags.lazy = None;
+                }
+
+                let prior_codes = next.status_word & 0x4500;
+                let stack_fault = lhs_empty || source_empty;
+                let invalid = lhs_info.unsupported
+                    || rhs_info.unsupported
+                    || if unordered {
+                        lhs_info.signaling_nan || rhs_info.signaling_nan
+                    } else {
+                        lhs_info.nan || rhs_info.nan
+                    };
+                let qnan_unordered = unordered && !invalid && (lhs_info.nan || rhs_info.nan);
+                let denormal = lhs_info.denormal || rhs_info.denormal;
+                let mut result_codes = None;
+                let mut complete = true;
+
+                if stack_fault {
+                    if next.signal_stack_fault(false) {
+                        result_codes = Some(0x4500);
+                    } else {
+                        complete = false;
+                    }
+                } else if invalid {
+                    next.status_word |= 0x0001; // IE
+                    if next.control_word & 0x0001 != 0 {
+                        result_codes = Some(0x4500);
+                    } else {
+                        next.status_word |= 0x8080; // B | ES
+                        complete = false;
+                    }
+                } else if qnan_unordered {
+                    result_codes = Some(0x4500);
+                } else if !eflags && denormal && next.control_word & 0x0002 == 0 {
+                    next.status_word |= 0x8082; // B | ES | DE
+                    complete = false;
+                } else {
+                    if !eflags && denormal {
+                        next.status_word |= 0x0002; // DE
+                    }
+                    result_codes = Some(match Self::x86_x87_compare_raw(&lhs_raw, &source_raw) {
+                        Ordering::Greater => 0x0000,
+                        Ordering::Less => 0x0100,
+                        Ordering::Equal => 0x4000,
+                    });
+                }
+
+                if complete {
+                    let codes = result_codes.expect("completed x87 comparison lacks result");
+                    if eflags {
+                        ctx.flags.materialized.cf = codes & 0x0100 != 0;
+                        ctx.flags.materialized.pf = codes & 0x0400 != 0;
+                        ctx.flags.materialized.zf = codes & 0x4000 != 0;
+                    } else {
+                        next.status_word = (next.status_word & !0x4500) | codes;
+                    }
+                    for _ in 0..pop {
+                        next.pop();
+                    }
+                } else if !eflags {
+                    next.status_word = (next.status_word & !0x4500) | prior_codes;
+                }
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = next;
+        }
+        Ok(())
+    }
+
+    fn x86_x87_raw_info(raw: &[u8; 10]) -> X87RawInfo {
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+        let exponent = exponent_sign & 0x7FFF;
+        let integer_bit = significand >> 63;
+        let fraction = significand & 0x7FFF_FFFF_FFFF_FFFF;
+        let unsupported = (exponent == 0x7FFF && integer_bit == 0)
+            || (exponent != 0 && exponent != 0x7FFF && integer_bit == 0);
+        let nan = exponent == 0x7FFF && integer_bit == 1 && fraction != 0;
+        X87RawInfo {
+            sign: exponent_sign & 0x8000 != 0,
+            unsupported,
+            nan,
+            signaling_nan: nan && fraction & (1u64 << 62) == 0,
+            denormal: exponent == 0 && significand != 0,
+            zero: exponent == 0 && significand == 0,
+        }
+    }
+
+    /// Exact total ordering for supported, non-NaN binary80 operands. Signed
+    /// zeros compare equal. Pseudo-denormals use an effective biased exponent
+    /// of one, as specified by Intel, so their ordering aliases the equivalent
+    /// minimum-exponent normal encoding.
+    fn x86_x87_compare_raw(lhs: &[u8; 10], rhs: &[u8; 10]) -> Ordering {
+        let lhs_info = Self::x86_x87_raw_info(lhs);
+        let rhs_info = Self::x86_x87_raw_info(rhs);
+        if lhs_info.zero && rhs_info.zero {
+            return Ordering::Equal;
+        }
+        if lhs_info.sign != rhs_info.sign {
+            return if lhs_info.sign {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            };
+        }
+        let magnitude = |raw: &[u8; 10]| {
+            let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+            let mut exponent = u16::from_le_bytes(raw[8..].try_into().unwrap()) & 0x7FFF;
+            if exponent == 0 && significand >> 63 != 0 {
+                exponent = 1;
+            }
+            (exponent, significand)
+        };
+        let ordering = magnitude(lhs).cmp(&magnitude(rhs));
+        if lhs_info.sign {
+            ordering.reverse()
+        } else {
+            ordering
+        }
+    }
+
+    fn x86_x87_from_i64(value: i64) -> [u8; 10] {
+        Self::x86_x87_from_signed_magnitude(value.unsigned_abs(), value < 0)
+    }
+
+    /// Convert an exactly representable signed magnitude into binary80. The
+    /// explicit sign preserves the packed-BCD distinction between +0 and -0.
+    fn x86_x87_from_signed_magnitude(magnitude: u64, sign: bool) -> [u8; 10] {
+        if magnitude == 0 {
+            let mut raw = [0; 10];
+            raw[9] = u8::from(sign) << 7;
+            return raw;
+        }
+        let highest = 63 - magnitude.leading_zeros();
+        let significand = magnitude << (63 - highest);
+        let exponent_sign = (16383 + highest as u16) | ((sign as u16) << 15);
+        let mut raw = [0u8; 10];
+        raw[..8].copy_from_slice(&significand.to_le_bytes());
+        raw[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+        raw
+    }
+
+    fn x86_x87_to_integer(raw: &[u8; 10], width_bits: u32, rounding: u16) -> X87IntegerConversion {
+        let info = Self::x86_x87_raw_info(raw);
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let mut exponent = u16::from_le_bytes(raw[8..].try_into().unwrap()) & 0x7FFF;
+        if info.unsupported || info.nan || exponent == 0x7FFF {
+            return X87IntegerConversion {
+                value: 0,
+                invalid: true,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if info.zero {
+            return X87IntegerConversion {
+                value: 0,
+                invalid: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if exponent == 0 && significand >> 63 != 0 {
+            exponent = 1; // pseudo-denormal effective exponent
+        }
+        let unbiased = exponent as i32 - 16383;
+        let denominator_shift = 63i32 - unbiased;
+        let (mut magnitude, remainder, half_cmp) = if denominator_shift <= 0 {
+            let shift = (-denominator_shift) as u32;
+            if shift >= 128 {
+                (u128::MAX, false, Ordering::Less)
+            } else {
+                (
+                    (significand as u128)
+                        .checked_shl(shift)
+                        .unwrap_or(u128::MAX),
+                    false,
+                    Ordering::Less,
+                )
+            }
+        } else if denominator_shift >= 128 {
+            let half_bit = denominator_shift - 1;
+            let half_cmp = if half_bit >= 128 {
+                Ordering::Less
+            } else {
+                (significand as u128).cmp(&(1u128 << half_bit))
+            };
+            (0, significand != 0, half_cmp)
+        } else {
+            let shift = denominator_shift as u32;
+            let denominator_mask = (1u128 << shift) - 1;
+            let remainder_bits = (significand as u128) & denominator_mask;
+            (
+                (significand as u128) >> shift,
+                remainder_bits != 0,
+                remainder_bits.cmp(&(1u128 << (shift - 1))),
+            )
+        };
+
+        let increment = if remainder {
+            match rounding & 3 {
+                0 => {
+                    half_cmp == Ordering::Greater
+                        || (half_cmp == Ordering::Equal && magnitude & 1 != 0)
+                }
+                1 => info.sign,
+                2 => !info.sign,
+                3 => false,
+                _ => unreachable!(),
+            }
+        } else {
+            false
+        };
+        if increment {
+            magnitude = magnitude.saturating_add(1);
+        }
+
+        let negative_limit = 1u128 << (width_bits - 1);
+        let positive_limit = negative_limit - 1;
+        let invalid = if info.sign {
+            magnitude > negative_limit
+        } else {
+            magnitude > positive_limit
+        };
+        if invalid {
+            return X87IntegerConversion {
+                value: 0,
+                invalid: true,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        let mask = if width_bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << width_bits) - 1
+        };
+        let value = if info.sign {
+            (0u64.wrapping_sub(magnitude as u64)) & mask
+        } else {
+            magnitude as u64
+        };
+        X87IntegerConversion {
+            value,
+            invalid: false,
+            inexact: remainder,
+            rounded_up: increment,
+        }
+    }
+
+    /// Round a binary80 value to an integral binary80 value without narrowing
+    /// through a host integer type. Values with unbiased exponent >= 63 are
+    /// already integral because binary80 has a 64-bit significand.
+    fn x86_x87_round_to_integral(raw: &[u8; 10], rounding: u16) -> X87IntegralConversion {
+        let info = Self::x86_x87_raw_info(raw);
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+        let exponent = exponent_sign & 0x7FFF;
+
+        if info.unsupported {
+            return X87IntegralConversion {
+                raw: crate::smir::X86X87State::INDEFINITE,
+                invalid: true,
+                denormal: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if info.nan {
+            let mut result = *raw;
+            if info.signaling_nan {
+                let quiet = significand | (1u64 << 62);
+                result[..8].copy_from_slice(&quiet.to_le_bytes());
+            }
+            return X87IntegralConversion {
+                raw: result,
+                invalid: info.signaling_nan,
+                denormal: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if exponent == 0x7FFF || info.zero {
+            return X87IntegralConversion {
+                raw: *raw,
+                invalid: false,
+                denormal: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+
+        // True denormals and pseudo-denormals both use biased exponent one for
+        // their value. They still raise #D because their encoded exponent is 0.
+        let effective_exponent = if exponent == 0 { 1 } else { exponent };
+        let unbiased = effective_exponent as i32 - 16383;
+        if unbiased >= 63 {
+            return X87IntegralConversion {
+                raw: *raw,
+                invalid: false,
+                denormal: info.denormal,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+
+        let (magnitude, inexact, rounded_up) =
+            Self::x86_x87_round_shift(significand as u128, 63 - unbiased, rounding, info.sign);
+        X87IntegralConversion {
+            raw: Self::x86_x87_from_signed_magnitude(magnitude as u64, info.sign),
+            invalid: false,
+            denormal: info.denormal,
+            inexact,
+            rounded_up,
+        }
+    }
+
+    fn x86_x87_extract(raw: &[u8; 10]) -> X87ExtractResult {
+        let info = Self::x86_x87_raw_info(raw);
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+        let exponent = exponent_sign & 0x7FFF;
+
+        if info.unsupported {
+            return X87ExtractResult {
+                significand: crate::smir::X86X87State::INDEFINITE,
+                exponent: crate::smir::X86X87State::INDEFINITE,
+                invalid: true,
+                denormal: false,
+                zero: false,
+            };
+        }
+        if info.nan {
+            let mut quiet = *raw;
+            if info.signaling_nan {
+                quiet[..8].copy_from_slice(&(significand | (1u64 << 62)).to_le_bytes());
+            }
+            return X87ExtractResult {
+                significand: quiet,
+                exponent: quiet,
+                invalid: info.signaling_nan,
+                denormal: false,
+                zero: false,
+            };
+        }
+        if exponent == 0x7FFF {
+            let positive_infinity = Self::x86_x87_from_raw_parts(0x8000_0000_0000_0000, 0x7FFF);
+            return X87ExtractResult {
+                significand: *raw,
+                exponent: positive_infinity,
+                invalid: false,
+                denormal: false,
+                zero: false,
+            };
+        }
+        if info.zero {
+            return X87ExtractResult {
+                significand: *raw,
+                exponent: Self::x86_x87_from_raw_parts(0x8000_0000_0000_0000, 0xFFFF),
+                invalid: false,
+                denormal: false,
+                zero: true,
+            };
+        }
+
+        let (normalized, true_exponent) = if exponent == 0 {
+            let highest = 63 - significand.leading_zeros();
+            (significand << (63 - highest), highest as i64 - 16_445)
+        } else {
+            (significand, exponent as i64 - 16_383)
+        };
+        X87ExtractResult {
+            significand: Self::x86_x87_from_raw_parts(
+                normalized,
+                0x3FFF | (exponent_sign & 0x8000),
+            ),
+            exponent: Self::x86_x87_from_i64(true_exponent),
+            invalid: false,
+            denormal: info.denormal,
+            zero: false,
+        }
+    }
+
+    fn x86_x87_from_raw_parts(significand: u64, exponent_sign: u16) -> [u8; 10] {
+        let mut raw = [0u8; 10];
+        raw[..8].copy_from_slice(&significand.to_le_bytes());
+        raw[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+        raw
+    }
+
+    /// Truncate a supported finite binary80 value toward zero, saturating at a
+    /// bound larger than every exponent displacement relevant to FSCALE.
+    fn x86_x87_truncate_scale(raw: &[u8; 10]) -> i64 {
+        const LIMIT: u64 = 100_000;
+        let info = Self::x86_x87_raw_info(raw);
+        if info.zero {
+            return 0;
+        }
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent = u16::from_le_bytes(raw[8..].try_into().unwrap()) & 0x7FFF;
+        let effective_exponent = if exponent == 0 { 1 } else { exponent };
+        let unbiased = effective_exponent as i32 - 16_383;
+        let magnitude = if unbiased < 0 {
+            0
+        } else if unbiased >= 63 {
+            LIMIT
+        } else {
+            (significand >> (63 - unbiased)).min(LIMIT)
+        };
+        if info.sign {
+            -(magnitude as i64)
+        } else {
+            magnitude as i64
+        }
+    }
+
+    fn x86_x87_quiet_nan(raw: &[u8; 10]) -> [u8; 10] {
+        let mut result = *raw;
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        result[..8].copy_from_slice(&(significand | (1u64 << 62)).to_le_bytes());
+        result
+    }
+
+    /// Exact FSCALE response. The operation is independent of FCW.PC; only
+    /// denormalization at the binary80 exponent floor can discard bits.
+    fn x86_x87_scale(st0: &[u8; 10], st1: &[u8; 10], control_word: u16) -> X87ScaleResult {
+        let lhs = Self::x86_x87_raw_info(st0);
+        let rhs = Self::x86_x87_raw_info(st1);
+        let lhs_sig = u64::from_le_bytes(st0[..8].try_into().unwrap());
+        let lhs_exp = u16::from_le_bytes(st0[8..].try_into().unwrap()) & 0x7FFF;
+        let rhs_exp = u16::from_le_bytes(st1[8..].try_into().unwrap()) & 0x7FFF;
+        let sign = lhs.sign;
+        let finish =
+            |raw, invalid, denormal, overflow, underflow, inexact, rounded_up| X87ScaleResult {
+                raw,
+                invalid,
+                denormal,
+                overflow,
+                underflow,
+                inexact,
+                rounded_up,
+            };
+
+        if lhs.unsupported || rhs.unsupported {
+            return finish(
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+            );
+        }
+        if lhs.nan || rhs.nan {
+            let selected = if lhs.signaling_nan {
+                Self::x86_x87_quiet_nan(st0)
+            } else if rhs.signaling_nan {
+                Self::x86_x87_quiet_nan(st1)
+            } else if lhs.nan {
+                *st0
+            } else {
+                *st1
+            };
+            return finish(
+                selected,
+                lhs.signaling_nan || rhs.signaling_nan,
+                false,
+                false,
+                false,
+                false,
+                false,
+            );
+        }
+
+        let lhs_infinite = lhs_exp == 0x7FFF;
+        let rhs_infinite = rhs_exp == 0x7FFF;
+        if rhs_infinite {
+            let invalid = (rhs.sign && lhs_infinite) || (!rhs.sign && lhs.zero);
+            if invalid {
+                return finish(
+                    crate::smir::X86X87State::INDEFINITE,
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                );
+            }
+            if rhs.sign {
+                return finish(
+                    Self::x86_x87_from_raw_parts(0, (sign as u16) << 15),
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                );
+            }
+            return finish(
+                Self::x86_x87_from_raw_parts(0x8000_0000_0000_0000, 0x7FFF | ((sign as u16) << 15)),
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            );
+        }
+        if lhs_infinite || lhs.zero {
+            return finish(*st0, false, rhs.denormal, false, false, false, false);
+        }
+
+        let denormal = lhs.denormal || rhs.denormal;
+        let highest = 63 - lhs_sig.leading_zeros();
+        let normalized = lhs_sig << (63 - highest);
+        let base_exponent = if lhs_exp == 0 {
+            highest as i64 - 16_445
+        } else {
+            lhs_exp as i64 - 16_383
+        };
+        let result_exponent = base_exponent + Self::x86_x87_truncate_scale(st1);
+        if result_exponent > 16_383 {
+            let overflow_masked = control_word & 0x0008 != 0;
+            let raw = if !overflow_masked {
+                let biased = result_exponent - 24_576;
+                if biased <= 16_383 {
+                    Self::x86_x87_from_raw_parts(
+                        normalized,
+                        (biased + 16_383) as u16 | ((sign as u16) << 15),
+                    )
+                } else {
+                    Self::x86_x87_from_raw_parts(
+                        0x8000_0000_0000_0000,
+                        0x7FFF | ((sign as u16) << 15),
+                    )
+                }
+            } else {
+                let infinity = match (control_word >> 10) & 3 {
+                    0 => true,
+                    1 => sign,
+                    2 => !sign,
+                    3 => false,
+                    _ => unreachable!(),
+                };
+                if infinity {
+                    Self::x86_x87_from_raw_parts(
+                        0x8000_0000_0000_0000,
+                        0x7FFF | ((sign as u16) << 15),
+                    )
+                } else {
+                    Self::x86_x87_from_raw_parts(u64::MAX, 0x7FFE | ((sign as u16) << 15))
+                }
+            };
+            let rounded_up = overflow_masked && matches!((control_word >> 10) & 3, 0)
+                || (overflow_masked && matches!((control_word >> 10) & 3, 1) && sign)
+                || (overflow_masked && matches!((control_word >> 10) & 3, 2) && !sign);
+            return finish(raw, false, denormal, true, false, true, rounded_up);
+        }
+        if result_exponent < -16_382 {
+            let shift = (-16_382 - result_exponent) as i32;
+            let (rounded, inexact, rounded_up) = Self::x86_x87_round_shift(
+                normalized as u128,
+                shift,
+                (control_word >> 10) & 3,
+                sign,
+            );
+            if !inexact {
+                return finish(
+                    Self::x86_x87_from_raw_parts(rounded as u64, (sign as u16) << 15),
+                    false,
+                    denormal,
+                    false,
+                    false,
+                    false,
+                    false,
+                );
+            }
+            let underflow_masked = control_word & 0x0010 != 0;
+            let raw = if !underflow_masked {
+                let biased = result_exponent + 24_576;
+                if biased >= -16_382 {
+                    Self::x86_x87_from_raw_parts(
+                        normalized,
+                        (biased + 16_383) as u16 | ((sign as u16) << 15),
+                    )
+                } else {
+                    Self::x86_x87_from_raw_parts(0, (sign as u16) << 15)
+                }
+            } else if rounded == 1u128 << 63 {
+                Self::x86_x87_from_raw_parts(0x8000_0000_0000_0000, 1 | ((sign as u16) << 15))
+            } else {
+                Self::x86_x87_from_raw_parts(rounded as u64, (sign as u16) << 15)
+            };
+            return finish(
+                raw,
+                false,
+                denormal,
+                false,
+                true,
+                true,
+                underflow_masked && rounded_up,
+            );
+        }
+
+        finish(
+            Self::x86_x87_from_raw_parts(
+                normalized,
+                (result_exponent + 16_383) as u16 | ((sign as u16) << 15),
+            ),
+            false,
+            denormal,
+            false,
+            false,
+            false,
+            false,
+        )
+    }
+
+    /// Floor(sqrt(value)) for the full u128 domain. The restoring algorithm
+    /// consumes one base-4 digit per iteration: O(64) time and O(1) space.
+    fn x86_x87_integer_sqrt(mut value: u128) -> u128 {
+        let mut result = 0u128;
+        let mut bit = 1u128 << 126;
+        while bit > value {
+            bit >>= 2;
+        }
+        while bit != 0 {
+            if value >= result + bit {
+                value -= result + bit;
+                result = (result >> 1) + bit;
+            } else {
+                result >>= 1;
+            }
+            bit >>= 2;
+        }
+        result
+    }
+
+    /// Exact binary80 square root. The radicand is promoted to a u128 fixed-
+    /// point integer, so both the root and its residual are available for an
+    /// exact midpoint decision at 24-, 53-, or 64-bit precision.
+    fn x86_x87_sqrt(raw: &[u8; 10], control_word: u16) -> X87SqrtResult {
+        let info = Self::x86_x87_raw_info(raw);
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+        let exponent = exponent_sign & 0x7FFF;
+        let finish = |raw, invalid, denormal, inexact, rounded_up| X87SqrtResult {
+            raw,
+            invalid,
+            denormal,
+            inexact,
+            rounded_up,
+        };
+
+        if info.unsupported {
+            return finish(
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+                false,
+                false,
+                false,
+            );
+        }
+        if info.nan {
+            return finish(
+                if info.signaling_nan {
+                    Self::x86_x87_quiet_nan(raw)
+                } else {
+                    *raw
+                },
+                info.signaling_nan,
+                false,
+                false,
+                false,
+            );
+        }
+        if info.zero {
+            return finish(*raw, false, false, false, false);
+        }
+        if info.sign {
+            return finish(
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+                false,
+                false,
+                false,
+            );
+        }
+        if exponent == 0x7FFF {
+            return finish(*raw, false, false, false, false);
+        }
+
+        let highest = 63 - significand.leading_zeros();
+        let normalized = significand << (63 - highest);
+        let true_exponent = if exponent == 0 {
+            highest as i32 - 16_445
+        } else {
+            exponent as i32 - 16_383
+        };
+        let odd_exponent = true_exponent.rem_euclid(2) != 0;
+        let radicand = (normalized as u128) << (63 + u32::from(odd_exponent));
+        let root = Self::x86_x87_integer_sqrt(radicand);
+        let remainder = radicand - root * root;
+        let precision = match (control_word >> 8) & 3 {
+            0 => 24u32,
+            2 => 53,
+            // PC=01 is reserved. Current Intel hardware treats it like the
+            // architectural 64-bit setting; keeping that behavior avoids an
+            // invented reduced-precision mode.
+            1 | 3 => 64,
+            _ => unreachable!(),
+        };
+        let shift = 64 - precision;
+        let truncated = root >> shift;
+        let discarded = if shift == 0 {
+            0
+        } else {
+            root & ((1u128 << shift) - 1)
+        };
+        let inexact = discarded != 0 || remainder != 0;
+        let half_cmp = if !inexact {
+            Ordering::Less
+        } else if shift == 0 {
+            // Compare sqrt(N)-floor(sqrt(N)) with 1/2 without approximation:
+            // 4*(N-q^2) ? 4*q+1.
+            (4 * remainder).cmp(&(4 * root + 1))
+        } else {
+            let midpoint = (truncated << shift) + (1u128 << (shift - 1));
+            match root.cmp(&midpoint) {
+                Ordering::Equal if remainder != 0 => Ordering::Greater,
+                ordering => ordering,
+            }
+        };
+        let increment = inexact
+            && match (control_word >> 10) & 3 {
+                0 => {
+                    half_cmp == Ordering::Greater
+                        || (half_cmp == Ordering::Equal && truncated & 1 != 0)
+                }
+                1 | 3 => false, // positive result: down and toward-zero truncate
+                2 => true,
+                _ => unreachable!(),
+            };
+        let rounded = truncated + u128::from(increment);
+        let mut result_exponent = true_exponent.div_euclid(2);
+        let result_significand = if rounded == 1u128 << precision {
+            result_exponent += 1;
+            1u64 << 63
+        } else {
+            (rounded << shift) as u64
+        };
+        finish(
+            Self::x86_x87_from_raw_parts(result_significand, (result_exponent + 16_383) as u16),
+            false,
+            info.denormal,
+            inexact,
+            increment,
+        )
+    }
+
+    /// Round an unsigned integer divided by `2^shift` according to an x87 RC
+    /// field. The final boolean reports an increment of the truncated
+    /// magnitude, which is the x87 definition used for C1 on precision loss.
+    fn x86_x87_round_shift(
+        value: u128,
+        shift: i32,
+        rounding: u16,
+        sign: bool,
+    ) -> (u128, bool, bool) {
+        if shift <= 0 {
+            let left = (-shift) as u32;
+            return (
+                if left >= 128 {
+                    u128::MAX
+                } else {
+                    value.checked_shl(left).unwrap_or(u128::MAX)
+                },
+                false,
+                false,
+            );
+        }
+
+        let (truncated, inexact, half_cmp) = if shift >= 128 {
+            let half_bit = shift - 1;
+            (
+                0,
+                value != 0,
+                if half_bit >= 128 {
+                    Ordering::Less
+                } else {
+                    value.cmp(&(1u128 << half_bit))
+                },
+            )
+        } else {
+            let shift = shift as u32;
+            let remainder = value & ((1u128 << shift) - 1);
+            (
+                value >> shift,
+                remainder != 0,
+                remainder.cmp(&(1u128 << (shift - 1))),
+            )
+        };
+        let increment = inexact
+            && match rounding & 3 {
+                0 => {
+                    half_cmp == Ordering::Greater
+                        || (half_cmp == Ordering::Equal && truncated & 1 != 0)
+                }
+                1 => sign,
+                2 => !sign,
+                3 => false,
+                _ => unreachable!(),
+            };
+        (
+            truncated.saturating_add(u128::from(increment)),
+            inexact,
+            increment,
+        )
+    }
+
+    /// Narrow a supported x87 binary80 value to an IEEE interchange payload.
+    /// This uses integer arithmetic exclusively, including gradual underflow,
+    /// and therefore cannot inherit host floating-point rounding or exception
+    /// state. `exponent_bits`/`fraction_bits` are `(8, 23)` or `(11, 52)`.
+    fn x86_x87_to_ieee(
+        raw: &[u8; 10],
+        exponent_bits: u32,
+        fraction_bits: u32,
+        rounding: u16,
+    ) -> X87FloatConversion {
+        let info = Self::x86_x87_raw_info(raw);
+        let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
+        let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
+        let exponent = exponent_sign & 0x7FFF;
+        let sign_bit = (info.sign as u64) << (exponent_bits + fraction_bits);
+        let exponent_mask = (1u64 << exponent_bits) - 1;
+        let fraction_mask = (1u64 << fraction_bits) - 1;
+
+        if info.unsupported {
+            return X87FloatConversion {
+                bits: (1u64 << (exponent_bits + fraction_bits))
+                    | (exponent_mask << fraction_bits)
+                    | (1u64 << (fraction_bits - 1)),
+                invalid: true,
+                overflow: false,
+                underflow: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if info.nan {
+            let payload = ((significand & 0x7FFF_FFFF_FFFF_FFFF) >> (63 - fraction_bits))
+                | (1u64 << (fraction_bits - 1));
+            return X87FloatConversion {
+                bits: sign_bit | (exponent_mask << fraction_bits) | payload,
+                invalid: info.signaling_nan,
+                overflow: false,
+                underflow: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if exponent == 0x7FFF {
+            return X87FloatConversion {
+                bits: sign_bit | (exponent_mask << fraction_bits),
+                invalid: false,
+                overflow: false,
+                underflow: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+        if info.zero {
+            return X87FloatConversion {
+                bits: sign_bit,
+                invalid: false,
+                overflow: false,
+                underflow: false,
+                inexact: false,
+                rounded_up: false,
+            };
+        }
+
+        // True and pseudo-denormals both use the minimum binary80 exponent;
+        // the explicit integer bit determines their leading-value exponent.
+        let effective_exponent = if exponent == 0 { 1 } else { exponent };
+        let extended_unbiased = effective_exponent as i32 - 16383;
+        let highest = 63 - significand.leading_zeros() as i32;
+        let value_exponent = extended_unbiased - 63 + highest;
+        let target_bias = (1i32 << (exponent_bits - 1)) - 1;
+        let minimum_normal_exponent = 1 - target_bias;
+        let maximum_normal_exponent = target_bias;
+        let precision = fraction_bits + 1;
+
+        let overflow = |rounded_up: bool| {
+            let infinity = match rounding & 3 {
+                0 => true,
+                1 => info.sign,
+                2 => !info.sign,
+                3 => false,
+                _ => unreachable!(),
+            };
+            let magnitude = if infinity {
+                exponent_mask << fraction_bits
+            } else {
+                ((exponent_mask - 1) << fraction_bits) | fraction_mask
+            };
+            X87FloatConversion {
+                bits: sign_bit | magnitude,
+                invalid: false,
+                overflow: true,
+                underflow: false,
+                inexact: true,
+                rounded_up,
+            }
+        };
+
+        if value_exponent > maximum_normal_exponent {
+            return overflow(match rounding & 3 {
+                0 => true,
+                1 => info.sign,
+                2 => !info.sign,
+                3 => false,
+                _ => unreachable!(),
+            });
+        }
+
+        if value_exponent >= minimum_normal_exponent {
+            let shift = highest + 1 - precision as i32;
+            let (mut rounded, inexact, increment) =
+                Self::x86_x87_round_shift(significand as u128, shift, rounding, info.sign);
+            let mut result_exponent = value_exponent;
+            if rounded >= 1u128 << precision {
+                rounded >>= 1;
+                result_exponent += 1;
+            }
+            if result_exponent > maximum_normal_exponent {
+                let infinity = match rounding & 3 {
+                    0 => true,
+                    1 => info.sign,
+                    2 => !info.sign,
+                    3 => false,
+                    _ => unreachable!(),
+                };
+                if infinity {
+                    return overflow(increment);
+                }
+                return X87FloatConversion {
+                    bits: sign_bit | ((exponent_mask - 1) << fraction_bits) | fraction_mask,
+                    invalid: false,
+                    overflow: false,
+                    underflow: false,
+                    inexact: true,
+                    rounded_up: increment,
+                };
+            }
+            let fraction = (rounded as u64) & fraction_mask;
+            return X87FloatConversion {
+                bits: sign_bit
+                    | ((result_exponent + target_bias) as u64) << fraction_bits
+                    | fraction,
+                invalid: false,
+                overflow: false,
+                underflow: false,
+                inexact,
+                rounded_up: increment,
+            };
+        }
+
+        // Subnormal payload units are 2^(emin-fraction_bits). Divide the
+        // binary80 integer significand by that unit, then round once.
+        let shift = 63 + minimum_normal_exponent - fraction_bits as i32 - extended_unbiased;
+        let (rounded, inexact, increment) =
+            Self::x86_x87_round_shift(significand as u128, shift, rounding, info.sign);
+        let (encoded_exponent, fraction) = if rounded >= 1u128 << fraction_bits {
+            (1u64, 0u64)
+        } else {
+            (0u64, rounded as u64)
+        };
+        X87FloatConversion {
+            bits: sign_bit | (encoded_exponent << fraction_bits) | fraction,
+            invalid: false,
+            overflow: false,
+            // Intel detects tininess before rounding for x87 narrowing stores:
+            // an inexact value below the minimum normal magnitude raises UE
+            // even when rounding promotes it to the minimum normal payload.
+            underflow: inexact,
+            inexact,
+            rounded_up: increment,
+        }
+    }
+
+    /// Widen an IEEE binary32/binary64 payload into x87 double-extended
+    /// precision without host floating-point conversion. Returns the raw
+    /// binary80 value plus source SNaN and denormal classifications. SNaNs are
+    /// quieted in the returned masked-response value.
+    fn x86_x87_widen_ieee(
+        bits: u64,
+        exponent_bits: u32,
+        fraction_bits: u32,
+    ) -> ([u8; 10], bool, bool) {
+        let sign = bits >> (exponent_bits + fraction_bits) & 1;
+        let exponent_mask = (1u64 << exponent_bits) - 1;
+        let fraction_mask = (1u64 << fraction_bits) - 1;
+        let exponent = (bits >> fraction_bits) & exponent_mask;
+        let fraction = bits & fraction_mask;
+        let bias = (1i32 << (exponent_bits - 1)) - 1;
+        let (significand, extended_exponent, signaling_nan, denormal) = if exponent == exponent_mask
+        {
+            let signaling_nan = fraction != 0 && fraction & (1 << (fraction_bits - 1)) == 0;
+            let mut significand = (1u64 << 63) | (fraction << (63 - fraction_bits));
+            if signaling_nan {
+                significand |= 1u64 << 62;
+            }
+            (significand, 0x7FFF, signaling_nan, false)
+        } else if exponent == 0 {
+            if fraction == 0 {
+                (0, 0, false, false)
+            } else {
+                let highest = 63 - fraction.leading_zeros();
+                let unbiased = 1 - bias - fraction_bits as i32 + highest as i32;
+                (
+                    fraction << (63 - highest),
+                    (unbiased + 16383) as u16,
+                    false,
+                    true,
+                )
+            }
+        } else {
+            (
+                ((1u64 << fraction_bits) | fraction) << (63 - fraction_bits),
+                (exponent as i32 - bias + 16383) as u16,
+                false,
+                false,
+            )
+        };
+        let exponent_sign = extended_exponent | ((sign as u16) << 15);
+        let mut raw = [0u8; 10];
+        raw[..8].copy_from_slice(&significand.to_le_bytes());
+        raw[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+        (raw, signaling_nan, denormal)
+    }
+
+    /// Return the architecturally rounded 80-bit encoding of an x87 load
+    /// constant. Values were cross-checked byte-for-byte for all FCW.RC modes
+    /// against an x86-64 execution probe. Every constant is positive, so RC=01
+    /// (down) and RC=11 (truncate) select the lower neighbor, while RC=10 (up)
+    /// selects the upper neighbor. FLD1 and FLDZ are exact.
+    fn x86_x87_constant(constant: X86X87Constant, control_word: u16) -> [u8; 10] {
+        let rc = (control_word >> 10) & 3;
+        let (nearest, lower, upper, exponent): (u64, u64, u64, u16) = match constant {
+            X86X87Constant::One => (
+                0x8000_0000_0000_0000,
+                0x8000_0000_0000_0000,
+                0x8000_0000_0000_0000,
+                0x3FFF,
+            ),
+            X86X87Constant::Log2Ten => (
+                0xD49A_784B_CD1B_8AFE,
+                0xD49A_784B_CD1B_8AFE,
+                0xD49A_784B_CD1B_8AFF,
+                0x4000,
+            ),
+            X86X87Constant::Log2E => (
+                0xB8AA_3B29_5C17_F0BC,
+                0xB8AA_3B29_5C17_F0BB,
+                0xB8AA_3B29_5C17_F0BC,
+                0x3FFF,
+            ),
+            X86X87Constant::Pi => (
+                0xC90F_DAA2_2168_C235,
+                0xC90F_DAA2_2168_C234,
+                0xC90F_DAA2_2168_C235,
+                0x4000,
+            ),
+            X86X87Constant::Log10Two => (
+                0x9A20_9A84_FBCF_F799,
+                0x9A20_9A84_FBCF_F798,
+                0x9A20_9A84_FBCF_F799,
+                0x3FFD,
+            ),
+            X86X87Constant::LnTwo => (
+                0xB172_17F7_D1CF_79AC,
+                0xB172_17F7_D1CF_79AB,
+                0xB172_17F7_D1CF_79AC,
+                0x3FFE,
+            ),
+            X86X87Constant::Zero => (0, 0, 0, 0),
+        };
+        let significand = match rc {
+            0 => nearest,
+            1 | 3 => lower,
+            2 => upper,
+            _ => unreachable!(),
+        };
+        let mut raw = [0u8; 10];
+        raw[..8].copy_from_slice(&significand.to_le_bytes());
+        raw[8..].copy_from_slice(&exponent.to_le_bytes());
+        raw
+    }
+
+    fn x86_x87_environment_len(width: X86X87EnvWidth) -> usize {
+        match width {
+            X86X87EnvWidth::W16 => 14,
+            X86X87EnvWidth::W32 => 28,
+        }
+    }
+
+    /// Construct the protected-mode legacy x87 environment image used in
+    /// 64-bit mode. Legacy formats save only 16 or 32 pointer-offset bits and
+    /// do not preserve the upper halves of FIP/FDP. Segment selectors are not
+    /// represented by SMIR and are stored as zero (the architecturally
+    /// permitted value on processors that deprecate FCS/FDS).
+    fn x86_x87_environment_image(
+        state: &crate::smir::X86X87State,
+        width: X86X87EnvWidth,
+    ) -> ([u8; 28], usize) {
+        let mut image = [0u8; 28];
+        match width {
+            X86X87EnvWidth::W16 => {
+                image[0..2].copy_from_slice(&state.control_word.to_le_bytes());
+                image[2..4].copy_from_slice(&state.status_word.to_le_bytes());
+                image[4..6].copy_from_slice(&state.tag_word.to_le_bytes());
+                image[6..8].copy_from_slice(&(state.instr_ptr as u16).to_le_bytes());
+                // 8:10 is FCS, which is modeled as zero.
+                image[10..12].copy_from_slice(&(state.data_ptr as u16).to_le_bytes());
+                // 12:14 is FDS, which is modeled as zero. The protected-mode
+                // 16-bit format has no FOP field.
+            }
+            X86X87EnvWidth::W32 => {
+                image[0..2].copy_from_slice(&state.control_word.to_le_bytes());
+                image[4..6].copy_from_slice(&state.status_word.to_le_bytes());
+                image[8..10].copy_from_slice(&state.tag_word.to_le_bytes());
+                image[12..16].copy_from_slice(&(state.instr_ptr as u32).to_le_bytes());
+                // 16:18 is FCS; FOP occupies bits 26:16 of this dword.
+                image[18..20].copy_from_slice(&(state.last_opcode & 0x07FF).to_le_bytes());
+                image[20..24].copy_from_slice(&(state.data_ptr as u32).to_le_bytes());
+                // 24:26 is FDS and all remaining fields are reserved zero.
+            }
+        }
+        (image, Self::x86_x87_environment_len(width))
+    }
+
+    fn restore_x86_x87_environment(
+        state: &mut crate::smir::X86X87State,
+        image: &[u8],
+        width: X86X87EnvWidth,
+    ) {
+        match width {
+            X86X87EnvWidth::W16 => {
+                state.control_word = u16::from_le_bytes(image[0..2].try_into().unwrap());
+                state.status_word = u16::from_le_bytes(image[2..4].try_into().unwrap());
+                state.tag_word = u16::from_le_bytes(image[4..6].try_into().unwrap());
+                state.instr_ptr = u16::from_le_bytes(image[6..8].try_into().unwrap()) as u64;
+                state.data_ptr = u16::from_le_bytes(image[10..12].try_into().unwrap()) as u64;
+                // No FOP is present in the protected-mode 16-bit image; retain
+                // the current opcode register rather than inventing a source.
+            }
+            X86X87EnvWidth::W32 => {
+                state.control_word = u16::from_le_bytes(image[0..2].try_into().unwrap());
+                state.status_word = u16::from_le_bytes(image[4..6].try_into().unwrap());
+                state.tag_word = u16::from_le_bytes(image[8..10].try_into().unwrap());
+                state.instr_ptr = u32::from_le_bytes(image[12..16].try_into().unwrap()) as u64;
+                state.last_opcode = u16::from_le_bytes(image[18..20].try_into().unwrap()) & 0x07FF;
+                state.data_ptr = u32::from_le_bytes(image[20..24].try_into().unwrap()) as u64;
+            }
+        }
+    }
+
+    fn x86_x87_state_image(
+        state: &crate::smir::X86X87State,
+        width: X86X87EnvWidth,
+    ) -> ([u8; 108], usize) {
+        let (environment, environment_len) = Self::x86_x87_environment_image(state, width);
+        let mut image = [0u8; 108];
+        image[..environment_len].copy_from_slice(&environment[..environment_len]);
+        // Unlike the full tag word, register payloads are serialized in
+        // logical ST(0)..ST(7) order relative to the saved TOP.
+        for logical in 0..8u8 {
+            let physical = state.physical_index(logical);
+            let offset = environment_len + logical as usize * 10;
+            image[offset..offset + 10].copy_from_slice(&state.regs[physical]);
+        }
+        (image, environment_len + 80)
+    }
+
+    fn restore_x86_x87_state(
+        state: &mut crate::smir::X86X87State,
+        image: &[u8],
+        width: X86X87EnvWidth,
+    ) {
+        let environment_len = Self::x86_x87_environment_len(width);
+        Self::restore_x86_x87_environment(state, &image[..environment_len], width);
+        for logical in 0..8u8 {
+            let physical = state.physical_index(logical);
+            let offset = environment_len + logical as usize * 10;
+            state.regs[physical].copy_from_slice(&image[offset..offset + 10]);
+        }
+    }
+
+    fn x86_fxsave_image(ctx: &SmirContext, rex_w: bool) -> [u8; 464] {
+        let mut image = [0u8; 464];
+        let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+            return image;
+        };
+        image[0..2].copy_from_slice(&x86.x87.control_word.to_le_bytes());
+        image[2..4].copy_from_slice(&x86.x87.status_word.to_le_bytes());
+        image[4] = x86.x87.abridged_tag_word();
+        image[6..8].copy_from_slice(&(x86.x87.last_opcode & 0x07FF).to_le_bytes());
+        if rex_w {
+            image[8..16].copy_from_slice(&x86.x87.instr_ptr.to_le_bytes());
+            image[16..24].copy_from_slice(&x86.x87.data_ptr.to_le_bytes());
+        } else {
+            image[8..12].copy_from_slice(&(x86.x87.instr_ptr as u32).to_le_bytes());
+            image[16..20].copy_from_slice(&(x86.x87.data_ptr as u32).to_le_bytes());
+        }
+        image[24..28].copy_from_slice(&x86.mxcsr.to_le_bytes());
+        image[28..32].copy_from_slice(&0x0000_FFFFu32.to_le_bytes());
+
+        // Register payload slots are in logical ST(0)..ST(7) order even though
+        // abridged FTW bits above are in physical R0..R7 order.
+        for logical in 0..8u8 {
+            let physical = x86.x87.physical_index(logical);
+            let offset = 32 + logical as usize * 16;
+            image[offset..offset + 10].copy_from_slice(&x86.x87.regs[physical]);
+        }
+        for register in 0..16 {
+            let offset = 160 + register * 16;
+            image[offset..offset + 8].copy_from_slice(&x86.xmm[register][0].to_le_bytes());
+            image[offset + 8..offset + 16].copy_from_slice(&x86.xmm[register][1].to_le_bytes());
+        }
+        image
+    }
+
+    fn restore_x86_fxsave_image(ctx: &mut SmirContext, image: &[u8; 512], rex_w: bool) {
+        let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+            return;
+        };
+        x86.x87.control_word = u16::from_le_bytes(image[0..2].try_into().unwrap());
+        x86.x87.status_word = u16::from_le_bytes(image[2..4].try_into().unwrap());
+        let abridged_tag = image[4];
+        x86.x87.last_opcode = u16::from_le_bytes(image[6..8].try_into().unwrap()) & 0x07FF;
+        if rex_w {
+            x86.x87.instr_ptr = u64::from_le_bytes(image[8..16].try_into().unwrap());
+            x86.x87.data_ptr = u64::from_le_bytes(image[16..24].try_into().unwrap());
+        } else {
+            x86.x87.instr_ptr = u32::from_le_bytes(image[8..12].try_into().unwrap()) as u64;
+            x86.x87.data_ptr = u32::from_le_bytes(image[16..20].try_into().unwrap()) as u64;
+        }
+        for logical in 0..8u8 {
+            let physical = x86.x87.physical_index(logical);
+            let offset = 32 + logical as usize * 16;
+            x86.x87.regs[physical].copy_from_slice(&image[offset..offset + 10]);
+        }
+        x86.x87.restore_abridged_tag_word(abridged_tag);
+        x86.mxcsr = u32::from_le_bytes(image[24..28].try_into().unwrap());
+        for register in 0..16 {
+            let offset = 160 + register * 16;
+            x86.xmm[register][0] =
+                u64::from_le_bytes(image[offset..offset + 8].try_into().unwrap());
+            x86.xmm[register][1] =
+                u64::from_le_bytes(image[offset + 8..offset + 16].try_into().unwrap());
+        }
     }
 
     /// Execute block terminator
@@ -6130,6 +9031,151 @@ impl SmirInterpreter {
             FpRoundMode::RoundDown => value.floor(),
             FpRoundMode::Dynamic => unreachable!(),
         }
+    }
+
+    fn x86_int_to_fp_bits(&self, ctx: &SmirContext, value: i128, elem: VecElementType) -> u64 {
+        let mode = self.dynamic_fp_round_mode(ctx);
+        match elem {
+            VecElementType::F32 => {
+                let nearest = value as f32;
+                let nearest_int = nearest as i128;
+                if nearest_int == value {
+                    return nearest.to_bits() as u64;
+                }
+                let (lo, hi) = if nearest_int < value {
+                    (nearest, Self::next_up_f32(nearest))
+                } else {
+                    (Self::next_down_f32(nearest), nearest)
+                };
+                let rounded = match mode {
+                    FpRoundMode::RoundDown => lo,
+                    FpRoundMode::RoundUp => hi,
+                    FpRoundMode::RoundTowardZero => {
+                        if value < 0 {
+                            hi
+                        } else {
+                            lo
+                        }
+                    }
+                    _ => nearest,
+                };
+                rounded.to_bits() as u64
+            }
+            VecElementType::F64 => {
+                let nearest = value as f64;
+                let nearest_int = nearest as i128;
+                if nearest_int == value {
+                    return nearest.to_bits();
+                }
+                let (lo, hi) = if nearest_int < value {
+                    (nearest, Self::next_up_f64(nearest))
+                } else {
+                    (Self::next_down_f64(nearest), nearest)
+                };
+                let rounded = match mode {
+                    FpRoundMode::RoundDown => lo,
+                    FpRoundMode::RoundUp => hi,
+                    FpRoundMode::RoundTowardZero => {
+                        if value < 0 {
+                            hi
+                        } else {
+                            lo
+                        }
+                    }
+                    _ => nearest,
+                };
+                rounded.to_bits()
+            }
+            _ => 0,
+        }
+    }
+
+    fn x86_f64_to_f32_bits(&self, ctx: &SmirContext, value: f64) -> u32 {
+        self.x86_f64_to_f32_bits_mode(ctx, value, FpRoundMode::Dynamic)
+    }
+
+    fn x86_f64_to_f32_bits_mode(&self, ctx: &SmirContext, value: f64, mode: FpRoundMode) -> u32 {
+        let nearest = value as f32;
+        if value.is_nan() || value.is_infinite() || (nearest as f64) == value {
+            return nearest.to_bits();
+        }
+        let (lo, hi) = if nearest.is_infinite() {
+            if value.is_sign_negative() {
+                (f32::NEG_INFINITY, -f32::MAX)
+            } else {
+                (f32::MAX, f32::INFINITY)
+            }
+        } else if (nearest as f64) < value {
+            (nearest, Self::next_up_f32(nearest))
+        } else {
+            (Self::next_down_f32(nearest), nearest)
+        };
+        let mode = if mode == FpRoundMode::Dynamic {
+            self.dynamic_fp_round_mode(ctx)
+        } else {
+            mode
+        };
+        let rounded = match mode {
+            FpRoundMode::RoundDown => lo,
+            FpRoundMode::RoundUp => hi,
+            FpRoundMode::RoundTowardZero => {
+                if value.is_sign_negative() {
+                    hi
+                } else {
+                    lo
+                }
+            }
+            _ => nearest,
+        };
+        rounded.to_bits()
+    }
+
+    fn next_up_f32(value: f32) -> f32 {
+        if value == 0.0 {
+            return f32::from_bits(1);
+        }
+        let bits = value.to_bits();
+        f32::from_bits(if value.is_sign_negative() {
+            bits - 1
+        } else {
+            bits + 1
+        })
+    }
+
+    fn next_down_f32(value: f32) -> f32 {
+        if value == 0.0 {
+            return f32::from_bits(0x8000_0001);
+        }
+        let bits = value.to_bits();
+        f32::from_bits(if value.is_sign_negative() {
+            bits + 1
+        } else {
+            bits - 1
+        })
+    }
+
+    fn next_up_f64(value: f64) -> f64 {
+        if value == 0.0 {
+            return f64::from_bits(1);
+        }
+        let bits = value.to_bits();
+        f64::from_bits(if value.is_sign_negative() {
+            bits - 1
+        } else {
+            bits + 1
+        })
+    }
+
+    fn next_down_f64(value: f64) -> f64 {
+        if value == 0.0 {
+            return f64::from_bits(0x8000_0000_0000_0001);
+        }
+        let bits = value.to_bits();
+        f64::from_bits(if value.is_sign_negative() {
+            bits + 1
+        } else {
+            bits - 1
+        })
     }
 
     /// v6mpy product-term table: `(vsel, byte, ci, osel)` — which Vuu vector
@@ -7849,6 +10895,6714 @@ mod tests {
         (ctx.read_vreg(rax), ctx.flags.materialized.to_rflags())
     }
 
+    fn execute_lifted_x86(
+        bytes: &[u8],
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+    ) -> BlockResult {
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        let mut lifter = X86_64Lifter::strict();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        func.blocks[0].ops = result.ops;
+        SmirInterpreter::new().execute_block(ctx, memory, &func.blocks[0])
+    }
+
+    fn execute_lifted_x86_condition(
+        bytes: &[u8],
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+    ) -> bool {
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
+
+        let mut lifter = X86_64Lifter::strict();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+        let condition = match result.control_flow {
+            ControlFlow::CondBranchReg { cond, .. } => cond,
+            other => panic!("expected register conditional branch, got {other:?}"),
+        };
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        func.blocks[0].ops = result.ops;
+        SmirInterpreter::new().execute_block(ctx, memory, &func.blocks[0]);
+        ctx.read_vreg(condition) != 0
+    }
+
+    #[test]
+    fn lifted_cbw_cwde_cdqe_execute_with_x86_partial_write_semantics() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x1122_3344_5566_7780);
+        assert!(matches!(
+            execute_lifted_x86(&[0x66, 0x98], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_FF80, "CBW");
+
+        ctx.write_vreg(rax, 0x1122_3344_0000_8001);
+        execute_lifted_x86(&[0x98], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x0000_0000_FFFF_8001, "CWDE");
+
+        ctx.write_vreg(rax, 0x0000_0000_8000_0001);
+        execute_lifted_x86(&[0x48, 0x98], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0xFFFF_FFFF_8000_0001, "CDQE");
+    }
+
+    #[test]
+    fn lifted_popcnt_tzcnt_lzcnt_execute_results_aliases_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rbx, 0);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xF3, 0x0F, 0xB8, 0xC3], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 0, "POPCNT zero result");
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            0x442,
+            "POPCNT must preserve DF, set ZF, and clear CF/PF/AF/SF/OF"
+        );
+
+        ctx.write_vreg(rax, 0x0000_0000_0000_0100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xF3, 0x0F, 0xBC, 0xC0], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 8, "TZCNT source/destination alias");
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xC96);
+
+        ctx.write_vreg(rax, 0);
+        execute_lifted_x86(&[0xF3, 0x0F, 0xBC, 0xC0], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 32, "TZCNT zero input");
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xC97, "TZCNT CF");
+
+        ctx.write_vreg(rax, 0x8000_0000);
+        execute_lifted_x86(&[0xF3, 0x0F, 0xBD, 0xC0], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 0, "LZCNT high bit");
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD6, "LZCNT ZF");
+    }
+
+    #[test]
+    fn lifted_bit_tests_execute_partial_register_and_signed_memory_offsets() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x4000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_0000);
+        ctx.write_vreg(rcx, 15);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD6);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x66, 0x0F, 0xAB, 0xC8], &mut ctx, &mut memory); // BTS AX,CX
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_8000);
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD6);
+
+        memory
+            .write(0x2008, &0x8000_0000_0000_0000u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x2010);
+        ctx.write_vreg(rcx, u64::MAX); // signed bit index -1 => [base-8], bit 63
+        execute_lifted_x86(&[0x48, 0x0F, 0xA3, 0x08], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+
+        memory.write(0x2008, &1u64.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(rcx, 64); // +1 qword, bit 0
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD6);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x48, 0x0F, 0xA3, 0x08], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+
+        memory.write(0x200C, &0x8000_0000u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x2010);
+        ctx.write_vreg(rcx, 0xFFFF_FFFF); // signed 32-bit index -1 => [base-4], bit31
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD6);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x0F, 0xA3, 0x08], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_bit_test_updates_execute_immediate_lock_and_fault_ordering() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x4000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x2200);
+        memory.write(0x2200, &0u32.to_le_bytes()).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x0F, 0xBA, 0x28, 37], &mut ctx, &mut memory); // BTS [RAX],37 => bit5
+        let mut dword = [0u8; 4];
+        memory.read(0x2200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 1 << 5);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            0xCD6,
+            "old bit was zero"
+        );
+
+        ctx.write_vreg(rcx, 3);
+        memory.write(0x2200, &0u64.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xF0, 0x48, 0x0F, 0xBB, 0x08], &mut ctx, &mut memory); // LOCK BTC [RAX],RCX
+        let mut qword = [0u8; 8];
+        memory.read(0x2200, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 1 << 3);
+
+        let mut inner = FlatMemory::new(0x4000);
+        inner.write(0x2200, &1u32.to_le_bytes()).unwrap();
+        let mut read_only = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rax, 0x2200);
+        ctx.write_vreg(rcx, 0);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD6);
+        ctx.flags.lazy = None;
+        let exit = execute_lifted_x86(&[0x0F, 0xB3, 0x08], &mut ctx, &mut read_only);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            0xCD6,
+            "faulting BTR store must not commit CF"
+        );
+    }
+
+    #[test]
+    fn lifted_loop_family_executes_conditions_counter_width_and_preserves_flags() {
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rcx, 2);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        assert!(execute_lifted_x86_condition(
+            &[0xE2, 0],
+            &mut ctx,
+            &mut memory
+        ));
+        assert_eq!(ctx.read_vreg(rcx), 1);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+
+        assert!(!execute_lifted_x86_condition(
+            &[0xE2, 0],
+            &mut ctx,
+            &mut memory
+        ));
+        assert_eq!(ctx.read_vreg(rcx), 0);
+
+        ctx.write_vreg(rcx, 0xFFFF_FFFF_0000_0001);
+        assert!(!execute_lifted_x86_condition(
+            &[0x67, 0xE2, 0],
+            &mut ctx,
+            &mut memory
+        ));
+        assert_eq!(ctx.read_vreg(rcx), 0, "67h LOOP must decrement ECX");
+
+        ctx.write_vreg(rcx, 0);
+        assert!(execute_lifted_x86_condition(
+            &[0xE3, 0],
+            &mut ctx,
+            &mut memory
+        ));
+        assert_eq!(ctx.read_vreg(rcx), 0, "JRCXZ must not decrement");
+
+        ctx.write_vreg(rcx, 2);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x42); // ZF=1
+        ctx.flags.lazy = None;
+        assert!(execute_lifted_x86_condition(
+            &[0xE1, 0],
+            &mut ctx,
+            &mut memory
+        ));
+        ctx.write_vreg(rcx, 2);
+        assert!(!execute_lifted_x86_condition(
+            &[0xE0, 0],
+            &mut ctx,
+            &mut memory
+        ));
+    }
+
+    #[test]
+    fn lifted_lahf_sahf_execute_status_flag_transfers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x1122_3344_5566_AA88);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x8D5);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x9F], &mut ctx, &mut memory);
+        assert_eq!(
+            ctx.read_vreg(rax),
+            0x1122_3344_5566_D788,
+            "LAHF must replace AH only and force bit 1"
+        );
+
+        ctx.write_vreg(rax, 0x0000_0000_0000_D500);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xC02); // OF|DF
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x9E], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "SAHF");
+    }
+
+    #[test]
+    fn lifted_pushf_popf_execute_stack_and_representable_flags() {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rsp, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x9C], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rsp), 0x1F8);
+        let mut pushed = [0u8; 8];
+        memory.read(0x1F8, &mut pushed).unwrap();
+        assert_eq!(u64::from_le_bytes(pushed), 0xCD7);
+
+        memory.write(0x1F8, &0x8D7u64.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0x9D], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rsp), 0x200);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0x8D7);
+    }
+
+    #[test]
+    fn lifted_moffs_pop_rm_and_group4_execute_memory_register_effects() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x5000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        memory.write(0x2000, &[0xA5]).unwrap();
+        ctx.write_vreg(rax, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0xA0, 0x00, 0x20, 0, 0, 0, 0, 0, 0], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_77A5, "MOV AL,moffs8");
+
+        ctx.write_vreg(rax, 0xAABB_CCDD_EEFF_1020);
+        execute_lifted_x86(&[0xA3, 0x00, 0x21, 0, 0, 0, 0, 0, 0], &mut ctx, &mut memory);
+        let mut dword = [0u8; 4];
+        memory.read(0x2100, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0xEEFF_1020, "MOV moffs32,EAX");
+
+        ctx.write_vreg(rsp, 0x3000);
+        memory
+            .write(0x3000, &0x0123_4567_89AB_CDEFu64.to_le_bytes())
+            .unwrap();
+        execute_lifted_x86(&[0x8F, 0x44, 0x24, 0x08], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rsp), 0x3008);
+        let mut popped = [0u8; 8];
+        memory.read(0x3010, &mut popped).unwrap();
+        assert_eq!(u64::from_le_bytes(popped), 0x0123_4567_89AB_CDEF);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_77FF);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x1); // CF set
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xFE, 0xC0], &mut ctx, &mut memory); // INC AL
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_7700);
+        assert!(ctx.flags.materialized.cf, "INC must preserve CF");
+        assert!(ctx.flags.materialized.zf, "FF + 1 must set ZF");
+
+        memory.write(0x2200, &[0]).unwrap();
+        ctx.write_vreg(rax, 0x2200);
+        execute_lifted_x86(&[0xFE, 0x08], &mut ctx, &mut memory); // DEC byte [RAX]
+        let mut byte = [0u8; 1];
+        memory.read(0x2200, &mut byte).unwrap();
+        assert_eq!(byte[0], 0xFF);
+
+        let mut inner = FlatMemory::new(0x5000);
+        inner
+            .write(0x3000, &0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes())
+            .unwrap();
+        let mut read_only = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rsp, 0x3000);
+        let exit = execute_lifted_x86(&[0x8F, 0x44, 0x24, 0x08], &mut ctx, &mut read_only);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        assert_eq!(
+            ctx.read_vreg(rsp),
+            0x3000,
+            "faulting POP r/m destination must not commit RSP"
+        );
+
+        let mut inner = FlatMemory::new(0x5000);
+        inner.write(0x2200, &[0]).unwrap();
+        let mut read_only = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rax, 0x2200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        let exit = execute_lifted_x86(&[0xFE, 0x08], &mut ctx, &mut read_only);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            0xCD7,
+            "faulting Group-4 memory update must not commit flags"
+        );
+
+        let mut wide_memory = FlatMemory::new(0x30000);
+        wide_memory
+            .write(0x1FFFF, &0xABCDu16.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rsp, 0x1FFFF);
+        execute_lifted_x86(&[0x66, 0x8F, 0xC4], &mut ctx, &mut wide_memory); // POP SP
+        assert_eq!(
+            ctx.read_vreg(rsp),
+            0x2ABCD,
+            "POP SP must take upper bits from the incremented RSP"
+        );
+    }
+
+    #[test]
+    fn lifted_memory_rmw_store_faults_preserve_flags_memory_and_registers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let cases: &[(&str, &[u8])] = &[
+            ("add [rax],ecx", &[0x01, 0x08]),
+            ("adc [rax],1", &[0x83, 0x10, 0x01]),
+            ("shl dword [rax],1", &[0xC1, 0x20, 0x01]),
+            ("ror byte [rax],1", &[0xD0, 0x08]),
+            ("rcr qword [rax],cl", &[0x48, 0xD3, 0x18]),
+            ("neg dword [rax]", &[0xF7, 0x18]),
+            ("inc qword [rax]", &[0x48, 0xFF, 0x00]),
+            ("dec word [rax]", &[0x66, 0xFF, 0x08]),
+        ];
+
+        for (name, bytes) in cases {
+            let seed = 0x0123_4567_89AB_CDEFu64.to_le_bytes();
+            let mut inner = FlatMemory::new(0x1000);
+            inner.write(0x200, &seed).unwrap();
+            let mut memory = StoreFaultMemory {
+                inner,
+                stores_before_fault: 0,
+            };
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.write_vreg(rcx, 1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+                ),
+                "{name}",
+            );
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+            assert_eq!(ctx.read_vreg(rax), 0x200, "{name}: RAX");
+            assert_eq!(ctx.read_vreg(rcx), 1, "{name}: RCX");
+            let mut actual = [0u8; 8];
+            memory.inner.read(0x200, &mut actual).unwrap();
+            assert_eq!(actual, seed, "{name}: memory");
+        }
+    }
+
+    #[test]
+    fn lifted_memory_rmw_success_commits_results_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x200);
+
+        memory.write(0x200, &1u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rcx, 2);
+        execute_lifted_x86(&[0x01, 0x08], &mut ctx, &mut memory); // ADD [RAX],ECX
+        let mut dword = [0u8; 4];
+        memory.read(0x200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 3);
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+        assert!(!ctx.flags.materialized.cf);
+
+        memory.write(0x200, &[0x80]).unwrap();
+        execute_lifted_x86(&[0xD0, 0x20], &mut ctx, &mut memory); // SHL byte [RAX],1
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 0);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+        assert!(ctx.flags.materialized.cf);
+
+        memory.write(0x200, &1u32.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xF7, 0x18], &mut ctx, &mut memory); // NEG dword [RAX]
+        memory.read(0x200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), u32::MAX);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf);
+        assert!(ctx.flags.materialized.sf);
+
+        memory.write(0x200, &u64::MAX.to_le_bytes()).unwrap();
+        ctx.flags.materialized.cf = true;
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x48, 0xFF, 0x00], &mut ctx, &mut memory); // INC qword [RAX]
+        let mut qword = [0u8; 8];
+        memory.read(0x200, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 0);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf, "INC preserves CF");
+        assert!(ctx.flags.materialized.zf);
+    }
+
+    #[test]
+    fn lifted_locked_memory_rmw_faults_preserve_flags_memory_and_registers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        for (name, bytes) in [
+            ("LOCK ADD", &[0xF0, 0x01, 0x08][..]),
+            ("LOCK ADC immediate", &[0xF0, 0x83, 0x10, 0x01][..]),
+            ("LOCK INC", &[0xF0, 0x48, 0xFF, 0x00][..]),
+            ("LOCK NOT", &[0xF0, 0xF7, 0x10][..]),
+            ("LOCK NEG", &[0xF0, 0xF7, 0x18][..]),
+        ] {
+            let seed = 0x0123_4567_89AB_CDEFu64.to_le_bytes();
+            let mut inner = FlatMemory::new(0x1000);
+            inner.write(0x200, &seed).unwrap();
+            let mut memory = StoreFaultMemory {
+                inner,
+                stores_before_fault: 0,
+            };
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.write_vreg(rcx, 1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+                ),
+                "{name}: {exit:?}",
+            );
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+            assert_eq!(ctx.read_vreg(rax), 0x200, "{name}: RAX");
+            assert_eq!(ctx.read_vreg(rcx), 1, "{name}: RCX");
+            let mut actual = [0u8; 8];
+            memory.inner.read(0x200, &mut actual).unwrap();
+            assert_eq!(actual, seed, "{name}: memory");
+        }
+    }
+
+    #[test]
+    fn lifted_locked_memory_rmw_success_commits_atomic_results_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x200);
+
+        memory.write(0x200, &u32::MAX.to_le_bytes()).unwrap();
+        ctx.write_vreg(rcx, 1);
+        execute_lifted_x86(&[0xF0, 0x01, 0x08], &mut ctx, &mut memory);
+        let mut dword = [0u8; 4];
+        memory.read(0x200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+        assert!(ctx.flags.materialized.cf);
+
+        memory.write(0x200, &5u32.to_le_bytes()).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(1);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xF0, 0x83, 0x10, 0x01], &mut ctx, &mut memory);
+        memory.read(0x200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 7, "ADC includes incoming CF");
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.cf);
+        assert!(!ctx.flags.materialized.zf);
+
+        memory.write(0x200, &u64::MAX.to_le_bytes()).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(1);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xF0, 0x48, 0xFF, 0x00], &mut ctx, &mut memory);
+        let mut qword = [0u8; 8];
+        memory.read(0x200, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 0);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf, "LOCK INC preserves CF");
+        assert!(ctx.flags.materialized.zf);
+
+        memory.write(0x200, &[0x0F]).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xF0, 0xF6, 0x10], &mut ctx, &mut memory);
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 0xF0);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "LOCK NOT flags");
+
+        memory.write(0x200, &1u32.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xF0, 0xF7, 0x18], &mut ctx, &mut memory);
+        memory.read(0x200, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), u32::MAX);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf);
+        assert!(ctx.flags.materialized.sf);
+    }
+
+    #[test]
+    fn lifted_group4_legacy_high_bytes_and_rex_low_bytes_are_distinct() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_7FFF);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(1); // CF=1 must survive INC.
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xFE, 0xC4], &mut ctx, &mut memory); // INC AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_80FF);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf);
+        assert!(ctx.flags.materialized.of);
+        assert!(ctx.flags.materialized.sf);
+        assert!(ctx.flags.materialized.af);
+        assert!(!ctx.flags.materialized.zf);
+        assert!(!ctx.flags.materialized.pf);
+
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0011);
+        execute_lifted_x86(&[0xFE, 0xCF], &mut ctx, &mut memory); // DEC BH
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_FF11);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.cf);
+        assert!(!ctx.flags.materialized.of);
+        assert!(ctx.flags.materialized.sf);
+        assert!(ctx.flags.materialized.af);
+        assert!(!ctx.flags.materialized.zf);
+        assert!(ctx.flags.materialized.pf);
+
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7F);
+        execute_lifted_x86(&[0x40, 0xFE, 0xC4], &mut ctx, &mut memory); // INC SPL
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE80);
+    }
+
+    #[test]
+    fn lifted_movzx_movsx_read_legacy_high_bytes_and_rex_low_bytes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_ABCD);
+        execute_lifted_x86(&[0x0F, 0xB6, 0xC4], &mut ctx, &mut memory); // MOVZX EAX,AH
+        assert_eq!(ctx.read_vreg(rax), 0xAB);
+
+        ctx.write_vreg(rax, 0x0000_0000_0000_80FF);
+        execute_lifted_x86(&[0x0F, 0xBE, 0xCC], &mut ctx, &mut memory); // MOVSX ECX,AH
+        assert_eq!(ctx.read_vreg(rcx), 0xFFFF_FF80);
+
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7E);
+        execute_lifted_x86(&[0x40, 0x0F, 0xB6, 0xC4], &mut ctx, &mut memory); // MOVZX EAX,SPL
+        assert_eq!(ctx.read_vreg(rax), 0x7E);
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE7E);
+    }
+
+    #[test]
+    fn lifted_mov_forms_read_and_write_legacy_high_bytes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0xB4, 0x5A], &mut ctx, &mut memory); // MOV AH,5Ah
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_5A88);
+        execute_lifted_x86(&[0xC6, 0xC4, 0x33], &mut ctx, &mut memory); // MOV AH,33h
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_3388);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_1234);
+        execute_lifted_x86(&[0x88, 0xE0], &mut ctx, &mut memory); // MOV AL,AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_1212);
+        ctx.write_vreg(rax, 0x1122_3344_5566_1234);
+        execute_lifted_x86(&[0x88, 0xC4], &mut ctx, &mut memory); // MOV AH,AL
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_3434);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_A5CC);
+        ctx.write_vreg(rbx, 0x200);
+        execute_lifted_x86(&[0x88, 0x23], &mut ctx, &mut memory); // MOV [RBX],AH
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 0xA5);
+        memory.write(0x200, &[0x6D]).unwrap();
+        execute_lifted_x86(&[0x8A, 0x23], &mut ctx, &mut memory); // MOV AH,[RBX]
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_6DCC);
+
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7F);
+        execute_lifted_x86(&[0x40, 0xB4, 0x5A], &mut ctx, &mut memory); // MOV SPL,5Ah
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE5A);
+    }
+
+    #[test]
+    fn lifted_test_reads_legacy_high_bytes_without_modifying_registers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_F0AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0F55);
+        execute_lifted_x86(&[0x84, 0xFC], &mut ctx, &mut memory); // TEST AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_F0AA);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0F55);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+        assert!(!ctx.flags.materialized.sf);
+        assert!(!ctx.flags.materialized.cf);
+        assert!(!ctx.flags.materialized.of);
+
+        memory.write(0x200, &[0x80]).unwrap();
+        ctx.write_vreg(rbx, 0x200);
+        execute_lifted_x86(&[0x84, 0x23], &mut ctx, &mut memory); // TEST [RBX],AH
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+        assert!(ctx.flags.materialized.sf);
+    }
+
+    #[test]
+    fn lifted_binary_alu_reads_and_writes_legacy_high_bytes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_01AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0255);
+        execute_lifted_x86(&[0x00, 0xFC], &mut ctx, &mut memory); // ADD AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_03AA);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0255);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_02AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0555);
+        execute_lifted_x86(&[0x28, 0xE7], &mut ctx, &mut memory); // SUB BH,AH
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0355);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_F0AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0F55);
+        execute_lifted_x86(&[0x30, 0xFC], &mut ctx, &mut memory); // XOR AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_FFAA);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_80AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_8055);
+        execute_lifted_x86(&[0x38, 0xFC], &mut ctx, &mut memory); // CMP AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_80AA);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_8055);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+
+        memory.write(0x200, &[2]).unwrap();
+        ctx.write_vreg(rax, 0x1122_3344_5566_01AA);
+        ctx.write_vreg(rbx, 0x200);
+        execute_lifted_x86(&[0x02, 0x23], &mut ctx, &mut memory); // ADD AH,[RBX]
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_03AA);
+        execute_lifted_x86(&[0x00, 0x23], &mut ctx, &mut memory); // ADD [RBX],AH
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 5);
+
+        ctx.write_vreg(rax, 1);
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7F);
+        execute_lifted_x86(&[0x40, 0x00, 0xC4], &mut ctx, &mut memory); // ADD SPL,AL
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE80);
+
+        ctx.write_vreg(rax, 0xFFFF_FFFF_1234_56AA);
+        execute_lifted_x86(&[0x34, 0xFF], &mut ctx, &mut memory); // XOR AL,FFh
+        assert_eq!(ctx.read_vreg(rax), 0xFFFF_FFFF_1234_5655);
+        execute_lifted_x86(&[0x35, 0x55, 0x56, 0x34, 0x12], &mut ctx, &mut memory); // XOR EAX,12345655h
+        assert_eq!(ctx.read_vreg(rax), 0);
+    }
+
+    #[test]
+    fn lifted_immediate_shift_and_group3_forms_handle_legacy_high_bytes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_01AA);
+        execute_lifted_x86(&[0x80, 0xC4, 1], &mut ctx, &mut memory); // ADD AH,1
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_02AA);
+        execute_lifted_x86(&[0x80, 0xFC, 2], &mut ctx, &mut memory); // CMP AH,2
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_02AA);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+
+        execute_lifted_x86(&[0xD0, 0xE4], &mut ctx, &mut memory); // SHL AH,1
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_04AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_1055);
+        execute_lifted_x86(&[0xC0, 0xCF, 4], &mut ctx, &mut memory); // ROR BH,4
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0155);
+
+        ctx.write_vreg(rcx, 0x1122_3344_5566_0101);
+        execute_lifted_x86(&[0xD2, 0xE5], &mut ctx, &mut memory); // SHL CH,CL
+        assert_eq!(ctx.read_vreg(rcx), 0x1122_3344_5566_0201);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_0FAA);
+        execute_lifted_x86(&[0xF6, 0xD4], &mut ctx, &mut memory); // NOT AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_F0AA);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0155);
+        execute_lifted_x86(&[0xF6, 0xDF], &mut ctx, &mut memory); // NEG BH
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_FF55);
+
+        execute_lifted_x86(&[0xF6, 0xC4, 0xF0], &mut ctx, &mut memory); // TEST AH,F0h
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+        ctx.write_vreg(rax, 0x1122_3344_5566_0304);
+        execute_lifted_x86(&[0xF6, 0xE4], &mut ctx, &mut memory); // MUL AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_000C);
+    }
+
+    #[test]
+    fn lifted_setcc_writes_legacy_high_bytes_and_rex_low_bytes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.flags.materialized = MaterializedFlags::from_rflags(1 << 6); // ZF=1
+        ctx.flags.lazy = None;
+        ctx.write_vreg(rax, 0x1122_3344_5566_AA55);
+        execute_lifted_x86(&[0x0F, 0x94, 0xC4], &mut ctx, &mut memory); // SETE AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0155);
+
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_AA55);
+        execute_lifted_x86(&[0x0F, 0x95, 0xC7], &mut ctx, &mut memory); // SETNE BH
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0055);
+
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE7F);
+        execute_lifted_x86(&[0x40, 0x0F, 0x94, 0xC4], &mut ctx, &mut memory); // SETE SPL
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE01);
+    }
+
+    #[test]
+    fn lifted_xchg_swaps_legacy_high_bytes_register_and_memory_forms() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_1256);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_3456);
+        execute_lifted_x86(&[0x86, 0xFC], &mut ctx, &mut memory); // XCHG AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_3456);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_1256);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_1234);
+        execute_lifted_x86(&[0x86, 0xE0], &mut ctx, &mut memory); // XCHG AL,AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_3412);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_A5CC);
+        ctx.write_vreg(rbx, 0x200);
+        memory.write(0x200, &[0x6D]).unwrap();
+        execute_lifted_x86(&[0x86, 0x23], &mut ctx, &mut memory); // XCHG [RBX],AH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_6DCC);
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 0xA5);
+
+        ctx.write_vreg(rax, 0x11);
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE22);
+        execute_lifted_x86(&[0x40, 0x86, 0xC4], &mut ctx, &mut memory); // XCHG SPL,AL
+        assert_eq!(ctx.read_vreg(rax), 0x22);
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE11);
+    }
+
+    #[test]
+    fn lifted_cmpxchg_xadd_handle_legacy_high_bytes_and_aliases() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_0505);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0955);
+        execute_lifted_x86(&[0x0F, 0xB0, 0xFC], &mut ctx, &mut memory); // CMPXCHG AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0905);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0955);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_0503);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0955);
+        execute_lifted_x86(&[0x0F, 0xB0, 0xFC], &mut ctx, &mut memory); // mismatch
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0505);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0955);
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_0201);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0355);
+        execute_lifted_x86(&[0x0F, 0xC0, 0xFC], &mut ctx, &mut memory); // XADD AH,BH
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0501);
+        assert_eq!(ctx.read_vreg(rbx), 0xAABB_CCDD_EEFF_0255);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_03AA);
+        ctx.write_vreg(rbx, 0x200);
+        memory.write(0x200, &[4]).unwrap();
+        execute_lifted_x86(&[0x0F, 0xC0, 0x23], &mut ctx, &mut memory); // XADD [RBX],AH
+        let mut byte = [0u8; 1];
+        memory.read(0x200, &mut byte).unwrap();
+        assert_eq!(byte[0], 7);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_04AA);
+
+        ctx.write_vreg(rax, 1);
+        ctx.write_vreg(rsp, 0x1234_5678_9ABC_DE02);
+        execute_lifted_x86(&[0x40, 0x0F, 0xC0, 0xC4], &mut ctx, &mut memory); // XADD SPL,AL
+        assert_eq!(ctx.read_vreg(rsp), 0x1234_5678_9ABC_DE03);
+        assert_eq!(ctx.read_vreg(rax), 2);
+    }
+
+    #[test]
+    fn lifted_xlat_executes_address_size_segment_and_fault_semantics() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let fs = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        memory.write(0x103, &[0xA5]).unwrap();
+        ctx.write_vreg(rax, 0x1122_3344_5566_7703);
+        ctx.write_vreg(rbx, 0x100);
+        execute_lifted_x86(&[0xD7], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_77A5);
+
+        memory.write(0x104, &[0x6D]).unwrap();
+        ctx.write_vreg(rax, 0xAABB_CCDD_EEFF_0004);
+        ctx.write_vreg(rbx, 0xFFFF_FFFF_0000_0100);
+        execute_lifted_x86(&[0x67, 0xD7], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0xAABB_CCDD_EEFF_006D);
+
+        memory.write(0x322, &[0x3C]).unwrap();
+        ctx.write_vreg(rax, 0x0123_4567_89AB_CD02);
+        ctx.write_vreg(rbx, 0x20);
+        ctx.write_vreg(fs, 0x300);
+        execute_lifted_x86(&[0x64, 0xD7], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x0123_4567_89AB_CD3C);
+
+        ctx.write_vreg(rax, 0xDEAD_BEEF_CAFE_BA10);
+        ctx.write_vreg(rbx, 0x2000);
+        let exit = execute_lifted_x86(&[0xD7], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        assert_eq!(ctx.read_vreg(rax), 0xDEAD_BEEF_CAFE_BA10);
+    }
+
+    #[test]
+    fn lifted_enter_executes_all_frame_phases_and_fault_ordering() {
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rbp, 0x600);
+        ctx.write_vreg(rsp, 0x800);
+        execute_lifted_x86(&[0xC8, 0x20, 0x00, 0], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rbp), 0x7F8);
+        assert_eq!(ctx.read_vreg(rsp), 0x7D8);
+        let mut qword = [0u8; 8];
+        memory.read(0x7F8, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 0x600);
+
+        memory.write(0x6FE, &0xBEEFu16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rbp, 0x700);
+        ctx.write_vreg(rsp, 0x900);
+        execute_lifted_x86(&[0x66, 0xC8, 0x10, 0x00, 2], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rbp), 0x8FE);
+        assert_eq!(ctx.read_vreg(rsp), 0x8EA);
+        let mut word = [0u8; 2];
+        memory.read(0x8FE, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0x700);
+        memory.read(0x8FC, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0xBEEF);
+        memory.read(0x8FA, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0x8FE);
+
+        let mut fault_memory = FlatMemory::new(0x7FF);
+        ctx.write_vreg(rbp, 0x600);
+        ctx.write_vreg(rsp, 0x800);
+        let exit = execute_lifted_x86(&[0xC8, 0, 0, 0], &mut ctx, &mut fault_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        assert_eq!(ctx.read_vreg(rsp), 0x7F8);
+        assert_eq!(ctx.read_vreg(rbp), 0x600);
+    }
+
+    #[test]
+    fn lifted_rdtsc_reads_cycle_counter_and_zero_extends_edx_eax() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.cycle_count = 0x1234_5678_9ABC_DEF0;
+        ctx.write_vreg(rax, u64::MAX);
+        ctx.write_vreg(rdx, u64::MAX);
+
+        execute_lifted_x86(&[0x0F, 0x31], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x9ABC_DEF0);
+        assert_eq!(ctx.read_vreg(rdx), 0x1234_5678);
+        assert_eq!(ctx.cycle_count, 0x1234_5678_9ABC_DEF0);
+    }
+
+    #[test]
+    fn lifted_packed_sse_arithmetic_and_moves_execute() {
+        fn f32x4(values: [f32; 4]) -> VecValue {
+            let mut result = [0u64; 16];
+            result[0] = values[0].to_bits() as u64 | ((values[1].to_bits() as u64) << 32);
+            result[1] = values[2].to_bits() as u64 | ((values[3].to_bits() as u64) << 32);
+            result
+        }
+        fn f64x2(values: [f64; 2]) -> VecValue {
+            let mut result = [0u64; 16];
+            result[0] = values[0].to_bits();
+            result[1] = values[1].to_bits();
+            result
+        }
+
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = f32x4([1.0, 2.0, 3.0, 4.0]);
+            x86.xmm[1] = f32x4([5.0, 6.0, 7.0, 8.0]);
+        }
+        execute_lifted_x86(&[0x0F, 0x58, 0xC1], &mut ctx, &mut memory); // ADDPS XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], f32x4([6.0, 8.0, 10.0, 12.0]));
+            assert_eq!(x86.xmm[1], f32x4([5.0, 6.0, 7.0, 8.0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = f64x2([8.0, 9.0]);
+            x86.xmm[1] = f64x2([2.0, 3.0]);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x5E, 0xC1], &mut ctx, &mut memory); // DIVPD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], f64x2([4.0, 3.0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [
+                0xFFFF_0000_FFFF_0000,
+                0xAAAA_AAAA_5555_5555,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[1] = [
+                0x00FF_00FF_00FF_00FF,
+                0xFFFF_0000_FFFF_0000,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+        }
+        execute_lifted_x86(&[0x0F, 0x57, 0xC1], &mut ctx, &mut memory); // XORPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0xFF00_00FF_FF00_00FF);
+            assert_eq!(x86.xmm[0][1], 0x5555_AAAA_AAAA_5555);
+        }
+
+        let bytes: Vec<u8> = (0u8..16).collect();
+        memory.write(0x200, &bytes).unwrap();
+        ctx.write_vreg(rbx, 0x200);
+        execute_lifted_x86(&[0x0F, 0x10, 0x03], &mut ctx, &mut memory); // MOVUPS XMM0,[RBX]
+        execute_lifted_x86(&[0x0F, 0x11, 0x43, 0x10], &mut ctx, &mut memory); // MOVUPS [RBX+16],XMM0
+        let mut copied = [0u8; 16];
+        memory.read(0x210, &mut copied).unwrap();
+        assert_eq!(copied.as_slice(), bytes.as_slice());
+    }
+
+    #[test]
+    fn lifted_scalar_sse_moves_and_arithmetic_preserve_or_clear_upper_lanes_exactly() {
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let mut lhs = [0u64; 16];
+        lhs[0] = 1.5f32.to_bits() as u64 | (0xA1B2_C3D4u64 << 32);
+        lhs[1] = 0x1122_3344_5566_7788;
+        lhs[2] = 0x99AA_BBCC_DDEE_FF00;
+        let mut rhs = [0u64; 16];
+        rhs[0] = 2.25f32.to_bits() as u64 | (0xDEAD_BEEFu64 << 32);
+        rhs[1] = u64::MAX;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = lhs;
+            x86.xmm[1] = rhs;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x58, 0xC1], &mut ctx, &mut memory); // ADDSS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = lhs;
+            expected[0] = 3.75f32.to_bits() as u64 | (lhs[0] & 0xFFFF_FFFF_0000_0000);
+            assert_eq!(x86.xmm[0], expected);
+            assert_eq!(x86.xmm[1], rhs);
+        }
+
+        let upper = [
+            0x0123_4567_89AB_CDEF,
+            0xAABB_CCDD_EEFF_0011,
+            0x2233_4455_6677_8899,
+        ];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 9.0f64.to_bits();
+            x86.xmm[0][1..4].copy_from_slice(&upper);
+            x86.xmm[1][0] = 3.0f64.to_bits();
+        }
+        execute_lifted_x86(&[0xF2, 0x0F, 0x5E, 0xC1], &mut ctx, &mut memory); // DIVSD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 3.0f64.to_bits());
+            assert_eq!(&x86.xmm[0][1..4], &upper);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = lhs;
+            x86.xmm[1] = rhs;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x10, 0xC1], &mut ctx, &mut memory); // MOVSS reg
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = lhs;
+            expected[0] = (lhs[0] & 0xFFFF_FFFF_0000_0000) | (rhs[0] & 0xFFFF_FFFF);
+            assert_eq!(x86.xmm[0], expected);
+        }
+
+        memory
+            .write(0x200, &6.5f32.to_bits().to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rbx, 0x200);
+        execute_lifted_x86(&[0xF3, 0x0F, 0x10, 0x03], &mut ctx, &mut memory); // MOVSS memory
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 6.5f32.to_bits() as u64);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert_eq!(x86.xmm[0][2..], lhs[2..], "legacy AVX upper state");
+        }
+
+        let sentinel = [0xAA; 16];
+        memory.write(0x300, &sentinel).unwrap();
+        ctx.write_vreg(rbx, 0x304);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 12.25f64.to_bits();
+        }
+        execute_lifted_x86(&[0xF2, 0x0F, 0x11, 0x0B], &mut ctx, &mut memory); // MOVSD [RBX],XMM1
+        let mut stored = [0u8; 16];
+        memory.read(0x300, &mut stored).unwrap();
+        assert_eq!(&stored[..4], &[0xAA; 4]);
+        assert_eq!(&stored[4..12], &12.25f64.to_bits().to_le_bytes());
+        assert_eq!(&stored[12..], &[0xAA; 4]);
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_scalar_sse_memory_faults_preserve_destination_flags_and_memory() {
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let original = [0x0123_4567_89AB_CDEFu64; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        ctx.write_vreg(rbx, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let mut short_memory = FlatMemory::new(0x204);
+        let exit = execute_lifted_x86(&[0xF2, 0x0F, 0x10, 0x03], &mut ctx, &mut short_memory); // MOVSD XMM0,[RBX]
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original, "faulting scalar load destination");
+        }
+
+        let seed = [0xA5; 16];
+        let mut inner = FlatMemory::new(0x400);
+        inner.write(0x200, &seed).unwrap();
+        let mut read_only = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        let exit = execute_lifted_x86(&[0xF3, 0x0F, 0x11, 0x03], &mut ctx, &mut read_only); // MOVSS [RBX],XMM0
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut actual = [0u8; 16];
+        read_only.inner.read(0x200, &mut actual).unwrap();
+        assert_eq!(actual, seed);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original, "faulting scalar store source");
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_vex_scalar_moves_and_arithmetic_merge_xmm_and_zero_avx_upper_state() {
+        fn f32x4_with_upper(values: [f32; 4], upper: u64) -> VecValue {
+            let mut result = [upper; 16];
+            result[0] = values[0].to_bits() as u64 | ((values[1].to_bits() as u64) << 32);
+            result[1] = values[2].to_bits() as u64 | ((values[3].to_bits() as u64) << 32);
+            result
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let src1 = f32x4_with_upper([1.5, 10.0, -3.0, 7.0], 0x1111_2222_3333_4444);
+        let src2 = f32x4_with_upper([2.25, 99.0, 88.0, 77.0], 0xAAAA_BBBB_CCCC_DDDD);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = src1;
+            x86.xmm[2] = src2;
+        }
+        execute_lifted_x86(&[0xC5, 0xF2, 0x58, 0xC2], &mut ctx, &mut memory); // VADDSS XMM0,XMM1,XMM2
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 3.75f32.to_bits());
+            assert_eq!(x86.xmm[0][0] >> 32, src1[0] >> 32);
+            assert_eq!(x86.xmm[0][1], src1[1]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.xmm[1], src1);
+            assert_eq!(x86.xmm[2], src2);
+        }
+
+        // Destination/source1 alias: upper XMM lanes must be captured before
+        // VEX zeroing rewrites the shared vector backing store.
+        let alias_src = f32x4_with_upper([8.0, 2.0, 3.0, 4.0], 0xDEAD_BEEF_CAFE_BABE);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = alias_src;
+            x86.xmm[1] = f32x4_with_upper([0.5, 0.0, 0.0, 0.0], 1);
+        }
+        execute_lifted_x86(&[0xC5, 0xFA, 0x58, 0xC1], &mut ctx, &mut memory); // VADDSS XMM0,XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 8.5f32.to_bits());
+            assert_eq!(x86.xmm[0][0] >> 32, alias_src[0] >> 32);
+            assert_eq!(x86.xmm[0][1], alias_src[1]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        let merge = f32x4_with_upper([100.0, 20.0, 30.0, 40.0], 0x1111);
+        let low = f32x4_with_upper([-6.0, 200.0, 300.0, 400.0], 0x2222);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = merge;
+            x86.xmm[1] = low;
+            x86.xmm[2] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0xC5, 0xFA, 0x10, 0xD1], &mut ctx, &mut memory); // VMOVSS XMM2,XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, (-6.0f32).to_bits());
+            assert_eq!(x86.xmm[2][0] >> 32, merge[0] >> 32);
+            assert_eq!(x86.xmm[2][1], merge[1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        memory
+            .write(0x200, &12.5f64.to_bits().to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0xC5, 0xFB, 0x10, 0x18], &mut ctx, &mut memory); // VMOVSD XMM3,[RAX]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[3][0], 12.5f64.to_bits());
+            assert!(x86.xmm[3][1..].iter().all(|word| *word == 0));
+        }
+
+        let packed_source = [0x5555_AAAA_1234_5678u64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = packed_source;
+        }
+        execute_lifted_x86(&[0xC5, 0xF8, 0x10, 0xC1], &mut ctx, &mut memory); // VMOVUPS XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &packed_source[..2]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_vex_scalar_memory_faults_preserve_destination_flags_and_memory() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let original = [0xABCD_EF01_2345_6789u64; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        ctx.write_vreg(rax, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let mut short_memory = FlatMemory::new(0x204);
+        let exit = execute_lifted_x86(&[0xC5, 0xFB, 0x10, 0x00], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original);
+        }
+
+        let seed = [0x5A; 16];
+        let mut inner = FlatMemory::new(0x400);
+        inner.write(0x200, &seed).unwrap();
+        let mut read_only = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        let exit = execute_lifted_x86(&[0xC5, 0xFA, 0x11, 0x00], &mut ctx, &mut read_only);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut actual = [0u8; 16];
+        read_only.inner.read(0x200, &mut actual).unwrap();
+        assert_eq!(actual, seed);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_vex_scalar_arithmetic_all_ops_and_memory_sources_execute() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        for (name, bytes, is_f64, a, b, expected) in [
+            (
+                "vaddss",
+                &[0xC5, 0xF2, 0x58, 0xC2][..],
+                false,
+                7.5f64,
+                2.5f64,
+                10.0f64,
+            ),
+            (
+                "vmulss",
+                &[0xC5, 0xF2, 0x59, 0xC2][..],
+                false,
+                3.0,
+                4.0,
+                12.0,
+            ),
+            (
+                "vsubss",
+                &[0xC5, 0xF2, 0x5C, 0xC2][..],
+                false,
+                7.0,
+                2.0,
+                5.0,
+            ),
+            (
+                "vdivss",
+                &[0xC5, 0xF2, 0x5E, 0xC2][..],
+                false,
+                9.0,
+                3.0,
+                3.0,
+            ),
+            (
+                "vaddsd",
+                &[0xC5, 0xF3, 0x58, 0xC2][..],
+                true,
+                7.5,
+                2.5,
+                10.0,
+            ),
+            (
+                "vmulsd",
+                &[0xC5, 0xF3, 0x59, 0xC2][..],
+                true,
+                3.0,
+                4.0,
+                12.0,
+            ),
+            ("vsubsd", &[0xC5, 0xF3, 0x5C, 0xC2][..], true, 7.0, 2.0, 5.0),
+            ("vdivsd", &[0xC5, 0xF3, 0x5E, 0xC2][..], true, 9.0, 3.0, 3.0),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [u64::MAX; 16];
+                x86.xmm[1] = [0x1357_9BDF_2468_ACE0; 16];
+                x86.xmm[2] = [0xAAAA_BBBB_CCCC_DDDD; 16];
+                if is_f64 {
+                    x86.xmm[1][0] = a.to_bits();
+                    x86.xmm[2][0] = b.to_bits();
+                } else {
+                    x86.xmm[1][0] = (a as f32).to_bits() as u64 | (0xDEAD_BEEFu64 << 32);
+                    x86.xmm[2][0] = (b as f32).to_bits() as u64;
+                }
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                if is_f64 {
+                    assert_eq!(x86.xmm[0][0], expected.to_bits(), "{name}");
+                    assert_eq!(x86.xmm[0][1], 0x1357_9BDF_2468_ACE0, "{name}: merge");
+                } else {
+                    assert_eq!(x86.xmm[0][0] as u32, (expected as f32).to_bits(), "{name}");
+                    assert_eq!(x86.xmm[0][0] >> 32, 0xDEAD_BEEF, "{name}: merge");
+                    assert_eq!(x86.xmm[0][1], 0x1357_9BDF_2468_ACE0, "{name}: merge");
+                }
+                assert!(
+                    x86.xmm[0][2..].iter().all(|word| *word == 0),
+                    "{name}: upper"
+                );
+            }
+        }
+
+        ctx.write_vreg(rax, 0x200);
+        memory
+            .write(0x200, &1.25f32.to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 2.75f32.to_bits() as u64 | (0x1234_5678u64 << 32);
+        }
+        execute_lifted_x86(&[0xC5, 0xF2, 0x58, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 4.0f32.to_bits());
+            assert_eq!(x86.xmm[0][0] >> 32, 0x1234_5678);
+        }
+
+        memory
+            .write(0x200, &2.0f64.to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 10.0f64.to_bits();
+            x86.xmm[1][1] = 0xCAFE_BABE_DEAD_BEEF;
+        }
+        execute_lifted_x86(&[0xC5, 0xF3, 0x5E, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 5.0f64.to_bits());
+            assert_eq!(x86.xmm[0][1], 0xCAFE_BABE_DEAD_BEEF);
+        }
+    }
+
+    #[test]
+    fn lifted_evex_scalar_masks_merge_zero_fault_suppress_and_address_high_registers() {
+        fn seeded(low: f32, lanes: [u32; 3], upper: u64) -> VecValue {
+            let mut value = [upper; 16];
+            value[0] = low.to_bits() as u64 | ((lanes[0] as u64) << 32);
+            value[1] = lanes[1] as u64 | ((lanes[2] as u64) << 32);
+            value
+        }
+
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let src1 = seeded(8.0, [0x1111_2222, 0x3333_4444, 0x5555_6666], 0xAAAA);
+        let src2 = seeded(2.0, [7, 8, 9], 0xBBBB);
+        let old_dst = seeded(-5.0, [1, 2, 3], 0xCCCC);
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = src1;
+            x86.xmm[1] = src2;
+            x86.xmm[2] = old_dst;
+        }
+        ctx.write_vreg(k1, 0);
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0xD1], &mut ctx, &mut memory); // VADDSS XMM2{k1},XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, (-5.0f32).to_bits());
+            assert_eq!(x86.xmm[2][0] >> 32, src1[0] >> 32);
+            assert_eq!(x86.xmm[2][1], src1[1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = old_dst;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x89, 0x5C, 0xD1], &mut ctx, &mut memory); // VSUBSS XMM2{k1}{z},XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, 0);
+            assert_eq!(x86.xmm[2][0] >> 32, src1[0] >> 32);
+            assert_eq!(x86.xmm[2][1], src1[1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        ctx.write_vreg(k1, 1);
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, 10.0f32.to_bits());
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 9.0f64.to_bits();
+            x86.xmm[0][1] = 0x0123_4567_89AB_CDEF;
+            x86.xmm[1][0] = 3.0f64.to_bits();
+            x86.xmm[3] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0xFF, 0x09, 0x5E, 0xD9], &mut ctx, &mut memory); // VDIVSD XMM3{k1},XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[3][0], 3.0f64.to_bits());
+            assert_eq!(x86.xmm[3][1], 0x0123_4567_89AB_CDEF);
+            assert!(x86.xmm[3][2..].iter().all(|word| *word == 0));
+        }
+
+        // A false scalar mask suppresses the memory read and its fault while
+        // still applying the architectural merge/upper-zero result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = src1;
+        }
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = old_dst;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, old_dst[0] as u32);
+            assert_eq!(x86.xmm[2][0] >> 32, src1[0] >> 32);
+        }
+
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = old_dst;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], old_dst);
+        }
+
+        let high_src1 = seeded(3.0, [0x10, 0x20, 0x30], 0x1111);
+        let high_src2 = seeded(4.0, [0x40, 0x50, 0x60], 0x2222);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = high_src1;
+            x86.xmm[17] = high_src2;
+            x86.xmm[18] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x7E, 0x00, 0x58, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[18][0] as u32, 7.0f32.to_bits());
+            assert_eq!(x86.xmm[18][0] >> 32, high_src1[0] >> 32);
+            assert_eq!(x86.xmm[18][1], high_src1[1]);
+            assert!(x86.xmm[18][2..].iter().all(|word| *word == 0));
+        }
+    }
+
+    #[test]
+    fn lifted_evex_scalar_masked_moves_suppress_memory_faults_and_stores() {
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let old = [0x1111_2222_3333_4444u64; 16];
+        let source = [0xAAAA_BBBB_CCCC_DDDDu64; 16];
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = old;
+            x86.xmm[1] = source;
+            x86.xmm[2] = old;
+        }
+
+        ctx.write_vreg(k1, 0);
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x10, 0xD1], &mut ctx, &mut memory); // VMOVSS XMM2{k1},XMM0,XMM1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, old[0] as u32);
+            assert_eq!(x86.xmm[2][0] >> 32, old[0] >> 32);
+            assert_eq!(x86.xmm[2][1], old[1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        ctx.write_vreg(rax, 0x1000);
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x10, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+
+        let seed = [0x5A; 16];
+        memory.write(0x200, &seed).unwrap();
+        ctx.write_vreg(rax, 0x200);
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x11, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        let mut actual = [0u8; 16];
+        memory.read(0x200, &mut actual).unwrap();
+        assert_eq!(actual, seed, "masked-off EVEX scalar store");
+
+        ctx.write_vreg(k1, 1);
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x11, 0x10], &mut ctx, &mut memory);
+        memory.read(0x200, &mut actual).unwrap();
+        assert_eq!(&actual[..4], &(old[0] as u32).to_le_bytes());
+        assert_eq!(&actual[4..], &seed[4..]);
+    }
+
+    #[test]
+    fn lifted_legacy_vex_evex_scalar_and_packed_sqrt_execute_exact_lanes() {
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        let mut legacy_dst = [0xAAAA_BBBB_CCCC_DDDDu64; 16];
+        legacy_dst[0] = 1.0f32.to_bits() as u64 | (0x1234_5678u64 << 32);
+        let mut source = [0x1111_2222_3333_4444u64; 16];
+        source[0] = 16.0f32.to_bits() as u64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_dst;
+            x86.xmm[1] = source;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x51, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = legacy_dst;
+            expected[0] = 4.0f32.to_bits() as u64 | (legacy_dst[0] & 0xFFFF_FFFF_0000_0000);
+            assert_eq!(x86.xmm[0], expected);
+        }
+
+        let mut merge = [0x7777_8888_9999_AAAAu64; 16];
+        merge[0] = 25.0f32.to_bits() as u64 | (0xDEAD_BEEFu64 << 32);
+        merge[1] = 0x0123_4567_89AB_CDEF;
+        let mut radicand = [0xBBBB_CCCC_DDDD_EEEEu64; 16];
+        radicand[0] = 81.0f32.to_bits() as u64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = merge;
+            x86.xmm[2] = radicand;
+        }
+        execute_lifted_x86(&[0xC5, 0xF2, 0x51, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 9.0f32.to_bits());
+            assert_eq!(x86.xmm[0][0] >> 32, merge[0] >> 32);
+            assert_eq!(x86.xmm[0][1], merge[1]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX masked-off memory SQRT suppresses the invalid read. Merge and
+        // zeroing still control the low lane while upper XMM lanes come from src1.
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = merge;
+            x86.xmm[2] = legacy_dst;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x51, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, legacy_dst[0] as u32);
+            assert_eq!(x86.xmm[2][0] >> 32, merge[0] >> 32);
+            assert_eq!(x86.xmm[2][1], merge[1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = legacy_dst;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x89, 0x51, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, 0);
+            assert_eq!(x86.xmm[2][0] >> 32, merge[0] >> 32);
+        }
+
+        // EVEX disp8 is compressed by the scalar tuple width: 0x10 * 4 = 64.
+        ctx.write_vreg(rax, 0x200);
+        ctx.write_vreg(k1, 1);
+        memory
+            .write(0x240, &36.0f32.to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = merge;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x7E, 0x08, 0x51, 0x50, 0x10],
+            &mut ctx,
+            &mut memory,
+        ); // VSQRTSS XMM2,XMM0,[RAX+64]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, 6.0f32.to_bits());
+        }
+
+        let mut packed = [0u64; 16];
+        packed[0] = 1.0f32.to_bits() as u64 | ((4.0f32.to_bits() as u64) << 32);
+        packed[1] = 9.0f32.to_bits() as u64 | ((16.0f32.to_bits() as u64) << 32);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+            x86.xmm[1] = packed;
+        }
+        execute_lifted_x86(&[0x0F, 0x51, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 1.0f32.to_bits());
+            assert_eq!((x86.xmm[0][0] >> 32) as u32, 2.0f32.to_bits());
+            assert_eq!(x86.xmm[0][1] as u32, 3.0f32.to_bits());
+            assert_eq!((x86.xmm[0][1] >> 32) as u32, 4.0f32.to_bits());
+            assert!(
+                x86.xmm[0][2..]
+                    .iter()
+                    .all(|word| *word == 0xCAFE_BABE_DEAD_BEEF),
+                "legacy packed SQRT must preserve shared AVX state above XMM"
+            );
+        }
+
+        // A full EVEX tuple compresses disp8 by 64 bytes for a ZMM operand.
+        ctx.write_vreg(rax, 0x300);
+        let mut zmm_source = [0u8; 64];
+        for lane in 0..16 {
+            let value = ((lane + 1) * (lane + 1)) as f32;
+            zmm_source[lane * 4..lane * 4 + 4].copy_from_slice(&value.to_bits().to_le_bytes());
+        }
+        memory.write(0x340, &zmm_source).unwrap();
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x7C, 0x48, 0x51, 0x50, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16 {
+                let word = x86.xmm[2][lane / 2];
+                let actual = if lane % 2 == 0 {
+                    word as u32
+                } else {
+                    (word >> 32) as u32
+                };
+                assert_eq!(actual, (lane as f32 + 1.0).to_bits(), "ZMM lane {lane}");
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_sqrt_memory_faults_preserve_destinations_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        for (name, bytes, dst) in [
+            ("legacy SQRTSD", &[0xF2, 0x0F, 0x51, 0x00][..], 0usize),
+            ("VEX VSQRTSS", &[0xC5, 0xF2, 0x51, 0x00][..], 0usize),
+            (
+                "EVEX VSQRTSS k1",
+                &[0x62, 0xF1, 0x7E, 0x09, 0x51, 0x10][..],
+                2usize,
+            ),
+        ] {
+            let original = [0x0123_4567_89AB_CDEFu64; 16];
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.write_vreg(k1, 1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[dst] = original;
+            }
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[dst], original, "{name}: destination changed");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_legacy_packed_sse_preserves_shared_state_above_bit_127() {
+        fn f32x4(values: [f32; 4], upper: u64) -> VecValue {
+            let mut result = [upper; 16];
+            result[0] = values[0].to_bits() as u64 | ((values[1].to_bits() as u64) << 32);
+            result[1] = values[2].to_bits() as u64 | ((values[3].to_bits() as u64) << 32);
+            result
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let mut source = [0x1111_2222_3333_4444u64; 16];
+        source[0] = 0x0123_4567_89AB_CDEF;
+        source[1] = 0xFEDC_BA98_7654_3210;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1] = source;
+        }
+        execute_lifted_x86(&[0x0F, 0x10, 0xC1], &mut ctx, &mut memory); // MOVUPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &source[..2]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        let lhs = f32x4([1.0, 2.0, 3.0, 4.0], sentinel);
+        let rhs = f32x4([10.0, 20.0, 30.0, 40.0], 0x9999);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = lhs;
+            x86.xmm[1] = rhs;
+        }
+        execute_lifted_x86(&[0x0F, 0x58, 0xC1], &mut ctx, &mut memory); // ADDPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let expected = f32x4([11.0, 22.0, 33.0, 44.0], sentinel);
+            assert_eq!(x86.xmm[0], expected);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[0][0] = 0xFFFF_0000_F0F0_0F0F;
+            x86.xmm[0][1] = 0xAAAA_5555_1234_5678;
+            x86.xmm[1][0] = 0x0FF0_0FF0_FFFF_0000;
+            x86.xmm[1][1] = 0xFFFF_0000_FFFF_0000;
+        }
+        execute_lifted_x86(&[0x0F, 0x54, 0xC1], &mut ctx, &mut memory); // ANDPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x0FF0_0000_F0F0_0000);
+            assert_eq!(x86.xmm[0][1], 0xAAAA_0000_1234_0000);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[0][0] = 1 | (2u64 << 32);
+            x86.xmm[0][1] = 3 | (4u64 << 32);
+            x86.xmm[1][0] = 10 | (20u64 << 32);
+            x86.xmm[1][1] = 30 | (40u64 << 32);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xFE, 0xC1], &mut ctx, &mut memory); // PADDD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 11 | (22u64 << 32));
+            assert_eq!(x86.xmm[0][1], 33 | (44u64 << 32));
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[0][0] = 2 | (3u64 << 32);
+            x86.xmm[0][1] = 4 | (5u64 << 32);
+            x86.xmm[1][0] = 6 | (7u64 << 32);
+            x86.xmm[1][1] = 8 | (9u64 << 32);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x40, 0xC1], &mut ctx, &mut memory); // PMULLD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 12 | (21u64 << 32));
+            assert_eq!(x86.xmm[0][1], 32 | (45u64 << 32));
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        ctx.write_vreg(rax, 0x200);
+        let bytes = 0x8877_6655_4433_2211u64
+            .to_le_bytes()
+            .into_iter()
+            .chain(0x00FF_EEDD_CCBB_AA99u64.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x200, &bytes).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+        }
+        execute_lifted_x86(&[0x0F, 0x10, 0x00], &mut ctx, &mut memory); // MOVUPS [RAX]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x8877_6655_4433_2211);
+            assert_eq!(x86.xmm[0][1], 0x00FF_EEDD_CCBB_AA99);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_legacy_packed_sse_load_fault_preserves_full_destination() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let original = [0x0123_4567_89AB_CDEFu64; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let mut short_memory = FlatMemory::new(0x208);
+        let exit = execute_lifted_x86(&[0x0F, 0x10, 0x00], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_minmax_preserves_source2_nan_zero_and_lane_semantics() {
+        fn f32x4(bits: [u32; 4], upper: u64) -> VecValue {
+            let mut value = [upper; 16];
+            value[0] = u64::from(bits[0]) | (u64::from(bits[1]) << 32);
+            value[1] = u64::from(bits[2]) | (u64::from(bits[3]) << 32);
+            value
+        }
+
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let mut legacy_dst = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+        legacy_dst[0] = 0x1122_3344_0000_0000;
+        let mut legacy_src = [0u64; 16];
+        legacy_src[0] = 0x8000_0000; // -0.0f32
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_dst;
+            x86.xmm[1] = legacy_src;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x5D, 0xC1], &mut ctx, &mut memory); // MINSS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = legacy_dst;
+            expected[0] = (legacy_dst[0] & 0xFFFF_FFFF_0000_0000) | 0x8000_0000;
+            assert_eq!(x86.xmm[0], expected, "equal zeros select source 2");
+        }
+
+        let qnan2 = 0x7FF8_1234_5678_9ABCu64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 1.0f64.to_bits();
+            x86.xmm[1][0] = qnan2;
+        }
+        execute_lifted_x86(&[0xF2, 0x0F, 0x5F, 0xC1], &mut ctx, &mut memory); // MAXSD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], qnan2, "source-2 NaN payload/sign bits");
+        }
+
+        let src1 = f32x4(
+            [
+                1.0f32.to_bits(),
+                9.0f32.to_bits(),
+                0.0f32.to_bits(),
+                0x7FC1_2345,
+            ],
+            0x1111_2222_3333_4444,
+        );
+        let src2 = f32x4(
+            [
+                2.0f32.to_bits(),
+                3.0f32.to_bits(),
+                (-0.0f32).to_bits(),
+                4.0f32.to_bits(),
+            ],
+            0xAAAA_BBBB_CCCC_DDDD,
+        );
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = src1;
+            x86.xmm[1] = src2;
+        }
+        execute_lifted_x86(&[0x0F, 0x5D, 0xC1], &mut ctx, &mut memory); // MINPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 1.0f32.to_bits());
+            assert_eq!((x86.xmm[0][0] >> 32) as u32, 3.0f32.to_bits());
+            assert_eq!(x86.xmm[0][1] as u32, (-0.0f32).to_bits());
+            assert_eq!((x86.xmm[0][1] >> 32) as u32, 4.0f32.to_bits());
+            assert_eq!(
+                &x86.xmm[0][2..],
+                &src1[2..],
+                "legacy MINPS changed shared state above bit 127"
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = src1;
+            x86.xmm[2] = src2;
+        }
+        execute_lifted_x86(&[0xC5, 0xF0, 0x5D, 0xC2], &mut ctx, &mut memory); // VMINPS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 1.0f32.to_bits());
+            assert_eq!((x86.xmm[0][0] >> 32) as u32, 3.0f32.to_bits());
+            assert_eq!(x86.xmm[0][1] as u32, (-0.0f32).to_bits());
+            assert_eq!((x86.xmm[0][1] >> 32) as u32, 4.0f32.to_bits());
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // A source-1 NaN still selects finite source 2, and scalar VEX merges
+        // the non-low XMM lanes from source 1 while clearing wider AVX state.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = [
+                0x7FF8_0000_0000_0001,
+                0x0123_4567_89AB_CDEF,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+                7,
+            ];
+            x86.xmm[2][0] = 5.0f64.to_bits();
+        }
+        execute_lifted_x86(&[0xC5, 0xF3, 0x5F, 0xC2], &mut ctx, &mut memory); // VMAXSD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 5.0f64.to_bits());
+            assert_eq!(x86.xmm[0][1], 0x0123_4567_89AB_CDEF);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // False EVEX mask suppresses an invalid memory access and preserves or
+        // zeros only the scalar destination lane as requested.
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = src1;
+            x86.xmm[2] = src2;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x09, 0x5D, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, src2[0] as u32);
+            assert_eq!(x86.xmm[2][0] >> 32, src1[0] >> 32);
+            assert_eq!(x86.xmm[2][1], src1[1]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = src2;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x89, 0x5D, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0] as u32, 0);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_minmax_memory_faults_preserve_destinations_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        for (name, bytes, dst) in [
+            ("legacy MINSS", &[0xF3, 0x0F, 0x5D, 0x00][..], 0usize),
+            ("VEX VMAXSD", &[0xC5, 0xF3, 0x5F, 0x00][..], 0usize),
+            (
+                "EVEX VMINSS k1",
+                &[0x62, 0xF1, 0x7E, 0x09, 0x5D, 0x10][..],
+                2usize,
+            ),
+        ] {
+            let original = [0x89AB_CDEF_0123_4567u64; 16];
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.write_vreg(k1, 1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[dst] = original;
+            }
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[dst], original, "{name}: destination changed");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_comi_ucomi_set_exact_x86_flags_and_preserve_registers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        let original0 = [0x0123_4567_89AB_CDEFu64; 16];
+        let original1 = [0xFEDC_BA98_7654_3210u64; 16];
+
+        for (name, a, b, expected_rflags) in [
+            ("greater", 2.0f32.to_bits(), 1.0f32.to_bits(), 0x402u64),
+            ("less", 1.0f32.to_bits(), 2.0f32.to_bits(), 0x403u64),
+            ("equal", 1.0f32.to_bits(), 1.0f32.to_bits(), 0x442u64),
+            ("unordered", 0x7FC1_2345u32, 1.0f32.to_bits(), 0x447u64),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = original0;
+                x86.xmm[1] = original1;
+                x86.xmm[0][0] = (x86.xmm[0][0] & !0xFFFF_FFFF) | u64::from(a);
+                x86.xmm[1][0] = (x86.xmm[1][0] & !0xFFFF_FFFF) | u64::from(b);
+            }
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            execute_lifted_x86(&[0x0F, 0x2E, 0xC1], &mut ctx, &mut memory); // UCOMISS
+            ctx.flags.materialize_all();
+            assert_eq!(
+                ctx.flags.materialized.to_rflags(),
+                expected_rflags,
+                "{name}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0][1..], original0[1..]);
+                assert_eq!(x86.xmm[1][1..], original1[1..]);
+            }
+        }
+
+        // VEX COMISD has the same architectural integer-flag truth table.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = (-4.0f64).to_bits();
+            x86.xmm[1][0] = 7.0f64.to_bits();
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC5, 0xF9, 0x2F, 0xC1], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0x403);
+
+        // EVEX scalar disp8 is compressed by 8 bytes for a double operand.
+        ctx.write_vreg(rax, 0x200);
+        memory
+            .write(0x240, &(-4.0f64).to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[18][0] = (-4.0f64).to_bits();
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0xFD, 0x08, 0x2F, 0x50, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0x442);
+    }
+
+    #[test]
+    fn lifted_comi_ucomi_memory_faults_preserve_all_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        for (name, bytes) in [
+            ("legacy UCOMISS", &[0x0F, 0x2E, 0x00][..]),
+            ("VEX COMISD", &[0xC5, 0xF9, 0x2F, 0x00][..]),
+            ("EVEX VCOMISD", &[0x62, 0xF1, 0xFD, 0x08, 0x2F, 0x00][..]),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}");
+        }
+    }
+
+    #[test]
+    fn lifted_x86_fp_to_int_honors_mxcsr_width_truncation_and_indefinite() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        for (name, rc, input, expected) in [
+            ("nearest-even", 0u32, 2.5f32, 2i32),
+            ("down", 1, -2.1f32, -3),
+            ("up", 2, 2.1f32, 3),
+            ("toward-zero", 3, -2.9f32, -2),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1][0] = input.to_bits() as u64;
+                x86.mxcsr = (0x1F80 & !(3 << 13)) | (rc << 13);
+            }
+            ctx.write_vreg(rax, u64::MAX);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            execute_lifted_x86(&[0xF3, 0x0F, 0x2D, 0xC1], &mut ctx, &mut memory);
+            assert_eq!(ctx.read_vreg(rax), expected as u32 as u64, "{name}");
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+
+        // Truncating forms ignore MXCSR.RC.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = (-2.9f32).to_bits() as u64;
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13);
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x2C, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), (-2i32) as u32 as u64);
+
+        // REX.W selects a signed 64-bit result and retains nearest-even ties.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = (-2.5f64).to_bits();
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xF2, 0x48, 0x0F, 0x2D, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), (-2i64) as u64);
+
+        // Masked invalid conversion produces the width-specific integer
+        // indefinite value; a 32-bit destination also clears the upper half.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0x7FF8_1234_5678_9ABC;
+        }
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(&[0xF2, 0x0F, 0x2D, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x8000_0000);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 9_223_372_036_854_775_808.0f64.to_bits();
+        }
+        execute_lifted_x86(&[0xF2, 0x48, 0x0F, 0x2C, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x8000_0000_0000_0000);
+
+        // EVEX high-XMM source decoding and extended GPR destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17][0] = 42.0f32.to_bits() as u64;
+        }
+        ctx.write_vreg(r10, 0);
+        execute_lifted_x86(&[0x62, 0x31, 0xFE, 0x08, 0x2D, 0xD1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r10), 42);
+
+        // Successful memory conversion reads the scalar Load result from the
+        // virtual scalar register file.
+        ctx.write_vreg(rbx, 0x200);
+        memory
+            .write(0x200, &3.75f64.to_bits().to_le_bytes())
+            .unwrap();
+        execute_lifted_x86(&[0xF2, 0x48, 0x0F, 0x2C, 0x03], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 3);
+    }
+
+    #[test]
+    fn lifted_x86_fp_to_int_memory_fault_preserves_destination_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        for (name, bytes) in [
+            ("legacy CVTSD2SI", &[0xF2, 0x48, 0x0F, 0x2D, 0x00][..]),
+            ("VEX VCVTTSS2SI", &[0xC5, 0xFA, 0x2C, 0x00][..]),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            assert_eq!(ctx.read_vreg(rax), 0x200, "{name}: destination");
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_x86_int_to_fp_honors_mxcsr_merge_zeroing_and_source_width() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let legacy = [0xABCD_EF01_2345_6789u64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = legacy;
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(rax, 0xFFFF_FFFE);
+        execute_lifted_x86(&[0xF3, 0x0F, 0x2A, 0xC8], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = legacy;
+            expected[0] = (legacy[0] & 0xFFFF_FFFF_0000_0000) | (-2.0f32).to_bits() as u64;
+            assert_eq!(
+                x86.xmm[1], expected,
+                "legacy merge and AVX-upper preservation"
+            );
+        }
+
+        // 2^24+1 is exactly between adjacent f32 values. MXCSR.RC selects the
+        // lower or upper representable result for directed modes.
+        for (name, rc, input, expected) in [
+            ("nearest", 0u32, 16_777_217i64, 16_777_216f32),
+            ("down", 1, 16_777_217, 16_777_216f32),
+            ("up", 2, 16_777_217, 16_777_218f32),
+            ("zero-negative", 3, -16_777_217, -16_777_216f32),
+            ("down-negative", 1, -16_777_217, -16_777_218f32),
+        ] {
+            let merge = [0x1111_2222_3333_4444u64; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = [u64::MAX; 16];
+                x86.xmm[2] = merge;
+                x86.mxcsr = (0x1F80 & !(3 << 13)) | (rc << 13);
+            }
+            ctx.write_vreg(r9, input as u64);
+            execute_lifted_x86(&[0xC4, 0xC1, 0xEA, 0x2A, 0xC9], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[1][0] as u32, expected.to_bits(), "{name}");
+                assert_eq!(x86.xmm[1][0] >> 32, merge[0] >> 32, "{name}: merge");
+                assert_eq!(x86.xmm[1][1], merge[1], "{name}: merge");
+                assert!(
+                    x86.xmm[1][2..].iter().all(|word| *word == 0),
+                    "{name}: VEX upper"
+                );
+            }
+        }
+
+        // 2^53+1 similarly distinguishes directed from nearest rounding for f64.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = [0x7777_8888_9999_AAAAu64; 16];
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13); // toward +infinity
+        }
+        ctx.write_vreg(r10, 9_007_199_254_740_993);
+        execute_lifted_x86(&[0xC4, 0xC1, 0xE3, 0x2A, 0xD2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.xmm[2][0],
+                9_007_199_254_740_994.0f64.to_bits(),
+                "directed i64-to-f64 rounding"
+            );
+            assert_eq!(x86.xmm[2][1], 0x7777_8888_9999_AAAA);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX high vector registers and 64-bit GPR source.
+        let merge = [0x5555_AAAA_1234_5678u64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = merge;
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(r10, 42);
+        execute_lifted_x86(&[0x62, 0xC1, 0xFE, 0x00, 0x2A, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17][0] as u32, 42.0f32.to_bits());
+            assert_eq!(x86.xmm[17][0] >> 32, merge[0] >> 32);
+            assert_eq!(x86.xmm[17][1], merge[1]);
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX W=1 compressed disp8 scales by the qword integer source width.
+        ctx.write_vreg(rax, 0x200);
+        memory.write(0x240, &(-7i64).to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = merge;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0xFE, 0x00, 0x2A, 0x48, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17][0] as u32, (-7.0f32).to_bits());
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_int_to_fp_memory_fault_preserves_destination_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let original = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+        for (name, bytes, dst) in [
+            (
+                "legacy CVTSI2SD",
+                &[0xF2, 0x48, 0x0F, 0x2A, 0x08][..],
+                1usize,
+            ),
+            (
+                "EVEX VCVTSI2SS",
+                &[0x62, 0xE1, 0xFE, 0x00, 0x2A, 0x08][..],
+                17usize,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[dst] = original;
+            }
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[dst], original, "{name}: destination");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_x86_scalar_fp_convert_honors_rounding_merge_and_upper_state() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        let legacy = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy;
+            x86.xmm[1][0] = 1.5f32.to_bits() as u64;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x5A, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = legacy;
+            expected[0] = 1.5f64.to_bits();
+            assert_eq!(
+                x86.xmm[0], expected,
+                "legacy widening preserves upper state"
+            );
+        }
+
+        let midpoint = 1.0f64 + 2.0f64.powi(-24);
+        for (name, rc, expected) in [
+            ("nearest-even", 0u32, 1.0f32.to_bits()),
+            ("down", 1, 1.0f32.to_bits()),
+            ("up", 2, 1.0f32.to_bits() + 1),
+            ("toward-zero", 3, 1.0f32.to_bits()),
+        ] {
+            let merge = [0x0123_4567_89AB_CDEFu64; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [u64::MAX; 16];
+                x86.xmm[1] = merge;
+                x86.xmm[2][0] = midpoint.to_bits();
+                x86.mxcsr = (0x1F80 & !(3 << 13)) | (rc << 13);
+            }
+            execute_lifted_x86(&[0xC5, 0xF3, 0x5A, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0][0] as u32, expected, "{name}");
+                assert_eq!(x86.xmm[0][0] >> 32, merge[0] >> 32, "{name}: merge");
+                assert_eq!(x86.xmm[0][1], merge[1], "{name}: merge");
+                assert!(
+                    x86.xmm[0][2..].iter().all(|word| *word == 0),
+                    "{name}: upper"
+                );
+            }
+        }
+
+        // Negative directed rounding selects the more-negative neighbour.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0; 16];
+            x86.xmm[2][0] = (-midpoint).to_bits();
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (1 << 13);
+        }
+        execute_lifted_x86(&[0xC5, 0xF3, 0x5A, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, (-1.0f32).to_bits() + 1);
+        }
+
+        // EVEX high destination/merge plus compressed f64 memory source.
+        let merge = [0x7777_8888_9999_AAAAu64; 16];
+        ctx.write_vreg(rax, 0x200);
+        memory
+            .write(0x240, &2.25f64.to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = merge;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0xFF, 0x00, 0x5A, 0x50, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[18][0] as u32, 2.25f32.to_bits());
+            assert_eq!(x86.xmm[18][0] >> 32, merge[0] >> 32);
+            assert_eq!(x86.xmm[18][1], merge[1]);
+            assert!(x86.xmm[18][2..].iter().all(|word| *word == 0));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_scalar_fp_convert_memory_fault_preserves_destination_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let original = [0xA5A5_5A5A_0123_4567u64; 16];
+        for (name, bytes, dst) in [
+            ("legacy CVTSS2SD", &[0xF3, 0x0F, 0x5A, 0x00][..], 0usize),
+            ("VEX VCVTSD2SS", &[0xC5, 0xF3, 0x5A, 0x00][..], 0usize),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[dst] = original;
+            }
+            let mut short_memory = FlatMemory::new(0x202);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[dst], original, "{name}: destination");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_x86_packed_fp_convert_honors_lanes_rounding_and_upper_state() {
+        fn pack_f32(values: [f32; 4], upper: u64) -> VecValue {
+            let mut result = [upper; 16];
+            result[0] = u64::from(values[0].to_bits()) | (u64::from(values[1].to_bits()) << 32);
+            result[1] = u64::from(values[2].to_bits()) | (u64::from(values[3].to_bits()) << 32);
+            result
+        }
+
+        let sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1] = pack_f32([1.5, -2.25, 99.0, 100.0], 0x1111);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0x0F, 0x5A, 0xC1], &mut ctx, &mut memory); // CVTPS2PD
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 1.5f64.to_bits());
+            assert_eq!(x86.xmm[0][1], (-2.25f64).to_bits());
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        let midpoint = 1.0f64 + 2.0f64.powi(-24);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][0] = midpoint.to_bits();
+            x86.xmm[1][1] = 2.25f64.to_bits();
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x5A, 0xC1], &mut ctx, &mut memory); // CVTPD2PS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0] as u32, 1.0f32.to_bits() + 1);
+            assert_eq!((x86.xmm[0][0] >> 32) as u32, 2.25f32.to_bits());
+            assert_eq!(x86.xmm[0][1], 0, "legacy narrowing clears bits 127:64");
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == sentinel));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1] = pack_f32([1.0, 2.0, 3.0, 4.0], 0x2222);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xC5, 0xFC, 0x5A, 0xC1], &mut ctx, &mut memory); // VCVTPS2PD ymm
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[0][..4],
+                &[
+                    1.0f64.to_bits(),
+                    2.0f64.to_bits(),
+                    3.0f64.to_bits(),
+                    4.0f64.to_bits(),
+                ]
+            );
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][..4].copy_from_slice(&[
+                1.0f64.to_bits(),
+                2.0f64.to_bits(),
+                3.0f64.to_bits(),
+                4.0f64.to_bits(),
+            ]);
+        }
+        execute_lifted_x86(&[0xC5, 0xFD, 0x5A, 0xC1], &mut ctx, &mut memory); // VCVTPD2PS xmm,ymm
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &pack_f32([1.0, 2.0, 3.0, 4.0], 0)[..2]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_evex_packed_fp_convert_honors_masks_high_regs_and_embedded_rounding() {
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        let sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            for lane in 0..8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[1],
+                    lane,
+                    32,
+                    (f32::from(lane + 1)).to_bits().into(),
+                );
+            }
+        }
+        ctx.write_vreg(k1, 0b0101_0101);
+        execute_lifted_x86(&[0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1], &mut ctx, &mut memory); // VCVTPS2PD zmm0{k1}{z},ymm1
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                let actual = SmirInterpreter::get_lane(&x86.xmm[0], lane, 64);
+                let expected = if lane % 2 == 0 {
+                    f64::from(lane + 1).to_bits()
+                } else {
+                    0
+                };
+                assert_eq!(actual, expected, "zero-mask lane {lane}");
+            }
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[18] = [sentinel; 16];
+            for lane in 0..8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[17],
+                    lane,
+                    32,
+                    (f32::from(lane + 10)).to_bits().into(),
+                );
+            }
+        }
+        ctx.write_vreg(k3, 0b0000_1111);
+        execute_lifted_x86(&[0x62, 0xA1, 0x7C, 0x4B, 0x5A, 0xD1], &mut ctx, &mut memory); // VCVTPS2PD zmm18{k3},ymm17
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                let actual = SmirInterpreter::get_lane(&x86.xmm[18], lane, 64);
+                let expected = if lane < 4 {
+                    f64::from(lane + 10).to_bits()
+                } else {
+                    sentinel
+                };
+                assert_eq!(actual, expected, "merge-mask high lane {lane}");
+            }
+            assert!(x86.xmm[18][8..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = [sentinel; 16];
+            for lane in 0..8 {
+                x86.xmm[6][lane as usize] = f64::from(lane + 1).to_bits();
+            }
+        }
+        ctx.write_vreg(k4, 0b1010_0101);
+        execute_lifted_x86(&[0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE], &mut ctx, &mut memory); // VCVTPD2PS ymm5{k4}{z},zmm6
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                let actual = SmirInterpreter::get_lane(&x86.xmm[5], lane, 32) as u32;
+                let expected = if 0b1010_0101 & (1 << lane) != 0 {
+                    (f32::from(lane + 1)).to_bits()
+                } else {
+                    0
+                };
+                assert_eq!(actual, expected, "narrow mask lane {lane}");
+            }
+            assert!(x86.xmm[5][4..].iter().all(|word| *word == 0));
+        }
+
+        let midpoint = 1.0f64 + 2.0f64.powi(-24);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][..8].fill(midpoint.to_bits());
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13); // MXCSR rounds up.
+        }
+        ctx.write_vreg(k1, 0xFF);
+        execute_lifted_x86(&[0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1], &mut ctx, &mut memory); // VCVTPD2PS ymm0{k1},zmm1,{rd-sae}
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[0], lane, 32) as u32,
+                    1.0f32.to_bits(),
+                    "embedded round-down lane {lane}"
+                );
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_evex_packed_fp_convert_suppresses_masked_memory_faults_per_lane() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let original = [0x0123_4567_89AB_CDEFu64; 16];
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x204);
+        ctx.write_vreg(rax, 0x200);
+        ctx.write_vreg(k3, 0);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7C, 0x4B, 0x5A, 0x00], &mut ctx, &mut memory); // VCVTPS2PD zmm0{k3},[rax]
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..8], &original[..8]);
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+        }
+
+        memory
+            .write(0x200, &1.5f32.to_bits().to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(k3, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7C, 0x4B, 0x5A, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 1.5f64.to_bits());
+            assert_eq!(&x86.xmm[0][1..8], &original[1..8]);
+        }
+
+        ctx.write_vreg(k3, 0b11);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7C, 0x4B, 0x5A, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original, "fault committed destination");
+        }
+
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(k3, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF1, 0x7C, 0xDB, 0x5A, 0x00], &mut ctx, &mut memory); // VCVTPS2PD zmm0{k3}{z},dword [rax]{1to8}
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[0].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_packed_fp_convert_memory_fault_preserves_destination_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let original = [0xA5A5_5A5A_0123_4567u64; 16];
+        for (name, bytes) in [
+            ("legacy CVTPS2PD", &[0x0F, 0x5A, 0x00][..]),
+            ("VEX VCVTPD2PS ymm source", &[0xC5, 0xFD, 0x5A, 0x00][..]),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.write_vreg(rax, 0x200);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = original;
+            }
+            let mut short_memory = FlatMemory::new(0x204);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(
+                    exit,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0], original, "{name}: destination");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: flags");
+        }
+    }
+
+    #[test]
+    fn lifted_legacy_and_vex_mxcsr_roundtrip_and_fault_atomicity() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.write_vreg(rax, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        memory.write(0x200, &0x5F80u32.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0x0F, 0xAE, 0x10], &mut ctx, &mut memory); // LDMXCSR [RAX]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, 0x5F80);
+        }
+        execute_lifted_x86(&[0x0F, 0xAE, 0x58, 0x04], &mut ctx, &mut memory); // STMXCSR [RAX+4]
+        let mut stored = [0u8; 4];
+        memory.read(0x204, &mut stored).unwrap();
+        assert_eq!(u32::from_le_bytes(stored), 0x5F80);
+
+        memory.write(0x208, &0x3F80u32.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xC5, 0xF8, 0xAE, 0x50, 0x08], &mut ctx, &mut memory); // VLDMXCSR [RAX+8]
+        execute_lifted_x86(&[0xC5, 0xF8, 0xAE, 0x58, 0x0C], &mut ctx, &mut memory); // VSTMXCSR [RAX+12]
+        memory.read(0x20C, &mut stored).unwrap();
+        assert_eq!(u32::from_le_bytes(stored), 0x3F80);
+
+        memory.write(0x200, &0x7F80u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rdi, 0xAAAA_BBBB_0000_0100);
+        ctx.write_vreg(rsi, 0xCCCC_DDDD_0000_0080);
+        execute_lifted_x86(&[0x67, 0x0F, 0xAE, 0x14, 0x77], &mut ctx, &mut memory); // LDMXCSR [edi+esi*2]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, 0x7F80);
+        }
+
+        let mut short_memory = FlatMemory::new(0x202);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F80;
+        }
+        let exit = execute_lifted_x86(&[0x0F, 0xAE, 0x10], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, 0x1F80, "faulting load changed MXCSR");
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x87_environment_control_state_memory_and_fault_atomicity() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let raw_reg = [0xA5, 0x5A, 1, 2, 3, 4, 5, 6, 0x34, 0xC0];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.status_word = 0xFFFF;
+            x86.x87.regs[3] = raw_reg;
+        }
+        execute_lifted_x86(&[0xDB, 0xE2], &mut ctx, &mut memory); // FNCLEX
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word, 0x7F00);
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[3], raw_reg);
+        }
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0xDF, 0xE0], &mut ctx, &mut memory); // FNSTSW AX
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_7F00);
+
+        ctx.write_vreg(rbx, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x0B7F;
+            x86.x87.status_word = 0x5A5A;
+        }
+        execute_lifted_x86(&[0xD9, 0x3B], &mut ctx, &mut memory); // FNSTCW [RBX]
+        execute_lifted_x86(&[0xDD, 0x7B, 0x02], &mut ctx, &mut memory); // FNSTSW [RBX+2]
+        let mut word = [0u8; 2];
+        memory.read(0x100, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0x0B7F);
+        memory.read(0x102, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0x5A5A);
+
+        memory.write(0x104, &0x077Fu16.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xD9, 0x6B, 0x04], &mut ctx, &mut memory); // FLDCW [RBX+4]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x077F);
+        }
+
+        // addr32 discards RBX[63:32] before applying the displacement.
+        memory.write(0x120, &0x037Fu16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rbx, 0xDEAD_BEEF_0000_0100);
+        execute_lifted_x86(&[0x67, 0xD9, 0x6B, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x037F);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x0040;
+            x86.x87.status_word = 0xFFFF;
+            x86.x87.tag_word = 0;
+            x86.x87.data_ptr = 0x1111_2222_3333_4444;
+            x86.x87.instr_ptr = 0x5555_6666_7777_8888;
+            x86.x87.last_opcode = 0x07FF;
+        }
+        execute_lifted_x86(&[0xDB, 0xE3], &mut ctx, &mut memory); // FNINIT
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x037F);
+            assert_eq!(x86.x87.status_word, 0);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+            assert_eq!(x86.x87.data_ptr, 0);
+            assert_eq!(x86.x87.instr_ptr, 0);
+            assert_eq!(x86.x87.last_opcode, 0);
+            assert_eq!(x86.x87.regs[3], raw_reg, "FNINIT changed data register");
+        }
+
+        // FLDCW reads before committing; a two-byte boundary fault preserves FCW.
+        let mut short_memory = FlatMemory::new(0x101);
+        ctx.write_vreg(rbx, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x0F7F;
+        }
+        let exit = execute_lifted_x86(&[0xD9, 0x2B], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x0F7F);
+        }
+
+        let exit = execute_lifted_x86(&[0xD9, 0x3B], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn x87_legacy_environment_images_match_16_and_32_bit_protected_layouts() {
+        fn raw(id: u8) -> [u8; 10] {
+            [id, id, id, id, id, id, id, id, id, id]
+        }
+
+        let mut state = crate::smir::X86X87State::default();
+        state.control_word = 0x1240;
+        state.status_word = 0x5A80;
+        state.tag_word = 0x39E4;
+        state.instr_ptr = 0x1122_3344_5566_7788;
+        state.data_ptr = 0x99AA_BBCC_DDEE_FF00;
+        state.last_opcode = 0x0765;
+        for physical in 0..8 {
+            state.regs[physical] = raw(physical as u8);
+        }
+
+        let (env32, len32) =
+            SmirInterpreter::x86_x87_environment_image(&state, X86X87EnvWidth::W32);
+        assert_eq!(len32, 28);
+        let mut expected32 = [0u8; 28];
+        expected32[0..2].copy_from_slice(&0x1240u16.to_le_bytes());
+        expected32[4..6].copy_from_slice(&0x5A80u16.to_le_bytes());
+        expected32[8..10].copy_from_slice(&0x39E4u16.to_le_bytes());
+        expected32[12..16].copy_from_slice(&0x5566_7788u32.to_le_bytes());
+        expected32[18..20].copy_from_slice(&0x0765u16.to_le_bytes());
+        expected32[20..24].copy_from_slice(&0xDDEE_FF00u32.to_le_bytes());
+        assert_eq!(env32, expected32);
+
+        let (env16, len16) =
+            SmirInterpreter::x86_x87_environment_image(&state, X86X87EnvWidth::W16);
+        assert_eq!(len16, 14);
+        let mut expected16 = [0u8; 14];
+        expected16[0..2].copy_from_slice(&0x1240u16.to_le_bytes());
+        expected16[2..4].copy_from_slice(&0x5A80u16.to_le_bytes());
+        expected16[4..6].copy_from_slice(&0x39E4u16.to_le_bytes());
+        expected16[6..8].copy_from_slice(&0x7788u16.to_le_bytes());
+        expected16[10..12].copy_from_slice(&0xFF00u16.to_le_bytes());
+        assert_eq!(&env16[..14], &expected16);
+        assert_eq!(&env16[14..], &[0; 14]);
+
+        let (save32, save32_len) =
+            SmirInterpreter::x86_x87_state_image(&state, X86X87EnvWidth::W32);
+        assert_eq!(save32_len, 108);
+        assert_eq!(&save32[..28], &expected32);
+        for logical in 0..8u8 {
+            let expected_physical = state.physical_index(logical) as u8;
+            let offset = 28 + logical as usize * 10;
+            assert_eq!(&save32[offset..offset + 10], &raw(expected_physical));
+        }
+
+        let (save16, save16_len) =
+            SmirInterpreter::x86_x87_state_image(&state, X86X87EnvWidth::W16);
+        assert_eq!(save16_len, 94);
+        assert_eq!(&save16[..14], &expected16);
+        for logical in 0..8u8 {
+            let expected_physical = state.physical_index(logical) as u8;
+            let offset = 14 + logical as usize * 10;
+            assert_eq!(&save16[offset..offset + 10], &raw(expected_physical));
+        }
+
+        let mut restored = crate::smir::X86X87State::default();
+        SmirInterpreter::restore_x86_x87_state(&mut restored, &save32, X86X87EnvWidth::W32);
+        assert_eq!(restored.control_word, state.control_word);
+        assert_eq!(restored.status_word, state.status_word);
+        assert_eq!(restored.tag_word, state.tag_word);
+        assert_eq!(restored.instr_ptr, 0x5566_7788);
+        assert_eq!(restored.data_ptr, 0xDDEE_FF00);
+        assert_eq!(restored.last_opcode, state.last_opcode);
+        assert_eq!(restored.regs, state.regs);
+
+        let mut restored16 = crate::smir::X86X87State::default();
+        restored16.last_opcode = 0x0321;
+        SmirInterpreter::restore_x86_x87_state(&mut restored16, &save16, X86X87EnvWidth::W16);
+        assert_eq!(restored16.control_word, state.control_word);
+        assert_eq!(restored16.status_word, state.status_word);
+        assert_eq!(restored16.tag_word, state.tag_word);
+        assert_eq!(restored16.instr_ptr, 0x7788);
+        assert_eq!(restored16.data_ptr, 0xFF00);
+        assert_eq!(restored16.last_opcode, 0x0321, "m14byte has no FOP field");
+        assert_eq!(restored16.regs, state.regs);
+    }
+
+    #[test]
+    fn lifted_x87_legacy_environment_save_restore_side_effects_and_fault_atomicity() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.write_vreg(rax, 0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x0C40;
+            x86.x87.status_word = 0x5A81;
+            x86.x87.tag_word = 0x39E4;
+            x86.x87.instr_ptr = 0x1122_3344_5566_7788;
+            x86.x87.data_ptr = 0x99AA_BBCC_DDEE_FF00;
+            x86.x87.last_opcode = 0x0765;
+            for physical in 0..8 {
+                x86.x87.regs[physical] = raw(
+                    0x8000_0000_0000_0000 | physical as u64,
+                    0x3FFF + physical as u16,
+                );
+            }
+        }
+        let original = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+
+        execute_lifted_x86(&[0xD9, 0x30], &mut ctx, &mut memory); // FNSTENV m28byte
+        let (expected_env32, _) =
+            SmirInterpreter::x86_x87_environment_image(&original, X86X87EnvWidth::W32);
+        let mut env32 = [0u8; 28];
+        memory.read(0x100, &mut env32).unwrap();
+        assert_eq!(env32, expected_env32);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = original.clone();
+            expected.control_word |= 0x003F;
+            assert_eq!(x86.x87, expected, "FNSTENV post-store masks");
+        }
+
+        // 66H selects the compact protected-mode image and does not overwrite
+        // bytes beyond the architectural 14-byte destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = original.clone();
+        }
+        memory.write(0x100, &[0xA5; 32]).unwrap();
+        execute_lifted_x86(&[0x66, 0xD9, 0x30], &mut ctx, &mut memory);
+        let (expected_env16, _) =
+            SmirInterpreter::x86_x87_environment_image(&original, X86X87EnvWidth::W16);
+        let mut compact = [0u8; 32];
+        memory.read(0x100, &mut compact).unwrap();
+        assert_eq!(&compact[..14], &expected_env16[..14]);
+        assert_eq!(&compact[14..], &[0xA5; 18]);
+
+        // FLDENV loads only the environment, zero-extends legacy pointer
+        // offsets, and preserves all physical register payloads.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            for physical in 0..8 {
+                x86.x87.regs[physical] = raw(physical as u64 + 1, 0x4000);
+            }
+        }
+        let regs_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.regs,
+            _ => unreachable!(),
+        };
+        memory.write(0x100, &expected_env32).unwrap();
+        execute_lifted_x86(&[0xD9, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, original.control_word);
+            assert_eq!(x86.x87.status_word, original.status_word);
+            assert_eq!(x86.x87.tag_word, original.tag_word);
+            assert_eq!(x86.x87.instr_ptr, 0x5566_7788);
+            assert_eq!(x86.x87.data_ptr, 0xDDEE_FF00);
+            assert_eq!(x86.x87.last_opcode, original.last_opcode);
+            assert_eq!(x86.x87.regs, regs_before);
+        }
+
+        // FNSAVE writes the complete logical-register image, then performs the
+        // FINIT environment reset without clearing raw register payloads.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = original.clone();
+        }
+        execute_lifted_x86(&[0xDD, 0x30], &mut ctx, &mut memory); // FNSAVE m108byte
+        let (expected_save, _) =
+            SmirInterpreter::x86_x87_state_image(&original, X86X87EnvWidth::W32);
+        let mut saved = [0u8; 108];
+        memory.read(0x100, &mut saved).unwrap();
+        assert_eq!(saved, expected_save);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x037F);
+            assert_eq!(x86.x87.status_word, 0);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+            assert_eq!(x86.x87.instr_ptr, 0);
+            assert_eq!(x86.x87.data_ptr, 0);
+            assert_eq!(x86.x87.last_opcode, 0);
+            assert_eq!(x86.x87.regs, original.regs);
+        }
+
+        execute_lifted_x86(&[0xDD, 0x20], &mut ctx, &mut memory); // FRSTOR m108byte
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = original.clone();
+            expected.instr_ptr = original.instr_ptr as u32 as u64;
+            expected.data_ptr = original.data_ptr as u32 as u64;
+            assert_eq!(x86.x87, expected);
+        }
+
+        // m94byte save/restore uses the compact environment and retains FOP on
+        // restore because that protected-mode layout contains no opcode field.
+        let mut compact_source = original.clone();
+        compact_source.instr_ptr = 0x7788;
+        compact_source.data_ptr = 0xFF00;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = compact_source.clone();
+        }
+        memory.write(0x100, &[0xA5; 108]).unwrap();
+        execute_lifted_x86(&[0x66, 0xDD, 0x30], &mut ctx, &mut memory);
+        let (expected_save16, _) =
+            SmirInterpreter::x86_x87_state_image(&compact_source, X86X87EnvWidth::W16);
+        let mut saved16 = [0u8; 108];
+        memory.read(0x100, &mut saved16).unwrap();
+        assert_eq!(&saved16[..94], &expected_save16[..94]);
+        assert_eq!(&saved16[94..], &[0xA5; 14]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.last_opcode = 0x0321;
+        }
+        execute_lifted_x86(&[0x66, 0xDD, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = compact_source;
+            expected.last_opcode = 0x0321;
+            assert_eq!(x86.x87, expected);
+        }
+
+        // Faults on every legacy load/store form leave architectural x87
+        // state unchanged; save faults therefore do not initialize the FPU.
+        for (name, bytes, memory_len, write) in [
+            ("FNSTENV", &[0xD9, 0x30][..], 0x110usize, true),
+            ("FLDENV", &[0xD9, 0x20][..], 0x110, false),
+            ("FNSAVE", &[0xDD, 0x30][..], 0x160, true),
+            ("FRSTOR", &[0xDD, 0x20][..], 0x160, false),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = original.clone();
+            }
+            let before = match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.x87.clone(),
+                _ => unreachable!(),
+            };
+            let mut short_memory = FlatMemory::new(memory_len);
+            let exit = execute_lifted_x86(bytes, &mut ctx, &mut short_memory);
+            assert!(
+                matches!(exit, BlockResult::Exit(ExitReason::MemoryFault { write: got, .. }) if got == write),
+                "{name}: {exit:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87, before, "{name}");
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x87_exact_register_and_m80_transfers_preserve_payload_tags_and_environment() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let raw_a = raw(0x8000_0000_0000_0000, 0x3FFF); // +1.0, valid
+        let raw_b = raw(0, 0x8000); // -0.0, zero
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        memory.write(0x100, &raw_a).unwrap();
+        memory.write(0x110, &raw_b).unwrap();
+
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(&[0xDB, 0x28], &mut ctx, &mut memory); // FLD m80fp [RAX]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[7], raw_a);
+            assert_eq!(x86.x87.physical_tag(7), 0);
+            assert_eq!(x86.x87.instr_ptr, 0x1000);
+            assert_eq!(x86.x87.data_ptr, 0x100);
+            assert_eq!(x86.x87.last_opcode, 0x0328);
+        }
+
+        ctx.write_vreg(rax, 0x110);
+        execute_lifted_x86(&[0xDB, 0x28], &mut ctx, &mut memory);
+        execute_lifted_x86(&[0xD9, 0xC9], &mut ctx, &mut memory); // FXCH ST(1)
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 6);
+            assert_eq!(x86.x87.regs[6], raw_a);
+            assert_eq!(x86.x87.physical_tag(6), 0);
+            assert_eq!(x86.x87.regs[7], raw_b);
+            assert_eq!(x86.x87.physical_tag(7), 1);
+            assert_eq!(x86.x87.last_opcode, 0x01C9);
+            assert_eq!(x86.x87.data_ptr, 0x110, "register op changed FDP");
+        }
+
+        execute_lifted_x86(&[0xDD, 0xD2], &mut ctx, &mut memory); // FST ST(2)
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], raw_a);
+            assert_eq!(x86.x87.physical_tag(0), 0);
+        }
+        execute_lifted_x86(&[0xDD, 0xD9], &mut ctx, &mut memory); // FSTP ST(1)
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.physical_tag(6), 3);
+            assert_eq!(x86.x87.regs[7], raw_a);
+            assert_eq!(x86.x87.physical_tag(7), 0);
+        }
+
+        ctx.write_vreg(rax, 0x180);
+        execute_lifted_x86(&[0xDB, 0x38], &mut ctx, &mut memory); // FSTP m80fp [RAX]
+        let mut stored = [0u8; 10];
+        memory.read(0x180, &mut stored).unwrap();
+        assert_eq!(stored, raw_a);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.physical_tag(7), 3);
+            assert_eq!(x86.x87.data_ptr, 0x180);
+            assert_eq!(x86.x87.last_opcode, 0x0338);
+        }
+
+        // FLD ST(i) copies the raw payload and full tag before decrementing TOP.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_logical_raw_tagged(3, raw_b, 1);
+        }
+        execute_lifted_x86(&[0xD9, 0xC3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[7], raw_b);
+            assert_eq!(x86.x87.physical_tag(7), 1);
+        }
+        execute_lifted_x86(&[0xDD, 0xC0], &mut ctx, &mut memory); // FFREE ST(0)
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.physical_tag(7), 3);
+            assert_eq!(x86.x87.regs[7], raw_b, "FFREE changed payload");
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x87_exact_sign_and_top_rotation_operations_preserve_raw_state() {
+        let mut negative = [0xA5, 0x5A, 1, 2, 3, 4, 5, 0x80, 0x34, 0xC0];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_top(7);
+            x86.x87.set_logical_raw_tagged(0, negative, 0);
+            x86.x87.status_word |= 0x0200;
+        }
+
+        execute_lifted_x86(&[0xD9, 0xE1], &mut ctx, &mut memory); // FABS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            negative[9] &= 0x7F;
+            assert_eq!(x86.x87.regs[7], negative);
+            assert_eq!(x86.x87.physical_tag(7), 0);
+            assert_eq!(x86.x87.status_word & 0x0200, 0);
+            assert_eq!(x86.x87.last_opcode, 0x01E1);
+        }
+
+        execute_lifted_x86(&[0xD9, 0xE0], &mut ctx, &mut memory); // FCHS
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            negative[9] ^= 0x80;
+            assert_eq!(x86.x87.regs[7], negative);
+            assert_eq!(x86.x87.last_opcode, 0x01E0);
+        }
+
+        let (regs, tags) = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => (x86.x87.regs, x86.x87.tag_word),
+            _ => unreachable!(),
+        };
+        execute_lifted_x86(&[0xD9, 0xF6], &mut ctx, &mut memory); // FDECSTP
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 6);
+            assert_eq!(x86.x87.regs, regs);
+            assert_eq!(x86.x87.tag_word, tags);
+            assert_eq!(x86.x87.last_opcode, 0x01F6);
+        }
+        execute_lifted_x86(&[0xD9, 0xF7], &mut ctx, &mut memory); // FINCSTP
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs, regs);
+            assert_eq!(x86.x87.tag_word, tags);
+            assert_eq!(x86.x87.last_opcode, 0x01F7);
+        }
+
+        // Masked unary stack underflow installs indefinite; with IM clear the
+        // empty tag and payload remain unchanged while ES/B become pending.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.regs[0] = negative;
+        }
+        execute_lifted_x86(&[0xD9, 0xE0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(0), 2);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.regs[0] = negative;
+        }
+        execute_lifted_x86(&[0xD9, 0xE1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], negative);
+            assert_eq!(x86.x87.physical_tag(0), 3);
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_load_constants_match_all_fcw_rounding_modes_exactly() {
+        let cases: [(u8, u16, [u64; 4], u16); 7] = [
+            (0xE8, 0x3FFF, [0x8000_0000_0000_0000; 4], 0u16),
+            (
+                0xE9,
+                0x4000,
+                [
+                    0xD49A_784B_CD1B_8AFE,
+                    0xD49A_784B_CD1B_8AFE,
+                    0xD49A_784B_CD1B_8AFF,
+                    0xD49A_784B_CD1B_8AFE,
+                ],
+                0,
+            ),
+            (
+                0xEA,
+                0x3FFF,
+                [
+                    0xB8AA_3B29_5C17_F0BC,
+                    0xB8AA_3B29_5C17_F0BB,
+                    0xB8AA_3B29_5C17_F0BC,
+                    0xB8AA_3B29_5C17_F0BB,
+                ],
+                0,
+            ),
+            (
+                0xEB,
+                0x4000,
+                [
+                    0xC90F_DAA2_2168_C235,
+                    0xC90F_DAA2_2168_C234,
+                    0xC90F_DAA2_2168_C235,
+                    0xC90F_DAA2_2168_C234,
+                ],
+                0,
+            ),
+            (
+                0xEC,
+                0x3FFD,
+                [
+                    0x9A20_9A84_FBCF_F799,
+                    0x9A20_9A84_FBCF_F798,
+                    0x9A20_9A84_FBCF_F799,
+                    0x9A20_9A84_FBCF_F798,
+                ],
+                0,
+            ),
+            (
+                0xED,
+                0x3FFE,
+                [
+                    0xB172_17F7_D1CF_79AC,
+                    0xB172_17F7_D1CF_79AB,
+                    0xB172_17F7_D1CF_79AC,
+                    0xB172_17F7_D1CF_79AB,
+                ],
+                0,
+            ),
+            (0xEE, 0x0000, [0; 4], 1),
+        ];
+
+        for rc in 0..4u16 {
+            for (opcode, exponent, significands, expected_tag) in cases {
+                let mut ctx = SmirContext::new_x86_64();
+                let mut memory = FlatMemory::new(0x10);
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+                    x86.x87.status_word = 0x0220; // C1 and PE initially set
+                }
+                execute_lifted_x86(&[0xD9, opcode], &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    let mut expected = [0u8; 10];
+                    expected[..8].copy_from_slice(&significands[rc as usize].to_le_bytes());
+                    expected[8..].copy_from_slice(&exponent.to_le_bytes());
+                    assert_eq!(x86.x87.top(), 7, "opcode={opcode:02X} rc={rc}");
+                    assert_eq!(x86.x87.regs[7], expected, "opcode={opcode:02X} rc={rc}");
+                    assert_eq!(
+                        x86.x87.physical_tag(7),
+                        expected_tag,
+                        "opcode={opcode:02X} rc={rc}"
+                    );
+                    assert_eq!(x86.x87.status_word & 0x0200, 0, "C1");
+                    assert_ne!(x86.x87.status_word & 0x0020, 0, "PE must be preserved");
+                    assert_eq!(x86.x87.last_opcode, 0x0100 | opcode as u16);
+                }
+            }
+        }
+
+        // Constant loads use the same masked-overflow response as FLD.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x10);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_physical_tag(7, 0);
+        }
+        execute_lifted_x86(&[0xD9, 0xEB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[7], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(7), 2);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0241);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fld_single_double_widens_exactly_and_reports_source_classes() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let single_cases = [
+            (0x3FC0_0000u32, raw(0xC000_0000_0000_0000, 0x3FFF), 0u16),
+            (0x8000_0000, raw(0, 0x8000), 1),
+            (0x0000_0001, raw(0x8000_0000_0000_0000, 0x3F6A), 0),
+            (0x7F80_0000, raw(0x8000_0000_0000_0000, 0x7FFF), 2),
+            (0x7FC1_2345, raw(0xC123_4500_0000_0000, 0x7FFF), 2),
+            (0x7F81_2345, raw(0xC123_4500_0000_0000, 0x7FFF), 2),
+        ];
+        for (bits, expected, tag) in single_cases {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            memory.write(0x100, &bits.to_le_bytes()).unwrap();
+            execute_lifted_x86(&[0xD9, 0x00], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "f32={bits:08X}");
+                assert_eq!(x86.x87.regs[7], expected, "f32={bits:08X}");
+                assert_eq!(x86.x87.physical_tag(7), tag, "f32={bits:08X}");
+                assert_eq!(x86.x87.last_opcode, 0x0100);
+                assert_eq!(x86.x87.data_ptr, 0x100);
+                assert_eq!(x86.x87.status_word & 1 != 0, bits == 0x7F81_2345);
+                assert_eq!(x86.x87.status_word & 2 != 0, bits == 1);
+            }
+        }
+
+        let double_cases = [
+            (
+                0xC004_0000_0000_0000u64,
+                raw(0xA000_0000_0000_0000, 0xC000),
+                0u16,
+            ),
+            (0x8000_0000_0000_0000, raw(0, 0x8000), 1),
+            (0x0000_0000_0000_0001, raw(0x8000_0000_0000_0000, 0x3BCD), 0),
+            (0x7FF0_0000_0000_0000, raw(0x8000_0000_0000_0000, 0x7FFF), 2),
+            (0x7FF8_1234_5678_9ABC, raw(0xC091_A2B3_C4D5_E000, 0x7FFF), 2),
+        ];
+        for (bits, expected, tag) in double_cases {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            memory.write(0x100, &bits.to_le_bytes()).unwrap();
+            execute_lifted_x86(&[0xDD, 0x00], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "f64={bits:016X}");
+                assert_eq!(x86.x87.regs[7], expected, "f64={bits:016X}");
+                assert_eq!(x86.x87.physical_tag(7), tag, "f64={bits:016X}");
+                assert_eq!(x86.x87.last_opcode, 0x0500);
+            }
+        }
+
+        // Intel specifies that an unmasked denormal exception on FLD still
+        // pushes the exactly widened value while setting the pending summary.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.write_vreg(rax, 0x100);
+        memory.write(0x100, &1u32.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word &= !0x0002;
+        }
+        execute_lifted_x86(&[0xD9, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[7], raw(0x8000_0000_0000_0000, 0x3F6A));
+            assert_eq!(x86.x87.status_word & 0x8082, 0x8082); // B|ES|DE
+        }
+
+        // An unmasked SNaN exception quiets no destination and does not change
+        // TOP; the pre-existing physical payload and empty tag remain intact.
+        let sentinel = raw(0xDEAD_BEEF_CAFE_BABE, 0x1234);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0001;
+            x86.x87.regs[7] = sentinel;
+        }
+        memory.write(0x100, &0x7F81_2345u32.to_le_bytes()).unwrap();
+        execute_lifted_x86(&[0xD9, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.regs[7], sentinel);
+            assert_eq!(x86.x87.physical_tag(7), 3);
+            assert_eq!(x86.x87.status_word & 0x8081, 0x8081); // B|ES|IE
+        }
+
+        // Complete-width read faults preserve the entire x87 state.
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x104);
+        let exit = execute_lifted_x86(&[0xDD, 0x00], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fcmov_conditions_copy_exact_state_and_gate_stack_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let destination = raw(0x8000_0000_0000_0000, 0x3FFF);
+        let source = raw(0xDEAD_BEEF_CAFE_BABE, 0xC123);
+        for (bytes, rflags) in [
+            (&[0xDA, 0xC2][..], 0x0001u64), // FCMOVB: CF=1
+            (&[0xDA, 0xCA][..], 0x0040),    // FCMOVE: ZF=1
+            (&[0xDA, 0xD2][..], 0x0001),    // FCMOVBE: CF=1
+            (&[0xDA, 0xDA][..], 0x0004),    // FCMOVU: PF=1
+            (&[0xDB, 0xC2][..], 0x0000),    // FCMOVNB: CF=0
+            (&[0xDB, 0xCA][..], 0x0000),    // FCMOVNE: ZF=0
+            (&[0xDB, 0xD2][..], 0x0000),    // FCMOVNBE: CF=ZF=0
+            (&[0xDB, 0xDA][..], 0x0000),    // FCMOVNU: PF=0
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(rflags);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw_tagged(0, destination, 0);
+                x86.x87.set_logical_raw_tagged(2, source, 2);
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], source, "{bytes:02X?}");
+                assert_eq!(x86.x87.physical_tag(0), 2, "{bytes:02X?}");
+                assert_eq!(x86.x87.status_word & 0x0041, 0, "{bytes:02X?}");
+                assert_eq!(x86.x87.instr_ptr, 0x1000);
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags() & 0x45, rflags & 0x45);
+        }
+
+        // A false condition neither reads the empty x87 source nor changes C1,
+        // while still recording the executed x87 opcode/environment.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x10);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0); // CF=0
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_logical_raw_tagged(0, destination, 0);
+            x86.x87.status_word |= 0x0200;
+        }
+        execute_lifted_x86(&[0xDA, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], destination);
+            assert_eq!(x86.x87.physical_tag(2), 3);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0200);
+            assert_eq!(x86.x87.last_opcode, 0x02C2);
+        }
+
+        // A true condition with an empty source follows the masked #IS
+        // response; with IM clear it preserves the destination and asserts ES/B.
+        ctx.flags.materialized = MaterializedFlags::from_rflags(1); // CF=1
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xDA, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(0), 2);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.set_logical_raw_tagged(0, destination, 0);
+        }
+        execute_lifted_x86(&[0xDA, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], destination);
+            assert_eq!(x86.x87.physical_tag(0), 0);
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fxam_classifies_all_binary80_classes_and_empty_sign() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        for (name, value, tag, expected_codes) in [
+            ("unsupported", raw(0, 0x7FFF), 2u16, 0x0000u16),
+            ("nan", raw(0xC000_0000_0000_0001, 0x7FFF), 2, 0x0100),
+            ("normal", raw(0x8000_0000_0000_0000, 0x3FFF), 0, 0x0400),
+            ("infinity", raw(0x8000_0000_0000_0000, 0x7FFF), 2, 0x0500),
+            ("zero", raw(0, 0), 1, 0x4000),
+            ("empty-negative", raw(0, 0x8000), 3, 0x4300),
+            ("denormal", raw(1, 0), 2, 0x4400),
+            ("pseudo-denormal", raw(0x8000_0000_0000_0001, 0), 2, 0x4400),
+            (
+                "negative-normal",
+                raw(0x8000_0000_0000_0000, 0xBFFF),
+                0,
+                0x0600,
+            ),
+            ("unnormal", raw(0x4000_0000_0000_0000, 0x4000), 2, 0x0000),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_top(5);
+                x86.x87.set_logical_raw_tagged(0, value, tag);
+                x86.x87.status_word |= 0x47A5;
+            }
+            execute_lifted_x86(&[0xD9, 0xE5], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 5, "{name}");
+                assert_eq!(x86.x87.regs[5], value, "{name}");
+                assert_eq!(x86.x87.physical_tag(5), tag, "{name}");
+                assert_eq!(x86.x87.status_word & 0x4700, expected_codes, "{name}");
+                assert_eq!(x86.x87.status_word & 0x00A5, 0x00A5, "{name}");
+                assert_eq!(x86.x87.last_opcode, 0x01E5);
+                assert_eq!(x86.x87.instr_ptr, 0x1000);
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x87_ftst_compares_zero_and_honors_exception_masks() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        for (name, value, tag, expected_codes, expected_exceptions) in [
+            ("positive", raw(0x8000_0000_0000_0000, 0x3FFF), 0u16, 0, 0),
+            ("negative", raw(0x8000_0000_0000_0000, 0xBFFF), 0, 0x0100, 0),
+            ("positive-zero", raw(0, 0), 1, 0x4000, 0),
+            ("negative-zero", raw(0, 0x8000), 1, 0x4000, 0),
+            (
+                "positive-infinity",
+                raw(0x8000_0000_0000_0000, 0x7FFF),
+                2,
+                0,
+                0,
+            ),
+            (
+                "negative-infinity",
+                raw(0x8000_0000_0000_0000, 0xFFFF),
+                2,
+                0x0100,
+                0,
+            ),
+            ("positive-denormal", raw(1, 0), 2, 0, 0x0002),
+            ("negative-denormal", raw(1, 0x8000), 2, 0x0100, 0x0002),
+            (
+                "qnan",
+                raw(0xC000_0000_0000_0001, 0x7FFF),
+                2,
+                0x4500,
+                0x0001,
+            ),
+            ("unsupported", raw(0, 0x7FFF), 2, 0x4500, 0x0001),
+            ("empty", raw(0, 0), 3, 0x4500, 0x0041),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_top(3);
+                x86.x87.set_logical_raw_tagged(0, value, tag);
+                x86.x87.status_word |= 0x4720;
+            }
+            execute_lifted_x86(&[0xD9, 0xE4], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 3, "{name}");
+                assert_eq!(x86.x87.regs[3], value, "{name}");
+                assert_eq!(x86.x87.physical_tag(3), tag, "{name}");
+                assert_eq!(x86.x87.status_word & 0x4500, expected_codes, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0200, 0, "{name}: C1");
+                assert_eq!(
+                    x86.x87.status_word & 0x0043,
+                    (0x0020 | expected_exceptions) & 0x0043,
+                    "{name}"
+                );
+                assert_eq!(x86.x87.last_opcode, 0x01E4);
+            }
+        }
+
+        for (name, value, tag, clear_mask, expected_status) in [
+            (
+                "unmasked-invalid",
+                raw(0xC000_0000_0000_0001, 0x7FFF),
+                2u16,
+                0x0001u16,
+                0x8081u16,
+            ),
+            ("unmasked-denormal", raw(1, 0), 2, 0x0002, 0x8082),
+            ("unmasked-empty", raw(0, 0), 3, 0x0001, 0x80C1),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !clear_mask;
+                x86.x87.set_logical_raw_tagged(0, value, tag);
+                x86.x87.status_word = 0x0700; // prior C0,C1,C2=1
+            }
+            execute_lifted_x86(&[0xD9, 0xE4], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x4500, 0x0500, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0200, 0, "{name}: C1");
+                assert_eq!(
+                    x86.x87.status_word & expected_status,
+                    expected_status,
+                    "{name}"
+                );
+                assert_eq!(x86.x87.regs[0], value, "{name}");
+                assert_eq!(x86.x87.physical_tag(0), tag, "{name}");
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fcom_fucom_order_binary80_and_apply_pop_counts() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let p0 = raw(0, 0);
+        let n0 = raw(0, 0x8000);
+        let p1 = raw(0x8000_0000_0000_0000, 0x3FFF);
+        let p2 = raw(0x8000_0000_0000_0000, 0x4000);
+        let n1 = raw(0x8000_0000_0000_0000, 0xBFFF);
+        let n2 = raw(0x8000_0000_0000_0000, 0xC000);
+        let pinf = raw(0x8000_0000_0000_0000, 0x7FFF);
+
+        for (name, lhs, lhs_tag, rhs, rhs_tag, expected_codes) in [
+            ("greater", p2, 0u16, p1, 0u16, 0x0000u16),
+            ("less", p1, 0, p2, 0, 0x0100),
+            ("equal", p1, 0, p1, 0, 0x4000),
+            ("negative-order", n2, 0, n1, 0, 0x0100),
+            ("negative-v-positive", n1, 0, p1, 0, 0x0100),
+            ("positive-v-negative", p1, 0, n1, 0, 0x0000),
+            ("signed-zero", n0, 1, p0, 1, 0x4000),
+            ("infinity", pinf, 2, p2, 0, 0x0000),
+            (
+                "pseudo-denormal-equals-normal",
+                raw(0x8000_0000_0000_0042, 0),
+                2,
+                raw(0x8000_0000_0000_0042, 1),
+                0,
+                0x4000,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw_tagged(0, lhs, lhs_tag);
+                x86.x87.set_logical_raw_tagged(1, rhs, rhs_tag);
+                x86.x87.status_word |= 0x47A0;
+            }
+            execute_lifted_x86(&[0xD8, 0xD1], &mut ctx, &mut memory); // FCOM ST(1)
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x4500, expected_codes, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0200, 0, "{name}: C1");
+                assert_eq!(x86.x87.top(), 0, "{name}");
+                assert_eq!(x86.x87.regs[0], lhs, "{name}");
+                assert_eq!(x86.x87.regs[1], rhs, "{name}");
+            }
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_logical_raw(0, p2);
+            x86.x87.set_logical_raw(1, p1);
+            x86.x87.set_logical_raw(2, n1);
+        }
+        execute_lifted_x86(&[0xD8, 0xD9], &mut ctx, &mut memory); // FCOMP ST(1)
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.physical_tag(0), 3);
+            assert_eq!(x86.x87.status_word & 0x4500, 0x0000);
+        }
+
+        // Reinitialize and verify both FCOMPP and FUCOMPP pop exactly twice.
+        for bytes in [&[0xDE, 0xD9][..], &[0xDA, 0xE9][..]] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.set_logical_raw(0, p1);
+                x86.x87.set_logical_raw(1, p1);
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 2, "{bytes:02X?}");
+                assert_eq!(x86.x87.physical_tag(0), 3, "{bytes:02X?}");
+                assert_eq!(x86.x87.physical_tag(1), 3, "{bytes:02X?}");
+                assert_eq!(x86.x87.status_word & 0x4500, 0x4000);
+            }
+        }
+
+        // Memory forms widen exactly before comparing and retain restartable
+        // read-fault semantics.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x100);
+        memory
+            .write(0x100, &2.0f32.to_bits().to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.set_logical_raw(0, p1);
+        }
+        execute_lifted_x86(&[0xD8, 0x10], &mut ctx, &mut memory); // FCOM m32fp
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x4500, 0x0100);
+            assert_eq!(x86.x87.data_ptr, 0x100);
+            assert_eq!(x86.x87.last_opcode, 0x0010);
+        }
+        memory
+            .write(0x100, &1.0f64.to_bits().to_le_bytes())
+            .unwrap();
+        execute_lifted_x86(&[0xDC, 0x18], &mut ctx, &mut memory); // FCOMP m64fp
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x4500, 0x4000);
+            assert_eq!(x86.x87.top(), 1);
+        }
+
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x104);
+        let exit = execute_lifted_x86(&[0xDC, 0x18], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_ficom_ficomp_widen_signed_integers_exactly() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.write_vreg(rax, 0x100);
+
+        memory.write(0x100, &i16::MIN.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87
+                .set_logical_raw(0, raw(0x8000_0000_0000_0000, 0xC00E));
+        }
+        execute_lifted_x86(&[0xDE, 0x10], &mut ctx, &mut memory); // FICOM m16int
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x4500, 0x4000);
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.data_ptr, 0x100);
+            assert_eq!(x86.x87.last_opcode, 0x0610);
+        }
+
+        memory.write(0x100, &i32::MAX.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87
+                .set_logical_raw(0, raw(0x8000_0000_0000_0000, 0x401E)); // 2^31
+        }
+        execute_lifted_x86(&[0xDA, 0x10], &mut ctx, &mut memory); // FICOM m32int
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x4500, 0x0000);
+            assert_eq!(x86.x87.top(), 0);
+        }
+
+        memory.write(0x100, &(-1i32).to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_logical_raw(0, raw(0, 0));
+        }
+        execute_lifted_x86(&[0xDA, 0x18], &mut ctx, &mut memory); // FICOMP m32int
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x4500, 0x0000);
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.physical_tag(0), 3);
+        }
+
+        // Integer sources cannot generate #D or #IA; only an empty ST(0)
+        // produces masked #IS and the pop still completes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        execute_lifted_x86(&[0xDE, 0x18], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x4543, 0x4541);
+        }
+
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x102);
+        let exit = execute_lifted_x86(&[0xDA, 0x18], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fild_widens_all_integer_widths_exactly_and_atomically() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        for (name, bytes, source, source_len, expected, tag, fop) in [
+            (
+                "m16 minimum",
+                &[0xDF, 0x00][..],
+                (i16::MIN as u16 as u64).to_le_bytes(),
+                2usize,
+                raw(0x8000_0000_0000_0000, 0xC00E),
+                0u16,
+                0x0700u16,
+            ),
+            (
+                "m32 maximum",
+                &[0xDB, 0x00][..],
+                (i32::MAX as u32 as u64).to_le_bytes(),
+                4,
+                raw(0xFFFF_FFFE_0000_0000, 0x401D),
+                0,
+                0x0300,
+            ),
+            (
+                "m64 minimum",
+                &[0xDF, 0x28][..],
+                (i64::MIN as u64).to_le_bytes(),
+                8,
+                raw(0x8000_0000_0000_0000, 0xC03E),
+                0,
+                0x0728,
+            ),
+            (
+                "zero",
+                &[0xDF, 0x28][..],
+                0u64.to_le_bytes(),
+                8,
+                raw(0, 0),
+                1,
+                0x0728,
+            ),
+            (
+                "negative one",
+                &[0xDF, 0x28][..],
+                u64::MAX.to_le_bytes(),
+                8,
+                raw(0x8000_0000_0000_0000, 0xBFFF),
+                0,
+                0x0728,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            memory.write(0x100, &source[..source_len]).unwrap();
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "{name}");
+                assert_eq!(x86.x87.regs[7], expected, "{name}");
+                assert_eq!(x86.x87.physical_tag(7), tag, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0043, 0, "{name}");
+                assert_eq!(x86.x87.data_ptr, 0x100, "{name}");
+                assert_eq!(x86.x87.last_opcode, fop, "{name}");
+            }
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.data_ptr = 0xCAFE;
+            x86.x87.instr_ptr = 0xBEEF;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x104);
+        let exit = execute_lifted_x86(&[0xDF, 0x28], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fist_fistp_fisttp_round_range_fault_and_pop_semantics() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let p15 = raw(0xC000_0000_0000_0000, 0x3FFF);
+        let n15 = raw(0xC000_0000_0000_0000, 0xBFFF);
+
+        for (name, rc, source, expected, expected_c1) in [
+            ("nearest +1.5", 0u16, p15, 2i16, true),
+            ("nearest -1.5", 0, n15, -2, true),
+            ("down +1.5", 1, p15, 1, false),
+            ("down -1.5", 1, n15, -2, true),
+            ("up +1.5", 2, p15, 2, true),
+            ("up -1.5", 2, n15, -1, false),
+            ("truncate +1.5", 3, p15, 1, false),
+            ("truncate -1.5", 3, n15, -1, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xDF, 0x10], &mut ctx, &mut memory); // FIST m16int
+            let mut stored = [0u8; 2];
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(i16::from_le_bytes(stored), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 0, "{name}");
+                assert_ne!(x86.x87.status_word & 0x0020, 0, "{name}: PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}");
+            }
+        }
+
+        // FISTTP ignores FCW.RC, truncates, clears C1, and pops.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = (x86.x87.control_word & !0x0C00) | 0x0800; // round up
+            x86.x87.set_logical_raw(0, n15);
+            x86.x87.status_word |= 0x0200;
+        }
+        execute_lifted_x86(&[0xDF, 0x08], &mut ctx, &mut memory);
+        let mut word = [0u8; 2];
+        memory.read(0x100, &mut word).unwrap();
+        assert_eq!(i16::from_le_bytes(word), -1);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x0220, 0x0020);
+        }
+
+        // Exact signed minima are valid at every destination width.
+        for (bytes, source, expected, len) in [
+            (
+                &[0xDF, 0x18][..],
+                raw(0x8000_0000_0000_0000, 0xC00E),
+                (i16::MIN as u16 as u64).to_le_bytes(),
+                2usize,
+            ),
+            (
+                &[0xDB, 0x18][..],
+                raw(0x8000_0000_0000_0000, 0xC01E),
+                (i32::MIN as u32 as u64).to_le_bytes(),
+                4,
+            ),
+            (
+                &[0xDF, 0x38][..],
+                raw(0x8000_0000_0000_0000, 0xC03E),
+                (i64::MIN as u64).to_le_bytes(),
+                8,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.set_logical_raw(0, source);
+            }
+            memory.write(0x100, &[0; 8]).unwrap();
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            let mut actual = [0u8; 8];
+            memory.read(0x100, &mut actual[..len]).unwrap();
+            assert_eq!(&actual[..len], &expected[..len], "{bytes:02X?}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 1, "{bytes:02X?}");
+                assert_eq!(x86.x87.status_word & 0x0021, 0, "{bytes:02X?}");
+            }
+        }
+
+        // Masked invalid conversion stores integer indefinite; pop behavior
+        // follows the selected opcode.
+        let qnan = raw(0xC000_0000_0000_1234, 0x7FFF);
+        for (bytes, len, pops) in [
+            (&[0xDF, 0x10][..], 2usize, false),
+            (&[0xDB, 0x18][..], 4, true),
+            (&[0xDF, 0x38][..], 8, true),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.set_logical_raw_tagged(0, qnan, 2);
+            }
+            memory.write(0x100, &[0; 8]).unwrap();
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            let mut actual = [0u8; 8];
+            memory.read(0x100, &mut actual[..len]).unwrap();
+            let indefinite = (1u64 << (len * 8 - 1)).to_le_bytes();
+            assert_eq!(&actual[..len], &indefinite[..len], "{bytes:02X?}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_ne!(x86.x87.status_word & 1, 0);
+                assert_eq!(x86.x87.top(), u8::from(pops));
+            }
+        }
+
+        // Positive 32768 is out of range for m16int and uses the same masked
+        // invalid response.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87
+                .set_logical_raw(0, raw(0x8000_0000_0000_0000, 0x400E));
+        }
+        execute_lifted_x86(&[0xDF, 0x10], &mut ctx, &mut memory);
+        memory.read(0x100, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0x8000);
+
+        // Unmasked invalid suppresses both store and pop.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.set_logical_raw_tagged(0, qnan, 2);
+        }
+        memory.write(0x100, &[0xA5; 8]).unwrap();
+        execute_lifted_x86(&[0xDF, 0x38], &mut ctx, &mut memory);
+        let mut qword = [0u8; 8];
+        memory.read(0x100, &mut qword).unwrap();
+        assert_eq!(qword, [0xA5; 8]);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.status_word & 0x8081, 0x8081);
+        }
+
+        // Unmasked precision still stores and pops the rounded result while
+        // asserting the pending summary.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0020;
+            x86.x87.set_logical_raw(0, p15);
+        }
+        execute_lifted_x86(&[0xDB, 0x18], &mut ctx, &mut memory);
+        let mut dword = [0u8; 4];
+        memory.read(0x100, &mut dword).unwrap();
+        assert_eq!(i32::from_le_bytes(dword), 2);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x80A0, 0x80A0);
+        }
+
+        // A partial write fault commits no status, environment, tag, or pop.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.set_logical_raw(0, p15);
+            x86.x87.data_ptr = 0xCAFE;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x104);
+        let exit = execute_lifted_x86(&[0xDF, 0x38], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_frndint_exact_rounding_special_values_and_exception_masks() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let p15 = raw(0xC000_0000_0000_0000, 0x3FFF);
+        let n15 = raw(0xC000_0000_0000_0000, 0xBFFF);
+        let p1 = raw(0x8000_0000_0000_0000, 0x3FFF);
+        let n1 = raw(0x8000_0000_0000_0000, 0xBFFF);
+        let p2 = raw(0x8000_0000_0000_0000, 0x4000);
+        let n2 = raw(0x8000_0000_0000_0000, 0xC000);
+
+        for (name, rc, source, expected, expected_c1) in [
+            ("nearest +1.5", 0u16, p15, p2, true),
+            ("nearest -1.5", 0, n15, n2, true),
+            ("down +1.5", 1, p15, p1, false),
+            ("down -1.5", 1, n15, n2, true),
+            ("up +1.5", 2, p15, p2, true),
+            ("up -1.5", 2, n15, n1, false),
+            ("truncate +1.5", 3, p15, p1, false),
+            ("truncate -1.5", 3, n15, n1, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+                x86.x87.data_ptr = 0xCAFE;
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], expected, "{name}");
+                assert_eq!(x86.x87.top(), 0, "{name}: no pop");
+                assert_eq!(x86.x87.status_word & 0x0020, 0x0020, "{name}: PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "{name}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x01FC, "{name}: FOP");
+                assert_eq!(x86.x87.data_ptr, 0xCAFE, "{name}: FDP unchanged");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: RFLAGS");
+        }
+
+        // Ties round to even, including signed zero; already-integral values
+        // beyond every host integer width remain bit-for-bit unchanged.
+        for (name, source, expected) in [
+            ("+0.5 tie", raw(0x8000_0000_0000_0000, 0x3FFE), raw(0, 0)),
+            (
+                "-0.5 tie",
+                raw(0x8000_0000_0000_0000, 0xBFFE),
+                raw(0, 0x8000),
+            ),
+            (
+                "huge integral",
+                raw(0x8000_0000_0001_2345, 0x404F),
+                raw(0x8000_0000_0001_2345, 0x404F),
+            ),
+            ("negative zero", raw(0, 0x8000), raw(0, 0x8000)),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], expected, "{name}");
+                assert_eq!(
+                    x86.x87.status_word & 0x0221,
+                    if name.contains("tie") { 0x0020 } else { 0 },
+                    "{name}"
+                );
+            }
+        }
+
+        let qnan = raw(0xC123_4567_89AB_CDEF, 0xFFFF);
+        let snan = raw(0x8123_4567_89AB_CDEF, 0x7FFF);
+        let quieted_snan = raw(0xC123_4567_89AB_CDEF, 0x7FFF);
+        let unsupported = raw(0x4123_4567_89AB_CDEF, 0x4000);
+        let infinity = raw(0x8000_0000_0000_0000, 0xFFFF);
+        for (name, source, expected, expected_ie) in [
+            ("quiet NaN", qnan, qnan, false),
+            ("signaling NaN", snan, quieted_snan, true),
+            (
+                "unsupported",
+                unsupported,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+            ("infinity", infinity, infinity, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], expected, "{name}");
+                assert_eq!(x86.x87.status_word & 1 != 0, expected_ie, "{name}: IE");
+                assert_eq!(x86.x87.status_word & 0x0220, 0, "{name}: no PE/C1");
+            }
+        }
+
+        // Masked #D permits rounding and subsequent #P accrual. Unmasked #D
+        // has higher priority and suppresses the result and #P.
+        let denormal = raw(1, 0);
+        for source in [denormal, raw(0x8000_0000_0000_0001, 0)] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], raw(0, 0));
+                assert_eq!(x86.x87.status_word & 0x0022, 0x0022);
+            }
+        }
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word &= !0x0002;
+            x86.x87.set_logical_raw(0, denormal);
+        }
+        execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], denormal);
+            assert_eq!(x86.x87.status_word & 0x80A2, 0x8082);
+        }
+
+        // Unmasked #IA suppresses quieting/replacement. Unmasked #P is a
+        // post-computation exception and therefore retains the rounded result.
+        for source in [snan, unsupported] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word &= !0x0001;
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.regs[0], source);
+                assert_eq!(x86.x87.status_word & 0x80A1, 0x8081);
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0020;
+            x86.x87.set_logical_raw(0, p15);
+        }
+        execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], p2);
+            assert_eq!(x86.x87.status_word & 0x82A0, 0x82A0);
+        }
+
+        // A masked empty-stack source installs indefinite without changing
+        // TOP. With IM clear, both tag and payload remain unchanged.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.regs[0], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(0), 2);
+            assert_eq!(x86.x87.status_word & 0x8241, 0x0041);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0001;
+            x86.x87.regs[0] = p1;
+        }
+        execute_lifted_x86(&[0xD9, 0xFC], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], p1);
+            assert_eq!(x86.x87.physical_tag(0), 3);
+            assert_eq!(x86.x87.status_word & 0x82C1, 0x80C1);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fxtract_exact_decomposition_special_values_and_stack_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            SmirInterpreter::x86_x87_from_raw_parts(significand, exponent_sign)
+        }
+        fn results(ctx: &SmirContext) -> ([u8; 10], [u8; 10]) {
+            match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => (
+                    x86.x87.regs[x86.x87.physical_index(0)],
+                    x86.x87.regs[x86.x87.physical_index(1)],
+                ),
+                _ => unreachable!(),
+            }
+        }
+
+        let p6 = raw(0xC000_0000_0000_0000, 0x4001);
+        let n6 = raw(0xC000_0000_0000_0000, 0xC001);
+        let p2 = raw(0x8000_0000_0000_0000, 0x4000);
+        let p15 = raw(0xC000_0000_0000_0000, 0x3FFF);
+        let n15 = raw(0xC000_0000_0000_0000, 0xBFFF);
+        for (name, source, significand, exponent) in [
+            ("positive six", p6, p15, p2),
+            ("negative six", n6, n15, p2),
+            (
+                "maximum normal exponent",
+                raw(0xFEDC_BA98_7654_3210, 0x7FFE),
+                raw(0xFEDC_BA98_7654_3210, 0x3FFF),
+                SmirInterpreter::x86_x87_from_i64(16_383),
+            ),
+            (
+                "minimum true denormal",
+                raw(1, 0),
+                raw(0x8000_0000_0000_0000, 0x3FFF),
+                SmirInterpreter::x86_x87_from_i64(-16_445),
+            ),
+            (
+                "pseudo-denormal",
+                raw(0x8000_0000_0000_0001, 0),
+                raw(0x8000_0000_0000_0001, 0x3FFF),
+                SmirInterpreter::x86_x87_from_i64(-16_382),
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.data_ptr = 0xCAFE;
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+            assert_eq!(results(&ctx), (significand, exponent), "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "{name}: push");
+                assert_eq!(
+                    x86.x87.status_word & 0x0002,
+                    if source[8] == 0 && source[9] & 0x7F == 0 {
+                        0x0002
+                    } else {
+                        0
+                    },
+                    "{name}: DE"
+                );
+                assert_eq!(x86.x87.status_word & 0x0261, 0, "{name}: IE/PE/C1");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "{name}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x01F4, "{name}: FOP");
+                assert_eq!(x86.x87.data_ptr, 0xCAFE, "{name}: FDP unchanged");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: RFLAGS");
+        }
+
+        let pzero = raw(0, 0);
+        let nzero = raw(0, 0x8000);
+        let negative_infinity = raw(0x8000_0000_0000_0000, 0xFFFF);
+        let positive_infinity = raw(0x8000_0000_0000_0000, 0x7FFF);
+        let qnan = raw(0xC123_4567_89AB_CDEF, 0xFFFF);
+        let snan = raw(0x8123_4567_89AB_CDEF, 0x7FFF);
+        let quiet_snan = raw(0xC123_4567_89AB_CDEF, 0x7FFF);
+        let unsupported = raw(0x4123_4567_89AB_CDEF, 0x4000);
+        for (name, source, expected, exceptions) in [
+            (
+                "positive zero",
+                pzero,
+                (pzero, negative_infinity),
+                0x0004u16,
+            ),
+            ("negative zero", nzero, (nzero, negative_infinity), 0x0004),
+            (
+                "negative infinity",
+                negative_infinity,
+                (negative_infinity, positive_infinity),
+                0,
+            ),
+            ("quiet NaN", qnan, (qnan, qnan), 0),
+            ("signaling NaN", snan, (quiet_snan, quiet_snan), 0x0001),
+            (
+                "unsupported",
+                unsupported,
+                (
+                    crate::smir::X86X87State::INDEFINITE,
+                    crate::smir::X86X87State::INDEFINITE,
+                ),
+                0x0001,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+            assert_eq!(results(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "{name}: push");
+                assert_eq!(x86.x87.status_word & 0x0007, exceptions, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0260, 0, "{name}: no PE/C1");
+            }
+        }
+
+        // Invalid, denormal, and zero-divide are pre-computation exceptions:
+        // clearing the corresponding mask suppresses the push and both writes.
+        for (name, source, mask, exception) in [
+            ("SNaN", snan, 0x0001u16, 0x0001u16),
+            ("denormal", raw(1, 0), 0x0002, 0x0002),
+            ("zero", pzero, 0x0004, 0x0004),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !mask;
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            let before = match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.x87.clone(),
+                _ => unreachable!(),
+            };
+            execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), before.top(), "{name}: no push");
+                assert_eq!(x86.x87.regs, before.regs, "{name}: operands unchanged");
+                assert_eq!(x86.x87.tag_word, before.tag_word, "{name}: tags unchanged");
+                assert_eq!(
+                    x86.x87.status_word & (0x8080 | exception),
+                    0x8080 | exception
+                );
+                assert_eq!(x86.x87.status_word & 0x0060, 0, "{name}: no SF/PE");
+            }
+        }
+
+        // Masked stack underflow/overflow push two indefinite values. The
+        // unmasked forms preserve TOP, tags, and operands; C1 distinguishes
+        // overflow from underflow.
+        for (name, overflow, expected_c1) in [("underflow", false, false), ("overflow", true, true)]
+        {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if overflow {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.x87.set_logical_raw(0, p6);
+                    x86.x87.set_logical_raw(7, p15);
+                }
+            }
+            execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+            assert_eq!(
+                results(&ctx),
+                (
+                    crate::smir::X86X87State::INDEFINITE,
+                    crate::smir::X86X87State::INDEFINITE,
+                ),
+                "{name}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "{name}: masked push");
+                assert_eq!(x86.x87.status_word & 0x0041, 0x0041, "{name}: IE/SF");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+            }
+
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !1;
+                if overflow {
+                    x86.x87.set_logical_raw(0, p6);
+                    x86.x87.set_logical_raw(7, p15);
+                }
+            }
+            let before = match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.x87.clone(),
+                _ => unreachable!(),
+            };
+            execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), before.top(), "{name}: unmasked no push");
+                assert_eq!(x86.x87.regs, before.regs, "{name}: operands unchanged");
+                assert_eq!(x86.x87.tag_word, before.tag_word, "{name}: tags unchanged");
+                assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1, "{name}: pending #IS");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fscale_exact_scaling_rounding_exceptions_and_reconstruction() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            SmirInterpreter::x86_x87_from_raw_parts(significand, exponent_sign)
+        }
+        fn seed(ctx: &mut SmirContext, st0: [u8; 10], st1: [u8; 10]) {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, st0);
+                x86.x87.set_logical_raw(1, st1);
+            }
+        }
+        fn st0(ctx: &SmirContext) -> [u8; 10] {
+            match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.x87.regs[x86.x87.physical_index(0)],
+                _ => unreachable!(),
+            }
+        }
+
+        let one = SmirInterpreter::x86_x87_from_i64(1);
+        let two = SmirInterpreter::x86_x87_from_i64(2);
+        let minus_one = SmirInterpreter::x86_x87_from_i64(-1);
+        let minus_64 = SmirInterpreter::x86_x87_from_i64(-64);
+        let p15 = raw(0xC000_0000_0000_0000, 0x3FFF);
+        let p6 = raw(0xC000_0000_0000_0000, 0x4001);
+        let p375 = raw(0xC000_0000_0000_0000, 0x3FFD);
+        let p25 = raw(0xA000_0000_0000_0000, 0x4000);
+        let n25 = raw(0xA000_0000_0000_0000, 0xC000);
+
+        for (name, value, scale, expected) in [
+            ("positive integral scale", p15, two, p6),
+            ("fraction truncates toward zero", p15, p25, p6),
+            ("negative fraction truncates toward zero", p15, n25, p375),
+            ("zero scale", p15, raw(0, 0x8000), p15),
+            (
+                "PC does not narrow significand",
+                raw(0x8000_0000_0000_0001, 0x3FFF),
+                one,
+                raw(0x8000_0000_0000_0001, 0x4000),
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !0x0300; // PC=24, irrelevant to FSCALE
+                x86.x87.data_ptr = 0xCAFE;
+            }
+            seed(&mut ctx, value, scale);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 0, "{name}: no pop");
+                assert_eq!(x86.x87.status_word & 0x023F, 0, "{name}: exact");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "{name}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x01FD, "{name}: FOP");
+                assert_eq!(x86.x87.data_ptr, 0xCAFE, "{name}: FDP unchanged");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: RFLAGS");
+        }
+
+        // Masked overflow selects infinity or maximum finite according to RC;
+        // C1 identifies the magnitude increment.
+        let max = raw(u64::MAX, 0x7FFE);
+        let nmax = raw(u64::MAX, 0xFFFE);
+        let pinf = raw(0x8000_0000_0000_0000, 0x7FFF);
+        let ninf = raw(0x8000_0000_0000_0000, 0xFFFF);
+        for (name, rc, value, expected, expected_c1) in [
+            ("nearest +overflow", 0u16, max, pinf, true),
+            ("nearest -overflow", 0, nmax, ninf, true),
+            ("down +overflow", 1, max, max, false),
+            ("down -overflow", 1, nmax, ninf, true),
+            ("up +overflow", 2, max, pinf, true),
+            ("up -overflow", 2, nmax, nmax, false),
+            ("zero +overflow", 3, max, max, false),
+            ("zero -overflow", 3, nmax, nmax, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+            }
+            seed(&mut ctx, value, one);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0028, 0x0028, "{name}: OE/PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+            }
+        }
+
+        // Half a minimum subnormal exercises every RC direction and signed
+        // zero. An exactly representable denormal does not raise UE or PE.
+        let min_normal = raw(0x8000_0000_0000_0000, 0x0001);
+        let nmin_normal = raw(0x8000_0000_0000_0000, 0x8001);
+        let pzero = raw(0, 0);
+        let nzero = raw(0, 0x8000);
+        let pmin_subnormal = raw(1, 0);
+        let nmin_subnormal = raw(1, 0x8000);
+        for (name, rc, value, expected, expected_c1) in [
+            ("nearest +half-min", 0u16, min_normal, pzero, false),
+            ("nearest -half-min", 0, nmin_normal, nzero, false),
+            ("down +half-min", 1, min_normal, pzero, false),
+            ("down -half-min", 1, nmin_normal, nmin_subnormal, true),
+            ("up +half-min", 2, min_normal, pmin_subnormal, true),
+            ("up -half-min", 2, nmin_normal, nzero, false),
+            ("zero +half-min", 3, min_normal, pzero, false),
+            ("zero -half-min", 3, nmin_normal, nzero, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+            }
+            seed(&mut ctx, value, minus_64);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0030, 0x0030, "{name}: UE/PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+            }
+        }
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        seed(&mut ctx, min_normal, minus_one);
+        execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), raw(0x4000_0000_0000_0000, 0));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x0030, 0, "exact tiny result");
+        }
+
+        // A denormal in either position raises DE. A masked denormal ST(0) is
+        // normalized when scaling permits it; a denormal ST(1) truncates to 0.
+        for (name, value, scale, expected) in [
+            (
+                "denormal destination",
+                raw(0x4000_0000_0000_0000, 0),
+                one,
+                min_normal,
+            ),
+            ("denormal scale factor", one, raw(1, 0), one),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            seed(&mut ctx, value, scale);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0032, 0x0002, "{name}: DE only");
+            }
+        }
+
+        // Unmasked register-result overflow/underflow stores Intel's exponent-
+        // biased response rather than suppressing the destination write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0008;
+        }
+        seed(&mut ctx, max, one);
+        execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), raw(u64::MAX, 0x1FFF));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x82A8, 0x80A8);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0010;
+        }
+        seed(&mut ctx, min_normal, minus_64);
+        execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), raw(0x8000_0000_0000_0000, 0x5FC1));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x82B0, 0x80B0);
+        }
+
+        // Scaling beyond the +/-24,576 unmasked-response bias saturates to
+        // signed infinity/zero. PM independently requests ES/B even when the
+        // corresponding range exception remains masked.
+        for (name, scale, unmask, expected, expected_flags) in [
+            (
+                "massive unmasked overflow",
+                SmirInterpreter::x86_x87_from_i64(50_000),
+                0x0008u16,
+                pinf,
+                0x80A8u16,
+            ),
+            (
+                "massive unmasked underflow",
+                SmirInterpreter::x86_x87_from_i64(-50_000),
+                0x0010,
+                pzero,
+                0x80B0,
+            ),
+            (
+                "masked overflow with PM clear",
+                SmirInterpreter::x86_x87_from_i64(50_000),
+                0x0020,
+                pinf,
+                0x82A8,
+            ),
+            (
+                "masked underflow with PM clear",
+                SmirInterpreter::x86_x87_from_i64(-50_000),
+                0x0020,
+                pzero,
+                0x80B0,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word &= !unmask;
+            }
+            seed(&mut ctx, one, scale);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x82B8, expected_flags, "{name}");
+            }
+        }
+
+        // Infinity, zero, NaN, and unsupported matrices do not report range
+        // exceptions; invalid combinations use canonical indefinite.
+        let qnan = raw(0xC123_4567_89AB_CDEF, 0x7FFF);
+        let snan = raw(0x8123_4567_89AB_CDEF, 0x7FFF);
+        let quiet_snan = raw(0xC123_4567_89AB_CDEF, 0x7FFF);
+        let unsupported = raw(0x4123_4567_89AB_CDEF, 0x4000);
+        for (name, value, scale, expected, expected_ie) in [
+            ("finite times +infinity", one, pinf, pinf, false),
+            ("finite times -infinity", one, ninf, pzero, false),
+            (
+                "zero times +infinity",
+                pzero,
+                pinf,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+            (
+                "infinity times -infinity",
+                pinf,
+                ninf,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+            ("quiet NaN scale factor", one, qnan, qnan, false),
+            ("signaling NaN scale factor", one, snan, quiet_snan, true),
+            (
+                "unsupported scale factor",
+                one,
+                unsupported,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            seed(&mut ctx, value, scale);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 1 != 0, expected_ie, "{name}: IE");
+                assert_eq!(x86.x87.status_word & 0x0238, 0, "{name}: no range/PE/C1");
+            }
+        }
+
+        // Unmasked invalid/denormal and unmasked stack faults suppress ST(0),
+        // while their masked forms replace it with indefinite as applicable.
+        for (name, value, scale, mask, exception) in [
+            ("invalid", one, snan, 0x0001u16, 0x0001u16),
+            ("denormal", one, raw(1, 0), 0x0002, 0x0002),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !mask;
+            }
+            seed(&mut ctx, value, scale);
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), value, "{name}: result suppressed");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.x87.status_word & (0x8080 | exception),
+                    0x8080 | exception
+                );
+            }
+        }
+        for missing_st0 in [true, false] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                if missing_st0 {
+                    x86.x87.set_logical_raw(1, one);
+                } else {
+                    x86.x87.set_logical_raw(0, one);
+                }
+            }
+            execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), crate::smir::X86X87State::INDEFINITE);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+            }
+        }
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word &= !1;
+            x86.x87.set_logical_raw(0, one);
+        }
+        execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), one);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
+        }
+
+        // The documented FXTRACT/FSCALE composition reconstructs the original
+        // binary80 value exactly without changing the extracted exponent.
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87
+                .set_logical_raw(0, raw(0xFEDC_BA98_7654_3210, 0xC123));
+        }
+        execute_lifted_x86(&[0xD9, 0xF4], &mut ctx, &mut memory);
+        let exponent_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.regs[x86.x87.physical_index(1)],
+            _ => unreachable!(),
+        };
+        execute_lifted_x86(&[0xD9, 0xFD], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), raw(0xFEDC_BA98_7654_3210, 0xC123));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[x86.x87.physical_index(1)], exponent_before);
+        }
+    }
+
+    #[test]
+    fn x87_u128_integer_sqrt_satisfies_floor_invariant() {
+        for value in 0u128..10_000 {
+            let root = SmirInterpreter::x86_x87_integer_sqrt(value);
+            assert!(root * root <= value, "{value}: lower bound");
+            assert!((root + 1) * (root + 1) > value, "{value}: upper bound");
+        }
+        for value in [
+            1u128 << 126,
+            (1u128 << 127) - 1,
+            1u128 << 127,
+            u128::MAX - (1u128 << 64),
+            u128::MAX,
+        ] {
+            let root = SmirInterpreter::x86_x87_integer_sqrt(value);
+            assert!(root * root <= value, "{value}: lower bound");
+            if root < u64::MAX as u128 {
+                assert!((root + 1) * (root + 1) > value, "{value}: upper bound");
+            } else {
+                assert_eq!(root, u64::MAX as u128);
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fsqrt_exact_pc_rc_special_and_exception_semantics() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            SmirInterpreter::x86_x87_from_raw_parts(significand, exponent_sign)
+        }
+        fn st0(ctx: &SmirContext) -> [u8; 10] {
+            match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.x87.regs[x86.x87.physical_index(0)],
+                _ => unreachable!(),
+            }
+        }
+
+        let two = raw(0x8000_0000_0000_0000, 0x4000);
+        for (name, pc, rc, expected, expected_c1) in [
+            (
+                "PC24 nearest",
+                0u16,
+                0u16,
+                raw(0xB504_F300_0000_0000, 0x3FFF),
+                false,
+            ),
+            ("PC24 down", 0, 1, raw(0xB504_F300_0000_0000, 0x3FFF), false),
+            ("PC24 up", 0, 2, raw(0xB504_F400_0000_0000, 0x3FFF), true),
+            ("PC24 zero", 0, 3, raw(0xB504_F300_0000_0000, 0x3FFF), false),
+            (
+                "reserved PC nearest",
+                1,
+                0,
+                raw(0xB504_F333_F9DE_6484, 0x3FFF),
+                false,
+            ),
+            (
+                "reserved PC up",
+                1,
+                2,
+                raw(0xB504_F333_F9DE_6485, 0x3FFF),
+                true,
+            ),
+            (
+                "PC53 nearest",
+                2,
+                0,
+                raw(0xB504_F333_F9DE_6800, 0x3FFF),
+                true,
+            ),
+            ("PC53 down", 2, 1, raw(0xB504_F333_F9DE_6000, 0x3FFF), false),
+            ("PC53 up", 2, 2, raw(0xB504_F333_F9DE_6800, 0x3FFF), true),
+            ("PC53 zero", 2, 3, raw(0xB504_F333_F9DE_6000, 0x3FFF), false),
+            (
+                "PC64 nearest",
+                3,
+                0,
+                raw(0xB504_F333_F9DE_6484, 0x3FFF),
+                false,
+            ),
+            ("PC64 down", 3, 1, raw(0xB504_F333_F9DE_6484, 0x3FFF), false),
+            ("PC64 up", 3, 2, raw(0xB504_F333_F9DE_6485, 0x3FFF), true),
+            ("PC64 zero", 3, 3, raw(0xB504_F333_F9DE_6484, 0x3FFF), false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0F00) | (pc << 8) | (rc << 10);
+                x86.x87.data_ptr = 0xCAFE;
+                x86.x87.set_logical_raw(0, two);
+            }
+            execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0020, 0x0020, "{name}: PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+                assert_eq!(x86.x87.top(), 0, "{name}: no pop");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "{name}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x01FA, "{name}: FOP");
+                assert_eq!(x86.x87.data_ptr, 0xCAFE, "{name}: FDP unchanged");
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7, "{name}: RFLAGS");
+        }
+
+        // Perfect squares are exact across exponent parity and PC settings.
+        for (name, source, expected) in [
+            (
+                "four",
+                raw(0x8000_0000_0000_0000, 0x4001),
+                raw(0x8000_0000_0000_0000, 0x4000),
+            ),
+            (
+                "quarter",
+                raw(0x8000_0000_0000_0000, 0x3FFD),
+                raw(0x8000_0000_0000_0000, 0x3FFE),
+            ),
+            (
+                "maximum exact power",
+                raw(0x8000_0000_0000_0000, 0x7FFD),
+                raw(0x8000_0000_0000_0000, 0x5FFE),
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !0x0300; // PC24 must still be exact
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x023F, 0, "{name}: exact");
+            }
+        }
+
+        // Denormals normalize before the root. The minimum denormal has an odd
+        // true exponent; a pseudo-denormal just above minimum normal rounds to
+        // exactly 2^-8191 while retaining DE and PE.
+        for (name, source, expected, expected_flags) in [
+            (
+                "minimum denormal",
+                raw(1, 0),
+                raw(0xB504_F333_F9DE_6484, 0x1FE0),
+                0x0022u16,
+            ),
+            (
+                "pseudo-denormal",
+                raw(0x8000_0000_0000_0001, 0),
+                raw(0x8000_0000_0000_0000, 0x2000),
+                0x0022,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x023F, expected_flags, "{name}");
+            }
+        }
+
+        let nzero = raw(0, 0x8000);
+        let pinf = raw(0x8000_0000_0000_0000, 0x7FFF);
+        let ninf = raw(0x8000_0000_0000_0000, 0xFFFF);
+        let negative = raw(0x8000_0000_0000_0000, 0xBFFF);
+        let qnan = raw(0xC123_4567_89AB_CDEF, 0xFFFF);
+        let snan = raw(0x8123_4567_89AB_CDEF, 0x7FFF);
+        let quiet_snan = raw(0xC123_4567_89AB_CDEF, 0x7FFF);
+        let unsupported = raw(0x4123_4567_89AB_CDEF, 0x4000);
+        for (name, source, expected, expected_ie) in [
+            ("negative zero", nzero, nzero, false),
+            ("positive infinity", pinf, pinf, false),
+            (
+                "negative infinity",
+                ninf,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+            (
+                "negative finite",
+                negative,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+            ("quiet NaN", qnan, qnan, false),
+            ("signaling NaN", snan, quiet_snan, true),
+            (
+                "unsupported",
+                unsupported,
+                crate::smir::X86X87State::INDEFINITE,
+                true,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 1 != 0, expected_ie, "{name}: IE");
+                assert_eq!(
+                    x86.x87.status_word & 0x023E,
+                    0,
+                    "{name}: no other exception/C1"
+                );
+            }
+        }
+
+        // Invalid and denormal are pre-computation exceptions and suppress the
+        // destination when unmasked. Precision is post-computation and commits.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        for (name, source, mask, exception) in [
+            ("invalid", negative, 0x0001u16, 0x0001u16),
+            ("denormal", raw(1, 0), 0x0002, 0x0002),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word &= !mask;
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+            assert_eq!(st0(&ctx), source, "{name}: suppressed");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.x87.status_word & (0x8080 | exception),
+                    0x8080 | exception
+                );
+                assert_eq!(x86.x87.status_word & 0x0020, 0, "{name}: no PE");
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0020;
+            x86.x87.set_logical_raw(0, two);
+        }
+        execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), raw(0xB504_F333_F9DE_6484, 0x3FFF));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x80A0, 0x80A0);
+        }
+
+        // Empty-stack masked response installs indefinite; IM clear suppresses
+        // the write while retaining the original empty tag and payload.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+        assert_eq!(st0(&ctx), crate::smir::X86X87State::INDEFINITE);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+            assert_eq!(x86.x87.physical_tag(0), 2);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.regs[0] = two;
+        }
+        execute_lifted_x86(&[0xD9, 0xFA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], two);
+            assert_eq!(x86.x87.physical_tag(0), 3);
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
+        }
+    }
+
+    #[test]
+    fn x87_narrow_ieee_conversion_covers_rounding_boundaries_and_special_values() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let convert32 = |value: [u8; 10], rc| SmirInterpreter::x86_x87_to_ieee(&value, 8, 23, rc);
+
+        for (name, value, expected_bits, invalid) in [
+            (
+                "exact normal",
+                raw(0xC000_0000_0000_0000, 0x3FFF),
+                0x3FC0_0000u64,
+                false,
+            ),
+            ("negative zero", raw(0, 0x8000), 0x8000_0000, false),
+            (
+                "negative infinity",
+                raw(0x8000_0000_0000_0000, 0xFFFF),
+                0xFF80_0000,
+                false,
+            ),
+            (
+                "quiet NaN payload",
+                raw(0xC123_4567_89AB_CDEF, 0x7FFF),
+                0x7FC1_2345,
+                false,
+            ),
+            (
+                "signaling NaN payload",
+                raw(0x8123_4567_89AB_CDEF, 0x7FFF),
+                0x7FC1_2345,
+                true,
+            ),
+            (
+                "unsupported encoding",
+                raw(0x4123_4567_89AB_CDEF, 0x4000),
+                0xFFC0_0000,
+                true,
+            ),
+        ] {
+            let conversion = convert32(value, 0);
+            assert_eq!(conversion.bits, expected_bits, "{name}");
+            assert_eq!(conversion.invalid, invalid, "{name}: IE");
+            assert!(!conversion.overflow, "{name}: OE");
+            assert!(!conversion.underflow, "{name}: UE");
+            assert!(!conversion.inexact, "{name}: PE");
+            assert!(!conversion.rounded_up, "{name}: C1");
+        }
+
+        let half_ulp_above_one = raw(0x8000_0080_0000_0000, 0x3FFF);
+        for (rc, bits, rounded_up) in [
+            (0u16, 0x3F80_0000u64, false),
+            (1, 0x3F80_0000, false),
+            (2, 0x3F80_0001, true),
+            (3, 0x3F80_0000, false),
+        ] {
+            let conversion = convert32(half_ulp_above_one, rc);
+            assert_eq!(conversion.bits, bits, "RC={rc}");
+            assert!(conversion.inexact, "RC={rc}: PE");
+            assert_eq!(conversion.rounded_up, rounded_up, "RC={rc}: C1");
+            assert!(!conversion.invalid, "RC={rc}: IE");
+            assert!(!conversion.overflow, "RC={rc}: OE");
+            assert!(!conversion.underflow, "RC={rc}: UE");
+        }
+
+        for (name, value, rc, bits, underflow, rounded_up) in [
+            (
+                "minimum subnormal exact",
+                raw(0x8000_0000_0000_0000, 0x3F6A),
+                0u16,
+                0x0000_0001u64,
+                false,
+                false,
+            ),
+            (
+                "half minimum subnormal nearest",
+                raw(0x8000_0000_0000_0000, 0x3F69),
+                0,
+                0,
+                true,
+                false,
+            ),
+            (
+                "half minimum subnormal upward",
+                raw(0x8000_0000_0000_0000, 0x3F69),
+                2,
+                1,
+                true,
+                true,
+            ),
+            (
+                "below minimum normal rounds normal",
+                raw(0xFFFF_FF00_0000_0000, 0x3F80),
+                0,
+                0x0080_0000,
+                true,
+                true,
+            ),
+        ] {
+            let conversion = convert32(value, rc);
+            assert_eq!(conversion.bits, bits, "{name}");
+            assert_eq!(conversion.underflow, underflow, "{name}: UE");
+            assert_eq!(conversion.inexact, underflow, "{name}: PE");
+            assert_eq!(conversion.rounded_up, rounded_up, "{name}: C1");
+        }
+
+        let overflow_threshold = raw(0xFFFF_FF80_0000_0000, 0x407E);
+        let nearest = convert32(overflow_threshold, 0);
+        assert_eq!(nearest.bits, 0x7F80_0000);
+        assert!(nearest.overflow && nearest.inexact && nearest.rounded_up);
+        let downward = convert32(overflow_threshold, 1);
+        assert_eq!(downward.bits, 0x7F7F_FFFF);
+        assert!(!downward.overflow && downward.inexact && !downward.rounded_up);
+
+        let two_pow_128 = convert32(raw(0x8000_0000_0000_0000, 0x407F), 1);
+        assert_eq!(two_pow_128.bits, 0x7F7F_FFFF);
+        assert!(two_pow_128.overflow && two_pow_128.inexact && !two_pow_128.rounded_up);
+
+        for (rc, bits, rounded_up) in [
+            (0u16, 0xFF80_0000u64, true),
+            (1, 0xFF80_0000, true),
+            (2, 0xFF7F_FFFF, false),
+            (3, 0xFF7F_FFFF, false),
+        ] {
+            let conversion = convert32(raw(0x8000_0000_0000_0000, 0xC07F), rc);
+            assert_eq!(conversion.bits, bits, "negative overflow RC={rc}");
+            assert!(conversion.overflow && conversion.inexact, "RC={rc}");
+            assert_eq!(conversion.rounded_up, rounded_up, "RC={rc}: C1");
+        }
+
+        for (rc, bits, rounded_up) in [
+            (0u16, 0x8000_0000u64, false),
+            (1, 0x8000_0001, true),
+            (2, 0x8000_0000, false),
+            (3, 0x8000_0000, false),
+        ] {
+            let conversion = convert32(raw(0x8000_0000_0000_0000, 0xBF69), rc);
+            assert_eq!(conversion.bits, bits, "negative underflow RC={rc}");
+            assert!(conversion.underflow && conversion.inexact, "RC={rc}");
+            assert_eq!(conversion.rounded_up, rounded_up, "RC={rc}: C1");
+        }
+
+        // Exercise the generic binary64 path at precision and range edges.
+        let f64_half_ulp =
+            SmirInterpreter::x86_x87_to_ieee(&raw(0x8000_0000_0000_0400, 0x3FFF), 11, 52, 2);
+        assert_eq!(f64_half_ulp.bits, 0x3FF0_0000_0000_0001);
+        assert!(f64_half_ulp.inexact && f64_half_ulp.rounded_up);
+        let f64_min_sub =
+            SmirInterpreter::x86_x87_to_ieee(&raw(0x8000_0000_0000_0000, 0x3BCD), 11, 52, 0);
+        assert_eq!(f64_min_sub.bits, 1);
+        assert!(!f64_min_sub.underflow && !f64_min_sub.inexact);
+        let f64_max =
+            SmirInterpreter::x86_x87_to_ieee(&raw(0xFFFF_FFFF_FFFF_F800, 0x43FE), 11, 52, 0);
+        assert_eq!(f64_max.bits, 0x7FEF_FFFF_FFFF_FFFF);
+        assert!(!f64_max.overflow && !f64_max.inexact);
+    }
+
+    #[test]
+    fn lifted_x87_fst_fstp_narrow_flags_masks_pop_environment_and_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let half_ulp_above_one = raw(0x8000_0080_0000_0000, 0x3FFF);
+
+        for (rc, expected, expected_c1) in [
+            (0u16, 0x3F80_0000u32, false),
+            (1, 0x3F80_0000, false),
+            (2, 0x3F80_0001, true),
+            (3, 0x3F80_0000, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+                x86.x87.set_logical_raw(0, half_ulp_above_one);
+            }
+            execute_lifted_x86(&[0xD9, 0x18], &mut ctx, &mut memory); // FSTP m32fp
+            let mut stored = [0u8; 4];
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(u32::from_le_bytes(stored), expected, "RC={rc}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 1, "RC={rc}: pop");
+                assert_eq!(x86.x87.status_word & 0x0030, 0x0020, "RC={rc}");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "RC={rc}");
+                assert_eq!(x86.x87.data_ptr, 0x100, "RC={rc}: FDP");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "RC={rc}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x0118, "RC={rc}: FOP");
+            }
+        }
+
+        // FST m64fp preserves TOP and stores the exact binary64 payload.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87
+                .set_logical_raw(0, raw(0xC000_0000_0000_0000, 0x3FFF));
+        }
+        execute_lifted_x86(&[0xDD, 0x10], &mut ctx, &mut memory);
+        let mut qword = [0u8; 8];
+        memory.read(0x100, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 1.5f64.to_bits());
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.last_opcode, 0x0510);
+        }
+
+        // Masked SNaN preserves and quiets its payload; unsupported encodings
+        // use the canonical negative indefinite response.
+        for (name, source, expected) in [
+            ("SNaN", raw(0x8123_4567_89AB_CDEF, 0x7FFF), 0x7FC1_2345u32),
+            (
+                "unsupported",
+                raw(0x4123_4567_89AB_CDEF, 0x4000),
+                0xFFC0_0000,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.set_logical_raw_tagged(0, source, 2);
+            }
+            execute_lifted_x86(&[0xD9, 0x18], &mut ctx, &mut memory);
+            let mut stored = [0u8; 4];
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(u32::from_le_bytes(stored), expected, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 1, 1, "{name}: IE");
+                assert_eq!(x86.x87.top(), 1, "{name}: pop");
+            }
+        }
+
+        // Inexact tiny conversion reports both UE and PE even when rounded to
+        // the minimum normal payload (tininess-before-rounding behavior).
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87
+                .set_logical_raw(0, raw(0xFFFF_FF00_0000_0000, 0x3F80));
+        }
+        execute_lifted_x86(&[0xD9, 0x10], &mut ctx, &mut memory);
+        let mut dword = [0u8; 4];
+        memory.read(0x100, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0x0080_0000);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x0230, 0x0230);
+        }
+
+        // At the upper rounding boundary, round-down reaches max-finite with
+        // PE only; an exactly out-of-range exponent raises OE as well.
+        for (source, expected_status) in [
+            (raw(0xFFFF_FF80_0000_0000, 0x407E), 0x0020u16),
+            (raw(0x8000_0000_0000_0000, 0x407F), 0x0028),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | 0x0400;
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xD9, 0x10], &mut ctx, &mut memory);
+            memory.read(0x100, &mut dword).unwrap();
+            assert_eq!(u32::from_le_bytes(dword), 0x7F7F_FFFF);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x0228, expected_status);
+            }
+        }
+
+        // Masked stack underflow stores indefinite and executes FSTP's pop.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        execute_lifted_x86(&[0xD9, 0x18], &mut ctx, &mut memory);
+        memory.read(0x100, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0xFFC0_0000);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        // Unmasked invalid, overflow, and underflow suppress both store and
+        // pop; unmasked precision records ES/B but completes the operation.
+        for (name, source, clear_mask, expected_exception) in [
+            (
+                "invalid",
+                raw(0x8123_4567_89AB_CDEF, 0x7FFF),
+                0x0001u16,
+                0x0001u16,
+            ),
+            (
+                "overflow",
+                raw(0x8000_0000_0000_0000, 0x407F),
+                0x0008,
+                0x0008,
+            ),
+            (
+                "underflow",
+                raw(0x8000_0000_0000_0000, 0x3F69),
+                0x0010,
+                0x0010,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word &= !clear_mask;
+                x86.x87
+                    .set_logical_raw_tagged(0, source, if name == "invalid" { 2 } else { 0 });
+            }
+            memory.write(0x100, &[0xA5; 4]).unwrap();
+            execute_lifted_x86(&[0xD9, 0x18], &mut ctx, &mut memory);
+            memory.read(0x100, &mut dword).unwrap();
+            assert_eq!(dword, [0xA5; 4], "{name}: store suppression");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 0, "{name}: pop suppression");
+                assert_eq!(
+                    x86.x87.status_word & (0x8080 | expected_exception),
+                    0x8080 | expected_exception,
+                    "{name}"
+                );
+                assert_eq!(x86.x87.status_word & 0x0020, 0, "{name}: no PE");
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0020;
+            x86.x87.set_logical_raw(0, half_ulp_above_one);
+        }
+        execute_lifted_x86(&[0xD9, 0x18], &mut ctx, &mut memory);
+        memory.read(0x100, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0x3F80_0000);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x80A0, 0x80A0);
+        }
+
+        // A partial m64 write fault commits no status, environment, or pop.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87
+                .set_logical_raw(0, raw(0xC000_0000_0000_0000, 0x3FFF));
+            x86.x87.data_ptr = 0xCAFE;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x104);
+        let exit = execute_lifted_x86(&[0xDD, 0x18], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_fbld_fbstp_exact_bcd_rounding_exceptions_and_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        fn bcd(mut magnitude: u64, negative: bool) -> [u8; 10] {
+            let mut result = [0u8; 10];
+            for byte in &mut result[..9] {
+                let low = (magnitude % 10) as u8;
+                magnitude /= 10;
+                let high = (magnitude % 10) as u8;
+                magnitude /= 10;
+                *byte = (high << 4) | low;
+            }
+            result[9] = u8::from(negative) << 7;
+            result
+        }
+
+        const BCD_INDEFINITE: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 0xC0, 0xFF, 0xFF];
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+
+        for (name, source, expected, expected_tag) in [
+            ("positive zero", bcd(0, false), raw(0, 0), 1u16),
+            ("negative zero", bcd(0, true), raw(0, 0x8000), 1),
+            (
+                "positive 123",
+                bcd(123, false),
+                raw(0xF600_0000_0000_0000, 0x4005),
+                0,
+            ),
+            (
+                "negative 123 with ignored sign bits",
+                {
+                    let mut value = bcd(123, true);
+                    value[9] = 0xFF;
+                    value
+                },
+                raw(0xF600_0000_0000_0000, 0xC005),
+                0,
+            ),
+            (
+                "maximum 18 digits",
+                bcd(999_999_999_999_999_999, false),
+                raw(0xDE0B_6B3A_763F_FFF0, 0x403A),
+                0,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            memory.write(0x100, &source).unwrap();
+            execute_lifted_x86(&[0xDF, 0x20], &mut ctx, &mut memory); // FBLD [RAX]
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 7, "{name}");
+                assert_eq!(x86.x87.regs[7], expected, "{name}");
+                assert_eq!(x86.x87.physical_tag(7), expected_tag, "{name}");
+                assert_eq!(x86.x87.status_word & 0x0241, 0, "{name}");
+                assert_eq!(x86.x87.data_ptr, 0x100, "{name}: FDP");
+                assert_eq!(x86.x87.instr_ptr, 0x1000, "{name}: FIP");
+                assert_eq!(x86.x87.last_opcode, 0x0720, "{name}: FOP");
+            }
+        }
+
+        let p15 = raw(0xC000_0000_0000_0000, 0x3FFF);
+        let n15 = raw(0xC000_0000_0000_0000, 0xBFFF);
+        for (name, rc, source, expected_magnitude, negative, expected_c1) in [
+            ("nearest +1.5", 0u16, p15, 2u64, false, true),
+            ("nearest -1.5", 0, n15, 2, true, true),
+            ("down +1.5", 1, p15, 1, false, false),
+            ("down -1.5", 1, n15, 2, true, true),
+            ("up +1.5", 2, p15, 2, false, true),
+            ("up -1.5", 2, n15, 1, true, false),
+            ("truncate +1.5", 3, p15, 1, false, false),
+            ("truncate -1.5", 3, n15, 1, true, false),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x200);
+            ctx.write_vreg(rax, 0x100);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word = (x86.x87.control_word & !0x0C00) | (rc << 10);
+                x86.x87.set_logical_raw(0, source);
+            }
+            execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory); // FBSTP [RAX]
+            let mut stored = [0u8; 10];
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(stored, bcd(expected_magnitude, negative), "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 1, "{name}: pop");
+                assert_eq!(x86.x87.status_word & 0x0020, 0x0020, "{name}: PE");
+                assert_eq!(x86.x87.status_word & 0x0200 != 0, expected_c1, "{name}: C1");
+                assert_eq!(x86.x87.data_ptr, 0x100, "{name}: FDP");
+                assert_eq!(x86.x87.last_opcode, 0x0730, "{name}: FOP");
+            }
+        }
+
+        // Exact maximum magnitude round-trips without precision loss.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87
+                .set_logical_raw(0, raw(0xDE0B_6B3A_763F_FFF0, 0x403A));
+        }
+        execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory);
+        let mut stored = [0u8; 10];
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(stored, bcd(999_999_999_999_999_999, false));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.status_word & 0x0021, 0);
+        }
+
+        // Every invalid source class and an exactly representable 10^18 use
+        // the canonical masked packed-BCD indefinite response.
+        for (name, source, tag) in [
+            ("qnan", raw(0xC000_0000_0000_1234, 0x7FFF), 2u16),
+            ("infinity", raw(0x8000_0000_0000_0000, 0x7FFF), 2),
+            ("unsupported", raw(0x4000_0000_0000_0000, 0x4000), 2),
+            (
+                "magnitude 10^18",
+                SmirInterpreter::x86_x87_from_signed_magnitude(1_000_000_000_000_000_000, false),
+                0,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.set_logical_raw_tagged(0, source, tag);
+            }
+            memory.write(0x100, &[0xA5; 10]).unwrap();
+            execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory);
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(stored, BCD_INDEFINITE, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 1, 1, "{name}: IE");
+                assert_eq!(x86.x87.status_word & 0x0020, 0, "{name}: no PE");
+                assert_eq!(x86.x87.top(), 1, "{name}: pop");
+            }
+        }
+
+        // Masked stack underflow stores indefinite and pops. Unmasked #IS and
+        // #IA suppress both the store and pop.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory);
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(stored, BCD_INDEFINITE);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        for (name, source, tag) in [
+            ("stack underflow", raw(0, 0), 3u16),
+            ("invalid", raw(0xC000_0000_0000_1234, 0x7FFF), 2),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87 = Default::default();
+                x86.x87.control_word &= !1;
+                x86.x87.set_logical_raw_tagged(0, source, tag);
+            }
+            memory.write(0x100, &[0xA5; 10]).unwrap();
+            execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory);
+            memory.read(0x100, &mut stored).unwrap();
+            assert_eq!(stored, [0xA5; 10], "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 0, "{name}: pop suppression");
+                assert_eq!(x86.x87.status_word & 0x8081, 0x8081, "{name}");
+            }
+        }
+
+        // Unmasked precision completes the store/pop while setting ES/B.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !0x0020;
+            x86.x87.set_logical_raw(0, p15);
+        }
+        execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut memory);
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(stored, bcd(2, false));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x82A0, 0x82A0);
+        }
+
+        // Complete memory accesses precede architectural state changes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.set_logical_raw(0, p15);
+            x86.x87.data_ptr = 0xCAFE;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut short_memory = FlatMemory::new(0x105);
+        let exit = execute_lifted_x86(&[0xDF, 0x30], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+
+        let mut short_memory = FlatMemory::new(0x105);
+        let exit = execute_lifted_x86(&[0xDF, 0x20], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_compare_nan_denormal_stack_and_eflags_exception_policies() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+        let p1 = raw(0x8000_0000_0000_0000, 0x3FFF);
+        let qnan = raw(0xC000_0000_0000_1234, 0x7FFF);
+        let snan = raw(0x8000_0000_0000_1234, 0x7FFF);
+        let unsupported = raw(0x4000_0000_0000_0000, 0x4000);
+        let denormal = raw(1, 0);
+        let mut memory = FlatMemory::new(0x10);
+
+        for (name, bytes, rhs, rhs_tag, expect_ie, expect_de, expect_pop, codes) in [
+            (
+                "FCOM qnan",
+                &[0xD8, 0xD1][..],
+                qnan,
+                2u16,
+                true,
+                false,
+                0u8,
+                0x4500u16,
+            ),
+            (
+                "FUCOM qnan",
+                &[0xDD, 0xE1][..],
+                qnan,
+                2,
+                false,
+                false,
+                0,
+                0x4500,
+            ),
+            (
+                "FUCOMP snan",
+                &[0xDD, 0xE9][..],
+                snan,
+                2,
+                true,
+                false,
+                1,
+                0x4500,
+            ),
+            (
+                "FUCOM unsupported",
+                &[0xDD, 0xE1][..],
+                unsupported,
+                2,
+                true,
+                false,
+                0,
+                0x4500,
+            ),
+            (
+                "FCOM denormal",
+                &[0xD8, 0xD1][..],
+                denormal,
+                2,
+                false,
+                true,
+                0,
+                0x0000,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, p1);
+                x86.x87.set_logical_raw_tagged(1, rhs, rhs_tag);
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 0x4500, codes, "{name}");
+                assert_eq!(x86.x87.status_word & 1 != 0, expect_ie, "{name}");
+                assert_eq!(x86.x87.status_word & 2 != 0, expect_de, "{name}");
+                assert_eq!(x86.x87.top(), expect_pop, "{name}");
+            }
+        }
+
+        // Unmasked invalid and denormal exceptions preserve result codes and
+        // suppress the architectural pop.
+        for (name, rhs, rhs_tag, clear_mask, expected_exception) in [
+            ("invalid", qnan, 2u16, 0x0001u16, 0x8081u16),
+            ("denormal", denormal, 2, 0x0002, 0x8082),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.control_word &= !clear_mask;
+                x86.x87.set_logical_raw(0, p1);
+                x86.x87.set_logical_raw_tagged(1, rhs, rhs_tag);
+                x86.x87.status_word |= 0x0500;
+            }
+            execute_lifted_x86(&[0xD8, 0xD9], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.top(), 0, "{name}");
+                assert_eq!(x86.x87.status_word & 0x4500, 0x0500, "{name}");
+                assert_eq!(
+                    x86.x87.status_word & expected_exception,
+                    expected_exception,
+                    "{name}"
+                );
+            }
+        }
+
+        // Masked stack underflow reports unordered and performs FCOMP's pop;
+        // unmasked #IS preserves TOP and prior condition codes.
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_logical_raw(0, p1);
+        }
+        execute_lifted_x86(&[0xD8, 0xD9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x4541, 0x4541);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.set_logical_raw(0, p1);
+            x86.x87.status_word |= 0x0500;
+        }
+        execute_lifted_x86(&[0xD8, 0xD9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.status_word & 0x4500, 0x0500);
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1);
+        }
+
+        // FCOMI/FUCOMI result truth table, flag clearing, NaN policy, and
+        // denormal non-exception behavior.
+        for (name, bytes, lhs, rhs, initial_flags, expected_zpc, expect_ie, pop) in [
+            (
+                "greater",
+                &[0xDB, 0xF1][..],
+                raw(0x8000_0000_0000_0000, 0x4000),
+                p1,
+                0x8D5u64,
+                0x000u64,
+                false,
+                0u8,
+            ),
+            (
+                "less",
+                &[0xDB, 0xF1][..],
+                p1,
+                raw(0x8000_0000_0000_0000, 0x4000),
+                0x8D5,
+                0x001,
+                false,
+                0,
+            ),
+            (
+                "equal-pop",
+                &[0xDF, 0xF1][..],
+                p1,
+                p1,
+                0x8D5,
+                0x040,
+                false,
+                1,
+            ),
+            (
+                "fcomi-qnan",
+                &[0xDB, 0xF1][..],
+                p1,
+                qnan,
+                0x8D5,
+                0x045,
+                true,
+                0,
+            ),
+            (
+                "fucomi-qnan",
+                &[0xDB, 0xE9][..],
+                p1,
+                qnan,
+                0x8D5,
+                0x045,
+                false,
+                0,
+            ),
+            (
+                "fucomip-snan",
+                &[0xDF, 0xE9][..],
+                p1,
+                snan,
+                0x8D5,
+                0x045,
+                true,
+                1,
+            ),
+            (
+                "denormal",
+                &[0xDB, 0xF1][..],
+                p1,
+                denormal,
+                0x8D5,
+                0x000,
+                false,
+                0,
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.flags.materialized = MaterializedFlags::from_rflags(initial_flags);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.x87.set_logical_raw(0, lhs);
+                x86.x87.set_logical_raw_tagged(1, rhs, 2);
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            ctx.flags.materialize_all();
+            let actual = ctx.flags.materialized.to_rflags();
+            assert_eq!(actual & 0x8D5, expected_zpc, "{name}");
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.x87.status_word & 1 != 0, expect_ie, "{name}");
+                assert_eq!(x86.x87.status_word & 2, 0, "{name}: DE");
+                assert_eq!(x86.x87.top(), pop, "{name}");
+            }
+        }
+
+        // Unmasked FCOMIP invalid preserves ZF/PF/CF, clears OF/SF/AF, and
+        // suppresses the pop.
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x8D5);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.set_logical_raw(0, p1);
+            x86.x87.set_logical_raw_tagged(1, qnan, 2);
+        }
+        execute_lifted_x86(&[0xDF, 0xF1], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags() & 0x8D5, 0x045);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.status_word & 0x8081, 0x8081);
+        }
+    }
+
+    #[test]
+    fn lifted_x87_exact_transfers_handle_masked_unmasked_stack_faults_and_memory_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let normal = raw(0x8000_0000_0000_0000, 0x4000);
+        let sentinel = raw(0xDEAD_BEEF_CAFE_BABE, 0x1234);
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x300);
+        ctx.write_vreg(rax, 0x100);
+        memory.write(0x100, &normal).unwrap();
+
+        // Masked stack overflow decrements TOP and writes floating-point
+        // indefinite over the occupied destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.set_physical_tag(7, 0);
+            x86.x87.regs[7] = sentinel;
+        }
+        execute_lifted_x86(&[0xDB, 0x28], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.regs[7], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(7), 2);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0241); // C1|SF|IE
+            assert_eq!(x86.x87.status_word & 0x8080, 0);
+        }
+
+        // An empty FLD-register source has higher priority than a simultaneous
+        // overflow and therefore reports underflow (C1=0).
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.set_physical_tag(7, 0); // push destination occupied
+        }
+        execute_lifted_x86(&[0xD9, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 7);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+            assert_eq!(x86.x87.regs[7], crate::smir::X86X87State::INDEFINITE);
+        }
+
+        // With IM clear, a stack overflow records a pending unmasked exception
+        // but leaves TOP and all operand payloads/tags unchanged.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+            x86.x87.set_physical_tag(7, 0);
+            x86.x87.regs[7] = sentinel;
+        }
+        execute_lifted_x86(&[0xDB, 0x28], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.regs[7], sentinel);
+            assert_eq!(x86.x87.physical_tag(7), 0);
+            assert_eq!(x86.x87.status_word & 0x82C1, 0x82C1); // B|C1|ES|SF|IE
+        }
+
+        // Masked FXCH underflow loads each empty input with indefinite before
+        // exchanging; the nonempty operand remains exact.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.regs[0] = normal;
+            x86.x87.set_physical_tag(0, 0);
+        }
+        execute_lifted_x86(&[0xD9, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.regs[0], crate::smir::X86X87State::INDEFINITE);
+            assert_eq!(x86.x87.physical_tag(0), 2);
+            assert_eq!(x86.x87.regs[1], normal);
+            assert_eq!(x86.x87.physical_tag(1), 0);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        // Masked empty-store writes indefinite and pops; unmasked empty-store
+        // changes neither memory nor TOP.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+        }
+        memory.write(0x120, &[0xA5; 10]).unwrap();
+        ctx.write_vreg(rax, 0x120);
+        execute_lifted_x86(&[0xDB, 0x38], &mut ctx, &mut memory);
+        let mut stored = [0u8; 10];
+        memory.read(0x120, &mut stored).unwrap();
+        assert_eq!(stored, crate::smir::X86X87State::INDEFINITE);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 1);
+            assert_eq!(x86.x87.status_word & 0x0241, 0x0041);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.control_word &= !1;
+        }
+        memory.write(0x120, &[0x5A; 10]).unwrap();
+        execute_lifted_x86(&[0xDB, 0x38], &mut ctx, &mut memory);
+        memory.read(0x120, &mut stored).unwrap();
+        assert_eq!(stored, [0x5A; 10]);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.top(), 0);
+            assert_eq!(x86.x87.status_word & 0x80C1, 0x80C1); // B|ES|SF|IE
+        }
+
+        // A partial ten-byte store fault is reported as a write and commits no
+        // pop, pointer, status, tag, or payload state.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.x87.set_logical_raw(0, normal);
+            x86.x87.data_ptr = 0xCAFE;
+            x86.x87.instr_ptr = 0xBEEF;
+            x86.x87.last_opcode = 0x123;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        ctx.write_vreg(rax, 0x100);
+        let mut short_memory = FlatMemory::new(0x105);
+        let exit = execute_lifted_x86(&[0xDB, 0x38], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+
+        // A partial load fault likewise preserves the complete x87 state.
+        let exit = execute_lifted_x86(&[0xDB, 0x28], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87, before);
+        }
+    }
+
+    #[test]
+    fn lifted_fxsave_fxrstor_preserve_exact_state_layout_tags_and_faults() {
+        fn raw(significand: u64, exponent_sign: u16) -> [u8; 10] {
+            let mut value = [0u8; 10];
+            value[..8].copy_from_slice(&significand.to_le_bytes());
+            value[8..].copy_from_slice(&exponent_sign.to_le_bytes());
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let raw_regs = [
+            raw(0x8000_0000_0000_0000, 0x3FFF), // valid
+            raw(0, 0x8000),                     // negative zero
+            raw(0x8000_0000_0000_0000, 0x7FFF), // infinity/special
+            raw(0x0123_4567_89AB_CDEF, 0x1234), // empty payload still saved
+            raw(0xC000_0000_0000_0000, 0x4000), // valid 3.0
+            raw(0x1111_2222_3333_4444, 0x2222),
+            raw(0x5555_6666_7777_8888, 0x3333),
+            raw(0x9999_AAAA_BBBB_CCCC, 0x4444),
+        ];
+        let tag_classes = [0u16, 1, 2, 3, 0, 3, 3, 3];
+        let expected_tag_word = tag_classes
+            .iter()
+            .enumerate()
+            .fold(0u16, |tags, (physical, tag)| {
+                tags | (*tag << (physical * 2))
+            });
+        let xmm0 = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        let xmm15 = [0xA5A5_5A5A_F0F0_0F0F, 0x1357_9BDF_2468_ACE0];
+
+        ctx.write_vreg(rax, 0x200);
+        memory.write(0x200, &[0xA5; 512]).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x0B7F;
+            x86.x87.status_word = 0x1845; // TOP=3
+            x86.x87.tag_word = expected_tag_word;
+            x86.x87.data_ptr = 0xFEDC_BA98_7654_3210;
+            x86.x87.instr_ptr = 0x0123_4567_89AB_CDEF;
+            x86.x87.last_opcode = 0xFABC;
+            x86.x87.regs = raw_regs;
+            x86.mxcsr = 0x5F80;
+            x86.xmm[0][0..2].copy_from_slice(&xmm0);
+            x86.xmm[15][0..2].copy_from_slice(&xmm15);
+        }
+        execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x00], &mut ctx, &mut memory); // FXSAVE64 [RAX]
+
+        let mut image = [0u8; 512];
+        memory.read(0x200, &mut image).unwrap();
+        assert_eq!(u16::from_le_bytes(image[0..2].try_into().unwrap()), 0x0B7F);
+        assert_eq!(u16::from_le_bytes(image[2..4].try_into().unwrap()), 0x1845);
+        assert_eq!(image[4], 0x17, "abridged FTW physical order");
+        assert_eq!(image[5], 0);
+        assert_eq!(u16::from_le_bytes(image[6..8].try_into().unwrap()), 0x02BC);
+        assert_eq!(
+            u64::from_le_bytes(image[8..16].try_into().unwrap()),
+            0x0123_4567_89AB_CDEF
+        );
+        assert_eq!(
+            u64::from_le_bytes(image[16..24].try_into().unwrap()),
+            0xFEDC_BA98_7654_3210
+        );
+        assert_eq!(
+            u32::from_le_bytes(image[24..28].try_into().unwrap()),
+            0x5F80
+        );
+        assert_eq!(
+            u32::from_le_bytes(image[28..32].try_into().unwrap()),
+            0xFFFF
+        );
+        // TOP=3 means the ST0 slot contains physical R3 and ST1 contains R4.
+        assert_eq!(&image[32..42], &raw_regs[3]);
+        assert_eq!(&image[48..58], &raw_regs[4]);
+        assert_eq!(&image[112..122], &raw_regs[0]); // ST5 wraps to physical R0
+        assert_eq!(
+            u64::from_le_bytes(image[160..168].try_into().unwrap()),
+            xmm0[0]
+        );
+        assert_eq!(
+            u64::from_le_bytes(image[408..416].try_into().unwrap()),
+            xmm15[1]
+        );
+        assert!(image[464..].iter().all(|byte| *byte == 0xA5));
+
+        let upper_sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87 = Default::default();
+            x86.mxcsr = 0x1F80;
+            for register in 0..16 {
+                x86.xmm[register][0] = 0;
+                x86.xmm[register][1] = 0;
+                x86.xmm[register][2] = upper_sentinel;
+            }
+        }
+        execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x08], &mut ctx, &mut memory); // FXRSTOR64 [RAX]
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x0B7F);
+            assert_eq!(x86.x87.status_word, 0x1845);
+            assert_eq!(x86.x87.tag_word, expected_tag_word);
+            assert_eq!(x86.x87.regs, raw_regs);
+            assert_eq!(x86.x87.instr_ptr, 0x0123_4567_89AB_CDEF);
+            assert_eq!(x86.x87.data_ptr, 0xFEDC_BA98_7654_3210);
+            assert_eq!(x86.x87.last_opcode, 0x02BC);
+            assert_eq!(x86.mxcsr, 0x5F80);
+            assert_eq!(&x86.xmm[0][0..2], &xmm0);
+            assert_eq!(&x86.xmm[15][0..2], &xmm15);
+            assert!(x86.xmm[..16].iter().all(|value| value[2] == upper_sentinel));
+        }
+
+        // REX.W=0 uses low 32-bit FIP/FDP fields and clears selector/reserved slots.
+        ctx.write_vreg(rax, 0x500);
+        memory.write(0x500, &[0xCC; 512]).unwrap();
+        execute_lifted_x86(&[0x0F, 0xAE, 0x00], &mut ctx, &mut memory);
+        memory.read(0x500, &mut image).unwrap();
+        assert_eq!(
+            u32::from_le_bytes(image[8..12].try_into().unwrap()),
+            0x89AB_CDEF
+        );
+        assert_eq!(&image[12..16], &[0; 4]);
+        assert_eq!(
+            u32::from_le_bytes(image[16..20].try_into().unwrap()),
+            0x7654_3210
+        );
+        assert_eq!(&image[20..24], &[0; 4]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.instr_ptr = u64::MAX;
+            x86.x87.data_ptr = u64::MAX;
+        }
+        execute_lifted_x86(&[0x0F, 0xAE, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.instr_ptr, 0x89AB_CDEF);
+            assert_eq!(x86.x87.data_ptr, 0x7654_3210);
+        }
+
+        // Alignment and range faults preserve architectural state; FXSAVE is
+        // reported as a write and FXRSTOR as a read.
+        ctx.write_vreg(rax, 0x201);
+        let exit = execute_lifted_x86(&[0x0F, 0xAE, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let exit = execute_lifted_x86(&[0x0F, 0xAE, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+
+        // Reserved MXCSR bits reject the image before any component commits.
+        image[24..28].copy_from_slice(&0x0001_1F80u32.to_le_bytes());
+        memory.write(0x700, &image).unwrap();
+        ctx.write_vreg(rax, 0x700);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x077F;
+            x86.mxcsr = 0x3F80;
+            x86.xmm[0][0] = 0xDEAD_BEEF;
+        }
+        let exit = execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.control_word, 0x077F);
+            assert_eq!(x86.mxcsr, 0x3F80);
+            assert_eq!(x86.xmm[0][0], 0xDEAD_BEEF);
+        }
+
+        let mut short_memory = FlatMemory::new(0x200);
+        ctx.write_vreg(rax, 0x100);
+        let exit = execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x00], &mut ctx, &mut short_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+    }
+
+    #[test]
+    fn lifted_x86_cache_control_preserves_state_and_faults_on_invalid_address() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x220);
+        ctx.write_vreg(rax, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        let original = [0xA5u8; 16];
+        memory.write(0x200, &original).unwrap();
+        for bytes in [
+            &[0x0F, 0xAE, 0x38][..],
+            &[0x66, 0x0F, 0xAE, 0x38][..],
+            &[0x66, 0x0F, 0xAE, 0x30][..],
+        ] {
+            assert!(matches!(
+                execute_lifted_x86(bytes, &mut ctx, &mut memory),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+        }
+        let mut actual = [0u8; 16];
+        memory.read(0x200, &mut actual).unwrap();
+        assert_eq!(actual, original);
+        ctx.write_vreg(rax, 0x400);
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0x1C, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xAE, 0x38], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_modrm_addr32_zero_extends_wraps_and_adds_segment_after_offset() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r12 = VReg::Arch(ArchReg::X86(X86Reg::R12));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let fs = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        // The high half of RBX is discarded and FFFF_FFF8h + 28h wraps to
+        // 0000_0020h before being zero-extended.
+        let wrap_value = 0x0123_4567_89AB_CDEFu64;
+        memory.write(0x20, &wrap_value.to_le_bytes()).unwrap();
+        ctx.write_vreg(rbx, 0xDEAD_BEEF_FFFF_FFF8);
+        execute_lifted_x86(&[0x67, 0x48, 0x8B, 0x43, 0x28], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), wrap_value);
+
+        // mod=00,r/m=101 is an absolute disp32 in addr32 mode, not relative to
+        // the next instruction pointer.
+        let absolute_value = 0xA5A5_5A5A_F00D_CAFEu64;
+        memory.write(0x80, &absolute_value.to_le_bytes()).unwrap();
+        execute_lifted_x86(
+            &[0x67, 0x48, 0x8B, 0x05, 0x80, 0x00, 0x00, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(rax), absolute_value);
+
+        // REX.B/X select the low 32-bit halves of r8/r12. The address is
+        // 10h + 3*4 + 8 = 24h despite nonzero upper halves.
+        let extended_value = 0x8877_6655_4433_2211u64;
+        memory.write(0x24, &extended_value.to_le_bytes()).unwrap();
+        ctx.write_vreg(r8, 0x1111_2222_0000_0010);
+        ctx.write_vreg(r12, 0x3333_4444_0000_0003);
+        execute_lifted_x86(&[0x67, 0x4B, 0x8B, 0x44, 0xA0, 0x08], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), extended_value);
+
+        // FS is added only after the wrapped, zero-extended 32-bit offset.
+        let segmented_value = 0x0BAD_F00D_C001_D00Du64;
+        memory.write(0x120, &segmented_value.to_le_bytes()).unwrap();
+        ctx.write_vreg(fs, 0x100);
+        ctx.write_vreg(rbx, 0xABCD_EF01_FFFF_FFF8);
+        execute_lifted_x86(&[0x67, 0x64, 0x48, 0x8B, 0x43, 0x28], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), segmented_value);
+
+        // LEA consumes the same zero-extended offset but ignores FS/GS bases.
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(&[0x67, 0x64, 0x48, 0x8D, 0x43, 0x28], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x20);
+
+        // POP r/m evaluates an ESP-based addr32 destination after incrementing
+        // RSP: old stack at 180h, new RSP 188h, destination [ESP+8] = 190h.
+        let popped = 0x1357_9BDF_2468_ACE0u64;
+        memory.write(0x180, &popped.to_le_bytes()).unwrap();
+        ctx.write_vreg(rsp, 0x180);
+        execute_lifted_x86(&[0x67, 0x8F, 0x44, 0x24, 0x08], &mut ctx, &mut memory);
+        let mut stored = [0u8; 8];
+        memory.read(0x190, &mut stored).unwrap();
+        assert_eq!(u64::from_le_bytes(stored), popped);
+        assert_eq!(ctx.read_vreg(rsp), 0x188);
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_string_movs_stos_lods_execute_rep_df_segment_and_addr32() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let fs = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+        let mut memory = FlatMemory::new(0x5000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        memory.write(0x100, &[1, 2, 3]).unwrap();
+        ctx.write_vreg(rsi, 0x100);
+        ctx.write_vreg(rdi, 0x200);
+        ctx.write_vreg(rcx, 3);
+        execute_lifted_x86(&[0xF3, 0xA4], &mut ctx, &mut memory);
+        let mut copied = [0u8; 3];
+        memory.read(0x200, &mut copied).unwrap();
+        assert_eq!(copied, [1, 2, 3]);
+        assert_eq!(ctx.read_vreg(rsi), 0x103);
+        assert_eq!(ctx.read_vreg(rdi), 0x203);
+        assert_eq!(ctx.read_vreg(rcx), 0);
+
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x402); // DF
+        ctx.flags.lazy = None;
+        ctx.write_vreg(rax, 0xBBAA);
+        ctx.write_vreg(rdi, 0x300);
+        ctx.write_vreg(rcx, 0xCAFE);
+        execute_lifted_x86(&[0x66, 0xAB], &mut ctx, &mut memory); // STOSW, no REP
+        let mut word = [0u8; 2];
+        memory.read(0x300, &mut word).unwrap();
+        assert_eq!(word, [0xAA, 0xBB]);
+        assert_eq!(ctx.read_vreg(rdi), 0x2FE);
+        assert_eq!(ctx.read_vreg(rcx), 0xCAFE, "non-REP must not touch RCX");
+
+        memory.write(0x410, &[0x5A]).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x2);
+        ctx.flags.lazy = None;
+        ctx.write_vreg(fs, 0x400);
+        ctx.write_vreg(rsi, 0x10);
+        ctx.write_vreg(rax, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0x64, 0xAC], &mut ctx, &mut memory); // LODSB FS:[RSI]
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_775A);
+        assert_eq!(ctx.read_vreg(rsi), 0x11);
+
+        memory.write(0x120, &[0xCC]).unwrap();
+        ctx.write_vreg(rsi, 0xDEAD_BEEF_0000_0120);
+        ctx.write_vreg(rdi, 0xAAAA_BBBB_0000_0220);
+        ctx.write_vreg(rcx, 0xFFFF_0000_0000_0001);
+        execute_lifted_x86(&[0x67, 0xF3, 0xA4], &mut ctx, &mut memory);
+        let mut byte = [0u8; 1];
+        memory.read(0x220, &mut byte).unwrap();
+        assert_eq!(byte[0], 0xCC);
+        assert_eq!(ctx.read_vreg(rsi), 0x121);
+        assert_eq!(ctx.read_vreg(rdi), 0x221);
+        assert_eq!(ctx.read_vreg(rcx), 0);
+
+        ctx.write_vreg(rsi, 0xDEAD_BEEF_0000_0120);
+        ctx.write_vreg(rdi, 0xAAAA_BBBB_0000_0220);
+        ctx.write_vreg(rcx, 0xFFFF_0000_0000_0000);
+        execute_lifted_x86(&[0x67, 0xF3, 0xA4], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rsi), 0x120);
+        assert_eq!(ctx.read_vreg(rdi), 0x220);
+        assert_eq!(ctx.read_vreg(rcx), 0);
+    }
+
+    #[test]
+    fn lifted_string_scas_cmps_rep_termination_and_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let mut memory = FlatMemory::new(0x5000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        memory.write(0x300, &[1, 1, 2, 1]).unwrap();
+        ctx.write_vreg(rax, 1);
+        ctx.write_vreg(rdi, 0x300);
+        ctx.write_vreg(rcx, 4);
+        execute_lifted_x86(&[0xF3, 0xAE], &mut ctx, &mut memory); // REPE SCASB
+        assert_eq!(ctx.read_vreg(rdi), 0x303);
+        assert_eq!(ctx.read_vreg(rcx), 1);
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+
+        memory.write(0x320, &[2, 2, 1, 2]).unwrap();
+        ctx.write_vreg(rdi, 0x320);
+        ctx.write_vreg(rcx, 4);
+        execute_lifted_x86(&[0xF2, 0xAE], &mut ctx, &mut memory); // REPNE SCASB
+        assert_eq!(ctx.read_vreg(rdi), 0x323);
+        assert_eq!(ctx.read_vreg(rcx), 1);
+        ctx.flags.materialize_all();
+        assert!(ctx.flags.materialized.zf);
+
+        memory.write(0x100, &[7, 8, 9, 10]).unwrap();
+        memory.write(0x200, &[7, 8, 0, 10]).unwrap();
+        ctx.write_vreg(rsi, 0x100);
+        ctx.write_vreg(rdi, 0x200);
+        ctx.write_vreg(rcx, 4);
+        execute_lifted_x86(&[0xF3, 0xA6], &mut ctx, &mut memory); // REPE CMPSB
+        assert_eq!(ctx.read_vreg(rsi), 0x103);
+        assert_eq!(ctx.read_vreg(rdi), 0x203);
+        assert_eq!(ctx.read_vreg(rcx), 1);
+        ctx.flags.materialize_all();
+        assert!(!ctx.flags.materialized.zf);
+    }
+
+    #[test]
+    fn lifted_string_faults_preserve_current_element_restart_state() {
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let mut inner = FlatMemory::new(0x1000);
+        inner.write(0x100, &[0x5A]).unwrap();
+        let mut memory = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(rsi, 0x100);
+        ctx.write_vreg(rdi, 0x200);
+        ctx.write_vreg(rcx, 2);
+        let exit = execute_lifted_x86(&[0xF3, 0xA4], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        assert_eq!(ctx.read_vreg(rsi), 0x100);
+        assert_eq!(ctx.read_vreg(rdi), 0x200);
+        assert_eq!(ctx.read_vreg(rcx), 2);
+
+        let mut inner = FlatMemory::new(0x1000);
+        inner.write(0x100, &[0x11, 0x22]).unwrap();
+        let mut partial_memory = StoreFaultMemory {
+            inner,
+            stores_before_fault: 1,
+        };
+        ctx.write_vreg(rsi, 0x100);
+        ctx.write_vreg(rdi, 0x200);
+        ctx.write_vreg(rcx, 2);
+        let exit = execute_lifted_x86(&[0xF3, 0xA4], &mut ctx, &mut partial_memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut first = [0u8; 1];
+        partial_memory.inner.read(0x200, &mut first).unwrap();
+        assert_eq!(first[0], 0x11);
+        assert_eq!(ctx.read_vreg(rsi), 0x101);
+        assert_eq!(ctx.read_vreg(rdi), 0x201);
+        assert_eq!(ctx.read_vreg(rcx), 1);
+    }
+
     fn vec_from_bytes(bytes: &[u8]) -> VecValue {
         let mut value = [0u64; 16];
         for (idx, chunk) in bytes.chunks(8).enumerate() {
@@ -7958,6 +17712,69 @@ mod tests {
                 .wrapping_add((i64::MIN as u64).wrapping_mul(8))
                 .wrapping_add((-1i64) as u64)
         );
+    }
+
+    #[test]
+    fn vector_lane_insert_extract_preserve_other_bits_and_extend_exactly() {
+        let interp = SmirInterpreter::new();
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut original = [0u64; 16];
+        original[0] = 0x8001_3344_5566_7788;
+        original[1] = 0x99AA_BBCC_DDEE_FF00;
+        SmirInterpreter::write_vec(&mut ctx, xmm0, original);
+        ctx.write_vreg(rax, 0xDEAD_BEEF);
+
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::VInsertLane {
+                        dst: xmm1,
+                        vec: xmm0,
+                        scalar: rax,
+                        lane: 1,
+                        elem: VecElementType::I32,
+                    },
+                ),
+            )
+            .unwrap();
+        let inserted = SmirInterpreter::read_vec(&ctx, xmm1);
+        assert_eq!(inserted[0], 0xDEAD_BEEF_5566_7788);
+        assert_eq!(inserted[1..], original[1..]);
+        assert_eq!(SmirInterpreter::read_vec(&ctx, xmm0), original);
+
+        for (dst, sign, expected) in [
+            (rcx, SignExtend::Zero, 0x8001),
+            (rdx, SignExtend::Sign, 0xFFFF_FFFF_FFFF_8001),
+        ] {
+            interp
+                .execute_op(
+                    &mut ctx,
+                    &mut memory,
+                    &SmirOp::new(
+                        OpId(1),
+                        0x1000,
+                        OpKind::VExtractLane {
+                            dst,
+                            vec: xmm0,
+                            lane: 3,
+                            elem: VecElementType::I16,
+                            sign,
+                        },
+                    ),
+                )
+                .unwrap();
+            assert_eq!(ctx.read_vreg(dst), expected);
+        }
     }
 
     #[test]
@@ -12350,18 +22167,23 @@ mod tests {
     // flag-producing Add ran before the Store, committing flags that a faulting
     // XADD must never produce.
 
-    /// Test memory that serves reads from an inner `FlatMemory` but faults every
-    /// write with a write page fault — models a read-only guest page so a memory
-    /// XADD's store cannot retire. (#23)
-    struct ReadOnlyStoreMemory {
+    /// Test memory that serves reads from an inner `FlatMemory` and faults a
+    /// configured store with a write page fault. A value of zero models a
+    /// read-only page; positive values permit that many stores to retire first.
+    struct StoreFaultMemory {
         inner: FlatMemory,
+        stores_before_fault: usize,
     }
 
-    impl SmirMemory for ReadOnlyStoreMemory {
+    impl SmirMemory for StoreFaultMemory {
         fn read(&mut self, addr: GuestAddr, buf: &mut [u8]) -> Result<(), MemoryError> {
             self.inner.read(addr, buf)
         }
-        fn write(&mut self, addr: GuestAddr, _data: &[u8]) -> Result<(), MemoryError> {
+        fn write(&mut self, addr: GuestAddr, data: &[u8]) -> Result<(), MemoryError> {
+            if self.stores_before_fault != 0 {
+                self.stores_before_fault -= 1;
+                return self.inner.write(addr, data);
+            }
             Err(MemoryError::PageFault {
                 addr,
                 write: true,
@@ -12405,6 +22227,14 @@ mod tests {
             size: MemWidth,
             order: MemoryOrder,
         ) -> Result<u64, MemoryError> {
+            if self.stores_before_fault == 0 {
+                return Err(MemoryError::PageFault {
+                    addr,
+                    write: true,
+                    user: true,
+                });
+            }
+            self.stores_before_fault -= 1;
             self.inner.atomic_rmw(addr, op, operand, size, order)
         }
         fn load_exclusive(&mut self, addr: GuestAddr, size: MemWidth) -> Result<u64, MemoryError> {
@@ -12484,7 +22314,10 @@ mod tests {
         const SENTINEL: u64 = 0x0000_0CD7; // CF|PF|AF|ZF|SF|DF|OF (+ reserved bit 1)
         let mut inner = FlatMemory::new(0x1000);
         inner.write(0x800, &0xFFFF_FFFFu32.to_le_bytes()).unwrap();
-        let mut memory = ReadOnlyStoreMemory { inner };
+        let mut memory = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
 
         let (rcx, exit, rflags) = run_xadd_mem32(0x800, 0x0000_0001, SENTINEL, &mut memory);
 

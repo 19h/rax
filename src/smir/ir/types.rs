@@ -800,6 +800,8 @@ pub enum FenceKind {
 pub enum AtomicOp {
     Add,
     Sub,
+    /// Two's-complement negation of the value in memory. The operand is ignored.
+    Neg,
     And,
     Or,
     Xor,

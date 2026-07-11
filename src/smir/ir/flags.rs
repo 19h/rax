@@ -578,9 +578,11 @@ impl FlagState {
     /// Materialize zero flag
     fn materialize_zf(&self, lazy: &LazyFlags) -> bool {
         match lazy.op {
-            LazyFlagOp::Rotate | LazyFlagOp::Ror | LazyFlagOp::Rcl | LazyFlagOp::Rcr => {
-                self.materialized.zf
-            }
+            LazyFlagOp::Rotate
+            | LazyFlagOp::Ror
+            | LazyFlagOp::Rcl
+            | LazyFlagOp::Rcr
+            | LazyFlagOp::Bt => self.materialized.zf,
             _ => (lazy.result & lazy.width.mask()) == 0,
         }
     }
@@ -592,6 +594,7 @@ impl FlagState {
             | LazyFlagOp::Ror
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
+            | LazyFlagOp::Bt
             | LazyFlagOp::Bextr => self.materialized.sf,
             _ => (lazy.result & lazy.width.sign_bit()) != 0,
         }
@@ -703,7 +706,7 @@ impl FlagState {
                 };
                 lazy.high != expected_hi
             }
-            LazyFlagOp::Bt => false,
+            LazyFlagOp::Bt => self.materialized.of,
             LazyFlagOp::Bextr | LazyFlagOp::Bzhi => false,
             LazyFlagOp::None => self.materialized.of,
         }
@@ -716,6 +719,7 @@ impl FlagState {
             | LazyFlagOp::Ror
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
+            | LazyFlagOp::Bt
             | LazyFlagOp::Bextr
             | LazyFlagOp::Bzhi => self.materialized.pf,
             _ => {
