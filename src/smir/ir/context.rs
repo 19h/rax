@@ -27,6 +27,8 @@ pub enum ExitReason {
     MemoryFault { addr: GuestAddr, write: bool },
     /// Undefined instruction
     Undefined { addr: GuestAddr, opcode: u32 },
+    /// x86 general-protection exception with its architectural error code.
+    GeneralProtection { addr: GuestAddr, error_code: u32 },
     /// External interrupt
     Interrupt { vector: u8 },
     /// Self-modifying code detected
@@ -362,6 +364,12 @@ pub struct X86RegState {
     pub k: [u64; 8],
     /// MXCSR (SSE control/status)
     pub mxcsr: u32,
+    /// Extended control register XCR0. Bit 0 (x87) is always enabled.
+    pub xcr0: u64,
+    /// XGETBV(ECX=1) init-optimization state bitmap.
+    pub xgetbv1: u64,
+    /// IA32_TSC_AUX value returned by RDPID (architecturally 32 bits).
+    pub tsc_aux: u32,
     /// x87 architectural environment and exact 80-bit physical registers.
     pub x87: X86X87State,
 }
@@ -373,6 +381,7 @@ impl X86RegState {
         state.rflags = 0x202; // IF=1, reserved bit 1 always set
         // Initialize MXCSR with default
         state.mxcsr = 0x1F80; // Default rounding, all exceptions masked
+        state.xcr0 = 1;
         state
     }
 

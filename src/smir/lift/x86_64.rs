@@ -9,8 +9,9 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AluEncoding, X86CacheControlKind, X86OpHint, X86RepMode, X86SsePrefix,
-    X86StringKind, X86VecAlign, X86VecMap, X86X87CompareSource, X86X87Constant, X86X87ControlKind,
-    X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -588,9 +589,10 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
 
     // Scalar EVEX moves and arithmetic below model one-bit write masks with
     // Select plus PredLoad/PredStore, including {z} and memory-fault suppression.
-    // Other masked vector families remain unsupported. EVEX.b (memory broadcast
-    // or register embedded rounding/SAE) remains rejected for every vector form
-    // because the current IR does not carry its rounding/exception semantics:
+    // Packed precision converts and packed logical operations model per-element
+    // masks; their memory forms use PredLoad so masked-off elements do not fault.
+    // EVEX.b remains rejected except where the relevant family implements memory
+    // broadcast or embedded rounding/SAE:
     //   - aaa (b3 bits[2:0]) != 0  -> allowed only for scalar maskable forms
     //   - z   (b3 bit[7])          -> allowed only with those scalar masks
     //   - b   (b3 bit[4])          -> broadcast / embedded rounding
@@ -609,10 +611,37 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         );
     let is_packed_fp_convert =
         (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A));
-    let is_maskable = is_scalar_maskable || is_packed_fp_convert;
+    let is_packed_logic = (b1 & 0x07) == 1
+        && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x54..=0x57)))
+            || ((b2 & 0x03) == 1
+                && matches!(
+                    bytes.get(4),
+                    Some(
+                        0xD4 | 0xD8
+                            | 0xD9
+                            | 0xDB
+                            | 0xDC
+                            | 0xDD
+                            | 0xDF
+                            | 0xE8
+                            | 0xE9
+                            | 0xEB
+                            | 0xEC
+                            | 0xED
+                            | 0xEF
+                            | 0xF8
+                            | 0xF9
+                            | 0xFA
+                            | 0xFB
+                            | 0xFC
+                            | 0xFD
+                            | 0xFE
+                    )
+                )));
+    let is_maskable = is_scalar_maskable || is_packed_fp_convert || is_packed_logic;
     if !is_apx_gpr_0f38
         && ((!is_maskable && ((b3 & 0x07) != 0 || (b3 & 0x80) != 0))
-            || (!is_packed_fp_convert && (b3 & 0x10) != 0))
+            || (!(is_packed_fp_convert || is_packed_logic) && (b3 & 0x10) != 0))
     {
         return Err(LiftError::Unsupported {
             addr,
@@ -3591,6 +3620,52 @@ impl X86_64Lifter {
         }
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let group = (modrm.byte >> 3) & 7;
+        if modrm.is_memory && matches!(group, 4 | 5 | 6) && !prefix.operand_size_override {
+            if prefix.rep_prefix.is_some() {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+            let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            let kind = if group == 5 {
+                OpKind::X86XRstor {
+                    addr,
+                    rex_w: prefix.rex_w(),
+                    supervisor: false,
+                    src_low: self.gpr(0),
+                    src_high: self.gpr(2),
+                }
+            } else {
+                OpKind::X86XSave {
+                    addr,
+                    rex_w: prefix.rex_w(),
+                    kind: if group == 6 {
+                        X86XSaveKind::XSaveOpt
+                    } else {
+                        X86XSaveKind::XSave
+                    },
+                    src_low: self.gpr(0),
+                    src_high: self.gpr(2),
+                }
+            };
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        if modrm.is_memory
+            && matches!(group, 4 | 5 | 6)
+            && (prefix.rep_prefix.is_some() || prefix.operand_size_override)
+            && !(group == 6 && prefix.operand_size_override && prefix.rep_prefix.is_none())
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
         if matches!(group, 0 | 1) {
             if !modrm.is_memory {
                 return Err(LiftError::InvalidEncoding {
@@ -3682,6 +3757,181 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(
             vec![SmirOp::new(OpId(0), pc, OpKind::Fence { kind })],
             prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift Group-9 CMPXCHG8B/16B, compacted XSAVE-family, random-source, and
+    /// processor-ID forms (0F C7).
+    fn lift_xsave_group9_0fc7(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let group = (modrm.byte >> 3) & 7;
+        match group {
+            1 => {
+                if !modrm.is_memory {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                    });
+                }
+                let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+                let (addr, mut ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86Cmpxchg8b16b {
+                        addr,
+                        wide: prefix.rex_w(),
+                        locked: prefix.lock,
+                        compare_lo: self.gpr(0),
+                        compare_hi: self.gpr(2),
+                        new_lo: self.gpr(3),
+                        new_hi: self.gpr(1),
+                        dst_lo: self.gpr(0),
+                        dst_hi: self.gpr(2),
+                    },
+                ));
+                Ok(LiftResult::fallthrough(
+                    ops,
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            3..=5 => {
+                if prefix.lock
+                    || prefix.rep_prefix.is_some()
+                    || prefix.operand_size_override
+                    || !modrm.is_memory
+                {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                    });
+                }
+                let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+                let (addr, mut ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                let kind = match group {
+                    3 => OpKind::X86XRstor {
+                        addr,
+                        rex_w: prefix.rex_w(),
+                        supervisor: true,
+                        src_low: self.gpr(0),
+                        src_high: self.gpr(2),
+                    },
+                    4 | 5 => OpKind::X86XSave {
+                        addr,
+                        rex_w: prefix.rex_w(),
+                        kind: if group == 4 {
+                            X86XSaveKind::XSaveC
+                        } else {
+                            X86XSaveKind::XSaveS
+                        },
+                        src_low: self.gpr(0),
+                        src_high: self.gpr(2),
+                    },
+                    _ => unreachable!(),
+                };
+                ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+                Ok(LiftResult::fallthrough(
+                    ops,
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            6 | 7 => {
+                if prefix.lock || modrm.is_memory {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                    });
+                }
+                if group == 6 && prefix.rep_prefix == Some(0xF3) {
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: "SENDUIPI".to_string(),
+                    });
+                }
+                let kind = if group == 7 && prefix.rep_prefix == Some(0xF3) {
+                    OpKind::X86ReadPid {
+                        dst: self.gpr(modrm.rm),
+                    }
+                } else {
+                    OpKind::X86Random {
+                        dst: self.gpr(modrm.rm),
+                        width: if prefix.rex_w() {
+                            OpWidth::W64
+                        } else if prefix.operand_size_override {
+                            OpWidth::W16
+                        } else {
+                            OpWidth::W32
+                        },
+                        seed: group == 7,
+                    }
+                };
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(OpId(0), pc, kind)],
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            _ => Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: format!("0F C7 /{group}"),
+            }),
+        }
+    }
+
+    /// Lift XGETBV/XSETBV fixed ModRM encodings (0F 01 D0/D1).
+    fn lift_xcr_0f01(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let Some(&modrm) = bytes.first() else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
+            });
+        };
+        if prefix.lock
+            || prefix.rep_prefix.is_some()
+            || prefix.operand_size_override
+            || !matches!(modrm, 0xD0 | 0xD1)
+        {
+            return Err(if prefix.lock || matches!(modrm, 0xD0 | 0xD1) {
+                LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..1].to_vec(),
+                }
+            } else {
+                LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("0F 01 {modrm:02X}"),
+                }
+            });
+        }
+        let kind = if modrm == 0xD0 {
+            OpKind::X86XGetBv {
+                dst_low: self.gpr(0),
+                dst_high: self.gpr(2),
+                selector: self.gpr(1),
+            }
+        } else {
+            OpKind::X86XSetBv {
+                selector: self.gpr(1),
+                src_low: self.gpr(0),
+                src_high: self.gpr(2),
+            }
+        };
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(OpId(0), pc, kind)],
+            prefix.cursor + 1,
         ))
     }
 
@@ -5223,7 +5473,7 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift packed legacy SSE/SSE2 bitwise AND/OR/XOR.
+    /// Lift packed legacy SSE/SSE2 bitwise AND/AND-NOT/OR/XOR.
     fn lift_sse_logic(
         &self,
         opcode: u8,
@@ -5266,6 +5516,12 @@ impl X86_64Lifter {
                 src2,
                 width: VecWidth::V128,
             },
+            0x55 => OpKind::VAndNot {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
             0x56 => OpKind::VOr {
                 dst,
                 src1: dst,
@@ -5299,8 +5555,185 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift SSE PADDD (66 0F FE)
-    fn lift_sse_padd(
+    /// Emit the exact integer sign-bit mask used by MOVMSKPS/MOVMSKPD.
+    fn append_sse_movmask(
+        &self,
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        dst_width: OpWidth,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        let accumulated = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst: accumulated,
+                src: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+        ));
+        for lane in 0..lanes {
+            let scalar = ctx.alloc_vreg();
+            let sign = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: src,
+                    lane,
+                    elem,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Shr {
+                    dst: sign,
+                    src: scalar,
+                    amount: SrcOperand::Imm(i64::from(elem.bytes() * 8 - 1)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            let positioned = if lane == 0 {
+                sign
+            } else {
+                let shifted = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Shl {
+                        dst: shifted,
+                        src: sign,
+                        amount: SrcOperand::Imm(i64::from(lane)),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                shifted
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Or {
+                    dst: accumulated,
+                    src1: accumulated,
+                    src2: SrcOperand::Reg(positioned),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+        }
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(accumulated),
+                width: dst_width,
+            },
+        ));
+    }
+
+    /// Lift legacy MOVMSKPS/MOVMSKPD (0F 50 /r).
+    fn lift_sse_movmask(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
+        let elem = if prefix.operand_size_override {
+            VecElementType::F64
+        } else {
+            VecElementType::F32
+        };
+        let lanes = if elem == VecElementType::F32 { 4 } else { 2 };
+        let mut ops = Vec::new();
+        self.append_sse_movmask(
+            self.gpr(modrm.reg),
+            self.xmm(modrm.rm),
+            elem,
+            lanes,
+            if prefix.rex_w() {
+                OpWidth::W64
+            } else {
+                OpWidth::W32
+            },
+            pc,
+            ctx,
+            &mut ops,
+        );
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift legacy LDDQU xmm, m128 (F2 0F F0 /r).
+    fn lift_sse_lddqu(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix != Some(0xF2) || prefix.operand_size_override {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if !modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+            });
+        }
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VLoad {
+                dst: self.xmm(modrm.reg),
+                addr,
+                width: VecWidth::V128,
+            },
+            X86OpHint::SseMov {
+                prefix: X86SsePrefix::Repne,
+                opcode: 0xF0,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift XMM PAND/PANDN/POR/PXOR (66 0F DB/DF/EB/EF).
+    fn lift_sse_integer_logic(
         &self,
         opcode: u8,
         bytes: &[u8],
@@ -5308,35 +5741,124 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if !prefix.operand_size_override {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: format!("MMX opcode 0F {opcode:02X}"),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let value = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: value,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            value
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let dst = self.xmm(modrm.reg);
+        let kind = match opcode {
+            0xDB => OpKind::VAnd {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            0xDF => OpKind::VAndNot {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            0xEB => OpKind::VOr {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            0xEF => OpKind::VXor {
+                dst,
+                src1: dst,
+                src2,
+                width: VecWidth::V128,
+            },
+            _ => unreachable!(),
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            kind,
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift XMM wrapping and saturating packed integer add/subtract.
+    fn lift_sse_packed_add_sub(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rep_prefix.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if !prefix.operand_size_override {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: format!("MMX opcode 0F {opcode:02X}"),
+            });
+        }
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let mut ops = Vec::new();
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
-
-        let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
-            X86SsePrefix::Rep
-        } else if prefix.rep_prefix == Some(0xF2) {
-            X86SsePrefix::Repne
-        } else if prefix.operand_size_override {
-            X86SsePrefix::OpSize
-        } else {
-            X86SsePrefix::None
+        let elem = match opcode {
+            0xD8 | 0xDC | 0xE8 | 0xEC | 0xF8 | 0xFC => VecElementType::I8,
+            0xD9 | 0xDD | 0xE9 | 0xED | 0xF9 | 0xFD => VecElementType::I16,
+            0xFA | 0xFE => VecElementType::I32,
+            0xD4 | 0xFB => VecElementType::I64,
+            _ => unreachable!(),
         };
-
-        if prefix_kind != X86SsePrefix::OpSize {
-            if self.strict {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("sse opcode 0x{:02X}", opcode),
-                });
-            }
-            return Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                prefix.cursor + modrm.bytes_consumed,
-            ));
-        }
+        let saturating = matches!(
+            opcode,
+            0xD8 | 0xD9 | 0xDC | 0xDD | 0xE8 | 0xE9 | 0xEC | 0xED
+        );
+        let subtract = matches!(
+            opcode,
+            0xD8 | 0xD9 | 0xE8 | 0xE9 | 0xF8 | 0xF9 | 0xFA | 0xFB
+        );
+        let signed = matches!(opcode, 0xE8 | 0xE9 | 0xEC | 0xED);
 
         let hint = X86OpHint::SseOp {
-            prefix: prefix_kind,
+            prefix: X86SsePrefix::OpSize,
             opcode,
         };
 
@@ -5357,31 +5879,64 @@ impl X86_64Lifter {
                 },
                 X86OpHint::VecAlign(X86VecAlign::Unaligned),
             ));
-            ops.push(SmirOp::with_hint(
-                OpId(ops.len() as u16),
-                pc,
+            let kind = if saturating {
+                OpKind::VAddSubSat {
+                    dst,
+                    src1: dst,
+                    src2: tmp,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                    subtract,
+                    signed,
+                }
+            } else if subtract {
+                OpKind::VSub {
+                    dst,
+                    src1: dst,
+                    src2: tmp,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                }
+            } else {
                 OpKind::VAdd {
                     dst,
                     src1: dst,
                     src2: tmp,
-                    elem: VecElementType::I32,
-                    lanes: 4,
-                },
-                hint,
-            ));
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                }
+            };
+            ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, kind, hint));
         } else {
-            ops.push(SmirOp::with_hint(
-                OpId(0),
-                pc,
+            let src2 = self.xmm(modrm.rm);
+            let kind = if saturating {
+                OpKind::VAddSubSat {
+                    dst,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                    subtract,
+                    signed,
+                }
+            } else if subtract {
+                OpKind::VSub {
+                    dst,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                }
+            } else {
                 OpKind::VAdd {
                     dst,
                     src1: dst,
-                    src2: self.xmm(modrm.rm),
-                    elem: VecElementType::I32,
-                    lanes: 4,
-                },
-                hint,
-            ));
+                    src2,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                }
+            };
+            ops.push(SmirOp::with_hint(OpId(0), pc, kind, hint));
         }
 
         Ok(LiftResult::fallthrough(
@@ -7019,6 +7574,79 @@ impl X86_64Lifter {
 
         match prefix.map {
             X86VecMap::Map0F => match opcode {
+                // VMOVMSKPS/VMOVMSKPD. VEX.vvvv is reserved as 1111b and
+                // ModR/M must select a vector register source.
+                0x50 => {
+                    if prefix.encoding != VecEncodingKind::Vex
+                        || prefix.vvvv != 0
+                        || !matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    if modrm.is_memory {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let elem = if prefix.pp == X86SsePrefix::OpSize {
+                        VecElementType::F64
+                    } else {
+                        VecElementType::F32
+                    };
+                    let src = self.vec_reg(modrm.rm, prefix.width);
+                    self.append_sse_movmask(
+                        self.gpr(modrm.reg),
+                        src,
+                        elem,
+                        prefix.width.lanes(elem) as u8,
+                        OpWidth::W32,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    );
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VLDDQU xmm/ymm, m128/m256.
+                0xF0 => {
+                    if prefix.encoding != VecEncodingKind::Vex
+                        || prefix.pp != X86SsePrefix::Repne
+                        || prefix.vvvv != 0
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    if !modrm.is_memory {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let (addr, pre_ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.extend(pre_ops);
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VLoad {
+                            dst: self.vec_reg(modrm.reg, prefix.width),
+                            addr,
+                            width: prefix.width,
+                        },
+                        hint,
+                    ));
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
                 // VCVTSI2SS/VCVTSI2SD.
                 0x2A => {
                     if !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
@@ -8176,52 +8804,472 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // Packed vector bitwise logic.
-                0x54 | 0x56 | 0x57 => {
+                // Packed floating-point/integer bitwise logic and integer add/subtract.
+                0x54 | 0x55 | 0x56 | 0x57 | 0xD4 | 0xD8 | 0xD9 | 0xDB | 0xDC | 0xDD | 0xDF
+                | 0xE8 | 0xE9 | 0xEB | 0xEC | 0xED | 0xEF | 0xF8 | 0xF9 | 0xFA | 0xFB | 0xFC
+                | 0xFD | 0xFE => {
+                    let integer_logic = matches!(opcode, 0xDB | 0xDF | 0xEB | 0xEF);
+                    let packed_add = matches!(opcode, 0xD4 | 0xFC | 0xFD | 0xFE);
+                    let packed_sub = matches!(opcode, 0xF8 | 0xF9 | 0xFA | 0xFB);
+                    let packed_sat = matches!(
+                        opcode,
+                        0xD8 | 0xD9 | 0xDC | 0xDD | 0xE8 | 0xE9 | 0xEC | 0xED
+                    );
+                    let elem = if packed_add || packed_sub || packed_sat {
+                        if prefix.pp != X86SsePrefix::OpSize {
+                            return Err(LiftError::InvalidEncoding {
+                                addr: pc,
+                                bytes: bytes.to_vec(),
+                            });
+                        }
+                        match opcode {
+                            0xD8 | 0xDC | 0xE8 | 0xEC | 0xF8 | 0xFC => VecElementType::I8,
+                            0xD9 | 0xDD | 0xE9 | 0xED | 0xF9 | 0xFD => VecElementType::I16,
+                            0xFA | 0xFE => VecElementType::I32,
+                            0xD4 | 0xFB => VecElementType::I64,
+                            _ => unreachable!(),
+                        }
+                    } else if integer_logic {
+                        if prefix.pp != X86SsePrefix::OpSize {
+                            return Err(LiftError::InvalidEncoding {
+                                addr: pc,
+                                bytes: bytes.to_vec(),
+                            });
+                        }
+                        if prefix.encoding == VecEncodingKind::Evex && prefix.w {
+                            VecElementType::I64
+                        } else {
+                            VecElementType::I32
+                        }
+                    } else {
+                        match prefix.pp {
+                            X86SsePrefix::None => VecElementType::F32,
+                            X86SsePrefix::OpSize => VecElementType::F64,
+                            _ => {
+                                return Err(LiftError::InvalidEncoding {
+                                    addr: pc,
+                                    bytes: bytes.to_vec(),
+                                });
+                            }
+                        }
+                    };
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && (prefix.l_bits == 3
+                            || prefix.zeroing && prefix.aaa == 0
+                            || (opcode == 0xFE && prefix.w)
+                            || (opcode == 0xD4 && !prefix.w)
+                            || (opcode == 0xFA && prefix.w)
+                            || (opcode == 0xFB && !prefix.w)
+                            || (!integer_logic
+                                && !packed_add
+                                && !packed_sub
+                                && !packed_sat
+                                && ((elem == VecElementType::F32 && prefix.w)
+                                    || (elem == VecElementType::F64 && !prefix.w))))
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let broadcast_allowed = matches!(
+                        opcode,
+                        0x54 | 0x55 | 0x56 | 0xD4 | 0xDB | 0xDF | 0xEB | 0xEF | 0xFA | 0xFB | 0xFE
+                    );
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && prefix.b
+                        && (!modrm.is_memory || !broadcast_allowed)
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-                    let dst = self.vec_reg(modrm.reg, prefix.width);
-                    let src1 = self.vec_reg(prefix.vvvv, prefix.width);
+                    let dst = self.vec_reg(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let src1 = self.vec_reg(
+                        prefix.vvvv
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.v_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let lanes = prefix.width.lanes(elem) as u8;
+                    let elem_mem_width = match elem.bytes() {
+                        1 => MemWidth::B1,
+                        2 => MemWidth::B2,
+                        4 => MemWidth::B4,
+                        8 => MemWidth::B8,
+                        _ => unreachable!(),
+                    };
+                    let elem_op_width = match elem.bytes() {
+                        1 => OpWidth::W8,
+                        2 => OpWidth::W16,
+                        4 => OpWidth::W32,
+                        8 => OpWidth::W64,
+                        _ => unreachable!(),
+                    };
+                    let mask = if prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0 {
+                        Some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))))
+                    } else {
+                        None
+                    };
                     let src2 = if modrm.is_memory {
-                        let (addr, pre_ops) =
-                            self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                        let broadcast = prefix.encoding == VecEncodingKind::Evex && prefix.b;
+                        let tuple_bytes = if broadcast {
+                            elem.bytes()
+                        } else {
+                            prefix.width.bytes()
+                        };
+                        let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                            prefix,
+                            modrm.addr.as_ref().unwrap(),
+                            next_pc,
+                            tuple_bytes,
+                            ctx,
+                        );
                         ops.extend(pre_ops);
-                        let tmp = ctx.alloc_vreg();
+                        let value = ctx.alloc_vreg();
+                        if broadcast {
+                            let scalar = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Mov {
+                                    dst: scalar,
+                                    src: SrcOperand::Imm(0),
+                                    width: OpWidth::W64,
+                                },
+                            ));
+                            if let Some(mask_reg) = mask {
+                                let cond = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::And {
+                                        dst: cond,
+                                        src1: mask_reg,
+                                        src2: SrcOperand::Imm((1i64 << lanes) - 1),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr,
+                                        width: elem_mem_width,
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                            } else {
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Load {
+                                        dst: scalar,
+                                        addr,
+                                        width: elem_mem_width,
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                            }
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: value,
+                                    scalar,
+                                    elem,
+                                    lanes,
+                                },
+                            ));
+                        } else if let Some(mask_reg) = mask {
+                            let zero = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Mov {
+                                    dst: zero,
+                                    src: SrcOperand::Imm(0),
+                                    width: OpWidth::W64,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VBroadcast {
+                                    dst: value,
+                                    scalar: zero,
+                                    elem,
+                                    lanes,
+                                },
+                            ));
+                            let base = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Lea { dst: base, addr },
+                            ));
+                            for lane in 0..lanes {
+                                let shifted = ctx.alloc_vreg();
+                                let cond = ctx.alloc_vreg();
+                                let scalar = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Shr {
+                                        dst: shifted,
+                                        src: mask_reg,
+                                        amount: SrcOperand::Imm(i64::from(lane)),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::And {
+                                        dst: cond,
+                                        src1: shifted,
+                                        src2: SrcOperand::Imm(1),
+                                        width: OpWidth::W64,
+                                        flags: FlagUpdate::None,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::Mov {
+                                        dst: scalar,
+                                        src: SrcOperand::Imm(0),
+                                        width: OpWidth::W64,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::PredLoad {
+                                        dst: scalar,
+                                        cond,
+                                        addr: Address::base_off(
+                                            base,
+                                            i64::from(lane) * i64::from(elem.bytes()),
+                                        ),
+                                        width: elem_mem_width,
+                                        signed: SignExtend::Zero,
+                                    },
+                                ));
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VInsertLane {
+                                        dst: value,
+                                        vec: value,
+                                        scalar,
+                                        lane,
+                                        elem,
+                                    },
+                                ));
+                            }
+                        } else {
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VLoad {
+                                    dst: value,
+                                    addr,
+                                    width: prefix.width,
+                                },
+                            ));
+                        }
+                        value
+                    } else {
+                        self.vec_reg(
+                            modrm.rm
+                                + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                    16
+                                } else {
+                                    0
+                                },
+                            prefix.width,
+                        )
+                    };
+                    let old_dst = mask.map(|_| {
+                        let old = ctx.alloc_vreg();
                         ops.push(SmirOp::new(
                             OpId(ops.len() as u16),
                             pc,
-                            OpKind::VLoad {
-                                dst: tmp,
-                                addr,
+                            OpKind::VMov {
+                                dst: old,
+                                src: dst,
                                 width: prefix.width,
                             },
                         ));
-                        tmp
+                        old
+                    });
+                    let raw_dst = if mask.is_some() {
+                        ctx.alloc_vreg()
                     } else {
-                        self.vec_reg(modrm.rm, prefix.width)
+                        dst
                     };
                     let kind = match opcode {
-                        0x54 => OpKind::VAnd {
-                            dst,
+                        0x54 | 0xDB => OpKind::VAnd {
+                            dst: raw_dst,
                             src1,
                             src2,
                             width: prefix.width,
                         },
-                        0x56 => OpKind::VOr {
-                            dst,
+                        0x55 | 0xDF => OpKind::VAndNot {
+                            dst: raw_dst,
                             src1,
                             src2,
                             width: prefix.width,
                         },
-                        0x57 => OpKind::VXor {
-                            dst,
+                        0x56 | 0xEB => OpKind::VOr {
+                            dst: raw_dst,
                             src1,
                             src2,
                             width: prefix.width,
                         },
+                        0x57 | 0xEF => OpKind::VXor {
+                            dst: raw_dst,
+                            src1,
+                            src2,
+                            width: prefix.width,
+                        },
+                        0xD4 | 0xFC | 0xFD | 0xFE => OpKind::VAdd {
+                            dst: raw_dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        0xF8 | 0xF9 | 0xFA | 0xFB => OpKind::VSub {
+                            dst: raw_dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        0xD8 | 0xD9 | 0xDC | 0xDD | 0xE8 | 0xE9 | 0xEC | 0xED => {
+                            OpKind::VAddSubSat {
+                                dst: raw_dst,
+                                src1,
+                                src2,
+                                elem,
+                                lanes,
+                                subtract: matches!(opcode, 0xD8 | 0xD9 | 0xE8 | 0xE9),
+                                signed: matches!(opcode, 0xE8 | 0xE9 | 0xEC | 0xED),
+                            }
+                        }
                         _ => unreachable!(),
                     };
                     ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, kind, hint));
+                    if let Some(mask_reg) = mask {
+                        let zero = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Mov {
+                                dst: zero,
+                                src: SrcOperand::Imm(0),
+                                width: OpWidth::W64,
+                            },
+                        ));
+                        for lane in 0..lanes {
+                            let shifted = ctx.alloc_vreg();
+                            let cond = ctx.alloc_vreg();
+                            let active = ctx.alloc_vreg();
+                            let inactive = if prefix.zeroing {
+                                zero
+                            } else {
+                                let old = ctx.alloc_vreg();
+                                ops.push(SmirOp::new(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VExtractLane {
+                                        dst: old,
+                                        vec: old_dst.unwrap(),
+                                        lane,
+                                        elem,
+                                        sign: SignExtend::Zero,
+                                    },
+                                ));
+                                old
+                            };
+                            let selected = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Shr {
+                                    dst: shifted,
+                                    src: mask_reg,
+                                    amount: SrcOperand::Imm(i64::from(lane)),
+                                    width: OpWidth::W64,
+                                    flags: FlagUpdate::None,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::And {
+                                    dst: cond,
+                                    src1: shifted,
+                                    src2: SrcOperand::Imm(1),
+                                    width: OpWidth::W64,
+                                    flags: FlagUpdate::None,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VExtractLane {
+                                    dst: active,
+                                    vec: raw_dst,
+                                    lane,
+                                    elem,
+                                    sign: SignExtend::Zero,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::Select {
+                                    dst: selected,
+                                    cond,
+                                    src_true: active,
+                                    src_false: inactive,
+                                    width: elem_op_width,
+                                },
+                            ));
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VInsertLane {
+                                    dst,
+                                    vec: if lane == 0 { raw_dst } else { dst },
+                                    scalar: selected,
+                                    lane,
+                                    elem,
+                                },
+                            ));
+                        }
+                    }
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
@@ -8295,14 +9343,12 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // Packed/scalar vector ADD/MUL/SUB/DIV/MIN/MAX and PADDD.
-                0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F | 0xFE => {
+                // Packed/scalar vector ADD/MUL/SUB/DIV/MIN/MAX.
+                0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F => {
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
 
-                    if opcode != 0xFE
-                        && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
-                    {
+                    if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
                         if prefix.encoding == VecEncodingKind::Evex
                             && ((prefix.zeroing && prefix.aaa == 0)
                                 || (prefix.pp == X86SsePrefix::Rep && prefix.w)
@@ -8504,18 +9550,13 @@ impl X86_64Lifter {
                         prefix.width,
                     );
 
-                    let elem = if opcode == 0xFE {
-                        VecElementType::I32
-                    } else {
-                        match prefix.pp {
-                            X86SsePrefix::None => VecElementType::F32,
-                            X86SsePrefix::OpSize => VecElementType::F64,
-                            X86SsePrefix::Rep | X86SsePrefix::Repne => unreachable!(),
-                        }
+                    let elem = match prefix.pp {
+                        X86SsePrefix::None => VecElementType::F32,
+                        X86SsePrefix::OpSize => VecElementType::F64,
+                        X86SsePrefix::Rep | X86SsePrefix::Repne => unreachable!(),
                     };
                     let lanes = prefix.width.lanes(elem) as u8;
-                    if opcode != 0xFE
-                        && prefix.encoding == VecEncodingKind::Evex
+                    if prefix.encoding == VecEncodingKind::Evex
                         && ((elem == VecElementType::F32 && prefix.w)
                             || (elem == VecElementType::F64 && !prefix.w))
                     {
@@ -8555,7 +9596,7 @@ impl X86_64Lifter {
                     };
 
                     let op_kind = match opcode {
-                        0x58 | 0xFE => OpKind::VAdd {
+                        0x58 => OpKind::VAdd {
                             dst,
                             src1,
                             src2,
@@ -13669,9 +14710,9 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift exact x87 environment/control operations and raw double-extended
-    /// stack transfers. Arithmetic and narrowing conversions remain explicit
-    /// unsupported until their FCW-controlled binary80 semantics are present.
+    /// Lift exact x87 environment/control, stack transfers, conversions, and
+    /// the arithmetic families whose FCW-controlled binary80 semantics are
+    /// represented explicitly in SMIR.
     fn lift_x87_escape(
         &self,
         opcode: u8,
@@ -13692,6 +14733,106 @@ impl X86_64Lifter {
         let st = modrm.byte & 7;
         let fop = (((opcode & 7) as u16) << 8) | modrm.byte as u16;
         let data_kind = match (opcode, modrm.is_memory, group, modrm.byte) {
+            (0xD8, true, 0, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Single,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xDC, true, 0, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Double,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xDE, true, 0, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Int16,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xDA, true, 0, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Int32,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xD8, true, group @ 4..=5, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Single,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: group == 5,
+            }),
+            (0xDC, true, group @ 4..=5, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Double,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: group == 5,
+            }),
+            (0xDE, true, group @ 4..=5, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Int16,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: group == 5,
+            }),
+            (0xDA, true, group @ 4..=5, _) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Int32,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: group == 5,
+            }),
+            (0xD8, true, group @ 6..=7, _) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Single,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: group == 7,
+            }),
+            (0xDC, true, group @ 6..=7, _) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Double,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: group == 7,
+            }),
+            (0xDE, true, group @ 6..=7, _) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Int16,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: group == 7,
+            }),
+            (0xDA, true, group @ 6..=7, _) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Int32,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: group == 7,
+            }),
+            (0xD8, true, 1, _) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Single,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            }),
+            (0xDC, true, 1, _) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Double,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            }),
+            (0xDE, true, 1, _) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Int16,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            }),
+            (0xDA, true, 1, _) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Int32,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            }),
             (0xD9, true, 2, _) => Some(X86X87DataKind::StoreFloat {
                 width: X86X87FloatWidth::F32,
                 pop: false,
@@ -13796,6 +14937,120 @@ impl X86_64Lifter {
                 pop: 1,
                 eflags: false,
             }),
+            (0xD8, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            }),
+            (0xDC, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+            }),
+            (0xDE, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+            }),
+            (0xD8, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xDC, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xDE, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                subtract: false,
+                reverse: false,
+            }),
+            (0xD8, false, _, 0xE0..=0xE7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: false,
+            }),
+            (0xDC, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+                subtract: true,
+                reverse: false,
+            }),
+            (0xDE, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                subtract: true,
+                reverse: false,
+            }),
+            (0xD8, false, _, 0xE8..=0xEF) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: true,
+                reverse: true,
+            }),
+            (0xDC, false, _, 0xE0..=0xE7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+                subtract: true,
+                reverse: true,
+            }),
+            (0xDE, false, _, 0xE0..=0xE7) => Some(X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                subtract: true,
+                reverse: true,
+            }),
+            (0xD8, false, _, 0xF0..=0xF7) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: false,
+            }),
+            (0xDC, false, _, 0xF8..=0xFF) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+                reverse: false,
+            }),
+            (0xDE, false, _, 0xF8..=0xFF) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                reverse: false,
+            }),
+            (0xD8, false, _, 0xF8..=0xFF) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: true,
+            }),
+            (0xDC, false, _, 0xF0..=0xF7) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: false,
+                reverse: true,
+            }),
+            (0xDE, false, _, 0xF0..=0xF7) => Some(X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                reverse: true,
+            }),
             (0xD8, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::Compare {
                 source: X86X87CompareSource::Register,
                 unordered: false,
@@ -13875,6 +15130,8 @@ impl X86_64Lifter {
             (0xD9, false, _, 0xE4) => Some(X86X87DataKind::TestZero),
             (0xD9, false, _, 0xE5) => Some(X86X87DataKind::Examine),
             (0xD9, false, _, 0xF4) => Some(X86X87DataKind::Extract),
+            (0xD9, false, _, 0xF5) => Some(X86X87DataKind::Remainder { nearest: true }),
+            (0xD9, false, _, 0xF8) => Some(X86X87DataKind::Remainder { nearest: false }),
             (0xD9, false, _, 0xFA) => Some(X86X87DataKind::SquareRoot),
             (0xD9, false, _, 0xFC) => Some(X86X87DataKind::RoundInteger),
             (0xD9, false, _, 0xFD) => Some(X86X87DataKind::Scale),
@@ -15335,6 +16592,8 @@ impl X86_64Lifter {
         };
 
         match opcode2 {
+            0x01 => self.lift_xcr_0f01(after_opcode, &prefix2, pc),
+
             // Cache-maintenance instructions modeled as no-ops by the base
             // emulator profile.
             0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
@@ -15545,6 +16804,18 @@ impl X86_64Lifter {
                 self.lift_sse_mov(opcode2, after_opcode, &prefix2, pc, ctx)
             }
 
+            // MOVMSKPS/MOVMSKPD sign-bit extraction.
+            0x50 => self.lift_sse_movmask(after_opcode, &prefix2, pc, ctx),
+
+            // LDDQU unaligned 128-bit integer load.
+            0xF0 => self.lift_sse_lddqu(after_opcode, &prefix2, pc, ctx),
+
+            // XMM packed-integer logical operations. Prefix-free forms target
+            // MMX state, which SMIR does not yet expose.
+            0xDB | 0xDF | 0xEB | 0xEF => {
+                self.lift_sse_integer_logic(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+
             // Scalar ordered/unordered FP compare setting integer flags.
             0x2E | 0x2F => self.lift_sse_comi(opcode2, after_opcode, &prefix2, pc, ctx),
 
@@ -15566,10 +16837,15 @@ impl X86_64Lifter {
             0x51 => self.lift_sse_sqrt(after_opcode, &prefix2, pc, ctx),
 
             // Packed legacy SSE/SSE2 bitwise logic.
-            0x54 | 0x56 | 0x57 => self.lift_sse_logic(opcode2, after_opcode, &prefix2, pc, ctx),
+            0x54 | 0x55 | 0x56 | 0x57 => {
+                self.lift_sse_logic(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
 
-            // SSE PADDD (66 0F FE)
-            0xFE => self.lift_sse_padd(opcode2, after_opcode, &prefix2, pc, ctx),
+            // XMM wrapping and saturating packed integer add/subtract.
+            0xD4 | 0xD8 | 0xD9 | 0xDC | 0xDD | 0xE8 | 0xE9 | 0xEC | 0xED | 0xF8 | 0xF9 | 0xFA
+            | 0xFB | 0xFC | 0xFD | 0xFE => {
+                self.lift_sse_packed_add_sub(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
 
             // SSE4.1 opcodes (0F 38)
             0x38 if prefix2.rex2_m() => Err(LiftError::InvalidEncoding {
@@ -15597,6 +16873,9 @@ impl X86_64Lifter {
 
             // XADD r/m, r (0F C0/0F C1)
             0xC0 | 0xC1 => self.lift_xadd(opcode2, after_opcode, &prefix2, pc, ctx),
+
+            // Group 9 CMPXCHG, compacted XSAVE, random, and RDPID forms.
+            0xC7 => self.lift_xsave_group9_0fc7(after_opcode, &prefix2, pc, ctx),
 
             // BSWAP r32/r64 (0F C8+rd)
             0xC8..=0xCF => self.lift_bswap_opcode(opcode2, &prefix2, pc),
@@ -23107,8 +24386,11 @@ mod tests {
         }
 
         assert!(matches!(
-            lift_single(&[0x0F, 0xAE, 0x28]),
-            Err(LiftError::Unsupported { .. })
+            lift_single(&[0x0F, 0xAE, 0x28]).unwrap().ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86XRstor { .. },
+                ..
+            }]
         ));
         assert!(matches!(
             lift_single(&[0xF0, 0x0F, 0xAE, 0xF0]),
@@ -23117,6 +24399,60 @@ mod tests {
         assert!(matches!(
             lift_single(&[0xF0, 0x9B]),
             Err(LiftError::InvalidEncoding { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_xgetbv_xsetbv_fixed_encodings_and_legality() {
+        for (bytes, set) in [
+            (&[0x0F, 0x01, 0xD0][..], false),
+            (&[0x0F, 0x01, 0xD1][..], true),
+            (&[0x48, 0x0F, 0x01, 0xD0][..], false),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86XSetBv {
+                            selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                            src_low: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                            src_high: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                        },
+                        ..
+                    }] if set
+                ) || matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86XGetBv {
+                            dst_low: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                            dst_high: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                            selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                        },
+                        ..
+                    }] if !set
+                )
+            );
+        }
+
+        for bytes in [
+            &[0xF0, 0x0F, 0x01, 0xD0][..],
+            &[0x66, 0x0F, 0x01, 0xD0][..],
+            &[0xF3, 0x0F, 0x01, 0xD1][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+        assert!(matches!(
+            lift_single(&[0x0F, 0x01, 0xD2]),
+            Err(LiftError::Unsupported { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0x01]),
+            Err(LiftError::Incomplete { .. })
         ));
     }
 
@@ -23276,7 +24612,6 @@ mod tests {
             ));
         }
         for bytes in [
-            &[0xD8, 0xC0][..], // FADD ST(0),ST(0): data family not yet represented
             &[0xD9, 0xD1][..], // reserved register encoding
             &[0xD9, 0x08][..], // reserved memory /1
         ] {
@@ -23326,6 +24661,524 @@ mod tests {
                 0x0728,
             ),
             (&[0xDF, 0x20][..], X86X87DataKind::LoadBcd, 0, true, 0x0720),
+            (
+                &[0xD8, 0x00][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0000,
+            ),
+            (
+                &[0xDC, 0x00][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0400,
+            ),
+            (
+                &[0xDE, 0x00][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0600,
+            ),
+            (
+                &[0xDA, 0x00][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0200,
+            ),
+            (
+                &[0xD8, 0x20][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0020,
+            ),
+            (
+                &[0xDC, 0x20][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0420,
+            ),
+            (
+                &[0xDE, 0x20][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0620,
+            ),
+            (
+                &[0xDA, 0x20][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0220,
+            ),
+            (
+                &[0xD8, 0x28][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0028,
+            ),
+            (
+                &[0xDC, 0x28][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0428,
+            ),
+            (
+                &[0xDE, 0x28][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0628,
+            ),
+            (
+                &[0xDA, 0x28][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0228,
+            ),
+            (
+                &[0xD8, 0xC3][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                3,
+                false,
+                0x00C3,
+            ),
+            (
+                &[0xDC, 0xC4][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+                4,
+                false,
+                0x04C4,
+            ),
+            (
+                &[0xDE, 0xC1][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    subtract: false,
+                    reverse: false,
+                },
+                1,
+                false,
+                0x06C1,
+            ),
+            (
+                &[0xD8, 0xE3][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                3,
+                false,
+                0x00E3,
+            ),
+            (
+                &[0xDC, 0xEB][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+                3,
+                false,
+                0x04EB,
+            ),
+            (
+                &[0xDE, 0xE9][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    subtract: true,
+                    reverse: false,
+                },
+                1,
+                false,
+                0x06E9,
+            ),
+            (
+                &[0xD8, 0xEB][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                3,
+                false,
+                0x00EB,
+            ),
+            (
+                &[0xDC, 0xE3][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+                3,
+                false,
+                0x04E3,
+            ),
+            (
+                &[0xDE, 0xE1][..],
+                X86X87DataKind::AddSubtract {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    subtract: true,
+                    reverse: true,
+                },
+                1,
+                false,
+                0x06E1,
+            ),
+            (
+                &[0xD8, 0x30][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0030,
+            ),
+            (
+                &[0xDC, 0x30][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0430,
+            ),
+            (
+                &[0xDE, 0x30][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0630,
+            ),
+            (
+                &[0xDA, 0x30][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+                0,
+                true,
+                0x0230,
+            ),
+            (
+                &[0xD8, 0x38][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0038,
+            ),
+            (
+                &[0xDC, 0x38][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0438,
+            ),
+            (
+                &[0xDE, 0x38][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0638,
+            ),
+            (
+                &[0xDA, 0x38][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+                0,
+                true,
+                0x0238,
+            ),
+            (
+                &[0xD8, 0xF3][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+                3,
+                false,
+                0x00F3,
+            ),
+            (
+                &[0xDC, 0xFB][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    reverse: false,
+                },
+                3,
+                false,
+                0x04FB,
+            ),
+            (
+                &[0xDE, 0xF9][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    reverse: false,
+                },
+                1,
+                false,
+                0x06F9,
+            ),
+            (
+                &[0xD8, 0xFB][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+                3,
+                false,
+                0x00FB,
+            ),
+            (
+                &[0xDC, 0xF3][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    reverse: true,
+                },
+                3,
+                false,
+                0x04F3,
+            ),
+            (
+                &[0xDE, 0xF1][..],
+                X86X87DataKind::Divide {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    reverse: true,
+                },
+                1,
+                false,
+                0x06F1,
+            ),
+            (
+                &[0xD8, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Single,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0008,
+            ),
+            (
+                &[0xDC, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Double,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0408,
+            ),
+            (
+                &[0xDE, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Int16,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0608,
+            ),
+            (
+                &[0xDA, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Int32,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+                0,
+                true,
+                0x0208,
+            ),
+            (
+                &[0xD8, 0xCB][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+                3,
+                false,
+                0x00CB,
+            ),
+            (
+                &[0xDC, 0xCC][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: false,
+                },
+                4,
+                false,
+                0x04CC,
+            ),
+            (
+                &[0xDE, 0xC9][..],
+                X86X87DataKind::Multiply {
+                    source: X86X87ArithmeticSource::Register,
+                    destination: X86X87ArithmeticDestination::StI,
+                    pop: true,
+                },
+                1,
+                false,
+                0x06C9,
+            ),
             (
                 &[0xD9, 0xC5][..],
                 X86X87DataKind::LoadRegister,
@@ -23440,6 +25293,20 @@ mod tests {
                 0x01FC,
             ),
             (&[0xD9, 0xF4][..], X86X87DataKind::Extract, 4, false, 0x01F4),
+            (
+                &[0xD9, 0xF5][..],
+                X86X87DataKind::Remainder { nearest: true },
+                5,
+                false,
+                0x01F5,
+            ),
+            (
+                &[0xD9, 0xF8][..],
+                X86X87DataKind::Remainder { nearest: false },
+                0,
+                false,
+                0x01F8,
+            ),
             (&[0xD9, 0xFD][..], X86X87DataKind::Scale, 5, false, 0x01FD),
             (
                 &[0xD9, 0xFA][..],
@@ -23872,6 +25739,286 @@ mod tests {
                 Err(LiftError::InvalidEncoding { .. })
             ));
         }
+    }
+
+    #[test]
+    fn lift_xsave_xsaveopt_xrstor_width_addressing_and_legality() {
+        for (bytes, save, expected_kind, rex_w) in [
+            (&[0x0F, 0xAE, 0x23][..], true, X86XSaveKind::XSave, false),
+            (
+                &[0x48, 0x0F, 0xAE, 0x23][..],
+                true,
+                X86XSaveKind::XSave,
+                true,
+            ),
+            (&[0x0F, 0xAE, 0x33][..], true, X86XSaveKind::XSaveOpt, false),
+            (
+                &[0x48, 0x0F, 0xAE, 0x33][..],
+                true,
+                X86XSaveKind::XSaveOpt,
+                true,
+            ),
+            (&[0x0F, 0xAE, 0x2B][..], false, X86XSaveKind::XSave, false),
+            (
+                &[0x48, 0x0F, 0xAE, 0x2B][..],
+                false,
+                X86XSaveKind::XSave,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86XSave {
+                            rex_w: got_rex,
+                            kind: got_kind,
+                            ..
+                        },
+                        ..
+                    }] if save && *got_rex == rex_w && *got_kind == expected_kind
+                ) || matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::X86XRstor { rex_w: got_rex, .. },
+                        ..
+                    }] if !save && *got_rex == rex_w
+                ),
+                "{bytes:02X?}"
+            );
+        }
+
+        let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x64, 0x4B, 0x20]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 6);
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86XSave {
+                addr: Address::Direct(_),
+                kind: X86XSaveKind::XSave,
+                ..
+            })
+        ));
+
+        for bytes in [
+            &[0x66, 0x0F, 0xAE, 0x23][..],
+            &[0x66, 0x0F, 0xAE, 0x2B][..],
+            &[0xF2, 0x0F, 0xAE, 0x23][..],
+            &[0xF3, 0x0F, 0xAE, 0x2B][..],
+            &[0xF3, 0x0F, 0xAE, 0x33][..],
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "{bytes:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lift_single(&[0x66, 0x0F, 0xAE, 0x33])
+                .unwrap()
+                .ops
+                .last()
+                .map(|op| &op.kind),
+            Some(OpKind::X86CacheControl {
+                kind: X86CacheControlKind::Clwb,
+                ..
+            })
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0xAE, 0xE8]).unwrap().ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Fence {
+                    kind: FenceKind::LoadLoad
+                },
+                ..
+            }]
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0xAE, 0xF0]).unwrap().ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Fence {
+                    kind: FenceKind::Full
+                },
+                ..
+            }]
+        ));
+    }
+
+    #[test]
+    fn lift_compacted_xsave_family_group9_encodings_and_legality() {
+        for (bytes, expected_kind, rex_w) in [
+            (&[0x0F, 0xC7, 0x23][..], X86XSaveKind::XSaveC, false),
+            (&[0x48, 0x0F, 0xC7, 0x23][..], X86XSaveKind::XSaveC, true),
+            (&[0x0F, 0xC7, 0x2B][..], X86XSaveKind::XSaveS, false),
+            (&[0x48, 0x0F, 0xC7, 0x2B][..], X86XSaveKind::XSaveS, true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86XSave {
+                        rex_w: got_rex,
+                        kind,
+                        ..
+                    },
+                    ..
+                }] if *got_rex == rex_w && *kind == expected_kind
+            ));
+        }
+        for (bytes, rex_w) in [
+            (&[0x0F, 0xC7, 0x1B][..], false),
+            (&[0x48, 0x0F, 0xC7, 0x1B][..], true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86XRstor {
+                        rex_w: got_rex,
+                        supervisor: true,
+                        ..
+                    },
+                    ..
+                }] if *got_rex == rex_w
+            ));
+        }
+
+        let addr32 = lift_single(&[0x67, 0x0F, 0xC7, 0x64, 0x4B, 0x20]).unwrap();
+        assert_eq!(addr32.bytes_consumed, 6);
+        assert!(matches!(
+            addr32.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86XSave {
+                addr: Address::Direct(_),
+                kind: X86XSaveKind::XSaveC,
+                ..
+            })
+        ));
+
+        for bytes in [
+            &[0xF0, 0x0F, 0xC7, 0x23][..],
+            &[0x66, 0x0F, 0xC7, 0x23][..],
+            &[0xF2, 0x0F, 0xC7, 0x1B][..],
+            &[0xF3, 0x0F, 0xC7, 0x2B][..],
+            &[0x0F, 0xC7, 0xD8][..],
+            &[0x0F, 0xC7, 0xE0][..],
+            &[0x0F, 0xC7, 0xE8][..],
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lift_group9_cmpxchg_random_seed_and_rdpid_encodings() {
+        for (bytes, wide, locked) in [
+            (&[0x0F, 0xC7, 0x0B][..], false, false),
+            (&[0x66, 0x0F, 0xC7, 0x0B][..], false, false),
+            (&[0x48, 0x0F, 0xC7, 0x0B][..], true, false),
+            (&[0xF0, 0x48, 0x0F, 0xC7, 0x0B][..], true, true),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86Cmpxchg8b16b {
+                        wide: got_wide,
+                        locked: got_locked,
+                        ..
+                    },
+                    ..
+                }] if *got_wide == wide && *got_locked == locked
+            ));
+        }
+
+        for (bytes, width, seed, register) in [
+            (&[0x0F, 0xC7, 0xF0][..], OpWidth::W32, false, X86Reg::Rax),
+            (
+                &[0x66, 0x0F, 0xC7, 0xF0][..],
+                OpWidth::W16,
+                false,
+                X86Reg::Rax,
+            ),
+            (
+                &[0x48, 0x0F, 0xC7, 0xF0][..],
+                OpWidth::W64,
+                false,
+                X86Reg::Rax,
+            ),
+            (
+                &[0x41, 0x0F, 0xC7, 0xF0][..],
+                OpWidth::W32,
+                false,
+                X86Reg::R8,
+            ),
+            (&[0x0F, 0xC7, 0xF8][..], OpWidth::W32, true, X86Reg::Rax),
+            (
+                &[0x66, 0x0F, 0xC7, 0xF8][..],
+                OpWidth::W16,
+                true,
+                X86Reg::Rax,
+            ),
+            (
+                &[0x48, 0x0F, 0xC7, 0xF8][..],
+                OpWidth::W64,
+                true,
+                X86Reg::Rax,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86Random {
+                        dst: VReg::Arch(ArchReg::X86(got_register)),
+                        width: got_width,
+                        seed: got_seed,
+                    },
+                    ..
+                }] if *got_width == width && *got_seed == seed && *got_register == register
+            ));
+        }
+
+        for bytes in [
+            &[0xF3, 0x0F, 0xC7, 0xF8][..],
+            &[0x66, 0xF3, 0x0F, 0xC7, 0xF8][..],
+            &[0xF3, 0x48, 0x0F, 0xC7, 0xF8][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86ReadPid {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Rax))
+                    },
+                    ..
+                }]
+            ));
+        }
+
+        for bytes in [
+            &[0x0F, 0xC7, 0xC8][..],
+            &[0x0F, 0xC7, 0x30][..],
+            &[0x0F, 0xC7, 0x38][..],
+            &[0xF0, 0x0F, 0xC7, 0xF0][..],
+            &[0xF0, 0x0F, 0xC7, 0xF8][..],
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "{bytes:02X?}"
+            );
+        }
+        assert!(matches!(
+            lift_single(&[0xF3, 0x0F, 0xC7, 0xF0]),
+            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+        ));
     }
 
     #[test]
@@ -24731,12 +26878,40 @@ mod tests {
                 ..
             }
         )));
+        let andnps = lift_single(&[0x0F, 0x55, 0xC1]).unwrap();
+        assert!(matches!(
+            andnps.ops.last().unwrap().kind,
+            OpKind::VAndNot {
+                width: VecWidth::V128,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                ..
+            }
+        ));
         let vex_andps = lift_single(&[0xC5, 0xF8, 0x54, 0xC1]).unwrap();
         assert!(matches!(
             vex_andps.ops.last().unwrap().kind,
             OpKind::VAnd {
                 width: VecWidth::V128,
                 ..
+            }
+        ));
+        let vex_andnps = lift_single(&[0xC5, 0xF8, 0x55, 0xC1]).unwrap();
+        assert!(matches!(
+            vex_andnps.ops.last().unwrap().kind,
+            OpKind::VAndNot {
+                width: VecWidth::V128,
+                ..
+            }
+        ));
+        let evex_andnps = lift_single(&[0x62, 0xF1, 0x7C, 0x48, 0x55, 0xC1]).unwrap();
+        assert!(matches!(
+            evex_andnps.ops.last().unwrap().kind,
+            OpKind::VAndNot {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                width: VecWidth::V512,
             }
         ));
 
@@ -24817,6 +26992,1086 @@ mod tests {
             lift_single(&[0xF0, 0xF3, 0x0F, 0x58, 0xC1]),
             Err(LiftError::InvalidEncoding { .. })
         ));
+    }
+
+    #[test]
+    fn lift_evex_packed_logic_models_masks_broadcast_high_regs_and_invalid_forms() {
+        let high = lift_single(&[0x62, 0xA1, 0x7C, 0x40, 0x55, 0xD1]).unwrap();
+        assert!(matches!(
+            high.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAndNot {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    width: VecWidth::V512,
+                },
+                ..
+            }]
+        ));
+
+        for (opcode, expected) in [(0x54, "and"), (0x55, "andn"), (0x56, "or"), (0x57, "xor")] {
+            let result = lift_single(&[0x62, 0xF1, 0x7C, 0xC9, opcode, 0xD1]).unwrap();
+            assert!(result.ops.iter().any(|op| match (&op.kind, expected) {
+                (OpKind::VAnd { width, .. }, "and")
+                | (OpKind::VAndNot { width, .. }, "andn")
+                | (OpKind::VOr { width, .. }, "or")
+                | (OpKind::VXor { width, .. }, "xor") => *width == VecWidth::V512,
+                _ => false,
+            }));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::Select {
+                            width: OpWidth::W32,
+                            ..
+                        }
+                    ))
+                    .count(),
+                16,
+                "opcode {opcode:02X}: one mask select per dword lane",
+            );
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VInsertLane {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                    elem: VecElementType::F32,
+                    lane: 15,
+                    ..
+                }
+            )));
+        }
+
+        let pd = lift_single(&[0x62, 0xF1, 0xFD, 0x49, 0x55, 0xD1]).unwrap();
+        assert_eq!(
+            pd.ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Select {
+                        width: OpWidth::W64,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+        );
+        assert!(pd.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                elem: VecElementType::F64,
+                lane: 7,
+                ..
+            }
+        )));
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7C, 0x49, 0x55, 0x50, 0x02]).unwrap();
+        assert_eq!(
+            masked_memory
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset {
+                    offset: 128,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+
+        let broadcast = lift_single(&[0x62, 0xF1, 0x7C, 0x59, 0x55, 0x50, 0x08]).unwrap();
+        assert_eq!(
+            broadcast
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                addr: Address::BaseOffset {
+                    offset: 32,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::F32,
+                lanes: 16,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF1, 0xFC, 0x48, 0x55, 0xC1][..], // VANDNPS requires W0
+            &[0x62, 0xF1, 0x7D, 0x48, 0x55, 0xC1][..], // VANDNPD requires W1
+            &[0x62, 0xF1, 0x7C, 0xC8, 0x55, 0xC1][..], // {z} requires a mask
+            &[0x62, 0xF1, 0x7C, 0x58, 0x55, 0xC1][..], // EVEX.b reserved for reg
+            &[0x62, 0xF1, 0x7C, 0x58, 0x57, 0x00][..], // VXORPS has no broadcast
+            &[0x62, 0xF1, 0x7C, 0x68, 0x55, 0xC1][..], // LL=3 is reserved
+            &[0x62, 0xF1, 0x7E, 0x48, 0x55, 0xC1][..], // F3 form is undefined
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid EVEX packed logic accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_and_vex_movmsk_extracts_exact_lanes_and_rejects_reserved_forms() {
+        for (bytes, dst, src, elem, lanes, width) in [
+            (
+                &[0x0F, 0x50, 0xC1][..],
+                X86Reg::Rax,
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                4usize,
+                OpWidth::W32,
+            ),
+            (
+                &[0x66, 0x0F, 0x50, 0xD1][..],
+                X86Reg::Rdx,
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                2,
+                OpWidth::W32,
+            ),
+            (
+                &[0x66, 0x48, 0x0F, 0x50, 0xC1][..],
+                X86Reg::Rax,
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                2,
+                OpWidth::W64,
+            ),
+            (
+                &[0x45, 0x0F, 0x50, 0xC1][..],
+                X86Reg::R8,
+                X86Reg::Xmm(9),
+                VecElementType::F32,
+                4,
+                OpWidth::W32,
+            ),
+            (
+                &[0xC5, 0xF8, 0x50, 0xC1][..],
+                X86Reg::Rax,
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                4,
+                OpWidth::W32,
+            ),
+            (
+                &[0xC5, 0xFD, 0x50, 0xD1][..],
+                X86Reg::Rdx,
+                X86Reg::Ymm(1),
+                VecElementType::F64,
+                4,
+                OpWidth::W32,
+            ),
+            (
+                &[0xC4, 0x41, 0x7C, 0x50, 0xC1][..],
+                X86Reg::R8,
+                X86Reg::Ymm(9),
+                VecElementType::F32,
+                8,
+                OpWidth::W32,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            let extracts = result
+                .ops
+                .iter()
+                .filter_map(|op| match op.kind {
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(actual_src)),
+                        lane,
+                        elem: actual_elem,
+                        sign: SignExtend::Zero,
+                        ..
+                    } if actual_src == src && actual_elem == elem => Some(lane),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                extracts,
+                (0..lanes as u8).collect::<Vec<_>>(),
+                "{bytes:02X?}"
+            );
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::Mov {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    width: actual_width,
+                    ..
+                } if actual_dst == dst && actual_width == width
+            ));
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty())
+            );
+        }
+
+        for bytes in [
+            &[0x0F, 0x50, 0x01][..],                   // memory source is undefined
+            &[0xF3, 0x0F, 0x50, 0xC1][..],             // no F3 legacy form
+            &[0xF0, 0x0F, 0x50, 0xC1][..],             // LOCK is undefined
+            &[0xC5, 0xF0, 0x50, 0xC1][..],             // VEX.vvvv != 1111b
+            &[0xC5, 0xFA, 0x50, 0xC1][..],             // no F3 VEX form
+            &[0xC5, 0xF8, 0x50, 0x01][..],             // VEX memory source
+            &[0x62, 0xF1, 0x7C, 0x08, 0x50, 0xC1][..], // no EVEX form
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid MOVMSK accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_and_vex_lddqu_models_width_extensions_and_reserved_forms() {
+        for (bytes, dst, width, expected_offset, legacy) in [
+            (
+                &[0xF2, 0x0F, 0xF0, 0x40, 0x01][..],
+                X86Reg::Xmm(0),
+                VecWidth::V128,
+                1i64,
+                true,
+            ),
+            (
+                &[0xF2, 0x44, 0x0F, 0xF0, 0x40, 0x03][..],
+                X86Reg::Xmm(8),
+                VecWidth::V128,
+                3,
+                true,
+            ),
+            (
+                &[0xC5, 0xFB, 0xF0, 0x40, 0x05][..],
+                X86Reg::Xmm(0),
+                VecWidth::V128,
+                5,
+                false,
+            ),
+            (
+                &[0xC5, 0xFF, 0xF0, 0x40, 0x07][..],
+                X86Reg::Ymm(0),
+                VecWidth::V256,
+                7,
+                false,
+            ),
+            (
+                &[0xC4, 0x61, 0xFB, 0xF0, 0x40, 0x09][..],
+                X86Reg::Xmm(8),
+                VecWidth::V128,
+                9,
+                false,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.last(),
+                Some(SmirOp {
+                    kind: OpKind::VLoad {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        addr: Address::BaseOffset {
+                            base: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                            offset,
+                            ..
+                        },
+                        width: actual_width,
+                    },
+                    x86_hint,
+                    ..
+                }) if *actual_dst == dst && *actual_width == width && *offset == expected_offset
+                    && if legacy {
+                        matches!(x86_hint, Some(X86OpHint::SseMov {
+                            prefix: X86SsePrefix::Repne,
+                            opcode: 0xF0,
+                        }))
+                    } else {
+                        matches!(x86_hint, Some(X86OpHint::VexOp {
+                            map: X86VecMap::Map0F,
+                            pp: X86SsePrefix::Repne,
+                            opcode: 0xF0,
+                            ..
+                        }))
+                    }
+            ));
+        }
+
+        for bytes in [
+            &[0x0F, 0xF0, 0x00][..],                   // F2 is mandatory
+            &[0xF3, 0x0F, 0xF0, 0x00][..],             // F3 is not LDDQU
+            &[0x66, 0xF2, 0x0F, 0xF0, 0x00][..],       // conflicting 66 prefix
+            &[0xF0, 0xF2, 0x0F, 0xF0, 0x00][..],       // LOCK is undefined
+            &[0xF2, 0x0F, 0xF0, 0xC1][..],             // register source
+            &[0xC5, 0xF3, 0xF0, 0x00][..],             // VEX.vvvv != 1111b
+            &[0xC5, 0xFA, 0xF0, 0x00][..],             // VEX.F3 is not VLDDQU
+            &[0xC5, 0xFB, 0xF0, 0xC1][..],             // VEX register source
+            &[0x62, 0xF1, 0x7F, 0x08, 0xF0, 0x00][..], // no EVEX form
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid LDDQU accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_and_vex_packed_integer_logic_covers_all_operations_and_forms() {
+        for (opcode, expected) in [(0xDB, "and"), (0xDF, "andn"), (0xEB, "or"), (0xEF, "xor")] {
+            let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
+            assert_eq!(legacy.bytes_consumed, 4);
+            assert!(
+                matches!(
+                    legacy.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::VAnd {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                            width: VecWidth::V128,
+                        },
+                        ..
+                    }]
+                ) == (expected == "and")
+            );
+            assert!(legacy.ops.iter().any(|op| match (&op.kind, expected) {
+                (OpKind::VAnd { .. }, "and")
+                | (OpKind::VAndNot { .. }, "andn")
+                | (OpKind::VOr { .. }, "or")
+                | (OpKind::VXor { .. }, "xor") => true,
+                _ => false,
+            }));
+            assert!(matches!(
+                legacy.ops.last().unwrap().x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: actual,
+                }) if actual == opcode
+            ));
+
+            let vex = lift_single(&[0xC5, 0xF5, opcode, 0xC2]).unwrap();
+            assert_eq!(vex.bytes_consumed, 4);
+            assert!(vex.ops.iter().any(|op| match (&op.kind, expected) {
+                (
+                    OpKind::VAnd {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        width: VecWidth::V256,
+                    },
+                    "and",
+                )
+                | (
+                    OpKind::VAndNot {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        width: VecWidth::V256,
+                    },
+                    "andn",
+                )
+                | (
+                    OpKind::VOr {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        width: VecWidth::V256,
+                    },
+                    "or",
+                )
+                | (
+                    OpKind::VXor {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        width: VecWidth::V256,
+                    },
+                    "xor",
+                ) => true,
+                _ => false,
+            }));
+        }
+
+        let memory = lift_single(&[0x66, 0x0F, 0xDF, 0x40, 0x10]).unwrap();
+        assert!(matches!(
+            memory.ops.first().unwrap().kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    base: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    offset: 0x10,
+                    ..
+                },
+                width: VecWidth::V128,
+                ..
+            }
+        ));
+        assert!(matches!(
+            memory.ops.last().unwrap().kind,
+            OpKind::VAndNot {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                ..
+            }
+        ));
+
+        let high = lift_single(&[0xC4, 0x41, 0x35, 0xDB, 0xC1]).unwrap();
+        assert!(matches!(
+            high.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAnd {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(8))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    width: VecWidth::V256,
+                },
+                ..
+            }]
+        ));
+
+        for bytes in [
+            &[0x0F, 0xDB, 0xC1][..],             // MMX form unsupported
+            &[0xF2, 0x0F, 0xDB, 0xC1][..],       // invalid mandatory prefix
+            &[0xF0, 0x66, 0x0F, 0xDB, 0xC1][..], // LOCK is undefined
+            &[0xC5, 0xF4, 0xDB, 0xC2][..],       // VEX form requires 66
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid/unsupported integer logic accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_packed_integer_logic_models_masks_broadcast_and_high_registers() {
+        for (opcode, expected) in [(0xDB, "and"), (0xDF, "andn"), (0xEB, "or"), (0xEF, "xor")] {
+            let result = lift_single(&[0x62, 0xF1, 0x7D, 0xC9, opcode, 0xD1]).unwrap();
+            assert!(result.ops.iter().any(|op| match (&op.kind, expected) {
+                (OpKind::VAnd { width, .. }, "and")
+                | (OpKind::VAndNot { width, .. }, "andn")
+                | (OpKind::VOr { width, .. }, "or")
+                | (OpKind::VXor { width, .. }, "xor") => *width == VecWidth::V512,
+                _ => false,
+            }));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::Select {
+                            width: OpWidth::W32,
+                            ..
+                        }
+                    ))
+                    .count(),
+                16,
+                "opcode {opcode:02X}: dword mask lane count",
+            );
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VInsertLane {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                    elem: VecElementType::I32,
+                    lane: 15,
+                    ..
+                }
+            )));
+        }
+
+        let qword = lift_single(&[0x62, 0xF1, 0xFD, 0x49, 0xDB, 0xD1]).unwrap();
+        assert_eq!(
+            qword
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Select {
+                        width: OpWidth::W64,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+        );
+        assert!(qword.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                elem: VecElementType::I64,
+                lane: 7,
+                ..
+            }
+        )));
+
+        let high = lift_single(&[0x62, 0xA1, 0x7D, 0x40, 0xDB, 0xD1]).unwrap();
+        assert!(matches!(
+            high.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAnd {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    width: VecWidth::V512,
+                },
+                ..
+            }]
+        ));
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7D, 0x49, 0xDB, 0x50, 0x02]).unwrap();
+        assert_eq!(
+            masked_memory
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset {
+                    offset: 128,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+
+        let broadcast = lift_single(&[0x62, 0xF1, 0xFD, 0x59, 0xEF, 0x50, 0x08]).unwrap();
+        assert_eq!(
+            broadcast
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I64,
+                lanes: 8,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF1, 0x7C, 0x48, 0xDB, 0xC1][..], // 66 is mandatory
+            &[0x62, 0xF1, 0x7D, 0xC8, 0xDB, 0xC1][..], // {z} requires k1-k7
+            &[0x62, 0xF1, 0x7D, 0x58, 0xDB, 0xC1][..], // EVEX.b reserved for reg
+            &[0x62, 0xF1, 0x7D, 0x68, 0xDB, 0xC1][..], // LL=3 is reserved
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid EVEX integer logic accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_packed_add_models_element_width_masks_and_broadcast() {
+        for (opcode, elem, lanes) in [
+            (0xFC, VecElementType::I8, 16u8),
+            (0xFD, VecElementType::I16, 8),
+            (0xFE, VecElementType::I32, 4),
+            (0xD4, VecElementType::I64, 2),
+        ] {
+            let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                legacy.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VAdd {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: actual_elem,
+                        lanes: actual_lanes,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    }),
+                    ..
+                }] if *actual_elem == elem && *actual_lanes == lanes && *actual_opcode == opcode
+            ));
+
+            let vex = lift_single(&[0xC5, 0xF5, opcode, 0xC2]).unwrap();
+            assert!(matches!(
+                vex.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VAdd {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        elem: actual_elem,
+                        lanes: actual_lanes,
+                    },
+                    ..
+                }] if *actual_elem == elem && *actual_lanes == lanes * 2
+            ));
+        }
+
+        for (bytes, elem, lanes, select_width) in [
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xFC, 0xD1][..],
+                VecElementType::I8,
+                64usize,
+                OpWidth::W8,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xFD, 0xD1][..],
+                VecElementType::I16,
+                32,
+                OpWidth::W16,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xFE, 0xD1][..],
+                VecElementType::I32,
+                16,
+                OpWidth::W32,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0xC9, 0xD4, 0xD1][..],
+                VecElementType::I64,
+                8,
+                OpWidth::W64,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VAdd {
+                    elem: actual_elem,
+                    lanes: actual_lanes,
+                    ..
+                } if actual_elem == elem && usize::from(actual_lanes) == lanes
+            )));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::Select { width, .. } if width == select_width
+                    ))
+                    .count(),
+                lanes,
+            );
+        }
+
+        // W is ignored for byte/word forms.
+        let byte_w1 = lift_single(&[0x62, 0xF1, 0xFD, 0x48, 0xFC, 0xC1]).unwrap();
+        assert!(matches!(
+            byte_w1.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAdd {
+                    elem: VecElementType::I8,
+                    lanes: 64,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let masked_bytes = lift_single(&[0x62, 0xF1, 0x7D, 0x49, 0xFC, 0x50, 0x02]).unwrap();
+        assert_eq!(
+            masked_bytes
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            64,
+        );
+        assert!(masked_bytes.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset {
+                    offset: 128,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+
+        let dword_broadcast = lift_single(&[0x62, 0xF1, 0x7D, 0x59, 0xFE, 0x50, 0x08]).unwrap();
+        assert!(dword_broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                addr: Address::BaseOffset {
+                    offset: 32,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        assert!(dword_broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I32,
+                lanes: 16,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x0F, 0xFC, 0xC1][..],                   // MMX form unsupported
+            &[0xF3, 0x0F, 0xFC, 0xC1][..],             // invalid legacy prefix
+            &[0xF0, 0x66, 0x0F, 0xFC, 0xC1][..],       // LOCK is undefined
+            &[0xC5, 0xF4, 0xFC, 0xC1][..],             // VEX requires 66
+            &[0x62, 0xF1, 0xFD, 0x48, 0xFE, 0xC1][..], // VPADDD requires W0
+            &[0x62, 0xF1, 0x7D, 0x48, 0xD4, 0xC1][..], // VPADDQ requires W1
+            &[0x62, 0xF1, 0x7D, 0x58, 0xFC, 0x00][..], // VPADDB has no broadcast
+            &[0x62, 0xF1, 0x7D, 0x58, 0xFD, 0x00][..], // VPADDW has no broadcast
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid packed add accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_packed_subtract_models_width_masks_and_broadcast() {
+        for (opcode, elem, legacy_lanes) in [
+            (0xF8, VecElementType::I8, 16u8),
+            (0xF9, VecElementType::I16, 8),
+            (0xFA, VecElementType::I32, 4),
+            (0xFB, VecElementType::I64, 2),
+        ] {
+            let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                legacy.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VSub {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: actual_elem,
+                        lanes,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    }),
+                    ..
+                }] if *actual_elem == elem && *lanes == legacy_lanes && *actual_opcode == opcode
+            ));
+
+            let vex = lift_single(&[0xC5, 0xF5, opcode, 0xC2]).unwrap();
+            assert!(matches!(
+                vex.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VSub {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        elem: actual_elem,
+                        lanes,
+                    },
+                    ..
+                }] if *actual_elem == elem && *lanes == legacy_lanes * 2
+            ));
+        }
+
+        for (bytes, elem, lanes, width) in [
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xF8, 0xD1][..],
+                VecElementType::I8,
+                64usize,
+                OpWidth::W8,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xF9, 0xD1][..],
+                VecElementType::I16,
+                32,
+                OpWidth::W16,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0xC9, 0xFA, 0xD1][..],
+                VecElementType::I32,
+                16,
+                OpWidth::W32,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0xC9, 0xFB, 0xD1][..],
+                VecElementType::I64,
+                8,
+                OpWidth::W64,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VSub {
+                    elem: actual_elem,
+                    lanes: actual_lanes,
+                    ..
+                } if actual_elem == elem && usize::from(actual_lanes) == lanes
+            )));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::Select { width: actual, .. } if actual == width))
+                    .count(),
+                lanes,
+            );
+        }
+
+        let broadcast = lift_single(&[0x62, 0xF1, 0xFD, 0x59, 0xFB, 0x50, 0x08]).unwrap();
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                addr: Address::BaseOffset { offset: 64, .. },
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+        assert!(broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I64,
+                lanes: 8,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x0F, 0xF8, 0xC1][..],                   // MMX form unsupported
+            &[0xC5, 0xF4, 0xF8, 0xC1][..],             // VEX requires 66
+            &[0x62, 0xF1, 0xFD, 0x48, 0xFA, 0xC1][..], // VPSUBD requires W0
+            &[0x62, 0xF1, 0x7D, 0x48, 0xFB, 0xC1][..], // VPSUBQ requires W1
+            &[0x62, 0xF1, 0x7D, 0x58, 0xF8, 0x00][..], // VPSUBB has no broadcast
+            &[0x62, 0xF1, 0x7D, 0x58, 0xF9, 0x00][..], // VPSUBW has no broadcast
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid packed subtract accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_legacy_vex_evex_saturating_add_subtract_covers_all_eight_opcodes() {
+        for (opcode, elem, subtract, signed, legacy_lanes) in [
+            (0xEC, VecElementType::I8, false, true, 16u8),
+            (0xED, VecElementType::I16, false, true, 8),
+            (0xDC, VecElementType::I8, false, false, 16),
+            (0xDD, VecElementType::I16, false, false, 8),
+            (0xE8, VecElementType::I8, true, true, 16),
+            (0xE9, VecElementType::I16, true, true, 8),
+            (0xD8, VecElementType::I8, true, false, 16),
+            (0xD9, VecElementType::I16, true, false, 8),
+        ] {
+            let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                legacy.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VAddSubSat {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: actual_elem,
+                        lanes,
+                        subtract: actual_subtract,
+                        signed: actual_signed,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    }),
+                    ..
+                }] if *actual_elem == elem && *lanes == legacy_lanes
+                    && *actual_subtract == subtract && *actual_signed == signed
+                    && *actual_opcode == opcode
+            ));
+
+            let vex = lift_single(&[0xC5, 0xF5, opcode, 0xC2]).unwrap();
+            assert!(matches!(
+                vex.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VAddSubSat {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        elem: actual_elem,
+                        lanes,
+                        subtract: actual_subtract,
+                        signed: actual_signed,
+                    },
+                    ..
+                }] if *actual_elem == elem && *lanes == legacy_lanes * 2
+                    && *actual_subtract == subtract && *actual_signed == signed
+            ));
+
+            let evex = lift_single(&[0x62, 0xF1, 0x7D, 0xC9, opcode, 0xD1]).unwrap();
+            let expected_lanes = if elem == VecElementType::I8 { 64 } else { 32 };
+            let select_width = if elem == VecElementType::I8 {
+                OpWidth::W8
+            } else {
+                OpWidth::W16
+            };
+            assert!(evex.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VAddSubSat {
+                    elem: actual_elem,
+                    lanes,
+                    subtract: actual_subtract,
+                    signed: actual_signed,
+                    ..
+                } if actual_elem == elem && usize::from(lanes) == expected_lanes
+                    && actual_subtract == subtract && actual_signed == signed
+            )));
+            assert_eq!(
+                evex
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::Select { width, .. } if width == select_width))
+                    .count(),
+                expected_lanes,
+            );
+        }
+
+        // EVEX.W is ignored for all byte/word saturating forms.
+        let wig = lift_single(&[0x62, 0xF1, 0xFD, 0x48, 0xEC, 0xC1]).unwrap();
+        assert!(matches!(
+            wig.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VAddSubSat {
+                    elem: VecElementType::I8,
+                    lanes: 64,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let masked_memory = lift_single(&[0x62, 0xF1, 0x7D, 0x49, 0xED, 0x50, 0x02]).unwrap();
+        assert_eq!(
+            masked_memory
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            32,
+        );
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset { offset: 128, .. },
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x0F, 0xEC, 0xC1][..],                   // MMX form unsupported
+            &[0xF3, 0x0F, 0xEC, 0xC1][..],             // invalid mandatory prefix
+            &[0xF0, 0x66, 0x0F, 0xEC, 0xC1][..],       // LOCK is undefined
+            &[0xC5, 0xF4, 0xEC, 0xC1][..],             // VEX requires 66
+            &[0x62, 0xF1, 0x7D, 0x58, 0xEC, 0x00][..], // no broadcast form
+            &[0x62, 0xF1, 0x7D, 0xC8, 0xEC, 0xC1][..], // {z} requires k1-k7
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid saturating packed arithmetic accepted: {bytes:02X?}",
+            );
+        }
     }
 
     #[test]

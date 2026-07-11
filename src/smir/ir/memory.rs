@@ -112,6 +112,52 @@ pub trait SmirMemory: Send {
         failure_order: MemoryOrder,
     ) -> Result<(u64, bool), MemoryError>;
 
+    /// Compare-and-swap with an architecturally observable write cycle on
+    /// both success and failure, as required by CMPXCHG8B. Concurrent memory
+    /// implementations should override this to keep the transaction
+    /// indivisible across the failure writeback.
+    fn compare_and_swap_writeback(
+        &mut self,
+        addr: GuestAddr,
+        expected: u64,
+        new: u64,
+        size: MemWidth,
+        success_order: MemoryOrder,
+        failure_order: MemoryOrder,
+    ) -> Result<(u64, bool), MemoryError> {
+        let (old, success) =
+            self.compare_and_swap(addr, expected, new, size, success_order, failure_order)?;
+        if !success {
+            self.atomic_store(addr, old, size, success_order)?;
+        }
+        Ok((old, success))
+    }
+
+    /// Atomic 128-bit compare-and-swap used by CMPXCHG16B. Concurrent memory
+    /// backends should override this default with one indivisible transaction;
+    /// the default preserves functional semantics for single-threaded models.
+    fn compare_and_swap_128(
+        &mut self,
+        addr: GuestAddr,
+        expected: [u64; 2],
+        new: [u64; 2],
+        _success_order: MemoryOrder,
+        _failure_order: MemoryOrder,
+    ) -> Result<([u64; 2], bool), MemoryError> {
+        let mut bytes = [0u8; 16];
+        self.read(addr, &mut bytes)?;
+        let old = [
+            u64::from_le_bytes(bytes[0..8].try_into().unwrap()),
+            u64::from_le_bytes(bytes[8..16].try_into().unwrap()),
+        ];
+        let success = old == expected;
+        let written = if success { new } else { old };
+        bytes[0..8].copy_from_slice(&written[0].to_le_bytes());
+        bytes[8..16].copy_from_slice(&written[1].to_le_bytes());
+        self.write(addr, &bytes)?;
+        Ok((old, success))
+    }
+
     /// Atomic read-modify-write
     fn atomic_rmw(
         &mut self,

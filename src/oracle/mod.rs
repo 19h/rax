@@ -19,6 +19,7 @@ use crate::smir::ir::ops::X86X87DataKind;
 use crate::smir::ir::ops::X86X87EnvWidth;
 use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
+use crate::smir::ir::ops::X86XSaveKind;
 use crate::smir::ir::types::DispSize;
 use crate::smir::lift::riscv::RiscVExtensions;
 use crate::smir::{
@@ -1127,6 +1128,7 @@ debug_name_json!(
     X86X87EnvWidth,
     X86X87IntWidth,
     X86X87FloatWidth,
+    X86XSaveKind,
 );
 
 impl OracleJson for FlagSet {
@@ -1853,6 +1855,54 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         } => op_json!("x86_x87_data", kind, addr, st, fop),
         OpKind::X86FxSave { addr, rex_w } => op_json!("x86_fxsave", addr, rex_w),
         OpKind::X86FxRstor { addr, rex_w } => op_json!("x86_fxrstor", addr, rex_w),
+        OpKind::X86XSave {
+            addr,
+            rex_w,
+            kind,
+            src_low,
+            src_high,
+        } => op_json!("x86_xsave", addr, rex_w, kind, src_low, src_high),
+        OpKind::X86XRstor {
+            addr,
+            rex_w,
+            supervisor,
+            src_low,
+            src_high,
+        } => op_json!("x86_xrstor", addr, rex_w, supervisor, src_low, src_high),
+        OpKind::X86Cmpxchg8b16b {
+            addr,
+            wide,
+            locked,
+            compare_lo,
+            compare_hi,
+            new_lo,
+            new_hi,
+            dst_lo,
+            dst_hi,
+        } => op_json!(
+            "x86_cmpxchg8b16b",
+            addr,
+            wide,
+            locked,
+            compare_lo,
+            compare_hi,
+            new_lo,
+            new_hi,
+            dst_lo,
+            dst_hi
+        ),
+        OpKind::X86Random { dst, width, seed } => op_json!("x86_random", dst, width, seed),
+        OpKind::X86ReadPid { dst } => op_json!("x86_read_pid", dst),
+        OpKind::X86XGetBv {
+            dst_low,
+            dst_high,
+            selector,
+        } => op_json!("x86_xgetbv", dst_low, dst_high, selector),
+        OpKind::X86XSetBv {
+            selector,
+            src_low,
+            src_high,
+        } => op_json!("x86_xsetbv", selector, src_low, src_high),
         OpKind::FConvert { dst, src, from, to } => op_json!("fconvert", dst, src, from, to),
         OpKind::HexFp {
             dst,
@@ -1918,6 +1968,24 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             lanes,
         } => op_json!("vsub", dst, src1, src2, elem, lanes),
+        OpKind::VAddSubSat {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            subtract,
+            signed,
+        } => op_json!(
+            "vaddsub_sat",
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            subtract,
+            signed
+        ),
         OpKind::VMax {
             dst,
             src1,
@@ -1991,6 +2059,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             width,
         } => op_json!("vand", dst, src1, src2, width),
+        OpKind::VAndNot {
+            dst,
+            src1,
+            src2,
+            width,
+        } => op_json!("vandnot", dst, src1, src2, width),
         OpKind::VOr {
             dst,
             src1,

@@ -1878,6 +1878,10 @@ impl OpKind {
 
             OpKind::X86FpCompare { .. } => FlagSet::ALL_X86,
 
+            OpKind::X86Cmpxchg8b16b { .. } => FlagSet::ZF,
+
+            OpKind::X86Random { .. } => FlagSet::ALL_X86,
+
             OpKind::X86X87Data {
                 kind: X86X87DataKind::Compare { eflags: true, .. },
                 ..
@@ -2366,12 +2370,14 @@ impl OpKind {
             // Vector operations
             OpKind::VAdd { src1, src2, .. }
             | OpKind::VSub { src1, src2, .. }
+            | OpKind::VAddSubSat { src1, src2, .. }
             | OpKind::VMax { src1, src2, .. }
             | OpKind::VX86MinMax { src1, src2, .. }
             | OpKind::VMul { src1, src2, .. }
             | OpKind::VDiv { src1, src2, .. }
             | OpKind::VLane { src1, src2, .. }
             | OpKind::VAnd { src1, src2, .. }
+            | OpKind::VAndNot { src1, src2, .. }
             | OpKind::VOr { src1, src2, .. }
             | OpKind::VXor { src1, src2, .. }
             | OpKind::VFMinMaxNm { src1, src2, .. }
@@ -2981,6 +2987,41 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
+            OpKind::X86XSave {
+                addr,
+                src_low,
+                src_high,
+                ..
+            }
+            | OpKind::X86XRstor {
+                addr,
+                src_low,
+                src_high,
+                ..
+            } => {
+                result.extend(addr.regs());
+                result.extend([*src_low, *src_high]);
+            }
+
+            OpKind::X86XGetBv { selector, .. } => result.push(*selector),
+            OpKind::X86XSetBv {
+                selector,
+                src_low,
+                src_high,
+            } => result.extend([*selector, *src_low, *src_high]),
+
+            OpKind::X86Cmpxchg8b16b {
+                addr,
+                compare_lo,
+                compare_hi,
+                new_lo,
+                new_hi,
+                ..
+            } => {
+                result.extend(addr.regs());
+                result.extend([*compare_lo, *compare_hi, *new_lo, *new_hi]);
+            }
+
             OpKind::X86X87Control {
                 addr: Some(addr), ..
             } => {
@@ -3003,6 +3044,8 @@ impl OpKind {
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
             | OpKind::X86ReadTsc { .. }
+            | OpKind::X86Random { .. }
+            | OpKind::X86ReadPid { .. }
             | OpKind::X86X87Control { addr: None, .. }
             | OpKind::X86X87Data { addr: None, .. }
             | OpKind::CmcCF
@@ -4178,8 +4221,119 @@ mod tests {
             ("FTST", &[0xD9, 0xE4][..], X86X87DataKind::TestZero),
             ("FRNDINT", &[0xD9, 0xFC][..], X86X87DataKind::RoundInteger),
             ("FXTRACT", &[0xD9, 0xF4][..], X86X87DataKind::Extract),
+            (
+                "FPREM1",
+                &[0xD9, 0xF5][..],
+                X86X87DataKind::Remainder { nearest: true },
+            ),
+            (
+                "FPREM",
+                &[0xD9, 0xF8][..],
+                X86X87DataKind::Remainder { nearest: false },
+            ),
             ("FSCALE", &[0xD9, 0xFD][..], X86X87DataKind::Scale),
             ("FSQRT", &[0xD9, 0xFA][..], X86X87DataKind::SquareRoot),
+            (
+                "FADD m64fp",
+                &[0xDC, 0x00][..],
+                X86X87DataKind::AddSubtract {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Double,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: false,
+                    reverse: false,
+                },
+            ),
+            (
+                "FSUB ST(3),ST(0)",
+                &[0xDC, 0xEB][..],
+                X86X87DataKind::AddSubtract {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Register,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::StI,
+                    pop: false,
+                    subtract: true,
+                    reverse: false,
+                },
+            ),
+            (
+                "FSUBRP ST(1),ST(0)",
+                &[0xDE, 0xE1][..],
+                X86X87DataKind::AddSubtract {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Register,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    subtract: true,
+                    reverse: true,
+                },
+            ),
+            (
+                "FISUBR m32int",
+                &[0xDA, 0x28][..],
+                X86X87DataKind::AddSubtract {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Int32,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    subtract: true,
+                    reverse: true,
+                },
+            ),
+            (
+                "FDIV m64fp",
+                &[0xDC, 0x30][..],
+                X86X87DataKind::Divide {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Double,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: false,
+                },
+            ),
+            (
+                "FDIVP ST(1),ST(0)",
+                &[0xDE, 0xF9][..],
+                X86X87DataKind::Divide {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Register,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::StI,
+                    pop: true,
+                    reverse: false,
+                },
+            ),
+            (
+                "FIDIVR m32int",
+                &[0xDA, 0x38][..],
+                X86X87DataKind::Divide {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Int32,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                    reverse: true,
+                },
+            ),
+            (
+                "FMUL m64fp",
+                &[0xDC, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Double,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+            ),
+            (
+                "FMULP ST(1),ST(0)",
+                &[0xDE, 0xC9][..],
+                X86X87DataKind::Multiply {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Register,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::StI,
+                    pop: true,
+                },
+            ),
+            (
+                "FIMUL m32int",
+                &[0xDA, 0x08][..],
+                X86X87DataKind::Multiply {
+                    source: crate::smir::ir::ops::X86X87ArithmeticSource::Int32,
+                    destination: crate::smir::ir::ops::X86X87ArithmeticDestination::St0,
+                    pop: false,
+                },
+            ),
             (
                 "FCOM m32fp",
                 &[0xD8, 0x10][..],
@@ -4270,6 +4424,64 @@ mod tests {
             );
         }
 
+        for (name, bytes, get) in [
+            ("XGETBV", &[0x0F, 0x01, 0xD0][..], true),
+            ("XSETBV", &[0x0F, 0x01, 0xD1][..], false),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| {
+                    (get && matches!(op.kind, OpKind::X86XGetBv { .. }))
+                        || (!get && matches!(op.kind, OpKind::X86XSetBv { .. }))
+                }),
+                "{name}: XCR operation removed"
+            );
+        }
+
+        for (name, bytes, save) in [
+            ("XSAVE64", &[0x48, 0x0F, 0xAE, 0x23][..], true),
+            ("XSAVEOPT64", &[0x48, 0x0F, 0xAE, 0x33][..], true),
+            ("XRSTOR64", &[0x48, 0x0F, 0xAE, 0x2B][..], false),
+            ("XSAVEC64", &[0x48, 0x0F, 0xC7, 0x23][..], true),
+            ("XSAVES64", &[0x48, 0x0F, 0xC7, 0x2B][..], true),
+            ("XRSTORS64", &[0x48, 0x0F, 0xC7, 0x1B][..], false),
+        ] {
+            let function = optimized(bytes);
+            assert!(
+                function.blocks[0].ops.iter().any(|op| {
+                    (save && matches!(op.kind, OpKind::X86XSave { .. }))
+                        || (!save && matches!(op.kind, OpKind::X86XRstor { .. }))
+                }),
+                "{name}: extended-state operation removed"
+            );
+        }
+
+        for (name, bytes, predicate) in [
+            ("CMPXCHG16B", &[0xF0, 0x48, 0x0F, 0xC7, 0x0E][..], 0u8),
+            ("RDRAND", &[0x48, 0x0F, 0xC7, 0xF0][..], 1),
+            ("RDSEED", &[0x48, 0x0F, 0xC7, 0xF8][..], 2),
+        ] {
+            let function = optimized(bytes);
+            let op = function.blocks[0]
+                .ops
+                .iter()
+                .find(|op| match predicate {
+                    0 => matches!(op.kind, OpKind::X86Cmpxchg8b16b { .. }),
+                    1 => matches!(op.kind, OpKind::X86Random { seed: false, .. }),
+                    _ => matches!(op.kind, OpKind::X86Random { seed: true, .. }),
+                })
+                .unwrap_or_else(|| panic!("{name}: Group-9 operation removed"));
+            assert_eq!(
+                op.kind.flags_written(),
+                if predicate == 0 {
+                    FlagSet::ZF
+                } else {
+                    FlagSet::ALL_X86
+                }
+            );
+            assert_eq!(op.kind.flags_must_write(), op.kind.flags_written());
+        }
+
         {
             let name = "ADDPS";
             let function = optimized(&[0x0F, 0x58, 0x00]);
@@ -4307,6 +4519,73 @@ mod tests {
                 "{name}: write before fault boundary"
             );
         }
+
+        {
+            let name = "PADDSB";
+            let function = optimized(&[0x66, 0x0F, 0xEC, 0x00]);
+            let ops = &function.blocks[0].ops;
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: VecWidth::V128,
+                            ..
+                        }
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: faulting VLoad removed"));
+            let saturated_write = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op,
+                        SmirOp {
+                            kind: OpKind::VAddSubSat {
+                                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                                elem: VecElementType::I8,
+                                subtract: false,
+                                signed: true,
+                                ..
+                            },
+                            x86_hint: Some(X86OpHint::SseOp { .. }),
+                            ..
+                        }
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: saturated destination write removed"));
+            assert!(
+                load < saturated_write,
+                "{name}: write before fault boundary"
+            );
+        }
+
+        let masked_sat = optimized(&[0x62, 0xF1, 0x7D, 0xC9, 0xEC, 0xD1]);
+        assert!(masked_sat.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAddSubSat {
+                elem: VecElementType::I8,
+                lanes: 64,
+                subtract: false,
+                signed: true,
+                ..
+            }
+        )));
+        assert_eq!(
+            masked_sat.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Select {
+                        width: OpWidth::W8,
+                        ..
+                    }
+                ))
+                .count(),
+            64,
+        );
 
         let movups = optimized(&[0x0F, 0x10, 0x00]);
         assert!(movups.blocks[0].ops.iter().any(|op| matches!(

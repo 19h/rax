@@ -96,6 +96,16 @@ pub enum X86CacheControlKind {
     Clwb,
 }
 
+/// Architectural XSAVE-family save form. The form determines standard versus
+/// compacted layout and which init/modified optimizations may be applied.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86XSaveKind {
+    XSave,
+    XSaveOpt,
+    XSaveC,
+    XSaveS,
+}
+
 /// x87 environment/control operations that do not consume or produce an x87
 /// data-stack value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -179,6 +189,32 @@ pub enum X86X87DataKind {
     Scale,
     /// `FSQRT` square root rounded according to FCW.PC and FCW.RC.
     SquareRoot,
+    /// `FMUL`, `FMULP`, or `FIMUL` exact binary80 multiplication.
+    Multiply {
+        source: X86X87ArithmeticSource,
+        destination: X86X87ArithmeticDestination,
+        pop: bool,
+    },
+    /// `FADD`/`FADDP`/`FIADD`, `FSUB`/`FSUBP`/`FISUB`, or the reverse-
+    /// subtract forms. `subtract` selects subtraction and `reverse` selects
+    /// source-minus-destination rather than destination-minus-source.
+    AddSubtract {
+        source: X86X87ArithmeticSource,
+        destination: X86X87ArithmeticDestination,
+        pop: bool,
+        subtract: bool,
+        reverse: bool,
+    },
+    /// `FDIV`/`FDIVP`/`FIDIV` or the reverse-divide forms. `reverse` selects
+    /// source-over-destination rather than destination-over-source.
+    Divide {
+        source: X86X87ArithmeticSource,
+        destination: X86X87ArithmeticDestination,
+        pop: bool,
+        reverse: bool,
+    },
+    /// `FPREM` or IEEE quotient-rounding `FPREM1` on ST(0)/ST(1).
+    Remainder { nearest: bool },
     /// x87 floating-point compare family. `unordered` selects FUCOM policy,
     /// `pop` is the architectural pop count, and `eflags` selects the
     /// FCOMI/FUCOMI destination instead of C0/C2/C3.
@@ -207,6 +243,21 @@ pub enum X86X87CompareSource {
     Double,
     Int16,
     Int32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87ArithmeticSource {
+    Register,
+    Single,
+    Double,
+    Int16,
+    Int32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87ArithmeticDestination {
+    St0,
+    StI,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1289,6 +1340,18 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Per-lane signed/unsigned saturating packed integer add or subtract.
+    /// x86 PADDS*/PADDUS*/PSUBS*/PSUBUS* use only I8/I16 elements.
+    VAddSubSat {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        subtract: bool,
+        signed: bool,
+    },
+
     /// Vector max
     VMax {
         dst: VReg,
@@ -1383,6 +1446,14 @@ pub enum OpKind {
 
     /// Vector bitwise AND
     VAnd {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// Width-bounded bitwise `(!src1) & src2`.
+    VAndNot {
         dst: VReg,
         src1: VReg,
         src2: VReg,
@@ -2684,6 +2755,63 @@ pub enum OpKind {
     /// FXRSTOR/FXRSTOR64: restore the 512-byte legacy x87/SSE state image.
     X86FxRstor { addr: Address, rex_w: bool },
 
+    /// XSAVE-family save selected by EDX:EAX and the enabled XCR0/IA32_XSS
+    /// state appropriate to `kind`.
+    X86XSave {
+        addr: Address,
+        rex_w: bool,
+        kind: X86XSaveKind,
+        src_low: VReg,
+        src_high: VReg,
+    },
+
+    /// XRSTOR/XRSTORS restore. XRSTOR accepts standard or compacted images;
+    /// XRSTORS (`supervisor`) requires a compacted image.
+    X86XRstor {
+        addr: Address,
+        rex_w: bool,
+        supervisor: bool,
+        src_low: VReg,
+        src_high: VReg,
+    },
+
+    /// CMPXCHG8B/CMPXCHG16B implicit-register memory transaction.
+    X86Cmpxchg8b16b {
+        addr: Address,
+        wide: bool,
+        locked: bool,
+        compare_lo: VReg,
+        compare_hi: VReg,
+        new_lo: VReg,
+        new_hi: VReg,
+        dst_lo: VReg,
+        dst_hi: VReg,
+    },
+
+    /// RDRAND/RDSEED hardware nondeterministic value request.
+    X86Random {
+        dst: VReg,
+        width: OpWidth,
+        seed: bool,
+    },
+
+    /// RDPID: read IA32_TSC_AUX into a GPR without changing flags.
+    X86ReadPid { dst: VReg },
+
+    /// XGETBV: read XCR0 or the init-optimization bitmap selected by ECX.
+    X86XGetBv {
+        dst_low: VReg,
+        dst_high: VReg,
+        selector: VReg,
+    },
+
+    /// XSETBV: update XCR0 from EDX:EAX using the selector in ECX.
+    X86XSetBv {
+        selector: VReg,
+        src_low: VReg,
+        src_high: VReg,
+    },
+
     /// Test condition and store result
     TestCondition { dst: VReg, cond: Condition },
 
@@ -3130,6 +3258,7 @@ impl OpKind {
             | OpKind::FRound { dst, .. }
             | OpKind::VAdd { dst, .. }
             | OpKind::VSub { dst, .. }
+            | OpKind::VAddSubSat { dst, .. }
             | OpKind::VMax { dst, .. }
             | OpKind::VX86MinMax { dst, .. }
             | OpKind::VMul { dst, .. }
@@ -3141,6 +3270,7 @@ impl OpKind {
             | OpKind::VTableLookup { dst, .. }
             | OpKind::VLane { dst, .. }
             | OpKind::VAnd { dst, .. }
+            | OpKind::VAndNot { dst, .. }
             | OpKind::VOr { dst, .. }
             | OpKind::VXor { dst, .. }
             | OpKind::VBitSelect { dst, .. }
@@ -3323,6 +3453,14 @@ impl OpKind {
                 v
             }
 
+            OpKind::X86XGetBv {
+                dst_low, dst_high, ..
+            } => vec![*dst_low, *dst_high],
+
+            OpKind::X86Cmpxchg8b16b { dst_lo, dst_hi, .. } => vec![*dst_lo, *dst_hi],
+
+            OpKind::X86Random { dst, .. } | OpKind::X86ReadPid { dst } => vec![*dst],
+
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
 
             OpKind::DivU { quot, rem, .. } | OpKind::DivS { quot, rem, .. } => {
@@ -3409,6 +3547,9 @@ impl OpKind {
             | OpKind::X86X87Data { .. }
             | OpKind::X86FxSave { .. }
             | OpKind::X86FxRstor { .. }
+            | OpKind::X86XSave { .. }
+            | OpKind::X86XRstor { .. }
+            | OpKind::X86XSetBv { .. }
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
@@ -3465,6 +3606,10 @@ impl OpKind {
                     }
                     | OpKind::X86X87Data { .. }
                     | OpKind::X86FxSave { .. }
+                    | OpKind::X86XSave { .. }
+                    | OpKind::X86XGetBv { .. }
+                    | OpKind::X86XSetBv { .. }
+                    | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
                     // actually clamps and `set_ovf` is set. That update is invisible
                     // to `dests()`, so the op must be treated as side-effecting or DCE
@@ -3530,7 +3675,36 @@ impl OpKind {
                     addr: Some(_),
                     ..
                 }
+                | OpKind::X86X87Data {
+                    kind: X86X87DataKind::Multiply {
+                        source: X86X87ArithmeticSource::Single
+                            | X86X87ArithmeticSource::Double
+                            | X86X87ArithmeticSource::Int16
+                            | X86X87ArithmeticSource::Int32,
+                        ..
+                    } | X86X87DataKind::AddSubtract {
+                        source: X86X87ArithmeticSource::Single
+                            | X86X87ArithmeticSource::Double
+                            | X86X87ArithmeticSource::Int16
+                            | X86X87ArithmeticSource::Int32,
+                        ..
+                    } | X86X87DataKind::Divide {
+                        source: X86X87ArithmeticSource::Single
+                            | X86X87ArithmeticSource::Double
+                            | X86X87ArithmeticSource::Int16
+                            | X86X87ArithmeticSource::Int32,
+                        ..
+                    },
+                    addr: Some(_),
+                    ..
+                }
                 | OpKind::X86FxRstor { .. }
+                | OpKind::X86XRstor { .. }
+                | OpKind::X86Cmpxchg8b16b { .. }
+                | OpKind::X86XSave {
+                    kind: X86XSaveKind::XSave | X86XSaveKind::XSaveOpt,
+                    ..
+                }
                 | OpKind::X86CacheControl {
                     kind: X86CacheControlKind::Clflush
                         | X86CacheControlKind::Clflushopt
@@ -3590,6 +3764,8 @@ impl OpKind {
                     ..
                 }
                 | OpKind::X86FxSave { .. }
+                | OpKind::X86XSave { .. }
+                | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::RvVector { .. }
         )
     }
@@ -3706,6 +3882,51 @@ mod tests {
         assert!(!compare_memory.writes_memory());
         assert!(compare_memory.has_side_effects());
 
+        let multiply_memory = OpKind::X86X87Data {
+            kind: X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Double,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0,
+        };
+        assert!(multiply_memory.reads_memory());
+        assert!(!multiply_memory.writes_memory());
+        assert!(multiply_memory.has_side_effects());
+
+        let add_memory = OpKind::X86X87Data {
+            kind: X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Int32,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                subtract: false,
+                reverse: false,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0,
+        };
+        assert!(add_memory.reads_memory());
+        assert!(!add_memory.writes_memory());
+        assert!(add_memory.has_side_effects());
+
+        let divide_memory = OpKind::X86X87Data {
+            kind: X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Single,
+                destination: X86X87ArithmeticDestination::St0,
+                pop: false,
+                reverse: true,
+            },
+            addr: Some(Address::Direct(rbx)),
+            st: 0,
+            fop: 0,
+        };
+        assert!(divide_memory.reads_memory());
+        assert!(!divide_memory.writes_memory());
+        assert!(divide_memory.has_side_effects());
+
         let store_extended = OpKind::X86X87Data {
             kind: X86X87DataKind::StorePopExtended,
             addr: Some(Address::Direct(rbx)),
@@ -3771,6 +3992,25 @@ mod tests {
             X86X87DataKind::Extract,
             X86X87DataKind::Scale,
             X86X87DataKind::SquareRoot,
+            X86X87DataKind::Multiply {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+            },
+            X86X87DataKind::AddSubtract {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                subtract: true,
+                reverse: true,
+            },
+            X86X87DataKind::Divide {
+                source: X86X87ArithmeticSource::Register,
+                destination: X86X87ArithmeticDestination::StI,
+                pop: true,
+                reverse: false,
+            },
+            X86X87DataKind::Remainder { nearest: true },
             X86X87DataKind::Compare {
                 source: X86X87CompareSource::Register,
                 unordered: true,
@@ -3805,6 +4045,98 @@ mod tests {
         assert!(fxrstor.reads_memory());
         assert!(!fxrstor.writes_memory());
         assert!(fxrstor.has_side_effects());
+
+        for kind in [
+            X86XSaveKind::XSave,
+            X86XSaveKind::XSaveOpt,
+            X86XSaveKind::XSaveC,
+            X86XSaveKind::XSaveS,
+        ] {
+            let xsave = OpKind::X86XSave {
+                addr: Address::Direct(rbx),
+                rex_w: true,
+                kind,
+                src_low: rbx,
+                src_high: rbx,
+            };
+            assert!(xsave.dests().is_empty(), "{kind:?}");
+            assert_eq!(
+                xsave.reads_memory(),
+                matches!(kind, X86XSaveKind::XSave | X86XSaveKind::XSaveOpt),
+                "{kind:?}"
+            );
+            assert!(xsave.writes_memory(), "{kind:?}");
+            assert!(xsave.has_side_effects(), "{kind:?}");
+        }
+
+        for supervisor in [false, true] {
+            let xrstor = OpKind::X86XRstor {
+                addr: Address::Direct(rbx),
+                rex_w: false,
+                supervisor,
+                src_low: rbx,
+                src_high: rbx,
+            };
+            assert!(xrstor.dests().is_empty());
+            assert!(xrstor.reads_memory());
+            assert!(!xrstor.writes_memory());
+            assert!(xrstor.has_side_effects());
+        }
+
+        let cmpxchg = OpKind::X86Cmpxchg8b16b {
+            addr: Address::Direct(rbx),
+            wide: true,
+            locked: true,
+            compare_lo: rbx,
+            compare_hi: rbx,
+            new_lo: rbx,
+            new_hi: rbx,
+            dst_lo: rbx,
+            dst_hi: rbx,
+        };
+        assert_eq!(cmpxchg.dests(), vec![rbx, rbx]);
+        assert!(cmpxchg.reads_memory());
+        assert!(cmpxchg.writes_memory());
+        assert!(cmpxchg.has_side_effects());
+
+        let random = OpKind::X86Random {
+            dst: rbx,
+            width: OpWidth::W64,
+            seed: false,
+        };
+        assert_eq!(random.dests(), vec![rbx]);
+        assert!(!random.reads_memory());
+        assert!(!random.writes_memory());
+        assert!(random.has_side_effects());
+
+        let rdpid = OpKind::X86ReadPid { dst: rbx };
+        assert_eq!(rdpid.dests(), vec![rbx]);
+        assert!(!rdpid.reads_memory());
+        assert!(!rdpid.writes_memory());
+        assert!(!rdpid.has_side_effects());
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let xgetbv = OpKind::X86XGetBv {
+            dst_low: rax,
+            dst_high: rdx,
+            selector: rcx,
+        };
+        assert_eq!(xgetbv.dests(), vec![rax, rdx]);
+        assert!(xgetbv.has_side_effects());
+        assert!(!xgetbv.reads_memory());
+        assert!(!xgetbv.writes_memory());
+
+        let xsetbv = OpKind::X86XSetBv {
+            selector: rcx,
+            src_low: rax,
+            src_high: rdx,
+        };
+        assert!(xsetbv.dests().is_empty());
+        assert!(xsetbv.has_side_effects());
+        assert!(!xsetbv.reads_memory());
+        assert!(!xsetbv.writes_memory());
     }
 
     #[test]
