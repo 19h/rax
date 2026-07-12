@@ -15626,8 +15626,18 @@ impl Aarch64Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
-            } => self.lower_vcvt_fp32_to_bf16(*dst, *src1, *src2, *width),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VCvtFP32ToBF16 on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vcvt_fp32_to_bf16(*dst, *src1, *src2, *width)
+                }
+            }
             OpKind::VCvtBF16ToFP32 { dst, src, width } => {
                 self.lower_vcvt_bf16_to_fp32(*dst, *src, *width)
             }
@@ -29086,13 +29096,17 @@ mod tests {
                 dst: v(0),
                 src1: v(1),
                 src2: None,
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VCvtFP32ToBF16 {
                 dst: v(3),
                 src1: v(4),
                 src2: Some(v(5)),
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
         ]);
         let words = code_words(&code);
@@ -29112,19 +29126,25 @@ mod tests {
                 dst: v(0),
                 src1: v(1),
                 src2: None,
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VCvtFP32ToBF16 {
                 dst: v(3),
                 src1: v(1),
                 src2: Some(v(2)),
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VCvtFP32ToBF16 {
                 dst: v(2),
                 src1: v(1),
                 src2: Some(v(2)),
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
         ]);
 
@@ -31910,21 +31930,27 @@ mod tests {
             dst: v(0),
             src1: v(1),
             src2: None,
+            mask: None,
             width: VecWidth::V64,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VCvtFP32ToBF16 {
             dst: v(0),
             src1: v(1),
             src2: None,
+            mask: None,
             width: VecWidth::V256,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VCvtFP32ToBF16 {
             dst: v(1),
             src1: v(1),
             src2: Some(v(2)),
+            mask: None,
             width: VecWidth::V128,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VCvtBF16ToFP32 {

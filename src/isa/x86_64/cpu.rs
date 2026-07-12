@@ -5393,9 +5393,20 @@ mod tests {
         );
         builder.push_op(
             0x1002,
+            OpKind::VCvtFP32ToBF16 {
+                dst: arch(X86Reg::Ymm(3)),
+                src1: arch(X86Reg::Zmm(4)),
+                src2: None,
+                mask: None,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1003,
             OpKind::VCvtBF16ToFP32 {
-                dst: arch(X86Reg::Zmm(3)),
-                src: arch(X86Reg::Zmm(4)),
+                dst: arch(X86Reg::Zmm(5)),
+                src: arch(X86Reg::Zmm(6)),
                 width: VecWidth::V512,
             },
         );

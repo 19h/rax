@@ -11804,16 +11804,11 @@ impl X86_64Lifter {
                 output_width
             },
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::VCvtFP32ToBF16 {
-                dst: raw,
+                dst,
                 src1: if two_source {
                     self.vec_reg(
                         prefix.vvvv + if prefix.v_high { 16 } else { 0 },
@@ -11823,33 +11818,11 @@ impl X86_64Lifter {
                     memory_src
                 },
                 src2: two_source.then_some(memory_src),
+                mask,
                 width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        if prefix.encoding == VecEncodingKind::Evex {
-            if two_source {
-                self.append_evex_vector_mask_result(
-                    prefix,
-                    dst,
-                    raw,
-                    VecElementType::I16,
-                    pc,
-                    ctx,
-                    &mut ops,
-                );
-            } else {
-                self.append_evex_vector_mask_result_lanes(
-                    prefix,
-                    dst,
-                    raw,
-                    VecElementType::I16,
-                    prefix.width.lanes(VecElementType::F32) as u8,
-                    pc,
-                    ctx,
-                    &mut ops,
-                );
-            }
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -54133,6 +54106,33 @@ mod tests {
                 } if actual == width && src2.is_some() == two_source
             )));
         }
+
+        let direct_single = lift_single(&[0x62, 0xF2, 0x7E, 0xCC, 0x72, 0xCA]).unwrap();
+        assert_eq!(direct_single.ops.len(), 1);
+        assert!(matches!(
+            direct_single.ops[0].kind,
+            OpKind::VCvtFP32ToBF16 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: None,
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                width: VecWidth::V512,
+                zeroing: true,
+            }
+        ));
+        let direct_pair = lift_single(&[0x62, 0xD2, 0x3F, 0x8B, 0x72, 0xF9]).unwrap();
+        assert_eq!(direct_pair.ops.len(), 1);
+        assert!(matches!(
+            direct_pair.ops[0].kind,
+            OpKind::VCvtFP32ToBF16 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(7))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(8))),
+                src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(9)))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                width: VecWidth::V128,
+                zeroing: true,
+            }
+        ));
 
         let single_broadcast = lift_single(&[0x62, 0xE2, 0x7E, 0x5B, 0x72, 0x60, 0x01]).unwrap();
         assert_eq!(

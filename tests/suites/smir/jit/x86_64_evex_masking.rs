@@ -80,6 +80,11 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpmadd52luq {k4}{z}", &[0x62, 0xf2, 0xed, 0xcc, 0xb4, 0xcb]),
         // vdpbf16ps %zmm3,%zmm2,%zmm1{%k4}{z}
         ("vdpbf16ps {k4}{z}", &[0x62, 0xf2, 0x6e, 0xcc, 0x52, 0xcb]),
+        // vcvtneps2bf16 %zmm2,%ymm1{%k4}{z}
+        (
+            "vcvtneps2bf16 {k4}{z}",
+            &[0x62, 0xf2, 0x7e, 0xcc, 0x72, 0xca],
+        ),
         // vpconflictd %zmm2,%zmm1{%k4}{z}
         ("vpconflictd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]),
     ];
@@ -694,6 +699,60 @@ fn hot_masked_vdpbf16ps_jits_with_exact_finite_products() {
     assert_eq!(get_zmm(&after_jit, 1), expected);
     assert_eq!(get_zmm(&after_jit, 2), lhs);
     assert_eq!(get_zmm(&after_jit, 3), rhs);
+    assert_eq!(after_jit.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vcvtneps2bf16_jits_with_half_width_result() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512bf16")
+    {
+        return;
+    }
+
+    // loop: vcvtneps2bf16 %zmm2,%ymm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7e, 0xcc, 0x72, 0xca]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let source: [u64; 8] = std::array::from_fn(|word| {
+        let low = (word * 2 + 1) as f32;
+        let high = (word * 2 + 2) as f32;
+        u64::from(low.to_bits()) | (u64::from(high.to_bits()) << 32)
+    });
+    let mask = 0xa55au64;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        if ((mask >> lane) & 1) != 0 {
+            let value = (lane + 1) as f32;
+            let bf16 = u64::from((value.to_bits() >> 16) as u16);
+            expected[lane / 4] |= bf16 << ((lane % 4) * 16);
+        }
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VCVTNEPS2BF16 loop"),
+        "a register-only masked VCVTNEPS2BF16 loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after_jit, 1), expected);
+    assert_eq!(get_zmm(&after_jit, 2), source);
     assert_eq!(after_jit.k[4], mask);
     run_to_hlt(&mut vcpu);
 }

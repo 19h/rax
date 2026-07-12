@@ -2945,8 +2945,10 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst,
             src1,
             src2,
+            mask,
             width,
-        } => op_json!("vcvt_fp32_to_bf16", dst, src1, src2, width),
+            zeroing,
+        } => op_json!("vcvt_fp32_to_bf16", dst, src1, src2, mask, width, zeroing),
         OpKind::VCvtBF16ToFP32 { dst, src, width } => {
             op_json!("vcvt_bf16_to_fp32", dst, src, width)
         }

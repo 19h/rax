@@ -2843,7 +2843,9 @@ pub enum OpKind {
         dst: VReg,
         src1: VReg,
         src2: Option<VReg>,
+        mask: Option<VReg>,
         width: VecWidth,
+        zeroing: bool,
     },
 
     /// Convert BFloat16 to FP32

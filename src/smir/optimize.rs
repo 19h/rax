@@ -3306,10 +3306,21 @@ impl OpKind {
                 }
             }
 
-            OpKind::VCvtFP32ToBF16 { src1, src2, .. } => {
+            OpKind::VCvtFP32ToBF16 {
+                dst,
+                src1,
+                src2,
+                mask,
+                zeroing,
+                ..
+            } => {
                 result.push(*src1);
                 if let Some(s2) = src2 {
                     result.push(*s2);
+                }
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !zeroing {
+                    result.push(*dst);
                 }
             }
 
@@ -9279,6 +9290,7 @@ mod tests {
         let src2 = VReg::virt(3);
         let dot = VReg::virt(4);
         let mask = VReg::virt(5);
+        let convert_mask = VReg::virt(6);
         let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
         let mut block = SmirBlock::new(BlockId(0), 0x1000);
         block.push_op(make_op(
@@ -9322,17 +9334,27 @@ mod tests {
         ));
         block.push_op(make_op(
             6,
+            OpKind::Mov {
+                dst: convert_mask,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            7,
             OpKind::VCvtFP32ToBF16 {
                 dst,
                 src1: dot,
                 src2: Some(src2),
+                mask: Some(convert_mask),
                 width: VecWidth::V128,
+                zeroing: false,
             },
         ));
         block.set_terminator(Terminator::Return { values: vec![dst] });
 
         dead_code_elimination(&mut block);
-        assert_eq!(block.ops.len(), 7, "BF16 input producer was removed");
+        assert_eq!(block.ops.len(), 8, "BF16 input producer was removed");
     }
 
     #[test]

@@ -8492,8 +8492,11 @@ impl SmirInterpreter {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let first = Self::read_vec(ctx, *src1);
                 let second = src2.map(|reg| Self::read_vec(ctx, reg));
                 let fp32_lanes = width.lanes(VecElementType::F32) as u8;
@@ -8524,6 +8527,23 @@ impl SmirInterpreter {
                             16,
                             u64::from(Self::x86_fp32_to_bf16_bits(input)),
                         );
+                    }
+                }
+                if let Some(mask_bits) = mask.map(|mask| ctx.read_vreg(mask)) {
+                    let result_lanes = if second.is_some() {
+                        fp32_lanes * 2
+                    } else {
+                        fp32_lanes
+                    };
+                    for lane in 0..result_lanes {
+                        if mask_bits & (1u64 << lane) == 0 {
+                            let inactive = if *zeroing {
+                                0
+                            } else {
+                                Self::get_lane(&old, lane, 16)
+                            };
+                            Self::set_lane(&mut result, lane, 16, inactive);
+                        }
                     }
                 }
                 Self::write_vec(ctx, *dst, result);

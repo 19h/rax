@@ -943,6 +943,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VConflict { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
+            | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VMultiplyAdd52 { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
@@ -1092,6 +1093,56 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::VCvtFP32ToBF16 {
+        dst,
+        src1,
+        src2,
+        mask,
+        width,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg, expected: crate::smir::ir::types::VecWidth| {
+            matches!(
+                (reg, expected),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        let output_width = match (width, src2.is_some()) {
+            (crate::smir::ir::types::VecWidth::V128, _) => crate::smir::ir::types::VecWidth::V128,
+            (crate::smir::ir::types::VecWidth::V256, false) => {
+                crate::smir::ir::types::VecWidth::V128
+            }
+            (crate::smir::ir::types::VecWidth::V256, true) => {
+                crate::smir::ir::types::VecWidth::V256
+            }
+            (crate::smir::ir::types::VecWidth::V512, false) => {
+                crate::smir::ir::types::VecWidth::V256
+            }
+            (crate::smir::ir::types::VecWidth::V512, true) => {
+                crate::smir::ir::types::VecWidth::V512
+            }
+            (crate::smir::ir::types::VecWidth::V64, _) => return false,
+        };
+        if !valid_vector(dst, output_width)
+            || !valid_vector(src1, *width)
+            || src2.is_some_and(|src2| !valid_vector(&src2, *width))
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
     op.dests().into_iter().chain(op.source_vregs()).all(|reg| {
         matches!(
             reg,
@@ -1151,6 +1202,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VConflict { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
+            | OpKind::VCvtFP32ToBF16 { width, .. }
             | OpKind::VMultiplyAdd52 { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
@@ -1177,7 +1229,10 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_bitalg |= matches!(op, OpKind::VShuffleBitQM { .. });
         needs_vnni |= matches!(op, OpKind::VDotProduct { .. });
         needs_ifma |= matches!(op, OpKind::VMultiplyAdd52 { .. });
-        needs_bf16 |= matches!(op, OpKind::VDotProductBF16 { .. });
+        needs_bf16 |= matches!(
+            op,
+            OpKind::VDotProductBF16 { .. } | OpKind::VCvtFP32ToBF16 { .. }
+        );
         needs_cd |= matches!(op, OpKind::VConflict { .. });
     }
 
@@ -1779,6 +1834,7 @@ mod jit_gate_tests {
         let zmm1 = x86(X86Reg::Zmm(1));
         let zmm2 = x86(X86Reg::Zmm(2));
         let zmm3 = x86(X86Reg::Zmm(3));
+        let ymm1 = x86(X86Reg::Ymm(1));
         let k4 = x86(X86Reg::K(4));
         let k5 = x86(X86Reg::K(5));
         let native_ops = [
@@ -1833,6 +1889,14 @@ mod jit_gate_tests {
                 acc: zmm1,
                 src1: zmm2,
                 src2: zmm3,
+                mask: Some(k4),
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VCvtFP32ToBF16 {
+                dst: ymm1,
+                src1: zmm2,
+                src2: None,
                 mask: Some(k4),
                 width: VecWidth::V512,
                 zeroing: true,
@@ -1916,6 +1980,28 @@ mod jit_gate_tests {
         };
         assert!(!is_x86_native_vector_op(&virtual_source));
         assert!(!x86_gate(virtual_source));
+
+        let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {
+            dst: zmm1,
+            src1: zmm2,
+            src2: None,
+            mask: Some(k4),
+            width: VecWidth::V512,
+            zeroing: true,
+        };
+        assert!(!is_x86_native_vector_op(&invalid_bf16_output_width));
+        assert!(!x86_gate(invalid_bf16_output_width));
+
+        let invalid_bf16_mask_class = OpKind::VCvtFP32ToBF16 {
+            dst: ymm1,
+            src1: zmm2,
+            src2: None,
+            mask: Some(zmm3),
+            width: VecWidth::V512,
+            zeroing: false,
+        };
+        assert!(!is_x86_native_vector_op(&invalid_bf16_mask_class));
+        assert!(!x86_gate(invalid_bf16_mask_class));
 
         let invalid_alias = OpKind::VDotProduct {
             dst: zmm1,

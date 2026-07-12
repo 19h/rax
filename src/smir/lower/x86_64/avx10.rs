@@ -269,8 +269,18 @@ impl Avx10Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
-            } => Some(self.lower_vcvtfp32tobf16(code, dst, src1, src2.as_ref(), *width)),
+                zeroing,
+            } => Some(self.lower_vcvtfp32tobf16(
+                code,
+                dst,
+                src1,
+                src2.as_ref(),
+                mask.as_ref(),
+                *width,
+                *zeroing,
+            )),
 
             // AVX10.1 FP16
             OpKind::VFP16Arith {
@@ -807,24 +817,43 @@ impl Avx10Lowerer {
         dst: &VReg,
         src1: &VReg,
         src2: Option<&VReg>,
+        mask: Option<&VReg>,
         width: VecWidth,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "VCVTNEPS2BF16/VCVTNE2PS2BF16 requires 128/256/512-bit input width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
 
-        let (pp, src2_reg) = if let Some(s2) = src2 {
+        let (pp, vvvv_reg, src2_reg) = if let Some(s2) = src2 {
             // VCVTNE2PS2BF16
-            (3, self.vreg_to_zmm(s2)?) // F2
+            (3, src1_reg, self.vreg_to_zmm(s2)?) // F2
         } else {
-            // VCVTNEPS2BF16
-            (2, src1_reg) // F3
+            // VCVTNEPS2BF16 has reserved EVEX.vvvv = 0 after decoding.
+            (2, 0, src1_reg) // F3
         };
+        if dst_reg > 31
+            || src1_reg > 31
+            || src2_reg > 31
+            || (mask.is_some() && !(1..=7).contains(&mask_reg))
+        {
+            return Err(LowerError::InvalidRegister(
+                "VCVTNEPS2BF16/VCVTNE2PS2BF16 vector register must be 0..31 and explicit opmask must be K1..K7"
+                    .to_string(),
+            ));
+        }
 
         let mut enc = EvexEncoder::new(code);
         enc.emit_evex(
             2, // map 0F38
             pp, false, // W = 0
-            width, dst_reg, src1_reg, src2_reg, 0, false,
+            width, dst_reg, vvvv_reg, src2_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(0x72);
         enc.emit_modrm_rr(dst_reg, src2_reg);
@@ -1603,6 +1632,35 @@ mod tests {
     }
 
     #[test]
+    fn vcvtfp32tobf16_lowering_rejects_malformed_mask_and_width_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        for (mask, width, zeroing) in [
+            (None, VecWidth::V512, true),
+            (
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                VecWidth::V512,
+                false,
+            ),
+            (None, VecWidth::V64, false),
+        ] {
+            let invalid = OpKind::VCvtFP32ToBF16 {
+                dst: zmm1,
+                src1: zmm2,
+                src2: None,
+                mask,
+                width,
+                zeroing,
+            };
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
     fn vpconflict_lowering_rejects_malformed_shapes() {
         let lowerer = Avx10Lowerer::new();
         let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
@@ -1654,6 +1712,50 @@ mod tests {
         let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VCvtFP32ToBF16 {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    src1: zmm2,
+                    src2: None,
+                    mask: Some(k4),
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x7E, 0xCC, 0x72, 0xCA][..],
+            ),
+            (
+                OpKind::VCvtFP32ToBF16 {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: Some(zmm3),
+                    mask: Some(k5),
+                    width: VecWidth::V512,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0x6F, 0x4D, 0x72, 0xCB][..],
+            ),
+            (
+                OpKind::VCvtFP32ToBF16 {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(6))),
+                    src1: ymm4,
+                    src2: None,
+                    mask: Some(k2),
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0x7E, 0x2A, 0x72, 0xF4][..],
+            ),
+            (
+                OpKind::VCvtFP32ToBF16 {
+                    dst: xmm7,
+                    src1: xmm8,
+                    src2: Some(xmm9),
+                    mask: Some(k3),
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD2, 0x3F, 0x8B, 0x72, 0xF9][..],
+            ),
             (
                 OpKind::VConflict {
                     dst: zmm1,

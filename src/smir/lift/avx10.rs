@@ -742,7 +742,9 @@ impl Avx10Lifter {
                 dst,
                 src1: src,
                 src2: None,
+                mask: None,
                 width,
+                zeroing: false,
             },
         );
 
@@ -775,7 +777,9 @@ impl Avx10Lifter {
                 dst,
                 src1,
                 src2: Some(src2),
+                mask: None,
                 width,
+                zeroing: false,
             },
         );
 
