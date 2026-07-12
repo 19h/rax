@@ -89,6 +89,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vaddph {k4}{z}", &[0x62, 0xf5, 0x6c, 0xcc, 0x58, 0xcb]),
         // vpconflictd %zmm2,%zmm1{%k4}{z}
         ("vpconflictd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]),
+        // vplzcntd %zmm2,%zmm1{%k4}{z}
+        ("vplzcntd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x44, 0xca]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -1061,6 +1063,75 @@ fn hot_masked_vpconflictd_jits_with_lower_lane_conflict_masks() {
     vcpu.set_regs(&regs).unwrap();
 
     assert!(vcpu.jit_try_block().expect("jit masked VPCONFLICTD loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), source);
+    assert_eq!(after.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vplzcntd_jits_with_direct_mask_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512cd")
+    {
+        return;
+    }
+
+    // loop: vplzcntd %zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7d, 0xcc, 0x44, 0xca]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let inputs = [
+        0u32,
+        1,
+        2,
+        3,
+        0x0000_8000,
+        0x0001_0000,
+        0x00ff_0000,
+        0x0100_0000,
+        0x4000_0000,
+        0x8000_0000,
+        0xffff_ffff,
+        7,
+        8,
+        0x0000_00ff,
+        0x0000_0100,
+        0x7fff_ffff,
+    ];
+    let mut source = [0u64; 8];
+    for (lane, input) in inputs.iter().copied().enumerate() {
+        source[lane / 2] |= u64::from(input) << ((lane % 2) * 32);
+    }
+    let mask = 0xa55au64;
+    let mut expected = [0u64; 8];
+    for (lane, input) in inputs.iter().copied().enumerate() {
+        let output = if ((mask >> lane) & 1) != 0 {
+            input.leading_zeros()
+        } else {
+            0
+        };
+        expected[lane / 2] |= u64::from(output) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit masked VPLZCNTD loop"));
     let after = vcpu.get_regs().unwrap();
     assert_eq!(after.rcx & 0xffff_ffff, 0);
     assert_eq!(get_zmm(&after, 1), expected);

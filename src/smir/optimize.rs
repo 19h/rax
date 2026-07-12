@@ -2498,7 +2498,7 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::VPopcnt { src, mask, .. } => {
+            OpKind::VPopcnt { src, mask, .. } | OpKind::VLeadingZeros { src, mask, .. } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());
             }
@@ -3241,7 +3241,7 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::VPopcnt { src, mask, .. } => {
+            OpKind::VPopcnt { src, mask, .. } | OpKind::VLeadingZeros { src, mask, .. } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());
             }
@@ -9185,6 +9185,59 @@ mod tests {
 
         dead_code_elimination(&mut block);
         assert_eq!(block.ops.len(), 4, "VConflict input producer was removed");
+    }
+
+    #[test]
+    fn vleadingzeros_source_definition_survives_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let source = VReg::virt(1);
+        let mask = VReg::virt(2);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: source,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::VLeadingZeros {
+                dst,
+                src: source,
+                mask: Some(mask),
+                elem: VecElementType::I32,
+                width: VecWidth::V128,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            4,
+            "VLeadingZeros input producer was removed"
+        );
     }
 
     #[test]

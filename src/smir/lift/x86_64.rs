@@ -11106,20 +11106,18 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
-            OpKind::VLaneUnary {
-                dst: raw,
+            OpKind::VLeadingZeros {
+                dst,
                 src,
+                mask,
                 elem,
-                lanes: prefix.width.lanes(elem) as u8,
-                op: 3,
-                signed: false,
+                width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -53680,15 +53678,16 @@ mod tests {
             ),
         ] {
             let lifted = lift_single(bytes).unwrap();
-            assert!(lifted.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VLaneUnary {
+            assert_eq!(lifted.ops.len(), 1);
+            assert!(matches!(
+                lifted.ops[0].kind,
+                OpKind::VLeadingZeros {
                     elem: actual_elem,
-                    lanes,
-                    op: 3,
+                    width: actual_width,
+                    mask: Some(_),
                     ..
-                } if actual_elem == elem && lanes == width.lanes(elem) as u8
-            )));
+                } if actual_elem == elem && actual_width == width
+            ));
         }
         let broadcast = lift_single(&[0x62, 0xE2, 0x7D, 0xDC, 0x44, 0x28]).unwrap();
         assert_eq!(

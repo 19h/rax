@@ -2854,6 +2854,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             zeroing,
         } => op_json!("vpopcnt", dst, src, mask, elem, width, zeroing),
+        OpKind::VLeadingZeros {
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            zeroing,
+        } => op_json!("vleading_zeros", dst, src, mask, elem, width, zeroing),
         OpKind::VConflict {
             dst,
             src,

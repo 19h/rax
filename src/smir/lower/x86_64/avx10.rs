@@ -216,6 +216,16 @@ impl Avx10Lowerer {
                 Some(self.lower_vpconflict(code, dst, src, mask.as_ref(), *elem, *width, *zeroing))
             }
 
+            // AVX-512 leading-zero count
+            OpKind::VLeadingZeros {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                zeroing,
+            } => Some(self.lower_vplzcnt(code, dst, src, mask.as_ref(), *elem, *width, *zeroing)),
+
             // AVX10.1 VBMI permute
             OpKind::VPermute {
                 dst,
@@ -684,6 +694,52 @@ impl Avx10Lowerer {
             w, width, dst_reg, 0, src_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(0xC4);
+        enc.emit_modrm_rr(dst_reg, src_reg);
+        Ok(())
+    }
+
+    fn lower_vplzcnt(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        mask: Option<&VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        zeroing: bool,
+    ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "VPLZCNT requires 128/256/512-bit width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if dst_reg > 31 || src_reg > 31 || (mask.is_some() && !(1..=7).contains(&mask_reg)) {
+            return Err(LowerError::InvalidRegister(
+                "VPLZCNT vector register must be 0..31 and explicit opmask must be K1..K7"
+                    .to_string(),
+            ));
+        }
+        let w = match elem {
+            VecElementType::I32 => false,
+            VecElementType::I64 => true,
+            _ => {
+                return Err(LowerError::UnsupportedOperation(
+                    "VPLZCNT requires I32 or I64 elements".to_string(),
+                ));
+            }
+        };
+
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(
+            2, // map 0F38
+            1, // pp = 66
+            w, width, dst_reg, 0, src_reg, mask_reg, zeroing,
+        );
+        enc.emit_opcode(0x44);
         enc.emit_modrm_rr(dst_reg, src_reg);
         Ok(())
     }
@@ -1752,6 +1808,50 @@ mod tests {
             assert!(result.is_err(), "accepted malformed {invalid:?}");
             assert_eq!(code.len(), 0);
         }
+
+        let invalid_register = OpKind::VLeadingZeros {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(32))),
+            src: zmm2,
+            mask: None,
+            elem: VecElementType::I32,
+            width: VecWidth::V512,
+            zeroing: false,
+        };
+        let mut code = CodeBuffer::new();
+        let result = lowerer.try_lower(&invalid_register, &mut code).unwrap();
+        assert!(result.is_err(), "accepted malformed {invalid_register:?}");
+        assert_eq!(code.len(), 0);
+    }
+
+    #[test]
+    fn vplzcnt_lowering_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        for (mask, elem, width, zeroing) in [
+            (None, VecElementType::I32, VecWidth::V512, true),
+            (
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                VecElementType::I32,
+                VecWidth::V512,
+                false,
+            ),
+            (None, VecElementType::I16, VecWidth::V512, false),
+            (None, VecElementType::I64, VecWidth::V64, false),
+        ] {
+            let invalid = OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask,
+                elem,
+                width,
+                zeroing,
+            };
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
     }
 
     #[test]
@@ -1910,6 +2010,50 @@ mod tests {
                     zeroing: true,
                 },
                 &[0x62, 0xD2, 0xFD, 0x8B, 0xC4, 0xF9][..],
+            ),
+            (
+                OpKind::VLeadingZeros {
+                    dst: zmm1,
+                    src: zmm2,
+                    mask: Some(k4),
+                    elem: VecElementType::I32,
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x7D, 0xCC, 0x44, 0xCA][..],
+            ),
+            (
+                OpKind::VLeadingZeros {
+                    dst: zmm17,
+                    src: zmm18,
+                    mask: Some(k7),
+                    elem: VecElementType::I64,
+                    width: VecWidth::V512,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0xFD, 0x4F, 0x44, 0xCA][..],
+            ),
+            (
+                OpKind::VLeadingZeros {
+                    dst: ymm4,
+                    src: ymm6,
+                    mask: Some(k2),
+                    elem: VecElementType::I32,
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0x7D, 0x2A, 0x44, 0xE6][..],
+            ),
+            (
+                OpKind::VLeadingZeros {
+                    dst: xmm7,
+                    src: xmm9,
+                    mask: Some(k3),
+                    elem: VecElementType::I64,
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD2, 0xFD, 0x8B, 0x44, 0xF9][..],
             ),
             (
                 OpKind::VDotProductBF16 {

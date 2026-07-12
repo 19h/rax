@@ -975,6 +975,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         OpKind::VPopcnt { .. }
             | OpKind::VShuffleBitQM { .. }
             | OpKind::VConflict { .. }
+            | OpKind::VLeadingZeros { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1060,6 +1061,45 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                 mask,
                 Some(VReg::Arch(ArchReg::X86(X86Reg::K(0 | 8..=u8::MAX))))
             )
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::VLeadingZeros {
+        dst,
+        src,
+        mask,
+        elem,
+        width,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        if !valid_vector(dst)
+            || !valid_vector(src)
+            || !matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
+            )
+            || *width == crate::smir::ir::types::VecWidth::V64
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
         {
             return false;
         }
@@ -1277,6 +1317,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VPopcnt { width, .. }
             | OpKind::VShuffleBitQM { width, .. }
             | OpKind::VConflict { width, .. }
+            | OpKind::VLeadingZeros { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -1311,7 +1352,7 @@ pub fn x86_native_vector_features_supported_excluding(
             op,
             OpKind::VDotProductBF16 { .. } | OpKind::VCvtFP32ToBF16 { .. }
         );
-        needs_cd |= matches!(op, OpKind::VConflict { .. });
+        needs_cd |= matches!(op, OpKind::VConflict { .. } | OpKind::VLeadingZeros { .. });
         needs_fp16 |= matches!(op, OpKind::VFP16Arith { .. });
     }
 
@@ -1951,6 +1992,14 @@ mod jit_gate_tests {
                 width: VecWidth::V512,
                 zeroing: true,
             },
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
             OpKind::VDotProduct {
                 dst: zmm1,
                 acc: zmm1,
@@ -2079,6 +2128,52 @@ mod jit_gate_tests {
         };
         assert!(!is_x86_native_vector_op(&virtual_source));
         assert!(!x86_gate(virtual_source));
+
+        for invalid_vplzcnt in [
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: VReg::Virtual(VirtualId(8)),
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask: None,
+                elem: VecElementType::I16,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(x86(X86Reg::K(0))),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VLeadingZeros {
+                dst: zmm1,
+                src: zmm2,
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V256,
+                zeroing: false,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_vplzcnt));
+            assert!(!x86_gate(invalid_vplzcnt));
+        }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {
             dst: zmm1,

@@ -2753,6 +2753,17 @@ pub enum OpKind {
         zeroing: bool,
     },
 
+    /// Vector leading-zero count per element.
+    /// VPLZCNTD/Q
+    VLeadingZeros {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        zeroing: bool,
+    },
+
     /// Per-element bit mask of equal elements at lower lane indices.
     /// VPCONFLICTD/Q
     VConflict {
@@ -3731,6 +3742,7 @@ impl OpKind {
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
+            | OpKind::VLeadingZeros { dst, .. }
             | OpKind::VConflict { dst, .. }
             | OpKind::VPermute { dst, .. }
             | OpKind::VShuffleBitQM { dst, .. }

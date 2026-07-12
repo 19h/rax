@@ -8582,6 +8582,38 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::VLeadingZeros {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                zeroing,
+            } => {
+                let old = Self::read_vec(ctx, *dst);
+                let input = Self::read_vec(ctx, *src);
+                let bits = elem.bytes() * 8;
+                let mut result = [0u64; 16];
+                for lane in 0..width.lanes(*elem) as u8 {
+                    let value = Self::get_lane(&input, lane, bits);
+                    let count = if bits == 32 {
+                        (value as u32).leading_zeros()
+                    } else {
+                        value.leading_zeros()
+                    };
+                    Self::set_lane(&mut result, lane, bits, u64::from(count));
+                }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VCvtFP32ToBF16 {
                 dst,
                 src1,

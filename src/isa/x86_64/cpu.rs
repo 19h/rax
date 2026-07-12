@@ -5397,6 +5397,17 @@ mod tests {
         );
         builder.push_op(
             0x1002,
+            OpKind::VLeadingZeros {
+                dst: arch(X86Reg::Zmm(10)),
+                src: arch(X86Reg::Zmm(11)),
+                mask: None,
+                elem: VecElementType::I64,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1003,
             OpKind::VCvtFP32ToBF16 {
                 dst: arch(X86Reg::Ymm(3)),
                 src1: arch(X86Reg::Zmm(4)),
@@ -5407,7 +5418,7 @@ mod tests {
             },
         );
         builder.push_op(
-            0x1003,
+            0x1004,
             OpKind::VFP16Arith {
                 dst: arch(X86Reg::Zmm(5)),
                 src1: arch(X86Reg::Zmm(6)),
@@ -5419,7 +5430,7 @@ mod tests {
             },
         );
         builder.push_op(
-            0x1004,
+            0x1005,
             OpKind::VCvtBF16ToFP32 {
                 dst: arch(X86Reg::Zmm(8)),
                 src: arch(X86Reg::Zmm(9)),
