@@ -380,21 +380,10 @@ pub fn evex_rm_register_buckets_for_row(row: &EvexSpecRow) -> Vec<u8> {
     }
 }
 
-pub fn evex_vvvv_value_for_row(row: &EvexSpecRow) -> u8 {
-    let operands = evex_operand_parts(&row.operands)
-        .into_iter()
-        .filter(|operand| !evex_operand_is_immediate(operand))
-        .collect::<Vec<_>>();
-
-    if operands.len() >= 3
-        && operands
-            .get(1)
-            .is_some_and(|operand| operand_has_vector_register(operand))
-    {
-        0
-    } else {
-        15
-    }
+pub fn evex_vvvv_value_for_row(_row: &EvexSpecRow) -> u8 {
+    // Generated source operands use register bucket zero. A reserved
+    // EVEX.vvvv field is encoded as 1111b and also decodes to zero.
+    0
 }
 
 pub fn avx512_spec_evex_rows() -> Vec<EvexSpecRow> {
@@ -498,13 +487,16 @@ pub fn raw_evex_spec_bytes_for_variant(row: &EvexSpecRow, variant: EvexCaseVaria
 
     let vvvv = evex_vvvv_value_for_row(row);
     let p1 = (((!vvvv) & 0x0f) << 3)
+        | 0x04
         | row.key.pp
         | match row.key.w {
             EvexW::W1 => 0x80,
             EvexW::W0 | EvexW::WIg => 0,
         };
     let mask = if row.cell.contains("{k") { 1 } else { 0 };
-    let p2 = (evex_vl_bits(row.key.vl) << 5) | mask;
+    // This generator uses the low vvvv source-register bucket, or a reserved
+    // vvvv field. In both cases the inverted EVEX.V' bit is encoded as one.
+    let p2 = (evex_vl_bits(row.key.vl) << 5) | 0x08 | mask;
     let reg_field = row.key.opcode_ext.unwrap_or(1);
     let modrm = match variant.mode {
         EvexAsmMode::Register => 0xc0 | (reg_field << 3) | (variant.rm_reg.unwrap_or(0) & 0x7),
