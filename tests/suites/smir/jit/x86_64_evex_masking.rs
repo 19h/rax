@@ -812,6 +812,89 @@ fn vector_region_mmu_fault_preserves_complete_zmm_and_k_state() {
 }
 
 #[test]
+fn vector_region_callout_round_trips_callee_vector_mutations() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    // caller loop:
+    //   vprold $1,zmm2,zmm1
+    //   call callee
+    //   dec ecx
+    //   jnz loop
+    //   hlt
+    // callee: vprold $7,zmm3,zmm2{k4}{z}; ret
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf1, 0x75, 0x48, 0x72, 0xca, 0x01]);
+    code.extend_from_slice(&[0xe8, 0x05, 0x00, 0x00, 0x00]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf0]);
+    code.push(0xf4);
+    code.extend_from_slice(&[0x62, 0xf1, 0x6d, 0xcc, 0x72, 0xcb, 0x07, 0xc3]);
+
+    let sentinels: [[u64; 8]; 32] = std::array::from_fn(|reg| {
+        std::array::from_fn(|word| {
+            0x1020_3040_5060_7080u64
+                .wrapping_add(reg as u64 * 0x0101_0101_0101_0101)
+                .wrapping_add(word as u64 * 0x0011_0011_0011_0011)
+        })
+    });
+    let masks: [u64; 8] =
+        std::array::from_fn(|index| 0x5aa5_9669_a55a_6996u64.rotate_left(index as u32 * 5));
+    let mut callee_result = [0u64; 8];
+    for lane in 0..16 {
+        let input = (sentinels[3][lane / 2] >> ((lane % 2) * 32)) as u32;
+        let output = if ((masks[4] >> lane) & 1) != 0 {
+            input.rotate_left(7)
+        } else {
+            0
+        };
+        callee_result[lane / 2] |= u64::from(output) << ((lane % 2) * 32);
+    }
+    let mut caller_result = [0u64; 8];
+    for lane in 0..16 {
+        let input = (callee_result[lane / 2] >> ((lane % 2) * 32)) as u32;
+        caller_result[lane / 2] |= u64::from(input.rotate_left(1)) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    vcpu.set_jit_call(true);
+    let mut regs = vcpu.get_regs().unwrap();
+    let initial_rsp = regs.rsp;
+    regs.rcx = 200;
+    for (index, value) in sentinels.iter().copied().enumerate() {
+        set_zmm(&mut regs, index, value);
+    }
+    regs.k = masks;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit vector callout loop"),
+        "a vector caller with an interpreted vector callee must enter the native tier"
+    );
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(
+        after.rsp, initial_rsp,
+        "callout did not balance the guest stack"
+    );
+    for (index, sentinel) in sentinels.iter().enumerate() {
+        let expected = match index {
+            1 => caller_result,
+            2 => callee_result,
+            _ => *sentinel,
+        };
+        assert_eq!(
+            get_zmm(&after, index),
+            expected,
+            "callout changed ZMM{index}"
+        );
+    }
+    assert_eq!(after.k, masks);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
 fn control_gpr_hot_loop_does_jit() {
     // Sanity: an all-GPR hot loop with the same shape DOES promote, so the
     // `!jitted` assertion above is meaningful (the harness can trigger the JIT).

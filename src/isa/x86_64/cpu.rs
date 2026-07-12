@@ -371,6 +371,11 @@ pub struct X86_64Vcpu {
     /// bail to the interpreter (the validated default).
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     jit_mem: bool,
+    /// Lift guest calls into interpreter callouts while retaining the native
+    /// caller region. Seeded from `RAX_JIT_CALL`; independently settable in
+    /// regression tests.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    jit_call: bool,
     /// Set by [`rax_jit_call`] (the lift-through-calls helper) when a callee
     /// yields a VMM-bound exit (I/O, HLT, …): `jit_run_region_native` recovers it
     /// and propagates it so the run loop returns it to the VMM. `None` otherwise.
@@ -967,6 +972,8 @@ impl X86_64Vcpu {
             jit_ineligible: std::collections::HashMap::new(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem: jit_mem_enabled() || jit_call_enabled(),
+            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            jit_call: jit_call_enabled(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_callout_exit: None,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -3839,6 +3846,16 @@ unsafe extern "C" fn rax_jit_call(
         op: LazyFlagOp::None,
         ..Default::default()
     };
+    if gr.vector_active != 0 {
+        for index in 0..16 {
+            let low = gr.get_zmm(index);
+            vcpu.regs.xmm[index] = [low[0], low[1]];
+            vcpu.regs.ymm_high[index] = [low[2], low[3]];
+            vcpu.regs.zmm_high[index] = [low[4], low[5], low[6], low[7]];
+            vcpu.regs.zmm_ext[index] = gr.get_zmm(index + 16);
+        }
+        vcpu.regs.k = gr.k;
+    }
 
     // Simulate the CALL's stack effect (the block's own ops already ran
     // natively; only the call's push+transfer remain), then enter the callee.
@@ -3885,6 +3902,25 @@ unsafe extern "C" fn rax_jit_call(
     // Sync vcpu state back into the marshalled file. Materialize flags first so
     // gr.rflags is current (the native reload / trampoline reads it).
     vcpu.materialize_flags();
+    if gr.vector_active != 0 {
+        for index in 0..16 {
+            gr.set_zmm(
+                index,
+                [
+                    vcpu.regs.xmm[index][0],
+                    vcpu.regs.xmm[index][1],
+                    vcpu.regs.ymm_high[index][0],
+                    vcpu.regs.ymm_high[index][1],
+                    vcpu.regs.zmm_high[index][0],
+                    vcpu.regs.zmm_high[index][1],
+                    vcpu.regs.zmm_high[index][2],
+                    vcpu.regs.zmm_high[index][3],
+                ],
+            );
+            gr.set_zmm(index + 16, vcpu.regs.zmm_ext[index]);
+        }
+        gr.k = vcpu.regs.k;
+    }
     gr.gpr[0] = vcpu.regs.rax;
     gr.gpr[1] = vcpu.regs.rcx;
     gr.gpr[2] = vcpu.regs.rdx;
@@ -4147,7 +4183,7 @@ impl X86_64Vcpu {
         // ineligible, retry WITHOUT call-mode (the smaller call-as-frontier
         // region). This makes lift-through-calls STRICTLY ADDITIVE — never worse
         // than the baseline mem/register JIT coverage.
-        let want_call = jit_call_enabled();
+        let want_call = self.jit_call;
         let modes: &[bool] = if want_call { &[true, false] } else { &[false] };
         'modes: for &cm in modes {
             let mut lifter = X86_64Lifter::strict();
@@ -4260,11 +4296,10 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-            // Call helpers may execute arbitrary guest vector code in the
-            // interpreter and do not yet synchronize vector state. MMU helpers,
-            // by contrast, are safe to mix with vector regions because the
-            // lowerer spills/reloads the full architectural ZMM/K file around
-            // each helper call.
+            // MMU and call helpers are safe to mix with vector regions: the
+            // lowerer synchronizes the full architectural ZMM/K file through
+            // GuestRegs around each callout, and the interpreter call helper
+            // copies any callee-produced vector state back before native resume.
             let uses_mem_helpers = allow_mem
                 && func
                     .blocks
@@ -4272,12 +4307,6 @@ impl X86_64Vcpu {
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
                     .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }));
-            if uses_vector && cm {
-                if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] vector-call-helper-mix @ {entry:#x} (call={cm})");
-                }
-                continue 'modes;
-            }
             if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
                 if jit_bail_log() {
                     eprintln!(
@@ -4305,6 +4334,7 @@ impl X86_64Vcpu {
             if cm {
                 // Lower CALL terminators as runtime call-outs (rax_jit_call).
                 lowerer.set_call_helpers(true);
+                lowerer.set_preserve_vector_call_helpers(uses_vector);
             }
             let res = match lowerer.lower_function(&func) {
                 Ok(r) if r.relocations.is_empty() => r,
@@ -5003,13 +5033,23 @@ impl X86_64Vcpu {
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit_mem = on;
     }
+
+    /// Enable lift-through-calls for tests. Callouts require the MMU helper path
+    /// for the guest return-address push, so enabling calls also enables memory
+    /// helpers.
+    pub fn set_jit_call(&mut self, on: bool) {
+        self.jit_call = on;
+        if on {
+            self.jit_mem = true;
+        }
+    }
 }
 
 #[cfg(test)]
 mod stack_segment_tests {
     use super::*;
     use std::sync::Arc;
-    use vm_memory::{GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
     const EFER_LMA: u64 = 1 << 10;
 
@@ -5260,7 +5300,7 @@ mod tests {
     use super::*;
     use std::sync::Arc;
     use std::time::{Duration, Instant};
-    use vm_memory::{GuestAddress, GuestMemoryMmap};
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
     fn test_vcpu() -> X86_64Vcpu {
         let mem =
@@ -5304,6 +5344,92 @@ mod tests {
 
         assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
         assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
+    }
+
+    #[test]
+    fn jit_callout_synchronizes_callee_vector_and_opmask_state() {
+        use crate::smir::lower::runtime::GuestRegs;
+
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        // vprold $7,%zmm2,%zmm1{%k4}{z}; ret
+        mem.write_slice(
+            &[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0xc3],
+            GuestAddress(0x100),
+        )
+        .unwrap();
+        let mut vcpu = X86_64Vcpu::new(0, mem.clone());
+        vcpu.sregs.cr0 = 0x21;
+        vcpu.sregs.cr4 = 0x20 | (1 << 9) | (1 << 18);
+        vcpu.sregs.efer = 0x500;
+        vcpu.sregs.cs.limit = u32::MAX;
+        vcpu.sregs.cs.present = true;
+        vcpu.sregs.cs.s = true;
+        vcpu.sregs.cs.l = true;
+
+        let source = [
+            0x0123_4567_89ab_cdef,
+            0x1111_2222_3333_4444,
+            0x8000_0001_7fff_ffff,
+            0xdead_beef_cafe_babe,
+            0x0102_0304_0506_0708,
+            0xf0e0_d0c0_b0a0_9080,
+            0x1357_9bdf_2468_ace0,
+            0xffff_ffff_0000_0001,
+        ];
+        let mask = 0x9669u64;
+        let mut expected = [0u64; 8];
+        for lane in 0..16 {
+            let input = (source[lane / 2] >> ((lane % 2) * 32)) as u32;
+            let output = if ((mask >> lane) & 1) != 0 {
+                input.rotate_left(7)
+            } else {
+                0
+            };
+            expected[lane / 2] |= u64::from(output) << ((lane % 2) * 32);
+        }
+
+        let mut gr = GuestRegs::default();
+        gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+        gr.gpr[4] = 0x8000;
+        gr.rflags = 0x2;
+        gr.vector_active = 1;
+        gr.set_zmm(1, [u64::MAX; 8]);
+        gr.set_zmm(2, source);
+        gr.set_zmm(31, [0x3131_3131_3131_3131; 8]);
+        gr.k[4] = mask;
+        gr.k[7] = 0x7777_7777_7777_7777;
+
+        let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200) };
+        assert_eq!(ok, 1);
+        assert_eq!(
+            gr.get_zmm(1),
+            expected,
+            "callee destination was not returned"
+        );
+        assert_eq!(gr.get_zmm(2), source, "caller source was not preserved");
+        assert_eq!(
+            gr.get_zmm(31),
+            [0x3131_3131_3131_3131; 8],
+            "high ZMM state was not preserved"
+        );
+        assert_eq!(gr.k[4], mask);
+        assert_eq!(gr.k[7], 0x7777_7777_7777_7777);
+
+        // A callee that mutates vector state and then yields HLT must publish
+        // that state before returning `ok=0`; the run loop consumes the stashed
+        // exit while leaving the interpreter state exactly at the yield.
+        mem.write_slice(
+            &[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0xf4],
+            GuestAddress(0x300),
+        )
+        .unwrap();
+        gr.set_zmm(1, [u64::MAX; 8]);
+        gr.gpr[4] = 0x8000;
+        let ok = unsafe { rax_jit_call(&mut gr, 0x300, 0x400) };
+        assert_eq!(ok, 0);
+        assert_eq!(gr.get_zmm(1), expected, "bailing callee lost vector state");
+        assert!(matches!(vcpu.jit_callout_exit, Some(VcpuExit::Hlt)));
     }
 
     #[cfg(feature = "debug")]

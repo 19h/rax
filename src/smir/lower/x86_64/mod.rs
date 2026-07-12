@@ -3457,6 +3457,12 @@ pub struct X86_64Lowerer {
     /// registers caller-saved.
     preserve_vector_mem_helpers: bool,
 
+    /// Synchronize the complete architectural ZMM/K file through `GuestRegs`
+    /// around interpreter callouts. Unlike MMU helpers, the callee may
+    /// semantically modify vector state, so the post-call reload consumes the
+    /// helper-updated state rather than merely restoring the pre-call snapshot.
+    preserve_vector_call_helpers: bool,
+
     /// When set, a `Terminator::Call` lowers to a runtime call-out (the
     /// `GuestRegs.call_fn` helper) that runs the callee in the interpreter and
     /// resumes native execution at the call's continuation block, instead of
@@ -3489,6 +3495,7 @@ impl X86_64Lowerer {
             native_exit_edges: std::collections::HashMap::new(),
             mem_helpers: false,
             preserve_vector_mem_helpers: false,
+            preserve_vector_call_helpers: false,
             call_helpers: false,
             epilogue_stack_patches: Vec::new(),
         }
@@ -3501,6 +3508,10 @@ impl X86_64Lowerer {
 
     pub fn set_preserve_vector_mem_helpers(&mut self, on: bool) {
         self.preserve_vector_mem_helpers = on;
+    }
+
+    pub fn set_preserve_vector_call_helpers(&mut self, on: bool) {
+        self.preserve_vector_call_helpers = on;
     }
 
     /// Enable lowering `Terminator::Call` as a runtime call-out (see `call_helpers`).
@@ -10680,6 +10691,10 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x24);
         self.emit_struct_mov(PhysReg::Rax, 1, X86_GUEST_RFLAGS_OFFSET, true);
 
+        if self.preserve_vector_call_helpers {
+            self.emit_helper_vector_state(PhysReg::Rax, true);
+        }
+
         // --- args: rdi = gr (rax), rsi = target_pc, rdx = return_pc ---
         // mov rdi, rax  (48 89 C7)
         self.code.emit_u8(0x48);
@@ -10711,6 +10726,9 @@ impl X86_64Lowerer {
         self.code.emit_u32(0);
 
         // --- OK path: restore full post-callee flags, reload GPRs, jmp continuation ---
+        if self.preserve_vector_call_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
         // push qword [rcx+rflags]; popfq  (the helper synced gr.rflags with the
         // post-callee flags). FF /6 [rcx+disp32] = FF B1 <disp32>.
         self.code.emit_u8(0xFF);
@@ -10736,6 +10754,9 @@ impl X86_64Lowerer {
         self.code
             .patch_i32(jz_pos, (bail as i64 - (jz_pos as i64 + 4)) as i32);
         // push qword [rcx+rflags]; popfq
+        if self.preserve_vector_call_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
         self.code.emit_u8(0xFF);
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
@@ -11185,6 +11206,38 @@ mod tests {
                 "missing {expected:02X?} in {loads:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn vector_call_helper_emits_save_and_both_resume_reloads() {
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_call_helpers(true);
+        lowerer.set_preserve_vector_call_helpers(true);
+        let continuation = BlockId(7);
+        lowerer.block_guest_pcs.insert(continuation, 0x2000);
+        lowerer
+            .emit_jit_call_op(&CallTarget::GuestAddr(0x1800), continuation)
+            .expect("lower vector-preserving call helper");
+
+        let bytes = lowerer.code.data();
+        let store_zmm0 = &[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x40, 0x05];
+        let load_zmm0 = &[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x41, 0x05];
+        assert_eq!(
+            bytes
+                .windows(store_zmm0.len())
+                .filter(|window| *window == store_zmm0)
+                .count(),
+            1,
+            "call helper must save vector state once"
+        );
+        assert_eq!(
+            bytes
+                .windows(load_zmm0.len())
+                .filter(|window| *window == load_zmm0)
+                .count(),
+            2,
+            "call helper must reload vector state on success and bailout"
+        );
     }
 
     #[test]
