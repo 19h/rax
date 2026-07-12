@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 const INVENTORY: &str =
     include_str!("../../../generated/x86_64/inventories/unimplemented_source_sites.txt");
-const SOURCE_ROOT: &str = "src/isa/x86_64";
+const SOURCE_ROOTS: &[&str] = &["src/isa/x86_64", "src/smir/lift/x86_64.rs"];
 const DIAGNOSTIC_WORDS: &[&str] = &[
     "unimplemented",
     "not implemented",
@@ -20,6 +20,7 @@ const CLASSIFICATIONS: &[&str] = &[
     "dead-diagnostic",
     "encoding-hole",
     "manifest-diff",
+    "mixed-dispatch",
     "non-instruction",
     "system-gap",
     "valid-gap-needs-diff",
@@ -106,9 +107,15 @@ fn line_has_live_diagnostic(line: &str) -> bool {
 
 fn source_diagnostics() -> Vec<SourceDiagnostic> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let source_root = root.join(SOURCE_ROOT);
     let mut files = Vec::new();
-    rust_files(&source_root, &mut files);
+    for source in SOURCE_ROOTS {
+        let source = root.join(source);
+        if source.is_dir() {
+            rust_files(&source, &mut files);
+        } else {
+            files.push(source);
+        }
+    }
 
     let mut diagnostics = Vec::new();
     for file in files {
@@ -119,8 +126,20 @@ fn source_diagnostics() -> Vec<SourceDiagnostic> {
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
+        let mut in_test_module = false;
         for (line_index, line) in text.lines().enumerate() {
-            if line_has_live_diagnostic(line) {
+            if relative == "src/smir/lift/x86_64.rs" && line == "#[cfg(test)]" {
+                in_test_module = true;
+            }
+            let smir_fallback = relative == "src/smir/lift/x86_64.rs"
+                && !in_test_module
+                && line.contains("LiftError::Unsupported");
+            let live = if relative == "src/smir/lift/x86_64.rs" {
+                smir_fallback
+            } else {
+                line_has_live_diagnostic(line)
+            };
+            if live {
                 diagnostics.push(SourceDiagnostic {
                     path: relative.clone(),
                     line: line_index + 1,
@@ -137,8 +156,8 @@ fn assert_inventory_sorted_unique(entries: &[InventoryEntry]) {
     let mut previous: Option<(&str, &str)> = None;
     for entry in entries {
         assert!(
-            entry.path.starts_with(SOURCE_ROOT),
-            "{} must live under {SOURCE_ROOT}",
+            SOURCE_ROOTS.iter().any(|root| entry.path.starts_with(root)),
+            "{} must live under an inventoried x86 source root",
             entry.path
         );
         let key = (entry.path.as_str(), entry.needle.as_str());
