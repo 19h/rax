@@ -11466,19 +11466,15 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::VDotProduct {
-                dst: raw,
+                dst,
                 acc: dst,
                 src1,
                 src2,
+                mask,
                 src_elem: if opcode < 0x52 {
                     VecElementType::I8
                 } else {
@@ -11488,19 +11484,9 @@ impl X86_64Lifter {
                 width: prefix.width,
                 src1_unsigned: opcode < 0x52,
                 saturate: opcode & 1 != 0,
+                zeroing: prefix.encoding == VecEncodingKind::Evex && prefix.zeroing,
             },
         ));
-        if prefix.encoding == VecEncodingKind::Evex {
-            self.append_evex_vector_mask_result(
-                prefix,
-                dst,
-                raw,
-                VecElementType::I32,
-                pc,
-                ctx,
-                &mut ops,
-            );
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -13790,11 +13776,13 @@ impl X86_64Lifter {
                 acc: zero,
                 src1: dst,
                 src2,
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I16,
                 width: VecWidth::V128,
                 src1_unsigned: true,
                 saturate: true,
+                zeroing: false,
             },
         ));
         self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
@@ -19147,11 +19135,13 @@ impl X86_64Lifter {
                 acc: zero,
                 src1: self.vec_reg(prefix.vvvv, prefix.width),
                 src2,
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I16,
                 width: prefix.width,
                 src1_unsigned: true,
                 saturate: true,
+                zeroing: false,
             },
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -24096,11 +24086,13 @@ impl X86_64Lifter {
                     prefix.width,
                 ),
                 src2,
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I16,
                 width: prefix.width,
                 src1_unsigned: true,
                 saturate: true,
+                zeroing: false,
             },
         ));
         let dst = self.vec_reg(
@@ -53836,6 +53828,29 @@ mod tests {
                     && actual_width == width
             )));
         }
+
+        let direct_masked = lift_single(&[0x62, 0xF2, 0x6D, 0xCC, 0x50, 0xCB]).unwrap();
+        assert_eq!(
+            direct_masked.ops.len(),
+            1,
+            "register-only masked VNNI must not expand through virtual mask operations"
+        );
+        assert!(matches!(
+            direct_masked.ops[0].kind,
+            OpKind::VDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V512,
+                src1_unsigned: true,
+                saturate: false,
+                zeroing: true,
+            }
+        ));
         let broadcast = lift_single(&[0x62, 0xE2, 0x55, 0x33, 0x53, 0x20]).unwrap();
         assert_eq!(
             broadcast

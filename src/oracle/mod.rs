@@ -2805,22 +2805,26 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             acc,
             src1,
             src2,
+            mask,
             src_elem,
             acc_elem,
             width,
             src1_unsigned,
             saturate,
+            zeroing,
         } => op_json!(
             "vdot_product",
             dst,
             acc,
             src1,
             src2,
+            mask,
             src_elem,
             acc_elem,
             width,
             src1_unsigned,
-            saturate
+            saturate,
+            zeroing
         ),
         OpKind::VMultiplyAdd52 {
             dst,

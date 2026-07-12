@@ -390,11 +390,13 @@ impl Avx10Lifter {
                 acc,
                 src1,
                 src2,
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width,
                 src1_unsigned: true,
                 saturate,
+                zeroing: false,
             },
         );
 
@@ -430,11 +432,13 @@ impl Avx10Lifter {
                 acc,
                 src1,
                 src2,
+                mask: None,
                 src_elem: VecElementType::I16,
                 acc_elem: VecElementType::I32,
                 width,
                 src1_unsigned: false,
                 saturate,
+                zeroing: false,
             },
         );
 

@@ -149,11 +149,13 @@ impl Avx10Lowerer {
                 acc,
                 src1,
                 src2,
+                mask,
                 src_elem,
                 acc_elem,
                 width,
                 src1_unsigned,
                 saturate,
+                zeroing,
                 ..
             } => Some(self.lower_vdotproduct(
                 code,
@@ -161,11 +163,13 @@ impl Avx10Lowerer {
                 acc,
                 src1,
                 src2,
+                mask.as_ref(),
                 *src_elem,
                 *acc_elem,
                 *width,
                 *src1_unsigned,
                 *saturate,
+                *zeroing,
             )),
 
             // AVX10.1 IFMA
@@ -426,29 +430,47 @@ impl Avx10Lowerer {
         acc: &VReg,
         src1: &VReg,
         src2: &VReg,
+        mask: Option<&VReg>,
         src_elem: VecElementType,
         acc_elem: VecElementType,
         width: VecWidth,
         src1_unsigned: bool,
         saturate: bool,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         if acc_elem != VecElementType::I32 || dst != acc {
             return Err(LowerError::UnsupportedOperation(format!(
                 "VNNI requires an I32 accumulator aliased with dst, got acc={acc_elem:?} dst={dst:?} accumulator={acc:?}"
             )));
         }
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "VNNI requires 128/256/512-bit width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if dst_reg > 31
+            || src1_reg > 31
+            || src2_reg > 31
+            || (mask.is_some() && !(1..=7).contains(&mask_reg))
+        {
+            return Err(LowerError::InvalidRegister(
+                "VNNI vector register must be 0..31 and explicit opmask must be K1..K7".to_string(),
+            ));
+        }
 
-        let opcode = match (src_elem, saturate) {
-            (VecElementType::I8, false) => 0x50,  // VPDPBUSD
-            (VecElementType::I8, true) => 0x51,   // VPDPBUSDS
-            (VecElementType::I16, false) => 0x52, // VPDPWSSD
-            (VecElementType::I16, true) => 0x53,  // VPDPWSSDS
+        let opcode = match (src_elem, src1_unsigned, saturate) {
+            (VecElementType::I8, true, false) => 0x50,   // VPDPBUSD
+            (VecElementType::I8, true, true) => 0x51,    // VPDPBUSDS
+            (VecElementType::I16, false, false) => 0x52, // VPDPWSSD
+            (VecElementType::I16, false, true) => 0x53,  // VPDPWSSDS
             _ => {
                 return Err(LowerError::UnsupportedOperation(
-                    "VNNI: invalid element type".to_string(),
+                    "VNNI: invalid element type or signedness".to_string(),
                 ));
             }
         };
@@ -458,8 +480,7 @@ impl Avx10Lowerer {
             2,     // map 0F38
             1,     // pp = 66
             false, // W = 0
-            width, dst_reg, src1_reg, src2_reg, 0,     // no mask
-            false, // no zeroing
+            width, dst_reg, src1_reg, src2_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, src2_reg);
@@ -1225,11 +1246,13 @@ mod tests {
             acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
             src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
             src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V512,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         };
 
         let result = lowerer.try_lower(&op, &mut code);
@@ -1257,14 +1280,81 @@ mod tests {
                 acc,
                 src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
                 src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem,
                 width: VecWidth::V512,
                 src1_unsigned: true,
                 saturate: true,
+                zeroing: false,
             };
             let result = lowerer.try_lower(&op, &mut code).unwrap();
             assert!(matches!(result, Err(LowerError::UnsupportedOperation(_))));
+            assert_eq!(code.len(), 0);
+        }
+
+        let mut code = CodeBuffer::new();
+        let invalid_signedness = OpKind::VDotProduct {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+            acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+            src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+            mask: None,
+            src_elem: VecElementType::I16,
+            acc_elem: VecElementType::I32,
+            width: VecWidth::V512,
+            src1_unsigned: true,
+            saturate: false,
+            zeroing: false,
+        };
+        let result = lowerer.try_lower(&invalid_signedness, &mut code).unwrap();
+        assert!(matches!(result, Err(LowerError::UnsupportedOperation(_))));
+        assert_eq!(code.len(), 0);
+
+        for invalid_mask_shape in [
+            OpKind::VDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V512,
+                src1_unsigned: true,
+                saturate: false,
+                zeroing: true,
+            },
+            OpKind::VDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V512,
+                src1_unsigned: true,
+                saturate: false,
+                zeroing: false,
+            },
+            OpKind::VDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V64,
+                src1_unsigned: true,
+                saturate: false,
+                zeroing: false,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid_mask_shape, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid_mask_shape:?}");
             assert_eq!(code.len(), 0);
         }
     }
@@ -1324,10 +1414,82 @@ mod tests {
         let zmm16 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(16)));
         let zmm17 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(17)));
         let zmm18 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(18)));
+        let ymm4 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(4)));
+        let ymm5 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(5)));
+        let ymm6 = VReg::Arch(ArchReg::X86(X86Reg::Ymm(6)));
+        let xmm7 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(7)));
+        let xmm8 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(8)));
+        let xmm9 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(9)));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
         let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
         let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VDotProduct {
+                    dst: zmm1,
+                    acc: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    mask: Some(k4),
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V512,
+                    src1_unsigned: true,
+                    saturate: false,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x50, 0xCB][..],
+            ),
+            (
+                OpKind::VDotProduct {
+                    dst: ymm4,
+                    acc: ymm4,
+                    src1: ymm5,
+                    src2: ymm6,
+                    mask: Some(k2),
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V256,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0x55, 0x2A, 0x51, 0xE6][..],
+            ),
+            (
+                OpKind::VDotProduct {
+                    dst: xmm7,
+                    acc: xmm7,
+                    src1: xmm8,
+                    src2: xmm9,
+                    mask: Some(k3),
+                    src_elem: VecElementType::I16,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V128,
+                    src1_unsigned: false,
+                    saturate: false,
+                    zeroing: true,
+                },
+                &[0x62, 0xD2, 0x3D, 0x8B, 0x52, 0xF9][..],
+            ),
+            (
+                OpKind::VDotProduct {
+                    dst: zmm16,
+                    acc: zmm16,
+                    src1: zmm17,
+                    src2: zmm18,
+                    mask: Some(k7),
+                    src_elem: VecElementType::I16,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V512,
+                    src1_unsigned: false,
+                    saturate: true,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0x75, 0x47, 0x53, 0xC2][..],
+            ),
             (
                 OpKind::VShuffleBitQM {
                     dst: k5,

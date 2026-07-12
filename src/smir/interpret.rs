@@ -7576,11 +7576,13 @@ impl SmirInterpreter {
                 acc,
                 src1,
                 src2,
+                mask,
                 src_elem,
                 acc_elem,
                 width,
                 src1_unsigned,
                 saturate,
+                zeroing,
             } => {
                 debug_assert!(matches!(src_elem, VecElementType::I8 | VecElementType::I16));
                 debug_assert!(matches!(
@@ -7630,6 +7632,14 @@ impl SmirInterpreter {
                     };
                     Self::set_lane(&mut result, lane, acc_bits, narrowed as u64 & acc_mask);
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &accumulator,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *acc_elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -35478,15 +35488,18 @@ mod tests {
             src_elem: VecElementType,
             src1_unsigned: bool,
             saturate: bool,
+            masking: Option<(u64, bool)>,
         ) -> VecValue {
             let dst = VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)));
             let first = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
             let second = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+            let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
             let mut ctx = SmirContext::new_x86_64();
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = acc;
                 x86.xmm[1] = src1;
                 x86.xmm[2] = src2;
+                x86.k[4] = masking.map_or(0, |(mask, _)| mask);
             }
             let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
             builder.push_op(
@@ -35496,11 +35509,13 @@ mod tests {
                     acc: dst,
                     src1: first,
                     src2: second,
+                    mask: masking.map(|_| k4),
                     src_elem,
                     acc_elem: VecElementType::I32,
                     width: VecWidth::V128,
                     src1_unsigned,
                     saturate,
+                    zeroing: masking.is_some_and(|(_, zeroing)| zeroing),
                 },
             );
             builder.set_terminator(Terminator::Trap {
@@ -35547,6 +35562,7 @@ mod tests {
             VecElementType::I8,
             true,
             true,
+            None,
         );
         let wrapping = run(
             acc_vec,
@@ -35555,6 +35571,7 @@ mod tests {
             VecElementType::I8,
             true,
             false,
+            None,
         );
         for lane in 0..4 {
             assert_eq!(
@@ -35593,6 +35610,7 @@ mod tests {
             VecElementType::I16,
             false,
             false,
+            None,
         );
         for lane in 0..4 {
             let expected = word_acc[lane].wrapping_add(
@@ -35602,6 +35620,31 @@ mod tests {
             assert_eq!(
                 SmirInterpreter::get_lane(&word_result, lane as u8, 32) as u32,
                 expected as u32
+            );
+        }
+
+        for (zeroing, masked_off) in [(false, acc[1] as u32), (true, 0)] {
+            let masked = run(
+                acc_vec,
+                first_vec,
+                second_vec,
+                VecElementType::I8,
+                true,
+                false,
+                Some((0b0101, zeroing)),
+            );
+            assert_eq!(
+                SmirInterpreter::get_lane(&masked, 0, 32) as u32,
+                sums[0] as i32 as u32
+            );
+            assert_eq!(SmirInterpreter::get_lane(&masked, 1, 32) as u32, masked_off);
+            assert_eq!(
+                SmirInterpreter::get_lane(&masked, 2, 32) as u32,
+                sums[2] as i32 as u32
+            );
+            assert_eq!(
+                SmirInterpreter::get_lane(&masked, 3, 32) as u32,
+                if zeroing { 0 } else { acc[3] as u32 }
             );
         }
     }

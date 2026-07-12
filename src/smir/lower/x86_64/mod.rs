@@ -11091,11 +11091,13 @@ mod tests {
             acc: zmm1,
             src1: zmm2,
             src2: zmm3,
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V512,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         });
         assert!(
             bytes
@@ -11127,11 +11129,13 @@ mod tests {
             acc: zmm2,
             src1: zmm2,
             src2: zmm3,
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V512,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         });
         assert!(
             matches!(error, LowerError::UnsupportedOperation(message) if message.contains("accumulator aliased with dst"))
@@ -11141,6 +11145,14 @@ mod tests {
     #[test]
     fn lifted_evex_bitmanip_instructions_reach_native_jit_lowering() {
         for (instruction, expected) in [
+            (
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x50, 0xCB][..],
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x50, 0xCB][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x75, 0x47, 0x53, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x47, 0x53, 0xC2][..],
+            ),
             (
                 &[0x62, 0xF2, 0x65, 0x48, 0x8F, 0xEA][..],
                 &[0x62, 0xF2, 0x65, 0x48, 0x8F, 0xEA][..],

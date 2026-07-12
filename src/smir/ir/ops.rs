@@ -2711,6 +2711,7 @@ pub enum OpKind {
         acc: VReg,
         src1: VReg,
         src2: VReg,
+        mask: Option<VReg>,
         /// Element type for src1 (I8 for byte, I16 for word)
         src_elem: VecElementType,
         /// Element type for accumulator (typically I32)
@@ -2720,6 +2721,8 @@ pub enum OpKind {
         src1_unsigned: bool,
         /// Saturate result instead of wrapping
         saturate: bool,
+        /// EVEX zeroing for masked-off accumulator lanes.
+        zeroing: bool,
     },
 
     /// IFMA 52-bit multiply-add: dst = acc + (src1[51:0] * src2[51:0])

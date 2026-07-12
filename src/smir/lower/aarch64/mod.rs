@@ -15549,22 +15549,32 @@ impl Aarch64Lowerer {
                 acc,
                 src1,
                 src2,
+                mask,
                 src_elem,
                 acc_elem,
                 width,
                 src1_unsigned,
                 saturate,
-            } => self.lower_vdotproduct(
-                *dst,
-                *acc,
-                *src1,
-                *src2,
-                *src_elem,
-                *acc_elem,
-                *width,
-                *src1_unsigned,
-                *saturate,
-            ),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VDotProduct on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vdotproduct(
+                        *dst,
+                        *acc,
+                        *src1,
+                        *src2,
+                        *src_elem,
+                        *acc_elem,
+                        *width,
+                        *src1_unsigned,
+                        *saturate,
+                    )
+                }
+            }
             OpKind::VDotProductExt {
                 dst,
                 acc,
@@ -29397,22 +29407,26 @@ mod tests {
                 acc: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width: VecWidth::V128,
                 src1_unsigned: true,
                 saturate: false,
+                zeroing: false,
             },
             OpKind::VDotProduct {
                 dst: v(3),
                 acc: v(3),
                 src1: v(4),
                 src2: v(5),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width: VecWidth::V64,
                 src1_unsigned: false,
                 saturate: false,
+                zeroing: false,
             },
         ]);
         let words = code_words(&code);
@@ -29443,33 +29457,39 @@ mod tests {
                 acc: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width: VecWidth::V128,
                 src1_unsigned: true,
                 saturate: false,
+                zeroing: false,
             },
             OpKind::VDotProduct {
                 dst: v(3),
                 acc: v(4),
                 src1: v(5),
                 src2: v(6),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width: VecWidth::V128,
                 src1_unsigned: false,
                 saturate: false,
+                zeroing: false,
             },
             OpKind::VDotProduct {
                 dst: v(7),
                 acc: v(7),
                 src1: v(8),
                 src2: v(9),
+                mask: None,
                 src_elem: VecElementType::I8,
                 acc_elem: VecElementType::I32,
                 width: VecWidth::V64,
                 src1_unsigned: true,
                 saturate: false,
+                zeroing: false,
             },
         ]);
 
@@ -31680,11 +31700,13 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V256,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VDotProduct {
@@ -31692,11 +31714,13 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             src_elem: VecElementType::I16,
             acc_elem: VecElementType::I32,
             width: VecWidth::V128,
             src1_unsigned: false,
             saturate: false,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VDotProduct {
@@ -31704,11 +31728,13 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I16,
             width: VecWidth::V128,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VDotProduct {
@@ -31716,11 +31742,13 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V128,
             src1_unsigned: true,
             saturate: true,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VDotProduct {
@@ -31728,11 +31756,13 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             src_elem: VecElementType::I8,
             acc_elem: VecElementType::I32,
             width: VecWidth::V128,
             src1_unsigned: true,
             saturate: false,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VShuffleBitQM {

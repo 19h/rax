@@ -74,6 +74,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
             "vpternlogd {k4}{z}",
             &[0x62, 0xf3, 0x6d, 0xcc, 0x25, 0xcb, 0x96],
         ),
+        // vpdpbusd %zmm3,%zmm2,%zmm1{%k4}{z}
+        ("vpdpbusd {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x50, 0xcb]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -434,6 +436,107 @@ fn hot_vpshufbitqmb_jits_and_writes_architectural_k_destination() {
     assert_eq!(after_jit.k[1], write_mask, "write mask survived");
     assert_eq!(get_zmm(&after_jit, 2), indices, "index ZMM survived");
     assert_eq!(get_zmm(&after_jit, 3), source, "source ZMM survived");
+
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpdpbusd_jits_with_destructive_accumulator_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vnni")
+    {
+        return;
+    }
+
+    // loop: vpdpbusd %zmm3,%zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x6d, 0xcc, 0x50, 0xcb]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let accumulator = [
+        0x0000_0002_0000_0001,
+        0xffff_fffc_0000_0003,
+        0x7fff_fff0_ffff_fffb,
+        0x0000_0007_8000_0010,
+        0x1111_1111_2222_2222,
+        0x3333_3333_4444_4444,
+        0x5555_5555_6666_6666,
+        0x7777_7777_8888_8888,
+    ];
+    let unsigned_source = [
+        0x0807_0605_0403_0201,
+        0x100f_0e0d_0c0b_0a09,
+        0x1817_1615_1413_1211,
+        0x201f_1e1d_1c1b_1a19,
+        0x2827_2625_2423_2221,
+        0x302f_2e2d_2c2b_2a29,
+        0x3837_3635_3433_3231,
+        0x403f_3e3d_3c3b_3a39,
+    ];
+    let signed_source = [
+        0xfc03_fe01_04fd_02ff,
+        0x08f7_06f9_04fb_02fd,
+        0x7f80_01ff_05fb_03fd,
+        0xf00f_f20d_f40b_f609,
+        0x817f_827e_837d_847c,
+        0x8878_8977_8a76_8b75,
+        0x906f_916e_926d_936c,
+        0x9867_9966_9a65_9b64,
+    ];
+    let mask = 0xa55au64;
+    let iterations = 200u32;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        if ((mask >> lane) & 1) == 0 {
+            continue;
+        }
+        let mut dot = 0i32;
+        for term in 0..4 {
+            let byte_index = lane * 4 + term;
+            let unsigned =
+                ((unsigned_source[byte_index / 8] >> ((byte_index % 8) * 8)) & 0xff) as u8;
+            let signed =
+                (((signed_source[byte_index / 8] >> ((byte_index % 8) * 8)) & 0xff) as u8) as i8;
+            dot = dot.wrapping_add(i32::from(unsigned) * i32::from(signed));
+        }
+        let initial = ((accumulator[lane / 2] >> ((lane % 2) * 32)) & 0xffff_ffff) as u32;
+        let result = initial.wrapping_add((dot as u32).wrapping_mul(iterations));
+        expected[lane / 2] |= (result as u64) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = u64::from(iterations);
+    set_zmm(&mut regs, 1, accumulator);
+    set_zmm(&mut regs, 2, unsigned_source);
+    set_zmm(&mut regs, 3, signed_source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VPDPBUSD loop"),
+        "a register-only masked VPDPBUSD loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0, "native loop drained");
+    assert_eq!(get_zmm(&after_jit, 1), expected, "accumulator write-back");
+    assert_eq!(
+        get_zmm(&after_jit, 2),
+        unsigned_source,
+        "unsigned source survived"
+    );
+    assert_eq!(
+        get_zmm(&after_jit, 3),
+        signed_source,
+        "signed source survived"
+    );
+    assert_eq!(after_jit.k[4], mask, "source opmask survived");
 
     run_to_hlt(&mut vcpu);
 }

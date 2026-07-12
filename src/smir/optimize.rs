@@ -3185,15 +3185,25 @@ impl OpKind {
                 result.push(*acc);
             }
 
-            OpKind::VDotProduct {
-                acc, src1, src2, ..
-            }
-            | OpKind::VDotProductBF16 {
+            OpKind::VDotProductBF16 {
                 acc, src1, src2, ..
             } => {
                 result.push(*acc);
                 result.push(*src1);
                 result.push(*src2);
+            }
+
+            OpKind::VDotProduct {
+                acc,
+                src1,
+                src2,
+                mask,
+                ..
+            } => {
+                result.push(*acc);
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VMultiplyAdd52 {
