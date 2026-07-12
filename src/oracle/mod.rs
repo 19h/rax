@@ -21,6 +21,7 @@ use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::ops::X86XSaveKind;
 use crate::smir::ir::types::DispSize;
+use crate::smir::ir::types::X86AesOp;
 use crate::smir::lift::riscv::RiscVExtensions;
 use crate::smir::{
     Aarch64Lifter, Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, CallTarget, Condition,
@@ -29,7 +30,7 @@ use crate::smir::{
     RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext, SmirInterpreter,
     SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind, VLaneOp, VReg,
     VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
-    X86_64Lifter, X86Reg,
+    X86_64Lifter, X86NarrowMode, X86Reg,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1116,7 +1117,9 @@ debug_name_json!(
     VecUnaryOp,
     VecReduceOp,
     VecPermuteKind,
+    X86AesOp,
     Avx10FP16Op,
+    X86NarrowMode,
     Condition,
     HexFpOp,
     HexFpRecipKind,
@@ -1788,6 +1791,34 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             signaling,
         } => op_json!("x86_fp_compare", src1, src2, elem, signaling),
+        OpKind::X86VectorFpCompare {
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            predicate,
+            scalar,
+            mask_destination,
+            zero_upper,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_vector_fp_compare",
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            predicate,
+            scalar,
+            mask_destination,
+            zero_upper,
+            suppress_exceptions
+        ),
         OpKind::X86FpToInt {
             dst,
             src,
@@ -1846,6 +1877,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86LoadMxcsr { addr } => op_json!("x86_load_mxcsr", addr),
         OpKind::X86StoreMxcsr { addr } => op_json!("x86_store_mxcsr", addr),
         OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),
+        OpKind::X86CheckAlignment { addr, alignment } => {
+            op_json!("x86_check_alignment", addr, alignment)
+        }
         OpKind::X86X87Control { kind, addr } => op_json!("x86_x87_control", kind, addr),
         OpKind::X86X87Data {
             kind,
@@ -1954,6 +1988,38 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             precision,
             mode,
         } => op_json!("fround", dst, src, precision, mode),
+        OpKind::X86Round {
+            dst,
+            merge,
+            src,
+            elem,
+            width,
+            lanes,
+            scalar_source,
+            zero_upper,
+            mode,
+            suppress_precision,
+        } => op_json!(
+            "x86_round",
+            dst,
+            merge,
+            src,
+            elem,
+            width,
+            lanes,
+            scalar_source,
+            zero_upper,
+            mode,
+            suppress_precision
+        ),
+        OpKind::X86DotProduct {
+            dst,
+            src1,
+            src2,
+            elem,
+            width,
+            imm,
+        } => op_json!("x86_dot_product", dst, src1, src2, elem, width, imm),
         OpKind::VAdd {
             dst,
             src1,
@@ -2189,7 +2255,18 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             src_elem,
             to_unsigned,
-        } => op_json!("vpack_sat", dst, src1, src2, src_elem, to_unsigned),
+            src_lanes,
+            block_lanes,
+        } => op_json!(
+            "vpack_sat",
+            dst,
+            src1,
+            src2,
+            src_elem,
+            to_unsigned,
+            src_lanes,
+            block_lanes
+        ),
         OpKind::VLut16 {
             dst_lo,
             dst_hi,
@@ -2307,6 +2384,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src1,
             src2,
             src_elem,
+            lanes,
             signed1,
             signed2,
             shift_left,
@@ -2319,6 +2397,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src1,
             src2,
             src_elem,
+            lanes,
             signed1,
             signed2,
             shift_left,
@@ -2653,7 +2732,35 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             indices,
             elem,
-        } => op_json!("vshuffle", dst, src1, src2, indices, elem),
+            lanes,
+        } => op_json!("vshuffle", dst, src1, src2, indices, elem, lanes),
+        OpKind::VByteShuffle {
+            dst,
+            src,
+            control,
+            lanes,
+            block_lanes,
+        } => op_json!("vbyte_shuffle", dst, src, control, lanes, block_lanes),
+        OpKind::VHorizontalBin {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            subtract,
+            saturating,
+        } => op_json!(
+            "vhorizontal_bin",
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            subtract,
+            saturating
+        ),
         OpKind::VLoad { dst, addr, width } => op_json!("vload", dst, addr, width),
         OpKind::VStore { src, addr, width } => op_json!("vstore", src, addr, width),
         OpKind::Leave => op_json!("leave"),
@@ -2729,6 +2836,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             width,
         } => op_json!("vpopcnt", dst, src, elem, width),
+        OpKind::VConflict {
+            dst,
+            src,
+            elem,
+            width,
+        } => op_json!("vconflict", dst, src, elem, width),
         OpKind::VPermute {
             dst,
             src1,
@@ -2753,6 +2866,42 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             indices,
             width,
         } => op_json!("vshuffle_bit_qm", dst, src, indices, width),
+        OpKind::VCompress {
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            zeroing,
+        } => op_json!("vcompress", dst, src, mask, elem, width, zeroing),
+        OpKind::VExpand {
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            zeroing,
+        } => op_json!("vexpand", dst, src, mask, elem, width, zeroing),
+        OpKind::X86NarrowInt {
+            dst,
+            src,
+            mask,
+            src_elem,
+            dst_elem,
+            width,
+            mode,
+            zeroing,
+        } => op_json!(
+            "x86_narrow_int",
+            dst,
+            src,
+            mask,
+            src_elem,
+            dst_elem,
+            width,
+            mode,
+            zeroing
+        ),
         OpKind::VDotProductBF16 {
             dst,
             acc,
@@ -2807,6 +2956,154 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             imm,
         } => op_json!("vmpsadbw", dst, src1, src2, width, imm),
+        OpKind::VSadBytes {
+            dst,
+            src1,
+            src2,
+            width,
+        } => op_json!("vsad_bytes", dst, src1, src2, width),
+        OpKind::X86Aes {
+            dst,
+            src1,
+            src2,
+            width,
+            op,
+            imm,
+        } => op_json!("x86_aes", dst, src1, src2, width, op, imm),
+        OpKind::X86Sha512Msg1 { dst, src } => op_json!("x86_sha512_msg1", dst, src),
+        OpKind::X86Sha512Msg2 { dst, src } => op_json!("x86_sha512_msg2", dst, src),
+        OpKind::X86Sha512Rounds2 { dst, state, wk } => {
+            op_json!("x86_sha512_rounds2", dst, state, wk)
+        }
+        OpKind::X86Sm3Msg1 {
+            dst, src1, src2, ..
+        } => op_json!("x86_sm3_msg1", dst, src1, src2),
+        OpKind::X86Sm3Msg2 {
+            dst, src1, src2, ..
+        } => op_json!("x86_sm3_msg2", dst, src1, src2),
+        OpKind::X86Sm3Rounds2 {
+            dst,
+            state,
+            words,
+            imm,
+        } => op_json!("x86_sm3_rounds2", dst, state, words, imm),
+        OpKind::X86Sm4 {
+            dst,
+            src1,
+            src2,
+            width,
+            key_schedule,
+        } => op_json!("x86_sm4", dst, src1, src2, width, key_schedule),
+        OpKind::X86Convert16ToFp32 {
+            dst,
+            src,
+            width,
+            fp16,
+            odd,
+            broadcast,
+        } => op_json!(
+            "x86_convert_16_to_fp32",
+            dst,
+            src,
+            width,
+            fp16,
+            odd,
+            broadcast
+        ),
+        OpKind::X86PackedShiftImm {
+            dst,
+            src,
+            width,
+            elem,
+            shift,
+            amount,
+            byte_lane,
+        } => op_json!(
+            "x86_packed_shift_imm",
+            dst,
+            src,
+            width,
+            elem,
+            shift,
+            amount,
+            byte_lane
+        ),
+        OpKind::X86PackedShift {
+            dst,
+            src,
+            count,
+            width,
+            elem,
+            shift,
+        } => op_json!("x86_packed_shift", dst, src, count, width, elem, shift),
+        OpKind::X86PackedShiftVariable {
+            dst,
+            src,
+            count,
+            width,
+            elem,
+            shift,
+        } => op_json!(
+            "x86_packed_shift_variable",
+            dst,
+            src,
+            count,
+            width,
+            elem,
+            shift
+        ),
+        OpKind::X86PackedRotate {
+            dst,
+            src,
+            count,
+            amount,
+            width,
+            elem,
+            left,
+        } => op_json!(
+            "x86_packed_rotate",
+            dst,
+            src,
+            count,
+            amount,
+            width,
+            elem,
+            left
+        ),
+        OpKind::X86TernaryLogic {
+            dst,
+            src1,
+            src2,
+            src3,
+            imm,
+            width,
+        } => op_json!("x86_ternary_logic", dst, src1, src2, src3, imm, width),
+        OpKind::X86PackedFunnelShift {
+            dst,
+            src,
+            fill,
+            count,
+            amount,
+            width,
+            elem,
+            left,
+        } => op_json!(
+            "x86_packed_funnel_shift",
+            dst,
+            src,
+            fill,
+            count,
+            amount,
+            width,
+            elem,
+            left
+        ),
+        OpKind::X86MultiShiftQB {
+            dst,
+            control,
+            source,
+            width,
+        } => op_json!("x86_multishift_qb", dst, control, source, width),
         OpKind::VDotProductExt {
             dst,
             acc,
@@ -2855,6 +3152,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::BidirShift { .. } => op_json!("bidir_shift"),
         OpKind::SatN { .. } => op_json!("sat_n"),
         OpKind::ClMul { .. } => op_json!("clmul"),
+        OpKind::Crc32C {
+            dst,
+            crc,
+            data,
+            data_width,
+        } => op_json!("crc32c", dst, crc, data, data_width),
         OpKind::CmpyW128Sat { .. } => op_json!("cmpy_w128_sat"),
         OpKind::SatOrigShl { .. } => op_json!("sat_orig_shl"),
         OpKind::HexFpDf {
