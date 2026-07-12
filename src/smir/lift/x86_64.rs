@@ -20884,7 +20884,11 @@ impl X86_64Lifter {
             modrm.reg + if evex && prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if evex { ctx.alloc_vreg() } else { dst };
+        let raw = if evex && prefix.aaa != 0 {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -20897,7 +20901,7 @@ impl X86_64Lifter {
                 shift,
             },
         ));
-        if evex {
+        if evex && prefix.aaa != 0 {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -21013,7 +21017,11 @@ impl X86_64Lifter {
             modrm.reg + if evex && prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if evex { ctx.alloc_vreg() } else { dst };
+        let raw = if evex && prefix.aaa != 0 {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -21026,7 +21034,7 @@ impl X86_64Lifter {
                 shift,
             },
         ));
-        if evex {
+        if evex && prefix.aaa != 0 {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -21152,7 +21160,11 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -21166,7 +21178,9 @@ impl X86_64Lifter {
                 left: opcode == 0x15,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -21296,7 +21310,11 @@ impl X86_64Lifter {
             prefix.vvvv + if prefix.v_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -21309,7 +21327,9 @@ impl X86_64Lifter {
                 width: prefix.width,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
@@ -21595,7 +21615,11 @@ impl X86_64Lifter {
             prefix.vvvv + if prefix.v_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -21610,7 +21634,9 @@ impl X86_64Lifter {
                 left: opcode <= 0x71,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
@@ -21707,7 +21733,11 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -21718,15 +21748,17 @@ impl X86_64Lifter {
                 width: prefix.width,
             },
         ));
-        self.append_evex_vector_mask_result(
-            prefix,
-            dst,
-            raw,
-            VecElementType::I8,
-            pc,
-            ctx,
-            &mut ops,
-        );
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(
+                prefix,
+                dst,
+                raw,
+                VecElementType::I8,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 

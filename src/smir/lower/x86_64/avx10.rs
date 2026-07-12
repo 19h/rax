@@ -171,12 +171,13 @@ impl Avx10Lowerer {
             // AVX10.1 IFMA
             OpKind::VMultiplyAdd52 {
                 dst,
+                acc,
                 src1,
                 src2,
                 width,
                 high,
                 ..
-            } => Some(self.lower_vpmadd52(code, dst, src1, src2, *width, *high)),
+            } => Some(self.lower_vpmadd52(code, dst, acc, src1, src2, *width, *high)),
 
             // AVX10.1 VPOPCNT
             OpKind::VPopcnt {
@@ -217,11 +218,12 @@ impl Avx10Lowerer {
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
+                acc,
                 src1,
                 src2,
                 width,
                 ..
-            } => Some(self.lower_vdpbf16ps(code, dst, src1, src2, *width)),
+            } => Some(self.lower_vdpbf16ps(code, dst, acc, src1, src2, *width)),
 
             OpKind::VCvtFP32ToBF16 {
                 dst,
@@ -261,6 +263,72 @@ impl Avx10Lowerer {
                 imm,
             } => Some(self.lower_vminmax(code, dst, src1, src2, *elem, *width, *imm)),
 
+            OpKind::X86PackedShiftVariable {
+                dst,
+                src,
+                count,
+                width,
+                elem,
+                shift,
+            } => {
+                Some(self.lower_packed_shift_variable(code, dst, src, count, *width, *elem, *shift))
+            }
+
+            OpKind::X86PackedRotate {
+                dst,
+                src,
+                count,
+                width,
+                elem,
+                left,
+                ..
+            } => Some(self.lower_packed_rotate_variable(
+                code,
+                dst,
+                src,
+                count.as_ref(),
+                *width,
+                *elem,
+                *left,
+            )),
+
+            OpKind::X86TernaryLogic {
+                dst,
+                src1,
+                src2,
+                src3,
+                imm,
+                width,
+            } => Some(self.lower_ternary_logic(code, dst, src1, src2, src3, *imm, *width)),
+
+            OpKind::X86PackedFunnelShift {
+                dst,
+                src,
+                fill,
+                count,
+                amount,
+                width,
+                elem,
+                left,
+            } => Some(self.lower_packed_funnel_shift(
+                code,
+                dst,
+                src,
+                fill,
+                count.as_ref(),
+                *amount,
+                *width,
+                *elem,
+                *left,
+            )),
+
+            OpKind::X86MultiShiftQB {
+                dst,
+                control,
+                source,
+                width,
+            } => Some(self.lower_multishift_qb(code, dst, control, source, *width)),
+
             // AVX10.2 VMPSADBW
             OpKind::VMpsadbw {
                 dst,
@@ -273,9 +341,11 @@ impl Avx10Lowerer {
             // AVX10.2 Media acceleration
             OpKind::VDotProductExt {
                 dst,
+                acc,
                 src1,
                 src2,
                 src_elem,
+                acc_elem,
                 width,
                 src1_signed,
                 src2_signed,
@@ -284,9 +354,11 @@ impl Avx10Lowerer {
             } => Some(self.lower_vdotproduct_ext(
                 code,
                 dst,
+                acc,
                 src1,
                 src2,
                 *src_elem,
+                *acc_elem,
                 *width,
                 *src1_signed,
                 *src2_signed,
@@ -357,11 +429,17 @@ impl Avx10Lowerer {
         &self,
         code: &mut CodeBuffer,
         dst: &VReg,
+        acc: &VReg,
         src1: &VReg,
         src2: &VReg,
         width: VecWidth,
         high: bool,
     ) -> Avx10LowerResult<()> {
+        if dst != acc {
+            return Err(LowerError::UnsupportedOperation(
+                "VPMADD52 requires acc aliased with dst".to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
@@ -507,10 +585,16 @@ impl Avx10Lowerer {
         &self,
         code: &mut CodeBuffer,
         dst: &VReg,
+        acc: &VReg,
         src1: &VReg,
         src2: &VReg,
         width: VecWidth,
     ) -> Avx10LowerResult<()> {
+        if dst != acc {
+            return Err(LowerError::UnsupportedOperation(
+                "VDPBF16PS requires acc aliased with dst".to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
@@ -681,6 +765,188 @@ impl Avx10Lowerer {
         Ok(())
     }
 
+    fn lower_packed_shift_variable(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        count: &VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        shift: ShiftOp,
+    ) -> Avx10LowerResult<()> {
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let count_reg = self.vreg_to_zmm(count)?;
+        let (opcode, w) = match (elem, shift) {
+            (VecElementType::I16, ShiftOp::Lsr) => (0x10, true),
+            (VecElementType::I16, ShiftOp::Asr) => (0x11, true),
+            (VecElementType::I16, ShiftOp::Lsl) => (0x12, true),
+            (VecElementType::I32 | VecElementType::I64, ShiftOp::Lsr) => {
+                (0x45, elem == VecElementType::I64)
+            }
+            (VecElementType::I32 | VecElementType::I64, ShiftOp::Asr) => {
+                (0x46, elem == VecElementType::I64)
+            }
+            (VecElementType::I32 | VecElementType::I64, ShiftOp::Lsl) => {
+                (0x47, elem == VecElementType::I64)
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOperation(format!(
+                    "packed variable shift {elem:?} {shift:?}"
+                )));
+            }
+        };
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(2, 1, w, width, dst_reg, src_reg, count_reg, 0, false);
+        enc.emit_opcode(opcode);
+        enc.emit_modrm_rr(dst_reg, count_reg);
+        Ok(())
+    }
+
+    fn lower_packed_rotate_variable(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        count: Option<&VReg>,
+        width: VecWidth,
+        elem: VecElementType,
+        left: bool,
+    ) -> Avx10LowerResult<()> {
+        let Some(count) = count else {
+            return Err(LowerError::UnsupportedOperation(
+                "immediate packed rotate requires group encoding".to_string(),
+            ));
+        };
+        if !matches!(elem, VecElementType::I32 | VecElementType::I64) {
+            return Err(LowerError::UnsupportedOperation(format!(
+                "packed rotate {elem:?}"
+            )));
+        }
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let count_reg = self.vreg_to_zmm(count)?;
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(
+            2,
+            1,
+            elem == VecElementType::I64,
+            width,
+            dst_reg,
+            src_reg,
+            count_reg,
+            0,
+            false,
+        );
+        enc.emit_opcode(if left { 0x15 } else { 0x14 });
+        enc.emit_modrm_rr(dst_reg, count_reg);
+        Ok(())
+    }
+
+    fn lower_ternary_logic(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src1: &VReg,
+        src2: &VReg,
+        src3: &VReg,
+        imm: u8,
+        width: VecWidth,
+    ) -> Avx10LowerResult<()> {
+        if dst != src1 {
+            return Err(LowerError::UnsupportedOperation(
+                "VPTERNLOG requires src1 aliased with dst".to_string(),
+            ));
+        }
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src2_reg = self.vreg_to_zmm(src2)?;
+        let src3_reg = self.vreg_to_zmm(src3)?;
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(3, 1, false, width, dst_reg, src2_reg, src3_reg, 0, false);
+        enc.emit_opcode(0x25);
+        enc.emit_modrm_rr(dst_reg, src3_reg);
+        enc.emit_imm8(imm);
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn lower_packed_funnel_shift(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        fill: &VReg,
+        count: Option<&VReg>,
+        amount: u8,
+        width: VecWidth,
+        elem: VecElementType,
+        left: bool,
+    ) -> Avx10LowerResult<()> {
+        let (opcode, w) = match (left, elem) {
+            (true, VecElementType::I16) => (0x70, true),
+            (true, VecElementType::I32) => (0x71, false),
+            (true, VecElementType::I64) => (0x71, true),
+            (false, VecElementType::I16) => (0x72, true),
+            (false, VecElementType::I32) => (0x73, false),
+            (false, VecElementType::I64) => (0x73, true),
+            _ => {
+                return Err(LowerError::UnsupportedOperation(format!(
+                    "packed funnel shift {elem:?}"
+                )));
+            }
+        };
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let fill_reg = self.vreg_to_zmm(fill)?;
+        let (map, vvvv, rm, immediate) = if let Some(count) = count {
+            if dst != src {
+                return Err(LowerError::UnsupportedOperation(
+                    "variable funnel shift requires src aliased with dst".to_string(),
+                ));
+            }
+            (2, fill_reg, self.vreg_to_zmm(count)?, None)
+        } else {
+            (3, src_reg, fill_reg, Some(amount))
+        };
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(map, 1, w, width, dst_reg, vvvv, rm, 0, false);
+        enc.emit_opcode(opcode);
+        enc.emit_modrm_rr(dst_reg, rm);
+        if let Some(imm) = immediate {
+            enc.emit_imm8(imm);
+        }
+        Ok(())
+    }
+
+    fn lower_multishift_qb(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        control: &VReg,
+        source: &VReg,
+        width: VecWidth,
+    ) -> Avx10LowerResult<()> {
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let control_reg = self.vreg_to_zmm(control)?;
+        let source_reg = self.vreg_to_zmm(source)?;
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(
+            2,
+            1,
+            true,
+            width,
+            dst_reg,
+            control_reg,
+            source_reg,
+            0,
+            false,
+        );
+        enc.emit_opcode(0x83);
+        enc.emit_modrm_rr(dst_reg, source_reg);
+        Ok(())
+    }
+
     // ========================================================================
     // AVX10.2 VMPSADBW
     // ========================================================================
@@ -720,14 +986,21 @@ impl Avx10Lowerer {
         &self,
         code: &mut CodeBuffer,
         dst: &VReg,
+        acc: &VReg,
         src1: &VReg,
         src2: &VReg,
         src_elem: VecElementType,
+        acc_elem: VecElementType,
         width: VecWidth,
         src1_signed: bool,
         src2_signed: bool,
         saturate: bool,
     ) -> Avx10LowerResult<()> {
+        if dst != acc || acc_elem != VecElementType::I32 {
+            return Err(LowerError::UnsupportedOperation(
+                "extended VNNI requires an I32 accumulator aliased with dst".to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
@@ -893,6 +1166,139 @@ mod tests {
             let result = lowerer.try_lower(&op, &mut code).unwrap();
             assert!(matches!(result, Err(LowerError::UnsupportedOperation(_))));
             assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn destructive_avx_accumulators_must_alias_destinations() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        let zmm4 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(4)));
+        for op in [
+            OpKind::VMultiplyAdd52 {
+                dst: zmm1,
+                acc: zmm4,
+                src1: zmm2,
+                src2: zmm3,
+                width: VecWidth::V512,
+                high: false,
+            },
+            OpKind::VDotProductBF16 {
+                dst: zmm1,
+                acc: zmm4,
+                src1: zmm2,
+                src2: zmm3,
+                width: VecWidth::V512,
+            },
+            OpKind::VDotProductExt {
+                dst: zmm1,
+                acc: zmm4,
+                src1: zmm2,
+                src2: zmm3,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V512,
+                src1_signed: true,
+                src2_signed: true,
+                saturate: false,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let error = lowerer
+                .try_lower(&op, &mut code)
+                .expect("recognized destructive AVX op")
+                .expect_err("non-aliased accumulator must be rejected");
+            assert!(matches!(error, LowerError::UnsupportedOperation(_)));
+            assert_eq!(code.len(), 0, "rejection emitted partial code for {op:?}");
+        }
+    }
+
+    #[test]
+    fn lowers_x86_evex_bitmanip_ir_to_canonical_encodings() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        let cases = [
+            (
+                OpKind::X86PackedShiftVariable {
+                    dst: zmm1,
+                    src: zmm2,
+                    count: zmm3,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    shift: ShiftOp::Lsl,
+                },
+                &[0x62, 0xF2, 0x6D, 0x48, 0x47, 0xCB][..],
+            ),
+            (
+                OpKind::X86PackedRotate {
+                    dst: zmm1,
+                    src: zmm2,
+                    count: Some(zmm3),
+                    amount: 0,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0x48, 0x15, 0xCB][..],
+            ),
+            (
+                OpKind::X86TernaryLogic {
+                    dst: zmm1,
+                    src1: zmm1,
+                    src2: zmm2,
+                    src3: zmm3,
+                    imm: 0x96,
+                    width: VecWidth::V512,
+                },
+                &[0x62, 0xF3, 0x6D, 0x48, 0x25, 0xCB, 0x96][..],
+            ),
+            (
+                OpKind::X86PackedFunnelShift {
+                    dst: zmm1,
+                    src: zmm2,
+                    fill: zmm3,
+                    count: None,
+                    amount: 7,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                },
+                &[0x62, 0xF3, 0x6D, 0x48, 0x71, 0xCB, 0x07][..],
+            ),
+            (
+                OpKind::X86PackedFunnelShift {
+                    dst: zmm1,
+                    src: zmm1,
+                    fill: zmm2,
+                    count: Some(zmm3),
+                    amount: 0,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0x48, 0x71, 0xCB][..],
+            ),
+            (
+                OpKind::X86MultiShiftQB {
+                    dst: zmm1,
+                    control: zmm2,
+                    source: zmm3,
+                    width: VecWidth::V512,
+                },
+                &[0x62, 0xF2, 0xED, 0x48, 0x83, 0xCB][..],
+            ),
+        ];
+        for (op, expected) in cases {
+            let mut code = CodeBuffer::new();
+            lowerer
+                .try_lower(&op, &mut code)
+                .expect("recognized EVEX bit-manipulation op")
+                .expect("lower EVEX bit-manipulation op");
+            assert_eq!(code.as_slice(), expected, "{op:?}");
         }
     }
 }

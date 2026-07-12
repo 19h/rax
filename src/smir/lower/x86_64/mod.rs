@@ -3838,6 +3838,14 @@ impl X86_64Lowerer {
 
     /// Lower a single operation
     fn lower_op(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
+        // AVX10 owns the EVEX-native vector operations that do not have a
+        // legacy scalar lowering below. Keep this dispatch in the production
+        // path so the dedicated encoder is exercised by normal JIT lowering,
+        // not only by its module-local unit tests.
+        if let Some(result) = avx10::Avx10Lowerer::new().try_lower(&op.kind, &mut self.code) {
+            return result;
+        }
+
         let alu_hint = match op.x86_hint {
             Some(X86OpHint::AluEncoding(enc)) => Some(enc),
             _ => None,
@@ -11015,12 +11023,15 @@ mod tests {
             .lift_block(0x1000, &reader, &mut lctx)
             .expect("lift REX2 block");
         block.set_terminator(Terminator::Return { values: vec![] });
+        let ops_debug = format!("{:?}", block.ops);
         let block_id = block.id;
         let mut func = SmirFunction::new(FunctionId(0), block_id, 0x1000);
         func.add_block(block);
 
         let mut lowerer = X86_64Lowerer::new();
-        let res = lowerer.lower_function(&func).expect("lower REX2 block");
+        let res = lowerer.lower_function(&func).unwrap_or_else(|error| {
+            panic!("lower REX2 block {bytes:02X?}: {error:?}; ops={ops_debug}")
+        });
         assert!(res.relocations.is_empty(), "REX2 block should not relocate");
         (lowerer.finalize().expect("finalize"), res.entry_offset)
     }
@@ -11068,6 +11079,100 @@ mod tests {
         lowerer
             .lower_function(&func)
             .expect_err("single op should fail to lower")
+    }
+
+    #[test]
+    fn production_lowerer_routes_avx10_ops_and_propagates_shape_errors() {
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        let bytes = lower_single_op(OpKind::VDotProduct {
+            dst: zmm1,
+            acc: zmm1,
+            src1: zmm2,
+            src2: zmm3,
+            src_elem: VecElementType::I8,
+            acc_elem: VecElementType::I32,
+            width: VecWidth::V512,
+            src1_unsigned: true,
+            saturate: false,
+        });
+        assert!(
+            bytes
+                .windows(6)
+                .any(|window| window == [0x62, 0xF2, 0x6D, 0x48, 0x50, 0xCB]),
+            "production lowering omitted VPDPBUSD: {bytes:02X?}"
+        );
+
+        let ternary = lower_single_op(OpKind::X86TernaryLogic {
+            dst: zmm1,
+            src1: zmm1,
+            src2: zmm2,
+            src3: zmm3,
+            imm: 0x96,
+            width: VecWidth::V512,
+        });
+        assert!(
+            ternary
+                .windows(7)
+                .any(|window| window == [0x62, 0xF3, 0x6D, 0x48, 0x25, 0xCB, 0x96]),
+            "production lowering omitted VPTERNLOGD: {ternary:02X?}"
+        );
+
+        let error = lower_single_op_err(OpKind::VDotProduct {
+            dst: zmm1,
+            acc: zmm2,
+            src1: zmm2,
+            src2: zmm3,
+            src_elem: VecElementType::I8,
+            acc_elem: VecElementType::I32,
+            width: VecWidth::V512,
+            src1_unsigned: true,
+            saturate: false,
+        });
+        assert!(
+            matches!(error, LowerError::UnsupportedOperation(message) if message.contains("accumulator aliased with dst"))
+        );
+    }
+
+    #[test]
+    fn lifted_evex_bitmanip_instructions_reach_native_jit_lowering() {
+        for (instruction, expected) in [
+            (
+                &[0x62, 0xF2, 0x6D, 0x48, 0x47, 0xCB][..],
+                &[0x62, 0xF2, 0x6D, 0x48, 0x47, 0xCB][..],
+            ),
+            (
+                &[0x62, 0xF2, 0x6D, 0x48, 0x15, 0xCB][..],
+                &[0x62, 0xF2, 0x6D, 0x48, 0x15, 0xCB][..],
+            ),
+            (
+                &[0x62, 0xF3, 0x6D, 0x48, 0x25, 0xCB, 0x96][..],
+                &[0x62, 0xF3, 0x6D, 0x48, 0x25, 0xCB, 0x96][..],
+            ),
+            (
+                &[0x62, 0xF3, 0x6D, 0x48, 0x71, 0xCB, 0x07][..],
+                &[0x62, 0xF3, 0x6D, 0x48, 0x71, 0xCB, 0x07][..],
+            ),
+            (
+                &[0x62, 0xF2, 0x6D, 0x48, 0x71, 0xCB][..],
+                &[0x62, 0xF2, 0x6D, 0x48, 0x71, 0xCB][..],
+            ),
+            (
+                &[0x62, 0xF2, 0xED, 0x48, 0x83, 0xCB][..],
+                &[0x62, 0xF2, 0xED, 0x48, 0x83, 0xCB][..],
+            ),
+        ] {
+            let mut block = instruction.to_vec();
+            block.push(0xF4);
+            let (lowered, _) = lower_rex2_block(&block);
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "lift/JIT round trip omitted {instruction:02X?}: {lowered:02X?}"
+            );
+        }
     }
 
     #[test]

@@ -12,7 +12,7 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
-    VecWidth, X86Reg,
+    VecElementType, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -994,6 +994,56 @@ pub fn constant_folding(block: &mut SmirBlock) -> usize {
             } if matches!(flags, FlagUpdate::None) => Some(OpKind::Mov {
                 dst: *dst,
                 src: SrcOperand::Reg(*src1),
+                width: *width,
+            }),
+
+            // VPTERNLOG truth-table projections. With index bits ordered as
+            // (src1, src2, src3), AA/CC/F0 select one input unchanged.
+            OpKind::X86TernaryLogic {
+                dst,
+                src1,
+                src2,
+                src3,
+                imm,
+                width,
+            } if matches!(imm, 0xAA | 0xCC | 0xF0) => Some(OpKind::VMov {
+                dst: *dst,
+                src: match imm {
+                    0xAA => *src3,
+                    0xCC => *src2,
+                    0xF0 => *src1,
+                    _ => unreachable!(),
+                },
+                width: *width,
+            }),
+
+            // Immediate packed rotates and funnel shifts reduce their counts
+            // modulo the element width. A reduced zero count is an exact copy.
+            OpKind::X86PackedRotate {
+                dst,
+                src,
+                count: None,
+                amount,
+                width,
+                elem,
+                ..
+            } if u32::from(*amount) % (elem.bytes() * 8) == 0 => Some(OpKind::VMov {
+                dst: *dst,
+                src: *src,
+                width: *width,
+            }),
+
+            OpKind::X86PackedFunnelShift {
+                dst,
+                src,
+                count: None,
+                amount,
+                width,
+                elem,
+                ..
+            } if u32::from(*amount) % (elem.bytes() * 8) == 0 => Some(OpKind::VMov {
+                dst: *dst,
+                src: *src,
                 width: *width,
             }),
 
@@ -8416,6 +8466,66 @@ mod tests {
         } else {
             panic!("Expected Mov operation");
         }
+    }
+
+    #[test]
+    fn folds_evex_ternary_projections_and_zero_reduced_immediates() {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        let dst = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let src3 = VReg::virt(3);
+        block.push_op(make_op(
+            0,
+            OpKind::X86TernaryLogic {
+                dst,
+                src1,
+                src2,
+                src3,
+                imm: 0xAA,
+                width: VecWidth::V512,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::X86PackedRotate {
+                dst,
+                src: src1,
+                count: None,
+                amount: 64,
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                left: true,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::X86PackedFunnelShift {
+                dst,
+                src: src2,
+                fill: src3,
+                count: None,
+                amount: 128,
+                width: VecWidth::V512,
+                elem: VecElementType::I64,
+                left: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        assert_eq!(constant_folding(&mut block), 3);
+        assert!(matches!(
+            block.ops[0].kind,
+            OpKind::VMov { src, width: VecWidth::V512, .. } if src == src3
+        ));
+        assert!(matches!(
+            block.ops[1].kind,
+            OpKind::VMov { src, width: VecWidth::V512, .. } if src == src1
+        ));
+        assert!(matches!(
+            block.ops[2].kind,
+            OpKind::VMov { src, width: VecWidth::V512, .. } if src == src2
+        ));
     }
 
     #[test]
