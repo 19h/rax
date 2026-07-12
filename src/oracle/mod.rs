@@ -2833,9 +2833,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::VPopcnt {
             dst,
             src,
+            mask,
             elem,
             width,
-        } => op_json!("vpopcnt", dst, src, elem, width),
+            zeroing,
+        } => op_json!("vpopcnt", dst, src, mask, elem, width, zeroing),
         OpKind::VConflict {
             dst,
             src,

@@ -938,7 +938,8 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 
     if !matches!(
         op,
-        OpKind::X86PackedShiftVariable { .. }
+        OpKind::VPopcnt { .. }
+            | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
             | OpKind::X86TernaryLogic { .. }
             | OpKind::X86PackedFunnelShift { .. }
@@ -984,6 +985,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_vl = false;
     let mut needs_vbmi = false;
     let mut needs_vbmi2 = false;
+    let mut needs_bitalg = false;
+    let mut needs_vpopcntdq = false;
 
     for op in func
         .blocks
@@ -995,7 +998,8 @@ pub fn x86_native_vector_features_supported_excluding(
     {
         any = true;
         let width = match op {
-            OpKind::X86PackedShiftVariable { width, .. }
+            OpKind::VPopcnt { width, .. }
+            | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
             | OpKind::X86TernaryLogic { width, .. }
             | OpKind::X86PackedFunnelShift { width, .. }
@@ -1005,6 +1009,18 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_vl |= width != VecWidth::V512;
         needs_vbmi |= matches!(op, OpKind::X86MultiShiftQB { .. });
         needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. });
+        if let OpKind::VPopcnt { elem, .. } = op {
+            needs_bitalg |= matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I8
+                    | crate::smir::ir::types::VecElementType::I16
+            );
+            needs_vpopcntdq |= matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
+            );
+        }
     }
 
     if !any {
@@ -1018,11 +1034,19 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
             && (!needs_vbmi || std::is_x86_feature_detected!("avx512vbmi"))
             && (!needs_vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
+            && (!needs_bitalg || std::is_x86_feature_detected!("avx512bitalg"))
+            && (!needs_vpopcntdq || std::is_x86_feature_detected!("avx512vpopcntdq"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     {
-        let _ = (needs_vl, needs_vbmi, needs_vbmi2);
+        let _ = (
+            needs_vl,
+            needs_vbmi,
+            needs_vbmi2,
+            needs_bitalg,
+            needs_vpopcntdq,
+        );
         false
     }
 }
@@ -1591,6 +1615,14 @@ mod jit_gate_tests {
         let zmm3 = x86(X86Reg::Zmm(3));
         let k4 = x86(X86Reg::K(4));
         let native_ops = [
+            OpKind::VPopcnt {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
             OpKind::X86PackedShiftVariable {
                 dst: zmm1,
                 src: zmm2,
@@ -1650,7 +1682,7 @@ mod jit_gate_tests {
         }
 
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-        builder.push_op(0x1000, native_ops[1].clone());
+        builder.push_op(0x1000, native_ops[0].clone());
         builder.set_terminator(Terminator::Return { values: vec![] });
         let func = builder.finish();
         assert!(uses_x86_native_vectors_excluding(

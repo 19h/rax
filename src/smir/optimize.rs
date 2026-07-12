@@ -2486,9 +2486,13 @@ impl OpKind {
 
             OpKind::VUnary { src, .. }
             | OpKind::VReduce { src, .. }
-            | OpKind::VPopcnt { src, .. }
             | OpKind::VConflict { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::VPopcnt { src, mask, .. } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::X86Aes { src1, src2, .. } => {
@@ -3200,10 +3204,13 @@ impl OpKind {
                 result.push(*src2);
             }
 
-            OpKind::VPopcnt { src, .. }
-            | OpKind::VConflict { src, .. }
-            | OpKind::VCvtBF16ToFP32 { src, .. } => {
+            OpKind::VConflict { src, .. } | OpKind::VCvtBF16ToFP32 { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::VPopcnt { src, mask, .. } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VPermute {
@@ -9052,8 +9059,10 @@ mod tests {
             OpKind::VPopcnt {
                 dst,
                 src: source,
+                mask: None,
                 elem: VecElementType::I8,
                 width: VecWidth::V128,
+                zeroing: false,
             },
         ));
         block.set_terminator(Terminator::Return { values: vec![dst] });

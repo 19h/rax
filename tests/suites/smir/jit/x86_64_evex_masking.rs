@@ -304,6 +304,68 @@ fn hot_masked_rotate_jits_and_round_trips_zmm_and_opmask_state() {
 }
 
 #[test]
+fn hot_masked_vpopcntd_jits_with_direct_mask_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vpopcntdq")
+    {
+        return;
+    }
+
+    // loop: vpopcntd %zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7d, 0xcc, 0x55, 0xca]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]); // back 10 bytes
+    code.push(0xf4);
+
+    let source = [
+        0x0123_4567_89ab_cdef,
+        0x1111_2222_3333_4444,
+        0x8000_0001_7fff_ffff,
+        0xdead_beef_cafe_babe,
+        0x0102_0304_0506_0708,
+        0xf0e0_d0c0_b0a0_9080,
+        0x1357_9bdf_2468_ace0,
+        0xffff_ffff_0000_0001,
+    ];
+    let mask = 0x9669u64;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        let input = (source[lane / 2] >> ((lane % 2) * 32)) as u32;
+        let output = if ((mask >> lane) & 1) != 0 {
+            input.count_ones()
+        } else {
+            0
+        };
+        expected[lane / 2] |= (output as u64) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VPOPCNTD loop"),
+        "a modeled register-only masked VPOPCNTD loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0, "native loop drained");
+    assert_eq!(get_zmm(&after_jit, 1), expected);
+    assert_eq!(get_zmm(&after_jit, 2), source, "source ZMM survived");
+    assert_eq!(after_jit.k[4], mask, "source opmask survived");
+
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
 fn control_gpr_hot_loop_does_jit() {
     // Sanity: an all-GPR hot loop with the same shape DOES promote, so the
     // `!jitted` assertion above is meaningful (the harness can trigger the JIT).

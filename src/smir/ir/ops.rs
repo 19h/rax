@@ -2740,8 +2740,10 @@ pub enum OpKind {
     VPopcnt {
         dst: VReg,
         src: VReg,
+        mask: Option<VReg>,
         elem: VecElementType,
         width: VecWidth,
+        zeroing: bool,
     },
 
     /// Per-element bit mask of equal elements at lower lane indices.

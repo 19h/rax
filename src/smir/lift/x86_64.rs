@@ -10998,18 +10998,18 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = ctx.alloc_vreg();
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::VPopcnt {
-                dst: raw,
+                dst,
                 src,
+                mask,
                 elem,
                 width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -53582,6 +53582,27 @@ mod tests {
                 "missing VPOPCNT for {bytes:02X?}"
             );
         }
+
+        let direct_masked = lift_single(&[0x62, 0xA2, 0x7D, 0x8A, 0x54, 0xCA]).unwrap();
+        assert!(direct_masked.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VPopcnt {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+                zeroing: true,
+            }
+        )));
+        assert_eq!(
+            direct_masked
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::VPopcnt { .. }))
+                .count(),
+            1
+        );
 
         let broadcast = lift_single(&[0x62, 0xE2, 0x7D, 0xDE, 0x55, 0x08]).unwrap();
         assert_eq!(

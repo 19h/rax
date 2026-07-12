@@ -15631,9 +15631,19 @@ impl Aarch64Lowerer {
             OpKind::VPopcnt {
                 dst,
                 src,
+                mask,
                 elem,
                 width,
-            } => self.lower_vpopcnt(*dst, *src, *elem, *width),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VPopcnt on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vpopcnt(*dst, *src, *elem, *width)
+                }
+            }
             OpKind::VConflict { .. } => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native VConflict".into(),
             }),
@@ -30979,14 +30989,18 @@ mod tests {
             OpKind::VPopcnt {
                 dst: v(0),
                 src: v(1),
+                mask: None,
                 elem: VecElementType::I8,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VPopcnt {
                 dst: v(2),
                 src: v(3),
+                mask: None,
                 elem: VecElementType::I8,
                 width: VecWidth::V64,
+                zeroing: false,
             },
         ]);
 
@@ -31886,15 +31900,19 @@ mod tests {
         assert_unsupported(OpKind::VPopcnt {
             dst: v(0),
             src: v(1),
+            mask: None,
             elem: VecElementType::I16,
             width: VecWidth::V128,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VPopcnt {
             dst: v(0),
             src: v(1),
+            mask: None,
             elem: VecElementType::I8,
             width: VecWidth::V256,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VMultiplyAdd52 {

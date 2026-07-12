@@ -183,9 +183,11 @@ impl Avx10Lowerer {
             OpKind::VPopcnt {
                 dst,
                 src,
+                mask,
                 elem,
                 width,
-            } => Some(self.lower_vpopcnt(code, dst, src, *elem, *width)),
+                zeroing,
+            } => Some(self.lower_vpopcnt(code, dst, src, mask.as_ref(), *elem, *width, *zeroing)),
 
             // AVX10.1 VBMI permute
             OpKind::VPermute {
@@ -511,11 +513,14 @@ impl Avx10Lowerer {
         code: &mut CodeBuffer,
         dst: &VReg,
         src: &VReg,
+        mask: Option<&VReg>,
         elem: VecElementType,
         width: VecWidth,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src_reg = self.vreg_to_zmm(src)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
 
         let (opcode, w) = match elem {
             VecElementType::I8 => (0x54, false),
@@ -534,7 +539,7 @@ impl Avx10Lowerer {
             2, // map 0F38
             1, // pp = 66
             w, width, dst_reg, 0, // no vvvv source
-            src_reg, 0, false,
+            src_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, src_reg);
@@ -1319,6 +1324,28 @@ mod tests {
         let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VPopcnt {
+                    dst: zmm1,
+                    src: zmm2,
+                    mask: Some(k4),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x7D, 0xCC, 0x54, 0xCA][..],
+            ),
+            (
+                OpKind::VPopcnt {
+                    dst: zmm17,
+                    src: zmm18,
+                    mask: Some(k7),
+                    elem: VecElementType::I64,
+                    width: VecWidth::V512,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0xFD, 0x4F, 0x55, 0xCA][..],
+            ),
             (
                 OpKind::X86PackedShiftVariable {
                     dst: zmm1,

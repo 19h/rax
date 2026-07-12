@@ -8418,9 +8418,12 @@ impl SmirInterpreter {
             OpKind::VPopcnt {
                 dst,
                 src,
+                mask,
                 elem,
                 width,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let input = Self::read_vec(ctx, *src);
                 let bits = elem.bytes() * 8;
                 let mut result = [0u64; 16];
@@ -8428,6 +8431,14 @@ impl SmirInterpreter {
                     let count = Self::get_lane(&input, lane, bits).count_ones();
                     Self::set_lane(&mut result, lane, bits, u64::from(count));
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 

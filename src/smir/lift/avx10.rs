@@ -510,8 +510,10 @@ impl Avx10Lifter {
             OpKind::VPopcnt {
                 dst,
                 src,
+                mask: None,
                 elem,
                 width,
+                zeroing: false,
             },
         );
 
