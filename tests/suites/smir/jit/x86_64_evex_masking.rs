@@ -735,7 +735,6 @@ fn vector_region_with_mmu_load_preserves_complete_zmm_and_k_state() {
     }
 
     let mut vcpu = make_vcpu(&code);
-    vcpu.set_jit_mem(true);
     let mut regs = vcpu.get_regs().unwrap();
     regs.rcx = 200;
     regs.rdi = LOAD_ADDR + data_offset;
@@ -812,6 +811,21 @@ fn vector_region_mmu_fault_preserves_complete_zmm_and_k_state() {
 }
 
 #[test]
+fn vector_region_mmu_path_can_be_explicitly_disabled() {
+    let code = [
+        0x8b, 0x07, // mov eax,[rdi]
+        0x62, 0xf1, 0x75, 0x48, 0x72, 0xca, 0x01, // vprold
+        0xf4,
+    ];
+    let mut vcpu = make_vcpu(&code);
+    vcpu.set_jit_mem(false);
+    assert!(
+        !vcpu.jit_try_block().expect("probe disabled MMU JIT"),
+        "explicitly disabling memory JIT must retain interpreter fallback"
+    );
+}
+
+#[test]
 fn vector_region_callout_round_trips_callee_vector_mutations() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
@@ -858,7 +872,6 @@ fn vector_region_callout_round_trips_callee_vector_mutations() {
     }
 
     let mut vcpu = make_vcpu(&code);
-    vcpu.set_jit_call(true);
     let mut regs = vcpu.get_regs().unwrap();
     let initial_rsp = regs.rsp;
     regs.rcx = 200;

@@ -366,14 +366,13 @@ pub struct X86_64Vcpu {
     /// `jit_cache` and are still SMC-invalidated for correctness.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     jit_ineligible: std::collections::HashMap<(u64, u64), u64>,
-    /// JIT of memory-touching regions (Load/Store via MMU helper calls). Seeded
-    /// from `RAX_JIT_MEM` at construction; settable for tests. Off ⇒ memory ops
-    /// bail to the interpreter (the validated default).
+    /// JIT of memory-touching regions (Load/Store via MMU helper calls). Enabled
+    /// by default; `RAX_JIT_NO_MEM` disables it. Independently settable in tests.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     jit_mem: bool,
     /// Lift guest calls into interpreter callouts while retaining the native
-    /// caller region. Seeded from `RAX_JIT_CALL`; independently settable in
-    /// regression tests.
+    /// caller region. Enabled by default; `RAX_JIT_NO_CALL` disables it.
+    /// Independently settable in regression tests.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     jit_call: bool,
     /// Set by [`rax_jit_call`] (the lift-through-calls helper) when a callee
@@ -3612,15 +3611,19 @@ fn jit_bail_log() -> bool {
     *ON.get_or_init(|| std::env::var_os("RAX_JIT_BAIL").is_some())
 }
 
-/// RAX_JIT_MEM=1 enables JIT of memory-touching hot regions: register Load/Store
-/// lower to MMU helper calls (`rax_jit_mem_load`/`rax_jit_mem_store`) with a
-/// per-op fault-bail to the interpreter. Off by default while it soaks; the
-/// register-only path (default) is unaffected.
+/// Memory-touching hot regions are enabled by default: register Load/Store lower
+/// to MMU helper calls (`rax_jit_mem_load`/`rax_jit_mem_store`) with per-op
+/// fault-bail to the interpreter. `RAX_JIT_NO_MEM=1` restores register-only JIT.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn jit_default_enabled(disable_present: bool) -> bool {
+    !disable_present
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn jit_mem_enabled() -> bool {
     use std::sync::OnceLock;
     static ON: OnceLock<bool> = OnceLock::new();
-    *ON.get_or_init(|| std::env::var_os("RAX_JIT_MEM").is_some())
+    *ON.get_or_init(|| jit_default_enabled(std::env::var_os("RAX_JIT_NO_MEM").is_some()))
 }
 
 /// Result of a JIT memory load: `value` in RAX, `ok` in RDX (SysV two-eightbyte
@@ -3960,15 +3963,15 @@ unsafe extern "C" fn rax_jit_call(
     ok
 }
 
-/// RAX_JIT_CALL=1 enables lift-through-calls: a guest CALL inside a hot region
-/// lowers to a call-out into [`rax_jit_call`] (instead of being a region-ending
-/// frontier), so call-heavy loops compile and run natively between calls. Opt-in
-/// while it soaks; requires (and implies) the mem-helper path.
+/// Lift-through-calls is enabled by default: a guest CALL inside a hot region
+/// lowers to a call-out into [`rax_jit_call`] instead of ending the region, so
+/// call-heavy loops remain native between callees. `RAX_JIT_NO_CALL=1` restores
+/// call-as-frontier behavior. Call mode requires and implies the MMU helper path.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn jit_call_enabled() -> bool {
     use std::sync::OnceLock;
     static ON: OnceLock<bool> = OnceLock::new();
-    *ON.get_or_init(|| std::env::var_os("RAX_JIT_CALL").is_some())
+    *ON.get_or_init(|| jit_default_enabled(std::env::var_os("RAX_JIT_NO_CALL").is_some()))
 }
 
 /// Classify the first reason an executed block of `func` fails the clobber gate:
@@ -3977,8 +3980,10 @@ fn jit_call_enabled() -> bool {
 fn jit_classify_bail(
     func: &crate::smir::ir::SmirFunction,
     exits: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+    allow_mem: bool,
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+    use crate::smir::lower::runtime::is_x86_native_vector_op;
     let is_sp_bp = |v: &VReg| {
         matches!(
             v,
@@ -4008,7 +4013,9 @@ fn jit_classify_bail(
                     }
                 }
             }
-            if !op.is_jit_safe() {
+            let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+            let vector_ok = is_x86_native_vector_op(&op.kind);
+            if !op.is_jit_safe() && !mem_ok && !vector_ok {
                 return variant(&op.kind);
             }
             if op
@@ -4311,7 +4318,7 @@ impl X86_64Vcpu {
                 if jit_bail_log() {
                     eprintln!(
                         "[JIT-BAIL] gate:{} @ {:#x} (call={cm})",
-                        jit_classify_bail(&func, &exits),
+                        jit_classify_bail(&func, &exits, allow_mem),
                         entry
                     );
                 }
@@ -5029,7 +5036,7 @@ impl X86_64Vcpu {
     }
 
     /// Enable/disable JIT of memory-touching regions (Load/Store via MMU helper
-    /// calls). For tests; production seeds this from `RAX_JIT_MEM`.
+    /// calls). For tests; production defaults on unless `RAX_JIT_NO_MEM` is set.
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit_mem = on;
     }
@@ -5344,6 +5351,50 @@ mod tests {
 
         assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
         assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
+    }
+
+    #[test]
+    fn jit_memory_and_call_capabilities_default_on_with_explicit_opt_out() {
+        assert!(jit_default_enabled(false));
+        assert!(!jit_default_enabled(true));
+    }
+
+    #[test]
+    fn jit_bail_classifier_skips_admitted_memory_operations() {
+        use crate::smir::ir::FunctionBuilder;
+        use crate::smir::ir::Terminator;
+        use crate::smir::ir::ops::OpKind;
+        use crate::smir::ir::types::{
+            Address, ArchReg, FunctionId, MemWidth, SignExtend, VReg, VecElementType, VecWidth,
+            X86Reg,
+        };
+
+        let arch = |reg| VReg::Arch(ArchReg::X86(reg));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: arch(X86Reg::Rax),
+                addr: Address::Direct(arch(X86Reg::Rbx)),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1001,
+            OpKind::VConflict {
+                dst: arch(X86Reg::Zmm(1)),
+                src: arch(X86Reg::Zmm(2)),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+        let exits = std::collections::HashMap::new();
+
+        assert_eq!(jit_classify_bail(&func, &exits, false), "Load");
+        assert_eq!(jit_classify_bail(&func, &exits, true), "VConflict");
     }
 
     #[test]

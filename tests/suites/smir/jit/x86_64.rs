@@ -111,17 +111,23 @@ fn make_vcpu_code(code: &[u8]) -> X86_64Vcpu {
     vcpu
 }
 
-/// The eligibility/clobber checks must DECLINE ineligible regions (returning
-/// None so a caller falls back to the interpreter) rather than mis-compile —
-/// the safety net for a future automatic `run()` integration.
+/// Default call mode must admit cross-function regions, while explicit policy
+/// disable and structurally ineligible frontiers still fall back cleanly.
 #[test]
 fn jit_bails_on_ineligible() {
-    // (a) A region with a CALL terminator — not a self-contained HALT region.
-    //     call $+5 ; hlt
+    // (a) `call $+5 ; hlt`: default lift-through-calls compiles the caller and
+    //     transfers to the interpreted callee, whose HLT yields back through
+    //     the callout. Explicitly disabling call mode restores frontier bailout.
     let mut v = make_vcpu_code(&[0xE8, 0x00, 0x00, 0x00, 0x00, 0xF4]);
     assert!(
-        !v.jit_try_block().expect("jit_try_block"),
-        "a CALL region (entry block is a frontier) must bail to the interpreter"
+        v.jit_try_block().expect("default call-mode jit_try_block"),
+        "cross-function call mode must be enabled by default"
+    );
+    let mut v = make_vcpu_code(&[0xE8, 0x00, 0x00, 0x00, 0x00, 0xF4]);
+    v.set_jit_call(false);
+    assert!(
+        !v.jit_try_block().expect("disabled call-mode jit_try_block"),
+        "explicit call-mode disable must restore call-as-frontier fallback"
     );
 
     // (b) A straight-line block ending in RET — entry block is a frontier exit,
@@ -140,18 +146,28 @@ fn jit_bails_on_ineligible() {
         "a frontier-less infinite loop must bail (no native exit)"
     );
 
-    // (d) A loop whose body READS MEMORY (mov eax,[rbx]; dec ecx; jnz) — memory
-    //     ops are not on the JIT whitelist (they would access wrong host
-    //     addresses under native exec); the region MUST bail to the interpreter
-    //     and never execute natively. This is the kernel-safety gate.
+    // (d) A loop whose body reads guest memory through the MMU helper path is
+    //     native by default. Explicit policy disable retains interpreter fallback.
     let mut v = make_vcpu_code(&[0x8B, 0x03, 0xFF, 0xC9, 0x75, 0xFA, 0xF4]);
     let mut r = v.get_regs().unwrap();
     r.rcx = 5;
     r.rbx = LOAD_ADDR;
     v.set_regs(&r).unwrap();
     assert!(
-        !v.jit_try_block().expect("jit_try_block"),
-        "a memory-touching loop must bail (not JIT-safe)"
+        v.jit_try_block().expect("default memory jit_try_block"),
+        "memory-touching loops must use MMU-helper JIT by default"
+    );
+    assert_eq!(v.get_regs().unwrap().rcx & 0xffff_ffff, 0);
+
+    let mut v = make_vcpu_code(&[0x8B, 0x03, 0xFF, 0xC9, 0x75, 0xFA, 0xF4]);
+    let mut r = v.get_regs().unwrap();
+    r.rcx = 5;
+    r.rbx = LOAD_ADDR;
+    v.set_regs(&r).unwrap();
+    v.set_jit_mem(false);
+    assert!(
+        !v.jit_try_block().expect("disabled memory jit_try_block"),
+        "explicit memory-JIT disable must retain interpreter fallback"
     );
 }
 
