@@ -3128,6 +3128,11 @@ impl Aarch64Lowerer {
                 let (q, sz) = Self::simd_float_shape(elem, lanes)?;
                 (q, 1, 0b10 | sz, 0b11111)
             }
+            VecUnaryOp::FRecipEstimate | VecUnaryOp::FRsqrtEstimate => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("x86 vector estimate {op:?}"),
+                });
+            }
             // Integer forms: size = element width, opcode 01011 (NEG: U=1, ABS: U=0).
             VecUnaryOp::Neg => {
                 let (q, size) = Self::simd_integer_shape(elem, lanes)?;
@@ -15617,12 +15622,21 @@ impl Aarch64Lowerer {
             OpKind::VShuffleBitQM { .. } => Err(LowerError::UnsupportedOp {
                 op: "VShuffleBitQM requires x86 opmask K-register state".into(),
             }),
+            OpKind::VCompress { .. } | OpKind::VExpand { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 compress/expand vector permutation".into(),
+            }),
+            OpKind::X86NarrowInt { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 EVEX integer narrowing".into(),
+            }),
             OpKind::VPopcnt {
                 dst,
                 src,
                 elem,
                 width,
             } => self.lower_vpopcnt(*dst, *src, *elem, *width),
+            OpKind::VConflict { .. } => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native VConflict".into(),
+            }),
             OpKind::VMultiplyAdd52 {
                 dst,
                 acc,
