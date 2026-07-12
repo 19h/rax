@@ -7,10 +7,12 @@
 
 #![cfg(feature = "x86_64-suite")]
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+
+use rax::smir::{LiftContext, SmirLifter, SourceArch, X86_64Lifter};
 
 #[path = "../../../generated/x86_64/inventories/avx512.rs"]
 mod avx512_inventory_data;
@@ -569,6 +571,26 @@ fn avx512_spec_inventory_is_case_variant_partitioned() {
 }
 
 #[test]
+fn raw_evex_rows_encode_fixed_and_reserved_prefix_bits_canonically() {
+    let row = avx512_spec_evex_rows()
+        .into_iter()
+        .find(|row| {
+            row.key.mnemonic == "vbroadcastss"
+                && row.key.vl == EvexVl::Vl128
+                && row.key.opcode == 0x18
+        })
+        .expect("VBROADCASTSS EVEX.128 row");
+    let bytes = raw_evex_spec_bytes_for_variant(
+        &row,
+        EvexCaseVariant {
+            mode: EvexAsmMode::Register,
+            rm_reg: Some(0),
+        },
+    );
+    assert_eq!(bytes, [0x62, 0xF2, 0x7D, 0x09, 0x18, 0xC8]);
+}
+
+#[test]
 fn avx512_unimplemented_evex_case_variants_have_generated_byte_coverage() {
     let llvm_mc = llvm_mc_path();
     if llvm_mc.is_none() {
@@ -673,6 +695,62 @@ fn avx512_unimplemented_evex_case_variants_have_generated_byte_coverage() {
         "unimplemented AVX-512 EVEX byte coverage mismatch\nfailures:\n{}\nmissing case variants:\n{}",
         failures.into_iter().take(80).collect::<Vec<_>>().join("\n"),
         format_row_set(&missing_case_variants)
+    );
+}
+
+/// Diagnostic used while closing the independent x86-to-SMIR coverage gap.
+/// It intentionally remains ignored until the residual set is empty; unlike
+/// the legacy executor mnemonic inventory, this exercises each generated EVEX
+/// row and r/m-extension variant through the production SMIR lifter.
+#[test]
+#[ignore = "diagnostic: reports residual EVEX forms rejected by the SMIR lifter"]
+fn report_evex_spec_forms_rejected_by_smir_lifter() {
+    let mut rejected = BTreeMap::<String, (usize, String)>::new();
+    let mut accepted = 0usize;
+    for row in avx512_spec_evex_rows() {
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            match lifter.lift_insn(0x1000, &bytes, &mut ctx) {
+                Ok(result) if result.bytes_consumed == bytes.len() => accepted += 1,
+                Ok(result) => {
+                    let detail = format!(
+                        "{}: consumed {}/{} bytes ({:02X?})",
+                        spec_case_variant_id(&row, variant),
+                        result.bytes_consumed,
+                        bytes.len(),
+                        bytes
+                    );
+                    let entry = rejected
+                        .entry(row.key.mnemonic.clone())
+                        .or_insert((0, detail));
+                    entry.0 += 1;
+                }
+                Err(error) => {
+                    let detail = format!(
+                        "{}: {error:?} ({:02X?})",
+                        spec_case_variant_id(&row, variant),
+                        bytes
+                    );
+                    let entry = rejected
+                        .entry(row.key.mnemonic.clone())
+                        .or_insert((0, detail));
+                    entry.0 += 1;
+                }
+            }
+        }
+    }
+    assert!(
+        rejected.is_empty(),
+        "accepted {accepted} EVEX forms; rejected {} mnemonics / {} forms:\n{}",
+        rejected.len(),
+        rejected.values().map(|entry| entry.0).sum::<usize>(),
+        rejected
+            .iter()
+            .map(|(mnemonic, (count, detail))| format!("{mnemonic}: {count} ({detail})"))
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }
 
