@@ -864,6 +864,17 @@ pub enum FpRoundMode {
 // Vector Types
 // ============================================================================
 
+/// x86 AES-NI/VAES transformation kind (see `OpKind::X86Aes`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum X86AesOp {
+    Enc,
+    EncLast,
+    Dec,
+    DecLast,
+    InvMixColumns,
+    KeygenAssist,
+}
+
 /// Vector element type
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum VecElementType {
@@ -905,6 +916,10 @@ pub enum VecUnaryOp {
     FNeg,
     /// Floating-point square root (AArch64 vector FSQRT).
     FSqrt,
+    /// x86 approximate reciprocal of packed/scalar F32 values.
+    FRecipEstimate,
+    /// x86 approximate reciprocal square root of packed/scalar F32 values.
+    FRsqrtEstimate,
     /// Integer negate (AArch64 vector NEG).
     Neg,
     /// Integer absolute value (AArch64 vector ABS).
@@ -1088,6 +1103,17 @@ pub enum Avx10FP16Op {
     Sqrt,
     Min,
     Max,
+}
+
+/// Integer narrowing behavior used by EVEX VPMOV* down-conversions.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum X86NarrowMode {
+    /// Retain the low destination-width bits.
+    Truncate,
+    /// Interpret the source as signed and clamp to the signed destination range.
+    SignedSaturate,
+    /// Interpret the source as signed and clamp to the unsigned destination range.
+    UnsignedSaturate,
 }
 
 /// AVX10 dot product variant
