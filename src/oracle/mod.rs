@@ -2857,9 +2857,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::VConflict {
             dst,
             src,
+            mask,
             elem,
             width,
-        } => op_json!("vconflict", dst, src, elem, width),
+            zeroing,
+        } => op_json!("vconflict", dst, src, mask, elem, width, zeroing),
         OpKind::VPermute {
             dst,
             src1,

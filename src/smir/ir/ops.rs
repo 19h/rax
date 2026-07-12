@@ -2757,8 +2757,10 @@ pub enum OpKind {
     VConflict {
         dst: VReg,
         src: VReg,
+        mask: Option<VReg>,
         elem: VecElementType,
         width: VecWidth,
+        zeroing: bool,
     },
 
     /// Byte permutation from one or two sources

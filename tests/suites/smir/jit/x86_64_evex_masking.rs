@@ -80,6 +80,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpmadd52luq {k4}{z}", &[0x62, 0xf2, 0xed, 0xcc, 0xb4, 0xcb]),
         // vdpbf16ps %zmm3,%zmm2,%zmm1{%k4}{z}
         ("vdpbf16ps {k4}{z}", &[0x62, 0xf2, 0x6e, 0xcc, 0x52, 0xcb]),
+        // vpconflictd %zmm2,%zmm1{%k4}{z}
+        ("vpconflictd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -904,6 +906,58 @@ fn vector_region_callout_round_trips_callee_vector_mutations() {
         );
     }
     assert_eq!(after.k, masks);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpconflictd_jits_with_lower_lane_conflict_masks() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512cd")
+    {
+        return;
+    }
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let lanes = [1u32, 2, 1, 1, 3, 2, 4, 3, 1, 4, 4, 5, 2, 5, 1, 3];
+    let mut source = [0u64; 8];
+    for (lane, value) in lanes.iter().copied().enumerate() {
+        source[lane / 2] |= u64::from(value) << ((lane % 2) * 32);
+    }
+    let mask = 0xa55au64;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        if ((mask >> lane) & 1) == 0 {
+            continue;
+        }
+        let mut conflicts = 0u32;
+        for previous in 0..lane {
+            if lanes[previous] == lanes[lane] {
+                conflicts |= 1u32 << previous;
+            }
+        }
+        expected[lane / 2] |= u64::from(conflicts) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit masked VPCONFLICTD loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), source);
+    assert_eq!(after.k[4], mask);
     run_to_hlt(&mut vcpu);
 }
 

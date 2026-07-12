@@ -2489,10 +2489,13 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::VUnary { src, .. }
-            | OpKind::VReduce { src, .. }
-            | OpKind::VConflict { src, .. } => {
+            OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::VConflict { src, mask, .. } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VPopcnt { src, mask, .. } => {
@@ -3229,8 +3232,13 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::VConflict { src, .. } | OpKind::VCvtBF16ToFP32 { src, .. } => {
+            OpKind::VCvtBF16ToFP32 { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::VConflict { src, mask, .. } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VPopcnt { src, mask, .. } => {
@@ -9107,6 +9115,7 @@ mod tests {
     fn vconflict_source_definition_survives_dead_code_elimination() {
         let scalar = VReg::virt(0);
         let source = VReg::virt(1);
+        let mask = VReg::virt(2);
         let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
         let mut block = SmirBlock::new(BlockId(0), 0x1000);
         block.push_op(make_op(
@@ -9128,17 +9137,27 @@ mod tests {
         ));
         block.push_op(make_op(
             2,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            3,
             OpKind::VConflict {
                 dst,
                 src: source,
+                mask: Some(mask),
                 elem: VecElementType::I32,
                 width: VecWidth::V128,
+                zeroing: false,
             },
         ));
         block.set_terminator(Terminator::Return { values: vec![dst] });
 
         dead_code_elimination(&mut block);
-        assert_eq!(block.ops.len(), 3, "VConflict source producer was removed");
+        assert_eq!(block.ops.len(), 4, "VConflict input producer was removed");
     }
 
     #[test]

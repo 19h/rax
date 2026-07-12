@@ -11211,13 +11211,14 @@ impl X86_64Lifter {
             OpId(ops.len() as u16),
             pc,
             OpKind::VConflict {
-                dst: raw,
+                dst,
                 src,
+                mask,
                 elem,
                 width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -46813,7 +46814,6 @@ mod tests {
                 }
             )));
         }
-
         let pd = lift_single(&[0x62, 0xF1, 0xFD, 0x49, 0x55, 0xD1]).unwrap();
         assert_eq!(
             pd.ops
@@ -53687,6 +53687,19 @@ mod tests {
                 } if actual_elem == elem && actual_width == width
             )));
         }
+        let direct_masked = lift_single(&[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA]).unwrap();
+        assert_eq!(direct_masked.ops.len(), 1);
+        assert!(matches!(
+            direct_masked.ops[0].kind,
+            OpKind::VConflict {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
+            }
+        ));
         let memory = lift_single(&[0x62, 0xF2, 0x7D, 0x89, 0xC4, 0x00]).unwrap();
         assert_eq!(
             memory

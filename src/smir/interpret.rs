@@ -8457,9 +8457,12 @@ impl SmirInterpreter {
             OpKind::VConflict {
                 dst,
                 src,
+                mask,
                 elem,
                 width,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let input = Self::read_vec(ctx, *src);
                 let bits = elem.bytes() * 8;
                 let lanes = width.lanes(*elem) as u8;
@@ -8474,6 +8477,14 @@ impl SmirInterpreter {
                     }
                     Self::set_lane(&mut result, lane, bits, conflicts);
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 

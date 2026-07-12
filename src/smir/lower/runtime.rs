@@ -940,6 +940,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         op,
         OpKind::VPopcnt { .. }
             | OpKind::VShuffleBitQM { .. }
+            | OpKind::VConflict { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VMultiplyAdd52 { .. }
@@ -987,6 +988,41 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                 (src_elem, src1_unsigned),
                 (crate::smir::ir::types::VecElementType::I8, true)
                     | (crate::smir::ir::types::VecElementType::I16, false)
+            )
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::VConflict {
+        dst,
+        src,
+        mask,
+        elem,
+        width,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                reg,
+                VReg::Arch(ArchReg::X86(
+                    X86Reg::Xmm(index) | X86Reg::Ymm(index) | X86Reg::Zmm(index)
+                )) if *index <= 31
+            )
+        };
+        if !valid_vector(dst)
+            || !valid_vector(src)
+            || !matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
+            )
+            || *width == crate::smir::ir::types::VecWidth::V64
+            || (*zeroing && mask.is_none())
+            || matches!(
+                mask,
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0 | 8..=u8::MAX))))
             )
         {
             return false;
@@ -1098,6 +1134,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_vnni = false;
     let mut needs_ifma = false;
     let mut needs_bf16 = false;
+    let mut needs_cd = false;
 
     for op in func
         .blocks
@@ -1111,6 +1148,7 @@ pub fn x86_native_vector_features_supported_excluding(
         let width = match op {
             OpKind::VPopcnt { width, .. }
             | OpKind::VShuffleBitQM { width, .. }
+            | OpKind::VConflict { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VMultiplyAdd52 { width, .. }
@@ -1140,6 +1178,7 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_vnni |= matches!(op, OpKind::VDotProduct { .. });
         needs_ifma |= matches!(op, OpKind::VMultiplyAdd52 { .. });
         needs_bf16 |= matches!(op, OpKind::VDotProductBF16 { .. });
+        needs_cd |= matches!(op, OpKind::VConflict { .. });
     }
 
     if !any {
@@ -1158,6 +1197,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_vnni || std::is_x86_feature_detected!("avx512vnni"))
             && (!needs_ifma || std::is_x86_feature_detected!("avx512ifma"))
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
+            && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1171,6 +1211,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_vnni,
             needs_ifma,
             needs_bf16,
+            needs_cd,
         );
         false
     }
@@ -1755,6 +1796,14 @@ mod jit_gate_tests {
                 indices: zmm2,
                 mask: Some(k4),
                 width: VecWidth::V512,
+            },
+            OpKind::VConflict {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
             },
             OpKind::VDotProduct {
                 dst: zmm1,

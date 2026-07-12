@@ -5385,7 +5385,17 @@ mod tests {
             OpKind::VConflict {
                 dst: arch(X86Reg::Zmm(1)),
                 src: arch(X86Reg::Zmm(2)),
+                mask: None,
                 elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1002,
+            OpKind::VCvtBF16ToFP32 {
+                dst: arch(X86Reg::Zmm(3)),
+                src: arch(X86Reg::Zmm(4)),
                 width: VecWidth::V512,
             },
         );
@@ -5394,7 +5404,7 @@ mod tests {
         let exits = std::collections::HashMap::new();
 
         assert_eq!(jit_classify_bail(&func, &exits, false), "Load");
-        assert_eq!(jit_classify_bail(&func, &exits, true), "VConflict");
+        assert_eq!(jit_classify_bail(&func, &exits, true), "VCvtBF16ToFP32");
     }
 
     #[test]
