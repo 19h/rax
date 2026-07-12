@@ -2477,11 +2477,16 @@ impl OpKind {
             }
 
             OpKind::VMultiplyAdd52 {
-                acc, src1, src2, ..
+                acc,
+                src1,
+                src2,
+                mask,
+                ..
             } => {
                 result.push(*acc);
                 result.push(*src1);
                 result.push(*src2);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VUnary { src, .. }
@@ -3207,11 +3212,16 @@ impl OpKind {
             }
 
             OpKind::VMultiplyAdd52 {
-                acc, src1, src2, ..
+                acc,
+                src1,
+                src2,
+                mask,
+                ..
             } => {
                 result.push(*acc);
                 result.push(*src1);
                 result.push(*src2);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VConflict { src, .. } | OpKind::VCvtBF16ToFP32 { src, .. } => {
@@ -9132,6 +9142,7 @@ mod tests {
         let acc = VReg::virt(1);
         let src1 = VReg::virt(2);
         let src2 = VReg::virt(3);
+        let mask = VReg::virt(4);
         let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
         let mut block = SmirBlock::new(BlockId(0), 0x1000);
         block.push_op(make_op(
@@ -9155,13 +9166,23 @@ mod tests {
         }
         block.push_op(make_op(
             4,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            5,
             OpKind::VMultiplyAdd52 {
                 dst,
                 acc,
                 src1,
                 src2,
+                mask: Some(mask),
                 width: VecWidth::V128,
                 high: false,
+                zeroing: false,
             },
         ));
         block.set_terminator(Terminator::Return { values: vec![dst] });
@@ -9169,7 +9190,7 @@ mod tests {
         dead_code_elimination(&mut block);
         assert_eq!(
             block.ops.len(),
-            5,
+            6,
             "VMultiplyAdd52 input producer was removed"
         );
     }

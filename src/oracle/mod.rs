@@ -2831,9 +2831,21 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             acc,
             src1,
             src2,
+            mask,
             width,
             high,
-        } => op_json!("vmultiply_add52", dst, acc, src1, src2, width, high),
+            zeroing,
+        } => op_json!(
+            "vmultiply_add52",
+            dst,
+            acc,
+            src1,
+            src2,
+            mask,
+            width,
+            high,
+            zeroing
+        ),
         OpKind::VPopcnt {
             dst,
             src,

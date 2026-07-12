@@ -11337,25 +11337,16 @@ impl X86_64Lifter {
             OpId(ops.len() as u16),
             pc,
             OpKind::VMultiplyAdd52 {
-                dst: raw,
+                dst,
                 acc: dst,
                 src1,
                 src2,
+                mask,
                 width: prefix.width,
                 high: opcode == 0xB5,
+                zeroing: prefix.encoding == VecEncodingKind::Evex && prefix.zeroing,
             },
         ));
-        if prefix.encoding == VecEncodingKind::Evex {
-            self.append_evex_vector_mask_result(
-                prefix,
-                dst,
-                raw,
-                VecElementType::I64,
-                pc,
-                ctx,
-                &mut ops,
-            );
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -53752,6 +53743,25 @@ mod tests {
                 } if actual_width == width && actual_high == high
             )));
         }
+        let direct_masked = lift_single(&[0x62, 0xF2, 0xED, 0xCC, 0xB4, 0xCB]).unwrap();
+        assert_eq!(
+            direct_masked.ops.len(),
+            1,
+            "register-only masked IFMA must not expand through virtual mask operations"
+        );
+        assert!(matches!(
+            direct_masked.ops[0].kind,
+            OpKind::VMultiplyAdd52 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                width: VecWidth::V512,
+                high: false,
+                zeroing: true,
+            }
+        ));
         let broadcast = lift_single(&[0x62, 0xE2, 0xD5, 0x33, 0xB5, 0x20]).unwrap();
         assert_eq!(
             broadcast

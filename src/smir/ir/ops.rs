@@ -2733,9 +2733,12 @@ pub enum OpKind {
         acc: VReg,
         src1: VReg,
         src2: VReg,
+        mask: Option<VReg>,
         width: VecWidth,
         /// true = high 52 bits, false = low 52 bits
         high: bool,
+        /// EVEX zeroing for masked-off accumulator lanes.
+        zeroing: bool,
     },
 
     /// Vector population count per element

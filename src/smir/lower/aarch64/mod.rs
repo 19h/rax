@@ -15662,9 +15662,19 @@ impl Aarch64Lowerer {
                 acc,
                 src1,
                 src2,
+                mask,
                 width,
                 high,
-            } => self.lower_vmultiply_add52(*dst, *acc, *src1, *src2, *width, *high),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VMultiplyAdd52 on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vmultiply_add52(*dst, *acc, *src1, *src2, *width, *high)
+                }
+            }
             OpKind::VMpsadbw {
                 dst,
                 src1,
@@ -30641,24 +30651,30 @@ mod tests {
                 acc: v(1),
                 src1: v(2),
                 src2: v(3),
+                mask: None,
                 width: VecWidth::V128,
                 high: false,
+                zeroing: false,
             },
             OpKind::VMultiplyAdd52 {
                 dst: v(4),
                 acc: v(5),
                 src1: v(2),
                 src2: v(3),
+                mask: None,
                 width: VecWidth::V128,
                 high: true,
+                zeroing: false,
             },
             OpKind::VMultiplyAdd52 {
                 dst: v(6),
                 acc: v(6),
                 src1: v(6),
                 src2: v(7),
+                mask: None,
                 width: VecWidth::V128,
                 high: true,
+                zeroing: false,
             },
         ]);
 
@@ -31951,8 +31967,10 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             width: VecWidth::V256,
             high: false,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VMpsadbw {

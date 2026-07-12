@@ -941,6 +941,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         OpKind::VPopcnt { .. }
             | OpKind::VShuffleBitQM { .. }
             | OpKind::VDotProduct { .. }
+            | OpKind::VMultiplyAdd52 { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
             | OpKind::X86TernaryLogic { .. }
@@ -991,6 +992,38 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::VMultiplyAdd52 {
+        dst,
+        acc,
+        src1,
+        src2,
+        mask,
+        width,
+        zeroing,
+        ..
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                reg,
+                VReg::Arch(ArchReg::X86(
+                    X86Reg::Xmm(index) | X86Reg::Ymm(index) | X86Reg::Zmm(index)
+                )) if *index <= 31
+            )
+        };
+        if dst != acc
+            || ![dst, acc, src1, src2].into_iter().all(valid_vector)
+            || *width == crate::smir::ir::types::VecWidth::V64
+            || (*zeroing && mask.is_none())
+            || matches!(
+                mask,
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0 | 8..=u8::MAX))))
+            )
+        {
+            return false;
+        }
+    }
+
     op.dests().into_iter().chain(op.source_vregs()).all(|reg| {
         matches!(
             reg,
@@ -1031,6 +1064,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_bitalg = false;
     let mut needs_vpopcntdq = false;
     let mut needs_vnni = false;
+    let mut needs_ifma = false;
 
     for op in func
         .blocks
@@ -1045,6 +1079,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VPopcnt { width, .. }
             | OpKind::VShuffleBitQM { width, .. }
             | OpKind::VDotProduct { width, .. }
+            | OpKind::VMultiplyAdd52 { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
             | OpKind::X86TernaryLogic { width, .. }
@@ -1069,6 +1104,7 @@ pub fn x86_native_vector_features_supported_excluding(
         }
         needs_bitalg |= matches!(op, OpKind::VShuffleBitQM { .. });
         needs_vnni |= matches!(op, OpKind::VDotProduct { .. });
+        needs_ifma |= matches!(op, OpKind::VMultiplyAdd52 { .. });
     }
 
     if !any {
@@ -1085,6 +1121,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bitalg || std::is_x86_feature_detected!("avx512bitalg"))
             && (!needs_vpopcntdq || std::is_x86_feature_detected!("avx512vpopcntdq"))
             && (!needs_vnni || std::is_x86_feature_detected!("avx512vnni"))
+            && (!needs_ifma || std::is_x86_feature_detected!("avx512ifma"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1096,6 +1133,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_bitalg,
             needs_vpopcntdq,
             needs_vnni,
+            needs_ifma,
         );
         false
     }
@@ -1694,6 +1732,16 @@ mod jit_gate_tests {
                 saturate: false,
                 zeroing: true,
             },
+            OpKind::VMultiplyAdd52 {
+                dst: zmm1,
+                acc: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask: Some(k4),
+                width: VecWidth::V512,
+                high: false,
+                zeroing: true,
+            },
             OpKind::X86PackedShiftVariable {
                 dst: zmm1,
                 src: zmm2,
@@ -1821,6 +1869,19 @@ mod jit_gate_tests {
         };
         assert!(!is_x86_native_vector_op(&invalid_zeroing));
         assert!(!x86_gate(invalid_zeroing));
+
+        let invalid_ifma_alias = OpKind::VMultiplyAdd52 {
+            dst: zmm1,
+            acc: zmm2,
+            src1: zmm2,
+            src2: zmm3,
+            mask: Some(k4),
+            width: VecWidth::V512,
+            high: false,
+            zeroing: true,
+        };
+        assert!(!is_x86_native_vector_op(&invalid_ifma_alias));
+        assert!(!x86_gate(invalid_ifma_alias));
     }
 
     #[cfg(target_arch = "x86_64")]

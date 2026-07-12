@@ -76,6 +76,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ),
         // vpdpbusd %zmm3,%zmm2,%zmm1{%k4}{z}
         ("vpdpbusd {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x50, 0xcb]),
+        // vpmadd52luq %zmm3,%zmm2,%zmm1{%k4}{z}
+        ("vpmadd52luq {k4}{z}", &[0x62, 0xf2, 0xed, 0xcc, 0xb4, 0xcb]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -536,6 +538,90 @@ fn hot_masked_vpdpbusd_jits_with_destructive_accumulator_semantics() {
         signed_source,
         "signed source survived"
     );
+    assert_eq!(after_jit.k[4], mask, "source opmask survived");
+
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpmadd52luq_jits_with_52_bit_product_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512ifma")
+    {
+        return;
+    }
+
+    // loop: vpmadd52luq %zmm3,%zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0xed, 0xcc, 0xb4, 0xcb]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    const MASK52: u64 = (1u64 << 52) - 1;
+    let accumulator = [
+        1,
+        u64::MAX - 7,
+        0x1111_2222_3333_4444,
+        0x5555_6666_7777_8888,
+        0x9999_aaaa_bbbb_cccc,
+        0xdddd_eeee_ffff_0000,
+        0x0123_4567_89ab_cdef,
+        0xfedc_ba98_7654_3210,
+    ];
+    let lhs = [
+        MASK52,
+        0x000f_edcb_a987_6543,
+        0x0001_2345_6789_abcd,
+        u64::MAX,
+        3,
+        5,
+        7,
+        11,
+    ];
+    let rhs = [
+        3,
+        0x000f_ffff_ffff_fff1,
+        0x000a_bcde_f012_3456,
+        MASK52,
+        13,
+        17,
+        19,
+        23,
+    ];
+    let mask = 0xa5u64;
+    let iterations = 200u64;
+    let mut expected = [0u64; 8];
+    for lane in 0..8 {
+        if ((mask >> lane) & 1) != 0 {
+            let product = u128::from(lhs[lane] & MASK52) * u128::from(rhs[lane] & MASK52);
+            let addend = product as u64 & MASK52;
+            expected[lane] = accumulator[lane].wrapping_add(addend.wrapping_mul(iterations));
+        }
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = iterations;
+    set_zmm(&mut regs, 1, accumulator);
+    set_zmm(&mut regs, 2, lhs);
+    set_zmm(&mut regs, 3, rhs);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VPMADD52LUQ loop"),
+        "a register-only masked VPMADD52LUQ loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0, "native loop drained");
+    assert_eq!(get_zmm(&after_jit, 1), expected, "accumulator write-back");
+    assert_eq!(get_zmm(&after_jit, 2), lhs, "first source survived");
+    assert_eq!(get_zmm(&after_jit, 3), rhs, "second source survived");
     assert_eq!(after_jit.k[4], mask, "source opmask survived");
 
     run_to_hlt(&mut vcpu);
