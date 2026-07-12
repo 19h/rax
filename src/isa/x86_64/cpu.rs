@@ -4260,9 +4260,11 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-            // Memory/call helpers follow the platform ABI and may clobber all
-            // caller-saved vector/opmask registers. Until helper call-outs gain
-            // explicit vector preservation, never mix them with a vector region.
+            // Call helpers may execute arbitrary guest vector code in the
+            // interpreter and do not yet synchronize vector state. MMU helpers,
+            // by contrast, are safe to mix with vector regions because the
+            // lowerer spills/reloads the full architectural ZMM/K file around
+            // each helper call.
             let uses_mem_helpers = allow_mem
                 && func
                     .blocks
@@ -4270,9 +4272,9 @@ impl X86_64Vcpu {
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
                     .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }));
-            if uses_vector && (cm || uses_mem_helpers) {
+            if uses_vector && cm {
                 if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] vector-helper-mix @ {entry:#x} (call={cm})");
+                    eprintln!("[JIT-BAIL] vector-call-helper-mix @ {entry:#x} (call={cm})");
                 }
                 continue 'modes;
             }
@@ -4298,6 +4300,7 @@ impl X86_64Vcpu {
             lowerer.set_native_exit_edges(edge_exits);
             if allow_mem {
                 lowerer.set_mem_helpers(true);
+                lowerer.set_preserve_vector_mem_helpers(uses_vector && uses_mem_helpers);
             }
             if cm {
                 // Lower CALL terminators as runtime call-outs (rax_jit_call).

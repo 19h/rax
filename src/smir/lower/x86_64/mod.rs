@@ -21,8 +21,9 @@ use super::regalloc::{PhysReg, RegAlloc, RegLocation};
 use super::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, SmirLowerer,
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
-    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_LOAD_FN_OFFSET,
-    X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -3450,6 +3451,12 @@ pub struct X86_64Lowerer {
     /// address space). Enables JIT of memory-touching hot regions under paging.
     mem_helpers: bool,
 
+    /// Preserve the complete architectural ZMM/K file around MMU helper calls.
+    /// Required when a region mixes admitted vector operations with scalar
+    /// guest-memory loads/stores because the platform ABI makes vector/opmask
+    /// registers caller-saved.
+    preserve_vector_mem_helpers: bool,
+
     /// When set, a `Terminator::Call` lowers to a runtime call-out (the
     /// `GuestRegs.call_fn` helper) that runs the callee in the interpreter and
     /// resumes native execution at the call's continuation block, instead of
@@ -3481,6 +3488,7 @@ impl X86_64Lowerer {
             native_exits: std::collections::HashMap::new(),
             native_exit_edges: std::collections::HashMap::new(),
             mem_helpers: false,
+            preserve_vector_mem_helpers: false,
             call_helpers: false,
             epilogue_stack_patches: Vec::new(),
         }
@@ -3489,6 +3497,10 @@ impl X86_64Lowerer {
     /// Enable lowering `Load`/`Store` as MMU helper calls (see `mem_helpers`).
     pub fn set_mem_helpers(&mut self, on: bool) {
         self.mem_helpers = on;
+    }
+
+    pub fn set_preserve_vector_mem_helpers(&mut self, on: bool) {
+        self.preserve_vector_mem_helpers = on;
     }
 
     /// Enable lowering `Terminator::Call` as a runtime call-out (see `call_helpers`).
@@ -10244,6 +10256,53 @@ impl X86_64Lowerer {
         self.emit_struct_mov(base, 1, 8, false); // RCX last
     }
 
+    /// Spill or reload every architectural vector/opmask register through the
+    /// vector fields in `GuestRegs`. `base` is the live state pointer (RAX before
+    /// a helper call, RCX after it). Full-file preservation is intentional: an
+    /// external SysV helper may clobber every ZMM/K register, including operands
+    /// that are not locally live but still contain architectural guest state.
+    fn emit_helper_vector_state(&mut self, base: PhysReg, store: bool) {
+        for index in 0..32u8 {
+            let reg = PhysReg::Zmm(index);
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_evex_prefix(
+                X86VecMap::Map0F,
+                X86SsePrefix::Rep,
+                VecWidth::V512,
+                true,
+                reg.vec_ext(),
+                0,
+                base.vec_ext(),
+                reg.vec_ext2(),
+                0,
+                base.vec_ext2(),
+                0,
+            );
+            emitter.code.emit_u8(if store { 0x7F } else { 0x6F });
+            emitter.emit_modrm_mem_disp(
+                reg,
+                base,
+                X86_GUEST_ZMM_OFFSET / 64 + i32::from(index),
+                DispSize::Disp8,
+            );
+        }
+
+        for index in 0..8u8 {
+            // KMOVQ m64,k / k,m64: VEX.W1.0F 90/91 with a disp32 operand.
+            self.code.emit_u8(0xC4);
+            self.code.emit_u8(0xE1);
+            self.code.emit_u8(0xF8);
+            self.code.emit_u8(if store { 0x91 } else { 0x90 });
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_modrm_mem_disp(
+                PhysReg::Xmm(index),
+                base,
+                X86_GUEST_K_OFFSET + i32::from(index) * 8,
+                DispSize::Disp32,
+            );
+        }
+    }
+
     /// Lower a guest `Load`/`Store` as a call into the MMU via the helper
     /// function pointers in `GuestRegs`. Spills all guest GPRs to the struct,
     /// computes the effective guest address, calls the helper, and on a fault/MMIO return (`ok==0`)
@@ -10305,6 +10364,10 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x24);
         self.code.emit_u8(0x08);
         self.emit_struct_mov(PhysReg::Rax, 1, 0, true);
+
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rax, true);
+        }
 
         // --- effective guest address into RSI (enc 6), reading base/index from
         //     the struct (state ptr in RAX) ---
@@ -10492,6 +10555,9 @@ impl X86_64Lowerer {
                 }
             }
         }
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
         self.emit_reload_all(PhysReg::Rcx);
         // popfq: restore the guest STATUS flags saved on entry (pops [rsp]).
         self.code.emit_u8(0x9D);
@@ -10512,6 +10578,9 @@ impl X86_64Lowerer {
         let fault = self.code.position();
         self.code
             .patch_i32(jz_pos, (fault as i64 - (jz_pos as i64 + 4)) as i32);
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
         self.emit_reload_all(PhysReg::Rcx);
         // popfq: restore the guest STATUS flags (pops [rsp]).
         self.code.emit_u8(0x9D);
@@ -11079,6 +11148,43 @@ mod tests {
         lowerer
             .lower_function(&func)
             .expect_err("single op should fail to lower")
+    }
+
+    #[test]
+    fn vector_mem_helper_preservation_uses_canonical_full_state_encodings() {
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.emit_helper_vector_state(PhysReg::Rax, true);
+        let stores = lowerer.code.data().to_vec();
+        for expected in [
+            &[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x40, 0x05][..],
+            &[0x62, 0x61, 0xFE, 0x48, 0x7F, 0x78, 0x24][..],
+            &[0xC4, 0xE1, 0xF8, 0x91, 0x80, 0x40, 0x09, 0x00, 0x00][..],
+            &[0xC4, 0xE1, 0xF8, 0x91, 0xB8, 0x78, 0x09, 0x00, 0x00][..],
+        ] {
+            assert!(
+                stores
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "missing {expected:02X?} in {stores:02X?}"
+            );
+        }
+
+        lowerer.code.clear();
+        lowerer.emit_helper_vector_state(PhysReg::Rcx, false);
+        let loads = lowerer.code.data();
+        for expected in [
+            &[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x41, 0x05][..],
+            &[0x62, 0x61, 0xFE, 0x48, 0x6F, 0x79, 0x24][..],
+            &[0xC4, 0xE1, 0xF8, 0x90, 0x81, 0x40, 0x09, 0x00, 0x00][..],
+            &[0xC4, 0xE1, 0xF8, 0x90, 0xB9, 0x78, 0x09, 0x00, 0x00][..],
+        ] {
+            assert!(
+                loads
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "missing {expected:02X?} in {loads:02X?}"
+            );
+        }
     }
 
     #[test]

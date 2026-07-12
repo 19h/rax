@@ -180,22 +180,30 @@ fn run_to_hlt(vcpu: &mut X86_64Vcpu) {
 }
 
 fn set_zmm(regs: &mut Registers, idx: usize, v: [u64; 8]) {
-    regs.xmm[idx] = [v[0], v[1]];
-    regs.ymm_high[idx] = [v[2], v[3]];
-    regs.zmm_high[idx] = [v[4], v[5], v[6], v[7]];
+    if idx < 16 {
+        regs.xmm[idx] = [v[0], v[1]];
+        regs.ymm_high[idx] = [v[2], v[3]];
+        regs.zmm_high[idx] = [v[4], v[5], v[6], v[7]];
+    } else {
+        regs.zmm_ext[idx - 16] = v;
+    }
 }
 
 fn get_zmm(regs: &Registers, idx: usize) -> [u64; 8] {
-    [
-        regs.xmm[idx][0],
-        regs.xmm[idx][1],
-        regs.ymm_high[idx][0],
-        regs.ymm_high[idx][1],
-        regs.zmm_high[idx][0],
-        regs.zmm_high[idx][1],
-        regs.zmm_high[idx][2],
-        regs.zmm_high[idx][3],
-    ]
+    if idx < 16 {
+        [
+            regs.xmm[idx][0],
+            regs.xmm[idx][1],
+            regs.ymm_high[idx][0],
+            regs.ymm_high[idx][1],
+            regs.zmm_high[idx][0],
+            regs.zmm_high[idx][1],
+            regs.zmm_high[idx][2],
+            regs.zmm_high[idx][3],
+        ]
+    } else {
+        regs.zmm_ext[idx - 16]
+    }
 }
 
 #[test]
@@ -686,6 +694,121 @@ fn hot_masked_vdpbf16ps_jits_with_exact_finite_products() {
     assert_eq!(get_zmm(&after_jit, 3), rhs);
     assert_eq!(after_jit.k[4], mask);
     run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn vector_region_with_mmu_load_preserves_complete_zmm_and_k_state() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    // loop: mov eax,[rdi] ; vprold $7,zmm2,zmm1{k4}{z} ; dec ecx ; jnz loop
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x8b, 0x07]);
+    code.extend_from_slice(&[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf3]);
+    code.push(0xf4);
+    let data_offset = code.len() as u64;
+    let loaded = 0x89ab_cdefu32;
+    code.extend_from_slice(&loaded.to_le_bytes());
+
+    let sentinels: [[u64; 8]; 32] = std::array::from_fn(|reg| {
+        std::array::from_fn(|word| {
+            0x0101_0101_0101_0101u64
+                .wrapping_mul((reg as u64 + 1) * 17)
+                .wrapping_add(word as u64 * 0x1111_1111_1111_1111)
+        })
+    });
+    let masks: [u64; 8] =
+        std::array::from_fn(|index| 0x1111_1111_1111_1111u64.wrapping_mul(index as u64 + 1));
+    let mask = masks[4];
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        let input = (sentinels[2][lane / 2] >> ((lane % 2) * 32)) as u32;
+        let output = if ((mask >> lane) & 1) != 0 {
+            input.rotate_left(7)
+        } else {
+            0
+        };
+        expected[lane / 2] |= u64::from(output) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    vcpu.set_jit_mem(true);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    regs.rdi = LOAD_ADDR + data_offset;
+    for (index, value) in sentinels.iter().copied().enumerate() {
+        set_zmm(&mut regs, index, value);
+    }
+    regs.k = masks;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit vector plus MMU-load loop"),
+        "a vector region with a scalar MMU load must enter the native tier"
+    );
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(after.rax & 0xffff_ffff, u64::from(loaded));
+    for (index, sentinel) in sentinels.iter().enumerate() {
+        assert_eq!(
+            get_zmm(&after, index),
+            if index == 1 { expected } else { *sentinel },
+            "ZMM{index} changed across the MMU helper"
+        );
+    }
+    assert_eq!(after.k, masks, "K registers changed across the MMU helper");
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn vector_region_mmu_fault_preserves_complete_zmm_and_k_state() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    let code = [
+        0x8b, 0x07, // mov eax,[rdi] -- faults
+        0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, // vprold (must not execute)
+        0xf4,
+    ];
+    let sentinels: [[u64; 8]; 32] = std::array::from_fn(|reg| {
+        std::array::from_fn(|word| {
+            0xf0e1_d2c3_b4a5_9687u64
+                .wrapping_add(reg as u64 * 0x0101_0101_0101_0101)
+                .wrapping_add(word as u64)
+        })
+    });
+    let masks: [u64; 8] =
+        std::array::from_fn(|index| 0xfedc_ba98_7654_3210u64.rotate_left(index as u32 * 7));
+
+    let mut vcpu = make_vcpu(&code);
+    vcpu.set_jit_mem(true);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rdi = MEM_SIZE + 0x1000;
+    for (index, value) in sentinels.iter().copied().enumerate() {
+        set_zmm(&mut regs, index, value);
+    }
+    regs.k = masks;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block()
+            .expect("jit faulting vector/MMU region"),
+        "the mixed region must compile before its MMU access faults"
+    );
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rip, LOAD_ADDR, "fault must restart at the load");
+    for (index, sentinel) in sentinels.iter().enumerate() {
+        assert_eq!(
+            get_zmm(&after, index),
+            *sentinel,
+            "fault changed ZMM{index}"
+        );
+    }
+    assert_eq!(after.k, masks, "fault changed K registers");
 }
 
 #[test]
