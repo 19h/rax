@@ -52,10 +52,11 @@ jobs:
           RUSTDOCFLAGS: "-Zsanitizer=${{ matrix.san }}"
           ASAN_OPTIONS: "detect_leaks=0"
         run: |
+          read -r -a core_tests <<< "$CORE_TESTS"
           cargo +nightly test -Z build-std \
             --target x86_64-unknown-linux-gnu \
             --no-default-features --features x86_64-suite \
-            $CORE_TESTS -- --include-ignored
+            "${core_tests[@]}" -- --include-ignored
 
   toolchains:
     name: toolchain ${{ matrix.toolchain }}
@@ -74,5 +75,6 @@ jobs:
           cache-key: toolchain-${{ matrix.toolchain }}
       - name: build + core tests
         run: |
+          read -r -a core_tests <<< "$CORE_TESTS"
           cargo build --all-targets --no-default-features --features x86_64-suite,smir-jit
-          cargo test --no-default-features --features x86_64-suite,smir-jit $CORE_TESTS -- --include-ignored
+          cargo test --no-default-features --features x86_64-suite,smir-jit "${core_tests[@]}" -- --include-ignored
