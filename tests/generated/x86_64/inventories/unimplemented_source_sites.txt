@@ -8,8 +8,10 @@
 # dead-diagnostic      Stale diagnostic in source that is not on active dispatch.
 # encoding-hole        Reserved or undefined opcode/ModRM/prefix combinations.
 # manifest-diff        Covered by an XML/generated manifest differential corpus.
+# mixed-dispatch       Mixed valid/reserved/system fallbacks requiring case-level audit.
 # non-instruction      Emulator support path, not an instruction implementation.
 # system-gap           Valid privileged/system forms needing a system-state oracle.
 # valid-gap-needs-diff Valid instruction-family gap still needing differential work.
 #
 # Keep this sorted by path, then source fragment.
+src/smir/lift/x86_64.rs|76|mixed-dispatch|LiftError::Unsupported
