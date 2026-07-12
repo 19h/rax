@@ -146,9 +146,11 @@ impl Avx10Lowerer {
             // AVX10.1 VNNI
             OpKind::VDotProduct {
                 dst,
+                acc,
                 src1,
                 src2,
                 src_elem,
+                acc_elem,
                 width,
                 src1_unsigned,
                 saturate,
@@ -156,9 +158,11 @@ impl Avx10Lowerer {
             } => Some(self.lower_vdotproduct(
                 code,
                 dst,
+                acc,
                 src1,
                 src2,
                 *src_elem,
+                *acc_elem,
                 *width,
                 *src1_unsigned,
                 *saturate,
@@ -301,13 +305,20 @@ impl Avx10Lowerer {
         &self,
         code: &mut CodeBuffer,
         dst: &VReg,
+        acc: &VReg,
         src1: &VReg,
         src2: &VReg,
         src_elem: VecElementType,
+        acc_elem: VecElementType,
         width: VecWidth,
         src1_unsigned: bool,
         saturate: bool,
     ) -> Avx10LowerResult<()> {
+        if acc_elem != VecElementType::I32 || dst != acc {
+            return Err(LowerError::UnsupportedOperation(format!(
+                "VNNI requires an I32 accumulator aliased with dst, got acc={acc_elem:?} dst={dst:?} accumulator={acc:?}"
+            )));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
@@ -852,5 +863,36 @@ mod tests {
         assert!(result.is_some());
         assert!(result.unwrap().is_ok());
         assert!(code.len() > 0);
+    }
+
+    #[test]
+    fn vdotproduct_lowering_rejects_non_vnni_accumulator_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        for (acc, acc_elem) in [
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(4))),
+                VecElementType::I32,
+            ),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                VecElementType::I16,
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            let op = OpKind::VDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                src_elem: VecElementType::I8,
+                acc_elem,
+                width: VecWidth::V512,
+                src1_unsigned: true,
+                saturate: true,
+            };
+            let result = lowerer.try_lower(&op, &mut code).unwrap();
+            assert!(matches!(result, Err(LowerError::UnsupportedOperation(_))));
+            assert_eq!(code.len(), 0);
+        }
     }
 }
