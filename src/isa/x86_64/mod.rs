@@ -3,7 +3,7 @@
 pub mod bios;
 mod cpu;
 mod decode;
-mod execute;
+pub(crate) mod execute;
 pub mod flags;
 pub(crate) mod memory;
 mod simd_native;
