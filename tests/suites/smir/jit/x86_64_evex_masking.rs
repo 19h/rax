@@ -78,6 +78,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpdpbusd {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x50, 0xcb]),
         // vpmadd52luq %zmm3,%zmm2,%zmm1{%k4}{z}
         ("vpmadd52luq {k4}{z}", &[0x62, 0xf2, 0xed, 0xcc, 0xb4, 0xcb]),
+        // vdpbf16ps %zmm3,%zmm2,%zmm1{%k4}{z}
+        ("vdpbf16ps {k4}{z}", &[0x62, 0xf2, 0x6e, 0xcc, 0x52, 0xcb]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -624,6 +626,65 @@ fn hot_masked_vpmadd52luq_jits_with_52_bit_product_semantics() {
     assert_eq!(get_zmm(&after_jit, 3), rhs, "second source survived");
     assert_eq!(after_jit.k[4], mask, "source opmask survived");
 
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vdpbf16ps_jits_with_exact_finite_products() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512bf16")
+    {
+        return;
+    }
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x6e, 0xcc, 0x52, 0xcb]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let mut lhs = [0u64; 8];
+    let mut rhs = [0u64; 8];
+    for lane in 0..32 {
+        let lhs_bf16 = if lane % 2 == 0 { 0x3f80u64 } else { 0x4000u64 };
+        let rhs_bf16 = if lane % 2 == 0 { 0x4040u64 } else { 0x4080u64 };
+        lhs[lane / 4] |= lhs_bf16 << ((lane % 4) * 16);
+        rhs[lane / 4] |= rhs_bf16 << ((lane % 4) * 16);
+    }
+    let accumulator = [0x4000_0000_3f80_0000u64; 8]; // lanes alternate 1.0, 2.0
+    let mask = 0xa55au64;
+    let iterations = 200u64;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        let value = if ((mask >> lane) & 1) != 0 {
+            let initial = if lane % 2 == 0 { 1.0f32 } else { 2.0f32 };
+            initial + iterations as f32 * 11.0
+        } else {
+            0.0
+        };
+        expected[lane / 2] |= u64::from(value.to_bits()) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = iterations;
+    set_zmm(&mut regs, 1, accumulator);
+    set_zmm(&mut regs, 2, lhs);
+    set_zmm(&mut regs, 3, rhs);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VDPBF16PS loop"),
+        "a register-only masked VDPBF16PS loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after_jit, 1), expected);
+    assert_eq!(get_zmm(&after_jit, 2), lhs);
+    assert_eq!(get_zmm(&after_jit, 3), rhs);
+    assert_eq!(after_jit.k[4], mask);
     run_to_hlt(&mut vcpu);
 }
 

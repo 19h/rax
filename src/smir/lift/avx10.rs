@@ -709,7 +709,9 @@ impl Avx10Lifter {
                 acc,
                 src1,
                 src2,
+                mask: None,
                 width,
+                zeroing: false,
             },
         );
 

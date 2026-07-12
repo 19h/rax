@@ -15603,8 +15603,18 @@ impl Aarch64Lowerer {
                 acc,
                 src1,
                 src2,
+                mask,
                 width,
-            } => self.lower_vdotproduct_bf16(*dst, *acc, *src1, *src2, *width),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VDotProductBF16 on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vdotproduct_bf16(*dst, *acc, *src1, *src2, *width)
+                }
+            }
             OpKind::VFP16Arith {
                 dst,
                 src1,
@@ -29336,14 +29346,18 @@ mod tests {
                 acc: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VDotProductBF16 {
                 dst: v(3),
                 acc: v(4),
                 src1: v(5),
                 src2: v(6),
+                mask: None,
                 width: VecWidth::V64,
+                zeroing: false,
             },
         ]);
         let words = code_words(&code);
@@ -29376,14 +29390,18 @@ mod tests {
                 acc: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VDotProductBF16 {
                 dst: v(3),
                 acc: v(4),
                 src1: v(5),
                 src2: v(6),
+                mask: None,
                 width: VecWidth::V64,
+                zeroing: false,
             },
         ]);
 
@@ -31846,7 +31864,9 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             width: VecWidth::V256,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VDotProductBF16 {
@@ -31854,7 +31874,9 @@ mod tests {
             acc: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             width: VecWidth::V128,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VFma {

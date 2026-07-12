@@ -11659,22 +11659,15 @@ impl X86_64Lifter {
             OpId(ops.len() as u16),
             pc,
             OpKind::VDotProductBF16 {
-                dst: raw,
+                dst,
                 acc: dst,
                 src1,
                 src2,
+                mask,
                 width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        self.append_evex_vector_mask_result(
-            prefix,
-            dst,
-            raw,
-            VecElementType::F32,
-            pc,
-            ctx,
-            &mut ops,
-        );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -54062,6 +54055,20 @@ mod tests {
                 OpKind::VDotProductBF16 { width: actual, .. } if actual == width
             )));
         }
+        let direct_masked = lift_single(&[0x62, 0xF2, 0x6E, 0xCC, 0x52, 0xCB]).unwrap();
+        assert_eq!(direct_masked.ops.len(), 1);
+        assert!(matches!(
+            direct_masked.ops[0].kind,
+            OpKind::VDotProductBF16 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                acc: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                width: VecWidth::V512,
+                zeroing: true,
+            }
+        ));
         let dot_broadcast = lift_single(&[0x62, 0xE2, 0x56, 0x53, 0x52, 0x60, 0x01]).unwrap();
         assert_eq!(
             dot_broadcast

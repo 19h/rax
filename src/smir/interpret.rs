@@ -8523,7 +8523,9 @@ impl SmirInterpreter {
                 acc,
                 src1,
                 src2,
+                mask,
                 width,
+                zeroing,
             } => {
                 let accumulator = Self::read_vec(ctx, *acc);
                 let first = Self::read_vec(ctx, *src1);
@@ -8574,6 +8576,14 @@ impl SmirInterpreter {
                     };
                     Self::set_lane(&mut result, lane, 32, u64::from(value));
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &accumulator,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    VecElementType::F32,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 

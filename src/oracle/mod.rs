@@ -2926,8 +2926,19 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             acc,
             src1,
             src2,
+            mask,
             width,
-        } => op_json!("vdot_product_bf16", dst, acc, src1, src2, width),
+            zeroing,
+        } => op_json!(
+            "vdot_product_bf16",
+            dst,
+            acc,
+            src1,
+            src2,
+            mask,
+            width,
+            zeroing
+        ),
         OpKind::VCvtFP32ToBF16 {
             dst,
             src1,

@@ -239,9 +239,19 @@ impl Avx10Lowerer {
                 acc,
                 src1,
                 src2,
+                mask,
                 width,
-                ..
-            } => Some(self.lower_vdpbf16ps(code, dst, acc, src1, src2, *width)),
+                zeroing,
+            } => Some(self.lower_vdpbf16ps(
+                code,
+                dst,
+                acc,
+                src1,
+                src2,
+                mask.as_ref(),
+                *width,
+                *zeroing,
+            )),
 
             OpKind::VCvtFP32ToBF16 {
                 dst,
@@ -690,23 +700,42 @@ impl Avx10Lowerer {
         acc: &VReg,
         src1: &VReg,
         src2: &VReg,
+        mask: Option<&VReg>,
         width: VecWidth,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         if dst != acc {
             return Err(LowerError::UnsupportedOperation(
                 "VDPBF16PS requires acc aliased with dst".to_string(),
             ));
         }
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "VDPBF16PS requires 128/256/512-bit width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if dst_reg > 31
+            || src1_reg > 31
+            || src2_reg > 31
+            || (mask.is_some() && !(1..=7).contains(&mask_reg))
+        {
+            return Err(LowerError::InvalidRegister(
+                "VDPBF16PS vector register must be 0..31 and explicit opmask must be K1..K7"
+                    .to_string(),
+            ));
+        }
 
         let mut enc = EvexEncoder::new(code);
         enc.emit_evex(
             2,     // map 0F38
             2,     // pp = F3
             false, // W = 0
-            width, dst_reg, src1_reg, src2_reg, 0, false,
+            width, dst_reg, src1_reg, src2_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(0x52);
         enc.emit_modrm_rr(dst_reg, src2_reg);
@@ -1412,7 +1441,9 @@ mod tests {
                 acc: zmm4,
                 src1: zmm2,
                 src2: zmm3,
+                mask: None,
                 width: VecWidth::V512,
+                zeroing: false,
             },
             OpKind::VDotProductExt {
                 dst: zmm1,
@@ -1483,6 +1514,37 @@ mod tests {
     }
 
     #[test]
+    fn vdpbf16ps_lowering_rejects_malformed_mask_and_width_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        for (mask, width, zeroing) in [
+            (None, VecWidth::V512, true),
+            (
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                VecWidth::V512,
+                false,
+            ),
+            (None, VecWidth::V64, false),
+        ] {
+            let invalid = OpKind::VDotProductBF16 {
+                dst: zmm1,
+                acc: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask,
+                width,
+                zeroing,
+            };
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
     fn lowers_x86_evex_bitmanip_ir_to_canonical_encodings() {
         let lowerer = Avx10Lowerer::new();
         let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
@@ -1503,6 +1565,42 @@ mod tests {
         let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VDotProductBF16 {
+                    dst: zmm1,
+                    acc: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    mask: Some(k4),
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6E, 0xCC, 0x52, 0xCB][..],
+            ),
+            (
+                OpKind::VDotProductBF16 {
+                    dst: zmm16,
+                    acc: zmm16,
+                    src1: zmm17,
+                    src2: zmm18,
+                    mask: Some(k7),
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0x76, 0x27, 0x52, 0xC2][..],
+            ),
+            (
+                OpKind::VDotProductBF16 {
+                    dst: xmm7,
+                    acc: xmm7,
+                    src1: xmm8,
+                    src2: xmm9,
+                    mask: Some(k3),
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD2, 0x3E, 0x8B, 0x52, 0xF9][..],
+            ),
             (
                 OpKind::VMultiplyAdd52 {
                     dst: zmm1,
