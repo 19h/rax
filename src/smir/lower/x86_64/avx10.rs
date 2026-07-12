@@ -214,8 +214,9 @@ impl Avx10Lowerer {
                 dst,
                 src,
                 indices,
+                mask,
                 width,
-            } => Some(self.lower_vpshufbitqmb(code, dst, src, indices, *width)),
+            } => Some(self.lower_vpshufbitqmb(code, dst, src, indices, mask.as_ref(), *width)),
 
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
@@ -601,11 +602,13 @@ impl Avx10Lowerer {
         dst: &VReg,
         src: &VReg,
         indices: &VReg,
+        mask: Option<&VReg>,
         width: VecWidth,
     ) -> Avx10LowerResult<()> {
         let dst_reg = self.vreg_to_k(dst)?;
         let src_reg = self.vreg_to_zmm(src)?;
         let indices_reg = self.vreg_to_zmm(indices)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
 
         let mut enc = EvexEncoder::new(code);
         enc.emit_evex(
@@ -616,7 +619,7 @@ impl Avx10Lowerer {
             dst_reg,
             src_reg,
             indices_reg,
-            0,
+            mask_reg,
             false,
         );
         enc.emit_opcode(0x8F);
@@ -1322,8 +1325,29 @@ mod tests {
         let zmm17 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(17)));
         let zmm18 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(18)));
         let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VShuffleBitQM {
+                    dst: k5,
+                    src: zmm3,
+                    indices: zmm2,
+                    mask: None,
+                    width: VecWidth::V512,
+                },
+                &[0x62, 0xF2, 0x65, 0x48, 0x8F, 0xEA][..],
+            ),
+            (
+                OpKind::VShuffleBitQM {
+                    dst: k5,
+                    src: zmm3,
+                    indices: zmm2,
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    width: VecWidth::V512,
+                },
+                &[0x62, 0xF2, 0x65, 0x49, 0x8F, 0xEA][..],
+            ),
             (
                 OpKind::VPopcnt {
                     dst: zmm1,

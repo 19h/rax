@@ -31739,6 +31739,7 @@ mod tests {
             dst: x86(X86Reg::K(1)),
             src: v(1),
             indices: v(2),
+            mask: None,
             width: VecWidth::V128,
         });
 

@@ -2866,8 +2866,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst,
             src,
             indices,
+            mask,
             width,
-        } => op_json!("vshuffle_bit_qm", dst, src, indices, width),
+        } => op_json!("vshuffle_bit_qm", dst, src, indices, mask, width),
         OpKind::VCompress {
             dst,
             src,

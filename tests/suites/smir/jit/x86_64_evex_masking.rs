@@ -366,6 +366,79 @@ fn hot_masked_vpopcntd_jits_with_direct_mask_semantics() {
 }
 
 #[test]
+fn hot_vpshufbitqmb_jits_and_writes_architectural_k_destination() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512bitalg")
+    {
+        return;
+    }
+
+    // loop: vpshufbitqmb %zmm2,%zmm3,%k5{%k1}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x65, 0x49, 0x8f, 0xea]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let source = [
+        0x8000_0000_0000_0001,
+        0x0123_4567_89ab_cdef,
+        0xfedc_ba98_7654_3210,
+        0xaaaa_5555_f0f0_0f0f,
+        0x0102_0408_1020_4080,
+        0x7fff_ffff_ffff_fffe,
+        0x1357_9bdf_2468_ace0,
+        0xffff_0000_ffff_0000,
+    ];
+    let indices = [
+        0x3f_00_3e_01_3d_02_3c_03,
+        0x04_05_06_07_08_09_0a_0b,
+        0x0c_0d_0e_0f_10_11_12_13,
+        0x14_15_16_17_18_19_1a_1b,
+        0x1c_1d_1e_1f_20_21_22_23,
+        0x24_25_26_27_28_29_2a_2b,
+        0x2c_2d_2e_2f_30_31_32_33,
+        0x34_35_36_37_38_39_3a_3b,
+    ];
+    let write_mask = 0xa55a_9669_5aa5_6996u64;
+    let mut raw = 0u64;
+    for qword in 0..8 {
+        for byte in 0..8 {
+            let index = ((indices[qword] >> (byte * 8)) & 0x3f) as u32;
+            let bit = (source[qword] >> index) & 1;
+            raw |= bit << (qword * 8 + byte);
+        }
+    }
+    let expected = raw & write_mask;
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 2, indices);
+    set_zmm(&mut regs, 3, source);
+    regs.k[1] = write_mask;
+    regs.k[5] = u64::MAX;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit VPSHUFBITQMB loop"),
+        "a register-only VPSHUFBITQMB loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0, "native loop drained");
+    assert_eq!(after_jit.k[5], expected, "K destination write-back");
+    assert_eq!(after_jit.k[1], write_mask, "write mask survived");
+    assert_eq!(get_zmm(&after_jit, 2), indices, "index ZMM survived");
+    assert_eq!(get_zmm(&after_jit, 3), source, "source ZMM survived");
+
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
 fn control_gpr_hot_loop_does_jit() {
     // Sanity: an all-GPR hot loop with the same shape DOES promote, so the
     // `!jitted` assertion above is meaningful (the harness can trigger the JIT).

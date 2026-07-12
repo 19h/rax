@@ -3226,9 +3226,12 @@ impl OpKind {
                 result.push(*indices);
             }
 
-            OpKind::VShuffleBitQM { src, indices, .. } => {
+            OpKind::VShuffleBitQM {
+                src, indices, mask, ..
+            } => {
                 result.push(*src);
                 result.push(*indices);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VCompress {
@@ -9298,6 +9301,7 @@ mod tests {
                 dst,
                 src,
                 indices,
+                mask: None,
                 width: VecWidth::V128,
             },
         ));

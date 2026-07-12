@@ -11955,38 +11955,19 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw = ctx.alloc_vreg();
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.reg)));
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::VShuffleBitQM {
-                dst: raw,
+                dst,
                 src: self.vec_reg(
                     prefix.vvvv + if prefix.v_high { 16 } else { 0 },
                     prefix.width,
                 ),
                 indices,
+                mask,
                 width: prefix.width,
-            },
-        ));
-        let dst = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.reg)));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            if let Some(mask) = mask {
-                OpKind::And {
-                    dst,
-                    src1: raw,
-                    src2: SrcOperand::Reg(mask),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                }
-            } else {
-                OpKind::Mov {
-                    dst,
-                    src: SrcOperand::Reg(raw),
-                    width: OpWidth::W64,
-                }
             },
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -54230,10 +54211,10 @@ mod tests {
         );
         assert!(matches!(
             memory.ops.last().unwrap().kind,
-            OpKind::And {
+            OpKind::VShuffleBitQM {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::K(4))),
-                src2: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
-                flags: FlagUpdate::None,
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                width: VecWidth::V512,
                 ..
             }
         ));

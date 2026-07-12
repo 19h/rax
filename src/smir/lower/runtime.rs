@@ -939,6 +939,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     if !matches!(
         op,
         OpKind::VPopcnt { .. }
+            | OpKind::VShuffleBitQM { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
             | OpKind::X86TernaryLogic { .. }
@@ -999,6 +1000,7 @@ pub fn x86_native_vector_features_supported_excluding(
         any = true;
         let width = match op {
             OpKind::VPopcnt { width, .. }
+            | OpKind::VShuffleBitQM { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
             | OpKind::X86TernaryLogic { width, .. }
@@ -1021,6 +1023,7 @@ pub fn x86_native_vector_features_supported_excluding(
                     | crate::smir::ir::types::VecElementType::I64
             );
         }
+        needs_bitalg |= matches!(op, OpKind::VShuffleBitQM { .. });
     }
 
     if !any {
@@ -1614,6 +1617,7 @@ mod jit_gate_tests {
         let zmm2 = x86(X86Reg::Zmm(2));
         let zmm3 = x86(X86Reg::Zmm(3));
         let k4 = x86(X86Reg::K(4));
+        let k5 = x86(X86Reg::K(5));
         let native_ops = [
             OpKind::VPopcnt {
                 dst: zmm1,
@@ -1622,6 +1626,13 @@ mod jit_gate_tests {
                 elem: VecElementType::I32,
                 width: VecWidth::V512,
                 zeroing: true,
+            },
+            OpKind::VShuffleBitQM {
+                dst: k5,
+                src: zmm3,
+                indices: zmm2,
+                mask: Some(k4),
+                width: VecWidth::V512,
             },
             OpKind::X86PackedShiftVariable {
                 dst: zmm1,

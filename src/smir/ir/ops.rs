@@ -2776,6 +2776,7 @@ pub enum OpKind {
         dst: VReg,
         src: VReg,
         indices: VReg,
+        mask: Option<VReg>,
         width: VecWidth,
     },
 

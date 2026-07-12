@@ -663,6 +663,7 @@ impl Avx10Lifter {
                 dst,
                 src,
                 indices,
+                mask: None,
                 width,
             },
         );

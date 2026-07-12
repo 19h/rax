@@ -7438,6 +7438,7 @@ impl SmirInterpreter {
                 dst,
                 src,
                 indices,
+                mask: write_mask,
                 width,
             } => {
                 let src_val = Self::read_vec(ctx, *src);
@@ -7460,7 +7461,8 @@ impl SmirInterpreter {
                 } else {
                     (1u64 << bytes) - 1
                 };
-                ctx.write_vreg(*dst, result & mask);
+                let write_mask = write_mask.map_or(u64::MAX, |mask| ctx.read_vreg(mask));
+                ctx.write_vreg(*dst, result & mask & write_mask);
             }
 
             OpKind::VCompress {
@@ -26305,6 +26307,7 @@ mod tests {
                         dst,
                         src,
                         indices,
+                        mask: None,
                         width: VecWidth::V128,
                     },
                 ),
