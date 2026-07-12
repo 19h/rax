@@ -87,7 +87,7 @@ pub use ir::types::{
     GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
     ShiftOp, SignExtend, SourceArch, SrcOperand, VLaneOp, VReg, VRegAllocator, VShiftVKind,
     VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth, VirtualId,
-    X86Reg,
+    X86NarrowMode, X86Reg,
 };
 pub use ir::{
     CallTarget, CallingConv, FunctionBuilder, PhiNode, RuntimeFunc, SmirBlock, SmirFunction,
