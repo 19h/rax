@@ -683,9 +683,9 @@ pub enum OpKind {
         width: OpWidth,
     },
 
-    /// Carry-less (GF(2) polynomial) multiply — Hexagon `pmpyw`/`vpmpyh` (and
-    /// their `_acc` XOR-accumulate forms). The product is the XOR of shifted
-    /// partial products, i.e. NO carries (mirrors x86 PCLMULQDQ / ARM PMULL).
+    /// Carry-less (GF(2) polynomial) multiply. The product is the XOR of
+    /// shifted partial products, i.e. NO carries. This models Hexagon
+    /// `pmpyw`/`vpmpyh` (and their `_acc` forms) and x86 PCLMULQDQ.
     /// Sign-ness is irrelevant because the operation is purely bitwise.
     ///
     /// `pmpyw`: a single 32x32 -> 64-bit carry-less product; `elem_bits = 32`,
@@ -693,6 +693,8 @@ pub enum OpKind {
     /// `vpmpyh`: two independent 16x16 -> 32-bit carry-less products; the
     /// 16-bit halves of `dst`/`dst_hi` are filled per the Hexagon interleave
     /// (`dst.h0=p0.lo, dst.h1=p1.lo, dst_hi.h0=p0.hi, dst_hi.h1=p1.hi`).
+    /// `PCLMULQDQ`: one 64x64 -> 128-bit product; the low 64 bits go to `dst`
+    /// and the high 64 bits to `dst_hi` (`elem_bits = 64`, `lanes = 1`).
     /// When `acc` is set the products are XOR-ed into the existing `dst`/
     /// `dst_hi` register pair.
     ClMul {
@@ -700,12 +702,23 @@ pub enum OpKind {
         dst_hi: Option<VReg>,
         src1: SrcOperand,
         src2: SrcOperand,
-        /// Per-lane element width in bits (32 for pmpyw, 16 for vpmpyh).
+        /// Per-lane element width in bits (16, 32, or 64).
         elem_bits: u8,
         /// Number of independent lanes (1 for pmpyw, 2 for vpmpyh).
         lanes: u8,
         /// true = XOR the product into the existing dst/dst_hi (`_acc` forms).
         acc: bool,
+    },
+
+    /// Reflected CRC-32C (Castagnoli) accumulation used by x86 CRC32.
+    /// `crc` contributes its low 32 bits; `data` contributes exactly
+    /// `data_width` bits in little-endian byte order. The result is always a
+    /// zero-extended 32-bit value, including the architectural r64 forms.
+    Crc32C {
+        dst: VReg,
+        crc: VReg,
+        data: VReg,
+        data_width: OpWidth,
     },
 
     /// Hexagon `M7_wcmpy*` — 32x32 wide complex multiply with an i128
@@ -952,7 +965,10 @@ pub enum OpKind {
     },
 
     /// Load effective address
-    Lea { dst: VReg, addr: Address },
+    Lea {
+        dst: VReg,
+        addr: Address,
+    },
 
     /// Exchange registers
     Xchg {
@@ -1123,7 +1139,10 @@ pub enum OpKind {
     ClearExclusive,
 
     /// Prefetch hint
-    Prefetch { addr: Address, write: bool },
+    Prefetch {
+        addr: Address,
+        write: bool,
+    },
 
     /// x86 cache-line writeback/invalidation operation.
     X86CacheControl {
@@ -1131,8 +1150,18 @@ pub enum OpKind {
         kind: X86CacheControlKind,
     },
 
+    /// Raise x86 #GP(0) when an effective address is not aligned to the given
+    /// power-of-two byte boundary. This is separate from the following memory
+    /// access so alignment is checked before any architectural side effect.
+    X86CheckAlignment {
+        addr: Address,
+        alignment: u8,
+    },
+
     /// Memory fence
-    Fence { kind: FenceKind },
+    Fence {
+        kind: FenceKind,
+    },
 
     // ========================================================================
     // FLOATING POINT (scalar)
@@ -1232,6 +1261,27 @@ pub enum OpKind {
         signaling: bool,
     },
 
+    /// x86 (V)CMP{PS,PD,SS,SD}. Legacy and VEX encodings write an
+    /// all-zeros/all-ones element vector; EVEX encodings write one result bit
+    /// per active element to an opmask register. `mask` is the EVEX write mask,
+    /// whose inactive result bits are architecturally zero. `scalar` limits the
+    /// comparison to lane zero; vector scalar forms merge the remaining XMM
+    /// lanes from `src1`. `suppress_exceptions` models EVEX SAE.
+    X86VectorFpCompare {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        predicate: u8,
+        scalar: bool,
+        mask_destination: bool,
+        zero_upper: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVT(T)SS2SI/CVT(T)SD2SI scalar conversion. Invalid or out-of-range
     /// inputs produce the signed integer-indefinite value for `int_width` when
     /// the SIMD invalid exception is masked. Non-truncating forms use MXCSR.RC.
@@ -1317,6 +1367,38 @@ pub enum OpKind {
         src: VReg,
         precision: FpPrecision,
         mode: FpRoundMode,
+    },
+
+    /// x86 ROUNDPS/ROUNDPD/ROUNDSS/ROUNDSD. In addition to integral
+    /// rounding, these instructions observe MXCSR.DAZ, quiet SNaNs, update the
+    /// MXCSR invalid/precision status bits, optionally suppress precision, and
+    /// can raise an unmasked SIMD floating-point exception before destination
+    /// writeback. `merge` supplies untouched lanes for scalar forms.
+    X86Round {
+        dst: VReg,
+        merge: VReg,
+        src: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        scalar_source: bool,
+        zero_upper: bool,
+        mode: FpRoundMode,
+        suppress_precision: bool,
+    },
+
+    /// x86 DPPS/DPPD and VDPPS/VDPPD. Each selected multiplication and each
+    /// horizontal addition is rounded separately under MXCSR; the operation
+    /// also owns DAZ/FTZ processing, SIMD exception status, and exception-before-
+    /// writeback atomicity. The immediate selects inputs in its high nibble and
+    /// broadcast destinations in its low nibble (DPPD uses two bits per field).
+    X86DotProduct {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+        imm: u8,
     },
 
     // ========================================================================
@@ -1639,9 +1721,12 @@ pub enum OpKind {
         odd: bool,
     },
 
-    /// Saturating narrowing pack. Models HVX `vpackhub_sat/hb_sat/wuh_sat/wh_sat`:
-    /// each signed `src_elem`-wide lane is saturated to a half-width lane;
-    /// src2's lanes fill the low half of the result, src1's the high half.
+    /// Saturating narrowing pack. Each signed `src_elem`-wide lane is
+    /// saturated to a half-width lane. Within each `block_lanes`-wide source
+    /// group, src2 fills the low half of the output group and src1 the high
+    /// half. `src_lanes` bounds the active lanes in each source; inactive
+    /// backing state is zeroed. A single full-width group models HVX
+    /// `vpackhub_sat/hb_sat/wuh_sat/wh_sat`; 128-bit groups model x86 PACK*.
     VPackSat {
         dst: VReg,
         src1: VReg,
@@ -1650,6 +1735,10 @@ pub enum OpKind {
         src_elem: VecElementType,
         /// true = saturate to the unsigned range (ub/uh), false = signed (b/h).
         to_unsigned: bool,
+        /// Number of active wide lanes in each source.
+        src_lanes: u8,
+        /// Wide source lanes from each operand in one independent pack group.
+        block_lanes: u8,
     },
 
     /// HVX halfword lookup-table gather into a register pair (`vlut16`: vlutvwh
@@ -1708,7 +1797,11 @@ pub enum OpKind {
     /// HVX `vdealb4w` (`Vd.b = vdeale(Vu.b, Vv.b)`): deal bytes 0 and 2 of each
     /// word. For word lane i (0..32): `dst.b[i]=src2.b[4i]`, `dst.b[32+i]=src2.b[4i+2]`,
     /// `dst.b[64+i]=src1.b[4i]`, `dst.b[96+i]=src1.b[4i+2]` (src1=Vu, src2=Vv).
-    VDealB4W { dst: VReg, src1: VReg, src2: VReg },
+    VDealB4W {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+    },
 
     /// Byte-granular alignment/rotate of the 256-byte concatenation `src1:src2`.
     /// Models HVX `valignb/vlalignb` (+imm forms) and `vror`: with byte shift
@@ -1911,20 +2004,35 @@ pub enum OpKind {
 
     /// HVX `vinsertwr` (`Vx.w[0] = Rt`): insert scalar GPR `scalar` into word lane
     /// 0 of vector `dst`; all other words preserved. `dst` is read-modify-written.
-    VInsertWordR { dst: VReg, scalar: VReg },
+    VInsertWordR {
+        dst: VReg,
+        scalar: VReg,
+    },
 
     /// HVX `extractw` (`Rd = vextract(Vu, Rs)`): extract word lane `(Rs & 127) >> 2`
     /// of vector `src` into the GPR `dst` (a SCALAR result, moving V -> R).
-    VExtractWord { dst: VReg, src: VReg, sel: VReg },
+    VExtractWord {
+        dst: VReg,
+        src: VReg,
+        sel: VReg,
+    },
 
     /// HVX `vlut4` (`Vd.h = vlut4(Vu.uh, Rtt.h)`): each halfword lane `i` of `src`
     /// selects (via its top two bits, `(uh >> 14) & 3`) one of four halfwords
     /// packed in the 64-bit scalar pair `table`. `table` is a W64 temp holding Rtt.
-    VLut4 { dst: VReg, src: VReg, table: VReg },
+    VLut4 {
+        dst: VReg,
+        src: VReg,
+        table: VReg,
+    },
 
     /// HVX `vrotr` (`Vd.uw = vrotr(Vu.uw, Vv.uw)`): per-word bit rotate-right of
     /// `src` lane by `amount` lane masked to 5 bits.
-    VRotr { dst: VReg, src: VReg, amount: VReg },
+    VRotr {
+        dst: VReg,
+        src: VReg,
+        amount: VReg,
+    },
 
     /// HVX `vaddububb_sat`/`vsubububb_sat` (`Vd.ub = vadd/vsub(Vu.ub, Vv.b):sat`):
     /// per byte lane, unsigned src1 `+/-` SIGNED src2, saturated to the unsigned
@@ -1941,7 +2049,11 @@ pub enum OpKind {
     /// scalar length. `v2` selects the variant:
     ///   false (`pred_scalar2`/vsetq): set the low `Rt & 127` byte-bits (`bit[i]=i<n`).
     ///   true  (`pred_scalar2v2`/vsetq2): set bits `0..=((Rt-1) & 127)` (Rt==0 -> all 128).
-    VSetPredQ { dst: VReg, scalar: VReg, v2: bool },
+    VSetPredQ {
+        dst: VReg,
+        scalar: VReg,
+        v2: bool,
+    },
 
     /// HVX `shuffeqh`/`shuffeqw` (`Qd.<n> = vshuffe(Qs.<2n>, Qt.<2n>)`): predicate
     /// shrink/shuffle of two Q vectors. Per vector-byte bit `i` (0..128):
@@ -2114,6 +2226,7 @@ pub enum OpKind {
         src1: VReg,
         src2: VReg,
         src_elem: VecElementType,
+        lanes: u8,
         signed1: bool,
         signed2: bool,
         shift_left: u8,
@@ -2475,13 +2588,49 @@ pub enum OpKind {
         sign: SignExtend,
     },
 
-    /// Vector shuffle/permute
+    /// Vector shuffle/permute. Each active output lane reads one element-sized
+    /// index. Indices `[0, lanes)` select `src1`; with `src2`, indices
+    /// `[lanes, 2*lanes)` select it. Out-of-range indices produce zero.
     VShuffle {
         dst: VReg,
         src1: VReg,
         src2: Option<VReg>,
         indices: VReg,
         elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Lane-local byte table shuffle with x86 PSHUFB semantics.
+    ///
+    /// For output byte `i`, the corresponding control byte selects within the
+    /// `block_lanes`-byte source block containing `i`. Control bit 7 produces
+    /// zero; otherwise the low `log2(block_lanes)` bits select the source byte.
+    /// Only `lanes` bytes are active and inactive backing state is zeroed.
+    VByteShuffle {
+        dst: VReg,
+        src: VReg,
+        control: VReg,
+        lanes: u8,
+        /// Power-of-two source block size (8 for MMX, 16 for XMM/YMM/ZMM).
+        block_lanes: u8,
+    },
+
+    /// Grouped horizontal binary operation. Within each `block_lanes` source
+    /// group, adjacent pairs from `src1` produce the low half of the output
+    /// group and adjacent pairs from `src2` produce the high half. This models
+    /// x86 PHADD*/PHSUB* independently in every 128-bit vector block.
+    VHorizontalBin {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        /// Total active element lanes in each source and the destination.
+        lanes: u8,
+        /// Source lanes per independent group (8 words or 4 dwords for x86).
+        block_lanes: u8,
+        subtract: bool,
+        /// Signed saturation; valid for the I16 PHADDSW/PHSUBSW forms.
+        saturating: bool,
     },
 
     /// Vector load
@@ -2548,7 +2697,11 @@ pub enum OpKind {
     // ========================================================================
     // AVX10.1 OPERATIONS
     // ========================================================================
-    /// VNNI dot product: dst = acc + dot(src1, src2)
+    /// Integer dot product: dst = acc + dot(src1, src2).
+    ///
+    /// VNNI uses I8/I16 sources with I32 accumulators. PMADDUBSW uses I8
+    /// sources with an I16 zero accumulator, two products per result, and
+    /// signed saturation.
     /// VPDPBUSD: unsigned bytes * signed bytes -> dword accumulate
     /// VPDPBUSDS: same with saturation
     /// VPDPWSSD: signed words * signed words -> dword accumulate
@@ -2591,6 +2744,15 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Per-element bit mask of equal elements at lower lane indices.
+    /// VPCONFLICTD/Q
+    VConflict {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+    },
+
     /// Byte permutation from one or two sources
     /// VPERMB: permute bytes from single source
     /// VPERMI2B: permute bytes from two sources, overwrite index
@@ -2613,6 +2775,43 @@ pub enum OpKind {
         src: VReg,
         indices: VReg,
         width: VecWidth,
+    },
+
+    /// Compact active source elements into consecutive low destination lanes.
+    /// Register forms preserve or zero the remaining lanes according to
+    /// `zeroing`; a missing mask denotes the architectural k0/no-mask form.
+    VCompress {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        zeroing: bool,
+    },
+
+    /// Distribute consecutive low source elements into mask-selected
+    /// destination lanes. Inactive lanes merge or zero according to `zeroing`.
+    VExpand {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        zeroing: bool,
+    },
+
+    /// Narrow consecutive integer source lanes into a smaller register result.
+    /// The writemask indexes source/result lanes; bits above the narrowed result
+    /// width are always cleared for architectural register destinations.
+    X86NarrowInt {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        src_elem: VecElementType,
+        dst_elem: VecElementType,
+        width: VecWidth,
+        mode: X86NarrowMode,
+        zeroing: bool,
     },
 
     /// BFloat16 dot product: dst = acc + dot(bf16_to_f32(src1), bf16_to_f32(src2))
@@ -2687,6 +2886,173 @@ pub enum OpKind {
         imm: u8,
     },
 
+    /// Packed sums of absolute byte differences. Each consecutive group of
+    /// eight unsigned bytes produces one zero-extended 16-bit sum in the low
+    /// word of the corresponding 64-bit result block.
+    /// PSADBW, VPSADBW
+    VSadBytes {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// AES-NI/VAES transformation, applied independently to each 128-bit lane.
+    /// `src2` is the round key for round operations and absent for AESIMC and
+    /// AESKEYGENASSIST. `imm` is used only by AESKEYGENASSIST.
+    X86Aes {
+        dst: VReg,
+        src1: VReg,
+        src2: Option<VReg>,
+        width: VecWidth,
+        op: X86AesOp,
+        imm: u8,
+    },
+
+    /// SHA-512 message schedule, first stage.
+    X86Sha512Msg1 {
+        dst: VReg,
+        src: VReg,
+    },
+
+    /// SHA-512 message schedule, final stage.
+    X86Sha512Msg2 {
+        dst: VReg,
+        src: VReg,
+    },
+
+    /// Two SHA-512 compression rounds.
+    X86Sha512Rounds2 {
+        dst: VReg,
+        state: VReg,
+        wk: VReg,
+    },
+
+    /// SM3 message-schedule first/final stages.
+    X86Sm3Msg1 {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+    },
+    X86Sm3Msg2 {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+    },
+
+    /// Two SM3 compression rounds.
+    X86Sm3Rounds2 {
+        dst: VReg,
+        state: VReg,
+        words: VReg,
+        imm: u8,
+    },
+
+    /// Four SM4 key-schedule or encryption rounds per 128-bit lane.
+    X86Sm4 {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        key_schedule: bool,
+    },
+
+    /// AVX_NE_CONVERT BF16/FP16 memory conversion to packed FP32. B1 forms
+    /// broadcast one m16 element; B0 forms select even or odd m128/m256 words.
+    X86Convert16ToFp32 {
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+        fp16: bool,
+        odd: bool,
+        broadcast: bool,
+    },
+
+    /// VEX packed immediate shifts. `byte_lane` selects PSLLDQ/PSRLDQ,
+    /// which shift independently within each 128-bit lane.
+    X86PackedShiftImm {
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        shift: ShiftOp,
+        amount: u8,
+        byte_lane: bool,
+    },
+
+    /// Packed element shift by the unsigned count in `count`. Architectural
+    /// x86 forms consume the complete low 64 bits and apply the same count to
+    /// every element; out-of-range counts zero logical results or sign-fill
+    /// arithmetic-right results.
+    X86PackedShift {
+        dst: VReg,
+        src: VReg,
+        count: VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        shift: ShiftOp,
+    },
+
+    /// Packed per-element shift by unsigned counts from corresponding vector
+    /// lanes (VPSLLV*/VPSRLV*/VPSRAV*).
+    X86PackedShiftVariable {
+        dst: VReg,
+        src: VReg,
+        count: VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        shift: ShiftOp,
+    },
+
+    /// EVEX packed element rotate. Immediate forms use `amount`; variable
+    /// forms use the corresponding element of `count`. Counts are reduced
+    /// modulo the element width by the interpreter.
+    X86PackedRotate {
+        dst: VReg,
+        src: VReg,
+        count: Option<VReg>,
+        amount: u8,
+        width: VecWidth,
+        elem: VecElementType,
+        left: bool,
+    },
+
+    /// EVEX VPTERNLOGD/Q. For every bit, `(src1, src2, src3)` forms a
+    /// three-bit index into `imm`; bit 0 of `imm` selects index 000 and bit 7
+    /// selects 111. The architectural destination is supplied as `src1`.
+    X86TernaryLogic {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        imm: u8,
+        width: VecWidth,
+    },
+
+    /// EVEX VPSHLD*/VPSHRD* packed funnel shift. At a zero reduced count the
+    /// result is `src`; nonzero left shifts fill its low bits from the high
+    /// bits of `fill`, while right shifts fill its high bits from the low bits
+    /// of `fill`. Immediate forms use `amount`; variable forms use `count`.
+    X86PackedFunnelShift {
+        dst: VReg,
+        src: VReg,
+        fill: VReg,
+        count: Option<VReg>,
+        amount: u8,
+        width: VecWidth,
+        elem: VecElementType,
+        left: bool,
+    },
+
+    /// EVEX VPMULTISHIFTQB. Each control byte selects an eight-bit circular
+    /// window from the corresponding 64-bit element of `source`.
+    X86MultiShiftQB {
+        dst: VReg,
+        control: VReg,
+        source: VReg,
+        width: VecWidth,
+    },
+
     /// AVX10.2 media acceleration dot products
     /// VPDPBSSD/S, VPDPBSUD/S, VPDPBUUD/S (byte variants)
     /// VPDPWSUD/S, VPDPWUSD/S, VPDPWUUD/S (word variants)
@@ -2709,16 +3075,24 @@ pub enum OpKind {
     // FLAG OPERATIONS
     // ========================================================================
     /// Read flags to register
-    ReadFlags { dst: VReg },
+    ReadFlags {
+        dst: VReg,
+    },
 
     /// Write register to flags
-    WriteFlags { src: VReg },
+    WriteFlags {
+        src: VReg,
+    },
 
     /// Set carry flag
-    SetCF { value: bool },
+    SetCF {
+        value: bool,
+    },
 
     /// Set direction flag (x86 CLD/STD)
-    SetDF { value: bool },
+    SetDF {
+        value: bool,
+    },
 
     /// Complement carry flag
     CmcCF,
@@ -2727,10 +3101,14 @@ pub enum OpKind {
     MaterializeFlags,
 
     /// x86 LDMXCSR/VLDMXCSR: load the 32-bit SIMD control/status register.
-    X86LoadMxcsr { addr: Address },
+    X86LoadMxcsr {
+        addr: Address,
+    },
 
     /// x86 STMXCSR/VSTMXCSR: store the 32-bit SIMD control/status register.
-    X86StoreMxcsr { addr: Address },
+    X86StoreMxcsr {
+        addr: Address,
+    },
 
     /// x87 environment/control operation. Memory forms carry `Some(addr)`;
     /// register-only FNINIT/FNCLEX/FNSTSW AX forms carry `None`.
@@ -2750,10 +3128,16 @@ pub enum OpKind {
     },
 
     /// FXSAVE/FXSAVE64: save the 512-byte legacy x87/SSE state image.
-    X86FxSave { addr: Address, rex_w: bool },
+    X86FxSave {
+        addr: Address,
+        rex_w: bool,
+    },
 
     /// FXRSTOR/FXRSTOR64: restore the 512-byte legacy x87/SSE state image.
-    X86FxRstor { addr: Address, rex_w: bool },
+    X86FxRstor {
+        addr: Address,
+        rex_w: bool,
+    },
 
     /// XSAVE-family save selected by EDX:EAX and the enabled XCR0/IA32_XSS
     /// state appropriate to `kind`.
@@ -2796,7 +3180,9 @@ pub enum OpKind {
     },
 
     /// RDPID: read IA32_TSC_AUX into a GPR without changing flags.
-    X86ReadPid { dst: VReg },
+    X86ReadPid {
+        dst: VReg,
+    },
 
     /// XGETBV: read XCR0 or the init-optimization bitmap selected by ECX.
     X86XGetBv {
@@ -2813,7 +3199,10 @@ pub enum OpKind {
     },
 
     /// Test condition and store result
-    TestCondition { dst: VReg, cond: Condition },
+    TestCondition {
+        dst: VReg,
+        cond: Condition,
+    },
 
     /// Conditional set: dst = cond ? 1 : 0
     SetCC {
@@ -2826,20 +3215,34 @@ pub enum OpKind {
     // SYSTEM / PRIVILEGED
     // ========================================================================
     /// System call
-    Syscall { num: VReg, args: Vec<VReg> },
+    Syscall {
+        num: VReg,
+        args: Vec<VReg>,
+    },
 
     /// Software interrupt
-    Swi { imm: u32 },
+    Swi {
+        imm: u32,
+    },
 
     /// Read system register
-    ReadSysReg { dst: VReg, reg: u32 },
+    ReadSysReg {
+        dst: VReg,
+        reg: u32,
+    },
 
     /// Write system register
-    WriteSysReg { reg: u32, src: VReg },
+    WriteSysReg {
+        reg: u32,
+        src: VReg,
+    },
 
     /// x86 RDTSC: read the monotonically increasing SMIR cycle counter into
     /// EDX:EAX (both destinations are 32-bit zero-extending writes).
-    X86ReadTsc { dst_lo: VReg, dst_hi: VReg },
+    X86ReadTsc {
+        dst_lo: VReg,
+        dst_hi: VReg,
+    },
 
     // ========================================================================
     // HEXAGON SCALAR FLOATING POINT (F2_*)
@@ -2948,7 +3351,11 @@ pub enum OpKind {
     /// FUNCTION of the register inputs — the "TLB entry" being matched IS the
     /// seeded register pair `Rss` (`src1`), NOT hidden TLB state — so it is fully
     /// reproducible. `src2`=Rt; `dst` receives the 0x00/0xff predicate byte.
-    HexTlbMatch { dst: VReg, src1: VReg, src2: VReg },
+    HexTlbMatch {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+    },
 
     // ========================================================================
     // RISC-V SCALAR FLOATING POINT (OP-FP / FMA)
@@ -3026,7 +3433,9 @@ pub enum OpKind {
     Nop,
 
     /// Undefined instruction (trap on execution)
-    Undefined { opcode: u32 },
+    Undefined {
+        opcode: u32,
+    },
 
     /// Debug breakpoint
     Breakpoint,
@@ -3203,6 +3612,7 @@ impl OpKind {
             | OpKind::Rcr { dst, .. }
             | OpKind::BidirShift { dst, .. }
             | OpKind::SatN { dst, .. }
+            | OpKind::Crc32C { dst, .. }
             | OpKind::Bts { dst, .. }
             | OpKind::Btr { dst, .. }
             | OpKind::Btc { dst, .. }
@@ -3252,10 +3662,13 @@ impl OpKind {
             | OpKind::IntToFp { dst, .. }
             | OpKind::FpToInt { dst, .. }
             | OpKind::X86FpToInt { dst, .. }
+            | OpKind::X86VectorFpCompare { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
             | OpKind::FRound { dst, .. }
+            | OpKind::X86Round { dst, .. }
+            | OpKind::X86DotProduct { dst, .. }
             | OpKind::VAdd { dst, .. }
             | OpKind::VSub { dst, .. }
             | OpKind::VAddSubSat { dst, .. }
@@ -3280,6 +3693,8 @@ impl OpKind {
             | OpKind::VInsertLane { dst, .. }
             | OpKind::VExtractLane { dst, .. }
             | OpKind::VShuffle { dst, .. }
+            | OpKind::VByteShuffle { dst, .. }
+            | OpKind::VHorizontalBin { dst, .. }
             | OpKind::VLoad { dst, .. }
             | OpKind::VBroadcast { dst, .. }
             | OpKind::VMin { dst, .. }
@@ -3287,8 +3702,12 @@ impl OpKind {
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
+            | OpKind::VConflict { dst, .. }
             | OpKind::VPermute { dst, .. }
             | OpKind::VShuffleBitQM { dst, .. }
+            | OpKind::VCompress { dst, .. }
+            | OpKind::VExpand { dst, .. }
+            | OpKind::X86NarrowInt { dst, .. }
             | OpKind::VDotProductBF16 { dst, .. }
             | OpKind::VCvtFP32ToBF16 { dst, .. }
             | OpKind::VCvtBF16ToFP32 { dst, .. }
@@ -3296,6 +3715,23 @@ impl OpKind {
             | OpKind::VCvtFpToIntSat { dst, .. }
             | OpKind::VMinMax { dst, .. }
             | OpKind::VMpsadbw { dst, .. }
+            | OpKind::VSadBytes { dst, .. }
+            | OpKind::X86Aes { dst, .. }
+            | OpKind::X86Sha512Msg1 { dst, .. }
+            | OpKind::X86Sha512Msg2 { dst, .. }
+            | OpKind::X86Sha512Rounds2 { dst, .. }
+            | OpKind::X86Sm3Msg1 { dst, .. }
+            | OpKind::X86Sm3Msg2 { dst, .. }
+            | OpKind::X86Sm3Rounds2 { dst, .. }
+            | OpKind::X86Sm4 { dst, .. }
+            | OpKind::X86Convert16ToFp32 { dst, .. }
+            | OpKind::X86PackedShiftImm { dst, .. }
+            | OpKind::X86PackedShift { dst, .. }
+            | OpKind::X86PackedShiftVariable { dst, .. }
+            | OpKind::X86PackedRotate { dst, .. }
+            | OpKind::X86TernaryLogic { dst, .. }
+            | OpKind::X86PackedFunnelShift { dst, .. }
+            | OpKind::X86MultiShiftQB { dst, .. }
             | OpKind::VDotProductExt { dst, .. }
             | OpKind::IoIn { dst, .. }
             | OpKind::ReadFlags { dst, .. }
@@ -3520,6 +3956,7 @@ impl OpKind {
             | OpKind::ClearExclusive
             | OpKind::Prefetch { .. }
             | OpKind::X86CacheControl { .. }
+            | OpKind::X86CheckAlignment { .. }
             | OpKind::Fence { .. }
             | OpKind::FCmp { .. }
             | OpKind::X86FpCompare { .. }
@@ -3594,6 +4031,10 @@ impl OpKind {
                     | OpKind::X86LoadMxcsr { .. }
                     | OpKind::X86StoreMxcsr { .. }
                     | OpKind::X86CacheControl { .. }
+                    | OpKind::X86CheckAlignment { .. }
+                    | OpKind::X86Round { .. }
+                    | OpKind::X86DotProduct { .. }
+                    | OpKind::X86VectorFpCompare { .. }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init
