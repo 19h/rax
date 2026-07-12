@@ -54,6 +54,32 @@ const RAX_AVX512_VEX_OPMASK_MNEMONICS: &[&str] = &[
     "kxnorw", "kxorb", "kxord", "kxorq", "kxorw",
 ];
 
+/// These cryptographic families are implemented by the SMIR x86
+/// lifter/interpreter rather than the
+/// legacy ISA integration-test decoder scanned by `local_simd_test_mnemonics`.
+const RAX_AVX_CRYPTO_MNEMONICS: &[&str] = &[
+    "vsha512msg1",
+    "vsha512msg2",
+    "vsha512rnds2",
+    "vsm3msg1",
+    "vsm3msg2",
+    "vsm3rnds2",
+    "vsm4key4",
+    "vsm4rnds4",
+];
+
+/// AVX_NE_CONVERT is implemented by the SMIR x86 lifter/interpreter rather
+/// than the legacy ISA integration-test decoder scanned by
+/// `local_simd_test_mnemonics`.
+const RAX_AVX10_NE_CONVERT_MNEMONICS: &[&str] = &[
+    "vbcstnebf162ps",
+    "vbcstnesh2ps",
+    "vcvtneebf162ps",
+    "vcvtneeph2ps",
+    "vcvtneobf162ps",
+    "vcvtneoph2ps",
+];
+
 #[derive(Clone, Copy)]
 enum ExtensionBucket {
     Avx,
@@ -267,6 +293,20 @@ fn expected_unimplemented_mnemonics(bucket: ExtensionBucket) -> BTreeSet<String>
 
     if !matches!(bucket, ExtensionBucket::Avx512) {
         implemented.extend(local_simd_test_mnemonics(bucket, &xml));
+    }
+    if matches!(bucket, ExtensionBucket::Avx) {
+        implemented.extend(
+            RAX_AVX_CRYPTO_MNEMONICS
+                .iter()
+                .map(|mnemonic| (*mnemonic).to_string()),
+        );
+    }
+    if matches!(bucket, ExtensionBucket::Avx10) {
+        implemented.extend(
+            RAX_AVX10_NE_CONVERT_MNEMONICS
+                .iter()
+                .map(|mnemonic| (*mnemonic).to_string()),
+        );
     }
     implemented.extend(
         RAX_EVEX_SIMD_DIFF_MNEMONICS
