@@ -52,15 +52,12 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
           cache-key: lint
-      # Advisory for now: the repo carries pre-existing rustc warnings and large
-      # generated test tables that are not rustfmt-formatted, so these surface
-      # signal without blocking merges. Flip `continue-on-error` off (and add
-      # `-- -D warnings` back to clippy) once the tree is clean to make it a gate.
+      # Formatting and Clippy are required checks. Keep Clippy at the repository's
+      # canonical warning policy; rustc warnings remain visible without promoting
+      # every warning to an error via `-D warnings`.
       - name: rustfmt --check
-        continue-on-error: true
         run: cargo fmt --all --check
       - name: clippy (all targets, default features)
-        continue-on-error: true
         run: cargo clippy --all-targets --features x86_64-suite
 
   # ---------------------------------------------------------------------------
@@ -134,6 +131,7 @@ jobs:
             --test realmode_boot \
             --test riscv_boot \
             --test smir_avx10_roundtrip \
+            --test smir_jit_evex_masking \
             --test isa_oracle \
             -- --include-ignored
 

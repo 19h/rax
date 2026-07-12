@@ -267,29 +267,44 @@ impl Avx10Lowerer {
                 dst,
                 src,
                 count,
+                mask,
                 width,
                 elem,
                 shift,
-            } => {
-                Some(self.lower_packed_shift_variable(code, dst, src, count, *width, *elem, *shift))
-            }
+                zeroing,
+            } => Some(self.lower_packed_shift_variable(
+                code,
+                dst,
+                src,
+                count,
+                mask.as_ref(),
+                *width,
+                *elem,
+                *shift,
+                *zeroing,
+            )),
 
             OpKind::X86PackedRotate {
                 dst,
                 src,
                 count,
+                mask,
+                amount,
                 width,
                 elem,
                 left,
-                ..
-            } => Some(self.lower_packed_rotate_variable(
+                zeroing,
+            } => Some(self.lower_packed_rotate(
                 code,
                 dst,
                 src,
                 count.as_ref(),
+                mask.as_ref(),
+                *amount,
                 *width,
                 *elem,
                 *left,
+                *zeroing,
             )),
 
             OpKind::X86TernaryLogic {
@@ -297,37 +312,65 @@ impl Avx10Lowerer {
                 src1,
                 src2,
                 src3,
+                mask,
                 imm,
                 width,
-            } => Some(self.lower_ternary_logic(code, dst, src1, src2, src3, *imm, *width)),
+                elem,
+                zeroing,
+            } => Some(self.lower_ternary_logic(
+                code,
+                dst,
+                src1,
+                src2,
+                src3,
+                mask.as_ref(),
+                *imm,
+                *width,
+                *elem,
+                *zeroing,
+            )),
 
             OpKind::X86PackedFunnelShift {
                 dst,
                 src,
                 fill,
                 count,
+                mask,
                 amount,
                 width,
                 elem,
                 left,
+                zeroing,
             } => Some(self.lower_packed_funnel_shift(
                 code,
                 dst,
                 src,
                 fill,
                 count.as_ref(),
+                mask.as_ref(),
                 *amount,
                 *width,
                 *elem,
                 *left,
+                *zeroing,
             )),
 
             OpKind::X86MultiShiftQB {
                 dst,
                 control,
                 source,
+                mask,
                 width,
-            } => Some(self.lower_multishift_qb(code, dst, control, source, *width)),
+                zeroing,
+            } => Some(self.lower_multishift_qb(
+                code,
+                dst,
+                control,
+                source,
+                mask.as_ref(),
+                *width,
+                *zeroing,
+            )),
 
             // AVX10.2 VMPSADBW
             OpKind::VMpsadbw {
@@ -771,13 +814,16 @@ impl Avx10Lowerer {
         dst: &VReg,
         src: &VReg,
         count: &VReg,
+        mask: Option<&VReg>,
         width: VecWidth,
         elem: VecElementType,
         shift: ShiftOp,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src_reg = self.vreg_to_zmm(src)?;
         let count_reg = self.vreg_to_zmm(count)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
         let (opcode, w) = match (elem, shift) {
             (VecElementType::I16, ShiftOp::Lsr) => (0x10, true),
             (VecElementType::I16, ShiftOp::Asr) => (0x11, true),
@@ -798,27 +844,27 @@ impl Avx10Lowerer {
             }
         };
         let mut enc = EvexEncoder::new(code);
-        enc.emit_evex(2, 1, w, width, dst_reg, src_reg, count_reg, 0, false);
+        enc.emit_evex(
+            2, 1, w, width, dst_reg, src_reg, count_reg, mask_reg, zeroing,
+        );
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, count_reg);
         Ok(())
     }
 
-    fn lower_packed_rotate_variable(
+    fn lower_packed_rotate(
         &self,
         code: &mut CodeBuffer,
         dst: &VReg,
         src: &VReg,
         count: Option<&VReg>,
+        mask: Option<&VReg>,
+        amount: u8,
         width: VecWidth,
         elem: VecElementType,
         left: bool,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
-        let Some(count) = count else {
-            return Err(LowerError::UnsupportedOperation(
-                "immediate packed rotate requires group encoding".to_string(),
-            ));
-        };
         if !matches!(elem, VecElementType::I32 | VecElementType::I64) {
             return Err(LowerError::UnsupportedOperation(format!(
                 "packed rotate {elem:?}"
@@ -826,21 +872,42 @@ impl Avx10Lowerer {
         }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src_reg = self.vreg_to_zmm(src)?;
-        let count_reg = self.vreg_to_zmm(count)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
         let mut enc = EvexEncoder::new(code);
-        enc.emit_evex(
-            2,
-            1,
-            elem == VecElementType::I64,
-            width,
-            dst_reg,
-            src_reg,
-            count_reg,
-            0,
-            false,
-        );
-        enc.emit_opcode(if left { 0x15 } else { 0x14 });
-        enc.emit_modrm_rr(dst_reg, count_reg);
+        if let Some(count) = count {
+            let count_reg = self.vreg_to_zmm(count)?;
+            enc.emit_evex(
+                2,
+                1,
+                elem == VecElementType::I64,
+                width,
+                dst_reg,
+                src_reg,
+                count_reg,
+                mask_reg,
+                zeroing,
+            );
+            enc.emit_opcode(if left { 0x15 } else { 0x14 });
+            enc.emit_modrm_rr(dst_reg, count_reg);
+        } else {
+            // VPROL[DQ]/VPROR[DQ] immediate use 0F.72 /1 and /0. The
+            // destination is encoded in EVEX.vvvv/V', while ModRM.reg is the
+            // opcode extension and ModRM.r/m is the source.
+            enc.emit_evex(
+                1,
+                1,
+                elem == VecElementType::I64,
+                width,
+                0,
+                dst_reg,
+                src_reg,
+                mask_reg,
+                zeroing,
+            );
+            enc.emit_opcode(0x72);
+            enc.emit_modrm_rr(u8::from(left), src_reg);
+            enc.emit_imm8(amount);
+        }
         Ok(())
     }
 
@@ -851,8 +918,11 @@ impl Avx10Lowerer {
         src1: &VReg,
         src2: &VReg,
         src3: &VReg,
+        mask: Option<&VReg>,
         imm: u8,
         width: VecWidth,
+        elem: VecElementType,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         if dst != src1 {
             return Err(LowerError::UnsupportedOperation(
@@ -862,8 +932,24 @@ impl Avx10Lowerer {
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
         let src3_reg = self.vreg_to_zmm(src3)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if !matches!(elem, VecElementType::I32 | VecElementType::I64) {
+            return Err(LowerError::UnsupportedOperation(format!(
+                "VPTERNLOG element {elem:?}"
+            )));
+        }
         let mut enc = EvexEncoder::new(code);
-        enc.emit_evex(3, 1, false, width, dst_reg, src2_reg, src3_reg, 0, false);
+        enc.emit_evex(
+            3,
+            1,
+            elem == VecElementType::I64,
+            width,
+            dst_reg,
+            src2_reg,
+            src3_reg,
+            mask_reg,
+            zeroing,
+        );
         enc.emit_opcode(0x25);
         enc.emit_modrm_rr(dst_reg, src3_reg);
         enc.emit_imm8(imm);
@@ -878,10 +964,12 @@ impl Avx10Lowerer {
         src: &VReg,
         fill: &VReg,
         count: Option<&VReg>,
+        mask: Option<&VReg>,
         amount: u8,
         width: VecWidth,
         elem: VecElementType,
         left: bool,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         let (opcode, w) = match (left, elem) {
             (true, VecElementType::I16) => (0x70, true),
@@ -899,6 +987,7 @@ impl Avx10Lowerer {
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src_reg = self.vreg_to_zmm(src)?;
         let fill_reg = self.vreg_to_zmm(fill)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
         let (map, vvvv, rm, immediate) = if let Some(count) = count {
             if dst != src {
                 return Err(LowerError::UnsupportedOperation(
@@ -910,7 +999,7 @@ impl Avx10Lowerer {
             (3, src_reg, fill_reg, Some(amount))
         };
         let mut enc = EvexEncoder::new(code);
-        enc.emit_evex(map, 1, w, width, dst_reg, vvvv, rm, 0, false);
+        enc.emit_evex(map, 1, w, width, dst_reg, vvvv, rm, mask_reg, zeroing);
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, rm);
         if let Some(imm) = immediate {
@@ -925,11 +1014,14 @@ impl Avx10Lowerer {
         dst: &VReg,
         control: &VReg,
         source: &VReg,
+        mask: Option<&VReg>,
         width: VecWidth,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
         let dst_reg = self.vreg_to_zmm(dst)?;
         let control_reg = self.vreg_to_zmm(control)?;
         let source_reg = self.vreg_to_zmm(source)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
         let mut enc = EvexEncoder::new(code);
         enc.emit_evex(
             2,
@@ -939,8 +1031,8 @@ impl Avx10Lowerer {
             dst_reg,
             control_reg,
             source_reg,
-            0,
-            false,
+            mask_reg,
+            zeroing,
         );
         enc.emit_opcode(0x83);
         enc.emit_modrm_rr(dst_reg, source_reg);
@@ -1221,29 +1313,107 @@ mod tests {
         let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
         let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
         let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        let zmm16 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(16)));
+        let zmm17 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(17)));
+        let zmm18 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(18)));
+        let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
             (
                 OpKind::X86PackedShiftVariable {
                     dst: zmm1,
                     src: zmm2,
                     count: zmm3,
+                    mask: None,
                     width: VecWidth::V512,
                     elem: VecElementType::I32,
                     shift: ShiftOp::Lsl,
+                    zeroing: false,
                 },
                 &[0x62, 0xF2, 0x6D, 0x48, 0x47, 0xCB][..],
+            ),
+            (
+                OpKind::X86PackedShiftVariable {
+                    dst: zmm1,
+                    src: zmm2,
+                    count: zmm3,
+                    mask: Some(k4),
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    shift: ShiftOp::Lsl,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x47, 0xCB][..],
             ),
             (
                 OpKind::X86PackedRotate {
                     dst: zmm1,
                     src: zmm2,
                     count: Some(zmm3),
+                    mask: None,
                     amount: 0,
                     width: VecWidth::V512,
                     elem: VecElementType::I32,
                     left: true,
+                    zeroing: false,
                 },
                 &[0x62, 0xF2, 0x6D, 0x48, 0x15, 0xCB][..],
+            ),
+            (
+                OpKind::X86PackedRotate {
+                    dst: zmm1,
+                    src: zmm2,
+                    count: Some(zmm3),
+                    mask: Some(k4),
+                    amount: 0,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x15, 0xCB][..],
+            ),
+            (
+                OpKind::X86PackedRotate {
+                    dst: zmm17,
+                    src: zmm18,
+                    count: None,
+                    mask: None,
+                    amount: 7,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                    zeroing: false,
+                },
+                &[0x62, 0xB1, 0x75, 0x40, 0x72, 0xCA, 0x07][..],
+            ),
+            (
+                OpKind::X86PackedRotate {
+                    dst: zmm1,
+                    src: zmm2,
+                    count: None,
+                    mask: Some(k4),
+                    amount: 7,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                    zeroing: true,
+                },
+                &[0x62, 0xF1, 0x75, 0xCC, 0x72, 0xCA, 0x07][..],
+            ),
+            (
+                OpKind::X86PackedRotate {
+                    dst: zmm17,
+                    src: zmm18,
+                    count: None,
+                    mask: None,
+                    amount: 63,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I64,
+                    left: false,
+                    zeroing: false,
+                },
+                &[0x62, 0xB1, 0xF5, 0x40, 0x72, 0xC2, 0x3F][..],
             ),
             (
                 OpKind::X86TernaryLogic {
@@ -1251,10 +1421,41 @@ mod tests {
                     src1: zmm1,
                     src2: zmm2,
                     src3: zmm3,
+                    mask: None,
                     imm: 0x96,
                     width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    zeroing: false,
                 },
                 &[0x62, 0xF3, 0x6D, 0x48, 0x25, 0xCB, 0x96][..],
+            ),
+            (
+                OpKind::X86TernaryLogic {
+                    dst: zmm1,
+                    src1: zmm1,
+                    src2: zmm2,
+                    src3: zmm3,
+                    mask: Some(k4),
+                    imm: 0x96,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    zeroing: true,
+                },
+                &[0x62, 0xF3, 0x6D, 0xCC, 0x25, 0xCB, 0x96][..],
+            ),
+            (
+                OpKind::X86TernaryLogic {
+                    dst: zmm16,
+                    src1: zmm16,
+                    src2: zmm17,
+                    src3: zmm18,
+                    mask: Some(k7),
+                    imm: 0xE4,
+                    width: VecWidth::V256,
+                    elem: VecElementType::I64,
+                    zeroing: false,
+                },
+                &[0x62, 0xA3, 0xF5, 0x27, 0x25, 0xC2, 0xE4][..],
             ),
             (
                 OpKind::X86PackedFunnelShift {
@@ -1262,12 +1463,29 @@ mod tests {
                     src: zmm2,
                     fill: zmm3,
                     count: None,
+                    mask: None,
                     amount: 7,
                     width: VecWidth::V512,
                     elem: VecElementType::I32,
                     left: true,
+                    zeroing: false,
                 },
                 &[0x62, 0xF3, 0x6D, 0x48, 0x71, 0xCB, 0x07][..],
+            ),
+            (
+                OpKind::X86PackedFunnelShift {
+                    dst: zmm1,
+                    src: zmm2,
+                    fill: zmm3,
+                    count: None,
+                    mask: Some(k4),
+                    amount: 7,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                    zeroing: true,
+                },
+                &[0x62, 0xF3, 0x6D, 0xCC, 0x71, 0xCB, 0x07][..],
             ),
             (
                 OpKind::X86PackedFunnelShift {
@@ -1275,21 +1493,51 @@ mod tests {
                     src: zmm1,
                     fill: zmm2,
                     count: Some(zmm3),
+                    mask: None,
                     amount: 0,
                     width: VecWidth::V512,
                     elem: VecElementType::I32,
                     left: true,
+                    zeroing: false,
                 },
                 &[0x62, 0xF2, 0x6D, 0x48, 0x71, 0xCB][..],
+            ),
+            (
+                OpKind::X86PackedFunnelShift {
+                    dst: zmm1,
+                    src: zmm1,
+                    fill: zmm2,
+                    count: Some(zmm3),
+                    mask: Some(k4),
+                    amount: 0,
+                    width: VecWidth::V512,
+                    elem: VecElementType::I32,
+                    left: true,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x71, 0xCB][..],
             ),
             (
                 OpKind::X86MultiShiftQB {
                     dst: zmm1,
                     control: zmm2,
                     source: zmm3,
+                    mask: None,
                     width: VecWidth::V512,
+                    zeroing: false,
                 },
                 &[0x62, 0xF2, 0xED, 0x48, 0x83, 0xCB][..],
+            ),
+            (
+                OpKind::X86MultiShiftQB {
+                    dst: zmm1,
+                    control: zmm2,
+                    source: zmm3,
+                    mask: Some(k4),
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0xED, 0xCC, 0x83, 0xCB][..],
             ),
         ];
         for (op, expected) in cases {

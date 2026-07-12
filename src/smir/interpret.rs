@@ -8115,10 +8115,13 @@ impl SmirInterpreter {
                 dst,
                 src,
                 count,
+                mask: write_mask,
                 width,
                 elem,
                 shift,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let input = Self::read_vec(ctx, *src);
                 let counts = Self::read_vec(ctx, *count);
                 let mut result = [0u64; 16];
@@ -8155,6 +8158,14 @@ impl SmirInterpreter {
                     };
                     Self::set_lane(&mut result, lane, bits, shifted);
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    write_mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -8162,11 +8173,14 @@ impl SmirInterpreter {
                 dst,
                 src,
                 count,
+                mask,
                 amount,
                 width,
                 elem,
                 left,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let input = Self::read_vec(ctx, *src);
                 let counts = count.map(|register| Self::read_vec(ctx, register));
                 let mut result = [0u64; 16];
@@ -8187,6 +8201,14 @@ impl SmirInterpreter {
                     };
                     Self::set_lane(&mut result, lane, bits, rotated);
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -8195,9 +8217,13 @@ impl SmirInterpreter {
                 src1,
                 src2,
                 src3,
+                mask,
                 imm,
                 width,
+                elem,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let a = Self::read_vec(ctx, *src1);
                 let b = Self::read_vec(ctx, *src2);
                 let c = Self::read_vec(ctx, *src3);
@@ -8213,6 +8239,14 @@ impl SmirInterpreter {
                     }
                     result[word] = out;
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -8221,11 +8255,14 @@ impl SmirInterpreter {
                 src,
                 fill,
                 count,
+                mask: write_mask,
                 amount,
                 width,
                 elem,
                 left,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let primary = Self::read_vec(ctx, *src);
                 let secondary = Self::read_vec(ctx, *fill);
                 let counts = count.map(|register| Self::read_vec(ctx, register));
@@ -8253,6 +8290,14 @@ impl SmirInterpreter {
                     };
                     Self::set_lane(&mut result, lane, bits, shifted);
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    write_mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -8260,8 +8305,11 @@ impl SmirInterpreter {
                 dst,
                 control,
                 source,
+                mask,
                 width,
+                zeroing,
             } => {
+                let old = Self::read_vec(ctx, *dst);
                 let controls = Self::read_vec(ctx, *control);
                 let data = Self::read_vec(ctx, *source);
                 let mut result = [0u64; 16];
@@ -8273,6 +8321,14 @@ impl SmirInterpreter {
                         Self::set_lane(&mut result, lane, 8, value.rotate_right(shift) & 0xFF);
                     }
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    VecElementType::I8,
+                );
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -14316,6 +14372,30 @@ impl SmirInterpreter {
             value[word_index] =
                 (value[word_index] & !(low_mask << bit_offset)) | ((bits & low_mask) << bit_offset);
             value[word_index + 1] = (value[word_index + 1] & !high_mask) | (bits >> low_bits);
+        }
+    }
+
+    fn apply_vector_mask(
+        result: &mut VecValue,
+        old: &VecValue,
+        mask_bits: Option<u64>,
+        zeroing: bool,
+        width: VecWidth,
+        elem: VecElementType,
+    ) {
+        let Some(mask_bits) = mask_bits else {
+            return;
+        };
+        let bits = elem.bytes() * 8;
+        for lane in 0..width.lanes(elem) as u8 {
+            if mask_bits & (1u64 << lane) == 0 {
+                let inactive = if zeroing {
+                    0
+                } else {
+                    Self::get_lane(old, lane, bits)
+                };
+                Self::set_lane(result, lane, bits, inactive);
+            }
         }
     }
 

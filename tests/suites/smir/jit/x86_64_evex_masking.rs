@@ -1,22 +1,24 @@
 //! SMIR JIT × AVX-512 EVEX write-masking safety.
 //!
-//! The SMIR vector IR does not model the EVEX opmask (`{k}`), zeroing (`{z}`),
-//! or the EVEX.b bit (memory broadcast `{1toN}` / register embedded-rounding
-//! `{er}`+SAE). Two layers must keep that from ever becoming a silent miscompile
-//! when a hot loop containing such an instruction is promoted to native code:
+//! SMIR models the EVEX opmask (`{k}`) and zeroing (`{z}`) directly for selected
+//! native-lowered bit-manipulation operations. Other vector operations still do
+//! not model those fields, and EVEX.b memory broadcast (`{1toN}`) / register
+//! embedded rounding (`{er}`+SAE) remains outside this JIT path. Two layers keep
+//! unsupported forms from becoming silent miscompilations when a hot loop is
+//! promoted to native code:
 //!
-//!   1. The lifter REFUSES to lift any masked/zeroing/broadcast/rounding EVEX
-//!      instruction (`decode_evex_prefix` returns `LiftError::Unsupported`), so
-//!      the region bails to the interpreter — which models masking correctly —
-//!      regardless of the JIT op whitelist.
+//!   1. The lifter preserves masking for explicitly modeled operations and
+//!      refuses unsupported masked/zeroing/broadcast/rounding forms, so those
+//!      regions bail to the interpreter regardless of the JIT op whitelist.
 //!   2. (Belt-and-suspenders, exercised by `RAX_JIT_VERIFY`, not here.) The JIT
 //!      verifier now also diffs ZMM/opmask state, so any future vector JIT that
 //!      diverged would be caught rather than silently corrupting vector state.
 //!
-//! This test pins layer 1 directly (lift refusal) and end-to-end (a hot masked
-//! loop is declined by the JIT and produces the correct masked result via the
-//! interpreter). These paths are NOT reachable by single-instruction diff runs,
-//! which never trigger hot-loop promotion.
+//! This test pins layer 1 directly (acceptance and refusal) and end-to-end (a hot
+//! loop containing an unsupported masked move is declined by the JIT and
+//! produces the correct result via the interpreter). These paths are not
+//! reachable by single-instruction differential runs, which never trigger
+//! hot-loop promotion.
 
 #![cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 
@@ -32,7 +34,7 @@ use rax::smir::lift::x86_64::X86_64Lifter;
 use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 
 // ---------------------------------------------------------------------------
-// Layer 1: the lifter refuses masked/zeroing/broadcast/rounding EVEX.
+// Layer 1: modeled masking lifts; unsupported EVEX features are refused.
 // ---------------------------------------------------------------------------
 
 /// Lift a single instruction; `Ok(())` if the lifter accepted it, `Err` if it
@@ -47,7 +49,7 @@ fn lift_one(bytes: &[u8]) -> Result<(), String> {
 }
 
 #[test]
-fn lifter_accepts_plain_evex_but_refuses_mask_zero_broadcast_rounding() {
+fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
     // The common unmasked EVEX vector ops MUST still lift (the fast path stays
     // JIT-eligible once vector ops are ever whitelisted; today they bail later
     // at the GPR-only clobber gate, which is fine).
@@ -60,7 +62,28 @@ fn lifter_accepts_plain_evex_but_refuses_mask_zero_broadcast_rounding() {
         "unmasked vpaddd %zmm1,%zmm2,%zmm3 must lift"
     );
 
-    // Every form the SMIR vector model can't represent MUST be refused so it
+    // Native-lowered bit-manipulation operations preserve their architectural
+    // opmask and zeroing fields in SMIR and must remain JIT-lowerable.
+    let modeled: &[(&str, &[u8])] = &[
+        // vprold $7,%zmm18,%zmm17{%k4}{z}
+        (
+            "vprold {k4}{z}",
+            &[0x62, 0xb1, 0x75, 0xcc, 0x72, 0xca, 0x07],
+        ),
+        // vpternlogd $0x96,%zmm3,%zmm2,%zmm1{%k4}{z}
+        (
+            "vpternlogd {k4}{z}",
+            &[0x62, 0xf3, 0x6d, 0xcc, 0x25, 0xcb, 0x96],
+        ),
+    ];
+    for (name, bytes) in modeled {
+        assert!(
+            lift_one(bytes).is_ok(),
+            "modeled {name} must lift (bytes={bytes:02x?})"
+        );
+    }
+
+    // Every form this SMIR vector path cannot represent must be refused so it
     // falls back to the interpreter. (Encodings from llvm-mc.)
     let refused: &[(&str, &[u8])] = &[
         // vmovdqa32 %zmm1,%zmm2{%k1}      — write-mask (aaa=1)

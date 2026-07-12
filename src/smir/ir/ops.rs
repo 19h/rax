@@ -2999,9 +2999,11 @@ pub enum OpKind {
         dst: VReg,
         src: VReg,
         count: VReg,
+        mask: Option<VReg>,
         width: VecWidth,
         elem: VecElementType,
         shift: ShiftOp,
+        zeroing: bool,
     },
 
     /// EVEX packed element rotate. Immediate forms use `amount`; variable
@@ -3011,10 +3013,12 @@ pub enum OpKind {
         dst: VReg,
         src: VReg,
         count: Option<VReg>,
+        mask: Option<VReg>,
         amount: u8,
         width: VecWidth,
         elem: VecElementType,
         left: bool,
+        zeroing: bool,
     },
 
     /// EVEX VPTERNLOGD/Q. For every bit, `(src1, src2, src3)` forms a
@@ -3025,8 +3029,11 @@ pub enum OpKind {
         src1: VReg,
         src2: VReg,
         src3: VReg,
+        mask: Option<VReg>,
         imm: u8,
         width: VecWidth,
+        elem: VecElementType,
+        zeroing: bool,
     },
 
     /// EVEX VPSHLD*/VPSHRD* packed funnel shift. At a zero reduced count the
@@ -3038,10 +3045,12 @@ pub enum OpKind {
         src: VReg,
         fill: VReg,
         count: Option<VReg>,
+        mask: Option<VReg>,
         amount: u8,
         width: VecWidth,
         elem: VecElementType,
         left: bool,
+        zeroing: bool,
     },
 
     /// EVEX VPMULTISHIFTQB. Each control byte selects an eight-bit circular
@@ -3050,7 +3059,9 @@ pub enum OpKind {
         dst: VReg,
         control: VReg,
         source: VReg,
+        mask: Option<VReg>,
         width: VecWidth,
+        zeroing: bool,
     },
 
     /// AVX10.2 media acceleration dot products

@@ -21017,26 +21017,21 @@ impl X86_64Lifter {
             modrm.reg + if evex && prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if evex && prefix.aaa != 0 {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::X86PackedShiftVariable {
-                dst: raw,
+                dst,
                 src,
                 count,
+                mask: (evex && prefix.aaa != 0)
+                    .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                 width: prefix.width,
                 elem,
                 shift,
+                zeroing: evex && prefix.zeroing,
             },
         ));
-        if evex && prefix.aaa != 0 {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -21160,27 +21155,21 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if prefix.aaa == 0 {
-            dst
-        } else {
-            ctx.alloc_vreg()
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::X86PackedRotate {
-                dst: raw,
+                dst,
                 src,
                 count: Some(count),
+                mask: (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                 amount: 0,
                 width: prefix.width,
                 elem,
                 left: opcode == 0x15,
+                zeroing: prefix.zeroing,
             },
         ));
-        if prefix.aaa != 0 {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -21310,26 +21299,21 @@ impl X86_64Lifter {
             prefix.vvvv + if prefix.v_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if prefix.aaa == 0 {
-            dst
-        } else {
-            ctx.alloc_vreg()
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::X86TernaryLogic {
-                dst: raw,
+                dst,
                 src1: dst,
                 src2,
                 src3,
+                mask: (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                 imm: bytes[imm_offset],
                 width: prefix.width,
+                elem,
+                zeroing: prefix.zeroing,
             },
         ));
-        if prefix.aaa != 0 {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-        }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
@@ -21615,28 +21599,22 @@ impl X86_64Lifter {
             prefix.vvvv + if prefix.v_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if prefix.aaa == 0 {
-            dst
-        } else {
-            ctx.alloc_vreg()
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::X86PackedFunnelShift {
-                dst: raw,
+                dst,
                 src: if variable { dst } else { vvvv },
                 fill: if variable { vvvv } else { rm_operand },
                 count: variable.then_some(rm_operand),
+                mask: (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                 amount: if variable { 0 } else { bytes[end] },
                 width: prefix.width,
                 elem,
                 left: opcode <= 0x71,
+                zeroing: prefix.zeroing,
             },
         ));
-        if prefix.aaa != 0 {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
-        }
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
@@ -21733,32 +21711,18 @@ impl X86_64Lifter {
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if prefix.aaa == 0 {
-            dst
-        } else {
-            ctx.alloc_vreg()
-        };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
             OpKind::X86MultiShiftQB {
-                dst: raw,
+                dst,
                 control,
                 source,
+                mask: (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
                 width: prefix.width,
+                zeroing: prefix.zeroing,
             },
         ));
-        if prefix.aaa != 0 {
-            self.append_evex_vector_mask_result(
-                prefix,
-                dst,
-                raw,
-                VecElementType::I8,
-                pc,
-                ctx,
-                &mut ops,
-            );
-        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -22144,7 +22108,9 @@ impl X86_64Lifter {
             prefix.vvvv + if evex && prefix.v_high { 16 } else { 0 },
             prefix.width,
         );
-        let raw = if evex && !byte_lane && mask.is_some() {
+        let raw = if rotate_left.is_some() {
+            dst
+        } else if evex && !byte_lane && mask.is_some() {
             ctx.alloc_vreg()
         } else {
             dst
@@ -22157,10 +22123,12 @@ impl X86_64Lifter {
                     dst: raw,
                     src,
                     count: None,
+                    mask,
                     amount: bytes[imm_offset],
                     width: prefix.width,
                     elem,
                     left,
+                    zeroing: prefix.zeroing,
                 }
             } else {
                 OpKind::X86PackedShiftImm {
@@ -22174,7 +22142,7 @@ impl X86_64Lifter {
                 }
             },
         ));
-        if evex && !byte_lane && mask.is_some() {
+        if rotate_left.is_none() && evex && !byte_lane && mask.is_some() {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
@@ -54608,15 +54576,16 @@ mod tests {
                 OpKind::X86TernaryLogic {
                     width: actual_width,
                     imm: actual_imm,
+                    elem: actual_elem,
+                    mask,
+                    zeroing,
                     ..
-                } if actual_width == width && actual_imm == imm
+                } if actual_width == width
+                    && actual_imm == imm
+                    && actual_elem == elem
+                    && mask.is_some() == (bytes[3] & 7 != 0)
+                    && zeroing == (bytes[3] & 0x80 != 0)
             )));
-            assert!(
-                lifted.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VInsertLane { elem: actual, .. } if actual == elem
-                )) || bytes[3] & 7 == 0
-            );
         }
 
         let register = lift_single(&[0x62, 0xF3, 0x6D, 0x08, 0x25, 0xCB, 0x96]).unwrap();

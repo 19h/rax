@@ -1004,8 +1004,10 @@ pub fn constant_folding(block: &mut SmirBlock) -> usize {
                 src1,
                 src2,
                 src3,
+                mask: None,
                 imm,
                 width,
+                ..
             } if matches!(imm, 0xAA | 0xCC | 0xF0) => Some(OpKind::VMov {
                 dst: *dst,
                 src: match imm {
@@ -1023,6 +1025,7 @@ pub fn constant_folding(block: &mut SmirBlock) -> usize {
                 dst,
                 src,
                 count: None,
+                mask: None,
                 amount,
                 width,
                 elem,
@@ -1037,6 +1040,7 @@ pub fn constant_folding(block: &mut SmirBlock) -> usize {
                 dst,
                 src,
                 count: None,
+                mask: None,
                 amount,
                 width,
                 elem,
@@ -3331,41 +3335,71 @@ impl OpKind {
                 result.push(*src);
                 result.push(*count);
             }
-            OpKind::X86PackedShiftVariable { src, count, .. } => {
+            OpKind::X86PackedShiftVariable {
+                src, count, mask, ..
+            } => {
                 result.push(*src);
                 result.push(*count);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
             }
 
-            OpKind::X86PackedRotate { src, count, .. } => {
+            OpKind::X86PackedRotate {
+                src, count, mask, ..
+            } => {
                 result.push(*src);
                 if let Some(count) = count {
                     result.push(*count);
                 }
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
             }
 
             OpKind::X86TernaryLogic {
-                src1, src2, src3, ..
+                src1,
+                src2,
+                src3,
+                mask,
+                ..
             } => {
                 result.push(*src1);
                 result.push(*src2);
                 result.push(*src3);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
             }
 
             OpKind::X86PackedFunnelShift {
-                src, fill, count, ..
+                src,
+                fill,
+                count,
+                mask,
+                ..
             } => {
                 result.push(*src);
                 result.push(*fill);
                 if let Some(count) = count {
                     result.push(*count);
                 }
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
             }
 
             OpKind::X86MultiShiftQB {
-                control, source, ..
+                control,
+                source,
+                mask,
+                ..
             } => {
                 result.push(*control);
                 result.push(*source);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
             }
 
             OpKind::VCvtFpToIntSat { src, .. } => {
@@ -8482,8 +8516,11 @@ mod tests {
                 src1,
                 src2,
                 src3,
+                mask: None,
                 imm: 0xAA,
                 width: VecWidth::V512,
+                elem: VecElementType::I32,
+                zeroing: false,
             },
         ));
         block.push_op(make_op(
@@ -8492,10 +8529,12 @@ mod tests {
                 dst,
                 src: src1,
                 count: None,
+                mask: None,
                 amount: 64,
                 width: VecWidth::V512,
                 elem: VecElementType::I32,
                 left: true,
+                zeroing: false,
             },
         ));
         block.push_op(make_op(
@@ -8505,10 +8544,12 @@ mod tests {
                 src: src2,
                 fill: src3,
                 count: None,
+                mask: None,
                 amount: 128,
                 width: VecWidth::V512,
                 elem: VecElementType::I64,
                 left: false,
+                zeroing: false,
             },
         ));
         block.set_terminator(Terminator::Return { values: vec![dst] });
