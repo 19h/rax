@@ -29,6 +29,8 @@ pub enum ExitReason {
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.
     GeneralProtection { addr: GuestAddr, error_code: u32 },
+    /// x86 unmasked SIMD floating-point exception (#XM).
+    SimdFloatingPoint { addr: GuestAddr },
     /// External interrupt
     Interrupt { vector: u8 },
     /// Self-modifying code detected
