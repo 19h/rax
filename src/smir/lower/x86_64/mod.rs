@@ -1476,6 +1476,7 @@ impl<'a> X86Emitter<'a> {
             X86VecMap::Map0F => 0x01,
             X86VecMap::Map0F38 => 0x02,
             X86VecMap::Map0F3A => 0x03,
+            X86VecMap::Map5 => 0x05,
         }
     }
 

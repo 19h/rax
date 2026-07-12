@@ -80,6 +80,7 @@ pub enum X86VecMap {
     Map0F,
     Map0F38,
     Map0F3A,
+    Map5,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -2861,8 +2862,10 @@ pub enum OpKind {
         dst: VReg,
         src1: VReg,
         src2: VReg,
+        mask: Option<VReg>,
         op: Avx10FP16Op,
         width: VecWidth,
+        zeroing: bool,
     },
 
     // ========================================================================

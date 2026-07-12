@@ -85,6 +85,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
             "vcvtneps2bf16 {k4}{z}",
             &[0x62, 0xf2, 0x7e, 0xcc, 0x72, 0xca],
         ),
+        // vaddph %zmm3,%zmm2,%zmm1{%k4}{z}
+        ("vaddph {k4}{z}", &[0x62, 0xf5, 0x6c, 0xcc, 0x58, 0xcb]),
         // vpconflictd %zmm2,%zmm1{%k4}{z}
         ("vpconflictd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]),
     ];
@@ -753,6 +755,53 @@ fn hot_masked_vcvtneps2bf16_jits_with_half_width_result() {
     assert_eq!(after_jit.rcx & 0xffff_ffff, 0);
     assert_eq!(get_zmm(&after_jit, 1), expected);
     assert_eq!(get_zmm(&after_jit, 2), source);
+    assert_eq!(after_jit.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vaddph_jits_with_direct_fp16_mask_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512fp16")
+    {
+        return;
+    }
+
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf5, 0x6c, 0xcc, 0x58, 0xcb]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let lhs = [0x3c00_3c00_3c00_3c00u64; 8]; // 1.0 in every FP16 lane
+    let rhs = [0x4000_4000_4000_4000u64; 8]; // 2.0 in every FP16 lane
+    let mask = 0xa55a_a55au64;
+    let mut expected = [0u64; 8];
+    for lane in 0..32 {
+        if ((mask >> lane) & 1) != 0 {
+            expected[lane / 4] |= 0x4200u64 << ((lane % 4) * 16); // 3.0
+        }
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, lhs);
+    set_zmm(&mut regs, 3, rhs);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VADDPH loop"),
+        "a register-only masked VADDPH loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after_jit, 1), expected);
+    assert_eq!(get_zmm(&after_jit, 2), lhs);
+    assert_eq!(get_zmm(&after_jit, 3), rhs);
     assert_eq!(after_jit.k[4], mask);
     run_to_hlt(&mut vcpu);
 }

@@ -170,6 +170,7 @@ impl EvexPrefix {
             1 => Some(X86VecMap::Map0F),
             2 => Some(X86VecMap::Map0F38),
             3 => Some(X86VecMap::Map0F3A),
+            5 => Some(X86VecMap::Map5),
             _ => None,
         }
     }
@@ -817,8 +818,10 @@ impl Avx10Lifter {
                 dst,
                 src1,
                 src2,
+                mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
                 op: op_type,
                 width,
+                zeroing: evex.z,
             },
         );
 

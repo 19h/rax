@@ -5369,8 +5369,8 @@ mod tests {
         use crate::smir::ir::Terminator;
         use crate::smir::ir::ops::OpKind;
         use crate::smir::ir::types::{
-            Address, ArchReg, FunctionId, MemWidth, SignExtend, VReg, VecElementType, VecWidth,
-            X86Reg,
+            Address, ArchReg, Avx10FP16Op, FunctionId, MemWidth, SignExtend, VReg, VecElementType,
+            VecWidth, X86Reg,
         };
 
         let arch = |reg| VReg::Arch(ArchReg::X86(reg));
@@ -5408,9 +5408,21 @@ mod tests {
         );
         builder.push_op(
             0x1003,
-            OpKind::VCvtBF16ToFP32 {
+            OpKind::VFP16Arith {
                 dst: arch(X86Reg::Zmm(5)),
-                src: arch(X86Reg::Zmm(6)),
+                src1: arch(X86Reg::Zmm(6)),
+                src2: arch(X86Reg::Zmm(7)),
+                mask: None,
+                op: Avx10FP16Op::Add,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::VCvtBF16ToFP32 {
+                dst: arch(X86Reg::Zmm(8)),
+                src: arch(X86Reg::Zmm(9)),
                 width: VecWidth::V512,
             },
         );

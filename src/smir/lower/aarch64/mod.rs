@@ -15619,9 +15619,19 @@ impl Aarch64Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 op,
                 width,
-            } => self.lower_vfp16_arith(*dst, *src1, *src2, *op, *width),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked x86 VFP16Arith on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vfp16_arith(*dst, *src1, *src2, *op, *width)
+                }
+            }
             OpKind::VCvtFP32ToBF16 {
                 dst,
                 src1,
@@ -29030,43 +29040,55 @@ mod tests {
                 dst: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 op: Avx10FP16Op::Add,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VFP16Arith {
                 dst: v(3),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 op: Avx10FP16Op::Sub,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VFP16Arith {
                 dst: v(4),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 op: Avx10FP16Op::Mul,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VFP16Arith {
                 dst: v(5),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 op: Avx10FP16Op::Div,
                 width: VecWidth::V128,
+                zeroing: false,
             },
             OpKind::VFP16Arith {
                 dst: v(8),
                 src1: v(6),
                 src2: v(7),
+                mask: None,
                 op: Avx10FP16Op::Add,
                 width: VecWidth::V64,
+                zeroing: false,
             },
             OpKind::VFP16Arith {
                 dst: v(9),
                 src1: v(6),
                 src2: v(7),
+                mask: None,
                 op: Avx10FP16Op::Div,
                 width: VecWidth::V64,
+                zeroing: false,
             },
         ]);
 
@@ -31914,16 +31936,20 @@ mod tests {
             dst: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             op: Avx10FP16Op::Add,
             width: VecWidth::V256,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VFP16Arith {
             dst: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             op: Avx10FP16Op::Min,
             width: VecWidth::V128,
+            zeroing: false,
         });
 
         assert_unsupported(OpKind::VCvtFP32ToBF16 {
@@ -34014,8 +34040,10 @@ mod tests {
                     dst: v(0),
                     src1: v(1),
                     src2: v(2),
+                    mask: None,
                     op: Avx10FP16Op::Add,
                     width: VecWidth::V128,
+                    zeroing: false,
                 },
             );
             builder.set_terminator(Terminator::Return { values: vec![] });

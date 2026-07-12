@@ -261,6 +261,100 @@ impl SmirInterpreter {
         }
     }
 
+    fn x86_fp16_to_f32(bits: u16) -> f32 {
+        let sign = (u32::from(bits & 0x8000)) << 16;
+        let exp = (bits >> 10) & 0x1f;
+        let frac = bits & 0x03ff;
+        let value = if exp == 0 {
+            if frac == 0 {
+                sign
+            } else {
+                let shift = frac.leading_zeros() - 6;
+                let normalized = (u32::from(frac) << (shift + 1)) & 0x03ff;
+                sign | ((112 - shift) << 23) | (normalized << 13)
+            }
+        } else if exp == 0x1f {
+            sign | 0x7f80_0000 | (u32::from(frac) << 13)
+        } else {
+            sign | ((u32::from(exp) + 112) << 23) | (u32::from(frac) << 13)
+        };
+        f32::from_bits(value)
+    }
+
+    fn x86_f32_to_fp16(value: f32, rounding: u8) -> u16 {
+        let bits = value.to_bits();
+        let sign = (bits >> 16) & 0x8000;
+        let negative = sign != 0;
+        let abs = bits & 0x7fff_ffff;
+        let exp = (abs >> 23) as i32;
+        let mant = abs & 0x007f_ffff;
+        if exp == 0xff {
+            if mant == 0 {
+                return (sign | 0x7c00) as u16;
+            }
+            return (sign | 0x7c00 | ((mant >> 13) | 0x0200).max(1)) as u16;
+        }
+        if abs < 0x3300_0000 {
+            if abs != 0
+                && (matches!(rounding & 3, 1 if negative) || matches!(rounding & 3, 2 if !negative))
+            {
+                return (sign | 1) as u16;
+            }
+            return sign as u16;
+        }
+        if abs < 0x3880_0000 {
+            let mant24 = mant | 0x0080_0000;
+            let shift = (126 - exp) as u32;
+            let mut half_mant = mant24 >> shift;
+            let remainder = mant24 & ((1u32 << shift) - 1);
+            if Self::x86_fp16_round_increment(negative, half_mant, remainder, shift, rounding) {
+                half_mant += 1;
+            }
+            return (sign | half_mant) as u16;
+        }
+        let mut half = (abs - 0x3800_0000) >> 13;
+        let remainder = abs & 0x1fff;
+        if Self::x86_fp16_round_increment(negative, half, remainder, 13, rounding) {
+            half += 1;
+        }
+        if half >= 0x7c00 {
+            let infinity = match rounding & 3 {
+                0 => true,
+                1 => negative,
+                2 => !negative,
+                _ => false,
+            };
+            if infinity {
+                (sign | 0x7c00) as u16
+            } else {
+                (sign | 0x7bff) as u16
+            }
+        } else {
+            (sign | half) as u16
+        }
+    }
+
+    fn x86_fp16_round_increment(
+        negative: bool,
+        base: u32,
+        remainder: u32,
+        shift: u32,
+        rounding: u8,
+    ) -> bool {
+        if remainder == 0 {
+            return false;
+        }
+        match rounding & 3 {
+            0 => {
+                let half = 1u32 << (shift - 1);
+                remainder > half || (remainder == half && (base & 1) != 0)
+            }
+            1 => negative,
+            2 => !negative,
+            _ => false,
+        }
+    }
+
     fn x86_bf16_to_fp32_daz(bits: u16) -> u32 {
         if bits & 0x7F80 == 0 {
             u32::from(bits & 0x8000) << 16
@@ -8726,9 +8820,55 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::VFP16Arith {
+                dst,
+                src1,
+                src2,
+                mask,
+                op,
+                width,
+                zeroing,
+            } => {
+                let old = Self::read_vec(ctx, *dst);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let rounding = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => ((x86.mxcsr >> 13) & 3) as u8,
+                    _ => 0,
+                };
+                let mut result = [0u64; 16];
+                for lane in 0..width.lanes(VecElementType::F16) as u8 {
+                    let a = Self::x86_fp16_to_f32(Self::get_lane(&first, lane, 16) as u16);
+                    let b = Self::x86_fp16_to_f32(Self::get_lane(&second, lane, 16) as u16);
+                    let value = match op {
+                        Avx10FP16Op::Add => a + b,
+                        Avx10FP16Op::Sub => a - b,
+                        Avx10FP16Op::Mul => a * b,
+                        Avx10FP16Op::Div => a / b,
+                        Avx10FP16Op::Sqrt => a.sqrt(),
+                        Avx10FP16Op::Min => a.min(b),
+                        Avx10FP16Op::Max => a.max(b),
+                    };
+                    Self::set_lane(
+                        &mut result,
+                        lane,
+                        16,
+                        u64::from(Self::x86_f32_to_fp16(value, rounding)),
+                    );
+                }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    VecElementType::F16,
+                );
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VMin { .. }
             | OpKind::VCvtBF16ToFP32 { .. }
-            | OpKind::VFP16Arith { .. }
             | OpKind::VCvtFpToIntSat { .. }
             | OpKind::VMinMax { .. } => {
                 // AVX10 operations not yet implemented in interpreter
@@ -27618,6 +27758,47 @@ mod tests {
         ));
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_evex_map5_fp16_arithmetic_masks_and_zeroes_upper_state() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        let mask = 0xa55a_a55au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [u64::MAX; 16];
+            x86.xmm[2] = [0x3c00_3c00_3c00_3c00; 16];
+            x86.xmm[3] = [0x4000_4000_4000_4000; 16];
+            x86.k[4] = mask;
+        }
+
+        execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB], &mut ctx, &mut memory);
+
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..32u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    if mask & (1u64 << lane) != 0 {
+                        0x4200
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[1][8..], &[0; 8]);
+        }
+
+        // 1.0 + 2^-11 is exactly halfway between adjacent FP16 values at 1.0;
+        // MXCSR round-toward-positive must select the upper value.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = [0x3c00_3c00_3c00_3c00; 16];
+            x86.xmm[3] = [0x1000_1000_1000_1000; 16];
+            x86.mxcsr = 0x5f80;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x48, 0x58, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x3c01);
         }
     }
 

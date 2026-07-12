@@ -27,7 +27,7 @@ impl<'a> EvexEncoder<'a> {
     ///
     /// EVEX format:
     /// P0: 62h
-    /// P1: R X B R' 0 0 m m
+    /// P1: R X B R' 0 m m m
     /// P2: W v v v v 1 p p
     /// P3: z L' L b V' a a a
     pub fn emit_evex(
@@ -60,9 +60,9 @@ impl<'a> EvexEncoder<'a> {
         // Build P0
         self.code.emit_u8(0x62);
 
-        // Build P1: ~R ~X ~B ~R' 0 0 m m
+        // Build P1: ~R ~X ~B ~R' 0 mmm
         let p1 =
-            ((r ^ 1) << 7) | ((x ^ 1) << 6) | ((b ^ 1) << 5) | ((r_prime ^ 1) << 4) | (map & 0x03);
+            ((r ^ 1) << 7) | ((x ^ 1) << 6) | ((b ^ 1) << 5) | ((r_prime ^ 1) << 4) | (map & 0x07);
         self.code.emit_u8(p1);
 
         // Build P2: W ~vvvv 1 pp
@@ -287,9 +287,20 @@ impl Avx10Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 op,
                 width,
-            } => Some(self.lower_vfp16_arith(code, dst, src1, src2, *op, *width)),
+                zeroing,
+            } => Some(self.lower_vfp16_arith(
+                code,
+                dst,
+                src1,
+                src2,
+                mask.as_ref(),
+                *op,
+                *width,
+                *zeroing,
+            )),
 
             // AVX10.2 saturation conversions
             OpKind::VCvtFpToIntSat {
@@ -871,12 +882,31 @@ impl Avx10Lowerer {
         dst: &VReg,
         src1: &VReg,
         src2: &VReg,
+        mask: Option<&VReg>,
         op: Avx10FP16Op,
         width: VecWidth,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "packed FP16 arithmetic requires 128/256/512-bit width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if dst_reg > 31
+            || src1_reg > 31
+            || src2_reg > 31
+            || (mask.is_some() && !(1..=7).contains(&mask_reg))
+        {
+            return Err(LowerError::InvalidRegister(
+                "packed FP16 vector register must be 0..31 and explicit opmask must be K1..K7"
+                    .to_string(),
+            ));
+        }
 
         let opcode = match op {
             Avx10FP16Op::Add => 0x58,
@@ -895,7 +925,7 @@ impl Avx10Lowerer {
             5,     // MAP5
             0,     // pp = none
             false, // W = 0
-            width, dst_reg, src1_reg, src2_reg, 0, false,
+            width, dst_reg, src1_reg, src2_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, src2_reg);
@@ -1661,6 +1691,39 @@ mod tests {
     }
 
     #[test]
+    fn vfp16_lowering_rejects_malformed_mask_width_and_operation_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        for (mask, op, width, zeroing) in [
+            (None, Avx10FP16Op::Add, VecWidth::V512, true),
+            (
+                Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                Avx10FP16Op::Mul,
+                VecWidth::V512,
+                false,
+            ),
+            (None, Avx10FP16Op::Div, VecWidth::V64, false),
+            (None, Avx10FP16Op::Sqrt, VecWidth::V512, false),
+        ] {
+            let invalid = OpKind::VFP16Arith {
+                dst: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask,
+                op,
+                width,
+                zeroing,
+            };
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
     fn vpconflict_lowering_rejects_malformed_shapes() {
         let lowerer = Avx10Lowerer::new();
         let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
@@ -1712,6 +1775,54 @@ mod tests {
         let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
         let k7 = VReg::Arch(ArchReg::X86(X86Reg::K(7)));
         let cases = [
+            (
+                OpKind::VFP16Arith {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    mask: Some(k4),
+                    op: Avx10FP16Op::Add,
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB][..],
+            ),
+            (
+                OpKind::VFP16Arith {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(18))),
+                    mask: Some(k7),
+                    op: Avx10FP16Op::Mul,
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xA5, 0x74, 0x27, 0x59, 0xC2][..],
+            ),
+            (
+                OpKind::VFP16Arith {
+                    dst: xmm7,
+                    src1: xmm8,
+                    src2: xmm9,
+                    mask: Some(k3),
+                    op: Avx10FP16Op::Sub,
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD5, 0x3C, 0x8B, 0x5C, 0xF9][..],
+            ),
+            (
+                OpKind::VFP16Arith {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(4))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(5))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(6))),
+                    mask: None,
+                    op: Avx10FP16Op::Div,
+                    width: VecWidth::V512,
+                    zeroing: false,
+                },
+                &[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..],
+            ),
             (
                 OpKind::VCvtFP32ToBF16 {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),

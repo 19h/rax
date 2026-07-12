@@ -978,6 +978,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
+            | OpKind::VFP16Arith { .. }
             | OpKind::VMultiplyAdd52 { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
@@ -1177,6 +1178,47 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::VFP16Arith {
+        dst,
+        src1,
+        src2,
+        mask,
+        op,
+        width,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        if ![dst, src1, src2].into_iter().all(valid_vector)
+            || !matches!(
+                op,
+                crate::smir::ir::types::Avx10FP16Op::Add
+                    | crate::smir::ir::types::Avx10FP16Op::Sub
+                    | crate::smir::ir::types::Avx10FP16Op::Mul
+                    | crate::smir::ir::types::Avx10FP16Op::Div
+            )
+            || *width == crate::smir::ir::types::VecWidth::V64
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
     op.dests().into_iter().chain(op.source_vregs()).all(|reg| {
         matches!(
             reg,
@@ -1220,6 +1262,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_ifma = false;
     let mut needs_bf16 = false;
     let mut needs_cd = false;
+    let mut needs_fp16 = false;
 
     for op in func
         .blocks
@@ -1237,6 +1280,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
+            | OpKind::VFP16Arith { width, .. }
             | OpKind::VMultiplyAdd52 { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
@@ -1268,6 +1312,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VDotProductBF16 { .. } | OpKind::VCvtFP32ToBF16 { .. }
         );
         needs_cd |= matches!(op, OpKind::VConflict { .. });
+        needs_fp16 |= matches!(op, OpKind::VFP16Arith { .. });
     }
 
     if !any {
@@ -1287,6 +1332,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_ifma || std::is_x86_feature_detected!("avx512ifma"))
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
+            && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1301,6 +1347,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_ifma,
             needs_bf16,
             needs_cd,
+            needs_fp16,
         );
         false
     }
@@ -1941,6 +1988,15 @@ mod jit_gate_tests {
                 src1: zmm2,
                 src2: None,
                 mask: Some(k4),
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VFP16Arith {
+                dst: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask: Some(k4),
+                op: crate::smir::ir::types::Avx10FP16Op::Add,
                 width: VecWidth::V512,
                 zeroing: true,
             },

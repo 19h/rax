@@ -458,6 +458,7 @@ fn vec_map_from_bits(map: u8) -> Option<X86VecMap> {
         0x01 => Some(X86VecMap::Map0F),
         0x02 => Some(X86VecMap::Map0F38),
         0x03 => Some(X86VecMap::Map0F3A),
+        0x05 => Some(X86VecMap::Map5),
         _ => None,
     }
 }
@@ -719,6 +720,9 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_bf16 = (b1 & 0x07) == 2
         && (((b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x52)))
             || (matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x72))));
+    let is_fp16_arithmetic = (b1 & 0x07) == 5
+        && (b2 & 0x03) == 0
+        && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C | 0x5E));
     let is_bitshuffle = (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x8F));
     let is_compress_expand = (b1 & 0x07) == 2
         && (b2 & 0x03) == 1
@@ -792,6 +796,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_vpmadd52
         || is_vnni_dot
         || is_bf16
+        || is_fp16_arithmetic
         || is_bitshuffle
         || is_compress_expand
         || is_packed_narrow
@@ -26720,6 +26725,74 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_evex_fp16_arithmetic(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map5
+            || prefix.pp != X86SsePrefix::None
+            || prefix.w
+            || prefix.l_bits == 3
+            || prefix.b
+            || (prefix.zeroing && prefix.aaa == 0)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if modrm.is_memory {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "EVEX MAP5 FP16 memory/broadcast form".to_string(),
+            });
+        }
+        let dst = self.vec_reg(
+            modrm.reg + if prefix.reg_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let src1 = self.vec_reg(
+            prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let src2 = self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width);
+        let op = match opcode {
+            0x58 => Avx10FP16Op::Add,
+            0x59 => Avx10FP16Op::Mul,
+            0x5C => Avx10FP16Op::Sub,
+            0x5E => Avx10FP16Op::Div,
+            _ => unreachable!("MAP5 FP16 dispatch filtered opcode"),
+        };
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::VFP16Arith {
+                    dst,
+                    src1,
+                    src2,
+                    mask: (prefix.aaa != 0)
+                        .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
+                    op,
+                    width: prefix.width,
+                    zeroing: prefix.zeroing,
+                },
+            )],
+            cursor + modrm.bytes_consumed,
+        ))
+    }
+
     fn lift_vec_opcode(
         &self,
         prefix: VecPrefix,
@@ -29429,6 +29502,15 @@ impl X86_64Lifter {
                 _ => Err(LiftError::Unsupported {
                     addr: pc,
                     mnemonic: "VEX 0F3A".to_string(),
+                }),
+            },
+            X86VecMap::Map5 => match opcode {
+                0x58 | 0x59 | 0x5C | 0x5E => {
+                    self.lift_evex_fp16_arithmetic(prefix, opcode, bytes, pc)
+                }
+                _ => Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("EVEX MAP5 opcode 0x{opcode:02X}"),
                 }),
             },
         }
@@ -54193,6 +54275,43 @@ mod tests {
                 lift_single(bytes),
                 Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
             ));
+        }
+    }
+
+    #[test]
+    fn lift_evex_map5_fp16_arithmetic_is_direct_masked_and_register_only() {
+        for bytes in [
+            &[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB][..],
+            &[0x62, 0xA5, 0x74, 0x27, 0x59, 0xC2][..],
+            &[0x62, 0xD5, 0x3C, 0x8B, 0x5C, 0xF9][..],
+            &[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..],
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert_eq!(lifted.bytes_consumed, bytes.len());
+            assert_eq!(lifted.ops.len(), 1);
+            assert!(matches!(lifted.ops[0].kind, OpKind::VFP16Arith { .. }));
+        }
+        let add = lift_single(&[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB]).unwrap();
+        assert!(matches!(
+            add.ops[0].kind,
+            OpKind::VFP16Arith {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                op: Avx10FP16Op::Add,
+                width: VecWidth::V512,
+                zeroing: true,
+            }
+        ));
+        for invalid in [
+            &[0x62, 0xF5, 0xEC, 0x4C, 0x58, 0xCB][..], // W=1
+            &[0x62, 0xF5, 0x6C, 0xEC, 0x58, 0xCB][..], // L'L=3
+            &[0x62, 0xF5, 0x6C, 0xDC, 0x58, 0xCB][..], // EVEX.b
+            &[0x62, 0xF5, 0x6C, 0xC8, 0x58, 0xCB][..], // {z} without mask
+            &[0x62, 0xF5, 0x6C, 0x4C, 0x58, 0x08][..], // memory form
+        ] {
+            assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
         }
     }
 

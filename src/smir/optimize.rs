@@ -3324,8 +3324,23 @@ impl OpKind {
                 }
             }
 
-            OpKind::VFP16Arith { src1, src2, .. }
-            | OpKind::VMinMax { src1, src2, .. }
+            OpKind::VFP16Arith {
+                dst,
+                src1,
+                src2,
+                mask,
+                zeroing,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !zeroing {
+                    result.push(*dst);
+                }
+            }
+
+            OpKind::VMinMax { src1, src2, .. }
             | OpKind::VMpsadbw { src1, src2, .. }
             | OpKind::VSadBytes { src1, src2, .. } => {
                 result.push(*src1);
@@ -3560,7 +3575,8 @@ mod tests {
     use super::*;
     use crate::smir::ir::ops::{OpKind, X86CacheControlKind, X86X87ControlKind, X86X87DataKind};
     use crate::smir::ir::types::{
-        Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp, X86NarrowMode,
+        Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
+        X86NarrowMode,
     };
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
@@ -9355,6 +9371,59 @@ mod tests {
 
         dead_code_elimination(&mut block);
         assert_eq!(block.ops.len(), 8, "BF16 input producer was removed");
+    }
+
+    #[test]
+    fn fp16_mask_and_input_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let mask = VReg::virt(3);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(0x3c00),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, src1), (2, src2)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            3,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            4,
+            OpKind::VFP16Arith {
+                dst,
+                src1,
+                src2,
+                mask: Some(mask),
+                op: Avx10FP16Op::Add,
+                width: VecWidth::V128,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 5, "FP16 input producer was removed");
     }
 
     #[test]
