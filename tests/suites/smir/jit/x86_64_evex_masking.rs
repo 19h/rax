@@ -1,11 +1,11 @@
 //! SMIR JIT × AVX-512 EVEX write-masking safety.
 //!
-//! SMIR models the EVEX opmask (`{k}`) and zeroing (`{z}`) directly for selected
-//! native-lowered bit-manipulation operations. Other vector operations still do
-//! not model those fields, and EVEX.b memory broadcast (`{1toN}`) / register
-//! embedded rounding (`{er}`+SAE) remains outside this JIT path. Two layers keep
-//! unsupported forms from becoming silent miscompilations when a hot loop is
-//! promoted to native code:
+//! SMIR preserves the EVEX opmask (`{k}`) and zeroing (`{z}`) directly for
+//! selected native-lowered bit-manipulation operations; other supported vector
+//! families may expand masking into primitive operations. EVEX.b memory
+//! broadcast (`{1toN}`) / register embedded rounding (`{er}`+SAE) remains
+//! outside this JIT path. Two layers keep unsupported forms from becoming
+//! silent miscompilations when a hot loop is promoted to native code:
 //!
 //!   1. The lifter preserves masking for explicitly modeled operations and
 //!      refuses unsupported masked/zeroing/broadcast/rounding forms, so those
@@ -50,9 +50,8 @@ fn lift_one(bytes: &[u8]) -> Result<(), String> {
 
 #[test]
 fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
-    // The common unmasked EVEX vector ops MUST still lift (the fast path stays
-    // JIT-eligible once vector ops are ever whitelisted; today they bail later
-    // at the GPR-only clobber gate, which is fine).
+    // Common unmasked EVEX vector ops must still lift. Operations outside the
+    // explicit native vector family continue to deopt at the JIT safety gate.
     assert!(
         lift_one(&[0x62, 0xf1, 0x7d, 0x48, 0x6f, 0xd1]).is_ok(),
         "unmasked vmovdqa32 %zmm1,%zmm2 must lift"
@@ -83,6 +82,18 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         );
     }
 
+    // General masked arithmetic is also semantically liftable, but currently
+    // expands through virtual-vector mask/select operations and therefore stays
+    // outside the native identity-map clobber gate.
+    assert!(
+        lift_one(&[0x62, 0xf1, 0x6d, 0x49, 0xfe, 0xd9]).is_ok(),
+        "masked vpaddd must remain interpreter-liftable"
+    );
+    assert!(
+        lift_one(&[0x62, 0xf1, 0x74, 0x58, 0x58, 0x10]).is_ok(),
+        "broadcast vaddps must remain interpreter-liftable"
+    );
+
     // Every form this SMIR vector path cannot represent must be refused so it
     // falls back to the interpreter. (Encodings from llvm-mc.)
     let refused: &[(&str, &[u8])] = &[
@@ -90,10 +101,6 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vmovdqa32 {k1}", &[0x62, 0xf1, 0x7d, 0x49, 0x6f, 0xd1]),
         // vmovdqa32 %zmm1,%zmm2{%k1}{z}   — zeroing (z=1, aaa=1)
         ("vmovdqa32 {k1}{z}", &[0x62, 0xf1, 0x7d, 0xc9, 0x6f, 0xd1]),
-        // vpaddd %zmm1,%zmm2,%zmm3{%k1}   — masked arithmetic
-        ("vpaddd {k1}", &[0x62, 0xf1, 0x6d, 0x49, 0xfe, 0xd9]),
-        // vaddps (%rax){1to16},%zmm1,%zmm2 — memory broadcast (b=1, mem)
-        ("vaddps {1to16}", &[0x62, 0xf1, 0x74, 0x58, 0x58, 0x10]),
         // vaddps {rn-sae},%zmm1,%zmm2,%zmm3 — embedded rounding (b=1, reg;
         // here L'L=00 would even misdecode the width as 128-bit if not bailed)
         ("vaddps {rn-sae}", &[0x62, 0xf1, 0x6c, 0x18, 0x58, 0xd9]),
@@ -235,6 +242,65 @@ fn hot_masked_evex_move_bails_to_interpreter_and_is_correct() {
         "masked move must honor k1 (got {:016x?})",
         get_zmm(&out, 2)
     );
+}
+
+#[test]
+fn hot_masked_rotate_jits_and_round_trips_zmm_and_opmask_state() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    // loop: vprold $7,%zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf5]); // back 11 bytes
+    code.push(0xf4);
+
+    let source = [
+        0x0123_4567_89ab_cdef,
+        0x1111_2222_3333_4444,
+        0x8000_0001_7fff_ffff,
+        0xdead_beef_cafe_babe,
+        0x0102_0304_0506_0708,
+        0xf0e0_d0c0_b0a0_9080,
+        0x1357_9bdf_2468_ace0,
+        0xffff_ffff_0000_0001,
+    ];
+    let mask = 0x5555u64;
+    let mut expected = [0u64; 8];
+    for lane in 0..16 {
+        let input = (source[lane / 2] >> ((lane % 2) * 32)) as u32;
+        let output = if ((mask >> lane) & 1) != 0 {
+            input.rotate_left(7)
+        } else {
+            0
+        };
+        expected[lane / 2] |= (output as u64) << ((lane % 2) * 32);
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("jit masked VPROLD loop"),
+        "a modeled register-only masked rotate loop must enter the native tier"
+    );
+    let after_jit = vcpu.get_regs().unwrap();
+    assert_eq!(after_jit.rcx & 0xffff_ffff, 0, "native loop drained");
+    assert_eq!(get_zmm(&after_jit, 1), expected);
+    assert_eq!(get_zmm(&after_jit, 2), source, "source ZMM survived");
+    assert_eq!(after_jit.k[4], mask, "source opmask survived");
+
+    run_to_hlt(&mut vcpu);
 }
 
 #[test]

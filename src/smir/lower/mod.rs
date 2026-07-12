@@ -65,6 +65,12 @@ pub const X86_GUEST_FS_BASE_OFFSET: i32 = X86_GUEST_STORE_FN_OFFSET + 8;
 pub const X86_GUEST_GS_BASE_OFFSET: i32 = X86_GUEST_FS_BASE_OFFSET + 8;
 /// Byte offset of `GuestRegs.call_fn`.
 pub const X86_GUEST_CALL_FN_OFFSET: i32 = X86_GUEST_GS_BASE_OFFSET + 8;
+/// Byte offset of `GuestRegs.zmm` (32 architectural 512-bit vector registers).
+pub const X86_GUEST_ZMM_OFFSET: i32 = X86_GUEST_CALL_FN_OFFSET + 8;
+/// Byte offset of `GuestRegs.k` (eight 64-bit AVX-512 opmask registers).
+pub const X86_GUEST_K_OFFSET: i32 = X86_GUEST_ZMM_OFFSET + 32 * 64;
+/// Byte offset of `GuestRegs.vector_active`.
+pub const X86_GUEST_VECTOR_ACTIVE_OFFSET: i32 = X86_GUEST_K_OFFSET + 8 * 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

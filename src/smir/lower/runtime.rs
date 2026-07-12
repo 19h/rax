@@ -20,9 +20,9 @@
 
 use super::{
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
-    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET,
+    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_STATE_PTR_AT_RBP,
+    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_ZMM_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -49,7 +49,7 @@ unsafe extern "C" {
 /// 16..=31=R16..=R31). `rflags` holds the materialized flags. `repr(C)` with a
 /// fixed layout — the trampoline reads/writes by byte offset (`gpr[i]` at
 /// `i*8`, `rflags` at [`X86_GUEST_RFLAGS_OFFSET`]).
-#[repr(C)]
+#[repr(C, align(64))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct GuestRegs {
     /// General-purpose registers, indexed by x86 encoding.
@@ -86,6 +86,29 @@ pub struct GuestRegs {
     /// the `*mut GuestRegs` itself (not `ctx`), because the helper needs the
     /// full marshalled guest state, and `gr.ctx` carries the vcpu pointer.
     pub call_fn: u64,
+    /// Complete architectural ZMM0-ZMM31 state. XMM and YMM values occupy the
+    /// corresponding low 128/256 bits. Kept in one canonical representation so
+    /// the native trampoline can import/export the entire overlapping register
+    /// file with one 64-byte transfer per physical register.
+    pub zmm: [[u64; 8]; 32],
+    /// AVX-512 architectural opmask registers K0-K7.
+    pub k: [u64; 8],
+    /// Non-zero only for a region containing an admitted native vector op. The
+    /// trampoline branches around every AVX-512 instruction when this is zero,
+    /// preserving GPR-only JIT execution on hosts without AVX-512 support.
+    pub vector_active: u64,
+}
+
+impl GuestRegs {
+    /// Install one complete architectural vector register.
+    pub fn set_zmm(&mut self, index: usize, value: [u64; 8]) {
+        self.zmm[index] = value;
+    }
+
+    /// Read one complete architectural vector register.
+    pub fn get_zmm(&self, index: usize) -> [u64; 8] {
+        self.zmm[index]
+    }
 }
 
 /// AArch64 guest register file for state-backed x86-64 lowering.
@@ -186,8 +209,9 @@ impl Aarch64GuestRegs {
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):
-//   preserve host callee-saved -> load guest GPRs+RFLAGS into the identical host
-//   regs -> `call` the block -> store the host regs back into GuestRegs.
+//   preserve host callee-saved -> load guest GPRs+RFLAGS and, for an admitted
+//   vector region, ZMM0-ZMM31+K0-K7 into the identical host regs -> `call` the
+//   block -> store the live architectural state back into GuestRegs.
 // RSP (gpr[4]) is NOT loaded — the block runs on the host stack (it owns no
 // guest stack). Alignment: 6 callee pushes (48) + `sub rsp,24` (72 total) leaves
 // rsp 16-aligned at the `call`.
@@ -209,6 +233,51 @@ macro_rules! x86_enter_native_trampoline {
             "sub rsp, 24", // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
             "mov [rsp], rdi",
             "mov [rsp+8], rsi",
+            // Vector state is optional. The branch executes before guest RFLAGS
+            // are installed, so its CMP cannot perturb architectural flags.
+            "cmp qword ptr [rsi+2432], 0",
+            "je 2f",
+            "vmovdqu64 zmm0,  [rsi+320]",
+            "vmovdqu64 zmm1,  [rsi+384]",
+            "vmovdqu64 zmm2,  [rsi+448]",
+            "vmovdqu64 zmm3,  [rsi+512]",
+            "vmovdqu64 zmm4,  [rsi+576]",
+            "vmovdqu64 zmm5,  [rsi+640]",
+            "vmovdqu64 zmm6,  [rsi+704]",
+            "vmovdqu64 zmm7,  [rsi+768]",
+            "vmovdqu64 zmm8,  [rsi+832]",
+            "vmovdqu64 zmm9,  [rsi+896]",
+            "vmovdqu64 zmm10, [rsi+960]",
+            "vmovdqu64 zmm11, [rsi+1024]",
+            "vmovdqu64 zmm12, [rsi+1088]",
+            "vmovdqu64 zmm13, [rsi+1152]",
+            "vmovdqu64 zmm14, [rsi+1216]",
+            "vmovdqu64 zmm15, [rsi+1280]",
+            "vmovdqu64 zmm16, [rsi+1344]",
+            "vmovdqu64 zmm17, [rsi+1408]",
+            "vmovdqu64 zmm18, [rsi+1472]",
+            "vmovdqu64 zmm19, [rsi+1536]",
+            "vmovdqu64 zmm20, [rsi+1600]",
+            "vmovdqu64 zmm21, [rsi+1664]",
+            "vmovdqu64 zmm22, [rsi+1728]",
+            "vmovdqu64 zmm23, [rsi+1792]",
+            "vmovdqu64 zmm24, [rsi+1856]",
+            "vmovdqu64 zmm25, [rsi+1920]",
+            "vmovdqu64 zmm26, [rsi+1984]",
+            "vmovdqu64 zmm27, [rsi+2048]",
+            "vmovdqu64 zmm28, [rsi+2112]",
+            "vmovdqu64 zmm29, [rsi+2176]",
+            "vmovdqu64 zmm30, [rsi+2240]",
+            "vmovdqu64 zmm31, [rsi+2304]",
+            "kmovq k0, [rsi+2368]",
+            "kmovq k1, [rsi+2376]",
+            "kmovq k2, [rsi+2384]",
+            "kmovq k3, [rsi+2392]",
+            "kmovq k4, [rsi+2400]",
+            "kmovq k5, [rsi+2408]",
+            "kmovq k6, [rsi+2416]",
+            "kmovq k7, [rsi+2424]",
+            "2:",
             "mov rax, [rsi+256]", // RFLAGS
             "push rax",
             "popfq",
@@ -247,6 +316,51 @@ macro_rules! x86_enter_native_trampoline {
             "pushfq",
             "pop rcx",
             "mov [rax+256], rcx",
+            // Guest flags are captured above, so the vector-active test can no
+            // longer alter the state returned to the emulator.
+            "cmp qword ptr [rax+2432], 0",
+            "je 3f",
+            "vmovdqu64 [rax+320],  zmm0",
+            "vmovdqu64 [rax+384],  zmm1",
+            "vmovdqu64 [rax+448],  zmm2",
+            "vmovdqu64 [rax+512],  zmm3",
+            "vmovdqu64 [rax+576],  zmm4",
+            "vmovdqu64 [rax+640],  zmm5",
+            "vmovdqu64 [rax+704],  zmm6",
+            "vmovdqu64 [rax+768],  zmm7",
+            "vmovdqu64 [rax+832],  zmm8",
+            "vmovdqu64 [rax+896],  zmm9",
+            "vmovdqu64 [rax+960],  zmm10",
+            "vmovdqu64 [rax+1024], zmm11",
+            "vmovdqu64 [rax+1088], zmm12",
+            "vmovdqu64 [rax+1152], zmm13",
+            "vmovdqu64 [rax+1216], zmm14",
+            "vmovdqu64 [rax+1280], zmm15",
+            "vmovdqu64 [rax+1344], zmm16",
+            "vmovdqu64 [rax+1408], zmm17",
+            "vmovdqu64 [rax+1472], zmm18",
+            "vmovdqu64 [rax+1536], zmm19",
+            "vmovdqu64 [rax+1600], zmm20",
+            "vmovdqu64 [rax+1664], zmm21",
+            "vmovdqu64 [rax+1728], zmm22",
+            "vmovdqu64 [rax+1792], zmm23",
+            "vmovdqu64 [rax+1856], zmm24",
+            "vmovdqu64 [rax+1920], zmm25",
+            "vmovdqu64 [rax+1984], zmm26",
+            "vmovdqu64 [rax+2048], zmm27",
+            "vmovdqu64 [rax+2112], zmm28",
+            "vmovdqu64 [rax+2176], zmm29",
+            "vmovdqu64 [rax+2240], zmm30",
+            "vmovdqu64 [rax+2304], zmm31",
+            "kmovq [rax+2368], k0",
+            "kmovq [rax+2376], k1",
+            "kmovq [rax+2384], k2",
+            "kmovq [rax+2392], k3",
+            "kmovq [rax+2400], k4",
+            "kmovq [rax+2408], k5",
+            "kmovq [rax+2416], k6",
+            "kmovq [rax+2424], k7",
+            "3:",
             // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
             // the GUEST RFLAGS into the host, and the region runs with them — but the
             // sticky control flags then LEAK into the host: AC (alignment check, set by
@@ -814,6 +928,105 @@ pub fn is_native_clobber_safe_excluding(
         })
 }
 
+/// Return whether `op` is one of the register-only x86 vector operations whose
+/// interpreter semantics and native EVEX encoding are both regression-covered.
+/// Every operand must be architectural: virtual vector values still require a
+/// separate vector allocator/spill discipline and therefore remain ineligible.
+pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    if !matches!(
+        op,
+        OpKind::X86PackedShiftVariable { .. }
+            | OpKind::X86PackedRotate { .. }
+            | OpKind::X86TernaryLogic { .. }
+            | OpKind::X86PackedFunnelShift { .. }
+            | OpKind::X86MultiShiftQB { .. }
+    ) {
+        return false;
+    }
+
+    op.dests().into_iter().chain(op.source_vregs()).all(|reg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Xmm(_) | X86Reg::Ymm(_) | X86Reg::Zmm(_) | X86Reg::K(_)
+            ))
+        )
+    })
+}
+
+/// Whether any executable (non-exit) block contains an admitted native vector
+/// operation. This controls vector-state marshalling in the entry trampoline.
+pub fn uses_x86_native_vectors_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| is_x86_native_vector_op(&op.kind))
+}
+
+/// Verify that this host can execute every admitted vector opcode in `func`.
+/// The trampoline itself uses 512-bit VMOVDQU64 and 64-bit KMOVQ, so AVX-512F
+/// and AVX-512BW are unconditional requirements for every vector region.
+pub fn x86_native_vector_features_supported_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::VecWidth;
+
+    let mut any = false;
+    let mut needs_vl = false;
+    let mut needs_vbmi = false;
+    let mut needs_vbmi2 = false;
+
+    for op in func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .map(|op| &op.kind)
+        .filter(|op| is_x86_native_vector_op(op))
+    {
+        any = true;
+        let width = match op {
+            OpKind::X86PackedShiftVariable { width, .. }
+            | OpKind::X86PackedRotate { width, .. }
+            | OpKind::X86TernaryLogic { width, .. }
+            | OpKind::X86PackedFunnelShift { width, .. }
+            | OpKind::X86MultiShiftQB { width, .. } => *width,
+            _ => unreachable!("filtered to native vector operations"),
+        };
+        needs_vl |= width != VecWidth::V512;
+        needs_vbmi |= matches!(op, OpKind::X86MultiShiftQB { .. });
+        needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. });
+    }
+
+    if !any {
+        return true;
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        std::is_x86_feature_detected!("avx512f")
+            && std::is_x86_feature_detected!("avx512bw")
+            && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
+            && (!needs_vbmi || std::is_x86_feature_detected!("avx512vbmi"))
+            && (!needs_vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
+    }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        let _ = (needs_vl, needs_vbmi, needs_vbmi2);
+        false
+    }
+}
+
 fn x86_flag_live_in(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -993,14 +1206,17 @@ fn block_is_clobber_safe(
                 }
             }
         }
-        // (1) fail-safe whitelist: any non-whitelisted op (div, FP/SIMD,
+        // (1) fail-safe whitelist: any non-whitelisted op (div, general FP/SIMD,
         // syscall, unvalidated) makes the whole region ineligible. When memory
         // JIT is enabled, register-destination Load/Store are additionally
         // allowed (they lower to MMU helper calls with fault-bail); RMW forms
         // still bail via the virtual-temp check below, and RSP/RBP-based
-        // addresses via check (3).
+        // addresses via check (3). The explicitly admitted native vector family
+        // is register-only and receives a separate host-feature gate before
+        // execution.
         let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
-        if !op.is_jit_safe() && !mem_ok {
+        let vector_ok = is_x86_native_vector_op(&op.kind);
+        if !op.is_jit_safe() && !mem_ok && !vector_ok {
             return false;
         }
         if x86_movx_uses_ambiguous_high_byte_source(op) {
@@ -1306,8 +1522,8 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{
-        Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, SignExtend,
-        SrcOperand, VReg, X86Reg,
+        Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
+        SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
     };
     use crate::smir::ir::{FunctionBuilder, Terminator};
 
@@ -1341,6 +1557,232 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             allow_mem,
         )
+    }
+
+    #[test]
+    fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, zmm),
+            X86_GUEST_ZMM_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, k),
+            X86_GUEST_K_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, vector_active),
+            X86_GUEST_VECTOR_ACTIVE_OFFSET as usize
+        );
+        assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
+
+        let mut regs = GuestRegs::default();
+        let low = [0x0101_0101_0101_0101; 8];
+        let high = [0x3131_3131_3131_3131; 8];
+        regs.set_zmm(0, low);
+        regs.set_zmm(31, high);
+        assert_eq!(regs.get_zmm(0), low);
+        assert_eq!(regs.get_zmm(31), high);
+    }
+
+    #[test]
+    fn clobber_gate_admits_only_architectural_native_vector_operands() {
+        let zmm1 = x86(X86Reg::Zmm(1));
+        let zmm2 = x86(X86Reg::Zmm(2));
+        let zmm3 = x86(X86Reg::Zmm(3));
+        let k4 = x86(X86Reg::K(4));
+        let native_ops = [
+            OpKind::X86PackedShiftVariable {
+                dst: zmm1,
+                src: zmm2,
+                count: zmm3,
+                mask: Some(k4),
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Lsl,
+                zeroing: true,
+            },
+            OpKind::X86PackedRotate {
+                dst: zmm1,
+                src: zmm2,
+                count: None,
+                mask: Some(k4),
+                amount: 7,
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                left: true,
+                zeroing: true,
+            },
+            OpKind::X86TernaryLogic {
+                dst: zmm1,
+                src1: zmm1,
+                src2: zmm2,
+                src3: zmm3,
+                mask: Some(k4),
+                imm: 0x96,
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                zeroing: true,
+            },
+            OpKind::X86PackedFunnelShift {
+                dst: zmm1,
+                src: zmm1,
+                fill: zmm2,
+                count: Some(zmm3),
+                mask: Some(k4),
+                amount: 0,
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                left: true,
+                zeroing: true,
+            },
+            OpKind::X86MultiShiftQB {
+                dst: zmm1,
+                control: zmm2,
+                source: zmm3,
+                mask: Some(k4),
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+        ];
+        for native in &native_ops {
+            assert!(is_x86_native_vector_op(native), "{native:?}");
+            assert!(x86_gate(native.clone()), "{native:?}");
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, native_ops[1].clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+        assert!(uses_x86_native_vectors_excluding(
+            &func,
+            &std::collections::HashMap::new()
+        ));
+
+        let virtual_source = OpKind::X86PackedShiftVariable {
+            dst: zmm1,
+            src: VReg::Virtual(VirtualId(7)),
+            count: zmm2,
+            mask: None,
+            width: VecWidth::V512,
+            elem: VecElementType::I32,
+            shift: ShiftOp::Lsl,
+            zeroing: false,
+        };
+        assert!(!is_x86_native_vector_op(&virtual_source));
+        assert!(!x86_gate(virtual_source));
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_vector_trampoline_round_trips_all_zmm_and_opmask_registers() {
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, OpKind::Nop);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower vector-state no-op region");
+        let code = lowerer
+            .finalize()
+            .expect("finalize vector-state no-op region");
+        let exec = ExecMem::new(&code).expect("map vector-state no-op region");
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        for register in 0..32 {
+            for lane in 0..8 {
+                regs.zmm[register][lane] =
+                    0x5a00_0000_0000_0000 | ((register as u64) << 16) | lane as u64;
+            }
+        }
+        for register in 0..8 {
+            regs.k[register] = 0xa500_0000_0000_0000 | register as u64;
+        }
+        let expected_zmm = regs.zmm;
+        let expected_k = regs.k;
+
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.zmm, expected_zmm);
+        assert_eq!(regs.k, expected_k);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_vector_trampoline_executes_masked_rotate_and_round_trips_state() {
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86PackedRotate {
+                dst: x86(X86Reg::Zmm(17)),
+                src: x86(X86Reg::Zmm(18)),
+                count: None,
+                mask: Some(x86(X86Reg::K(4))),
+                amount: 7,
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                left: true,
+                zeroing: true,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower masked VPROLD region");
+        assert!(lowered.relocations.is_empty());
+        let code = lowerer.finalize().expect("finalize masked VPROLD region");
+        let exec = ExecMem::new(&code).expect("map masked VPROLD region");
+
+        let source = [
+            0x0123_4567_89ab_cdef,
+            0x1111_2222_3333_4444,
+            0x8000_0001_7fff_ffff,
+            0xdead_beef_cafe_babe,
+            0x0102_0304_0506_0708,
+            0xf0e0_d0c0_b0a0_9080,
+            0x1357_9bdf_2468_ace0,
+            0xffff_ffff_0000_0001,
+        ];
+        let mask = 0x5555u64;
+        let mut expected = [0u64; 8];
+        for lane in 0..16 {
+            let input = (source[lane / 2] >> ((lane % 2) * 32)) as u32;
+            let output = if ((mask >> lane) & 1) != 0 {
+                input.rotate_left(7)
+            } else {
+                0
+            };
+            expected[lane / 2] |= (output as u64) << ((lane % 2) * 32);
+        }
+
+        let mut regs = GuestRegs::default();
+        regs.vector_active = 1;
+        regs.set_zmm(17, [u64::MAX; 8]);
+        regs.set_zmm(18, source);
+        regs.k[4] = mask;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(17), expected);
+        assert_eq!(regs.get_zmm(18), source, "source ZMM must survive");
+        assert_eq!(regs.k[4], mask, "source opmask must survive");
     }
 
     #[test]

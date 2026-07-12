@@ -3592,6 +3592,8 @@ const JIT_VERIFY_MEM_TRACE_LIMIT: usize = 4;
 pub(super) struct JitRegion {
     exec: crate::smir::lower::runtime::ExecMem,
     entry_offset: usize,
+    /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
+    uses_vector: bool,
 }
 
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
@@ -4100,11 +4102,15 @@ impl X86_64Vcpu {
     ) -> Result<Option<JitRegion>> {
         use crate::smir::ir::Terminator;
         use crate::smir::ir::memory::MemoryError;
+        use crate::smir::ir::ops::OpKind;
         use crate::smir::ir::types::SourceArch;
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::lower::SmirLowerer;
-        use crate::smir::lower::runtime::{ExecMem, is_native_clobber_safe_excluding};
+        use crate::smir::lower::runtime::{
+            ExecMem, is_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
+            x86_native_vector_features_supported_excluding,
+        };
         use crate::smir::lower::x86_64::X86_64Lowerer;
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
@@ -4247,6 +4253,29 @@ impl X86_64Vcpu {
             }
             // Fail-safe gate over the EXECUTED (non-exit) blocks.
             let allow_mem = self.jit_mem;
+            let uses_vector = uses_x86_native_vectors_excluding(&func, &exits);
+            if uses_vector && !x86_native_vector_features_supported_excluding(&func, &exits) {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] host-vector-features @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
+            // Memory/call helpers follow the platform ABI and may clobber all
+            // caller-saved vector/opmask registers. Until helper call-outs gain
+            // explicit vector preservation, never mix them with a vector region.
+            let uses_mem_helpers = allow_mem
+                && func
+                    .blocks
+                    .iter()
+                    .filter(|block| !exits.contains_key(&block.id))
+                    .flat_map(|block| &block.ops)
+                    .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }));
+            if uses_vector && (cm || uses_mem_helpers) {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] vector-helper-mix @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
             if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
                 if jit_bail_log() {
                     eprintln!(
@@ -4304,15 +4333,17 @@ impl X86_64Vcpu {
             return Ok(Some(JitRegion {
                 exec,
                 entry_offset: res.entry_offset,
+                uses_vector,
             }));
         }
         Ok(None)
     }
 
     /// Execute a (possibly cached) compiled region with the current guest state,
-    /// then resume at the recorded exit PC. Marshals guest GPRs+flags into the
-    /// native file, runs, and bridges the result back. RSP is neither loaded nor
-    /// written by the trampoline (the block runs on the host stack).
+    /// then resume at the recorded exit PC. Marshals guest GPRs+flags and, when
+    /// required, the complete vector/opmask state into the native file, runs,
+    /// and bridges the result back. RSP is neither loaded nor written by the
+    /// trampoline (the block runs on the host stack).
     pub(super) fn jit_run_region(&mut self, region: &JitRegion) {
         // Self-verifying mode (RAX_JIT_VERIFY=1): run the region natively, then
         // re-run the INTERPRETER from the identical entry state up to the JIT's
@@ -4424,6 +4455,26 @@ impl X86_64Vcpu {
         gr.gpr[31] = self.regs.r31;
         gr.rflags = self.regs.rflags;
         gr.exit_pc = self.regs.rip; // fallback (an exit stub overwrites this)
+        if region.uses_vector {
+            for index in 0..16 {
+                gr.set_zmm(
+                    index,
+                    [
+                        self.regs.xmm[index][0],
+                        self.regs.xmm[index][1],
+                        self.regs.ymm_high[index][0],
+                        self.regs.ymm_high[index][1],
+                        self.regs.zmm_high[index][0],
+                        self.regs.zmm_high[index][1],
+                        self.regs.zmm_high[index][2],
+                        self.regs.zmm_high[index][3],
+                    ],
+                );
+                gr.set_zmm(index + 16, self.regs.zmm_ext[index]);
+            }
+            gr.k = self.regs.k;
+            gr.vector_active = 1;
+        }
 
         region.exec.run(region.entry_offset, &mut gr);
 
@@ -4473,6 +4524,16 @@ impl X86_64Vcpu {
         self.regs.r29 = gr.gpr[29];
         self.regs.r30 = gr.gpr[30];
         self.regs.r31 = gr.gpr[31];
+        if region.uses_vector {
+            for index in 0..16 {
+                let low = gr.get_zmm(index);
+                self.regs.xmm[index] = [low[0], low[1]];
+                self.regs.ymm_high[index] = [low[2], low[3]];
+                self.regs.zmm_high[index] = [low[4], low[5], low[6], low[7]];
+                self.regs.zmm_ext[index] = gr.get_zmm(index + 16);
+            }
+            self.regs.k = gr.k;
+        }
         // Merge: status flags from the native result, all other bits (IF, DF,
         // IOPL, NT, reserved, …) preserved from the guest's pre-region value.
         const STATUS: u64 = flags::bits::CF
@@ -4640,10 +4701,8 @@ impl X86_64Vcpu {
             }
             // Vector (XMM/YMM/ZMM) + opmask (k) state. A masked-EVEX miscompile —
             // or any vector divergence — surfaces here. The interpreter result is
-            // in self.regs, the native result in `jit`. No vector op is currently
-            // JIT-whitelisted (`OpKind::is_jit_safe`), so these always match today;
-            // this is the safety net that catches any future vector JIT regression
-            // (the GPR/flags/memory checks above are blind to ZMM/k).
+            // in self.regs, the native result in `jit`; the GPR/flags/memory checks
+            // above are blind to ZMM/k.
             for i in 0..16 {
                 if self.regs.xmm[i] != jit.xmm[i] {
                     diffs.push(format!(
