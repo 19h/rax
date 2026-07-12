@@ -10458,6 +10458,8 @@ impl HexagonLifter {
                     src2: self.hex_v(fld(b'v')),
                     src_elem,
                     to_unsigned,
+                    src_lanes: (128 / src_elem.bytes()) as u8,
+                    block_lanes: (128 / src_elem.bytes()) as u8,
                 });
             }
 
@@ -10787,6 +10789,7 @@ impl HexagonLifter {
                 src1: self.hex_v(fld(b'u')),
                 src2: self.hex_v(fld(b'v')),
                 src_elem: VecElementType::I16,
+                lanes: 64,
                 signed1: true,
                 signed2: true,
                 shift_left: 1,
@@ -10799,6 +10802,7 @@ impl HexagonLifter {
                 src1: self.hex_v(fld(b'u')),
                 src2: self.hex_v(fld(b'v')),
                 src_elem: VecElementType::I16,
+                lanes: 64,
                 signed1: false,
                 signed2: false,
                 shift_left: 0,
@@ -10833,6 +10837,7 @@ impl HexagonLifter {
                     src1: self.hex_v(fld(b'u')),
                     src2: t,
                     src_elem: VecElementType::I16,
+                    lanes: 64,
                     signed1: true,
                     signed2: true,
                     shift_left: 1,
